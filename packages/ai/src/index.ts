@@ -11,7 +11,7 @@ export {
 
 /** Utils */
 export * from "./utils/request";
+export * from "./utils/create-error-response";
 
 /** Types */
 export * from "./types";
-export * from "./utils/request";

@@ -1,3 +1,48 @@
+import type { StreamingTextResponse } from "ai";
+
+/**
+ * Generic Response types used both by Models and Chains.
+ */
+
+export type Tokens = {
+  prompt: number;
+  completion: number;
+};
+
+export type SuccessResponse<ResponseData> = {
+  type: "json";
+  success: true;
+  tokens: Tokens;
+  data: ResponseData;
+};
+
+export type StreamingSuccessResponse = {
+  type: "stream";
+  success: true;
+  stream: StreamingTextResponse;
+};
+
+export type ErrorResponse = {
+  type: "json";
+  success: false;
+  tokens: Tokens;
+  data: {
+    status: number;
+    error: string;
+    message: string;
+    debug?: string;
+  };
+};
+
+type Response<ResponseData = void> = {
+  id: string;
+} & (
+  | (ResponseData extends void
+      ? StreamingSuccessResponse
+      : SuccessResponse<ResponseData>)
+  | ErrorResponse
+);
+
 /**
  * Models types.
  *
@@ -6,41 +51,27 @@
  */
 
 export type ModelMessage = ["system" | "user" | "assistant", string];
-export type ModelMessages = Array<ModelMessage>;
 
 export type Model<ModelMessageFormat> = {
   // Turns ModelMessages into a model-specific messages format.
   generateMessages: ModelGenerateMessages<ModelMessageFormat>;
-  // Regular request.
-  request: ModelRequest<ModelMessageFormat>;
-  // Streaming.
-  requestStream: ModelRequestStream<ModelMessageFormat>;
+  completion: ModelCompletion<ModelMessageFormat>;
+  completionStream: ModelCompletionStream<ModelMessageFormat>;
 };
 
-export type ModelGenerateMessages<ModelMessage> = (
-  messages: ModelMessages
-) => ModelMessage[];
+export type ModelGenerateMessages<ModelMessageFormat> = (
+  messages: ModelMessage[]
+) => ModelMessageFormat[];
 
-export type ModelRequestSuccess = {
-  success: true;
-  choices: string[];
-  tokens: {
-    prompt: number;
-    completion: number;
-  };
-};
-
-export type ModelRequest<ModelMessageFormat> = ({
-  messages,
-}: {
+export type ModelCompletion<ModelMessageFormat> = (args: {
+  id: string;
   messages: ReturnType<ModelGenerateMessages<ModelMessageFormat>>;
-}) => Promise<ModelRequestSuccess | ErrorResponse>;
+}) => Promise<Response<{ choices: string[] }>>;
 
-export type ModelRequestStream<ModelMessageFormat> = ({
-  messages,
-}: {
+export type ModelCompletionStream<ModelMessageFormat> = (args: {
+  id: string;
   messages: ReturnType<ModelGenerateMessages<ModelMessageFormat>>;
-}) => Promise<StreamingTextResponse | ErrorResponse>;
+}) => Promise<Response>;
 
 /**
  * Chains types.
@@ -54,34 +85,7 @@ export type ModelRequestStream<ModelMessageFormat> = ({
  * zod types must have a Schema suffix. For example ResponseSchema.
  */
 
-import type { StreamingTextResponse } from "ai";
-
-/* Used on any kind of error response */
-export type ErrorResponse = {
-  success: false;
-  type: "generic_error" | string;
-  status: number;
-  message: string;
-};
-
-export type SuccessResponse<ResponseData> = {
-  success: true;
-  data: ResponseData;
-};
-
-export type ChainResponseSuccess<ResponseData> = {
-  success: true;
-  tokens: number;
-  data: ResponseData;
-  llmMessages: ModelMessages[];
-};
-
-export type Chain<Model, Context, ResponseData> = (args: {
+export type Chain<Model, Context, ResponseData = void> = (args: {
   model: Model;
   context: Context;
-}) => Promise<ChainResponseSuccess<ResponseData> | ErrorResponse>;
-
-export type ChainStream<Model, Context> = (request: {
-  model: Model;
-  context: Context;
-}) => Promise<StreamingTextResponse | ErrorResponse>;
+}) => Promise<Response<ResponseData> & { llmMessages: ModelMessage[] }>;

@@ -1,123 +1,97 @@
-import { createChunkDecoder } from "ai";
-import type { ErrorResponse, SuccessResponse } from "../types";
+import { StreamingTextResponse, createChunkDecoder } from "ai";
+import type {
+  ErrorResponse,
+  StreamingSuccessResponse,
+  SuccessResponse,
+} from "../types";
+import { createErrorResponse } from "./create-error-response";
 
 type RequestOptions = {
+  onChunk?: (
+    operationId: string,
+    data: { decoded: string; value: Uint8Array | undefined; done: boolean }
+  ) => void;
   retry?: number;
 };
 
-export const request = function request<ResponseData>(
+export const request = <ResponseData = void>(
   fetchArgs: Parameters<typeof fetch>,
-  options: RequestOptions = { retry: 0 }
-): Promise<SuccessResponse<ResponseData> | ErrorResponse> {
-  return fetch(...fetchArgs)
-    .then((res) => {
-      if (res.ok === false) {
-        return {
-          success: false,
-          type: "generic_error",
-          status: res.status,
-          message: res.statusText,
-        } as ErrorResponse;
-      }
-      return res.json();
-    })
-    .catch((error) => {
-      const signal = fetchArgs[1]?.signal;
-      const isAborted = signal?.aborted === true;
-
-      if (
-        isAborted === false &&
-        typeof options.retry === "number" &&
-        options.retry > 0
-      ) {
-        return requestStream(fetchArgs, {
-          ...options,
-          retry: options.retry - 1,
-        });
-      }
-      return {
-        success: false,
-        type: isAborted ? "aborted" : "generic_error",
-        status: 500,
-        message: "",
-      } as ErrorResponse;
-    });
-};
-
-type RequestStreamOptions = {
-  onChunk?: (completion: string) => void;
-  retry?: number;
-};
-
-export const requestStream = async function requestStream(
-  fetchArgs: Parameters<typeof fetch>,
-  options: RequestStreamOptions = {
-    retry: 0,
-  }
-): Promise<string | ErrorResponse> {
+  { retry = 0, onChunk }: RequestOptions
+): Promise<
+  SuccessResponse<ResponseData> | StreamingSuccessResponse | ErrorResponse
+> => {
   const signal = fetchArgs[1]?.signal;
   return fetch(...fetchArgs)
     .then(async (response) => {
-      if (response.ok === false || response.body == null) {
+      if (response.status !== 200) {
         return {
-          success: false,
-          type: "generic_error",
-          status: response.status,
-          message: response.body
-            ? response.statusText
-            : "The response is empty",
-        } as ErrorResponse;
-      }
-      if (response.headers.get("Content-Type")?.includes("application/json")) {
-        const json: ErrorResponse = await response.json();
-        return json;
+          id: "",
+          ...createErrorResponse({
+            status: response.status,
+            error: "ai.unhandledError",
+            debug: response.statusText,
+          }),
+        } as const;
       }
 
-      let completion = "";
-      const reader = response.body.getReader();
-      const decoder = createChunkDecoder();
+      const isStream =
+        (response.headers.get("content-type") || "").startsWith("text/plain") &&
+        response.body instanceof ReadableStream;
 
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value } = await reader.read();
+      if (isStream) {
+        // @todo Add delimiter to text streaming response to extract the operation id.
+        const operationId = "copywriter";
 
-        if (done) {
-          break;
+        let completion = "";
+        const reader = response.body.getReader();
+        const decoder = createChunkDecoder();
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          completion += decoder(value);
+
+          if (typeof onChunk === "function") {
+            onChunk(operationId, {
+              decoded: completion,
+              value,
+              done,
+            });
+          }
+
+          if (signal?.aborted === true) {
+            reader.cancel();
+            break;
+          }
         }
 
-        completion += decoder(value);
-
-        if (typeof options.onChunk === "function") {
-          options.onChunk(completion);
-        }
-
-        if (signal?.aborted === true) {
-          reader.cancel();
-          break;
-        }
+        return {
+          id: operationId,
+          type: "stream",
+          success: true,
+          stream: new StreamingTextResponse(
+            new Blob([completion], { type: "text/plain" }).stream()
+          ),
+        } as const;
       }
 
-      return completion;
+      return (await response.json()) as
+        | SuccessResponse<ResponseData>
+        | ErrorResponse;
     })
     .catch((error) => {
-      const isAborted = signal?.aborted === true;
-
-      if (
-        isAborted === false &&
-        typeof options.retry === "number" &&
-        options.retry > 0
-      ) {
-        return requestStream(fetchArgs, {
-          ...options,
-          retry: options.retry - 1,
-        });
-      }
-
       return {
-        success: false,
-        type: isAborted ? "aborted" : "generic_error",
-        status: 500,
-        message: "",
-      } as ErrorResponse;
+        id: "",
+        ...createErrorResponse({
+          status: 500,
+          error: "ai.unhandledError",
+          debug: error.message + "\n" + error.stack,
+        }),
+      } as const;
     });
 };
