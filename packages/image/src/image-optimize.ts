@@ -132,7 +132,8 @@ const getWidths = (
     return { widths: deviceSizes, kind: "w" };
   }
 
-  // There is no need to support ratios more than 2 https://blog.twitter.com/engineering/en_us/topics/infrastructure/2019/capping-image-fidelity-on-ultra-high-resolution-devices.html
+  // Max device pixel ratio capped at 2; higher ratios offer negligible benefits
+  // See Twitter Engineering's article on capping image fidelity: https://blog.twitter.com/engineering/en_us/topics/infrastructure/2019/capping-image-fidelity-on-ultra-high-resolution-devices.html
   const MAX_DEVICE_PIXEL_RATIO = 2;
 
   let index = allSizes.findIndex(
