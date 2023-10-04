@@ -61,7 +61,7 @@ const getCanvasStyle = (
   }
 
   return {
-    width: canvasWidth,
+    width: canvasWidth ?? "100%",
     height: canvasHeight ?? "100%",
     left: "50%",
     // Chrome on Windows has a bug and makes everything slightly blurry if scale(1) is used together with translateX.
@@ -90,10 +90,12 @@ const useOutlineStyle = () => {
   const workspaceRect = useStore(workspaceRectStore);
   const [canvasWidth] = useCanvasWidth();
   const style = getCanvasStyle(100, workspaceRect, canvasWidth);
+
   return {
     ...style,
     pointerEvents: "none",
-    width: (canvasWidth ?? 0) * (scale / 100),
+    width:
+      canvasWidth === undefined ? "100%" : (canvasWidth ?? 0) * (scale / 100),
   } as const;
 };
 
