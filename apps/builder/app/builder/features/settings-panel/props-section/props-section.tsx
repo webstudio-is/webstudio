@@ -33,7 +33,6 @@ import {
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -120,28 +119,18 @@ const renderProperty = (
         "width" in asset.meta &&
         "height" in asset.meta
       ) {
-        if (isFeatureEnabled("image")) {
-          logic.handleChangeByPropName("width", {
-            value: asset.meta.width,
-            type: "number",
-          });
-          logic.handleChangeByPropName("height", {
-            value: asset.meta.height,
-            type: "number",
-          });
+        logic.handleChangeByPropName("width", {
+          value: asset.meta.width,
+          type: "number",
+        });
+        logic.handleChangeByPropName("height", {
+          value: asset.meta.height,
+          type: "number",
+        });
 
-          setCssProperty("height")({
-            type: "keyword",
-            value: "fit-content",
-          });
-
-          return;
-        }
-
-        setCssProperty("aspectRatio")({
-          type: "unit",
-          unit: "number",
-          value: asset.meta.width / asset.meta.height,
+        setCssProperty("height")({
+          type: "keyword",
+          value: "fit-content",
         });
       }
     },
