@@ -119,7 +119,9 @@ const getWidths = (
       // we can exclude from srcSets all images which are smaller than the smallestRatio * smallesDeviceSize
       const smallestRatio = Math.min(...percentSizes) * 0.01;
       return {
-        widths: allSizes.filter((s) => s >= deviceSizes[0] * smallestRatio),
+        widths: allSizes.filter(
+          (size) => size >= deviceSizes[0] * smallestRatio
+        ),
         kind: "w",
       };
     }
@@ -132,7 +134,9 @@ const getWidths = (
 
   const MAX_DEVICE_PIXEL_RATIO = 2;
 
-  let index = allSizes.findIndex((p) => p >= MAX_DEVICE_PIXEL_RATIO * width);
+  let index = allSizes.findIndex(
+    (size) => size >= MAX_DEVICE_PIXEL_RATIO * width
+  );
   index = index < 0 ? allSizes.length : index;
 
   return {
