@@ -197,7 +197,7 @@ const $jsx = computed(
     }
 
     return `<style>{\`${engine.cssText.replace(/\n/gm, " ")}\`}</style>${jsx
-      .replace(/data-ws-component=\"[^"]+"/g, "")
+      .replace(/data-ws-component="[^"]+"/g, "")
       .replace(/\n(data-)/g, " $1")}`;
   }
 );
