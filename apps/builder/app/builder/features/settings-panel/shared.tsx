@@ -119,6 +119,7 @@ export const useLocalValue = <Type,>(
   savedValue: Type,
   onSave: (value: Type) => void
 ) => {
+  const isEditingRef = useRef(false);
   const localValueRef = useRef(savedValue);
 
   const [_, setRefresh] = useState(0);
@@ -127,6 +128,7 @@ export const useLocalValue = <Type,>(
   onSaveRef.current = onSave;
 
   const save = () => {
+    isEditingRef.current = false;
     if (equal(localValueRef.current, savedValue) === false) {
       // To synchronize with setState immediately followed by save
       onSaveRef.current(localValueRef.current);
@@ -134,6 +136,7 @@ export const useLocalValue = <Type,>(
   };
 
   const setLocalValue = (value: Type) => {
+    isEditingRef.current = true;
     localValueRef.current = value;
     setRefresh((refresh) => refresh + 1);
   };
@@ -142,6 +145,17 @@ export const useLocalValue = <Type,>(
   // So we're saving at the unmount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => save, []);
+
+  useEffect(() => {
+    // Update local value if saved value changes and control is not in edit mode.
+    if (
+      isEditingRef.current === false &&
+      localValueRef.current !== savedValue
+    ) {
+      localValueRef.current = savedValue;
+      setRefresh((refresh) => refresh + 1);
+    }
+  }, [savedValue]);
 
   return {
     /**
