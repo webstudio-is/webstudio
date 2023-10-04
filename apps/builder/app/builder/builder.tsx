@@ -302,7 +302,11 @@ export const Builder = ({
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <Topbar gridArea="header" project={project} />
         <Main>
-          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+          <Workspace
+            onTransitionEnd={onTransitionEnd}
+            publish={publish}
+            initialBreakpoints={build.breakpoints}
+          >
             <CanvasIframe
               ref={iframeRefCallback}
               src={canvasUrl}
