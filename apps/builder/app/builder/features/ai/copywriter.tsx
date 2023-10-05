@@ -137,8 +137,6 @@ export const Copywriter = () => {
               ).then((result) => {
                 abort.current = null;
                 if (result.success === false) {
-                  // eslint-disable-next-line no-console
-                  console.log(result);
                   alert(result.data.message);
                 }
                 setIsLoading(false);

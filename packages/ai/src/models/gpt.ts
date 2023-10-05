@@ -129,7 +129,6 @@ export const createCompletionStream = (
 const errorToResponse = (id: string, error: unknown) => {
   let status = 500;
   let debug =
-    process.env.NODE_ENV === "development" &&
     error != null &&
     typeof error === "object" &&
     "message" in error &&
