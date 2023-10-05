@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   theme,
@@ -41,6 +40,7 @@ import {
 } from "~/shared/breakpoints";
 import { scaleStore } from "~/builder/shared/nano-states";
 import { useSetInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { serverSyncStore } from "~/shared/sync";
 
 export const BreakpointsPopover = () => {
   const view = useStore($breakpointsMenuView);
@@ -64,7 +64,7 @@ export const BreakpointsPopover = () => {
     if (breakpointToDelete === undefined) {
       return;
     }
-    store.createTransaction(
+    serverSyncStore.createTransaction(
       [breakpointsStore, stylesStore],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;

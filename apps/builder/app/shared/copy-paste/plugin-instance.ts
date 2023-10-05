@@ -1,6 +1,5 @@
 import { shallowEqual } from "shallow-equal";
 import { nanoid } from "nanoid";
-import store from "immerhin";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
@@ -54,6 +53,7 @@ import {
   isInstanceDetachable,
 } from "../instance-utils";
 import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
+import { serverSyncStore } from "../sync";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -426,7 +426,7 @@ export const onPaste = (clipboardData: string): boolean => {
   }
   const dropTarget = potentialDropTarget;
 
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [
       breakpointsStore,
       instancesStore,

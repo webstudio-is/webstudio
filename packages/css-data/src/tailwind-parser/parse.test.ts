@@ -35,6 +35,23 @@ Quick Validation of Generated CSS in WebStudio:
 */
 
 describe("parseTailwindToWebstudio", () => {
+  test("no-underline", async () => {
+    const tailwindClasses = `no-underline`;
+
+    expect(await parseTailwindToWebstudio(tailwindClasses))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "property": "textDecorationLine",
+    "value": {
+      "type": "keyword",
+      "value": "none",
+    },
+  },
+]
+`);
+  });
+
   test("expand margins", async () => {
     const tailwindClasses = `m-4`;
 

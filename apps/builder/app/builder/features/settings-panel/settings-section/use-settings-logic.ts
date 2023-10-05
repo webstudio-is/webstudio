@@ -1,4 +1,3 @@
-import store from "immerhin";
 import {
   type KeyboardEventHandler,
   useRef,
@@ -6,6 +5,7 @@ import {
   useCallback,
 } from "react";
 import { instancesStore, selectedInstanceStore } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 
 type Setting = "label";
 type Value = string;
@@ -50,7 +50,7 @@ export const useSettingsLogic = () => {
     if (selectedInstance === undefined) {
       return;
     }
-    store.createTransaction([instancesStore], (instances) => {
+    serverSyncStore.createTransaction([instancesStore], (instances) => {
       const instance = instances.get(selectedInstance.id);
       if (instance === undefined) {
         return;

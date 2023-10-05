@@ -1,4 +1,4 @@
-import store, { type Change } from "immerhin";
+import { Store, type Change } from "immerhin";
 import { enableMapSet } from "immer";
 import { atom, type WritableAtom } from "nanostores";
 import { useEffect } from "react";
@@ -53,26 +53,29 @@ declare module "~/shared/pubsub" {
     sendStoreChanges: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
+      namespace: "client" | "server";
       changes: Change[];
     };
   }
 }
 
+export const clientSyncStore = new Store();
+export const serverSyncStore = new Store();
 const clientStores = new Map<string, WritableAtom<unknown>>();
 const initializedStores = new Set<string>();
 
 export const registerContainers = () => {
   // synchronize patches
-  store.register("pages", pagesStore);
-  store.register("breakpoints", breakpointsStore);
-  store.register("instances", instancesStore);
-  store.register("styles", stylesStore);
-  store.register("styleSources", styleSourcesStore);
-  store.register("styleSourceSelections", styleSourceSelectionsStore);
-  store.register("props", propsStore);
-  store.register("dataSources", dataSourcesStore);
-  store.register("assets", assetsStore);
-  store.register("commandMetas", $commandMetas);
+  serverSyncStore.register("pages", pagesStore);
+  serverSyncStore.register("breakpoints", breakpointsStore);
+  serverSyncStore.register("instances", instancesStore);
+  serverSyncStore.register("styles", stylesStore);
+  serverSyncStore.register("styleSources", styleSourcesStore);
+  serverSyncStore.register("styleSourceSelections", styleSourceSelectionsStore);
+  serverSyncStore.register("props", propsStore);
+  serverSyncStore.register("dataSources", dataSourcesStore);
+  serverSyncStore.register("assets", assetsStore);
+  clientSyncStore.register("commandMetas", $commandMetas);
   // synchronize whole states
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);
@@ -131,16 +134,21 @@ export const registerContainers = () => {
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   const unsubscribeRemoteChanges = subscribe(
     "sendStoreChanges",
-    ({ source, changes }) => {
+    ({ source, namespace, changes }) => {
       /// prevent reapplying own changes
       if (source === name) {
         return;
       }
-      store.createTransactionFromChanges(changes, "remote");
+      if (namespace === "server") {
+        serverSyncStore.createTransactionFromChanges(changes, "remote");
+      }
+      if (namespace === "client") {
+        clientSyncStore.createTransactionFromChanges(changes, "remote");
+      }
     }
   );
 
-  const unsubscribeStoreChanges = store.subscribe(
+  const unsubscribeStoreChanges = serverSyncStore.subscribe(
     (_transactionId, changes, source) => {
       // prevent sending remote patches back
       if (source === "remote") {
@@ -151,6 +159,25 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
         type: "sendStoreChanges",
         payload: {
           source: name,
+          namespace: "server",
+          changes,
+        },
+      });
+    }
+  );
+
+  const unsubscribeClientImmerhinStoreChanges = clientSyncStore.subscribe(
+    (_transactionId, changes, source) => {
+      // prevent sending remote patches back
+      if (source === "remote") {
+        return;
+      }
+
+      publish({
+        type: "sendStoreChanges",
+        payload: {
+          source: name,
+          namespace: "client",
           changes,
         },
       });
@@ -160,6 +187,7 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   return () => {
     unsubscribeRemoteChanges();
     unsubscribeStoreChanges();
+    unsubscribeClientImmerhinStoreChanges();
   };
 };
 
@@ -175,9 +203,13 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
       }
       for (const { namespace, value } of data) {
         // apply immerhin stores data
-        const container = store.containers.get(namespace);
+        const container = serverSyncStore.containers.get(namespace);
         if (container) {
           container.set(value);
+        }
+        const clientContainer = clientSyncStore.containers.get(namespace);
+        if (clientContainer) {
+          clientContainer.set(value);
         }
         // apply state stores data
         const stateStore = clientStores.get(namespace);
@@ -330,7 +362,7 @@ export const useBuilderStore = (publish: Publish) => {
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
-      for (const [namespace, container] of store.containers) {
+      for (const [namespace, container] of serverSyncStore.containers) {
         data.push({
           namespace,
           value: container.get(),

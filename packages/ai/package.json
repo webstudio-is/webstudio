@@ -36,7 +36,7 @@
   "license": "AGPL-3.0-or-later",
   "sideEffects": false,
   "dependencies": {
-    "@webstudio-is/sdk": "workspace:^",
+    "@webstudio-is/sdk": "workspace:*",
     "ai": "^2.2.12",
     "escape-string-regexp": "^5.0.0",
     "openai": "^4.8.0",

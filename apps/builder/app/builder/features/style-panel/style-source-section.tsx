@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
-import store from "immerhin";
 import {
   type Instance,
   type StyleSource,
@@ -42,6 +41,7 @@ import { cloneStyles } from "~/shared/tree-utils";
 import { humanizeString } from "~/shared/string-utils";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import { shallowComputed } from "~/shared/store-utils";
+import { serverSyncStore } from "~/shared/sync";
 
 const getOrCreateStyleSourceSelectionMutable = (
   styleSourceSelections: StyleSourceSelections,
@@ -148,7 +148,7 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
     name,
   };
   const presetTokens = $presetTokens.get();
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [styleSourcesStore, stylesStore, styleSourceSelectionsStore],
     (styleSources, styles, styleSourceSelections) => {
       styleSources.set(newStyleSource.id, newStyleSource);
@@ -178,7 +178,7 @@ export const addStyleSourceToInstance = (
     return;
   }
   const [selectedInstanceId] = selectedInstanceSelector;
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [styleSourceSelectionsStore, styleSourcesStore],
     (styleSourceSelections, styleSources) => {
       addStyleSourceToInstaceMutable(
@@ -198,7 +198,7 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
     return;
   }
   const [selectedInstanceId] = selectedInstanceSelector;
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
       const styleSourceSelection =
@@ -221,7 +221,7 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
 };
 
 const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [styleSourcesStore, styleSourceSelectionsStore, stylesStore],
     (styleSources, styleSourceSelections, styles) => {
       styleSources.delete(styleSourceId);
@@ -271,7 +271,7 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
   clonedStyleSourceIds.set(styleSourceId, newStyleSource.id);
   const clonedStyles = cloneStyles(stylesStore.get(), clonedStyleSourceIds);
 
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [styleSourcesStore, stylesStore, styleSourceSelectionsStore],
     (styleSources, styles, styleSourceSelections) => {
       const styleSourceSelection =
@@ -305,7 +305,7 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
     id: styleSourceId,
     name: "Local (Copy)",
   };
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [styleSourcesStore, styleSourceSelectionsStore],
     (styleSources, styleSourceSelections) => {
       const styleSourceSelection = getOrCreateStyleSourceSelectionMutable(
@@ -328,7 +328,7 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
     return;
   }
   const [selectedInstanceId] = selectedInstanceSelector;
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [styleSourceSelectionsStore],
     (styleSourceSelections) => {
       const styleSourceSelection =
@@ -342,7 +342,7 @@ const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
 };
 
 const renameStyleSource = (id: StyleSource["id"], label: string) => {
-  store.createTransaction([styleSourcesStore], (styleSources) => {
+  serverSyncStore.createTransaction([styleSourcesStore], (styleSources) => {
     const styleSource = styleSources.get(id);
     if (styleSource?.type === "token") {
       styleSource.name = label;
@@ -351,7 +351,7 @@ const renameStyleSource = (id: StyleSource["id"], label: string) => {
 };
 
 const clearStyles = (styleSourceId: StyleSource["id"]) => {
-  store.createTransaction([stylesStore], (styles) => {
+  serverSyncStore.createTransaction([stylesStore], (styles) => {
     for (const [styleDeclKey, styleDecl] of styles) {
       if (styleDecl.styleSourceId === styleSourceId) {
         styles.delete(styleDeclKey);

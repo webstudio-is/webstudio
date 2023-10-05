@@ -1,5 +1,5 @@
 import { type Options, useHotkeys } from "react-hotkeys-hook";
-import store from "immerhin";
+import { serverSyncStore } from "../sync";
 
 export const shortcuts = {
   esc: "esc",
@@ -17,7 +17,7 @@ export const useSharedShortcuts = ({
   useHotkeys(
     // safari use cmd+z to reopen closed tabs so fallback to ctrl
     "meta+z, ctrl+z",
-    () => store.undo(),
+    () => serverSyncStore.undo(),
     {
       // prevents undoing when user is editing text in a control on style panel etc.
       enableOnFormTags: source === "canvas",
@@ -29,7 +29,7 @@ export const useSharedShortcuts = ({
   useHotkeys(
     // safari use cmd+shift+z to close reopened tabs so fallback to ctrl
     "meta+shift+z, ctrl+shift+z",
-    () => store.redo(),
+    () => serverSyncStore.redo(),
     {
       // prevents undoing when user is editing text in a control on style panel etc.
       enableOnFormTags: source === "canvas",
