@@ -478,7 +478,6 @@ export const color = {
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",
   maintenanceSpacerViz: "#f9c6c6",
-  backgrondMenuHint: "#dedede",
 } as const;
 
 export const borderWidth = { "0": 1, "1": 2 } as const;
