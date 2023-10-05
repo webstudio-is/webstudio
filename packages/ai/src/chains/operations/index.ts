@@ -11,7 +11,8 @@ import {
   type WsOperations,
 } from "./operations";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { postprocessTemplate } from "../../utils/jsx-to-template";
+import { postProcessTemplate } from "../../utils/jsx-to-template";
+import { createErrorResponse } from "../../utils/create-error-response";
 
 export * from "./operations";
 
@@ -38,63 +39,53 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
-    const { prompt, components, jsx } = context;
+    const id = "operations";
 
-    const llmMessages: ModelMessage[] = [];
-    const tokens = { prompt: 0, completion: 0 };
+    const { prompt, components, jsx } = context;
 
     const operationsSchema = zodToJsonSchema(
       AiOperationsSchema.element,
       "AiOperationsSchema"
     );
 
-    const systemMessage: ModelMessage = [
-      "system",
-      formatPrompt(
-        {
-          operationsSchema: JSON.stringify(operationsSchema),
-          components: components
-            .map((name) =>
-              name.replace(
-                "@webstudio-is/sdk-components-react-radix:",
-                "Radix."
-              )
-            )
-            .join(", "),
-        },
-        promptSystemTemplate
-      ),
+    const llmMessages: ModelMessage[] = [
+      [
+        "system",
+        formatPrompt(
+          {
+            operationsSchema: JSON.stringify(operationsSchema),
+            components: components.join(", "),
+          },
+          promptSystemTemplate
+        ),
+      ],
+      [
+        "user",
+        formatPrompt(
+          {
+            prompt,
+            jsx,
+          },
+          promptUserTemplate
+        ),
+      ],
     ];
-    llmMessages.push(systemMessage);
-
-    const userMessage: ModelMessage = [
-      "user",
-      formatPrompt(
-        {
-          prompt,
-          jsx,
-        },
-        promptUserTemplate
-      ),
-    ];
-    llmMessages.push(userMessage);
 
     const messages = model.generateMessages(llmMessages);
 
-    const completion = await model.request({
+    const completion = await model.completion({
+      id,
       messages,
     });
 
     if (completion.success === false) {
-      return completion;
+      return {
+        ...completion,
+        llmMessages,
+      };
     }
 
-    // @todo Refactor to send tokens usage with ErroResponse too.
-
-    tokens.prompt += completion.tokens.prompt;
-    tokens.completion += completion.tokens.completion;
-
-    const completionText = completion.choices[0];
+    const completionText = completion.data.choices[0];
     llmMessages.push(["assistant", completionText]);
 
     const parsedCompletion = AiOperationsSchema.safeParse(
@@ -102,16 +93,14 @@ export const createChain = <ModelMessageFormat>(): Chain<
     );
     if (parsedCompletion.success === false) {
       return {
-        success: false,
-        type: "parseError",
-        status: 500,
-        message: `Failed to parse completion ${
-          process.env.NODE_ENV === "development"
-            ? parsedCompletion.error.message
-            : ""
-        }`.trim(),
+        id,
+        ...createErrorResponse({
+          status: 500,
+          debug: `Failed to parse completion ${parsedCompletion.error.message}`,
+        }),
+        tokens: completion.tokens,
         llmMessages,
-      };
+      } as const;
     }
 
     const aiOperations = parsedCompletion.data;
@@ -121,30 +110,38 @@ export const createChain = <ModelMessageFormat>(): Chain<
       wsOperations = await Promise.all(aiToWs(aiOperations));
 
       // Clean up template and ensure valid components in templates
-      wsOperations.forEach((operation) => {
-        for (let index = 0; index < wsOperations.length; index++) {
-          if (operation.operation !== "insertTemplate") {
-            return;
-          }
-
-          postprocessTemplate(operation.template, components);
+      for (const wsOperation of wsOperations) {
+        if (wsOperation.operation === "insertTemplate") {
+          postProcessTemplate(wsOperation.template, components);
         }
-      });
+      }
+      // wsOperations.forEach((operation) => {
+      //   for (let index = 0; index < wsOperations.length; index++) {
+      //     if (operation.operation !== "insertTemplate") {
+      //       return;
+      //     }
+
+      //     postProcessTemplate(operation.template, components);
+      //   }
+      // });
     } catch (error) {
       return {
-        success: false,
-        type: "parseError",
-        status: 500,
-        message: `Failed to convert operations. ${
-          process.env.NODE_ENV === "development" ? (error as Error) : ""
-        }`.trim(),
+        id,
+        ...createErrorResponse({
+          status: 500,
+          debug: (
+            "Failed to convert operations. " +
+            (error instanceof Error ? error.message : "")
+          ).trim(),
+          tokens: completion.tokens,
+        }),
         llmMessages,
-      };
+      } as const;
     }
 
+    const { data, ...response } = completion;
     return {
-      success: true,
-      tokens: tokens.prompt + tokens.completion,
+      ...response,
       data: wsOperations,
       llmMessages,
     };

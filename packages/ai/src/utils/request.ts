@@ -1,5 +1,10 @@
 import { createChunkDecoder } from "ai";
-import type { ErrorResponse, SuccessResponse } from "../types";
+import type {
+  Chain,
+  ErrorResponse,
+  LlmResponse,
+  SuccessResponse,
+} from "../types";
 import { createErrorResponse } from "./create-error-response";
 import { StreamingTextResponse } from "./streaming-text-response";
 
@@ -12,7 +17,7 @@ type RequestOptions = {
 
 export const request = <ResponseData>(
   fetchArgs: Parameters<typeof fetch>,
-  { onChunk }: RequestOptions
+  options?: RequestOptions
 ) => {
   const signal = fetchArgs[1]?.signal;
   return fetch(...fetchArgs)
@@ -50,8 +55,8 @@ export const request = <ResponseData>(
 
           completion += decoder(value);
 
-          if (typeof onChunk === "function") {
-            onChunk(operationId, {
+          if (typeof options?.onChunk === "function") {
+            options.onChunk(operationId, {
               decoded: completion,
               value,
               done,
@@ -77,9 +82,7 @@ export const request = <ResponseData>(
 
       // @todo Convert the response types to Zod
       // so that responses can be parsed and validated on the client.
-      return (await response.json()) as
-        | SuccessResponse<ResponseData>
-        | ErrorResponse;
+      return (await response.json()) as LlmResponse<ResponseData>;
     })
     .catch((error) => {
       return {

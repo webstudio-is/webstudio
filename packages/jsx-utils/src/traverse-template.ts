@@ -2,9 +2,7 @@ import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 
 type ElementType<T> = T extends (infer U)[] ? U : never;
 
-export type NodeType =
-  | ElementType<WsEmbedTemplate>
-  | { type: "styles"; value: string };
+export type NodeType = ElementType<WsEmbedTemplate>;
 
 export const traverseTemplate = (
   template: NodeType[],

@@ -18,11 +18,19 @@ import {
 import type { DroppableTarget } from "~/shared/tree-utils";
 import { getStyleDeclKey, type StyleSource } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
+import { traverseTemplate } from "@webstudio-is/jsx-utils";
 
 export const applyOperations = (operations: operations.Response) => {
   for (const operation of operations) {
     switch (operation.operation) {
       case "insertTemplate":
+        traverseTemplate(operation.template, (node) => {
+          if (node.type === "instance" && node.component.startsWith("Radix.")) {
+            node.component =
+              "@webstudio-is/sdk-components-react-radix:" +
+              node.component.slice("Radix.".length);
+          }
+        });
         insertTemplate(operation);
         break;
       case "deleteInstance":

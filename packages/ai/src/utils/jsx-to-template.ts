@@ -13,18 +13,12 @@ export const jsxToTemplate = async (jsx: string) => {
   return template;
 };
 
-export const postprocessTemplate = (
+export const postProcessTemplate = (
   template: WsEmbedTemplate,
   components: string[]
 ) => {
   traverseTemplate(template, (node) => {
     if (node.type === "instance") {
-      if (node.component.startsWith("Radix.")) {
-        node.component =
-          "@webstudio-is/sdk-components-react-radix:" +
-          node.component.slice("Radix.".length);
-      }
-
       if (components.includes(node.component) === false) {
         // Replace invalid components with Fragment if available
         if (components.includes("Fragment")) {

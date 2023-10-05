@@ -4,6 +4,7 @@ import {
   templateGenerator,
   createGptModel,
   type GPTModelMessageFormat,
+  createErrorResponse,
 } from "@webstudio-is/ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
@@ -14,22 +15,27 @@ const RequestSchema = operations.ContextSchema;
 
 export const maxDuration = 120;
 
-export const action = async function action({ request }: ActionArgs) {
-  if (isFeatureEnabled("aiOperations") === false) {
+export const action = async ({ request }: ActionArgs) => {
+  if (isFeatureEnabled("aiCopy") === false) {
     return {
-      success: false,
-      type: "featureDisabled",
-      status: 503,
-      message: "The feature is not available",
+      id: "ai",
+      ...createErrorResponse({
+        error: "featureDisabled",
+        status: 503,
+        message: "The feature is not available",
+        debug: "aiCopy feature disabled",
+      }),
     };
   }
 
   if (env.OPENAI_KEY === undefined) {
     return {
-      success: false,
-      type: "invalidApiKey",
-      status: 401,
-      message: "",
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidApiKey",
+        status: 401,
+        debug: "Invalid OpenAI API key",
+      }),
     };
   }
 
@@ -38,10 +44,12 @@ export const action = async function action({ request }: ActionArgs) {
     env.OPENAI_ORG.startsWith("org-") === false
   ) {
     return {
-      success: false,
-      type: "invalidOrg",
-      status: 401,
-      message: "",
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidOrg",
+        status: 401,
+        debug: "Invalid OpenAI API organization",
+      }),
     };
   }
 
@@ -49,13 +57,12 @@ export const action = async function action({ request }: ActionArgs) {
 
   if (parsed.success === false) {
     return {
-      success: false,
-      type: "invalidRequest",
-      status: 400,
-      message:
-        process.env.NODE_ENV === "development"
-          ? parsed.error.errors
-          : "Invalid request data",
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidRequest",
+        status: 401,
+        debug: "Invalid request data",
+      }),
     };
   }
 
@@ -65,10 +72,13 @@ export const action = async function action({ request }: ActionArgs) {
 
   if (requestContext.authorization.userId === undefined) {
     return {
-      success: false,
-      type: "unauthorized",
-      status: 401,
-      message: "You don't have edit access to this project",
+      id: "ai",
+      ...createErrorResponse({
+        error: "unauthorized",
+        status: 401,
+        message: "You don't have edit access to this project",
+        debug: "Unauthorized access attempt",
+      }),
     };
   }
 
@@ -93,6 +103,8 @@ export const action = async function action({ request }: ActionArgs) {
   if (response.success === false) {
     return response;
   }
+
+  const { llmMessages } = response;
 
   const generateTemplatePrompts = response.data.filter(
     (operation) => operation.operation === "generateTemplatePrompt"
@@ -122,8 +134,13 @@ export const action = async function action({ request }: ActionArgs) {
     );
 
     for (const [index, result] of results) {
+      llmMessages.push(...result.llmMessages);
+
       if (result.success === false) {
-        return result;
+        return {
+          ...result,
+          llmMessages,
+        };
       }
 
       // Replace generateTemplatePrompt.wsOperation with actual generated template
@@ -138,8 +155,7 @@ export const action = async function action({ request }: ActionArgs) {
   }
 
   return {
-    success: true,
-    data: response.data,
-    llmMessages: response.llmMessages,
+    ...response,
+    llmMessages,
   };
 };

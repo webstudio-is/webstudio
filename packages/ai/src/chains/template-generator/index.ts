@@ -6,8 +6,9 @@ import { prompt as promptUserTemplate } from "./__generated__/template-generator
 import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   jsxToTemplate,
-  postprocessTemplate,
+  postProcessTemplate,
 } from "../../utils/jsx-to-template";
+import { createErrorResponse } from "../../utils/create-error-response";
 
 /**
  * Template Generator Chain.
@@ -31,45 +32,38 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
+    const id = "template-generator";
+
     const { prompt, components } = context;
 
-    const llmMessages: ModelMessage[] = [];
-
-    const systemMessage: ModelMessage = [
-      "system",
-      formatPrompt(
-        {
-          components: components
-            .map((name) =>
-              name.replace(
-                "@webstudio-is/sdk-components-react-radix:",
-                "Radix."
-              )
-            )
-            .join(", "),
-        },
-        promptSystemTemplate
-      ),
+    const llmMessages: ModelMessage[] = [
+      [
+        "system",
+        formatPrompt(
+          {
+            components: components.join(", "),
+          },
+          promptSystemTemplate
+        ),
+      ],
+      ["user", formatPrompt({ prompt }, promptUserTemplate)],
     ];
-    llmMessages.push(systemMessage);
-
-    const userMessage: ModelMessage = [
-      "user",
-      formatPrompt({ prompt }, promptUserTemplate),
-    ];
-    llmMessages.push(userMessage);
 
     const messages = model.generateMessages(llmMessages);
 
-    const completion = await model.request({
+    const completion = await model.completion({
+      id,
       messages,
     });
 
     if (completion.success === false) {
-      return completion;
+      return {
+        ...completion,
+        llmMessages,
+      };
     }
 
-    const completionText = completion.choices[0];
+    const completionText = completion.data.choices[0];
     llmMessages.push(["assistant", completionText]);
 
     let template: WsEmbedTemplate;
@@ -78,29 +72,36 @@ export const createChain = <ModelMessageFormat>(): Chain<
       template = await jsxToTemplate(completionText);
     } catch (error) {
       return {
-        success: false,
-        type: "parseError",
-        status: 500,
-        message: "Failed to parse the completion " + error,
+        id,
+        ...createErrorResponse({
+          status: 500,
+          debug: (
+            "Failed to parse the completion " +
+            (error instanceof Error ? error.message : "")
+          ).trim(),
+        }),
         llmMessages,
       };
     }
 
     try {
-      postprocessTemplate(template, components);
+      postProcessTemplate(template, components);
     } catch (error) {
       return {
-        success: false,
-        type: "parseError",
-        status: 500,
-        message: "Invalid completion",
+        id,
+        ...createErrorResponse({
+          status: 500,
+          debug: (
+            "Invalid completion " +
+            (error instanceof Error ? error.message : "")
+          ).trim(),
+        }),
         llmMessages,
       };
     }
 
     return {
-      success: true,
-      tokens: completion.tokens.prompt + completion.tokens.completion,
+      ...completion,
       data: template,
       llmMessages,
     };

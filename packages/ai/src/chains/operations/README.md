@@ -83,7 +83,7 @@ export async function handler({ request }) {
 
   const promptOperations = getGenerateTemplatePromptsWsOperations(response.data);
 
-  if (promptOperations.lengt > 0) {
+  if (promptOperations.length > 0) {
     const model = createGptModel({
       apiKey: process.env.OPENAI_KEY,
       organization: process.env.OPENAI_ORG,

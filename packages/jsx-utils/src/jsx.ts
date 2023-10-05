@@ -84,12 +84,12 @@ const transform = async (
   return null;
 };
 
-const getComponentName = (elem: JSXOpeningElement["name"]): string => {
-  if (elem.type === "JSXIdentifier") {
-    return elem.name;
+const getComponentName = (element: JSXOpeningElement["name"]): string => {
+  if (element.type === "JSXIdentifier") {
+    return element.name;
   }
-  if (elem.type === "JSXMemberExpression") {
-    return `${getComponentName(elem.object)}.${elem.property.name}`;
+  if (element.type === "JSXMemberExpression") {
+    return `${getComponentName(element.object)}.${element.property.name}`;
   }
   return "Box";
 };

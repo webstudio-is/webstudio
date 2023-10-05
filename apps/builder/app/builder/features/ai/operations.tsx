@@ -37,7 +37,7 @@ export const Operations = () => {
   return (
     <form
       method="POST"
-      action=""
+      action={restAiOperations()}
       onSubmit={(event) => {
         event.preventDefault();
 
@@ -66,33 +66,35 @@ export const Operations = () => {
         const metas = registeredComponentMetasStore.get();
         const exclude = ["Body", "Slot"];
 
-        const components = [...metas.keys()].filter(
-          (name) => !exclude.includes(name)
-        );
+        const components = [...metas.keys()]
+          .filter((name) => !exclude.includes(name))
+          .map((name) =>
+            name.replace("@webstudio-is/sdk-components-react-radix:", "Radix.")
+          );
 
         abort.current = new AbortController();
 
-        request<operations.Response>(
-          [
-            restAiOperations(),
-            {
-              method: "POST",
-              body: JSON.stringify({
-                prompt,
-                components,
-                jsx: data,
-              }),
-              signal: abort.current.signal,
-            },
-          ],
-          { retry: 2 }
-        )
+        request<operations.Response>([
+          restAiOperations(),
+          {
+            method: "POST",
+            body: JSON.stringify({
+              prompt,
+              components,
+              jsx: data,
+            }),
+            signal: abort.current.signal,
+          },
+        ])
           .then((result) => {
-            if (result.success === false) {
-              setError(result.message);
+            if (result.success === true) {
+              if (result.type === "json" && result.id === "operations") {
+                applyOperations(result.data);
+              }
               return;
             }
-            applyOperations(result.data);
+
+            setError(result.data.message);
           })
           .finally(() => {
             abort.current = undefined;
@@ -151,7 +153,7 @@ const $jsx = computed(
 
     const [rootInstanceId] = selectedInstanceSelector;
     const instance = instances.get(rootInstanceId);
-    if (instance == null) {
+    if (instance === undefined) {
       return null;
     }
     const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
@@ -197,7 +199,7 @@ const $jsx = computed(
     }
 
     return `<style>{\`${engine.cssText.replace(/\n/gm, " ")}\`}</style>${jsx
-      .replace(/data-ws-component="[^"]+"/g, "")
+      .replace(new RegExp(`${idAttribute}="[^"]+"`, "g"), "")
       .replace(/\n(data-)/g, " $1")}`;
   }
 );
