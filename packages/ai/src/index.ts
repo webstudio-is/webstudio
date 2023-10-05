@@ -1,7 +1,7 @@
 /** Chains */
-export * as copywriter from "./chains/copywriter";
+export * as copywriter from "./chains/copywriter/chain";
 export * as operations from "./chains/operations";
-export * as templateGenerator from "./chains/template-generator";
+export * as templateGenerator from "./chains/template-generator/chain";
 
 /** Models */
 export {

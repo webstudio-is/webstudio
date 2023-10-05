@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-import {
-  editStyles,
-  generateTemplatePrompt,
-  generateInsertTemplate,
-  deleteInstance,
-} from "./all";
+import * as editStyles from "./edit-styles";
+import * as generateTemplatePrompt from "./generate-template-prompt";
+import * as generateInsertTemplate from "./generate-insert-template";
+import * as deleteInstance from "./delete-instance";
 
 // AiOperations are supported LLM operations.
 // A valid completion is then converted to WsOperations
@@ -44,7 +42,7 @@ export const aiToWs = (aiOperations: AiOperations) => {
       }
     })
     .filter(function <T>(value: T): value is NonNullable<T> {
-      return value != null;
+      return value !== undefined;
     });
 };
 

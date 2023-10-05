@@ -109,7 +109,7 @@ export const Operations = () => {
         Prompt
         <InputField name="prompt" />
       </Label>
-      <input type="hidden" name="data" value={JSON.stringify(jsx)} />
+      <input type="hidden" name="data" value={jsx ? JSON.stringify(jsx) : ""} />
       <Button
         onClick={(event) => {
           if (isLoading) {
@@ -148,13 +148,13 @@ const $jsx = computed(
     styleSourceSelections
   ) => {
     if (selectedInstanceSelector === undefined) {
-      return null;
+      return;
     }
 
     const [rootInstanceId] = selectedInstanceSelector;
     const instance = instances.get(rootInstanceId);
     if (instance === undefined) {
-      return null;
+      return;
     }
     const indexesWithinAncestors = getIndexesWithinAncestors(metas, instances, [
       rootInstanceId,

@@ -31,13 +31,13 @@ export const applyOperations = (operations: operations.Response) => {
               node.component.slice("Radix.".length);
           }
         });
-        insertTemplate(operation);
+        insertTemplateByOp(operation);
         break;
       case "deleteInstance":
-        deleteInstance(operation);
+        deleteInstanceByOp(operation);
         break;
       case "applyStyles":
-        applyStyles(operation);
+        applyStylesByOp(operation);
         break;
       default:
         if (process.env.NODE_ENV === "development") {
@@ -48,7 +48,7 @@ export const applyOperations = (operations: operations.Response) => {
   }
 };
 
-const insertTemplate = (
+const insertTemplateByOp = (
   operation: operations.generateInsertTemplate.wsOperation
 ) => {
   const breakpoints = breakpointsStore.get();
@@ -86,11 +86,13 @@ const insertTemplate = (
   return rootInstanceIds;
 };
 
-const deleteInstance = (operation: operations.deleteInstance.wsOperation) => {
+const deleteInstanceByOp = (
+  operation: operations.deleteInstance.wsOperation
+) => {
   _deleteInstance([operation.wsId]);
 };
 
-const applyStyles = (operation: operations.editStyles.wsOperation) => {
+const applyStylesByOp = (operation: operations.editStyles.wsOperation) => {
   serverSyncStore.createTransaction(
     [
       instancesStore,
@@ -104,7 +106,7 @@ const applyStyles = (operation: operations.editStyles.wsOperation) => {
 
       const breakpointValues = Array.from(breakpoints.values());
       const baseBreakpoint =
-        breakpointValues.find(isBaseBreakpoint) || breakpointValues[0];
+        breakpointValues.find(isBaseBreakpoint) ?? breakpointValues[0];
 
       for (const instanceId of operation.instanceIds) {
         const styleSourceSelection = styleSourceSelections.get(instanceId);

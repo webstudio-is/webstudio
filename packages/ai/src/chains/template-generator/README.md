@@ -56,12 +56,7 @@ import {
 } from "@webstudio-is/ai";
 
 function UiComponent() {
-  const [error, setError] = useState(null);
-  const [template, setTemplate] = useState({});
-
-  useEffect(() => {
-    console.log(template);
-  }, [template]);
+  const [error, setError] = useState();
 
   return (
     <form
@@ -91,7 +86,8 @@ function UiComponent() {
           },
         ]).then((response) => {
           if (response.success) {
-            setTemplate(response.data);
+            // Log the template
+            console.log(response.data);
           }
         });
       }}

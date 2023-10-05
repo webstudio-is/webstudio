@@ -120,11 +120,11 @@ export const Copywriter = () => {
                   },
                 ],
                 {
-                  onChunk: (id, { decoded }) => {
+                  onChunk: (id, { completion }) => {
                     try {
                       const jsonResponse = z
                         .array(copywriter.TextInstanceSchema)
-                        .parse(JSON.parse(untruncateJson(decoded)));
+                        .parse(JSON.parse(untruncateJson(completion)));
 
                       const currenTextInstance = jsonResponse.pop();
 

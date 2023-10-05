@@ -11,7 +11,12 @@ import { StreamingTextResponse } from "./streaming-text-response";
 type RequestOptions = {
   onChunk?: (
     operationId: string,
-    data: { decoded: string; value: Uint8Array | undefined; done: boolean }
+    data: {
+      completion: string;
+      chunk: Uint8Array | undefined;
+      decodedChunk: string;
+      done: boolean;
+    }
   ) => void;
 };
 
@@ -53,12 +58,14 @@ export const request = <ResponseData>(
             break;
           }
 
-          completion += decoder(value);
+          const decodedChunk = decoder(value);
+          completion += decodedChunk;
 
           if (typeof options?.onChunk === "function") {
             options.onChunk(operationId, {
-              decoded: completion,
-              value,
+              completion,
+              chunk: value,
+              decodedChunk,
               done,
             });
           }
