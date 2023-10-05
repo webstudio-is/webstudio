@@ -1,6 +1,7 @@
 import type { ActionArgs } from "@remix-run/node";
 import {
   copywriter,
+  createErrorResponse,
   createGptModel,
   type GPTModelMessageFormat,
 } from "@webstudio-is/ai";
@@ -17,19 +18,24 @@ const RequestSchema = copywriter.ContextSchema.extend({
 export const action = async function action({ request }: ActionArgs) {
   if (isFeatureEnabled("aiCopy") === false) {
     return {
-      success: false,
-      type: "featureDisabled",
-      status: 503,
-      message: "The feature is not available",
+      id: "ai",
+      ...createErrorResponse({
+        error: "featureDisabled",
+        status: 503,
+        message: "The feature is not available",
+        debug: "aiCopy feature disabled",
+      }),
     };
   }
 
   if (env.OPENAI_KEY === undefined) {
     return {
-      success: false,
-      type: "invalidApiKey",
-      status: 401,
-      message: "",
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidApiKey",
+        status: 401,
+        debug: "Invalid OpenAI API key",
+      }),
     };
   }
 
@@ -38,10 +44,12 @@ export const action = async function action({ request }: ActionArgs) {
     env.OPENAI_ORG.startsWith("org-") === false
   ) {
     return {
-      success: false,
-      type: "invalidOrg",
-      status: 401,
-      message: "",
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidOrg",
+        status: 401,
+        debug: "Invalid OpenAI API organization",
+      }),
     };
   }
 
@@ -49,17 +57,14 @@ export const action = async function action({ request }: ActionArgs) {
 
   if (parsed.success === false) {
     return {
-      success: false,
-      type: "invalidRequest",
-      status: 400,
-      message:
-        process.env.NODE_ENV === "development"
-          ? parsed.error.errors
-          : "Invalid request data",
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidRequest",
+        status: 401,
+        debug: "Invalid request data",
+      }),
     };
   }
-
-  // @todo add rate limiting
 
   const { projectId, prompt, textInstances } = parsed.data;
 
@@ -72,10 +77,13 @@ export const action = async function action({ request }: ActionArgs) {
 
   if (canEdit === false) {
     return {
-      success: false,
-      type: "unauthorized",
-      status: 401,
-      message: "You don't have edit access to this project",
+      id: "ai",
+      ...createErrorResponse({
+        error: "unauthorized",
+        status: 401,
+        message: "You don't have edit access to this project",
+        debug: "Unauthorized access attempt",
+      }),
     };
   }
   // End of Permissions check
@@ -89,11 +97,17 @@ export const action = async function action({ request }: ActionArgs) {
 
   const chain = copywriter.createChain<GPTModelMessageFormat>();
 
-  return chain({
+  const response = await chain({
     model,
     context: {
       prompt,
       textInstances,
     },
   });
+
+  if (response.success) {
+    return response.data;
+  }
+
+  return response;
 };

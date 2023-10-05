@@ -16,9 +16,9 @@ describe("Image optimizations applied", () => {
 
     expect(imgAttr).toMatchInlineSnapshot(`
       {
-        "sizes": undefined,
+        "sizes": "100vw",
         "src": "/asset/image/logo.webp?width=256&quality=100&format=auto",
-        "srcSet": "/asset/image/logo.webp?width=128&quality=100&format=auto 1x, /asset/image/logo.webp?width=256&quality=100&format=auto 2x",
+        "srcSet": "/asset/image/logo.webp?width=16&quality=100&format=auto 16w, /asset/image/logo.webp?width=32&quality=100&format=auto 32w, /asset/image/logo.webp?width=48&quality=100&format=auto 48w, /asset/image/logo.webp?width=64&quality=100&format=auto 64w, /asset/image/logo.webp?width=96&quality=100&format=auto 96w, /asset/image/logo.webp?width=128&quality=100&format=auto 128w, /asset/image/logo.webp?width=256&quality=100&format=auto 256w",
       }
     `);
   });

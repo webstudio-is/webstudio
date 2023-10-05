@@ -21,7 +21,7 @@
  *   source size value is 70vw  equal to 800px * 0,7 = 560px
  *
  *   browser internal srcset will be (we divide `w` descriptor by source size value):
- *   photo-small.jpg 320/560x, photo-medium.jpg 640/560x, photo-huge.jpg 1280/560x =>
+ *   photo-small.jpg 320w/560px, photo-medium.jpg 640w/560px, photo-huge.jpg 1280w/560px =>
  *   photo-small.jpg 0.57x, photo-medium.jpg 1.14x, photo-huge.jpg 2.28x
  *
  *   Finally same rules as for pixel density descriptor 'x' are applied.
@@ -36,8 +36,7 @@
  * > if allSizes.length is too big, you will have many caches misses.
  *
  * If img has a defined width property.
- *   1. find the first value from allSizes which is greater or equal to the width property
- *   2. use found value to generate srcset with pixel density descriptor 'x'
+ *   1. filter allSizes to exclude loading images higher that maxDevicePixelRatio * img.width
  *
  *
  * If img has no defined width property.
@@ -120,7 +119,9 @@ const getWidths = (
       // we can exclude from srcSets all images which are smaller than the smallestRatio * smallesDeviceSize
       const smallestRatio = Math.min(...percentSizes) * 0.01;
       return {
-        widths: allSizes.filter((s) => s >= deviceSizes[0] * smallestRatio),
+        widths: allSizes.filter(
+          (size) => size >= deviceSizes[0] * smallestRatio
+        ),
         kind: "w",
       };
     }
@@ -131,6 +132,23 @@ const getWidths = (
     return { widths: deviceSizes, kind: "w" };
   }
 
+  // Max device pixel ratio capped at 2; higher ratios offer negligible benefits
+  // See Twitter Engineering's article on capping image fidelity: https://blog.twitter.com/engineering/en_us/topics/infrastructure/2019/capping-image-fidelity-on-ultra-high-resolution-devices.html
+  const MAX_DEVICE_PIXEL_RATIO = 2;
+
+  let index = allSizes.findIndex(
+    (size) => size >= MAX_DEVICE_PIXEL_RATIO * width
+  );
+  index = index < 0 ? allSizes.length : index;
+
+  return {
+    widths: allSizes.slice(0, index + 1),
+    kind: "w",
+  };
+
+  /*
+  // Leave it here for future optimisations - icon like images
+
   const widths = [
     ...new Set(
       [width, width * 2].map(
@@ -139,6 +157,7 @@ const getWidths = (
     ),
   ];
   return { widths, kind: "x" };
+  */
 };
 
 const generateImgAttrs = ({

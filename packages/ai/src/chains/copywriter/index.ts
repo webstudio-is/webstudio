@@ -1,13 +1,11 @@
 import { z } from "zod";
-import type {
-  Model as BaseModel,
-  ModelMessage,
-  ChainStream,
-} from "../../types";
+import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
 import { prompt as promptSystemTemplate } from "./__generated__/copy.system.prompt";
 import { prompt as promptUserTemplate } from "./__generated__/copy.user.prompt";
 import type { Instance, Instances } from "@webstudio-is/sdk";
+import { createErrorResponse } from "../../utils/create-error-response";
+import type { StreamingTextResponseType } from "../../utils/streaming-text-response";
 
 /**
  * Copywriter chain.
@@ -40,51 +38,71 @@ export type Context = z.infer<typeof ContextSchema>;
 export const ResponseSchema = z.array(TextInstanceSchema);
 export type Response = z.infer<typeof ResponseSchema>;
 
-export const createChain = <ModelMessageFormat>(): ChainStream<
+export const createChain = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>,
-  Context
+  Context,
+  StreamingTextResponseType
 > =>
   async function chain({ model, context }) {
     const { prompt, textInstances } = context;
 
+    const id = "copywriter";
+
+    const llmMessages: ModelMessage[] = [
+      ["system", promptSystemTemplate],
+      [
+        "user",
+        formatPrompt(
+          {
+            prompt,
+            text_nodes: JSON.stringify(textInstances),
+          },
+          promptUserTemplate
+        ),
+      ],
+    ];
+
     if (textInstances.length === 0) {
+      const message = "No text nodes found for the instance";
       return {
-        success: false,
-        type: "genericError",
-        status: 404,
-        message: "No text nodes found for the instance",
+        id,
+        ...createErrorResponse({
+          status: 404,
+          error: "ai.copywriter.textNodesNotFound",
+          message,
+          debug: message,
+        }),
+        llmMessages,
       };
     }
 
     try {
       z.array(TextInstanceSchema).parse(textInstances);
     } catch (error) {
+      const message = "Invalid nodes list";
       return {
-        success: false,
-        type: "parseError",
-        status: 500,
-        message: "Invalid text nodes list",
+        id,
+        ...createErrorResponse({
+          status: 404,
+          error: "ai.parseError",
+          message,
+          debug: message,
+        }),
+        llmMessages,
       };
     }
 
-    const systemMessage: ModelMessage = ["system", promptSystemTemplate];
+    const messages = model.generateMessages(llmMessages);
 
-    const userMessage: ModelMessage = [
-      "user",
-      formatPrompt(
-        {
-          prompt,
-          text_nodes: JSON.stringify(textInstances),
-        },
-        promptUserTemplate
-      ),
-    ];
-
-    const messages = model.generateMessages([systemMessage, userMessage]);
-
-    return model.requestStream({
+    const response = await model.completionStream({
+      id,
       messages,
     });
+
+    return {
+      ...response,
+      llmMessages,
+    };
   };
 
 export const collectTextInstances = ({

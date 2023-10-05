@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/builder",
-  "version": "0.104.0",
+  "version": "0.105.0",
   "private": true,
   "description": "Webstudio Builder UI as a service",
   "scripts": {
