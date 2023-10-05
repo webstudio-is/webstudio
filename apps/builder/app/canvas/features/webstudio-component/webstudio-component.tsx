@@ -77,9 +77,8 @@ const ContentEditable = ({
       // <a> stops working with inline-flex when only 1 character left
       // so add span inside and use it as editor element in lexical
       const span = document.createElement("span");
-      span.contentEditable = "true";
-      const child = rootElement.firstChild;
-      if (child !== null) {
+      for (const child of rootElement.childNodes) {
+        rootElement.removeChild(child);
         span.appendChild(child);
       }
       rootElement.appendChild(span);
@@ -260,6 +259,7 @@ export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+  const rootRef = useRef<null | HTMLDivElement>(null);
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
@@ -323,7 +323,7 @@ export const WebstudioComponentCanvas = forwardRef<
 
   const instanceElement = (
     <>
-      <Component {...props} ref={ref}>
+      <Component {...props} ref={mergeRefs(ref, rootRef)}>
         {renderWebstudioComponentChildren(children)}
       </Component>
     </>
@@ -341,12 +341,13 @@ export const WebstudioComponentCanvas = forwardRef<
   return (
     <Suspense fallback={instanceElement}>
       <TextEditor
+        rootRef={rootRef}
         rootInstanceSelector={instanceSelector}
         instances={instances}
         contentEditable={
           <ContentEditable
             renderComponentWithRef={(elementRef) => (
-              <Component {...props} ref={mergeRefs(ref, elementRef)}>
+              <Component {...props} ref={mergeRefs(ref, elementRef, rootRef)}>
                 {initialContentEditableContent.current}
               </Component>
             )}
