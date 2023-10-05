@@ -5,18 +5,18 @@
         {
           "color": "#0000001a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 2,
-          "blur": 7,
-          "spread": 0
+          "x": "0",
+          "y": "2",
+          "blur": "7",
+          "spread": "0"
         },
         {
           "color": "#00000026",
           "type": "dropShadow",
-          "x": 0,
-          "y": 5,
-          "blur": 17,
-          "spread": 0
+          "x": "0",
+          "y": "5",
+          "blur": "17",
+          "spread": "0"
         }
       ],
       "type": "boxShadow"
@@ -1077,10 +1077,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 4,
-          "blur": 4,
-          "spread": 0
+          "x": "0",
+          "y": "4",
+          "blur": "4",
+          "spread": "0"
         },
         "type": "boxShadow",
         "description": "elevation for small things within the dashboard"
@@ -1089,10 +1089,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 8,
-          "blur": 16,
-          "spread": 0
+          "x": "0",
+          "y": "8",
+          "blur": "16",
+          "spread": "0"
         },
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
@@ -1294,13 +1294,6 @@
         "type": "dimension"
       }
     },
-    "backgrond": {
-      "menu-hint": {
-        "value": "#dedede",
-        "type": "color",
-        "description": "For the background of the hint menu item."
-      }
-    },
     "fontSize": {
       "0": {
         "value": "8",
@@ -1340,18 +1333,18 @@
         {
           "color": "#00000014",
           "type": "dropShadow",
-          "x": 0,
-          "y": 4,
-          "blur": 15,
-          "spread": 0
+          "x": "0",
+          "y": "4",
+          "blur": "15",
+          "spread": "0"
         },
         {
           "color": "#00000014",
           "type": "dropShadow",
-          "x": 0,
-          "y": 1,
-          "blur": 7,
-          "spread": 0
+          "x": "0",
+          "y": "1",
+          "blur": "7",
+          "spread": "0"
         }
       ],
       "type": "boxShadow",
