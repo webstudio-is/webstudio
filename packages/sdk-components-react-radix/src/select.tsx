@@ -24,13 +24,8 @@ import { type Hook, getClosestInstance } from "@webstudio-is/react-sdk";
 export const Select = forwardRef<
   HTMLDivElement,
   ComponentPropsWithoutRef<typeof Root>
->(({ value, ...props }, _ref) => {
-  // radix consider empty string as empty value since this change but not released yet
-  // https://github.com/radix-ui/primitives/commit/a3dadb0a825524dd60629d426538dac74930791a
-  if (value === "") {
-    value = undefined;
-  }
-  return <Root value={value} {...props} />;
+>((props, _ref) => {
+  return <Root {...props} />;
 });
 
 export const SelectTrigger: ForwardRefExoticComponent<
