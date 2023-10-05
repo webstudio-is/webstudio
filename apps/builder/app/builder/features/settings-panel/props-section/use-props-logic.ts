@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/sdk";
-import {
-  type PropMeta,
-  type WsComponentPropsMeta,
-  showAttribute,
-} from "@webstudio-is/react-sdk";
+import { type PropMeta, showAttribute } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
@@ -109,24 +105,6 @@ type UsePropsLogicInput = {
   deleteProp: (id: Prop["id"]) => void;
 };
 
-type UsePropsLogicOutput = {
-  meta: WsComponentPropsMeta;
-  /** Similar to Initial, but displayed as a separate group in UI etc.
-   * Currentrly used only for the ID prop. */
-  systemProps: PropAndMeta[];
-  /** Initial (not deletable) props */
-  initialProps: PropAndMeta[];
-  /** Optional props that were added by user */
-  addedProps: PropAndMeta[];
-  /** List of remaining props still available to add */
-  availableProps: NameAndLabel[];
-  handleAdd: (propName: string) => void;
-  handleChange: (prop: PropOrName, value: PropValue) => void;
-  handleDelete: (prop: PropOrName) => void;
-  /** Delete the prop, but keep it in the list of added props */
-  handleSoftDelete: (prop: Prop) => void;
-};
-
 const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
   const value = map.get(key);
   map.delete(key);
@@ -168,7 +146,7 @@ export const usePropsLogic = ({
   props,
   updateProp,
   deleteProp,
-}: UsePropsLogicInput): UsePropsLogicOutput => {
+}: UsePropsLogicInput) => {
   const meta = useStore(registeredComponentPropsMetasStore).get(
     instance.component
   );
@@ -298,6 +276,16 @@ export const usePropsLogic = ({
     );
   };
 
+  const handleChangeByPropName = (propName: string, value: PropValue) => {
+    const prop = props.find((prop) => prop.name === propName);
+
+    updateProp(
+      prop === undefined
+        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
+        : { ...prop, ...value }
+    );
+  };
+
   const handleDelete = ({ prop, propName }: PropOrName) => {
     if (prop) {
       deleteProp(prop.id);
@@ -310,17 +298,24 @@ export const usePropsLogic = ({
   };
 
   return {
+    handleAdd,
+    handleChange,
+    handleDelete,
+    /** Delete the prop, but keep it in the list of added props */
+    handleSoftDelete,
+    handleChangeByPropName,
     meta,
+    /** Similar to Initial, but displayed as a separate group in UI etc.
+     * Currentrly used only for the ID prop. */
     systemProps,
+    /** Initial (not deletable) props */
     initialProps,
+    /** Optional props that were added by user */
     addedProps,
+    /** List of remaining props still available to add */
     availableProps: Array.from(
       unprocessedKnown.entries(),
       ([name, { label }]) => ({ name, label })
     ),
-    handleAdd,
-    handleChange,
-    handleDelete,
-    handleSoftDelete,
   };
 };

@@ -1,15 +1,13 @@
 import OpenAI from "openai";
-import {
-  OpenAIStream,
-  StreamingTextResponse as _StreamingTextResponse,
-} from "ai";
+import { OpenAIStream } from "ai";
 import type {
   Model as BaseModel,
-  ErrorResponse,
+  ModelCompletion,
+  ModelCompletionStream,
   ModelGenerateMessages,
-  ModelRequest,
-  ModelRequestStream,
 } from "../types";
+import { createErrorResponse } from "../utils/create-error-response";
+import { StreamingTextResponse } from "../utils/streaming-text-response";
 
 export type Model = BaseModel<ModelMessageFormat>;
 export type ModelMessageFormat = OpenAI.Chat.Completions.ChatCompletionMessage;
@@ -25,8 +23,8 @@ export type ModelConfig = {
 export const create = function createModel(config: ModelConfig): Model {
   return {
     generateMessages,
-    request: createRequest(config),
-    requestStream: createRequestStream(config),
+    completion: createCompletion(config),
+    completionStream: createCompletionStream(config),
   };
 };
 
@@ -36,96 +34,62 @@ export const generateMessages: ModelGenerateMessages<ModelMessageFormat> = (
   return messages.map(([role, content]) => ({ role, content }));
 };
 
-const createRequest = (config: ModelConfig): ModelRequest<ModelMessageFormat> =>
-  async function request({ messages }) {
-    const response = await fetch(
-      config.endpoint ?? "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${config.apiKey}`,
-          "OpenAI-Organization": config.organization,
-        },
-        body: JSON.stringify({
-          model: config.model ?? "gpt-3.5-turbo",
-          messages,
-          temperature: config.temperature,
-        }),
-      }
-    );
-
-    if (response.ok === false) {
-      return errorResponse(response);
-    }
-
-    const completion: OpenAI.Chat.Completions.ChatCompletion =
-      await response.json();
-
-    return {
-      success: true,
-      choices: completion.choices.map(
-        (choice) => choice?.message?.content || ""
-      ),
-      tokens: {
-        prompt: completion.usage?.prompt_tokens ?? 0,
-        completion: completion.usage?.completion_tokens ?? 0,
-      },
-    };
-  };
-
-export const errorResponse = (response: Response): ErrorResponse => {
-  let errorType = "ai.genericError";
-
-  if ([401, 429, 500, 503].includes(response.status)) {
-    errorType =
-      OpenAIErrors[response.status as 401 | 429 | 500 | 503][
-        response.statusText
-      ] ?? "ai.genericError";
-  }
-
-  return {
-    success: false,
-    type: errorType,
-    status: response.status,
-    message: response.statusText,
-  };
-};
-
-const OpenAIErrors: Record<401 | 429 | 500 | 503, { [key in string]: string }> =
-  {
-    401: {
-      "Invalid Authentication": "ai.invalidAuth",
-      "Incorrect API key provided": "ai.invalidApiKey",
-      "You must be a member of an organization to use the API": "ai.invalidOrg",
-    },
-    429: {
-      "Rate limit reached for requests": "ai.rateLimit",
-
-      "You exceeded your current quota, please check your plan and billing details":
-        "ai.quotaExceed",
-    },
-    500: {
-      "The server had an error while processing your request":
-        "ai.genericError",
-    },
-    503: {
-      "The engine is currently overloaded, please try again later":
-        "ai.overloaded",
-    },
-  };
-
-const createRequestStream = (
+export const createCompletion = (
   config: ModelConfig
-): ModelRequestStream<ModelMessageFormat> =>
-  async function requestStream({ messages }) {
+): ModelCompletion<ModelMessageFormat> =>
+  async function completion({
+    id,
+    messages,
+  }: {
+    id: string;
+    messages: ModelMessageFormat[];
+  }) {
     try {
       const openai = new OpenAI({
         apiKey: config.apiKey,
         organization: config.organization,
       });
 
+      const completion = await openai.chat.completions.create({
+        model: config.model ?? "gpt-3.5-turbo",
+        temperature: config.temperature,
+        messages,
+      });
+
+      return {
+        id,
+        type: "json",
+        success: true,
+        tokens: {
+          prompt: completion.usage?.prompt_tokens || 0,
+          completion: completion.usage?.completion_tokens || 0,
+        },
+        data: {
+          choices: completion.choices.map(
+            (choice) => choice?.message?.content || ""
+          ),
+        },
+      } as const;
+    } catch (error) {
+      return errorToResponse(id, error);
+    }
+  };
+
+export const createCompletionStream = (
+  config: ModelConfig
+): ModelCompletionStream<ModelMessageFormat> =>
+  async function completeStream({
+    id,
+    messages,
+  }: {
+    id: string;
+    messages: ModelMessageFormat[];
+  }) {
+    try {
+      const openai = new OpenAI({
+        apiKey: config.apiKey,
+        organization: config.organization,
+      });
       // Use polyfilled TransformStream because in Webstudio Builder
       // globalThis.fetch is overriden to @remix-run/web-fetch.
       //
@@ -149,62 +113,51 @@ const createRequestStream = (
       });
 
       const stream = OpenAIStream(response);
-      return new StreamingTextResponse(stream);
+      return {
+        id,
+        type: "stream",
+        success: true,
+        data: new StreamingTextResponse(stream),
+        tokens: {
+          prompt: -1,
+          completion: -1,
+        },
+      } as const;
     } catch (error) {
-      let response = new Response(null, {
-        status: 500,
-        statusText:
-          process.env.NODE_ENV === "development" &&
-          error != null &&
-          typeof error === "object" &&
-          "message" in error &&
-          typeof error.message === "string"
-            ? error.message
-            : "",
-      });
-
-      if (error instanceof OpenAI.APIError) {
-        const { status, message } = error;
-        response = new Response(null, {
-          status,
-          statusText: message,
-        });
-      }
-
-      return errorResponse(response);
+      return errorToResponse(id, error);
     }
   };
 
-// vercel/ai's StreamingTextResponse does not include request.headers.raw()
-// which @vercel/remix uses when deployed on vercel.
-// Therefore we use a custom one.
-export class StreamingTextResponse extends _StreamingTextResponse {
-  constructor(res: ReadableStream, init?: ResponseInit) {
-    super(res, init);
-    this.getRequestHeaders();
-  }
+const errorToResponse = (id: string, error: unknown) => {
+  let status = 500;
+  let debug =
+    error != null &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+      ? error.message
+      : "";
 
-  getRequestHeaders() {
-    return addRawHeaders(this.headers);
-  }
-}
-
-const addRawHeaders = function addRawHeaders(headers: Headers) {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  headers.raw = function () {
-    const rawHeaders: { [k in string]: string[] } = {};
-    const headerEntries = headers.entries();
-    for (const [key, value] of headerEntries) {
-      const headerKey = key.toLowerCase();
-      // eslint-disable-next-line no-prototype-builtins
-      if (rawHeaders.hasOwnProperty(headerKey)) {
-        rawHeaders[headerKey].push(value);
-      } else {
-        rawHeaders[headerKey] = [value];
-      }
+  if (error instanceof OpenAI.APIError) {
+    if (typeof error.status === "number") {
+      status = error.status;
     }
-    return rawHeaders;
-  };
-  return headers;
+    debug += `\n ${error.message}`;
+  }
+
+  return {
+    id,
+    ...createErrorResponse({
+      status,
+      error: getErrorType(error),
+      message: "Something went wrong",
+      debug,
+    }),
+  } as const;
+};
+const getErrorType = (error: unknown) => {
+  if (error instanceof OpenAI.APIError) {
+    return `ai.${error.name}`;
+  }
+  return `ai.unknownError`;
 };

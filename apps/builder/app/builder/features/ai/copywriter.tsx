@@ -1,6 +1,10 @@
 import { z } from "zod";
 import untruncateJson from "untruncate-json";
-import { copywriter, requestStream } from "@webstudio-is/ai";
+import {
+  copywriter,
+  request,
+  type StreamingTextResponseType,
+} from "@webstudio-is/ai";
 import { restAiCopy } from "~/shared/router-utils";
 import {
   Box,
@@ -43,24 +47,6 @@ const patchTextInstance = (textInstance: copywriter.TextInstance) => {
       currentInstance.children[textInstance.index].value = textInstance.text;
     }
   });
-};
-
-const onChunk = (completion: string) => {
-  try {
-    const jsonResponse = z
-      .array(copywriter.TextInstanceSchema)
-      .parse(JSON.parse(untruncateJson(completion)));
-
-    const currenTextInstance = jsonResponse.pop();
-
-    if (currenTextInstance === undefined) {
-      return;
-    }
-
-    patchTextInstance(currenTextInstance);
-  } catch {
-    /**/
-  }
 };
 
 const $textInstances = computed(
@@ -120,7 +106,7 @@ export const Copywriter = () => {
 
               abort.current = new AbortController();
               setIsLoading(true);
-              requestStream(
+              request<StreamingTextResponseType>(
                 [
                   restAiCopy(),
                   {
@@ -134,12 +120,28 @@ export const Copywriter = () => {
                   },
                 ],
                 {
-                  onChunk,
+                  onChunk: (id, { decoded }) => {
+                    try {
+                      const jsonResponse = z
+                        .array(copywriter.TextInstanceSchema)
+                        .parse(JSON.parse(untruncateJson(decoded)));
+
+                      const currenTextInstance = jsonResponse.pop();
+
+                      if (currenTextInstance === undefined) {
+                        return;
+                      }
+
+                      patchTextInstance(currenTextInstance);
+                    } catch {
+                      /**/
+                    }
+                  },
                 }
               ).then((result) => {
                 abort.current = null;
-                if (typeof result !== "string") {
-                  alert("Error " + result.type);
+                if (result.success === false) {
+                  alert(result.data.message);
                 }
                 setIsLoading(false);
               });

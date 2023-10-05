@@ -119,10 +119,18 @@ const renderProperty = (
         "width" in asset.meta &&
         "height" in asset.meta
       ) {
-        setCssProperty("aspectRatio")({
-          type: "unit",
-          unit: "number",
-          value: asset.meta.width / asset.meta.height,
+        logic.handleChangeByPropName("width", {
+          value: asset.meta.width,
+          type: "number",
+        });
+        logic.handleChangeByPropName("height", {
+          value: asset.meta.height,
+          type: "number",
+        });
+
+        setCssProperty("height")({
+          type: "keyword",
+          value: "fit-content",
         });
       }
     },
