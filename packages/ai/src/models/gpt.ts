@@ -1,8 +1,5 @@
 import OpenAI from "openai";
-import {
-  OpenAIStream,
-  StreamingTextResponse as _StreamingTextResponse,
-} from "ai";
+import { OpenAIStream } from "ai";
 import type {
   Model as BaseModel,
   ModelCompletion,
@@ -10,6 +7,7 @@ import type {
   ModelGenerateMessages,
 } from "../types";
 import { createErrorResponse } from "../utils/create-error-response";
+import { StreamingTextResponse } from "../utils/streaming-text-response";
 
 export type Model = BaseModel<ModelMessageFormat>;
 export type ModelMessageFormat = OpenAI.Chat.Completions.ChatCompletionMessage;
@@ -119,7 +117,11 @@ export const createCompletionStream = (
         id,
         type: "stream",
         success: true,
-        stream: new StreamingTextResponse(stream),
+        data: new StreamingTextResponse(stream),
+        tokens: {
+          prompt: -1,
+          completion: -1,
+        },
       } as const;
     } catch (error) {
       return errorToResponse(id, error);
@@ -158,38 +160,4 @@ const getErrorType = (error: unknown) => {
     return `ai.${error.name}`;
   }
   return `ai.unknownError`;
-};
-
-// vercel/ai's StreamingTextResponse does not include request.headers.raw()
-// which @vercel/remix uses when deployed on vercel.
-// Therefore we use a custom one.
-export class StreamingTextResponse extends _StreamingTextResponse {
-  constructor(res: ReadableStream, init?: ResponseInit) {
-    super(res, init);
-    this.getRequestHeaders();
-  }
-
-  getRequestHeaders() {
-    return addRawHeaders(this.headers);
-  }
-}
-
-const addRawHeaders = function addRawHeaders(headers: Headers) {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  headers.raw = function () {
-    const rawHeaders: { [k in string]: string[] } = {};
-    const headerEntries = headers.entries();
-    for (const [key, value] of headerEntries) {
-      const headerKey = key.toLowerCase();
-      // eslint-disable-next-line no-prototype-builtins
-      if (rawHeaders.hasOwnProperty(headerKey)) {
-        rawHeaders[headerKey].push(value);
-      } else {
-        rawHeaders[headerKey] = [value];
-      }
-    }
-    return rawHeaders;
-  };
-  return headers;
 };

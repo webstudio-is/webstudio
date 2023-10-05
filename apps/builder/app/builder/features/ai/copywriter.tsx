@@ -1,6 +1,10 @@
 import { z } from "zod";
 import untruncateJson from "untruncate-json";
-import { copywriter, request } from "@webstudio-is/ai";
+import {
+  copywriter,
+  request,
+  type StreamingTextResponseType,
+} from "@webstudio-is/ai";
 import { restAiCopy } from "~/shared/router-utils";
 import {
   Box,
@@ -102,7 +106,7 @@ export const Copywriter = () => {
 
               abort.current = new AbortController();
               setIsLoading(true);
-              request(
+              request<StreamingTextResponseType>(
                 [
                   restAiCopy(),
                   {

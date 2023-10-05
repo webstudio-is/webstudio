@@ -1,25 +1,19 @@
-import { StreamingTextResponse, createChunkDecoder } from "ai";
-import type {
-  ErrorResponse,
-  StreamingSuccessResponse,
-  SuccessResponse,
-} from "../types";
+import { createChunkDecoder } from "ai";
+import type { ErrorResponse, SuccessResponse } from "../types";
 import { createErrorResponse } from "./create-error-response";
+import { StreamingTextResponse } from "./streaming-text-response";
 
 type RequestOptions = {
   onChunk?: (
     operationId: string,
     data: { decoded: string; value: Uint8Array | undefined; done: boolean }
   ) => void;
-  retry?: number;
 };
 
-export const request = <ResponseData = void>(
+export const request = <ResponseData>(
   fetchArgs: Parameters<typeof fetch>,
-  { retry = 0, onChunk }: RequestOptions
-): Promise<
-  SuccessResponse<ResponseData> | StreamingSuccessResponse | ErrorResponse
-> => {
+  { onChunk }: RequestOptions
+) => {
   const signal = fetchArgs[1]?.signal;
   return fetch(...fetchArgs)
     .then(async (response) => {
@@ -74,12 +68,15 @@ export const request = <ResponseData = void>(
           id: operationId,
           type: "stream",
           success: true,
-          stream: new StreamingTextResponse(
+          data: new StreamingTextResponse(
             new Blob([completion], { type: "text/plain" }).stream()
           ),
+          tokens: { prompt: -1, completion: -1 },
         } as const;
       }
 
+      // @todo Convert the response types to Zod
+      // so that responses can be parsed and validated on the client.
       return (await response.json()) as
         | SuccessResponse<ResponseData>
         | ErrorResponse;

@@ -1,8 +1,11 @@
-import type { StreamingTextResponse } from "ai";
+import type { StreamingTextResponseType } from "./utils/streaming-text-response";
 
 /**
  * Generic Response types used both by Models and Chains.
  */
+
+// @todo Convert the response types to Zod
+// so that responses can be parsed and validated on the client.
 
 export type Tokens = {
   prompt: number;
@@ -10,16 +13,10 @@ export type Tokens = {
 };
 
 export type SuccessResponse<ResponseData> = {
-  type: "json";
+  type: ResponseData extends StreamingTextResponseType ? "stream" : "json";
   success: true;
   tokens: Tokens;
   data: ResponseData;
-};
-
-export type StreamingSuccessResponse = {
-  type: "stream";
-  success: true;
-  stream: StreamingTextResponse;
 };
 
 export type ErrorResponse = {
@@ -34,14 +31,9 @@ export type ErrorResponse = {
   };
 };
 
-type Response<ResponseData = void> = {
+type Response<ResponseData> = {
   id: string;
-} & (
-  | (ResponseData extends void
-      ? StreamingSuccessResponse
-      : SuccessResponse<ResponseData>)
-  | ErrorResponse
-);
+} & (SuccessResponse<ResponseData> | ErrorResponse);
 
 /**
  * Models types.
@@ -71,7 +63,7 @@ export type ModelCompletion<ModelMessageFormat> = (args: {
 export type ModelCompletionStream<ModelMessageFormat> = (args: {
   id: string;
   messages: ReturnType<ModelGenerateMessages<ModelMessageFormat>>;
-}) => Promise<Response>;
+}) => Promise<Response<StreamingTextResponseType>>;
 
 /**
  * Chains types.
@@ -85,7 +77,7 @@ export type ModelCompletionStream<ModelMessageFormat> = (args: {
  * zod types must have a Schema suffix. For example ResponseSchema.
  */
 
-export type Chain<Model, Context, ResponseData = void> = (args: {
+export type Chain<Model, Context, ResponseData> = (args: {
   model: Model;
   context: Context;
 }) => Promise<Response<ResponseData> & { llmMessages: ModelMessage[] }>;

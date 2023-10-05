@@ -12,6 +12,7 @@ export {
 /** Utils */
 export * from "./utils/request";
 export * from "./utils/create-error-response";
+export * from "./utils/streaming-text-response";
 
 /** Types */
 export * from "./types";

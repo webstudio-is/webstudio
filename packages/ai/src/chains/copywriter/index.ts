@@ -5,6 +5,7 @@ import { prompt as promptSystemTemplate } from "./__generated__/copy.system.prom
 import { prompt as promptUserTemplate } from "./__generated__/copy.user.prompt";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import { createErrorResponse } from "../../utils/create-error-response";
+import type { StreamingTextResponseType } from "../../utils/streaming-text-response";
 
 /**
  * Copywriter chain.
@@ -39,7 +40,8 @@ export type Response = z.infer<typeof ResponseSchema>;
 
 export const createChain = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>,
-  Context
+  Context,
+  StreamingTextResponseType
 > =>
   async function chain({ model, context }) {
     const { prompt, textInstances } = context;

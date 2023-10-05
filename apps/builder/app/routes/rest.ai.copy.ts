@@ -106,7 +106,7 @@ export const action = async function action({ request }: ActionArgs) {
   });
 
   if (response.success) {
-    return response.stream;
+    return response.data;
   }
 
   return response;
