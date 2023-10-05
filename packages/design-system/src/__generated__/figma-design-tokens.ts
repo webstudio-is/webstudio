@@ -478,6 +478,8 @@ export const color = {
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",
   maintenanceSpacerViz: "#f9c6c6",
+  darkBlueFade: "linear-gradient(180deg, #11273f 0%, #11273f00 100%)",
+  strokeFade: "linear-gradient(180deg, #9697fc 0%, #4a4efa00 100%)",
 } as const;
 
 export const borderWidth = { "0": 1, "1": 2 } as const;
