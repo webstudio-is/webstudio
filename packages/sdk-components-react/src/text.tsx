@@ -12,7 +12,7 @@ export const Text = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ tag: Tag = defaultTag, children, ...props }, ref) => {
     return (
       <Tag {...props} ref={ref}>
-        {children}
+        {children ?? "The text you can edit"}
       </Tag>
     );
   }

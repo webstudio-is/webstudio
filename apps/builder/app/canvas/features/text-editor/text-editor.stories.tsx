@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import type { ComponentStory, ComponentMeta } from "@storybook/react";
@@ -56,6 +57,7 @@ const instances: Instances = new Map([
 
 export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
   const state = useStore(textToolbarStore);
+  const ref = useRef<null | HTMLDivElement>(null);
 
   const setFormat = (type: Format) => {
     publish({ type: "formatTextToolbar", payload: type });
@@ -125,6 +127,7 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
         }}
       >
         <TextEditor
+          rootRef={ref}
           rootInstanceSelector={["1"]}
           instances={instances}
           contentEditable={<ContentEditable />}
