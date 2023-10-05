@@ -1379,6 +1379,14 @@
       },
       "type": "typography",
       "description": "Labels with code syntax, such as CSS property labels within tooltips"
+    },
+    "darkBlue-Fade": {
+      "value": "linear-gradient(180deg, #11273f 0%, #11273f00 100%)",
+      "type": "color"
+    },
+    "Stroke-Fade": {
+      "value": "linear-gradient(180deg, #9697fc 0%, #4a4efa00 100%)",
+      "type": "color"
     }
   },
   "$themes": [],
