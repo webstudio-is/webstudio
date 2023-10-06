@@ -8,7 +8,6 @@ import { type CSS, css, theme } from "../stitches.config";
 import { textVariants } from "./text";
 import { Grid } from "./grid";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import { ScrollArea } from "./scroll-area";
 
 const commonStyle = css(textVariants.regular, {
   border: "none",
@@ -54,21 +53,11 @@ type Props = Omit<
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
-  maxHeight?: number;
 };
 
 export const AutogrowTextArea = forwardRef(
   (
-    {
-      css,
-      className,
-      state,
-      value,
-      maxHeight,
-      defaultValue,
-      onChange,
-      ...props
-    }: Props,
+    { css, className, state, value, defaultValue, onChange, ...props }: Props,
     ref: Ref<HTMLTextAreaElement>
   ) => {
     // use
@@ -80,31 +69,27 @@ export const AutogrowTextArea = forwardRef(
 
     return (
       <Grid>
-        <ScrollArea css={{ maxHeight }}>
-          <Grid>
-            <div
-              className={style({
-                css: { visibility: "hidden", ...css },
-                state,
-                className,
-              })}
-            >
-              {textValue}{" "}
-            </div>
-            <textarea
-              rows={1}
-              value={textValue}
-              onChange={(e) => setTextValue(e.target.value)}
-              spellCheck={false}
-              className={style({
-                state,
-                className,
-              })}
-              ref={ref}
-              {...props}
-            />
-          </Grid>
-        </ScrollArea>
+        <div
+          className={style({
+            css: { visibility: "hidden", ...css },
+            state,
+            className,
+          })}
+        >
+          {textValue}{" "}
+        </div>
+        <textarea
+          rows={1}
+          value={textValue}
+          onChange={(e) => setTextValue(e.target.value)}
+          spellCheck={false}
+          className={style({
+            state,
+            className,
+          })}
+          ref={ref}
+          {...props}
+        />
       </Grid>
     );
   }
