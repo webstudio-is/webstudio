@@ -3,19 +3,19 @@
     "menu drop shadow": {
       "value": [
         {
+          "color": "#0000004d",
+          "type": "dropShadow",
+          "x": 0,
+          "y": 5,
+          "blur": 17,
+          "spread": 0
+        },
+        {
           "color": "#0000001a",
           "type": "dropShadow",
           "x": 0,
           "y": 2,
           "blur": 7,
-          "spread": 0
-        },
-        {
-          "color": "#00000026",
-          "type": "dropShadow",
-          "x": 0,
-          "y": 5,
-          "blur": 17,
           "spread": 0
         }
       ],
@@ -344,6 +344,10 @@
     "textDecoration": {
       "none": {
         "value": "none",
+        "type": "textDecoration"
+      },
+      "underline": {
+        "value": "underline",
         "type": "textDecoration"
       }
     },
@@ -1080,6 +1084,16 @@
         "value": "#ff22ae",
         "type": "color",
         "description": "The inverse color of our primary blue, when we want a contrasting highlight."
+      },
+      "link-not-visited": {
+        "value": "#006adc",
+        "type": "color",
+        "description": "Text links that are not yet visited."
+      },
+      "link-visited": {
+        "value": "#793aaf",
+        "type": "color",
+        "description": "Text links that the user has visited."
       }
     },
     "Brand": {
@@ -1304,13 +1318,6 @@
         "type": "dimension"
       }
     },
-    "backgrond": {
-      "menu-hint": {
-        "value": "#dedede",
-        "type": "color",
-        "description": "For the background of the hint menu item."
-      }
-    },
     "fontSize": {
       "0": {
         "value": "8",
@@ -1351,16 +1358,16 @@
           "color": "#00000014",
           "type": "dropShadow",
           "x": 0,
-          "y": 4,
-          "blur": 15,
+          "y": 1,
+          "blur": 7,
           "spread": 0
         },
         {
           "color": "#00000014",
           "type": "dropShadow",
           "x": 0,
-          "y": 1,
-          "blur": 7,
+          "y": 4,
+          "blur": 15,
           "spread": 0
         }
       ],
@@ -1396,6 +1403,36 @@
       },
       "type": "typography",
       "description": "Labels with code syntax, such as CSS property labels within tooltips"
+    },
+    "darkBlue-Fade": {
+      "value": "linear-gradient(180deg, #11273f 0%, #11273f00 100%)",
+      "type": "color"
+    },
+    "Stroke-Fade": {
+      "value": "linear-gradient(180deg, #9697fc 0%, #4a4efa00 100%)",
+      "type": "color"
+    },
+    "backgrond": {
+      "menu-hint": {
+        "value": "#dedede",
+        "type": "color",
+        "description": "For the background of the hint menu item."
+      }
+    },
+    "Link": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-0}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.underline}"
+      },
+      "type": "typography",
+      "description": "link text"
     }
   },
   "$themes": [],
