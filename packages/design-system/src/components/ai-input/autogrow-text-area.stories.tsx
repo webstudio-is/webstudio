@@ -1,8 +1,8 @@
 import { AutogrowTextArea } from "./autogrow-text-area";
-import { Box } from "./box";
-import { Grid } from "./grid";
-import { ScrollArea } from "./scroll-area";
-import { StorySection, StoryGrid } from "./storybook";
+import { Box } from "../box";
+import { Grid } from "../grid";
+import { ScrollArea } from "../scroll-area";
+import { StorySection, StoryGrid } from "../storybook";
 
 export default {
   title: "Library/Autogrow Text Area",

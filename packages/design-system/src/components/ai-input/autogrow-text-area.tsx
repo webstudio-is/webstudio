@@ -4,9 +4,9 @@
  */
 
 import { type ComponentProps, type Ref, forwardRef } from "react";
-import { type CSS, css, theme } from "../stitches.config";
-import { textVariants } from "./text";
-import { Grid } from "./grid";
+import { type CSS, css, theme } from "../../stitches.config";
+import { textVariants } from "../text";
+import { Grid } from "../grid";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 
 const commonStyle = css(textVariants.regular, {
@@ -81,7 +81,7 @@ export const AutogrowTextArea = forwardRef(
         <textarea
           rows={1}
           value={textValue}
-          onChange={(e) => setTextValue(e.target.value)}
+          onChange={(event) => setTextValue(event.target.value)}
           spellCheck={false}
           className={style({
             state,
