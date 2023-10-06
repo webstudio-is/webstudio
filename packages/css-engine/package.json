@@ -21,14 +21,13 @@
     "hyphenate-style-name": "^1.0.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.4",
+    "@jest/globals": "^29.7.0",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "jest": "^29.6.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "5.2.2"

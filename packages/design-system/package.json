@@ -17,7 +17,7 @@
     "storybook:build": "storybook build"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.4",
+    "@jest/globals": "^29.7.0",
     "@storybook/react": "^7.4.0",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/react": "^18.2.21",
@@ -25,7 +25,6 @@
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "jest": "^29.6.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsx": "^3.12.8",
