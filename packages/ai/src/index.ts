@@ -1,15 +1,18 @@
 /** Chains */
-export * as copywriter from "./chains/copywriter/chain";
-export * as operations from "./chains/operations";
-export * as templateGenerator from "./chains/template-generator/chain";
-
-/** Models */
 export {
-  create as createGptModel,
-  type Model as GPTModel,
-  type ModelConfig as GPTModelConfig,
-  type ModelMessageFormat as GPTModelMessageFormat,
-} from "./models/gpt";
+  type Response as CopywriterResponse,
+  ResponseSchema as CopywriterResponseSchema,
+  collectTextInstances,
+  TextInstanceSchema,
+} from "./chains/copywriter/chain";
+export {
+  type Response as OperationsResponse,
+  ResponseSchema as OperationsResponseSchema,
+} from "./chains/operations";
+export {
+  type Response as TemplateGeneratorResponse,
+  ResponseSchema as TemplateGeneratorResponseSchema,
+} from "./chains/template-generator/chain";
 
 /** Utils */
 export * from "./utils/request";

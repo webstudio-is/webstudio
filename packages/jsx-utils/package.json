@@ -23,9 +23,16 @@
     "typescript": "5.2.2"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./index.server": {
+      "webstudio": "./src/index.server.ts",
+      "types": "./lib/types/index.server.d.ts",
+      "import": "./lib/index.server.js"
+    }
   },
   "files": [
     "lib/*",

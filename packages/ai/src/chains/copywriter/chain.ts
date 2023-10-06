@@ -29,7 +29,7 @@ export type TextInstance = z.infer<typeof TextInstanceSchema>;
 
 export const ContextSchema = z.object({
   // The prompt provides context about the copy to generate and comes from the user.
-  prompt: z.string().max(1200),
+  prompt: z.string(),
   // An array of text nodes to generate copy for.
   textInstances: z.array(TextInstanceSchema),
 });

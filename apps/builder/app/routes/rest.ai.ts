@@ -8,7 +8,7 @@ import {
   createErrorResponse,
   type ModelMessage,
   copywriter,
-} from "@webstudio-is/ai";
+} from "@webstudio-is/ai/index.server";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 import env from "~/env/env.server";
@@ -16,12 +16,13 @@ import { createContext } from "~/shared/context.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 
-export const RequestParamsSchema = operations.ContextSchema.merge(
-  z.object({
-    projectId: z.string(),
-    instanceId: z.string(),
-  })
-);
+export const RequestParamsSchema = z.object({
+  projectId: z.string(),
+  instanceId: z.string(),
+  prompt: z.string().max(1200),
+  components: z.array(z.string()),
+  jsx: z.string(),
+});
 
 export const maxDuration = 120;
 

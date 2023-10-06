@@ -11,7 +11,7 @@ import {
   type WsOperations,
 } from "./shared";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { postProcessTemplate } from "../../utils/jsx-to-template";
+import { postProcessTemplate } from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
 
 /**
@@ -22,7 +22,7 @@ import { createErrorResponse } from "../../utils/create-error-response";
  */
 
 export const ContextSchema = z.object({
-  prompt: z.string().max(1200).describe("Edit request from the user"),
+  prompt: z.string().describe("Edit request from the user"),
   components: z.array(z.string()).describe("Available Webstudio components"),
   jsx: z.string().describe("Input JSX to edit"),
 });

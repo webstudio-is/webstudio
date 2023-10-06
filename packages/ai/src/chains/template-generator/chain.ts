@@ -7,7 +7,7 @@ import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   jsxToTemplate,
   postProcessTemplate,
-} from "../../utils/jsx-to-template";
+} from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
 
 /**
@@ -18,7 +18,7 @@ import { createErrorResponse } from "../../utils/create-error-response";
 
 export const ContextSchema = z.object({
   // The prompt provides the original user request.
-  prompt: z.string().max(1200),
+  prompt: z.string(),
   components: z.array(z.string()),
 });
 export type Context = z.infer<typeof ContextSchema>;

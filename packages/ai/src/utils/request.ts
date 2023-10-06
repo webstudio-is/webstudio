@@ -1,5 +1,5 @@
 import { createChunkDecoder } from "ai";
-import type { LlmResponse } from "../types";
+import type { ModelResponse } from "../types";
 import { createErrorResponse } from "./create-error-response";
 import { StreamingTextResponse } from "./streaming-text-response";
 
@@ -84,7 +84,7 @@ export const request = <ResponseData>(
 
       // @todo Convert the response types to Zod
       // so that responses can be parsed and validated on the client.
-      return (await response.json()) as LlmResponse<ResponseData>;
+      return (await response.json()) as ModelResponse<ResponseData>;
     })
     .catch((error) => {
       return {
