@@ -1,6 +1,6 @@
 import { serverSyncStore } from "~/shared/sync";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
-import { copywriter, operations } from "@webstudio-is/ai";
+import { OperationsResponse } from "@webstudio-is/ai";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstance as _deleteInstance,
@@ -19,7 +19,7 @@ import type { DroppableTarget } from "~/shared/tree-utils";
 import { getStyleDeclKey, type StyleSource } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 
-export const applyOperations = (operations: operations.Response) => {
+export const applyOperations = (operations: OperationsResponse) => {
   for (const operation of operations) {
     switch (operation.operation) {
       case "insertTemplate":

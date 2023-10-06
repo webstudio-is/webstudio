@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
-import { prompt as promptSystemTemplate } from "./__generated__/edit.system.prompt";
-import { prompt as promptUserTemplate } from "./__generated__/edit.user.prompt";
+import { prompt as promptSystemTemplate } from "./__generated__/operations.system.prompt";
+import { prompt as promptUserTemplate } from "./__generated__/operations.user.prompt";
 
 import {
   AiOperationsSchema,
@@ -94,6 +94,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
         id,
         ...createErrorResponse({
           status: 500,
+          error: "ai.parseError",
           debug: `Failed to parse completion ${parsedCompletion.error.message}`,
         }),
         tokens: completion.tokens,
@@ -118,6 +119,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
         id,
         ...createErrorResponse({
           status: 500,
+          error: "ai.parseError",
           debug: (
             "Failed to convert operations. " +
             (error instanceof Error ? error.message : "")

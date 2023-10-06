@@ -91,7 +91,9 @@ const handleSubmit = async (
       }
       return;
     } else {
-      throw new Error(result.data.message);
+      if (abortSignal.aborted === false) {
+        throw new Error(result.data.message);
+      }
     }
   });
 };

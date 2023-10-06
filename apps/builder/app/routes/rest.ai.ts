@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ActionArgs } from "@remix-run/node";
 import {
+  commandDetect,
   operations,
   templateGenerator,
   createGptModel,
@@ -108,21 +109,31 @@ export const action = async ({ request }: ActionArgs) => {
   });
 
   // We first detect whether the request can be handled by the copywriter.
-  const copywriterDetectChain =
-    copywriterDetect.createChain<GPTModelMessageFormat>();
-  const copywriterDetectResponse = await copywriterDetectChain({
+  const commandDetectChain = commandDetect.createChain<GPTModelMessageFormat>();
+  const commandDetectResponse = await commandDetectChain({
     model,
     context: {
       prompt,
+      commands: [
+        // @todo Find a good way to pass only the features we want/need to detect
+        // without passing them all. As a safety measure we are currently passing them all
+        // so that the LLM won't miscategorize the task and for example handle an "edit-style" request as a "write-copy" one.
+        // During testing the LLM misdetected a stylistic request like "make it bold" as a request to rewrite the text to sound more "bold".
+        "write-copy",
+        "generate-images",
+        "edit-styles",
+        "generate-ui",
+        "delete-elements",
+      ],
     },
   });
 
-  llmMessages.push(...copywriterDetectResponse.llmMessages);
+  llmMessages.push(...commandDetectResponse.llmMessages);
 
   // If this is indeed a copy request use the copywriter chain.
   if (
-    copywriterDetectResponse.success &&
-    copywriterDetectResponse.data === true
+    commandDetectResponse.success &&
+    commandDetectResponse.data.some((command) => command === "write-copy")
   ) {
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId: projectId, permit: "edit" },
@@ -131,7 +142,7 @@ export const action = async ({ request }: ActionArgs) => {
 
     if (canEdit === false) {
       return {
-        id: copywriterDetectResponse.id,
+        id: commandDetectResponse.id,
         ...createErrorResponse({
           error: "unauthorized",
           status: 401,
