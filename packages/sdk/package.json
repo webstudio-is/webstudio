@@ -26,14 +26,13 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/css-engine": "workspace:*",
+    "@webstudio-is/fonts": "workspace:*",
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.4",
+    "@jest/globals": "^29.7.0",
     "@webstudio-is/jest-config": "workspace:*",
-    "@webstudio-is/tsconfig": "workspace:*",
-    "jest": "^29.6.4"
+    "@webstudio-is/tsconfig": "workspace:*"
   }
 }
