@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
@@ -11,7 +12,10 @@ import {
   LinkIcon,
   PaintBrushIcon,
 } from "@webstudio-is/icons";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import {
+  selectedInstanceIntanceToTagStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
 import { type TextToolbarState, textToolbarStore } from "~/shared/nano-states";
 import type { Publish } from "~/shared/pubsub";
 import { scaleStore } from "~/builder/shared/nano-states";
@@ -49,6 +53,25 @@ const getRectForRelativeRect = (
   };
 };
 
+const $isWithinLink = computed(
+  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+  (selectedInstanceSelector, selectedInstanceIntanceToTag) => {
+    if (
+      selectedInstanceSelector === undefined ||
+      selectedInstanceIntanceToTag === undefined
+    ) {
+      return false;
+    }
+    for (const instanceId of selectedInstanceSelector) {
+      const tag = selectedInstanceIntanceToTag.get(instanceId);
+      if (tag === "a") {
+        return true;
+      }
+    }
+    return false;
+  }
+);
+
 type ToolbarProps = {
   state: TextToolbarState;
   onToggle: (value: Format) => void;
@@ -56,6 +79,8 @@ type ToolbarProps = {
 };
 
 const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
+  const isWithinLink = useStore($isWithinLink);
+
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -162,15 +187,17 @@ const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
         </IconButton>
       </Tooltip>
 
-      <Tooltip content="Inline link">
-        <IconButton
-          aria-label="Inline link"
-          variant={state.isLink ? "local" : "default"}
-          onClick={() => onToggle("link")}
-        >
-          <LinkIcon />
-        </IconButton>
-      </Tooltip>
+      {isWithinLink === false && (
+        <Tooltip content="Inline link">
+          <IconButton
+            aria-label="Inline link"
+            variant={state.isLink ? "local" : "default"}
+            onClick={() => onToggle("link")}
+          >
+            <LinkIcon />
+          </IconButton>
+        </Tooltip>
+      )}
 
       <Tooltip content="Wrap with span">
         <IconButton

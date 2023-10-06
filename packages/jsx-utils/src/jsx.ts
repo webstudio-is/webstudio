@@ -4,9 +4,9 @@ import {
   type JSXOpeningElement,
   type JSXText,
 } from "@babel/types";
-import type {
+import {
   WsEmbedTemplate,
-  EmbedTemplateProp,
+  type EmbedTemplateProp,
 } from "@webstudio-is/react-sdk";
 import JSON5 from "json5";
 import type { JsonObject } from "type-fest";
@@ -14,16 +14,23 @@ import type { JsonObject } from "type-fest";
 export const jsxToWSEmbedTemplate = async (
   code: string
 ): Promise<WsEmbedTemplate> => {
-  const ast = parser.parseExpression(code, {
-    plugins: ["jsx"],
-  });
+  const ast = parser.parseExpression(
+    code.replace(/^```(jsx)?/, "").replace(/```$/, ""),
+    {
+      plugins: ["jsx"],
+    }
+  );
 
   if (ast.type === "JSXElement") {
     const template = await transform(ast, code);
-    return template === null ? [] : [template];
+    if (template !== null) {
+      // Validate template
+      WsEmbedTemplate.parse([template]);
+      return [template];
+    }
   }
 
-  return [];
+  throw new Error("JSX to Webstudio Embed Template produced an empty result");
 };
 
 const ignoredProps = new Set(["style"]);
@@ -58,8 +65,7 @@ const transform = async (
 
     return {
       type: "instance",
-      component:
-        element.name.type === "JSXIdentifier" ? element.name.name : "Box",
+      component: getComponentName(element.name),
       styles: [],
       props,
       children: (
@@ -76,6 +82,16 @@ const transform = async (
   }
 
   return null;
+};
+
+const getComponentName = (element: JSXOpeningElement["name"]): string => {
+  if (element.type === "JSXIdentifier") {
+    return element.name;
+  }
+  if (element.type === "JSXMemberExpression") {
+    return `${getComponentName(element.object)}.${element.property.name}`;
+  }
+  return "Box";
 };
 
 type JsonProp = {

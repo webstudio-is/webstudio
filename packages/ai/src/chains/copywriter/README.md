@@ -41,15 +41,10 @@ export async function handler({ request }) {
 Client side:
 
 ```tsx
-import { copywriter, requestStream, type ErrorResponse } from "@webstudio-is/ai";
+import { copywriter, request, StreamingResponseTextType } from "@webstudio-is/ai";
 
 function UiComponent() {
-  const [error, setError] = useState(null);
-  const [copy, setCopy] = useState([]);
-
-  useEffect(() => {
-    console.log(copy);
-  }, [copy]);
+  const [error, setError] = useState();
 
   return (
     <form
@@ -73,7 +68,7 @@ function UiComponent() {
           return;
         }
 
-        requestStream(
+        request<StreamingResponseTextType>(
           [
             '/rest/ai/copy',
             {
@@ -87,14 +82,19 @@ function UiComponent() {
             },
           ],
           {
-            onChunk,
+            onChunk: (id, { completion, done }) => {
+              // Log the completion.
+              console.log(completion)
+              if (done) {
+                doSomething(completion);
+              }
+            },
           }
         ).then((result) => {
           abort.current = null;
           if (typeof result !== "string") {
             alert("Error " + result.type);
           }
-          setCopy(parseResult(result));
           setIsLoading(false);
         });
       }}

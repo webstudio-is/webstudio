@@ -19,7 +19,6 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "fast-glob": "^3.2.12",
-    "jest": "^29.6.4",
     "type-fest": "^4.3.1",
     "typescript": "5.2.2"
   },

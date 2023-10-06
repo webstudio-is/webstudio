@@ -43,7 +43,7 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@types/node": "^18.13.0",
+    "@types/node": "^18.17.1",
     "@types/prompts": "^2.4.4",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",

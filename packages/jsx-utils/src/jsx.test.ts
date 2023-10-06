@@ -29,6 +29,40 @@ describe("jsx", () => {
 ]
 `);
   });
+
+  test("parses components names that are member expressions", async () => {
+    const parsed = await jsxToWSEmbedTemplate(
+      `<A.B><C.D.E><F></F></C.D.E></A.B>`
+    );
+    expect(() => WsEmbedTemplate.parse(parsed)).not.toThrow();
+    expect(parsed).toMatchInlineSnapshot(`
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "component": "F",
+            "props": [],
+            "styles": [],
+            "type": "instance",
+          },
+        ],
+        "component": "C.D.E",
+        "props": [],
+        "styles": [],
+        "type": "instance",
+      },
+    ],
+    "component": "A.B",
+    "props": [],
+    "styles": [],
+    "type": "instance",
+  },
+]
+`);
+  });
 });
 
 const jsx = `

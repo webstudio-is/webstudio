@@ -17,10 +17,9 @@
     "@webstudio-is/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.4",
+    "@jest/globals": "^29.7.0",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "jest": "^29.6.4",
     "typescript": "5.2.2"
   },
   "exports": {

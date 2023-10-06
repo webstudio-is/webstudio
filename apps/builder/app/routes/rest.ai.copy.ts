@@ -15,7 +15,7 @@ const RequestSchema = copywriter.ContextSchema.extend({
   projectId: z.string(),
 });
 
-export const action = async function action({ request }: ActionArgs) {
+export const action = async ({ request }: ActionArgs) => {
   if (isFeatureEnabled("aiCopy") === false) {
     return {
       id: "ai",

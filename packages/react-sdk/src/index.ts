@@ -30,4 +30,8 @@ export {
 export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";
 export { generateUtilsExport } from "./generator";
-export { generatePageComponent } from "./component-generator";
+export {
+  generatePageComponent,
+  generateJsxElement,
+  generateJsxChildren,
+} from "./component-generator";
