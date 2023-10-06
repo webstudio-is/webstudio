@@ -9,7 +9,7 @@ export const getIcon = (name: string, type: IconsTypes = "solid") => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     return typeof typeIcons[name] === "string" ? typeIcons[name] : null;
-  } catch (error) {
+  } catch {
     /**/
   }
 

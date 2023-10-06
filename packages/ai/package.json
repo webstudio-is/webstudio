@@ -36,11 +36,15 @@
   "license": "AGPL-3.0-or-later",
   "sideEffects": false,
   "dependencies": {
+    "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/jsx-utils": "workspace:*",
     "ai": "^2.2.12",
     "escape-string-regexp": "^5.0.0",
     "openai": "^4.8.0",
     "web-streams-polyfill": "^3.2.1",
-    "zod": "^3.21.4"
+    "zod": "^3.21.4",
+    "zod-to-json-schema": "^3.21.4"
   }
 }

@@ -24,7 +24,7 @@ Install the package
 pnpm i @webstudio-is/ai
 ```
 
-For an example usage check out the [base example](./src/chains/README.md#example-chain) and [the copywriter chain](./src/chains/copywriter/index.ts) that generates copy for Webstudio.
+For an example usage check out the [base example](./src/chains/README.md#example-chain) and [the copywriter chain](./src/chains/copywriter/chain.ts) that generates copy for Webstudio.
 
 ### Prompt templates
 

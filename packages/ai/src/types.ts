@@ -77,7 +77,11 @@ export type ModelCompletionStream<ModelMessageFormat> = (args: {
  * zod types must have a Schema suffix. For example ResponseSchema.
  */
 
+export type LlmResponse<ResponseData> = Response<ResponseData> & {
+  llmMessages: ModelMessage[];
+};
+
 export type Chain<Model, Context, ResponseData> = (args: {
   model: Model;
   context: Context;
-}) => Promise<Response<ResponseData> & { llmMessages: ModelMessage[] }>;
+}) => Promise<LlmResponse<ResponseData>>;

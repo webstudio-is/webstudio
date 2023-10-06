@@ -1,18 +1,23 @@
 import { createChunkDecoder } from "ai";
-import type { ErrorResponse, SuccessResponse } from "../types";
+import type { LlmResponse } from "../types";
 import { createErrorResponse } from "./create-error-response";
 import { StreamingTextResponse } from "./streaming-text-response";
 
 type RequestOptions = {
   onChunk?: (
     operationId: string,
-    data: { decoded: string; value: Uint8Array | undefined; done: boolean }
+    data: {
+      completion: string;
+      chunk: Uint8Array | undefined;
+      decodedChunk: string;
+      done: boolean;
+    }
   ) => void;
 };
 
 export const request = <ResponseData>(
   fetchArgs: Parameters<typeof fetch>,
-  { onChunk }: RequestOptions
+  options?: RequestOptions
 ) => {
   const signal = fetchArgs[1]?.signal;
   return fetch(...fetchArgs)
@@ -48,12 +53,14 @@ export const request = <ResponseData>(
             break;
           }
 
-          completion += decoder(value);
+          const decodedChunk = decoder(value);
+          completion += decodedChunk;
 
-          if (typeof onChunk === "function") {
-            onChunk(operationId, {
-              decoded: completion,
-              value,
+          if (typeof options?.onChunk === "function") {
+            options.onChunk(operationId, {
+              completion,
+              chunk: value,
+              decodedChunk,
               done,
             });
           }
@@ -77,9 +84,7 @@ export const request = <ResponseData>(
 
       // @todo Convert the response types to Zod
       // so that responses can be parsed and validated on the client.
-      return (await response.json()) as
-        | SuccessResponse<ResponseData>
-        | ErrorResponse;
+      return (await response.json()) as LlmResponse<ResponseData>;
     })
     .catch((error) => {
       return {

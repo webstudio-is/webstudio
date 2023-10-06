@@ -181,6 +181,9 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
+      '@webstudio-is/jsx-utils':
+        specifier: workspace:*
+        version: link:../../packages/jsx-utils
       '@webstudio-is/prisma-client':
         specifier: workspace:*
         version: link:../../packages/prisma-client
@@ -669,6 +672,15 @@ importers:
 
   packages/ai:
     dependencies:
+      '@webstudio-is/css-data':
+        specifier: workspace:*
+        version: link:../css-data
+      '@webstudio-is/jsx-utils':
+        specifier: workspace:*
+        version: link:../jsx-utils
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../react-sdk
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
@@ -687,6 +699,9 @@ importers:
       zod:
         specifier: ^3.21.4
         version: 3.21.4
+      zod-to-json-schema:
+        specifier: ^3.21.4
+        version: 3.21.4(zod@3.21.4)
     devDependencies:
       '@webstudio-is/jest-config':
         specifier: workspace:^
@@ -17458,6 +17473,14 @@ packages:
       mustache: 4.2.0
       stack-trace: 0.0.10
     dev: true
+
+  /zod-to-json-schema@3.21.4(zod@3.21.4):
+    resolution: {integrity: sha512-fjUZh4nQ1s6HMccgIeE0VP4QG/YRGPmyjO9sAh890aQKPEk3nqbfUXhMFaC+Dr5KvYBm8BCyvfpZf2jY9aGSsw==}
+    peerDependencies:
+      zod: ^3.21.4
+    dependencies:
+      zod: 3.21.4
+    dev: false
 
   /zod@3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}

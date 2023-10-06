@@ -46,6 +46,7 @@
     "@vercel/kv": "^0.2.3",
     "@vercel/remix": "^1.19.2",
     "@webstudio-is/ai": "workspace:*",
+    "@webstudio-is/jsx-utils": "workspace:*",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
     "@webstudio-is/css-data": "workspace:*",
