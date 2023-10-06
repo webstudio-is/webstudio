@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { ActionArgs } from "@remix-run/node";
 import {
   operations,
@@ -5,18 +6,29 @@ import {
   createGptModel,
   type GPTModelMessageFormat,
   createErrorResponse,
+  type ModelMessage,
+  copywriter,
 } from "@webstudio-is/ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
+import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
+import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 
-const RequestSchema = operations.ContextSchema;
+export const RequestParamsSchema = operations.ContextSchema.merge(
+  z.object({
+    projectId: z.string(),
+    instanceId: z.string(),
+  })
+);
 
 export const maxDuration = 120;
 
 export const action = async ({ request }: ActionArgs) => {
-  if (isFeatureEnabled("aiCopy") === false) {
+  const llmMessages: ModelMessage[] = [];
+
+  if (isFeatureEnabled("ai") === false) {
     return {
       id: "ai",
       ...createErrorResponse({
@@ -25,6 +37,7 @@ export const action = async ({ request }: ActionArgs) => {
         message: "The feature is not available",
         debug: "aiCopy feature disabled",
       }),
+      llmMessages,
     };
   }
 
@@ -36,6 +49,7 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid OpenAI API key",
       }),
+      llmMessages,
     };
   }
 
@@ -50,10 +64,11 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid OpenAI API organization",
       }),
+      llmMessages,
     };
   }
 
-  const parsed = RequestSchema.safeParse(await request.json());
+  const parsed = RequestParamsSchema.safeParse(await request.json());
 
   if (parsed.success === false) {
     return {
@@ -63,10 +78,11 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid request data",
       }),
+      llmMessages,
     };
   }
 
-  const { prompt, components, jsx } = parsed.data;
+  const { prompt, components, jsx, projectId, instanceId } = parsed.data;
 
   const requestContext = await createContext(request);
 
@@ -79,10 +95,77 @@ export const action = async ({ request }: ActionArgs) => {
         message: "You don't have edit access to this project",
         debug: "Unauthorized access attempt",
       }),
+      llmMessages,
     };
   }
 
-  const model = createGptModel({
+  let model = createGptModel({
+    apiKey: env.OPENAI_KEY,
+    organization: env.OPENAI_ORG,
+    temperature: 0,
+    model: "gpt-3.5-turbo",
+  });
+
+  // We first detect whether the request can be handled by the copywriter.
+  const copywriterDetectChain =
+    copywriterDetect.createChain<GPTModelMessageFormat>();
+  const copywriterDetectResponse = await copywriterDetectChain({
+    model,
+    context: {
+      prompt,
+    },
+  });
+
+  llmMessages.push(...copywriterDetectResponse.llmMessages);
+
+  // If this is indeed a copy request use the copywriter chain.
+  if (
+    copywriterDetectResponse.success &&
+    copywriterDetectResponse.data === true
+  ) {
+    const canEdit = await authorizeProject.hasProjectPermit(
+      { projectId: projectId, permit: "edit" },
+      requestContext
+    );
+
+    if (canEdit === false) {
+      return {
+        id: copywriterDetectResponse.id,
+        ...createErrorResponse({
+          error: "unauthorized",
+          status: 401,
+          message: "You don't have edit access to this project",
+          debug: "Unauthorized access attempt",
+        }),
+        llmMessages,
+      };
+    }
+
+    const { instances } = await loadBuildByProjectId(projectId);
+    const copywriterChain = copywriter.createChain<GPTModelMessageFormat>();
+    const copywriterResponse = await copywriterChain({
+      model,
+      context: {
+        prompt,
+        textInstances: copywriter.collectTextInstances({
+          instances: new Map(instances),
+          rootInstanceId: instanceId,
+        }),
+      },
+    });
+
+    if (copywriterResponse.success) {
+      // Return the copywriter generation stream.
+      return copywriterResponse.data;
+    }
+
+    return {
+      ...copywriterResponse,
+      llmMessages,
+    };
+  }
+
+  model = createGptModel({
     apiKey: env.OPENAI_KEY,
     organization: env.OPENAI_ORG,
     temperature: 0,
@@ -104,7 +187,7 @@ export const action = async ({ request }: ActionArgs) => {
     return response;
   }
 
-  const { llmMessages } = response;
+  llmMessages.push(...response.llmMessages);
 
   const generateTemplatePrompts = response.data.filter(
     (operation) => operation.operation === "generateTemplatePrompt"

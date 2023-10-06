@@ -1,4 +1,5 @@
-import { operations, request } from "@webstudio-is/ai";
+import { z } from "zod";
+import { copywriter, operations, request } from "@webstudio-is/ai";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { Button, InputField, Label, Text } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
@@ -17,84 +18,100 @@ import {
   breakpointsStore,
   dataSourcesStore,
   instancesStore,
+  projectStore,
   propsStore,
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   styleSourceSelectionsStore,
   stylesStore,
 } from "~/shared/nano-states";
-import { applyOperations } from "./apply-operations";
+import { applyOperations, patchTextInstance } from "./apply-operations";
 import { useStore } from "@nanostores/react";
-import { restAiOperations } from "~/shared/router-utils";
+import { restAi } from "~/shared/router-utils";
+import { RequestParamsSchema } from "~/routes/rest.ai";
+import untruncateJson from "untruncate-json";
+import { traverseTemplate } from "@webstudio-is/jsx-utils";
 
-export const Operations = () => {
+const handleSubmit = async (
+  event: React.FormEvent<HTMLFormElement>,
+  abortSignal: AbortSignal
+) => {
+  const requestParams = Object.fromEntries(
+    new FormData(event.currentTarget).entries()
+  );
+
+  if (RequestParamsSchema.safeParse(requestParams).success === false) {
+    throw new Error("Invalid prompt data");
+  }
+
+  return request<operations.Response>(
+    [
+      restAi(),
+      {
+        method: "POST",
+        body: JSON.stringify(requestParams),
+        signal: abortSignal,
+      },
+    ],
+    {
+      onChunk: (operationId, { completion }) => {
+        if (operationId === "copywriter") {
+          try {
+            const jsonResponse = z
+              .array(copywriter.TextInstanceSchema)
+              .parse(JSON.parse(untruncateJson(completion)));
+
+            const currenTextInstance = jsonResponse.pop();
+
+            if (currenTextInstance === undefined) {
+              return;
+            }
+
+            patchTextInstance(currenTextInstance);
+          } catch {
+            /**/
+          }
+        }
+      },
+    }
+  ).then((result) => {
+    if (result.success === true) {
+      if (result.type === "json" && result.id === "operations") {
+        restoreComponentsNamespace(result.data);
+        applyOperations(result.data);
+      }
+      return;
+    } else {
+      throw new Error(result.data.message);
+    }
+  });
+};
+
+export const CommandsBar = () => {
   const abort = useRef<AbortController>();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();
 
+  const project = useStore(projectStore);
+  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const availableComponentsNames = useStore($availableComponentsNames);
   const jsx = useStore($jsx);
 
   return (
     <form
       method="POST"
-      action={restAiOperations()}
+      action={restAi()}
       onSubmit={(event) => {
         event.preventDefault();
 
         if (isLoading) {
           return;
         }
-
-        const formData = new FormData(event.currentTarget);
-
-        const prompt = formData.get("prompt");
-        let data = formData.get("data");
-
-        if (typeof data === "string") {
-          try {
-            data = JSON.parse(data);
-          } catch {
-            /**/
-          }
-        }
-
-        if (typeof prompt !== "string" || typeof data !== "string") {
-          alert("Invalid data");
-          return;
-        }
-
-        const metas = registeredComponentMetasStore.get();
-        const exclude = ["Body", "Slot"];
-
-        const components = [...metas.keys()]
-          .filter((name) => !exclude.includes(name))
-          .map((name) =>
-            name.replace("@webstudio-is/sdk-components-react-radix:", "Radix.")
-          );
-
         abort.current = new AbortController();
 
-        request<operations.Response>([
-          restAiOperations(),
-          {
-            method: "POST",
-            body: JSON.stringify({
-              prompt,
-              components,
-              jsx: data,
-            }),
-            signal: abort.current.signal,
-          },
-        ])
-          .then((result) => {
-            if (result.success === true) {
-              if (result.type === "json" && result.id === "operations") {
-                applyOperations(result.data);
-              }
-              return;
-            }
-
-            setError(result.data.message);
+        handleSubmit(event, abort.current.signal)
+          .catch((error) => {
+            setError(error.message);
           })
           .finally(() => {
             abort.current = undefined;
@@ -109,7 +126,18 @@ export const Operations = () => {
         Prompt
         <InputField name="prompt" />
       </Label>
-      <input type="hidden" name="data" value={jsx ? JSON.stringify(jsx) : ""} />
+      <input type="hidden" name="jsx" value={jsx ? JSON.stringify(jsx) : ""} />
+      <input
+        type="hidden"
+        name="components"
+        value={JSON.stringify(availableComponentsNames)}
+      />
+      <input type="hidden" name="projectId" value={project?.id ?? ""} />
+      <input
+        type="hidden"
+        name="instanceId"
+        value={selectedInstanceSelector ? selectedInstanceSelector[0] : ""}
+      />
       <Button
         onClick={(event) => {
           if (isLoading) {
@@ -124,6 +152,37 @@ export const Operations = () => {
       {error ? <Text>{error}</Text> : null}
     </form>
   );
+};
+
+const $availableComponentsNames = computed(
+  [registeredComponentMetasStore],
+  (metas) => {
+    const exclude = ["Body", "Slot"];
+
+    return [...metas.keys()]
+      .filter((name) => !exclude.includes(name))
+      .map((name) => parseComponentName);
+  }
+);
+
+// The LLM gets a list of available component names
+// therefore we need to replace the component namespace with a LLM-friendly one
+// preserving context eg. Radix.Dialog instead of just Dialog
+const parseComponentName = (name: string) =>
+  name.replace("@webstudio-is/sdk-components-react-radix:", "Radix.");
+// When AI generation is done we need to restore components namespaces.
+const restoreComponentsNamespace = (operations: operations.Response) => {
+  for (const operation of operations) {
+    if (operation.operation === "insertTemplate") {
+      traverseTemplate(operation.template, (node) => {
+        if (node.type === "instance" && node.component.startsWith("Radix.")) {
+          node.component =
+            "@webstudio-is/sdk-components-react-radix:" +
+            node.component.slice("Radix.".length);
+        }
+      });
+    }
+  }
 };
 
 const $jsx = computed(

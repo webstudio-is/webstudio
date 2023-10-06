@@ -1,2 +1,1 @@
-export * from "./copywriter";
-export { Operations } from "./operations";
+export { CommandsBar } from "./commands-bar";
