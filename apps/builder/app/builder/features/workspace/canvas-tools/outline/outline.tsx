@@ -34,6 +34,7 @@ const baseStyle = css({
         outline: "none",
         [angleVar]: `0deg`,
         border: `1px solid`,
+        // @todo check with design on specific colors
         borderImage: `conic-gradient(from ${cssVars.use(
           angleVar
         )}, #FFAE3C 0%, #39FBBB 25%, #4A4EFA 50%, #E63CFE 100%) 1`,
