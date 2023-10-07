@@ -2,7 +2,7 @@
 
 import { readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
 import { execSync } from "node:child_process";
-import camelCase from "camelcase";
+import { camelCase } from "change-case";
 import { z, type ZodType, type ZodTypeDef } from "zod";
 
 const SOURCE_FILE = "./src/__generated__/figma-design-tokens.json";

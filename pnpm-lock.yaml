@@ -211,6 +211,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../../packages/trpc-interface
+      change-case:
+        specifier: ^5.0.2
+        version: 5.0.2
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -268,9 +271,6 @@ importers:
       nanostores:
         specifier: ^0.9.3
         version: 0.9.3
-      no-case:
-        specifier: ^3.0.4
-        version: 3.0.4
       node-fetch:
         specifier: ^3.3.1
         version: 3.3.1
@@ -323,8 +323,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       title-case:
-        specifier: ^3.0.3
-        version: 3.0.3
+        specifier: ^4.1.0
+        version: 4.1.0
       untruncate-json:
         specifier: ^0.0.1
         version: 0.0.1
@@ -844,8 +844,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       title-case:
-        specifier: ^3.0.3
-        version: 3.0.3
+        specifier: ^4.1.0
+        version: 4.1.0
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -883,6 +883,9 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
+      change-case:
+        specifier: ^5.0.2
+        version: 5.0.2
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -911,9 +914,6 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      camelcase:
-        specifier: ^7.0.1
-        version: 7.0.1
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1099,9 +1099,9 @@ importers:
       '@webstudio-is/icons':
         specifier: workspace:*
         version: link:../icons
-      camelcase:
-        specifier: ^7.0.1
-        version: 7.0.1
+      change-case:
+        specifier: ^5.0.2
+        version: 5.0.2
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.2.0)
@@ -1575,6 +1575,9 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      change-case:
+        specifier: ^5.0.2
+        version: 5.0.2
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1584,12 +1587,9 @@ importers:
       nanoid:
         specifier: ^4.0.2
         version: 4.0.2
-      no-case:
-        specifier: ^3.0.4
-        version: 3.0.4
       title-case:
-        specifier: ^3.0.3
-        version: 3.0.3
+        specifier: ^4.1.0
+        version: 4.1.0
     devDependencies:
       '@jest/globals':
         specifier: ^29.7.0
@@ -1683,9 +1683,9 @@ importers:
       '@webstudio-is/sdk-components-react':
         specifier: workspace:^
         version: link:../sdk-components-react
-      param-case:
-        specifier: ^3.0.4
-        version: 3.0.4
+      change-case:
+        specifier: ^5.0.2
+        version: 5.0.2
     devDependencies:
       '@types/node':
         specifier: ^18.17.1
@@ -9279,10 +9279,6 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /camelcase@7.0.1:
-    resolution: {integrity: sha512-xlx1yCK2Oc1APsPXDL2LdlNP6+uu8OCDdhOBSVT279M/S+y75O30C2VuD8T2ogdePBBl7PfPF4504tnLgX3zfw==}
-    engines: {node: '>=14.16'}
-
   /caniuse-lite@1.0.30001517:
     resolution: {integrity: sha512-Vdhm5S11DaFVLlyiKu4hiUTkpZu+y1KA/rZZqVQfOD5YdDT/eQKlkt7NaE0WGOFgX32diqt9MiP9CAiFeRklaA==}
 
@@ -9308,6 +9304,10 @@ packages:
   /chalk@5.3.0:
     resolution: {integrity: sha512-dLitG79d+GV1Nb/VYcCDFivJeK1hiukt9QjRNVOsUtTy1rR1YJsmpGGTZ3qJos+uw7WmWF4wUwBd9jxjocFC2w==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+    dev: false
+
+  /change-case@5.0.2:
+    resolution: {integrity: sha512-tH6YZXViaeC2/Mnt8m4gSmbZfNorC2rhwCX2bXw8SYZWr8ljCPB7iA+1TLG9t7yroWBFauc63LlOZ1gucMVCWw==}
     dev: false
 
   /char-regex@1.0.2:
@@ -10014,13 +10014,6 @@ packages:
       domelementtype: 2.3.0
       domhandler: 5.0.3
     dev: true
-
-  /dot-case@3.0.4:
-    resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
-    dependencies:
-      no-case: 3.0.4
-      tslib: 2.6.0
-    dev: false
 
   /dotenv-expand@10.0.0:
     resolution: {integrity: sha512-GopVGCpVS1UKH75VKHGuQFqS1Gusej0z4FyQkPdwjil2gNIv+LNsqBlboOzpJFZKVT95GkCyWJbBSdFEFUWI2A==}
@@ -12865,12 +12858,6 @@ packages:
     dependencies:
       js-tokens: 4.0.0
 
-  /lower-case@2.0.2:
-    resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
-    dependencies:
-      tslib: 2.6.0
-    dev: false
-
   /lowercase-keys@2.0.0:
     resolution: {integrity: sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA==}
     engines: {node: '>=8'}
@@ -14093,13 +14080,6 @@ packages:
     engines: {node: '>= 0.4.0'}
     dev: true
 
-  /no-case@3.0.4:
-    resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
-    dependencies:
-      lower-case: 2.0.2
-      tslib: 2.6.0
-    dev: false
-
   /node-addon-api@1.7.2:
     resolution: {integrity: sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg==}
     requiresBuild: true
@@ -14492,13 +14472,6 @@ packages:
 
   /pako@0.2.9:
     resolution: {integrity: sha512-NUcwaKxUxWrZLpDG+z/xZaCgQITkA/Dv4V/T6bw7VON6l1Xz/VnrBqrYjZQ12TamKHzITTfOEIYUj48y2KXImA==}
-
-  /param-case@3.0.4:
-    resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
-    dependencies:
-      dot-case: 3.0.4
-      tslib: 2.6.0
-    dev: false
 
   /parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -16517,10 +16490,8 @@ packages:
     resolution: {integrity: sha512-vJhccZPs965sV/L2sU4oRQVAos0pQXwsvTLkWYdqJ+a8Q5kPFzJTuOFwy7UniPli44NKQGAglksjvOcpo95aZA==}
     dev: false
 
-  /title-case@3.0.3:
-    resolution: {integrity: sha512-e1zGYRvbffpcHIrnuqT0Dh+gEJtDaxDSoG4JAIpq4oDFyooziLBIiYQv0GBT4FUAnUop5uZ1hiIAj7oAF6sOCA==}
-    dependencies:
-      tslib: 2.6.0
+  /title-case@4.1.0:
+    resolution: {integrity: sha512-X6j4JkYviJJ7jPVuBkd1geC35pq+3J5z3q1N5z57FIhBooKQqrO4B7C6dy3RzSJIKYB6Ze0/G3KcWtinzO7MGg==}
     dev: false
 
   /tmp@0.0.33:
