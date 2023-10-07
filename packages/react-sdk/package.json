@@ -39,11 +39,11 @@
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "change-case": "^5.0.2",
     "html-tags": "^3.3.1",
     "jsep": "^1.3.8",
     "nanoid": "^4.0.2",
-    "no-case": "^3.0.4",
-    "title-case": "^3.0.3"
+    "title-case": "^4.1.0"
   },
   "exports": {
     ".": {

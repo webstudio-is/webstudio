@@ -1,5 +1,5 @@
 import * as csstree from "css-tree";
-import camelCase from "camelcase";
+import { camelCase } from "change-case";
 import { UnoGenerator, createGenerator } from "@unocss/core";
 import { type Theme, presetUno } from "@unocss/preset-uno";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";

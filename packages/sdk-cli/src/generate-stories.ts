@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
-import { paramCase } from "param-case";
+import { kebabCase } from "change-case";
 import {
   type Instances,
   type Instance,
@@ -192,7 +192,7 @@ export const generateStories = async () => {
     );
     content += getStoriesExports(name, css);
     await writeFile(
-      join(storiesDir, paramCase(name) + ".stories.tsx"),
+      join(storiesDir, kebabCase(name) + ".stories.tsx"),
       content
     );
   }

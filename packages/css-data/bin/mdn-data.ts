@@ -7,7 +7,7 @@ import { parse, definitionSyntax, type DSNode, type CssNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import data from "css-tree/dist/data";
-import camelCase from "camelcase";
+import { camelCase } from "change-case";
 import type {
   KeywordValue,
   StyleValue,

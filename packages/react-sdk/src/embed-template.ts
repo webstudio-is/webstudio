@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { titleCase } from "title-case";
-import { noCase } from "no-case";
+import { noCase } from "change-case";
 import type {
   Instance,
   Prop,
