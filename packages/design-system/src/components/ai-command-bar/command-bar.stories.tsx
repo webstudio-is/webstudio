@@ -40,7 +40,8 @@ export const Demo = () => {
           css={{
             alignSelf: "center",
             color: theme.colors.foregroundContrastMain,
-            maxWidth: theme.spacing[31],
+            // Set maxWidth to autogrow in width
+            width: theme.spacing[31],
           }}
         >
           <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
