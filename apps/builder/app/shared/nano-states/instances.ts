@@ -8,10 +8,6 @@ export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const $collaborativeInstanceSelector = atom<
-  undefined | InstanceSelector
->(undefined);
-
 export const editingItemIdStore = atom<undefined | string>(undefined);
 
 export const textEditingInstanceSelectorStore = atom<
