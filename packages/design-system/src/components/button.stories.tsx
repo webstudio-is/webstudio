@@ -30,6 +30,7 @@ const colors: ReadonlyArray<ComponentProps<typeof ButtonComponent>["color"]> = [
   "ghost",
   "dark",
   "gradient",
+  "dark-ghost",
 ];
 
 const states: ReadonlyArray<ComponentProps<typeof ButtonComponent>["state"]> = [
@@ -60,7 +61,15 @@ export const Button = ({
     <StorySection title="Colors & States">
       <StoryGrid>
         {colors.map((color) => (
-          <StoryGrid horizontal key={color}>
+          <StoryGrid
+            horizontal
+            key={color}
+            css={
+              color === "dark-ghost"
+                ? { backgroundColor: "#1E1E1E", padding: 8 }
+                : undefined
+            }
+          >
             {states.map((state) => (
               <ButtonComponent
                 prefix={<TrashIcon />}
