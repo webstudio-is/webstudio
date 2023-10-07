@@ -39,6 +39,7 @@ export * from "./components/component-card";
 export * from "./components/input-field";
 export * from "./components/nested-input-button";
 export * from "./components/panel-tabs";
+export * from "./components/ai-command-bar";
 
 // Not aligned
 

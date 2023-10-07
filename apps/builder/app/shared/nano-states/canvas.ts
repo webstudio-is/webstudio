@@ -55,6 +55,11 @@ export const hoveredInstanceOutlineAndInstanceStore = computed(
   getInstanceOutlineAndInstance
 );
 
+// @todo implement like above
+export const $collaborativeInstanceOutlineAndInstance = atom<
+  undefined | { instance: Instance; rect: DOMRect }
+>(undefined);
+
 export const synchronizedCanvasStores = [
   ["textToolbar", textToolbarStore],
   ["selectedInstanceOutline", selectedInstanceOutlineStore],
