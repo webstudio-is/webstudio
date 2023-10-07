@@ -6,6 +6,7 @@ import {
   type ReactNode,
   forwardRef,
   Children,
+  type ComponentProps,
 } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
@@ -50,7 +51,20 @@ export const DialogOverlay = forwardRef<
 
 export const DialogContent = DialogPrimitive.Content;
 export const DialogClose = DialogPrimitive.Close;
-export const DialogTitle = DialogPrimitive.Title;
+
+type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+const defaultTag = "h1";
+export const DialogTitle = forwardRef<
+  HTMLHeadingElement,
+  ComponentProps<typeof DialogPrimitive.DialogTitle> & { tag?: Tag }
+>(({ tag: Tag = defaultTag, children, ...props }, ref) => (
+  <DialogPrimitive.DialogTitle asChild>
+    <Tag ref={ref} {...props}>
+      {children ?? "Heading title you can edit"}
+    </Tag>
+  </DialogPrimitive.DialogTitle>
+));
+
 export const DialogDescription = DialogPrimitive.Description;
 
 /* BUILDER HOOKS */
