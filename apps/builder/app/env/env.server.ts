@@ -96,6 +96,8 @@ const env = {
    */
   OPENAI_KEY: process.env.OPENAI_KEY,
   OPENAI_ORG: process.env.OPENAI_ORG,
+
+  UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
 };
 
 export type ServerEnv = typeof env;

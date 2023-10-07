@@ -18,3 +18,5 @@ export * from "./utils/streaming-text-response";
 
 /** Types */
 export * from "./types";
+
+export * from "./image";

@@ -1,15 +1,22 @@
 import type { ActionArgs } from "@remix-run/node";
+import { createApi } from "unsplash-js";
 import {
   operations,
   templateGenerator,
   createGptModel,
   type GPTModelMessageFormat,
   createErrorResponse,
+  queryImagesAndMutateTemplate,
 } from "@webstudio-is/ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
+import { traverseTemplateAsync } from "@webstudio-is/jsx-utils";
+import type {
+  EmbedTemplateProp,
+  WsEmbedTemplate,
+} from "@webstudio-is/react-sdk";
 
 const RequestSchema = operations.ContextSchema;
 
@@ -122,18 +129,30 @@ export const action = async ({ request }: ActionArgs) => {
       templateGenerator.createChain<GPTModelMessageFormat>();
 
     const results = await Promise.all(
-      generateTemplatePrompts.map((operation, index) =>
+      generateTemplatePrompts.map((operation) =>
         generationChain({
           model: generationModel,
           context: {
             prompt: operation.llmPrompt,
             components,
           },
-        }).then((result) => [index, result] as const)
+        })
       )
     );
 
-    for (const [index, result] of results) {
+    await Promise.all(
+      results.map(async (result) => {
+        if (result.success === false) {
+          return;
+        }
+        await queryImagesAndMutateTemplate({
+          template: result.data,
+          accessKey: env.UNSPLASH_ACCESS_KEY ?? "",
+        });
+      })
+    );
+
+    results.forEach((result, index) => {
       llmMessages.push(...result.llmMessages);
 
       if (result.success === false) {
@@ -151,7 +170,7 @@ export const action = async ({ request }: ActionArgs) => {
         addAtIndex: generateTemplatePrompt.addAtIndex,
         template: result.data,
       };
-    }
+    });
   }
 
   return {
