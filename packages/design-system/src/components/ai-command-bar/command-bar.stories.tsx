@@ -9,6 +9,7 @@ import {
   ChevronUpIcon,
 } from "@webstudio-is/icons";
 import { CommandButton } from "./command-button";
+import { theme } from "../..";
 
 export default {
   title: "Library/AI Command Bar",
@@ -33,10 +34,15 @@ export const Demo = () => {
           <ChevronUpIcon />
         </CommandButton>
 
-        <AutogrowTextArea
-          css={{ alignSelf: "center" }}
-          placeholder="Enter value..."
-        />
+        <Box
+          css={{
+            alignSelf: "center",
+            color: theme.colors.foregroundContrastMain,
+            maxWidth: theme.spacing[31],
+          }}
+        >
+          <AutogrowTextArea placeholder="Enter value..." />
+        </Box>
 
         <CommandButton color="dark-ghost">
           <MicIcon />
