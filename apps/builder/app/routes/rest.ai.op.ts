@@ -1,5 +1,4 @@
 import type { ActionArgs } from "@remix-run/node";
-import { createApi } from "unsplash-js";
 import {
   operations,
   templateGenerator,
@@ -9,14 +8,8 @@ import {
   queryImagesAndMutateTemplate,
 } from "@webstudio-is/ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
-import { traverseTemplateAsync } from "@webstudio-is/jsx-utils";
-import type {
-  EmbedTemplateProp,
-  WsEmbedTemplate,
-} from "@webstudio-is/react-sdk";
 
 const RequestSchema = operations.ContextSchema;
 
