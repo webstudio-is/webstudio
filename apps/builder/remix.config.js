@@ -36,6 +36,8 @@ module.exports = {
     "node-fetch",
     "immerhin",
     "strip-indent",
+    "change-case",
+    "title-case",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
