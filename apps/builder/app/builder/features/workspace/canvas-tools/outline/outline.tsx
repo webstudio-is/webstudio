@@ -5,6 +5,7 @@ import { cssVars } from "@webstudio-is/css-vars";
 
 const angleVar = cssVars.define("angle");
 
+// Won't work in current FF/Safari, but outline will still work, just no animation.
 const propertyStyle = (
   <style>{`
     @property ${angleVar} {
