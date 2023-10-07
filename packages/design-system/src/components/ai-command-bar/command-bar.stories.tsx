@@ -1,6 +1,8 @@
 import { CommandBar } from "./command-bar";
 import { AutogrowTextArea } from "./autogrow-text-area";
+import { ScrollArea } from "../scroll-area";
 import { Box } from "../box";
+import { Grid } from "../grid";
 import {
   AiIcon,
   // StopIcon,
@@ -34,15 +36,17 @@ export const Demo = () => {
           <ChevronUpIcon />
         </CommandButton>
 
-        <Box
+        <Grid
           css={{
             alignSelf: "center",
             color: theme.colors.foregroundContrastMain,
             maxWidth: theme.spacing[31],
           }}
         >
-          <AutogrowTextArea placeholder="Enter value..." />
-        </Box>
+          <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
+            <AutogrowTextArea placeholder="Enter value..." />
+          </ScrollArea>
+        </Grid>
 
         <CommandButton color="dark-ghost">
           <MicIcon />
