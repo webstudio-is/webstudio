@@ -1,4 +1,4 @@
-import { CommandButton } from "./command-button";
+import { CommandBarButton } from "./command-bar-button";
 import { StorySection, StoryGrid } from "../storybook";
 import {
   AiIcon,
@@ -17,22 +17,22 @@ export const Demo = () => {
     <>
       <StorySection title="AI Menu Buttons">
         <StoryGrid horizontal css={{ backgroundColor: "#1D1D1D", padding: 8 }}>
-          <CommandButton color="dark-ghost">
+          <CommandBarButton color="dark-ghost">
             <ChevronUpIcon />
-          </CommandButton>
+          </CommandBarButton>
         </StoryGrid>
       </StorySection>
       <StorySection title="AI Buttons">
         <StoryGrid horizontal css={{ backgroundColor: "#1D1D1D", padding: 8 }}>
-          <CommandButton color="gradient">
+          <CommandBarButton color="gradient">
             <AiIcon />
-          </CommandButton>
-          <CommandButton color="gradient" disabled>
+          </CommandBarButton>
+          <CommandBarButton color="gradient" disabled>
             <AiIcon />
-          </CommandButton>
-          <CommandButton color="neutral-destructive" disabled>
+          </CommandBarButton>
+          <CommandBarButton color="neutral-destructive" disabled>
             <LargeXIcon />
-          </CommandButton>
+          </CommandBarButton>
         </StoryGrid>
       </StorySection>
       <StorySection title="Sound Buttons">
@@ -40,12 +40,12 @@ export const Demo = () => {
           horizontal
           css={{ backgroundColor: "#1D1D1D", padding: 8, color: "#FFF" }}
         >
-          <CommandButton color="dark-ghost">
+          <CommandBarButton color="dark-ghost">
             <MicIcon />
-          </CommandButton>
-          <CommandButton color="destructive">
+          </CommandBarButton>
+          <CommandBarButton color="destructive">
             <StopIcon />
-          </CommandButton>
+          </CommandBarButton>
         </StoryGrid>
       </StorySection>
     </>

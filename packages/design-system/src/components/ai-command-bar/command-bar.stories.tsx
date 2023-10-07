@@ -1,22 +1,20 @@
+import { useState } from "react";
 import {
+  AutogrowTextArea,
   CommandBar,
+  CommandBarButton,
   CommandBarContentPrompt,
   CommandBarContentSection,
   CommandBarContentSeparator,
   CommandBarTrigger,
-} from "./command-bar";
-import { AutogrowTextArea } from "./autogrow-text-area";
+} from "./index";
+import { Button, Flex, ScrollArea, Box, Grid, Text, theme } from "../..";
 import {
   AiIcon,
-  // StopIcon,
   MicIcon,
-  // LargeXIcon,
   ChevronUpIcon,
   ExternalLinkIcon,
 } from "@webstudio-is/icons";
-import { CommandButton } from "./command-button";
-import { Button, Flex, ScrollArea, Box, Grid, Text, theme } from "../..";
-import { useState } from "react";
 
 export default {
   title: "Library/AI Command Bar",
@@ -104,9 +102,9 @@ export const Demo = () => {
         content={commandBarContent}
       >
         <CommandBarTrigger>
-          <CommandButton color="dark-ghost">
+          <CommandBarButton color="dark-ghost">
             <ChevronUpIcon />
-          </CommandButton>
+          </CommandBarButton>
         </CommandBarTrigger>
 
         <Grid
@@ -122,12 +120,12 @@ export const Demo = () => {
           </ScrollArea>
         </Grid>
 
-        <CommandButton color="dark-ghost">
+        <CommandBarButton color="dark-ghost">
           <MicIcon />
-        </CommandButton>
-        <CommandButton color="gradient">
+        </CommandBarButton>
+        <CommandBarButton color="gradient">
           <AiIcon />
-        </CommandButton>
+        </CommandBarButton>
       </CommandBar>
     </Box>
   );

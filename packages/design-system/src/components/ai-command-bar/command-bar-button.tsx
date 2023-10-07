@@ -9,10 +9,10 @@ const RoundedButton = styled(Button, {
   width: "min-content",
 });
 
-export const CommandButton = forwardRef(
+export const CommandBarButton = forwardRef(
   ({ children, ...props }: CommandButtonProps, ref: Ref<HTMLButtonElement>) => {
     return <RoundedButton ref={ref} {...props} prefix={children} />;
   }
 );
 
-CommandButton.displayName = "CommandButton";
+CommandBarButton.displayName = "CommandButton";
