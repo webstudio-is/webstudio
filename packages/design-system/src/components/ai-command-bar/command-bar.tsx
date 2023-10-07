@@ -61,19 +61,19 @@ export const CommandBar = (props: Props) => {
   );
 };
 
-export const CommandBarTrigger = Collapsible.Trigger;
+export const CommandBarTrigger = (props: { children: ReactNode }) => (
+  <Collapsible.Trigger asChild {...props} />
+);
 
-CommandBarTrigger.defaultProps = {
-  asChild: true,
-};
-
-export const CommandBarContentSection = styled(Grid, {
-  margin: theme.spacing[9],
-});
-
-CommandBarContentSection.defaultProps = {
-  gap: 2,
-};
+export const CommandBarContentSection = (props: { children: ReactNode }) => (
+  <Grid
+    css={{
+      margin: theme.spacing[9],
+    }}
+    gap={2}
+    {...props}
+  />
+);
 
 export const CommandBarContentSeparator = styled(Separator.Root, {
   backgroundColor: "#323232",
@@ -85,6 +85,7 @@ const CommandBarContentPromptStyled = styled(Button, {
   p: theme.spacing[4],
   height: "auto",
 });
+
 const CommandBarContentPromptText = styled("span", {
   overflow: "auto",
   whiteSpace: "break-spaces",
@@ -99,5 +100,3 @@ export const CommandBarContentPrompt = (props: { children: ReactNode }) => {
     </CommandBarContentPromptStyled>
   );
 };
-
-CommandBar.displayName = "CommandBar";

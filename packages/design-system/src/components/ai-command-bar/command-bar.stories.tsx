@@ -23,7 +23,7 @@ export default {
 const CommandBarContent = () => {
   return (
     <>
-      <CommandBarContentSection gap={2}>
+      <CommandBarContentSection>
         <Text variant={"labelsSentenceCase"} align={"center"}>
           Welcome to Webstudio AI alpha!
         </Text>
