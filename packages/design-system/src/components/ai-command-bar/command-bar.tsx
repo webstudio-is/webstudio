@@ -1,3 +1,7 @@
+/**
+ * Implementation of the "ai command bar" component from:
+ * https://www.figma.com/file/xCBegXEWxROLqA1Y31z2Xo/%F0%9F%93%96-Webstudio-Design-Docs?node-id=7586%3A48927&mode=dev
+ */
 import * as Collapsible from "@radix-ui/react-collapsible";
 import * as Separator from "@radix-ui/react-separator";
 import { styled, theme } from "../../stitches.config";
@@ -12,21 +16,25 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+// @todo replace with theme variables, as of now they are no ready yet
 const borderRadius = 22;
+const backgroundColor = "#1D1D1D";
+const borderColor = "#323232";
+const boxShadow =
+  "0px 5px 17px 0px rgba(0, 0, 0, 0.30), 0px 2px 7px 0px rgba(0, 0, 0, 0.10)";
 
 const GridContainer = styled(Grid, {
   gridTemplateColumns: `max-content 1fr`,
   gridAutoColumns: "max-content",
   gridAutoFlow: "column",
   padding: theme.spacing[5],
-  backgroundColor: "#1D1D1D",
   borderRadius,
   variants: {
     open: {
       true: {
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0,
-        borderTop: "1px solid #323232",
+        borderTop: `1px solid ${borderColor}`,
       },
     },
   },
@@ -34,11 +42,10 @@ const GridContainer = styled(Grid, {
 
 const CollapsibleRoot = styled(Collapsible.Root, {
   color: theme.colors.foregroundContrastMain,
-  backgroundColor: "#1D1D1D",
+  backgroundColor,
   borderRadius,
-  border: "1px solid #323232",
-  boxShadow:
-    "0px 5px 17px 0px rgba(0, 0, 0, 0.30), 0px 2px 7px 0px rgba(0, 0, 0, 0.10)",
+  border: `1px solid ${borderColor}`,
+  boxShadow,
 });
 
 const CollapsibleContent = styled(Collapsible.Content, {
@@ -76,7 +83,7 @@ export const CommandBarContentSection = (props: { children: ReactNode }) => (
 );
 
 export const CommandBarContentSeparator = styled(Separator.Root, {
-  backgroundColor: "#323232",
+  backgroundColor: borderColor,
   height: 1,
 });
 
