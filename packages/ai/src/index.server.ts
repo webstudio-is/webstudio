@@ -1,8 +1,8 @@
 /** Chains */
-export * as commandDetect from "./chains/command-detect/chain";
-export * as copywriter from "./chains/copywriter/chain";
-export * as operations from "./chains/operations";
-export * as templateGenerator from "./chains/template-generator/chain";
+export * as commandDetect from "./chains/command-detect/index.server";
+export * as copywriter from "./chains/copywriter/index.server";
+export * as operations from "./chains/operations/index.server";
+export * as templateGenerator from "./chains/template-generator/index.server";
 
 /** Models */
 export {

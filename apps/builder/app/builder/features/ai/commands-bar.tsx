@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  TextInstanceSchema,
-  request,
-  type OperationsResponse,
-} from "@webstudio-is/ai";
+import { copywriter, type operations, request } from "@webstudio-is/ai";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { Button, InputField, Label, Text } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
@@ -53,7 +49,7 @@ const handleSubmit = async (
     throw new Error("Invalid prompt data");
   }
 
-  return request<OperationsResponse>(
+  return request<operations.Response>(
     [
       restAi(),
       {
@@ -67,7 +63,7 @@ const handleSubmit = async (
         if (operationId === "copywriter") {
           try {
             const jsonResponse = z
-              .array(TextInstanceSchema)
+              .array(copywriter.TextInstanceSchema)
               .parse(JSON.parse(untruncateJson(completion)));
 
             const currenTextInstance = jsonResponse.pop();
@@ -182,7 +178,7 @@ const $availableComponentsNames = computed(
 const parseComponentName = (name: string) =>
   name.replace("@webstudio-is/sdk-components-react-radix:", "Radix.");
 // When AI generation is done we need to restore components namespaces.
-const restoreComponentsNamespace = (operations: OperationsResponse) => {
+const restoreComponentsNamespace = (operations: operations.WsOperations) => {
   for (const operation of operations) {
     if (operation.operation === "insertTemplate") {
       traverseTemplate(operation.template, (node) => {

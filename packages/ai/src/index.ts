@@ -1,18 +1,8 @@
 /** Chains */
-export {
-  type Response as CopywriterResponse,
-  ResponseSchema as CopywriterResponseSchema,
-  collectTextInstances,
-  TextInstanceSchema,
-} from "./chains/copywriter/chain";
-export {
-  type Response as OperationsResponse,
-  ResponseSchema as OperationsResponseSchema,
-} from "./chains/operations";
-export {
-  type Response as TemplateGeneratorResponse,
-  ResponseSchema as TemplateGeneratorResponseSchema,
-} from "./chains/template-generator/chain";
+export * as commandDetect from "./chains/command-detect/index.server";
+export * as copywriter from "./chains/copywriter/index.server";
+export * as operations from "./chains/operations/index.server";
+export * as templateGenerator from "./chains/template-generator/index.server";
 
 /** Utils */
 export * from "./utils/request";

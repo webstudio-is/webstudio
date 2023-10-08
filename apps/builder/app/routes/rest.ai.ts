@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { ActionArgs } from "@remix-run/node";
 import {
+  copywriter,
   commandDetect,
   operations,
   templateGenerator,
@@ -8,7 +9,6 @@ import {
   type GPTModelMessageFormat,
   createErrorResponse,
   type ModelMessage,
-  copywriter,
 } from "@webstudio-is/ai/index.server";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
@@ -108,7 +108,9 @@ export const action = async ({ request }: ActionArgs) => {
     model: "gpt-3.5-turbo",
   });
 
-  // We first detect whether the request can be handled by the copywriter.
+  // Given a prompt, categorize the user request.
+  // Based on that we can then decide whether we should execute standalone chains
+  // or the operations chain which needs full context about the instances tree as JSX and CSS.
   const commandDetectChain = commandDetect.createChain<GPTModelMessageFormat>();
   const commandDetectResponse = await commandDetectChain({
     model,
@@ -177,6 +179,8 @@ export const action = async ({ request }: ActionArgs) => {
     };
   }
 
+  // If the request requires context about the instances tree use the Operations chain.
+
   model = createGptModel({
     apiKey: env.OPENAI_KEY,
     organization: env.OPENAI_ORG,
@@ -200,6 +204,11 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   llmMessages.push(...response.llmMessages);
+
+  // The operations chain can detect a user interface generation request.
+  // In such cases we let this chain select the insertion point
+  // and then handle the generation request with a standalone chain called template-generator
+  // that has a dedicate and comprehensive prompt.
 
   const generateTemplatePrompts = response.data.filter(
     (operation) => operation.operation === "generateTemplatePrompt"
@@ -238,7 +247,7 @@ export const action = async ({ request }: ActionArgs) => {
         };
       }
 
-      // Replace generateTemplatePrompt.wsOperation with actual generated template
+      // Replace generateTemplatePrompt.wsOperation with the AI-generated Webstudio template.
       const generateTemplatePrompt = generateTemplatePrompts[index];
       response.data[index] = {
         operation: "insertTemplate",

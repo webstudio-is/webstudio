@@ -1,6 +1,6 @@
 import { serverSyncStore } from "~/shared/sync";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
-import { OperationsResponse } from "@webstudio-is/ai";
+import { copywriter, operations } from "@webstudio-is/ai";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstance as _deleteInstance,
@@ -19,7 +19,7 @@ import type { DroppableTarget } from "~/shared/tree-utils";
 import { getStyleDeclKey, type StyleSource } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 
-export const applyOperations = (operations: OperationsResponse) => {
+export const applyOperations = (operations: operations.WsOperations) => {
   for (const operation of operations) {
     switch (operation.operation) {
       case "insertTemplate":
@@ -57,11 +57,11 @@ const insertTemplateByOp = (
   );
 
   // @todo Find a way to avoid the workaround below, peharps improving the prompt.
-  // Occasionally the LLM picks a component name as the insertion point.
+  // Occasionally the LLM picks a component name or the entire data-ws-id attribute as the insertion point.
   // Instead of throwing the otherwise correct operation we try to fix this here.
   if (
-    [...metas.keys()].some((ComponentName) =>
-      ComponentName.includes(operation.addTo)
+    [...metas.keys()].some((componentName) =>
+      componentName.includes(operation.addTo)
     )
   ) {
     const selectedInstance = selectedInstanceStore.get();

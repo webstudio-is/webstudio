@@ -15,12 +15,6 @@ export const ContextSchema = z.object({
   // The prompt provides the original user request.
   prompt: z.string(),
   commands: z.array(z.string()),
-  // z.array(
-  //   z.object({
-  //     name: z.string(),
-  //     description: z.string(),
-  //   })
-  // ),
 });
 export type Context = z.infer<typeof ContextSchema>;
 
@@ -70,7 +64,6 @@ export const createChain = <ModelMessageFormat>(): Chain<
     let detectedCommands = [];
     try {
       detectedCommands = ResponseSchema.parse(JSON.parse(completionText));
-      // const expectedCommands = new Set(commands.map(({ name }) => name));
       const expectedCommands = new Set(commands);
       for (const command of detectedCommands) {
         if (expectedCommands.has(command) === false) {
@@ -91,8 +84,6 @@ export const createChain = <ModelMessageFormat>(): Chain<
         llmMessages,
       };
     }
-
-    console.log(detectedCommands);
 
     return {
       ...completion,
