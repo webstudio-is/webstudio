@@ -49,7 +49,7 @@ const handleSubmit = async (
     throw new Error("Invalid prompt data");
   }
 
-  return request<operations.Response>(
+  const result = await request<operations.Response>(
     [
       restAi(),
       {
@@ -79,19 +79,19 @@ const handleSubmit = async (
         }
       },
     }
-  ).then((result) => {
-    if (result.success === true) {
-      if (result.type === "json" && result.id === "operations") {
-        restoreComponentsNamespace(result.data);
-        applyOperations(result.data);
-      }
-      return;
-    } else {
-      if (abortSignal.aborted === false) {
-        throw new Error(result.data.message);
-      }
+  );
+
+  if (result.success === true) {
+    if (result.type === "json" && result.id === "operations") {
+      restoreComponentsNamespace(result.data);
+      applyOperations(result.data);
     }
-  });
+    return;
+  } else {
+    if (abortSignal.aborted === false) {
+      throw new Error(result.data.message);
+    }
+  }
 };
 
 export const CommandsBar = () => {
@@ -108,7 +108,7 @@ export const CommandsBar = () => {
     <form
       method="POST"
       action={restAi()}
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
 
         if (isLoading) {
@@ -116,17 +116,19 @@ export const CommandsBar = () => {
         }
         abort.current = new AbortController();
 
-        handleSubmit(event, abort.current.signal)
-          .catch((error) => {
-            setError(error.message);
-          })
-          .finally(() => {
-            abort.current = undefined;
-            setIsLoading(false);
-          });
-
         setError(undefined);
         setIsLoading(true);
+
+        try {
+          await handleSubmit(event, abort.current.signal);
+        } catch (error) {
+          setError(
+            error instanceof Error ? error.message : "Something went wrong."
+          );
+        }
+
+        abort.current = undefined;
+        setIsLoading(false);
       }}
     >
       <Label>

@@ -17,6 +17,10 @@ export const editStyles = {
   aiOperation: editStylesAiOperation,
   wsOperation: editStylesWsOperation,
 };
+export type editStyles = {
+  aiOperation: editStylesAiOperation;
+  wsOperation: editStylesWsOperation;
+};
 
 import {
   aiOperation as generateTemplatePromptAiOperation,
@@ -25,6 +29,10 @@ import {
 export const generateTemplatePrompt = {
   aiOperation: generateTemplatePromptAiOperation,
   wsOperation: generateTemplatePromptWsOperation,
+};
+export type generateTemplatePrompt = {
+  aiOperation: editStylesAiOperation;
+  wsOperation: editStylesWsOperation;
 };
 
 import {
@@ -35,6 +43,10 @@ export const generateInsertTemplate = {
   aiOperation: generateInsertTemplateAiOperation,
   wsOperation: generateInsertTemplateWsOperation,
 };
+export type generateInsertTemplate = {
+  aiOperation: editStylesAiOperation;
+  wsOperation: editStylesWsOperation;
+};
 
 import {
   aiOperation as deleteInstanceAiOperation,
@@ -43,4 +55,8 @@ import {
 export const deleteInstance = {
   aiOperation: deleteInstanceAiOperation,
   wsOperation: deleteInstanceWsOperation,
+};
+export type deleteInstance = {
+  aiOperation: editStylesAiOperation;
+  wsOperation: editStylesWsOperation;
 };
