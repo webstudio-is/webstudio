@@ -102,7 +102,15 @@ export const useMediaRecorder = (
       latestSamples[latestSamplesIndex] = sampleMaxAmplitude;
       latestSamplesIndex = (latestSamplesIndex + 1) % latestSamples.length;
 
-      onReportSoundAmplitude?.(sampleMaxAmplitude / Math.max(...latestSamples));
+      // To not normalize amplitude around near zero values
+      const normalizeThreshold = 0.1;
+
+      // Normalize amplitude to be between 0 and 1, and against lastest samples.
+      // The idea to use latest samples for normalization
+      onReportSoundAmplitude?.(
+        sampleMaxAmplitude /
+          Math.max(normalizeThreshold, Math.max(...latestSamples))
+      );
 
       // New recording started, do cleanup and return
       if (id !== idRef.current) {
