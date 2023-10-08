@@ -67,12 +67,14 @@ export const useMediaRecorder = (
     setError(undefined);
     setState("recording");
 
-    const extension = MediaRecorder.isTypeSupported("audio/webm; codecs=opus")
+    const subtype = MediaRecorder.isTypeSupported("audio/webm; codecs=opus")
       ? "webm"
-      : "ogg";
+      : "mp4";
+    const mimeType =
+      subtype === "webm" ? `audio/${subtype}; codecs=opus` : `audio/${subtype}`;
 
     const recorder = new MediaRecorder(stream, {
-      mimeType: `audio/${extension}; codecs=opus`,
+      mimeType,
       ...options,
     });
 
@@ -127,9 +129,9 @@ export const useMediaRecorder = (
       chunks.push(event.data);
 
       if (recorder.state === "inactive") {
-        const audioFile = new File(chunks, "recording." + extension, {
+        const audioFile = new File(chunks, "recording." + subtype, {
           // Add type to be able to play in audio element
-          type: "audio/" + extension,
+          type: "audio/" + subtype,
         });
 
         if (audioFile.size > 0) {
