@@ -39,12 +39,12 @@ export const useMediaRecorder = (
         audio: true,
         video: false,
       });
-    } catch (e) {
+    } catch (error) {
       // Not allowed, do not start new recording
       isActiveRef.current = false;
 
-      if (e instanceof Error) {
-        setError(e);
+      if (error instanceof Error) {
+        setError(error);
         return;
       }
       setError(new Error("Unknown error"));
