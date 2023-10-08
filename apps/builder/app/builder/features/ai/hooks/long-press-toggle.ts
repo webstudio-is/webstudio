@@ -18,7 +18,7 @@ export const useLongPressToggle = (props: UseClickAndHoldProps) => {
   const currentTarget = useRef<Element>();
   const pointerDownTimeRef = useRef(0);
   const stateRef = useRef<"idle" | "active">("idle");
-  const keyMapRef = useRef<string[]>([]);
+  const keyMapRef = useRef(new Set<string>());
 
   const { longPressDuration = 1000 } = props;
 
@@ -72,21 +72,19 @@ export const useLongPressToggle = (props: UseClickAndHoldProps) => {
   });
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if (keyMapRef.current.includes(event.code)) {
+    if (keyMapRef.current.has(event.code)) {
       return;
     }
 
     if (event.code === "Enter" || event.code === "Space") {
-      keyMapRef.current.push(event.code);
+      keyMapRef.current.add(event.code);
       onPointerDown(event);
     }
   });
 
   const onKeyUp = useEffectEvent((event: KeyboardEvent) => {
     if (event.code === "Enter" || event.code === "Space") {
-      keyMapRef.current = keyMapRef.current.filter(
-        (code) => code !== event.code
-      );
+      keyMapRef.current.delete(event.code);
 
       handlePointerUp(event.nativeEvent);
     }
