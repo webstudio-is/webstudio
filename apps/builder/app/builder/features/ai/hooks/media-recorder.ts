@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { useRef, useState } from "react";
 import { useEffectEvent } from "./effect-event";
 
@@ -52,6 +51,7 @@ export const useMediaRecorder = (
     }
 
     // Recording was stopped, do not start new recording
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore wrong ts error based on isActiveRef.current = true above it think that isActiveRef.current is always true
     if (isActiveRef.current === false) {
       stream.getAudioTracks().forEach((track) => track.stop());
