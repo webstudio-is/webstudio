@@ -33,6 +33,7 @@ export const useMediaRecorder = (
     cancelRef.current = false;
 
     let stream: MediaStream;
+
     try {
       stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
@@ -88,11 +89,14 @@ export const useMediaRecorder = (
     const dataArray = new Float32Array(bufferLength);
 
     disposeRef.current = () => {
-      recorder.stop();
-      stream.getAudioTracks().forEach((track) => track.stop());
       source.disconnect();
       analyser.disconnect();
       audioContext.close();
+      // Safari bug: Calling `stop` on tracks delays next `getUserMedia` by 3-5s.
+      // Chrome: `stop` needed to remove recording tab indicator.
+      // @todo: Probably don't stop tracks in Safari, as subsequent getUserMedia blocks the main thread, and cause long-press logic to fail
+      stream.getAudioTracks().forEach((track) => track.stop());
+      recorder.stop();
     };
 
     const latestSamples = Array.from({ length: 10 }, () => 1);
