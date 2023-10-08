@@ -47,7 +47,7 @@
     "react-dom": "^18.2.0"
   },
   "dependencies": {
-    "@react-aria/utils": "^3.19.0",
+    "@react-aria/utils": "^3.21.0",
     "@webstudio-is/css-vars": "workspace:*",
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
