@@ -126,6 +126,7 @@ export const useMediaRecorder = (
 
       // Cancelled, do cleanup and return
       if (cancelRef.current) {
+        setState("inactive");
         chunks.length = 0;
         return;
       }
@@ -143,6 +144,7 @@ export const useMediaRecorder = (
           onReportSoundAmplitude?.(0);
         }
         chunks.length = 0;
+        setState("inactive");
       }
     };
 
@@ -153,7 +155,6 @@ export const useMediaRecorder = (
     isActiveRef.current = false;
     disposeRef.current?.();
     disposeRef.current = undefined;
-    setState("inactive");
   });
 
   const cancel = useEffectEvent(() => {

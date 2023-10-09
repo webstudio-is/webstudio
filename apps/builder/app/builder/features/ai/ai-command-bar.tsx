@@ -137,9 +137,21 @@ export const AiCommandBar = () => {
             <AutogrowTextArea
               autoFocus
               disabled={textAreaDisabled}
-              placeholder="Enter value..."
+              placeholder={
+                mediaRecorderState === "recording"
+                  ? "Recording voice ..."
+                  : isAudioTranscribing
+                  ? "Transcribing voice.."
+                  : "Enter value..."
+              }
               value={value}
               onChange={setValue}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  // @todo add text submit here
+                }
+              }}
             />
           </ScrollArea>
         </Grid>
