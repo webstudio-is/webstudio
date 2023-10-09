@@ -36,9 +36,7 @@ const handleSubmit = async (
   event: React.FormEvent<HTMLFormElement>,
   abortSignal: AbortSignal
 ) => {
-  const requestParams = Object.fromEntries(
-    new FormData(event.currentTarget).entries()
-  );
+  const requestParams = Object.fromEntries(new FormData(event.currentTarget));
 
   requestParams.components =
     typeof requestParams.components === "string"
@@ -85,10 +83,10 @@ const handleSubmit = async (
       applyOperations(result.data);
     }
     return;
-  } else {
-    if (abortSignal.aborted === false) {
-      throw new Error(result.data.message);
-    }
+  }
+
+  if (abortSignal.aborted === false) {
+    throw new Error(result.data.message);
   }
 };
 
