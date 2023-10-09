@@ -33,6 +33,7 @@ const style = css(commonStyle, {
   },
   "&:disabled": {
     color: theme.colors.foregroundDisabled,
+    // @todo: Ask Taylor if we should use the same color as the placeholder
     opacity: 0.6,
   },
   variants: {
