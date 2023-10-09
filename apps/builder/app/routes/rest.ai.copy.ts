@@ -18,7 +18,7 @@ export const RequestSchema = z.object({
 });
 
 export const action = async ({ request }: ActionArgs) => {
-  if (isFeatureEnabled("aiCopy") === false) {
+  if (isFeatureEnabled("ai") === false) {
     return {
       id: "ai",
       ...createErrorResponse({

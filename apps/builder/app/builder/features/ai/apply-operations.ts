@@ -1,6 +1,6 @@
 import { serverSyncStore } from "~/shared/sync";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
-import { copywriter, operations } from "@webstudio-is/ai";
+import { copywriter, type operations } from "@webstudio-is/ai";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstance as _deleteInstance,
@@ -41,7 +41,7 @@ export const applyOperations = (operations: operations.WsOperations) => {
 };
 
 const insertTemplateByOp = (
-  operation: operations.generateInsertTemplate.wsOperation
+  operation: operations.generateInsertTemplateWsOperation
 ) => {
   const breakpoints = breakpointsStore.get();
   const breakpointValues = Array.from(breakpoints.values());
@@ -84,12 +84,12 @@ const insertTemplateByOp = (
 };
 
 const deleteInstanceByOp = (
-  operation: operations.deleteInstance.wsOperation
+  operation: operations.deleteInstanceWsOperation
 ) => {
   _deleteInstance([operation.wsId]);
 };
 
-const applyStylesByOp = (operation: operations.editStyles.wsOperation) => {
+const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
   serverSyncStore.createTransaction(
     [
       instancesStore,
