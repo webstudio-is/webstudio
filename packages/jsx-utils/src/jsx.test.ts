@@ -63,6 +63,32 @@ describe("jsx", () => {
 ]
 `);
   });
+
+  test.only("parses props values correctly", async () => {
+    const parsed = await jsxToWSEmbedTemplate(`
+      <Image src alt="welcome to webstudio" width={1000} height={200} />`);
+    expect(() => WsEmbedTemplate.parse(parsed)).not.toThrow();
+
+    expect(parsed[0].props).toMatchInlineSnapshot(`
+[
+  {
+    "name": "alt",
+    "type": "string",
+    "value": "welcome to webstudio",
+  },
+  {
+    "name": "width",
+    "type": "number",
+    "value": 1000,
+  },
+  {
+    "name": "height",
+    "type": "number",
+    "value": 200,
+  },
+]
+`);
+  });
 });
 
 const jsx = `
