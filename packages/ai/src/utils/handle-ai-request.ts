@@ -17,7 +17,7 @@ type RequestOptions = {
 };
 
 export const handleAiRequest = <ResponseData>(
-  request: ReturnType<typeof fetch>,
+  request: Promise<Response>,
   options?: RequestOptions
 ) => {
   return request
