@@ -7,7 +7,7 @@ export * as templateGenerator from "./chains/template-generator/index";
 /** Utils */
 export * from "./utils/handle-ai-request";
 export * from "./utils/create-error-response";
-export * from "./utils/streaming-text-response";
+export * from "./utils/remix-streaming-text-response";
 
 /** Types */
 export * from "./types";

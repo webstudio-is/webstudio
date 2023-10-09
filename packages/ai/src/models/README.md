@@ -8,10 +8,10 @@ Each vendor (eg. OpenAI) implementation follows the same API and is passed to [c
 export type Model<ModelMessageFormat> = {
   // Turns ModelMessages into a model-specific messages format.
   generateMessages: ModelGenerateMessages<ModelMessageFormat>;
-  // Regular request.
-  request: ModelRequest<ModelMessageFormat>;
-  // Streaming.
-  requestStream: ModelRequestStream<ModelMessageFormat>;
+  // JSON completion.
+  completion: ModelCompletion<ModelMessageFormat>;
+  // Streaming completion.
+  completionStream: ModelCompletionStream<ModelMessageFormat>;
 };
 ```
 

@@ -1,7 +1,7 @@
 import { createChunkDecoder } from "ai";
 import type { ModelResponse } from "../types";
 import { createErrorResponse } from "./create-error-response";
-import { StreamingTextResponse } from "./streaming-text-response";
+import { RemixStreamingTextResponse } from "./remix-streaming-text-response";
 
 type RequestOptions = {
   signal: AbortSignal;
@@ -75,7 +75,7 @@ export const handleAiRequest = <ResponseData>(
           id: operationId,
           type: "stream",
           success: true,
-          data: new StreamingTextResponse(
+          data: new RemixStreamingTextResponse(
             new Blob([completion], { type: "text/plain" }).stream()
           ),
           tokens: { prompt: -1, completion: -1 },
