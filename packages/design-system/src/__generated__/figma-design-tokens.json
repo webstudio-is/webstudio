@@ -551,6 +551,11 @@
           "value": "#e9ebed",
           "type": "color",
           "description": "disabled state for button"
+        },
+        "disabled-dark": {
+          "value": "#687076",
+          "type": "color",
+          "description": "For disabled controls that are against a dark background."
         }
       },
       "item": {
