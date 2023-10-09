@@ -33,7 +33,8 @@ const style = css(commonStyle, {
   },
   "&:disabled": {
     color: theme.colors.foregroundDisabled,
-    background: theme.colors.backgroundInputDisabled,
+    // @todo: Ask Taylor if we should use the same color as the placeholder
+    opacity: 0.6,
   },
   variants: {
     state: {

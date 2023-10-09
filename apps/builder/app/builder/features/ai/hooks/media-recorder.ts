@@ -7,10 +7,7 @@ const DEFAULT_OPTIONS: MediaRecorderOptions = {
 };
 
 export const useMediaRecorder = (
-  {
-    onComplete,
-    onReportSoundAmplitude,
-  }: {
+  props: {
     onComplete: (file: File) => void;
     onReportSoundAmplitude?: (amplitude: number) => void;
   },
@@ -23,6 +20,9 @@ export const useMediaRecorder = (
   const idRef = useRef(0);
   const [error, setError] = useState<Error>();
   const [state, setState] = useState<"inactive" | "recording">("inactive");
+
+  const onComplete = useEffectEvent(props.onComplete);
+  const onReportSoundAmplitude = useEffectEvent(props.onReportSoundAmplitude);
 
   const start = useEffectEvent(async () => {
     isActiveRef.current = true;

@@ -20,17 +20,86 @@ import {
   MicIcon,
   ChevronUpIcon,
   ExternalLinkIcon,
+  StopIcon,
 } from "@webstudio-is/icons";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
+import { useMediaRecorder } from "./hooks/media-recorder";
+import { useLongPressToggle } from "./hooks/long-press-toggle";
+import { restAi } from "~/shared/router-utils";
+
+const fetchTranscription = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${restAi()}/audio/transcriptions`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (response.ok === false) {
+    // @todo: show error
+    return;
+  }
+
+  // @todo add response parsing
+  const { text } = await response.json();
+
+  return text;
+};
 
 export const AiCommandBar = () => {
+  const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
+  const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
+  const recordButtonRef = useRef<HTMLButtonElement>(null);
+  const uploadIdRef = useRef(0);
+
+  const {
+    start,
+    stop,
+    cancel,
+    state: mediaRecorderState,
+  } = useMediaRecorder({
+    onComplete: async (file) => {
+      setIsAudioTranscribing(true);
+      uploadIdRef.current++;
+      const uploadId = uploadIdRef.current;
+      const text = await fetchTranscription(file);
+      if (uploadId !== uploadIdRef.current) {
+        return;
+      }
+      setValue(text);
+      setIsAudioTranscribing(false);
+    },
+    onReportSoundAmplitude: (amplitude) => {
+      recordButtonRef.current?.style.setProperty(
+        "--amplitude",
+        amplitude.toString()
+      );
+    },
+  });
+
+  const longPressToggleProps = useLongPressToggle({
+    onStart: () => {
+      setValue("");
+      start();
+    },
+    onEnd: stop,
+    onCancel: cancel,
+  });
 
   if (isAiCommandBarVisible === false) {
     return;
   }
+
+  const textAreaDisabled =
+    mediaRecorderState === "recording" || isAudioTranscribing;
+
+  const recordButtonDisabled = isAudioTranscribing;
+  const aiButtonDisabled =
+    mediaRecorderState === "recording" || isAudioTranscribing;
 
   return (
     <Box
@@ -65,14 +134,32 @@ export const AiCommandBar = () => {
           }}
         >
           <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
-            <AutogrowTextArea autoFocus placeholder="Enter value..." />
+            <AutogrowTextArea
+              autoFocus
+              disabled={textAreaDisabled}
+              placeholder="Enter value..."
+              value={value}
+              onChange={setValue}
+            />
           </ScrollArea>
         </Grid>
 
-        <CommandBarButton color="dark-ghost">
-          <MicIcon />
+        <CommandBarButton
+          disabled={recordButtonDisabled}
+          ref={recordButtonRef}
+          css={{
+            opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
+            transition: "opacity 0.1s ease-in-out",
+          }}
+          color={
+            mediaRecorderState === "recording" ? "destructive" : "dark-ghost"
+          }
+          {...longPressToggleProps}
+        >
+          {mediaRecorderState === "recording" ? <StopIcon /> : <MicIcon />}
         </CommandBarButton>
-        <CommandBarButton color="gradient">
+
+        <CommandBarButton color="gradient" disabled={aiButtonDisabled}>
           <AiIcon />
         </CommandBarButton>
       </CommandBar>
