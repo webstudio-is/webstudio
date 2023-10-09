@@ -25,9 +25,12 @@ import {
   EffectsSection,
   BoxShadowsSection,
   ListItemSection,
+  TransitionSection,
 } from "./sections";
 
 export const categories = [
+  /* Move back to bottom once done */
+  "transitions",
   "layout",
   "flexChild",
   "gridChild",
@@ -154,4 +157,5 @@ export const sections: Record<
   outline: OutlineSection,
   effects: EffectsSection,
   boxShadows: BoxShadowsSection,
+  transitions: TransitionSection,
 };
