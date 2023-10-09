@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
-import { prompt as promptSystemTemplate } from "./__generated__/edit.system.prompt";
-import { prompt as promptUserTemplate } from "./__generated__/edit.user.prompt";
+import { prompt as promptSystemTemplate } from "./__generated__/operations.system.prompt";
+import { prompt as promptUserTemplate } from "./__generated__/operations.user.prompt";
 
 import {
   AiOperationsSchema,
@@ -11,7 +11,7 @@ import {
   type WsOperations,
 } from "./shared";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { postProcessTemplate } from "../../utils/jsx-to-template";
+import { postProcessTemplate } from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
 
 /**
@@ -22,7 +22,7 @@ import { createErrorResponse } from "../../utils/create-error-response";
  */
 
 export const ContextSchema = z.object({
-  prompt: z.string().max(1200).describe("Edit request from the user"),
+  prompt: z.string().describe("Edit request from the user"),
   components: z.array(z.string()).describe("Available Webstudio components"),
   jsx: z.string().describe("Input JSX to edit"),
 });
@@ -94,6 +94,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
         id,
         ...createErrorResponse({
           status: 500,
+          error: "ai.parseError",
           debug: `Failed to parse completion ${parsedCompletion.error.message}`,
         }),
         tokens: completion.tokens,
@@ -118,6 +119,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
         id,
         ...createErrorResponse({
           status: 500,
+          error: "ai.parseError",
           debug: (
             "Failed to convert operations. " +
             (error instanceof Error ? error.message : "")

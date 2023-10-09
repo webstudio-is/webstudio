@@ -1,6 +1,6 @@
 import { serverSyncStore } from "~/shared/sync";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
-import { operations } from "@webstudio-is/ai";
+import { copywriter, type operations } from "@webstudio-is/ai";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstance as _deleteInstance,
@@ -18,19 +18,11 @@ import {
 import type { DroppableTarget } from "~/shared/tree-utils";
 import { getStyleDeclKey, type StyleSource } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
-import { traverseTemplate } from "@webstudio-is/jsx-utils";
 
-export const applyOperations = (operations: operations.Response) => {
+export const applyOperations = (operations: operations.WsOperations) => {
   for (const operation of operations) {
     switch (operation.operation) {
       case "insertTemplate":
-        traverseTemplate(operation.template, (node) => {
-          if (node.type === "instance" && node.component.startsWith("Radix.")) {
-            node.component =
-              "@webstudio-is/sdk-components-react-radix:" +
-              node.component.slice("Radix.".length);
-          }
-        });
         insertTemplateByOp(operation);
         break;
       case "deleteInstance":
@@ -49,7 +41,7 @@ export const applyOperations = (operations: operations.Response) => {
 };
 
 const insertTemplateByOp = (
-  operation: operations.generateInsertTemplate.wsOperation
+  operation: operations.generateInsertTemplateWsOperation
 ) => {
   const breakpoints = breakpointsStore.get();
   const breakpointValues = Array.from(breakpoints.values());
@@ -64,9 +56,14 @@ const insertTemplateByOp = (
     baseBreakpoint.id
   );
 
-  // Occasionally the LLM picks a component name as the insertion point.
+  // @todo Find a way to avoid the workaround below, peharps improving the prompt.
+  // Occasionally the LLM picks a component name or the entire data-ws-id attribute as the insertion point.
   // Instead of throwing the otherwise correct operation we try to fix this here.
-  if (metas.has(operation.addTo)) {
+  if (
+    [...metas.keys()].some((componentName) =>
+      componentName.includes(operation.addTo)
+    )
+  ) {
     const selectedInstance = selectedInstanceStore.get();
     if (selectedInstance) {
       operation.addTo = selectedInstance.id;
@@ -87,12 +84,12 @@ const insertTemplateByOp = (
 };
 
 const deleteInstanceByOp = (
-  operation: operations.deleteInstance.wsOperation
+  operation: operations.deleteInstanceWsOperation
 ) => {
   _deleteInstance([operation.wsId]);
 };
 
-const applyStylesByOp = (operation: operations.editStyles.wsOperation) => {
+const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
   serverSyncStore.createTransaction(
     [
       instancesStore,
@@ -150,4 +147,33 @@ const applyStylesByOp = (operation: operations.editStyles.wsOperation) => {
       }
     }
   );
+};
+
+export const patchTextInstance = (textInstance: copywriter.TextInstance) => {
+  serverSyncStore.createTransaction([instancesStore], (instances) => {
+    const currentInstance = instances.get(textInstance.instanceId);
+
+    if (
+      currentInstance === undefined ||
+      currentInstance.children.length === 0
+    ) {
+      return;
+    }
+
+    // Instances can have a number of text child nodes without interleaving components.
+    // When this is the case we treat the child nodes as a single text node,
+    // otherwise the AI would generate children.length chunks of separate text.
+    // We can identify this case of "joint" text instances when the index is -1.
+    const replaceAll = textInstance.index === -1;
+    if (replaceAll) {
+      if (currentInstance.children.every((child) => child.type === "text")) {
+        currentInstance.children = [{ type: "text", value: textInstance.text }];
+      }
+      return;
+    }
+
+    if (currentInstance.children[textInstance.index].type === "text") {
+      currentInstance.children[textInstance.index].value = textInstance.text;
+    }
+  });
 };

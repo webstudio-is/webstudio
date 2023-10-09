@@ -1,29 +1,24 @@
 import { z } from "zod";
 import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
-import { prompt as promptSystemTemplate } from "./__generated__/template-generator.system.prompt";
-import { prompt as promptUserTemplate } from "./__generated__/template-generator.user.prompt";
-import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
-import {
-  jsxToTemplate,
-  postProcessTemplate,
-} from "../../utils/jsx-to-template.server";
+import { prompt as promptSystemTemplate } from "./__generated__/command-detect.system.prompt";
+import { prompt as promptUserTemplate } from "./__generated__/command-detect.user.prompt";
 import { createErrorResponse } from "../../utils/create-error-response";
 
 /**
- * Template Generator Chain.
+ * Command Detect Chain
  *
- * Given a UI section or widget description, this chain generates a Webstudio Embed Template representing the UI.
+ * Given a prompt and a list of possible commands and descriptions, it returns an array of operations matching the prompt request.
  */
 
 export const ContextSchema = z.object({
   // The prompt provides the original user request.
   prompt: z.string(),
-  components: z.array(z.string()),
+  commands: z.array(z.string()),
 });
 export type Context = z.infer<typeof ContextSchema>;
 
-export const ResponseSchema = WsEmbedTemplate;
+export const ResponseSchema = z.array(z.string());
 export type Response = z.infer<typeof ResponseSchema>;
 
 export const createChain = <ModelMessageFormat>(): Chain<
@@ -32,16 +27,16 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
-    const id = "template-generator";
+    const id = "command-detect";
 
-    const { prompt, components } = context;
+    const { prompt, commands } = context;
 
     const llmMessages: ModelMessage[] = [
       [
         "system",
         formatPrompt(
           {
-            components: components.join(", "),
+            commands: JSON.stringify(commands),
           },
           promptSystemTemplate
         ),
@@ -66,15 +61,21 @@ export const createChain = <ModelMessageFormat>(): Chain<
     const completionText = completion.data.choices[0];
     llmMessages.push(["assistant", completionText]);
 
-    let template: WsEmbedTemplate;
-
+    let detectedCommands = [];
     try {
-      template = await jsxToTemplate(completionText);
+      detectedCommands = ResponseSchema.parse(JSON.parse(completionText));
+      const expectedCommands = new Set(commands);
+      for (const command of detectedCommands) {
+        if (expectedCommands.has(command) === false) {
+          throw new Error("Invalid command name detected " + command);
+        }
+      }
     } catch (error) {
       return {
         id,
         ...createErrorResponse({
           status: 500,
+          error: "ai.parseError",
           debug: (
             "Failed to parse the completion " +
             (error instanceof Error ? error.message : "")
@@ -84,25 +85,9 @@ export const createChain = <ModelMessageFormat>(): Chain<
       };
     }
 
-    try {
-      postProcessTemplate(template, components);
-    } catch (error) {
-      return {
-        id,
-        ...createErrorResponse({
-          status: 500,
-          debug: (
-            "Invalid completion " +
-            (error instanceof Error ? error.message : "")
-          ).trim(),
-        }),
-        llmMessages,
-      };
-    }
-
     return {
       ...completion,
-      data: template,
+      data: detectedCommands,
       llmMessages,
     };
   };

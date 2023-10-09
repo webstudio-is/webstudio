@@ -4,19 +4,21 @@ import {
   createErrorResponse,
   createGptModel,
   type GPTModelMessageFormat,
-} from "@webstudio-is/ai";
+} from "@webstudio-is/ai/index.server";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { z } from "zod";
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 
-const RequestSchema = copywriter.ContextSchema.extend({
+export const RequestSchema = z.object({
   projectId: z.string(),
+  prompt: z.string().max(1200),
+  textInstances: z.array(copywriter.TextInstanceSchema),
 });
 
 export const action = async ({ request }: ActionArgs) => {
-  if (isFeatureEnabled("aiCopy") === false) {
+  if (isFeatureEnabled("ai") === false) {
     return {
       id: "ai",
       ...createErrorResponse({
