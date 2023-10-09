@@ -23,7 +23,7 @@
     "fontkit": "^2.0.2",
     "image-size": "^1.0.2",
     "immer": "^10.0.3",
-    "nanoid": "^4.0.2",
+    "nanoid": "^5.0.1",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {

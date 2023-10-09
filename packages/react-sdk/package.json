@@ -42,7 +42,7 @@
     "change-case": "^5.0.2",
     "html-tags": "^3.3.1",
     "jsep": "^1.3.8",
-    "nanoid": "^4.0.2",
+    "nanoid": "^5.0.1",
     "title-case": "^4.1.0"
   },
   "exports": {

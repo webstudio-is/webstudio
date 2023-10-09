@@ -75,7 +75,6 @@ export const registerContainers = () => {
   serverSyncStore.register("props", propsStore);
   serverSyncStore.register("dataSources", dataSourcesStore);
   serverSyncStore.register("assets", assetsStore);
-  clientSyncStore.register("commandMetas", $commandMetas);
   // synchronize whole states
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);
