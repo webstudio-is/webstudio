@@ -53,7 +53,7 @@ import {
   operations,
   templateGenerator,
   createGptModel
-  type GPTModelMessageFormat
+  type GptModelMessageFormat
 } from "@webstudio-is/ai";
 
 export async function handler({ request }) {
@@ -66,7 +66,7 @@ export async function handler({ request }) {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = operations.createChain<GPTModelMessageFormat>();
+  const chain = operations.createChain<GptModelMessageFormat>();
 
   const response = await chain({
     model,
@@ -90,7 +90,7 @@ export async function handler({ request }) {
       temperature: 0.2,
       model: "gpt-4",
     });
-    const chain = templateGenerator.createChain<GPTModelMessageFormat>();
+    const chain = templateGenerator.createChain<GptModelMessageFormat>();
 
     const results = await Promise.all(promptOperations.map(operation => chain({
       model,

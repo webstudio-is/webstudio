@@ -3,7 +3,7 @@ import {
   copywriter,
   createErrorResponse,
   createGptModel,
-  type GPTModelMessageFormat,
+  type GptModelMessageFormat,
 } from "@webstudio-is/ai/index.server";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
@@ -97,7 +97,7 @@ export const action = async ({ request }: ActionArgs) => {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = copywriter.createChain<GPTModelMessageFormat>();
+  const chain = copywriter.createChain<GptModelMessageFormat>();
 
   const response = await chain({
     model,

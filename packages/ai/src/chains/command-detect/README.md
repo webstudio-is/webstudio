@@ -10,7 +10,7 @@ Given a prompt and a list of possible commands and descriptions, it returns an a
 import {
   commandDetect,
   createGptModel
-  type GPTModelMessageFormat
+  type GptModelMessageFormat
 } from "@webstudio-is/ai";
 
 export async function handler({ request }) {
@@ -23,7 +23,7 @@ export async function handler({ request }) {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = commandDetect.createChain<GPTModelMessageFormat>();
+  const chain = commandDetect.createChain<GptModelMessageFormat>();
 
   const result = await chain({
     model,
