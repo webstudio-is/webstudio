@@ -33,7 +33,7 @@ const style = css(commonStyle, {
   },
   "&:disabled": {
     color: theme.colors.foregroundDisabled,
-    background: theme.colors.backgroundInputDisabled,
+    opacity: 0.6,
   },
   variants: {
     state: {
