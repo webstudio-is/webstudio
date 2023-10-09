@@ -28,7 +28,7 @@ import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
 import { restAi } from "~/shared/router-utils";
 
-const transcribeAudio = async (file: File) => {
+const fetchTranscription = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -66,7 +66,7 @@ export const AiCommandBar = () => {
       setIsAudioTranscribing(true);
       uploadIdRef.current++;
       const uploadId = uploadIdRef.current;
-      const text = await transcribeAudio(file);
+      const text = await fetchTranscription(file);
       if (uploadId !== uploadIdRef.current) {
         return;
       }
