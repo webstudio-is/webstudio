@@ -30,7 +30,6 @@ import {
   synchronizedComponentsMetaStores,
   dataSourceVariablesStore,
 } from "~/shared/nano-states";
-import { $commandMetas } from "~/shared/commands-emitter";
 
 enableMapSet();
 
