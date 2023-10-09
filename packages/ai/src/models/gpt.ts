@@ -7,7 +7,7 @@ import type {
   ModelGenerateMessages,
 } from "../types";
 import { createErrorResponse } from "../utils/create-error-response";
-import { StreamingTextResponse } from "../utils/streaming-text-response";
+import { RemixStreamingTextResponse } from "../utils/remix-streaming-text-response";
 
 export type Model = BaseModel<ModelMessageFormat>;
 export type ModelMessageFormat = OpenAI.Chat.Completions.ChatCompletionMessage;
@@ -117,7 +117,7 @@ export const createCompletionStream = (
         id,
         type: "stream",
         success: true,
-        data: new StreamingTextResponse(stream),
+        data: new RemixStreamingTextResponse(stream),
         tokens: {
           prompt: -1,
           completion: -1,
