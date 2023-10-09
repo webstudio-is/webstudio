@@ -373,6 +373,7 @@ export const color = {
   backgroundButtonHover: "#ffffff17",
   backgroundButtonPressed: "#0000001c",
   backgroundButtonDisabled: "#e9ebed",
+  backgroundButtonDisabledDark: "#687076",
   backgroundItemCurrent: "#096cff",
   backgroundItemCurrentChild: "#e1f0ff",
   backgroundItemCurrentHidden: "#7e868c",
