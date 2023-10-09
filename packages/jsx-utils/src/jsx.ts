@@ -14,12 +14,11 @@ import type { JsonObject } from "type-fest";
 export const jsxToWSEmbedTemplate = async (
   code: string
 ): Promise<WsEmbedTemplate> => {
-  const ast = parser.parseExpression(
-    code.replace(/^```(jsx)?/, "").replace(/```$/, ""),
-    {
-      plugins: ["jsx"],
-    }
-  );
+  code = code.trim();
+
+  const ast = parser.parseExpression(code, {
+    plugins: ["jsx"],
+  });
 
   if (ast.type === "JSXElement") {
     const template = await transform(ast, code);
