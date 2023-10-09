@@ -14,6 +14,7 @@ import {
   ScrollArea,
   Text,
   theme,
+  useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
   AiIcon,
@@ -55,6 +56,8 @@ export const AiCommandBar = () => {
   const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
   const uploadIdRef = useRef(0);
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
 
   const {
     start,
@@ -85,9 +88,16 @@ export const AiCommandBar = () => {
     onStart: () => {
       setValue("");
       start();
+      disableCanvasPointerEvents();
     },
-    onEnd: stop,
-    onCancel: cancel,
+    onEnd: () => {
+      stop();
+      enableCanvasPointerEvents();
+    },
+    onCancel: () => {
+      cancel();
+      enableCanvasPointerEvents();
+    },
   });
 
   if (isAiCommandBarVisible === false) {
@@ -139,9 +149,9 @@ export const AiCommandBar = () => {
               disabled={textAreaDisabled}
               placeholder={
                 mediaRecorderState === "recording"
-                  ? "Recording voice ..."
+                  ? "Recording voice..."
                   : isAudioTranscribing
-                  ? "Transcribing voice.."
+                  ? "Transcribing voice..."
                   : "Enter value..."
               }
               value={value}
