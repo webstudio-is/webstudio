@@ -8,15 +8,19 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { $dragAndDropState } from "~/shared/nano-states";
+import {
+  $dragAndDropState,
+  $isAiCommandBarVisible,
+} from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { BugIcon, HelpIcon } from "@webstudio-is/icons";
+import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const none = { TabContent: () => null };
 
@@ -30,6 +34,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [clientSettings] = useClientSettings();
   const [helpIsOpen, setHelpIsOpen] = useState(false);
+  const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
 
   useSubscribe("clickCanvas", () => {
     setActiveTab("none");
@@ -64,6 +69,17 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               {tabName === "none" ? null : panels[tabName].icon}
             </SidebarTabsTrigger>
           ))}
+          {isFeatureEnabled("ai") && (
+            <SidebarTabsTrigger
+              aria-label="ai"
+              value={isAiCommandBarVisible ? activeTab : "ai"}
+              onClick={() => {
+                $isAiCommandBarVisible.set(!isAiCommandBarVisible);
+              }}
+            >
+              <AiIcon />
+            </SidebarTabsTrigger>
+          )}
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
           <HelpPopover onOpenChange={setHelpIsOpen}>
