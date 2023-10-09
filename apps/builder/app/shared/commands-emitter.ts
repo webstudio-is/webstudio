@@ -1,5 +1,5 @@
 import { isHotkeyPressed } from "react-hotkeys-hook";
-import { atom, onMount } from "nanostores";
+import { atom } from "nanostores";
 import { $publisher, subscribe } from "~/shared/pubsub";
 import { clientSyncStore } from "~/shared/sync";
 
@@ -40,6 +40,7 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
  * expose command metas to synchronize between builder, canvas and plugins
  */
 export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
+clientSyncStore.register("commandMetas", $commandMetas);
 
 export const createCommandsEmitter = <CommandName extends string>({
   source,
@@ -56,17 +57,10 @@ export const createCommandsEmitter = <CommandName extends string>({
   }
 
   if (commands.length > 0) {
-    onMount($commandMetas, () => {
-      // listener from sync-stores is called after onMount callback
-      // schedule store.set to the next tick
-      // so store.listen is executed after store.set below
-      Promise.resolve().then(() => {
-        clientSyncStore.createTransaction([$commandMetas], (commandMetas) => {
-          for (const { handler, ...meta } of commands) {
-            commandMetas.set(meta.name, meta);
-          }
-        });
-      });
+    clientSyncStore.createTransaction([$commandMetas], (commandMetas) => {
+      for (const { handler, ...meta } of commands) {
+        commandMetas.set(meta.name, meta);
+      }
     });
   }
 
