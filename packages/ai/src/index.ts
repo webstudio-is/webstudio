@@ -5,7 +5,7 @@ export * as operations from "./chains/operations/index";
 export * as templateGenerator from "./chains/template-generator/index";
 
 /** Utils */
-export * from "./utils/request";
+export * from "./utils/handle-ai-request";
 export * from "./utils/create-error-response";
 export * from "./utils/streaming-text-response";
 

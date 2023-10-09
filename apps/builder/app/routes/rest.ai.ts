@@ -6,7 +6,7 @@ import {
   operations,
   templateGenerator,
   createGptModel,
-  type GPTModelMessageFormat,
+  type GptModelMessageFormat,
   createErrorResponse,
   type ModelMessage,
 } from "@webstudio-is/ai/index.server";
@@ -111,7 +111,7 @@ export const action = async ({ request }: ActionArgs) => {
   // Given a prompt, categorize the user request.
   // Based on that we can then decide whether we should execute standalone chains
   // or the operations chain which needs full context about the instances tree as JSX and CSS.
-  const commandDetectChain = commandDetect.createChain<GPTModelMessageFormat>();
+  const commandDetectChain = commandDetect.createChain<GptModelMessageFormat>();
   const commandDetectResponse = await commandDetectChain({
     model,
     context: {
@@ -156,7 +156,7 @@ export const action = async ({ request }: ActionArgs) => {
     }
 
     const { instances } = await loadBuildByProjectId(projectId);
-    const copywriterChain = copywriter.createChain<GPTModelMessageFormat>();
+    const copywriterChain = copywriter.createChain<GptModelMessageFormat>();
     const copywriterResponse = await copywriterChain({
       model,
       context: {
@@ -188,7 +188,7 @@ export const action = async ({ request }: ActionArgs) => {
     model: "gpt-3.5-turbo-16k",
   });
 
-  const chain = operations.createChain<GPTModelMessageFormat>();
+  const chain = operations.createChain<GptModelMessageFormat>();
 
   const response = await chain({
     model,
@@ -223,7 +223,7 @@ export const action = async ({ request }: ActionArgs) => {
     });
 
     const generationChain =
-      templateGenerator.createChain<GPTModelMessageFormat>();
+      templateGenerator.createChain<GptModelMessageFormat>();
 
     const results = await Promise.all(
       generateTemplatePrompts.map((operation, index) =>

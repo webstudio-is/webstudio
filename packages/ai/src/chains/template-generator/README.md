@@ -12,7 +12,7 @@ Server side:
 import {
   templateGenerator,
   createGptModel
-  type GPTModelMessageFormat
+  type GptModelMessageFormat
 } from "@webstudio-is/ai";
 
 export async function handler({ request }) {
@@ -25,7 +25,7 @@ export async function handler({ request }) {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = templateGenerator.createChain<GPTModelMessageFormat>();
+  const chain = templateGenerator.createChain<GptModelMessageFormat>();
 
   const response = await chain({
     model,

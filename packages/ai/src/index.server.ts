@@ -7,13 +7,13 @@ export * as templateGenerator from "./chains/template-generator/index.server";
 /** Models */
 export {
   create as createGptModel,
-  type Model as GPTModel,
-  type ModelConfig as GPTModelConfig,
-  type ModelMessageFormat as GPTModelMessageFormat,
+  type Model as GptModel,
+  type ModelConfig as GptModelConfig,
+  type ModelMessageFormat as GptModelMessageFormat,
 } from "./models/gpt";
 
 /** Utils */
-export * from "./utils/request";
+export * from "./utils/handle-ai-request";
 export * from "./utils/create-error-response";
 export * from "./utils/streaming-text-response";
 

@@ -4,6 +4,7 @@ import { createErrorResponse } from "./create-error-response";
 import { StreamingTextResponse } from "./streaming-text-response";
 
 type RequestOptions = {
+  signal: AbortSignal;
   onChunk?: (
     operationId: string,
     data: {
@@ -15,12 +16,11 @@ type RequestOptions = {
   ) => void;
 };
 
-export const request = <ResponseData>(
-  fetchArgs: Parameters<typeof fetch>,
+export const handleAiRequest = <ResponseData>(
+  request: Promise<Response>,
   options?: RequestOptions
 ) => {
-  const signal = fetchArgs[1]?.signal;
-  return fetch(...fetchArgs)
+  return request
     .then(async (response) => {
       if (response.status !== 200) {
         return {
@@ -65,7 +65,7 @@ export const request = <ResponseData>(
             });
           }
 
-          if (signal?.aborted === true) {
+          if (options?.signal?.aborted === true) {
             reader.cancel();
             break;
           }
@@ -91,7 +91,8 @@ export const request = <ResponseData>(
         id: "",
         ...createErrorResponse({
           status: 500,
-          error: "ai.unhandledError",
+          error:
+            options?.signal?.aborted === true ? "aborted" : "ai.unhandledError",
           debug: error.message + "\n" + error.stack,
         }),
       } as const;

@@ -12,7 +12,7 @@ Server side:
 import {
   copywriter,
   createGptModel
-  type GPTModelMessageFormat
+  type GptModelMessageFormat
 } from "@webstudio-is/ai";
 
 export async function handler({ request }) {
@@ -25,7 +25,7 @@ export async function handler({ request }) {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = copywriter.createChain<GPTModelMessageFormat>();
+  const chain = copywriter.createChain<GptModelMessageFormat>();
 
   // Respond with a stream.
   return chain({

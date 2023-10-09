@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { copywriter, type operations, request } from "@webstudio-is/ai";
+import { copywriter, type operations, handleAiRequest } from "@webstudio-is/ai";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { Button, InputField, Label, Text } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
@@ -36,9 +36,7 @@ const handleSubmit = async (
   event: React.FormEvent<HTMLFormElement>,
   abortSignal: AbortSignal
 ) => {
-  const requestParams = Object.fromEntries(
-    new FormData(event.currentTarget).entries()
-  );
+  const requestParams = Object.fromEntries(new FormData(event.currentTarget));
 
   requestParams.components =
     typeof requestParams.components === "string"
@@ -49,16 +47,14 @@ const handleSubmit = async (
     throw new Error("Invalid prompt data");
   }
 
-  const result = await request<operations.Response>(
-    [
-      restAi(),
-      {
-        method: "POST",
-        body: JSON.stringify(requestParams),
-        signal: abortSignal,
-      },
-    ],
+  const result = await handleAiRequest<operations.Response>(
+    fetch(restAi(), {
+      method: "POST",
+      body: JSON.stringify(requestParams),
+      signal: abortSignal,
+    }),
     {
+      signal: abortSignal,
       onChunk: (operationId, { completion }) => {
         if (operationId === "copywriter") {
           try {
@@ -87,10 +83,10 @@ const handleSubmit = async (
       applyOperations(result.data);
     }
     return;
-  } else {
-    if (abortSignal.aborted === false) {
-      throw new Error(result.data.message);
-    }
+  }
+
+  if (abortSignal.aborted === false) {
+    throw new Error(result.data.message);
   }
 };
 
