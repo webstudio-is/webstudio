@@ -9,6 +9,7 @@ import {
   postProcessTemplate,
 } from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
+import { getCode } from "../../utils/get-code";
 
 /**
  * Template Generator Chain.
@@ -69,7 +70,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     let template: WsEmbedTemplate;
 
     try {
-      template = await jsxToTemplate(completionText);
+      template = await jsxToTemplate(getCode(completionText, "jsx"));
     } catch (error) {
       return {
         id,

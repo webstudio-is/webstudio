@@ -122,10 +122,10 @@ export const action = async ({ request }: ActionArgs) => {
         // so that the LLM won't miscategorize the task and for example handle an "edit-style" request as a "write-copy" one.
         // During testing the LLM misdetected a stylistic request like "make it bold" as a request to rewrite the text to sound more "bold".
         "write-copy",
-        "generate-images",
+        "generate-user-interface",
         "edit-styles",
-        "generate-ui",
         "delete-elements",
+        "generate-images-only",
       ],
     },
   });
