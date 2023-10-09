@@ -13,7 +13,7 @@ export {
 } from "./models/gpt";
 
 /** Utils */
-export * from "./utils/request";
+export * from "./utils/handle-ai-request";
 export * from "./utils/create-error-response";
 export * from "./utils/streaming-text-response";
 
