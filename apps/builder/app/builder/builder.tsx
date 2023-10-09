@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
@@ -46,6 +46,8 @@ import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
+import { AiCommandBar } from "./features/ai/ai-command-bar";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 registerContainers();
 
@@ -108,13 +110,14 @@ const SidePanel = ({
   );
 };
 
-const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
+const Main = ({ children }: { children: ReactNode }) => (
   <Flex
     as="main"
     direction="column"
     css={{
       gridArea: "main",
       overflow: "hidden",
+      position: "relative",
     }}
   >
     {children}
@@ -318,6 +321,7 @@ export const Builder = ({
               }}
             />
           </Workspace>
+          {isFeatureEnabled("ai") && <AiCommandBar />}
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
           <SidebarLeft publish={publish} />

@@ -327,3 +327,5 @@ export type DragAndDropState = {
 export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
+
+export const $isAiCommandBarVisible = atom<boolean>(true);

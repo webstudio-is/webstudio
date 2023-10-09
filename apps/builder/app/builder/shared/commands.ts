@@ -84,5 +84,20 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         editingItemIdStore.set(targetInstanceId);
       },
     },
+
+    /*
+    // @todo: decide about keyboard shortcut, uncomment when ready
+    {
+      name: "toggleAiCommandBar",
+      defaultHotkeys: ["space"],
+      disableHotkeyOnContentEditable: true,
+      // this disables hotkey for inputs on style panel
+      // but still work for input on canvas which call event.preventDefault() in keydown handler
+      disableHotkeyOnFormTags: true,
+      handler: () => {
+        $isAiCommandBarVisible.set($isAiCommandBarVisible.get() === false);
+      },
+    },
+    */
   ],
 });
