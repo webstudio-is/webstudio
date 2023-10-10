@@ -1,4 +1,3 @@
-import { cssVars } from "@webstudio-is/css-vars";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +13,11 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
-const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
-const menuTriggerVisibilityOverrideVar = cssVars.define(
-  "menu-trigger-visibility-override"
-);
-const menuTriggerGradientVar = cssVars.define("menu-trigger-gradient");
+const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
+const menuTriggerVisibilityOverrideVar =
+  "--ws-style-source-menu-trigger-visibility-override";
+const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
+const visibility = `var(${menuTriggerVisibilityOverrideVar}, var(${menuTriggerVisibilityVar}))`;
 
 export const menuCssVars = ({
   show,
@@ -50,10 +49,7 @@ const MenuTrigger = styled("button", {
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   color: theme.colors.foregroundContrastMain,
-  visibility: cssVars.use(
-    menuTriggerVisibilityOverrideVar,
-    cssVars.use(menuTriggerVisibilityVar)
-  ),
+  visibility,
   "&:hover, &[data-state=open]": {
     ...menuCssVars({ show: true }),
     "&::after": {
@@ -64,10 +60,7 @@ const MenuTrigger = styled("button", {
       right: 0,
       width: "100%",
       height: "100%",
-      visibility: cssVars.use(
-        menuTriggerVisibilityOverrideVar,
-        cssVars.use(menuTriggerVisibilityVar)
-      ),
+      visibility,
       backgroundColor: theme.colors.backgroundButtonHover,
       borderTopRightRadius: theme.borderRadius[4],
       borderBottomRightRadius: theme.borderRadius[4],
@@ -82,11 +75,8 @@ const MenuTriggerGradient = styled(Box, {
   right: 0,
   width: theme.spacing[11],
   height: "100%",
-  visibility: cssVars.use(
-    menuTriggerVisibilityOverrideVar,
-    cssVars.use(menuTriggerVisibilityVar)
-  ),
-  background: cssVars.use(menuTriggerGradientVar),
+  visibility,
+  background: `var(${menuTriggerGradientVar})`,
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",
