@@ -100,7 +100,7 @@ const getRateLimitMemoized = memoize(
     // No ephemeralCache for the AI endpoint
     const ai = new Ratelimit({
       redis: kv,
-      limiter: Ratelimit.slidingWindow(20, "5 m"),
+      limiter: Ratelimit.slidingWindow(100, "5 m"),
       prefix: "ai",
     });
 
