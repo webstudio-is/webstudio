@@ -13,6 +13,7 @@ import {
   Grid,
   ScrollArea,
   Text,
+  Tooltip,
   theme,
   useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
@@ -22,8 +23,9 @@ import {
   ChevronUpIcon,
   ExternalLinkIcon,
   StopIcon,
+  LargeXIcon,
 } from "@webstudio-is/icons";
-import { useRef, useState } from "react";
+import { useRef, useState, type SyntheticEvent } from "react";
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
@@ -106,17 +108,24 @@ export const AiCommandBar = () => {
   const textAreaDisabled =
     mediaRecorderState === "recording" || isAudioTranscribing;
 
-  const recordButtonDisabled = isAudioTranscribing;
-
   const aiButtonDisabled =
     mediaRecorderState === "recording" || isAudioTranscribing;
 
-  const actionPlaceholder =
-    mediaRecorderState === "recording"
-      ? "Recording voice..."
-      : isAudioTranscribing
-      ? "Transcribing voice..."
-      : undefined;
+  const actionPlaceholder = isAudioTranscribing
+    ? "Transcribing voice..."
+    : mediaRecorderState === "recording"
+    ? "Recording voice..."
+    : undefined;
+
+  const recordButtonProps = isAudioTranscribing
+    ? {
+        onClick: (event: SyntheticEvent) => {
+          // Cancel transcription
+          uploadIdRef.current++;
+          setIsAudioTranscribing(false);
+        },
+      }
+    : longPressToggleProps;
 
   return (
     <Box
@@ -167,24 +176,53 @@ export const AiCommandBar = () => {
           </ScrollArea>
         </Grid>
 
-        <CommandBarButton
-          disabled={recordButtonDisabled}
-          ref={recordButtonRef}
-          css={{
-            opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
-            transition: "opacity 0.1s ease-in-out",
-          }}
-          color={
-            mediaRecorderState === "recording" ? "destructive" : "dark-ghost"
+        <Tooltip
+          side="top"
+          sideOffset={10}
+          delayDuration={100}
+          content={
+            isAudioTranscribing
+              ? "Cancel"
+              : mediaRecorderState === "recording"
+              ? "Stop recording"
+              : "Start recording"
           }
-          {...longPressToggleProps}
         >
-          {mediaRecorderState === "recording" ? <StopIcon /> : <MicIcon />}
-        </CommandBarButton>
+          <CommandBarButton
+            ref={recordButtonRef}
+            css={{
+              opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
+              transition: "opacity 0.1s ease-in-out",
+            }}
+            color={
+              isAudioTranscribing
+                ? "neutral"
+                : mediaRecorderState === "recording"
+                ? "destructive"
+                : "dark-ghost"
+            }
+            {...recordButtonProps}
+          >
+            {isAudioTranscribing ? (
+              <LargeXIcon />
+            ) : mediaRecorderState === "recording" ? (
+              <StopIcon />
+            ) : (
+              <MicIcon />
+            )}
+          </CommandBarButton>
+        </Tooltip>
 
-        <CommandBarButton color="gradient" disabled={aiButtonDisabled}>
-          <AiIcon />
-        </CommandBarButton>
+        <Tooltip
+          side="top"
+          sideOffset={10}
+          delayDuration={0}
+          content="Generate AI results"
+        >
+          <CommandBarButton color="gradient" disabled={aiButtonDisabled}>
+            <AiIcon />
+          </CommandBarButton>
+        </Tooltip>
       </CommandBar>
     </Box>
   );
