@@ -117,7 +117,6 @@ export const AiCommandBar = () => {
   let textAreaPlaceholder = "Enter value...";
   let textAreaValue = value;
   let textAreaDisabled = false;
-  let aiButtonDisabled = false;
 
   let recordButtonTooltipContent = "Start recording";
   let recordButtonColor: ComponentPropsWithoutRef<typeof Button>["color"] =
@@ -125,12 +124,13 @@ export const AiCommandBar = () => {
   let recordButtonProps: PartialButtonProps = longPressToggleProps;
   let recordButtonIcon = <MicIcon />;
 
+  let aiButtonDisabled = false;
+
   if (isAudioTranscribing) {
     textAreaPlaceholder = "Transcribing voice...";
     // Show placeholder instead
     textAreaValue = "";
     textAreaDisabled = true;
-    aiButtonDisabled = true;
 
     recordButtonTooltipContent = "Cancel";
     recordButtonColor = "neutral";
@@ -142,6 +142,8 @@ export const AiCommandBar = () => {
       },
     };
     recordButtonIcon = <LargeXIcon />;
+
+    aiButtonDisabled = true;
   }
 
   if (mediaRecorderState === "recording") {
