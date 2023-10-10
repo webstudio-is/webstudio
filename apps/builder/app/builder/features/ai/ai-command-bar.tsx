@@ -157,7 +157,7 @@ export const AiCommandBar = () => {
               value={value}
               onChange={setValue}
               onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
+                if (event.key === "Enter" && event.shiftKey === false) {
                   event.preventDefault();
                   // @todo add text submit here
                 }
