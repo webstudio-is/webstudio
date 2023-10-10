@@ -509,7 +509,7 @@ const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
 const ExportContent = () => {
-  const npxCommand = "npx webstudio-cli";
+  const npxCommand = "npx webstudio";
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
 
   return (

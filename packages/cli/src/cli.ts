@@ -38,7 +38,7 @@ export const main = async () => {
         alias: "help",
         type: "boolean",
       })
-      .scriptName("webstudio-cli")
+      .scriptName("webstudio")
       .usage(
         `Webstudio CLI (${packageJson.version}) allows you to setup, sync, build and preview your project.`
       );

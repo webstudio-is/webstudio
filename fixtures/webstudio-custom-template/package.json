@@ -7,9 +7,9 @@
     "start": "remix-serve build",
     "checks": "pnpm typecheck",
     "size-test": "rm -rf ./public && remix build && size-limit",
-    "fixtures:link": "webstudio-cli link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/0d856812-61d8-4014-a20a-82e01c0eb8ee?authToken=d225fafb-4f20-4340-9359-c21df7c49a3f'",
-    "fixtures:sync": "webstudio-cli sync && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "webstudio-cli build --template ./custom-template --preview && pnpm prettier --write ./app/ ./package.json"
+    "fixtures:link": "webstudio link --link 'https://webstudio-builder-git-main-webstudio-is.vercel.app/builder/0d856812-61d8-4014-a20a-82e01c0eb8ee?authToken=d225fafb-4f20-4340-9359-c21df7c49a3f'",
+    "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "webstudio build --template ./custom-template --preview && pnpm prettier --write ./app/ ./package.json"
   },
   "private": true,
   "sideEffects": false,
@@ -36,7 +36,7 @@
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "typescript": "5.2.2",
-    "webstudio-cli": "workspace:*"
+    "webstudio": "workspace:*"
   },
   "engines": {
     "node": ">=18.0.0"
