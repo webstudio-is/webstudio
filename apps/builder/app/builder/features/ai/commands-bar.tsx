@@ -14,6 +14,7 @@ import {
   getIndexesWithinAncestors,
   getStyleRules,
   idAttribute,
+  componentAttribute,
 } from "@webstudio-is/react-sdk";
 import { createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
@@ -323,7 +324,7 @@ const $jsx = computed(
     }
 
     return `<style>{\`${engine.cssText.replace(/\n/gm, " ")}\`}</style>${jsx
-      .replace(new RegExp(`${idAttribute}="[^"]+"`, "g"), "")
+      .replace(new RegExp(`${componentAttribute}="[^"]+"`, "g"), "")
       .replace(/\n(data-)/g, " $1")}`;
   }
 );
