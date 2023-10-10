@@ -204,7 +204,7 @@ export const prebuild = async (options: {
     options.template.startsWith(".") === false
   ) {
     throw Error(
-      `\n Template ${options.template} is not available \n Please check webstudio-cli --help for more details`
+      `\n Template ${options.template} is not available \n Please check webstudio --help for more details`
     );
   }
 
