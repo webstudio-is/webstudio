@@ -15,6 +15,7 @@ import {
   Text,
   Tooltip,
   theme,
+  toast,
   useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
@@ -34,28 +35,9 @@ import {
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
-import { restAi } from "~/shared/router-utils";
 import { AiCommandBarButton } from "./ai-button";
-
-const fetchTranscription = async (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await fetch(`${restAi()}/audio/transcriptions`, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (response.ok === false) {
-    // @todo: show error
-    return;
-  }
-
-  // @todo add response parsing
-  const { text } = await response.json();
-
-  return text;
-};
+import { fetchTranscription } from "./ai-fetch-transcription";
+import { fetchResult } from "./ai-fetch-result";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -63,11 +45,13 @@ type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
 
 export const AiCommandBar = () => {
   const [value, setValue] = useState("");
+  const [prompts, setPrompts] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
+  const [isAiRequesting, setIsAiRequesting] = useState(false);
   const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
-  const uploadIdRef = useRef(0);
+  const guardIdRef = useRef(0);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
@@ -79,18 +63,23 @@ export const AiCommandBar = () => {
   } = useMediaRecorder({
     onComplete: async (file) => {
       setIsAudioTranscribing(true);
-      uploadIdRef.current++;
-      const uploadId = uploadIdRef.current;
+      guardIdRef.current++;
+      const guardId = guardIdRef.current;
       const text = await fetchTranscription(file);
-      if (uploadId !== uploadIdRef.current) {
+      if (guardId !== guardIdRef.current) {
         return;
       }
       setValue((previousText) => `${previousText} ${text}`);
       setIsAudioTranscribing(false);
+
+      setValue((value) => {
+        Promise.resolve(true).then(() => handleAiRequest(value));
+        return value;
+      });
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
-        "--amplitude",
+        "--ws-ai-command-bar-amplitude",
         amplitude.toString()
       );
     },
@@ -111,6 +100,37 @@ export const AiCommandBar = () => {
     },
   });
 
+  const handleAiRequest = async (prompt: string) => {
+    setIsAiRequesting(true);
+    guardIdRef.current++;
+    const guardId = guardIdRef.current;
+
+    // Skip Abort Logic for now
+    try {
+      await fetchResult(prompt, new AbortController().signal);
+      if (guardId !== guardIdRef.current) {
+        return;
+      }
+
+      setPrompts((previousPrompts) => [...previousPrompts, prompt]);
+
+      setValue("");
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+      if (error instanceof Error) {
+        toast(error.message);
+        return;
+      }
+      toast("Something went wrong");
+    }
+    setIsAiRequesting(false);
+  };
+
+  const handleAiButtonClick = () => {
+    handleAiRequest(value);
+  };
+
   if (isAiCommandBarVisible === false) {
     return;
   }
@@ -127,7 +147,7 @@ export const AiCommandBar = () => {
 
   let aiButtonTooltip: string | undefined = "Generate AI results";
   let aiButtonDisabled = value.length === 0;
-  const aiButtonPending = false;
+  let aiButtonPending = false;
 
   if (isAudioTranscribing) {
     textAreaPlaceholder = "Transcribing voice...";
@@ -140,7 +160,7 @@ export const AiCommandBar = () => {
     recordButtonProps = {
       onClick: (event: MouseEvent<HTMLButtonElement>) => {
         // Cancel transcription
-        uploadIdRef.current++;
+        guardIdRef.current++;
         setIsAudioTranscribing(false);
       },
     };
@@ -164,6 +184,26 @@ export const AiCommandBar = () => {
     aiButtonTooltip = undefined;
   }
 
+  if (isAiRequesting) {
+    textAreaDisabled = true;
+
+    recordButtonTooltipContent = "Cancel";
+    recordButtonColor = "neutral";
+    recordButtonProps = {
+      onClick: (event: MouseEvent<HTMLButtonElement>) => {
+        // Cancel AI request
+        guardIdRef.current++;
+        setIsAiRequesting(false);
+        alert("Not fully implemented, should abort changes");
+      },
+    };
+    recordButtonIcon = <LargeXIcon />;
+
+    aiButtonTooltip = undefined;
+    aiButtonDisabled = true;
+    aiButtonPending = true;
+  }
+
   return (
     <Box
       css={{
@@ -180,7 +220,7 @@ export const AiCommandBar = () => {
       <CommandBar
         open={open}
         onOpenChange={setOpen}
-        content={<CommandBarContent />}
+        content={<CommandBarContent prompts={prompts} />}
       >
         <CommandBarTrigger>
           <CommandBarButton color="dark-ghost">
@@ -206,7 +246,7 @@ export const AiCommandBar = () => {
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey === false) {
                   event.preventDefault();
-                  // @todo add text submit here
+                  handleAiRequest(value);
                 }
               }}
             />
@@ -222,8 +262,8 @@ export const AiCommandBar = () => {
           <CommandBarButton
             ref={recordButtonRef}
             css={{
-              "--amplitude": 0,
-              opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
+              "--ws-ai-command-bar-amplitude": 0,
+              opacity: "calc(1 - 0.5 * var(--ws-ai-command-bar-amplitude, 0))",
               transition: "opacity 0.1s ease-in-out",
             }}
             color={recordButtonColor}
@@ -243,6 +283,7 @@ export const AiCommandBar = () => {
             color="gradient"
             data-pending={aiButtonPending}
             disabled={aiButtonDisabled}
+            onClick={handleAiButtonClick}
           >
             <AiIcon />
           </AiCommandBarButton>
@@ -252,7 +293,7 @@ export const AiCommandBar = () => {
   );
 };
 
-const CommandBarContent = () => {
+const CommandBarContent = (props: { prompts: string[] }) => {
   const shortcutText = "⌘⇧Q";
   return (
     <>
@@ -296,19 +337,15 @@ const CommandBarContent = () => {
           Previous prompts
         </Text>
         <div />
-        <CommandBarContentPrompt>
-          Make a new section with a contact form
-        </CommandBarContentPrompt>
-        <CommandBarContentPrompt>
-          Add an image of a cat smiling wearing eyeglasses
-        </CommandBarContentPrompt>
-        <CommandBarContentPrompt>
-          Write a breakup letter for my girlfriend and make it long enough to
-          break into multiple lines
-        </CommandBarContentPrompt>
-        <CommandBarContentPrompt>
-          Make all headings bold
-        </CommandBarContentPrompt>
+        <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
+          <Grid gap={2}>
+            {props.prompts.map((prompt, index) => (
+              <CommandBarContentPrompt key={index}>
+                {prompt}
+              </CommandBarContentPrompt>
+            ))}
+          </Grid>
+        </ScrollArea>
       </CommandBarContentSection>
     </>
   );
