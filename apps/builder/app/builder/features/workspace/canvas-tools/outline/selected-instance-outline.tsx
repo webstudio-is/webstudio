@@ -29,7 +29,7 @@ export const SelectedInstanceOutline = () => {
   }
   const rect = applyScale(outline.rect, scale);
   return (
-    <Outline rect={rect}>
+    <Outline rect={rect} variant="collaboration">
       <Label instance={outline.instance} instanceRect={rect} />
     </Outline>
   );
