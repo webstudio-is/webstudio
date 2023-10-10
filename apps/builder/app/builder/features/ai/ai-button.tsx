@@ -7,7 +7,6 @@ import { CommandBarButton, styled, theme } from "@webstudio-is/design-system";
 
 export const AiCommandBarButton = styled(CommandBarButton, {
   // @todo switch to theme variables when available
-  // Increase specificity to override default button styles
   variants: {
     color: {
       gradient: {
