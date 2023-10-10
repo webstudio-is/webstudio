@@ -13,6 +13,7 @@ import {
   Grid,
   ScrollArea,
   Text,
+  Tooltip,
   theme,
   useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
@@ -22,12 +23,19 @@ import {
   ChevronUpIcon,
   ExternalLinkIcon,
   StopIcon,
+  LargeXIcon,
 } from "@webstudio-is/icons";
-import { useRef, useState } from "react";
+import {
+  useRef,
+  useState,
+  type MouseEvent,
+  type ComponentPropsWithoutRef,
+} from "react";
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
 import { restAi } from "~/shared/router-utils";
+import { AiCommandBarButton } from "./ai-button";
 
 const fetchTranscription = async (file: File) => {
   const formData = new FormData();
@@ -47,6 +55,10 @@ const fetchTranscription = async (file: File) => {
   const { text } = await response.json();
 
   return text;
+};
+
+type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
+  [key in keyof T]?: T[key];
 };
 
 export const AiCommandBar = () => {
@@ -103,20 +115,54 @@ export const AiCommandBar = () => {
     return;
   }
 
-  const textAreaDisabled =
-    mediaRecorderState === "recording" || isAudioTranscribing;
+  let textAreaPlaceholder = "Enter value...";
+  let textAreaValue = value;
+  let textAreaDisabled = false;
 
-  const recordButtonDisabled = isAudioTranscribing;
+  let recordButtonTooltipContent = "Start recording";
+  let recordButtonColor: ComponentPropsWithoutRef<typeof Button>["color"] =
+    "dark-ghost";
+  let recordButtonProps: PartialButtonProps = longPressToggleProps;
+  let recordButtonIcon = <MicIcon />;
 
-  const aiButtonDisabled =
-    mediaRecorderState === "recording" || isAudioTranscribing;
+  let aiButtonTooltip: string | undefined = "Generate AI results";
+  let aiButtonDisabled = value.length === 0;
+  const aiButtonPending = false;
 
-  const actionPlaceholder =
-    mediaRecorderState === "recording"
-      ? "Recording voice..."
-      : isAudioTranscribing
-      ? "Transcribing voice..."
-      : undefined;
+  if (isAudioTranscribing) {
+    textAreaPlaceholder = "Transcribing voice...";
+    // Show placeholder instead
+    textAreaValue = "";
+    textAreaDisabled = true;
+
+    recordButtonTooltipContent = "Cancel";
+    recordButtonColor = "neutral";
+    recordButtonProps = {
+      onClick: (event: MouseEvent<HTMLButtonElement>) => {
+        // Cancel transcription
+        uploadIdRef.current++;
+        setIsAudioTranscribing(false);
+      },
+    };
+    recordButtonIcon = <LargeXIcon />;
+
+    aiButtonTooltip = undefined;
+    aiButtonDisabled = true;
+  }
+
+  if (mediaRecorderState === "recording") {
+    textAreaPlaceholder = "Recording voice...";
+    // Show placeholder instead
+    textAreaValue = "";
+    textAreaDisabled = true;
+    aiButtonDisabled = true;
+
+    recordButtonTooltipContent = "Stop recording";
+    recordButtonColor = "destructive";
+    recordButtonIcon = <StopIcon />;
+
+    aiButtonTooltip = undefined;
+  }
 
   return (
     <Box
@@ -154,8 +200,8 @@ export const AiCommandBar = () => {
             <AutogrowTextArea
               autoFocus
               disabled={textAreaDisabled}
-              placeholder={actionPlaceholder ?? "Enter value..."}
-              value={actionPlaceholder !== undefined ? "" : value}
+              placeholder={textAreaPlaceholder}
+              value={textAreaValue}
               onChange={setValue}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey === false) {
@@ -167,60 +213,80 @@ export const AiCommandBar = () => {
           </ScrollArea>
         </Grid>
 
-        <CommandBarButton
-          disabled={recordButtonDisabled}
-          ref={recordButtonRef}
-          css={{
-            opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
-            transition: "opacity 0.1s ease-in-out",
-          }}
-          color={
-            mediaRecorderState === "recording" ? "destructive" : "dark-ghost"
-          }
-          {...longPressToggleProps}
+        <Tooltip
+          side="top"
+          sideOffset={10}
+          delayDuration={100}
+          content={recordButtonTooltipContent}
         >
-          {mediaRecorderState === "recording" ? <StopIcon /> : <MicIcon />}
-        </CommandBarButton>
+          <CommandBarButton
+            ref={recordButtonRef}
+            css={{
+              "--amplitude": 0,
+              opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
+              transition: "opacity 0.1s ease-in-out",
+            }}
+            color={recordButtonColor}
+            {...recordButtonProps}
+          >
+            {recordButtonIcon}
+          </CommandBarButton>
+        </Tooltip>
 
-        <CommandBarButton color="gradient" disabled={aiButtonDisabled}>
-          <AiIcon />
-        </CommandBarButton>
+        <Tooltip
+          side="top"
+          sideOffset={10}
+          delayDuration={0}
+          content={aiButtonTooltip}
+        >
+          <AiCommandBarButton
+            color="gradient"
+            data-pending={aiButtonPending}
+            disabled={aiButtonDisabled}
+          >
+            <AiIcon />
+          </AiCommandBarButton>
+        </Tooltip>
       </CommandBar>
     </Box>
   );
 };
 
 const CommandBarContent = () => {
+  const shortcutText = "⌘⇧Q";
   return (
     <>
       <CommandBarContentSection>
-        <Text variant={"labelsSentenceCase"} align={"center"}>
-          Welcome to Webstudio AI alpha!
-        </Text>
-        <div />
-        <Text variant={"labelsSentenceCase"}>
-          Ask me to generate or edit sections, text, or images.
-          <br /> For example you can say: ”Make a new contact section”
-        </Text>
-        <Flex align={"end"}>
-          <Button
-            color="dark"
-            css={{
-              width: theme.spacing[30],
-            }}
-            suffix={<ExternalLinkIcon />}
-          >
-            Learn more
-          </Button>
+        <Flex justify={"between"}>
           <Text
             variant={"labelsSentenceCase"}
             color={"subtle"}
-            css={{ flex: 1 }}
-            align={"center"}
+            css={{ visibility: "hidden" }}
           >
-            shortcut ⌘⇧Q
+            {shortcutText}
+          </Text>
+          <Text variant={"labelsSentenceCase"} align={"center"}>
+            Welcome to Webstudio AI alpha!
+          </Text>
+          <Text variant={"labelsSentenceCase"} color={"subtle"}>
+            {shortcutText}
           </Text>
         </Flex>
+        <div />
+        <Text variant={"labelsSentenceCase"}>
+          Ask me to generate or edit sections, text, or images.
+          <br />
+          For example you can say: ”Make a new contact section”
+        </Text>
+        {/* @todo: change color on theme when available */}
+        <Text variant={"labelsSentenceCase"} css={{ color: "#828486" }}>
+          Powered by ChatGPT - By using Webstudio AI, you consent to OpenAI
+          storing interactions without personal data.
+        </Text>
+        <div />
+        <Button color="dark" suffix={<ExternalLinkIcon />}>
+          Learn more
+        </Button>
       </CommandBarContentSection>
 
       <CommandBarContentSeparator />
