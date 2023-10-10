@@ -226,7 +226,7 @@ const CommandBarContent = () => {
 
       <CommandBarContentSection>
         <Text variant={"labelsSentenceCase"} align={"center"}>
-          Previous propmts
+          Previous prompts
         </Text>
         <div />
         <CommandBarContentPrompt>
