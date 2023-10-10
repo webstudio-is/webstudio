@@ -192,6 +192,7 @@ export const AiCommandBar = () => {
         // Cancel AI request
         guardIdRef.current++;
         setIsAiRequesting(false);
+        alert("Not fully implemented, should abort changes");
       },
     };
     recordButtonIcon = <LargeXIcon />;
