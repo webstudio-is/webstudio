@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const name = "delete-instance";
+
 const wsId = z.string().describe("The element's ws-id to remove");
 
 export const aiOperation = z.object({

@@ -2,9 +2,11 @@ import { z } from "zod";
 import { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseTailwindToWebstudio } from "@webstudio-is/css-data";
 
+export const name = "edit-styles";
+
 const wsId = z
   .string()
-  .describe("The element's ws-id that must get the new styles");
+  .describe("The data-ws-id value of the element being edited.");
 
 export const aiOperation = z.object({
   operation: z.literal("editStylesWithTailwindCSS"),

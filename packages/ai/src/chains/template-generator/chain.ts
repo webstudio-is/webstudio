@@ -17,6 +17,8 @@ import { getCode } from "../../utils/get-code";
  * Given a UI section or widget description, this chain generates a Webstudio Embed Template representing the UI.
  */
 
+export const name = "template-generator";
+
 export const ContextSchema = z.object({
   // The prompt provides the original user request.
   prompt: z.string(),
@@ -33,8 +35,6 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
-    const id = "template-generator";
-
     const { prompt, components } = context;
 
     const llmMessages: ModelMessage[] = [
@@ -53,7 +53,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     const messages = model.generateMessages(llmMessages);
 
     const completion = await model.completion({
-      id,
+      id: name,
       messages,
     });
 
@@ -73,7 +73,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
       template = await jsxToTemplate(getCode(completionText, "jsx"));
     } catch (error) {
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
           debug: (
@@ -89,7 +89,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
       postProcessTemplate(template, components);
     } catch (error) {
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
           debug: (

@@ -21,6 +21,8 @@ import { createErrorResponse } from "../../utils/create-error-response";
  * it generates a series of edit operations to fulfill an edit request coming from the user.
  */
 
+export const name = "operations";
+
 export const ContextSchema = z.object({
   prompt: z.string().describe("Edit request from the user"),
   components: z.array(z.string()).describe("Available Webstudio components"),
@@ -37,8 +39,6 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
-    const id = "operations";
-
     const { prompt, components, jsx } = context;
 
     const operationsSchema = zodToJsonSchema(
@@ -72,7 +72,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     const messages = model.generateMessages(llmMessages);
 
     const completion = await model.completion({
-      id,
+      id: name,
       messages,
     });
 
@@ -91,7 +91,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     );
     if (parsedCompletion.success === false) {
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
           error: "ai.parseError",
@@ -116,7 +116,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
       }
     } catch (error) {
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
           error: "ai.parseError",

@@ -163,4 +163,5 @@ export const getPublishedUrl = (domain: string) => {
   return `${protocol}//${domain}.${host}`;
 };
 
-export const restAi = () => `/rest/ai`;
+export const restAi = (subEndpoint?: "detect" | "copy") =>
+  typeof subEndpoint === "string" ? `/rest/ai/${subEndpoint}` : "/rest/ai";

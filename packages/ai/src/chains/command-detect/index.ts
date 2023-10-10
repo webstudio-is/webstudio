@@ -1,1 +1,1 @@
-export { type Response, ResponseSchema } from "./chain";
+export { name, type Response, ResponseSchema } from "./chain";
