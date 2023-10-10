@@ -65,7 +65,7 @@ const perColorStyle = (variant: ButtonColor) => ({
       : backgrounds[variant],
   color:
     variant === "dark-ghost"
-      ? theme.colors.foregroundMoreSubtle
+      ? theme.colors.foregroundSubtle
       : foregrounds[variant],
 
   "&[data-state=auto]:hover, &[data-state=hover]": {

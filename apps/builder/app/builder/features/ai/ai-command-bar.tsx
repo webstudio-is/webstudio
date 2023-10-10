@@ -14,6 +14,7 @@ import {
   ScrollArea,
   Text,
   theme,
+  useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
   AiIcon,
@@ -55,6 +56,8 @@ export const AiCommandBar = () => {
   const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
   const uploadIdRef = useRef(0);
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
 
   const {
     start,
@@ -70,7 +73,7 @@ export const AiCommandBar = () => {
       if (uploadId !== uploadIdRef.current) {
         return;
       }
-      setValue(text);
+      setValue((previousText) => `${previousText} ${text}`);
       setIsAudioTranscribing(false);
     },
     onReportSoundAmplitude: (amplitude) => {
@@ -83,11 +86,17 @@ export const AiCommandBar = () => {
 
   const longPressToggleProps = useLongPressToggle({
     onStart: () => {
-      setValue("");
       start();
+      disableCanvasPointerEvents();
     },
-    onEnd: stop,
-    onCancel: cancel,
+    onEnd: () => {
+      stop();
+      enableCanvasPointerEvents();
+    },
+    onCancel: () => {
+      cancel();
+      enableCanvasPointerEvents();
+    },
   });
 
   if (isAiCommandBarVisible === false) {
@@ -98,8 +107,16 @@ export const AiCommandBar = () => {
     mediaRecorderState === "recording" || isAudioTranscribing;
 
   const recordButtonDisabled = isAudioTranscribing;
+
   const aiButtonDisabled =
     mediaRecorderState === "recording" || isAudioTranscribing;
+
+  const actionPlaceholder =
+    mediaRecorderState === "recording"
+      ? "Recording voice..."
+      : isAudioTranscribing
+      ? "Transcribing voice..."
+      : undefined;
 
   return (
     <Box
@@ -137,9 +154,15 @@ export const AiCommandBar = () => {
             <AutogrowTextArea
               autoFocus
               disabled={textAreaDisabled}
-              placeholder="Enter value..."
-              value={value}
+              placeholder={actionPlaceholder ?? "Enter value..."}
+              value={actionPlaceholder !== undefined ? "" : value}
               onChange={setValue}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && event.shiftKey === false) {
+                  event.preventDefault();
+                  // @todo add text submit here
+                }
+              }}
             />
           </ScrollArea>
         </Grid>
@@ -204,7 +227,7 @@ const CommandBarContent = () => {
 
       <CommandBarContentSection>
         <Text variant={"labelsSentenceCase"} align={"center"}>
-          Previous propmts
+          Previous prompts
         </Text>
         <div />
         <CommandBarContentPrompt>
