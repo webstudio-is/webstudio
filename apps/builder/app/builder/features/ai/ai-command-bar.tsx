@@ -222,6 +222,7 @@ export const AiCommandBar = () => {
           <CommandBarButton
             ref={recordButtonRef}
             css={{
+              "--amplitude": 0,
               opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
               transition: "opacity 0.1s ease-in-out",
             }}
