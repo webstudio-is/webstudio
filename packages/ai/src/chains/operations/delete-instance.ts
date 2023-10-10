@@ -1,6 +1,9 @@
 import { z } from "zod";
+import { idAttribute } from "@webstudio-is/react-sdk";
 
-const wsId = z.string().describe("The element's ws-id to remove");
+export const name = "delete-instance";
+
+const wsId = z.string().describe(`The element's ${idAttribute} to remove`);
 
 export const aiOperation = z.object({
   operation: z.literal("deleteInstance"),

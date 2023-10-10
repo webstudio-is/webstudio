@@ -19,7 +19,7 @@ export async function handler({ request }) {
   const model = createGptModel({
     apiKey: process.env.OPENAI_KEY,
     organization: process.env.OPENAI_ORG,
-    temperature: 0.5,
+    temperature: 0,
     model: "gpt-3.5-turbo",
   });
 
@@ -29,11 +29,11 @@ export async function handler({ request }) {
     model,
     context: {
       prompt,
-      commands: [
-        "write-text",
-        "generate-images",
-        // ... a list of descriptive command names that you want to detect
-      ]
+      commands: {
+        "copywriter": "writes, rewrites, translates text",
+        "edit-styles": "edits styles",
+        // ...
+      }
     }
   });
 

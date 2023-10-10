@@ -1,20 +1,20 @@
+import { z } from "zod";
 import type { ActionArgs } from "@remix-run/node";
 import {
-  copywriter,
-  createErrorResponse,
+  commandDetect,
   createGptModel,
   type GptModelMessageFormat,
+  createErrorResponse,
+  copywriter,
+  operations,
 } from "@webstudio-is/ai/index.server";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
-import { z } from "zod";
+
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 
-export const RequestSchema = z.object({
-  projectId: z.string(),
+export const RequestParamsSchema = z.object({
   prompt: z.string().max(1200),
-  textInstances: z.array(copywriter.TextInstanceSchema),
 });
 
 export const action = async ({ request }: ActionArgs) => {
@@ -27,6 +27,7 @@ export const action = async ({ request }: ActionArgs) => {
         message: "The feature is not available",
         debug: "aiCopy feature disabled",
       }),
+      llmMessages: [],
     };
   }
 
@@ -38,6 +39,7 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid OpenAI API key",
       }),
+      llmMessages: [],
     };
   }
 
@@ -52,10 +54,11 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid OpenAI API organization",
       }),
+      llmMessages: [],
     };
   }
 
-  const parsed = RequestSchema.safeParse(await request.json());
+  const parsed = RequestParamsSchema.safeParse(await request.json());
 
   if (parsed.success === false) {
     return {
@@ -65,19 +68,13 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid request data",
       }),
+      llmMessages: [],
     };
   }
 
-  const { projectId, prompt, textInstances } = parsed.data;
-
-  // Permissions check
   const requestContext = await createContext(request);
-  const canEdit = await authorizeProject.hasProjectPermit(
-    { projectId: projectId, permit: "edit" },
-    requestContext
-  );
 
-  if (canEdit === false) {
+  if (requestContext.authorization.userId === undefined) {
     return {
       id: "ai",
       ...createErrorResponse({
@@ -86,30 +83,31 @@ export const action = async ({ request }: ActionArgs) => {
         message: "You don't have edit access to this project",
         debug: "Unauthorized access attempt",
       }),
+      llmMessages: [],
     };
   }
-  // End of Permissions check
+
+  const { prompt } = parsed.data;
 
   const model = createGptModel({
     apiKey: env.OPENAI_KEY,
     organization: env.OPENAI_ORG,
-    temperature: 0.5,
+    temperature: 0,
     model: "gpt-3.5-turbo",
   });
 
-  const chain = copywriter.createChain<GptModelMessageFormat>();
-
-  const response = await chain({
+  const commandDetectChain = commandDetect.createChain<GptModelMessageFormat>();
+  return commandDetectChain({
     model,
     context: {
       prompt,
-      textInstances,
+      commands: {
+        [copywriter.name]: "writes, rewrites, rephrases or translates text",
+        [operations.editStyles.name]: "edits styles",
+        [operations.generateTemplatePrompt.name]:
+          "handles a user interface generation request",
+        [operations.deleteInstance.name]: "deletes elements",
+      },
     },
   });
-
-  if (response.success) {
-    return response.data;
-  }
-
-  return response;
 };

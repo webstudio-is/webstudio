@@ -11,10 +11,13 @@ import { createErrorResponse } from "../../utils/create-error-response";
  * Given a prompt and a list of possible commands and descriptions, it returns an array of operations matching the prompt request.
  */
 
+export const name = "command-detect";
+
 export const ContextSchema = z.object({
   // The prompt provides the original user request.
   prompt: z.string(),
-  commands: z.array(z.string()),
+  // Command name - description pairs.
+  commands: z.record(z.string(), z.string()),
 });
 export type Context = z.infer<typeof ContextSchema>;
 
@@ -27,8 +30,6 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
-    const id = "command-detect";
-
     const { prompt, commands } = context;
 
     const llmMessages: ModelMessage[] = [
@@ -47,7 +48,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     const messages = model.generateMessages(llmMessages);
 
     const completion = await model.completion({
-      id,
+      id: name,
       messages,
     });
 
@@ -64,7 +65,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     let detectedCommands = [];
     try {
       detectedCommands = ResponseSchema.parse(JSON.parse(completionText));
-      const expectedCommands = new Set(commands);
+      const expectedCommands = new Set(Object.keys(commands));
       for (const command of detectedCommands) {
         if (expectedCommands.has(command) === false) {
           throw new Error("Invalid command name detected " + command);
@@ -72,7 +73,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
       }
     } catch (error) {
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
           error: "ai.parseError",

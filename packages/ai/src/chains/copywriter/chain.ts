@@ -14,6 +14,8 @@ import type { RemixStreamingTextResponse } from "../../utils/remix-streaming-tex
  * this chain generates copy for the instance and all its descendant text nodes.
  */
 
+export const name = "copywriter";
+
 export const TextInstanceSchema = z.object({
   instanceId: z.string(),
   index: z.number(),
@@ -46,7 +48,35 @@ export const createChain = <ModelMessageFormat>(): Chain<
   async function chain({ model, context }) {
     const { prompt, textInstances } = context;
 
-    const id = "copywriter";
+    if (textInstances.length === 0) {
+      const message = "No text nodes found for the instance";
+      return {
+        id: name,
+        ...createErrorResponse({
+          status: 404,
+          error: "ai.copywriter.textNodesNotFound",
+          message,
+          debug: message,
+        }),
+        llmMessages: [],
+      };
+    }
+
+    if (
+      z.array(TextInstanceSchema).safeParse(textInstances).success === false
+    ) {
+      const message = "Invalid nodes list";
+      return {
+        id: name,
+        ...createErrorResponse({
+          status: 404,
+          error: "ai.parseError",
+          message,
+          debug: message,
+        }),
+        llmMessages: [],
+      };
+    }
 
     const llmMessages: ModelMessage[] = [
       ["system", promptSystemTemplate],
@@ -62,40 +92,10 @@ export const createChain = <ModelMessageFormat>(): Chain<
       ],
     ];
 
-    if (textInstances.length === 0) {
-      const message = "No text nodes found for the instance";
-      return {
-        id,
-        ...createErrorResponse({
-          status: 404,
-          error: "ai.copywriter.textNodesNotFound",
-          message,
-          debug: message,
-        }),
-        llmMessages,
-      };
-    }
-
-    try {
-      z.array(TextInstanceSchema).parse(textInstances);
-    } catch (error) {
-      const message = "Invalid nodes list";
-      return {
-        id,
-        ...createErrorResponse({
-          status: 404,
-          error: "ai.parseError",
-          message,
-          debug: message,
-        }),
-        llmMessages,
-      };
-    }
-
     const messages = model.generateMessages(llmMessages);
 
     const response = await model.completionStream({
-      id,
+      id: name,
       messages,
     });
 

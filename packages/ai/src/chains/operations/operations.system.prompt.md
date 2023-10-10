@@ -6,4 +6,6 @@ The available operations are defined by the following JSON schema which you shou
 {operationsSchema}
 ```
 
+Properties value might contain descriptions with instructions on how to fill them out. When they do please keep those in mind when generating a completion.
+
 Respond with an array of operations as JSON and no other text. Start with [{"operation":
