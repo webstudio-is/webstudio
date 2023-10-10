@@ -35,25 +35,16 @@ export async function handler({ request }) {
     }
   });
 
-  if (response.success === false) {
-    return response;
-  }
+  // response.data contains the template
 
-  return {
-    success: true,
-    data: response.data,
-  };
+  return response;
 }
 ```
 
 Client side:
 
 ```tsx
-import {
-  templateGenerator,
-  request,
-  type ErrorResponse,
-} from "@webstudio-is/ai";
+import { templateGenerator, handleAiRequest } from "@webstudio-is/ai";
 
 function UiComponent() {
   const [error, setError] = useState();
@@ -75,16 +66,15 @@ function UiComponent() {
           return;
         }
 
-        request<templateGenerator.Response>([
-          "/rest/ai/template-generator",
-          {
+        handleAiRequest<templateGenerator.Response>(
+          fetch("/rest/ai/template-generator", {
             method: "POST",
             body: JSON.stringify({
               prompt,
               components: JSON.parse(components) || [],
             }),
-          },
-        ]).then((response) => {
+          })
+        ).then((response) => {
           if (response.success) {
             // Log the template
             console.log(response.data);

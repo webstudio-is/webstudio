@@ -1,12 +1,15 @@
 import { z } from "zod";
+import { idAttribute } from "@webstudio-is/react-sdk";
 
 // Currently this operation is used to prepare a context for the insert-template operations.
 // insert-template is processed as a regular chain in a separate LLM call. This is to produce better results.
 
+export const name = "generate-template-prompt";
+
 const wsId = z
   .string()
   .describe(
-    "Add the generated code to the element with this data-ws-id. Don't use element names for this value."
+    `The ${idAttribute} value of the host element. The result will  be added to this element.`
   );
 
 export const aiOperation = z.object({

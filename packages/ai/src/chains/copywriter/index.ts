@@ -1,4 +1,5 @@
 export {
+  name,
   type Response,
   ResponseSchema,
   type TextInstance,

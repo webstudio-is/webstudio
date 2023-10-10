@@ -1,15 +1,17 @@
 import { z } from "zod";
-import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
+import { WsEmbedTemplate, idAttribute } from "@webstudio-is/react-sdk";
 import { jsxToTemplate } from "../../utils/jsx-to-template.server";
 
 // Currently this operation is used is a separate LLM call after the main one has returned an insert-instance operation. This is to produce better results.
 // Effectively the aiOperation from this module is not used. The separate chain will call the LLM and we use the resulting completion to construct an aiOperation by hand
 // and pass it to this file's aiOperationToWs, replacing the initial insert-instance operation.
 
+export const name = "generate-insert-template";
+
 const wsId = z
   .string()
   .describe(
-    "Append the generated code to the element with this data-ws-id. Don't use element names for this value."
+    `The ${idAttribute} value of the host element. The result will  be added to this element.`
   );
 
 export const aiOperation = z.object({

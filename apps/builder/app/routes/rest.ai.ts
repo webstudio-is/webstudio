@@ -2,7 +2,6 @@ import { z } from "zod";
 import type { ActionArgs } from "@remix-run/node";
 import {
   copywriter,
-  commandDetect,
   operations,
   templateGenerator,
   createGptModel,
@@ -10,8 +9,11 @@ import {
   createErrorResponse,
   type ModelMessage,
 } from "@webstudio-is/ai/index.server";
+import {
+  copywriter as clientCopywriter,
+  operations as clientOperations,
+} from "@webstudio-is/ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
@@ -23,13 +25,20 @@ export const RequestParamsSchema = z.object({
   prompt: z.string().max(1200),
   components: z.array(z.string()),
   jsx: z.string(),
+  command: z.union([
+    // Using client* friendly imports because RequestParamsSchema
+    // is used to parse the form data on the client too.
+    z.literal(clientCopywriter.name),
+    z.literal(clientOperations.editStylesName),
+    z.literal(clientOperations.generateTemplatePromptName),
+    z.literal(clientOperations.deleteInstanceName),
+  ]),
 });
 
-export const maxDuration = 120;
+// Override Vercel's default serverless functions timeout.
+export const maxDuration = 120; // seconds
 
 export const action = async ({ request }: ActionArgs) => {
-  const llmMessages: ModelMessage[] = [];
-
   if (isFeatureEnabled("ai") === false) {
     return {
       id: "ai",
@@ -39,7 +48,7 @@ export const action = async ({ request }: ActionArgs) => {
         message: "The feature is not available",
         debug: "aiCopy feature disabled",
       }),
-      llmMessages,
+      llmMessages: [],
     };
   }
 
@@ -51,7 +60,7 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid OpenAI API key",
       }),
-      llmMessages,
+      llmMessages: [],
     };
   }
 
@@ -66,7 +75,7 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid OpenAI API organization",
       }),
-      llmMessages,
+      llmMessages: [],
     };
   }
 
@@ -80,11 +89,9 @@ export const action = async ({ request }: ActionArgs) => {
         status: 401,
         debug: "Invalid request data",
       }),
-      llmMessages,
+      llmMessages: [],
     };
   }
-
-  const { prompt, components, jsx, projectId, instanceId } = parsed.data;
 
   const requestContext = await createContext(request);
 
@@ -97,46 +104,14 @@ export const action = async ({ request }: ActionArgs) => {
         message: "You don't have edit access to this project",
         debug: "Unauthorized access attempt",
       }),
-      llmMessages,
+      llmMessages: [],
     };
   }
 
-  let model = createGptModel({
-    apiKey: env.OPENAI_KEY,
-    organization: env.OPENAI_ORG,
-    temperature: 0,
-    model: "gpt-3.5-turbo",
-  });
+  const { prompt, components, jsx, projectId, instanceId, command } =
+    parsed.data;
 
-  // Given a prompt, categorize the user request.
-  // Based on that we can then decide whether we should execute standalone chains
-  // or the operations chain which needs full context about the instances tree as JSX and CSS.
-  const commandDetectChain = commandDetect.createChain<GptModelMessageFormat>();
-  const commandDetectResponse = await commandDetectChain({
-    model,
-    context: {
-      prompt,
-      commands: [
-        // @todo Find a good way to pass only the features we want/need to detect
-        // without passing them all. As a safety measure we are currently passing them all
-        // so that the LLM won't miscategorize the task and for example handle an "edit-style" request as a "write-copy" one.
-        // During testing the LLM misdetected a stylistic request like "make it bold" as a request to rewrite the text to sound more "bold".
-        "write-copy",
-        "generate-user-interface",
-        "edit-styles",
-        "delete-elements",
-        "generate-images-only",
-      ],
-    },
-  });
-
-  llmMessages.push(...commandDetectResponse.llmMessages);
-
-  // If this is indeed a copy request use the copywriter chain.
-  if (
-    commandDetectResponse.success &&
-    commandDetectResponse.data.some((command) => command === "write-copy")
-  ) {
+  if (command === copywriter.name) {
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId: projectId, permit: "edit" },
       requestContext
@@ -144,18 +119,26 @@ export const action = async ({ request }: ActionArgs) => {
 
     if (canEdit === false) {
       return {
-        id: commandDetectResponse.id,
+        id: copywriter.name,
         ...createErrorResponse({
           error: "unauthorized",
           status: 401,
           message: "You don't have edit access to this project",
           debug: "Unauthorized access attempt",
         }),
-        llmMessages,
+        llmMessages: [],
       };
     }
 
     const { instances } = await loadBuildByProjectId(projectId);
+
+    const model = createGptModel({
+      apiKey: env.OPENAI_KEY,
+      organization: env.OPENAI_ORG,
+      temperature: 0,
+      model: "gpt-3.5-turbo",
+    });
+
     const copywriterChain = copywriter.createChain<GptModelMessageFormat>();
     const copywriterResponse = await copywriterChain({
       model,
@@ -168,20 +151,19 @@ export const action = async ({ request }: ActionArgs) => {
       },
     });
 
-    if (copywriterResponse.success) {
-      // Return the copywriter generation stream.
-      return copywriterResponse.data;
+    if (copywriterResponse.success === false) {
+      return copywriterResponse;
     }
 
-    return {
-      ...copywriterResponse,
-      llmMessages,
-    };
+    // Return the copywriter generation stream.
+    return copywriterResponse.data;
   }
 
   // If the request requires context about the instances tree use the Operations chain.
 
-  model = createGptModel({
+  const llmMessages: ModelMessage[] = [];
+
+  const model = createGptModel({
     apiKey: env.OPENAI_KEY,
     organization: env.OPENAI_ORG,
     temperature: 0,

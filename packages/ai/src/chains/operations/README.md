@@ -117,11 +117,16 @@ export async function handler({ request }) {
 Client side:
 
 ```tsx
-import { operations, request, type ErrorResponse } from "@webstudio-is/ai";
+import {
+  operations,
+  handleAiRequest
+} from "@webstudio-is/ai";
 import { applyOperations } from "./apply-operations";
 
-request<operations.Response>(
-  [
+const abortController = new AbortController();
+
+handleAiRequest<operations.Response>(
+  fetch(
     '/rest/ai/op',
     {
       method: 'POST',
@@ -129,11 +134,15 @@ request<operations.Response>(
         prompt,
         components: getAvailableComponentsFromWebstudioMetas(...),
         jsx: getJsxAndCssForSelectedInstance(...),
-      })
+      }),
+      signal: abortController.signal
     }
-  ]
+  ),
+  {
+    signal: abortController.signal
+  }
 ).then((result) => {
-  if (result.success) {
+  if (result.success === true && result.id === operations.name) {
     applyOperations(result.data);
   }
 });

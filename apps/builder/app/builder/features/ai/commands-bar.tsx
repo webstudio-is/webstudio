@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { copywriter, type operations, handleAiRequest } from "@webstudio-is/ai";
+import {
+  copywriter,
+  type operations,
+  handleAiRequest,
+  commandDetect,
+} from "@webstudio-is/ai";
 import { createCssEngine } from "@webstudio-is/css-engine";
 import { Button, InputField, Label, Text } from "@webstudio-is/design-system";
 import { SpinnerIcon } from "@webstudio-is/icons";
@@ -9,6 +14,7 @@ import {
   getIndexesWithinAncestors,
   getStyleRules,
   idAttribute,
+  componentAttribute,
 } from "@webstudio-is/react-sdk";
 import { createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
@@ -35,7 +41,7 @@ import { traverseTemplate } from "@webstudio-is/jsx-utils";
 const handleSubmit = async (
   event: React.FormEvent<HTMLFormElement>,
   abortSignal: AbortSignal
-) => {
+): Promise<string[]> => {
   const requestParams = Object.fromEntries(new FormData(event.currentTarget));
 
   requestParams.components =
@@ -43,51 +49,104 @@ const handleSubmit = async (
       ? JSON.parse(requestParams.components)
       : undefined;
 
-  if (RequestParamsSchema.safeParse(requestParams).success === false) {
-    throw new Error("Invalid prompt data");
+  if (
+    RequestParamsSchema.omit({ command: true }).safeParse(requestParams)
+      .success === false
+  ) {
+    return ["Invalid prompt data"];
   }
 
-  const result = await handleAiRequest<operations.Response>(
-    fetch(restAi(), {
+  const commandsResponse = await handleAiRequest<commandDetect.Response>(
+    fetch(restAi("detect"), {
       method: "POST",
-      body: JSON.stringify(requestParams),
+      body: JSON.stringify({ prompt: requestParams.prompt }),
       signal: abortSignal,
     }),
-    {
-      signal: abortSignal,
-      onChunk: (operationId, { completion }) => {
-        if (operationId === "copywriter") {
-          try {
-            const jsonResponse = z
-              .array(copywriter.TextInstanceSchema)
-              .parse(JSON.parse(untruncateJson(completion)));
-
-            const currenTextInstance = jsonResponse.pop();
-
-            if (currenTextInstance === undefined) {
-              return;
-            }
-
-            patchTextInstance(currenTextInstance);
-          } catch {
-            /**/
-          }
-        }
-      },
-    }
+    { signal: abortSignal }
   );
 
-  if (result.success === true) {
-    if (result.type === "json" && result.id === "operations") {
-      restoreComponentsNamespace(result.data);
-      applyOperations(result.data);
+  if (
+    commandsResponse.success === false ||
+    commandsResponse.type === "stream"
+  ) {
+    // Commands detection is not using streaming
+    // therefore this should never be the case.
+    // The check is here just for type safety.
+    if (commandsResponse.type === "stream") {
+      return ["Something went wrong."];
     }
-    return;
+
+    if (abortSignal.aborted === false) {
+      return [commandsResponse.data.message];
+    }
+
+    return [];
   }
 
-  if (abortSignal.aborted === false) {
-    throw new Error(result.data.message);
+  const promises = await Promise.allSettled(
+    commandsResponse.data.map((command) =>
+      handleAiRequest<operations.Response>(
+        fetch(restAi(), {
+          method: "POST",
+          body: JSON.stringify({ ...requestParams, command }),
+          signal: abortSignal,
+        }),
+        {
+          signal: abortSignal,
+          onChunk: (operationId, { completion }) => {
+            if (operationId === "copywriter") {
+              try {
+                const jsonResponse = z
+                  .array(copywriter.TextInstanceSchema)
+                  .parse(JSON.parse(untruncateJson(completion)));
+
+                const currenTextInstance = jsonResponse.pop();
+
+                if (currenTextInstance === undefined) {
+                  return;
+                }
+
+                patchTextInstance(currenTextInstance);
+              } catch {
+                /**/
+              }
+            }
+          },
+        }
+      )
+    )
+  );
+
+  const errors = [];
+
+  for (const promise of promises) {
+    if (promise.status === "fulfilled") {
+      const result = promise.value;
+
+      if (result.success === false) {
+        errors.push(result.data.message);
+        continue;
+      }
+
+      if (result.type !== "json") {
+        continue;
+      }
+
+      if (result.id === "operations") {
+        restoreComponentsNamespace(result.data);
+        applyOperations(result.data);
+        continue;
+      }
+
+      // Handle other commands responses below.
+      // ...
+      //
+    } else if (promise.status === "rejected") {
+      errors.push(promise.reason);
+    }
   }
+
+  return errors;
 };
 
 export const CommandsBar = () => {
@@ -116,11 +175,12 @@ export const CommandsBar = () => {
         setIsLoading(true);
 
         try {
-          await handleSubmit(event, abort.current.signal);
+          const errors = await handleSubmit(event, abort.current.signal);
+          if (errors.length > 0) {
+            setError(errors.join("\n"));
+          }
         } catch (error) {
-          setError(
-            error instanceof Error ? error.message : "Something went wrong."
-          );
+          setError("Something went wrong.");
         }
 
         abort.current = undefined;
@@ -143,6 +203,7 @@ export const CommandsBar = () => {
         name="instanceId"
         value={selectedInstanceSelector ? selectedInstanceSelector[0] : ""}
       />
+      <input type="hidden" name="command" value="" />
       <Button
         onClick={(event) => {
           if (isLoading) {
@@ -263,7 +324,7 @@ const $jsx = computed(
     }
 
     return `<style>{\`${engine.cssText.replace(/\n/gm, " ")}\`}</style>${jsx
-      .replace(new RegExp(`${idAttribute}="[^"]+"`, "g"), "")
+      .replace(new RegExp(`${componentAttribute}="[^"]+"`, "g"), "")
       .replace(/\n(data-)/g, " $1")}`;
   }
 );
