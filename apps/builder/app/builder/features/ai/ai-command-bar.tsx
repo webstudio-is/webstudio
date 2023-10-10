@@ -45,6 +45,7 @@ type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
 
 export const AiCommandBar = () => {
   const [value, setValue] = useState("");
+  const [prompts, setPrompts] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
@@ -111,7 +112,8 @@ export const AiCommandBar = () => {
         return;
       }
 
-      // @todo: Add result to previous prompts
+      setPrompts((previousPrompts) => [...previousPrompts, prompt]);
+
       setValue("");
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -218,7 +220,7 @@ export const AiCommandBar = () => {
       <CommandBar
         open={open}
         onOpenChange={setOpen}
-        content={<CommandBarContent />}
+        content={<CommandBarContent prompts={prompts} />}
       >
         <CommandBarTrigger>
           <CommandBarButton color="dark-ghost">
@@ -291,7 +293,7 @@ export const AiCommandBar = () => {
   );
 };
 
-const CommandBarContent = () => {
+const CommandBarContent = (props: { prompts: string[] }) => {
   const shortcutText = "⌘⇧Q";
   return (
     <>
@@ -335,19 +337,15 @@ const CommandBarContent = () => {
           Previous prompts
         </Text>
         <div />
-        <CommandBarContentPrompt>
-          Make a new section with a contact form
-        </CommandBarContentPrompt>
-        <CommandBarContentPrompt>
-          Add an image of a cat smiling wearing eyeglasses
-        </CommandBarContentPrompt>
-        <CommandBarContentPrompt>
-          Write a breakup letter for my girlfriend and make it long enough to
-          break into multiple lines
-        </CommandBarContentPrompt>
-        <CommandBarContentPrompt>
-          Make all headings bold
-        </CommandBarContentPrompt>
+        <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
+          <Grid gap={2}>
+            {props.prompts.map((prompt, index) => (
+              <CommandBarContentPrompt key={index}>
+                {prompt}
+              </CommandBarContentPrompt>
+            ))}
+          </Grid>
+        </ScrollArea>
       </CommandBarContentSection>
     </>
   );
