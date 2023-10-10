@@ -73,7 +73,7 @@ export const AiCommandBar = () => {
       if (uploadId !== uploadIdRef.current) {
         return;
       }
-      setValue(text);
+      setValue((previousText) => `${previousText} ${text}`);
       setIsAudioTranscribing(false);
     },
     onReportSoundAmplitude: (amplitude) => {
@@ -86,7 +86,6 @@ export const AiCommandBar = () => {
 
   const longPressToggleProps = useLongPressToggle({
     onStart: () => {
-      setValue("");
       start();
       disableCanvasPointerEvents();
     },
@@ -108,8 +107,16 @@ export const AiCommandBar = () => {
     mediaRecorderState === "recording" || isAudioTranscribing;
 
   const recordButtonDisabled = isAudioTranscribing;
+
   const aiButtonDisabled =
     mediaRecorderState === "recording" || isAudioTranscribing;
+
+  const actionPlaceholder =
+    mediaRecorderState === "recording"
+      ? "Recording voice..."
+      : isAudioTranscribing
+      ? "Transcribing voice..."
+      : undefined;
 
   return (
     <Box
@@ -147,14 +154,8 @@ export const AiCommandBar = () => {
             <AutogrowTextArea
               autoFocus
               disabled={textAreaDisabled}
-              placeholder={
-                mediaRecorderState === "recording"
-                  ? "Recording voice..."
-                  : isAudioTranscribing
-                  ? "Transcribing voice..."
-                  : "Enter value..."
-              }
-              value={value}
+              placeholder={actionPlaceholder ?? "Enter value..."}
+              value={actionPlaceholder !== undefined ? "" : value}
               onChange={setValue}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey === false) {
