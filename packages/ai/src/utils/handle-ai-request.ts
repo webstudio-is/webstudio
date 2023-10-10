@@ -18,7 +18,7 @@ type RequestOptions = {
 
 export const handleAiRequest = <ResponseData>(
   request: Promise<Response>,
-  options?: RequestOptions
+  options: RequestOptions
 ) => {
   return request
     .then(async (response) => {
