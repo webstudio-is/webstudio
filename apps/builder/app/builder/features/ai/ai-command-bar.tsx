@@ -25,7 +25,12 @@ import {
   StopIcon,
   LargeXIcon,
 } from "@webstudio-is/icons";
-import { useRef, useState, type SyntheticEvent } from "react";
+import {
+  useRef,
+  useState,
+  type MouseEvent,
+  type ComponentPropsWithoutRef,
+} from "react";
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
@@ -49,6 +54,10 @@ const fetchTranscription = async (file: File) => {
   const { text } = await response.json();
 
   return text;
+};
+
+type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
+  [key in keyof T]?: T[key];
 };
 
 export const AiCommandBar = () => {
@@ -105,27 +114,47 @@ export const AiCommandBar = () => {
     return;
   }
 
-  const textAreaDisabled =
-    mediaRecorderState === "recording" || isAudioTranscribing;
+  let textAreaPlaceholder = "Enter value...";
+  let textAreaValue = value;
+  let textAreaDisabled = false;
+  let aiButtonDisabled = false;
 
-  const aiButtonDisabled =
-    mediaRecorderState === "recording" || isAudioTranscribing;
+  let recordButtonTooltipContent = "Start recording";
+  let recordButtonColor: ComponentPropsWithoutRef<typeof Button>["color"] =
+    "dark-ghost";
+  let recordButtonProps: PartialButtonProps = longPressToggleProps;
+  let recordButtonIcon = <MicIcon />;
 
-  const actionPlaceholder = isAudioTranscribing
-    ? "Transcribing voice..."
-    : mediaRecorderState === "recording"
-    ? "Recording voice..."
-    : undefined;
+  if (isAudioTranscribing) {
+    textAreaPlaceholder = "Transcribing voice...";
+    // Show placeholder instead
+    textAreaValue = "";
+    textAreaDisabled = true;
+    aiButtonDisabled = true;
 
-  const recordButtonProps = isAudioTranscribing
-    ? {
-        onClick: (event: SyntheticEvent) => {
-          // Cancel transcription
-          uploadIdRef.current++;
-          setIsAudioTranscribing(false);
-        },
-      }
-    : longPressToggleProps;
+    recordButtonTooltipContent = "Cancel";
+    recordButtonColor = "neutral";
+    recordButtonProps = {
+      onClick: (event: MouseEvent<HTMLButtonElement>) => {
+        // Cancel transcription
+        uploadIdRef.current++;
+        setIsAudioTranscribing(false);
+      },
+    };
+    recordButtonIcon = <LargeXIcon />;
+  }
+
+  if (mediaRecorderState === "recording") {
+    textAreaPlaceholder = "Recording voice...";
+    // Show placeholder instead
+    textAreaValue = "";
+    textAreaDisabled = true;
+    aiButtonDisabled = true;
+
+    recordButtonTooltipContent = "Stop recording";
+    recordButtonColor = "destructive";
+    recordButtonIcon = <StopIcon />;
+  }
 
   return (
     <Box
@@ -163,8 +192,8 @@ export const AiCommandBar = () => {
             <AutogrowTextArea
               autoFocus
               disabled={textAreaDisabled}
-              placeholder={actionPlaceholder ?? "Enter value..."}
-              value={actionPlaceholder !== undefined ? "" : value}
+              placeholder={textAreaPlaceholder}
+              value={textAreaValue}
               onChange={setValue}
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey === false) {
@@ -180,13 +209,7 @@ export const AiCommandBar = () => {
           side="top"
           sideOffset={10}
           delayDuration={100}
-          content={
-            isAudioTranscribing
-              ? "Cancel"
-              : mediaRecorderState === "recording"
-              ? "Stop recording"
-              : "Start recording"
-          }
+          content={recordButtonTooltipContent}
         >
           <CommandBarButton
             ref={recordButtonRef}
@@ -194,22 +217,10 @@ export const AiCommandBar = () => {
               opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
               transition: "opacity 0.1s ease-in-out",
             }}
-            color={
-              isAudioTranscribing
-                ? "neutral"
-                : mediaRecorderState === "recording"
-                ? "destructive"
-                : "dark-ghost"
-            }
+            color={recordButtonColor}
             {...recordButtonProps}
           >
-            {isAudioTranscribing ? (
-              <LargeXIcon />
-            ) : mediaRecorderState === "recording" ? (
-              <StopIcon />
-            ) : (
-              <MicIcon />
-            )}
+            {recordButtonIcon}
           </CommandBarButton>
         </Tooltip>
 
