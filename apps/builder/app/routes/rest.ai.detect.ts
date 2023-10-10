@@ -17,8 +17,6 @@ export const RequestParamsSchema = z.object({
   prompt: z.string().max(1200),
 });
 
-export const maxDuration = 20;
-
 export const action = async ({ request }: ActionArgs) => {
   if (isFeatureEnabled("ai") === false) {
     return {
