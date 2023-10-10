@@ -34,28 +34,9 @@ import {
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
-import { restAi } from "~/shared/router-utils";
 import { AiCommandBarButton } from "./ai-button";
-
-const fetchTranscription = async (file: File) => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await fetch(`${restAi()}/audio/transcriptions`, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (response.ok === false) {
-    // @todo: show error
-    return;
-  }
-
-  // @todo add response parsing
-  const { text } = await response.json();
-
-  return text;
-};
+import { fetchTranscription } from "./ai-fetch-transcription";
+import { fetchResult } from "./ai-fetch-result";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -65,9 +46,10 @@ export const AiCommandBar = () => {
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
+  const [isAiRequesting, setIsAiRequesting] = useState(false);
   const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
-  const uploadIdRef = useRef(0);
+  const guardIdRef = useRef(0);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
@@ -79,14 +61,16 @@ export const AiCommandBar = () => {
   } = useMediaRecorder({
     onComplete: async (file) => {
       setIsAudioTranscribing(true);
-      uploadIdRef.current++;
-      const uploadId = uploadIdRef.current;
+      guardIdRef.current++;
+      const guardId = guardIdRef.current;
       const text = await fetchTranscription(file);
-      if (uploadId !== uploadIdRef.current) {
+      if (guardId !== guardIdRef.current) {
         return;
       }
       setValue((previousText) => `${previousText} ${text}`);
       setIsAudioTranscribing(false);
+
+      handleAiRequest();
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
@@ -111,6 +95,22 @@ export const AiCommandBar = () => {
     },
   });
 
+  const handleAiRequest = async () => {
+    setIsAiRequesting(true);
+    guardIdRef.current++;
+    const guardId = guardIdRef.current;
+
+    await fetchResult(value);
+
+    if (guardId !== guardIdRef.current) {
+      return;
+    }
+
+    setIsAiRequesting(false);
+    // @todo: Add result to previous prompts
+    setValue("");
+  };
+
   if (isAiCommandBarVisible === false) {
     return;
   }
@@ -127,7 +127,7 @@ export const AiCommandBar = () => {
 
   let aiButtonTooltip: string | undefined = "Generate AI results";
   let aiButtonDisabled = value.length === 0;
-  const aiButtonPending = false;
+  let aiButtonPending = false;
 
   if (isAudioTranscribing) {
     textAreaPlaceholder = "Transcribing voice...";
@@ -140,7 +140,7 @@ export const AiCommandBar = () => {
     recordButtonProps = {
       onClick: (event: MouseEvent<HTMLButtonElement>) => {
         // Cancel transcription
-        uploadIdRef.current++;
+        guardIdRef.current++;
         setIsAudioTranscribing(false);
       },
     };
@@ -162,6 +162,25 @@ export const AiCommandBar = () => {
     recordButtonIcon = <StopIcon />;
 
     aiButtonTooltip = undefined;
+  }
+
+  if (isAiRequesting) {
+    textAreaDisabled = true;
+
+    recordButtonTooltipContent = "Cancel";
+    recordButtonColor = "neutral";
+    recordButtonProps = {
+      onClick: (event: MouseEvent<HTMLButtonElement>) => {
+        // Cancel AI request
+        guardIdRef.current++;
+        setIsAiRequesting(false);
+      },
+    };
+    recordButtonIcon = <LargeXIcon />;
+
+    aiButtonTooltip = undefined;
+    aiButtonDisabled = true;
+    aiButtonPending = true;
   }
 
   return (
@@ -243,6 +262,7 @@ export const AiCommandBar = () => {
             color="gradient"
             data-pending={aiButtonPending}
             disabled={aiButtonDisabled}
+            onClick={handleAiRequest}
           >
             <AiIcon />
           </AiCommandBarButton>
