@@ -72,7 +72,9 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
           {isFeatureEnabled("ai") && (
             <SidebarTabsTrigger
               aria-label="ai"
-              value={isAiCommandBarVisible ? activeTab : "ai"}
+              value={
+                "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
+              }
               onClick={() => {
                 $isAiCommandBarVisible.set(!isAiCommandBarVisible);
               }}
