@@ -90,7 +90,7 @@ export const AiCommandBar = () => {
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
-        "--amplitude",
+        "--ws-ai-command-bar-amplitude",
         amplitude.toString()
       );
     },
@@ -222,8 +222,8 @@ export const AiCommandBar = () => {
           <CommandBarButton
             ref={recordButtonRef}
             css={{
-              "--amplitude": 0,
-              opacity: "calc(1 - 0.5 * var(--amplitude, 0))",
+              "--ws-ai-command-bar-amplitude": 0,
+              opacity: "calc(1 - 0.5 * var(--ws-ai-command-bar-amplitude, 0))",
               transition: "opacity 0.1s ease-in-out",
             }}
             color={recordButtonColor}
