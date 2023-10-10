@@ -15,6 +15,7 @@ import {
   Text,
   Tooltip,
   theme,
+  toast,
   useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
@@ -70,7 +71,10 @@ export const AiCommandBar = () => {
       setValue((previousText) => `${previousText} ${text}`);
       setIsAudioTranscribing(false);
 
-      handleAiRequest();
+      setValue((value) => {
+        Promise.resolve(true).then(() => handleAiRequest(value));
+        return value;
+      });
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
@@ -95,20 +99,34 @@ export const AiCommandBar = () => {
     },
   });
 
-  const handleAiRequest = async () => {
+  const handleAiRequest = async (prompt: string) => {
     setIsAiRequesting(true);
     guardIdRef.current++;
     const guardId = guardIdRef.current;
 
-    await fetchResult(value);
+    // Skip Abort Logic for now
+    try {
+      await fetchResult(prompt, new AbortController().signal);
+      if (guardId !== guardIdRef.current) {
+        return;
+      }
 
-    if (guardId !== guardIdRef.current) {
-      return;
+      // @todo: Add result to previous prompts
+      setValue("");
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+      if (error instanceof Error) {
+        toast(error.message);
+        return;
+      }
+      toast("Something went wrong");
     }
-
     setIsAiRequesting(false);
-    // @todo: Add result to previous prompts
-    setValue("");
+  };
+
+  const handleAiButtonClick = () => {
+    handleAiRequest(value);
   };
 
   if (isAiCommandBarVisible === false) {
@@ -225,7 +243,7 @@ export const AiCommandBar = () => {
               onKeyDown={(event) => {
                 if (event.key === "Enter" && event.shiftKey === false) {
                   event.preventDefault();
-                  // @todo add text submit here
+                  handleAiRequest(value);
                 }
               }}
             />
@@ -262,7 +280,7 @@ export const AiCommandBar = () => {
             color="gradient"
             data-pending={aiButtonPending}
             disabled={aiButtonDisabled}
-            onClick={handleAiRequest}
+            onClick={handleAiButtonClick}
           >
             <AiIcon />
           </AiCommandBarButton>
