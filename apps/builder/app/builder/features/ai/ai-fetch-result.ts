@@ -1,9 +1,7 @@
-// import { restAi } from "~/shared/router-utils";
-
 import { z } from "zod";
 import {
   copywriter,
-  type operations,
+  operations,
   handleAiRequest,
   commandDetect,
 } from "@webstudio-is/ai";
@@ -39,14 +37,14 @@ import { traverseTemplate } from "@webstudio-is/jsx-utils";
 export const fetchResult = async (
   prompt: string,
   abortSignal: AbortSignal
-): Promise<void> => {
+): Promise<string[]> => {
   const project = projectStore.get();
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   const availableComponentsNames = $availableComponentsNames.get();
-  const jsx = $jsx.get();
+  const [styles, jsx] = $jsx.get() || [];
 
   const requestParams = {
-    jsx: jsx ? JSON.stringify(jsx) : "",
+    jsx: `${styles}${jsx}`,
     components: availableComponentsNames,
     projectId: project?.id,
     instanceId: selectedInstanceSelector?.[0] ?? "",
@@ -57,7 +55,7 @@ export const fetchResult = async (
     RequestParamsSchema.omit({ command: true }).safeParse(requestParams)
       .success === false
   ) {
-    throw new Error("Invalid prompt data");
+    return ["Invalid prompt data"];
   }
 
   const commandsResponse = await handleAiRequest<commandDetect.Response>(
@@ -77,15 +75,14 @@ export const fetchResult = async (
     // therefore this should never be the case.
     // The check is here just for type safety.
     if (commandsResponse.type === "stream") {
-      // eslint-disable-next-line no-console
-      throw new Error("Something went wrong.");
+      return ["Something went wrong."];
     }
 
     if (abortSignal.aborted === false) {
-      throw new Error(commandsResponse.data.message);
+      return [commandsResponse.data.message];
     }
 
-    throw new Error("Unknown error");
+    return ["Something went wrong."];
   }
 
   const promises = await Promise.allSettled(
@@ -93,7 +90,10 @@ export const fetchResult = async (
       handleAiRequest<operations.Response>(
         fetch(restAi(), {
           method: "POST",
-          body: JSON.stringify({ ...requestParams, command }),
+          body: JSON.stringify({
+            ...requestParams,
+            command,
+          }),
           signal: abortSignal,
         }),
         {
@@ -151,9 +151,7 @@ export const fetchResult = async (
     }
   }
 
-  if (errors.length > 0) {
-    throw new Error(errors.join("\n"));
-  }
+  return errors;
 };
 
 const $availableComponentsNames = computed(
@@ -259,9 +257,13 @@ const $jsx = computed(
       });
     }
 
-    return `<style>{\`${engine.cssText.replace(/\n/gm, " ")}\`}</style>${jsx
-      .replace(new RegExp(`${componentAttribute}="[^"]+"`, "g"), "")
-      .replace(/\n(data-)/g, " $1")}`;
+    const css = engine.cssText.replace(/\n/gm, " ");
+    return [
+      css.length > 0 ? `<style>{\`${css}\`}</style>` : "",
+      jsx
+        .replace(new RegExp(`${componentAttribute}="[^"]+"`, "g"), "")
+        .replace(/\n(data-)/g, " $1"),
+    ];
   }
 );
 

@@ -49,6 +49,7 @@ export const AiCommandBar = () => {
   const [open, setOpen] = useState(false);
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
+  const abortController = useRef<AbortController>();
   const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
   const guardIdRef = useRef(0);
@@ -101,15 +102,21 @@ export const AiCommandBar = () => {
   });
 
   const handleAiRequest = async (prompt: string) => {
+    abortController.current = new AbortController();
     setIsAiRequesting(true);
     guardIdRef.current++;
     const guardId = guardIdRef.current;
 
     // Skip Abort Logic for now
     try {
-      await fetchResult(prompt, new AbortController().signal);
+      const errors = await fetchResult(prompt, abortController.current.signal);
+
       if (guardId !== guardIdRef.current) {
         return;
+      }
+
+      if (errors.length > 0) {
+        toast(errors.join("\n"));
       }
 
       setPrompts((previousPrompts) => [...previousPrompts, prompt]);
@@ -120,10 +127,11 @@ export const AiCommandBar = () => {
       console.error(error);
       if (error instanceof Error) {
         toast(error.message);
-        return;
+      } else {
+        toast("Something went wrong");
       }
-      toast("Something went wrong");
     }
+    abortController.current = undefined;
     setIsAiRequesting(false);
   };
 
@@ -194,7 +202,7 @@ export const AiCommandBar = () => {
         // Cancel AI request
         guardIdRef.current++;
         setIsAiRequesting(false);
-        alert("Not fully implemented, should abort changes");
+        abortController.current?.abort();
       },
     };
     recordButtonIcon = <LargeXIcon />;
