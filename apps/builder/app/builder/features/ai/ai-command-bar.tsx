@@ -26,7 +26,7 @@ import {
   StopIcon,
   LargeXIcon,
 } from "@webstudio-is/icons";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
@@ -50,16 +50,16 @@ export const AiCommandBar = () => {
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const { start, stop, cancel } = useMediaRecorder({
+  const { start, stop, cancel, state } = useMediaRecorder({
     onComplete: async (file) => {
-      setStatus("transcribing");
+      abortController.current?.abort();
       abortController.current = new AbortController();
+      setStatus("transcribing");
       try {
-        let prompt = await fetchTranscription(
+        const prompt = await fetchTranscription(
           file,
           abortController.current.signal
         );
-        prompt = prompt.trim().replace(/\.$/, "");
         setPrompt(prompt);
         handleAiRequest(prompt);
       } catch (error) {
@@ -78,25 +78,31 @@ export const AiCommandBar = () => {
     },
   });
 
+  useEffect(() => {
+    if (state === "recording") {
+      setStatus("recording");
+    } else {
+      setStatus("idle");
+    }
+  }, [state]);
+
   const recordButtonProps = useLongPressToggle({
     onStart: () => {
       start();
       disableCanvasPointerEvents();
-      setStatus("recording");
     },
     onEnd: () => {
       stop();
       enableCanvasPointerEvents();
-      setStatus("idle");
     },
     onCancel: () => {
       cancel();
       enableCanvasPointerEvents();
-      setStatus("idle");
     },
   });
 
   const handleAiRequest = async (prompt: string) => {
+    abortController.current?.abort();
     abortController.current = new AbortController();
     setStatus("ai");
 
