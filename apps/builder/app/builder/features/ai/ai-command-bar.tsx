@@ -60,8 +60,14 @@ export const AiCommandBar = () => {
           file,
           abortController.current.signal
         );
-        setPrompt(prompt);
-        handleAiRequest(prompt);
+        setPrompt((currentPrompt) => {
+          if (currentPrompt.trim().length > 0) {
+            const combinedPrompt = `${currentPrompt} ${prompt}`;
+            handleAiRequest(combinedPrompt);
+            return combinedPrompt;
+          }
+          return prompt;
+        });
       } catch (error) {
         if (abortController.current.signal.aborted === false) {
           toast("Something went wrong.");
