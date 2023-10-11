@@ -4,7 +4,7 @@ export const fetchTranscription = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${restAi()}/audio/transcriptions`, {
+  const response = await fetch(restAi("audio/transcriptions"), {
     method: "POST",
     body: formData,
   });
