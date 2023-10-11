@@ -147,7 +147,7 @@ export const queryImagesAndMutateTemplate = async ({
       imageInstances.add(instance);
     }
   });
-  await Promise.all(
+  await Promise.allSettled(
     Array.from(imageInstances).map((instance) =>
       queryImageAndMutateInstance(apiKey, instance)
     )
