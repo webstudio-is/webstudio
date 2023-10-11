@@ -71,7 +71,7 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidApiKey",
         status: 401,
-        debug: "Invalid Unsplash access key",
+        debug: "Invalid Pexels api key",
       }),
       llmMessages: [],
     };
