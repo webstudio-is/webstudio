@@ -36,7 +36,7 @@ export const RequestParamsSchema = z.object({
 });
 
 // Override Vercel's default serverless functions timeout.
-export const maxDuration = 120; // seconds
+export const maxDuration = 180; // seconds
 
 export const action = async ({ request }: ActionArgs) => {
   if (isFeatureEnabled("ai") === false) {
