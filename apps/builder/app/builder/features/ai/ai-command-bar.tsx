@@ -26,12 +26,7 @@ import {
   StopIcon,
   LargeXIcon,
 } from "@webstudio-is/icons";
-import {
-  useRef,
-  useState,
-  type MouseEvent,
-  type ComponentPropsWithoutRef,
-} from "react";
+import { useRef, useState } from "react";
 import { $isAiCommandBarVisible } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
@@ -39,44 +34,41 @@ import { AiCommandBarButton } from "./ai-button";
 import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
 
-type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
-  [key in keyof T]?: T[key];
-};
+type Status = "idle" | "recording" | "transcribing" | "ai";
 
 export const AiCommandBar = () => {
-  const [value, setValue] = useState("");
-  const [prompts, setPrompts] = useState<string[]>([]);
-  const [open, setOpen] = useState(false);
-  const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
-  const [isAiRequesting, setIsAiRequesting] = useState(false);
-  const abortController = useRef<AbortController>();
   const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
+  const [open, setOpen] = useState<boolean>(false);
+
+  const [status, setStatus] = useState<Status>("idle");
+  const abortController = useRef<AbortController>();
+
+  const [prompt, setPrompt] = useState<string>("");
+  const [promptsHistory, setPromptsHistory] = useState<string[]>([]);
+
   const recordButtonRef = useRef<HTMLButtonElement>(null);
-  const guardIdRef = useRef(0);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
-  const {
-    start,
-    stop,
-    cancel,
-    state: mediaRecorderState,
-  } = useMediaRecorder({
+  const { start, stop, cancel } = useMediaRecorder({
     onComplete: async (file) => {
-      setIsAudioTranscribing(true);
-      guardIdRef.current++;
-      const guardId = guardIdRef.current;
-      const text = await fetchTranscription(file);
-      if (guardId !== guardIdRef.current) {
-        return;
+      setStatus("transcribing");
+      abortController.current = new AbortController();
+      try {
+        let prompt = await fetchTranscription(
+          file,
+          abortController.current.signal
+        );
+        prompt = prompt.trim().replace(/\.$/, "");
+        setPrompt(prompt);
+        handleAiRequest(prompt);
+      } catch (error) {
+        if (abortController.current.signal.aborted === false) {
+          toast("Something went wrong.");
+        }
+        abortController.current = undefined;
+        setStatus("idle");
       }
-      setValue((previousText) => `${previousText} ${text}`);
-      setIsAudioTranscribing(false);
-
-      setValue((value) => {
-        Promise.resolve(true).then(() => handleAiRequest(value));
-        return value;
-      });
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
@@ -86,45 +78,38 @@ export const AiCommandBar = () => {
     },
   });
 
-  const longPressToggleProps = useLongPressToggle({
+  const recordButtonProps = useLongPressToggle({
     onStart: () => {
       start();
       disableCanvasPointerEvents();
+      setStatus("recording");
     },
     onEnd: () => {
       stop();
       enableCanvasPointerEvents();
+      setStatus("idle");
     },
     onCancel: () => {
       cancel();
       enableCanvasPointerEvents();
+      setStatus("idle");
     },
   });
 
   const handleAiRequest = async (prompt: string) => {
     abortController.current = new AbortController();
-    setIsAiRequesting(true);
-    guardIdRef.current++;
-    const guardId = guardIdRef.current;
+    setStatus("ai");
 
-    // Skip Abort Logic for now
     try {
       const errors = await fetchResult(prompt, abortController.current.signal);
 
-      if (guardId !== guardIdRef.current) {
-        return;
-      }
-
       if (errors.length > 0) {
         toast(errors.join("\n"));
+      } else {
+        setPrompt("");
+        setPromptsHistory((history) => [...history, prompt]);
       }
-
-      setPrompts((previousPrompts) => [...previousPrompts, prompt]);
-
-      setValue("");
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
       if (error instanceof Error) {
         toast(error.message);
       } else {
@@ -132,84 +117,11 @@ export const AiCommandBar = () => {
       }
     }
     abortController.current = undefined;
-    setIsAiRequesting(false);
-  };
-
-  const handleAiButtonClick = () => {
-    handleAiRequest(value);
+    setStatus("idle");
   };
 
   if (isAiCommandBarVisible === false) {
     return;
-  }
-
-  let textAreaPlaceholder = "Enter value...";
-  let textAreaValue = value;
-  let textAreaDisabled = false;
-
-  let recordButtonTooltipContent = "Start recording";
-  let recordButtonColor: ComponentPropsWithoutRef<typeof Button>["color"] =
-    "dark-ghost";
-  let recordButtonProps: PartialButtonProps = longPressToggleProps;
-  let recordButtonIcon = <MicIcon />;
-
-  let aiButtonTooltip: string | undefined = "Generate AI results";
-  let aiButtonDisabled = value.length === 0;
-  let aiButtonPending = false;
-
-  if (isAudioTranscribing) {
-    textAreaPlaceholder = "Transcribing voice...";
-    // Show placeholder instead
-    textAreaValue = "";
-    textAreaDisabled = true;
-
-    recordButtonTooltipContent = "Cancel";
-    recordButtonColor = "neutral";
-    recordButtonProps = {
-      onClick: (event: MouseEvent<HTMLButtonElement>) => {
-        // Cancel transcription
-        guardIdRef.current++;
-        setIsAudioTranscribing(false);
-      },
-    };
-    recordButtonIcon = <LargeXIcon />;
-
-    aiButtonTooltip = undefined;
-    aiButtonDisabled = true;
-  }
-
-  if (mediaRecorderState === "recording") {
-    textAreaPlaceholder = "Recording voice...";
-    // Show placeholder instead
-    textAreaValue = "";
-    textAreaDisabled = true;
-    aiButtonDisabled = true;
-
-    recordButtonTooltipContent = "Stop recording";
-    recordButtonColor = "destructive";
-    recordButtonIcon = <StopIcon />;
-
-    aiButtonTooltip = undefined;
-  }
-
-  if (isAiRequesting) {
-    textAreaDisabled = true;
-
-    recordButtonTooltipContent = "Cancel";
-    recordButtonColor = "neutral";
-    recordButtonProps = {
-      onClick: (event: MouseEvent<HTMLButtonElement>) => {
-        // Cancel AI request
-        guardIdRef.current++;
-        setIsAiRequesting(false);
-        abortController.current?.abort();
-      },
-    };
-    recordButtonIcon = <LargeXIcon />;
-
-    aiButtonTooltip = undefined;
-    aiButtonDisabled = true;
-    aiButtonPending = true;
   }
 
   return (
@@ -228,7 +140,7 @@ export const AiCommandBar = () => {
       <CommandBar
         open={open}
         onOpenChange={setOpen}
-        content={<CommandBarContent prompts={prompts} />}
+        content={<CommandBarContent prompts={promptsHistory} />}
       >
         <CommandBarTrigger>
           <CommandBarButton color="dark-ghost">
@@ -247,51 +159,89 @@ export const AiCommandBar = () => {
           <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
             <AutogrowTextArea
               autoFocus
-              disabled={textAreaDisabled}
-              placeholder={textAreaPlaceholder}
-              value={textAreaValue}
-              onChange={setValue}
-              onKeyDown={(event) => {
+              disabled={status !== "idle"}
+              placeholder={
+                status === "recording"
+                  ? "Recording..."
+                  : status === "transcribing"
+                  ? "Transcribing recording..."
+                  : "Enter value..."
+              }
+              value={prompt}
+              onChange={setPrompt}
+              onKeyPress={(event) => {
                 if (event.key === "Enter" && event.shiftKey === false) {
                   event.preventDefault();
-                  handleAiRequest(value);
+                  handleAiRequest(prompt);
                 }
               }}
             />
           </ScrollArea>
         </Grid>
 
-        <Tooltip
-          side="top"
-          sideOffset={10}
-          delayDuration={100}
-          content={recordButtonTooltipContent}
-        >
-          <CommandBarButton
-            ref={recordButtonRef}
-            css={{
-              "--ws-ai-command-bar-amplitude": 0,
-              opacity: "calc(1 - 0.5 * var(--ws-ai-command-bar-amplitude, 0))",
-              transition: "opacity 0.1s ease-in-out",
-            }}
-            color={recordButtonColor}
-            {...recordButtonProps}
+        {/* Record button */}
+        {(status === "idle" || status === "recording") && (
+          <Tooltip
+            side="top"
+            sideOffset={10}
+            delayDuration={100}
+            content={status === "idle" ? "Start recording" : "Stop recording"}
           >
-            {recordButtonIcon}
-          </CommandBarButton>
-        </Tooltip>
+            <CommandBarButton
+              ref={recordButtonRef}
+              css={{
+                "--ws-ai-command-bar-amplitude": 0,
+                opacity:
+                  "calc(1 - 0.5 * var(--ws-ai-command-bar-amplitude, 0))",
+                transition: "opacity 0.1s ease-in-out",
+              }}
+              color={status === "idle" ? "dark-ghost" : "destructive"}
+              {...recordButtonProps}
+            >
+              {status === "idle" ? <MicIcon /> : <StopIcon />}
+            </CommandBarButton>
+          </Tooltip>
+        )}
+
+        {/* Abort button */}
+        {(status === "ai" || status === "transcribing") && (
+          <Tooltip
+            side="top"
+            sideOffset={10}
+            delayDuration={100}
+            content="Cancel"
+          >
+            <CommandBarButton
+              ref={recordButtonRef}
+              css={{
+                "--ws-ai-command-bar-amplitude": 0,
+                opacity:
+                  "calc(1 - 0.5 * var(--ws-ai-command-bar-amplitude, 0))",
+                transition: "opacity 0.1s ease-in-out",
+              }}
+              color="neutral"
+              onClick={(event) => {
+                abortController.current?.abort();
+              }}
+            >
+              <LargeXIcon />
+            </CommandBarButton>
+          </Tooltip>
+        )}
 
         <Tooltip
           side="top"
           sideOffset={10}
           delayDuration={0}
-          content={aiButtonTooltip}
+          content={status === "idle" && prompt !== "" ? "Go" : undefined}
         >
           <AiCommandBarButton
             color="gradient"
-            data-pending={aiButtonPending}
-            disabled={aiButtonDisabled}
-            onClick={handleAiButtonClick}
+            data-pending={status === "ai"}
+            disabled={status !== "idle" || prompt === ""}
+            onClick={() => {
+              handleAiRequest(prompt);
+            }}
           >
             <AiIcon />
           </AiCommandBarButton>

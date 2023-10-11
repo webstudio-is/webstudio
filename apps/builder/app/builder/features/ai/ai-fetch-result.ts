@@ -82,7 +82,7 @@ export const fetchResult = async (
       return [commandsResponse.data.message];
     }
 
-    return ["Something went wrong."];
+    return [];
   }
 
   const promises = await Promise.allSettled(
@@ -129,7 +129,9 @@ export const fetchResult = async (
       const result = promise.value;
 
       if (result.success === false) {
-        errors.push(result.data.message);
+        if (abortSignal.aborted === false) {
+          errors.push(result.data.message);
+        }
         continue;
       }
 
