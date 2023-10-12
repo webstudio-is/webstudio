@@ -1,6 +1,7 @@
+import { nanoid } from "nanoid";
 import { Store, type Change } from "immerhin";
 import { enableMapSet } from "immer";
-import { atom, type WritableAtom } from "nanostores";
+import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
@@ -34,6 +35,8 @@ import {
 
 enableMapSet();
 
+const appId = nanoid();
+
 type StoreData = {
   namespace: string;
   value: unknown;
@@ -43,8 +46,8 @@ type SyncEventSource = "canvas" | "builder";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    handshake: { source: SyncEventSource };
-
+    connect: { sourceAppId: string };
+    disconnect: { sourceAppId: string };
     sendStoreData: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
@@ -260,105 +263,60 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   };
 };
 
-export const handshakenStore = atom(false);
-
-const handshakeAndSyncStores = (
-  source: SyncEventSource,
-  publish: Publish,
-  sync: (publish: Publish) => () => void
-) => {
-  const actions: Parameters<typeof publish>[0][] = [];
-
-  // Until builder is ready store action in local cache
-  const publishAction: typeof publish = (action) => {
-    const destinationReady = handshakenStore.get();
-    if (destinationReady) {
-      return publish(action);
-    }
-    actions.push({ payload: undefined, ...action });
-  };
-
-  const unsubscribe = sync(publishAction);
-
-  const handshakeAction = {
-    type: "handshake",
-    payload: {
-      source,
-    },
-  } as const;
-
-  publish(handshakeAction);
-
-  const destinationStoreReady = subscribe("handshake", (payload) => {
-    if (source === payload.source) {
-      return;
-    }
-
-    const destinationReady = handshakenStore.get();
-    if (destinationReady) {
-      return;
-    }
-
-    // We need to publish it here last time
-    publish(handshakeAction);
-
-    for (const action of actions) {
-      publish(action);
-    }
-
-    // cleanup
-    actions.length = 0;
-
-    handshakenStore.set(true);
-
-    destinationStoreReady();
-  });
-
-  return () => {
-    destinationStoreReady();
-    unsubscribe();
-  };
-};
-
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
-    return handshakeAndSyncStores("canvas", publish, (publish) => {
-      const unsubscribeStoresState = syncStoresState("canvas", publish);
-      const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
-
-      // immerhin data is sent only initially so not part of syncStoresState
-      // expect data to be populated by the time effect is called
-      const data = [];
-      for (const [namespace, store] of clientStores) {
-        if (initializedStores.has(namespace)) {
-          data.push({
-            namespace,
-            value: store.get(),
-          });
-        }
-      }
-      publish({
-        type: "sendStoreData",
-        payload: {
-          source: "canvas",
-          data,
-        },
-      });
-
-      return () => {
-        unsubscribeStoresState();
-        unsubscribeStoresChanges();
-      };
+    // connect to builder to get latest changes
+    publish({
+      type: "connect",
+      payload: { sourceAppId: appId },
     });
+
+    // immerhin data is sent only initially so not part of syncStoresState
+    // expect data to be populated by the time effect is called
+    const data = [];
+    for (const [namespace, store] of clientStores) {
+      if (initializedStores.has(namespace)) {
+        data.push({
+          namespace,
+          value: store.get(),
+        });
+      }
+    }
+    publish({
+      type: "sendStoreData",
+      payload: {
+        source: "canvas",
+        data,
+      },
+    });
+
+    // subscribe stores after connect even so builder is ready to receive
+    // changes from immerhin queue
+    const unsubscribeStoresState = syncStoresState("canvas", publish);
+    const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
+
+    return () => {
+      publish({
+        type: "disconnect",
+        payload: { sourceAppId: appId },
+      });
+      unsubscribeStoresState();
+      unsubscribeStoresChanges();
+    };
   }, [publish]);
 };
 
 export const useBuilderStore = (publish: Publish) => {
   useEffect(() => {
-    return handshakeAndSyncStores("builder", publish, (publish) => {
-      const unsubscribeStoresState = syncStoresState("builder", publish);
-      const unsubscribeStoresChanges = syncStoresChanges("builder", publish);
-
+    let unsubscribeStoresState: undefined | (() => void);
+    let unsubscribeStoresChanges: undefined | (() => void);
+    const unsubscribeConnect = subscribe("connect", () => {
+      // subscribe stores after connection so canvas is ready to receive
+      // changes from immerhin queue
+      // @todo subscribe prematurely and compute initial changes
+      // from current state whenever new app is connected
+      unsubscribeStoresState = syncStoresState("builder", publish);
+      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
@@ -383,17 +341,18 @@ export const useBuilderStore = (publish: Publish) => {
           data,
         },
       });
-
-      return () => {
-        unsubscribeStoresState();
-        unsubscribeStoresChanges();
-      };
     });
-  }, [publish]);
 
-  useEffect(() => {
+    const unsubscribeDisconnect = subscribe("disconnect", () => {
+      unsubscribeStoresState?.();
+      unsubscribeStoresChanges?.();
+    });
+
     return () => {
-      handshakenStore.set(false);
+      unsubscribeConnect();
+      unsubscribeDisconnect();
+      unsubscribeStoresState?.();
+      unsubscribeStoresChanges?.();
     };
-  }, []);
+  }, [publish]);
 };

@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
@@ -21,11 +21,7 @@ import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/m
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { $publisher, publish } from "~/shared/pubsub";
-import {
-  handshakenStore,
-  registerContainers,
-  useCanvasStore,
-} from "~/shared/sync";
+import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
@@ -172,7 +168,6 @@ export const Canvas = ({
   params,
   imageLoader,
 }: CanvasProps): JSX.Element | null => {
-  const handshaken = useStore(handshakenStore);
   useCanvasStore(publish);
   const isPreviewMode = useStore($isPreviewMode);
 
@@ -233,6 +228,11 @@ export const Canvas = ({
   const instances = useStore(instancesStore);
   const elements = useElementsTree(components, instances, params, imageLoader);
 
+  const [isInitialized, setInitialized] = useState(false);
+  useEffect(() => {
+    setInitialized(true);
+  }, []);
+
   if (components.size === 0 || instances.size === 0) {
     return (
       <body>
@@ -250,7 +250,7 @@ export const Canvas = ({
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && handshaken === true && (
+      {isPreviewMode === false && isInitialized && (
         <DesignMode params={params} />
       )}
     </>
