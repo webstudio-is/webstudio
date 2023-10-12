@@ -12,6 +12,7 @@ import {
 import {
   copywriter as clientCopywriter,
   operations as clientOperations,
+  queryImagesAndMutateTemplate,
 } from "@webstudio-is/ai";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import env from "~/env/env.server";
@@ -63,6 +64,19 @@ export const action = async ({ request }: ActionArgs) => {
       llmMessages: [],
     };
   }
+
+  if (env.PEXELS_API_KEY === undefined) {
+    return {
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidApiKey",
+        status: 401,
+        debug: "Invalid Pexels api key",
+      }),
+      llmMessages: [],
+    };
+  }
+  const PEXELS_API_KEY = env.PEXELS_API_KEY;
 
   if (
     env.OPENAI_ORG === undefined ||
@@ -192,9 +206,16 @@ export const action = async ({ request }: ActionArgs) => {
   // and then handle the generation request with a standalone chain called template-generator
   // that has a dedicate and comprehensive prompt.
 
-  const generateTemplatePrompts = response.data.filter(
-    (operation) => operation.operation === "generateTemplatePrompt"
-  ) as operations.generateTemplatePrompt.wsOperation[];
+  const generateTemplatePrompts: {
+    dataIndex: number;
+    operation: operations.generateTemplatePrompt.wsOperation;
+  }[] = [];
+  response.data.forEach((operation, dataIndex) => {
+    if (operation.operation === "generateTemplatePrompt") {
+      // preserve the index in response.data to update it after executing operations
+      generateTemplatePrompts.push({ dataIndex, operation });
+    }
+  });
 
   if (generateTemplatePrompts.length > 0) {
     const generationModel = createGptModel({
@@ -208,18 +229,29 @@ export const action = async ({ request }: ActionArgs) => {
       templateGenerator.createChain<GptModelMessageFormat>();
 
     const results = await Promise.all(
-      generateTemplatePrompts.map((operation, index) =>
-        generationChain({
+      generateTemplatePrompts.map(async ({ dataIndex, operation }) => {
+        const result = await generationChain({
           model: generationModel,
           context: {
             prompt: operation.llmPrompt,
             components,
           },
-        }).then((result) => [index, result] as const)
-      )
+        });
+        if (result.success) {
+          await queryImagesAndMutateTemplate({
+            template: result.data,
+            apiKey: PEXELS_API_KEY,
+          });
+        }
+        return {
+          dataIndex,
+          operation,
+          result,
+        };
+      })
     );
 
-    for (const [index, result] of results) {
+    for (const { dataIndex, operation, result } of results) {
       llmMessages.push(...result.llmMessages);
 
       if (result.success === false) {
@@ -230,11 +262,10 @@ export const action = async ({ request }: ActionArgs) => {
       }
 
       // Replace generateTemplatePrompt.wsOperation with the AI-generated Webstudio template.
-      const generateTemplatePrompt = generateTemplatePrompts[index];
-      response.data[index] = {
+      response.data[dataIndex] = {
         operation: "insertTemplate",
-        addTo: generateTemplatePrompt.addTo,
-        addAtIndex: generateTemplatePrompt.addAtIndex,
+        addTo: operation.addTo,
+        addAtIndex: operation.addAtIndex,
         template: result.data,
       };
     }
