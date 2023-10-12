@@ -221,7 +221,12 @@ export const action = async ({ request }: ActionArgs) => {
         const result = await generationChain({
           model: generationModel,
           context: {
-            prompt: operation.llmPrompt,
+            prompt:
+              operation.llmPrompt +
+              (operation.classNames.length > 0
+                ? `.\nSuggested Tailwind classes: ${operation.classNames}`
+                : ""),
+
             components,
           },
         });

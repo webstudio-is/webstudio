@@ -91,7 +91,7 @@ export const action = async ({ request }: ActionArgs) => {
       prompt,
       commands: {
         [copywriter.name]:
-          "writes, rewrites, rephrases, shortens, increases length or translates text",
+          "rewrites, rephrases, shortens, increases length or translates text",
         [operations.editStyles.name]: "edits styles",
         [operations.generateTemplatePrompt.name]:
           "handles a user interface generation request",
