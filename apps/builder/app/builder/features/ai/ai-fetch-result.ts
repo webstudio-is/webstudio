@@ -93,6 +93,11 @@ export const fetchResult = async (
           body: JSON.stringify({
             ...requestParams,
             command,
+            jsx:
+              // Delete instances don't need CSS.
+              command === operations.deleteInstanceName
+                ? jsx
+                : requestParams.jsx,
           }),
           signal: abortSignal,
         }),
