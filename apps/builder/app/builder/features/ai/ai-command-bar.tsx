@@ -25,6 +25,7 @@ import {
   ExternalLinkIcon,
   StopIcon,
   LargeXIcon,
+  AiLoadingIcon,
 } from "@webstudio-is/icons";
 import {
   useRef,
@@ -164,6 +165,7 @@ export const AiCommandBar = () => {
     ? undefined
     : "Generate AI results";
   let aiButtonPending = false;
+  let aiIcon = <AiIcon />;
 
   if (isAudioTranscribing) {
     textAreaPlaceholder = "Transcribing voice...";
@@ -208,6 +210,7 @@ export const AiCommandBar = () => {
     aiButtonTooltip = "Generating ...";
     aiButtonDisabled = true;
     aiButtonPending = true;
+    aiIcon = <AiLoadingIcon />;
   }
 
   return (
@@ -292,7 +295,7 @@ export const AiCommandBar = () => {
             disabled={aiButtonDisabled}
             onClick={handleAiButtonClick}
           >
-            <AiIcon />
+            {aiIcon}
           </AiCommandBarButton>
         </Tooltip>
       </CommandBar>

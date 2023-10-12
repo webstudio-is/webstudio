@@ -17,6 +17,7 @@ export { ASStretchIcon } from "./a-s-stretch";
 export { AccordionContentIcon } from "./accordion-content";
 export { AccordionTriggerIcon } from "./accordion-trigger";
 export { AccordionIcon } from "./accordion";
+export { AiLoadingIcon } from "./ai-loading";
 export { AiIcon } from "./ai";
 export { AlertIcon } from "./alert";
 export { ArrowDownIcon } from "./arrow-down";
