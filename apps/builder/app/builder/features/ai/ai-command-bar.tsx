@@ -38,6 +38,7 @@ import { useLongPressToggle } from "./hooks/long-press-toggle";
 import { AiCommandBarButton } from "./ai-button";
 import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
+import { useEffectEvent } from "./hooks/effect-event";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -56,6 +57,10 @@ export const AiCommandBar = () => {
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
+  const getValue = useEffectEvent(() => {
+    return value;
+  });
+
   const {
     start,
     stop,
@@ -70,13 +75,13 @@ export const AiCommandBar = () => {
       if (guardId !== guardIdRef.current) {
         return;
       }
-      setValue((previousText) => `${previousText} ${text}`);
+
+      const currentValue = getValue();
+      const newValue = `${currentValue} ${text}`;
+      setValue(newValue);
       setIsAudioTranscribing(false);
 
-      setValue((value) => {
-        Promise.resolve(true).then(() => handleAiRequest(value));
-        return value;
-      });
+      handleAiRequest(newValue);
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
@@ -147,14 +152,17 @@ export const AiCommandBar = () => {
   let textAreaValue = value;
   let textAreaDisabled = false;
 
-  let recordButtonTooltipContent = "Start recording";
+  let recordButtonTooltipContent = undefined;
   let recordButtonColor: ComponentPropsWithoutRef<typeof Button>["color"] =
     "dark-ghost";
   let recordButtonProps: PartialButtonProps = longPressToggleProps;
   let recordButtonIcon = <MicIcon />;
+  let recordButtonDisabled = false;
 
-  let aiButtonTooltip: string | undefined = "Generate AI results";
   let aiButtonDisabled = value.length === 0;
+  let aiButtonTooltip: string | undefined = aiButtonDisabled
+    ? undefined
+    : "Generate AI results";
   let aiButtonPending = false;
 
   if (isAudioTranscribing) {
@@ -163,16 +171,7 @@ export const AiCommandBar = () => {
     textAreaValue = "";
     textAreaDisabled = true;
 
-    recordButtonTooltipContent = "Cancel";
-    recordButtonColor = "neutral";
-    recordButtonProps = {
-      onClick: (event: MouseEvent<HTMLButtonElement>) => {
-        // Cancel transcription
-        guardIdRef.current++;
-        setIsAudioTranscribing(false);
-      },
-    };
-    recordButtonIcon = <LargeXIcon />;
+    recordButtonDisabled = true;
 
     aiButtonTooltip = undefined;
     aiButtonDisabled = true;
@@ -185,7 +184,6 @@ export const AiCommandBar = () => {
     textAreaDisabled = true;
     aiButtonDisabled = true;
 
-    recordButtonTooltipContent = "Stop recording";
     recordButtonColor = "destructive";
     recordButtonIcon = <StopIcon />;
 
@@ -207,7 +205,7 @@ export const AiCommandBar = () => {
     };
     recordButtonIcon = <LargeXIcon />;
 
-    aiButtonTooltip = undefined;
+    aiButtonTooltip = "Generating ...";
     aiButtonDisabled = true;
     aiButtonPending = true;
   }
@@ -267,7 +265,8 @@ export const AiCommandBar = () => {
           delayDuration={100}
           content={recordButtonTooltipContent}
         >
-          <CommandBarButton
+          <AiCommandBarButton
+            disabled={recordButtonDisabled}
             ref={recordButtonRef}
             css={{
               "--ws-ai-command-bar-amplitude": 0,
@@ -278,7 +277,7 @@ export const AiCommandBar = () => {
             {...recordButtonProps}
           >
             {recordButtonIcon}
-          </CommandBarButton>
+          </AiCommandBarButton>
         </Tooltip>
 
         <Tooltip
@@ -338,23 +337,27 @@ const CommandBarContent = (props: { prompts: string[] }) => {
         </Button>
       </CommandBarContentSection>
 
-      <CommandBarContentSeparator />
+      {props.prompts.length > 0 && (
+        <>
+          <CommandBarContentSeparator />
 
-      <CommandBarContentSection>
-        <Text variant={"labelsSentenceCase"} align={"center"}>
-          Previous prompts
-        </Text>
-        <div />
-        <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
-          <Grid gap={2}>
-            {props.prompts.map((prompt, index) => (
-              <CommandBarContentPrompt key={index}>
-                {prompt}
-              </CommandBarContentPrompt>
-            ))}
-          </Grid>
-        </ScrollArea>
-      </CommandBarContentSection>
+          <CommandBarContentSection>
+            <Text variant={"labelsSentenceCase"} align={"center"}>
+              Previous prompts
+            </Text>
+            <div />
+            <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
+              <Grid gap={2}>
+                {props.prompts.map((prompt, index) => (
+                  <CommandBarContentPrompt key={index}>
+                    {prompt}
+                  </CommandBarContentPrompt>
+                ))}
+              </Grid>
+            </ScrollArea>
+          </CommandBarContentSection>
+        </>
+      )}
     </>
   );
 };
