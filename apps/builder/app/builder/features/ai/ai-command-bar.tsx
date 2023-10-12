@@ -38,6 +38,7 @@ import { useLongPressToggle } from "./hooks/long-press-toggle";
 import { AiCommandBarButton } from "./ai-button";
 import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
+import { useEffectEvent } from "./hooks/effect-event";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -56,6 +57,10 @@ export const AiCommandBar = () => {
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
+  const getValue = useEffectEvent(() => {
+    return value;
+  });
+
   const {
     start,
     stop,
@@ -70,19 +75,13 @@ export const AiCommandBar = () => {
       if (guardId !== guardIdRef.current) {
         return;
       }
-      setValue((previousText) => `${previousText} ${text}`);
+
+      const currentValue = getValue();
+      const newValue = `${currentValue} ${text}`;
+      setValue(newValue);
       setIsAudioTranscribing(false);
 
-      let execOnceGuard = true;
-      setValue((value) => {
-        Promise.resolve(true).then(() => {
-          if (execOnceGuard) {
-            handleAiRequest(value);
-            execOnceGuard = false;
-          }
-        });
-        return value;
-      });
+      handleAiRequest(newValue);
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
