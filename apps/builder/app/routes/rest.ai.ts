@@ -14,7 +14,6 @@ import {
   operations as clientOperations,
   queryImagesAndMutateTemplate,
 } from "@webstudio-is/ai";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import env from "~/env/env.server";
 import { createContext } from "~/shared/context.server";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
@@ -40,18 +39,7 @@ export const RequestParamsSchema = z.object({
 export const maxDuration = 180; // seconds
 
 export const action = async ({ request }: ActionArgs) => {
-  if (isFeatureEnabled("ai") === false) {
-    return {
-      id: "ai",
-      ...createErrorResponse({
-        error: "featureDisabled",
-        status: 503,
-        message: "The feature is not available",
-        debug: "aiCopy feature disabled",
-      }),
-      llmMessages: [],
-    };
-  }
+  // @todo Reinstate isFeatureEnabled('ai')
 
   if (env.OPENAI_KEY === undefined) {
     return {

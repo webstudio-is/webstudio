@@ -1,5 +1,9 @@
-import type { ComponentProps } from "react";
-import { useLoaderData, useRouteError } from "@remix-run/react";
+import { useEffect, type ComponentProps } from "react";
+import {
+  useLoaderData,
+  useRouteError,
+  useSearchParams,
+} from "@remix-run/react";
 import type { LoaderArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
@@ -10,6 +14,7 @@ import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
+import { setLocal } from "@webstudio-is/feature-flags";
 
 export const loader = async ({
   request,
@@ -51,6 +56,15 @@ export const ErrorBoundary = () => {
 };
 
 const DashboardRoute = () => {
+  // Allows to set feature flags via URL parameter features=name1,name2,name3
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    const features = searchParams.get("features");
+    if (features) {
+      setLocal(features);
+    }
+  }, [searchParams]);
+
   const data = useLoaderData<ReturnType<typeof loader>>();
   return <Dashboard {...data} />;
 };
