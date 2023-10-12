@@ -4,7 +4,7 @@ let env = "";
 
 type Name = keyof typeof flags;
 
-const parse = (flags?: string | null): Array<Name> =>
+export const parse = (flags?: string | null): Array<Name> =>
   // Supports both, space and comma separated items
   (flags ?? "").split(/\s|,/).filter(Boolean) as Array<Name>;
 
@@ -17,7 +17,7 @@ export const setLocal = (features: string) => {
   }
 };
 
-const readLocal = (): Array<Name> => {
+export const readLocal = (): Array<Name> => {
   try {
     const flags = localStorage.getItem("features");
     return parse(flags);
