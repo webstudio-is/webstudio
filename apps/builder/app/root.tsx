@@ -4,16 +4,21 @@ import { setEnv } from "@webstudio-is/feature-flags";
 import { withSentry, ErrorBoundary } from "@sentry/remix";
 import env from "./shared/env";
 import type { ComponentProps } from "react";
+import { useSetFeatures } from "./shared/use-set-features";
 
 setEnv(env.FEATURES as string);
 
 type OutletProps = ComponentProps<typeof Outlet>;
 
-const RootWithErrorBoundary = (props: OutletProps) => (
-  <ErrorBoundary>
-    <Outlet {...props} />
-  </ErrorBoundary>
-);
+const RootWithErrorBoundary = (props: OutletProps) => {
+  useSetFeatures();
+
+  return (
+    <ErrorBoundary>
+      <Outlet {...props} />
+    </ErrorBoundary>
+  );
+};
 
 export default withSentry(
   // withSentryRouteTracing() expects a type from component that is not necessary true.
