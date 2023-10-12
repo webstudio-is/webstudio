@@ -338,23 +338,27 @@ const CommandBarContent = (props: { prompts: string[] }) => {
         </Button>
       </CommandBarContentSection>
 
-      <CommandBarContentSeparator />
+      {props.prompts.length > 0 && (
+        <>
+          <CommandBarContentSeparator />
 
-      <CommandBarContentSection>
-        <Text variant={"labelsSentenceCase"} align={"center"}>
-          Previous prompts
-        </Text>
-        <div />
-        <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
-          <Grid gap={2}>
-            {props.prompts.map((prompt, index) => (
-              <CommandBarContentPrompt key={index}>
-                {prompt}
-              </CommandBarContentPrompt>
-            ))}
-          </Grid>
-        </ScrollArea>
-      </CommandBarContentSection>
+          <CommandBarContentSection>
+            <Text variant={"labelsSentenceCase"} align={"center"}>
+              Previous prompts
+            </Text>
+            <div />
+            <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
+              <Grid gap={2}>
+                {props.prompts.map((prompt, index) => (
+                  <CommandBarContentPrompt key={index}>
+                    {prompt}
+                  </CommandBarContentPrompt>
+                ))}
+              </Grid>
+            </ScrollArea>
+          </CommandBarContentSection>
+        </>
+      )}
     </>
   );
 };
