@@ -27,6 +27,11 @@ export const aiOperation = z.object({
     .describe(
       `Enhanced user prompt from this chat. The description will be passed to another LLM to generate a user interface with JSX.`
     ),
+  classNames: z
+    .string()
+    .describe(
+      "A list of suggested Tailwind CSS classes matching the style of the request code. Always use the square brackets notation eg. mb-[10px] instead of mb-10"
+    ),
 });
 export type aiOperation = z.infer<typeof aiOperation>;
 
