@@ -107,7 +107,7 @@ export const findClosestDetachableInstanceSelector = (
       return;
     }
     const detachable = meta.detachable ?? true;
-    if (meta.type !== "container" || detachable === false) {
+    if (meta.type === "rich-text-child" || detachable === false) {
       continue;
     }
     return getAncestorInstanceSelector(instanceSelector, instanceId);
