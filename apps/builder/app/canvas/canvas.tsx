@@ -228,7 +228,7 @@ export const Canvas = ({
   const instances = useStore(instancesStore);
   const elements = useElementsTree(components, instances, params, imageLoader);
 
-  const [initialized, setInitialized] = useState(false);
+  const [isInitialized, setInitialized] = useState(false);
   useEffect(() => {
     setInitialized(true);
   }, []);
@@ -250,7 +250,9 @@ export const Canvas = ({
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && initialized && <DesignMode params={params} />}
+      {isPreviewMode === false && isInitialized && (
+        <DesignMode params={params} />
+      )}
     </>
   );
 };

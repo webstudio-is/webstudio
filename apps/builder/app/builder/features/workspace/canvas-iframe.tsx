@@ -18,12 +18,12 @@ export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   ({ css, ...rest }, ref) => {
     // initialize canvas after builder is rendered
     // and synchronizatio is initialized
-    const [initialized, setInitialized] = useState(false);
+    const [isInitialized, setInitialized] = useState(false);
     useEffect(() => {
       setInitialized(true);
     }, []);
     return (
-      initialized && (
+      isInitialized && (
         <iframe {...rest} ref={ref} className={iframeStyle({ css })} />
       )
     );
