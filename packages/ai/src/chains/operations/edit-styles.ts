@@ -14,7 +14,7 @@ export const aiOperation = z.object({
   className: z
     .string()
     .describe(
-      "A list of Tailwind CSS classes to add or override existing styles"
+      "A list of Tailwind CSS classes to add or override existing styles. When the user requests exact values you must use Tailwind's square bracket notation to generate a custom Tailwind class for the value eg. top-[10px]"
     ),
 });
 export type aiOperation = z.infer<typeof aiOperation>;
