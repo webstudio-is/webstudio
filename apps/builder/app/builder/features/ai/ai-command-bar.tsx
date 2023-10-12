@@ -25,6 +25,7 @@ import {
   ExternalLinkIcon,
   StopIcon,
   LargeXIcon,
+  AiLoadingIcon,
 } from "@webstudio-is/icons";
 import {
   useRef,
@@ -292,7 +293,7 @@ export const AiCommandBar = () => {
             disabled={aiButtonDisabled}
             onClick={handleAiButtonClick}
           >
-            <AiIcon />
+            {aiButtonPending ? <AiLoadingIcon /> : <AiIcon />}
           </AiCommandBarButton>
         </Tooltip>
       </CommandBar>
