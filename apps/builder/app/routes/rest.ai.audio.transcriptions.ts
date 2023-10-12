@@ -18,24 +18,25 @@ export const action = async ({ request }: ActionArgs) => {
   );
 
   if (response.ok === false) {
-    const txt = await response.text();
+    const message = await response.text();
 
     // eslint-disable-next-line no-console
-    console.error("ERROR", response.status, txt);
+    console.error("ERROR", response.status, message);
 
     return {
       success: false,
       error: {
         status: response.status,
-        message: txt,
+        message,
       },
     };
   }
 
+  // @todo untyped
   const data = await response.json();
 
   return {
     success: true,
-    text: data.text,
+    text: data.text.trim(),
   };
 };
