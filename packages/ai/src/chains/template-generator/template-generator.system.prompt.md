@@ -18,8 +18,7 @@ Follow the rules below:
 - Don't use JSX Fragments
 - Don't use JSX comments
 - Don't use CSS grid for layout, use flexbox instead
-- Only use valid Tailwind CSS classes
-- When the user requests exact CSS values you must use Tailwind's square bracket notation to generate a custom Tailwind class for the value eg. top-[10px]
+- Only use valid Tailwind CSS classes. Always use the square brackets notation eg. mb-[10px] instead of mb-10
 - Don't add round corners and shadow to top-level containers
 - Don't add any props to components
 - For images leave the `src` prop empty and add a good on-topic description as `alt` attribute for screen readers. Additionally set a `width` and `height` props for the image size
