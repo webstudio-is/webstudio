@@ -46,6 +46,7 @@ type SyncEventSource = "canvas" | "builder";
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
     connect: { sourceAppId: string };
+    disconnect: { sourceAppId: string };
     sendStoreData: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
@@ -293,6 +294,10 @@ export const useCanvasStore = (publish: Publish) => {
     const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
 
     return () => {
+      publish({
+        type: "disconnect",
+        payload: { sourceAppId: appId },
+      });
       unsubscribeStoresState();
       unsubscribeStoresChanges();
     };
@@ -336,8 +341,14 @@ export const useBuilderStore = (publish: Publish) => {
       });
     });
 
+    const unsubscribeDisconnect = subscribe("disconnect", () => {
+      unsubscribeStoresState?.();
+      unsubscribeStoresChanges?.();
+    });
+
     return () => {
       unsubscribeConnect();
+      unsubscribeDisconnect();
       unsubscribeStoresState?.();
       unsubscribeStoresChanges?.();
     };
