@@ -29,6 +29,7 @@ import {
   selectedStyleSourceSelectorStore,
   synchronizedComponentsMetaStores,
   dataSourceVariablesStore,
+  $dragAndDropState,
 } from "~/shared/nano-states";
 
 enableMapSet();
@@ -102,6 +103,7 @@ export const registerContainers = () => {
     "selectedStyleSourceSelector",
     selectedStyleSourceSelectorStore
   );
+  clientStores.set("dragAndDropState", $dragAndDropState);
   for (const [name, store] of synchronizedBreakpointsStores) {
     clientStores.set(name, store);
   }
