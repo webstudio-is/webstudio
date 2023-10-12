@@ -4,21 +4,31 @@
  */
 
 import { CommandBarButton, styled, theme } from "@webstudio-is/design-system";
+import { forwardRef, type ComponentProps } from "react";
 
-export const AiCommandBarButton = styled(CommandBarButton, {
-  // @todo switch to theme variables when available
-  variants: {
-    color: {
-      gradient: {
-        "&[data-state=disabled]": {
-          background: "#687076",
-          color: "#1D1D1D",
-        },
-        "&[data-state=disabled]&[data-pending=true]": {
-          background: "#1D1D1D",
-          color: theme.colors.foregroundContrastMain,
-        },
-      },
+type CommandButtonProps = ComponentProps<typeof CommandBarButton>;
+
+// @todo: Move to design system, if no additional changes are needed
+const AiCommandBarButtonStyled = styled(CommandBarButton, {
+  "&[data-state=disabled]": {
+    "&[data-state=disabled]": {
+      background: "#1D1D1D",
+      color: "#646464",
+      outline: "1px solid #646464",
+    },
+    "&[data-pending=true]": {
+      background: "#1D1D1D",
+      color: theme.colors.foregroundContrastMain,
+      outline: "none",
     },
   },
 });
+
+export const AiCommandBarButton = forwardRef<
+  HTMLButtonElement,
+  CommandButtonProps
+>((props, ref) => {
+  return <AiCommandBarButtonStyled ref={ref} {...props} />;
+});
+
+AiCommandBarButton.displayName = "AiCommandBarButton";

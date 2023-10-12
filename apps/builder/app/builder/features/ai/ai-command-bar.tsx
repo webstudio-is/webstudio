@@ -73,8 +73,14 @@ export const AiCommandBar = () => {
       setValue((previousText) => `${previousText} ${text}`);
       setIsAudioTranscribing(false);
 
+      let execOnceGuard = true;
       setValue((value) => {
-        Promise.resolve(true).then(() => handleAiRequest(value));
+        Promise.resolve(true).then(() => {
+          if (execOnceGuard) {
+            handleAiRequest(value);
+            execOnceGuard = false;
+          }
+        });
         return value;
       });
     },
@@ -147,14 +153,17 @@ export const AiCommandBar = () => {
   let textAreaValue = value;
   let textAreaDisabled = false;
 
-  let recordButtonTooltipContent = "Start recording";
+  let recordButtonTooltipContent = undefined;
   let recordButtonColor: ComponentPropsWithoutRef<typeof Button>["color"] =
     "dark-ghost";
   let recordButtonProps: PartialButtonProps = longPressToggleProps;
   let recordButtonIcon = <MicIcon />;
+  let recordButtonDisabled = false;
 
-  let aiButtonTooltip: string | undefined = "Generate AI results";
   let aiButtonDisabled = value.length === 0;
+  let aiButtonTooltip: string | undefined = aiButtonDisabled
+    ? undefined
+    : "Generate AI results";
   let aiButtonPending = false;
 
   if (isAudioTranscribing) {
@@ -163,16 +172,7 @@ export const AiCommandBar = () => {
     textAreaValue = "";
     textAreaDisabled = true;
 
-    recordButtonTooltipContent = "Cancel";
-    recordButtonColor = "neutral";
-    recordButtonProps = {
-      onClick: (event: MouseEvent<HTMLButtonElement>) => {
-        // Cancel transcription
-        guardIdRef.current++;
-        setIsAudioTranscribing(false);
-      },
-    };
-    recordButtonIcon = <LargeXIcon />;
+    recordButtonDisabled = true;
 
     aiButtonTooltip = undefined;
     aiButtonDisabled = true;
@@ -185,7 +185,6 @@ export const AiCommandBar = () => {
     textAreaDisabled = true;
     aiButtonDisabled = true;
 
-    recordButtonTooltipContent = "Stop recording";
     recordButtonColor = "destructive";
     recordButtonIcon = <StopIcon />;
 
@@ -207,7 +206,7 @@ export const AiCommandBar = () => {
     };
     recordButtonIcon = <LargeXIcon />;
 
-    aiButtonTooltip = undefined;
+    aiButtonTooltip = "Generating ...";
     aiButtonDisabled = true;
     aiButtonPending = true;
   }
@@ -267,7 +266,8 @@ export const AiCommandBar = () => {
           delayDuration={100}
           content={recordButtonTooltipContent}
         >
-          <CommandBarButton
+          <AiCommandBarButton
+            disabled={recordButtonDisabled}
             ref={recordButtonRef}
             css={{
               "--ws-ai-command-bar-amplitude": 0,
@@ -278,7 +278,7 @@ export const AiCommandBar = () => {
             {...recordButtonProps}
           >
             {recordButtonIcon}
-          </CommandBarButton>
+          </AiCommandBarButton>
         </Tooltip>
 
         <Tooltip
