@@ -34,7 +34,7 @@ import {
 import { applyOperations, patchTextInstance } from "./apply-operations";
 import { useStore } from "@nanostores/react";
 import { restAi } from "~/shared/router-utils";
-import { RequestParamsSchema } from "~/routes/rest.ai";
+import { RequestParamsSchema } from "~/routes/rest.ai._index";
 import untruncateJson from "untruncate-json";
 import { traverseTemplate } from "@webstudio-is/jsx-utils";
 
