@@ -1,4 +1,9 @@
 import type { ActionArgs } from "@remix-run/node";
+import { z } from "zod";
+
+const zTranscription = z.object({
+  text: z.string().transform((value) => value.trim()),
+});
 
 // @todo: move to AI package
 export const action = async ({ request }: ActionArgs) => {
@@ -29,14 +34,16 @@ export const action = async ({ request }: ActionArgs) => {
         status: response.status,
         message,
       },
-    };
+    } as const;
   }
 
   // @todo untyped
-  const data = await response.json();
+  const data = zTranscription.safeParse(await response.json());
 
-  return {
-    success: true,
-    text: data.text.trim(),
-  };
+  if (data.success === false) {
+    // eslint-disable-next-line no-console
+    console.error("ERROR openai transcriptions", data.error);
+  }
+
+  return data;
 };

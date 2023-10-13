@@ -40,6 +40,7 @@ import { AiCommandBarButton } from "./ai-button";
 import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
 import { useEffectEvent } from "./hooks/effect-event";
+import { AiApiException, RateLimitException } from "./api-exceptions";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -69,21 +70,43 @@ export const AiCommandBar = () => {
     state: mediaRecorderState,
   } = useMediaRecorder({
     onComplete: async (file) => {
-      setIsAudioTranscribing(true);
-      guardIdRef.current++;
-      const guardId = guardIdRef.current;
-      const text = await fetchTranscription(file);
-      if (guardId !== guardIdRef.current) {
-        return;
+      try {
+        setIsAudioTranscribing(true);
+        guardIdRef.current++;
+        const guardId = guardIdRef.current;
+        const text = await fetchTranscription(file);
+        if (guardId !== guardIdRef.current) {
+          return;
+        }
+
+        const currentValue = getValue();
+        const newValue = [currentValue, text].filter(Boolean).join(" ");
+
+        setValue(newValue);
+        handleAiRequest(newValue);
+      } catch (error) {
+        if (error instanceof AiApiException) {
+          // Error in our API, show toast
+          toast(`API Internal Error: ${error.message}`);
+          return;
+        }
+
+        if (error instanceof RateLimitException) {
+          // Rate limit error, show toast
+          // eslint-disable-next-line no-console
+          console.warn("Rate limit", error.meta);
+
+          toast(`Rate limit reached. Chill for a bit, then try again`);
+          return;
+        }
+
+        if (error instanceof Error) {
+          // Unknown error, show toast
+          toast(`Unknown Error: ${error.message}`);
+        }
+      } finally {
+        setIsAudioTranscribing(false);
       }
-
-      const currentValue = getValue();
-      const newValue = [currentValue, text].filter(Boolean).join(" ");
-
-      setValue(newValue);
-      setIsAudioTranscribing(false);
-
-      handleAiRequest(newValue);
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
