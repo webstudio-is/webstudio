@@ -100,9 +100,12 @@ const CommandBarContentPromptText = styled("span", {
   whiteSpace: "break-spaces",
 });
 
-export const CommandBarContentPrompt = (props: { children: ReactNode }) => {
+export const CommandBarContentPrompt = (props: {
+  children: ReactNode;
+  onClick?: () => void;
+}) => {
   return (
-    <CommandBarContentPromptStyled color="dark">
+    <CommandBarContentPromptStyled color="dark" onClick={props.onClick}>
       <CommandBarContentPromptText>
         {props.children}
       </CommandBarContentPromptText>
