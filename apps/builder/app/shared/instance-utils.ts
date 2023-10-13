@@ -391,6 +391,10 @@ export const reparentInstance = (
 };
 
 export const deleteInstance = (instanceSelector: InstanceSelector) => {
+  // @todo tell user they can't delete root
+  if (instanceSelector.length === 1) {
+    return;
+  }
   if (isInstanceDetachable(instanceSelector) === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
@@ -498,11 +502,7 @@ export const deleteSelectedInstance = () => {
   if (textEditingInstanceSelector) {
     return;
   }
-  // @todo tell user they can't delete root
-  if (
-    selectedInstanceSelector === undefined ||
-    selectedInstanceSelector.length === 1
-  ) {
+  if (selectedInstanceSelector === undefined) {
     return;
   }
   deleteInstance(selectedInstanceSelector);

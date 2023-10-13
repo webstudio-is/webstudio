@@ -10,13 +10,14 @@ import {
   breakpointsStore,
   instancesStore,
   registeredComponentMetasStore,
+  selectedInstanceSelectorStore,
   selectedInstanceStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
 } from "~/shared/nano-states";
-import type { DroppableTarget } from "~/shared/tree-utils";
-import { getStyleDeclKey, type StyleSource } from "@webstudio-is/sdk";
+import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
+import { getStyleDeclKey, Instance, type StyleSource } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 
 export const applyOperations = (operations: operations.WsOperations) => {
@@ -86,7 +87,44 @@ const insertTemplateByOp = (
 const deleteInstanceByOp = (
   operation: operations.deleteInstanceWsOperation
 ) => {
-  _deleteInstance([operation.wsId]);
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+
+  // For a given instance to delete we compute the subtree selector between
+  // that instance and the selected instance (a parent).
+  let subtreeSelector: InstanceSelector = [];
+  const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instancesStore.get().values()) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentInstancesById.set(child.value, instance.id);
+      }
+    }
+  }
+  const selector: InstanceSelector = [];
+  let currentInstanceId: undefined | Instance["id"] = operation.wsId;
+  while (currentInstanceId) {
+    selector.push(currentInstanceId);
+    currentInstanceId = parentInstancesById.get(currentInstanceId);
+    if (currentInstanceId === selectedInstanceSelector[0]) {
+      subtreeSelector = [...selector, ...selectedInstanceSelector];
+      break;
+    }
+  }
+
+  if (subtreeSelector.length === 0) {
+    return;
+  }
+
+  const parentSelector = selectedInstanceSelector.slice(1);
+  // Combine the subtree selector with the selected instance one
+  // to get the full and final selector.
+  const combinedSelector = [...subtreeSelector, ...parentSelector];
+
+  // Finally delete the instance by selector.
+  _deleteInstance(combinedSelector);
 };
 
 const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
