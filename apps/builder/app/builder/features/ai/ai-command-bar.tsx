@@ -349,8 +349,10 @@ const CommandBarContent = (props: { prompts: string[] }) => {
               Previous prompts
             </Text>
             <div />
-            <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
-              <Grid gap={2}>
+
+            {/* negative then positive margin is used to preserve focus outline on command prompts */}
+            <ScrollArea css={{ maxHeight: theme.spacing[29], margin: -4 }}>
+              <Grid gap={2} css={{ margin: 4 }}>
                 {props.prompts.map((prompt, index) => (
                   <CommandBarContentPrompt key={index}>
                     {prompt}
