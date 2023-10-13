@@ -87,7 +87,7 @@ export const AiCommandBar = () => {
       } catch (error) {
         if (error instanceof AiApiException) {
           // Error in our API, show toast
-          toast(`API Internal Error: ${error.message}`);
+          toast.error(`API Internal Error: ${error.message}`);
           return;
         }
 
@@ -102,7 +102,7 @@ export const AiCommandBar = () => {
 
         if (error instanceof Error) {
           // Unknown error, show toast
-          toast(`Unknown Error: ${error.message}`);
+          toast.error(`Unknown Error: ${error.message}`);
         }
       } finally {
         setIsAudioTranscribing(false);
