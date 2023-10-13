@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react-radix",
-  "version": "0.106.0",
+  "version": "0.107.0",
   "description": "Webstudio wrapper for radix library",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
