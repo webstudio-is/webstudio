@@ -41,6 +41,9 @@ export const createChain = <ModelMessageFormat>(): Chain<
   async function chain({ model, context }) {
     const { prompt, components, jsx } = context;
 
+    // @todo Make it so this chain can run only for
+    // a specific operation among the supported ones.
+    // This could be passed as context.operations.
     const operationsSchema = zodToJsonSchema(
       AiOperationsSchema.element,
       "AiOperationsSchema"

@@ -107,6 +107,10 @@ export const fetchResult = async (
               command === operations.deleteInstanceName
                 ? jsx
                 : requestParams.jsx,
+            // @todo This helps the operations chain disambiguating operation detection.
+            // Ideally though the operations chain can be executed just for one
+            // specific kind of operation i.e. `command`.
+            prompt: `${command}:\n\n${requestParams.prompt}`,
           }),
           signal: abortSignal,
         }),
