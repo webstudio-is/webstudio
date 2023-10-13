@@ -221,18 +221,16 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
     throw new HTTPException(429, {
       res: ctx.json(
         {
-          errors: [
-            {
-              message: `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`,
-              code: 429,
-              meta: {
-                limit,
-                reset,
-                remaining,
-                ratelimitName,
-              },
+          error: {
+            message: `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`,
+            code: 429,
+            meta: {
+              limit,
+              reset,
+              remaining,
+              ratelimitName,
             },
-          ],
+          },
         },
         429
       ),
