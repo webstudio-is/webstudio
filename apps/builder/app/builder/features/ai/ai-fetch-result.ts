@@ -30,9 +30,9 @@ import {
 } from "~/shared/nano-states";
 import { applyOperations, patchTextInstance } from "./apply-operations";
 import { restAi } from "~/shared/router-utils";
-import { RequestParamsSchema } from "~/routes/rest.ai._index";
 import untruncateJson from "untruncate-json";
 import { traverseTemplate } from "@webstudio-is/jsx-utils";
+import { RequestParamsSchema } from "~/routes/rest.ai._index";
 
 const unknownArray = z.array(z.unknown());
 
@@ -40,30 +40,10 @@ export const fetchResult = async (
   prompt: string,
   abortSignal: AbortSignal
 ): Promise<string[]> => {
-  const project = projectStore.get();
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  const availableComponentsNames = $availableComponentsNames.get();
-  const [styles, jsx] = $jsx.get() || [];
-
-  const requestParams = {
-    jsx: `${styles}${jsx}`,
-    components: availableComponentsNames,
-    projectId: project?.id,
-    instanceId: selectedInstanceSelector?.[0] ?? "",
-    prompt,
-  };
-
-  if (
-    RequestParamsSchema.omit({ command: true }).safeParse(requestParams)
-      .success === false
-  ) {
-    return ["Invalid prompt data"];
-  }
-
   const commandsResponse = await handleAiRequest<commandDetect.Response>(
     fetch(restAi("detect"), {
       method: "POST",
-      body: JSON.stringify({ prompt: requestParams.prompt }),
+      body: JSON.stringify({ prompt }),
       signal: abortSignal,
     }),
     { signal: abortSignal }
@@ -87,7 +67,33 @@ export const fetchResult = async (
     return ["Something went wrong."];
   }
 
+  const project = projectStore.get();
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const availableComponentsNames = $availableComponentsNames.get();
+  const [styles, jsx] = $jsx.get() || ["", ""];
+
+  const requestParams = {
+    jsx: `${styles}${jsx}`,
+    components: availableComponentsNames,
+    projectId: project?.id,
+    instanceId: selectedInstanceSelector?.[0],
+    prompt,
+  };
+
+  // @todo Future commands might not require all the requestParams above.
+  // When that will be the case, we should revisit the validatin below.
+  if (requestParams.instanceId === undefined) {
+    return ["Please select an instance on the canvas."];
+  }
+  if (
+    RequestParamsSchema.omit({ command: true }).safeParse(requestParams)
+      .success === false
+  ) {
+    return ["Invalid prompt data"];
+  }
+
   const appliedOperations = new Set<string>();
+
   const promises = await Promise.allSettled(
     commandsResponse.data.map((command) =>
       handleAiRequest<operations.Response>(

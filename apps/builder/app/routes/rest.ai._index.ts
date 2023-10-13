@@ -20,11 +20,11 @@ import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 
 export const RequestParamsSchema = z.object({
-  projectId: z.string(),
-  instanceId: z.string(),
-  prompt: z.string().max(1200),
+  projectId: z.string().min(1, "nonempty"),
+  instanceId: z.string().min(1, "nonempty"),
+  prompt: z.string().min(1, "nonempty").max(1200),
   components: z.array(z.string()),
-  jsx: z.string(),
+  jsx: z.string().min(1, "nonempty"),
   command: z.union([
     // Using client* friendly imports because RequestParamsSchema
     // is used to parse the form data on the client too.
@@ -55,19 +55,6 @@ export const action = async ({ request }: ActionArgs) => {
     };
   }
 
-  if (env.PEXELS_API_KEY === undefined) {
-    return {
-      id: "ai",
-      ...createErrorResponse({
-        error: "ai.invalidApiKey",
-        status: 401,
-        debug: "Invalid Pexels api key",
-      }),
-      llmMessages: [],
-    };
-  }
-  const PEXELS_API_KEY = env.PEXELS_API_KEY;
-
   if (
     env.OPENAI_ORG === undefined ||
     env.OPENAI_ORG.startsWith("org-") === false
@@ -82,6 +69,19 @@ export const action = async ({ request }: ActionArgs) => {
       llmMessages: [],
     };
   }
+
+  if (env.PEXELS_API_KEY === undefined) {
+    return {
+      id: "ai",
+      ...createErrorResponse({
+        error: "ai.invalidApiKey",
+        status: 401,
+        debug: "Invalid Pexels api key",
+      }),
+      llmMessages: [],
+    };
+  }
+  const PEXELS_API_KEY = env.PEXELS_API_KEY;
 
   const parsed = RequestParamsSchema.safeParse(await request.json());
 
