@@ -109,37 +109,52 @@ export const AiCommandBar = () => {
   });
 
   const handleAiRequest = async (prompt: string) => {
-    abortController.current = new AbortController();
+    if (abortController.current) {
+      if (abortController.current.signal.aborted === false) {
+        // eslint-disable-next-line no-console
+        console.warn(`For some reason previous operation is not aborted.`);
+      }
+
+      abortController.current.abort();
+    }
+
+    const localAbortController = new AbortController();
+    abortController.current = localAbortController;
+
     setIsAiRequesting(true);
-    guardIdRef.current++;
-    const guardId = guardIdRef.current;
 
     // Skip Abort Logic for now
     try {
-      const errors = await fetchResult(prompt, abortController.current.signal);
+      await fetchResult(prompt, abortController.current.signal);
 
-      if (guardId !== guardIdRef.current) {
+      if (localAbortController !== abortController.current) {
+        // skip
         return;
-      }
-
-      if (errors.length > 0) {
-        toast(errors.join("\n"));
       }
 
       setPrompts((previousPrompts) => [...previousPrompts, prompt]);
 
       setValue("");
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
+      if (
+        (error instanceof Error && error.message.startsWith("AbortError:")) ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) {
+        // Aborted by user request
+        return;
+      }
+
       if (error instanceof Error) {
         toast(error.message);
       } else {
-        toast("Something went wrong");
+        toast(`Something went wrong, ${error}`);
       }
+      // eslint-disable-next-line no-console
+      console.error(error);
+    } finally {
+      abortController.current = undefined;
+      setIsAiRequesting(false);
     }
-    abortController.current = undefined;
-    setIsAiRequesting(false);
   };
 
   const handleAiButtonClick = () => {
@@ -205,8 +220,6 @@ export const AiCommandBar = () => {
     recordButtonProps = {
       onClick: (event: MouseEvent<HTMLButtonElement>) => {
         // Cancel AI request
-        guardIdRef.current++;
-        setIsAiRequesting(false);
         abortController.current?.abort();
       },
     };
