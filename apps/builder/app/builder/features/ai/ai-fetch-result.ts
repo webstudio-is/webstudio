@@ -34,6 +34,8 @@ import { RequestParamsSchema } from "~/routes/rest.ai._index";
 import untruncateJson from "untruncate-json";
 import { traverseTemplate } from "@webstudio-is/jsx-utils";
 
+const unknownArray = z.array(z.unknown());
+
 export const fetchResult = async (
   prompt: string,
   abortSignal: AbortSignal
@@ -85,6 +87,7 @@ export const fetchResult = async (
     return ["Something went wrong."];
   }
 
+  const appliedOperations = new Set<string>();
   const promises = await Promise.allSettled(
     commandsResponse.data.map((command) =>
       handleAiRequest<operations.Response>(
@@ -106,19 +109,35 @@ export const fetchResult = async (
           onChunk: (operationId, { completion }) => {
             if (operationId === "copywriter") {
               try {
-                const jsonResponse = z
-                  .array(copywriter.TextInstanceSchema)
-                  .parse(JSON.parse(untruncateJson(completion)));
+                const unparsedDataArray = unknownArray.parse(
+                  JSON.parse(untruncateJson(completion))
+                );
 
-                const currenTextInstance = jsonResponse.pop();
+                const parsedDataArray = unparsedDataArray
+                  .map((item) => {
+                    const safeResult =
+                      copywriter.TextInstanceSchema.safeParse(item);
+                    if (safeResult.success) {
+                      return safeResult.data;
+                    }
+                  })
+                  .filter(
+                    <T>(value: T): value is NonNullable<T> =>
+                      value !== undefined
+                  );
 
-                if (currenTextInstance === undefined) {
-                  return;
+                const operationsToApply = parsedDataArray.filter(
+                  (item) =>
+                    appliedOperations.has(JSON.stringify(item)) === false
+                );
+
+                for (const operation of operationsToApply) {
+                  patchTextInstance(operation);
+                  appliedOperations.add(JSON.stringify(operation));
                 }
-
-                patchTextInstance(currenTextInstance);
               } catch {
-                /**/
+                // eslint-disable-next-line no-console
+                console.error("completion failed to parse", completion);
               }
             }
           },
