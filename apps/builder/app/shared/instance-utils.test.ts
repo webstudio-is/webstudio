@@ -10,9 +10,11 @@ import {
   findClosestEditableInstanceSelector,
   insertTemplateData,
   type InsertConstraints,
+  deleteInstance,
 } from "./instance-utils";
 import {
   instancesStore,
+  registeredComponentMetasStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
@@ -414,6 +416,51 @@ test("insert template data with only new style sources", () => {
           value: { type: "keyword", value: "green" },
         },
       ],
+    ])
+  );
+});
+
+test("delete instance with its children", () => {
+  // body
+  //   box1
+  //     box11
+  //   box2
+  instancesStore.set(
+    new Map([
+      createInstancePair("body", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("box1", "Box", [{ type: "id", value: "box11" }]),
+      createInstancePair("box11", "Box", []),
+      createInstancePair("box2", "Box", []),
+    ])
+  );
+  registeredComponentMetasStore.set(createFakeComponentMetas({}));
+  deleteInstance(["box1", "body"]);
+  expect(instancesStore.get()).toEqual(
+    new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
+      createInstancePair("box2", "Box", []),
+    ])
+  );
+});
+
+test("prevent deleting root instance", () => {
+  // body
+  //   box1
+  instancesStore.set(
+    new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
+      createInstancePair("box1", "Box", []),
+    ])
+  );
+  registeredComponentMetasStore.set(createFakeComponentMetas({}));
+  deleteInstance(["body"]);
+  expect(instancesStore.get()).toEqual(
+    new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
+      createInstancePair("box1", "Box", []),
     ])
   );
 });
