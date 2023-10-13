@@ -120,9 +120,11 @@ export const fetchResult = async (
                     if (safeResult.success) {
                       return safeResult.data;
                     }
-                    return;
                   })
-                  .filter(<T>(v: T): v is NonNullable<T> => v !== undefined);
+                  .filter(
+                    <T>(value: T): value is NonNullable<T> =>
+                      value !== undefined
+                  );
 
                 const operationsToApply = parsedDataArray.filter(
                   (item) =>
