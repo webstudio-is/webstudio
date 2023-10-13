@@ -78,7 +78,8 @@ export const AiCommandBar = () => {
       }
 
       const currentValue = getValue();
-      const newValue = `${currentValue} ${text}`;
+      const newValue = [currentValue, text].filter(Boolean).join(" ");
+
       setValue(newValue);
       setIsAudioTranscribing(false);
 
@@ -143,6 +144,10 @@ export const AiCommandBar = () => {
 
   const handleAiButtonClick = () => {
     handleAiRequest(value);
+  };
+
+  const handlePropmptClick = (prompt: string) => {
+    setValue(prompt);
   };
 
   if (isAiCommandBarVisible === false) {
@@ -229,7 +234,12 @@ export const AiCommandBar = () => {
       <CommandBar
         open={open}
         onOpenChange={setOpen}
-        content={<CommandBarContent prompts={prompts} />}
+        content={
+          <CommandBarContent
+            prompts={prompts}
+            onPromptClick={handlePropmptClick}
+          />
+        }
       >
         <CommandBarTrigger>
           <CommandBarButton color="dark-ghost">
@@ -303,7 +313,10 @@ export const AiCommandBar = () => {
   );
 };
 
-const CommandBarContent = (props: { prompts: string[] }) => {
+const CommandBarContent = (props: {
+  prompts: string[];
+  onPromptClick: (value: string) => void;
+}) => {
   const shortcutText = "⌘⇧Q";
   return (
     <>
@@ -354,7 +367,10 @@ const CommandBarContent = (props: { prompts: string[] }) => {
             <ScrollArea css={{ maxHeight: theme.spacing[29], margin: -4 }}>
               <Grid gap={2} css={{ margin: 4 }}>
                 {props.prompts.map((prompt, index) => (
-                  <CommandBarContentPrompt key={index}>
+                  <CommandBarContentPrompt
+                    key={index}
+                    onClick={() => props.onPromptClick(prompt)}
+                  >
                     {prompt}
                   </CommandBarContentPrompt>
                 ))}
