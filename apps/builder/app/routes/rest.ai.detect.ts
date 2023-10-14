@@ -91,7 +91,7 @@ export const action = async ({ request }: ActionArgs) => {
       prompt,
       commands: {
         [copywriter.name]:
-          "a text editing related task or a request to write text or copy",
+          "a copy editing related task (write, rewrite, rephrase, shorten, translate etc.)",
         [operations.editStyles.name]:
           "a task that is about editing styles or adding new ones. can't handle images",
         [operations.generateTemplatePrompt.name]:
