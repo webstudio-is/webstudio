@@ -34,29 +34,56 @@ import untruncateJson from "untruncate-json";
 import { traverseTemplate } from "@webstudio-is/jsx-utils";
 import { RequestParamsSchema } from "~/routes/rest.ai._index";
 
+const slashCommands = {
+  text: copywriter.name,
+  t: copywriter.name,
+  style: operations.editStylesName,
+  s: operations.editStylesName,
+  ui: operations.generateTemplatePromptName,
+  u: operations.generateTemplatePromptName,
+  delete: operations.deleteInstanceName,
+  d: operations.deleteInstanceName,
+} as const;
+
 const unknownArray = z.array(z.unknown());
 
 export const fetchResult = async (
   prompt: string,
   abortSignal: AbortSignal
 ): Promise<void> => {
-  const commandsResponse = await handleAiRequest<commandDetect.Response>(
-    fetch(restAi("detect"), {
-      method: "POST",
-      body: JSON.stringify({ prompt }),
-      signal: abortSignal,
-    })
-  );
+  let commands: string[] = [];
 
-  if (commandsResponse.type === "stream") {
-    throw new Error(
-      "Commands detection is not using streaming. Something went wrong."
+  prompt = prompt.trim();
+
+  const firstWord = prompt.split(" ")[0];
+  if (firstWord && firstWord.startsWith("/")) {
+    const slashCommand = firstWord.slice(1);
+    if (slashCommand in slashCommands) {
+      commands = [slashCommands[slashCommand as keyof typeof slashCommands]];
+      prompt = prompt.slice(firstWord.length);
+    } else {
+      throw new Error("Unsupported slash command.");
+    }
+  } else {
+    const commandsResponse = await handleAiRequest<commandDetect.Response>(
+      fetch(restAi("detect"), {
+        method: "POST",
+        body: JSON.stringify({ prompt }),
+        signal: abortSignal,
+      })
     );
-  }
 
-  if (commandsResponse.success === false) {
-    // Server error response
-    throw new Error(commandsResponse.data.message);
+    if (commandsResponse.type === "stream") {
+      throw new Error(
+        "Commands detection is not using streaming. Something went wrong."
+      );
+    }
+
+    if (commandsResponse.success === false) {
+      // Server error response
+      throw new Error(commandsResponse.data.message);
+    }
+    commands = commandsResponse.data;
   }
 
   const project = projectStore.get();
@@ -89,7 +116,7 @@ export const fetchResult = async (
   const appliedOperations = new Set<string>();
 
   const promises = await Promise.allSettled(
-    commandsResponse.data.map((command) =>
+    commands.map((command) =>
       handleAiRequest<operations.Response>(
         fetch(restAi(), {
           method: "POST",
