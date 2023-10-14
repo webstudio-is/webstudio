@@ -12,7 +12,7 @@ type RequestOptions = {
       done: boolean;
     }
   ) => void;
-  onResponseReceived?: (response: Response) => void;
+  onResponseReceived: (response: Response) => void;
 };
 
 export const handleAiRequest = async <ResponseData>(

@@ -41,6 +41,21 @@ import {
 
 const unknownArray = z.array(z.unknown());
 
+const onResponseReceived = async (response: Response) => {
+  if (response.ok === false) {
+    const text = await response.text();
+
+    if (response.status === 429) {
+      const meta = textToRateLimitMeta(text);
+      throw new RateLimitException(text, meta);
+    }
+
+    throw new Error(
+      `Fetch error status=${response.status} text=${text.slice(0, 1000)}`
+    );
+  }
+};
+
 export const fetchResult = async (
   prompt: string,
   abortSignal: AbortSignal
@@ -52,20 +67,7 @@ export const fetchResult = async (
       signal: abortSignal,
     }),
     {
-      onResponseReceived: async (response) => {
-        if (response.ok === false) {
-          const text = await response.text();
-
-          if (response.status === 429) {
-            const meta = textToRateLimitMeta(text);
-            throw new RateLimitException(text, meta);
-          }
-
-          throw new Error(
-            `Fetch error status=${response.status} text=${text.slice(0, 1000)}`
-          );
-        }
-      },
+      onResponseReceived,
     }
   );
 
@@ -130,23 +132,7 @@ export const fetchResult = async (
           signal: abortSignal,
         }),
         {
-          onResponseReceived: async (response) => {
-            if (response.ok === false) {
-              const text = await response.text();
-
-              if (response.status === 429) {
-                const meta = textToRateLimitMeta(text);
-                throw new RateLimitException(text, meta);
-              }
-
-              throw new Error(
-                `Fetch error status=${response.status} text=${text.slice(
-                  0,
-                  1000
-                )}`
-              );
-            }
-          },
+          onResponseReceived,
           onChunk: (operationId, { completion }) => {
             if (operationId === "copywriter") {
               try {
@@ -204,11 +190,11 @@ export const fetchResult = async (
         applyOperations(result.data);
         continue;
       }
-
-      // Handle other commands responses below.
-      // ...
-      //
     } else if (promise.status === "rejected") {
+      if (promise.reason instanceof Error) {
+        throw promise.reason;
+      }
+
       throw new Error(promise.reason.message);
     }
   }
