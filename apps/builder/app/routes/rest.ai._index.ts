@@ -229,7 +229,7 @@ export const action = async ({ request }: ActionArgs) => {
           context: {
             prompt:
               operation.llmPrompt +
-              (operation.classNames.length > 0
+              (operation.classNames && operation.classNames.length > 0
                 ? `.\nSuggested Tailwind classes: ${operation.classNames}`
                 : ""),
 
