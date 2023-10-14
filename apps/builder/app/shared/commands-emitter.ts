@@ -66,13 +66,19 @@ export const createCommandsEmitter = <CommandName extends string>({
 
   const emitCommand = (name: CommandName) => {
     const { publish } = $publisher.get();
-    publish({
-      type: "command",
-      payload: {
-        source,
-        name,
-      },
-    });
+    // continue to work without emitter
+    // for example in tests
+    if (publish) {
+      publish({
+        type: "command",
+        payload: {
+          source,
+          name,
+        },
+      });
+    } else {
+      commandHandlers.get(name)?.();
+    }
   };
 
   /**
