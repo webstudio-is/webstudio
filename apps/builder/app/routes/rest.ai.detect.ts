@@ -91,11 +91,12 @@ export const action = async ({ request }: ActionArgs) => {
       prompt,
       commands: {
         [copywriter.name]:
-          "rewrites, rephrases, shortens, increases length or translates text",
-        [operations.editStyles.name]: "edits styles",
+          "a text editing related task or a request to write text or copy",
+        [operations.editStyles.name]:
+          "a task that is about editing styles or adding new ones. can't handle images",
         [operations.generateTemplatePrompt.name]:
           "handles a user interface generation request",
-        [operations.deleteInstance.name]: "deletes elements",
+        [operations.deleteInstance.name]: "deletes existing elements",
       },
     },
   });
