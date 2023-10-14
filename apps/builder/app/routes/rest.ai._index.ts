@@ -78,8 +78,8 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidApiKey",
         status: 401,
-        message: "Invalid Pexels api key",
-        debug: "Invalid Pexels api key",
+        message: "Invalid Pexels API key",
+        debug: "Invalid Pexels API key",
       }),
       llmMessages: [],
     };

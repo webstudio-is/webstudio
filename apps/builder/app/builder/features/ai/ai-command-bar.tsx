@@ -111,7 +111,7 @@ export const AiCommandBar = () => {
           return;
         }
 
-        // Above is known errors, we are not interesting in
+        // Above are known errors; we're not interested in logging them.
         // eslint-disable-next-line no-console
         console.error(error);
 
