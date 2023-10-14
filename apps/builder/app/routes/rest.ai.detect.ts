@@ -49,7 +49,7 @@ export const action = async ({ request }: ActionArgs) => {
   }
 
   const requestJson = await request.json();
-  const parsed = RequestParamsSchema.safeParse(await request.json());
+  const parsed = RequestParamsSchema.safeParse(requestJson);
 
   if (parsed.success === false) {
     return {

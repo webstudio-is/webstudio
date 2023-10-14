@@ -72,11 +72,9 @@ export const createChain = <ModelMessageFormat>(): Chain<
     try {
       template = await jsxToTemplate(getCode(completionText, "jsx"));
     } catch (error) {
-      const debug = (
-        "Failed to parse the completion " +
-        (error instanceof Error ? error.message : "") +
-        completionText
-      ).trim();
+      const debug = `Failed to parse the completion error="${
+        error instanceof Error ? error.message : ""
+      }" completionText="${completionText}"`.trim();
       return {
         id: name,
         ...createErrorResponse({
