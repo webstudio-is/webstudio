@@ -25,6 +25,7 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidApiKey",
         status: 401,
+        message: "Invalid OpenAI API key",
         debug: "Invalid OpenAI API key",
       }),
       llmMessages: [],
@@ -40,12 +41,14 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidOrg",
         status: 401,
+        message: "Invalid OpenAI API organization",
         debug: "Invalid OpenAI API organization",
       }),
       llmMessages: [],
     };
   }
 
+  const requestJson = await request.json();
   const parsed = RequestParamsSchema.safeParse(await request.json());
 
   if (parsed.success === false) {
@@ -54,6 +57,9 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidRequest",
         status: 401,
+        message: `RequestParamsSchema.safeParse failed on ${JSON.stringify(
+          requestJson
+        )}`,
         debug: "Invalid request data",
       }),
       llmMessages: [],

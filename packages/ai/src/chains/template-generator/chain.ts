@@ -72,14 +72,17 @@ export const createChain = <ModelMessageFormat>(): Chain<
     try {
       template = await jsxToTemplate(getCode(completionText, "jsx"));
     } catch (error) {
+      const debug = (
+        "Failed to parse the completion " +
+        (error instanceof Error ? error.message : "") +
+        completionText
+      ).trim();
       return {
         id: name,
         ...createErrorResponse({
           status: 500,
-          debug: (
-            "Failed to parse the completion " +
-            (error instanceof Error ? error.message : "")
-          ).trim(),
+          message: debug,
+          debug,
         }),
         llmMessages,
       };
@@ -88,14 +91,16 @@ export const createChain = <ModelMessageFormat>(): Chain<
     try {
       postProcessTemplate(template, components);
     } catch (error) {
+      const debug = (
+        "Invalid completion " + (error instanceof Error ? error.message : "")
+      ).trim();
+
       return {
         id: name,
         ...createErrorResponse({
           status: 500,
-          debug: (
-            "Invalid completion " +
-            (error instanceof Error ? error.message : "")
-          ).trim(),
+          message: debug,
+          debug,
         }),
         llmMessages,
       };

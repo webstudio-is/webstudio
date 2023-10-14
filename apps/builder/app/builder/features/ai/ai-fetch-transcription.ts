@@ -25,7 +25,7 @@ export const fetchTranscription = async (file: File) => {
     }
 
     throw new Error(
-      `Fetch error status=${response.status} text=${text.slice(0, 1000)}`
+      `Fetch error status="${response.status}" text="${text.slice(0, 1000)}"`
     );
   }
 

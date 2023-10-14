@@ -9,7 +9,7 @@ export const createErrorResponse = ({
 }: {
   status?: number;
   error?: string;
-  message?: string;
+  message: string;
   debug?: string;
   tokens?: Tokens;
 }): ErrorResponse => ({
