@@ -1,3 +1,5 @@
+/* eslint-disable import/no-internal-modules */
+import formatDistance from "date-fns/formatDistance";
 import { useStore } from "@nanostores/react";
 import {
   AutogrowTextArea,
@@ -69,6 +71,17 @@ export const AiCommandBar = () => {
     cancel,
     state: mediaRecorderState,
   } = useMediaRecorder({
+    onError: (error) => {
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        toast("Please enable your microphone.");
+        return;
+      }
+      if (error instanceof Error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.error(`Unknown Error: ${error}`);
+    },
     onComplete: async (file) => {
       try {
         setIsAudioTranscribing(true);
@@ -85,18 +98,25 @@ export const AiCommandBar = () => {
         setValue(newValue);
         handleAiRequest(newValue);
       } catch (error) {
-        if (error instanceof AiApiException) {
-          // Error in our API, show toast
-          toast.error(`API Internal Error: ${error.message}`);
+        if (error instanceof RateLimitException) {
+          toast(
+            `Temporary AI rate limit reached. Please wait ${formatDistance(
+              Date.now(),
+              new Date(error.meta.reset),
+              {
+                includeSeconds: true,
+              }
+            )} and try again.`
+          );
           return;
         }
 
-        if (error instanceof RateLimitException) {
-          // Rate limit error, show toast
-          // eslint-disable-next-line no-console
-          console.warn("Rate limit", error.meta);
+        // Above is known errors, we are not interesting in
+        // eslint-disable-next-line no-console
+        console.error(error);
 
-          toast(`Rate limit reached. Chill for a bit, then try again`);
+        if (error instanceof AiApiException) {
+          toast.error(`API Internal Error: ${error.message}`);
           return;
         }
 
@@ -167,13 +187,32 @@ export const AiCommandBar = () => {
         return;
       }
 
-      if (error instanceof Error) {
-        toast(error.message);
-      } else {
-        toast(`Something went wrong, ${error}`);
+      if (error instanceof RateLimitException) {
+        toast(
+          `Temporary AI rate limit reached. Please wait ${formatDistance(
+            Date.now(),
+            new Date(error.meta.reset),
+            {
+              includeSeconds: true,
+            }
+          )} and try again.`
+        );
+        return;
       }
+
+      // Above is known errors, we are not interesting in
       // eslint-disable-next-line no-console
       console.error(error);
+
+      if (error instanceof AiApiException) {
+        toast.error(`API Internal Error: ${error.message}`);
+        return;
+      }
+
+      if (error instanceof Error) {
+        // Unknown error, show toast
+        toast.error(`Unknown Error: ${error.message}`);
+      }
     } finally {
       abortController.current = undefined;
       setIsAiRequesting(false);

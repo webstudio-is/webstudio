@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/**
+ * To facilitate debugging, categorize errors into few types, one is and API-specific errors.
+ */
 export class AiApiException extends Error {
   constructor(message: string) {
     super(message);
@@ -27,10 +30,11 @@ export const textToRateLimitMeta = (text: string): RateLimitMeta => {
 
     return error.meta;
   } catch {
+    //  If a 429 status code is received and it's not from our API, default to a 1-minute wait time from the current moment.
     return {
       limit: 0,
       remaining: 0,
-      reset: 0,
+      reset: Date.now(),
       ratelimitName: "unparsed",
     };
   }

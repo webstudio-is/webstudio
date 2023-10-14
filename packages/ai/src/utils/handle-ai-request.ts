@@ -3,7 +3,7 @@ import type { ModelResponse } from "../types";
 import { RemixStreamingTextResponse } from "./remix-streaming-text-response";
 
 type RequestOptions = {
-  onChunk: (
+  onChunk?: (
     operationId: string,
     data: {
       completion: string;
@@ -12,22 +12,16 @@ type RequestOptions = {
       done: boolean;
     }
   ) => void;
+  onResponseReceived?: (response: Response) => void;
 };
 
 export const handleAiRequest = async <ResponseData>(
   request: Promise<Response>,
-  options?: RequestOptions
+  options: RequestOptions
 ) => {
   const response = await request;
 
-  if (response.status !== 200) {
-    // Non 200 responses are unrecoverable errors.
-    throw new Error(
-      `response.status is ${response.status}, response ${(
-        await response.text()
-      ).slice(0, 1000)}`
-    );
-  }
+  await options.onResponseReceived?.(response);
 
   const isStream =
     (response.headers.get("content-type") || "").startsWith("text/plain") &&
@@ -52,7 +46,7 @@ export const handleAiRequest = async <ResponseData>(
       const decodedChunk = decoder(value);
       completion += decodedChunk;
 
-      options?.onChunk(operationId, {
+      options.onChunk?.(operationId, {
         completion,
         chunk: value,
         decodedChunk,

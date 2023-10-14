@@ -33,6 +33,11 @@ import { restAi } from "~/shared/router-utils";
 import untruncateJson from "untruncate-json";
 import { traverseTemplate } from "@webstudio-is/jsx-utils";
 import { RequestParamsSchema } from "~/routes/rest.ai._index";
+import {
+  AiApiException,
+  RateLimitException,
+  textToRateLimitMeta,
+} from "./api-exceptions";
 
 const unknownArray = z.array(z.unknown());
 
@@ -45,7 +50,23 @@ export const fetchResult = async (
       method: "POST",
       body: JSON.stringify({ prompt }),
       signal: abortSignal,
-    })
+    }),
+    {
+      onResponseReceived: async (response) => {
+        if (response.ok === false) {
+          const text = await response.text();
+
+          if (response.status === 429) {
+            const meta = textToRateLimitMeta(text);
+            throw new RateLimitException(text, meta);
+          }
+
+          throw new Error(
+            `Fetch error status=${response.status} text=${text.slice(0, 1000)}`
+          );
+        }
+      },
+    }
   );
 
   if (commandsResponse.type === "stream") {
@@ -109,6 +130,23 @@ export const fetchResult = async (
           signal: abortSignal,
         }),
         {
+          onResponseReceived: async (response) => {
+            if (response.ok === false) {
+              const text = await response.text();
+
+              if (response.status === 429) {
+                const meta = textToRateLimitMeta(text);
+                throw new RateLimitException(text, meta);
+              }
+
+              throw new Error(
+                `Fetch error status=${response.status} text=${text.slice(
+                  0,
+                  1000
+                )}`
+              );
+            }
+          },
           onChunk: (operationId, { completion }) => {
             if (operationId === "copywriter") {
               try {
@@ -149,15 +187,12 @@ export const fetchResult = async (
     )
   );
 
-  const errors = [];
-
   for (const promise of promises) {
     if (promise.status === "fulfilled") {
       const result = promise.value;
 
       if (result.success === false) {
-        errors.push(result.data.message);
-        continue;
+        throw new AiApiException(result.data.message);
       }
 
       if (result.type !== "json") {
@@ -174,12 +209,8 @@ export const fetchResult = async (
       // ...
       //
     } else if (promise.status === "rejected") {
-      errors.push(promise.reason);
+      throw new Error(promise.reason.message);
     }
-  }
-
-  if (errors.length > 0) {
-    throw new Error(errors.join("\n"));
   }
 };
 

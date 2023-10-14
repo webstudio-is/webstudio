@@ -30,7 +30,7 @@ export const aiOperationToWs = async (
   operation: aiOperation
 ): Promise<wsOperation> => {
   if (operation.className === "") {
-    throw new Error("Invalid response");
+    throw new Error(`Operation ${operation.operation} className is empty`);
   }
   const styles = await parseTailwindToWebstudio(operation.className);
   return {

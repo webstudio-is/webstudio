@@ -9,6 +9,7 @@ const DEFAULT_OPTIONS: MediaRecorderOptions = {
 export const useMediaRecorder = (
   props: {
     onComplete: (file: File) => void;
+    onError: (error: unknown) => void;
     onReportSoundAmplitude?: (amplitude: number) => void;
   },
   options = DEFAULT_OPTIONS
@@ -18,7 +19,7 @@ export const useMediaRecorder = (
   const cancelRef = useRef(false);
   const isActiveRef = useRef<boolean>(false);
   const idRef = useRef(0);
-  const [error, setError] = useState<Error>();
+  // const [error, setError] = useState<Error>();
   const [state, setState] = useState<"inactive" | "recording">("inactive");
 
   const onComplete = useEffectEvent(props.onComplete);
@@ -42,12 +43,7 @@ export const useMediaRecorder = (
     } catch (error) {
       // Not allowed, do not start new recording
       isActiveRef.current = false;
-
-      if (error instanceof Error) {
-        setError(error);
-        return;
-      }
-      setError(new Error("Unknown error"));
+      props.onError(error);
       return;
     }
 
@@ -65,7 +61,6 @@ export const useMediaRecorder = (
       return;
     }
 
-    setError(undefined);
     setState("recording");
 
     const subtype = MediaRecorder.isTypeSupported("audio/webm; codecs=opus")
@@ -162,5 +157,5 @@ export const useMediaRecorder = (
     stop();
   });
 
-  return { start, stop, cancel, error, state };
+  return { start, stop, cancel, state };
 };

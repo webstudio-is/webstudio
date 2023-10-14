@@ -100,8 +100,10 @@ const getRateLimitMemoized = memoize(
     // No ephemeralCache for the AI endpoint
     const ai = new Ratelimit({
       redis: kv,
-      limiter: Ratelimit.slidingWindow(100, "5 m"),
+      limiter: Ratelimit.slidingWindow(5, "1 m"),
       prefix: "ai",
+      // Usually during AI request we need few requests available, small timeout here could break things
+      timeout: 60000,
     });
 
     // For performance testing purposes
@@ -215,7 +217,7 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
   if (success === false) {
     // eslint-disable-next-line no-console
     console.warn(
-      `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`
+      `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining} key=${key}`
     );
 
     throw new HTTPException(429, {

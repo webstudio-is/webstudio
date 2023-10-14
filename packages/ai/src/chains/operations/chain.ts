@@ -98,6 +98,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
         ...createErrorResponse({
           status: 500,
           error: "ai.parseError",
+          message: `Failed to parse completion ${parsedCompletion.error.message}`,
           debug: `Failed to parse completion ${parsedCompletion.error.message}`,
         }),
         tokens: completion.tokens,
@@ -123,6 +124,11 @@ export const createChain = <ModelMessageFormat>(): Chain<
         ...createErrorResponse({
           status: 500,
           error: "ai.parseError",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to parse the completion",
+
           debug: (
             "Failed to convert operations. " +
             (error instanceof Error ? error.message : "")
