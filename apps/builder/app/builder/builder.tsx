@@ -10,7 +10,6 @@ import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
-import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
@@ -276,7 +275,6 @@ export const Builder = ({
     authPermit,
     version: build.version,
   });
-  useSharedShortcuts({ source: "builder" });
 
   const isPreviewMode = useStore($isPreviewMode);
   usePublishShortcuts(publish);
