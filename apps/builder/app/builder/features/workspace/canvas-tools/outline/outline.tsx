@@ -22,6 +22,7 @@ const angleKeyframes = keyframes({
 });
 
 const baseStyle = css({
+  boxSizing: "border-box",
   position: "absolute",
   pointerEvents: "none",
   outline: `1px solid ${theme.colors.blue9}`,

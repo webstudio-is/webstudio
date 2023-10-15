@@ -47,8 +47,8 @@ export const Basic = () => (
       <Box css={{ width: "min-content", textAlign: "center" }}>
         Selected outline over Collaboration
       </Box>
-      <Outline rect={new DOMRect(0, 0, 150, 150)} />
       <Outline rect={new DOMRect(0, 0, 150, 150)} variant="collaboration" />
+      <Outline rect={new DOMRect(0, 0, 150, 150)} />
     </Flex>
   </Grid>
 );
