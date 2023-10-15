@@ -50,7 +50,24 @@ type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
 
 export const AiCommandBar = () => {
   const [value, setValue] = useState("");
-  const [prompts, setPrompts] = useState<string[]>([]);
+  const [prompts, setPrompts] = useState<string[]>([
+    "1",
+    "2",
+    "3",
+    "4",
+    "1",
+    "2",
+    "3",
+    "4",
+    "1",
+    "2",
+    "3",
+    "4",
+    "1",
+    "2",
+    "3",
+    "4",
+  ]);
   const [open, setOpen] = useState(false);
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
@@ -175,7 +192,7 @@ export const AiCommandBar = () => {
         return;
       }
 
-      setPrompts((previousPrompts) => [...previousPrompts, prompt]);
+      setPrompts((previousPrompts) => [prompt, ...previousPrompts]);
 
       setValue("");
     } catch (error) {
@@ -220,6 +237,9 @@ export const AiCommandBar = () => {
   };
 
   const handleAiButtonClick = () => {
+    if (value.trim().length === 0) {
+      return;
+    }
     handleAiRequest(value);
   };
 
@@ -242,10 +262,9 @@ export const AiCommandBar = () => {
   let recordButtonIcon = <MicIcon />;
   let recordButtonDisabled = false;
 
-  let aiButtonDisabled = value.length === 0;
-  let aiButtonTooltip: string | undefined = aiButtonDisabled
-    ? undefined
-    : "Generate AI results";
+  let aiButtonDisabled = false;
+  let aiButtonTooltip: string | undefined =
+    value.length === 0 ? undefined : "Generate AI results";
   let aiButtonPending = false;
   let aiIcon = <AiIcon />;
 
@@ -278,7 +297,6 @@ export const AiCommandBar = () => {
     textAreaDisabled = true;
 
     recordButtonTooltipContent = "Cancel";
-    recordButtonColor = "neutral";
     recordButtonProps = {
       onClick: (event: MouseEvent<HTMLButtonElement>) => {
         // Cancel AI request
@@ -392,7 +410,9 @@ const CommandBarContent = (props: {
   prompts: string[];
   onPromptClick: (value: string) => void;
 }) => {
-  const shortcutText = "⌘⇧Q";
+  // @todo enable when we will have shortcut
+  // const shortcutText = "⌘⇧Q";
+
   return (
     <>
       <CommandBarContentSection>
@@ -402,13 +422,13 @@ const CommandBarContent = (props: {
             color={"subtle"}
             css={{ visibility: "hidden" }}
           >
-            {shortcutText}
+            {/* shortcutText */}
           </Text>
           <Text variant={"labelsSentenceCase"} align={"center"}>
             Welcome to Webstudio AI alpha!
           </Text>
           <Text variant={"labelsSentenceCase"} color={"subtle"}>
-            {shortcutText}
+            {/* shortcutText */}
           </Text>
         </Flex>
         <div />
@@ -417,15 +437,41 @@ const CommandBarContent = (props: {
           <br />
           For example you can say: ”Make a new contact section”
         </Text>
+
         {/* @todo: change color on theme when available */}
         <Text variant={"labelsSentenceCase"} css={{ color: "#828486" }}>
-          Powered by ChatGPT - By using Webstudio AI, you consent to OpenAI
-          storing interactions without personal data.
+          This is an experimental (alpha) feature so results may vary in
+          quality. Consider sharing your feedback to help us improve.
+        </Text>
+        <Text variant={"labelsSentenceCase"} css={{ color: "#828486" }}>
+          By using Webstudio AI, you consent to OpenAI storing interactions
+          without personal data.
         </Text>
         <div />
-        <Button color="dark" suffix={<ExternalLinkIcon />}>
-          Learn more
-        </Button>
+        <Grid columns={2} gap={2}>
+          <Button
+            onClick={(event) => {
+              // @todo: Link must be changed
+              const url = new URL(`https://discord.gg/UNdyrDkq5r`);
+              window.open(url.href, "_blank");
+            }}
+            color="dark"
+            suffix={<ExternalLinkIcon />}
+          >
+            Learn more
+          </Button>
+          <Button
+            onClick={(event) => {
+              // @todo: Link must be changed
+              const url = new URL(`https://discord.gg/UNdyrDkq5r`);
+              window.open(url.href, "_blank");
+            }}
+            color="dark"
+            suffix={<ExternalLinkIcon />}
+          >
+            Share feedback
+          </Button>
+        </Grid>
       </CommandBarContentSection>
 
       {props.prompts.length > 0 && (
@@ -439,15 +485,28 @@ const CommandBarContent = (props: {
             <div />
 
             {/* negative then positive margin is used to preserve focus outline on command prompts */}
-            <ScrollArea css={{ maxHeight: theme.spacing[29], margin: -4 }}>
-              <Grid gap={2} css={{ margin: 4 }}>
+            <ScrollArea
+              css={{
+                maxHeight: theme.spacing[29],
+                margin: -4,
+                marginRight: -14,
+              }}
+            >
+              <Grid gap={2} css={{ margin: 4, marginRight: 14 }}>
                 {props.prompts.map((prompt, index) => (
-                  <CommandBarContentPrompt
+                  <Tooltip
                     key={index}
-                    onClick={() => props.onPromptClick(prompt)}
+                    side="top"
+                    // sideOffset={10}
+
+                    content={"Click to add prompt to input"}
                   >
-                    {prompt}
-                  </CommandBarContentPrompt>
+                    <CommandBarContentPrompt
+                      onClick={() => props.onPromptClick(prompt)}
+                    >
+                      {prompt}
+                    </CommandBarContentPrompt>
+                  </Tooltip>
                 ))}
               </Grid>
             </ScrollArea>
