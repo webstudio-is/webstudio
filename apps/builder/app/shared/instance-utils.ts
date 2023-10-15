@@ -19,7 +19,6 @@ import {
   styleSourcesStore,
   instancesStore,
   selectedStyleSourceSelectorStore,
-  textEditingInstanceSelectorStore,
   breakpointsStore,
   registeredComponentMetasStore,
   dataSourcesStore,
@@ -393,13 +392,13 @@ export const reparentInstance = (
 export const deleteInstance = (instanceSelector: InstanceSelector) => {
   // @todo tell user they can't delete root
   if (instanceSelector.length === 1) {
-    return;
+    return false;
   }
   if (isInstanceDetachable(instanceSelector) === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
-    return;
+    return false;
   }
   serverSyncStore.createTransaction(
     [
@@ -484,26 +483,7 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
           styles.delete(styleDeclKey);
         }
       }
-
-      if (parentInstance) {
-        selectedInstanceSelectorStore.set(
-          getAncestorInstanceSelector(instanceSelector, parentInstance.id)
-        );
-        selectedStyleSourceSelectorStore.set(undefined);
-      }
     }
   );
-};
-
-export const deleteSelectedInstance = () => {
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  // cannot delete instance while editing
-  if (textEditingInstanceSelector) {
-    return;
-  }
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  deleteInstance(selectedInstanceSelector);
+  return true;
 };

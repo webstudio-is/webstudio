@@ -2,14 +2,18 @@ import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $isPreviewMode,
   editingItemIdStore,
+  instancesStore,
   selectedInstanceSelectorStore,
+  selectedStyleSourceSelectorStore,
+  textEditingInstanceSelectorStore,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
 import { onCopy, onPaste } from "~/shared/copy-paste/plugin-instance";
-import { deleteSelectedInstance } from "~/shared/instance-utils";
+import { deleteInstance } from "~/shared/instance-utils";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -21,6 +25,46 @@ const makeBreakpointCommand = <CommandName extends string>(
     selectBreakpointByOrder(number);
   },
 });
+
+const deleteSelectedInstance = () => {
+  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  // cannot delete instance while editing
+  if (textEditingInstanceSelector) {
+    return;
+  }
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  if (selectedInstanceSelector.length === 1) {
+    return;
+  }
+  let newSelectedInstanceSelector: undefined | InstanceSelector;
+  const instances = instancesStore.get();
+  const [selectedInstanceId, parentInstanceId] = selectedInstanceSelector;
+  const parentInstance = instances.get(parentInstanceId);
+  if (parentInstance) {
+    const siblingIds = parentInstance.children
+      .filter((child) => child.type === "id")
+      .map((child) => child.value);
+    const position = siblingIds.indexOf(selectedInstanceId);
+    const siblingId = siblingIds[position + 1] ?? siblingIds[position - 1];
+    if (siblingId) {
+      // select next or previous sibling if possible
+      newSelectedInstanceSelector = [
+        siblingId,
+        ...selectedInstanceSelector.slice(1),
+      ];
+    } else {
+      // fallback to parent
+      newSelectedInstanceSelector = selectedInstanceSelector.slice(1);
+    }
+  }
+  if (deleteInstance(selectedInstanceSelector)) {
+    selectedInstanceSelectorStore.set(newSelectedInstanceSelector);
+    selectedStyleSourceSelectorStore.set(undefined);
+  }
+};
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
@@ -61,9 +105,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       // this disables hotkey for inputs on style panel
       // but still work for input on canvas which call event.preventDefault() in keydown handler
       disableHotkeyOnFormTags: true,
-      handler: () => {
-        deleteSelectedInstance();
-      },
+      handler: deleteSelectedInstance,
     },
     {
       name: "duplicateInstance",
