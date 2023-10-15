@@ -9,6 +9,8 @@ const baseConfig =
           /@webstudio-is\//,
           "nanoid",
           "@jsep-plugin/assignment",
+          "change-case",
+          "title-case",
         ],
       };
 
