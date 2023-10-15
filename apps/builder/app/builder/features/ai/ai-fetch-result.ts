@@ -38,6 +38,7 @@ import {
   RateLimitException,
   textToRateLimitMeta,
 } from "./api-exceptions";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const unknownArray = z.array(z.unknown());
 
@@ -207,8 +208,12 @@ const $availableComponentsNames = computed(
       "Body",
       "Slot",
       // @todo Remove Radix exclusion when the model has been fine-tuned to understand them.
-      "@webstudio-is/sdk-components-react-radix:",
-    ];
+      isFeatureEnabled("aiRadixComponents")
+        ? "@webstudio-is/sdk-components-react-radix:"
+        : undefined,
+    ].filter(function <T>(value: T): value is NonNullable<T> {
+      return value !== undefined;
+    });
 
     return [...metas.keys()]
       .filter((name) => !exclude.some((excluded) => name.startsWith(excluded)))
