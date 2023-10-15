@@ -48,7 +48,7 @@ type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
 };
 
-export const AiCommandBar = () => {
+export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const [value, setValue] = useState("");
   const [prompts, setPrompts] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
@@ -150,6 +150,10 @@ export const AiCommandBar = () => {
       enableCanvasPointerEvents();
     },
   });
+
+  if (isPreviewMode) {
+    return;
+  }
 
   const handleAiRequest = async (prompt: string) => {
     if (abortController.current) {
