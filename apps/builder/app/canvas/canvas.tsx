@@ -53,7 +53,7 @@ import { useSelectedInstance } from "./instance-selected-react";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
-import { useUpdateCollaborativeInstanceRect } from "./collaborative-instance-react";
+import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 
 registerContainers();
 
@@ -154,7 +154,7 @@ const DesignMode = ({ params }: { params: Params }) => {
   useCopyPaste();
 
   useSelectedInstance();
-  useUpdateCollaborativeInstanceRect();
+  useEffect(updateCollaborativeInstanceRect, []);
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
 

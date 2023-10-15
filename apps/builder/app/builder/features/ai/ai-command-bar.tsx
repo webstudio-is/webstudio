@@ -177,13 +177,14 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
 
     // Skip Abort Logic for now
     try {
-      const instanceSelector = (
-        selectedInstanceSelectorStore.get() ?? [
-          selectedPageStore.get()?.rootInstanceId,
-        ]
-      ).filter(<T,>(item: T): item is NonNullable<T> => item !== undefined);
+      const page = selectedPageStore.get();
+      const rootInstanceSelector = page?.rootInstanceId
+        ? [page.rootInstanceId]
+        : [];
+      const instanceSelector =
+        selectedInstanceSelectorStore.get() ?? rootInstanceSelector;
 
-      const instanceId = instanceSelector[0];
+      const [instanceId] = instanceSelector;
 
       if (instanceId === undefined) {
         // Must not happen, we always have root instance
