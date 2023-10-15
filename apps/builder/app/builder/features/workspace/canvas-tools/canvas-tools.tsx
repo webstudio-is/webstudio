@@ -7,7 +7,11 @@ import {
   $isPreviewMode,
   $dragAndDropState,
 } from "~/shared/nano-states";
-import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
+import {
+  CollaborativeInstanceOutline,
+  HoveredInstanceOutline,
+  SelectedInstanceOutline,
+} from "./outline";
 import { TextToolbar } from "./text-toolbar";
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
@@ -74,6 +78,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
           <div className={containerStyle({ overflow: "hidden" })}>
             <SelectedInstanceOutline />
             <HoveredInstanceOutline />
+            <CollaborativeInstanceOutline />
           </div>
           <TextToolbar publish={publish} />
         </>
