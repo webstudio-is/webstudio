@@ -50,24 +50,7 @@ type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
 
 export const AiCommandBar = () => {
   const [value, setValue] = useState("");
-  const [prompts, setPrompts] = useState<string[]>([
-    "1",
-    "2",
-    "3",
-    "4",
-    "1",
-    "2",
-    "3",
-    "4",
-    "1",
-    "2",
-    "3",
-    "4",
-    "1",
-    "2",
-    "3",
-    "4",
-  ]);
+  const [prompts, setPrompts] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
