@@ -191,10 +191,15 @@ export const fetchResult = async (
 const $availableComponentsNames = computed(
   [registeredComponentMetasStore],
   (metas) => {
-    const exclude = ["Body", "Slot"];
+    const exclude = [
+      "Body",
+      "Slot",
+      // @todo Remove Radix exclusion when the model has been fine-tuned to understand them.
+      "@webstudio-is/sdk-components-react-radix:",
+    ];
 
     return [...metas.keys()]
-      .filter((name) => !exclude.includes(name))
+      .filter((name) => !exclude.some((excluded) => name.startsWith(excluded)))
       .map(parseComponentName);
   }
 );
