@@ -13,15 +13,12 @@ type FileControlProps = ControlProps<"file", "asset" | "string">;
 
 const UrlInput = ({
   id,
-  disabled,
   localValue,
 }: {
   id: string;
-  disabled: boolean;
   localValue: ReturnType<typeof useLocalValue<string>>;
 }) => (
   <InputField
-    disabled={disabled}
     id={id}
     value={localValue.value}
     placeholder="http://www.url.com"
@@ -73,11 +70,7 @@ export const FileControl = ({
       onDelete={onDelete}
     >
       <Row>
-        <UrlInput
-          id={id}
-          disabled={prop?.type === "asset"}
-          localValue={localStringValue}
-        />
+        <UrlInput id={id} localValue={localStringValue} />
       </Row>
       <Row>
         <SelectAsset
@@ -85,7 +78,6 @@ export const FileControl = ({
           accept={meta.accept}
           onChange={onChange}
           onSoftDelete={onSoftDelete}
-          disabled={localStringValue.value !== ""}
         />
       </Row>
     </VerticalLayout>
