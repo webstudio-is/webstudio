@@ -16,11 +16,11 @@ const UrlInput = ({
   localValue,
 }: {
   id: string;
-  localValue: ReturnType<typeof useLocalValue<string>>;
+  localValue: ReturnType<typeof useLocalValue<undefined | string>>;
 }) => (
   <InputField
     id={id}
-    value={localValue.value}
+    value={localValue.value ?? ""}
     placeholder="http://www.url.com"
     onChange={(event) => localValue.set(event.target.value)}
     onBlur={localValue.save}
@@ -50,9 +50,13 @@ export const FileControl = ({
   const id = useId();
 
   const localStringValue = useLocalValue(
-    prop?.type === "string" ? prop.value : "",
+    // use undefined for asset type to not delete
+    // when url is reset by asset selector
+    prop?.type === "string" ? prop.value : undefined,
     (value) => {
-      if (value === "") {
+      if (value === undefined) {
+        return;
+      } else if (value === "") {
         onSoftDelete();
       } else {
         onChange({ type: "string", value });
