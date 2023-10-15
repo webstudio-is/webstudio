@@ -30,7 +30,6 @@ import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
-import { serverSyncStore } from "~/shared/sync";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -125,13 +124,13 @@ export const Menu = () => {
             Dashboard
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => serverSyncStore.undo()}>
+          <DropdownMenuItem onSelect={() => emitCommand("undo")}>
             Undo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => serverSyncStore.redo()}>
+          <DropdownMenuItem onSelect={() => emitCommand("redo")}>
             Redo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["shift", "cmd", "z"]} />
