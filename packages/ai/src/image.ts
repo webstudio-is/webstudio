@@ -109,6 +109,17 @@ const queryImageAndMutateInstance = async (
   } else {
     instance.props[srcIndex] = newSrc;
   }
+  const title: EmbedTemplateProp = {
+    name: "title",
+    type: "string",
+    value: `Credit: ${result.photographer}`,
+  };
+  const titleIndex = instance.props.findIndex((prop) => prop.name === "title");
+  if (titleIndex === -1) {
+    instance.props.push(title);
+  } else {
+    instance.props[titleIndex] = title;
+  }
   // prevent image deformation when ai specifies image size
   const hasObjectFit = instance.styles?.some(
     (styleDecl) => styleDecl.property === "objectFit"
