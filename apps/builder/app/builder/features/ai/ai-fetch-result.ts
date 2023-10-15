@@ -163,9 +163,9 @@ export const fetchResult = async (
                   patchTextInstance(operation);
                   appliedOperations.add(JSON.stringify(operation));
                 }
-              } catch {
+              } catch (error) {
                 // eslint-disable-next-line no-console
-                console.error("completion failed to parse", completion);
+                console.error(error);
               }
             }
           },
