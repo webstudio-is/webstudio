@@ -49,6 +49,7 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidApiKey",
         status: 401,
+        message: "Invalid OpenAI API key",
         debug: "Invalid OpenAI API key",
       }),
       llmMessages: [],
@@ -64,6 +65,7 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidOrg",
         status: 401,
+        message: "Invalid OpenAI API organization",
         debug: "Invalid OpenAI API organization",
       }),
       llmMessages: [],
@@ -76,7 +78,8 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidApiKey",
         status: 401,
-        debug: "Invalid Pexels api key",
+        message: "Invalid Pexels API key",
+        debug: "Invalid Pexels API key",
       }),
       llmMessages: [],
     };
@@ -91,6 +94,7 @@ export const action = async ({ request }: ActionArgs) => {
       ...createErrorResponse({
         error: "ai.invalidRequest",
         status: 401,
+        message: "Invalid request data",
         debug: "Invalid request data",
       }),
       llmMessages: [],

@@ -76,7 +76,11 @@ export const createChain = <ModelMessageFormat>(): Chain<
         id: name,
         ...createErrorResponse({
           status: 500,
-          error: "ai.parseError",
+          error: `ai.${name}.parseError`,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to parse the completion",
           debug: (
             "Failed to parse the completion " +
             (error instanceof Error ? error.message : "")

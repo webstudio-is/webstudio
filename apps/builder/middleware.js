@@ -100,8 +100,10 @@ const getRateLimitMemoized = memoize(
     // No ephemeralCache for the AI endpoint
     const ai = new Ratelimit({
       redis: kv,
-      limiter: Ratelimit.slidingWindow(100, "5 m"),
+      limiter: Ratelimit.slidingWindow(20, "1 m"),
       prefix: "ai",
+      // Usually during AI request we need few requests available, small timeout here could break things
+      timeout: 60000,
     });
 
     // For performance testing purposes
@@ -215,24 +217,22 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
   if (success === false) {
     // eslint-disable-next-line no-console
     console.warn(
-      `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`
+      `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining} key=${key}`
     );
 
     throw new HTTPException(429, {
       res: ctx.json(
         {
-          errors: [
-            {
-              message: `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`,
-              code: 429,
-              meta: {
-                limit,
-                reset,
-                remaining,
-                ratelimitName,
-              },
+          error: {
+            message: `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining}, key=${key}`,
+            code: 429,
+            meta: {
+              limit,
+              reset,
+              remaining,
+              ratelimitName,
             },
-          ],
+          },
         },
         429
       ),
@@ -428,31 +428,40 @@ if (process.env.NODE_ENV !== "production") {
     });
 
     passthrough = async (ctx) => {
-      const devUrl = new URL(ctx.req.url);
-      devUrl.port = "3000";
+      try {
+        const devUrl = new URL(ctx.req.url);
+        devUrl.port = "3000";
 
-      const raw = ctx.req.raw;
+        const raw = ctx.req.raw;
 
-      const req = new Request(devUrl, {
-        headers: raw.headers,
-        method: raw.method,
-        body: raw.body,
-        redirect: "manual",
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        duplex: "half",
-      });
+        const req = new Request(devUrl, {
+          headers: raw.headers,
+          method: raw.method,
+          body: raw.body,
+          redirect: "manual",
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          duplex: "half",
+        });
 
-      const res = await fetch(req);
+        const res = await fetch(req);
 
-      const responseHeaders = new Headers(res.headers);
-      responseHeaders.delete("content-encoding");
+        const responseHeaders = new Headers(res.headers);
+        responseHeaders.delete("content-encoding");
 
-      return new Response(res.body, {
-        status: res.status,
-        statusText: res.statusText,
-        headers: responseHeaders,
-      });
+        return new Response(res.body, {
+          status: res.status,
+          statusText: res.statusText,
+          headers: responseHeaders,
+        });
+      } catch (error) {
+        throw new HTTPException(500, {
+          message:
+            error instanceof Error
+              ? `Middlewared dev fetch error ${error.message}`
+              : "Middlewared dev fetch error",
+        });
+      }
     };
   }
 }

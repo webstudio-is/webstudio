@@ -33,38 +33,53 @@ import { restAi } from "~/shared/router-utils";
 import untruncateJson from "untruncate-json";
 import { traverseTemplate } from "@webstudio-is/jsx-utils";
 import { RequestParamsSchema } from "~/routes/rest.ai._index";
+import {
+  AiApiException,
+  RateLimitException,
+  textToRateLimitMeta,
+} from "./api-exceptions";
 
 const unknownArray = z.array(z.unknown());
+
+const onResponseReceived = async (response: Response) => {
+  if (response.ok === false) {
+    const text = await response.text();
+
+    if (response.status === 429) {
+      const meta = textToRateLimitMeta(text);
+      throw new RateLimitException(text, meta);
+    }
+
+    throw new Error(
+      `Fetch error status="${response.status}" text="${text.slice(0, 1000)}"`
+    );
+  }
+};
 
 export const fetchResult = async (
   prompt: string,
   abortSignal: AbortSignal
-): Promise<string[]> => {
+): Promise<void> => {
   const commandsResponse = await handleAiRequest<commandDetect.Response>(
     fetch(restAi("detect"), {
       method: "POST",
       body: JSON.stringify({ prompt }),
       signal: abortSignal,
     }),
-    { signal: abortSignal }
+    {
+      onResponseReceived,
+    }
   );
 
-  if (
-    commandsResponse.success === false ||
-    commandsResponse.type === "stream"
-  ) {
-    // Commands detection is not using streaming
-    // therefore this should never be the case.
-    // The check is here just for type safety.
-    if (commandsResponse.type === "stream") {
-      return ["Something went wrong."];
-    }
+  if (commandsResponse.type === "stream") {
+    throw new Error(
+      "Commands detection is not using streaming. Something went wrong."
+    );
+  }
 
-    if (abortSignal.aborted === false) {
-      return [commandsResponse.data.message];
-    }
-
-    return ["Something went wrong."];
+  if (commandsResponse.success === false) {
+    // Server error response
+    throw new Error(commandsResponse.data.message);
   }
 
   const project = projectStore.get();
@@ -83,13 +98,15 @@ export const fetchResult = async (
   // @todo Future commands might not require all the requestParams above.
   // When that will be the case, we should revisit the validatin below.
   if (requestParams.instanceId === undefined) {
-    return ["Please select an instance on the canvas."];
+    throw new Error("Please select an instance on the canvas.");
   }
+
+  // @todo can be covered by ts
   if (
     RequestParamsSchema.omit({ command: true }).safeParse(requestParams)
       .success === false
   ) {
-    return ["Invalid prompt data"];
+    throw new Error("Invalid prompt data");
   }
 
   const appliedOperations = new Set<string>();
@@ -115,7 +132,7 @@ export const fetchResult = async (
           signal: abortSignal,
         }),
         {
-          signal: abortSignal,
+          onResponseReceived,
           onChunk: (operationId, { completion }) => {
             if (operationId === "copywriter") {
               try {
@@ -156,15 +173,12 @@ export const fetchResult = async (
     )
   );
 
-  const errors = [];
-
   for (const promise of promises) {
     if (promise.status === "fulfilled") {
       const result = promise.value;
 
       if (result.success === false) {
-        errors.push(result.data.message);
-        continue;
+        throw new AiApiException(result.data.message);
       }
 
       if (result.type !== "json") {
@@ -176,16 +190,14 @@ export const fetchResult = async (
         applyOperations(result.data);
         continue;
       }
-
-      // Handle other commands responses below.
-      // ...
-      //
     } else if (promise.status === "rejected") {
-      errors.push(promise.reason);
+      if (promise.reason instanceof Error) {
+        throw promise.reason;
+      }
+
+      throw new Error(promise.reason.message);
     }
   }
-
-  return errors;
 };
 
 const $availableComponentsNames = computed(
@@ -305,26 +317,3 @@ const $jsx = computed(
     ];
   }
 );
-
-/*
-export const fetchResult = async (text: string) => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await fetch(`${restAi()}/blabla`, {
-    method: "POST",
-    body: formData,
-  });
-
-  if (response.ok === false) {
-    // @todo: show error
-    return;
-  }
-
-  // @todo add response parsing
-  const { text } = await response.json();
-
-  // return text;
-  await new Promise((resolve) => setTimeout(resolve, 10000));
-};
-*/

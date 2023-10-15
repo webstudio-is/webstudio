@@ -1,3 +1,5 @@
+/* eslint-disable import/no-internal-modules */
+import formatDistance from "date-fns/formatDistance";
 import { useStore } from "@nanostores/react";
 import {
   AutogrowTextArea,
@@ -40,6 +42,7 @@ import { AiCommandBarButton } from "./ai-button";
 import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
 import { useEffectEvent } from "./hooks/effect-event";
+import { AiApiException, RateLimitException } from "./api-exceptions";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -68,22 +71,62 @@ export const AiCommandBar = () => {
     cancel,
     state: mediaRecorderState,
   } = useMediaRecorder({
-    onComplete: async (file) => {
-      setIsAudioTranscribing(true);
-      guardIdRef.current++;
-      const guardId = guardIdRef.current;
-      const text = await fetchTranscription(file);
-      if (guardId !== guardIdRef.current) {
+    onError: (error) => {
+      if (error instanceof DOMException && error.name === "NotAllowedError") {
+        toast("Please enable your microphone.");
         return;
       }
+      if (error instanceof Error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.error(`Unknown Error: ${error}`);
+    },
+    onComplete: async (file) => {
+      try {
+        setIsAudioTranscribing(true);
+        guardIdRef.current++;
+        const guardId = guardIdRef.current;
+        const text = await fetchTranscription(file);
+        if (guardId !== guardIdRef.current) {
+          return;
+        }
 
-      const currentValue = getValue();
-      const newValue = [currentValue, text].filter(Boolean).join(" ");
+        const currentValue = getValue();
+        const newValue = [currentValue, text].filter(Boolean).join(" ");
 
-      setValue(newValue);
-      setIsAudioTranscribing(false);
+        setValue(newValue);
+        handleAiRequest(newValue);
+      } catch (error) {
+        if (error instanceof RateLimitException) {
+          toast(
+            `Temporary AI rate limit reached. Please wait ${formatDistance(
+              Date.now(),
+              new Date(error.meta.reset),
+              {
+                includeSeconds: true,
+              }
+            )} and try again.`
+          );
+          return;
+        }
 
-      handleAiRequest(newValue);
+        // Above are known errors; we're not interested in logging them.
+        // eslint-disable-next-line no-console
+        console.error(error);
+
+        if (error instanceof AiApiException) {
+          toast.error(`API Internal Error: ${error.message}`);
+          return;
+        }
+
+        if (error instanceof Error) {
+          // Unknown error, show toast
+          toast.error(`Unknown Error: ${error.message}`);
+        }
+      } finally {
+        setIsAudioTranscribing(false);
+      }
     },
     onReportSoundAmplitude: (amplitude) => {
       recordButtonRef.current?.style.setProperty(
@@ -109,37 +152,71 @@ export const AiCommandBar = () => {
   });
 
   const handleAiRequest = async (prompt: string) => {
-    abortController.current = new AbortController();
+    if (abortController.current) {
+      if (abortController.current.signal.aborted === false) {
+        // eslint-disable-next-line no-console
+        console.warn(`For some reason previous operation is not aborted.`);
+      }
+
+      abortController.current.abort();
+    }
+
+    const localAbortController = new AbortController();
+    abortController.current = localAbortController;
+
     setIsAiRequesting(true);
-    guardIdRef.current++;
-    const guardId = guardIdRef.current;
 
     // Skip Abort Logic for now
     try {
-      const errors = await fetchResult(prompt, abortController.current.signal);
+      await fetchResult(prompt, abortController.current.signal);
 
-      if (guardId !== guardIdRef.current) {
+      if (localAbortController !== abortController.current) {
+        // skip
         return;
-      }
-
-      if (errors.length > 0) {
-        toast(errors.join("\n"));
       }
 
       setPrompts((previousPrompts) => [...previousPrompts, prompt]);
 
       setValue("");
     } catch (error) {
+      if (
+        (error instanceof Error && error.message.startsWith("AbortError:")) ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) {
+        // Aborted by user request
+        return;
+      }
+
+      if (error instanceof RateLimitException) {
+        toast(
+          `Temporary AI rate limit reached. Please wait ${formatDistance(
+            Date.now(),
+            new Date(error.meta.reset),
+            {
+              includeSeconds: true,
+            }
+          )} and try again.`
+        );
+        return;
+      }
+
+      // Above is known errors, we are not interesting in
       // eslint-disable-next-line no-console
       console.error(error);
-      if (error instanceof Error) {
-        toast(error.message);
-      } else {
-        toast("Something went wrong");
+
+      if (error instanceof AiApiException) {
+        toast.error(`API Internal Error: ${error.message}`);
+        return;
       }
+
+      if (error instanceof Error) {
+        // Unknown error, show toast
+        toast.error(`Unknown Error: ${error.message}`);
+      }
+    } finally {
+      abortController.current = undefined;
+      setIsAiRequesting(false);
     }
-    abortController.current = undefined;
-    setIsAiRequesting(false);
   };
 
   const handleAiButtonClick = () => {
@@ -205,8 +282,6 @@ export const AiCommandBar = () => {
     recordButtonProps = {
       onClick: (event: MouseEvent<HTMLButtonElement>) => {
         // Cancel AI request
-        guardIdRef.current++;
-        setIsAiRequesting(false);
         abortController.current?.abort();
       },
     };

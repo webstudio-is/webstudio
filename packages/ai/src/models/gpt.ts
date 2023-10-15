@@ -150,7 +150,7 @@ const errorToResponse = (id: string, error: unknown) => {
     ...createErrorResponse({
       status,
       error: getErrorType(error, status),
-      message: "Something went wrong",
+      message: debug,
       debug,
     }),
   } as const;

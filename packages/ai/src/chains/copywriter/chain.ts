@@ -70,7 +70,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
         id: name,
         ...createErrorResponse({
           status: 404,
-          error: "ai.parseError",
+          error: `ai.${name}.parseError`,
           message,
           debug: message,
         }),

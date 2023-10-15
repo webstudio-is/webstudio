@@ -34,6 +34,10 @@ export const MediaRecorder = (options: { audioBitsPerSecond: number }) => {
 
   const { start, stop, cancel, state } = useMediaRecorder(
     {
+      onError: (error) => {
+        // eslint-disable-next-line no-console
+        console.error(error);
+      },
       onComplete: (file) => {
         setFile(file);
       },
