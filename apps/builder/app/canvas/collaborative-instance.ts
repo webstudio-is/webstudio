@@ -38,6 +38,7 @@ export const updateCollaborativeInstanceRect = () => {
     elements = getElementsByInstanceSelector(selector);
 
     if (elements.length > 0) {
+      cancelAnimationFrame(frameHandler);
       frameLoop();
     }
   });
