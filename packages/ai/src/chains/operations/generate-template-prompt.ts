@@ -29,6 +29,7 @@ export const aiOperation = z.object({
     ),
   classNames: z
     .string()
+    .optional()
     .describe(
       "A list of suggested Tailwind CSS classes matching the style of the request code. Always use the square brackets notation eg. mb-[10px] instead of mb-10"
     ),

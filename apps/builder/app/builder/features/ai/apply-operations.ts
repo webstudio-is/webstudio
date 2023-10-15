@@ -75,56 +75,25 @@ const insertTemplateByOp = (
     .filter((child) => child.type === "id")
     .map((child) => child.value);
 
-  const dropTarget: DroppableTarget = {
-    parentSelector: [operation.addTo],
-    position: operation.addAtIndex + 1,
-  };
+  const instanceSelector = computeSelectorForInstanceId(operation.addTo);
+  if (instanceSelector) {
+    const dropTarget: DroppableTarget = {
+      parentSelector: instanceSelector,
+      position: operation.addAtIndex + 1,
+    };
 
-  insertTemplateData(templateData, dropTarget);
-  return rootInstanceIds;
+    insertTemplateData(templateData, dropTarget);
+    return rootInstanceIds;
+  }
 };
 
 const deleteInstanceByOp = (
   operation: operations.deleteInstanceWsOperation
 ) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
+  const instanceSelector = computeSelectorForInstanceId(operation.wsId);
+  if (instanceSelector) {
+    _deleteInstance(instanceSelector);
   }
-
-  // For a given instance to delete we compute the subtree selector between
-  // that instance and the selected instance (a parent).
-  let subtreeSelector: InstanceSelector = [];
-  const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
-  for (const instance of instancesStore.get().values()) {
-    for (const child of instance.children) {
-      if (child.type === "id") {
-        parentInstancesById.set(child.value, instance.id);
-      }
-    }
-  }
-  const selector: InstanceSelector = [];
-  let currentInstanceId: undefined | Instance["id"] = operation.wsId;
-  while (currentInstanceId) {
-    selector.push(currentInstanceId);
-    currentInstanceId = parentInstancesById.get(currentInstanceId);
-    if (currentInstanceId === selectedInstanceSelector[0]) {
-      subtreeSelector = [...selector, ...selectedInstanceSelector];
-      break;
-    }
-  }
-
-  if (subtreeSelector.length === 0) {
-    return;
-  }
-
-  const parentSelector = selectedInstanceSelector.slice(1);
-  // Combine the subtree selector with the selected instance one
-  // to get the full and final selector.
-  const combinedSelector = [...subtreeSelector, ...parentSelector];
-
-  // Finally delete the instance by selector.
-  _deleteInstance(combinedSelector);
 };
 
 const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
@@ -185,6 +154,50 @@ const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
       }
     }
   );
+};
+
+const computeSelectorForInstanceId = (instanceId: Instance["id"]) => {
+  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+
+  // When the instance is the selected instance return selectedInstanceSelector right away.
+  if (instanceId === selectedInstanceSelector[0]) {
+    return selectedInstanceSelector;
+  }
+
+  // For a given instance to delete we compute the subtree selector between
+  // that instance and the selected instance (a parent).
+  let subtreeSelector: InstanceSelector = [];
+  const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instancesStore.get().values()) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentInstancesById.set(child.value, instance.id);
+      }
+    }
+  }
+  const selector: InstanceSelector = [];
+  let currentInstanceId: undefined | Instance["id"] = instanceId;
+  while (currentInstanceId) {
+    selector.push(currentInstanceId);
+    currentInstanceId = parentInstancesById.get(currentInstanceId);
+    if (currentInstanceId === selectedInstanceSelector[0]) {
+      subtreeSelector = [...selector, ...selectedInstanceSelector];
+      break;
+    }
+  }
+
+  if (subtreeSelector.length === 0) {
+    return;
+  }
+
+  const parentSelector = selectedInstanceSelector.slice(1);
+  // Combine the subtree selector with the selected instance one
+  // to get the full and final selector.
+  const combinedSelector = [...subtreeSelector, ...parentSelector];
+  return combinedSelector;
 };
 
 export const patchTextInstance = (textInstance: copywriter.TextInstance) => {
