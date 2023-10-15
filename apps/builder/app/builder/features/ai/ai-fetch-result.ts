@@ -14,7 +14,7 @@ import {
   idAttribute,
   componentAttribute,
 } from "@webstudio-is/react-sdk";
-import { createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
+import { Instance, createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
 import { getMapValuesByKeysSet } from "~/shared/array-utils";
 import {
@@ -59,6 +59,7 @@ const onResponseReceived = async (response: Response) => {
 
 export const fetchResult = async (
   prompt: string,
+  instanceId: Instance["id"],
   abortSignal: AbortSignal
 ): Promise<void> => {
   const commandsResponse = await handleAiRequest<commandDetect.Response>(
@@ -84,7 +85,7 @@ export const fetchResult = async (
   }
 
   const project = projectStore.get();
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+
   const availableComponentsNames = $availableComponentsNames.get();
   const [styles, jsx] = $jsx.get() || ["", ""];
 
@@ -92,7 +93,7 @@ export const fetchResult = async (
     jsx: `${styles}${jsx}`,
     components: availableComponentsNames,
     projectId: project?.id,
-    instanceId: selectedInstanceSelector?.[0],
+    instanceId,
     prompt,
   };
 
@@ -163,9 +164,9 @@ export const fetchResult = async (
                   patchTextInstance(operation);
                   appliedOperations.add(JSON.stringify(operation));
                 }
-              } catch {
+              } catch (error) {
                 // eslint-disable-next-line no-console
-                console.error("completion failed to parse", completion);
+                console.error(error);
               }
             }
           },

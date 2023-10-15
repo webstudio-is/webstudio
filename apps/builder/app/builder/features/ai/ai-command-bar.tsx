@@ -35,7 +35,12 @@ import {
   type MouseEvent,
   type ComponentPropsWithoutRef,
 } from "react";
-import { $isAiCommandBarVisible } from "~/shared/nano-states";
+import {
+  $collaborativeInstanceSelector,
+  $isAiCommandBarVisible,
+  selectedInstanceSelectorStore,
+  selectedPageStore,
+} from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
 import { AiCommandBarButton } from "./ai-button";
@@ -172,7 +177,22 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
 
     // Skip Abort Logic for now
     try {
-      await fetchResult(prompt, abortController.current.signal);
+      const page = selectedPageStore.get();
+      const rootInstanceSelector = page?.rootInstanceId
+        ? [page.rootInstanceId]
+        : [];
+      const instanceSelector =
+        selectedInstanceSelectorStore.get() ?? rootInstanceSelector;
+
+      const [instanceId] = instanceSelector;
+
+      if (instanceId === undefined) {
+        // Must not happen, we always have root instance
+        throw new Error("No element selected");
+      }
+
+      $collaborativeInstanceSelector.set(instanceSelector);
+      await fetchResult(prompt, instanceId, abortController.current.signal);
 
       if (localAbortController !== abortController.current) {
         // skip
@@ -219,6 +239,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
       }
     } finally {
       abortController.current = undefined;
+      $collaborativeInstanceSelector.set(undefined);
       setIsAiRequesting(false);
     }
   };

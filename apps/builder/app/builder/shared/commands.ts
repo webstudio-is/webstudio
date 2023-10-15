@@ -14,6 +14,7 @@ import {
 import { onCopy, onPaste } from "~/shared/copy-paste/plugin-instance";
 import { deleteInstance } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { serverSyncStore } from "~/shared/sync";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -95,6 +96,20 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     makeBreakpointCommand("selectBreakpoint7", 7),
     makeBreakpointCommand("selectBreakpoint8", 8),
     makeBreakpointCommand("selectBreakpoint9", 9),
+    /*
+    // @todo: decide about keyboard shortcut, uncomment when ready
+    {
+      name: "toggleAiCommandBar",
+      defaultHotkeys: ["space"],
+      disableHotkeyOnContentEditable: true,
+      // this disables hotkey for inputs on style panel
+      // but still work for input on canvas which call event.preventDefault() in keydown handler
+      disableHotkeyOnFormTags: true,
+      handler: () => {
+        $isAiCommandBarVisible.set($isAiCommandBarVisible.get() === false);
+      },
+    },
+    */
 
     // instances
 
@@ -127,19 +142,27 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       },
     },
 
-    /*
-    // @todo: decide about keyboard shortcut, uncomment when ready
+    // history
+
     {
-      name: "toggleAiCommandBar",
-      defaultHotkeys: ["space"],
+      name: "undo",
+      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      defaultHotkeys: ["meta+z", "ctrl+z"],
       disableHotkeyOnContentEditable: true,
-      // this disables hotkey for inputs on style panel
-      // but still work for input on canvas which call event.preventDefault() in keydown handler
       disableHotkeyOnFormTags: true,
       handler: () => {
-        $isAiCommandBarVisible.set($isAiCommandBarVisible.get() === false);
+        serverSyncStore.undo();
       },
     },
-    */
+    {
+      name: "redo",
+      // safari use cmd+z to reopen closed tabs, here added ctrl as alternative
+      defaultHotkeys: ["meta+shift+z", "ctrl+shift+z"],
+      disableHotkeyOnContentEditable: true,
+      disableHotkeyOnFormTags: true,
+      handler: () => {
+        serverSyncStore.redo();
+      },
+    },
   ],
 });

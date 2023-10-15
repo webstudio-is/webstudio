@@ -22,7 +22,6 @@ import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-ra
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { $publisher, publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
-import { useSharedShortcuts } from "~/shared/shortcuts";
 import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
@@ -53,6 +52,7 @@ import { useSelectedInstance } from "./instance-selected-react";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
+import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 
 registerContainers();
 
@@ -153,6 +153,7 @@ const DesignMode = ({ params }: { params: Params }) => {
   useCopyPaste();
 
   useSelectedInstance();
+  useEffect(updateCollaborativeInstanceRect, []);
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
 
@@ -201,7 +202,6 @@ export const Canvas = ({
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();
-  useSharedShortcuts({ source: "canvas" });
   const selectedPage = useStore(selectedPageStore);
 
   useEffect(() => {
