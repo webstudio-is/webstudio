@@ -76,7 +76,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
         id: name,
         ...createErrorResponse({
           status: 500,
-          error: "ai command-detect parse error",
+          error: `ai.${name}.parseError`,
           message:
             error instanceof Error
               ? error.message

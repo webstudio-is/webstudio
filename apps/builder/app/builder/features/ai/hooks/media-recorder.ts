@@ -19,7 +19,6 @@ export const useMediaRecorder = (
   const cancelRef = useRef(false);
   const isActiveRef = useRef<boolean>(false);
   const idRef = useRef(0);
-  // const [error, setError] = useState<Error>();
   const [state, setState] = useState<"inactive" | "recording">("inactive");
 
   const onComplete = useEffectEvent(props.onComplete);
