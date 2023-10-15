@@ -452,7 +452,9 @@ const CommandBarContent = (props: {
           <Button
             onClick={(event) => {
               // @todo: Link must be changed
-              const url = new URL(`https://discord.gg/UNdyrDkq5r`);
+              const url = new URL(
+                `https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=AI`
+              );
               window.open(url.href, "_blank");
             }}
             color="dark"
@@ -463,7 +465,9 @@ const CommandBarContent = (props: {
           <Button
             onClick={(event) => {
               // @todo: Link must be changed
-              const url = new URL(`https://discord.gg/UNdyrDkq5r`);
+              const url = new URL(
+                `https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=AI`
+              );
               window.open(url.href, "_blank");
             }}
             color="dark"
@@ -497,8 +501,6 @@ const CommandBarContent = (props: {
                   <Tooltip
                     key={index}
                     side="top"
-                    // sideOffset={10}
-
                     content={"Click to add prompt to input"}
                   >
                     <CommandBarContentPrompt
