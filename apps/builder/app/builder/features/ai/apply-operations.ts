@@ -191,10 +191,21 @@ export const patchTextInstance = (textInstance: copywriter.TextInstance) => {
   serverSyncStore.createTransaction([instancesStore], (instances) => {
     const currentInstance = instances.get(textInstance.instanceId);
 
-    if (
-      currentInstance === undefined ||
-      currentInstance.children.length === 0
-    ) {
+    if (currentInstance === undefined) {
+      return;
+    }
+
+    const meta = registeredComponentMetasStore
+      .get()
+      .get(currentInstance.component);
+
+    // Only container components are allowed to have child elements.
+    if (meta?.type !== "container") {
+      return;
+    }
+
+    if (currentInstance.children.length === 0) {
+      currentInstance.children = [{ type: "text", value: textInstance.text }];
       return;
     }
 
