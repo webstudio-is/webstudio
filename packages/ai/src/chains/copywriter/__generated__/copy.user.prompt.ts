@@ -1,12 +1,12 @@
-export const prompt = `Description:
-
-\`\`\`
-{prompt}
-\`\`\`
-
-List of copy to complete:
+export const prompt = `List of all the copy snippets to edit:
 
 \`\`\`
 {text_nodes}
+\`\`\`
+
+Edit request:
+
+\`\`\`
+{prompt}
 \`\`\`
 `;
