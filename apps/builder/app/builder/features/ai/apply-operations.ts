@@ -206,6 +206,7 @@ export const patchTextInstance = (textInstance: copywriter.TextInstance) => {
 
     if (currentInstance.children.length === 0) {
       currentInstance.children = [{ type: "text", value: textInstance.text }];
+      return;
     }
 
     // Instances can have a number of text child nodes without interleaving components.
