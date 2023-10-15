@@ -85,7 +85,6 @@ const insertTemplateByOp = (
     insertTemplateData(templateData, dropTarget);
     return rootInstanceIds;
   }
-  console.log("fail");
 };
 
 const deleteInstanceByOp = (
@@ -161,6 +160,11 @@ const computeSelectorForInstanceId = (instanceId: Instance["id"]) => {
   const selectedInstanceSelector = selectedInstanceSelectorStore.get();
   if (selectedInstanceSelector === undefined) {
     return;
+  }
+
+  // When the instance is the selected instance return selectedInstanceSelector right away.
+  if (instanceId === selectedInstanceSelector[0]) {
+    return selectedInstanceSelector;
   }
 
   // For a given instance to delete we compute the subtree selector between
