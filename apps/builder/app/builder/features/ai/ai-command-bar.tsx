@@ -472,7 +472,6 @@ const CommandBarContent = (props: {
         <Grid columns={2} gap={2}>
           <Button
             onClick={(event) => {
-              // @todo: Link must be changed
               const url = new URL("https://wstd.us/learn-webstudio-ai");
               window.open(url.href, "_blank");
             }}
@@ -483,7 +482,6 @@ const CommandBarContent = (props: {
           </Button>
           <Button
             onClick={(event) => {
-              // @todo: Link must be changed
               const url = new URL(
                 `https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=AI`
               );
