@@ -90,6 +90,9 @@ export const createChain = <ModelMessageFormat>(): Chain<
       };
     }
 
+    // eslint-disable-next-line no-console
+    console.info(JSON.stringify({ prompt, detectedCommands }));
+
     return {
       ...completion,
       data: detectedCommands,
