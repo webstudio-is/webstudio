@@ -54,9 +54,15 @@ type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
 };
 
+const initialPrompts = [
+  "Create a hero section with a heading, subheading in white, CTA button and an image of a mountain in the background,  add light blur to the image",
+  "Create a two column feature section with a heading and subheading in the left column, and an image that covers the right column",
+  "Create a testimonials section on 2 rows. The first row has a heading and subheading, the second row has 3 testimonial cards with an image, headline, description and link.",
+];
+
 export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const [value, setValue] = useState("");
-  const [prompts, setPrompts] = useState<string[]>([]);
+  const [prompts, setPrompts] = useState<string[]>(initialPrompts);
   const [clientSettings, setClientSetting, isClientSettingsLoaded] =
     useClientSettings();
   const open = isClientSettingsLoaded && clientSettings.isAiMenuOpen;
@@ -467,9 +473,7 @@ const CommandBarContent = (props: {
           <Button
             onClick={(event) => {
               // @todo: Link must be changed
-              const url = new URL(
-                `https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=AI`
-              );
+              const url = new URL("https://wstd.us/learn-webstudio-ai");
               window.open(url.href, "_blank");
             }}
             color="dark"
