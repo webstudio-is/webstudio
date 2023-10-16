@@ -2,19 +2,17 @@ import { useEffect, useState } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { sentryMessage } from "~/shared/sentry";
-import * as config from "./config";
 
-type Name = keyof typeof config;
-type Value = (typeof config)[Name]["values"][number];
-export type Settings = Record<Name, Value>;
+import { z } from "zod";
 
-const defaultSettings = (Object.keys(config) as Array<Name>).reduce(
-  (acc, settingName) => {
-    acc[settingName] = config[settingName].defaultValue;
-    return acc;
-  },
-  {} as Settings
-);
+export const zSettings = z.object({
+  navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
+  isAiMenuOpen: z.boolean().default(true),
+});
+
+export type Settings = z.infer<typeof zSettings>;
+
+const defaultSettings = zSettings.parse({});
 
 const namespace = "__webstudio_user_settings__";
 
@@ -31,8 +29,7 @@ const read = (): Settings => {
   }
 
   try {
-    // @todo add zod schema
-    return JSON.parse(settingsString);
+    return zSettings.parse(JSON.parse(settingsString));
   } catch (error) {
     if (error instanceof Error) {
       sentryMessage({
@@ -53,24 +50,19 @@ const write = (settings: Settings) => {
 /**
  * Get a value from local storage or a default.
  */
-export const getSetting = (name: Name) => {
+export const getSetting = <Name extends keyof Settings>(name: Name) => {
   const settings = read();
-  const validValues = config[name].values;
   const value = settings[name];
-  const isValidValue = value !== undefined && validValues.includes(value);
-  if (isValidValue) {
-    return value;
-  }
-  return config[name].defaultValue;
+  return value;
 };
 
-export const setSetting = (name: Name, value: Value) => {
+export const setSetting = <Name extends keyof Settings>(
+  name: Name,
+  value: Settings[Name]
+) => {
   const settings = read();
-  const validValues = config[name].values;
-  const isValidValue = validValues.includes(value);
-  if (isValidValue) {
-    write({ ...settings, [name]: value });
-  }
+
+  write({ ...settings, [name]: value });
 };
 
 const settingsContainer = atom<Settings>(defaultSettings);
@@ -86,7 +78,10 @@ export const useClientSettings = (): [Settings, typeof setSetting, boolean] => {
     setIsLoaded(true);
   }, []);
 
-  const setSettingValue = (name: Name, value: Value) => {
+  const setSettingValue = <Name extends keyof Settings>(
+    name: Name,
+    value: Settings[Name]
+  ) => {
     if (settings[name] === value) {
       return;
     }
