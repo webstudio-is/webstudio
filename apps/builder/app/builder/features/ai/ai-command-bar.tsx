@@ -48,6 +48,7 @@ import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
 import { useEffectEvent } from "./hooks/effect-event";
 import { AiApiException, RateLimitException } from "./api-exceptions";
+import { useClientSettings } from "~/builder/shared/client-settings";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
@@ -56,7 +57,13 @@ type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
 export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const [value, setValue] = useState("");
   const [prompts, setPrompts] = useState<string[]>([]);
-  const [open, setOpen] = useState(false);
+  const [clientSettings, setClientSetting, isClientSettingsLoaded] =
+    useClientSettings();
+  const open = isClientSettingsLoaded && clientSettings.isAiMenuOpen;
+  const setOpen = useEffectEvent((value: boolean) =>
+    setClientSetting("isAiMenuOpen", value)
+  );
+
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
   const abortController = useRef<AbortController>();
