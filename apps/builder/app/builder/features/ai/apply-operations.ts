@@ -77,6 +77,15 @@ const insertTemplateByOp = (
 
   const instanceSelector = computeSelectorForInstanceId(operation.addTo);
   if (instanceSelector) {
+    const currentInstance = instancesStore.get().get(instanceSelector[0]);
+    // Only container components are allowed to have child elements.
+    if (
+      currentInstance &&
+      metas.get(currentInstance.component)?.type !== "container"
+    ) {
+      return;
+    }
+
     const dropTarget: DroppableTarget = {
       parentSelector: instanceSelector,
       position: operation.addAtIndex + 1,
