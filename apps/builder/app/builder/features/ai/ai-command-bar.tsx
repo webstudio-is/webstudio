@@ -473,9 +473,7 @@ const CommandBarContent = (props: {
           <Button
             onClick={(event) => {
               // @todo: Link must be changed
-              const url = new URL(
-                `https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=AI`
-              );
+              const url = new URL("https://wstd.us/learn-webstudio-ai");
               window.open(url.href, "_blank");
             }}
             color="dark"
