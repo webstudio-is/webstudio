@@ -226,7 +226,7 @@ const PagesPanel = ({
   );
 };
 
-export const TabContent = (props: TabContentProps) => {
+export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const currentPageId = useStore(selectedPageIdStore);
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
@@ -238,13 +238,16 @@ export const TabContent = (props: TabContentProps) => {
   return (
     <>
       <PagesPanel
-        onClose={() => props.onSetActiveTab("none")}
+        onClose={() => onSetActiveTab("none")}
         onCreateNewPage={() =>
           setEditingPageId((current) =>
             current === newPageId ? undefined : newPageId
           )
         }
-        onSelect={switchPage}
+        onSelect={(pageId) => {
+          switchPage(pageId);
+          onSetActiveTab("none");
+        }}
         selectedPageId={currentPageId}
         onEdit={setEditingPageId}
         editingPageId={editingPageId}
