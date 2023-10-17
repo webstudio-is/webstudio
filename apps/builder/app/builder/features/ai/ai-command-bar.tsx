@@ -75,8 +75,8 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const [prompts, setPrompts] = useState<string[]>(initialPrompts);
   const [clientSettings, setClientSetting, isClientSettingsLoaded] =
     useClientSettings();
-  const open = isClientSettingsLoaded && clientSettings.isAiMenuOpen;
-  const setOpen = useEffectEvent((value: boolean) =>
+  const isMenuOpen = isClientSettingsLoaded && clientSettings.isAiMenuOpen;
+  const setIsMenuOpen = useEffectEvent((value: boolean) =>
     setClientSetting("isAiMenuOpen", value)
   );
 
@@ -364,8 +364,8 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
       }}
     >
       <CommandBar
-        open={open}
-        onOpenChange={setOpen}
+        open={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
         content={
           <CommandBarContent
             prompts={prompts}
