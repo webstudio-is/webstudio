@@ -280,6 +280,9 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   };
 
   const handlePropmptClick = (prompt: string) => {
+    if (textAreaRef.current?.disabled) {
+      return;
+    }
     setValue(prompt);
     selectPrompt();
   };
