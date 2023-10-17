@@ -49,21 +49,17 @@ import { fetchResult } from "./ai-fetch-result";
 import { useEffectEvent } from "./hooks/effect-event";
 import { AiApiException, RateLimitException } from "./api-exceptions";
 import { useClientSettings } from "~/builder/shared/client-settings";
-import { useEffectQueue } from "~/shared/hook-utils/use-effect-queue";
+import { flushSync } from "react-dom";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
 };
 
 const useSelectText = () => {
-  // We can't select text right away because value will be set using setState.
-  const scheduleEffect = useEffectQueue();
   const ref = useRef<HTMLTextAreaElement>(null);
   const selectText = () => {
-    scheduleEffect(() => {
-      ref.current?.focus();
-      ref.current?.select();
-    });
+    ref.current?.focus();
+    ref.current?.select();
   };
   return [ref, selectText] as const;
 };
@@ -283,7 +279,10 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
     if (textAreaRef.current?.disabled) {
       return;
     }
-    setValue(prompt);
+    // We can't select text right away because value will be set using setState.
+    flushSync(() => {
+      setValue(prompt);
+    });
     selectPrompt();
   };
 
