@@ -1,5 +1,4 @@
 import { useStore } from "@nanostores/react";
-import type { Publish } from "~/shared/pubsub";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
@@ -34,11 +33,7 @@ const containerStyle = css({
   },
 });
 
-type CanvasToolsProps = {
-  publish: Publish;
-};
-
-export const CanvasTools = ({ publish }: CanvasToolsProps) => {
+export const CanvasTools = () => {
   // @todo try to setup cross-frame atoms to avoid this
   useSubscribeDragAndDropState();
 
@@ -80,7 +75,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
             <HoveredInstanceOutline />
             <CollaborativeInstanceOutline />
           </div>
-          <TextToolbar publish={publish} />
+          <TextToolbar />
         </>
       )}
     </div>
