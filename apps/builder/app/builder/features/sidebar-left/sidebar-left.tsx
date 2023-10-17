@@ -74,7 +74,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               onClick={() => {
                 setClientSetting(
                   "isAiCommandBarVisible",
-                  !clientSettings.isAiCommandBarVisible
+                  clientSettings.isAiCommandBarVisible === true ? false : true
                 );
               }}
             >
