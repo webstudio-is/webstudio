@@ -272,7 +272,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
     return;
   }
 
-  let textAreaPlaceholder = "Enter value...";
+  let textAreaPlaceholder = "Welcome to Webstudio AI alpha!";
   let textAreaValue = value;
   let textAreaDisabled = false;
 
