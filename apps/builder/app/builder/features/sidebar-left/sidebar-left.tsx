@@ -8,10 +8,7 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import {
-  $dragAndDropState,
-  $isAiCommandBarVisible,
-} from "~/shared/nano-states";
+import { $dragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
@@ -32,9 +29,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const dragAndDropState = useStore($dragAndDropState);
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
-  const [clientSettings] = useClientSettings();
   const [helpIsOpen, setHelpIsOpen] = useState(false);
-  const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
+  const [clientSettings, setClientSetting] = useClientSettings();
 
   useSubscribe("clickCanvas", () => {
     setActiveTab("none");
@@ -76,7 +72,10 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
               }
               onClick={() => {
-                $isAiCommandBarVisible.set(!isAiCommandBarVisible);
+                setClientSetting(
+                  "isAiCommandBarVisible",
+                  clientSettings.isAiCommandBarVisible === true ? false : true
+                );
               }}
             >
               <AiIcon />

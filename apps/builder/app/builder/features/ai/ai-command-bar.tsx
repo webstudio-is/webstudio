@@ -1,6 +1,5 @@
 /* eslint-disable import/no-internal-modules */
 import formatDistance from "date-fns/formatDistance";
-import { useStore } from "@nanostores/react";
 import {
   AutogrowTextArea,
   Box,
@@ -37,7 +36,6 @@ import {
 } from "react";
 import {
   $collaborativeInstanceSelector,
-  $isAiCommandBarVisible,
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "~/shared/nano-states";
@@ -75,15 +73,14 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const [prompts, setPrompts] = useState<string[]>(initialPrompts);
   const [clientSettings, setClientSetting, isClientSettingsLoaded] =
     useClientSettings();
-  const open = isClientSettingsLoaded && clientSettings.isAiMenuOpen;
-  const setOpen = useEffectEvent((value: boolean) =>
+  const isMenuOpen = isClientSettingsLoaded && clientSettings.isAiMenuOpen;
+  const setIsMenuOpen = useEffectEvent((value: boolean) =>
     setClientSetting("isAiMenuOpen", value)
   );
 
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
   const abortController = useRef<AbortController>();
-  const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
   const guardIdRef = useRef(0);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
@@ -286,7 +283,10 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
     selectPrompt();
   };
 
-  if (isAiCommandBarVisible === false) {
+  if (
+    isClientSettingsLoaded === false ||
+    clientSettings.isAiCommandBarVisible === false
+  ) {
     return;
   }
 
@@ -364,8 +364,8 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
       }}
     >
       <CommandBar
-        open={open}
-        onOpenChange={setOpen}
+        open={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
         content={
           <CommandBarContent
             prompts={prompts}
