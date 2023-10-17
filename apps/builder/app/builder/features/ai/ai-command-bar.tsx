@@ -49,9 +49,19 @@ import { fetchResult } from "./ai-fetch-result";
 import { useEffectEvent } from "./hooks/effect-event";
 import { AiApiException, RateLimitException } from "./api-exceptions";
 import { useClientSettings } from "~/builder/shared/client-settings";
+import { flushSync } from "react-dom";
 
 type PartialButtonProps<T = ComponentPropsWithoutRef<typeof Button>> = {
   [key in keyof T]?: T[key];
+};
+
+const useSelectText = () => {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const selectText = () => {
+    ref.current?.focus();
+    ref.current?.select();
+  };
+  return [ref, selectText] as const;
 };
 
 const initialPrompts = [
@@ -82,6 +92,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const getValue = useEffectEvent(() => {
     return value;
   });
+  const [textAreaRef, selectPrompt] = useSelectText();
 
   const {
     start,
@@ -265,14 +276,21 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   };
 
   const handlePropmptClick = (prompt: string) => {
-    setValue(prompt);
+    if (textAreaRef.current?.disabled) {
+      return;
+    }
+    // We can't select text right away because value will be set using setState.
+    flushSync(() => {
+      setValue(prompt);
+    });
+    selectPrompt();
   };
 
   if (isAiCommandBarVisible === false) {
     return;
   }
 
-  let textAreaPlaceholder = "Enter value...";
+  let textAreaPlaceholder = "Welcome to Webstudio AI alpha!";
   let textAreaValue = value;
   let textAreaDisabled = false;
 
@@ -371,6 +389,7 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
         >
           <ScrollArea css={{ maxHeight: theme.spacing[29] }}>
             <AutogrowTextArea
+              ref={textAreaRef}
               autoFocus
               disabled={textAreaDisabled}
               placeholder={textAreaPlaceholder}
