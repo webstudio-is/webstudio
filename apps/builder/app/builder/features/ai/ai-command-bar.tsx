@@ -37,7 +37,6 @@ import {
 } from "react";
 import {
   $collaborativeInstanceSelector,
-  $isAiCommandBarVisible,
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "~/shared/nano-states";
@@ -83,7 +82,6 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
   const [isAudioTranscribing, setIsAudioTranscribing] = useState(false);
   const [isAiRequesting, setIsAiRequesting] = useState(false);
   const abortController = useRef<AbortController>();
-  const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
   const recordButtonRef = useRef<HTMLButtonElement>(null);
   const guardIdRef = useRef(0);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
@@ -286,7 +284,10 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
     selectPrompt();
   };
 
-  if (isAiCommandBarVisible === false) {
+  if (
+    isClientSettingsLoaded === false ||
+    clientSettings.isAiCommandBarVisible === false
+  ) {
     return;
   }
 

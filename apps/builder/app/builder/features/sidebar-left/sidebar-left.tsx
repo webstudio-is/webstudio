@@ -8,10 +8,7 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import {
-  $dragAndDropState,
-  $isAiCommandBarVisible,
-} from "~/shared/nano-states";
+import { $dragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
@@ -33,8 +30,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [helpIsOpen, setHelpIsOpen] = useState(false);
-  const [clientSettings, setClientSetting, isClientSettingsLoaded] =
-    useClientSettings();
+  const [clientSettings, setClientSetting] = useClientSettings();
 
   useSubscribe("clickCanvas", () => {
     setActiveTab("none");
@@ -42,12 +38,6 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   useSubscribe("dragEnd", () => {
     setActiveTab("none");
   });
-
-  useEffect(() => {
-    if (isClientSettingsLoaded) {
-      $isAiCommandBarVisible.set(clientSettings.isAiCommandBarVisible);
-    }
-  }, [isClientSettingsLoaded, clientSettings.isAiCommandBarVisible]);
 
   const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
     (panel) => {
@@ -82,11 +72,9 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
               }
               onClick={() => {
-                const isAiCommandBarVisible = !$isAiCommandBarVisible.get();
-                $isAiCommandBarVisible.set(isAiCommandBarVisible);
                 setClientSetting(
                   "isAiCommandBarVisible",
-                  isAiCommandBarVisible
+                  !clientSettings.isAiCommandBarVisible
                 );
               }}
             >
