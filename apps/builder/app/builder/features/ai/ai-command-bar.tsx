@@ -1,6 +1,5 @@
 /* eslint-disable import/no-internal-modules */
 import formatDistance from "date-fns/formatDistance";
-import { useStore } from "@nanostores/react";
 import {
   AutogrowTextArea,
   Box,
