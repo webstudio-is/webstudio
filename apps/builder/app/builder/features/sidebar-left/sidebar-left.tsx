@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   SidebarTabs,
@@ -32,9 +32,9 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const dragAndDropState = useStore($dragAndDropState);
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
-  const [clientSettings] = useClientSettings();
   const [helpIsOpen, setHelpIsOpen] = useState(false);
-  const isAiCommandBarVisible = useStore($isAiCommandBarVisible);
+  const [clientSettings, setClientSetting, isClientSettingsLoaded] =
+    useClientSettings();
 
   useSubscribe("clickCanvas", () => {
     setActiveTab("none");
@@ -42,6 +42,12 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   useSubscribe("dragEnd", () => {
     setActiveTab("none");
   });
+
+  useEffect(() => {
+    if (isClientSettingsLoaded) {
+      $isAiCommandBarVisible.set(clientSettings.isAiCommandBarVisible);
+    }
+  }, [isClientSettingsLoaded, clientSettings.isAiCommandBarVisible]);
 
   const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
     (panel) => {
@@ -76,7 +82,12 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
               }
               onClick={() => {
-                $isAiCommandBarVisible.set(!isAiCommandBarVisible);
+                const isAiCommandBarVisible = !$isAiCommandBarVisible.get();
+                $isAiCommandBarVisible.set(isAiCommandBarVisible);
+                setClientSetting(
+                  "isAiCommandBarVisible",
+                  isAiCommandBarVisible
+                );
               }}
             >
               <AiIcon />
