@@ -76,7 +76,7 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
       {isPreviewMode === false && (
         <>
           <div className={containerStyle({ overflow: "hidden" })}>
-            <SelectedInstanceOutline />
+            <SelectedInstanceOutline publish={publish} />
             <HoveredInstanceOutline />
             <CollaborativeInstanceOutline />
           </div>

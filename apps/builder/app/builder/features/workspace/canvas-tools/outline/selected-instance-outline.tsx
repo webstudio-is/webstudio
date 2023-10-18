@@ -9,8 +9,9 @@ import { Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "./apply-scale";
 import { scaleStore } from "~/builder/shared/nano-states";
+import type { Publish } from "~/shared/pubsub";
 
-export const SelectedInstanceOutline = () => {
+export const SelectedInstanceOutline = ({ publish }: { publish: Publish }) => {
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
@@ -30,7 +31,11 @@ export const SelectedInstanceOutline = () => {
   const rect = applyScale(outline.rect, scale);
   return (
     <Outline rect={rect}>
-      <Label instance={outline.instance} instanceRect={rect} />
+      <Label
+        instance={outline.instance}
+        instanceRect={rect}
+        publish={publish}
+      />
     </Outline>
   );
 };
