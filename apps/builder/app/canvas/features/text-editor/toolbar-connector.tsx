@@ -250,7 +250,7 @@ const ToolbarConnectorPluginInternal = ({
       },
       COMMAND_PRIORITY_EDITOR
     );
-  }, [editor]);
+  }, [editor, onSelectNode]);
 
   useEffect(() => {
     return editor.registerCommand(
