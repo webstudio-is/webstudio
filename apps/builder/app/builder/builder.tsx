@@ -22,7 +22,6 @@ import {
   useReadCanvasRect,
   Workspace,
 } from "./features/workspace";
-import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   assetsStore,
   $authPermit,
@@ -277,7 +276,6 @@ export const Builder = ({
   });
 
   const isPreviewMode = useStore($isPreviewMode);
-  usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is

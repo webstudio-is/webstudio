@@ -22,7 +22,6 @@ import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-ra
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { $publisher, publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
-import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
@@ -200,8 +199,6 @@ export const Canvas = ({
     $publisher.set({ publish });
   }, []);
 
-  // e.g. toggling preview is still needed in both modes
-  useCanvasShortcuts();
   const selectedPage = useStore(selectedPageStore);
 
   useEffect(() => {

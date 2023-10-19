@@ -39,6 +39,7 @@ declare module "~/shared/pubsub" {
     dragMove: DragMovePayload;
     dragStart: DragStartPayload;
     dropTargetChange: undefined | ItemDropTarget;
+    cancelCurrentDrag: undefined;
   }
 }
 
