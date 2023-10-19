@@ -69,7 +69,16 @@ const deleteSelectedInstance = () => {
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "builder",
-  externalCommands: ["editInstanceText"],
+  externalCommands: [
+    "editInstanceText",
+    "formatBold",
+    "formatItalic",
+    "formatSuperscript",
+    "formatSubscript",
+    "formatLink",
+    "formatSpan",
+    "formatClear",
+  ],
   commands: [
     // ui
 

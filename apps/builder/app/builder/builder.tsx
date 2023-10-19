@@ -305,7 +305,6 @@ export const Builder = ({
         <Main>
           <Workspace
             onTransitionEnd={onTransitionEnd}
-            publish={publish}
             initialBreakpoints={build.breakpoints}
           >
             <CanvasIframe
