@@ -5,19 +5,22 @@ import type {
   StyleValue,
   TupleValue,
 } from "@webstudio-is/css-engine";
-import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import type { CreateBatchUpdate } from "./shared/use-style-data";
 import {
-  addBoxShadow,
+  addLayer,
   deleteLayer,
   hideLayer,
   swapLayers,
-  updateBoxShadowLayer,
-} from "./box-shadow-utils";
-import type { StyleInfo } from "../../shared/style-info";
+  updateLayer,
+} from "./style-layer-utils";
+import type { StyleInfo } from "./shared/style-info";
+import { parseBoxShadow } from "@webstudio-is/css-data";
 
 let styleInfo: StyleInfo = {};
 let published = false;
 const deletedProperties = new Set<string>();
+
+const property: StyleProperty = "boxShadow";
 
 afterEach(() => {
   styleInfo = {};
@@ -99,7 +102,7 @@ describe("boxShadowUtils", () => {
       ],
     };
 
-    deleteLayer(1, layers, createBatchUpdate);
+    deleteLayer(property, 1, layers, createBatchUpdate);
     const boxShadowValue = styleInfo["boxShadow"]?.value as LayersValue;
 
     expect(published).toBe(true);
@@ -159,7 +162,7 @@ describe("boxShadowUtils", () => {
       ],
     };
 
-    deleteLayer(0, layers, createBatchUpdate);
+    deleteLayer(property, 0, layers, createBatchUpdate);
     expect(published).toBe(true);
     expect(deletedProperties.has("boxShadow")).toBe(true);
   });
@@ -190,7 +193,7 @@ describe("boxShadowUtils", () => {
       ],
     };
 
-    hideLayer(0, layers, createBatchUpdate);
+    hideLayer(property, 0, layers, createBatchUpdate);
     const boxShadowValue = styleInfo["boxShadow"]?.value as LayersValue;
 
     expect(published).toBe(true);
@@ -200,8 +203,9 @@ describe("boxShadowUtils", () => {
   });
 
   test("adds layer to box-shadow proeprty", () => {
-    addBoxShadow(
-      `box-shadow: 10px 10px 10px 0px rgba(0, 0, 0, 0.75)`,
+    addLayer(
+      property,
+      parseBoxShadow(`box-shadow: 10px 10px 10px 0px rgba(0, 0, 0, 0.75)`),
       styleInfo,
       createBatchUpdate
     );
@@ -300,20 +304,23 @@ describe("boxShadowUtils", () => {
       ],
     };
 
-    updateBoxShadowLayer(newLayer, oldLayers, 0, createBatchUpdate);
+    updateLayer(property, newLayer, oldLayers, 0, createBatchUpdate);
     const boxShadow = styleInfo["boxShadow"]?.value as LayersValue;
     expect(boxShadow).toBeDefined();
     expect(boxShadow.value[0]).toBe(newLayer.value[0]);
   });
 
   test("swaps the layers using indexe's", () => {
-    addBoxShadow(
-      `box-shadow: 0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14);`,
+    addLayer(
+      property,
+      parseBoxShadow(
+        `box-shadow: 0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14);`
+      ),
       styleInfo,
       createBatchUpdate
     );
 
-    swapLayers(0, 1, styleInfo, createBatchUpdate);
+    swapLayers(property, 0, 1, styleInfo, createBatchUpdate);
     const boxShadow = styleInfo["boxShadow"]?.value as LayersValue;
 
     expect(boxShadow.value[0].value).toMatchInlineSnapshot(`
