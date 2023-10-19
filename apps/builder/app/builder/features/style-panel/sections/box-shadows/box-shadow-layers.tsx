@@ -1,4 +1,4 @@
-import type { LayersValue } from "@webstudio-is/css-engine";
+import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
   Flex,
@@ -11,20 +11,22 @@ import {
   getLayerCount,
   hideLayer,
   swapLayers,
-  updateBoxShadowLayer,
-} from "./box-shadow-utils";
+  updateLayer,
+} from "../../style-layer-utils";
 import { useMemo } from "react";
 
 type BoxShadowLayerProperies = RenderCategoryProps & {
   layers: LayersValue;
 };
 
+const property: StyleProperty = "boxShadow";
+
 export const BoxShadowLayers = ({
   layers,
   currentStyle,
   createBatchUpdate,
 }: BoxShadowLayerProperies) => {
-  const layersCount = getLayerCount(currentStyle);
+  const layersCount = getLayerCount(property, currentStyle);
 
   const sortableItems = useMemo(
     () =>
@@ -38,20 +40,20 @@ export const BoxShadowLayers = ({
   const { dragItemId, placementIndicator, sortableRefCallback } = useSortable({
     items: sortableItems,
     onSort: (newIndex, oldIndex) => {
-      swapLayers(newIndex, oldIndex, currentStyle, createBatchUpdate);
+      swapLayers(property, newIndex, oldIndex, currentStyle, createBatchUpdate);
     },
   });
 
   const handleDeleteLayer = (index: number) => {
-    return deleteLayer(index, layers, createBatchUpdate);
+    return deleteLayer(property, index, layers, createBatchUpdate);
   };
 
   const handleHideLayer = (index: number) => {
-    return hideLayer(index, layers, createBatchUpdate);
+    return hideLayer(property, index, layers, createBatchUpdate);
   };
 
   const onEditLayer = (index: number, newLayers: LayersValue) => {
-    return updateBoxShadowLayer(newLayers, layers, index, createBatchUpdate);
+    return updateLayer(property, newLayers, layers, index, createBatchUpdate);
   };
 
   return (
