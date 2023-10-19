@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/sdk";
 import { type PropMeta, showAttribute } from "@webstudio-is/react-sdk";
@@ -229,31 +228,19 @@ export const usePropsLogic = ({
     initialProps.push({ prop, propName: name, meta: known });
   }
 
-  // We keep track of names because sometime prop is in the list but not actually added/saved
-  // Also makes order stable etc.
-  const [addedNames, setAddedNames] = useState<Prop["name"][]>(() =>
-    Array.from(unprocessedSaved.values(), (prop) => prop.name)
-  );
-
   const addedProps: PropAndMeta[] = [];
-  for (const name of addedNames) {
-    const saved = getAndDelete(unprocessedSaved, name);
-    let known = getAndDelete(unprocessedKnown, name);
+  for (const prop of Array.from(unprocessedSaved.values()).reverse()) {
+    let known = getAndDelete(unprocessedKnown, prop.name);
 
     // @todo:
     //   if meta is undefined, this means it's a "custom attribute"
     //   but because custom attributes not implemented yet,
     //   we'll show it as a regular optional prop for now
     if (known === undefined) {
-      if (saved === undefined) {
-        // eslint-disable-next-line no-console
-        console.error(`Cannot find meta for a newly added prop "${name}`);
-        continue;
-      }
-      known = getDefaultMetaForType(saved.type);
+      known = getDefaultMetaForType(prop.type);
     }
 
-    addedProps.push({ prop: saved, propName: name, meta: known });
+    addedProps.push({ prop, propName: prop.name, meta: known });
   }
 
   const handleAdd = (propName: string) => {
@@ -265,7 +252,6 @@ export const usePropsLogic = ({
     if (prop) {
       updateProp(prop);
     }
-    setAddedNames((prev) => [propName, ...prev]);
   };
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
@@ -286,11 +272,8 @@ export const usePropsLogic = ({
     );
   };
 
-  const handleDelete = ({ prop, propName }: PropOrName) => {
-    if (prop) {
-      deleteProp(prop.id);
-    }
-    setAddedNames((prev) => prev.filter((name) => propName !== name));
+  const handleDelete = (prop: Prop) => {
+    deleteProp(prop.id);
   };
 
   return {
