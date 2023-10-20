@@ -6,7 +6,6 @@ import {
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import type { Publish } from "~/shared/pubsub";
 import {
   selectedBreakpointStore,
   selectedOrLastStyleSourceSelectorStore,
@@ -38,7 +37,6 @@ type StyleUpdates = {
 };
 
 type UseStyleData = {
-  publish: Publish;
   selectedInstance: Instance;
 };
 
@@ -62,7 +60,7 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
+export const useStyleData = ({ selectedInstance }: UseStyleData) => {
   const selectedBreakpoint = useStore(selectedBreakpointStore);
 
   const currentStyle = useStyleInfo();
@@ -144,7 +142,7 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
         }
       );
     },
-    [publish, selectedBreakpoint, selectedInstance]
+    [selectedBreakpoint, selectedInstance]
   );
 
   const setProperty = useCallback<SetProperty>(

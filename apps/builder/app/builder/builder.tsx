@@ -332,7 +332,7 @@ export const Builder = ({
           isPreviewMode={isPreviewMode}
           css={{ overflow: "hidden" }}
         >
-          <Inspector publish={publish} navigatorLayout={navigatorLayout} />
+          <Inspector navigatorLayout={navigatorLayout} />
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />
