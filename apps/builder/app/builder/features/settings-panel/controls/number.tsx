@@ -6,23 +6,25 @@ import {
   ResponsiveLayout,
   Label,
 } from "../shared";
+import { useState } from "react";
 
 export const NumberControl = ({
   meta,
   prop,
   propName,
   onChange,
+  deletable,
   onDelete,
-  onSoftDelete,
 }: ControlProps<"number", "number">) => {
   const id = useId();
 
+  const [isInvalid, setIsInvalid] = useState(false);
   const localValue = useLocalValue(prop ? prop.value : "", (value) => {
     if (typeof value === "number") {
       onChange({ type: "number", value });
     }
     if (value === "") {
-      onSoftDelete();
+      setIsInvalid(true);
     }
   });
 
@@ -33,15 +35,18 @@ export const NumberControl = ({
           {getLabel(meta, propName)}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <InputField
         id={id}
         type="number"
         value={localValue.value}
-        onChange={({ target: { valueAsNumber, value } }) =>
-          localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
-        }
+        color={isInvalid ? "error" : undefined}
+        onChange={({ target: { valueAsNumber, value } }) => {
+          localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber);
+          setIsInvalid(false);
+        }}
         onBlur={localValue.save}
         onKeyDown={(event) => {
           if (event.key === "Enter") {

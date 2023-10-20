@@ -26,6 +26,7 @@ export const CheckControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"check" | "inline-check" | "multi-select", "string[]">) => {
@@ -46,6 +47,7 @@ export const CheckControl = ({
           {getLabel(meta, propName)}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <Box css={{ paddingTop: theme.spacing[2] }}>

@@ -10,6 +10,7 @@ export const BooleanControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"boolean", "boolean">) => {
@@ -18,7 +19,7 @@ export const BooleanControl = ({
   return (
     <Grid
       css={{
-        gridTemplateColumns: onDelete
+        gridTemplateColumns: deletable
           ? `1fr max-content max-content`
           : `1fr max-content`,
         minHeight: theme.spacing[13],
@@ -35,7 +36,7 @@ export const BooleanControl = ({
         checked={prop?.value ?? false}
         onCheckedChange={(value) => onChange({ type: "boolean", value })}
       />
-      {onDelete && <RemovePropButton onClick={onDelete} />}
+      {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
   );
 };

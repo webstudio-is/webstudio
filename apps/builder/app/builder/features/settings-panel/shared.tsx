@@ -46,12 +46,9 @@ export type ControlProps<Control, PropType> = {
   // and we don't want to show user something like a 0 for number when it's in fact not set to any value
   prop: PropByType<PropType> | undefined;
   propName: string;
+  deletable: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
-  onDelete?: () => void;
-
-  // Should be called when we want to delete the prop,
-  // but want to keep it in the list until panel is closed
-  onSoftDelete: () => void;
+  onDelete: () => void;
 };
 
 export const getLabel = (meta: { label?: string }, fallback: string) =>
@@ -178,15 +175,21 @@ export const useLocalValue = <Type,>(
 
 type LayoutProps = {
   label: ReturnType<typeof Label>;
-  onDelete?: () => void;
+  deletable: boolean;
+  onDelete: () => void;
   children: ReactNode;
 };
 
-export const VerticalLayout = ({ label, onDelete, children }: LayoutProps) => (
+export const VerticalLayout = ({
+  label,
+  deletable,
+  onDelete,
+  children,
+}: LayoutProps) => (
   <Box>
     <Grid
       css={{
-        gridTemplateColumns: onDelete ? `1fr max-content` : `1fr`,
+        gridTemplateColumns: deletable ? `1fr max-content` : `1fr`,
         justifyItems: "start",
       }}
       align="center"
@@ -194,7 +197,7 @@ export const VerticalLayout = ({ label, onDelete, children }: LayoutProps) => (
       justify="between"
     >
       {label}
-      {onDelete && <RemovePropButton onClick={onDelete} />}
+      {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
     {children}
   </Box>
@@ -202,12 +205,13 @@ export const VerticalLayout = ({ label, onDelete, children }: LayoutProps) => (
 
 export const HorizontalLayout = ({
   label,
+  deletable,
   onDelete,
   children,
 }: LayoutProps) => (
   <Grid
     css={{
-      gridTemplateColumns: onDelete
+      gridTemplateColumns: deletable
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[13],
@@ -218,12 +222,13 @@ export const HorizontalLayout = ({
   >
     {label}
     {children}
-    {onDelete && <RemovePropButton onClick={onDelete} />}
+    {deletable && <RemovePropButton onClick={onDelete} />}
   </Grid>
 );
 
 export const ResponsiveLayout = ({
   label,
+  deletable,
   onDelete,
   children,
 }: LayoutProps) => {
@@ -231,13 +236,13 @@ export const ResponsiveLayout = ({
   // might not cover all cases though
   if (label.props.children.length <= 8) {
     return (
-      <HorizontalLayout label={label} onDelete={onDelete}>
+      <HorizontalLayout label={label} deletable={deletable} onDelete={onDelete}>
         {children}
       </HorizontalLayout>
     );
   }
   return (
-    <VerticalLayout label={label} onDelete={onDelete}>
+    <VerticalLayout label={label} deletable={deletable} onDelete={onDelete}>
       {children}
     </VerticalLayout>
   );

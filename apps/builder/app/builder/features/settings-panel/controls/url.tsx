@@ -37,7 +37,7 @@ type BaseControlProps = {
   instanceId: string;
   prop: UrlControlProps["prop"];
   onChange: UrlControlProps["onChange"];
-  onSoftDelete: UrlControlProps["onSoftDelete"];
+  onDelete: UrlControlProps["onDelete"];
 };
 
 const Row = ({ children }: { children: ReactNode }) => (
@@ -334,12 +334,12 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
   );
 };
 
-const BaseAttachment = ({ prop, onChange, onSoftDelete }: BaseControlProps) => (
+const BaseAttachment = ({ prop, onChange, onDelete }: BaseControlProps) => (
   <Row>
     <SelectAsset
       prop={prop?.type === "asset" ? prop : undefined}
       onChange={onChange}
-      onSoftDelete={onSoftDelete}
+      onDelete={onDelete}
     />
   </Row>
 );
@@ -387,9 +387,9 @@ export const UrlControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
-  onSoftDelete,
 }: UrlControlProps) => {
   const [mode, setMode] = useState<Mode>(propToMode(prop));
 
@@ -404,6 +404,7 @@ export const UrlControl = ({
           {getLabel(meta, propName)}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <Flex
@@ -437,7 +438,7 @@ export const UrlControl = ({
         instanceId={instanceId}
         prop={prop}
         onChange={onChange}
-        onSoftDelete={onSoftDelete}
+        onDelete={onDelete}
       />
     </VerticalLayout>
   );

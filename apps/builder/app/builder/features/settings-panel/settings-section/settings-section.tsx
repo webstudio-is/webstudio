@@ -26,7 +26,11 @@ export const SettingsSection = () => {
 
   return (
     <Row>
-      <HorizontalLayout label={<Label htmlFor={id}>Name</Label>}>
+      <HorizontalLayout
+        label={<Label htmlFor={id}>Name</Label>}
+        deletable={false}
+        onDelete={() => {}}
+      >
         <InputField
           id={id}
           /* Key is required, otherwise when label is undefined, previous value stayed */

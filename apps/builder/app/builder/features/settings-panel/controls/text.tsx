@@ -101,6 +101,7 @@ export const TextControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"text", "string">) => {
@@ -131,6 +132,7 @@ export const TextControl = ({
             {label}
           </Label>
         }
+        deletable={deletable}
         onDelete={onDelete}
       >
         <Flex>{input}</Flex>
@@ -145,6 +147,7 @@ export const TextControl = ({
           {label}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <Flex css={{ py: theme.spacing[2] }}>{input}</Flex>
