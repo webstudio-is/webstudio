@@ -11,9 +11,12 @@ import { getDots } from "../../shared/collapsible-section";
 import { getStyleSource } from "../../shared/style-info";
 import { PlusIcon } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
-import { addTransition, property } from "./transition-utils";
+import { addLayer } from "../../style-layer-utils";
+import { parseTransition } from "@webstudio-is/css-data";
+import { LayersList } from "../../style-layers-list";
+import { Layer } from "./transition-layer";
 
-const properties: StyleProperty[] = ["transition"];
+const property: StyleProperty = "transition";
 const label = "Transitions";
 
 export const TransitionSection = (props: RenderCategoryProps) => {
@@ -24,19 +27,21 @@ export const TransitionSection = (props: RenderCategoryProps) => {
 
   return (
     <CollapsibleSectionBase
+      fullWidth
       label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, properties)}
+          dots={getDots(currentStyle, [property])}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                addTransition(
+                addLayer(
+                  property,
                   // Using default transition value
-                  "ease 0s",
+                  parseTransition("ease 0s"),
                   currentStyle,
                   props.createBatchUpdate
                 );
@@ -48,7 +53,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           <PropertyName
             title={label}
             style={currentStyle}
-            properties={properties}
+            properties={[property]}
             label={
               <SectionTitleLabel color={layersStyleSource}>
                 {label}
@@ -60,7 +65,14 @@ export const TransitionSection = (props: RenderCategoryProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <div>Has layers</div>
+        <LayersList
+          property={property}
+          layers={value}
+          {...props}
+          renderLayer={(layerProps) => {
+            return <Layer key={layerProps.index} {...layerProps} />;
+          }}
+        />
       )}
     </CollapsibleSectionBase>
   );

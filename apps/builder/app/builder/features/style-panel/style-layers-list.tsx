@@ -19,23 +19,25 @@ import {
 import { useMemo } from "react";
 import type { CreateBatchUpdate } from "./shared/use-style-data";
 
-type LayerListProperties = RenderCategoryProps & {
-  layers: LayersValue;
-  renderLayer: (props: {
-    id: string;
-    index: number;
-    layer: TupleValue;
-    isHighlighted: boolean;
-    onLayerHide: (index: number) => void;
-    onDeleteLayer: (index: number) => void;
-    createBatchUpdate: CreateBatchUpdate;
-    onEditLayer: (index: number, newLayers: LayersValue) => void;
-  }) => JSX.Element;
+export type LayerProps = {
+  id: string;
+  index: number;
+  layer: TupleValue;
+  isHighlighted: boolean;
+  onLayerHide: (index: number) => void;
+  onDeleteLayer: (index: number) => void;
+  onEditLayer: (index: number, layers: LayersValue) => void;
+  createBatchUpdate: CreateBatchUpdate;
 };
 
-const property: StyleProperty = "boxShadow";
+type LayerListProperties = RenderCategoryProps & {
+  property: StyleProperty;
+  layers: LayersValue;
+  renderLayer: (props: LayerProps) => JSX.Element;
+};
 
 export const LayersList = ({
+  property,
   layers,
   currentStyle,
   renderLayer,
