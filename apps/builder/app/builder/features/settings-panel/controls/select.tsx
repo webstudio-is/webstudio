@@ -6,6 +6,7 @@ export const SelectControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"select", "string">) => {
@@ -24,6 +25,7 @@ export const SelectControl = ({
           {getLabel(meta, propName)}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <Flex css={{ py: theme.spacing[2] }}>

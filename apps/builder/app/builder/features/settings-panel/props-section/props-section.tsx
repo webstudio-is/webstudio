@@ -104,10 +104,8 @@ const renderProperty = (
     meta,
     prop,
     propName,
-    onDelete: deletable
-      ? () => logic.handleDelete({ prop, propName })
-      : undefined,
-    onSoftDelete: () => prop && logic.handleSoftDelete(prop),
+    deletable: deletable ?? false,
+    onDelete: () => logic.handleDelete({ prop, propName }),
     onChange: (propValue, asset) => {
       logic.handleChange({ prop, propName }, propValue);
 

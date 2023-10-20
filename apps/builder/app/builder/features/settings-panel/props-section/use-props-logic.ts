@@ -293,16 +293,10 @@ export const usePropsLogic = ({
     setAddedNames((prev) => prev.filter((name) => propName !== name));
   };
 
-  const handleSoftDelete = (prop: Prop) => {
-    deleteProp(prop.id);
-  };
-
   return {
     handleAdd,
     handleChange,
     handleDelete,
-    /** Delete the prop, but keep it in the list of added props */
-    handleSoftDelete,
     handleChangeByPropName,
     meta,
     /** Similar to Initial, but displayed as a separate group in UI etc.

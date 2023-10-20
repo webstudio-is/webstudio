@@ -29,15 +29,10 @@ type Props = {
   accept?: string;
   prop: AssetControlProps["prop"];
   onChange: AssetControlProps["onChange"];
-  onSoftDelete: AssetControlProps["onSoftDelete"];
+  onDelete: AssetControlProps["onDelete"];
 };
 
-export const SelectAsset = ({
-  prop,
-  onChange,
-  onSoftDelete,
-  accept,
-}: Props) => {
+export const SelectAsset = ({ prop, onChange, onDelete, accept }: Props) => {
   const assetStore = useMemo(
     () =>
       computed(assetsStore, (assets) =>
@@ -72,7 +67,7 @@ export const SelectAsset = ({
       {prop ? (
         <SmallIconButton
           icon={<TrashIcon />}
-          onClick={onSoftDelete}
+          onClick={onDelete}
           variant="destructive"
         />
       ) : null}

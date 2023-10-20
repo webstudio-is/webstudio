@@ -15,6 +15,7 @@ export const ColorControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"color", "string">) => {
@@ -31,6 +32,7 @@ export const ColorControl = ({
           {getLabel(meta, propName)}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <InputField
