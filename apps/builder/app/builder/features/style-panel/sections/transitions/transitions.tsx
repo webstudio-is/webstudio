@@ -15,15 +15,34 @@ import { addLayer } from "../../style-layer-utils";
 import { parseTransition } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
 import { Layer } from "./transition-layer";
+import {
+  selectedInstanceStyleSourcesStore,
+  selectedOrLastStyleSourceSelectorStore,
+} from "~/shared/nano-states";
+import { useStore } from "@nanostores/react";
 
 const property: StyleProperty = "transition";
 const label = "Transitions";
 
 export const TransitionSection = (props: RenderCategoryProps) => {
   const { currentStyle, deleteProperty } = props;
-  const layersStyleSource = getStyleSource(currentStyle[property]);
   const [isOpen, setIsOpen] = useState(true);
+  const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
+
+  const selectedInstanceStyleSources = useStore(
+    selectedInstanceStyleSourcesStore
+  );
+
+  const selectedOrLastStyleSourceSelector = useStore(
+    selectedOrLastStyleSourceSelectorStore
+  );
+
+  const isSelectedStyleSourceIsLocal = selectedInstanceStyleSources.some(
+    (styleSource) =>
+      styleSource.id === selectedOrLastStyleSourceSelector?.styleSourceId &&
+      styleSource.type === "local"
+  );
 
   return (
     <CollapsibleSectionBase
@@ -36,6 +55,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           dots={getDots(currentStyle, [property])}
           suffix={
             <SectionTitleButton
+              disabled={isSelectedStyleSourceIsLocal === false}
               prefix={<PlusIcon />}
               onClick={() => {
                 addLayer(
