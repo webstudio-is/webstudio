@@ -59,7 +59,7 @@ const UniversalInput = ({
           ? { resize: "vertical" }
           : { resize: "none", whiteSpace: "nowrap", overflow: "hidden" }
       }
-      defaultValue={value}
+      value={value}
       onChange={(event) => {
         const { value } = event.target;
         handleChange(value);
