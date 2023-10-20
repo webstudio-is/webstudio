@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
@@ -10,7 +10,6 @@ import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
-import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
@@ -23,7 +22,6 @@ import {
   useReadCanvasRect,
   Workspace,
 } from "./features/workspace";
-import { usePublishShortcuts } from "./shared/shortcuts";
 import {
   assetsStore,
   $authPermit,
@@ -46,6 +44,8 @@ import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
+import { AiCommandBar } from "./features/ai/ai-command-bar";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 registerContainers();
 
@@ -108,13 +108,14 @@ const SidePanel = ({
   );
 };
 
-const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
+const Main = ({ children }: { children: ReactNode }) => (
   <Flex
     as="main"
     direction="column"
     css={{
       gridArea: "main",
       overflow: "hidden",
+      position: "relative",
     }}
   >
     {children}
@@ -273,10 +274,8 @@ export const Builder = ({
     authPermit,
     version: build.version,
   });
-  useSharedShortcuts({ source: "builder" });
 
   const isPreviewMode = useStore($isPreviewMode);
-  usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
@@ -304,7 +303,6 @@ export const Builder = ({
         <Main>
           <Workspace
             onTransitionEnd={onTransitionEnd}
-            publish={publish}
             initialBreakpoints={build.breakpoints}
           >
             <CanvasIframe
@@ -318,6 +316,9 @@ export const Builder = ({
               }}
             />
           </Workspace>
+          {isFeatureEnabled("ai") && (
+            <AiCommandBar isPreviewMode={isPreviewMode} />
+          )}
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
           <SidebarLeft publish={publish} />

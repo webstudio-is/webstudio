@@ -163,5 +163,5 @@ export const getPublishedUrl = (domain: string) => {
   return `${protocol}//${domain}.${host}`;
 };
 
-export const restAiCopy = () => `/rest/ai/copy`;
-export const restAiOperations = () => `/rest/ai/op`;
+export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>
+  typeof subEndpoint === "string" ? `/rest/ai/${subEndpoint}` : "/rest/ai";

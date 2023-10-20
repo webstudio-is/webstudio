@@ -35,13 +35,13 @@ To get started with the Webstudio CLI:
 1. Download and install the CLI using the following command:
 
    ```bash
-   npm install -g webstudio-cli
+   npm install -g webstudio
    ```
 
 1. Confirm the installation by checking the CLI version:
 
    ```bash
-   webstudio-cli --version
+   webstudio --version
    ```
 
 1. To keep your CLI updated, use the same command used for installation whenever a new release is available.
@@ -51,7 +51,7 @@ To get started with the Webstudio CLI:
 Now, you can run a Webstudio project on your local machine using this command:
 
 ```bash
-webstudio-cli
+webstudio
 ```
 
 This will initiate the flow to connect your Webstudio Cloud project and build it in your local computer. The default flow will guide you through the steps. You can also perform all the operations individually using independent commands.
@@ -73,7 +73,7 @@ The **`link`** command syncs your local Webstudio project with the project from 
 You can link a project from Webstudio Cloud with the following command:
 
 ```bash
-webstudio-cli link
+webstudio link
 ```
 
 This command will prompt you to paste a link which you can create using the _Share_ option in your project.
@@ -85,7 +85,7 @@ Make sure to provide _Build_ access when generating the link in Webstudio Cloud.
 Once the project is linked, use the **`sync`** command to sync it with the cloud:
 
 ```bash
-webstudio-cli sync
+webstudio sync
 ```
 
 Make sure to publish the project in Webstudio Cloud before running the **`sync`** command in your local Webstudio project.
@@ -95,7 +95,7 @@ Make sure to publish the project in Webstudio Cloud before running the **`sync`*
 Now, you can build your project with the **`build`** command:
 
 ```bash
-webstudio-cli build
+webstudio build
 ```
 
 During this phase, the CLI establishes the necessary routes and pages, scaffolding the entire application using the default Remix template. Additionally, all assets, such as images and fonts are downloaded to the **`assets`** folder inside the **`public`** directory.
@@ -129,13 +129,13 @@ You can configure the project to support netlify serverless/edge-functions respe
 You can manually change it using the `build` command. For serverless functions:
 
 ```bash
-webstudio-cli build --template netlify-functions
+webstudio build --template netlify-functions
 ```
 
 and for edge functions:
 
 ```bash
-webstudio-cli build --template netlify-edge-functions
+webstudio build --template netlify-edge-functions
 ```
 
 ## Important Notes

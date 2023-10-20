@@ -13,17 +13,14 @@ type FileControlProps = ControlProps<"file", "asset" | "string">;
 
 const UrlInput = ({
   id,
-  disabled,
   localValue,
 }: {
   id: string;
-  disabled: boolean;
-  localValue: ReturnType<typeof useLocalValue<string>>;
+  localValue: ReturnType<typeof useLocalValue<undefined | string>>;
 }) => (
   <InputField
-    disabled={disabled}
     id={id}
-    value={localValue.value}
+    value={localValue.value ?? ""}
     placeholder="http://www.url.com"
     onChange={(event) => localValue.set(event.target.value)}
     onBlur={localValue.save}
@@ -53,9 +50,13 @@ export const FileControl = ({
   const id = useId();
 
   const localStringValue = useLocalValue(
-    prop?.type === "string" ? prop.value : "",
+    // use undefined for asset type to not delete
+    // when url is reset by asset selector
+    prop?.type === "string" ? prop.value : undefined,
     (value) => {
-      if (value === "") {
+      if (value === undefined) {
+        return;
+      } else if (value === "") {
         onSoftDelete();
       } else {
         onChange({ type: "string", value });
@@ -73,11 +74,7 @@ export const FileControl = ({
       onDelete={onDelete}
     >
       <Row>
-        <UrlInput
-          id={id}
-          disabled={prop?.type === "asset"}
-          localValue={localStringValue}
-        />
+        <UrlInput id={id} localValue={localStringValue} />
       </Row>
       <Row>
         <SelectAsset
@@ -85,7 +82,6 @@ export const FileControl = ({
           accept={meta.accept}
           onChange={onChange}
           onSoftDelete={onSoftDelete}
-          disabled={localStringValue.value !== ""}
         />
       </Row>
     </VerticalLayout>

@@ -1,4 +1,5 @@
 import * as parser from "@babel/parser";
+import type { ParseError } from "@babel/parser";
 import {
   type JSXElement,
   type JSXOpeningElement,
@@ -14,14 +15,27 @@ import type { JsonObject } from "type-fest";
 export const jsxToWSEmbedTemplate = async (
   code: string
 ): Promise<WsEmbedTemplate> => {
-  const ast = parser.parseExpression(
-    code.replace(/^```(jsx)?/, "").replace(/```$/, ""),
-    {
-      plugins: ["jsx"],
-    }
-  );
+  code = code.trim();
 
-  if (ast.type === "JSXElement") {
+  let ast;
+
+  try {
+    ast = parser.parseExpression(code, {
+      plugins: ["jsx"],
+    });
+  } catch (error) {
+    if (
+      error &&
+      (error as ParseError).reasonCode === "UnwrappedAdjacentJSXElements"
+    ) {
+      code = `<Fragment>${code}</Fragment>`;
+      ast = parser.parseExpression(code, {
+        plugins: ["jsx"],
+      });
+    }
+  }
+
+  if (ast && ast.type === "JSXElement") {
     const template = await transform(ast, code);
     if (template !== null) {
       // Validate template

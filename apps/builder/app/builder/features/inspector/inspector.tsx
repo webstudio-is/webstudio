@@ -14,7 +14,6 @@ import {
   EnhancedTooltipProvider,
   Flex,
   ScrollArea,
-  Separator,
 } from "@webstudio-is/design-system";
 import type { Publish } from "~/shared/pubsub";
 import { StylePanel } from "~/builder/features/style-panel";
@@ -29,9 +28,6 @@ import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
-import { Copywriter } from "../ai";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { Operations } from "../ai";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore(registeredComponentMetasStore);
@@ -102,7 +98,6 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
   const availableTabs = [
     isStyleTabVisible ? "style" : undefined,
     "settings",
-    isFeatureEnabled("ai") ? "ai" : undefined,
   ].filter((tab) => tab);
 
   return (
@@ -124,9 +119,6 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
                 <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
               )}
               <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
-              {isFeatureEnabled("ai") && (
-                <PanelTabsTrigger value="ai">AI</PanelTabsTrigger>
-              )}
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
               <InstanceInfo instance={selectedInstance} />
@@ -147,29 +139,6 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
                 />
               </ScrollArea>
             </PanelTabsContent>
-            {isFeatureEnabled("ai") ? (
-              <PanelTabsContent value="ai" css={contentStyle} tabIndex={-1}>
-                <Flex direction="column" gap="4" css={{ padding: 10 }}>
-                  {isFeatureEnabled("aiOperations") ? (
-                    <Flex direction="column" gap="2">
-                      <Text variant="titles">Commands Bar</Text>
-                      <Text>
-                        You can edit styles, remove instances or ask to generate
-                        something
-                      </Text>
-                      <Operations />
-                    </Flex>
-                  ) : null}
-                  <Separator />
-                  {isFeatureEnabled("aiCopy") ? (
-                    <Flex direction="column" gap="2">
-                      <Text variant="titles">Text Generation</Text>
-                      <Copywriter />
-                    </Flex>
-                  ) : null}
-                </Flex>
-              </PanelTabsContent>
-            ) : null}
           </Flex>
         </PanelTabs>
       </FloatingPanelProvider>

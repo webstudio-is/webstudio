@@ -1,9 +1,8 @@
 import { useMemo } from "react";
 import { css, keyframes, type Rect } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { cssVars } from "@webstudio-is/css-vars";
 
-const angleVar = cssVars.define("angle");
+const angleVar = `--ws-outline-angle`;
 
 // Won't work in current FF/Safari, but outline will still work, just no animation.
 const propertyStyle = (
@@ -23,6 +22,7 @@ const angleKeyframes = keyframes({
 });
 
 const baseStyle = css({
+  boxSizing: "border-box",
   position: "absolute",
   pointerEvents: "none",
   outline: `1px solid ${theme.colors.blue9}`,
@@ -35,10 +35,7 @@ const baseStyle = css({
         outline: "none",
         [angleVar]: `0deg`,
         border: `1px solid`,
-        // @todo check with design on specific colors
-        borderImage: `conic-gradient(from ${cssVars.use(
-          angleVar
-        )}, #FFAE3C 0%, #39FBBB 25%, #4A4EFA 50%, #E63CFE 100%) 1`,
+        borderImage: `conic-gradient(from var(${angleVar}), #39FBBB 0%, #4A4EFA 12.5%, #E63CFE 25%, #FFAE3C 37.5%, #39FBBB 50%, #4A4EFA 62.5%, #E63CFE 75%, #FFAE3C 87.5%) 1`,
         animation: `2s ${angleKeyframes} linear infinite`,
       },
     },

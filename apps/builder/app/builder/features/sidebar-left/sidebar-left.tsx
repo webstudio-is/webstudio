@@ -14,9 +14,10 @@ import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
-import { BugIcon, HelpIcon } from "@webstudio-is/icons";
+import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const none = { TabContent: () => null };
 
@@ -28,8 +29,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const dragAndDropState = useStore($dragAndDropState);
   const [activeTab, setActiveTab] = useState<TabName>("none");
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
-  const [clientSettings] = useClientSettings();
   const [helpIsOpen, setHelpIsOpen] = useState(false);
+  const [clientSettings, setClientSetting] = useClientSettings();
 
   useSubscribe("clickCanvas", () => {
     setActiveTab("none");
@@ -64,6 +65,22 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               {tabName === "none" ? null : panels[tabName].icon}
             </SidebarTabsTrigger>
           ))}
+          {isFeatureEnabled("ai") && (
+            <SidebarTabsTrigger
+              aria-label="ai"
+              value={
+                "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
+              }
+              onClick={() => {
+                setClientSetting(
+                  "isAiCommandBarVisible",
+                  clientSettings.isAiCommandBarVisible === true ? false : true
+                );
+              }}
+            >
+              <AiIcon />
+            </SidebarTabsTrigger>
+          )}
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
           <HelpPopover onOpenChange={setHelpIsOpen}>

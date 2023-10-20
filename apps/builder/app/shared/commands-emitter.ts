@@ -1,5 +1,5 @@
 import { isHotkeyPressed } from "react-hotkeys-hook";
-import { atom, onMount } from "nanostores";
+import { atom } from "nanostores";
 import { $publisher, subscribe } from "~/shared/pubsub";
 import { clientSyncStore } from "~/shared/sync";
 
@@ -40,6 +40,41 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
  * expose command metas to synchronize between builder, canvas and plugins
  */
 export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
+clientSyncStore.register("commandMetas", $commandMetas);
+
+// this is a hack to workaround react-hotkeys-hook implementation
+// of isHotkeyPressed which matches every specified keys
+// even when more keys pressed. This resulted in cmd+z and cmd+shift+z
+// both match when only cmd+z is pressed
+//
+// here find hotkeys which have more keys pressed at a time
+const findCommandsMatchingHeaviestHotkeys = () => {
+  const commandMetas = $commandMetas.get();
+  let maxHotkeySize = 0;
+  let matchingCommands = new Set<CommandMeta<string>>();
+  for (const commandMeta of commandMetas.values()) {
+    if (commandMeta.defaultHotkeys === undefined) {
+      continue;
+    }
+    for (const hotkey of commandMeta.defaultHotkeys) {
+      const keys = hotkey.split("+");
+      const hotkeySize = keys.length;
+      if (isHotkeyPressed(keys) === false) {
+        continue;
+      }
+      // reset commands list when found more heavy hotkey
+      if (maxHotkeySize < hotkeySize) {
+        maxHotkeySize = hotkeySize;
+        matchingCommands = new Set();
+      }
+      // hotkey matches haviest one
+      if (maxHotkeySize === hotkeySize) {
+        matchingCommands.add(commandMeta);
+      }
+    }
+  }
+  return matchingCommands;
+};
 
 export const createCommandsEmitter = <CommandName extends string>({
   source,
@@ -56,29 +91,28 @@ export const createCommandsEmitter = <CommandName extends string>({
   }
 
   if (commands.length > 0) {
-    onMount($commandMetas, () => {
-      // listener from sync-stores is called after onMount callback
-      // schedule store.set to the next tick
-      // so store.listen is executed after store.set below
-      Promise.resolve().then(() => {
-        clientSyncStore.createTransaction([$commandMetas], (commandMetas) => {
-          for (const { handler, ...meta } of commands) {
-            commandMetas.set(meta.name, meta);
-          }
-        });
-      });
+    clientSyncStore.createTransaction([$commandMetas], (commandMetas) => {
+      for (const { handler, ...meta } of commands) {
+        commandMetas.set(meta.name, meta);
+      }
     });
   }
 
   const emitCommand = (name: CommandName) => {
     const { publish } = $publisher.get();
-    publish({
-      type: "command",
-      payload: {
-        source,
-        name,
-      },
-    });
+    // continue to work without emitter
+    // for example in tests
+    if (publish) {
+      publish({
+        type: "command",
+        payload: {
+          source,
+          name,
+        },
+      });
+    } else {
+      commandHandlers.get(name)?.();
+    }
   };
 
   /**
@@ -90,19 +124,8 @@ export const createCommandsEmitter = <CommandName extends string>({
       commandHandlers.get(name)?.();
     });
     const handleKeyDown = (event: KeyboardEvent) => {
-      const commandMetas = $commandMetas.get();
       let emitted = false;
-      for (const commandMeta of commandMetas.values()) {
-        if (commandMeta.defaultHotkeys === undefined) {
-          continue;
-        }
-        if (
-          commandMeta.defaultHotkeys.some((hotkey) =>
-            isHotkeyPressed(hotkey.split("+"))
-          ) === false
-        ) {
-          continue;
-        }
+      for (const commandMeta of findCommandsMatchingHeaviestHotkeys()) {
         if (
           commandMeta.disableHotkeyOutsideApp &&
           commandHandlers.has(commandMeta.name) === false
@@ -128,8 +151,9 @@ export const createCommandsEmitter = <CommandName extends string>({
         }
         if (
           isOnContentEditable &&
-          disableHotkeyOnContentEditable &&
-          event.defaultPrevented === false
+          disableHotkeyOnContentEditable
+          // editors usually manage history in controlled way
+          // so do not check if event is prevented
         ) {
           continue;
         }

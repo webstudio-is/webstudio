@@ -47,7 +47,7 @@ const applyScale = (rect: Rect, scale: number) => {
 
 export const PlacementIndicator = ({
   placement,
-  scale = 1,
+  scale = 100,
 }: {
   placement: Placement;
   scale?: number;

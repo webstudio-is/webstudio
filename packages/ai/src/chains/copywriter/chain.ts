@@ -5,7 +5,7 @@ import { prompt as promptSystemTemplate } from "./__generated__/copy.system.prom
 import { prompt as promptUserTemplate } from "./__generated__/copy.user.prompt";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import { createErrorResponse } from "../../utils/create-error-response";
-import type { StreamingTextResponseType } from "../../utils/streaming-text-response";
+import type { RemixStreamingTextResponse } from "../../utils/remix-streaming-text-response";
 
 /**
  * Copywriter chain.
@@ -13,6 +13,8 @@ import type { StreamingTextResponseType } from "../../utils/streaming-text-respo
  * Given a description and an instance id,
  * this chain generates copy for the instance and all its descendant text nodes.
  */
+
+export const name = "copywriter";
 
 export const TextInstanceSchema = z.object({
   instanceId: z.string(),
@@ -29,7 +31,7 @@ export type TextInstance = z.infer<typeof TextInstanceSchema>;
 
 export const ContextSchema = z.object({
   // The prompt provides context about the copy to generate and comes from the user.
-  prompt: z.string().max(1200),
+  prompt: z.string(),
   // An array of text nodes to generate copy for.
   textInstances: z.array(TextInstanceSchema),
 });
@@ -41,12 +43,40 @@ export type Response = z.infer<typeof ResponseSchema>;
 export const createChain = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>,
   Context,
-  StreamingTextResponseType
+  RemixStreamingTextResponse
 > =>
   async function chain({ model, context }) {
     const { prompt, textInstances } = context;
 
-    const id = "copywriter";
+    if (textInstances.length === 0) {
+      const message = "No text nodes found for the instance";
+      return {
+        id: name,
+        ...createErrorResponse({
+          status: 404,
+          error: "ai.copywriter.textNodesNotFound",
+          message,
+          debug: message,
+        }),
+        llmMessages: [],
+      };
+    }
+
+    if (
+      z.array(TextInstanceSchema).safeParse(textInstances).success === false
+    ) {
+      const message = "Invalid nodes list";
+      return {
+        id: name,
+        ...createErrorResponse({
+          status: 404,
+          error: `ai.${name}.parseError`,
+          message,
+          debug: message,
+        }),
+        llmMessages: [],
+      };
+    }
 
     const llmMessages: ModelMessage[] = [
       ["system", promptSystemTemplate],
@@ -62,40 +92,10 @@ export const createChain = <ModelMessageFormat>(): Chain<
       ],
     ];
 
-    if (textInstances.length === 0) {
-      const message = "No text nodes found for the instance";
-      return {
-        id,
-        ...createErrorResponse({
-          status: 404,
-          error: "ai.copywriter.textNodesNotFound",
-          message,
-          debug: message,
-        }),
-        llmMessages,
-      };
-    }
-
-    try {
-      z.array(TextInstanceSchema).parse(textInstances);
-    } catch (error) {
-      const message = "Invalid nodes list";
-      return {
-        id,
-        ...createErrorResponse({
-          status: 404,
-          error: "ai.parseError",
-          message,
-          debug: message,
-        }),
-        llmMessages,
-      };
-    }
-
     const messages = model.generateMessages(llmMessages);
 
     const response = await model.completionStream({
-      id,
+      id: name,
       messages,
     });
 

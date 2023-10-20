@@ -96,6 +96,8 @@ const env = {
    */
   OPENAI_KEY: process.env.OPENAI_KEY,
   OPENAI_ORG: process.env.OPENAI_ORG,
+
+  PEXELS_API_KEY: process.env.PEXELS_API_KEY,
 };
 
 export type ServerEnv = typeof env;

@@ -1,4 +1,4 @@
-import type { StreamingTextResponseType } from "./utils/streaming-text-response";
+import { type RemixStreamingTextResponse } from "./utils/remix-streaming-text-response";
 
 /**
  * Generic Response types used both by Models and Chains.
@@ -13,7 +13,7 @@ export type Tokens = {
 };
 
 export type SuccessResponse<ResponseData> = {
-  type: ResponseData extends StreamingTextResponseType ? "stream" : "json";
+  type: ResponseData extends RemixStreamingTextResponse ? "stream" : "json";
   success: true;
   tokens: Tokens;
   data: ResponseData;
@@ -63,7 +63,7 @@ export type ModelCompletion<ModelMessageFormat> = (args: {
 export type ModelCompletionStream<ModelMessageFormat> = (args: {
   id: string;
   messages: ReturnType<ModelGenerateMessages<ModelMessageFormat>>;
-}) => Promise<Response<StreamingTextResponseType>>;
+}) => Promise<Response<RemixStreamingTextResponse>>;
 
 /**
  * Chains types.
@@ -77,11 +77,11 @@ export type ModelCompletionStream<ModelMessageFormat> = (args: {
  * zod types must have a Schema suffix. For example ResponseSchema.
  */
 
-export type LlmResponse<ResponseData> = Response<ResponseData> & {
+export type ModelResponse<ResponseData> = Response<ResponseData> & {
   llmMessages: ModelMessage[];
 };
 
 export type Chain<Model, Context, ResponseData> = (args: {
   model: Model;
   context: Context;
-}) => Promise<LlmResponse<ResponseData>>;
+}) => Promise<ModelResponse<ResponseData>>;

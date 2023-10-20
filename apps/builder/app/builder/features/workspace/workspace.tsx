@@ -5,7 +5,6 @@ import {
   useCanvasWidth,
   workspaceRectStore,
 } from "~/builder/shared/nano-states";
-import type { Publish } from "~/shared/pubsub";
 import {
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
@@ -142,14 +141,12 @@ const useOutlineStyle = (
 type WorkspaceProps = {
   children: JSX.Element;
   onTransitionEnd: () => void;
-  publish: Publish;
   initialBreakpoints: [Breakpoint["id"], Breakpoint][];
 };
 
 export const Workspace = ({
   children,
   onTransitionEnd,
-  publish,
   initialBreakpoints,
 }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle(initialBreakpoints);
@@ -176,7 +173,7 @@ export const Workspace = ({
         {children}
       </div>
       <div className={canvasContainerStyle()} style={outlineStyle}>
-        <CanvasTools publish={publish} />
+        <CanvasTools />
       </div>
       <Toaster />
     </div>

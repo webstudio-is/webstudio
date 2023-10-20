@@ -7,7 +7,7 @@ import * as Separator from "@radix-ui/react-separator";
 import { styled, theme } from "../../stitches.config";
 import { Grid } from "../grid";
 import { Button } from "../button";
-import { type ReactNode } from "react";
+import { forwardRef, type ReactNode } from "react";
 
 type Props = {
   children: React.ReactNode;
@@ -68,9 +68,11 @@ export const CommandBar = (props: Props) => {
   );
 };
 
-export const CommandBarTrigger = (props: { children: ReactNode }) => (
-  <Collapsible.Trigger asChild {...props} />
-);
+export const CommandBarTrigger = forwardRef<
+  HTMLButtonElement,
+  { children: ReactNode }
+>((props, ref) => <Collapsible.Trigger ref={ref} asChild {...props} />);
+CommandBarTrigger.displayName = "CommandBarTrigger";
 
 export const CommandBarContentSection = (props: { children: ReactNode }) => (
   <Grid
@@ -98,12 +100,20 @@ const CommandBarContentPromptText = styled("span", {
   whiteSpace: "break-spaces",
 });
 
-export const CommandBarContentPrompt = (props: { children: ReactNode }) => {
+export const CommandBarContentPrompt = forwardRef<
+  HTMLButtonElement,
+  {
+    children: ReactNode;
+    onClick?: () => void;
+  }
+>((props, ref) => {
   return (
-    <CommandBarContentPromptStyled color="dark">
+    <CommandBarContentPromptStyled ref={ref} color="dark" {...props}>
       <CommandBarContentPromptText>
         {props.children}
       </CommandBarContentPromptText>
     </CommandBarContentPromptStyled>
   );
-};
+});
+
+CommandBarContentPrompt.displayName = "CommandBarContentPrompt";

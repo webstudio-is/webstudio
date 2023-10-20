@@ -7,7 +7,7 @@ import type {
   ModelGenerateMessages,
 } from "../types";
 import { createErrorResponse } from "../utils/create-error-response";
-import { StreamingTextResponse } from "../utils/streaming-text-response";
+import { RemixStreamingTextResponse } from "../utils/remix-streaming-text-response";
 
 export type Model = BaseModel<ModelMessageFormat>;
 export type ModelMessageFormat = OpenAI.Chat.Completions.ChatCompletionMessage;
@@ -117,7 +117,7 @@ export const createCompletionStream = (
         id,
         type: "stream",
         success: true,
-        data: new StreamingTextResponse(stream),
+        data: new RemixStreamingTextResponse(stream),
         tokens: {
           prompt: -1,
           completion: -1,
@@ -149,15 +149,31 @@ const errorToResponse = (id: string, error: unknown) => {
     id,
     ...createErrorResponse({
       status,
-      error: getErrorType(error),
-      message: "Something went wrong",
+      error: getErrorType(error, status),
+      message: debug,
       debug,
     }),
   } as const;
 };
-const getErrorType = (error: unknown) => {
+const getErrorType = (error: unknown, status: number) => {
   if (error instanceof OpenAI.APIError) {
-    return `ai.${error.name}`;
+    if (error.code && error.code in errorCodes) {
+      return `ai.${errorCodes[error.code as keyof typeof errorCodes]}`;
+    }
+    if (status in errorHttpCodes) {
+      return `ai.${errorHttpCodes[status as keyof typeof errorHttpCodes]}`;
+    }
   }
   return `ai.unknownError`;
+};
+
+const errorCodes = {
+  context_length_exceeded: "contextLengthExceeded",
+  rate_limit_exceeded: "rateLimitExceeded",
+  insufficient_quota: "spendingQuotaLimitReached",
+};
+
+const errorHttpCodes = {
+  401: "invalidAuthOrApiKey",
+  503: "engineOverloaded",
 };

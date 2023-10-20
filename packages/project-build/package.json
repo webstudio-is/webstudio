@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/project-build",
-  "version": "0.105.0",
+  "version": "0.111.0",
   "description": "Webstudio Project Build",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -36,7 +36,7 @@
     "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
-    "nanoid": "^4.0.2",
+    "nanoid": "^5.0.1",
     "zod": "^3.21.4"
   },
   "devDependencies": {

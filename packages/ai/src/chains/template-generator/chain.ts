@@ -7,8 +7,9 @@ import { WsEmbedTemplate } from "@webstudio-is/react-sdk";
 import {
   jsxToTemplate,
   postProcessTemplate,
-} from "../../utils/jsx-to-template";
+} from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
+import { getCode } from "../../utils/get-code";
 
 /**
  * Template Generator Chain.
@@ -16,9 +17,11 @@ import { createErrorResponse } from "../../utils/create-error-response";
  * Given a UI section or widget description, this chain generates a Webstudio Embed Template representing the UI.
  */
 
+export const name = "template-generator";
+
 export const ContextSchema = z.object({
   // The prompt provides the original user request.
-  prompt: z.string().max(1200),
+  prompt: z.string(),
   components: z.array(z.string()),
 });
 export type Context = z.infer<typeof ContextSchema>;
@@ -32,8 +35,6 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
-    const id = "template-generator";
-
     const { prompt, components } = context;
 
     const llmMessages: ModelMessage[] = [
@@ -52,7 +53,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     const messages = model.generateMessages(llmMessages);
 
     const completion = await model.completion({
-      id,
+      id: name,
       messages,
     });
 
@@ -69,16 +70,17 @@ export const createChain = <ModelMessageFormat>(): Chain<
     let template: WsEmbedTemplate;
 
     try {
-      template = await jsxToTemplate(completionText);
+      template = await jsxToTemplate(getCode(completionText, "jsx"));
     } catch (error) {
+      const debug = `Failed to parse the completion error="${
+        error instanceof Error ? error.message : ""
+      }" completionText="${completionText}"`.trim();
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
-          debug: (
-            "Failed to parse the completion " +
-            (error instanceof Error ? error.message : "")
-          ).trim(),
+          message: debug,
+          debug,
         }),
         llmMessages,
       };
@@ -87,14 +89,16 @@ export const createChain = <ModelMessageFormat>(): Chain<
     try {
       postProcessTemplate(template, components);
     } catch (error) {
+      const debug = (
+        "Invalid completion " + (error instanceof Error ? error.message : "")
+      ).trim();
+
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
-          debug: (
-            "Invalid completion " +
-            (error instanceof Error ? error.message : "")
-          ).trim(),
+          message: debug,
+          debug,
         }),
         llmMessages,
       };

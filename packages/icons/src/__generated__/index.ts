@@ -17,6 +17,7 @@ export * from "./a-s-stretch";
 export * from "./accordion-content";
 export * from "./accordion-trigger";
 export * from "./accordion";
+export * from "./ai-loading";
 export * from "./ai";
 export * from "./alert";
 export * from "./arrow-down";

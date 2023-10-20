@@ -24,9 +24,16 @@
     "typescript": "5.2.2"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./index.server": {
+      "webstudio": "./src/index.server.ts",
+      "types": "./lib/types/index.server.d.ts",
+      "import": "./lib/index.server.js"
+    }
   },
   "files": [
     "lib/*",
@@ -41,7 +48,9 @@
     "@webstudio-is/sdk": "workspace:*",
     "ai": "^2.2.12",
     "escape-string-regexp": "^5.0.0",
+    "mdast-util-from-markdown": "^2.0.0",
     "openai": "^4.8.0",
+    "unist-util-visit-parents": "^6.0.1",
     "web-streams-polyfill": "^3.2.1",
     "zod": "^3.21.4",
     "zod-to-json-schema": "^3.21.4"

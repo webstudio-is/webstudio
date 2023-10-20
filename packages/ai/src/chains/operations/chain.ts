@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
-import { prompt as promptSystemTemplate } from "./__generated__/edit.system.prompt";
-import { prompt as promptUserTemplate } from "./__generated__/edit.user.prompt";
+import { prompt as promptSystemTemplate } from "./__generated__/operations.system.prompt";
+import { prompt as promptUserTemplate } from "./__generated__/operations.user.prompt";
 
 import {
   AiOperationsSchema,
@@ -11,7 +11,7 @@ import {
   type WsOperations,
 } from "./shared";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import { postProcessTemplate } from "../../utils/jsx-to-template";
+import { postProcessTemplate } from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
 
 /**
@@ -21,8 +21,10 @@ import { createErrorResponse } from "../../utils/create-error-response";
  * it generates a series of edit operations to fulfill an edit request coming from the user.
  */
 
+export const name = "operations";
+
 export const ContextSchema = z.object({
-  prompt: z.string().max(1200).describe("Edit request from the user"),
+  prompt: z.string().describe("Edit request from the user"),
   components: z.array(z.string()).describe("Available Webstudio components"),
   jsx: z.string().describe("Input JSX to edit"),
 });
@@ -37,10 +39,11 @@ export const createChain = <ModelMessageFormat>(): Chain<
   Response
 > =>
   async function chain({ model, context }) {
-    const id = "operations";
-
     const { prompt, components, jsx } = context;
 
+    // @todo Make it so this chain can run only for
+    // a specific operation among the supported ones.
+    // This could be passed as context.operations.
     const operationsSchema = zodToJsonSchema(
       AiOperationsSchema.element,
       "AiOperationsSchema"
@@ -72,7 +75,7 @@ export const createChain = <ModelMessageFormat>(): Chain<
     const messages = model.generateMessages(llmMessages);
 
     const completion = await model.completion({
-      id,
+      id: name,
       messages,
     });
 
@@ -91,9 +94,11 @@ export const createChain = <ModelMessageFormat>(): Chain<
     );
     if (parsedCompletion.success === false) {
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
+          error: "ai.parseError",
+          message: `Failed to parse completion ${parsedCompletion.error.message}`,
           debug: `Failed to parse completion ${parsedCompletion.error.message}`,
         }),
         tokens: completion.tokens,
@@ -115,9 +120,15 @@ export const createChain = <ModelMessageFormat>(): Chain<
       }
     } catch (error) {
       return {
-        id,
+        id: name,
         ...createErrorResponse({
           status: 500,
+          error: "ai.parseError",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to parse the completion",
+
           debug: (
             "Failed to convert operations. " +
             (error instanceof Error ? error.message : "")

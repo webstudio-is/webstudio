@@ -1,5 +1,4 @@
 import { useStore } from "@nanostores/react";
-import type { Publish } from "~/shared/pubsub";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
@@ -7,7 +6,11 @@ import {
   $isPreviewMode,
   $dragAndDropState,
 } from "~/shared/nano-states";
-import { HoveredInstanceOutline, SelectedInstanceOutline } from "./outline";
+import {
+  CollaborativeInstanceOutline,
+  HoveredInstanceOutline,
+  SelectedInstanceOutline,
+} from "./outline";
 import { TextToolbar } from "./text-toolbar";
 import { Label } from "./outline/label";
 import { Outline } from "./outline/outline";
@@ -30,11 +33,7 @@ const containerStyle = css({
   },
 });
 
-type CanvasToolsProps = {
-  publish: Publish;
-};
-
-export const CanvasTools = ({ publish }: CanvasToolsProps) => {
+export const CanvasTools = () => {
   // @todo try to setup cross-frame atoms to avoid this
   useSubscribeDragAndDropState();
 
@@ -74,8 +73,9 @@ export const CanvasTools = ({ publish }: CanvasToolsProps) => {
           <div className={containerStyle({ overflow: "hidden" })}>
             <SelectedInstanceOutline />
             <HoveredInstanceOutline />
+            <CollaborativeInstanceOutline />
           </div>
-          <TextToolbar publish={publish} />
+          <TextToolbar />
         </>
       )}
     </div>

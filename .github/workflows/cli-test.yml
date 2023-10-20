@@ -36,12 +36,12 @@ jobs:
       - uses: ./.github/actions/ci-setup
 
       - name: Build cli
-        run: pnpm turbo run build --filter='webstudio-cli'
+        run: pnpm turbo run build --filter='webstudio'
 
         # Testing fixtures for vercel template
       - name: Test cli --help flag
         working-directory: ./fixtures/webstudio-remix-vercel
-        run: pnpm webstudio-cli --help
+        run: pnpm webstudio --help
 
       - name: Testing cli link command
         run: pnpm --filter='./fixtures/*' --sequential run fixtures:link

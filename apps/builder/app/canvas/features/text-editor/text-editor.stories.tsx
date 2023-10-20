@@ -1,28 +1,19 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import type { ComponentStory, ComponentMeta } from "@storybook/react";
+import type { StoryFn, Meta } from "@storybook/react";
 import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { publish } from "~/shared/pubsub";
 import { textToolbarStore } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
+import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
 
 export default {
   component: TextEditor,
   title: "Text Editor 2",
-} as ComponentMeta<typeof TextEditor>;
-
-type Format =
-  | "bold"
-  | "italic"
-  | "superscript"
-  | "subscript"
-  | "link"
-  | "span"
-  | "clear";
+} satisfies Meta<typeof TextEditor>;
 
 const createInstancePair = (
   id: Instance["id"],
@@ -55,13 +46,11 @@ const instances: Instances = new Map([
   createInstancePair("5", "Bold", [{ type: "text", value: " subtext" }]),
 ]);
 
-export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
+export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
   const state = useStore(textToolbarStore);
   const ref = useRef<null | HTMLDivElement>(null);
 
-  const setFormat = (type: Format) => {
-    publish({ type: "formatTextToolbar", payload: type });
-  };
+  useEffect(subscribeCommands, []);
 
   return (
     <div>
@@ -70,7 +59,7 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
         style={{ fontWeight: state?.isBold ? "bold" : "normal" }}
         onClick={(event) => {
           event.preventDefault();
-          setFormat("bold");
+          emitCommand("formatBold");
         }}
       >
         Bold
@@ -78,42 +67,42 @@ export const Basic: ComponentStory<typeof TextEditor> = ({ onChange }) => {
       <button
         disabled={state == null}
         style={{ fontWeight: state?.isItalic ? "bold" : "normal" }}
-        onClick={() => setFormat("italic")}
+        onClick={() => emitCommand("formatItalic")}
       >
         Italic
       </button>
       <button
         disabled={state == null}
         style={{ fontWeight: state?.isSuperscript ? "bold" : "normal" }}
-        onClick={() => setFormat("superscript")}
+        onClick={() => emitCommand("formatSuperscript")}
       >
         Superscript
       </button>
       <button
         disabled={state == null}
         style={{ fontWeight: state?.isSubscript ? "bold" : "normal" }}
-        onClick={() => setFormat("subscript")}
+        onClick={() => emitCommand("formatSubscript")}
       >
         Subscript
       </button>
       <button
         disabled={state == null}
         style={{ fontWeight: state?.isLink ? "bold" : "normal" }}
-        onClick={() => setFormat("link")}
+        onClick={() => emitCommand("formatLink")}
       >
         Link
       </button>
       <button
         disabled={state == null}
         style={{ fontWeight: state?.isSpan ? "bold" : "normal" }}
-        onClick={() => setFormat("span")}
+        onClick={() => emitCommand("formatSpan")}
       >
         Span
       </button>
       <button
         disabled={state == null}
         style={{ fontWeight: "normal" }}
-        onClick={() => setFormat("clear")}
+        onClick={() => emitCommand("formatClear")}
       >
         Clear
       </button>

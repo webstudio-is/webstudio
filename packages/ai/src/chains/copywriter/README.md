@@ -12,7 +12,7 @@ Server side:
 import {
   copywriter,
   createGptModel
-  type GPTModelMessageFormat
+  type GptModelMessageFormat
 } from "@webstudio-is/ai";
 
 export async function handler({ request }) {
@@ -25,23 +25,33 @@ export async function handler({ request }) {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = copywriter.createChain<GPTModelMessageFormat>();
+  const chain = copywriter.createChain<GptModelMessageFormat>();
 
-  // Respond with a stream.
-  return chain({
+  const response = await chain({
     model,
     context: {
       prompt,
       textInstances
     }
-  })
+  });
+
+  if (response.success === false) {
+    return response;
+  }
+
+  // Respond with the text generation stream.
+  return response.stream;
 }
 ```
 
 Client side:
 
 ```tsx
-import { copywriter, request, StreamingResponseTextType } from "@webstudio-is/ai";
+import {
+  copywriter,
+  handleAiRequest,
+  type RemixStreamingTextResponse
+} from "@webstudio-is/ai";
 
 function UiComponent() {
   const [error, setError] = useState();
@@ -68,8 +78,8 @@ function UiComponent() {
           return;
         }
 
-        request<StreamingResponseTextType>(
-          [
+        handleAiRequest<RemixStreamingTextResponse>(
+          fetch(
             '/rest/ai/copy',
             {
               method: "POST",
@@ -80,8 +90,9 @@ function UiComponent() {
               }),
               signal: abort.current.signal,
             },
-          ],
+          ),
           {
+            signal: abort.current.signal,
             onChunk: (id, { completion, done }) => {
               // Log the completion.
               console.log(completion)

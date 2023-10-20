@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
@@ -21,13 +21,7 @@ import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/m
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { $publisher, publish } from "~/shared/pubsub";
-import {
-  handshakenStore,
-  registerContainers,
-  useCanvasStore,
-} from "~/shared/sync";
-import { useSharedShortcuts } from "~/shared/shortcuts";
-import { useCanvasShortcuts } from "./canvas-shortcuts";
+import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
@@ -57,6 +51,7 @@ import { useSelectedInstance } from "./instance-selected-react";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
+import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 
 registerContainers();
 
@@ -157,6 +152,7 @@ const DesignMode = ({ params }: { params: Params }) => {
   useCopyPaste();
 
   useSelectedInstance();
+  useEffect(updateCollaborativeInstanceRect, []);
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
 
@@ -172,7 +168,6 @@ export const Canvas = ({
   params,
   imageLoader,
 }: CanvasProps): JSX.Element | null => {
-  const handshaken = useStore(handshakenStore);
   useCanvasStore(publish);
   const isPreviewMode = useStore($isPreviewMode);
 
@@ -204,9 +199,6 @@ export const Canvas = ({
     $publisher.set({ publish });
   }, []);
 
-  // e.g. toggling preview is still needed in both modes
-  useCanvasShortcuts();
-  useSharedShortcuts({ source: "canvas" });
   const selectedPage = useStore(selectedPageStore);
 
   useEffect(() => {
@@ -233,6 +225,11 @@ export const Canvas = ({
   const instances = useStore(instancesStore);
   const elements = useElementsTree(components, instances, params, imageLoader);
 
+  const [isInitialized, setInitialized] = useState(false);
+  useEffect(() => {
+    setInitialized(true);
+  }, []);
+
   if (components.size === 0 || instances.size === 0) {
     return (
       <body>
@@ -250,7 +247,7 @@ export const Canvas = ({
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && handshaken === true && (
+      {isPreviewMode === false && isInitialized && (
         <DesignMode params={params} />
       )}
     </>
