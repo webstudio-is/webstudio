@@ -16,6 +16,7 @@ import { deleteInstance } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $publisher } from "~/shared/pubsub";
+import { $activeSidebarPanel } from "./nano-states";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -89,6 +90,13 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         const { publish } = $publisher.get();
         publish?.({ type: "cancelCurrentDrag" });
+      },
+    },
+    {
+      name: "clickCanvas",
+      handler: () => {
+        $breakpointsMenuView.set(undefined);
+        $activeSidebarPanel.set("none");
       },
     },
 

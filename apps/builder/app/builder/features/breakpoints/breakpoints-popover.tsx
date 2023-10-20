@@ -21,7 +21,6 @@ import {
   PopoverMenuItemContainer,
   PopoverMenuItemRightSlot,
 } from "@webstudio-is/design-system";
-import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { BreakpointsPopoverToolbarButton } from "./breakpoints-popover-toolbar-button";
 import { WidthInput } from "./width-input";
@@ -51,10 +50,6 @@ export const BreakpointsPopover = () => {
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const scale = useStore(scaleStore);
   const setInitialCanvasWidth = useSetInitialCanvasWidth();
-
-  useSubscribe("clickCanvas", () => {
-    $breakpointsMenuView.set(undefined);
-  });
 
   if (selectedBreakpoint === undefined) {
     return null;

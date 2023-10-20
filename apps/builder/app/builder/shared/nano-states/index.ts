@@ -1,5 +1,6 @@
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
+import type { TabName } from "~/builder/features/sidebar-left/types";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -34,3 +35,5 @@ export const scaleStore = computed(
     );
   }
 );
+
+export const $activeSidebarPanel = atom<TabName>("none");
