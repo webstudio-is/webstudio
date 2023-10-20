@@ -16,7 +16,7 @@ import {
 } from "~/shared/nano-states";
 import { useStyleInfo } from "./style-info";
 import { serverSyncStore } from "~/shared/sync";
-import { $ephemeralStyles } from "~/canvas/shared/styles";
+import { $ephemeralStyles } from "~/canvas/stores";
 
 export type StyleUpdate =
   | {

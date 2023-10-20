@@ -32,7 +32,7 @@ import {
   dataSourceVariablesStore,
   $dragAndDropState,
 } from "~/shared/nano-states";
-import { $ephemeralStyles } from "~/canvas/shared/styles";
+import { $ephemeralStyles } from "~/canvas/stores";
 
 enableMapSet();
 

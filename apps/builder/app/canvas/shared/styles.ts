@@ -1,6 +1,6 @@
 import { useContext, useEffect, useMemo } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
-import { atom, computed } from "nanostores";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Assets, Instance, StyleDecl } from "@webstudio-is/sdk";
 import {
@@ -32,6 +32,7 @@ import {
   toValue,
   compareMedia,
 } from "@webstudio-is/css-engine";
+import { $ephemeralStyles } from "../stores";
 
 const userCssEngine = createCssEngine({ name: "user-styles" });
 const helpersCssEngine = createCssEngine({ name: "helpers" });
@@ -111,16 +112,6 @@ const subscribePreviewMode = () => {
     isRendered = false;
   };
 };
-
-export const $ephemeralStyles = atom<
-  Array<{
-    instanceId: Instance["id"];
-    breakpointId: StyleDecl["breakpointId"];
-    state: StyleDecl["state"];
-    property: StyleDecl["property"];
-    value: StyleDecl["value"];
-  }>
->([]);
 
 const subscribeEphemeralStyle = (params: Params) => {
   // track custom properties added on previous ephemeral styles change
