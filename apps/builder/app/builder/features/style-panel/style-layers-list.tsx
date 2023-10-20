@@ -1,31 +1,46 @@
-import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
+import type {
+  LayersValue,
+  StyleProperty,
+  TupleValue,
+} from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
   Flex,
   useSortable,
 } from "@webstudio-is/design-system";
-import type { RenderCategoryProps } from "../../style-sections";
-import { Layer } from "./box-shadow-layer";
+import type { RenderCategoryProps } from "./style-sections";
 import {
   deleteLayer,
   getLayerCount,
   hideLayer,
   swapLayers,
   updateLayer,
-} from "../../style-layer-utils";
+} from "./style-layer-utils";
 import { useMemo } from "react";
+import type { CreateBatchUpdate } from "./shared/use-style-data";
 
-type BoxShadowLayerProperies = RenderCategoryProps & {
+type LayerListProperties = RenderCategoryProps & {
   layers: LayersValue;
+  renderLayer: (props: {
+    id: string;
+    index: number;
+    layer: TupleValue;
+    isHighlighted: boolean;
+    onLayerHide: (index: number) => void;
+    onDeleteLayer: (index: number) => void;
+    createBatchUpdate: CreateBatchUpdate;
+    onEditLayer: (index: number, newLayers: LayersValue) => void;
+  }) => JSX.Element;
 };
 
 const property: StyleProperty = "boxShadow";
 
-export const BoxShadowLayers = ({
+export const LayersList = ({
   layers,
   currentStyle,
+  renderLayer,
   createBatchUpdate,
-}: BoxShadowLayerProperies) => {
+}: LayerListProperties) => {
   const layersCount = getLayerCount(property, currentStyle);
 
   const sortableItems = useMemo(
@@ -64,19 +79,16 @@ export const BoxShadowLayers = ({
             return null;
           }
           const id = String(index);
-          return (
-            <Layer
-              key={index}
-              id={id}
-              index={index}
-              layer={layer}
-              isHighlighted={dragItemId === id}
-              onLayerHide={handleHideLayer}
-              onDeleteLayer={handleDeleteLayer}
-              createBatchUpdate={createBatchUpdate}
-              onEditLayer={onEditLayer}
-            />
-          );
+          return renderLayer({
+            id,
+            index,
+            layer,
+            isHighlighted: dragItemId === id,
+            onLayerHide: handleHideLayer,
+            onDeleteLayer: handleDeleteLayer,
+            createBatchUpdate,
+            onEditLayer,
+          });
         })}
         {placementIndicator}
       </Flex>
