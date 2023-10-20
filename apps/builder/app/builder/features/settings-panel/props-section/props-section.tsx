@@ -14,7 +14,6 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import {
   dataSourceVariablesStore,
   propsIndexStore,
@@ -198,14 +197,11 @@ export const PropsSection = (props: PropsSectionProps) => {
 
 export const PropsSectionContainer = ({
   selectedInstance: instance,
-  publish,
 }: {
-  publish: Publish;
   selectedInstance: Instance;
 }) => {
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
-    publish,
   });
   const { propsByInstanceId } = useStore(propsIndexStore);
 

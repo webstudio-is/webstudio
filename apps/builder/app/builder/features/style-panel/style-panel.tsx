@@ -7,7 +7,6 @@ import {
   ScrollArea,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import type { Publish } from "~/shared/pubsub";
 
 import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
@@ -17,15 +16,13 @@ import { selectedInstanceRenderStateStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
 type StylePanelProps = {
-  publish: Publish;
   selectedInstance: Instance;
 };
 
-export const StylePanel = ({ selectedInstance, publish }: StylePanelProps) => {
+export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
     useStyleData({
       selectedInstance,
-      publish,
     });
 
   const selectedInstanceRenderState = useStore(
