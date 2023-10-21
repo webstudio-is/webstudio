@@ -9,4 +9,3 @@ export interface PubsubMap {
 
 export const { registerIframe, publish, useSubscribe, subscribe } =
   createPubsub<PubsubMap>();
-export type Publish = typeof publish;
