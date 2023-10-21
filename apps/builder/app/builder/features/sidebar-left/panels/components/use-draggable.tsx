@@ -17,7 +17,7 @@ import {
   selectedInstanceSelectorStore,
   selectedPageStore,
 } from "~/shared/nano-states";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
+import { publish, useSubscribe } from "~/shared/pubsub";
 import { $canvasRect, scaleStore } from "~/builder/shared/nano-states";
 import {
   computeInstancesConstraints,
@@ -117,10 +117,8 @@ const formatInsertionError = (component: string, meta: WsComponentMeta) => {
 };
 
 export const useDraggable = ({
-  publish,
   metaByComponentName,
 }: {
-  publish: Publish;
   metaByComponentName: Map<string, WsComponentMeta>;
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();

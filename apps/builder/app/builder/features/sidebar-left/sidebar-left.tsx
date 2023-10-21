@@ -7,7 +7,7 @@ import {
   SidebarTabsTrigger,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { useSubscribe, type Publish } from "~/shared/pubsub";
+import { useSubscribe } from "~/shared/pubsub";
 import { $dragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
 import type { TabName } from "./types";
@@ -22,11 +22,7 @@ import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 
 const none = { TabContent: () => null };
 
-type SidebarLeftProps = {
-  publish: Publish;
-};
-
-export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
+export const SidebarLeft = () => {
   const dragAndDropState = useStore($dragAndDropState);
   const activeTab = useStore($activeSidebarPanel);
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
@@ -134,10 +130,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 : "visible",
           }}
         >
-          <TabContent
-            publish={publish}
-            onSetActiveTab={$activeSidebarPanel.set}
-          />
+          <TabContent onSetActiveTab={$activeSidebarPanel.set} />
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>

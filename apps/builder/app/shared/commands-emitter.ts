@@ -1,6 +1,6 @@
 import { isHotkeyPressed } from "react-hotkeys-hook";
 import { atom } from "nanostores";
-import { $publisher, subscribe } from "~/shared/pubsub";
+import { publish, subscribe } from "~/shared/pubsub";
 import { clientSyncStore } from "~/shared/sync";
 
 type CommandMeta<CommandName extends string> = {
@@ -99,20 +99,13 @@ export const createCommandsEmitter = <CommandName extends string>({
   }
 
   const emitCommand = (name: CommandName) => {
-    const { publish } = $publisher.get();
-    // continue to work without emitter
-    // for example in tests
-    if (publish) {
-      publish({
-        type: "command",
-        payload: {
-          source,
-          name,
-        },
-      });
-    } else {
-      commandHandlers.get(name)?.();
-    }
+    publish({
+      type: "command",
+      payload: {
+        source,
+        name,
+      },
+    });
   };
 
   /**

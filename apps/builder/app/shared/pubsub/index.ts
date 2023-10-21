@@ -1,4 +1,3 @@
-import { atom } from "nanostores";
 import { createPubsub } from "./create";
 
 export interface PubsubMap {
@@ -8,9 +7,6 @@ export interface PubsubMap {
   };
 }
 
-export const { publish, usePublish, useSubscribe, subscribe } =
+export const { registerIframe, publish, useSubscribe, subscribe } =
   createPubsub<PubsubMap>();
 export type Publish = typeof publish;
-export type UsePublish = typeof usePublish;
-
-export const $publisher = atom<{ publish?: Publish }>({});

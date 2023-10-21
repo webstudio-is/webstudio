@@ -20,7 +20,6 @@ import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
-import { $publisher, publish } from "~/shared/pubsub";
 import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
@@ -168,7 +167,7 @@ export const Canvas = ({
   params,
   imageLoader,
 }: CanvasProps): JSX.Element | null => {
-  useCanvasStore(publish);
+  useCanvasStore();
   const isPreviewMode = useStore($isPreviewMode);
 
   useMount(() => {
@@ -194,10 +193,6 @@ export const Canvas = ({
   useEffect(subscribeComponentHooks, []);
 
   useEffect(subscribeCommands, []);
-
-  useEffect(() => {
-    $publisher.set({ publish });
-  }, []);
 
   const selectedPage = useStore(selectedPageStore);
 

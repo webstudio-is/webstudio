@@ -15,7 +15,7 @@ import { onCopy, onPaste } from "~/shared/copy-paste/plugin-instance";
 import { deleteInstance } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
-import { $publisher } from "~/shared/pubsub";
+import { publish } from "~/shared/pubsub";
 import { $activeSidebarPanel } from "./nano-states";
 
 const makeBreakpointCommand = <CommandName extends string>(
@@ -88,8 +88,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "cancelCurrentDrag",
       defaultHotkeys: ["escape"],
       handler: () => {
-        const { publish } = $publisher.get();
-        publish?.({ type: "cancelCurrentDrag" });
+        publish({ type: "cancelCurrentDrag" });
       },
     },
     {

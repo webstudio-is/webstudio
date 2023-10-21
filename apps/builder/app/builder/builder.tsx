@@ -2,7 +2,6 @@ import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
@@ -261,12 +260,7 @@ export const Builder = ({
 
   useSyncPageUrl();
 
-  const [publish, publishRef] = usePublish();
-  useEffect(() => {
-    $publisher.set({ publish });
-  }, [publish]);
-
-  useBuilderStore(publish);
+  useBuilderStore();
   useSyncServer({
     buildId: build.id,
     projectId: project.id,
@@ -283,10 +277,9 @@ export const Builder = ({
   useSetWindowTitle();
   const iframeRefCallback = useCallback(
     (element: HTMLIFrameElement) => {
-      publishRef.current = element;
       onRefReadCanvas(element);
     },
-    [publishRef, onRefReadCanvas]
+    [onRefReadCanvas]
   );
 
   const navigatorLayout = useNavigatorLayout();
@@ -321,7 +314,7 @@ export const Builder = ({
           )}
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
-          <SidebarLeft publish={publish} />
+          <SidebarLeft />
         </SidePanel>
         <NavigatorPanel
           isPreviewMode={isPreviewMode}
