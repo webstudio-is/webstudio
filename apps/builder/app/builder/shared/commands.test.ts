@@ -23,6 +23,7 @@ const metas = new Map(Object.entries(baseMetas));
 
 globalThis.document = {
   addEventListener: () => {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 subscribeCommands();
 

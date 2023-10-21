@@ -356,5 +356,5 @@ export const useBuilderStore = () => {
       unsubscribeStoresState?.();
       unsubscribeStoresChanges?.();
     };
-  }, [publish]);
+  }, []);
 };

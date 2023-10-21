@@ -35,6 +35,8 @@ const PublishableIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   }
 );
 
+PublishableIframe.displayName = "PublishableIframe";
+
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   (props, ref) => {
     // initialize canvas after builder is rendered
