@@ -65,22 +65,20 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               {tabName === "none" ? null : panels[tabName].icon}
             </SidebarTabsTrigger>
           ))}
-          {isFeatureEnabled("ai") && (
-            <SidebarTabsTrigger
-              aria-label="ai"
-              value={
-                "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
-              }
-              onClick={() => {
-                setClientSetting(
-                  "isAiCommandBarVisible",
-                  clientSettings.isAiCommandBarVisible === true ? false : true
-                );
-              }}
-            >
-              <AiIcon />
-            </SidebarTabsTrigger>
-          )}
+          <SidebarTabsTrigger
+            aria-label="ai"
+            value={
+              "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
+            }
+            onClick={() => {
+              setClientSetting(
+                "isAiCommandBarVisible",
+                clientSettings.isAiCommandBarVisible === true ? false : true
+              );
+            }}
+          >
+            <AiIcon />
+          </SidebarTabsTrigger>
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
           <HelpPopover onOpenChange={setHelpIsOpen}>

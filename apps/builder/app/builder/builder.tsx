@@ -316,9 +316,7 @@ export const Builder = ({
               }}
             />
           </Workspace>
-          {isFeatureEnabled("ai") && (
-            <AiCommandBar isPreviewMode={isPreviewMode} />
-          )}
+          <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
           <SidebarLeft publish={publish} />
