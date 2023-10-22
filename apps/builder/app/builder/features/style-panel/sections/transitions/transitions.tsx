@@ -5,6 +5,7 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
@@ -15,10 +16,7 @@ import { addLayer } from "../../style-layer-utils";
 import { parseTransition } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
 import { Layer } from "./transition-layer";
-import {
-  selectedInstanceStyleSourcesStore,
-  selectedOrLastStyleSourceSelectorStore,
-} from "~/shared/nano-states";
+import { selectedOrLastStyleSourceSelectorStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
 const property: StyleProperty = "transition";
@@ -30,19 +28,13 @@ export const TransitionSection = (props: RenderCategoryProps) => {
   const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
 
-  const selectedInstanceStyleSources = useStore(
-    selectedInstanceStyleSourcesStore
-  );
-
   const selectedOrLastStyleSourceSelector = useStore(
     selectedOrLastStyleSourceSelectorStore
   );
 
-  const isSelectedStyleSourceIsLocal = selectedInstanceStyleSources.some(
-    (styleSource) =>
-      styleSource.id === selectedOrLastStyleSourceSelector?.styleSourceId &&
-      styleSource.type === "local"
-  );
+  const isStyleInLocalState =
+    selectedOrLastStyleSourceSelector &&
+    selectedOrLastStyleSourceSelector.state === undefined;
 
   return (
     <CollapsibleSectionBase
@@ -54,20 +46,22 @@ export const TransitionSection = (props: RenderCategoryProps) => {
         <SectionTitle
           dots={getDots(currentStyle, [property])}
           suffix={
-            <SectionTitleButton
-              disabled={isSelectedStyleSourceIsLocal === false}
-              prefix={<PlusIcon />}
-              onClick={() => {
-                addLayer(
-                  property,
-                  // Using default transition value
-                  parseTransition("ease 0s"),
-                  currentStyle,
-                  props.createBatchUpdate
-                );
-                setIsOpen(true);
-              }}
-            />
+            <Tooltip content={"Transitions can only be added in local state"}>
+              <SectionTitleButton
+                disabled={isStyleInLocalState === false}
+                prefix={<PlusIcon />}
+                onClick={() => {
+                  addLayer(
+                    property,
+                    // Using default transition value
+                    parseTransition("ease 0s"),
+                    currentStyle,
+                    props.createBatchUpdate
+                  );
+                  setIsOpen(true);
+                }}
+              />
+            </Tooltip>
           }
         >
           <PropertyName
@@ -90,7 +84,13 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           layers={value}
           {...props}
           renderLayer={(layerProps) => {
-            return <Layer key={layerProps.index} {...layerProps} />;
+            return (
+              <Layer
+                key={layerProps.index}
+                {...layerProps}
+                disabled={isStyleInLocalState === false}
+              />
+            );
           }}
         />
       )}

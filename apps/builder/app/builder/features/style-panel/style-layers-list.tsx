@@ -24,6 +24,7 @@ export type LayerProps = {
   index: number;
   layer: TupleValue;
   isHighlighted: boolean;
+  disabled?: boolean;
   onLayerHide: (index: number) => void;
   onDeleteLayer: (index: number) => void;
   onEditLayer: (index: number, layers: LayersValue) => void;
@@ -31,6 +32,7 @@ export type LayerProps = {
 };
 
 type LayerListProperties = RenderCategoryProps & {
+  disabled?: boolean;
   property: StyleProperty;
   layers: LayersValue;
   renderLayer: (props: LayerProps) => JSX.Element;
@@ -39,6 +41,7 @@ type LayerListProperties = RenderCategoryProps & {
 export const LayersList = ({
   property,
   layers,
+  disabled,
   currentStyle,
   renderLayer,
   createBatchUpdate,
@@ -85,6 +88,7 @@ export const LayersList = ({
             id,
             index,
             layer,
+            disabled,
             isHighlighted: dragItemId === id,
             onLayerHide: handleHideLayer,
             onDeleteLayer: handleDeleteLayer,

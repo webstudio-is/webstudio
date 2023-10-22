@@ -32,7 +32,7 @@ const useLayer = (layer: TupleValue) => {
 };
 
 export const Layer = (props: LayerProps) => {
-  const { id, index, layer, isHighlighted, onDeleteLayer } = props;
+  const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
   const { name, transition } = useLayer(layer);
 
   return (
@@ -52,7 +52,7 @@ export const Layer = (props: LayerProps) => {
         active={isHighlighted}
         index={index}
         label={<Label truncate>{name}</Label>}
-        hidden={layer?.hidden}
+        hidden={disabled ?? layer?.hidden}
         buttons={
           <>
             <SmallIconButton
