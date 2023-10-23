@@ -21,7 +21,6 @@ import {
   PlusIcon,
 } from "@webstudio-is/icons";
 import type { Page, Pages } from "@webstudio-is/sdk";
-import type { Publish } from "~/shared/pubsub";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
@@ -31,7 +30,6 @@ import { switchPage } from "~/shared/pages";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
-  publish: Publish;
 };
 
 type PagesTreeNode =

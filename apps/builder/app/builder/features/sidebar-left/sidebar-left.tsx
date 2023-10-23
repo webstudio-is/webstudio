@@ -18,6 +18,7 @@ import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 
 const none = { TabContent: () => null };
 
@@ -27,16 +28,13 @@ type SidebarLeftProps = {
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const dragAndDropState = useStore($dragAndDropState);
-  const [activeTab, setActiveTab] = useState<TabName>("none");
+  const activeTab = useStore($activeSidebarPanel);
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [helpIsOpen, setHelpIsOpen] = useState(false);
   const [clientSettings, setClientSetting] = useClientSettings();
 
-  useSubscribe("clickCanvas", () => {
-    setActiveTab("none");
-  });
   useSubscribe("dragEnd", () => {
-    setActiveTab("none");
+    $activeSidebarPanel.set("none");
   });
 
   const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
@@ -59,7 +57,9 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               key={tabName}
               value={tabName}
               onClick={() => {
-                setActiveTab(activeTab !== tabName ? tabName : "none");
+                $activeSidebarPanel.set(
+                  activeTab !== tabName ? tabName : "none"
+                );
               }}
             >
               {tabName === "none" ? null : panels[tabName].icon}
@@ -134,7 +134,10 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 : "visible",
           }}
         >
-          <TabContent publish={publish} onSetActiveTab={setActiveTab} />
+          <TabContent
+            publish={publish}
+            onSetActiveTab={$activeSidebarPanel.set}
+          />
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>

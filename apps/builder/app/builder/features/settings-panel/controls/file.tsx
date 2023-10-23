@@ -43,9 +43,9 @@ export const FileControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
-  onSoftDelete,
 }: FileControlProps) => {
   const id = useId();
 
@@ -57,7 +57,7 @@ export const FileControl = ({
       if (value === undefined) {
         return;
       } else if (value === "") {
-        onSoftDelete();
+        onDelete();
       } else {
         onChange({ type: "string", value });
       }
@@ -71,6 +71,7 @@ export const FileControl = ({
           {getLabel(meta, propName)}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <Row>
@@ -81,7 +82,7 @@ export const FileControl = ({
           prop={prop?.type === "asset" ? prop : undefined}
           accept={meta.accept}
           onChange={onChange}
-          onSoftDelete={onSoftDelete}
+          onDelete={onDelete}
         />
       </Row>
     </VerticalLayout>

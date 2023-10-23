@@ -19,6 +19,7 @@ import {
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
   source: "canvas",
+  externalCommands: ["clickCanvas"],
   commands: [
     {
       name: "editInstanceText",

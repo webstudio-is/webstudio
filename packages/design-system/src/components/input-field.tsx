@@ -72,6 +72,10 @@ const containerStyle = css({
   "&:has([data-input-field-input][data-color=error])": {
     borderColor: theme.colors.borderDestructiveMain,
   },
+  "&:has([data-input-field-input][data-color=error]:focus), &[data-color=error]:focus":
+    {
+      outlineColor: theme.colors.borderDestructiveMain,
+    },
 
   "&:has([data-input-field-input]:disabled)": {
     backgroundColor: theme.colors.backgroundInputDisabled,

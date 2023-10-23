@@ -13,6 +13,7 @@ export const RadioControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"radio" | "inline-radio", "string">) => {
@@ -31,6 +32,7 @@ export const RadioControl = ({
           {getLabel(meta, propName)}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <Box css={{ paddingTop: theme.spacing[2] }}>

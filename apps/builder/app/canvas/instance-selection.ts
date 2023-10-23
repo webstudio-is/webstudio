@@ -7,13 +7,7 @@ import {
   selectedStyleSourceSelectorStore,
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
-import { publish } from "~/shared/pubsub";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    clickCanvas: undefined;
-  }
-}
+import { emitCommand } from "./shared/commands";
 
 export const subscribeInstanceSelection = () => {
   let pointerDownElement: undefined | Element = undefined;
@@ -49,7 +43,7 @@ export const subscribeInstanceSelection = () => {
     if (clickCount === 1) {
       // notify whole app about click on document
       // e.g. to hide the side panel
-      publish({ type: "clickCanvas" });
+      emitCommand("clickCanvas");
     }
 
     // prevent selecting instances inside text editor while editing text

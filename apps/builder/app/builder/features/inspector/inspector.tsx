@@ -15,7 +15,6 @@ import {
   Flex,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
@@ -56,7 +55,6 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
 };
 
 type InspectorProps = {
-  publish: Publish;
   navigatorLayout: Settings["navigatorLayout"];
 };
 
@@ -68,7 +66,7 @@ const contentStyle = {
 
 const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
 
-export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
+export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
@@ -122,16 +120,12 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
               <InstanceInfo instance={selectedInstance} />
-              <StylePanel
-                publish={publish}
-                selectedInstance={selectedInstance}
-              />
+              <StylePanel selectedInstance={selectedInstance} />
             </PanelTabsContent>
             <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
               <ScrollArea>
                 <InstanceInfo instance={selectedInstance} />
                 <SettingsPanelContainer
-                  publish={publish}
                   key={
                     selectedInstance.id /* Re-render when instance changes */
                   }

@@ -14,7 +14,6 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import {
   dataSourceVariablesStore,
   propsIndexStore,
@@ -104,10 +103,12 @@ const renderProperty = (
     meta,
     prop,
     propName,
-    onDelete: deletable
-      ? () => logic.handleDelete({ prop, propName })
-      : undefined,
-    onSoftDelete: () => prop && logic.handleSoftDelete(prop),
+    deletable: deletable ?? false,
+    onDelete: () => {
+      if (prop) {
+        logic.handleDelete(prop);
+      }
+    },
     onChange: (propValue, asset) => {
       logic.handleChange({ prop, propName }, propValue);
 
@@ -200,14 +201,11 @@ export const PropsSection = (props: PropsSectionProps) => {
 
 export const PropsSectionContainer = ({
   selectedInstance: instance,
-  publish,
 }: {
-  publish: Publish;
   selectedInstance: Instance;
 }) => {
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
-    publish,
   });
   const { propsByInstanceId } = useStore(propsIndexStore);
 

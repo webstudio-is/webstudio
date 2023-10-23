@@ -6,7 +6,6 @@ import {
   getStyleDeclKey,
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
-import type { Publish } from "~/shared/pubsub";
 import {
   selectedBreakpointStore,
   selectedOrLastStyleSourceSelectorStore,
@@ -17,6 +16,7 @@ import {
 } from "~/shared/nano-states";
 import { useStyleInfo } from "./style-info";
 import { serverSyncStore } from "~/shared/sync";
+import { $ephemeralStyles } from "~/canvas/stores";
 
 export type StyleUpdate =
   | {
@@ -29,22 +29,14 @@ export type StyleUpdate =
       value: StyleValue;
     };
 
-export type StyleUpdates = {
+type StyleUpdates = {
   id: Instance["id"];
   updates: Array<StyleUpdate>;
   breakpoint: Breakpoint;
   state: undefined | string;
 };
 
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    updateStyle: StyleUpdates;
-    previewStyle: StyleUpdates;
-  }
-}
-
 type UseStyleData = {
-  publish: Publish;
   selectedInstance: Instance;
 };
 
@@ -68,7 +60,7 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
+export const useStyleData = ({ selectedInstance }: UseStyleData) => {
   const selectedBreakpoint = useStore(selectedBreakpointStore);
 
   const currentStyle = useStyleInfo();
@@ -86,20 +78,25 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
       ) {
         return;
       }
-      publish({
-        type: type === "update" ? "updateStyle" : "previewStyle",
-        payload: {
-          id: selectedInstance.id,
-          updates,
-          breakpoint: selectedBreakpoint,
-          state: styleSourceSelector.state,
-        },
-      });
 
-      if (type !== "update") {
+      if (type === "preview") {
+        const ephemeralStyles: ReturnType<typeof $ephemeralStyles.get> = [];
+        for (const update of updates) {
+          if (update.operation === "set") {
+            ephemeralStyles.push({
+              instanceId: selectedInstance.id,
+              breakpointId: selectedBreakpoint.id,
+              state: styleSourceSelector.state,
+              property: update.property,
+              value: update.value,
+            });
+          }
+        }
+        $ephemeralStyles.set(ephemeralStyles);
         return;
       }
 
+      $ephemeralStyles.set([]);
       serverSyncStore.createTransaction(
         [styleSourceSelectionsStore, styleSourcesStore, stylesStore],
         (styleSourceSelections, styleSources, styles) => {
@@ -145,7 +142,7 @@ export const useStyleData = ({ selectedInstance, publish }: UseStyleData) => {
         }
       );
     },
-    [publish, selectedBreakpoint, selectedInstance]
+    [selectedBreakpoint, selectedInstance]
   );
 
   const setProperty = useCallback<SetProperty>(
