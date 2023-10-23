@@ -6,3 +6,4 @@ export const displayContents = false;
 export const adminRole = false;
 export const ai = false;
 export const aiRadixComponents = false;
+export const transitions = false;
