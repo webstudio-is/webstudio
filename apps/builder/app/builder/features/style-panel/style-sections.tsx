@@ -29,8 +29,6 @@ import {
 } from "./sections";
 
 export const categories = [
-  /* Move back to bottom once done */
-  "transitions",
   "layout",
   "flexChild",
   "gridChild",
@@ -44,6 +42,7 @@ export const categories = [
   "boxShadows",
   "outline",
   "effects",
+  "transitions",
 ] as const;
 
 export type Category = (typeof categories)[number];
