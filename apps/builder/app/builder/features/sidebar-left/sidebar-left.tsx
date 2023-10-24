@@ -17,7 +17,6 @@ import { theme } from "@webstudio-is/design-system";
 import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 
 const none = { TabContent: () => null };
@@ -65,22 +64,20 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               {tabName === "none" ? null : panels[tabName].icon}
             </SidebarTabsTrigger>
           ))}
-          {isFeatureEnabled("ai") && (
-            <SidebarTabsTrigger
-              aria-label="ai"
-              value={
-                "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
-              }
-              onClick={() => {
-                setClientSetting(
-                  "isAiCommandBarVisible",
-                  clientSettings.isAiCommandBarVisible === true ? false : true
-                );
-              }}
-            >
-              <AiIcon />
-            </SidebarTabsTrigger>
-          )}
+          <SidebarTabsTrigger
+            aria-label="ai"
+            value={
+              "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
+            }
+            onClick={() => {
+              setClientSetting(
+                "isAiCommandBarVisible",
+                clientSettings.isAiCommandBarVisible === true ? false : true
+              );
+            }}
+          >
+            <AiIcon />
+          </SidebarTabsTrigger>
         </SidebarTabsList>
         <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
           <HelpPopover onOpenChange={setHelpIsOpen}>

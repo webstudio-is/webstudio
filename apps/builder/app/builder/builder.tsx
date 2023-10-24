@@ -45,7 +45,6 @@ import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 registerContainers();
 
@@ -316,9 +315,7 @@ export const Builder = ({
               }}
             />
           </Workspace>
-          {isFeatureEnabled("ai") && (
-            <AiCommandBar isPreviewMode={isPreviewMode} />
-          )}
+          <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
           <SidebarLeft publish={publish} />
