@@ -17,7 +17,6 @@ import { theme } from "@webstudio-is/design-system";
 import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 
 const none = { TabContent: () => null };
