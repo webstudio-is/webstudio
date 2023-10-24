@@ -4,12 +4,24 @@ import {
   type Instances,
   type StyleSource,
   getStyleDeclKey,
+  findTreeInstanceIds,
+  StyleSourceSelection,
+  StyleDecl,
+  Asset,
+  StyleSources,
+  Breakpoints,
+  DataSources,
+  Props,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
   type EmbedTemplateData,
+  encodeDataSourceVariable,
+  computeExpressionsDependencies,
+  decodeDataSourceVariable,
+  validateExpression,
 } from "@webstudio-is/react-sdk";
 import {
   propsStore,
@@ -22,6 +34,8 @@ import {
   breakpointsStore,
   registeredComponentMetasStore,
   dataSourcesStore,
+  assetsStore,
+  dataSourcesLogicStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -36,6 +50,7 @@ import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
+import type { StyleValue } from "@webstudio-is/css-engine";
 
 const getLabelFromComponentName = (component: Instance["component"]) => {
   if (component.includes(":")) {
@@ -486,4 +501,286 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
     }
   );
   return true;
+};
+
+const traverseStyleValue = (
+  value: StyleValue,
+  callback: (value: StyleValue) => void
+) => {
+  if (
+    value.type === "fontFamily" ||
+    value.type === "image" ||
+    value.type === "unit" ||
+    value.type === "keyword" ||
+    value.type === "unparsed" ||
+    value.type === "invalid" ||
+    value.type === "unset" ||
+    value.type === "rgb"
+  ) {
+    callback(value);
+    return;
+  }
+  if (value.type === "var") {
+    for (const item of value.fallbacks) {
+      traverseStyleValue(item, callback);
+    }
+    return;
+  }
+  if (value.type === "tuple" || value.type === "layers") {
+    for (const item of value.value) {
+      traverseStyleValue(item, callback);
+    }
+    return;
+  }
+  value satisfies never;
+};
+
+const getPropTypeAndValue = (name: string, value: unknown) => {
+  if (typeof value === "boolean") {
+    return { type: "boolean", value } as const;
+  }
+  if (typeof value === "number") {
+    return { type: "number", value } as const;
+  }
+  if (typeof value === "string") {
+    return { type: "string", value } as const;
+  }
+  if (Array.isArray(value)) {
+    return { type: "string[]", value } as const;
+  }
+  throw Error(`Unexpected "${name}" prop value ${value}`);
+};
+
+export const getInstancesSlice = (rootInstanceId: string) => {
+  const assets = assetsStore.get();
+  const instances = instancesStore.get();
+  const dataSources = dataSourcesStore.get();
+  const props = propsStore.get();
+  const styleSourceSelections = styleSourceSelectionsStore.get();
+  const styleSources = styleSourcesStore.get();
+  const breakpoints = breakpointsStore.get();
+  const styles = stylesStore.get();
+
+  const dataSourcesLogic = dataSourcesLogicStore.get();
+
+  // collect the instance by id and all its descendants including portal instances
+  const slicedInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
+  const slicedInstances: Instance[] = [];
+  const slicedStyleSourceSelections: StyleSourceSelection[] = [];
+  const slicedStyleSources: StyleSources = new Map();
+  for (const instanceId of slicedInstanceIds) {
+    const instance = instances.get(instanceId);
+    if (instance) {
+      slicedInstances.push(instance);
+    }
+
+    // collect all style sources bound to these instances
+    const styleSourceSelection = styleSourceSelections.get(instanceId);
+    if (styleSourceSelection) {
+      slicedStyleSourceSelections.push(styleSourceSelection);
+      for (const styleSourceId of styleSourceSelection.values) {
+        if (slicedStyleSources.has(styleSourceId)) {
+          continue;
+        }
+        const styleSource = styleSources.get(styleSourceId);
+        if (styleSource === undefined) {
+          continue;
+        }
+        slicedStyleSources.set(styleSourceId, styleSource);
+      }
+    }
+  }
+
+  const slicedAssetIds = new Set<Asset["id"]>();
+  const slicedFontFamilies = new Set<string>();
+
+  // collect styles bound to these style sources
+  const slicedStyles: StyleDecl[] = [];
+  const slicedBreapoints: Breakpoints = new Map();
+  for (const styleDecl of styles.values()) {
+    if (slicedStyleSources.has(styleDecl.styleSourceId) === false) {
+      continue;
+    }
+    slicedStyles.push(styleDecl);
+
+    // collect breakpoints
+    if (slicedBreapoints.has(styleDecl.breakpointId) === false) {
+      const breakpoint = breakpoints.get(styleDecl.breakpointId);
+      if (breakpoint) {
+        slicedBreapoints.set(styleDecl.breakpointId, breakpoint);
+      }
+    }
+
+    // collect assets including fonts
+    traverseStyleValue(styleDecl.value, (value) => {
+      if (value.type === "fontFamily") {
+        for (const fontFamily of value.value) {
+          slicedFontFamilies.add(fontFamily);
+        }
+      }
+      if (value.type === "image") {
+        if (value.value.type === "asset") {
+          slicedAssetIds.add(value.value.value);
+        }
+      }
+    });
+  }
+
+  // compute dependencies of expressions to make sure all data sources
+  // are inside of instances slice and can be copied
+  const expressions = new Map<string, string>();
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "expression") {
+      expressions.set(encodeDataSourceVariable(dataSource.id), dataSource.code);
+    }
+  }
+  const dependencies = computeExpressionsDependencies(expressions);
+
+  // collect data sources scoped to instances slice
+  //
+  // @todo copy data sources outside of slice tree and bind to copied root
+  // to preserve bindings and let users easily rebind variables
+  // blocked by lack of UI to manage data sources
+  const slicedDataSources: DataSources = new Map();
+  for (const dataSource of dataSources.values()) {
+    let canBeCopied = true;
+    if (dataSource.type === "expression") {
+      const expressionDeps = dependencies.get(
+        encodeDataSourceVariable(dataSource.id)
+      );
+      // check if all expression dependencies can be copied
+      if (expressionDeps) {
+        for (const dependency of expressionDeps) {
+          const dataSourceId = decodeDataSourceVariable(dependency);
+          if (dataSourceId === undefined) {
+            continue;
+          }
+          const dataSource = dataSources.get(dataSourceId);
+          if (dataSource === undefined) {
+            continue;
+          }
+          if (
+            dataSource.scopeInstanceId === undefined ||
+            slicedInstanceIds.has(dataSource.scopeInstanceId) === false
+          ) {
+            canBeCopied = false;
+          }
+        }
+      }
+    }
+    if (
+      canBeCopied &&
+      // check if data source itself can be copied
+      dataSource.scopeInstanceId !== undefined &&
+      slicedInstanceIds.has(dataSource.scopeInstanceId)
+    ) {
+      slicedDataSources.set(dataSource.id, dataSource);
+    }
+  }
+
+  // @todo convert to value props
+  // when variables are outside of slice and cannot be copied
+
+  // collect props bound to these instances
+  const slicedProps: Props = new Map();
+  for (const prop of props.values()) {
+    if (slicedInstanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
+
+    slicedProps.set(prop.id, prop);
+
+    // convert data source prop to value prop
+    // when not scoped to sliced instances
+    //
+    // @todo stop converting to value props once UI is ready
+    if (prop.type === "dataSource") {
+      const dataSourceId = prop.value;
+      if (slicedDataSources.has(dataSourceId) === false) {
+        const value = dataSourcesLogic.get(dataSourceId);
+        slicedProps.set(prop.id, {
+          id: prop.id,
+          instanceId: prop.instanceId,
+          name: prop.name,
+          ...getPropTypeAndValue(prop.name, value),
+        });
+      }
+    }
+
+    // clear effectful expressions when depend on data sources
+    // outside of instances slice
+    //
+    // @todo should not be necessary once bindings UI is available
+    if (prop.type === "action") {
+      slicedProps.set(prop.id, {
+        ...prop,
+        value: prop.value.flatMap((value) => {
+          if (value.type !== "execute") {
+            return [value];
+          }
+          let shouldKeepAction = true;
+          validateExpression(value.code, {
+            effectful: true,
+            transformIdentifier: (identifier) => {
+              if (value.args.includes(identifier)) {
+                return identifier;
+              }
+              const id = decodeDataSourceVariable(identifier);
+              if (id === undefined) {
+                return identifier;
+              }
+              if (slicedDataSources.has(id) === false) {
+                shouldKeepAction = false;
+                return identifier;
+              }
+              const identifierDeps = dependencies.get(id);
+              if (identifierDeps) {
+                for (const dependency of identifierDeps) {
+                  const id = decodeDataSourceVariable(dependency);
+                  if (id === undefined) {
+                    continue;
+                  }
+                  if (slicedDataSources.has(id) === false) {
+                    shouldKeepAction = false;
+                    return identifier;
+                  }
+                }
+              }
+              return identifier;
+            },
+          });
+          if (shouldKeepAction) {
+            return [value];
+          }
+          return [];
+        }),
+      });
+    }
+
+    // collect assets
+    if (prop.type === "asset") {
+      slicedAssetIds.add(prop.value);
+    }
+  }
+
+  const slicedAssets: Asset[] = [];
+  for (const asset of assets.values()) {
+    if (
+      slicedAssetIds.has(asset.id) ||
+      (asset.type === "font" && slicedFontFamilies.has(asset.meta.family))
+    ) {
+      slicedAssets.push(asset);
+    }
+  }
+
+  return {
+    instances: slicedInstances,
+    styleSourceSelections: slicedStyleSourceSelections,
+    styleSources: Array.from(slicedStyleSources.values()),
+    breakpoints: Array.from(slicedBreapoints.values()),
+    styles: slicedStyles,
+    dataSources: Array.from(slicedDataSources.values()),
+    props: Array.from(slicedProps.values()),
+    assets: slicedAssets,
+  };
 };
