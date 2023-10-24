@@ -78,7 +78,7 @@ export const LayersList = ({
 
   return (
     <CssValueListArrowFocus dragItemId={dragItemId}>
-      <Flex direction="column" gap={2} ref={sortableRefCallback}>
+      <Flex direction="column" ref={sortableRefCallback}>
         {layers.value.map((layer, index) => {
           if (layer.type !== "tuple") {
             return null;
