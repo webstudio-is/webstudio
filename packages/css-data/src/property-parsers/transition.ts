@@ -57,20 +57,13 @@ export const parseTransition = (
       let layer: csstree.CssNode[] = [];
 
       for (const child of children) {
-        if (children.last === child) {
-          layer.push(child);
-        }
+        layer.push(child);
 
         if (child.type === "Operator" || children.last === child) {
           const transition: TupleValueItem[] = [];
 
           for (let index = 0; index < layer.length; index++) {
             const item = layer[index];
-
-            if (item === undefined) {
-              throw new Error(`Layer at index ${index} is undefined`);
-            }
-
             if (item.type === "Identifier") {
               transition.push({
                 type: "keyword",
@@ -86,12 +79,14 @@ export const parseTransition = (
               });
             }
           }
-          layers.push({ type: "tuple", value: transition });
+
+          layers.push({
+            type: "tuple",
+            value: transition,
+          });
           layer = [];
           continue;
         }
-
-        layer.push(child);
       }
     }
   });

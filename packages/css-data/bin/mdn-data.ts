@@ -229,24 +229,36 @@ const filteredProperties: FilteredProperties = (() => {
   const ignoreProperties = ["all", "-webkit-line-clamp", "--*"];
   let property: Property;
   const result = {} as FilteredProperties;
+
+  /*
+    A transition is a shorthand property that represents the combination of the other four properties.
+    Typically, we exclude shorthand properties when using the expanded ones.
+    However, in this case, the transition property in the designs allows users to set all transition values at once.
+    Therefore, we need to make this property available from the generated list.
+
+    The initial properties for transition is
+    config.initial = [
+      'transition-delay',
+      'transition-duration',
+      'transition-property',
+      'transition-timing-function'
+    ]
+
+    We replace it with the defaults of the rest of the four properties
+    "all 0s ease 0s"
+  */
+
+  const supportedComplexProperties: Record<string, string> = {
+    transition: "all 0s ease 0s",
+  };
+
   for (property in properties) {
     const config = properties[property];
     const isSupportedStatus =
       config.status === "standard" || config.status === "experimental";
 
-    /*
-      transition is a shorthand property, it's the combination of the rest of the four prperties.
-      We omit all the shorthand properties, since we want to use the expanded once.
-      But, the transition property from the designs allows users to set all at once so we need the
-      property to be available from the generated list
-      https://www.figma.com/file/EfzZ2w94KpmUviZJSBgxCd/%F0%9F%92%AD-Webstudio-Design-Work?type=design&node-id=6424-30607&mode=design
-
-      The values all, 0s, ease, 0s are all combination of defaults for the rest of the values
-      https://developer.mozilla.org/en-US/docs/Web/CSS/transition#formal_definition
-
-    */
-    if (property === "transition") {
-      config.initial = "all 0s ease 0s";
+    if (property in supportedComplexProperties) {
+      config.initial = supportedComplexProperties[property];
     }
 
     if (

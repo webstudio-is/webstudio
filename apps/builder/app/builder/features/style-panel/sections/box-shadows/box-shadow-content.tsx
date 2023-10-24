@@ -1,4 +1,4 @@
-import type { LayersValue } from "@webstudio-is/css-engine";
+import type { InvalidValue, LayersValue } from "@webstudio-is/css-engine";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -10,8 +10,9 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { InformationIcon } from "@webstudio-is/icons";
+import { useState } from "react";
 import type { RenderCategoryProps } from "../../style-sections";
-import { useIntermediateContent } from "../../shared/use-intermediate-layer";
+import type { IntermediateStyleValue } from "../../shared/css-value-input";
 
 type BoxShadowContentProps = {
   index: number;
@@ -21,8 +22,33 @@ type BoxShadowContentProps = {
 };
 
 export const BoxShadowContent = (props: BoxShadowContentProps) => {
-  const { intermediateValue, handleChange, handleComplete } =
-    useIntermediateContent({ ...props, parseValue: parseBoxShadow });
+  const [intermediateValue, setIntermediateValue] = useState<
+    IntermediateStyleValue | InvalidValue | undefined
+  >();
+
+  const handleChange = (value: string) => {
+    setIntermediateValue({
+      type: "intermediate",
+      value,
+    });
+  };
+
+  const handleComplete = () => {
+    if (intermediateValue === undefined) {
+      return;
+    }
+    const layers = parseBoxShadow(intermediateValue.value);
+    if (layers.type === "invalid") {
+      setIntermediateValue({
+        type: "invalid",
+        value: intermediateValue.value,
+      });
+      return;
+    }
+
+    props.onEditLayer(props.index, layers);
+  };
+
   return (
     <Flex
       direction="column"

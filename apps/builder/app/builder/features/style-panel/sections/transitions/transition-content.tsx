@@ -1,4 +1,4 @@
-import type { LayersValue } from "@webstudio-is/css-engine";
+import type { InvalidValue, LayersValue } from "@webstudio-is/css-engine";
 import {
   Flex,
   Label,
@@ -6,9 +6,10 @@ import {
   theme,
   textVariants,
 } from "@webstudio-is/design-system";
-import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import { useIntermediateContent } from "../../shared/use-intermediate-layer";
+import { useState } from "react";
 import { parseTransition } from "@webstudio-is/css-data";
+import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import type { IntermediateStyleValue } from "../../shared/css-value-input";
 
 type TransitionContentProps = {
   index: number;
@@ -18,8 +19,32 @@ type TransitionContentProps = {
 };
 
 export const TransitionContent = (props: TransitionContentProps) => {
-  const { intermediateValue, handleChange, handleComplete } =
-    useIntermediateContent({ ...props, parseValue: parseTransition });
+  const [intermediateValue, setIntermediateValue] = useState<
+    IntermediateStyleValue | InvalidValue | undefined
+  >();
+
+  const handleChange = (value: string) => {
+    setIntermediateValue({
+      type: "intermediate",
+      value,
+    });
+  };
+
+  const handleComplete = () => {
+    if (intermediateValue === undefined) {
+      return;
+    }
+    const layers = parseTransition(intermediateValue.value);
+    if (layers.type === "invalid") {
+      setIntermediateValue({
+        type: "invalid",
+        value: intermediateValue.value,
+      });
+      return;
+    }
+
+    props.onEditLayer(props.index, layers);
+  };
 
   return (
     <Flex
