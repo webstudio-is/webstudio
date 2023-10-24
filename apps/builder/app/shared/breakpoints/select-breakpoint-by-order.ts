@@ -1,5 +1,6 @@
 import { groupBreakpoints } from "./group-breakpoints";
 import { selectedBreakpointIdStore, breakpointsStore } from "../nano-states";
+import { setInitialCanvasWidth } from "~/builder/features/breakpoints";
 
 /**
  * Order number starts with 1 and covers all existing breakpoints
@@ -12,5 +13,6 @@ export const selectBreakpointByOrder = (orderNumber: number) => {
   );
   if (breakpoint) {
     selectedBreakpointIdStore.set(breakpoint.id);
+    setInitialCanvasWidth(breakpoint.id);
   }
 };
