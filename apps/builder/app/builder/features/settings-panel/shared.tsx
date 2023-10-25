@@ -215,7 +215,6 @@ export const HorizontalLayout = ({
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[13],
-      justifyItems: "start",
     }}
     align="center"
     gap="2"

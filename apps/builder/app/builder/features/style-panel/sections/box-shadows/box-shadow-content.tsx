@@ -98,7 +98,7 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
         value={intermediateValue?.value ?? props.value ?? ""}
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-        onChange={(event) => handleChange(event.target.value)}
+        onChange={handleChange}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             handleComplete();
