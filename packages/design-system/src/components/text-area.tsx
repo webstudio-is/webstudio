@@ -29,19 +29,20 @@ const gridStyle = css(textVariants.regular, {
   overflow: "auto",
   width: "100%",
 
-  "&:disabled": {
-    color: theme.colors.foregroundDisabled,
-    background: theme.colors.backgroundInputDisabled,
-  },
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
     outline: `1px solid ${theme.colors.borderFocus}`,
   },
   variants: {
+    autoGrow: {
+      true: {
+        resize: "none",
+      },
+    },
     state: {
       invalid: {
         color: theme.colors.foregroundDestructive,
-        "&:not(:disabled):not(:focus-visible)": {
+        "&:not(:disabled):not(:focus-within)": {
           borderColor: theme.colors.borderDestructiveMain,
         },
       },
@@ -68,6 +69,10 @@ const commonStyle = css(textVariants.regular, {
   "&::placeholder": {
     color: theme.colors.foregroundContrastSubtle,
   },
+  "&:disabled": {
+    color: theme.colors.foregroundDisabled,
+    background: theme.colors.backgroundInputDisabled,
+  },
 });
 
 const textAreaStyle = css(commonStyle, {});
@@ -78,15 +83,27 @@ type Props = Omit<
 > & {
   css?: CSS;
   rows?: number;
+  maxRows?: number;
   state?: "invalid";
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
+  autoGrow?: boolean;
 };
 
 export const TextArea = forwardRef(
   (
-    { css, className, rows = 3, state, value, onChange, ...props }: Props,
+    {
+      css,
+      className,
+      rows = 3,
+      maxRows,
+      state,
+      value,
+      onChange,
+      autoGrow,
+      ...props
+    }: Props,
     ref: Ref<HTMLTextAreaElement>
   ) => {
     const [textValue, setTextValue] = useControllableState({
@@ -94,16 +111,17 @@ export const TextArea = forwardRef(
       defaultProp: props.defaultValue,
       onChange,
     });
+
     // We could use `box-sizing:content-box` to avoid dealing with paddings and border here
     // But then, the user of the component will not be able to set `width` reliably
-    const height =
+    const minHeight =
       rows * LINE_HEIGHT + PADDING_TOP + PADDING_BOTTOM + BORDER * 2;
 
-    const commonHeight = {
-      height: "max-content",
-    };
+    const height = autoGrow ? undefined : minHeight;
 
-    const ScrollAreaIfNeeded = ScrollArea;
+    const maxHeight = maxRows
+      ? maxRows * LINE_HEIGHT + PADDING_TOP + PADDING_BOTTOM + BORDER * 2
+      : undefined;
 
     const scrollThumpPositionDelta = 4;
     const textAreaScrollThumbMargin = scrollThumpPositionDelta + 2;
@@ -112,7 +130,8 @@ export const TextArea = forwardRef(
       <Grid
         className={gridStyle({
           state,
-          css: { height, minHeight: height },
+          autoGrow,
+          css: { height, minHeight, maxHeight },
         })}
         onClick={(event) => {
           if (event.target instanceof HTMLElement) {
@@ -124,12 +143,11 @@ export const TextArea = forwardRef(
           }
         }}
       >
-        <ScrollAreaIfNeeded
+        <ScrollArea
           css={{
-            // maxHeight: height,
             height: "100%",
+            maxHeight: maxRows ? maxRows * LINE_HEIGHT : undefined,
             marginRight: -scrollThumpPositionDelta,
-            "& > div": {},
             // Overwrite hack from scroll-area.tsx
             "& [data-radix-scroll-area-viewport] > div": {
               display: "grid!important",
@@ -141,7 +159,6 @@ export const TextArea = forwardRef(
               css: {
                 marginRight: textAreaScrollThumbMargin,
                 visibility: "hidden",
-                ...commonHeight,
                 ...css,
               },
               state,
@@ -164,7 +181,7 @@ export const TextArea = forwardRef(
             ref={ref}
             {...props}
           />
-        </ScrollAreaIfNeeded>
+        </ScrollArea>
       </Grid>
     );
   }

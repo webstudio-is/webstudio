@@ -14,39 +14,56 @@ export const Demo = () => {
 
   return (
     <>
-      <StorySection title="Empty">
+      <StorySection title="Uncontrollable">
         <StoryGrid css={{ width: 200 }}>
           <TextArea placeholder="Enter value..." />
         </StoryGrid>
       </StorySection>
+
+      <StorySection title="No AutoGrow, rows=3 (Manual resize only, no height limit)">
+        <StoryGrid css={{ width: 200 }}>
+          <TextArea value={value} onChange={setValue} />
+        </StoryGrid>
+      </StorySection>
+
+      <StorySection title="No AutoGrow, rows=3, maxRows=6 (Manual resize up to 6 rows)">
+        <StoryGrid css={{ width: 200 }}>
+          <TextArea value={value} onChange={setValue} maxRows={6} />
+        </StoryGrid>
+      </StorySection>
+
+      <StorySection title="AutoGrow, no max (Auto-resize with no height limit.)">
+        <StoryGrid css={{ width: 200 }}>
+          <TextArea value={value} onChange={setValue} autoGrow />
+        </StoryGrid>
+      </StorySection>
+
+      <StorySection title="AutoGrow, maxRows=10 (Auto-resize up to 10 rows.)">
+        <StoryGrid css={{ width: 200 }}>
+          <TextArea value={value} onChange={setValue} autoGrow maxRows={10} />
+        </StoryGrid>
+      </StorySection>
+
       <StorySection title="With value">
         <StoryGrid css={{ width: 200 }}>
-          <TextArea value={value} onChange={(value) => setValue(value)} />
+          <TextArea value={value} onChange={setValue} />
         </StoryGrid>
       </StorySection>
       <StorySection title="Invalid">
         <StoryGrid css={{ width: 200 }}>
-          <TextArea
-            value={value}
-            onChange={(value) => setValue(value)}
-            state="invalid"
-          />
+          <TextArea value={value} onChange={setValue} state="invalid" />
         </StoryGrid>
       </StorySection>
       <StorySection title="Disabled">
         <StoryGrid css={{ width: 200 }}>
-          <TextArea
-            value={value}
-            onChange={(value) => setValue(value)}
-            disabled
-          />
+          <TextArea value={value} onChange={setValue} disabled />
         </StoryGrid>
       </StorySection>
       <StorySection title="Disabled invalid">
         <StoryGrid css={{ width: 200 }}>
           <TextArea
             value={value}
-            onChange={(value) => setValue(value)}
+            onChange={setValue}
             state="invalid"
             disabled
           />
@@ -54,30 +71,18 @@ export const Demo = () => {
       </StorySection>
       <StorySection title="Focused (initialy)">
         <StoryGrid css={{ width: 200 }}>
-          <TextArea
-            value={value}
-            onChange={(value) => setValue(value)}
-            autoFocus
-          />
+          <TextArea value={value} onChange={setValue} autoFocus />
         </StoryGrid>
       </StorySection>
       <StorySection title="Rows test">
         <StoryGrid css={{ width: 200 }}>
-          <TextArea
-            value={value}
-            onChange={(value) => setValue(value)}
-            rows={1}
-          />
-          <TextArea
-            value={value}
-            onChange={(value) => setValue(value)}
-            rows={5}
-          />
+          <TextArea value={value} onChange={setValue} rows={1} />
+          <TextArea value={value} onChange={setValue} rows={5} />
         </StoryGrid>
       </StorySection>
       <StorySection title="Width test">
         <StoryGrid css={{ width: 250 }}>
-          <TextArea value={value} onChange={(value) => setValue(value)} />
+          <TextArea value={value} onChange={setValue} />
         </StoryGrid>
       </StorySection>
     </>
