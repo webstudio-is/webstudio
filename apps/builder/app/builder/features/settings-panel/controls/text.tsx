@@ -47,21 +47,16 @@ const UniversalInput = ({
   );
 
   const handleChange = (value: string) => {
-    setRows(Math.min(countLines(value), maxRows));
+    setRows(Math.min(defaultRows || countLines(value), maxRows));
     onChange(value);
   };
 
   return (
     <TextArea
       {...rest}
-      css={
-        rows > 1
-          ? { resize: "vertical" }
-          : { resize: "none", whiteSpace: "nowrap", overflow: "hidden" }
-      }
+      css={rows > 1 ? {} : { whiteSpace: "nowrap", overflow: "hidden" }}
       value={value}
-      onChange={(event) => {
-        const { value } = event.target;
+      onChange={(value) => {
         handleChange(value);
       }}
       onBlur={(_event) => {

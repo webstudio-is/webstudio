@@ -94,9 +94,7 @@ export const BackgroundGradient = (
       disabled={props.disabled}
       value={textAreaValue ?? ""}
       state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-      onChange={(event) => {
-        handleChange(event.target.value);
-      }}
+      onChange={handleChange}
       onBlur={handleOnComplete}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
