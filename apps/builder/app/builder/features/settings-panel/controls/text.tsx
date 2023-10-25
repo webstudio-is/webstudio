@@ -7,20 +7,6 @@ import {
   ResponsiveLayout,
   Label,
 } from "../shared";
-import { useState, type ComponentProps } from "react";
-
-const countLines = (value: string) => (value.match(/\n/g) || "").length + 1;
-
-type UniversalInputProps = Omit<
-  ComponentProps<typeof TextArea>,
-  "onChange" | "value" | "onSubmit"
-> & {
-  defaultRows?: number;
-  maxRows?: number;
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: () => void;
-};
 
 export const TextControl = ({
   meta,
@@ -44,6 +30,7 @@ export const TextControl = ({
       autoGrow
       value={localValue.value}
       rows={meta.rows ?? 1}
+      // Set maxRows to 3 when meta.rows is undefined or equal to 1, otherwise set it to rows * 2
       maxRows={Math.max(2 * (meta.rows ?? 1), 3)}
       onChange={localValue.set}
       onBlur={localValue.save}
