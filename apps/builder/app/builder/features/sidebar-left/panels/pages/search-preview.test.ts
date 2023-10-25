@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 import { expect, test } from "@jest/globals";
 import { truncateMetaText, truncateUrl } from "./search-preview";
 
