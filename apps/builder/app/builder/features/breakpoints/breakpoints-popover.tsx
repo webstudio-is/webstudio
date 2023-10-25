@@ -38,7 +38,7 @@ import {
   minCanvasWidth,
 } from "~/shared/breakpoints";
 import { scaleStore } from "~/builder/shared/nano-states";
-import { useSetInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
 import { serverSyncStore } from "~/shared/sync";
 
 export const BreakpointsPopover = () => {
@@ -49,7 +49,6 @@ export const BreakpointsPopover = () => {
   const breakpoints = useStore(breakpointsStore);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const scale = useStore(scaleStore);
-  const setInitialCanvasWidth = useSetInitialCanvasWidth();
 
   if (selectedBreakpoint === undefined) {
     return null;
