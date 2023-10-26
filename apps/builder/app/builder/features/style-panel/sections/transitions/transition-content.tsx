@@ -2,6 +2,7 @@ import type {
   InvalidValue,
   LayersValue,
   TupleValue,
+  TupleValueItem,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -19,10 +20,15 @@ import {
   extractTransitionProperties,
   parseTransition,
 } from "@webstudio-is/css-data";
-import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { InformationIcon } from "@webstudio-is/icons";
+import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import {
+  CssValueInput,
+  type IntermediateStyleValue,
+} from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
+import { convertTupleToStringValue } from "./transition-utils";
+import { TransitionTiming } from "./transition-timing";
 
 type TransitionContentProps = {
   index: number;
@@ -40,8 +46,9 @@ export const TransitionContent = ({
 }: TransitionContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
-  >();
-  const { property } = useMemo(() => {
+  >({ type: "intermediate", value: transition });
+
+  const { property, timing, delay, duration } = useMemo(() => {
     return extractTransitionProperties(layer);
   }, [layer]);
 
@@ -56,6 +63,7 @@ export const TransitionContent = ({
     if (intermediateValue === undefined) {
       return;
     }
+
     const layers = parseTransition(intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
@@ -68,6 +76,24 @@ export const TransitionContent = ({
     onEditLayer(index, layers);
   };
 
+  const handleOnPropertySelection = (newProperty: TupleValueItem) => {
+    const value: TupleValueItem[] = [
+      newProperty,
+      duration,
+      timing,
+      delay,
+    ].filter<TupleValueItem>((item): item is TupleValueItem => item !== null);
+
+    const newLayer: TupleValue = { type: "tuple", value };
+
+    setIntermediateValue({
+      type: "intermediate",
+      value: convertTupleToStringValue(newLayer),
+    });
+
+    onEditLayer(index, { type: "layers", value: [newLayer] });
+  };
+
   return (
     <Flex direction="column">
       <Grid
@@ -78,23 +104,32 @@ export const TransitionContent = ({
           gridTemplateColumns: `1fr ${theme.spacing[22]}`,
         }}
       >
-        <TransitionProperty property={property} />
+        <TransitionProperty
+          /* Browser defaults for property */
+          property={property ?? { type: "keyword", value: "all" }}
+          onPropertySelection={handleOnPropertySelection}
+        />
 
-        {/* <Label> Duration </Label>
+        <Label> Duration </Label>
         <CssValueInput
           property="transitionDuration"
-          value={{ type: "unit", value: 200, unit: "ms" }}
+          /* Browser defaults for duration */
+          value={duration ?? { type: "unit", value: 0, unit: "s" }}
           styleSource="local"
         />
 
         <Label>Delay</Label>
         <CssValueInput
           property="transitionDelay"
-          value={{ type: "unit", value: 0, unit: "ms" }}
+          /* Browser defaults for delay */
+          value={delay ?? { type: "unit", value: 0, unit: "s" }}
           styleSource="local"
         />
 
-        <Label>Timing</Label> */}
+        <TransitionTiming
+          /* Browser default for timing */
+          timing={timing ?? { type: "keyword", value: "ease" }}
+        />
       </Grid>
       <Separator css={{ gridColumn: "span 2" }} />
       <Flex
@@ -129,7 +164,7 @@ export const TransitionContent = ({
           rows={3}
           name="description"
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-          value={intermediateValue?.value ?? transition ?? ""}
+          value={intermediateValue?.value ?? ""}
           onChange={(event) => handleChange(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter") {

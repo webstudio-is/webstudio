@@ -17,7 +17,7 @@ import {
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
 import { humanizeString } from "~/shared/string-utils";
-import type { KeywordValue } from "@webstudio-is/css-engine";
+import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
 
 const commonProperties = [
   "all",
@@ -37,10 +37,14 @@ const fileteredAnimatableProperties = animatableProperties.filter(
 );
 
 type TransitionPropertyProps = {
-  property: KeywordValue | null;
+  property: KeywordValue;
+  onPropertySelection: (property: TupleValueItem) => void;
 };
 
-export const TransitionProperty = ({ property }: TransitionPropertyProps) => {
+export const TransitionProperty = ({
+  property,
+  onPropertySelection,
+}: TransitionPropertyProps) => {
   const [selectedProperty, setSelectedProeprty] = useState<string>(
     property?.value ?? "all"
   );
@@ -59,6 +63,7 @@ export const TransitionProperty = ({ property }: TransitionPropertyProps) => {
       typeof item === "string" ? humanizeString(item) : "",
     onItemSelect(value) {
       setSelectedProeprty(value);
+      onPropertySelection({ type: "keyword", value });
     },
   });
 
