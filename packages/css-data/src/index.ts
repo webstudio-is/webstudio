@@ -9,6 +9,7 @@ export {
   properties as propertyDescriptions,
   declarations as declarationDescriptions,
 } from "./__generated__/property-value-descriptions";
+export * from "./__generated__/animatable";
 
 // longhand property parsers
 export * from "./property-parsers/index";

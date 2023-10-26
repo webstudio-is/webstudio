@@ -55,7 +55,6 @@ export const parseTransition = (
     if (node.type === "Value") {
       const children = node.children;
       let layer: csstree.CssNode[] = [];
-
       for (const child of children) {
         layer.push(child);
 
@@ -76,6 +75,13 @@ export const parseTransition = (
                 type: "unit",
                 value: Number(item.value),
                 unit: item.unit as Unit,
+              });
+            }
+
+            if (item.type === "Function") {
+              transition.push({
+                type: "keyword",
+                value: csstree.generate(item),
               });
             }
           }

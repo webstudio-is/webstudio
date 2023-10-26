@@ -93,6 +93,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
               <Layer
                 key={layerProps.index}
                 {...layerProps}
+                layer={layerProps.layer}
                 disabled={isStyleInLocalState === false}
               />
             );

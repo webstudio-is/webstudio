@@ -41,7 +41,8 @@ export const Layer = (props: LayerProps) => {
       content={
         <TransitionContent
           index={index}
-          value={transition}
+          layer={layer}
+          transition={transition}
           onEditLayer={props.onEditLayer}
           createBatchUpdate={props.createBatchUpdate}
         />
