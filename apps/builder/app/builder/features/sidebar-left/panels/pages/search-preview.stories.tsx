@@ -7,10 +7,10 @@ export const Basic = () => (
   <Box css={{ width: 600, margin: 20 }}>
     <SearchPreview
       pageUrl="https://webstudio.is/blog-webstudios-architecture-an-overview"
-      title="Blog: Webstudio's Architecture - an overview"
+      titleLink="Blog: Webstudio's Architecture - an overview"
       siteName="Webstudio"
       faviconUrl="https://webstudio.is/favicon.ico"
-      description="This is an introduction for developers who want to contribute to Webstudio Core. However, it may also be an interesting read for ambitious designers who want to better understand the future of Webstudio and Visual Development."
+      snippet="This is an introduction for developers who want to contribute to Webstudio Core. However, it may also be an interesting read for ambitious designers who want to better understand the future of Webstudio and Visual Development."
     />
   </Box>
 );

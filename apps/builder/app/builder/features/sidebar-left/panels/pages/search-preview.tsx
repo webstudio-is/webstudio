@@ -40,14 +40,51 @@ const formatUrl = (urlString: string) => {
   return `${url.origin}${url.pathname.split("/").join(" › ")}`;
 };
 
+/**
+ * Full description with links https://developers.google.com/search/docs/appearance/visual-elements-gallery
+ */
 type SearchPreviewProps = {
   /**
-   * The URL of the page to preview in search results
+   *  https://developers.google.com/search/docs/appearance/site-names
+   * ```html
+   *   <script type="application/ld+json">
+   *    {
+   *      "@context" : "https://schema.org",
+   *      "@type" : "WebSite",
+   *      "name" : "Example",
+   *      "url" : "https://example.com/"
+   *    }
+   *   </script>
+   * ```
+   */
+  siteName: string;
+
+  /**
+   * Domain + Visible Url, The URL of the page to preview in search results
+   * or https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
    */
   pageUrl: string;
-  title: string;
-  description: string;
-  siteName: string;
+
+  /**
+   * https://developers.google.com/search/docs/appearance/title-link
+   * ```html
+   *    <title>Blue title link example</title>
+   * ```
+   */
+  titleLink: string;
+
+  /**
+   * Snippets are automatically created from page content https://developers.google.com/search/docs/appearance/snippet
+   * sometimes meta description or structured data can be used
+   * ```html
+   *   <meta name="description" content="This is the description of the content of the page">
+   * ```
+   */
+  snippet: string;
+
+  /**
+   * https://developers.google.com/search/docs/appearance/favicon-in-search
+   */
   faviconUrl: string;
 };
 
@@ -135,7 +172,7 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           color: "#1a0dab",
         }}
       >
-        {truncateMetaText(props.title, 60)}
+        {truncateMetaText(props.titleLink, 60)}
       </Flex>
       <Flex
         css={{
@@ -148,7 +185,7 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           overflow: "hidden",
         }}
       >
-        {truncateMetaText(props.description)}
+        {truncateMetaText(props.snippet)}
       </Flex>
     </Grid>
   );
