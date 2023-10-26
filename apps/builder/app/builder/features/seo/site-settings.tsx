@@ -33,6 +33,10 @@ type Props = {
 const imgStyle = css({
   width: 72,
   height: 72,
+  borderRadius: theme.borderRadius[4],
+  borderWidth: 1,
+  borderStyle: "solid",
+  borderColor: theme.colors.borderMain,
 });
 
 const SiteSettingsContent = (props: Props) => {
