@@ -3,13 +3,35 @@ import { PageSettings } from "./settings";
 
 import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
-import { projectStore } from "~/shared/nano-states";
+import { assetsStore, projectStore } from "~/shared/nano-states";
 
 export default {
   component: PageSettings,
 };
 
 $isSiteSettigsOpen.set(true);
+
+assetsStore.set(
+  new Map([
+    [
+      "imageId",
+      {
+        id: "imageId",
+        type: "image",
+        name: "very-very-very-long-long-image-name.jpg",
+        format: "jpg",
+        size: 100,
+        meta: {
+          width: 2 * 191,
+          height: 2 * 100,
+        },
+        projectId: "projectId",
+        createdAt: `${new Date()}`,
+        description: "image-description",
+      },
+    ],
+  ])
+);
 
 pagesStore.set({
   homePage: {

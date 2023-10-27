@@ -71,6 +71,7 @@ export { CustomCodeIcon } from "./custom-code";
 export { DashBorderIcon } from "./dash-border";
 export { DashIcon } from "./dash";
 export { DashedBorderIcon } from "./dashed-border";
+export { DeleteIcon } from "./delete";
 export { DescriptionIcon } from "./description";
 export { DialogIcon } from "./dialog";
 export { DimensionsIcon } from "./dimensions";

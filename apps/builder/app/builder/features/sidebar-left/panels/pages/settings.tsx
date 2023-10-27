@@ -31,6 +31,7 @@ import {
   Checkbox,
   Separator,
   Text,
+  IconButton,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -39,11 +40,16 @@ import {
   CheckMarkIcon,
   LinkIcon,
   HomeIcon,
+  ImageIcon,
+  DimensionsIcon,
+  AspectRatioIcon,
+  DeleteIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
 import {
+  assetsStore,
   instancesStore,
   pagesStore,
   projectStore,
@@ -55,6 +61,7 @@ import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
 import { ImageControl } from "~/builder/features/seo/image-control";
+import { getFormattedAspectRatio } from "~/builder/shared/image-manager/utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -213,6 +220,8 @@ const FormFields = ({
   ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
+  const assets = useStore(assetsStore);
+  const asset = assets.get(values.socialImageAssetId);
 
   const project = projectStore.get();
 
@@ -427,6 +436,56 @@ const FormFields = ({
             </Button>
           </ImageControl>
         </Grid>
+
+        {asset?.type === "image" && (
+          <Grid gap={1} flow={"column"} align={"center"} justify={"start"}>
+            <Grid
+              gap={2}
+              flow={"column"}
+              align={"center"}
+              justify={"start"}
+              css={{
+                borderRadius: theme.borderRadius[4],
+                border: `1px solid ${theme.colors.borderMain}`,
+                backgroundColor: theme.colors.white,
+                padding: theme.spacing[4],
+                justifySelf: "start",
+                pr: theme.spacing[5],
+              }}
+            >
+              <Grid flow={"column"} gap={1} align={"center"}>
+                <ImageIcon />
+                <Text truncate variant={"labelsTitleCase"}>
+                  {asset.name}
+                </Text>
+              </Grid>
+              |
+              <Grid flow={"column"} gap={1} align={"center"}>
+                <DimensionsIcon />
+                <Text variant={"labelsTitleCase"}>
+                  {asset.meta.width} x {asset.meta.height} Px
+                </Text>
+              </Grid>
+              |
+              <Grid flow={"column"} gap={1} align={"center"}>
+                <AspectRatioIcon />
+                <Text variant={"labelsTitleCase"}>
+                  {getFormattedAspectRatio(asset.meta)}
+                </Text>
+              </Grid>
+            </Grid>
+            <IconButton
+              onClick={() => {
+                onChange({
+                  field: "socialImageAssetId",
+                  value: "",
+                });
+              }}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Grid>
+        )}
       </Grid>
     </>
   );

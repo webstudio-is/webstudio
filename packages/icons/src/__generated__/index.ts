@@ -71,6 +71,7 @@ export * from "./custom-code";
 export * from "./dash-border";
 export * from "./dash";
 export * from "./dashed-border";
+export * from "./delete";
 export * from "./description";
 export * from "./dialog";
 export * from "./dimensions";
