@@ -24,37 +24,52 @@ import {
   Box,
   Label,
   TextArea,
-  styled,
-  Flex,
   InputErrorsTooltip,
   Tooltip,
   InputField,
+  Grid,
+  Checkbox,
+  Separator,
+  Text,
 } from "@webstudio-is/design-system";
-import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  ChevronDoubleLeftIcon,
+  CopyIcon,
+  TrashIcon,
+  CheckMarkIcon,
+  LinkIcon,
+} from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
 import {
   instancesStore,
   pagesStore,
+  projectStore,
   selectedInstanceSelectorStore,
   selectedPageIdStore,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
+import { SearchPreview } from "./search-preview";
 
-const Group = styled(Flex, {
-  marginBottom: theme.spacing[9],
-  gap: theme.spacing[4],
-  defaultVariants: { direction: "column" },
-});
-
-const fieldNames = ["name", "path", "title", "description"] as const;
-type FieldName = (typeof fieldNames)[number];
-type Values = {
-  [fieldName in FieldName]: string;
+const fieldDefaultValues = {
+  name: "Untitled",
+  path: "/untitled",
+  title: "Untitled",
+  description: "",
+  isHomePage: false,
 };
+
+const fieldNames = Object.keys(
+  fieldDefaultValues
+) as (keyof typeof fieldDefaultValues)[];
+
+type FieldName = (typeof fieldNames)[number];
+
+type Values = typeof fieldDefaultValues;
+
 type Errors = {
   [fieldName in FieldName]?: string[];
 };
@@ -116,12 +131,13 @@ const validateValues = (
   return errors;
 };
 
-const toFormPage = (page?: Page): Values => {
+const toFormPage = (page: Page, isHomePage: boolean): Values => {
   return {
-    name: page?.name ?? "",
-    path: page?.path ?? "",
-    title: page?.title ?? "",
-    description: page?.meta.description ?? "",
+    name: page.name,
+    path: page.path,
+    title: page.title,
+    description: page.meta.description ?? "",
+    isHomePage,
   };
 };
 
@@ -138,89 +154,192 @@ const FormFields = ({
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
-  isHomePage?: boolean;
+  isHomePage: boolean;
   errors: Errors;
   values: Values;
-  onChange: <Name extends FieldName>(event: {
-    field: Name;
-    value: Values[Name];
-  }) => void;
+  onChange: (
+    event: {
+      [K in keyof Values]: {
+        field: K;
+        value: Values[K];
+      };
+    }[keyof Values]
+  ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
 
+  const [pathIconState, setPathIconState] = useState<
+    "link" | "copy" | "checkmark"
+  >("link");
+
+  let pathIcon = <CopyIcon />;
+  if (pathIconState === "checkmark") {
+    pathIcon = <CheckMarkIcon />;
+  } else if (pathIconState === "link") {
+    pathIcon = <LinkIcon />;
+  }
+
+  const project = projectStore.get();
+
+  const pageDomainAndPath = [project?.domain, values?.path]
+    .join("/")
+    .replace(/\/+/g, "/");
+  const pageUrl = `https://${pageDomainAndPath}`;
+
   return (
     <>
-      <Group>
-        <Label htmlFor={fieldIds.name}>Page Name</Label>
-        <InputErrorsTooltip errors={errors.name}>
-          <InputField
-            tabIndex={1}
-            color={errors.name && "error"}
-            id={fieldIds.name}
-            autoFocus
-            onFocus={autoSelect ? autoSelectHandler : undefined}
-            name="name"
-            placeholder="About"
-            disabled={disabled}
-            value={values?.name}
-            onChange={(event) => {
-              onChange({ field: "name", value: event.target.value });
-            }}
-          />
-        </InputErrorsTooltip>
-      </Group>
-      {isHomePage !== true && (
-        <Group>
-          <Label htmlFor={fieldIds.path}>Path</Label>
-          <InputErrorsTooltip errors={errors.path}>
+      <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Grid gap={1}>
+          <Label htmlFor={fieldIds.name}>Page Name</Label>
+          <InputErrorsTooltip errors={errors.name}>
             <InputField
               tabIndex={1}
-              color={errors.path && "error"}
-              id={fieldIds.path}
-              name="path"
-              placeholder="/about"
+              color={errors.name && "error"}
+              id={fieldIds.name}
+              autoFocus
+              onFocus={autoSelect ? autoSelectHandler : undefined}
+              name="name"
+              placeholder="About"
               disabled={disabled}
-              value={values?.path}
+              value={values?.name}
               onChange={(event) => {
-                onChange({ field: "path", value: event.target.value });
+                onChange({ field: "name", value: event.target.value });
               }}
             />
           </InputErrorsTooltip>
-        </Group>
-      )}
-      <Group>
-        <Label htmlFor={fieldIds.title}>Title</Label>
-        <InputErrorsTooltip errors={errors.title}>
-          <InputField
-            tabIndex={1}
-            color={errors.title && "error"}
-            id={fieldIds.title}
-            name="title"
-            placeholder="My awesome site - About"
-            disabled={disabled}
-            value={values?.title}
-            onChange={(event) => {
-              onChange({ field: "title", value: event.target.value });
-            }}
-          />
-        </InputErrorsTooltip>
-      </Group>
-      <Group>
-        <Label htmlFor={fieldIds.description}>Description</Label>
-        <InputErrorsTooltip errors={errors.description}>
-          <TextArea
-            tabIndex={1}
-            state={errors.description && "invalid"}
-            id={fieldIds.description}
-            name="description"
-            disabled={disabled}
-            value={values?.description}
-            onChange={(value) => {
-              onChange({ field: "description", value });
-            }}
-          />
-        </InputErrorsTooltip>
-      </Group>
+
+          {isHomePage === false && (
+            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+              <Checkbox id={fieldIds.isHomePage} />
+              <Label htmlFor={fieldIds.isHomePage}>
+                Make “[page-name]” the home page
+              </Label>
+            </Grid>
+          )}
+        </Grid>
+
+        {isHomePage !== true && (
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.path}>Path</Label>
+            <InputErrorsTooltip errors={errors.path}>
+              <InputField
+                tabIndex={1}
+                color={errors.path && "error"}
+                id={fieldIds.path}
+                name="path"
+                placeholder="/about"
+                disabled={disabled}
+                value={values?.path}
+                onChange={(event) => {
+                  onChange({ field: "path", value: event.target.value });
+                }}
+              />
+            </InputErrorsTooltip>
+            <Tooltip
+              content={
+                pathIconState === "checkmark" ? "Copied" : "Click to copy"
+              }
+            >
+              <Button
+                color="ghost"
+                onPointerDown={(event) => {
+                  navigator.clipboard.writeText("ddd");
+                  setPathIconState("checkmark");
+                  // Prevent tooltip to be closed
+                  event.stopPropagation();
+                }}
+                prefix={pathIcon}
+                css={{ justifySelf: "start" }}
+                onMouseEnter={() => {
+                  setPathIconState("copy");
+                }}
+                onMouseLeave={() => {
+                  setPathIconState("link");
+                }}
+              >
+                {pageDomainAndPath}
+              </Button>
+            </Tooltip>
+          </Grid>
+        )}
+      </Grid>
+
+      <Separator />
+
+      <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Grid gap={2}>
+          <Label sectionTitle>Search</Label>
+          <Text color="subtle">
+            Optimize the way this page appears in search engine results pages.
+          </Text>
+          <Grid gap={1}>
+            <Label>Search Result Preview</Label>
+            <Box
+              css={{
+                padding: theme.spacing[5],
+                background: theme.colors.white,
+                borderRadius: theme.borderRadius[4],
+                border: `1px solid ${theme.colors.borderMain}`,
+              }}
+            >
+              <Box
+                css={{
+                  transformOrigin: "top left",
+                  transform: "scale(0.667)",
+                  width: 600,
+                  height: 80,
+                }}
+              >
+                <SearchPreview
+                  siteName="NotImplemented"
+                  faviconUrl="/favicon.ico"
+                  pageUrl={pageUrl}
+                  titleLink={values.title}
+                  snippet={values.description}
+                />
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+
+        <Grid gap={1}>
+          <Label htmlFor={fieldIds.title}>Title</Label>
+          <InputErrorsTooltip errors={errors.title}>
+            <InputField
+              tabIndex={1}
+              color={errors.title && "error"}
+              id={fieldIds.title}
+              name="title"
+              placeholder="My awesome site - About"
+              disabled={disabled}
+              value={values.title}
+              onChange={(event) => {
+                onChange({ field: "title", value: event.target.value });
+              }}
+            />
+          </InputErrorsTooltip>
+        </Grid>
+
+        <Grid gap={1}>
+          <Label htmlFor={fieldIds.description}>Description</Label>
+          <InputErrorsTooltip errors={errors.description}>
+            <TextArea
+              tabIndex={1}
+              state={errors.description && "invalid"}
+              id={fieldIds.description}
+              name="description"
+              disabled={disabled}
+              value={values.description}
+              onChange={(value) => {
+                onChange({ field: "description", value });
+              }}
+              autoGrow
+              maxRows={10}
+            />
+          </InputErrorsTooltip>
+        </Grid>
+        <div />
+      </Grid>
     </>
   );
 };
@@ -261,10 +380,8 @@ export const NewPageSettings = ({
   const pages = useStore(pagesStore);
 
   const [values, setValues] = useState<Values>({
-    name: "Untitled",
-    path: nameToPath(pages, "Untitled"),
-    title: "Untitled",
-    description: "",
+    ...fieldDefaultValues,
+    path: nameToPath(pages, fieldDefaultValues.name),
   });
   const errors = validateValues(pages, undefined, values, false);
 
@@ -308,16 +425,18 @@ export const NewPageSettings = ({
       isSubmitting={false}
       errors={errors}
       disabled={false}
+      isHomePage={false}
       values={values}
-      onChange={({ field, value }) => {
+      onChange={(val) => {
         setValues((values) => {
-          const changes = { [field]: value };
-          if (field === "name") {
+          const changes = { [val.field]: val.value };
+
+          if (val.field === "name") {
             if (values.path === nameToPath(pages, values.name)) {
-              changes.path = nameToPath(pages, value);
+              changes.path = nameToPath(pages, val.value);
             }
             if (values.title === values.name) {
-              changes.title = value;
+              changes.title = val.value;
             }
           }
           return { ...values, ...changes };
@@ -370,7 +489,6 @@ const NewPageSettingsView = ({
       <Box
         css={{
           overflow: "auto",
-          padding: `${theme.spacing[5]} ${theme.spacing[9]}`,
         }}
       >
         <form
@@ -455,7 +573,7 @@ export const PageSettings = ({
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
-    ...toFormPage(page),
+    ...(page ? toFormPage(page, isHomePage) : fieldDefaultValues),
     ...unsavedValues,
   };
   const errors = validateValues(pages, pageId, values, isHomePage);
@@ -557,7 +675,6 @@ const PageSettingsView = ({
       <Box
         css={{
           overflow: "auto",
-          padding: `${theme.spacing[5]} ${theme.spacing[9]}`,
         }}
       >
         <form

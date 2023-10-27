@@ -3,6 +3,7 @@ import { PageSettings } from "./settings";
 
 import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
+import { projectStore } from "~/shared/nano-states";
 
 export default {
   component: PageSettings,
@@ -12,10 +13,10 @@ $isSiteSettigsOpen.set(true);
 
 pagesStore.set({
   homePage: {
-    id: "pageId",
-    title: "Page title",
-    path: "/page-path",
-    name: "page-name",
+    id: "homePageId",
+    title: "Home page title",
+    path: "/home-page-path",
+    name: "home-page-name",
     meta: {},
     rootInstanceId: "root-instance-id",
   },
@@ -29,6 +30,15 @@ pagesStore.set({
       rootInstanceId: "root-instance-id",
     },
   ],
+});
+
+projectStore.set({
+  id: "projectId",
+  title: "Project title",
+  createdAt: `${new Date()}`,
+  isDeleted: false,
+  userId: "userId",
+  domain: "new-2x9tcd.wstd.io",
 });
 
 export const PageSettingsEdit = () => {
