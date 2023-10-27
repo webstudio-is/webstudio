@@ -19,6 +19,7 @@ import { ImageControl } from "./image-control";
 import { assetsStore } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
+import { useIds } from "~/shared/form-utils";
 
 type Value = {
   siteName: string;
@@ -40,6 +41,7 @@ const imgStyle = css({
 });
 
 const SiteSettingsContent = (props: Props) => {
+  const ids = useIds(["siteName", "favicon", "customCode"]);
   const handleChange =
     <T extends keyof Value>(name: T) =>
     (val: Value[T]) => {
@@ -73,8 +75,9 @@ const SiteSettingsContent = (props: Props) => {
           px: theme.spacing[5],
         }}
       >
-        <Label>Site Name</Label>
+        <Label htmlFor={ids.siteName}>Site Name</Label>
         <InputField
+          id={ids.siteName}
           value={props.value.siteName}
           onChange={(event) => handleChange("siteName")(event.target.value)}
           placeholder="Current Site Name"
@@ -86,7 +89,9 @@ const SiteSettingsContent = (props: Props) => {
       <Separator />
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label sectionTitle>Favicon</Label>
+        <Label htmlFor={ids.favicon} sectionTitle>
+          Favicon
+        </Label>
         <Grid flow="column" gap={3}>
           <Image
             width={72}
@@ -104,7 +109,9 @@ const SiteSettingsContent = (props: Props) => {
               assetId={props.value.faviconAssetId}
               onAssetIdChange={handleChange("faviconAssetId")}
             >
-              <Button css={{ justifySelf: "start" }}>Upload</Button>
+              <Button id={ids.favicon} css={{ justifySelf: "start" }}>
+                Upload
+              </Button>
             </ImageControl>
           </Grid>
         </Grid>
@@ -113,12 +120,15 @@ const SiteSettingsContent = (props: Props) => {
       <Separator />
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label sectionTitle>Custom Code</Label>
+        <Label htmlFor={ids.customCode} sectionTitle>
+          Custom Code
+        </Label>
         <Text color="subtle">
           Custom code and scripts will be added at the end of the &lt;head&gt;
           tag to every page across the published site.
         </Text>
         <TextArea
+          id={ids.customCode}
           rows={5}
           autoGrow
           maxRows={10}
