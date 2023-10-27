@@ -32,6 +32,7 @@ import {
   Separator,
   Text,
   IconButton,
+  css,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -62,6 +63,8 @@ import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
 import { ImageControl } from "~/builder/features/seo/image-control";
 import { getFormattedAspectRatio } from "~/builder/shared/image-manager/utils";
+import { Image, createImageLoader } from "@webstudio-is/image";
+import env from "~/shared/env";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -199,6 +202,14 @@ const CopyPageDomainAndPathButton = ({
   );
 };
 
+const imgStyle = css({
+  borderTopLeftRadius: theme.borderRadius[4],
+  borderTopRightRadius: theme.borderRadius[4],
+  width: "100%",
+  aspectRatio: "1.91 / 1",
+  background: "#DFE3E6",
+});
+
 const FormFields = ({
   disabled,
   autoSelect,
@@ -232,6 +243,10 @@ const FormFields = ({
       .replace(/\/+/g, "/") +
     "dsndsnm,dnsm,dns,mndm,snd,mnsm,dns,mnd,msnd,mnsd,mnsmnms,nd,mnsdm,nsm,ndm,sndm,nsdm,nsdn";
   const pageUrl = `https://${pageDomainAndPath}`;
+
+  const imageLoader = createImageLoader({
+    imageBaseUrl: env.ASSET_BASE_URL,
+  });
 
   return (
     <>
@@ -486,6 +501,24 @@ const FormFields = ({
             </IconButton>
           </Grid>
         )}
+        <div />
+        <Grid gap={1}>
+          <Label>Social Sharing Preview</Label>
+          <Grid
+            gap={2}
+            css={{
+              borderRadius: theme.borderRadius[4],
+              border: `1px solid ${theme.colors.borderMain}`,
+              backgroundColor: theme.colors.white,
+            }}
+          >
+            <Image
+              src={asset?.type === "image" ? asset.name : undefined}
+              loader={imageLoader}
+              className={imgStyle()}
+            />
+          </Grid>
+        </Grid>
       </Grid>
     </>
   );
