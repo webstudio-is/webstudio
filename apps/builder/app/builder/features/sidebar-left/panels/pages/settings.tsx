@@ -54,6 +54,7 @@ import { nanoid } from "nanoid";
 import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
+import { ImageControl } from "~/builder/features/seo/image-control";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -62,6 +63,7 @@ const fieldDefaultValues = {
   description: "",
   isHomePage: false,
   excludePageFromSearch: false,
+  socialImageAssetId: "",
 };
 
 const fieldNames = Object.keys(
@@ -135,12 +137,12 @@ const validateValues = (
 
 const toFormPage = (page: Page, isHomePage: boolean): Values => {
   return {
+    ...fieldDefaultValues,
     name: page.name,
     path: page.path,
     title: page.title,
     description: page.meta.description ?? "",
     isHomePage,
-    excludePageFromSearch: false,
   };
 };
 
@@ -393,7 +395,38 @@ const FormFields = ({
             </Label>
           </Grid>
         </Grid>
-        <div />
+      </Grid>
+      <Separator />
+
+      <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Label htmlFor={fieldIds.socialImageAssetId} sectionTitle>
+          Social Image
+        </Label>
+        <Text color="subtle">
+          This image appears when you share a link to this page on social media
+          sites. If no image is set here, the Social Image set in the Site
+          Settings will be used. The optimal dimensions for the image are
+          1200x630 px or larger with a 1.91:1 aspect ratio.
+        </Text>
+        <Grid gap={1} flow={"column"}>
+          <ImageControl
+            assetId={values.socialImageAssetId}
+            onAssetIdChange={(socialImageAssetId) =>
+              onChange({
+                field: "socialImageAssetId",
+                value: socialImageAssetId,
+              })
+            }
+          >
+            <Button
+              id={fieldIds.socialImageAssetId}
+              css={{ justifySelf: "start" }}
+              color="neutral"
+            >
+              Choose Image From Assets
+            </Button>
+          </ImageControl>
+        </Grid>
       </Grid>
     </>
   );
