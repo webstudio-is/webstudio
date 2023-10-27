@@ -2,7 +2,6 @@ import { useState } from "react";
 import { animatableProperties } from "@webstudio-is/css-data";
 import {
   Label,
-  theme,
   InputField,
   Combobox,
   ComboboxAnchor,
@@ -30,11 +29,17 @@ const commonProperties = [
   "flex",
   "background-color",
   "font-color",
-];
+] as const;
+
+type CommonProperties = (typeof commonProperties)[number];
 
 const fileteredAnimatableProperties = animatableProperties.filter(
-  (property) => !commonProperties.includes(property)
+  (property) => !commonProperties.includes(property as CommonProperties)
 );
+
+type AnimatableProperties =
+  | CommonProperties
+  | (typeof fileteredAnimatableProperties)[number];
 
 type TransitionPropertyProps = {
   property: KeywordValue;
@@ -45,9 +50,10 @@ export const TransitionProperty = ({
   property,
   onPropertySelection,
 }: TransitionPropertyProps) => {
-  const [selectedProperty, setSelectedProeprty] = useState<string>(
-    property?.value ?? "all"
-  );
+  const [selectedProperty, setSelectedProeprty] =
+    useState<AnimatableProperties>(
+      (property?.value as AnimatableProperties) ?? "all"
+    );
 
   const {
     getComboboxProps,
@@ -55,8 +61,11 @@ export const TransitionProperty = ({
     getInputProps,
     getMenuProps,
     getItemProps,
-  } = useCombobox<string>({
-    items: [...commonProperties, ...fileteredAnimatableProperties],
+  } = useCombobox<AnimatableProperties>({
+    items: [
+      ...commonProperties,
+      ...fileteredAnimatableProperties,
+    ] as AnimatableProperties[],
     value: selectedProperty,
     selectedItem: selectedProperty,
     itemToString: (item) =>
@@ -67,7 +76,7 @@ export const TransitionProperty = ({
     },
   });
 
-  const renderItem = (item: string) => (
+  const renderItem = (item: AnimatableProperties) => (
     <ComboboxListboxItem
       {...getItemProps({
         item,
@@ -97,10 +106,7 @@ export const TransitionProperty = ({
             />
           </ComboboxAnchor>
           <ComboboxContent align="end" sideOffset={5}>
-            <ComboboxListbox
-              {...getMenuProps()}
-              css={{ zIndex: theme.zIndices[1] }}
-            >
+            <ComboboxListbox {...getMenuProps()}>
               <ComboboxLabel>Common</ComboboxLabel>
               {commonProperties.map(renderItem)}
               <ComboboxSeparator />
