@@ -95,6 +95,7 @@ export { HamburgerMenuIcon } from "./hamburger-menu";
 export { HeaderIcon } from "./header";
 export { HeadingIcon } from "./heading";
 export { HelpIcon } from "./help";
+export { HomeIcon } from "./home";
 export { ImageIcon } from "./image";
 export { InfoIcon } from "./info";
 export { InformationIcon } from "./information";

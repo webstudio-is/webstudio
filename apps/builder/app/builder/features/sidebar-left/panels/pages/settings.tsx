@@ -38,6 +38,7 @@ import {
   TrashIcon,
   CheckMarkIcon,
   LinkIcon,
+  HomeIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
@@ -144,17 +145,58 @@ const toFormPage = (page: Page, isHomePage: boolean): Values => {
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
 
+const CopyPageDomainAndPathButton = ({
+  pageDomainAndPath,
+}: {
+  pageDomainAndPath: string;
+}) => {
+  const [pathIconState, setPathIconState] = useState<
+    "link" | "copy" | "checkmark"
+  >("link");
+
+  let pathIcon = <CopyIcon />;
+  if (pathIconState === "checkmark") {
+    pathIcon = <CheckMarkIcon />;
+  } else if (pathIconState === "link") {
+    pathIcon = <LinkIcon />;
+  }
+
+  return (
+    <Tooltip
+      content={pathIconState === "checkmark" ? "Copied" : "Click to copy"}
+    >
+      <Button
+        color="ghost"
+        onPointerDown={(event) => {
+          navigator.clipboard.writeText("ddd");
+          setPathIconState("checkmark");
+          // Prevent tooltip to be closed
+          event.stopPropagation();
+        }}
+        prefix={pathIcon}
+        css={{ justifySelf: "start" }}
+        onMouseEnter={() => {
+          setPathIconState("copy");
+        }}
+        onMouseLeave={() => {
+          setPathIconState("link");
+        }}
+      >
+        {pageDomainAndPath}
+      </Button>
+    </Tooltip>
+  );
+};
+
 const FormFields = ({
   disabled,
   autoSelect,
-  isHomePage,
   errors,
   values,
   onChange,
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
-  isHomePage: boolean;
   errors: Errors;
   values: Values;
   onChange: (
@@ -168,22 +210,14 @@ const FormFields = ({
 }) => {
   const fieldIds = useIds(fieldNames);
 
-  const [pathIconState, setPathIconState] = useState<
-    "link" | "copy" | "checkmark"
-  >("link");
-
-  let pathIcon = <CopyIcon />;
-  if (pathIconState === "checkmark") {
-    pathIcon = <CheckMarkIcon />;
-  } else if (pathIconState === "link") {
-    pathIcon = <LinkIcon />;
-  }
-
   const project = projectStore.get();
 
-  const pageDomainAndPath = [project?.domain, values?.path]
-    .join("/")
-    .replace(/\/+/g, "/");
+  const pageDomainAndPath =
+    [project?.domain, values?.path]
+      .filter(Boolean)
+      .join("/")
+      .replace(/\/+/g, "/") +
+    "dsndsnm,dnsm,dns,mndm,snd,mnsm,dns,mnd,msnd,mnsd,mnsmnms,nd,mnsdm,nsm,ndm,sndm,nsdm,nsdn";
   const pageUrl = `https://${pageDomainAndPath}`;
 
   return (
@@ -201,24 +235,49 @@ const FormFields = ({
               name="name"
               placeholder="About"
               disabled={disabled}
-              value={values?.name}
+              value={values.name}
               onChange={(event) => {
                 onChange({ field: "name", value: event.target.value });
               }}
             />
           </InputErrorsTooltip>
 
-          {isHomePage === false && (
-            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-              <Checkbox id={fieldIds.isHomePage} />
-              <Label htmlFor={fieldIds.isHomePage}>
-                Make “[page-name]” the home page
-              </Label>
-            </Grid>
+          <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+            {values.isHomePage ? (
+              <HomeIcon />
+            ) : (
+              <Checkbox
+                id={fieldIds.isHomePage}
+                onCheckedChange={() => {
+                  onChange({ field: "path", value: "" });
+                  onChange({ field: "isHomePage", value: !values.isHomePage });
+                }}
+              />
+            )}
+
+            <Label
+              css={{
+                overflowWrap: "anywhere",
+                wordBreak: "break-all",
+              }}
+              htmlFor={fieldIds.isHomePage}
+            >
+              {values.isHomePage
+                ? `“${values.name}” is the home page`
+                : `Make “${values.name}” the home page`}
+            </Label>
+          </Grid>
+          {values.isHomePage === true && (
+            <>
+              <div />
+              <CopyPageDomainAndPathButton
+                pageDomainAndPath={pageDomainAndPath}
+              />
+            </>
           )}
         </Grid>
 
-        {isHomePage !== true && (
+        {values.isHomePage === false && (
           <Grid gap={1}>
             <Label htmlFor={fieldIds.path}>Path</Label>
             <InputErrorsTooltip errors={errors.path}>
@@ -235,31 +294,9 @@ const FormFields = ({
                 }}
               />
             </InputErrorsTooltip>
-            <Tooltip
-              content={
-                pathIconState === "checkmark" ? "Copied" : "Click to copy"
-              }
-            >
-              <Button
-                color="ghost"
-                onPointerDown={(event) => {
-                  navigator.clipboard.writeText("ddd");
-                  setPathIconState("checkmark");
-                  // Prevent tooltip to be closed
-                  event.stopPropagation();
-                }}
-                prefix={pathIcon}
-                css={{ justifySelf: "start" }}
-                onMouseEnter={() => {
-                  setPathIconState("copy");
-                }}
-                onMouseLeave={() => {
-                  setPathIconState("link");
-                }}
-              >
-                {pageDomainAndPath}
-              </Button>
-            </Tooltip>
+            <CopyPageDomainAndPathButton
+              pageDomainAndPath={pageDomainAndPath}
+            />
           </Grid>
         )}
       </Grid>
@@ -425,7 +462,6 @@ export const NewPageSettings = ({
       isSubmitting={false}
       errors={errors}
       disabled={false}
-      isHomePage={false}
       values={values}
       onChange={(val) => {
         setValues((values) => {
@@ -621,7 +657,6 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
-      isHomePage={isHomePage}
       onClose={onClose}
       onDelete={hanldeDelete}
       errors={errors}
@@ -632,12 +667,10 @@ export const PageSettings = ({
 };
 
 const PageSettingsView = ({
-  isHomePage,
   onDelete,
   onClose,
   ...formFieldsProps
 }: {
-  isHomePage: boolean;
   onDelete: () => void;
   onClose?: () => void;
 } & ComponentProps<typeof FormFields>) => {
@@ -647,7 +680,7 @@ const PageSettingsView = ({
         title="Page Settings"
         suffix={
           <>
-            {isHomePage === false && (
+            {formFieldsProps.values.isHomePage === false && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
                   color="ghost"
@@ -683,7 +716,7 @@ const PageSettingsView = ({
             onClose?.();
           }}
         >
-          <FormFields isHomePage={isHomePage} {...formFieldsProps} />
+          <FormFields {...formFieldsProps} />
           <input type="submit" hidden />
         </form>
       </Box>

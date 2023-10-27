@@ -95,6 +95,7 @@ export * from "./hamburger-menu";
 export * from "./header";
 export * from "./heading";
 export * from "./help";
+export * from "./home";
 export * from "./image";
 export * from "./info";
 export * from "./information";
