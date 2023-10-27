@@ -2,7 +2,15 @@ import { enableMapSet } from "immer";
 import { describe, test, expect } from "@jest/globals";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type {
+  Asset,
+  Instance,
+  Instances,
+  Prop,
+  StyleDecl,
+  StyleDeclKey,
+} from "@webstudio-is/sdk";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   computeInstancesConstraints,
   findClosestDroppableComponentIndex,
@@ -11,9 +19,14 @@ import {
   insertTemplateData,
   type InsertConstraints,
   deleteInstance,
+  getInstancesSlice,
 } from "./instance-utils";
 import {
+  assetsStore,
+  breakpointsStore,
+  dataSourcesStore,
   instancesStore,
+  propsStore,
   registeredComponentMetasStore,
   styleSourceSelectionsStore,
   styleSourcesStore,
@@ -47,12 +60,84 @@ const createFakeComponentMetas = (
   return new Map(Object.entries(configs)) as Map<string, WsComponentMeta>;
 };
 
+const getIdValuePair = <T extends { id: string }>(item: T) =>
+  [item.id, item] as const;
+
+const toMap = <T extends { id: string }>(list: T[]) =>
+  new Map(list.map(getIdValuePair));
+
+const createInstance = (
+  id: Instance["id"],
+  component: string,
+  children: Instance["children"]
+): Instance => {
+  return { type: "instance", id, component, children };
+};
+
 const createInstancePair = (
   id: Instance["id"],
   component: string,
   children: Instance["children"]
 ): [Instance["id"], Instance] => {
   return [id, { type: "instance", id, component, children }];
+};
+
+const createStyleDecl = (
+  styleSourceId: string,
+  breakpointId: string,
+  property: StyleProperty,
+  value: StyleValue | string
+): StyleDecl => ({
+  styleSourceId,
+  breakpointId,
+  property,
+  value: typeof value === "string" ? { type: "unparsed", value } : value,
+});
+
+const createStyleDeclPair = (
+  styleSourceId: string,
+  breakpointId: string,
+  property: StyleProperty,
+  value: StyleValue | string
+): [StyleDeclKey, StyleDecl] => [
+  `${styleSourceId}:${breakpointId}:${property}:`,
+  createStyleDecl(styleSourceId, breakpointId, property, value),
+];
+
+const createProp = (instanceId: string, id: string, name: string): Prop => ({
+  id,
+  instanceId,
+  name,
+  type: "string",
+  value: id,
+});
+
+const createImageAsset = (id: string): Asset => {
+  return {
+    id,
+    type: "image",
+    format: "",
+    name: "",
+    description: "",
+    projectId: "",
+    createdAt: "",
+    size: 0,
+    meta: { width: 0, height: 0 },
+  };
+};
+
+const createFontAsset = (id: string, family: string): Asset => {
+  return {
+    id,
+    type: "font",
+    format: "woff",
+    name: "",
+    description: "",
+    projectId: "",
+    createdAt: "",
+    size: 0,
+    meta: { style: "normal", family, variationAxes: {} },
+  };
 };
 
 const emptyInsertConstraints: InsertConstraints = {
@@ -463,4 +548,389 @@ test("prevent deleting root instance", () => {
       createInstancePair("box1", "Box", []),
     ])
   );
+});
+
+describe("get instances slice", () => {
+  test("collect the instance by id and all its descendants including portal instances", () => {
+    // body
+    //   bodyChild1
+    //     slot
+    //       slotChild
+    //   bodyChild2
+    instancesStore.set(
+      toMap([
+        createInstance("body", "Body", [
+          { type: "id", value: "bodyChild1" },
+          { type: "id", value: "bodyChild2" },
+        ]),
+        createInstance("bodyChild1", "Box", [{ type: "id", value: "slot" }]),
+        createInstance("slot", "Slot", [{ type: "id", value: "slotChild" }]),
+        createInstance("slotChild", "Box", []),
+        createInstance("bodyChild2", "Box", []),
+      ])
+    );
+    const { instances } = getInstancesSlice("bodyChild1");
+
+    expect(instances).toEqual([
+      createInstance("bodyChild1", "Box", [{ type: "id", value: "slot" }]),
+      createInstance("slot", "Slot", [{ type: "id", value: "slotChild" }]),
+      createInstance("slotChild", "Box", []),
+    ]);
+  });
+
+  test("collect all styles and breakpoints bound to instances slice", () => {
+    // body
+    //   box1
+    //     box2
+    instancesStore.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
+        createInstance("box2", "Box", []),
+      ])
+    );
+    styleSourceSelectionsStore.set(
+      new Map([
+        ["body", { instanceId: "box1", values: ["localBody", "token1"] }],
+        ["box1", { instanceId: "box1", values: ["localBox1", "token2"] }],
+        ["box2", { instanceId: "box2", values: ["localBox2", "token2"] }],
+      ])
+    );
+    styleSourcesStore.set(
+      new Map([
+        ["localBody", { id: "localBody", type: "local" }],
+        ["localBox1", { id: "localBox1", type: "local" }],
+        ["localBox2", { id: "localBox2", type: "local" }],
+        ["token1", { id: "token1", type: "token", name: "token1" }],
+        ["token2", { id: "token2", type: "token", name: "token2" }],
+      ])
+    );
+    stylesStore.set(
+      new Map([
+        createStyleDeclPair("localBody1", "base", "color", "red"),
+        createStyleDeclPair("localBox1", "base", "color", "green"),
+        createStyleDeclPair("localBox2", "base", "color", "blue"),
+        createStyleDeclPair("token1", "base", "color", "yellow"),
+        createStyleDeclPair("token2", "base", "color", "orange"),
+      ])
+    );
+    breakpointsStore.set(
+      new Map([
+        ["base", { id: "base", label: "base" }],
+        ["big", { id: "big", label: "big", minWidth: 768 }],
+      ])
+    );
+    const { styleSources, styleSourceSelections, styles, breakpoints } =
+      getInstancesSlice("box1");
+
+    // exclude localBody and token1 bound to body
+    expect(styleSources).toEqual([
+      { id: "localBox1", type: "local" },
+      { id: "token2", type: "token", name: "token2" },
+      { id: "localBox2", type: "local" },
+    ]);
+    expect(styleSourceSelections).toEqual([
+      { instanceId: "box1", values: ["localBox1", "token2"] },
+      { instanceId: "box2", values: ["localBox2", "token2"] },
+    ]);
+    expect(styles).toEqual([
+      createStyleDecl("localBox1", "base", "color", "green"),
+      createStyleDecl("localBox2", "base", "color", "blue"),
+      createStyleDecl("token2", "base", "color", "orange"),
+    ]);
+    expect(breakpoints).toEqual([{ id: "base", label: "base" }]);
+  });
+
+  test("collect all props bound to instances slice", () => {
+    // body
+    //   box1
+    //     box2
+    instancesStore.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
+        createInstance("box2", "Box", []),
+      ])
+    );
+    propsStore.set(
+      toMap([
+        createProp("body", "bodyProp", "data-body"),
+        createProp("box1", "box1Prop", "data-box1"),
+        createProp("box2", "box2Prop", "data-box2"),
+      ])
+    );
+    const { props } = getInstancesSlice("box1");
+
+    expect(props).toEqual([
+      createProp("box1", "box1Prop", "data-box1"),
+      createProp("box2", "box2Prop", "data-box2"),
+    ]);
+  });
+
+  test("collect assets from props and styles withiin instances slice", () => {
+    // body
+    //   box1
+    //     box2
+    instancesStore.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
+        createInstance("box2", "Box", []),
+      ])
+    );
+    propsStore.set(
+      new Map([
+        [
+          "bodyProp",
+          {
+            id: "bodyProp",
+            instanceId: "body",
+            name: "data-body",
+            type: "asset",
+            value: "asset1",
+          },
+        ],
+        [
+          "box1Prop",
+          {
+            id: "box1Prop",
+            instanceId: "box1",
+            name: "data-box1",
+            type: "asset",
+            value: "asset2",
+          },
+        ],
+      ])
+    );
+    styleSourceSelectionsStore.set(
+      new Map([
+        ["body", { instanceId: "box1", values: ["localBody"] }],
+        ["box1", { instanceId: "box1", values: ["localBox1"] }],
+      ])
+    );
+    styleSourcesStore.set(
+      new Map([
+        ["localBody", { id: "localBody", type: "local" }],
+        ["localBox1", { id: "localBox1", type: "local" }],
+      ])
+    );
+    stylesStore.set(
+      new Map([
+        createStyleDeclPair("localBody1", "base", "fontFamily", {
+          type: "fontFamily",
+          value: ["font1"],
+        }),
+        createStyleDeclPair("localBody1", "base", "backgroundImage", {
+          type: "image",
+          value: { type: "asset", value: "asset3" },
+        }),
+        createStyleDeclPair("localBox1", "base", "fontFamily", {
+          type: "fontFamily",
+          value: ["font2"],
+        }),
+        createStyleDeclPair("localBox1", "base", "color", {
+          type: "image",
+          value: { type: "asset", value: "asset4" },
+        }),
+      ])
+    );
+    breakpointsStore.set(new Map([["base", { id: "base", label: "base" }]]));
+    assetsStore.set(
+      toMap([
+        createImageAsset("asset1"),
+        createImageAsset("asset2"),
+        createImageAsset("asset3"),
+        createImageAsset("asset4"),
+        createFontAsset("asset5", "font1"),
+        createFontAsset("asset6", "font2"),
+      ])
+    );
+    const { assets } = getInstancesSlice("box1");
+
+    expect(assets).toEqual([
+      createImageAsset("asset2"),
+      createImageAsset("asset4"),
+      createFontAsset("asset6", "font2"),
+    ]);
+  });
+
+  test("collect data sources within instances slice and convert others to value prop", () => {
+    // body
+    //   box1
+    //     box2
+    instancesStore.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
+        createInstance("box2", "Box", []),
+      ])
+    );
+    dataSourcesStore.set(
+      toMap([
+        {
+          id: "box1$state",
+          scopeInstanceId: "box1",
+          type: "variable",
+          name: "state",
+          value: { type: "string", value: "initial" },
+        },
+        {
+          id: "box2$stateInitial",
+          scopeInstanceId: "box2",
+          type: "expression",
+          name: "stateInitial",
+          code: `$ws$dataSource$box1$state === 'initial'`,
+        },
+        {
+          id: "box2$true",
+          scopeInstanceId: "box2",
+          type: "expression",
+          name: "trueValue",
+          code: `true`,
+        },
+      ])
+    );
+    propsStore.set(
+      toMap([
+        {
+          id: "box1$state",
+          instanceId: "box1",
+          type: "dataSource",
+          name: "state",
+          value: "box1$state",
+        },
+        {
+          id: "box2$state",
+          instanceId: "box2",
+          type: "dataSource",
+          name: "state",
+          value: "box1$state",
+        },
+        {
+          id: "box2$show",
+          instanceId: "box2",
+          type: "dataSource",
+          name: "show",
+          value: "box2$stateInitial",
+        },
+        {
+          id: "box2$true",
+          instanceId: "box2",
+          type: "dataSource",
+          name: "bool-prop",
+          value: "box2$true",
+        },
+      ])
+    );
+    const { props } = getInstancesSlice("box2");
+
+    expect(props).toEqual([
+      {
+        id: "box2$state",
+        instanceId: "box2",
+        type: "string",
+        name: "state",
+        value: "initial",
+      },
+      {
+        id: "box2$show",
+        instanceId: "box2",
+        type: "boolean",
+        name: "show",
+        value: true,
+      },
+      {
+        id: "box2$true",
+        instanceId: "box2",
+        type: "dataSource",
+        name: "bool-prop",
+        value: "box2$true",
+      },
+    ]);
+  });
+
+  test("clear actions which depend on data sources outside of instances slice", () => {
+    // body
+    //   box1
+    //     box2
+    instancesStore.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
+        createInstance("box2", "Box", []),
+      ])
+    );
+    dataSourcesStore.set(
+      toMap([
+        {
+          id: "box1$state",
+          scopeInstanceId: "box1",
+          type: "variable",
+          name: "state",
+          value: { type: "string", value: "initial" },
+        },
+        {
+          id: "box2$state",
+          scopeInstanceId: "box2",
+          type: "variable",
+          name: "state",
+          value: { type: "string", value: "initial" },
+        },
+      ])
+    );
+    propsStore.set(
+      toMap([
+        {
+          id: "box2$onChange1",
+          instanceId: "box2",
+          type: "action",
+          name: "onChange",
+          value: [
+            {
+              type: "execute",
+              args: ["value"],
+              code: `$ws$dataSource$box1$state = value`,
+            },
+          ],
+        },
+        {
+          id: "box2$onChange2",
+          instanceId: "box2",
+          type: "action",
+          name: "onChange",
+          value: [
+            {
+              type: "execute",
+              args: ["value"],
+              code: `$ws$dataSource$box2$state = value`,
+            },
+          ],
+        },
+      ])
+    );
+    const { props } = getInstancesSlice("box2");
+
+    expect(props).toEqual([
+      {
+        id: "box2$onChange1",
+        instanceId: "box2",
+        type: "action",
+        name: "onChange",
+        value: [],
+      },
+      {
+        id: "box2$onChange2",
+        instanceId: "box2",
+        type: "action",
+        name: "onChange",
+        value: [
+          {
+            type: "execute",
+            args: ["value"],
+            code: `$ws$dataSource$box2$state = value`,
+          },
+        ],
+      },
+    ]);
+  });
 });

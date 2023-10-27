@@ -215,8 +215,8 @@ const FormFields = ({
             name="description"
             disabled={disabled}
             value={values?.description}
-            onChange={(event) => {
-              onChange({ field: "description", value: event.target.value });
+            onChange={(value) => {
+              onChange({ field: "description", value });
             }}
           />
         </InputErrorsTooltip>
