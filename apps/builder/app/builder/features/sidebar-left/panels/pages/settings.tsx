@@ -61,6 +61,7 @@ const fieldDefaultValues = {
   title: "Untitled",
   description: "",
   isHomePage: false,
+  excludePageFromSearch: false,
 };
 
 const fieldNames = Object.keys(
@@ -139,6 +140,7 @@ const toFormPage = (page: Page, isHomePage: boolean): Values => {
     title: page.title,
     description: page.meta.description ?? "",
     isHomePage,
+    excludePageFromSearch: false,
   };
 };
 
@@ -374,6 +376,22 @@ const FormFields = ({
               maxRows={10}
             />
           </InputErrorsTooltip>
+          <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+            <Checkbox
+              id={fieldIds.isHomePage}
+              onCheckedChange={() => {
+                onChange({ field: "path", value: "" });
+                onChange({
+                  field: "excludePageFromSearch",
+                  value: !values.excludePageFromSearch,
+                });
+              }}
+            />
+
+            <Label htmlFor={fieldIds.excludePageFromSearch}>
+              Exclude this page from search results
+            </Label>
+          </Grid>
         </Grid>
         <div />
       </Grid>
