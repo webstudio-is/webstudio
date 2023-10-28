@@ -31,7 +31,7 @@ export const inputFieldColors = ["placeholder", "set", "error"] as const;
 
 const inputStyle = css({
   all: "unset",
-  ...textVariants.regular,
+  ...textVariants.mono,
   color: theme.colors.foregroundMain,
   flexGrow: 1,
   flexShrink: 1,
