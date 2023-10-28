@@ -31,8 +31,6 @@ import {
   Checkbox,
   Separator,
   Text,
-  IconButton,
-  css,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -41,10 +39,6 @@ import {
   CheckMarkIcon,
   LinkIcon,
   HomeIcon,
-  ImageIcon,
-  DimensionsIcon,
-  AspectRatioIcon,
-  DeleteIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
@@ -62,9 +56,8 @@ import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
 import { ImageControl } from "~/builder/features/seo/image-control";
-import { getFormattedAspectRatio } from "~/builder/shared/image-manager/utils";
-import { Image, createImageLoader } from "@webstudio-is/image";
-import env from "~/shared/env";
+import { ImageInfo } from "./image-info";
+import { SocialPreview } from "./social-preview";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -202,14 +195,6 @@ const CopyPageDomainAndPathButton = ({
   );
 };
 
-const imgStyle = css({
-  borderTopLeftRadius: theme.borderRadius[4],
-  borderTopRightRadius: theme.borderRadius[4],
-  width: "100%",
-  aspectRatio: "1.91 / 1",
-  background: "#DFE3E6",
-});
-
 const FormFields = ({
   disabled,
   autoSelect,
@@ -244,12 +229,11 @@ const FormFields = ({
     "dsndsnm,dnsm,dns,mndm,snd,mnsm,dns,mnd,msnd,mnsd,mnsmnms,nd,mnsdm,nsm,ndm,sndm,nsdm,nsdn";
   const pageUrl = `https://${pageDomainAndPath}`;
 
-  const imageLoader = createImageLoader({
-    imageBaseUrl: env.ASSET_BASE_URL,
-  });
-
   return (
     <>
+      {/**
+       * ----------------------========<<<Page props>>>>========----------------------
+       */}
       <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
         <Grid gap={1}>
           <Label htmlFor={fieldIds.name}>Page Name</Label>
@@ -331,6 +315,9 @@ const FormFields = ({
 
       <Separator />
 
+      {/**
+       * ----------------------========<<<Search Results>>>>========----------------------
+       */}
       <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
         <Grid gap={2}>
           <Label sectionTitle>Search</Label>
@@ -420,8 +407,12 @@ const FormFields = ({
           </Grid>
         </Grid>
       </Grid>
+
       <Separator />
 
+      {/**
+       * ----------------------========<<<Social Sharing>>>>========----------------------
+       */}
       <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
         <Label htmlFor={fieldIds.socialImageAssetId} sectionTitle>
           Social Image
@@ -453,72 +444,23 @@ const FormFields = ({
         </Grid>
 
         {asset?.type === "image" && (
-          <Grid gap={1} flow={"column"} align={"center"} justify={"start"}>
-            <Grid
-              gap={2}
-              flow={"column"}
-              align={"center"}
-              justify={"start"}
-              css={{
-                borderRadius: theme.borderRadius[4],
-                border: `1px solid ${theme.colors.borderMain}`,
-                backgroundColor: theme.colors.white,
-                padding: theme.spacing[4],
-                justifySelf: "start",
-                pr: theme.spacing[5],
-              }}
-            >
-              <Grid flow={"column"} gap={1} align={"center"}>
-                <ImageIcon />
-                <Text truncate variant={"labelsTitleCase"}>
-                  {asset.name}
-                </Text>
-              </Grid>
-              |
-              <Grid flow={"column"} gap={1} align={"center"}>
-                <DimensionsIcon />
-                <Text variant={"labelsTitleCase"}>
-                  {asset.meta.width} x {asset.meta.height} Px
-                </Text>
-              </Grid>
-              |
-              <Grid flow={"column"} gap={1} align={"center"}>
-                <AspectRatioIcon />
-                <Text variant={"labelsTitleCase"}>
-                  {getFormattedAspectRatio(asset.meta)}
-                </Text>
-              </Grid>
-            </Grid>
-            <IconButton
-              onClick={() => {
-                onChange({
-                  field: "socialImageAssetId",
-                  value: "",
-                });
-              }}
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Grid>
+          <ImageInfo
+            asset={asset}
+            onDelete={() => {
+              onChange({
+                field: "socialImageAssetId",
+                value: "",
+              });
+            }}
+          />
         )}
         <div />
-        <Grid gap={1}>
-          <Label>Social Sharing Preview</Label>
-          <Grid
-            gap={2}
-            css={{
-              borderRadius: theme.borderRadius[4],
-              border: `1px solid ${theme.colors.borderMain}`,
-              backgroundColor: theme.colors.white,
-            }}
-          >
-            <Image
-              src={asset?.type === "image" ? asset.name : undefined}
-              loader={imageLoader}
-              className={imgStyle()}
-            />
-          </Grid>
-        </Grid>
+        <SocialPreview
+          asset={asset?.type === "image" ? asset : undefined}
+          ogUrl={pageUrl}
+          ogTitle={values.title}
+          ogDescription={values.description}
+        />
       </Grid>
     </>
   );
