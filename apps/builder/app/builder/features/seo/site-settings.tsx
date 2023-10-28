@@ -23,7 +23,6 @@ import { useIds } from "~/shared/form-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "../ai/hooks/effect-event";
 import type { Pages } from "@webstudio-is/sdk";
-import { shallowEqual } from "shallow-equal";
 
 type Value = Pages["meta"];
 
