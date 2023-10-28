@@ -166,7 +166,17 @@ export const SiteSettings = () => {
         $isSiteSettigsOpen.set(isOpen);
       }}
     >
-      <DialogContent onBlur={handleSave}>
+      <DialogContent
+        onBlur={handleSave}
+        // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
+        // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
+        css={{
+          zIndex: theme.zIndices[1],
+        }}
+        overlayCss={{
+          zIndex: theme.zIndices[1],
+        }}
+      >
         <SiteSettingsContent value={value} onChange={setValue} />
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order

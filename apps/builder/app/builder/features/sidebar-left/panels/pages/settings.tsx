@@ -59,6 +59,7 @@ import { SearchPreview } from "./search-preview";
 import { ImageControl } from "~/builder/features/seo/image-control";
 import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
+import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -222,12 +223,10 @@ const FormFields = ({
 
   const project = projectStore.get();
 
-  const pageDomainAndPath =
-    [project?.domain, values?.path]
-      .filter(Boolean)
-      .join("/")
-      .replace(/\/+/g, "/") +
-    "dsndsnm,dnsm,dns,mndm,snd,mnsm,dns,mnd,msnd,mnsd,mnsmnms,nd,mnsdm,nsm,ndm,sndm,nsdm,nsdn";
+  const pageDomainAndPath = [project?.domain, values?.path]
+    .filter(Boolean)
+    .join("/")
+    .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
 
   const TOPBAR_HEIGHT = 40;
@@ -708,18 +707,24 @@ export const PageSettings = ({
     ...(page ? toFormPage(page, isHomePage) : fieldDefaultValues),
     ...unsavedValues,
   };
+
   const errors = validateValues(pages, pageId, values, isHomePage);
 
-  const handleSubmitDebounced = useDebouncedCallback(() => {
+  const debouncedFn = useEffectEvent(() => {
     if (
       Object.keys(unsavedValues).length === 0 ||
       Object.keys(errors).length !== 0
     ) {
       return;
     }
+
     updatePage(pageId, unsavedValues);
-    setUnsavedValues({});
-  }, 1000);
+
+    // @todo: uncomment
+    // setUnsavedValues({});
+  });
+
+  const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
 
   const handleChange = useCallback(
     <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {

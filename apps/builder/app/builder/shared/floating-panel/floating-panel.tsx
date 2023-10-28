@@ -5,6 +5,7 @@ import {
   FloatingPanelPopoverTrigger,
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
+  type CSS,
 } from "@webstudio-is/design-system";
 import {
   type MutableRefObject,
@@ -58,9 +59,12 @@ type FloatingPanelProps = {
   children: JSX.Element;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  contentCss?: CSS;
 };
 
-const contentStyle = css({ width: theme.spacing[30] });
+const contentStyle = css({
+  width: theme.spacing[30],
+});
 
 export const FloatingPanel = ({
   title,
@@ -68,6 +72,7 @@ export const FloatingPanel = ({
   children,
   open,
   onOpenChange,
+  contentCss,
 }: FloatingPanelProps) => {
   const { isOpen, handleOpenChange, triggerRef, sideOffset } = useLogic(
     open,
@@ -82,7 +87,9 @@ export const FloatingPanel = ({
         sideOffset={sideOffset}
         side="left"
         align="start"
-        className={contentStyle()}
+        className={contentStyle({
+          css: contentCss,
+        })}
       >
         {content}
         <FloatingPanelPopoverTitle>{title}</FloatingPanelPopoverTitle>
