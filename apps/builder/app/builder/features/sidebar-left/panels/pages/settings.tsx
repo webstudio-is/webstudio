@@ -142,11 +142,12 @@ const validateValues = (
 
 const toFormPage = (page: Page, isHomePage: boolean): Values => {
   return {
-    ...fieldDefaultValues,
     name: page.name,
     path: page.path,
     title: page.title,
     description: page.meta.description ?? "",
+    socialImageAssetId: page.meta.socialImageAssetId ?? "",
+    excludePageFromSearch: page.meta.excludePageFromSearch ?? false,
     isHomePage,
   };
 };
@@ -520,6 +521,7 @@ export const NewPageSettings = ({
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
+
       serverSyncStore.createTransaction(
         [pagesStore, instancesStore],
         (pages, instances) => {
@@ -533,10 +535,9 @@ export const NewPageSettings = ({
             path: values.path,
             title: values.title,
             rootInstanceId,
-            meta: {
-              description: values.description,
-            },
+            meta: {},
           });
+
           instances.set(rootInstanceId, {
             type: "instance",
             id: rootInstanceId,
@@ -546,6 +547,9 @@ export const NewPageSettings = ({
           selectedInstanceSelectorStore.set(undefined);
         }
       );
+
+      updatePage(pageId, values);
+
       onSuccess(pageId);
     }
   };
@@ -647,17 +651,44 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     if (values.title !== undefined) {
       page.title = values.title;
     }
+
     if (values.description !== undefined) {
       page.meta.description = values.description;
     }
+
+    if (values.excludePageFromSearch !== undefined) {
+      page.meta.excludePageFromSearch = values.excludePageFromSearch;
+    }
+
+    if (values.socialImageAssetId !== undefined) {
+      page.meta.socialImageAssetId = values.socialImageAssetId;
+    }
   };
+
   serverSyncStore.createTransaction([pagesStore], (pages) => {
     if (pages === undefined) {
       return;
     }
+
+    // swap home page
+    if (values.isHomePage && pages.homePage.id !== pageId) {
+      const newHomePageIndex = pages.pages.findIndex(
+        (page) => page.id === pageId
+      );
+
+      if (newHomePageIndex === -1) {
+        throw new Error(`Page with id ${pageId} not found`);
+      }
+
+      const tmp = pages.homePage;
+      pages.homePage = pages.pages[newHomePageIndex];
+      pages.pages[newHomePageIndex] = tmp;
+    }
+
     if (pages.homePage.id === pageId) {
       updatePageMutable(pages.homePage, values);
     }
+
     for (const page of pages.pages) {
       if (page.id === pageId) {
         updatePageMutable(page, values);
@@ -719,9 +750,7 @@ export const PageSettings = ({
     }
 
     updatePage(pageId, unsavedValues);
-
-    // @todo: uncomment
-    // setUnsavedValues({});
+    setUnsavedValues({});
   });
 
   const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
