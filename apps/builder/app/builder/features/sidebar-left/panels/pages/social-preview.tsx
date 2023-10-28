@@ -12,6 +12,7 @@ type SocialPreviewProps = {
 };
 
 const imgStyle = css({
+  objectFit: "cover",
   borderTopLeftRadius: theme.borderRadius[4],
   borderTopRightRadius: theme.borderRadius[4],
   width: "100%",
@@ -71,6 +72,9 @@ export const SocialPreview = ({
               fontSize: "14px",
               fontWeight: 700,
               lineHeight: "18px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
             {truncateByWords(ogTitle, 60)}
