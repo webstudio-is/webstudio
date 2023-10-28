@@ -682,6 +682,8 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
       const tmp = pages.homePage;
       pages.homePage = pages.pages[newHomePageIndex];
+      tmp.path = pages.homePage.path;
+      pages.homePage.path = "";
       pages.pages[newHomePageIndex] = tmp;
     }
 
@@ -739,7 +741,7 @@ export const PageSettings = ({
     ...unsavedValues,
   };
 
-  const errors = validateValues(pages, pageId, values, isHomePage);
+  const errors = validateValues(pages, pageId, values, values.isHomePage);
 
   const debouncedFn = useEffectEvent(() => {
     if (
@@ -750,6 +752,7 @@ export const PageSettings = ({
     }
 
     updatePage(pageId, unsavedValues);
+
     setUnsavedValues({});
   });
 
