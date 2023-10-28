@@ -220,7 +220,11 @@ const FormFields = ({
 }) => {
   const fieldIds = useIds(fieldNames);
   const assets = useStore(assetsStore);
-  const asset = assets.get(values.socialImageAssetId);
+  const pages = useStore(pagesStore);
+  const socialImageAsset = assets.get(values.socialImageAssetId);
+  const faviconAsset = assets.get(pages?.meta.faviconAssetId ?? "");
+
+  const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
   const project = projectStore.get();
 
@@ -353,8 +357,8 @@ const FormFields = ({
                   }}
                 >
                   <SearchPreview
-                    siteName="NotImplemented"
-                    faviconUrl="/favicon.ico"
+                    siteName={pages?.meta.siteName ?? ""}
+                    faviconUrl={faviconUrl}
                     pageUrl={pageUrl}
                     titleLink={values.title}
                     snippet={values.description}
@@ -453,9 +457,9 @@ const FormFields = ({
             </ImageControl>
           </Grid>
 
-          {asset?.type === "image" && (
+          {socialImageAsset?.type === "image" && (
             <ImageInfo
-              asset={asset}
+              asset={socialImageAsset}
               onDelete={() => {
                 onChange({
                   field: "socialImageAssetId",
@@ -466,7 +470,9 @@ const FormFields = ({
           )}
           <div />
           <SocialPreview
-            asset={asset?.type === "image" ? asset : undefined}
+            asset={
+              socialImageAsset?.type === "image" ? socialImageAsset : undefined
+            }
             ogUrl={pageUrl}
             ogTitle={values.title}
             ogDescription={values.description}

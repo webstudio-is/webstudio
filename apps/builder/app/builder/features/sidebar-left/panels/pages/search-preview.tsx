@@ -1,6 +1,7 @@
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { formatUrl, truncateByWords, truncate } from "./social-utils";
+import env from "~/shared/env";
 
 /**
  * Full description with links https://developers.google.com/search/docs/appearance/visual-elements-gallery
@@ -64,9 +65,9 @@ const VerticalThreePointIcon = () => (
   </svg>
 );
 
-const loader = createImageLoader({ imageBaseUrl: "" });
-
 export const SearchPreview = (props: SearchPreviewProps) => {
+  const loader = createImageLoader({ imageBaseUrl: env.IMAGE_BASE_URL });
+
   return (
     <Grid
       gap={1}

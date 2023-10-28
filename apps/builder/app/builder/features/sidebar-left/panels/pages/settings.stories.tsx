@@ -34,7 +34,11 @@ assetsStore.set(
 );
 
 pagesStore.set({
-  meta: {},
+  meta: {
+    siteName: "Site name",
+    faviconAssetId: "imageId",
+    code: "code",
+  },
   homePage: {
     id: "homePageId",
     title: "Home page title",
