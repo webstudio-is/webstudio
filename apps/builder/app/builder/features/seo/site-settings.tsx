@@ -78,7 +78,7 @@ const SiteSettingsContent = (props: Props) => {
         <Label htmlFor={ids.siteName}>Site Name</Label>
         <InputField
           id={ids.siteName}
-          value={props.value.siteName}
+          value={props.value.siteName ?? ""}
           onChange={(event) => handleChange("siteName")(event.target.value)}
           placeholder="Current Site Name"
           name="Name"
@@ -132,7 +132,7 @@ const SiteSettingsContent = (props: Props) => {
           rows={5}
           autoGrow
           maxRows={10}
-          value={props.value.code}
+          value={props.value.code ?? ""}
           onChange={handleChange("code")}
         />
       </Grid>
