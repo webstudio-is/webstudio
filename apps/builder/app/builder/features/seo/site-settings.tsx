@@ -16,16 +16,16 @@ import {
 import { useEffect, useState } from "react";
 import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
 import { ImageControl } from "./image-control";
-import { assetsStore } from "~/shared/nano-states";
+import { assetsStore, pagesStore } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
+import { serverSyncStore } from "~/shared/sync";
+import { useEffectEvent } from "../ai/hooks/effect-event";
+import type { Pages } from "@webstudio-is/sdk";
 
-type Value = {
-  siteName: string;
-  faviconAssetId: string;
-  customCode: string;
-};
+type Value = Pages["meta"];
+
 type Props = {
   value: Value;
   onChange: (value: Value) => void;
@@ -41,7 +41,7 @@ const imgStyle = css({
 });
 
 const SiteSettingsContent = (props: Props) => {
-  const ids = useIds(["siteName", "favicon", "customCode"]);
+  const ids = useIds(["siteName", "favicon", "code"]);
   const handleChange =
     <T extends keyof Value>(name: T) =>
     (val: Value[T]) => {
@@ -52,7 +52,7 @@ const SiteSettingsContent = (props: Props) => {
     };
 
   const assets = useStore(assetsStore);
-  const asset = assets.get(props.value.faviconAssetId);
+  const asset = assets.get(props.value.faviconAssetId ?? "");
 
   const favIconUrl = asset ? `${asset.name}` : undefined;
 
@@ -106,7 +106,7 @@ const SiteSettingsContent = (props: Props) => {
               Upload a 32 x 32 px image to display in browser tabs.
             </Text>
             <ImageControl
-              assetId={props.value.faviconAssetId}
+              assetId={props.value.faviconAssetId ?? ""}
               onAssetIdChange={handleChange("faviconAssetId")}
             >
               <Button id={ids.favicon} css={{ justifySelf: "start" }}>
@@ -120,7 +120,7 @@ const SiteSettingsContent = (props: Props) => {
       <Separator />
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label htmlFor={ids.customCode} sectionTitle>
+        <Label htmlFor={ids.code} sectionTitle>
           Custom Code
         </Label>
         <Text color="subtle">
@@ -128,12 +128,12 @@ const SiteSettingsContent = (props: Props) => {
           tag to every page across the published site.
         </Text>
         <TextArea
-          id={ids.customCode}
+          id={ids.code}
           rows={5}
           autoGrow
           maxRows={10}
-          value={props.value.customCode}
-          onChange={handleChange("customCode")}
+          value={props.value.code}
+          onChange={handleChange("code")}
         />
       </Grid>
       <div />
@@ -141,24 +141,28 @@ const SiteSettingsContent = (props: Props) => {
   );
 };
 
-export const SiteSettings = () => {
-  const [value, setValue] = useState({
-    siteName: "",
-    faviconAssetId: "",
-    customCode: "",
-  });
+const SiteSettingsView = () => {
+  const [value, setValue] = useState(
+    pagesStore.get()?.meta ?? {
+      siteName: "",
+      faviconAssetId: "",
+      code: "",
+    }
+  );
 
   const open = useStore($isSiteSettigsOpen);
 
-  const handleSave = () => {
-    // @todo: Next PR
-    // eslint-disable-next-line no-console
-    console.info("Save is not implemented");
+  const handleSave = useEffectEvent(() => {
+    serverSyncStore.createTransaction([pagesStore], (pages) => {
+      if (pages === undefined) {
+        return;
+      }
 
-    // const pages = pagesStore.get();
-  };
+      pages.meta = value;
+    });
+  });
 
-  useEffect(() => handleSave, []);
+  useEffect(() => handleSave, [handleSave]);
 
   return (
     <Dialog
@@ -187,4 +191,22 @@ export const SiteSettings = () => {
       </DialogContent>
     </Dialog>
   );
+};
+
+export const SiteSettings = () => {
+  const [settingDialogLazyOpen, setSettingDialogLazyOpen] = useState(false);
+
+  useEffect(() => {
+    return $isSiteSettigsOpen.subscribe((isOpen) => {
+      if (isOpen) {
+        setSettingDialogLazyOpen(true);
+      }
+    });
+  }, []);
+
+  if (settingDialogLazyOpen === false) {
+    return null;
+  }
+
+  return <SiteSettingsView />;
 };
