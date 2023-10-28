@@ -154,6 +154,8 @@ export const SiteSettings = () => {
     // @todo: Next PR
     // eslint-disable-next-line no-console
     console.info("Save is not implemented");
+
+    // const pages = pagesStore.get();
   };
 
   useEffect(() => handleSave, []);

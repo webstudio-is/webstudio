@@ -34,6 +34,7 @@ assetsStore.set(
 );
 
 pagesStore.set({
+  meta: {},
   homePage: {
     id: "homePageId",
     title: "Home page title",

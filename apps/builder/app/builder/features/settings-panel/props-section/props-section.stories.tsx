@@ -34,6 +34,7 @@ const page = (name: string, path: string) => ({
 });
 
 pagesStore.set({
+  meta: {},
   homePage: page("Home", "/"),
   pages: [
     page("About", "/about"),
