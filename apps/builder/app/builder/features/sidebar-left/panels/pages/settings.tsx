@@ -31,6 +31,7 @@ import {
   Checkbox,
   Separator,
   Text,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -229,240 +230,250 @@ const FormFields = ({
     "dsndsnm,dnsm,dns,mndm,snd,mnsm,dns,mnd,msnd,mnsd,mnsmnms,nd,mnsdm,nsm,ndm,sndm,nsdm,nsdn";
   const pageUrl = `https://${pageDomainAndPath}`;
 
-  return (
-    <>
-      {/**
-       * ----------------------========<<<Page props>>>>========----------------------
-       */}
-      <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-        <Grid gap={1}>
-          <Label htmlFor={fieldIds.name}>Page Name</Label>
-          <InputErrorsTooltip errors={errors.name}>
-            <InputField
-              tabIndex={1}
-              color={errors.name && "error"}
-              id={fieldIds.name}
-              autoFocus
-              onFocus={autoSelect ? autoSelectHandler : undefined}
-              name="name"
-              placeholder="About"
-              disabled={disabled}
-              value={values.name}
-              onChange={(event) => {
-                onChange({ field: "name", value: event.target.value });
-              }}
-            />
-          </InputErrorsTooltip>
+  const TOPBAR_HEIGHT = 40;
+  const HEADER_HEIGHT = 40;
+  const FOOTER_HEIGHT = 24;
+  const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
 
-          <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-            {values.isHomePage ? (
-              <HomeIcon />
-            ) : (
+  return (
+    <Grid>
+      <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
+        {/**
+         * ----------------------========<<<Page props>>>>========----------------------
+         */}
+        <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.name}>Page Name</Label>
+            <InputErrorsTooltip errors={errors.name}>
+              <InputField
+                tabIndex={1}
+                color={errors.name && "error"}
+                id={fieldIds.name}
+                autoFocus
+                onFocus={autoSelect ? autoSelectHandler : undefined}
+                name="name"
+                placeholder="About"
+                disabled={disabled}
+                value={values.name}
+                onChange={(event) => {
+                  onChange({ field: "name", value: event.target.value });
+                }}
+              />
+            </InputErrorsTooltip>
+
+            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+              {values.isHomePage ? (
+                <HomeIcon />
+              ) : (
+                <Checkbox
+                  id={fieldIds.isHomePage}
+                  onCheckedChange={() => {
+                    onChange({ field: "path", value: "" });
+                    onChange({
+                      field: "isHomePage",
+                      value: !values.isHomePage,
+                    });
+                  }}
+                />
+              )}
+
+              <Label
+                css={{
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-all",
+                }}
+                htmlFor={fieldIds.isHomePage}
+              >
+                {values.isHomePage
+                  ? `“${values.name}” is the home page`
+                  : `Make “${values.name}” the home page`}
+              </Label>
+            </Grid>
+            {values.isHomePage === true && (
+              <>
+                <div />
+                <CopyPageDomainAndPathButton
+                  pageDomainAndPath={pageDomainAndPath}
+                />
+              </>
+            )}
+          </Grid>
+
+          {values.isHomePage === false && (
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.path}>Path</Label>
+              <InputErrorsTooltip errors={errors.path}>
+                <InputField
+                  tabIndex={1}
+                  color={errors.path && "error"}
+                  id={fieldIds.path}
+                  name="path"
+                  placeholder="/about"
+                  disabled={disabled}
+                  value={values?.path}
+                  onChange={(event) => {
+                    onChange({ field: "path", value: event.target.value });
+                  }}
+                />
+              </InputErrorsTooltip>
+              <CopyPageDomainAndPathButton
+                pageDomainAndPath={pageDomainAndPath}
+              />
+            </Grid>
+          )}
+        </Grid>
+
+        <Separator />
+
+        {/**
+         * ----------------------========<<<Search Results>>>>========----------------------
+         */}
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Grid gap={2}>
+            <Label sectionTitle>Search</Label>
+            <Text color="subtle">
+              Optimize the way this page appears in search engine results pages.
+            </Text>
+            <Grid gap={1}>
+              <Label>Search Result Preview</Label>
+              <Box
+                css={{
+                  padding: theme.spacing[5],
+                  background: theme.colors.white,
+                  borderRadius: theme.borderRadius[4],
+                  border: `1px solid ${theme.colors.borderMain}`,
+                }}
+              >
+                <Box
+                  css={{
+                    transformOrigin: "top left",
+                    transform: "scale(0.667)",
+                    width: 600,
+                    height: 80,
+                  }}
+                >
+                  <SearchPreview
+                    siteName="NotImplemented"
+                    faviconUrl="/favicon.ico"
+                    pageUrl={pageUrl}
+                    titleLink={values.title}
+                    snippet={values.description}
+                  />
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.title}>Title</Label>
+            <InputErrorsTooltip errors={errors.title}>
+              <InputField
+                tabIndex={1}
+                color={errors.title && "error"}
+                id={fieldIds.title}
+                name="title"
+                placeholder="My awesome site - About"
+                disabled={disabled}
+                value={values.title}
+                onChange={(event) => {
+                  onChange({ field: "title", value: event.target.value });
+                }}
+              />
+            </InputErrorsTooltip>
+          </Grid>
+
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.description}>Description</Label>
+            <InputErrorsTooltip errors={errors.description}>
+              <TextArea
+                tabIndex={1}
+                state={errors.description && "invalid"}
+                id={fieldIds.description}
+                name="description"
+                disabled={disabled}
+                value={values.description}
+                onChange={(value) => {
+                  onChange({ field: "description", value });
+                }}
+                autoGrow
+                maxRows={10}
+              />
+            </InputErrorsTooltip>
+            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
               <Checkbox
                 id={fieldIds.isHomePage}
                 onCheckedChange={() => {
                   onChange({ field: "path", value: "" });
-                  onChange({ field: "isHomePage", value: !values.isHomePage });
+                  onChange({
+                    field: "excludePageFromSearch",
+                    value: !values.excludePageFromSearch,
+                  });
                 }}
               />
-            )}
 
-            <Label
-              css={{
-                overflowWrap: "anywhere",
-                wordBreak: "break-all",
-              }}
-              htmlFor={fieldIds.isHomePage}
-            >
-              {values.isHomePage
-                ? `“${values.name}” is the home page`
-                : `Make “${values.name}” the home page`}
-            </Label>
+              <Label htmlFor={fieldIds.excludePageFromSearch}>
+                Exclude this page from search results
+              </Label>
+            </Grid>
           </Grid>
-          {values.isHomePage === true && (
-            <>
-              <div />
-              <CopyPageDomainAndPathButton
-                pageDomainAndPath={pageDomainAndPath}
-              />
-            </>
-          )}
         </Grid>
 
-        {values.isHomePage === false && (
-          <Grid gap={1}>
-            <Label htmlFor={fieldIds.path}>Path</Label>
-            <InputErrorsTooltip errors={errors.path}>
-              <InputField
-                tabIndex={1}
-                color={errors.path && "error"}
-                id={fieldIds.path}
-                name="path"
-                placeholder="/about"
-                disabled={disabled}
-                value={values?.path}
-                onChange={(event) => {
-                  onChange({ field: "path", value: event.target.value });
-                }}
-              />
-            </InputErrorsTooltip>
-            <CopyPageDomainAndPathButton
-              pageDomainAndPath={pageDomainAndPath}
-            />
-          </Grid>
-        )}
-      </Grid>
+        <Separator />
 
-      <Separator />
-
-      {/**
-       * ----------------------========<<<Search Results>>>>========----------------------
-       */}
-      <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-        <Grid gap={2}>
-          <Label sectionTitle>Search</Label>
+        {/**
+         * ----------------------========<<<Social Sharing>>>>========----------------------
+         */}
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Label htmlFor={fieldIds.socialImageAssetId} sectionTitle>
+            Social Image
+          </Label>
           <Text color="subtle">
-            Optimize the way this page appears in search engine results pages.
+            This image appears when you share a link to this page on social
+            media sites. If no image is set here, the Social Image set in the
+            Site Settings will be used. The optimal dimensions for the image are
+            1200x630 px or larger with a 1.91:1 aspect ratio.
           </Text>
-          <Grid gap={1}>
-            <Label>Search Result Preview</Label>
-            <Box
-              css={{
-                padding: theme.spacing[5],
-                background: theme.colors.white,
-                borderRadius: theme.borderRadius[4],
-                border: `1px solid ${theme.colors.borderMain}`,
-              }}
-            >
-              <Box
-                css={{
-                  transformOrigin: "top left",
-                  transform: "scale(0.667)",
-                  width: 600,
-                  height: 80,
-                }}
-              >
-                <SearchPreview
-                  siteName="NotImplemented"
-                  faviconUrl="/favicon.ico"
-                  pageUrl={pageUrl}
-                  titleLink={values.title}
-                  snippet={values.description}
-                />
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
-
-        <Grid gap={1}>
-          <Label htmlFor={fieldIds.title}>Title</Label>
-          <InputErrorsTooltip errors={errors.title}>
-            <InputField
-              tabIndex={1}
-              color={errors.title && "error"}
-              id={fieldIds.title}
-              name="title"
-              placeholder="My awesome site - About"
-              disabled={disabled}
-              value={values.title}
-              onChange={(event) => {
-                onChange({ field: "title", value: event.target.value });
-              }}
-            />
-          </InputErrorsTooltip>
-        </Grid>
-
-        <Grid gap={1}>
-          <Label htmlFor={fieldIds.description}>Description</Label>
-          <InputErrorsTooltip errors={errors.description}>
-            <TextArea
-              tabIndex={1}
-              state={errors.description && "invalid"}
-              id={fieldIds.description}
-              name="description"
-              disabled={disabled}
-              value={values.description}
-              onChange={(value) => {
-                onChange({ field: "description", value });
-              }}
-              autoGrow
-              maxRows={10}
-            />
-          </InputErrorsTooltip>
-          <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-            <Checkbox
-              id={fieldIds.isHomePage}
-              onCheckedChange={() => {
-                onChange({ field: "path", value: "" });
+          <Grid gap={1} flow={"column"}>
+            <ImageControl
+              assetId={values.socialImageAssetId}
+              onAssetIdChange={(socialImageAssetId) =>
                 onChange({
-                  field: "excludePageFromSearch",
-                  value: !values.excludePageFromSearch,
+                  field: "socialImageAssetId",
+                  value: socialImageAssetId,
+                })
+              }
+            >
+              <Button
+                id={fieldIds.socialImageAssetId}
+                css={{ justifySelf: "start" }}
+                color="neutral"
+              >
+                Choose Image From Assets
+              </Button>
+            </ImageControl>
+          </Grid>
+
+          {asset?.type === "image" && (
+            <ImageInfo
+              asset={asset}
+              onDelete={() => {
+                onChange({
+                  field: "socialImageAssetId",
+                  value: "",
                 });
               }}
             />
-
-            <Label htmlFor={fieldIds.excludePageFromSearch}>
-              Exclude this page from search results
-            </Label>
-          </Grid>
-        </Grid>
-      </Grid>
-
-      <Separator />
-
-      {/**
-       * ----------------------========<<<Social Sharing>>>>========----------------------
-       */}
-      <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-        <Label htmlFor={fieldIds.socialImageAssetId} sectionTitle>
-          Social Image
-        </Label>
-        <Text color="subtle">
-          This image appears when you share a link to this page on social media
-          sites. If no image is set here, the Social Image set in the Site
-          Settings will be used. The optimal dimensions for the image are
-          1200x630 px or larger with a 1.91:1 aspect ratio.
-        </Text>
-        <Grid gap={1} flow={"column"}>
-          <ImageControl
-            assetId={values.socialImageAssetId}
-            onAssetIdChange={(socialImageAssetId) =>
-              onChange({
-                field: "socialImageAssetId",
-                value: socialImageAssetId,
-              })
-            }
-          >
-            <Button
-              id={fieldIds.socialImageAssetId}
-              css={{ justifySelf: "start" }}
-              color="neutral"
-            >
-              Choose Image From Assets
-            </Button>
-          </ImageControl>
-        </Grid>
-
-        {asset?.type === "image" && (
-          <ImageInfo
-            asset={asset}
-            onDelete={() => {
-              onChange({
-                field: "socialImageAssetId",
-                value: "",
-              });
-            }}
+          )}
+          <div />
+          <SocialPreview
+            asset={asset?.type === "image" ? asset : undefined}
+            ogUrl={pageUrl}
+            ogTitle={values.title}
+            ogDescription={values.description}
           />
-        )}
-        <div />
-        <SocialPreview
-          asset={asset?.type === "image" ? asset : undefined}
-          ogUrl={pageUrl}
-          ogTitle={values.title}
-          ogDescription={values.description}
-        />
-      </Grid>
-    </>
+        </Grid>
+      </ScrollArea>
+    </Grid>
   );
 };
 
