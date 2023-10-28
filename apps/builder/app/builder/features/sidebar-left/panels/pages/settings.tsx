@@ -405,9 +405,8 @@ const FormFields = ({
             </InputErrorsTooltip>
             <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
               <Checkbox
-                id={fieldIds.isHomePage}
+                id={fieldIds.excludePageFromSearch}
                 onCheckedChange={() => {
-                  onChange({ field: "path", value: "" });
                   onChange({
                     field: "excludePageFromSearch",
                     value: !values.excludePageFromSearch,
