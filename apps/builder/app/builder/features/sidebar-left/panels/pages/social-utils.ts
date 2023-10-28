@@ -1,7 +1,7 @@
 /**
  * Exact google truncation logic is not known, but this is a close approximation
  */
-export const truncateMetaText = (
+export const truncateByWords = (
   description: string,
   maxLength: number = 155
 ) => {
@@ -20,7 +20,7 @@ export const truncateMetaText = (
   return `${truncated}${ellipsis}`;
 };
 
-export const truncateUrl = (pageUrl: string, maxLength = 53) => {
+export const truncate = (pageUrl: string, maxLength = 53) => {
   if (pageUrl.length <= maxLength) {
     return pageUrl;
   }

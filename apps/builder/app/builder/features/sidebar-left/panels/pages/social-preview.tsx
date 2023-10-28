@@ -2,7 +2,7 @@ import { Box, Grid, Label, css, theme } from "@webstudio-is/design-system";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import type { ImageAsset } from "@webstudio-is/sdk";
 import env from "~/shared/env";
-import { truncateMetaText, truncateUrl } from "./social-utils";
+import { truncateByWords, truncate } from "./social-utils";
 
 type SocialPreviewProps = {
   asset?: ImageAsset;
@@ -62,7 +62,7 @@ export const SocialPreview = ({
               lineHeight: "16px",
             }}
           >
-            {truncateUrl(ogUrl)}
+            {truncate(ogUrl)}
           </Box>
           <Box
             css={{
@@ -73,7 +73,7 @@ export const SocialPreview = ({
               lineHeight: "18px",
             }}
           >
-            {truncateMetaText(ogTitle, 60)}
+            {truncateByWords(ogTitle, 60)}
           </Box>
           <Box
             css={{
@@ -88,7 +88,7 @@ export const SocialPreview = ({
               overflow: "hidden",
             }}
           >
-            {truncateMetaText(ogDescription)}
+            {truncateByWords(ogDescription)}
           </Box>
         </Grid>
       </Grid>

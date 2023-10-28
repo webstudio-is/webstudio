@@ -1,6 +1,6 @@
-import { Flex, Grid } from "@webstudio-is/design-system";
+import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import { Image, createImageLoader } from "@webstudio-is/image";
-import { formatUrl, truncateMetaText, truncateUrl } from "./social-utils";
+import { formatUrl, truncateByWords, truncate } from "./social-utils";
 
 /**
  * Full description with links https://developers.google.com/search/docs/appearance/visual-elements-gallery
@@ -110,7 +110,7 @@ export const SearchPreview = (props: SearchPreviewProps) => {
               whiteSpace: "nowrap",
             }}
           >
-            {truncateMetaText(props.siteName)}
+            {truncate(truncateByWords(props.siteName), 60)}
           </Flex>
           <Flex
             css={{
@@ -121,22 +121,26 @@ export const SearchPreview = (props: SearchPreviewProps) => {
             }}
             align={"center"}
           >
-            {/*todo add > instead of / */ formatUrl(truncateUrl(props.pageUrl))}
+            {/*todo add > instead of / */ formatUrl(truncate(props.pageUrl))}
             <VerticalThreePointIcon />
           </Flex>
         </Grid>
       </Flex>
       <div />
-      <Flex
+      <Box
         css={{
           fontSize: "20px",
           fontWeight: 400,
           color: "#1a0dab",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          width: "100%",
         }}
       >
-        {truncateMetaText(props.titleLink, 60)}
-      </Flex>
-      <Flex
+        {truncateByWords(props.titleLink, 60)}
+      </Box>
+      <Box
         css={{
           lineHeight: 1.58,
           fontSize: 14,
@@ -147,8 +151,8 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           overflow: "hidden",
         }}
       >
-        {truncateMetaText(props.snippet)}
-      </Flex>
+        {truncateByWords(props.snippet)}
+      </Box>
     </Grid>
   );
 };
