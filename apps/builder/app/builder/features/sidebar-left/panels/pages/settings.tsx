@@ -406,6 +406,7 @@ const FormFields = ({
             <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
               <Checkbox
                 id={fieldIds.excludePageFromSearch}
+                checked={values.excludePageFromSearch}
                 onCheckedChange={() => {
                   onChange({
                     field: "excludePageFromSearch",
