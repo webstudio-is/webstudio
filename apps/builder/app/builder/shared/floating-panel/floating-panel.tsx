@@ -80,6 +80,7 @@ export const FloatingPanel = ({
     open,
     onOpenChange
   );
+
   return (
     <FloatingPanelPopover open={isOpen} onOpenChange={handleOpenChange} modal>
       <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
@@ -90,7 +91,9 @@ export const FloatingPanel = ({
         side="left"
         align="start"
         className={contentStyle({
-          zIndex: zIndex ? theme.zIndices[zIndex] : undefined,
+          css: {
+            zIndex: zIndex ? theme.zIndices[zIndex] : undefined,
+          },
         })}
       >
         {content}
