@@ -5,7 +5,6 @@ import {
   FloatingPanelPopoverTrigger,
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
-  type CSS,
 } from "@webstudio-is/design-system";
 import {
   type MutableRefObject,
@@ -59,7 +58,10 @@ type FloatingPanelProps = {
   children: JSX.Element;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
-  contentCss?: CSS;
+  // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
+  // For a panel to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
+  // After layout is fixed, this prop should be removed.
+  zIndex?: 1;
 };
 
 const contentStyle = css({
@@ -72,7 +74,7 @@ export const FloatingPanel = ({
   children,
   open,
   onOpenChange,
-  contentCss,
+  zIndex,
 }: FloatingPanelProps) => {
   const { isOpen, handleOpenChange, triggerRef, sideOffset } = useLogic(
     open,
@@ -88,7 +90,7 @@ export const FloatingPanel = ({
         side="left"
         align="start"
         className={contentStyle({
-          css: contentCss,
+          zIndex: zIndex ? theme.zIndices[zIndex] : undefined,
         })}
       >
         {content}

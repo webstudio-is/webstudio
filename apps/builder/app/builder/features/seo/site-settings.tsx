@@ -150,7 +150,7 @@ const SiteSettingsView = () => {
     }
   );
 
-  const open = useStore($isSiteSettigsOpen);
+  const isOpen = useStore($isSiteSettigsOpen);
 
   const handleSave = useEffectEvent(() => {
     serverSyncStore.createTransaction([pagesStore], (pages) => {
@@ -164,7 +164,7 @@ const SiteSettingsView = () => {
 
   return (
     <Dialog
-      open={open}
+      open={isOpen}
       onOpenChange={(isOpen) => {
         handleSave();
         $isSiteSettigsOpen.set(isOpen);
