@@ -114,9 +114,9 @@ export const links: LinksFunction = () => {
         rel: "icon",
         href: imageLoader({
           src: imageAsset.name,
-          format: "auto",
           width: 128,
           quality: 100,
+          format: "auto",
         }),
         type: undefined,
       });
