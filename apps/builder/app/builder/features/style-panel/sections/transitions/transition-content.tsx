@@ -44,6 +44,7 @@ export const TransitionContent = (props: TransitionContentProps) => {
     }
 
     props.onEditLayer(props.index, layers);
+    setIntermediateValue(undefined);
   };
 
   return (
@@ -62,7 +63,7 @@ export const TransitionContent = (props: TransitionContentProps) => {
         name="description"
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
         value={intermediateValue?.value ?? props.value ?? ""}
-        onChange={(event) => handleChange(event.target.value)}
+        onChange={handleChange}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             handleComplete();
