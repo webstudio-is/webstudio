@@ -114,9 +114,9 @@ export const links: LinksFunction = () => {
         rel: "icon",
         href: imageLoader({
           src: imageAsset.name,
-          // Do not transform favicon
-          // We need to know supported formats before to do this
-          format: "raw",
+          format: "auto",
+          width: 128,
+          quality: 100,
         }),
         type: undefined,
       });
