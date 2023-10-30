@@ -4,9 +4,10 @@ import {
   type LinksFunction,
   type LinkDescriptor,
   type ActionArgs,
+  type LoaderArgs,
   json,
 } from "@remix-run/server-runtime";
-import type { Page as PageType } from "@webstudio-is/sdk";
+import type { Page as PageType, SiteMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import { Scripts, ScrollRestoration } from "@remix-run/react";
@@ -18,32 +19,76 @@ import {
   pagesPaths,
   formsProperties,
   Page,
+  imageAssets,
 } from "../__generated__/[form]._index.tsx";
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
 export type PageData = {
+  site: SiteMeta;
   page: PageType;
 };
 
-export const meta: V2_ServerRuntimeMetaFunction = () => {
-  const { page } = pageData;
-  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [
-    { title: page?.title || "Webstudio" },
-  ];
-  for (const [name, value] of Object.entries(page?.meta ?? {})) {
-    if (name.startsWith("og:")) {
-      metas.push({
-        property: name,
-        content: value,
-      });
-      continue;
-    }
+export const loader = async (arg: LoaderArgs) => {
+  const host =
+    arg.request.headers.get("x-forwarded-host") ||
+    arg.request.headers.get("host") ||
+    "";
+  return json({ host });
+};
 
+export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
+  const { page, site } = pageData;
+
+  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [
+    { title: page.title },
+    {
+      property: "og:title",
+      content: page.title,
+    },
+  ];
+
+  if (site?.siteName) {
     metas.push({
-      name,
-      content: value,
+      property: "og:site_name",
+      content: site.siteName,
     });
+    metas.push({
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        name: site.siteName,
+        url: `https://${data?.host}`,
+      },
+    });
+  }
+
+  if (page.meta.description) {
+    metas.push({
+      name: "description",
+      content: page.meta.description,
+    });
+    metas.push({
+      property: "og:description",
+      content: page.meta.description,
+    });
+  }
+
+  if (page.meta.socialImageAssetId) {
+    const imageAsset = imageAssets.find(
+      (asset) => asset.id === page.meta.socialImageAssetId
+    );
+
+    if (imageAsset) {
+      metas.push({
+        property: "og:image",
+        content: imageLoader({
+          src: imageAsset.name,
+          // Do not transform social image (not enough information do we need to do this)
+          format: "raw",
+        }),
+      });
+    }
   }
 
   return metas;
@@ -56,6 +101,38 @@ export const links: LinksFunction = () => {
     rel: "stylesheet",
     href: css,
   });
+
+  const { site } = pageData;
+
+  if (site.faviconAssetId) {
+    const imageAsset = imageAssets.find(
+      (asset) => asset.id === site.faviconAssetId
+    );
+
+    if (imageAsset) {
+      result.push({
+        rel: "icon",
+        href: imageLoader({
+          src: imageAsset.name,
+          // Do not transform favicon for now
+          format: "raw",
+        }),
+        type: `image/${imageAsset.format}`,
+      });
+    }
+  } else {
+    result.push({
+      rel: "icon",
+      href: "/favicon.ico",
+      type: "image/x-icon",
+    });
+
+    result.push({
+      rel: "shortcut icon",
+      href: "/favicon.ico",
+      type: "image/x-icon",
+    });
+  }
 
   for (const asset of fontAssets) {
     if (asset.type === "font") {

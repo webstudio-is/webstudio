@@ -81,6 +81,8 @@ const SiteMeta = z
   })
   .default({});
 
+export type SiteMeta = z.infer<typeof SiteMeta>;
+
 export type Page = z.infer<typeof Page>;
 
 export const Pages = z.object({
