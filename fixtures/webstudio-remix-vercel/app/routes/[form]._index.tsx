@@ -46,6 +46,7 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
       property: "og:title",
       content: page.title,
     },
+    { property: "og:type", content: "website" },
   ];
 
   if (site?.siteName) {
@@ -56,7 +57,7 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     metas.push({
       "script:ld+json": {
         "@context": "https://schema.org",
-        "@type": "Organization",
+        "@type": "WebSite",
         name: site.siteName,
         url: `https://${data?.host}`,
       },
@@ -82,11 +83,11 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     if (imageAsset) {
       metas.push({
         property: "og:image",
-        content: imageLoader({
+        content: `https://${data?.host}${imageLoader({
           src: imageAsset.name,
           // Do not transform social image (not enough information do we need to do this)
           format: "raw",
-        }),
+        })}`,
       });
     }
   }
