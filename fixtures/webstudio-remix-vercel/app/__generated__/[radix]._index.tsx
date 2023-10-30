@@ -22,9 +22,14 @@ export const fontAssets: Asset[] = [];
 export const pageData: PageData = {
   page: {
     id: "xfvB4UThQXmQ_OubPYrkg",
-    name: "radix",
-    title: "radix",
-    meta: { description: "" },
+    name: "radix excluded from the search",
+    title: "Radix Revelations: Unraveling the Feline Mystique",
+    meta: {
+      description:
+        "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
+      excludePageFromSearch: true,
+      socialImageAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
+    },
     rootInstanceId: "uKWGyE9JY3cPwY-xI9vk6",
     path: "/radix",
   },
