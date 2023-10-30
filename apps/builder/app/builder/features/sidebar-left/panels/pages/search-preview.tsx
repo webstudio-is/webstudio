@@ -1,53 +1,53 @@
-import { Flex, Grid } from "@webstudio-is/design-system";
+import { Box, Flex, Grid } from "@webstudio-is/design-system";
 import { Image, createImageLoader } from "@webstudio-is/image";
+import { formatUrl, truncateByWords, truncate } from "./social-utils";
+import env from "~/shared/env";
 
 /**
- * Exact google truncation logic is not known, but this is a close approximation
+ * Full description with links https://developers.google.com/search/docs/appearance/visual-elements-gallery
  */
-export const truncateMetaText = (
-  description: string,
-  maxLength: number = 155
-) => {
-  if (description.length <= maxLength) {
-    return description;
-  }
-
-  const ellipsis = "\u00A0...";
-  let truncated = description.substring(0, maxLength);
-  const lastSpaceIndex = truncated.lastIndexOf(" ");
-
-  // If there's a space to truncate at, use it; otherwise, use the max length
-  truncated =
-    lastSpaceIndex > 0 ? truncated.substring(0, lastSpaceIndex) : truncated;
-
-  return `${truncated}${ellipsis}`;
-};
-
-export const truncateUrl = (pageUrl: string, maxLength = 53) => {
-  if (pageUrl.length <= maxLength) {
-    return pageUrl;
-  }
-
-  const ellipsis = "...";
-  const truncated = pageUrl.substring(0, maxLength);
-
-  return `${truncated}${ellipsis}`;
-};
-
-const formatUrl = (urlString: string) => {
-  const url = new URL(urlString);
-
-  return `${url.origin}${url.pathname.split("/").join(" › ")}`;
-};
-
 type SearchPreviewProps = {
   /**
-   * The URL of the page to preview in search results
+   *  https://developers.google.com/search/docs/appearance/site-names
+   * ```html
+   *   <script type="application/ld+json">
+   *    {
+   *      "@context" : "https://schema.org",
+   *      "@type" : "WebSite",
+   *      "name" : "Example",
+   *      "url" : "https://example.com/"
+   *    }
+   *   </script>
+   * ```
+   */
+  siteName: string;
+
+  /**
+   * Domain + Visible Url, The URL of the page to preview in search results
+   * or https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
    */
   pageUrl: string;
-  title: string;
-  description: string;
-  siteName: string;
+
+  /**
+   * https://developers.google.com/search/docs/appearance/title-link
+   * ```html
+   *    <title>Blue title link example</title>
+   * ```
+   */
+  titleLink: string;
+
+  /**
+   * Snippets are automatically created from page content https://developers.google.com/search/docs/appearance/snippet
+   * sometimes meta description or structured data can be used
+   * ```html
+   *   <meta name="description" content="This is the description of the content of the page">
+   * ```
+   */
+  snippet: string;
+
+  /**
+   * https://developers.google.com/search/docs/appearance/favicon-in-search
+   */
   faviconUrl: string;
 };
 
@@ -65,9 +65,9 @@ const VerticalThreePointIcon = () => (
   </svg>
 );
 
-const loader = createImageLoader({ imageBaseUrl: "" });
-
 export const SearchPreview = (props: SearchPreviewProps) => {
+  const loader = createImageLoader({ imageBaseUrl: env.IMAGE_BASE_URL });
+
   return (
     <Grid
       gap={1}
@@ -111,7 +111,7 @@ export const SearchPreview = (props: SearchPreviewProps) => {
               whiteSpace: "nowrap",
             }}
           >
-            {truncateMetaText(props.siteName)}
+            {truncate(truncateByWords(props.siteName), 60)}
           </Flex>
           <Flex
             css={{
@@ -122,22 +122,26 @@ export const SearchPreview = (props: SearchPreviewProps) => {
             }}
             align={"center"}
           >
-            {/*todo add > instead of / */ formatUrl(truncateUrl(props.pageUrl))}
+            {/*todo add > instead of / */ formatUrl(truncate(props.pageUrl))}
             <VerticalThreePointIcon />
           </Flex>
         </Grid>
       </Flex>
       <div />
-      <Flex
+      <Box
         css={{
           fontSize: "20px",
           fontWeight: 400,
           color: "#1a0dab",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          width: "100%",
         }}
       >
-        {truncateMetaText(props.title, 60)}
-      </Flex>
-      <Flex
+        {truncateByWords(props.titleLink, 60)}
+      </Box>
+      <Box
         css={{
           lineHeight: 1.58,
           fontSize: 14,
@@ -148,8 +152,8 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           overflow: "hidden",
         }}
       >
-        {truncateMetaText(props.description)}
-      </Flex>
+        {truncateByWords(props.snippet)}
+      </Box>
     </Grid>
   );
 };

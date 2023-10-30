@@ -24,37 +24,62 @@ import {
   Box,
   Label,
   TextArea,
-  styled,
-  Flex,
   InputErrorsTooltip,
   Tooltip,
   InputField,
+  Grid,
+  Checkbox,
+  Separator,
+  Text,
+  ScrollArea,
 } from "@webstudio-is/design-system";
-import { ChevronDoubleLeftIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  ChevronDoubleLeftIcon,
+  CopyIcon,
+  TrashIcon,
+  CheckMarkIcon,
+  LinkIcon,
+  HomeIcon,
+} from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
 import {
+  assetsStore,
   instancesStore,
   pagesStore,
+  projectStore,
   selectedInstanceSelectorStore,
   selectedPageIdStore,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
+import { SearchPreview } from "./search-preview";
+import { ImageControl } from "~/builder/features/seo/image-control";
+import { ImageInfo } from "./image-info";
+import { SocialPreview } from "./social-preview";
+import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
+import { getPublishedUrl } from "~/shared/router-utils";
 
-const Group = styled(Flex, {
-  marginBottom: theme.spacing[9],
-  gap: theme.spacing[4],
-  defaultVariants: { direction: "column" },
-});
-
-const fieldNames = ["name", "path", "title", "description"] as const;
-type FieldName = (typeof fieldNames)[number];
-type Values = {
-  [fieldName in FieldName]: string;
+const fieldDefaultValues = {
+  name: "Untitled",
+  path: "/untitled",
+  title: "Untitled",
+  description: "",
+  isHomePage: false,
+  excludePageFromSearch: false,
+  socialImageAssetId: "",
 };
+
+const fieldNames = Object.keys(
+  fieldDefaultValues
+) as (keyof typeof fieldDefaultValues)[];
+
+type FieldName = (typeof fieldNames)[number];
+
+type Values = typeof fieldDefaultValues;
+
 type Errors = {
   [fieldName in FieldName]?: string[];
 };
@@ -116,112 +141,347 @@ const validateValues = (
   return errors;
 };
 
-const toFormPage = (page?: Page): Values => {
+const toFormPage = (page: Page, isHomePage: boolean): Values => {
   return {
-    name: page?.name ?? "",
-    path: page?.path ?? "",
-    title: page?.title ?? "",
-    description: page?.meta.description ?? "",
+    name: page.name,
+    path: page.path,
+    title: page.title,
+    description: page.meta.description ?? "",
+    socialImageAssetId: page.meta.socialImageAssetId ?? "",
+    excludePageFromSearch: page.meta.excludePageFromSearch ?? false,
+    isHomePage,
   };
 };
 
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
 
+const CopyPageDomainAndPathButton = ({
+  pageDomainAndPath,
+}: {
+  pageDomainAndPath: string;
+}) => {
+  const [pathIconState, setPathIconState] = useState<
+    "link" | "copy" | "checkmark"
+  >("link");
+
+  let pathIcon = <CopyIcon />;
+  if (pathIconState === "checkmark") {
+    pathIcon = <CheckMarkIcon />;
+  } else if (pathIconState === "link") {
+    pathIcon = <LinkIcon />;
+  }
+
+  return (
+    <Tooltip
+      content={pathIconState === "checkmark" ? "Copied" : "Click to copy"}
+    >
+      <Button
+        color="ghost"
+        onPointerDown={(event) => {
+          navigator.clipboard.writeText("ddd");
+          setPathIconState("checkmark");
+          // Prevent tooltip to be closed
+          event.stopPropagation();
+        }}
+        prefix={pathIcon}
+        css={{ justifySelf: "start" }}
+        onMouseEnter={() => {
+          setPathIconState("copy");
+        }}
+        onMouseLeave={() => {
+          setPathIconState("link");
+        }}
+      >
+        {pageDomainAndPath}
+      </Button>
+    </Tooltip>
+  );
+};
+
 const FormFields = ({
   disabled,
   autoSelect,
-  isHomePage,
   errors,
   values,
   onChange,
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
-  isHomePage?: boolean;
   errors: Errors;
   values: Values;
-  onChange: <Name extends FieldName>(event: {
-    field: Name;
-    value: Values[Name];
-  }) => void;
+  onChange: (
+    event: {
+      [K in keyof Values]: {
+        field: K;
+        value: Values[K];
+      };
+    }[keyof Values]
+  ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
+  const assets = useStore(assetsStore);
+  const pages = useStore(pagesStore);
+  const socialImageAsset = assets.get(values.socialImageAssetId);
+  const faviconAsset = assets.get(pages?.meta.faviconAssetId ?? "");
+
+  const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
+
+  const project = projectStore.get();
+  const publishedUrl = new URL(getPublishedUrl(project?.domain ?? ""));
+
+  const pageDomainAndPath = [publishedUrl.host, values?.path]
+    .filter(Boolean)
+    .join("/")
+    .replace(/\/+/g, "/");
+  const pageUrl = `https://${pageDomainAndPath}`;
+
+  const TOPBAR_HEIGHT = 40;
+  const HEADER_HEIGHT = 40;
+  const FOOTER_HEIGHT = 24;
+  const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
 
   return (
-    <>
-      <Group>
-        <Label htmlFor={fieldIds.name}>Page Name</Label>
-        <InputErrorsTooltip errors={errors.name}>
-          <InputField
-            tabIndex={1}
-            color={errors.name && "error"}
-            id={fieldIds.name}
-            autoFocus
-            onFocus={autoSelect ? autoSelectHandler : undefined}
-            name="name"
-            placeholder="About"
-            disabled={disabled}
-            value={values?.name}
-            onChange={(event) => {
-              onChange({ field: "name", value: event.target.value });
-            }}
-          />
-        </InputErrorsTooltip>
-      </Group>
-      {isHomePage !== true && (
-        <Group>
-          <Label htmlFor={fieldIds.path}>Path</Label>
-          <InputErrorsTooltip errors={errors.path}>
-            <InputField
-              tabIndex={1}
-              color={errors.path && "error"}
-              id={fieldIds.path}
-              name="path"
-              placeholder="/about"
-              disabled={disabled}
-              value={values?.path}
-              onChange={(event) => {
-                onChange({ field: "path", value: event.target.value });
+    <Grid>
+      <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
+        {/**
+         * ----------------------========<<<Page props>>>>========----------------------
+         */}
+        <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.name}>Page Name</Label>
+            <InputErrorsTooltip errors={errors.name}>
+              <InputField
+                tabIndex={1}
+                color={errors.name && "error"}
+                id={fieldIds.name}
+                autoFocus
+                onFocus={autoSelect ? autoSelectHandler : undefined}
+                name="name"
+                placeholder="About"
+                disabled={disabled}
+                value={values.name}
+                onChange={(event) => {
+                  onChange({ field: "name", value: event.target.value });
+                }}
+              />
+            </InputErrorsTooltip>
+
+            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+              {values.isHomePage ? (
+                <HomeIcon />
+              ) : (
+                <Checkbox
+                  id={fieldIds.isHomePage}
+                  onCheckedChange={() => {
+                    onChange({ field: "path", value: "" });
+                    onChange({
+                      field: "isHomePage",
+                      value: !values.isHomePage,
+                    });
+                  }}
+                />
+              )}
+
+              <Label
+                css={{
+                  overflowWrap: "anywhere",
+                  wordBreak: "break-all",
+                }}
+                htmlFor={fieldIds.isHomePage}
+              >
+                {values.isHomePage
+                  ? `“${values.name}” is the home page`
+                  : `Make “${values.name}” the home page`}
+              </Label>
+            </Grid>
+            {values.isHomePage === true && (
+              <>
+                <div />
+                <CopyPageDomainAndPathButton
+                  pageDomainAndPath={pageDomainAndPath}
+                />
+              </>
+            )}
+          </Grid>
+
+          {values.isHomePage === false && (
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.path}>Path</Label>
+              <InputErrorsTooltip errors={errors.path}>
+                <InputField
+                  tabIndex={1}
+                  color={errors.path && "error"}
+                  id={fieldIds.path}
+                  name="path"
+                  placeholder="/about"
+                  disabled={disabled}
+                  value={values?.path}
+                  onChange={(event) => {
+                    onChange({ field: "path", value: event.target.value });
+                  }}
+                />
+              </InputErrorsTooltip>
+              <CopyPageDomainAndPathButton
+                pageDomainAndPath={pageDomainAndPath}
+              />
+            </Grid>
+          )}
+        </Grid>
+
+        <Separator />
+
+        {/**
+         * ----------------------========<<<Search Results>>>>========----------------------
+         */}
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Grid gap={2}>
+            <Label sectionTitle>Search</Label>
+            <Text color="subtle">
+              Optimize the way this page appears in search engine results pages.
+            </Text>
+            <Grid gap={1}>
+              <Label>Search Result Preview</Label>
+              <Box
+                css={{
+                  padding: theme.spacing[5],
+                  background: theme.colors.white,
+                  borderRadius: theme.borderRadius[4],
+                  border: `1px solid ${theme.colors.borderMain}`,
+                }}
+              >
+                <Box
+                  css={{
+                    transformOrigin: "top left",
+                    transform: "scale(0.667)",
+                    width: 600,
+                    height: 80,
+                  }}
+                >
+                  <SearchPreview
+                    siteName={pages?.meta.siteName ?? ""}
+                    faviconUrl={faviconUrl}
+                    pageUrl={pageUrl}
+                    titleLink={values.title}
+                    snippet={values.description}
+                  />
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.title}>Title</Label>
+            <InputErrorsTooltip errors={errors.title}>
+              <InputField
+                tabIndex={1}
+                color={errors.title && "error"}
+                id={fieldIds.title}
+                name="title"
+                placeholder="My awesome site - About"
+                disabled={disabled}
+                value={values.title}
+                onChange={(event) => {
+                  onChange({ field: "title", value: event.target.value });
+                }}
+              />
+            </InputErrorsTooltip>
+          </Grid>
+
+          <Grid gap={1}>
+            <Label htmlFor={fieldIds.description}>Description</Label>
+            <InputErrorsTooltip errors={errors.description}>
+              <TextArea
+                tabIndex={1}
+                state={errors.description && "invalid"}
+                id={fieldIds.description}
+                name="description"
+                disabled={disabled}
+                value={values.description}
+                onChange={(value) => {
+                  onChange({ field: "description", value });
+                }}
+                autoGrow
+                maxRows={10}
+              />
+            </InputErrorsTooltip>
+            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
+              <Checkbox
+                id={fieldIds.excludePageFromSearch}
+                checked={values.excludePageFromSearch}
+                onCheckedChange={() => {
+                  onChange({
+                    field: "excludePageFromSearch",
+                    value: !values.excludePageFromSearch,
+                  });
+                }}
+              />
+
+              <Label htmlFor={fieldIds.excludePageFromSearch}>
+                Exclude this page from search results
+              </Label>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        <Separator />
+
+        {/**
+         * ----------------------========<<<Social Sharing>>>>========----------------------
+         */}
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+          <Label htmlFor={fieldIds.socialImageAssetId} sectionTitle>
+            Social Image
+          </Label>
+          <Text color="subtle">
+            This image appears when you share a link to this page on social
+            media sites. If no image is set here, the Social Image set in the
+            Site Settings will be used. The optimal dimensions for the image are
+            1200x630 px or larger with a 1.91:1 aspect ratio.
+          </Text>
+          <Grid gap={1} flow={"column"}>
+            <ImageControl
+              assetId={values.socialImageAssetId}
+              onAssetIdChange={(socialImageAssetId) =>
+                onChange({
+                  field: "socialImageAssetId",
+                  value: socialImageAssetId,
+                })
+              }
+            >
+              <Button
+                id={fieldIds.socialImageAssetId}
+                css={{ justifySelf: "start" }}
+                color="neutral"
+              >
+                Choose Image From Assets
+              </Button>
+            </ImageControl>
+          </Grid>
+
+          {socialImageAsset?.type === "image" && (
+            <ImageInfo
+              asset={socialImageAsset}
+              onDelete={() => {
+                onChange({
+                  field: "socialImageAssetId",
+                  value: "",
+                });
               }}
             />
-          </InputErrorsTooltip>
-        </Group>
-      )}
-      <Group>
-        <Label htmlFor={fieldIds.title}>Title</Label>
-        <InputErrorsTooltip errors={errors.title}>
-          <InputField
-            tabIndex={1}
-            color={errors.title && "error"}
-            id={fieldIds.title}
-            name="title"
-            placeholder="My awesome site - About"
-            disabled={disabled}
-            value={values?.title}
-            onChange={(event) => {
-              onChange({ field: "title", value: event.target.value });
-            }}
+          )}
+          <div />
+          <SocialPreview
+            asset={
+              socialImageAsset?.type === "image" ? socialImageAsset : undefined
+            }
+            ogUrl={pageUrl}
+            ogTitle={values.title}
+            ogDescription={values.description}
           />
-        </InputErrorsTooltip>
-      </Group>
-      <Group>
-        <Label htmlFor={fieldIds.description}>Description</Label>
-        <InputErrorsTooltip errors={errors.description}>
-          <TextArea
-            tabIndex={1}
-            state={errors.description && "invalid"}
-            id={fieldIds.description}
-            name="description"
-            disabled={disabled}
-            value={values?.description}
-            onChange={(value) => {
-              onChange({ field: "description", value });
-            }}
-          />
-        </InputErrorsTooltip>
-      </Group>
-    </>
+        </Grid>
+      </ScrollArea>
+    </Grid>
   );
 };
 
@@ -261,16 +521,15 @@ export const NewPageSettings = ({
   const pages = useStore(pagesStore);
 
   const [values, setValues] = useState<Values>({
-    name: "Untitled",
-    path: nameToPath(pages, "Untitled"),
-    title: "Untitled",
-    description: "",
+    ...fieldDefaultValues,
+    path: nameToPath(pages, fieldDefaultValues.name),
   });
   const errors = validateValues(pages, undefined, values, false);
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
+
       serverSyncStore.createTransaction(
         [pagesStore, instancesStore],
         (pages, instances) => {
@@ -284,10 +543,9 @@ export const NewPageSettings = ({
             path: values.path,
             title: values.title,
             rootInstanceId,
-            meta: {
-              description: values.description,
-            },
+            meta: {},
           });
+
           instances.set(rootInstanceId, {
             type: "instance",
             id: rootInstanceId,
@@ -297,6 +555,9 @@ export const NewPageSettings = ({
           selectedInstanceSelectorStore.set(undefined);
         }
       );
+
+      updatePage(pageId, values);
+
       onSuccess(pageId);
     }
   };
@@ -309,15 +570,16 @@ export const NewPageSettings = ({
       errors={errors}
       disabled={false}
       values={values}
-      onChange={({ field, value }) => {
+      onChange={(val) => {
         setValues((values) => {
-          const changes = { [field]: value };
-          if (field === "name") {
+          const changes = { [val.field]: val.value };
+
+          if (val.field === "name") {
             if (values.path === nameToPath(pages, values.name)) {
-              changes.path = nameToPath(pages, value);
+              changes.path = nameToPath(pages, val.value);
             }
             if (values.title === values.name) {
-              changes.title = value;
+              changes.title = val.value;
             }
           }
           return { ...values, ...changes };
@@ -370,7 +632,6 @@ const NewPageSettingsView = ({
       <Box
         css={{
           overflow: "auto",
-          padding: `${theme.spacing[5]} ${theme.spacing[9]}`,
         }}
       >
         <form
@@ -398,17 +659,48 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     if (values.title !== undefined) {
       page.title = values.title;
     }
+
     if (values.description !== undefined) {
       page.meta.description = values.description;
     }
+
+    if (values.excludePageFromSearch !== undefined) {
+      page.meta.excludePageFromSearch = values.excludePageFromSearch;
+    }
+
+    if (values.socialImageAssetId !== undefined) {
+      page.meta.socialImageAssetId = values.socialImageAssetId;
+    }
   };
+
   serverSyncStore.createTransaction([pagesStore], (pages) => {
     if (pages === undefined) {
       return;
     }
+
+    // swap home page
+    if (values.isHomePage && pages.homePage.id !== pageId) {
+      const newHomePageIndex = pages.pages.findIndex(
+        (page) => page.id === pageId
+      );
+
+      if (newHomePageIndex === -1) {
+        throw new Error(`Page with id ${pageId} not found`);
+      }
+
+      const tmp = pages.homePage;
+      pages.homePage = pages.pages[newHomePageIndex];
+
+      pages.homePage.path = "";
+      pages.pages[newHomePageIndex] = tmp;
+
+      tmp.path = nameToPath(pages, tmp.name);
+    }
+
     if (pages.homePage.id === pageId) {
       updatePageMutable(pages.homePage, values);
     }
+
     for (const page of pages.pages) {
       if (page.id === pageId) {
         updatePageMutable(page, values);
@@ -455,21 +747,26 @@ export const PageSettings = ({
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
-    ...toFormPage(page),
+    ...(page ? toFormPage(page, isHomePage) : fieldDefaultValues),
     ...unsavedValues,
   };
-  const errors = validateValues(pages, pageId, values, isHomePage);
 
-  const handleSubmitDebounced = useDebouncedCallback(() => {
+  const errors = validateValues(pages, pageId, values, values.isHomePage);
+
+  const debouncedFn = useEffectEvent(() => {
     if (
       Object.keys(unsavedValues).length === 0 ||
       Object.keys(errors).length !== 0
     ) {
       return;
     }
+
     updatePage(pageId, unsavedValues);
+
     setUnsavedValues({});
-  }, 1000);
+  });
+
+  const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
 
   const handleChange = useCallback(
     <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {
@@ -503,7 +800,6 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
-      isHomePage={isHomePage}
       onClose={onClose}
       onDelete={hanldeDelete}
       errors={errors}
@@ -514,12 +810,10 @@ export const PageSettings = ({
 };
 
 const PageSettingsView = ({
-  isHomePage,
   onDelete,
   onClose,
   ...formFieldsProps
 }: {
-  isHomePage: boolean;
   onDelete: () => void;
   onClose?: () => void;
 } & ComponentProps<typeof FormFields>) => {
@@ -529,7 +823,7 @@ const PageSettingsView = ({
         title="Page Settings"
         suffix={
           <>
-            {isHomePage === false && (
+            {formFieldsProps.values.isHomePage === false && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
                   color="ghost"
@@ -557,7 +851,6 @@ const PageSettingsView = ({
       <Box
         css={{
           overflow: "auto",
-          padding: `${theme.spacing[5]} ${theme.spacing[9]}`,
         }}
       >
         <form
@@ -566,7 +859,7 @@ const PageSettingsView = ({
             onClose?.();
           }}
         >
-          <FormFields isHomePage={isHomePage} {...formFieldsProps} />
+          <FormFields {...formFieldsProps} />
           <input type="submit" hidden />
         </form>
       </Box>

@@ -17,7 +17,12 @@ const commonPageFields = {
   id: z.string(),
   name: PageName,
   title: PageTitle,
-  meta: z.record(z.string(), z.string()),
+  meta: z.object({
+    description: z.string().optional(),
+    title: z.string().optional(),
+    excludePageFromSearch: z.boolean().optional(),
+    socialImageAssetId: z.string().optional(),
+  }),
   rootInstanceId: z.string(),
 } as const;
 
@@ -68,18 +73,25 @@ const Page = z.object({
   path: PagePath,
 });
 
+const SiteMeta = z
+  .object({
+    siteName: z.string().optional(),
+    faviconAssetId: z.string().optional(),
+    code: z.string().optional(),
+  })
+  .default({});
+
 export type Page = z.infer<typeof Page>;
 
-export const Pages: z.ZodType<{ homePage: Page; pages: Array<Page> }> =
-  z.object({
-    homePage: HomePage,
-    pages: z
-      .array(Page)
-      .refine(
-        (array) =>
-          new Set(array.map((page) => page.path)).size === array.length,
-        "All paths must be unique"
-      ),
-  });
+export const Pages = z.object({
+  meta: SiteMeta,
+  homePage: HomePage,
+  pages: z
+    .array(Page)
+    .refine(
+      (array) => new Set(array.map((page) => page.path)).size === array.length,
+      "All paths must be unique"
+    ),
+});
 
 export type Pages = z.infer<typeof Pages>;
