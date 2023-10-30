@@ -12,13 +12,19 @@ type SocialPreviewProps = {
 };
 
 const imgStyle = css({
-  objectFit: "cover",
   borderTopLeftRadius: theme.borderRadius[4],
   borderTopRightRadius: theme.borderRadius[4],
   width: "100%",
   aspectRatio: "1.91 / 1",
   background: "#DFE3E6",
   borderBottom: `1px solid ${theme.colors.borderMain}`,
+  variants: {
+    hasImage: {
+      true: {
+        objectFit: "cover",
+      },
+    },
+  },
 });
 
 export const SocialPreview = ({
@@ -46,7 +52,9 @@ export const SocialPreview = ({
         <Image
           src={asset?.type === "image" ? asset.name : undefined}
           loader={imageLoader}
-          className={imgStyle()}
+          className={imgStyle({
+            hasImage: asset?.type === "image" ? true : undefined,
+          })}
         />
 
         <Grid
