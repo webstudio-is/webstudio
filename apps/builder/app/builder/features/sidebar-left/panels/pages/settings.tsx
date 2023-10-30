@@ -223,7 +223,7 @@ const FormFields = ({
   const assets = useStore(assetsStore);
   const pages = useStore(pagesStore);
   const socialImageAsset = assets.get(values.socialImageAssetId);
-  const faviconAsset = assets.get(pages?.meta.faviconAssetId ?? "");
+  const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
@@ -359,7 +359,7 @@ const FormFields = ({
                   }}
                 >
                   <SearchPreview
-                    siteName={pages?.meta.siteName ?? ""}
+                    siteName={pages?.meta?.siteName ?? ""}
                     faviconUrl={faviconUrl}
                     pageUrl={pageUrl}
                     titleLink={values.title}
