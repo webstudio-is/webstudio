@@ -118,7 +118,7 @@ export const links: LinksFunction = () => {
           // We need to know supported formats before to do this
           format: "raw",
         }),
-        type: undefined, // imageAsset.format.includes("svg") ? "image/svg+xml" : undefined,
+        type: undefined,
       });
     }
   } else {
