@@ -20,8 +20,6 @@ const gridStyle = css(textVariants.regular, {
   borderRadius: theme.borderRadius[4],
   border: `${BORDER}px solid ${theme.colors.borderMain}`,
   background: theme.colors.backgroundControls,
-  paddingRight: theme.spacing[4],
-  paddingLeft: theme.spacing[3],
   paddingTop: PADDING_TOP,
   paddingBottom: PADDING_BOTTOM,
   boxSizing: "border-box",
@@ -52,8 +50,8 @@ const gridStyle = css(textVariants.regular, {
 
 const commonStyle = css(textVariants.regular, {
   border: "none",
-  paddingRight: 0,
-  paddingLeft: 0,
+  paddingRight: theme.spacing[4],
+  paddingLeft: theme.spacing[3],
   paddingTop: 0,
   paddingBottom: 0,
   boxSizing: "border-box",
@@ -123,9 +121,6 @@ export const TextArea = forwardRef(
       ? maxRows * LINE_HEIGHT + PADDING_TOP + PADDING_BOTTOM + BORDER * 2
       : undefined;
 
-    const scrollThumpPositionDelta = 4;
-    const textAreaScrollThumbMargin = scrollThumpPositionDelta + 2;
-
     return (
       <Grid
         className={gridStyle({
@@ -147,7 +142,6 @@ export const TextArea = forwardRef(
           css={{
             height: "100%",
             maxHeight: maxRows ? maxRows * LINE_HEIGHT : undefined,
-            marginRight: -scrollThumpPositionDelta,
             // Overwrite hack from scroll-area.tsx
             "& [data-radix-scroll-area-viewport] > div": {
               display: "grid!important",
@@ -156,11 +150,7 @@ export const TextArea = forwardRef(
         >
           <div
             className={commonStyle({
-              css: {
-                marginRight: textAreaScrollThumbMargin,
-                visibility: "hidden",
-                ...css,
-              },
+              css: { visibility: "hidden", ...css },
               state,
               className,
             })}
@@ -171,7 +161,7 @@ export const TextArea = forwardRef(
           <textarea
             spellCheck={false}
             className={textAreaStyle({
-              css: { marginRight: textAreaScrollThumbMargin, ...css },
+              css,
               state,
               className,
             })}

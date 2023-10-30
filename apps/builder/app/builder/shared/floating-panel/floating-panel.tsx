@@ -58,9 +58,15 @@ type FloatingPanelProps = {
   children: JSX.Element;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
+  // For a panel to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
+  // After layout is fixed, this prop should be removed.
+  zIndex?: 1;
 };
 
-const contentStyle = css({ width: theme.spacing[30] });
+const contentStyle = css({
+  width: theme.spacing[30],
+});
 
 export const FloatingPanel = ({
   title,
@@ -68,11 +74,13 @@ export const FloatingPanel = ({
   children,
   open,
   onOpenChange,
+  zIndex,
 }: FloatingPanelProps) => {
   const { isOpen, handleOpenChange, triggerRef, sideOffset } = useLogic(
     open,
     onOpenChange
   );
+
   return (
     <FloatingPanelPopover open={isOpen} onOpenChange={handleOpenChange} modal>
       <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
@@ -82,7 +90,11 @@ export const FloatingPanel = ({
         sideOffset={sideOffset}
         side="left"
         align="start"
-        className={contentStyle()}
+        className={contentStyle({
+          css: {
+            zIndex: zIndex ? theme.zIndices[zIndex] : undefined,
+          },
+        })}
       >
         {content}
         <FloatingPanelPopoverTitle>{title}</FloatingPanelPopoverTitle>
