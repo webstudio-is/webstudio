@@ -3,13 +3,14 @@
 
 import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
 import {
   Body as Body,
   Heading as Heading,
 } from "@webstudio-is/sdk-components-react";
 
 export const fontAssets: Asset[] = [];
+export const imageAssets: ImageAsset[] = [];
 export const pageData: PageData = {
   page: {
     id: "nfzls_SkTc9jKYyxcZ8Lw",

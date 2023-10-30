@@ -25,7 +25,7 @@ import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
 export type PageData = {
-  site: SiteMeta;
+  site?: SiteMeta;
   page: PageType;
 };
 
@@ -82,11 +82,11 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     if (imageAsset) {
       metas.push({
         property: "og:image",
-        content: `https://${data?.host}${imageLoader({
+        content: imageLoader({
           src: imageAsset.name,
           // Do not transform social image (not enough information do we need to do this)
           format: "raw",
-        })}`,
+        }),
       });
     }
   }
@@ -104,7 +104,7 @@ export const links: LinksFunction = () => {
 
   const { site } = pageData;
 
-  if (site.faviconAssetId) {
+  if (site?.faviconAssetId) {
     const imageAsset = imageAssets.find(
       (asset) => asset.id === site.faviconAssetId
     );
