@@ -22,13 +22,9 @@ import {
 } from "@webstudio-is/css-data";
 import { InformationIcon } from "@webstudio-is/icons";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
-import {
-  CssValueInput,
-  type IntermediateStyleValue,
-} from "../../shared/css-value-input";
+import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { convertTupleToStringValue } from "./transition-utils";
-import { TransitionTiming } from "./transition-timing";
 
 type TransitionContentProps = {
   index: number;
@@ -105,30 +101,9 @@ export const TransitionContent = ({
         }}
       >
         <TransitionProperty
-          /* Browser defaults for property */
+          /* Browser defaults for transition-property - all */
           property={property ?? { type: "keyword", value: "all" }}
           onPropertySelection={handleOnPropertySelection}
-        />
-
-        <Label> Duration </Label>
-        <CssValueInput
-          property="transitionDuration"
-          /* Browser defaults for duration */
-          value={duration ?? { type: "unit", value: 0, unit: "s" }}
-          styleSource="local"
-        />
-
-        <Label>Delay</Label>
-        <CssValueInput
-          property="transitionDelay"
-          /* Browser defaults for delay */
-          value={delay ?? { type: "unit", value: 0, unit: "s" }}
-          styleSource="local"
-        />
-
-        <TransitionTiming
-          /* Browser default for timing */
-          timing={timing ?? { type: "keyword", value: "ease" }}
         />
       </Grid>
       <Separator css={{ gridColumn: "span 2" }} />
