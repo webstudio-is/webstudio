@@ -85,12 +85,16 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  **/
 
-export type ImageLoader = (props: {
-  width: number;
-  quality: number;
-  src: string;
-  format?: "auto" | "raw";
-}) => string;
+export type ImageLoader = (
+  props:
+    | {
+        width: number;
+        quality: number;
+        src: string;
+        format?: "auto";
+      }
+    | { src: string; format: "raw" }
+) => string;
 
 /**
  * max(...imageSizes) must be less then min(...deviceSizes)

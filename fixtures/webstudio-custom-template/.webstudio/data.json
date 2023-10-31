@@ -1,14 +1,19 @@
 {
   "build": {
-    "id": "de63ff61-f4b6-437e-bbc6-b2d085cd35bd",
+    "id": "bed606f3-fc20-408b-9e27-afa65f293390",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 5,
-    "createdAt": "2023-09-21T09:44:06.958Z",
+    "version": 13,
+    "createdAt": "2023-10-30T20:36:31.649Z",
     "pages": {
+      "meta": {
+        "siteName": "Fixture Site",
+        "faviconAssetId": "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
+        "code": ""
+      },
       "homePage": {
         "id": "nfzls_SkTc9jKYyxcZ8Lw",
         "name": "Home",
-        "title": "Home",
+        "title": "Site Title",
         "meta": {
           "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
         },
@@ -123,7 +128,7 @@
   "page": {
     "id": "nfzls_SkTc9jKYyxcZ8Lw",
     "name": "Home",
-    "title": "Home",
+    "title": "Site Title",
     "meta": {
       "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
     },
@@ -134,7 +139,7 @@
     {
       "id": "nfzls_SkTc9jKYyxcZ8Lw",
       "name": "Home",
-      "title": "Home",
+      "title": "Site Title",
       "meta": {
         "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
       },
@@ -142,7 +147,22 @@
       "path": ""
     }
   ],
-  "assets": [],
+  "assets": [
+    {
+      "id": "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
+      "name": "home_wsKvRSqvkajPPBeycZ-C8.svg",
+      "description": null,
+      "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
+      "size": 3350,
+      "type": "image",
+      "format": "svg",
+      "createdAt": "2023-10-30T20:35:47.113Z",
+      "meta": {
+        "width": 16,
+        "height": 16
+      }
+    }
+  ],
   "user": {
     "email": "hello@webstudio.is"
   },
