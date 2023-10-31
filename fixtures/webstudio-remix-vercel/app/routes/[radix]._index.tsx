@@ -34,20 +34,49 @@ export const loader = async (arg: LoaderArgs) => {
     arg.request.headers.get("x-forwarded-host") ||
     arg.request.headers.get("host") ||
     "";
-  return json({ host });
+
+  const url = new URL(arg.request.url);
+  url.host = host;
+  url.protocol = "https";
+
+  return json(
+    { host, url: url.href },
+    // No way for current information to change, so add cache for 10 minutes
+    // In case of CRM Data, this should be set to 0
+    { headers: { "Cache-Control": "public, max-age=600" } }
+  );
+};
+
+export const headers = () => {
+  return {
+    "Cache-Control": "public, max-age=0, must-revalidate",
+  };
 };
 
 export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
   const { page, site } = pageData;
 
-  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [
-    { title: page.title },
-    {
+  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [];
+
+  if (data?.url) {
+    metas.push({
+      property: "og:url",
+      content: data.url,
+    });
+  }
+
+  if (page.title) {
+    metas.push({ title: page.title });
+
+    metas.push({
       property: "og:title",
       content: page.title,
-    },
-    { property: "og:type", content: "website" },
-  ];
+    });
+  }
+
+  metas.push({ property: "og:type", content: "website" });
+
+  const origin = `https://${data?.host}`;
 
   if (site?.siteName) {
     metas.push({
@@ -59,7 +88,7 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
         "@context": "https://schema.org",
         "@type": "WebSite",
         name: site.siteName,
-        url: `https://${data?.host}`,
+        url: origin,
       },
     });
   }
