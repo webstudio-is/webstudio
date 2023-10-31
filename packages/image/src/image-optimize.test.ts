@@ -93,8 +93,10 @@ describe("Image optimizations applied", () => {
       srcSet: undefined,
       sizes: "100vw",
       quality: 70,
-      loader: ({ width, src, quality }) =>
-        `${new URL(src).pathname}?w=${width}&q=${quality}`,
+      loader: (props) =>
+        `${new URL(props.src).pathname}?w=${
+          props.format !== "raw" ? props.width : 0
+        }&q=${props.format !== "raw" ? props.quality : 0}`,
     });
 
     expect(imgAttr).toMatchInlineSnapshot(`

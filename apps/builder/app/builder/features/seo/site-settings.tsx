@@ -24,7 +24,7 @@ import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "../ai/hooks/effect-event";
 import type { Pages } from "@webstudio-is/sdk";
 
-type Value = Pages["meta"];
+type Value = NonNullable<Pages["meta"]>;
 
 type Props = {
   value: Value;

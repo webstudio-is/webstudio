@@ -73,18 +73,17 @@ const Page = z.object({
   path: PagePath,
 });
 
-const SiteMeta = z
-  .object({
-    siteName: z.string().optional(),
-    faviconAssetId: z.string().optional(),
-    code: z.string().optional(),
-  })
-  .default({});
+const SiteMeta = z.object({
+  siteName: z.string().optional(),
+  faviconAssetId: z.string().optional(),
+  code: z.string().optional(),
+});
+export type SiteMeta = z.infer<typeof SiteMeta>;
 
 export type Page = z.infer<typeof Page>;
 
 export const Pages = z.object({
-  meta: SiteMeta,
+  meta: SiteMeta.optional(),
   homePage: HomePage,
   pages: z
     .array(Page)

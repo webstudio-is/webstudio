@@ -3,18 +3,36 @@
 
 import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
 import {
   Body as Body,
   Heading as Heading,
 } from "@webstudio-is/sdk-components-react";
 
 export const fontAssets: Asset[] = [];
+export const imageAssets: ImageAsset[] = [
+  {
+    id: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
+    name: "home_wsKvRSqvkajPPBeycZ-C8.svg",
+    description: null,
+    projectId: "0d856812-61d8-4014-a20a-82e01c0eb8ee",
+    size: 3350,
+    type: "image",
+    format: "svg",
+    createdAt: "2023-10-30T20:35:47.113Z",
+    meta: { width: 16, height: 16 },
+  },
+];
 export const pageData: PageData = {
+  site: {
+    siteName: "Fixture Site",
+    faviconAssetId: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
+    code: "",
+  },
   page: {
     id: "nfzls_SkTc9jKYyxcZ8Lw",
     name: "Home",
-    title: "Home",
+    title: "Site Title",
     meta: {
       description: "Page description f511c297-b44f-4e4b-96bd-d013da06bada",
     },
