@@ -60,7 +60,6 @@ import { ImageControl } from "~/builder/features/seo/image-control";
 import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { getPublishedUrl } from "~/shared/router-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -228,7 +227,7 @@ const FormFields = ({
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
   const project = projectStore.get();
-  const publishedUrl = new URL(getPublishedUrl(project?.domain ?? ""));
+  const publishedUrl = new URL(`https://${project?.domain}`);
 
   const pageDomainAndPath = [publishedUrl.host, values?.path]
     .filter(Boolean)
