@@ -11,3 +11,4 @@ export * from "./borders/borders";
 export * from "./outline/outline";
 export * from "./effects/effects";
 export * from "./box-shadows/box-shadows";
+export * from "./transitions/transitions";

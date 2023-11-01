@@ -229,10 +229,38 @@ const filteredProperties: FilteredProperties = (() => {
   const ignoreProperties = ["all", "-webkit-line-clamp", "--*"];
   let property: Property;
   const result = {} as FilteredProperties;
+
+  /*
+    A transition is a shorthand property that represents the combination of the other four properties.
+    Typically, we exclude shorthand properties when using the expanded ones.
+    However, in this case, the transition property in the designs allows users to set all transition values at once.
+    Therefore, we need to make this property available from the generated list.
+
+    The initial properties for transition is
+    config.initial = [
+      'transition-delay',
+      'transition-duration',
+      'transition-property',
+      'transition-timing-function'
+    ]
+
+    We replace it with the defaults of the rest of the four properties
+    "all 0s ease 0s"
+  */
+
+  const supportedComplexProperties: Record<string, string> = {
+    transition: "all 0s ease 0s",
+  };
+
   for (property in properties) {
     const config = properties[property];
     const isSupportedStatus =
       config.status === "standard" || config.status === "experimental";
+
+    if (property in supportedComplexProperties) {
+      config.initial = supportedComplexProperties[property];
+    }
+
     if (
       isSupportedStatus === false ||
       // Skipping the complex values, since we want to use the expanded once.

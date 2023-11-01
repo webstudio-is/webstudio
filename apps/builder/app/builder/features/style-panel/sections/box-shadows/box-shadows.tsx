@@ -66,6 +66,7 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
     >
       {value?.type === "layers" && value.value.length > 0 && (
         <LayersList
+          property={property}
           layers={value}
           {...props}
           renderLayer={(layersProps) => (

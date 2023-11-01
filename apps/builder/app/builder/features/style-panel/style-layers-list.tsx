@@ -19,24 +19,29 @@ import {
 import { useMemo } from "react";
 import type { CreateBatchUpdate } from "./shared/use-style-data";
 
-type LayerListProperties = RenderCategoryProps & {
-  layers: LayersValue;
-  renderLayer: (props: {
-    id: string;
-    index: number;
-    layer: TupleValue;
-    isHighlighted: boolean;
-    onLayerHide: (index: number) => void;
-    onDeleteLayer: (index: number) => void;
-    createBatchUpdate: CreateBatchUpdate;
-    onEditLayer: (index: number, newLayers: LayersValue) => void;
-  }) => JSX.Element;
+export type LayerProps = {
+  id: string;
+  index: number;
+  layer: TupleValue;
+  isHighlighted: boolean;
+  disabled?: boolean;
+  onLayerHide: (index: number) => void;
+  onDeleteLayer: (index: number) => void;
+  onEditLayer: (index: number, layers: LayersValue) => void;
+  createBatchUpdate: CreateBatchUpdate;
 };
 
-const property: StyleProperty = "boxShadow";
+type LayerListProperties = RenderCategoryProps & {
+  disabled?: boolean;
+  property: StyleProperty;
+  layers: LayersValue;
+  renderLayer: (props: LayerProps) => JSX.Element;
+};
 
 export const LayersList = ({
+  property,
   layers,
+  disabled,
   currentStyle,
   renderLayer,
   createBatchUpdate,
@@ -73,7 +78,7 @@ export const LayersList = ({
 
   return (
     <CssValueListArrowFocus dragItemId={dragItemId}>
-      <Flex direction="column" gap={2} ref={sortableRefCallback}>
+      <Flex direction="column" ref={sortableRefCallback}>
         {layers.value.map((layer, index) => {
           if (layer.type !== "tuple") {
             return null;
@@ -83,6 +88,7 @@ export const LayersList = ({
             id,
             index,
             layer,
+            disabled,
             isHighlighted: dragItemId === id,
             onLayerHide: handleHideLayer,
             onDeleteLayer: handleDeleteLayer,

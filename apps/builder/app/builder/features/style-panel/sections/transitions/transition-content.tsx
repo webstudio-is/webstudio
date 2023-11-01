@@ -1,27 +1,24 @@
 import type { InvalidValue, LayersValue } from "@webstudio-is/css-engine";
-import { parseBoxShadow } from "@webstudio-is/css-data";
 import {
   Flex,
   Label,
-  Text,
   TextArea,
-  textVariants,
   theme,
-  Tooltip,
+  textVariants,
 } from "@webstudio-is/design-system";
-import { InformationIcon } from "@webstudio-is/icons";
 import { useState } from "react";
-import type { RenderCategoryProps } from "../../style-sections";
+import { parseTransition } from "@webstudio-is/css-data";
+import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import type { IntermediateStyleValue } from "../../shared/css-value-input";
 
-type BoxShadowContentProps = {
+type TransitionContentProps = {
   index: number;
   value: string;
-  onEditLayer: (index: number, layers: LayersValue) => void;
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
+  onEditLayer: (index: number, layer: LayersValue) => void;
+  createBatchUpdate: CreateBatchUpdate;
 };
 
-export const BoxShadowContent = (props: BoxShadowContentProps) => {
+export const TransitionContent = (props: TransitionContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
@@ -37,7 +34,7 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
     if (intermediateValue === undefined) {
       return;
     }
-    const layers = parseBoxShadow(intermediateValue.value);
+    const layers = parseTransition(intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
@@ -47,6 +44,7 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
     }
 
     props.onEditLayer(props.index, layers);
+    setIntermediateValue(undefined);
   };
 
   return (
@@ -59,30 +57,12 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
         minWidth: theme.spacing[30],
       }}
     >
-      <Label>
-        <Flex align={"center"} gap={1}>
-          Code
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Text>
-                Paste a box-shadow value, for example:
-                <br />
-                <br />
-                0px 2px 5px 0px rgba(0, 0, 0, 0.2)
-              </Text>
-            }
-          >
-            <InformationIcon />
-          </Tooltip>
-        </Flex>
-      </Label>
+      <Label>Code</Label>
       <TextArea
         rows={3}
         name="description"
-        value={intermediateValue?.value ?? props.value ?? ""}
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-        state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
+        value={intermediateValue?.value ?? props.value ?? ""}
         onChange={handleChange}
         onKeyDown={(event) => {
           if (event.key === "Enter") {

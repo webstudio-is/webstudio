@@ -1,4 +1,4 @@
-import type { LayersValue, TupleValue } from "@webstudio-is/css-engine";
+import type { TupleValue } from "@webstudio-is/css-engine";
 import {
   Label,
   SmallIconButton,
@@ -13,10 +13,10 @@ import {
 import { useMemo } from "react";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { BoxShadowContent } from "./box-shadow-content";
-import type { RenderCategoryProps } from "../../style-sections";
 import { colord, type RgbaColor } from "colord";
 import { toValue } from "@webstudio-is/css-engine";
 import { ColorThumb } from "../../shared/color-thumb";
+import type { LayerProps } from "../../style-layers-list";
 
 const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
@@ -49,17 +49,7 @@ const useLayer = (layer: TupleValue) => {
   }, [layer]);
 };
 
-export const Layer = (
-  props: Pick<RenderCategoryProps, "createBatchUpdate"> & {
-    id: string;
-    index: number;
-    layer: TupleValue;
-    isHighlighted: boolean;
-    onLayerHide: (index: number) => void;
-    onDeleteLayer: (index: number) => void;
-    onEditLayer: (index: number, layers: LayersValue) => void;
-  }
-) => {
+export const Layer = (props: LayerProps) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
   const { name, shadow, color } = useLayer(layer);
 
@@ -95,6 +85,7 @@ export const Layer = (
             <SmallIconButton
               variant="destructive"
               tabIndex={-1}
+              disabled={layer.hidden}
               icon={<SubtractIcon />}
               onClick={(event) => {
                 onDeleteLayer(index);
