@@ -24,10 +24,6 @@ import {
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
-export interface AppLoadContext {
-  EXCLUDE_FROM_SEARCH: string;
-}
-
 export type PageData = {
   site?: SiteMeta;
   page: PageType;
@@ -42,6 +38,9 @@ export const loader = async (arg: LoaderArgs) => {
   const url = new URL(arg.request.url);
   url.host = host;
   url.protocol = "https";
+
+  // typecheck
+  arg.context.EXCLUDE_FROM_SEARCH satisfies string;
 
   return json(
     {
