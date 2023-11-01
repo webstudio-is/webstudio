@@ -1,6 +1,6 @@
 import { ActionArgs } from "@remix-run/server-runtime";
 
-export const actions = (arg: ActionArgs) => {
+export const loader = (arg: ActionArgs) => {
   const host =
     arg.request.headers.get("x-forwarded-host") ||
     arg.request.headers.get("host") ||
@@ -13,7 +13,6 @@ Disallow: /api/
 
 # Uncomment
 # Sitemap: https://${host}/sitemap.xml
-
 
   `,
     {

@@ -214,6 +214,14 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating files";
 
+  const appRoot = "app";
+
+  const generatedDir = join(appRoot, "__generated__");
+  await rm(generatedDir, { recursive: true, force: true });
+
+  const routesDir = join(appRoot, "routes");
+  await rm(routesDir, { recursive: true, force: true });
+
   await copyTemplates();
 
   if (options.template !== undefined) {
@@ -389,14 +397,6 @@ export const prebuild = async (options: {
   }
 
   spinner.text = "Generating routes and pages";
-
-  const appRoot = "app";
-
-  const generatedDir = join(appRoot, "__generated__");
-  await rm(generatedDir, { recursive: true, force: true });
-
-  const routesDir = join(appRoot, "routes");
-  await rm(routesDir, { recursive: true, force: true });
 
   const routeFileTemplate = await readFile(
     normalize(
