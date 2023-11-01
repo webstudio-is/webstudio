@@ -45,17 +45,22 @@ FloatingPanelPopoverContent.displayName = "FloatingPanelPopoverContent";
 
 export const FloatingPanelPopoverTitle = ({
   children,
+  actions,
   closeLabel = "Close dialog",
 }: {
   children: ReactNode;
+  actions?: ReactNode;
   closeLabel?: string;
 }) => (
   <TitleSlot>
     <PanelTitle
       suffix={
-        <Primitive.Close asChild>
-          <CloseButton aria-label={closeLabel} />
-        </Primitive.Close>
+        <>
+          {actions}
+          <Primitive.Close asChild>
+            <CloseButton aria-label={closeLabel} />
+          </Primitive.Close>
+        </>
       }
     >
       {children}
