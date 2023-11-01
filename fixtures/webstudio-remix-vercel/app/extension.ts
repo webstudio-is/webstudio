@@ -1,3 +1,4 @@
+// @eslint-ignore
 // @ts-ignore
 import { AppLoadContext } from "@remix-run/server-runtime";
 
