@@ -19,18 +19,20 @@ export default {
 registerContainers();
 selectedInstanceSelectorStore.set(["root"]);
 
+const VariablesPopover = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  return (
+    <FloatingPanelPopover open={isOpen} onOpenChange={setIsOpen}>
+      <FloatingPanelPopoverTrigger asChild>
+        <Button>Open variables panel</Button>
+      </FloatingPanelPopoverTrigger>
+      <FloatingPanelPopoverContent align="start">
+        <VariablesPanel />
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
+  );
+};
+
 export const Variables: StoryObj = {
-  render: () => {
-    const [isOpen, setIsOpen] = useState(true);
-    return (
-      <FloatingPanelPopover open={isOpen} onOpenChange={setIsOpen}>
-        <FloatingPanelPopoverTrigger asChild>
-          <Button>Open variables panel</Button>
-        </FloatingPanelPopoverTrigger>
-        <FloatingPanelPopoverContent align="start">
-          <VariablesPanel propId={undefined} />
-        </FloatingPanelPopoverContent>
-      </FloatingPanelPopover>
-    );
-  },
+  render: () => <VariablesPopover />,
 };
