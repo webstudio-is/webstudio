@@ -55,6 +55,8 @@ export const menuItemCss = css(textVariants.labelsTitleCase, {
   mx: itemMargin,
   padding: theme.spacing[3],
   borderRadius: theme.borderRadius[3],
+  // override button default styles
+  backgroundColor: "transparent",
   "&:focus, &[data-found], &[aria-selected=true], &[data-state=open]": {
     backgroundColor: theme.colors.backgroundItemMenuItemHover,
   },
@@ -108,6 +110,8 @@ export const menuCss = css({
     },
   },
 });
+
+export const MenuList = styled("div", menuCss);
 
 export const subMenuCss = css(menuCss, {
   // the goal is to align the top menu item in a sub menu
