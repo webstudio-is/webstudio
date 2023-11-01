@@ -1,4 +1,4 @@
-// @eslint-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { AppLoadContext } from "@remix-run/server-runtime";
 
