@@ -251,6 +251,7 @@ const ListItem = ({
         <>
           <Tooltip content="Edit variable" side="bottom">
             <SmallIconButton
+              tabIndex={-1}
               aria-label="Edit variable"
               icon={<MenuIcon />}
               onClick={() => onEdit(variable)}
@@ -258,6 +259,7 @@ const ListItem = ({
           </Tooltip>
           <Tooltip content="Delete variable" side="bottom">
             <SmallIconButton
+              tabIndex={-1}
               aria-label="Delete variable"
               variant="destructive"
               icon={<MinusIcon />}
