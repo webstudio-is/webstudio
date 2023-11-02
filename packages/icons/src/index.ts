@@ -9,7 +9,6 @@ export * from "./justify-items-end";
 export * from "./justify-items-space-around";
 export * from "./justify-items-space-between";
 export * from "./justify-items-start";
-export * from "./aspect-ratio";
 export * from "./cloud";
 export * from "./trash";
 export * from "./size";

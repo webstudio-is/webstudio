@@ -31,6 +31,7 @@ registerContainers();
 registeredComponentMetasStore.set(new Map(Object.entries(baseComponentMetas)));
 projectStore.set({ id: "my-project" } as Project);
 pagesStore.set({
+  meta: {},
   homePage: { id: "home-page", rootInstanceId: "body0" } as Page,
   pages: [],
 });

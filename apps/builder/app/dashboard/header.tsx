@@ -48,7 +48,7 @@ const Menu = ({ user }: { user: User }) => {
           </Flex>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent align="end">
         <DropdownMenuLabel>{title}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
           Logout

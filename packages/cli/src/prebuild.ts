@@ -35,6 +35,7 @@ import type {
   Deployment,
   Asset,
   FontAsset,
+  ImageAsset,
 } from "@webstudio-is/sdk";
 import {
   createScope,
@@ -213,6 +214,14 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating files";
 
+  const appRoot = "app";
+
+  const generatedDir = join(appRoot, "__generated__");
+  await rm(generatedDir, { recursive: true, force: true });
+
+  const routesDir = join(appRoot, "routes");
+  await rm(routesDir, { recursive: true, force: true });
+
   await copyTemplates();
 
   if (options.template !== undefined) {
@@ -340,6 +349,13 @@ export const prebuild = async (options: {
   const assetsToDownload: Promise<void>[] = [];
   const fontAssets: FontAsset[] = [];
 
+  const imageAssets: ImageAsset[] = [];
+  for (const asset of siteData.assets) {
+    if (asset.type === "image") {
+      imageAssets.push(asset);
+    }
+  }
+
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
@@ -353,8 +369,6 @@ export const prebuild = async (options: {
     for (const asset of siteData.assets) {
       if (asset.type === "image") {
         const imageSrc = imageLoader({
-          width: 16,
-          quality: 100,
           src: asset.name,
           format: "raw",
         });
@@ -383,14 +397,6 @@ export const prebuild = async (options: {
   }
 
   spinner.text = "Generating routes and pages";
-
-  const appRoot = "app";
-
-  const generatedDir = join(appRoot, "__generated__");
-  await rm(generatedDir, { recursive: true, force: true });
-
-  const routesDir = join(appRoot, "routes");
-  await rm(routesDir, { recursive: true, force: true });
 
   const routeFileTemplate = await readFile(
     normalize(
@@ -463,6 +469,7 @@ export const prebuild = async (options: {
     const pageData = siteDataByPage[pathName];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
+      site: siteData.build.pages.meta,
       page: pageData.page,
     };
 
@@ -491,9 +498,10 @@ export const prebuild = async (options: {
 /* This is a auto generated file for building the project */ \n
 import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
 ${componentImports}
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
+export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
 export const pageData: PageData = ${JSON.stringify(renderedPageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user

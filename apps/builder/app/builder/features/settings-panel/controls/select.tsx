@@ -14,7 +14,7 @@ export const SelectControl = ({
 
   // making sure that the current value is in the list of options
   const options =
-    prop === undefined || meta.options.includes(prop.value)
+    prop === undefined || meta.options.includes(prop.value) || prop.value === ""
       ? meta.options
       : [prop.value, ...meta.options];
 

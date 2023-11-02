@@ -1,8 +1,6 @@
-import { useStore } from "@nanostores/react";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
-  useCanvasWidth,
   workspaceRectStore,
   canvasWidthStore,
 } from "~/builder/shared/nano-states";
@@ -14,28 +12,22 @@ import { findInitialWidth } from "./find-initial-width";
 
 // Fixes initial canvas width jump on wide screens.
 // Calculate canvas width during SSR based on known initial width for wide screens.
-export const useSetInitialCanvasWidth = () => {
-  const [, setCanvasWidth] = useCanvasWidth();
-  const workspaceRect = useStore(workspaceRectStore);
-  const breakpoints = useStore(breakpointsStore);
-  return useCallback(
-    (breakpointId: Breakpoint["id"]) => {
-      const breakpoint = breakpoints.get(breakpointId);
-      if (workspaceRect === undefined || breakpoint === undefined) {
-        return false;
-      }
+export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
+  const workspaceRect = workspaceRectStore.get();
+  const breakpoints = breakpointsStore.get();
+  const breakpoint = breakpoints.get(breakpointId);
+  if (workspaceRect === undefined || breakpoint === undefined) {
+    return false;
+  }
 
-      const width = findInitialWidth(
-        Array.from(breakpoints.values()),
-        breakpoint,
-        workspaceRect.width
-      );
-
-      setCanvasWidth(width);
-      return true;
-    },
-    [workspaceRect, breakpoints, setCanvasWidth]
+  const width = findInitialWidth(
+    Array.from(breakpoints.values()),
+    breakpoint,
+    workspaceRect.width
   );
+
+  canvasWidthStore.set(width);
+  return true;
 };
 
 /**

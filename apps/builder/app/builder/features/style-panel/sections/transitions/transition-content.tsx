@@ -59,7 +59,6 @@ export const TransitionContent = ({
     if (intermediateValue === undefined) {
       return;
     }
-
     const layers = parseTransition(intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
@@ -70,6 +69,7 @@ export const TransitionContent = ({
     }
 
     onEditLayer(index, layers);
+    setIntermediateValue(undefined);
   };
 
   const handleOnPropertySelection = (newProperty: TupleValueItem) => {
@@ -140,7 +140,7 @@ export const TransitionContent = ({
           name="description"
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
           value={intermediateValue?.value ?? ""}
-          onChange={(event) => handleChange(event.target.value)}
+          onChange={handleChange}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               handleComplete();

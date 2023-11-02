@@ -132,6 +132,7 @@ export const createBuild = async (
   const [rootInstanceId] = newInstances[0];
 
   const newPages = Pages.parse({
+    meta: {},
     homePage: {
       id: nanoid(),
       name: "Home",

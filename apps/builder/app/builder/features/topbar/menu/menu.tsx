@@ -30,6 +30,7 @@ import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
+import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -199,6 +200,15 @@ export const Menu = () => {
               disabled={isPublishEnabled === false}
             >
               Publish
+            </DropdownMenuItem>
+          </Tooltip>
+          <Tooltip side="right" content={undefined}>
+            <DropdownMenuItem
+              onSelect={() => {
+                $isSiteSettigsOpen.set(true);
+              }}
+            >
+              Site Settings
             </DropdownMenuItem>
           </Tooltip>
         </DropdownMenuContent>

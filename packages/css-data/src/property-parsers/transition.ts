@@ -55,6 +55,7 @@ export const parseTransition = (
     if (node.type === "Value") {
       const children = node.children;
       let layer: csstree.CssNode[] = [];
+
       for (const child of children) {
         layer.push(child);
 

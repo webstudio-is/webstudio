@@ -43,6 +43,7 @@ export const categories = [
   "boxShadows",
   "outline",
   "effects",
+  "transitions",
 ] as const;
 
 export type Category = (typeof categories)[number];

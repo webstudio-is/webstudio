@@ -1,6 +1,6 @@
 import type { InvalidValue, RgbValue } from "@webstudio-is/css-engine";
 import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
-import { TextArea, textVariants, theme } from "@webstudio-is/design-system";
+import { TextArea, textVariants } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
 import type { ControlProps } from "../../style-sections";
 
@@ -88,15 +88,15 @@ export const BackgroundGradient = (
   return (
     <TextArea
       ref={textAreaRef}
-      css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
+      css={{ ...textVariants.mono }}
       rows={2}
+      autoGrow
+      maxRows={4}
       name="description"
       disabled={props.disabled}
       value={textAreaValue ?? ""}
       state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-      onChange={(event) => {
-        handleChange(event.target.value);
-      }}
+      onChange={handleChange}
       onBlur={handleOnComplete}
       onKeyDown={(event) => {
         if (event.key === "Enter") {

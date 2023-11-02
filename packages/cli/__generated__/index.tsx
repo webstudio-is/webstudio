@@ -3,11 +3,17 @@
  **/
 import type { ReactNode } from "react";
 import type { PageData } from "../templates/route-template";
-import type { Asset } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset } from "@webstudio-is/sdk";
 
 export const fontAssets: Asset[] = [];
+export const imageAssets: ImageAsset[] = [];
 
 export const pageData: PageData = {
+  site: {
+    siteName: "",
+    faviconAssetId: "",
+    code: "",
+  },
   page: {
     id: "",
     name: "",

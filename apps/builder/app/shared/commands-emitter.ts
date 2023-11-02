@@ -8,6 +8,8 @@ type CommandMeta<CommandName extends string> = {
   name: CommandName;
   /** default because hotkeys can be customized from ui */
   defaultHotkeys?: string[];
+  /** set to false when default browser or radix behavior is desired */
+  preventDefault?: boolean;
   /** listen hotkeys only locally without sharing with other apps */
   disableHotkeyOutsideApp?: boolean;
   /**
@@ -125,6 +127,7 @@ export const createCommandsEmitter = <CommandName extends string>({
     });
     const handleKeyDown = (event: KeyboardEvent) => {
       let emitted = false;
+      let preventDefault = true;
       for (const commandMeta of findCommandsMatchingHeaviestHotkeys()) {
         if (
           commandMeta.disableHotkeyOutsideApp &&
@@ -158,11 +161,15 @@ export const createCommandsEmitter = <CommandName extends string>({
           continue;
         }
         emitted = true;
+        if (commandMeta.preventDefault === false) {
+          preventDefault = false;
+        }
         emitCommand(commandMeta.name as CommandName);
       }
       // command can redefine browser hotkeys
-      // always prevent to avoid unexpected behavior
-      if (emitted) {
+      // prevent to avoid unexpected behavior
+      // unless at least one matching command disabled prevent default
+      if (emitted && preventDefault) {
         event.preventDefault();
       }
     };

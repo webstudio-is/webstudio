@@ -19,6 +19,7 @@ export * from "./components/dialog";
 export * from "./components/floating-panel-popover";
 export * from "./components/popover";
 export {
+  MenuList,
   MenuItemButton,
   MenuCheckedIcon,
   MenuItemIndicator,

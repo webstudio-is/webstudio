@@ -9,9 +9,9 @@ import {
 } from "@webstudio-is/design-system";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
-import { useSetInitialCanvasWidth } from ".";
 import { selectedBreakpointIdStore } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
+import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {
@@ -56,7 +56,6 @@ export const BreakpointsSelector = ({
   selectedBreakpoint,
 }: BreakpointsSelector) => {
   const refs = useRef(new Map<string, HTMLButtonElement>());
-  const setInitialCanvasWidth = useSetInitialCanvasWidth();
   const getButtonById = useCallback((id: string) => refs.current.get(id), []);
 
   return (

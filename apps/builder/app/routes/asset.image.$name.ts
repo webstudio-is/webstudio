@@ -21,8 +21,6 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     throw Error("Options are invalid");
   }
 
-  const options = `width=${width},quality=${quality},format=${format}`;
-
   // Allow direct image access, and from the same origin
   const refererRawUrl = request.headers.get("referer");
   const refererUrl = refererRawUrl === null ? url : new URL(refererRawUrl);
@@ -33,9 +31,10 @@ export const loader = async ({ params, request }: LoaderArgs) => {
   }
 
   if (env.RESIZE_ORIGIN !== undefined) {
-    const assetUrl = `${env.ASSET_BASE_URL}${name}`;
+    const assetUrl = `${name}`;
     // @todo add secret ti avoid exploiting our server
-    const imageUrl = `${env.RESIZE_ORIGIN}/cdn-cgi/image/${options}/${assetUrl}`;
+    const imageUrl = `${env.RESIZE_ORIGIN}/cgi/image/${assetUrl}?${url.searchParams}`;
+
     const response = await fetch(imageUrl, {
       headers: {
         accept: request.headers.get("accept") ?? "",
