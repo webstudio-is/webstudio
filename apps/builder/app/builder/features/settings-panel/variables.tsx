@@ -50,8 +50,8 @@ const parseVariableValue = (code: string) => {
   if (ids.size === 0) {
     try {
       result.value = eval(code);
-    } catch {
-      result.error = "Unknown error";
+    } catch (error) {
+      result.error = `Parse Error: ${(error as Error).message}`;
     }
   } else {
     const idsList = Array.from(ids).join(", ");
