@@ -135,6 +135,13 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     }
   }
 
+  for (const customMeta of page.meta.custom ?? []) {
+    if (customMeta.property.trim().length === 0) {
+      continue;
+    }
+    metas.push(customMeta);
+  }
+
   return metas;
 };
 
