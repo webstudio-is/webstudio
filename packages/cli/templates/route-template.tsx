@@ -39,8 +39,15 @@ export const loader = async (arg: LoaderArgs) => {
   url.host = host;
   url.protocol = "https";
 
+  // typecheck
+  arg.context.EXCLUDE_FROM_SEARCH satisfies boolean;
+
   return json(
-    { host, url: url.href },
+    {
+      host,
+      url: url.href,
+      excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
+    },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
     { headers: { "Cache-Control": "public, max-age=600" } }
@@ -90,6 +97,13 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
         name: site.siteName,
         url: origin,
       },
+    });
+  }
+
+  if (page.meta.excludePageFromSearch || data?.excludeFromSearch) {
+    metas.push({
+      name: "robots",
+      content: "noindex, nofollow",
     });
   }
 

@@ -60,7 +60,6 @@ import { ImageControl } from "~/builder/features/seo/image-control";
 import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { getPublishedUrl } from "~/shared/router-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -178,13 +177,19 @@ const CopyPageDomainAndPathButton = ({
     >
       <Button
         color="ghost"
+        type="button"
         onPointerDown={(event) => {
-          navigator.clipboard.writeText("ddd");
+          navigator.clipboard.writeText(`https://${pageDomainAndPath}`);
           setPathIconState("checkmark");
           // Prevent tooltip to be closed
           event.stopPropagation();
         }}
-        prefix={pathIcon}
+        // Recreating Icon without pointer-events: none cause mouse leave/enter event to be fired again
+        prefix={
+          <Grid align="center" css={{ pointerEvents: "none" }}>
+            {pathIcon}
+          </Grid>
+        }
         css={{ justifySelf: "start" }}
         onMouseEnter={() => {
           setPathIconState("copy");
@@ -228,7 +233,7 @@ const FormFields = ({
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
   const project = projectStore.get();
-  const publishedUrl = new URL(getPublishedUrl(project?.domain ?? ""));
+  const publishedUrl = new URL(`https://${project?.domain}`);
 
   const pageDomainAndPath = [publishedUrl.host, values?.path]
     .filter(Boolean)
