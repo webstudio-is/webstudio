@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -117,6 +117,20 @@ const VariablePanel = ({
     JSON.stringify(variable?.value.value ?? "")
   );
   const [valueErrors, setValueErrors] = useState<undefined | string[]>();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        // prevent closing popover
+        event.preventDefault();
+        onBack();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
+    };
+  }, [onBack]);
 
   return (
     <ScrollArea
