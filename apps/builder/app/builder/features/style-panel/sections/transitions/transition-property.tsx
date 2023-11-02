@@ -7,18 +7,19 @@ import {
   ComboboxAnchor,
   Box,
   useCombobox,
-  IconButton,
   ComboboxContent,
   ComboboxLabel,
   ComboboxListbox,
   ComboboxSeparator,
   ComboboxListboxItem,
+  DeprecatedIconButton,
 } from "@webstudio-is/design-system";
 import { ChevronDownIcon } from "@webstudio-is/icons";
-import { humanizeString } from "~/shared/string-utils";
 import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
 
-const commonProperties = [
+type AnimatableProperties = (typeof animatableProperties)[number];
+
+const commonProperties: AnimatableProperties[] = [
   "all",
   "opacity",
   "margin",
@@ -28,18 +29,21 @@ const commonProperties = [
   "filter",
   "flex",
   "background-color",
-  "font-color",
-] as const;
-
-type CommonProperties = (typeof commonProperties)[number];
+];
 
 const fileteredAnimatableProperties = animatableProperties.filter(
-  (property) => !commonProperties.includes(property as CommonProperties)
+  (property) => !commonProperties.includes(property)
 );
 
-type AnimatableProperties =
-  | CommonProperties
-  | (typeof fileteredAnimatableProperties)[number];
+const transitionProperties: Array<{
+  name: AnimatableProperties;
+  label: string;
+}> = [...commonProperties, ...fileteredAnimatableProperties].map((prop) => ({
+  name: prop,
+  label: prop,
+}));
+
+type NameAndLabel = { name: string; label?: string };
 
 type TransitionPropertyProps = {
   property: KeywordValue;
@@ -50,10 +54,7 @@ export const TransitionProperty = ({
   property,
   onPropertySelection,
 }: TransitionPropertyProps) => {
-  const [selectedProperty, setSelectedProeprty] =
-    useState<AnimatableProperties>(
-      (property?.value as AnimatableProperties) ?? "all"
-    );
+  const [inputValue, setInputValue] = useState(property?.value ?? "all");
 
   const {
     getComboboxProps,
@@ -61,28 +62,24 @@ export const TransitionProperty = ({
     getInputProps,
     getMenuProps,
     getItemProps,
-  } = useCombobox<AnimatableProperties>({
-    items: [
-      ...commonProperties,
-      ...fileteredAnimatableProperties,
-    ] as AnimatableProperties[],
-    value: selectedProperty,
-    selectedItem: selectedProperty,
-    itemToString: (item) =>
-      typeof item === "string" ? humanizeString(item) : "",
-    onItemSelect(value) {
-      setSelectedProeprty(value);
-      onPropertySelection({ type: "keyword", value });
+    closeMenu,
+  } = useCombobox<NameAndLabel>({
+    items: transitionProperties,
+    value: { name: inputValue, label: inputValue },
+    selectedItem: undefined,
+    itemToString: (value) => value?.name ?? "",
+    onItemSelect: (prop) => {
+      setInputValue(prop.name);
+      onPropertySelection({ type: "keyword", value: prop.name });
     },
+    onInputChange: (value) => setInputValue(value ?? ""),
   });
 
   const renderItem = (item: AnimatableProperties) => (
     <ComboboxListboxItem
       {...getItemProps({
-        item,
-        index: [...commonProperties, ...fileteredAnimatableProperties].indexOf(
-          item
-        ),
+        item: { name: item, label: item },
+        index: transitionProperties.findIndex((prop) => prop.name === item),
       })}
       key={item}
     >
@@ -97,11 +94,24 @@ export const TransitionProperty = ({
         <Box {...getComboboxProps()}>
           <ComboboxAnchor>
             <InputField
-              {...getInputProps()}
+              autoFocus
+              {...getInputProps({
+                onKeyDown: (event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    onPropertySelection({
+                      type: "keyword",
+                      value: inputValue,
+                    });
+                    closeMenu();
+                  }
+                },
+              })}
+              placeholder="all"
               suffix={
-                <IconButton {...getToggleButtonProps()}>
+                <DeprecatedIconButton {...getToggleButtonProps()}>
                   <ChevronDownIcon />
-                </IconButton>
+                </DeprecatedIconButton>
               }
             />
           </ComboboxAnchor>
