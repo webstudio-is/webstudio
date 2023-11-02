@@ -2,7 +2,7 @@ import { Box } from "@webstudio-is/design-system";
 import { CustomMetadata } from "./custom-metadata";
 import { useState } from "react";
 
-export default { component: CustomMetadata };
+export default { component: CustomMetadata, title: "Pages/CustomMetadata" };
 
 export const Basic = () => {
   const [customMetas, setCustomMetas] = useState([
