@@ -29,8 +29,10 @@ import { CodeEditor } from "./code-editor";
 
 type VariableDataSource = Extract<DataSource, { type: "variable" }>;
 
-// convert value expression to js value
-// validating out accessing any identifier
+/**
+ * convert value expression to js value
+ * validating out accessing any identifier
+ */
 const parseVariableValue = (code: string) => {
   const result: { value?: unknown; error?: string } = {};
   const ids = new Set<string>();
