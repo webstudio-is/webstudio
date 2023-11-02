@@ -267,16 +267,20 @@ const $usedVariables = computed(
     for (const prop of props.values()) {
       if (prop.type === "action") {
         for (const value of prop.value) {
-          validateExpression(value.code, {
-            effectful: true,
-            transformIdentifier: (identifier) => {
-              const id = decodeDataSourceVariable(identifier);
-              if (id !== undefined) {
-                usedVariables.add(id);
-              }
-              return identifier;
-            },
-          });
+          try {
+            validateExpression(value.code, {
+              effectful: true,
+              transformIdentifier: (identifier) => {
+                const id = decodeDataSourceVariable(identifier);
+                if (id !== undefined) {
+                  usedVariables.add(id);
+                }
+                return identifier;
+              },
+            });
+          } catch {
+            // empty block
+          }
         }
       }
     }
