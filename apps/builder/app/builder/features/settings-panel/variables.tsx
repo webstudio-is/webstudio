@@ -164,7 +164,7 @@ const VariablePanel = ({
             onClick={() => {
               if (/[a-zA-z_]+[a-zA-z0-9_]*/.test(name) === false) {
                 setNameErrors([
-                  `Variable name can star with letter or _ and contain letters, digits and underscores`,
+                  `Variable names must start with letter or underscore (_) and can include numbers.`,
                 ]);
                 return;
               }
