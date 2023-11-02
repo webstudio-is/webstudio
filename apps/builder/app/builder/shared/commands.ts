@@ -87,6 +87,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     {
       name: "cancelCurrentDrag",
       defaultHotkeys: ["escape"],
+      // radix check event.defaultPrevented before invoking callbacks
+      preventDefault: false,
       handler: () => {
         const { publish } = $publisher.get();
         publish?.({ type: "cancelCurrentDrag" });
