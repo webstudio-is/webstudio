@@ -36,9 +36,9 @@ const PropertyContent = (props: {
       css={{
         gridTemplateColumns: `${theme.spacing[18]} 1fr 19px`,
         gridTemplateAreas: `
-      "property property-input button"
-      "content content-input button"
-    `,
+         "property property-input button"
+         "content  content-input  button"
+        `,
       }}
       align={"center"}
     >
@@ -160,8 +160,10 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
           }}
           prefix={<PlusIcon />}
           onClick={() => {
-            const newCustomMetas = [...props.customMetas];
-            newCustomMetas.push({ property: "", content: "" });
+            const newCustomMetas = [
+              ...props.customMetas,
+              { property: "", content: "" },
+            ];
             props.onChange(newCustomMetas);
           }}
         >
