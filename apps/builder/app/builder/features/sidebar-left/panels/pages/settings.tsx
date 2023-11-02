@@ -177,13 +177,19 @@ const CopyPageDomainAndPathButton = ({
     >
       <Button
         color="ghost"
+        type="button"
         onPointerDown={(event) => {
-          navigator.clipboard.writeText("ddd");
+          navigator.clipboard.writeText(`https://${pageDomainAndPath}`);
           setPathIconState("checkmark");
           // Prevent tooltip to be closed
           event.stopPropagation();
         }}
-        prefix={pathIcon}
+        // Recreating Icon without pointer-events: none cause mouse leave/enter event to be fired again
+        prefix={
+          <Grid align="center" css={{ pointerEvents: "none" }}>
+            {pathIcon}
+          </Grid>
+        }
         css={{ justifySelf: "start" }}
         onMouseEnter={() => {
           setPathIconState("copy");
