@@ -40,7 +40,6 @@ const IconButtonsWrapper = styled(Flex, {
   top: 0,
   bottom: 0,
   paddingRight: sharedPaddingRight,
-  visibility: "hidden",
 });
 
 const FakeIconButtonsWrapper = styled(Flex, {
@@ -115,11 +114,6 @@ const ItemWrapper = styled("div", {
       backgroundColor: theme.colors.backgroundHover,
     },
     [`& ${DragHandleIconStyled}`]: {
-      visibility: "visible",
-    },
-  },
-  "&:hover, &[data-active=true], &:focus-within": {
-    [`& ${IconButtonsWrapper}`]: {
       visibility: "visible",
     },
   },
