@@ -103,7 +103,7 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
   if (page.meta.excludePageFromSearch || data?.excludeFromSearch) {
     metas.push({
       name: "robots",
-      content: "noindex",
+      content: "noindex, nofollow",
     });
   }
 
