@@ -356,7 +356,7 @@ export const CodeEditor = ({
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <PlainTextPlugin
-        contentEditable={<ContentEditable onBlur={onBlur} />}
+        contentEditable={<ContentEditable spellCheck={false} onBlur={onBlur} />}
         placeholder={null}
         ErrorBoundary={LexicalErrorBoundary}
       />
