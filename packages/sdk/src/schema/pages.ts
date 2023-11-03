@@ -22,6 +22,14 @@ const commonPageFields = {
     title: z.string().optional(),
     excludePageFromSearch: z.boolean().optional(),
     socialImageAssetId: z.string().optional(),
+    custom: z
+      .array(
+        z.object({
+          property: z.string(),
+          content: z.string(),
+        })
+      )
+      .optional(),
   }),
   rootInstanceId: z.string(),
 } as const;

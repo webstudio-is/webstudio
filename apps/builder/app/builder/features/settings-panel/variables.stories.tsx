@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { useState } from "react";
+import { useStore } from "@nanostores/react";
 import { CodeEditor as CodeEditorComponent } from "./code-editor";
 import {
   Button,
@@ -7,9 +9,11 @@ import {
   FloatingPanelPopoverTrigger,
 } from "@webstudio-is/design-system";
 import { VariablesPanel } from "./variables";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { registerContainers } from "~/shared/sync";
-import { useState } from "react";
+import {
+  propsStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
+import { registerContainers, serverSyncStore } from "~/shared/sync";
 
 export default {
   title: "Builder/Variables",
@@ -19,15 +23,39 @@ export default {
 registerContainers();
 selectedInstanceSelectorStore.set(["root"]);
 
+const initialProp = {
+  id: "my-prop",
+  instanceId: "#",
+  name: "my-prop",
+  type: "string",
+  value: "initial",
+} as const;
+propsStore.set(new Map([[initialProp.id, initialProp]]));
+
 const VariablesPopover = () => {
   const [isOpen, setIsOpen] = useState(true);
+  const props = useStore(propsStore);
+  const myProp = props.get("my-prop");
   return (
     <FloatingPanelPopover open={isOpen} onOpenChange={setIsOpen}>
       <FloatingPanelPopoverTrigger asChild>
         <Button>Open variables panel</Button>
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent align="start">
-        <VariablesPanel />
+        <VariablesPanel
+          prop={myProp}
+          propMeta={{
+            required: false,
+            control: "text",
+            type: "string",
+            defaultValue: "initial",
+          }}
+          onChange={(propValue) => {
+            serverSyncStore.createTransaction([propsStore], (props) => {
+              props.set("my-prop", { ...initialProp, ...propValue });
+            });
+          }}
+        />
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>
   );

@@ -60,6 +60,7 @@ import { ImageControl } from "~/builder/features/seo/image-control";
 import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
+import { CustomMetadata } from "./custom-metadata";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -69,6 +70,12 @@ const fieldDefaultValues = {
   isHomePage: false,
   excludePageFromSearch: false,
   socialImageAssetId: "",
+  customMetas: [
+    {
+      property: "",
+      content: "",
+    },
+  ],
 };
 
 const fieldNames = Object.keys(
@@ -145,10 +152,14 @@ const toFormPage = (page: Page, isHomePage: boolean): Values => {
     name: page.name,
     path: page.path,
     title: page.title,
-    description: page.meta.description ?? "",
-    socialImageAssetId: page.meta.socialImageAssetId ?? "",
-    excludePageFromSearch: page.meta.excludePageFromSearch ?? false,
+    description: page.meta.description ?? fieldDefaultValues.description,
+    socialImageAssetId:
+      page.meta.socialImageAssetId ?? fieldDefaultValues.socialImageAssetId,
+    excludePageFromSearch:
+      page.meta.excludePageFromSearch ??
+      fieldDefaultValues.excludePageFromSearch,
     isHomePage,
+    customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
   };
 };
 
@@ -485,6 +496,19 @@ const FormFields = ({
             ogDescription={values.description}
           />
         </Grid>
+
+        <Separator />
+
+        <CustomMetadata
+          customMetas={values.customMetas}
+          onChange={(customMetas) => {
+            onChange({
+              field: "customMetas",
+              value: customMetas,
+            });
+          }}
+        />
+        <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
     </Grid>
   );
@@ -675,6 +699,10 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.socialImageAssetId !== undefined) {
       page.meta.socialImageAssetId = values.socialImageAssetId;
+    }
+
+    if (values.customMetas !== undefined) {
+      page.meta.custom = values.customMetas;
     }
   };
 
