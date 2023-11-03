@@ -15,3 +15,18 @@ test("allow to predefine already occupied identifiers", () => {
   expect(scope.getName("2", "anotherName")).toEqual("anotherName_1");
   expect(scope.getName("3", "newName")).toEqual("newName");
 });
+
+test("delete non-ascii characters from name", () => {
+  const scope = createScope(["_"]);
+  expect(scope.getName("1", "привет")).toEqual("__1");
+});
+
+test("delete spaces from name", () => {
+  const scope = createScope(["_"]);
+  expect(scope.getName("1", "My Variable")).toEqual("MyVariable");
+});
+
+test("prefix name starting with digit", () => {
+  const scope = createScope(["_"]);
+  expect(scope.getName("1", "123")).toEqual("_123");
+});
