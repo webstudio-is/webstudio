@@ -176,10 +176,8 @@ const VariablePanel = ({
           </Button>
           <Button
             onClick={() => {
-              if (/[a-zA-z_]+[a-zA-z0-9_]*/.test(name) === false) {
-                setNameErrors([
-                  `Variable names must start with letter or underscore (_) and can include numbers.`,
-                ]);
+              if (name.length === 0) {
+                setNameErrors([`Variable name is required`]);
                 return;
               }
               const result = saveVariable(variable?.id, name, value);
