@@ -1,14 +1,14 @@
 {
   "build": {
-    "id": "e21f5897-41b4-4850-971a-ff6f8badf388",
+    "id": "583e33b6-d105-45b8-ad11-a763f14760d4",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 217,
-    "createdAt": "2023-11-02T17:03:37.356Z",
+    "version": 222,
+    "createdAt": "2023-11-03T13:22:34.879Z",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
         "faviconAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
-        "code": ""
+        "code": "<script>console.log('KittyGuardedZone')</script>\n"
       },
       "homePage": {
         "id": "7Db64ZXgYiRqKSQNR-qTQ",
