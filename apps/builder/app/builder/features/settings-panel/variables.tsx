@@ -7,25 +7,34 @@ import {
   CssValueListArrowFocus,
   CssValueListItem,
   Flex,
+  FloatingPanelPopoverClose,
   FloatingPanelPopoverTitle,
   InputErrorsTooltip,
   InputField,
   Label,
   ScrollArea,
+  Separator,
   SmallIconButton,
   Text,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { MenuIcon, MinusIcon, PlusIcon } from "@webstudio-is/icons";
-import type { DataSource } from "@webstudio-is/sdk";
-import { validateExpression } from "@webstudio-is/react-sdk";
+import { MenuIcon, MinusIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import type { DataSource, Prop } from "@webstudio-is/sdk";
+import {
+  PropMeta,
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  validateExpression,
+} from "@webstudio-is/react-sdk";
 import {
   dataSourcesStore,
+  propsStore,
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { CodeEditor } from "./code-editor";
+import type { PropValue } from "./shared";
 
 type VariableDataSource = Extract<DataSource, { type: "variable" }>;
 
@@ -196,7 +205,7 @@ const VariablePanel = ({
   );
 };
 
-const selectedInstanceVariables = computed(
+const $selectedInstanceVariables = computed(
   [selectedInstanceSelectorStore, dataSourcesStore],
   (instanceSelector, dataSources) => {
     const matchedVariables: VariableDataSource[] = [];
@@ -231,6 +240,52 @@ const EmptyList = ({ onAdd }: { onAdd: () => void }) => {
   );
 };
 
+const $usedVariables = computed(
+  [dataSourcesStore, propsStore],
+  (dataSources, props) => {
+    const usedVariables = new Set<DataSource["id"]>();
+    for (const dataSource of dataSources.values()) {
+      if (dataSource.type !== "expression") {
+        continue;
+      }
+      try {
+        validateExpression(dataSource.code, {
+          transformIdentifier: (identifier) => {
+            const id = decodeDataSourceVariable(identifier);
+            if (id !== undefined) {
+              usedVariables.add(id);
+            }
+            return identifier;
+          },
+        });
+      } catch {
+        // empty block
+      }
+    }
+    for (const prop of props.values()) {
+      if (prop.type === "action") {
+        for (const value of prop.value) {
+          try {
+            validateExpression(value.code, {
+              effectful: true,
+              transformIdentifier: (identifier) => {
+                const id = decodeDataSourceVariable(identifier);
+                if (id !== undefined) {
+                  usedVariables.add(id);
+                }
+                return identifier;
+              },
+            });
+          } catch {
+            // empty block
+          }
+        }
+      }
+    }
+    return usedVariables;
+  }
+);
+
 const deleteVariable = (variable: VariableDataSource) => {
   // @todo prevent delete when variable is used
   serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
@@ -240,13 +295,15 @@ const deleteVariable = (variable: VariableDataSource) => {
 
 const ListItem = ({
   index,
-  selectedId,
+  selected,
+  deletable,
   variable,
   onSelect,
   onEdit,
 }: {
   index: number;
-  selectedId: undefined | string;
+  selected: boolean;
+  deletable: boolean;
   variable: VariableDataSource;
   onSelect: (variableId: DataSource["id"]) => void;
   onEdit: (variable: VariableDataSource) => void;
@@ -260,7 +317,7 @@ const ListItem = ({
       }
       id={variable.id}
       index={index}
-      active={selectedId === variable.id}
+      active={selected}
       buttons={
         <>
           <Tooltip content="Edit variable" side="bottom">
@@ -274,6 +331,7 @@ const ListItem = ({
           <Tooltip content="Delete variable" side="bottom">
             <SmallIconButton
               tabIndex={-1}
+              disabled={deletable === false}
               aria-label="Delete variable"
               variant="destructive"
               icon={<MinusIcon />}
@@ -287,15 +345,106 @@ const ListItem = ({
   );
 };
 
+const getPropExpressionStore = (propId: undefined | string) => {
+  const $propDataSource = computed(
+    [propsStore, dataSourcesStore],
+    (props, dataSources) => {
+      if (propId === undefined) {
+        return;
+      }
+      const prop = props.get(propId);
+      if (prop?.type !== "dataSource") {
+        return;
+      }
+      const dataSourceId = prop.value;
+      return dataSources.get(dataSourceId);
+    }
+  );
+  const $propExpression = computed([$propDataSource], (dataSource) => {
+    // convert variable to expression
+    if (dataSource?.type === "variable") {
+      return encodeDataSourceVariable(dataSource.id);
+    }
+    if (dataSource?.type === "expression") {
+      return dataSource.code;
+    }
+    return "";
+  });
+  return $propExpression;
+};
+
+const getExpressionVariables = (expression: string) => {
+  const variableIds = new Set<VariableDataSource["id"]>();
+  if (expression === "") {
+    return variableIds;
+  }
+  validateExpression(expression, {
+    transformIdentifier: (identifier) => {
+      const id = decodeDataSourceVariable(identifier);
+      if (id !== undefined) {
+        variableIds.add(id);
+      }
+      return identifier;
+    },
+  });
+  return variableIds;
+};
+
 const ListPanel = ({
+  prop,
   onAdd,
   onEdit,
+  onChange,
 }: {
+  prop: undefined | Prop;
   onAdd: () => void;
   onEdit: (variable: VariableDataSource) => void;
+  onChange: (value: undefined | PropValue) => void;
 }) => {
-  const matchedVariables = useStore(selectedInstanceVariables);
-  const [selectedId, setSelectedId] = useState<undefined | string>(undefined);
+  const matchedVariables = useStore($selectedInstanceVariables);
+  const editorVariables = useMemo(() => {
+    const variables = new Map<string, string>();
+    for (const variable of matchedVariables) {
+      variables.set(encodeDataSourceVariable(variable.id), variable.name);
+    }
+    return variables;
+  }, [matchedVariables]);
+  const propId = prop?.id;
+  const propExpression = useStore(
+    useMemo(() => getPropExpressionStore(propId), [propId])
+  );
+  const exoressionVariables = useMemo(
+    () => getExpressionVariables(propExpression),
+    [propExpression]
+  );
+  const usedVariables = useStore($usedVariables);
+  const [expression, setExpression] = useState<undefined | string>();
+
+  const applyExpression = (expression: string) => {
+    // @todo replace data source expression into prop expression
+    // this pirce would become one liner
+    serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
+      const dataSource =
+        prop?.type === "dataSource" ? dataSources.get(prop.value) : undefined;
+
+      // update existing expression without changing prop
+      if (dataSource?.type === "expression") {
+        dataSource.code = expression;
+        return;
+      }
+
+      // create new expression and bind to prop
+      const dataSourceId = nanoid();
+      dataSources.set(dataSourceId, {
+        id: dataSourceId,
+        type: "expression",
+        name: "expression",
+        code: expression,
+      });
+      onChange({ type: "dataSource", value: dataSourceId });
+    });
+  };
+
   return (
     <ScrollArea
       css={{
@@ -308,24 +457,79 @@ const ListPanel = ({
       {matchedVariables.length === 0 ? (
         <EmptyList onAdd={onAdd} />
       ) : (
-        <CssValueListArrowFocus>
-          {matchedVariables.map((variable, index) => (
-            <ListItem
-              key={variable.id}
-              index={index}
-              variable={variable}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
-              onEdit={onEdit}
+        <>
+          <CssValueListArrowFocus>
+            {matchedVariables.map((variable, index) => (
+              <ListItem
+                key={variable.id}
+                index={index}
+                variable={variable}
+                // mark all variables used in expression as selected
+                selected={exoressionVariables.has(variable.id)}
+                deletable={usedVariables.has(variable.id) === false}
+                onSelect={() =>
+                  // convert variable to expression
+                  applyExpression(encodeDataSourceVariable(variable.id))
+                }
+                onEdit={onEdit}
+              />
+            ))}
+          </CssValueListArrowFocus>
+          <Separator />
+          <Flex
+            direction="column"
+            css={{
+              padding: `${theme.spacing[5]} ${theme.spacing[9]} ${theme.spacing[9]}`,
+              gap: theme.spacing[3],
+            }}
+          >
+            <Label>Name</Label>
+            <CodeEditor
+              // reset uncontrolled editor when saved expression is changed
+              key={propExpression}
+              variables={editorVariables}
+              defaultValue={expression ?? propExpression}
+              onChange={setExpression}
+              onBlur={() => {
+                // skip when expression is not changed
+                if (expression === undefined) {
+                  return;
+                }
+
+                if (expression.trim() === "") {
+                  onChange(undefined);
+                  setExpression(undefined);
+                  return;
+                }
+
+                try {
+                  validateExpression(expression);
+                } catch (error) {
+                  // @todo show errors
+                  (error as Error).message;
+                  return;
+                }
+
+                applyExpression(expression);
+                setExpression(undefined);
+              }}
             />
-          ))}
-        </CssValueListArrowFocus>
+          </Flex>
+        </>
       )}
     </ScrollArea>
   );
 };
 
-export const VariablesPanel = () => {
+export const VariablesPanel = ({
+  prop,
+  propMeta,
+  onChange,
+}: {
+  prop: undefined | Prop;
+  propMeta: PropMeta;
+  onChange: (value: PropValue) => void;
+}) => {
   const [view, setView] = useState<
     | { name: "list" }
     | { name: "add" }
@@ -340,6 +544,7 @@ export const VariablesPanel = () => {
       </>
     );
   }
+
   if (view.name === "edit") {
     return (
       <>
@@ -352,23 +557,64 @@ export const VariablesPanel = () => {
       </>
     );
   }
+
+  const removeBinding = () => {
+    // delete expression if exists
+    if (prop?.type === "dataSource") {
+      serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
+        const dataSource = dataSources.get(prop.value);
+        if (dataSource?.type === "expression") {
+          dataSources.delete(dataSource.id);
+        }
+      });
+    }
+    // reset prop with initial value from meta
+    onChange({
+      type: propMeta.type,
+      value: propMeta.defaultValue,
+    } as PropValue);
+  };
+
   return (
     <>
       <ListPanel
+        prop={prop}
         onAdd={() => setView({ name: "add" })}
         onEdit={(variable) => setView({ name: "edit", variable })}
+        onChange={(value) => {
+          if (value === undefined) {
+            removeBinding();
+          } else {
+            onChange(value);
+          }
+        }}
       />
       {/* put after content to avoid auto focusing "New variable" button */}
       <FloatingPanelPopoverTitle
         actions={
-          <Tooltip content="New variable" side="bottom">
-            <Button
-              aria-label="New variable"
-              prefix={<PlusIcon />}
-              color="ghost"
-              onClick={() => setView({ name: "add" })}
-            />
-          </Tooltip>
+          <>
+            {prop?.type === "dataSource" && (
+              <Tooltip content="Remove binding" side="bottom">
+                {/* automatically close popover when remove binding */}
+                <FloatingPanelPopoverClose asChild>
+                  <Button
+                    aria-label="Remove binding"
+                    prefix={<TrashIcon />}
+                    color="ghost"
+                    onClick={removeBinding}
+                  />
+                </FloatingPanelPopoverClose>
+              </Tooltip>
+            )}
+            <Tooltip content="New variable" side="bottom">
+              <Button
+                aria-label="New variable"
+                prefix={<PlusIcon />}
+                color="ghost"
+                onClick={() => setView({ name: "add" })}
+              />
+            </Tooltip>
+          </>
         }
       >
         Variables
