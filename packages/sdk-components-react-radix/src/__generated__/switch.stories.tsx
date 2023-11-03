@@ -3,7 +3,8 @@ import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [switchChecked, set$switchChecked] = useState(false);
+  let [switchChecked, set$switchChecked] = useState<any>(false);
+  let expression = switchChecked;
   let onCheckedChange = (checked: any) => {
     switchChecked = checked;
     set$switchChecked(switchChecked);
@@ -13,10 +14,10 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Switch
         data-ws-id="1"
         data-ws-component="Switch"
-        checked={switchChecked}
+        checked={expression}
         onCheckedChange={onCheckedChange}
       >
-        <SwitchThumb data-ws-id="6" data-ws-component="SwitchThumb" />
+        <SwitchThumb data-ws-id="7" data-ws-component="SwitchThumb" />
       </Switch>
       {props.scripts}
     </Box>
@@ -214,7 +215,7 @@ html {margin: 0; display: grid; min-height: 100%}
   [data-ws-id="1"][data-state=unchecked] {
     background-color: rgba(226, 232, 240, 1)
   }
-  [data-ws-id="6"] {
+  [data-ws-id="7"] {
     pointer-events: none;
     display: block;
     height: 1.25rem;
@@ -229,10 +230,10 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms
   }
-  [data-ws-id="6"][data-state=checked] {
+  [data-ws-id="7"][data-state=checked] {
     transform: translateX(20px)
   }
-  [data-ws-id="6"][data-state=unchecked] {
+  [data-ws-id="7"][data-state=unchecked] {
     transform: translateX(0px)
   }
 }

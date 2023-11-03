@@ -11,7 +11,8 @@ import {
 } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [popoverOpen, set$popoverOpen] = useState(false);
+  let [popoverOpen, set$popoverOpen] = useState<any>(false);
+  let expression = popoverOpen;
   let onOpenChange = (open: any) => {
     popoverOpen = open;
     set$popoverOpen(popoverOpen);
@@ -21,16 +22,16 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Popover
         data-ws-id="1"
         data-ws-component="Popover"
-        open={popoverOpen}
+        open={expression}
         onOpenChange={onOpenChange}
       >
-        <PopoverTrigger data-ws-id="5" data-ws-component="PopoverTrigger">
-          <Button data-ws-id="6" data-ws-component="Button">
+        <PopoverTrigger data-ws-id="6" data-ws-component="PopoverTrigger">
+          <Button data-ws-id="7" data-ws-component="Button">
             {"Button"}
           </Button>
         </PopoverTrigger>
-        <PopoverContent data-ws-id="8" data-ws-component="PopoverContent">
-          <Text data-ws-id="10" data-ws-component="Text">
+        <PopoverContent data-ws-id="9" data-ws-component="PopoverContent">
+          <Text data-ws-id="11" data-ws-component="Text">
             {"The text you can edit"}
           </Text>
         </PopoverContent>
@@ -182,7 +183,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="6"] {
+  [data-ws-id="7"] {
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
@@ -212,22 +213,22 @@ html {margin: 0; display: grid; min-height: 100%}
     padding-top: 0.5rem;
     padding-bottom: 0.5rem
   }
-  [data-ws-id="6"]:focus-visible {
+  [data-ws-id="7"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="6"]:disabled {
+  [data-ws-id="7"]:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="6"]:hover {
+  [data-ws-id="7"]:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="8"] {
+  [data-ws-id="9"] {
     z-index: 50;
     width: 18rem;
     border-top-left-radius: 0.375rem;

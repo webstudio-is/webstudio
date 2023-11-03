@@ -36,14 +36,14 @@ export const metaSwitch: WsComponentMeta = {
     {
       type: "instance",
       component: "Switch",
-      dataSources: {
-        switchChecked: { type: "variable", initialValue: false },
+      variables: {
+        switchChecked: { initialValue: false },
       },
       props: [
         {
           name: "checked",
-          type: "dataSource",
-          dataSourceName: "switchChecked",
+          type: "expression",
+          code: "switchChecked",
         },
         {
           name: "onCheckedChange",

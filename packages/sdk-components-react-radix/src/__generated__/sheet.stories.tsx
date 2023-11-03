@@ -16,7 +16,8 @@ import {
 } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [sheetOpen, set$sheetOpen] = useState(false);
+  let [sheetOpen, set$sheetOpen] = useState<any>(false);
+  let expression = sheetOpen;
   let onOpenChange = (open: any) => {
     sheetOpen = open;
     set$sheetOpen(sheetOpen);
@@ -26,13 +27,13 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Dialog
         data-ws-id="1"
         data-ws-component="Dialog"
-        open={sheetOpen}
+        open={expression}
         onOpenChange={onOpenChange}
       >
-        <DialogTrigger data-ws-id="5" data-ws-component="DialogTrigger">
-          <Button data-ws-id="6" data-ws-component="Button">
+        <DialogTrigger data-ws-id="6" data-ws-component="DialogTrigger">
+          <Button data-ws-id="7" data-ws-component="Button">
             <HtmlEmbed
-              data-ws-id="8"
+              data-ws-id="9"
               data-ws-component="HtmlEmbed"
               code={
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M2 5.998a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 5.5a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Zm0 5.5a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>'
@@ -40,32 +41,32 @@ const Page = (props: { scripts?: ReactNode }) => {
             />
           </Button>
         </DialogTrigger>
-        <DialogOverlay data-ws-id="10" data-ws-component="DialogOverlay">
-          <DialogContent data-ws-id="12" data-ws-component="DialogContent">
+        <DialogOverlay data-ws-id="11" data-ws-component="DialogOverlay">
+          <DialogContent data-ws-id="13" data-ws-component="DialogContent">
             <Box
-              data-ws-id="14"
+              data-ws-id="15"
               data-ws-component="Box"
               tag={"nav"}
               role={"navigation"}
             >
-              <Box data-ws-id="17" data-ws-component="Box">
-                <DialogTitle data-ws-id="19" data-ws-component="DialogTitle">
+              <Box data-ws-id="18" data-ws-component="Box">
+                <DialogTitle data-ws-id="20" data-ws-component="DialogTitle">
                   {"Sheet Title"}
                 </DialogTitle>
                 <DialogDescription
-                  data-ws-id="21"
+                  data-ws-id="22"
                   data-ws-component="DialogDescription"
                 >
                   {"Sheet description text you can edit"}
                 </DialogDescription>
               </Box>
-              <Text data-ws-id="23" data-ws-component="Text">
+              <Text data-ws-id="24" data-ws-component="Text">
                 {"The text you can edit"}
               </Text>
             </Box>
-            <DialogClose data-ws-id="24" data-ws-component="DialogClose">
+            <DialogClose data-ws-id="25" data-ws-component="DialogClose">
               <HtmlEmbed
-                data-ws-id="26"
+                data-ws-id="27"
                 data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M13.566 2.434a.8.8 0 0 1 0 1.132L9.13 8l4.435 4.434a.8.8 0 0 1-1.132 1.132L8 9.13l-4.434 4.435a.8.8 0 0 1-1.132-1.132L6.87 8 2.434 3.566a.8.8 0 0 1 1.132-1.132L8 6.87l4.434-4.435a.8.8 0 0 1 1.132 0Z" clip-rule="evenodd"/></svg>'
@@ -275,7 +276,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="6"] {
+  [data-ws-id="7"] {
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
@@ -302,22 +303,22 @@ html {margin: 0; display: grid; min-height: 100%}
     height: 2.5rem;
     width: 2.5rem
   }
-  [data-ws-id="6"]:focus-visible {
+  [data-ws-id="7"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="6"]:disabled {
+  [data-ws-id="7"]:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="6"]:hover {
+  [data-ws-id="7"]:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="10"] {
+  [data-ws-id="11"] {
     position: fixed;
     left: 0px;
     right: 0px;
@@ -330,7 +331,7 @@ html {margin: 0; display: grid; min-height: 100%}
     flex-direction: column;
     overflow: auto
   }
-  [data-ws-id="12"] {
+  [data-ws-id="13"] {
     width: 100%;
     z-index: 50;
     display: flex;
@@ -360,27 +361,27 @@ html {margin: 0; display: grid; min-height: 100%}
     max-width: 24rem;
     flex-grow: 1
   }
-  [data-ws-id="17"] {
+  [data-ws-id="18"] {
     display: flex;
     flex-direction: column;
     row-gap: 0.25rem;
     column-gap: 0.25rem
   }
-  [data-ws-id="19"] {
+  [data-ws-id="20"] {
     margin-top: 0px;
     margin-bottom: 0px;
     line-height: 1.75rem;
     font-size: 1.125rem;
     letter-spacing: -0.025em
   }
-  [data-ws-id="21"] {
+  [data-ws-id="22"] {
     margin-top: 0px;
     margin-bottom: 0px;
     font-size: 0.875rem;
     line-height: 1.25rem;
     color: rgba(100, 116, 139, 1)
   }
-  [data-ws-id="24"] {
+  [data-ws-id="25"] {
     position: absolute;
     right: 1rem;
     top: 1rem;
@@ -412,10 +413,10 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-color: transparent;
     outline-offset: 2px
   }
-  [data-ws-id="24"]:hover {
+  [data-ws-id="25"]:hover {
     opacity: 1
   }
-  [data-ws-id="24"]:focus {
+  [data-ws-id="25"]:focus {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
 }

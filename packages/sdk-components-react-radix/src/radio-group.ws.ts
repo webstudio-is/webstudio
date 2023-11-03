@@ -109,16 +109,16 @@ export const metaRadioGroup: WsComponentMeta = {
     {
       type: "instance",
       component: "RadioGroup",
-      dataSources: {
-        radioGroupValue: { type: "variable", initialValue: "" },
+      variables: {
+        radioGroupValue: { initialValue: "" },
       },
       // grid gap-2
       styles: [tc.flex(), tc.flex("col"), tc.gap(2)].flat(),
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "value",
-          dataSourceName: "radioGroupValue",
+          code: "radioGroupValue",
         },
         {
           name: "onValueChange",
