@@ -27,7 +27,7 @@ export const pageData: PageData = {
   site: {
     siteName: "Fixture Site",
     faviconAssetId: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
-    code: "",
+    code: '<script>console.log(\'HELLO\')</script>\n<meta property="saas:test" content="test">',
   },
   page: {
     id: "nfzls_SkTc9jKYyxcZ8Lw",
