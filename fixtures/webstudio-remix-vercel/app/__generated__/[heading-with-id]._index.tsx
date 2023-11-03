@@ -49,7 +49,7 @@ export const pageData: PageData = {
   site: {
     siteName: "KittyGuardedZone",
     faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
-    code: "",
+    code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
   page: {
     id: "-J9I4Oo6mONfQlf_3-OqG",
