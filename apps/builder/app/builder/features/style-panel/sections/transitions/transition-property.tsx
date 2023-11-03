@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { animatableProperties } from "@webstudio-is/css-data";
 import {
   Label,
@@ -18,8 +18,13 @@ import {
 import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
+type NameAndLabel = { name: string; label?: string };
+type TransitionPropertyProps = {
+  property: KeywordValue;
+  onPropertySelection: (property: TupleValueItem) => void;
+};
 
-const commonProperties: AnimatableProperties[] = [
+const commonPropertiesSet = new Set<AnimatableProperties>([
   "all",
   "opacity",
   "margin",
@@ -29,27 +34,7 @@ const commonProperties: AnimatableProperties[] = [
   "filter",
   "flex",
   "background-color",
-];
-
-const commonPropertiesSet: Set<AnimatableProperties> = new Set(
-  commonProperties
-);
-
-const animatablePropertiesSet: Set<AnimatableProperties> = new Set(
-  animatableProperties.filter((property) => !commonPropertiesSet.has(property))
-);
-
-const allPropertiesSet: Set<AnimatableProperties> = new Set([
-  ...commonProperties,
-  ...animatableProperties,
 ]);
-
-type NameAndLabel = { name: string; label?: string };
-
-type TransitionPropertyProps = {
-  property: KeywordValue;
-  onPropertySelection: (property: TupleValueItem) => void;
-};
 
 const comboBoxStyles = css({ zIndex: theme.zIndices[1] });
 
@@ -58,22 +43,18 @@ export const TransitionProperty = ({
   onPropertySelection,
 }: TransitionPropertyProps) => {
   const [inputValue, setInputValue] = useState(property?.value ?? "all");
-  const [filteredProperties, setFilteredProperties] = useState(
-    animatablePropertiesSet
-  );
-  const [commonlyDisplayedProperties, setCommonlyDisplayedProperties] =
-    useState(commonPropertiesSet);
+  useEffect(() => setInputValue(property.value), [property]);
 
   const {
+    items,
+    isOpen,
     getComboboxProps,
     getToggleButtonProps,
     getInputProps,
     getMenuProps,
     getItemProps,
-    closeMenu,
-    isOpen,
   } = useCombobox<NameAndLabel>({
-    items: Array.from(allPropertiesSet).map((prop) => ({
+    items: animatableProperties.map((prop) => ({
       name: prop,
       label: prop,
     })),
@@ -89,43 +70,27 @@ export const TransitionProperty = ({
         return "";
       }
       setInputValue(value);
-      filterProperties(value);
     },
   });
 
-  const filterProperties = (value: string) => {
-    const filtered = new Set<AnimatableProperties>();
-    animatablePropertiesSet.forEach((property) => {
-      if (property.includes(value)) {
-        filtered.add(property);
-      }
-    });
-    setFilteredProperties(filtered);
-
-    const commonFiltered = new Set<AnimatableProperties>();
-    commonPropertiesSet.forEach((property) => {
-      if (property.includes(value)) {
-        commonFiltered.add(property);
-      }
-    });
-    setCommonlyDisplayedProperties(commonFiltered);
-  };
-
-  const renderMatchingItems = (properties: Set<AnimatableProperties>) => {
-    const matchedItems: AnimatableProperties[] = Array.from(properties);
-    return matchedItems.map(renderItem);
-  };
-
-  const renderItem = (item: AnimatableProperties) => (
+  const renderItem = (item: NameAndLabel, index: number) => (
     <ComboboxListboxItem
-      {...getItemProps({
-        item: { name: item, label: item },
-        index: Array.from(allPropertiesSet).findIndex((prop) => prop === item),
-      })}
-      key={item}
+      key={item.name}
+      selectable={false}
+      {...getItemProps({ item, index: items.indexOf(item) })}
     >
-      {item}
+      {item.name}
     </ComboboxListboxItem>
+  );
+
+  const commonProperties = items.filter(
+    (item) =>
+      commonPropertiesSet.has(item.name as AnimatableProperties) === true
+  );
+
+  const filteredProperties = items.filter(
+    (item) =>
+      commonPropertiesSet.has(item.name as AnimatableProperties) === false
   );
 
   return (
@@ -136,18 +101,7 @@ export const TransitionProperty = ({
           <ComboboxAnchor>
             <InputField
               autoFocus
-              {...getInputProps({
-                onKeyDown: (event) => {
-                  if (event.key === "Enter") {
-                    event.preventDefault();
-                    onPropertySelection({
-                      type: "keyword",
-                      value: inputValue,
-                    });
-                    closeMenu();
-                  }
-                },
-              })}
+              {...getInputProps({ onKeyDown: (e) => e.stopPropagation() })}
               placeholder="all"
               suffix={<NestedInputButton {...getToggleButtonProps()} />}
             />
@@ -161,10 +115,9 @@ export const TransitionProperty = ({
               {isOpen && (
                 <>
                   <ComboboxLabel>Common</ComboboxLabel>
-                  {renderMatchingItems(commonlyDisplayedProperties)}
+                  {commonProperties.map(renderItem)}
                   <ComboboxSeparator />
-                  <ComboboxLabel>Filtered</ComboboxLabel>
-                  {renderMatchingItems(filteredProperties)}
+                  {filteredProperties.map(renderItem)}
                 </>
               )}
             </ComboboxListbox>

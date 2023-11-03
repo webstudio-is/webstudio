@@ -19,6 +19,7 @@ import { Layer } from "./transition-layer";
 import { selectedOrLastStyleSourceSelectorStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { TransitionProperty } from "./transition-property";
 
 const property: StyleProperty = "transition";
 const label = "Transitions";

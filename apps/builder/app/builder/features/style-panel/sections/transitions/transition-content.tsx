@@ -1,3 +1,4 @@
+import { useMemo, useState, useEffect } from "react";
 import type {
   InvalidValue,
   LayersValue,
@@ -15,7 +16,6 @@ import {
   Text,
   Grid,
 } from "@webstudio-is/design-system";
-import { useMemo, useState } from "react";
 import {
   extractTransitionProperties,
   parseTransition,
@@ -45,8 +45,9 @@ export const TransitionContent = ({
   >({ type: "intermediate", value: transition });
 
   const { property, timing, delay, duration } = useMemo(() => {
+    setIntermediateValue({ type: "intermediate", value: transition });
     return extractTransitionProperties(layer);
-  }, [layer]);
+  }, [layer, transition]);
 
   const handleChange = (value: string) => {
     setIntermediateValue({
