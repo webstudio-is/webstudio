@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import { animatableProperties } from "@webstudio-is/css-data";
+import {
+  animatableProperties,
+  isAnimatableProperty,
+} from "@webstudio-is/css-data";
 import {
   Label,
   InputField,
@@ -43,7 +46,7 @@ export const TransitionProperty = ({
   onPropertySelection,
 }: TransitionPropertyProps) => {
   const [inputValue, setInputValue] = useState(property?.value ?? "all");
-  useEffect(() => setInputValue(property.value), [property]);
+  useEffect(() => setInputValue(property.value), [property.value]);
 
   const {
     items,
@@ -62,12 +65,15 @@ export const TransitionProperty = ({
     selectedItem: undefined,
     itemToString: (value) => value?.name ?? "",
     onItemSelect: (prop) => {
+      if (isAnimatableProperty(prop.name) === false) {
+        return;
+      }
       setInputValue(prop.name);
       onPropertySelection({ type: "keyword", value: prop.name });
     },
     onInputChange: (value) => {
       if (value === undefined) {
-        return "";
+        return;
       }
       setInputValue(value);
     },

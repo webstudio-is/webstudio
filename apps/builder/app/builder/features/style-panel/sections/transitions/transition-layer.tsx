@@ -8,11 +8,11 @@ import { SubtractIcon } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransitionContent } from "./transition-content";
 import type { LayerProps } from "../../style-layers-list";
-import { convertTupleToStringValue } from "./transition-utils";
+import { toValue } from "@webstudio-is/css-engine";
 
 export const Layer = (props: LayerProps) => {
   const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
-  const transition = useMemo(() => convertTupleToStringValue(layer), [layer]);
+  const transition = useMemo(() => toValue(layer), [layer]);
 
   return (
     <FloatingPanel

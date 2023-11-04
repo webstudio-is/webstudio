@@ -405,7 +405,11 @@ const keywordValues = (() => {
 writeToFile("units.ts", "units", units);
 writeToFile("properties.ts", "properties", propertiesData);
 writeToFile("keyword-values.ts", "keywordValues", keywordValues);
-writeToFile("animatable.ts", "animatableProperties", animatableProperties);
+writeToFile(
+  "animatable-properties.ts",
+  "animatableProperties",
+  animatableProperties
+);
 
 let types = "";
 

@@ -4,7 +4,7 @@ import type {
   UnitValue,
 } from "@webstudio-is/css-engine";
 
-const isTimingFunction = (timing: string) => {
+export const isTimingFunction = (timing: string) => {
   const regex =
     /^(ease(-in-out|-in|-out)?|linear|cubic-bezier\((-?\d+(\.\d+)?, ?){3}-?\d+(\.\d+)?\)|steps\(\d+(-?(start|end))?\))$/gm;
   return regex.test(timing);
@@ -36,7 +36,7 @@ export const extractTransitionProperties = (
     }
   }
 
-  if (isTimingFunction(keywordValues[0].value)) {
+  if (keywordValues.length && isTimingFunction(keywordValues[0].value)) {
     timing = keywordValues[0];
   } else {
     property = keywordValues[0];

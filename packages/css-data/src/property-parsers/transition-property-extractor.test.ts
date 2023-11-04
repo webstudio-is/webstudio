@@ -341,4 +341,73 @@ describe("extractTransitionProperties", () => {
       }
     `);
   });
+
+  test("parses and extracts values from custom-property ease", () => {
+    const result = extractTransitionProperties({
+      type: "tuple",
+      value: [
+        {
+          type: "keyword",
+          value: "custom-property",
+        },
+        {
+          type: "keyword",
+          value: "ease",
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      property: { type: "keyword", value: "custom-property" },
+      duration: null,
+      timing: { type: "keyword", value: "ease" },
+      delay: null,
+    });
+
+    expect(result).toMatchSnapshot(`
+      {
+        "property": {
+          "type": "keyword",
+          "value": "custom-property"
+        },
+        "duration": null,
+        "timing": {
+          "type": "keyword",
+          "value": "ease"
+        },
+        "delay": null
+      }
+    `);
+  });
+
+  test("parses and extracts values from custom-property ease", () => {
+    const result = extractTransitionProperties({
+      type: "tuple",
+      value: [
+        {
+          type: "keyword",
+          value: "ease",
+        },
+      ],
+    });
+
+    expect(result).toEqual({
+      property: null,
+      duration: null,
+      timing: { type: "keyword", value: "ease" },
+      delay: null,
+    });
+
+    expect(result).toMatchSnapshot(`
+      {
+        "property": null,
+        "duration": null,
+        "timing": {
+          "type": "keyword",
+          "value": "ease"
+        },
+        "delay": null
+      }
+    `);
+  });
 });

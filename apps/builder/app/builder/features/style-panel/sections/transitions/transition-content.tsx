@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import type {
-  InvalidValue,
-  LayersValue,
-  TupleValue,
-  TupleValueItem,
+import {
+  toValue,
+  type InvalidValue,
+  type LayersValue,
+  type TupleValue,
+  type TupleValueItem,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -24,7 +25,6 @@ import { InformationIcon } from "@webstudio-is/icons";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
-import { convertTupleToStringValue } from "./transition-utils";
 
 type TransitionContentProps = {
   index: number;
@@ -60,6 +60,7 @@ export const TransitionContent = ({
     if (intermediateValue === undefined) {
       return;
     }
+
     const layers = parseTransition(intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
@@ -85,7 +86,7 @@ export const TransitionContent = ({
 
     setIntermediateValue({
       type: "intermediate",
-      value: convertTupleToStringValue(newLayer),
+      value: toValue(newLayer),
     });
 
     onEditLayer(index, { type: "layers", value: [newLayer] });

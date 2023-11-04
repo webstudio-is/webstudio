@@ -1,5 +1,55 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`extractTransitionProperties parses and extracts values from custom-property ease: 
+      {
+        "property": {
+          "type": "keyword",
+          "value": "custom-property"
+        },
+        "duration": null,
+        "timing": {
+          "type": "keyword",
+          "value": "ease"
+        },
+        "delay": null
+      }
+     1`] = `
+{
+  "delay": null,
+  "duration": null,
+  "property": {
+    "type": "keyword",
+    "value": "custom-property",
+  },
+  "timing": {
+    "type": "keyword",
+    "value": "ease",
+  },
+}
+`;
+
+exports[`extractTransitionProperties parses and extracts values from custom-property ease: 
+      {
+        "property": null,
+        "duration": null,
+        "timing": {
+          "type": "keyword",
+          "value": "ease"
+        },
+        "delay": null
+      }
+     1`] = `
+{
+  "delay": null,
+  "duration": null,
+  "property": null,
+  "timing": {
+    "type": "keyword",
+    "value": "ease",
+  },
+}
+`;
+
 exports[`extractTransitionProperties parses and extracts values from opacity 200ms 10ms: 
       {
         "property": {
