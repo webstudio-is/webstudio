@@ -141,6 +141,7 @@ export const TransitionContent = ({
           rows={3}
           name="description"
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
+          state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
           value={intermediateValue?.value ?? ""}
           onChange={handleChange}
           onKeyDown={(event) => {

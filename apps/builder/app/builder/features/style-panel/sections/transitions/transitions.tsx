@@ -59,7 +59,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
                   addLayer(
                     property,
                     // Using default transition value
-                    parseTransition("opacity 200ms ease 0s"),
+                    parseTransition("opacity 200ms ease"),
                     currentStyle,
                     props.createBatchUpdate
                   );

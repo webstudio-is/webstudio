@@ -71,19 +71,17 @@ export const TransitionProperty = ({
       setInputValue(prop.name);
       onPropertySelection({ type: "keyword", value: prop.name });
     },
-    onInputChange: (value) => {
-      if (value === undefined) {
-        return;
-      }
-      setInputValue(value);
-    },
+    onInputChange: (value) => setInputValue(value ?? ""),
   });
 
-  const renderItem = (item: NameAndLabel, index: number) => (
+  const renderItem = (item: NameAndLabel, index) => (
     <ComboboxListboxItem
       key={item.name}
       selectable={false}
-      {...getItemProps({ item, index: items.indexOf(item) })}
+      {...getItemProps({
+        item,
+        index,
+      })}
     >
       {item.name}
     </ComboboxListboxItem>
@@ -123,7 +121,17 @@ export const TransitionProperty = ({
                   <ComboboxLabel>Common</ComboboxLabel>
                   {commonProperties.map(renderItem)}
                   <ComboboxSeparator />
-                  {filteredProperties.map(renderItem)}
+                  {filteredProperties.map((property, index) =>
+                    /*
+                      When rendered in two different lists.
+                      We will have two indexes start at '0'. Which leads to
+                      - The same focus might be repeated when highlighted.
+                      - Using findIndex within getItemProps might make the focus jump around,
+                        as it searches the entire list for items.
+                        This happens because the list isn't sorted in order but is divided when rendering.
+                    */
+                    renderItem(property, commonProperties.length + index)
+                  )}
                 </>
               )}
             </ComboboxListbox>
