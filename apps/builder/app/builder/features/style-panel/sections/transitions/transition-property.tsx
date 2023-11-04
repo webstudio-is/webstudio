@@ -74,7 +74,7 @@ export const TransitionProperty = ({
     onInputChange: (value) => setInputValue(value ?? ""),
   });
 
-  const renderItem = (item: NameAndLabel, index) => (
+  const renderItem = (item: NameAndLabel, index: number) => (
     <ComboboxListboxItem
       key={item.name}
       selectable={false}
