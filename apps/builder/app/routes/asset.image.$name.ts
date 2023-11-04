@@ -30,26 +30,17 @@ export const loader = async ({ params, request }: LoaderArgs) => {
     });
   }
 
-  if (env.RESIZE_ORIGIN !== undefined) {
-    const assetUrl = `${name}`;
-    // @todo add secret ti avoid exploiting our server
-    const imageUrl = `${env.RESIZE_ORIGIN}/cgi/image/${assetUrl}?${url.searchParams}`;
+  const assetUrl = `${name}`;
+  // @todo add secret ti avoid exploiting our server
+  const imageUrl = `https://image-transformer.wstd.io/cgi/image/${assetUrl}?${url.searchParams}`;
 
-    const response = await fetch(imageUrl, {
-      headers: {
-        accept: request.headers.get("accept") ?? "",
-        "accept-encoding": request.headers.get("accept-encoding") ?? "",
-      },
-    });
-    response.headers.set("Access-Control-Allow-Origin", url.origin);
+  const response = await fetch(imageUrl, {
+    headers: {
+      accept: request.headers.get("accept") ?? "",
+      "accept-encoding": request.headers.get("accept-encoding") ?? "",
+    },
+  });
+  response.headers.set("Access-Control-Allow-Origin", url.origin);
 
-    return response;
-  }
-
-  if (env.FILE_UPLOAD_PATH === undefined) {
-    throw Error("FILE_UPLOAD_PATH is not provided");
-  }
-  const fileUploadPath = env.FILE_UPLOAD_PATH;
-  const filePath = join(process.cwd(), fileUploadPath, name);
-  return new Response(createReadStream(filePath));
+  return response;
 };
