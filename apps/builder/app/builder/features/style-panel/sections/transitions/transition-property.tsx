@@ -21,7 +21,7 @@ import {
 import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
-type NameAndLabel = { name: string; label?: string };
+type NameAndLabel = { name: AnimatableProperties; label?: string };
 type TransitionPropertyProps = {
   property: KeywordValue;
   onPropertySelection: (property: TupleValueItem) => void;
@@ -38,6 +38,10 @@ const commonPropertiesSet = new Set<AnimatableProperties>([
   "flex",
   "background-color",
 ]);
+
+const filteredPropertiesSet = new Set<AnimatableProperties>(
+  animatableProperties.filter((item) => commonPropertiesSet.has(item) === false)
+);
 
 const comboBoxStyles = css({ zIndex: theme.zIndices[1] });
 
@@ -57,11 +61,14 @@ export const TransitionProperty = ({
     getMenuProps,
     getItemProps,
   } = useCombobox<NameAndLabel>({
-    items: animatableProperties.map((prop) => ({
+    items: [
+      ...Array.from(commonPropertiesSet),
+      ...Array.from(filteredPropertiesSet),
+    ].map((prop) => ({
       name: prop,
       label: prop,
     })),
-    value: { name: inputValue, label: inputValue },
+    value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
     itemToString: (value) => value?.name ?? "",
     onItemSelect: (prop) => {
@@ -74,6 +81,14 @@ export const TransitionProperty = ({
     onInputChange: (value) => setInputValue(value ?? ""),
   });
 
+  const commonProperties = items.filter(
+    (item) => commonPropertiesSet.has(item.name) === true
+  );
+
+  const filteredProperties = items.filter(
+    (item) => commonPropertiesSet.has(item.name) === false
+  );
+
   const renderItem = (item: NameAndLabel, index: number) => (
     <ComboboxListboxItem
       key={item.name}
@@ -85,16 +100,6 @@ export const TransitionProperty = ({
     >
       {item.name}
     </ComboboxListboxItem>
-  );
-
-  const commonProperties = items.filter(
-    (item) =>
-      commonPropertiesSet.has(item.name as AnimatableProperties) === true
-  );
-
-  const filteredProperties = items.filter(
-    (item) =>
-      commonPropertiesSet.has(item.name as AnimatableProperties) === false
   );
 
   return (
