@@ -224,6 +224,7 @@ const walkSyntax = (
 
 type FilteredProperties = { [property in Property]: Value };
 
+const animatableProperties: string[] = [];
 const filteredProperties: FilteredProperties = (() => {
   // A list of properties we don't want to show
   const ignoreProperties = ["all", "-webkit-line-clamp", "--*"];
@@ -262,6 +263,14 @@ const filteredProperties: FilteredProperties = (() => {
     }
 
     if (
+      property.charAt(0) !== "-" &&
+      config.animationType !== "discrete" &&
+      config.animationType !== "notAnimatable"
+    ) {
+      animatableProperties.push(property);
+    }
+
+    if (
       isSupportedStatus === false ||
       // Skipping the complex values, since we want to use the expanded once.
       Array.isArray(config.initial) ||
@@ -296,7 +305,6 @@ const patchAppliesTo = (property: Property, config: Value) => {
 };
 
 let property: Property;
-
 for (property in filteredProperties) {
   const config = filteredProperties[property];
   // collect node types to improve parsing of css values
@@ -397,6 +405,11 @@ const keywordValues = (() => {
 writeToFile("units.ts", "units", units);
 writeToFile("properties.ts", "properties", propertiesData);
 writeToFile("keyword-values.ts", "keywordValues", keywordValues);
+writeToFile(
+  "animatable-properties.ts",
+  "animatableProperties",
+  animatableProperties
+);
 
 let types = "";
 

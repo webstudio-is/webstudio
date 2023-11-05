@@ -80,4 +80,24 @@ describe("parseTransition", () => {
         ]
       }`);
   });
+
+  test("throws error if any custom transition proeprty is used", () => {
+    const transition = parseTransition(
+      "all 200ms ease 0s, --foo 200ms ease 0s"
+    );
+    expect(transition).toMatchSnapshot(`
+      {
+        "type": "invalid",
+        "value": "all 200ms ease 0s, --foo 200ms ease 0s"
+      }`);
+  });
+
+  test("throws error if any custom transition timing function is used", () => {
+    const transition = parseTransition("all 200ms custom-function 0s");
+    expect(transition).toMatchSnapshot(`
+      {
+        "type": "invalid",
+        "value": "all 200ms custom-function 0s"
+      }`);
+  });
 });

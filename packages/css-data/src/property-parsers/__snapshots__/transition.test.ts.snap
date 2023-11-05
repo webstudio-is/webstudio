@@ -127,3 +127,25 @@ exports[`parseTransition parse value and returns valid layer:
   ],
 }
 `;
+
+exports[`parseTransition throws error if any custom transition proeprty is used: 
+      {
+        "type": "invalid",
+        "value": "all 200ms ease 0s, --foo 200ms ease 0s"
+      } 1`] = `
+{
+  "type": "invalid",
+  "value": "all 200ms ease 0s, --foo 200ms ease 0s",
+}
+`;
+
+exports[`parseTransition throws error if any custom transition timing function is used: 
+      {
+        "type": "invalid",
+        "value": "all 200ms custom-function 0s"
+      } 1`] = `
+{
+  "type": "invalid",
+  "value": "all 200ms custom-function 0s",
+}
+`;
