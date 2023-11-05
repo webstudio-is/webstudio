@@ -10,8 +10,6 @@ export const loader = (arg: LoaderArgs) => {
   const urls = sitemap.pages.map((page) => {
     const url = new URL(`https://${host}${page.path}`);
 
-    console.log("===========", page);
-
     return `
   <url>
     <loc>${url.href}</loc>
