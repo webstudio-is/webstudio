@@ -58,12 +58,11 @@ export const action = async ({ request }: ActionArgs) => {
       return { errors: "Project id required" };
     }
 
-    if (transactions.length === 0) {
-      return { errors: "Transactions required" };
-    }
+    const lastTransactionId = transactions.at(-1)?.transactionId;
 
-    const lastTransactionId =
-      transactions[transactions.length - 1].transactionId;
+    if (lastTransactionId === undefined) {
+      return { errors: "Transaction array must not be empty." };
+    }
 
     const context = await createContext(request);
     const canEdit = await authorizeProject.hasProjectPermit(
