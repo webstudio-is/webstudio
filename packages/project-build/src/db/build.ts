@@ -25,6 +25,7 @@ import { parseProps } from "./props";
 import { parseDataSources } from "./data-sources";
 import { parseInstances, serializeInstances } from "./instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
+import type { Data } from "@webstudio-is/http-client";
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   // eslint-disable-next-line no-console
@@ -43,11 +44,12 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
 
     const deployment = parseDeployment(build.deployment);
 
-    return {
+    const result: Build = {
       id: build.id,
       projectId: build.projectId,
       version: build.version,
       createdAt: build.createdAt.toISOString(),
+      updatedAt: build.updatedAt.toISOString(),
       pages,
       breakpoints,
       styles,
@@ -57,7 +59,9 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       dataSources,
       instances,
       deployment,
-    };
+    } satisfies Data["build"];
+
+    return result;
   } finally {
     // eslint-disable-next-line no-console
     console.timeEnd("parseBuild");
