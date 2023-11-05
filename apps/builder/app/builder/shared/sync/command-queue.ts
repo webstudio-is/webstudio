@@ -39,11 +39,6 @@ export const enqueue = (command: Command) => {
   projectCommandsQueue.push(command);
 };
 
-export const dequeue = () => {
-  const command = projectCommandsQueue.pop();
-  return command;
-};
-
 export const dequeueAll = () => {
   const commands = [...projectCommandsQueue];
   projectCommandsQueue.length = 0;
