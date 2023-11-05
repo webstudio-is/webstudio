@@ -49,14 +49,14 @@ export const metaCheckbox: WsComponentMeta = {
         {
           type: "instance",
           component: "Checkbox",
-          dataSources: {
-            checkboxChecked: { type: "variable", initialValue: false },
+          variables: {
+            checkboxChecked: { initialValue: false },
           },
           props: [
             {
               name: "checked",
-              type: "dataSource",
-              dataSourceName: "checkboxChecked",
+              type: "expression",
+              code: "checkboxChecked",
             },
             {
               name: "onCheckedChange",

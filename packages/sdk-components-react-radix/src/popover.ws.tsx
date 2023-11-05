@@ -53,14 +53,14 @@ export const metaPopover: WsComponentMeta = {
     {
       type: "instance",
       component: "Popover",
-      dataSources: {
-        popoverOpen: { type: "variable", initialValue: false },
+      variables: {
+        popoverOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "open",
-          dataSourceName: "popoverOpen",
+          code: "popoverOpen",
         },
         {
           name: "onOpenChange",

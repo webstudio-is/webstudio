@@ -314,11 +314,11 @@ export const metaNavigationMenu: WsComponentMeta = {
     {
       type: "instance",
       component: "NavigationMenu",
-      dataSources: {
-        menuValue: { type: "variable", initialValue: "" },
+      variables: {
+        menuValue: { initialValue: "" },
       },
       props: [
-        { type: "dataSource", name: "value", dataSourceName: "menuValue" },
+        { type: "expression", name: "value", code: "menuValue" },
         {
           name: "onValueChange",
           type: "action",

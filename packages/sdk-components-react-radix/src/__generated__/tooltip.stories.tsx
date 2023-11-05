@@ -11,7 +11,8 @@ import {
 } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [tooltipOpen, set$tooltipOpen] = useState(false);
+  let [tooltipOpen, set$tooltipOpen] = useState<any>(false);
+  let expression = tooltipOpen;
   let onOpenChange = (open: any) => {
     tooltipOpen = open;
     set$tooltipOpen(tooltipOpen);
@@ -21,16 +22,16 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Tooltip
         data-ws-id="1"
         data-ws-component="Tooltip"
-        open={tooltipOpen}
+        open={expression}
         onOpenChange={onOpenChange}
       >
-        <TooltipTrigger data-ws-id="5" data-ws-component="TooltipTrigger">
-          <Button data-ws-id="6" data-ws-component="Button">
+        <TooltipTrigger data-ws-id="6" data-ws-component="TooltipTrigger">
+          <Button data-ws-id="7" data-ws-component="Button">
             {"Button"}
           </Button>
         </TooltipTrigger>
-        <TooltipContent data-ws-id="8" data-ws-component="TooltipContent">
-          <Text data-ws-id="10" data-ws-component="Text">
+        <TooltipContent data-ws-id="9" data-ws-component="TooltipContent">
+          <Text data-ws-id="11" data-ws-component="Text">
             {"The text you can edit"}
           </Text>
         </TooltipContent>
@@ -182,7 +183,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="6"] {
+  [data-ws-id="7"] {
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
@@ -212,22 +213,22 @@ html {margin: 0; display: grid; min-height: 100%}
     padding-top: 0.5rem;
     padding-bottom: 0.5rem
   }
-  [data-ws-id="6"]:focus-visible {
+  [data-ws-id="7"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="6"]:disabled {
+  [data-ws-id="7"]:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="6"]:hover {
+  [data-ws-id="7"]:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="8"] {
+  [data-ws-id="9"] {
     z-index: 50;
     overflow: hidden;
     border-top-left-radius: 0.375rem;
