@@ -58,6 +58,12 @@ export const action = async ({ request }: ActionArgs) => {
       return { errors: "Project id required" };
     }
 
+    const lastTransactionId = transactions.at(-1)?.transactionId;
+
+    if (lastTransactionId === undefined) {
+      return { errors: "Transaction array must not be empty." };
+    }
+
     const context = await createContext(request);
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId, permit: "edit" },
@@ -78,6 +84,13 @@ export const action = async ({ request }: ActionArgs) => {
 
     const serverVersion = build.version;
     if (clientVersion !== serverVersion) {
+      // Check if a retry attempt is made with a previously successful transaction.
+      // This can occur if the connection was lost or an error occurred post-transaction completion,
+      // leaving the client in an erroneous state and prompting a retry.
+      if (lastTransactionId === build.lastTransactionId) {
+        return { status: "ok" };
+      }
+
       return {
         status: "version_mismatched",
       };
@@ -183,6 +196,7 @@ export const action = async ({ request }: ActionArgs) => {
     // save build data when all patches applied
     const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {
       version: clientVersion + 1,
+      lastTransactionId,
     };
 
     if (buildData.pages) {
@@ -249,9 +263,12 @@ export const action = async ({ request }: ActionArgs) => {
         version: clientVersion,
       },
     });
+
     // ensure only build with client version is updated
     // to avoid race conditions
     if (count === 0) {
+      // We don't validate if lastTransactionId matches the user's transaction ID here, as we've already done so earlier.
+      // Given the sequential nature of messages from a single client, this situation is deemed improbable.
       return {
         status: "version_mismatched",
       };
