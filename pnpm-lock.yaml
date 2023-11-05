@@ -1542,7 +1542,7 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0
       '@webstudio-is/http-client':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../http-client
       '@webstudio-is/jest-config':
         specifier: workspace:*
