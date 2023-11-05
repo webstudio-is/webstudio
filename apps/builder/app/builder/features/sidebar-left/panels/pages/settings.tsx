@@ -247,7 +247,9 @@ const FormFields = ({
 
   const project = projectStore.get();
   const customDomain: string | undefined = $domains.get()[0];
-  const projectDomain = `${project?.domain}.${env.PUBLISHER_HOST}`;
+  const projectDomain = `${project?.domain}.${
+    env.PUBLISHER_HOST ?? "wstd.work"
+  }`;
   const domain = customDomain ?? projectDomain;
 
   const publishedUrl = new URL(`https://${domain}`);

@@ -65,7 +65,7 @@ projectStore.set({
   createdAt: `${new Date()}`,
   isDeleted: false,
   userId: "userId",
-  domain: "new-2x9tcd.wstd.io",
+  domain: "new-2x9tcd",
 });
 
 export const PageSettingsEdit = () => {
