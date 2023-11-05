@@ -161,26 +161,6 @@ export const validateExpression = (
   return generateCode(expression, true, effectful, transformIdentifier);
 };
 
-const sortTopologically = (
-  list: Set<string>,
-  depsById: Map<string, Set<string>>,
-  explored = new Set<string>(),
-  sorted: string[] = []
-) => {
-  for (const id of list) {
-    if (explored.has(id)) {
-      continue;
-    }
-    explored.add(id);
-    const deps = depsById.get(id);
-    if (deps) {
-      sortTopologically(deps, depsById, explored, sorted);
-    }
-    sorted.push(id);
-  }
-  return sorted;
-};
-
 const computeExpressionDependencies = (
   expressions: Map<string, string>,
   expressionId: string,
@@ -293,39 +273,8 @@ export const generateDataSources = ({
   let body = "";
   const output = new Map<DataSourceOrPropId, VariableName>();
 
-  // collect each data source depndencies to sort topologically
-  // and replace data sources with scoped names
-  const depsById = new Map<DataSourceId, Set<DataSourceId>>();
-  const codeById = new Map<DataSourceId, string>();
   for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "expression") {
-      const deps = new Set<string>();
-      const newCode = validateExpression(dataSource.code, {
-        transformIdentifier: (identifier) => {
-          const depId = decodeDataSourceVariable(identifier);
-          const dep = depId ? dataSources.get(depId) : undefined;
-          if (dep) {
-            deps.add(dep.id);
-            return scope.getName(dep.id, dep.name);
-          }
-          // eslint-disable-next-line no-console
-          console.error(`Unknown dependency "${identifier}"`);
-          return identifier;
-        },
-      });
-      depsById.set(dataSource.id, deps);
-      codeById.set(dataSource.id, newCode);
-    }
-  }
-
-  // sort expressions starting with used ones as entry points
-  const sortedDataSources = sortTopologically(
-    new Set(dataSources.keys()),
-    depsById
-  );
-  for (const dataSourceId of sortedDataSources) {
-    const dataSource = dataSources.get(dataSourceId);
-    if (dataSource?.type === "variable") {
+    if (dataSource.type === "variable") {
       // save variables to generate header and footer depending on environment
       const valueName = scope.getName(dataSource.id, dataSource.name);
       const setterName = scope.getName(
@@ -336,63 +285,79 @@ export const generateDataSources = ({
       output.set(dataSource.id, valueName);
       variables.set(dataSource.id, { valueName, setterName, initialValue });
     }
-    if (dataSource?.type === "expression") {
-      const name = scope.getName(dataSource.id, dataSource.name);
-      const code = codeById.get(dataSourceId);
-      output.set(dataSource.id, name);
-      body += `let ${name} = (${code});\n`;
-    }
   }
 
-  // generate actions assigning variables and invoking their setters
   for (const prop of props.values()) {
-    if (prop.type !== "action") {
-      continue;
-    }
-    const name = scope.getName(prop.id, prop.name);
-    output.set(prop.id, name);
-    const setters = new Set<DataSourceId>();
-    let args: undefined | string[] = undefined;
-    let newCode = "";
-    for (const value of prop.value) {
-      args = value.args;
-      newCode += validateExpression(value.code, {
-        effectful: true,
-        transformIdentifier: (identifier, assignee) => {
-          if (args?.includes(identifier)) {
-            return identifier;
-          }
+    // generate prop expressions
+    if (prop.type === "dataSource") {
+      const dataSource = dataSources.get(prop.value);
+      if (dataSource?.type !== "expression") {
+        continue;
+      }
+      const name = scope.getName(prop.id, prop.name);
+      output.set(prop.id, name);
+      const code = validateExpression(dataSource.code, {
+        transformIdentifier: (identifier) => {
           const depId = decodeDataSourceVariable(identifier);
           const dep = depId ? dataSources.get(depId) : undefined;
           if (dep) {
-            const name = scope.getName(dep.id, dep.name);
-            if (assignee) {
-              setters.add(dep.id);
-            }
-            return name;
+            return scope.getName(dep.id, dep.name);
           }
           // eslint-disable-next-line no-console
           console.error(`Unknown dependency "${identifier}"`);
           return identifier;
         },
       });
-      newCode += `\n`;
+      body += `let ${name} = (${code});\n`;
     }
-    if (args === undefined) {
-      continue;
-    }
-    if (typed) {
-      args = args.map((arg) => `${arg}: any`);
-    }
-    body += `let ${name} = (${args.join(", ")}) => {\n`;
-    body += newCode;
-    for (const dataSourceId of setters.values()) {
-      const variable = variables.get(dataSourceId);
-      if (variable) {
-        body += `${variable.setterName}(${variable.valueName})\n`;
+
+    // generate actions assigning variables and invoking their setters
+    if (prop.type === "action") {
+      const name = scope.getName(prop.id, prop.name);
+      output.set(prop.id, name);
+      const setters = new Set<DataSourceId>();
+      let args: undefined | string[] = undefined;
+      let newCode = "";
+      for (const value of prop.value) {
+        args = value.args;
+        newCode += validateExpression(value.code, {
+          effectful: true,
+          transformIdentifier: (identifier, assignee) => {
+            if (args?.includes(identifier)) {
+              return identifier;
+            }
+            const depId = decodeDataSourceVariable(identifier);
+            const dep = depId ? dataSources.get(depId) : undefined;
+            if (dep) {
+              const name = scope.getName(dep.id, dep.name);
+              if (assignee) {
+                setters.add(dep.id);
+              }
+              return name;
+            }
+            // eslint-disable-next-line no-console
+            console.error(`Unknown dependency "${identifier}"`);
+            return identifier;
+          },
+        });
+        newCode += `\n`;
       }
+      if (args === undefined) {
+        continue;
+      }
+      if (typed) {
+        args = args.map((arg) => `${arg}: any`);
+      }
+      body += `let ${name} = (${args.join(", ")}) => {\n`;
+      body += newCode;
+      for (const dataSourceId of setters.values()) {
+        const variable = variables.get(dataSourceId);
+        if (variable) {
+          body += `${variable.setterName}(${variable.valueName})\n`;
+        }
+      }
+      body += `}\n`;
     }
-    body += `}\n`;
   }
 
   return {

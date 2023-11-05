@@ -12,7 +12,7 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [collapsibleOpen, set$collapsibleOpen] = useState<any>(false);
-  let expression = collapsibleOpen;
+  let open = collapsibleOpen;
   let onOpenChange = (open: any) => {
     collapsibleOpen = open;
     set$collapsibleOpen(collapsibleOpen);
@@ -22,7 +22,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Collapsible
         data-ws-id="1"
         data-ws-component="Collapsible"
-        open={expression}
+        open={open}
         onOpenChange={onOpenChange}
       >
         <CollapsibleTrigger

@@ -163,7 +163,8 @@ export const usePropsLogic = ({
     // convert data source prop to typed prop
     const dataSourceId = prop.value;
     const dataSource = dataSources.get(dataSourceId);
-    const dataSourceValue = dataSourcesLogic.get(dataSourceId);
+    const dataSourceValue =
+      dataSourcesLogic.get(prop.id) ?? dataSourcesLogic.get(dataSourceId);
     if (dataSource === undefined) {
       return [];
     }

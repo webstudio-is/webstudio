@@ -73,20 +73,20 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 const Page = (props: { scripts?: ReactNode }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
-  let formInitial = formState === "initial" || formState === "error";
-  let formSuccess = formState === "success";
-  let formError = formState === "error";
-  let formInitial_1 = formState_1 === "initial" || formState_1 === "error";
-  let formSuccess_1 = formState_1 === "success";
-  let formError_1 = formState_1 === "error";
   let onStateChange = (state: any) => {
     formState = state;
     set$formState(formState);
   };
+  let datawsshow = formState === "initial" || formState === "error";
+  let datawsshow_1 = formState === "success";
+  let datawsshow_2 = formState === "error";
   let onStateChange_1 = (state: any) => {
     formState_1 = state;
     set$formState_1(formState_1);
   };
+  let datawsshow_3 = formState_1 === "initial" || formState_1 === "error";
+  let datawsshow_4 = formState_1 === "success";
+  let datawsshow_5 = formState_1 === "error";
   return (
     <Body data-ws-id="a-4nDFkaWy4px1fn38XWJ" data-ws-component="Body">
       <Form
@@ -95,7 +95,7 @@ const Page = (props: { scripts?: ReactNode }) => {
         state={formState_1}
         onStateChange={onStateChange_1}
       >
-        {formInitial_1 && (
+        {datawsshow_3 && (
           <Box data-ws-id="qhnVrmYGlyrMZi3UzqSQA" data-ws-component="Box">
             <Heading
               data-ws-id="YdHHf4u3jrdbRIWpB_VfH"
@@ -128,12 +128,12 @@ const Page = (props: { scripts?: ReactNode }) => {
             </Button>
           </Box>
         )}
-        {formSuccess_1 && (
+        {datawsshow_4 && (
           <Box data-ws-id="966cjxuqP_T99N27-mqWE" data-ws-component="Box">
             {"Thank you for getting in touch!"}
           </Box>
         )}
-        {formError_1 && (
+        {datawsshow_5 && (
           <Box data-ws-id="SYG5hhOz31xFJUN_v9zq6" data-ws-component="Box">
             {"Sorry, something went wrong."}
           </Box>
@@ -147,7 +147,7 @@ const Page = (props: { scripts?: ReactNode }) => {
         method={"get"}
         action={"/custom"}
       >
-        {formInitial && (
+        {datawsshow && (
           <Box data-ws-id="a5YPRc19IJyhTrjjasA_R" data-ws-component="Box">
             <Heading
               data-ws-id="y4pceTmziuBRIDgUBQNLD"
@@ -180,12 +180,12 @@ const Page = (props: { scripts?: ReactNode }) => {
             </Button>
           </Box>
         )}
-        {formSuccess && (
+        {datawsshow_1 && (
           <Box data-ws-id="Gw-ta0R4FNFAGBTVRWKep" data-ws-component="Box">
             {"Thank you for getting in touch!"}
           </Box>
         )}
-        {formError && (
+        {datawsshow_2 && (
           <Box data-ws-id="ewk_WKpu4syHLPABMmvUz" data-ws-component="Box">
             {"Sorry, something went wrong."}
           </Box>

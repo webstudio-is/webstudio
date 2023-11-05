@@ -12,7 +12,7 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
-  let expression = checkboxChecked;
+  let checked = checkboxChecked;
   let onCheckedChange = (checked: any) => {
     checkboxChecked = checked;
     set$checkboxChecked(checkboxChecked);
@@ -23,7 +23,7 @@ const Page = (props: { scripts?: ReactNode }) => {
         <Checkbox
           data-ws-id="3"
           data-ws-component="Checkbox"
-          checked={expression}
+          checked={checked}
           onCheckedChange={onCheckedChange}
         >
           <CheckboxIndicator

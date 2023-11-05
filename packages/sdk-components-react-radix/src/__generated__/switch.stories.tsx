@@ -4,7 +4,7 @@ import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [switchChecked, set$switchChecked] = useState<any>(false);
-  let expression = switchChecked;
+  let checked = switchChecked;
   let onCheckedChange = (checked: any) => {
     switchChecked = checked;
     set$switchChecked(switchChecked);
@@ -14,7 +14,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Switch
         data-ws-id="1"
         data-ws-component="Switch"
-        checked={expression}
+        checked={checked}
         onCheckedChange={onCheckedChange}
       >
         <SwitchThumb data-ws-id="7" data-ws-component="SwitchThumb" />
