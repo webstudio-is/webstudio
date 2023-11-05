@@ -127,6 +127,13 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   // to not regenerate auth token and preserve canvas url
   currentUrlCopy.searchParams.delete("pageId");
   nextUrlCopy.searchParams.delete("pageId");
+
+  currentUrlCopy.searchParams.delete("mode");
+  nextUrlCopy.searchParams.delete("mode");
+
+  currentUrlCopy.searchParams.delete("pageHash");
+  nextUrlCopy.searchParams.delete("pageHash");
+
   return currentUrlCopy.href === nextUrlCopy.href
     ? false
     : defaultShouldRevalidate;
