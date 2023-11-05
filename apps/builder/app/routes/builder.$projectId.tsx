@@ -6,6 +6,7 @@ import {
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { redirect, type LoaderArgs, json } from "@remix-run/node";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { db as domainDb } from "@webstudio-is/domain/index.server";
 import { db } from "@webstudio-is/project/index.server";
 import {
   AuthorizationError,
@@ -52,7 +53,20 @@ export const loader = async ({
     }
 
     const devBuild = await loadBuildByProjectId(project.id);
+
     const assets = await loadAssetsByProject(project.id, context);
+
+    const currentProjectDomainsResult = await domainDb.findMany(
+      { projectId: project.id },
+      context
+    );
+
+    const domains = currentProjectDomainsResult.success
+      ? currentProjectDomainsResult.data
+          .filter((projectDomain) => projectDomain.verified)
+          .filter((projectDomain) => projectDomain.domain.status === "ACTIVE")
+          .map((projectDomain) => projectDomain.domain.domain)
+      : [];
 
     const end = Date.now();
 
@@ -66,6 +80,7 @@ export const loader = async ({
 
     return {
       project,
+      domains,
       build: devBuild,
       assets: assets.map((asset) => [asset.id, asset]),
       buildOrigin: getBuildOrigin(request),
