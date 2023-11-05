@@ -268,7 +268,7 @@ export const action = async ({ request }: ActionArgs) => {
     // ensure only build with client version is updated
     // to avoid race conditions
     if (count === 0) {
-      // We don't validate if lastTransactionId matches the user's ID here, as we've already done so earlier.
+      // We don't validate if lastTransactionId matches the user's transaction ID here, as we've already done so earlier.
       // Given the sequential nature of messages from a single client, this situation is deemed improbable.
       return {
         status: "version_mismatched",
