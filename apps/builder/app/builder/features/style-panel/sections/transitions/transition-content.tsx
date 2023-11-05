@@ -25,6 +25,7 @@ import { InformationIcon } from "@webstudio-is/icons";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
+import { TransitionTiming } from "./transition-timing";
 
 type TransitionContentProps = {
   index: number;
@@ -106,6 +107,10 @@ export const TransitionContent = ({
           /* Browser defaults for transition-property - all */
           property={property ?? { type: "keyword", value: "all" }}
           onPropertySelection={handleOnPropertySelection}
+        />
+
+        <TransitionTiming
+          timing={timing ?? { type: "keyword", value: "ease" }}
         />
       </Grid>
       <Separator css={{ gridColumn: "span 2" }} />
