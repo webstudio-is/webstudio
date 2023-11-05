@@ -1,4 +1,5 @@
 import type { LoaderArgs } from "@remix-run/server-runtime";
+import { sitemap } from "../__generated__/[sitemap.xml]";
 
 export const loader = (arg: LoaderArgs) => {
   const host =
@@ -6,13 +7,21 @@ export const loader = (arg: LoaderArgs) => {
     arg.request.headers.get("host") ||
     "";
 
+  const urls = sitemap.pages.map((page) => {
+    const url = new URL(`https://${host}${page.path}`);
+
+    return `
+  <url>
+    <loc>${url.href}</loc>
+    <lastmod>${page.lastModified.split("T")[0]}</lastmod>
+  </url>
+    `;
+  });
+
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://${host}/</loc>
-    <lastmod>2023-11-05</lastmod>
-  </url>
+${urls.join("")}
 </urlset>
   `,
     {
