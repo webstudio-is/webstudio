@@ -10,10 +10,6 @@ const env = {
   // Secret session key, context encode
   AUTH_SECRET: process.env.AUTH_SECRET,
 
-  // Publishing
-  PUBLISHER_ENDPOINT: process.env.PUBLISHER_ENDPOINT,
-  PUBLISHER_TOKEN: process.env.PUBLISHER_TOKEN,
-
   // DEPLOYMENT_ENVIRONMENT development | preview | production
   DEPLOYMENT_ENVIRONMENT: process.env.DEPLOYMENT_ENVIRONMENT,
   DEPLOYMENT_URL: process.env.DEPLOYMENT_URL,
