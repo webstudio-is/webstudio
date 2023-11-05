@@ -46,7 +46,7 @@ import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
 import {
   assetsStore,
-  domainsStore,
+  $domains,
   instancesStore,
   pagesStore,
   projectStore,
@@ -246,7 +246,7 @@ const FormFields = ({
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
   const project = projectStore.get();
-  const customDomain: string | undefined = domainsStore.get()[0];
+  const customDomain: string | undefined = $domains.get()[0];
   const projectDomain = `${project?.domain}.${env.PUBLISHER_HOST}`;
   const domain = customDomain ?? projectDomain;
 

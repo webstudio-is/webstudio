@@ -36,7 +36,7 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
-  domainsStore,
+  $domains,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -240,7 +240,7 @@ export const Builder = ({
   useMount(() => {
     // additional data stores
     projectStore.set(project);
-    domainsStore.set(domains);
+    $domains.set(domains);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
 

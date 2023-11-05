@@ -31,7 +31,7 @@ import type { Project } from "@webstudio-is/project";
 
 export const projectStore = atom<Project | undefined>();
 
-export const domainsStore = atom<string[]>([]);
+export const $domains = atom<string[]>([]);
 
 export const rootInstanceStore = computed(
   [instancesStore, selectedPageStore],
