@@ -63,7 +63,6 @@ const parseVariableValue = (code: string) => {
       result.value = eval(`(${code})`);
     } catch (error) {
       result.error = `Parse Error: ${(error as Error).message}`;
-      console.log(error);
     }
   } else {
     const idsList = Array.from(ids).join(", ");
