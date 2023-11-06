@@ -12,7 +12,6 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
   FloatingPanelPopoverTrigger,
-  IconButton,
   InputErrorsTooltip,
   InputField,
   Label,
