@@ -13,7 +13,8 @@ import {
 } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [accordionValue, set$accordionValue] = useState("0");
+  let [accordionValue, set$accordionValue] = useState<any>("0");
+  let expression = accordionValue;
   let onValueChange = (value: any) => {
     accordionValue = value;
     set$accordionValue(accordionValue);
@@ -24,25 +25,25 @@ const Page = (props: { scripts?: ReactNode }) => {
         data-ws-id="1"
         data-ws-component="Accordion"
         collapsible={true}
-        value={accordionValue}
+        value={expression}
         onValueChange={onValueChange}
       >
         <AccordionItem
-          data-ws-id="6"
+          data-ws-id="7"
           data-ws-component="AccordionItem"
           data-ws-index="0"
         >
-          <AccordionHeader data-ws-id="8" data-ws-component="AccordionHeader">
+          <AccordionHeader data-ws-id="9" data-ws-component="AccordionHeader">
             <AccordionTrigger
-              data-ws-id="10"
+              data-ws-id="11"
               data-ws-component="AccordionTrigger"
             >
-              <Text data-ws-id="12" data-ws-component="Text">
+              <Text data-ws-id="13" data-ws-component="Text">
                 {"Is it accessible?"}
               </Text>
-              <Box data-ws-id="13" data-ws-component="Box">
+              <Box data-ws-id="14" data-ws-component="Box">
                 <HtmlEmbed
-                  data-ws-id="15"
+                  data-ws-id="16"
                   data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
@@ -52,28 +53,28 @@ const Page = (props: { scripts?: ReactNode }) => {
             </AccordionTrigger>
           </AccordionHeader>
           <AccordionContent
-            data-ws-id="17"
+            data-ws-id="18"
             data-ws-component="AccordionContent"
           >
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
         </AccordionItem>
         <AccordionItem
-          data-ws-id="19"
+          data-ws-id="20"
           data-ws-component="AccordionItem"
           data-ws-index="1"
         >
-          <AccordionHeader data-ws-id="21" data-ws-component="AccordionHeader">
+          <AccordionHeader data-ws-id="22" data-ws-component="AccordionHeader">
             <AccordionTrigger
-              data-ws-id="23"
+              data-ws-id="24"
               data-ws-component="AccordionTrigger"
             >
-              <Text data-ws-id="25" data-ws-component="Text">
+              <Text data-ws-id="26" data-ws-component="Text">
                 {"Is it styled?"}
               </Text>
-              <Box data-ws-id="26" data-ws-component="Box">
+              <Box data-ws-id="27" data-ws-component="Box">
                 <HtmlEmbed
-                  data-ws-id="28"
+                  data-ws-id="29"
                   data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
@@ -83,7 +84,7 @@ const Page = (props: { scripts?: ReactNode }) => {
             </AccordionTrigger>
           </AccordionHeader>
           <AccordionContent
-            data-ws-id="30"
+            data-ws-id="31"
             data-ws-component="AccordionContent"
           >
             {
@@ -92,21 +93,21 @@ const Page = (props: { scripts?: ReactNode }) => {
           </AccordionContent>
         </AccordionItem>
         <AccordionItem
-          data-ws-id="32"
+          data-ws-id="33"
           data-ws-component="AccordionItem"
           data-ws-index="2"
         >
-          <AccordionHeader data-ws-id="34" data-ws-component="AccordionHeader">
+          <AccordionHeader data-ws-id="35" data-ws-component="AccordionHeader">
             <AccordionTrigger
-              data-ws-id="36"
+              data-ws-id="37"
               data-ws-component="AccordionTrigger"
             >
-              <Text data-ws-id="38" data-ws-component="Text">
+              <Text data-ws-id="39" data-ws-component="Text">
                 {"Is it animated?"}
               </Text>
-              <Box data-ws-id="39" data-ws-component="Box">
+              <Box data-ws-id="40" data-ws-component="Box">
                 <HtmlEmbed
-                  data-ws-id="41"
+                  data-ws-id="42"
                   data-ws-component="HtmlEmbed"
                   code={
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M4.04 6.284a.65.65 0 0 1 .92.001L8 9.335l3.04-3.05a.65.65 0 1 1 .921.918l-3.5 3.512a.65.65 0 0 1-.921 0L4.039 7.203a.65.65 0 0 1 .001-.92Z"/></svg>'
@@ -116,7 +117,7 @@ const Page = (props: { scripts?: ReactNode }) => {
             </AccordionTrigger>
           </AccordionHeader>
           <AccordionContent
-            data-ws-id="43"
+            data-ws-id="44"
             data-ws-component="AccordionContent"
           >
             {
@@ -312,15 +313,15 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="6"] {
+  [data-ws-id="7"] {
     border-bottom-width: 1px;
     border-bottom-style: solid;
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  [data-ws-id="8"] {
+  [data-ws-id="9"] {
     display: flex
   }
-  [data-ws-id="10"] {
+  [data-ws-id="11"] {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
@@ -332,13 +333,13 @@ html {margin: 0; display: grid; min-height: 100%}
     font-weight: 500;
     --accordion-trigger-icon-transform: 0deg
   }
-  [data-ws-id="10"]:hover {
+  [data-ws-id="11"]:hover {
     text-decoration-line: underline
   }
-  [data-ws-id="10"][data-state=open] {
+  [data-ws-id="11"][data-state=open] {
     --accordion-trigger-icon-transform: 180deg
   }
-  [data-ws-id="13"] {
+  [data-ws-id="14"] {
     rotate: var(--accordion-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
@@ -347,21 +348,21 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms
   }
-  [data-ws-id="17"] {
+  [data-ws-id="18"] {
     overflow: hidden;
     font-size: 0.875rem;
     line-height: 1.25rem;
     padding-bottom: 1rem
   }
-  [data-ws-id="19"] {
+  [data-ws-id="20"] {
     border-bottom-width: 1px;
     border-bottom-style: solid;
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  [data-ws-id="21"] {
+  [data-ws-id="22"] {
     display: flex
   }
-  [data-ws-id="23"] {
+  [data-ws-id="24"] {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
@@ -373,13 +374,13 @@ html {margin: 0; display: grid; min-height: 100%}
     font-weight: 500;
     --accordion-trigger-icon-transform: 0deg
   }
-  [data-ws-id="23"]:hover {
+  [data-ws-id="24"]:hover {
     text-decoration-line: underline
   }
-  [data-ws-id="23"][data-state=open] {
+  [data-ws-id="24"][data-state=open] {
     --accordion-trigger-icon-transform: 180deg
   }
-  [data-ws-id="26"] {
+  [data-ws-id="27"] {
     rotate: var(--accordion-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
@@ -388,21 +389,21 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms
   }
-  [data-ws-id="30"] {
+  [data-ws-id="31"] {
     overflow: hidden;
     font-size: 0.875rem;
     line-height: 1.25rem;
     padding-bottom: 1rem
   }
-  [data-ws-id="32"] {
+  [data-ws-id="33"] {
     border-bottom-width: 1px;
     border-bottom-style: solid;
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  [data-ws-id="34"] {
+  [data-ws-id="35"] {
     display: flex
   }
-  [data-ws-id="36"] {
+  [data-ws-id="37"] {
     display: flex;
     flex-grow: 1;
     flex-shrink: 1;
@@ -414,13 +415,13 @@ html {margin: 0; display: grid; min-height: 100%}
     font-weight: 500;
     --accordion-trigger-icon-transform: 0deg
   }
-  [data-ws-id="36"]:hover {
+  [data-ws-id="37"]:hover {
     text-decoration-line: underline
   }
-  [data-ws-id="36"][data-state=open] {
+  [data-ws-id="37"][data-state=open] {
     --accordion-trigger-icon-transform: 180deg
   }
-  [data-ws-id="39"] {
+  [data-ws-id="40"] {
     rotate: var(--accordion-trigger-icon-transform);
     height: 1rem;
     width: 1rem;
@@ -429,7 +430,7 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 200ms
   }
-  [data-ws-id="43"] {
+  [data-ws-id="44"] {
     overflow: hidden;
     font-size: 0.875rem;
     line-height: 1.25rem;

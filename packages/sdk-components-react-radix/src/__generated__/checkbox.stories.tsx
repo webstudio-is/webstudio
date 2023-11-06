@@ -11,7 +11,8 @@ import {
 } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [checkboxChecked, set$checkboxChecked] = useState(false);
+  let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
+  let expression = checkboxChecked;
   let onCheckedChange = (checked: any) => {
     checkboxChecked = checked;
     set$checkboxChecked(checkboxChecked);
@@ -22,15 +23,15 @@ const Page = (props: { scripts?: ReactNode }) => {
         <Checkbox
           data-ws-id="3"
           data-ws-component="Checkbox"
-          checked={checkboxChecked}
+          checked={expression}
           onCheckedChange={onCheckedChange}
         >
           <CheckboxIndicator
-            data-ws-id="8"
+            data-ws-id="9"
             data-ws-component="CheckboxIndicator"
           >
             <HtmlEmbed
-              data-ws-id="10"
+              data-ws-id="11"
               data-ws-component="HtmlEmbed"
               code={
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M11.957 5.043a1 1 0 0 1 0 1.414l-4.5 4.5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.75 8.836l3.793-3.793a1 1 0 0 1 1.414 0Z" clip-rule="evenodd"/></svg>'
@@ -38,7 +39,7 @@ const Page = (props: { scripts?: ReactNode }) => {
             />
           </CheckboxIndicator>
         </Checkbox>
-        <Text data-ws-id="12" data-ws-component="Text" tag={"span"}>
+        <Text data-ws-id="13" data-ws-component="Text" tag={"span"}>
           {"Checkbox"}
         </Text>
       </Label>
@@ -253,7 +254,7 @@ html {margin: 0; display: grid; min-height: 100%}
     background-color: rgba(15, 23, 42, 1);
     color: rgba(248, 250, 252, 1)
   }
-  [data-ws-id="8"] {
+  [data-ws-id="9"] {
     display: flex;
     align-items: center;
     justify-content: center;

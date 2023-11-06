@@ -307,6 +307,7 @@ export const prebuild = async (options: {
       assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
       pages: new Map(siteData.pages.map((page) => [page.id, page])),
     });
+
     const props: [Prop["id"], Prop][] = [];
     for (const prop of normalizedProps) {
       if (pageInstanceSet.has(prop.instanceId)) {
@@ -559,6 +560,22 @@ ${utilsExport}
     }
   );
   await ensureFileInPath(join(generatedDir, "index.css"), cssText);
+
+  await writeFile(
+    join(generatedDir, "[sitemap.xml].ts"),
+    `
+      export const sitemap = ${JSON.stringify(
+        {
+          pages: siteData.pages.map((page) => ({
+            path: page.path,
+            lastModified: siteData.build.updatedAt,
+          })),
+        },
+        null,
+        2
+      )};
+    `
+  );
 
   spinner.text = "Downloading fonts and images";
   await Promise.all(assetsToDownload);

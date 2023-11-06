@@ -14,8 +14,10 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
+import { decodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import {
   dataSourceVariablesStore,
+  dataSourcesStore,
   propsIndexStore,
   propsStore,
 } from "~/shared/nano-states";
@@ -217,7 +219,22 @@ export const PropsSectionContainer = ({
       const prop = props.get(update.id);
       // update data source instead when real prop has data source type
       if (prop?.type === "dataSource") {
-        const dataSourceId = prop.value;
+        let dataSourceId = prop.value;
+        const dataSources = dataSourcesStore.get();
+        const dataSource = dataSources.get(dataSourceId);
+        // when data source is expression containing only reference to variable
+        // update that variable instead
+        if (dataSource?.type === "expression") {
+          // extract id without parsing expression
+          const potentialVariableId = decodeDataSourceVariable(dataSource.code);
+          if (
+            potentialVariableId !== undefined &&
+            dataSources.has(potentialVariableId)
+          ) {
+            dataSourceId = potentialVariableId;
+          }
+        }
+
         const dataSourceVariables = new Map(dataSourceVariablesStore.get());
         dataSourceVariables.set(dataSourceId, update.value);
         dataSourceVariablesStore.set(dataSourceVariables);

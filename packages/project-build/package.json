@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/project-build",
-  "version": "0.112.0",
+  "version": "0.114.0",
   "description": "Webstudio Project Build",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "type-fest": "^4.3.1",

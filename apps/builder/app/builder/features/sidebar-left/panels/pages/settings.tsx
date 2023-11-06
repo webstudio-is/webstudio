@@ -46,6 +46,7 @@ import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
 import {
   assetsStore,
+  $domains,
   instancesStore,
   pagesStore,
   projectStore,
@@ -61,6 +62,7 @@ import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
+import env from "~/shared/env";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -244,7 +246,13 @@ const FormFields = ({
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
   const project = projectStore.get();
-  const publishedUrl = new URL(`https://${project?.domain}`);
+  const customDomain: string | undefined = $domains.get()[0];
+  const projectDomain = `${project?.domain}.${
+    env.PUBLISHER_HOST ?? "wstd.work"
+  }`;
+  const domain = customDomain ?? projectDomain;
+
+  const publishedUrl = new URL(`https://${domain}`);
 
   const pageDomainAndPath = [publishedUrl.host, values?.path]
     .filter(Boolean)

@@ -86,11 +86,12 @@ enum PublishStatus {
 }
 
 model Build {
-  id        String   @unique @default(uuid())
-  version   Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  pages     String
+  id                String   @unique @default(uuid())
+  version           Int      @default(0)
+  lastTransactionId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+  pages             String
 
   project   Project @relation(fields: [projectId], references: [id])
   projectId String

@@ -224,14 +224,14 @@ test("generate data for embedding from props bound to data source variables", ()
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            showOtherBoxDataSource: { type: "variable", initialValue: false },
+          variables: {
+            showOtherBoxDataSource: { initialValue: false },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "showOtherBox",
-              dataSourceName: "showOtherBoxDataSource",
+              code: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -241,9 +241,9 @@ test("generate data for embedding from props bound to data source variables", ()
           component: "Box2",
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "showOtherBoxDataSource",
+              code: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -288,6 +288,20 @@ test("generate data for embedding from props bound to data source variables", ()
           value: false,
         },
       },
+      {
+        id: expectString,
+        scopeInstanceId: expectString,
+        type: "expression",
+        name: "expression",
+        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
+      },
+      {
+        id: expectString,
+        scopeInstanceId: expectString,
+        type: "expression",
+        name: "expression",
+        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
+      },
     ],
     styleSourceSelections: [],
     styleSources: [],
@@ -302,18 +316,14 @@ test("generate data for embedding from props bound to data source expressions", 
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            boxState: { type: "variable", initialValue: "initial" },
-            boxStateSuccess: {
-              type: "expression",
-              code: `boxState === 'success'`,
-            },
+          variables: {
+            boxState: { initialValue: "initial" },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "state",
-              dataSourceName: "boxState",
+              code: "boxState",
             },
           ],
           children: [],
@@ -323,9 +333,9 @@ test("generate data for embedding from props bound to data source expressions", 
           component: "Box2",
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "boxStateSuccess",
+              code: "boxState === 'success'",
             },
           ],
           children: [],
@@ -374,7 +384,14 @@ test("generate data for embedding from props bound to data source expressions", 
         type: "expression",
         id: expectString,
         scopeInstanceId: expectString,
-        name: "boxStateSuccess",
+        name: "expression",
+        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
+      },
+      {
+        type: "expression",
+        id: expectString,
+        scopeInstanceId: expectString,
+        name: "expression",
         code: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
@@ -391,14 +408,14 @@ test("generate data for embedding from action props", () => {
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            boxState: { type: "variable", initialValue: "initial" },
+          variables: {
+            boxState: { initialValue: "initial" },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "state",
-              dataSourceName: "boxState",
+              code: "boxState",
             },
           ],
           children: [
@@ -487,6 +504,13 @@ test("generate data for embedding from action props", () => {
           type: "string",
           value: "initial",
         },
+      },
+      {
+        id: expectString,
+        scopeInstanceId: expectString,
+        name: "expression",
+        type: "expression",
+        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
     ],
     styleSourceSelections: [],

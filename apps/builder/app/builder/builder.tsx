@@ -36,6 +36,7 @@ import {
   styleSourceSelectionsStore,
   styleSourcesStore,
   stylesStore,
+  $domains,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -219,6 +220,7 @@ const NavigatorPanel = ({
 
 export type BuilderProps = {
   project: Project;
+  domains: string[];
   build: Build;
   assets: [Asset["id"], Asset][];
   buildOrigin: string;
@@ -228,6 +230,7 @@ export type BuilderProps = {
 
 export const Builder = ({
   project,
+  domains,
   build,
   assets,
   buildOrigin,
@@ -237,6 +240,7 @@ export const Builder = ({
   useMount(() => {
     // additional data stores
     projectStore.set(project);
+    $domains.set(domains);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
 

@@ -12,7 +12,8 @@ import {
 } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [radioGroupValue, set$radioGroupValue] = useState("");
+  let [radioGroupValue, set$radioGroupValue] = useState<any>("");
+  let expression = radioGroupValue;
   let onValueChange = (value: any) => {
     radioGroupValue = value;
     set$radioGroupValue(radioGroupValue);
@@ -22,21 +23,21 @@ const Page = (props: { scripts?: ReactNode }) => {
       <RadioGroup
         data-ws-id="1"
         data-ws-component="RadioGroup"
-        value={radioGroupValue}
+        value={expression}
         onValueChange={onValueChange}
       >
-        <Label data-ws-id="6" data-ws-component="Label">
+        <Label data-ws-id="7" data-ws-component="Label">
           <RadioGroupItem
-            data-ws-id="8"
+            data-ws-id="9"
             data-ws-component="RadioGroupItem"
             value={"default"}
           >
             <RadioGroupIndicator
-              data-ws-id="11"
+              data-ws-id="12"
               data-ws-component="RadioGroupIndicator"
             >
               <HtmlEmbed
-                data-ws-id="12"
+                data-ws-id="13"
                 data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
@@ -44,22 +45,22 @@ const Page = (props: { scripts?: ReactNode }) => {
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text data-ws-id="14" data-ws-component="Text">
+          <Text data-ws-id="15" data-ws-component="Text">
             {"Default"}
           </Text>
         </Label>
-        <Label data-ws-id="15" data-ws-component="Label">
+        <Label data-ws-id="16" data-ws-component="Label">
           <RadioGroupItem
-            data-ws-id="17"
+            data-ws-id="18"
             data-ws-component="RadioGroupItem"
             value={"comfortable"}
           >
             <RadioGroupIndicator
-              data-ws-id="20"
+              data-ws-id="21"
               data-ws-component="RadioGroupIndicator"
             >
               <HtmlEmbed
-                data-ws-id="21"
+                data-ws-id="22"
                 data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
@@ -67,22 +68,22 @@ const Page = (props: { scripts?: ReactNode }) => {
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text data-ws-id="23" data-ws-component="Text">
+          <Text data-ws-id="24" data-ws-component="Text">
             {"Comfortable"}
           </Text>
         </Label>
-        <Label data-ws-id="24" data-ws-component="Label">
+        <Label data-ws-id="25" data-ws-component="Label">
           <RadioGroupItem
-            data-ws-id="26"
+            data-ws-id="27"
             data-ws-component="RadioGroupItem"
             value={"compact"}
           >
             <RadioGroupIndicator
-              data-ws-id="29"
+              data-ws-id="30"
               data-ws-component="RadioGroupIndicator"
             >
               <HtmlEmbed
-                data-ws-id="30"
+                data-ws-id="31"
                 data-ws-component="HtmlEmbed"
                 code={
                   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M8 5.35a2.65 2.65 0 1 0 0 5.3 2.65 2.65 0 0 0 0-5.3Z"/></svg>'
@@ -90,7 +91,7 @@ const Page = (props: { scripts?: ReactNode }) => {
               />
             </RadioGroupIndicator>
           </RadioGroupItem>
-          <Text data-ws-id="32" data-ws-component="Text">
+          <Text data-ws-id="33" data-ws-component="Text">
             {"Compact"}
           </Text>
         </Label>
@@ -278,13 +279,13 @@ html {margin: 0; display: grid; min-height: 100%}
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="6"] {
+  [data-ws-id="7"] {
     display: flex;
     align-items: center;
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="8"] {
+  [data-ws-id="9"] {
     aspect-ratio: 1 / 1;
     height: 1rem;
     width: 1rem;
@@ -306,24 +307,24 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="8"]:focus-visible {
+  [data-ws-id="9"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="8"]:disabled {
+  [data-ws-id="9"]:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="15"] {
+  [data-ws-id="16"] {
     display: flex;
     align-items: center;
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="17"] {
+  [data-ws-id="18"] {
     aspect-ratio: 1 / 1;
     height: 1rem;
     width: 1rem;
@@ -345,24 +346,24 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="17"]:focus-visible {
+  [data-ws-id="18"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="17"]:disabled {
+  [data-ws-id="18"]:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }
-  [data-ws-id="24"] {
+  [data-ws-id="25"] {
     display: flex;
     align-items: center;
     row-gap: 0.5rem;
     column-gap: 0.5rem
   }
-  [data-ws-id="26"] {
+  [data-ws-id="27"] {
     aspect-ratio: 1 / 1;
     height: 1rem;
     width: 1rem;
@@ -384,14 +385,14 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="26"]:focus-visible {
+  [data-ws-id="27"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="26"]:disabled {
+  [data-ws-id="27"]:disabled {
     cursor: not-allowed;
     opacity: 0.5
   }

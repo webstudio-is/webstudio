@@ -11,7 +11,8 @@ import {
 } from "../components";
 
 const Page = (props: { scripts?: ReactNode }) => {
-  let [collapsibleOpen, set$collapsibleOpen] = useState(false);
+  let [collapsibleOpen, set$collapsibleOpen] = useState<any>(false);
+  let expression = collapsibleOpen;
   let onOpenChange = (open: any) => {
     collapsibleOpen = open;
     set$collapsibleOpen(collapsibleOpen);
@@ -21,22 +22,22 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Collapsible
         data-ws-id="1"
         data-ws-component="Collapsible"
-        open={collapsibleOpen}
+        open={expression}
         onOpenChange={onOpenChange}
       >
         <CollapsibleTrigger
-          data-ws-id="5"
+          data-ws-id="6"
           data-ws-component="CollapsibleTrigger"
         >
-          <Button data-ws-id="6" data-ws-component="Button">
+          <Button data-ws-id="7" data-ws-component="Button">
             {"Click to toggle content"}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent
-          data-ws-id="8"
+          data-ws-id="9"
           data-ws-component="CollapsibleContent"
         >
-          <Text data-ws-id="9" data-ws-component="Text">
+          <Text data-ws-id="10" data-ws-component="Text">
             {"Collapsible Content"}
           </Text>
         </CollapsibleContent>
@@ -196,7 +197,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="6"] {
+  [data-ws-id="7"] {
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
@@ -226,18 +227,18 @@ html {margin: 0; display: grid; min-height: 100%}
     padding-top: 0.5rem;
     padding-bottom: 0.5rem
   }
-  [data-ws-id="6"]:focus-visible {
+  [data-ws-id="7"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="6"]:disabled {
+  [data-ws-id="7"]:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="6"]:hover {
+  [data-ws-id="7"]:hover {
     background-color: rgba(241, 245, 249, 0.9);
     color: rgba(15, 23, 42, 1)
   }

@@ -16,6 +16,7 @@ export type Build = {
   projectId: string;
   version: number;
   createdAt: string;
+  updatedAt: string;
   pages: Pages;
   breakpoints: [Breakpoint["id"], Breakpoint][];
   styles: [StyleDeclKey, StyleDecl][];

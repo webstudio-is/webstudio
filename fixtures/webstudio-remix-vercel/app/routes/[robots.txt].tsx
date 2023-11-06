@@ -11,8 +11,7 @@ export const loader = (arg: LoaderArgs) => {
 User-agent: *
 Disallow: /api/
 
-# Uncomment
-# Sitemap: https://${host}/sitemap.xml
+Sitemap: https://${host}/sitemap.xml
 
   `,
     {
