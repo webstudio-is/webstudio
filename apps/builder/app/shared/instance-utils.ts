@@ -12,14 +12,13 @@ import {
   Breakpoints,
   DataSources,
   Props,
+  DataSource,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
   type EmbedTemplateData,
-  encodeDataSourceVariable,
-  computeExpressionsDependencies,
   decodeDataSourceVariable,
   validateExpression,
 } from "@webstudio-is/react-sdk";
@@ -626,16 +625,6 @@ export const getInstancesSlice = (rootInstanceId: string) => {
     });
   }
 
-  // compute dependencies of expressions to make sure all data sources
-  // are inside of instances slice and can be copied
-  const expressions = new Map<string, string>();
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "expression") {
-      expressions.set(encodeDataSourceVariable(dataSource.id), dataSource.code);
-    }
-  }
-  const dependencies = computeExpressionsDependencies(expressions);
-
   // collect data sources scoped to instances slice
   //
   // @todo copy data sources outside of slice tree and bind to copied root
@@ -645,26 +634,27 @@ export const getInstancesSlice = (rootInstanceId: string) => {
   for (const dataSource of dataSources.values()) {
     let canBeCopied = true;
     if (dataSource.type === "expression") {
-      const expressionDeps = dependencies.get(
-        encodeDataSourceVariable(dataSource.id)
-      );
+      const deps = new Set<DataSource["id"]>();
+      validateExpression(dataSource.code, {
+        transformIdentifier: (identifier) => {
+          const id = decodeDataSourceVariable(identifier);
+          if (id !== undefined) {
+            deps.add(id);
+          }
+          return identifier;
+        },
+      });
       // check if all expression dependencies can be copied
-      if (expressionDeps) {
-        for (const dependency of expressionDeps) {
-          const dataSourceId = decodeDataSourceVariable(dependency);
-          if (dataSourceId === undefined) {
-            continue;
-          }
-          const dataSource = dataSources.get(dataSourceId);
-          if (dataSource === undefined) {
-            continue;
-          }
-          if (
-            dataSource.scopeInstanceId === undefined ||
-            slicedInstanceIds.has(dataSource.scopeInstanceId) === false
-          ) {
-            canBeCopied = false;
-          }
+      for (const dataSourceId of deps) {
+        const dataSource = dataSources.get(dataSourceId);
+        if (dataSource === undefined) {
+          continue;
+        }
+        if (
+          dataSource.scopeInstanceId === undefined ||
+          slicedInstanceIds.has(dataSource.scopeInstanceId) === false
+        ) {
+          canBeCopied = false;
         }
       }
     }
@@ -723,9 +713,6 @@ export const getInstancesSlice = (rootInstanceId: string) => {
           validateExpression(value.code, {
             effectful: true,
             transformIdentifier: (identifier) => {
-              if (value.args.includes(identifier)) {
-                return identifier;
-              }
               const id = decodeDataSourceVariable(identifier);
               if (id === undefined) {
                 return identifier;
@@ -733,19 +720,6 @@ export const getInstancesSlice = (rootInstanceId: string) => {
               if (slicedDataSources.has(id) === false) {
                 shouldKeepAction = false;
                 return identifier;
-              }
-              const identifierDeps = dependencies.get(id);
-              if (identifierDeps) {
-                for (const dependency of identifierDeps) {
-                  const id = decodeDataSourceVariable(dependency);
-                  if (id === undefined) {
-                    continue;
-                  }
-                  if (slicedDataSources.has(id) === false) {
-                    shouldKeepAction = false;
-                    return identifier;
-                  }
-                }
               }
               return identifier;
             },
