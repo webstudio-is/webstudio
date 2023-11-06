@@ -93,6 +93,24 @@ export const TransitionContent = ({
     onEditLayer(index, { type: "layers", value: [newLayer] });
   };
 
+  const handleOnTimingSelection = (newTiming: TupleValueItem) => {
+    const value: TupleValueItem[] = [
+      property,
+      duration,
+      newTiming,
+      delay,
+    ].filter<TupleValueItem>((item): item is TupleValueItem => item !== null);
+
+    const newLayer: TupleValue = { type: "tuple", value };
+
+    setIntermediateValue({
+      type: "intermediate",
+      value: toValue(newLayer),
+    });
+
+    onEditLayer(index, { type: "layers", value: [newLayer] });
+  };
+
   return (
     <Flex direction="column">
       <Grid
@@ -110,7 +128,9 @@ export const TransitionContent = ({
         />
 
         <TransitionTiming
+          /* Browser defaults for transition-property - ease */
           timing={timing ?? { type: "keyword", value: "ease" }}
+          onTimingSelection={handleOnTimingSelection}
         />
       </Grid>
       <Separator css={{ gridColumn: "span 2" }} />

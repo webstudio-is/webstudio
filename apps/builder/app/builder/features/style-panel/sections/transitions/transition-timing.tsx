@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { KeywordValue } from "@webstudio-is/css-engine";
+import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
 import {
   Combobox,
   ComboboxAnchor,
@@ -75,17 +75,37 @@ const timingFunctions = {
   ...easeInOutFunctions,
 } as const;
 
-type NameAndLabel = { name: TimingFunctions; label?: string };
+type NameAndLabel = { name: TimingFunctions; value: string };
 
 type TransitionTimingProps = {
   timing: KeywordValue;
+  onTimingSelection: (timing: TupleValueItem) => void;
+};
+
+const findTimingFunctionFromValue = (
+  timingFunction: string
+): TimingFunctions | undefined => {
+  return (Object.keys(timingFunctions) as TimingFunctions[]).find(
+    (key: TimingFunctions) => timingFunctions[key] === timingFunction
+  );
 };
 
 const comboBoxStyles = css({ zIndex: theme.zIndices[1] });
 
-export const TransitionTiming = ({ timing }: TransitionTimingProps) => {
-  const [inputValue, setInputValue] = useState(timing.value ?? "ease");
-  useEffect(() => setInputValue(timing.value), [timing.value]);
+export const TransitionTiming = ({
+  timing,
+  onTimingSelection,
+}: TransitionTimingProps) => {
+  const [inputValue, setInputValue] = useState(
+    findTimingFunctionFromValue(timing.value) ?? timing.value ?? ""
+  );
+  useEffect(
+    () =>
+      setInputValue(
+        findTimingFunctionFromValue(timing.value) ?? timing.value ?? ""
+      ),
+    [timing.value]
+  );
 
   const {
     items,
@@ -98,21 +118,26 @@ export const TransitionTiming = ({ timing }: TransitionTimingProps) => {
   } = useCombobox<NameAndLabel>({
     items: (Object.keys(timingFunctions) as TimingFunctions[]).map((prop) => ({
       name: prop,
-      label: prop,
+      value: timingFunctions[prop],
     })),
-    value: { name: inputValue as TimingFunctions, label: inputValue },
+    value: {
+      name: inputValue as TimingFunctions,
+      value: timingFunctions[inputValue as TimingFunctions] ?? "",
+    },
     selectedItem: undefined,
     itemToString: (value) => value?.name ?? "",
     onInputChange: (value) => setInputValue(value ?? ""),
     onItemSelect: (prop) => {
       setInputValue(prop.name);
-      console.log(timingFunctions[prop.name]);
+      onTimingSelection({ type: "keyword", value: prop.value });
     },
   });
 
   const defaults = useMemo(() => {
     return items.filter(
-      (prop: NameAndLabel): prop is { name: DefaultFunction } => {
+      (
+        prop: NameAndLabel
+      ): prop is { name: DefaultFunction; value: string } => {
         return Object.keys(defaultFunctions).includes(prop.name);
       }
     );
@@ -120,7 +145,7 @@ export const TransitionTiming = ({ timing }: TransitionTimingProps) => {
 
   const easeIns = useMemo(() => {
     return items.filter(
-      (prop: NameAndLabel): prop is { name: EaseInFunction } => {
+      (prop: NameAndLabel): prop is { name: EaseInFunction; value: string } => {
         return Object.keys(easeInFunctions).includes(prop.name);
       }
     );
@@ -128,7 +153,9 @@ export const TransitionTiming = ({ timing }: TransitionTimingProps) => {
 
   const easeOuts = useMemo(() => {
     return items.filter(
-      (prop: NameAndLabel): prop is { name: EaseOutFunction } => {
+      (
+        prop: NameAndLabel
+      ): prop is { name: EaseOutFunction; value: string } => {
         return Object.keys(easeOutFunctions).includes(prop.name);
       }
     );
@@ -136,7 +163,9 @@ export const TransitionTiming = ({ timing }: TransitionTimingProps) => {
 
   const easeInOuts = useMemo(() => {
     return items.filter(
-      (prop: NameAndLabel): prop is { name: EaseInOutFunction } => {
+      (
+        prop: NameAndLabel
+      ): prop is { name: EaseInOutFunction; value: string } => {
         return Object.keys(easeOutFunctions).includes(prop.name);
       }
     );
