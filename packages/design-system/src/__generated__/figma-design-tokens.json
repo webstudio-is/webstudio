@@ -553,7 +553,7 @@
           "description": "disabled state for button"
         },
         "disabled-dark": {
-          "value": "#687076",
+          "value": "#646464",
           "type": "color",
           "description": "For disabled controls that are against a dark background."
         }
@@ -931,7 +931,7 @@
         "description": "default color for all text and icons"
       },
       "subtle": {
-        "value": "#707375",
+        "value": "#656869",
         "type": "color",
         "description": "color for less prominent elements. Used in small icon button, nested select button, input field, color input, select button, panel button, text area, search field & toast"
       },
