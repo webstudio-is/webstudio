@@ -60,7 +60,12 @@ export const generateJsxElement = ({
         if (dataSource === undefined) {
           continue;
         }
-        conditionVariableName = scope.getName(dataSource.id, dataSource.name);
+        if (dataSource.type === "variable") {
+          conditionVariableName = scope.getName(dataSource.id, dataSource.name);
+        }
+        if (dataSource.type === "expression") {
+          conditionVariableName = scope.getName(prop.id, prop.name);
+        }
       }
       // ignore any other values
       continue;
@@ -84,8 +89,17 @@ export const generateJsxElement = ({
       if (dataSource === undefined) {
         continue;
       }
-      const dataSourceVariable = scope.getName(dataSource.id, dataSource.name);
-      generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
+      if (dataSource.type === "variable") {
+        const dataSourceVariable = scope.getName(
+          dataSource.id,
+          dataSource.name
+        );
+        generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
+      }
+      if (dataSource.type === "expression") {
+        const dataSourceVariable = scope.getName(prop.id, prop.name);
+        generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
+      }
       continue;
     }
     if (prop.type === "action") {

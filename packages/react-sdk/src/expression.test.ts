@@ -234,7 +234,7 @@ test("generate variables with actions", () => {
   );
 });
 
-test("generate variables with sorted expressions", () => {
+test("generate variables with expressions", () => {
   const generated = generateDataSources({
     scope: createScope(),
     dataSources: new Map([
@@ -255,7 +255,7 @@ test("generate variables with sorted expressions", () => {
           scopeInstanceId: "instance1",
           type: "expression",
           name: "myExp",
-          code: `$ws$dataSource$dataSource3 + "Name"`,
+          code: `$ws$dataSource$dataSource1 + "Name"`,
         },
       ],
       [
@@ -269,11 +269,32 @@ test("generate variables with sorted expressions", () => {
         },
       ],
     ]),
-    props: new Map(),
+    props: new Map([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          type: "dataSource",
+          name: "exp",
+          value: "dataSource2",
+        },
+      ],
+      [
+        "prop2",
+        {
+          id: "prop2",
+          instanceId: "instance2",
+          type: "dataSource",
+          name: "exp",
+          value: "dataSource3",
+        },
+      ],
+    ]),
   });
   expect(generated.body).toMatchInlineSnapshot(`
-"let myExp = (myVar + "Value");
-let myExp_1 = (myExp + "Name");
+"let exp = (myVar + "Name");
+let exp_1 = (myVar + "Value");
 "
 `);
   expect(generated.variables).toEqual(
@@ -291,8 +312,8 @@ let myExp_1 = (myExp + "Name");
   expect(generated.output).toEqual(
     new Map([
       ["dataSource1", "myVar"],
-      ["dataSource2", "myExp_1"],
-      ["dataSource3", "myExp"],
+      ["prop1", "exp"],
+      ["prop2", "exp_1"],
     ])
   );
 });

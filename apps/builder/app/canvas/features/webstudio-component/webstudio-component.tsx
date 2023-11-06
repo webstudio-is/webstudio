@@ -165,7 +165,11 @@ const useInstanceProps = (instanceId: Instance["id"]) => {
           }
           if (prop.type === "dataSource") {
             const dataSourceId = prop.value;
-            const value = dataSourcesLogic.get(dataSourceId);
+            const value =
+              // access expression by prop id
+              dataSourcesLogic.get(prop.id) ??
+              // access variable by data source id
+              dataSourcesLogic.get(dataSourceId);
             if (value !== undefined) {
               instancePropsObject[prop.name] = value;
             }

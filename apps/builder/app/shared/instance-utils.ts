@@ -697,7 +697,8 @@ export const getInstancesSlice = (rootInstanceId: string) => {
     if (prop.type === "dataSource") {
       const dataSourceId = prop.value;
       if (slicedDataSources.has(dataSourceId) === false) {
-        const value = dataSourcesLogic.get(dataSourceId);
+        const value =
+          dataSourcesLogic.get(prop.id) ?? dataSourcesLogic.get(dataSourceId);
         slicedProps.set(prop.id, {
           id: prop.id,
           instanceId: prop.instanceId,
