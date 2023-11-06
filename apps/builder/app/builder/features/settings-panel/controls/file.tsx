@@ -1,5 +1,11 @@
 import { type ReactNode } from "react";
-import { Flex, InputField, theme, useId } from "@webstudio-is/design-system";
+import {
+  Box,
+  Flex,
+  InputField,
+  theme,
+  useId,
+} from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -8,6 +14,7 @@ import {
   Label,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
+import { VariablesButton } from "../variables";
 
 type FileControlProps = ControlProps<"file", "asset" | "string">;
 
@@ -67,9 +74,12 @@ export const FileControl = ({
   return (
     <VerticalLayout
       label={
-        <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
-        </Label>
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+        </Box>
       }
       deletable={deletable}
       onDelete={onDelete}

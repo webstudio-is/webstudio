@@ -1,4 +1,4 @@
-import { InputField, useId } from "@webstudio-is/design-system";
+import { Box, InputField, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -7,6 +7,7 @@ import {
   Label,
 } from "../shared";
 import { useState } from "react";
+import { VariablesButton } from "../variables";
 
 export const NumberControl = ({
   meta,
@@ -31,9 +32,12 @@ export const NumberControl = ({
   return (
     <ResponsiveLayout
       label={
-        <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
-        </Label>
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+        </Box>
       }
       deletable={deletable}
       onDelete={onDelete}

@@ -7,8 +7,12 @@ import {
   CssValueListArrowFocus,
   CssValueListItem,
   Flex,
+  FloatingPanelPopover,
   FloatingPanelPopoverClose,
+  FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
+  FloatingPanelPopoverTrigger,
+  IconButton,
   InputErrorsTooltip,
   InputField,
   Label,
@@ -19,7 +23,13 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { MenuIcon, MinusIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  DotIcon,
+  MenuIcon,
+  MinusIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
 import type { DataSource, Prop } from "@webstudio-is/sdk";
 import {
   PropMeta,
@@ -35,6 +45,7 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 import { CodeEditor } from "./code-editor";
 import type { PropValue } from "./shared";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type VariableDataSource = Extract<DataSource, { type: "variable" }>;
 
@@ -482,7 +493,7 @@ const ListPanel = ({
               gap: theme.spacing[3],
             }}
           >
-            <Label>Name</Label>
+            <Label>Expression</Label>
             <CodeEditor
               // reset uncontrolled editor when saved expression is changed
               key={propExpression}
@@ -619,5 +630,36 @@ export const VariablesPanel = ({
         Variables
       </FloatingPanelPopoverTitle>
     </>
+  );
+};
+
+export const VariablesButton = ({
+  prop,
+  propMeta,
+  onChange,
+}: {
+  prop: undefined | Prop;
+  propMeta: PropMeta;
+  onChange: (value: PropValue) => void;
+}) => {
+  if (isFeatureEnabled("bindings") === false) {
+    return;
+  }
+  return (
+    <FloatingPanelPopover modal>
+      <FloatingPanelPopoverTrigger asChild>
+        <SmallIconButton
+          css={{
+            position: "absolute",
+            top: -10,
+            left: -10,
+          }}
+          icon={<DotIcon />}
+        />
+      </FloatingPanelPopoverTrigger>
+      <FloatingPanelPopoverContent side="left" align="start">
+        <VariablesPanel prop={prop} propMeta={propMeta} onChange={onChange} />
+      </FloatingPanelPopoverContent>
+    </FloatingPanelPopover>
   );
 };
