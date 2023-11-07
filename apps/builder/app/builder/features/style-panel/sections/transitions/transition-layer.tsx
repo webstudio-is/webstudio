@@ -8,11 +8,30 @@ import { SubtractIcon } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransitionContent } from "./transition-content";
 import type { LayerProps } from "../../style-layers-list";
-import { toValue } from "@webstudio-is/css-engine";
+import { TupleValue, toValue } from "@webstudio-is/css-engine";
+import { findTimingFunctionFromValue } from "./transition-utils";
 
 export const Layer = (props: LayerProps) => {
   const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
-  const transition = useMemo(() => toValue(layer), [layer]);
+  const { transition, label } = useMemo(() => {
+    const label: TupleValue = {
+      type: "tuple",
+      value: [],
+    };
+
+    for (const prop of layer.value) {
+      if (prop.type === "keyword") {
+        label.value.push({
+          type: "keyword",
+          value: findTimingFunctionFromValue(prop.value) ?? prop.value,
+        });
+      } else {
+        label.value.push(prop);
+      }
+    }
+
+    return { transition: toValue(layer), label: toValue(label) };
+  }, [layer]);
 
   return (
     <FloatingPanel
@@ -23,7 +42,7 @@ export const Layer = (props: LayerProps) => {
           layer={layer}
           transition={transition}
           onEditLayer={props.onEditLayer}
-          createBatchUpdate={props.createBatchUpdate}
+          deleteProperty={props.deleteProperty}
         />
       }
     >
@@ -31,7 +50,7 @@ export const Layer = (props: LayerProps) => {
         id={id}
         active={isHighlighted}
         index={index}
-        label={<Label truncate>{transition}</Label>}
+        label={<Label truncate>{label}</Label>}
         hidden={disabled ?? layer?.hidden}
         buttons={
           <>

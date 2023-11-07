@@ -49,7 +49,7 @@ export const TransitionProperty = ({
   property,
   onPropertySelection,
 }: TransitionPropertyProps) => {
-  const [inputValue, setInputValue] = useState(property?.value ?? "all");
+  const [inputValue, setInputValue] = useState(property.value ?? "all");
   useEffect(() => setInputValue(property.value), [property.value]);
 
   const {
