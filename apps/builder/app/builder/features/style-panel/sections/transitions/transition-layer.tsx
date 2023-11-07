@@ -42,7 +42,7 @@ export const Layer = (props: LayerProps) => {
           layer={layer}
           transition={transition}
           onEditLayer={props.onEditLayer}
-          createBatchUpdate={props.createBatchUpdate}
+          deleteProperty={props.deleteProperty}
         />
       }
     >

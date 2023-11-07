@@ -22,7 +22,7 @@ import {
   parseTransition,
 } from "@webstudio-is/css-data";
 import { InformationIcon } from "@webstudio-is/icons";
-import type { CreateBatchUpdate } from "../../shared/use-style-data";
+import type { DeleteProperty } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
@@ -32,7 +32,7 @@ type TransitionContentProps = {
   layer: TupleValue;
   transition: string;
   onEditLayer: (index: number, layer: LayersValue) => void;
-  createBatchUpdate: CreateBatchUpdate;
+  deleteProperty: DeleteProperty;
 };
 
 export const TransitionContent = ({
@@ -40,6 +40,7 @@ export const TransitionContent = ({
   transition,
   onEditLayer,
   index,
+  deleteProperty,
 }: TransitionContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -169,9 +170,20 @@ export const TransitionContent = ({
           state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
           value={intermediateValue?.value ?? ""}
           onChange={handleChange}
+          onBlur={handleComplete}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               handleComplete();
+              event.preventDefault();
+            }
+
+            if (event.key === "Escape") {
+              if (intermediateValue === undefined) {
+                return;
+              }
+
+              deleteProperty("transition", { isEphemeral: true });
+              setIntermediateValue(undefined);
               event.preventDefault();
             }
           }}

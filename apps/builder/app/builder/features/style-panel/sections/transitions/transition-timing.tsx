@@ -36,6 +36,17 @@ type TransitionTimingProps = {
   onTimingSelection: (timing: TupleValueItem) => void;
 };
 
+const filterTimingFunctuionsFromList = <T extends TimingFunctions>(
+  functions: NameAndLabel[],
+  timingFunctions: { [key in T]: string }
+) => {
+  return functions.filter(
+    (prop: NameAndLabel): prop is { name: T; value: string } => {
+      return Object.keys(timingFunctions).includes(prop.name);
+    }
+  );
+};
+
 const comboBoxStyles = css({ zIndex: theme.zIndices[1] });
 
 export const TransitionTiming = ({
@@ -79,43 +90,33 @@ export const TransitionTiming = ({
     },
   });
 
-  const defaults = useMemo(() => {
-    return items.filter(
-      (
-        prop: NameAndLabel
-      ): prop is { name: DefaultFunction; value: string } => {
-        return Object.keys(defaultFunctions).includes(prop.name);
-      }
+  const filteredTimingFunctions = useMemo(() => {
+    const defaults = filterTimingFunctuionsFromList<DefaultFunction>(
+      items,
+      defaultFunctions
     );
+    const easeIns = filterTimingFunctuionsFromList<EaseInFunction>(
+      items,
+      easeInFunctions
+    );
+    const easeOuts = filterTimingFunctuionsFromList<EaseOutFunction>(
+      items,
+      easeOutFunctions
+    );
+    const easeInOuts = filterTimingFunctuionsFromList<EaseInOutFunction>(
+      items,
+      easeInOutFunctions
+    );
+
+    return {
+      defaults,
+      easeIns,
+      easeOuts,
+      easeInOuts,
+    };
   }, [items]);
 
-  const easeIns = useMemo(() => {
-    return items.filter(
-      (prop: NameAndLabel): prop is { name: EaseInFunction; value: string } => {
-        return Object.keys(easeInFunctions).includes(prop.name);
-      }
-    );
-  }, [items]);
-
-  const easeOuts = useMemo(() => {
-    return items.filter(
-      (
-        prop: NameAndLabel
-      ): prop is { name: EaseOutFunction; value: string } => {
-        return Object.keys(easeOutFunctions).includes(prop.name);
-      }
-    );
-  }, [items]);
-
-  const easeInOuts = useMemo(() => {
-    return items.filter(
-      (
-        prop: NameAndLabel
-      ): prop is { name: EaseInOutFunction; value: string } => {
-        return Object.keys(easeInOutFunctions).includes(prop.name);
-      }
-    );
-  }, [items]);
+  const { defaults, easeIns, easeOuts, easeInOuts } = filteredTimingFunctions;
 
   const renderItem = (item: NameAndLabel, index: number) => {
     return (

@@ -17,7 +17,10 @@ import {
   updateLayer,
 } from "./style-layer-utils";
 import { useMemo } from "react";
-import type { CreateBatchUpdate } from "./shared/use-style-data";
+import type {
+  CreateBatchUpdate,
+  DeleteProperty,
+} from "./shared/use-style-data";
 
 export type LayerProps = {
   id: string;
@@ -29,6 +32,7 @@ export type LayerProps = {
   onDeleteLayer: (index: number) => void;
   onEditLayer: (index: number, layers: LayersValue) => void;
   createBatchUpdate: CreateBatchUpdate;
+  deleteProperty: DeleteProperty;
 };
 
 type LayerListProperties = RenderCategoryProps & {
@@ -45,6 +49,7 @@ export const LayersList = ({
   currentStyle,
   renderLayer,
   createBatchUpdate,
+  deleteProperty,
 }: LayerListProperties) => {
   const layersCount = getLayerCount(property, currentStyle);
 
@@ -93,6 +98,7 @@ export const LayersList = ({
             onLayerHide: handleHideLayer,
             onDeleteLayer: handleDeleteLayer,
             createBatchUpdate,
+            deleteProperty,
             onEditLayer,
           });
         })}
