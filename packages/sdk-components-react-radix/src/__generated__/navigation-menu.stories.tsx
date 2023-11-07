@@ -19,7 +19,7 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [menuValue, set$menuValue] = useState<any>("");
-  let expression = menuValue;
+  let value = menuValue;
   let onValueChange = (value: any) => {
     menuValue = value;
     set$menuValue(menuValue);
@@ -29,7 +29,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <NavigationMenu
         data-ws-id="1"
         data-ws-component="NavigationMenu"
-        value={expression}
+        value={value}
         onValueChange={onValueChange}
       >
         <NavigationMenuList

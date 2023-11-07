@@ -288,7 +288,7 @@ test("generate jsx element with data sources and action", () => {
       data-ws-id="box"
       data-ws-component="Box"
       variable={variableName}
-      expression={expressionName}
+      expression={expression}
       onClick={onClick}
       onChange={onChange} />
     `)

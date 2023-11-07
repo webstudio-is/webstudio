@@ -9,7 +9,7 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [tabsValue, set$tabsValue] = useState<any>("0");
-  let expression = tabsValue;
+  let value = tabsValue;
   let onValueChange = (value: any) => {
     tabsValue = value;
     set$tabsValue(tabsValue);
@@ -19,7 +19,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Tabs
         data-ws-id="1"
         data-ws-component="Tabs"
-        value={expression}
+        value={value}
         onValueChange={onValueChange}
       >
         <TabsList data-ws-id="6" data-ws-component="TabsList">
