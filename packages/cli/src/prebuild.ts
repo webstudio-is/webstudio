@@ -566,10 +566,12 @@ ${utilsExport}
     `
       export const sitemap = ${JSON.stringify(
         {
-          pages: siteData.pages.map((page) => ({
-            path: page.path,
-            lastModified: siteData.build.updatedAt,
-          })),
+          pages: siteData.pages
+            .filter((page) => page.meta.excludePageFromSearch !== true)
+            .map((page) => ({
+              path: page.path,
+              lastModified: siteData.build.updatedAt,
+            })),
         },
         null,
         2
