@@ -18,13 +18,14 @@ import {
   css,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
+import type { KeywordValue } from "@webstudio-is/css-engine";
+import { humanizeString } from "~/shared/string-utils";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: AnimatableProperties; label?: string };
 type TransitionPropertyProps = {
   property: KeywordValue;
-  onPropertySelection: (property: TupleValueItem) => void;
+  onPropertySelection: (params: { property: KeywordValue }) => void;
 };
 
 const commonPropertiesSet = new Set<AnimatableProperties>([
@@ -70,13 +71,13 @@ export const TransitionProperty = ({
     })),
     value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
-    itemToString: (value) => value?.name ?? "",
+    itemToString: (value) => humanizeString(value?.name || "") ?? "",
     onItemSelect: (prop) => {
       if (isAnimatableProperty(prop.name) === false) {
         return;
       }
       setInputValue(prop.name);
-      onPropertySelection({ type: "keyword", value: prop.name });
+      onPropertySelection({ property: { type: "keyword", value: prop.name } });
     },
     onInputChange: (value) => setInputValue(value ?? ""),
   });

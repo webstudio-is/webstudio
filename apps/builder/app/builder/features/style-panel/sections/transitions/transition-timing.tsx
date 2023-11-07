@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
+import type { KeywordValue } from "@webstudio-is/css-engine";
 import {
   Combobox,
   ComboboxAnchor,
@@ -28,12 +28,13 @@ import {
   type DefaultFunction,
   type EaseInOutFunction,
 } from "./transition-utils";
+import { humanizeString } from "~/shared/string-utils";
 
 type NameAndLabel = { name: TimingFunctions; value: string };
 
 type TransitionTimingProps = {
   timing: KeywordValue;
-  onTimingSelection: (timing: TupleValueItem) => void;
+  onTimingSelection: (params: { timing: KeywordValue }) => void;
 };
 
 const filterTimingFunctuionsFromList = <T extends TimingFunctions>(
@@ -82,11 +83,11 @@ export const TransitionTiming = ({
       value: timingFunctions[inputValue as TimingFunctions] ?? "",
     },
     selectedItem: undefined,
-    itemToString: (value) => value?.name ?? "",
+    itemToString: (value) => humanizeString(value?.name ?? ""),
     onInputChange: (value) => setInputValue(value ?? ""),
     onItemSelect: (prop) => {
       setInputValue(prop.name);
-      onTimingSelection({ type: "keyword", value: prop.value });
+      onTimingSelection({ timing: { type: "keyword", value: prop.value } });
     },
   });
 
@@ -133,7 +134,7 @@ export const TransitionTiming = ({
 
   return (
     <>
-      <Label>Timing</Label>
+      <Label>Easing</Label>
       <Combobox>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>

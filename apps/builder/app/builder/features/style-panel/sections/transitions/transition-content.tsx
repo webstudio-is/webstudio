@@ -5,6 +5,9 @@ import {
   type LayersValue,
   type TupleValue,
   type TupleValueItem,
+  KeywordValue,
+  UnitValue,
+  StyleValue,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -26,6 +29,8 @@ import type { DeleteProperty } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
+import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { styleConfigByName } from "../../shared/configs";
 
 type TransitionContentProps = {
   index: number;
@@ -33,6 +38,13 @@ type TransitionContentProps = {
   transition: string;
   onEditLayer: (index: number, layer: LayersValue) => void;
   deleteProperty: DeleteProperty;
+};
+
+type ExtractedTransitionProperties = {
+  property?: KeywordValue | null;
+  timing?: KeywordValue | null;
+  delay?: StyleValue | null;
+  duration?: StyleValue | null;
 };
 
 export const TransitionContent = ({
@@ -46,10 +58,25 @@ export const TransitionContent = ({
     IntermediateStyleValue | InvalidValue | undefined
   >({ type: "intermediate", value: transition });
 
-  const { property, timing, delay, duration } = useMemo(() => {
-    setIntermediateValue({ type: "intermediate", value: transition });
-    return extractTransitionProperties(layer);
-  }, [layer, transition]);
+  const { property, timing, delay, duration } =
+    useMemo<ExtractedTransitionProperties>(() => {
+      setIntermediateValue({ type: "intermediate", value: transition });
+      return extractTransitionProperties(layer);
+    }, [layer, transition]);
+
+  const transitionDurationConfig = styleConfigByName("transitionDuration");
+  const transitionDurationKeywords = transitionDurationConfig.items.map(
+    (item) => ({
+      type: "keyword" as const,
+      value: item.name,
+    })
+  );
+
+  const transitionDelayConfig = styleConfigByName("transitionDelay");
+  const transitionDelayKeywords = transitionDelayConfig.items.map((item) => ({
+    type: "keyword" as const,
+    value: item.name,
+  }));
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -76,32 +103,14 @@ export const TransitionContent = ({
     setIntermediateValue(undefined);
   };
 
-  const handleOnPropertySelection = (newProperty: TupleValueItem) => {
-    const value: TupleValueItem[] = [
-      newProperty,
-      duration,
-      timing,
-      delay,
-    ].filter<TupleValueItem>((item): item is TupleValueItem => item !== null);
-
-    const newLayer: TupleValue = { type: "tuple", value };
-
-    setIntermediateValue({
-      type: "intermediate",
-      value: toValue(newLayer),
-    });
-
-    onEditLayer(index, { type: "layers", value: [newLayer] });
-  };
-
-  const handleOnTimingSelection = (newTiming: TupleValueItem) => {
-    const value: TupleValueItem[] = [
-      property,
-      duration,
-      newTiming,
-      delay,
-    ].filter<TupleValueItem>((item): item is TupleValueItem => item !== null);
-
+  const handlePropertyUpdate = (params: ExtractedTransitionProperties) => {
+    const value: Array<UnitValue | KeywordValue> = Object.values({
+      ...{ property, duration, delay, timing },
+      ...params,
+    }).filter<UnitValue | KeywordValue>(
+      (item): item is UnitValue | KeywordValue =>
+        item !== null && item !== undefined
+    );
     const newLayer: TupleValue = { type: "tuple", value };
 
     setIntermediateValue({
@@ -124,14 +133,50 @@ export const TransitionContent = ({
       >
         <TransitionProperty
           /* Browser defaults for transition-property - all */
-          property={property ?? { type: "keyword", value: "all" }}
-          onPropertySelection={handleOnPropertySelection}
+          property={property ?? { type: "keyword" as const, value: "all" }}
+          onPropertySelection={handlePropertyUpdate}
+        />
+
+        <Label>Duration</Label>
+        <CssValueInputContainer
+          key={"transitionDuration"}
+          property={"transitionDuration"}
+          label={transitionDurationConfig.label}
+          styleSource="local"
+          value={duration ?? undefined}
+          keywords={transitionDurationKeywords}
+          deleteProperty={() => {
+            handlePropertyUpdate({ duration });
+          }}
+          setValue={(value) => {
+            if (value === undefined) {
+              return;
+            }
+            handlePropertyUpdate({ duration: value });
+          }}
+        />
+
+        <Label>Delay</Label>
+        <CssValueInputContainer
+          property={"transitionDelay"}
+          key={"transitionDelay"}
+          styleSource="local"
+          value={delay ?? undefined}
+          label={transitionDurationConfig.label}
+          keywords={transitionDelayKeywords}
+          deleteProperty={() => handlePropertyUpdate({ delay })}
+          setValue={(value) => {
+            if (value === undefined) {
+              return;
+            }
+            handlePropertyUpdate({ delay: value });
+          }}
         />
 
         <TransitionTiming
           /* Browser defaults for transition-property - ease */
           timing={timing ?? { type: "keyword", value: "ease" }}
-          onTimingSelection={handleOnTimingSelection}
+          onTimingSelection={handlePropertyUpdate}
         />
       </Grid>
       <Separator css={{ gridColumn: "span 2" }} />
