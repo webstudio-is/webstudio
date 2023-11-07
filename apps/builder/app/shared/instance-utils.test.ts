@@ -754,7 +754,7 @@ describe("get instances slice", () => {
     ]);
   });
 
-  test("collect data sources within instances slice and convert others to value prop", () => {
+  test("collect data sources used in expressions within instances", () => {
     // body
     //   box1
     //     box2
@@ -793,28 +793,28 @@ describe("get instances slice", () => {
     propsStore.set(
       toMap([
         {
-          id: "box1$state",
+          id: "box1$stateProp",
           instanceId: "box1",
           type: "dataSource",
           name: "state",
           value: "box1$state",
         },
         {
-          id: "box2$state",
+          id: "box2$stateProp",
           instanceId: "box2",
           type: "dataSource",
           name: "state",
           value: "box1$state",
         },
         {
-          id: "box2$show",
+          id: "box2$showProp",
           instanceId: "box2",
           type: "dataSource",
           name: "show",
           value: "box2$stateInitial",
         },
         {
-          id: "box2$true",
+          id: "box2$trueProp",
           instanceId: "box2",
           type: "dataSource",
           name: "bool-prop",
@@ -822,34 +822,57 @@ describe("get instances slice", () => {
         },
       ])
     );
-    const { props } = getInstancesSlice("box2");
+    const { props, dataSources } = getInstancesSlice("box2");
 
-    expect(props).toEqual([
+    expect(dataSources).toEqual([
       {
-        id: "box2$state",
-        instanceId: "box2",
-        type: "string",
+        id: "box1$state",
+        scopeInstanceId: "box1",
+        type: "variable",
         name: "state",
-        value: "initial",
+        value: { type: "string", value: "initial" },
       },
       {
-        id: "box2$show",
-        instanceId: "box2",
-        type: "boolean",
-        name: "show",
-        value: true,
+        id: "box2$stateInitial",
+        scopeInstanceId: "box2",
+        type: "expression",
+        name: "stateInitial",
+        code: `$ws$dataSource$box1$state === 'initial'`,
       },
       {
         id: "box2$true",
+        scopeInstanceId: "box2",
+        type: "expression",
+        name: "trueValue",
+        code: `true`,
+      },
+    ]);
+    expect(props).toEqual([
+      {
+        id: "box2$stateProp",
         instanceId: "box2",
+        name: "state",
         type: "dataSource",
+        value: "box1$state",
+      },
+      {
+        id: "box2$showProp",
+        instanceId: "box2",
+        name: "show",
+        type: "dataSource",
+        value: "box2$stateInitial",
+      },
+      {
+        id: "box2$trueProp",
+        instanceId: "box2",
         name: "bool-prop",
+        type: "dataSource",
         value: "box2$true",
       },
     ]);
   });
 
-  test("clear actions which depend on data sources outside of instances slice", () => {
+  test("collect data sources used in actions within instances", () => {
     // body
     //   box1
     //     box2
@@ -908,15 +931,37 @@ describe("get instances slice", () => {
         },
       ])
     );
-    const { props } = getInstancesSlice("box2");
+    const { props, dataSources } = getInstancesSlice("box2");
 
+    expect(dataSources).toEqual([
+      {
+        id: "box1$state",
+        scopeInstanceId: "box1",
+        type: "variable",
+        name: "state",
+        value: { type: "string", value: "initial" },
+      },
+      {
+        id: "box2$state",
+        scopeInstanceId: "box2",
+        type: "variable",
+        name: "state",
+        value: { type: "string", value: "initial" },
+      },
+    ]);
     expect(props).toEqual([
       {
         id: "box2$onChange1",
         instanceId: "box2",
         type: "action",
         name: "onChange",
-        value: [],
+        value: [
+          {
+            args: ["value"],
+            code: "$ws$dataSource$box1$state = value",
+            type: "execute",
+          },
+        ],
       },
       {
         id: "box2$onChange2",

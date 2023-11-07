@@ -2,7 +2,6 @@ import { expect, test } from "@jest/globals";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  computeExpressionsDependencies,
   validateExpression,
   generateDataSources,
 } from "./expression";
@@ -160,36 +159,6 @@ test("encode/decode variable names", () => {
     "my--id"
   );
   expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
-});
-
-test("compute expressions dependencies", () => {
-  const expressions = new Map([
-    ["exp1", `var1`],
-    ["exp2", `exp1 + exp1`],
-    ["exp3", `exp1 + exp2`],
-    ["exp4", `var1 + exp1`],
-  ]);
-  expect(computeExpressionsDependencies(expressions)).toEqual(
-    new Map([
-      ["exp4", new Set(["var1", "exp1"])],
-      ["exp3", new Set(["var1", "exp1", "exp2"])],
-      ["exp2", new Set(["var1", "exp1"])],
-      ["exp1", new Set(["var1"])],
-    ])
-  );
-});
-
-test("handle cyclic dependencies", () => {
-  const expressions = new Map([
-    ["exp1", `exp2 + var1`],
-    ["exp2", `exp1 + var1`],
-  ]);
-  expect(computeExpressionsDependencies(expressions)).toEqual(
-    new Map([
-      ["exp2", new Set(["var1", "exp1", "exp2"])],
-      ["exp1", new Set(["var1", "exp1", "exp2"])],
-    ])
-  );
 });
 
 test("generate variables with actions", () => {
