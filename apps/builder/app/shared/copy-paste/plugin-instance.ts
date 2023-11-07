@@ -201,16 +201,34 @@ export const onPaste = (clipboardData: string): boolean => {
         dropTarget
       );
 
+      // duplicate data sources only within copied tree
       const copiedDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+      const copiedDataSources = new Map<DataSource["id"], DataSource>();
       for (const dataSource of data.dataSources) {
-        copiedDataSourceIds.set(dataSource.id, nanoid());
+        const { scopeInstanceId } = dataSource;
+        if (
+          scopeInstanceId !== undefined &&
+          copiedInstanceIds.has(scopeInstanceId)
+        ) {
+          copiedDataSourceIds.set(dataSource.id, nanoid());
+        }
+        copiedDataSources.set(dataSource.id, dataSource);
       }
 
       for (const dataSource of data.dataSources) {
         let { scopeInstanceId } = dataSource;
-        if (scopeInstanceId !== undefined) {
-          scopeInstanceId = copiedInstanceIds.get(scopeInstanceId);
+        if (scopeInstanceId === undefined) {
+          continue;
         }
+        // reject data sources outside of copied tree and not scoped to ancestors
+        if (
+          copiedInstanceIds.has(scopeInstanceId) === false &&
+          instanceSelector.includes(scopeInstanceId) === false
+        ) {
+          continue;
+        }
+        scopeInstanceId = copiedInstanceIds.get(scopeInstanceId);
+
         const newId = copiedDataSourceIds.get(dataSource.id);
         if (newId === undefined) {
           continue;
@@ -220,26 +238,6 @@ export const onPaste = (clipboardData: string): boolean => {
             ...dataSource,
             id: newId,
             scopeInstanceId,
-          });
-        }
-        if (dataSource.type === "expression") {
-          dataSources.set(newId, {
-            ...dataSource,
-            id: newId,
-            scopeInstanceId,
-            code: validateExpression(dataSource.code, {
-              transformIdentifier: (id) => {
-                const dataSourceId = decodeDataSourceVariable(id);
-                if (dataSourceId === undefined) {
-                  return id;
-                }
-                const newId = copiedDataSourceIds.get(dataSourceId);
-                if (newId === undefined) {
-                  return id;
-                }
-                return encodeDataSourceVariable(newId);
-              },
-            }),
           });
         }
       }
@@ -259,30 +257,92 @@ export const onPaste = (clipboardData: string): boolean => {
       insertPropsCopyMutable(
         props,
         data.props.map((prop) => {
+          let actionDiscarded = false;
+          const transformIdentifier = (
+            identifier: string,
+            assignee: boolean
+          ) => {
+            const dataSourceId = decodeDataSourceVariable(identifier);
+            if (dataSourceId === undefined) {
+              return identifier;
+            }
+            // data source is within copied tree
+            const newId = copiedDataSourceIds.get(dataSourceId);
+            if (newId !== undefined) {
+              return encodeDataSourceVariable(newId);
+            }
+            const dataSource = copiedDataSources.get(dataSourceId);
+            // data source is within paste target
+            if (
+              dataSource?.scopeInstanceId !== undefined &&
+              instanceSelector.includes(dataSource.scopeInstanceId)
+            ) {
+              return identifier;
+            }
+            // left operand of assign operator cannot be inlined
+            if (assignee) {
+              actionDiscarded = true;
+            }
+            // inline variable not scoped to copied tree or paste target
+            if (dataSource?.type === "variable") {
+              return JSON.stringify(dataSource.value.value);
+            }
+            return identifier;
+          };
+
+          if (prop.type === "dataSource") {
+            const dataSource = copiedDataSources.get(prop.value);
+            // convert to value prop when variable is not scoped to copied tree or paste target
+            if (dataSource?.type === "variable") {
+              // data source is within copied tree
+              if (copiedDataSourceIds.has(dataSource.id)) {
+                return prop;
+              }
+              // data source is within paste target
+              if (
+                dataSource.scopeInstanceId !== undefined &&
+                instanceSelector.includes(dataSource.scopeInstanceId)
+              ) {
+                return prop;
+              }
+              return {
+                ...prop,
+                ...dataSource.value,
+              };
+            }
+            if (dataSource?.type === "expression") {
+              const newDataSourceId =
+                copiedDataSourceIds.get(dataSource.id) ?? dataSource.id;
+              const newInstanceId =
+                copiedInstanceIds.get(dataSource.scopeInstanceId) ??
+                dataSource.scopeInstanceId;
+              dataSources.set(newDataSourceId, {
+                ...dataSource,
+                id: newDataSourceId,
+                scopeInstanceId: newInstanceId,
+                code: validateExpression(dataSource.code, {
+                  transformIdentifier,
+                }),
+              });
+              return prop;
+            }
+          }
           if (prop.type === "action") {
             return {
               ...prop,
-              value: prop.value.map((value) => {
+              value: prop.value.flatMap((value) => {
                 if (value.type !== "execute") {
-                  return value;
+                  return [value];
                 }
-                return {
-                  ...value,
-                  code: validateExpression(value.code, {
-                    effectful: true,
-                    transformIdentifier: (id) => {
-                      const dataSourceId = decodeDataSourceVariable(id);
-                      if (dataSourceId === undefined) {
-                        return id;
-                      }
-                      const newId = copiedDataSourceIds.get(dataSourceId);
-                      if (newId === undefined) {
-                        return id;
-                      }
-                      return encodeDataSourceVariable(newId);
-                    },
-                  }),
-                };
+                actionDiscarded = false;
+                const newCode = validateExpression(value.code, {
+                  effectful: true,
+                  transformIdentifier,
+                });
+                if (actionDiscarded) {
+                  return [];
+                }
+                return [{ ...value, code: newCode }];
               }),
             };
           }
@@ -291,6 +351,7 @@ export const onPaste = (clipboardData: string): boolean => {
         copiedInstanceIds,
         copiedDataSourceIds
       );
+
       insertStyleSourceSelectionsCopyMutable(
         styleSourceSelections,
         data.styleSourceSelections,
