@@ -14,6 +14,32 @@ test("allow literals and array expressions", () => {
   ).toEqual(`["", '', 0, true, false, null, undefined]`);
 });
 
+test("allow object literals", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression(
+      `{param1: "", "param2": 0, ["param3"]: false, [a]: b }`,
+      {
+        transformIdentifier: (id) => {
+          ids.push(id);
+          return id;
+        },
+      }
+    )
+  ).toEqual(`{param1: "", "param2": 0, ["param3"]: false, [a]: b}`);
+  expect(ids).toEqual(["a", "b"]);
+});
+
+test("expand shorthand properties in objects", () => {
+  expect(validateExpression(`{a}`)).toEqual(`{a: a}`);
+});
+
+test("supports array of objects", () => {
+  expect(
+    validateExpression(`[{name: 'John'}, {name: 'Dave'}, {name: 'Oliver'}]`)
+  ).toEqual(`[{name: 'John'}, {name: 'Dave'}, {name: 'Oliver'}]`);
+});
+
 test("allow unary and binary expressions", () => {
   expect(validateExpression(`[-1, 1 + 1]`)).toEqual(`[-1, 1 + 1]`);
 });
@@ -25,10 +51,49 @@ test("optionally allow assignment expressions", () => {
   expect(validateExpression(`a = 2`, { effectful: true })).toEqual(`a = 2`);
 });
 
-test("forbid member expressions", () => {
-  expect(() => {
-    validateExpression("var1 + obj.param");
-  }).toThrowError(/Cannot access "param" of "obj"/);
+test("allow member expressions", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression("a.b.c", {
+      transformIdentifier: (id) => {
+        ids.push(id);
+        return id;
+      },
+    })
+  ).toEqual("a.b.c");
+  expect(ids).toEqual(["a"]);
+});
+
+test("allow indexed member expressions", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression(`a["b"][1]`, {
+      transformIdentifier: (id) => {
+        ids.push(id);
+        return id;
+      },
+    })
+  ).toEqual(`a["b"][1]`);
+  expect(ids).toEqual(["a"]);
+});
+
+test("allow indexed member expressions with identifiers", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression(`a[b]`, {
+      transformIdentifier: (id) => {
+        ids.push(id);
+        return id;
+      },
+    })
+  ).toEqual(`a[b]`);
+  expect(ids).toEqual(["a", "b"]);
+});
+
+test("optionally transpile all member expressions into optional chaining", () => {
+  expect(validateExpression(`a.b["c"][1]`, { optional: true })).toEqual(
+    `a?.b?.["c"]?.[1]`
+  );
 });
 
 test("forbid this expressions", () => {

@@ -46,7 +46,8 @@ const parseVariableValue = (code: string) => {
   const result: { value?: unknown; error?: string } = {};
   const ids = new Set<string>();
   try {
-    validateExpression(code, {
+    code = validateExpression(code, {
+      optional: true,
       transformIdentifier: (id) => {
         ids.add(id);
         return id;
@@ -58,7 +59,8 @@ const parseVariableValue = (code: string) => {
   }
   if (ids.size === 0) {
     try {
-      result.value = eval(code);
+      // wrap with parentheses to treat {} as object instead of block
+      result.value = eval(`(${code})`);
     } catch (error) {
       result.error = `Parse Error: ${(error as Error).message}`;
     }
@@ -85,10 +87,7 @@ const saveVariable = (
   }
   const [instanceId] = instanceSelector;
   serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
-    let variableValue: VariableDataSource["value"] = {
-      type: "string",
-      value: "",
-    };
+    let variableValue: VariableDataSource["value"] = { type: "json", value };
     if (typeof value === "string") {
       variableValue = { type: "string", value };
     }

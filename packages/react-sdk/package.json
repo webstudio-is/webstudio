@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@jsep-plugin/assignment": "^1.2.1",
+    "@jsep-plugin/object": "^1.2.1",
     "@webstudio-is/css-engine": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/image": "workspace:*",

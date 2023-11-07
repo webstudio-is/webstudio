@@ -1562,6 +1562,9 @@ importers:
       '@jsep-plugin/assignment':
         specifier: ^1.2.1
         version: 1.2.1(jsep@1.3.8)
+      '@jsep-plugin/object':
+        specifier: ^1.2.1
+        version: 1.2.1(jsep@1.3.8)
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -4484,6 +4487,15 @@ packages:
 
   /@jsep-plugin/assignment@1.2.1(jsep@1.3.8):
     resolution: {integrity: sha512-gaHqbubTi29aZpVbBlECRpmdia+L5/lh2BwtIJTmtxdbecEyyX/ejAOg7eQDGNvGOUmPY7Z2Yxdy9ioyH/VJeA==}
+    engines: {node: '>= 10.16.0'}
+    peerDependencies:
+      jsep: ^0.4.0||^1.0.0
+    dependencies:
+      jsep: 1.3.8
+    dev: false
+
+  /@jsep-plugin/object@1.2.1(jsep@1.3.8):
+    resolution: {integrity: sha512-6YoZP80h2QFCuxyqj+OvoqEnTu2r5cSRpgpvGauWlvnevFP/F/dibpvXDpnHeqwT2FIzzvg47YOe3QD/UT8vJw==}
     engines: {node: '>= 10.16.0'}
     peerDependencies:
       jsep: ^0.4.0||^1.0.0
