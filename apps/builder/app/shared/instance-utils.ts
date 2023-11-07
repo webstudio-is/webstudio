@@ -12,14 +12,13 @@ import {
   Breakpoints,
   DataSources,
   Props,
+  DataSource,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
   type EmbedTemplateData,
-  encodeDataSourceVariable,
-  computeExpressionsDependencies,
   decodeDataSourceVariable,
   validateExpression,
 } from "@webstudio-is/react-sdk";
@@ -35,7 +34,6 @@ import {
   registeredComponentMetasStore,
   dataSourcesStore,
   assetsStore,
-  dataSourcesLogicStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -535,22 +533,6 @@ const traverseStyleValue = (
   value satisfies never;
 };
 
-const getPropTypeAndValue = (name: string, value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  if (Array.isArray(value)) {
-    return { type: "string[]", value } as const;
-  }
-  throw Error(`Unexpected "${name}" prop value ${value}`);
-};
-
 export const getInstancesSlice = (rootInstanceId: string) => {
   const assets = assetsStore.get();
   const instances = instancesStore.get();
@@ -560,8 +542,6 @@ export const getInstancesSlice = (rootInstanceId: string) => {
   const styleSources = styleSourcesStore.get();
   const breakpoints = breakpointsStore.get();
   const styles = stylesStore.get();
-
-  const dataSourcesLogic = dataSourcesLogicStore.get();
 
   // collect the instance by id and all its descendants including portal instances
   const slicedInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
@@ -626,63 +606,9 @@ export const getInstancesSlice = (rootInstanceId: string) => {
     });
   }
 
-  // compute dependencies of expressions to make sure all data sources
-  // are inside of instances slice and can be copied
-  const expressions = new Map<string, string>();
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "expression") {
-      expressions.set(encodeDataSourceVariable(dataSource.id), dataSource.code);
-    }
-  }
-  const dependencies = computeExpressionsDependencies(expressions);
-
-  // collect data sources scoped to instances slice
-  //
-  // @todo copy data sources outside of slice tree and bind to copied root
-  // to preserve bindings and let users easily rebind variables
-  // blocked by lack of UI to manage data sources
-  const slicedDataSources: DataSources = new Map();
-  for (const dataSource of dataSources.values()) {
-    let canBeCopied = true;
-    if (dataSource.type === "expression") {
-      const expressionDeps = dependencies.get(
-        encodeDataSourceVariable(dataSource.id)
-      );
-      // check if all expression dependencies can be copied
-      if (expressionDeps) {
-        for (const dependency of expressionDeps) {
-          const dataSourceId = decodeDataSourceVariable(dependency);
-          if (dataSourceId === undefined) {
-            continue;
-          }
-          const dataSource = dataSources.get(dataSourceId);
-          if (dataSource === undefined) {
-            continue;
-          }
-          if (
-            dataSource.scopeInstanceId === undefined ||
-            slicedInstanceIds.has(dataSource.scopeInstanceId) === false
-          ) {
-            canBeCopied = false;
-          }
-        }
-      }
-    }
-    if (
-      canBeCopied &&
-      // check if data source itself can be copied
-      dataSource.scopeInstanceId !== undefined &&
-      slicedInstanceIds.has(dataSource.scopeInstanceId)
-    ) {
-      slicedDataSources.set(dataSource.id, dataSource);
-    }
-  }
-
-  // @todo convert to value props
-  // when variables are outside of slice and cannot be copied
-
   // collect props bound to these instances
   const slicedProps: Props = new Map();
+  const usedDataSourceIds = new Set<DataSource["id"]>();
   for (const prop of props.values()) {
     if (slicedInstanceIds.has(prop.instanceId) === false) {
       continue;
@@ -690,77 +616,60 @@ export const getInstancesSlice = (rootInstanceId: string) => {
 
     slicedProps.set(prop.id, prop);
 
-    // convert data source prop to value prop
-    // when not scoped to sliced instances
-    //
-    // @todo stop converting to value props once UI is ready
     if (prop.type === "dataSource") {
-      const dataSourceId = prop.value;
-      if (slicedDataSources.has(dataSourceId) === false) {
-        const value =
-          dataSourcesLogic.get(prop.id) ?? dataSourcesLogic.get(dataSourceId);
-        slicedProps.set(prop.id, {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          ...getPropTypeAndValue(prop.name, value),
+      const dataSource = dataSources.get(prop.value);
+      if (dataSource?.type === "variable") {
+        usedDataSourceIds.add(dataSource.id);
+      }
+      if (dataSource?.type === "expression") {
+        usedDataSourceIds.add(dataSource.id);
+        validateExpression(dataSource.code, {
+          transformIdentifier(identifier) {
+            const id = decodeDataSourceVariable(identifier);
+            if (id !== undefined) {
+              usedDataSourceIds.add(id);
+            }
+            return identifier;
+          },
         });
       }
     }
 
-    // clear effectful expressions when depend on data sources
-    // outside of instances slice
-    //
-    // @todo should not be necessary once bindings UI is available
     if (prop.type === "action") {
-      slicedProps.set(prop.id, {
-        ...prop,
-        value: prop.value.flatMap((value) => {
-          if (value.type !== "execute") {
-            return [value];
-          }
-          let shouldKeepAction = true;
+      for (const value of prop.value) {
+        if (value.type === "execute") {
           validateExpression(value.code, {
             effectful: true,
-            transformIdentifier: (identifier) => {
-              if (value.args.includes(identifier)) {
-                return identifier;
-              }
+            transformIdentifier(identifier) {
               const id = decodeDataSourceVariable(identifier);
-              if (id === undefined) {
-                return identifier;
-              }
-              if (slicedDataSources.has(id) === false) {
-                shouldKeepAction = false;
-                return identifier;
-              }
-              const identifierDeps = dependencies.get(id);
-              if (identifierDeps) {
-                for (const dependency of identifierDeps) {
-                  const id = decodeDataSourceVariable(dependency);
-                  if (id === undefined) {
-                    continue;
-                  }
-                  if (slicedDataSources.has(id) === false) {
-                    shouldKeepAction = false;
-                    return identifier;
-                  }
-                }
+              if (id !== undefined) {
+                usedDataSourceIds.add(id);
               }
               return identifier;
             },
           });
-          if (shouldKeepAction) {
-            return [value];
-          }
-          return [];
-        }),
-      });
+        }
+      }
     }
 
     // collect assets
     if (prop.type === "asset") {
       slicedAssetIds.add(prop.value);
+    }
+  }
+
+  // collect variables scoped to instances slice
+  // or used by expressions or actions even outside of the tree
+  // such variables can be bound to sliced root on paste
+  const slicedDataSources: DataSources = new Map();
+  for (const dataSource of dataSources.values()) {
+    if (
+      // check if data source itself can be copied
+      (dataSource.scopeInstanceId !== undefined &&
+        slicedInstanceIds.has(dataSource.scopeInstanceId)) ||
+      usedDataSourceIds.has(dataSource.id)
+    ) {
+      slicedDataSources.set(dataSource.id, dataSource);
     }
   }
 
