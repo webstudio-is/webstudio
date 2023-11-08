@@ -4,7 +4,6 @@ import {
   type InvalidValue,
   type LayersValue,
   type TupleValue,
-  type TupleValueItem,
   KeywordValue,
   UnitValue,
   StyleValue,
@@ -137,7 +136,24 @@ export const TransitionContent = ({
           onPropertySelection={handlePropertyUpdate}
         />
 
-        <Label>Duration</Label>
+        <Tooltip
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Duration</Text>
+              <Text variant="monoBold" color="moreSubtle">
+                transition-duration
+              </Text>
+              <Text>
+                Sets the length of time a
+                <br />
+                transition animation should take
+                <br /> to complete.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label>Duration</Label>
+        </Tooltip>
         <CssValueInputContainer
           key={"transitionDuration"}
           property={"transitionDuration"}
@@ -156,7 +172,23 @@ export const TransitionContent = ({
           }}
         />
 
-        <Label>Delay</Label>
+        <Tooltip
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Delay</Text>
+              <Text variant="monoBold" color="moreSubtle">
+                transition-delay
+              </Text>
+              <Text>
+                Specify the duration to wait
+                <br />
+                before the transition begins.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label>Delay</Label>
+        </Tooltip>
         <CssValueInputContainer
           property={"transitionDelay"}
           key={"transitionDelay"}
@@ -196,7 +228,10 @@ export const TransitionContent = ({
               variant="wrapped"
               content={
                 <Text>
-                  Paste CSS code for a transition or part of a transition, for
+                  Paste CSS code for a transition
+                  <br />
+                  or part of a transition, for
+                  <br />
                   example:
                   <br />
                   <br />

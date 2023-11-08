@@ -35,7 +35,7 @@ export const Layer = (props: LayerProps) => {
 
   return (
     <FloatingPanel
-      title="Transitions"
+      title="Transition"
       content={
         <TransitionContent
           index={index}

@@ -14,6 +14,9 @@ import {
   theme,
   ComboboxListboxItem,
   ComboboxSeparator,
+  Tooltip,
+  Flex,
+  Text,
 } from "@webstudio-is/design-system";
 import {
   defaultFunctions,
@@ -134,7 +137,27 @@ export const TransitionTiming = ({
 
   return (
     <>
-      <Label>Easing</Label>
+      <Tooltip
+        content={
+          <Flex gap="2" direction="column">
+            <Text variant="regularBold">Easing</Text>
+            <Text variant="monoBold" color="moreSubtle">
+              transition-timing-function
+            </Text>
+            <Text>
+              Affects the look and feel of the
+              <br />
+              animation by varying the speed
+              <br />
+              of the transition at different
+              <br />
+              points in its duration.
+            </Text>
+          </Flex>
+        }
+      >
+        <Label>Easing</Label>
+      </Tooltip>
       <Combobox>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>

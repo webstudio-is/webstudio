@@ -17,6 +17,9 @@ import {
   theme,
   css,
   NestedInputButton,
+  Tooltip,
+  Text,
+  Flex,
 } from "@webstudio-is/design-system";
 import type { KeywordValue } from "@webstudio-is/css-engine";
 import { humanizeString } from "~/shared/string-utils";
@@ -105,7 +108,23 @@ export const TransitionProperty = ({
 
   return (
     <>
-      <Label> Property </Label>
+      <Tooltip
+        content={
+          <Flex gap="2" direction="column">
+            <Text variant="regularBold">Property</Text>
+            <Text variant="monoBold" color="moreSubtle">
+              transition-property
+            </Text>
+            <Text>
+              Sets the CSS properties that will
+              <br />
+              be affected by the transition.
+            </Text>
+          </Flex>
+        }
+      >
+        <Label> Property </Label>
+      </Tooltip>
       <Combobox>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>
