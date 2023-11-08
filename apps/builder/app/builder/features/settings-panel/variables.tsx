@@ -531,14 +531,28 @@ const ListPanel = ({
 };
 
 export const VariablesPanel = ({
-  prop,
+  propId,
   propMeta,
   onChange,
 }: {
-  prop: undefined | Prop;
+  propId: undefined | Prop["id"];
   propMeta: PropMeta;
   onChange: (value: PropValue) => void;
 }) => {
+  // compute prop instead of using passed one
+  // because data source props are converted into values
+  const prop = useStore(
+    useMemo(
+      () =>
+        computed(propsStore, (props) => {
+          if (propId) {
+            return props.get(propId);
+          }
+        }),
+      [propId]
+    )
+  );
+
   const [view, setView] = useState<
     | { name: "list" }
     | { name: "add" }
@@ -657,7 +671,11 @@ export const VariablesButton = ({
         />
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent side="left" align="start">
-        <VariablesPanel prop={prop} propMeta={propMeta} onChange={onChange} />
+        <VariablesPanel
+          propId={prop?.id}
+          propMeta={propMeta}
+          onChange={onChange}
+        />
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>
   );

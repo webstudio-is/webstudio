@@ -183,6 +183,12 @@ export const renderControl = ({
       );
     }
 
+    if (prop.type === "json") {
+      throw new Error(
+        `Cannot render a fallback control for prop "${rest.propName}" with type json, because we don't know the available options for a multiselect control`
+      );
+    }
+
     prop satisfies never;
   }
 

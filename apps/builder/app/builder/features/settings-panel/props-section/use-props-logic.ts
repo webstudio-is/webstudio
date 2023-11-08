@@ -88,6 +88,10 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
       );
+    case "json":
+      throw new Error(
+        "A prop with type json must have a meta, we can't provide a default one because we need a list of options"
+      );
     case "dataSource":
       throw new Error(
         "A prop with type dataSource must have a meta, we can't provide a default one because we need a list of options"
@@ -136,7 +140,8 @@ const getPropTypeAndValue = (value: unknown) => {
   if (Array.isArray(value)) {
     return { type: "string[]", value } as const;
   }
-  throw Error(`Unexpected prop value ${value}`);
+  // fallback to empty string to not break UI
+  return { type: "string", value: "" } as const;
 };
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */

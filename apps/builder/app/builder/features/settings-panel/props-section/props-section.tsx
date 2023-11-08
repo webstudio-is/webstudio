@@ -218,7 +218,8 @@ export const PropsSectionContainer = ({
       const props = propsStore.get();
       const prop = props.get(update.id);
       // update data source instead when real prop has data source type
-      if (prop?.type === "dataSource") {
+      // update the prop when new binding is added
+      if (prop?.type === "dataSource" && update.type !== "dataSource") {
         let dataSourceId = prop.value;
         const dataSources = dataSourcesStore.get();
         const dataSource = dataSources.get(dataSourceId);
