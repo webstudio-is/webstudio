@@ -59,6 +59,11 @@ export const Prop = z.union([
   }),
   z.object({
     ...baseProp,
+    type: z.literal("expression"),
+    value: z.string(),
+  }),
+  z.object({
+    ...baseProp,
     type: z.literal("action"),
     value: z.array(
       z.object({

@@ -268,7 +268,7 @@ test("generate variables with actions", () => {
   );
 });
 
-test("generate variables with expressions", () => {
+test("generate variables with data source expressions", () => {
   const generated = generateDataSources({
     scope: createScope(),
     dataSources: new Map([
@@ -322,6 +322,70 @@ test("generate variables with expressions", () => {
           type: "dataSource",
           name: "exp",
           value: "dataSource3",
+        },
+      ],
+    ]),
+  });
+  expect(generated.body).toMatchInlineSnapshot(`
+"let exp = (myVar + "Name");
+let exp_1 = (myVar + "Value");
+"
+`);
+  expect(generated.variables).toEqual(
+    new Map([
+      [
+        "dataSource1",
+        {
+          initialValue: "initial",
+          setterName: "set$myVar",
+          valueName: "myVar",
+        },
+      ],
+    ])
+  );
+  expect(generated.output).toEqual(
+    new Map([
+      ["dataSource1", "myVar"],
+      ["prop1", "exp"],
+      ["prop2", "exp_1"],
+    ])
+  );
+});
+
+test("generate variables witha prop expressions", () => {
+  const generated = generateDataSources({
+    scope: createScope(),
+    dataSources: new Map([
+      [
+        "dataSource1",
+        {
+          id: "dataSource1",
+          scopeInstanceId: "instance1",
+          type: "variable",
+          name: "myVar",
+          value: { type: "string", value: "initial" },
+        },
+      ],
+    ]),
+    props: new Map([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          type: "expression",
+          name: "exp",
+          value: `$ws$dataSource$dataSource1 + "Name"`,
+        },
+      ],
+      [
+        "prop2",
+        {
+          id: "prop2",
+          instanceId: "instance2",
+          type: "expression",
+          name: "exp",
+          value: `$ws$dataSource$dataSource1 + "Value"`,
         },
       ],
     ]),
