@@ -1,4 +1,4 @@
-import { Flex, theme, useId, TextArea } from "@webstudio-is/design-system";
+import { Flex, theme, useId, TextArea, Box } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -7,6 +7,7 @@ import {
   ResponsiveLayout,
   Label,
 } from "../shared";
+import { VariablesButton } from "../variables";
 
 export const TextControl = ({
   meta,
@@ -38,14 +39,19 @@ export const TextControl = ({
     />
   );
 
+  const labelElement = (
+    <Box css={{ position: "relative" }}>
+      <Label htmlFor={id} description={meta.description}>
+        {label}
+      </Label>
+      <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+    </Box>
+  );
+
   if (isTwoColumnLayout) {
     return (
       <ResponsiveLayout
-        label={
-          <Label htmlFor={id} description={meta.description}>
-            {label}
-          </Label>
-        }
+        label={labelElement}
         deletable={deletable}
         onDelete={onDelete}
       >
@@ -56,11 +62,7 @@ export const TextControl = ({
 
   return (
     <VerticalLayout
-      label={
-        <Label htmlFor={id} description={meta.description}>
-          {label}
-        </Label>
-      }
+      label={labelElement}
       deletable={deletable}
       onDelete={onDelete}
     >

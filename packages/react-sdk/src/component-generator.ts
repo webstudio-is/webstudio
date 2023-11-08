@@ -74,7 +74,8 @@ export const generateJsxElement = ({
       prop.type === "string" ||
       prop.type === "number" ||
       prop.type === "boolean" ||
-      prop.type === "string[]"
+      prop.type === "string[]" ||
+      prop.type === "json"
     ) {
       generatedProps += `\n${prop.name}={${JSON.stringify(prop.value)}}`;
       continue;

@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { useStore } from "@nanostores/react";
 import { CodeEditor as CodeEditorComponent } from "./code-editor";
 import {
   Button,
@@ -34,8 +33,6 @@ propsStore.set(new Map([[initialProp.id, initialProp]]));
 
 const VariablesPopover = () => {
   const [isOpen, setIsOpen] = useState(true);
-  const props = useStore(propsStore);
-  const myProp = props.get("my-prop");
   return (
     <FloatingPanelPopover open={isOpen} onOpenChange={setIsOpen}>
       <FloatingPanelPopoverTrigger asChild>
@@ -43,7 +40,7 @@ const VariablesPopover = () => {
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent align="start">
         <VariablesPanel
-          prop={myProp}
+          propId="my-prop"
           propMeta={{
             required: false,
             control: "text",
