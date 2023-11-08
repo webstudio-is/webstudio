@@ -239,6 +239,22 @@ export const PropsSectionContainer = ({
         const dataSourceVariables = new Map(dataSourceVariablesStore.get());
         dataSourceVariables.set(dataSourceId, update.value);
         dataSourceVariablesStore.set(dataSourceVariables);
+        // update the variable when real prop has expression type
+        // update the prop when new binding is added
+      } else if (prop?.type === "expression" && update.type !== "expression") {
+        const dataSources = dataSourcesStore.get();
+        // when expression contains only reference to variable update that variable
+        // extract id without parsing expression
+        const potentialVariableId = decodeDataSourceVariable(prop.value);
+        if (
+          potentialVariableId !== undefined &&
+          dataSources.has(potentialVariableId)
+        ) {
+          const dataSourceId = potentialVariableId;
+          const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+          dataSourceVariables.set(dataSourceId, update.value);
+          dataSourceVariablesStore.set(dataSourceVariables);
+        }
       } else {
         serverSyncStore.createTransaction([propsStore], (props) => {
           const istanceProps = propsByInstanceId.get(instance.id) ?? [];

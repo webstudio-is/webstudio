@@ -327,6 +327,16 @@ export const onPaste = (clipboardData: string): boolean => {
               return prop;
             }
           }
+
+          if (prop.type === "expression") {
+            return {
+              ...prop,
+              value: validateExpression(prop.value, {
+                transformIdentifier,
+              }),
+            };
+          }
+
           if (prop.type === "action") {
             return {
               ...prop,
@@ -346,6 +356,7 @@ export const onPaste = (clipboardData: string): boolean => {
               }),
             };
           }
+
           return prop;
         }),
         copiedInstanceIds,

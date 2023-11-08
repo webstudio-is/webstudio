@@ -253,6 +253,7 @@ const $usedVariables = computed(
   [dataSourcesStore, propsStore],
   (dataSources, props) => {
     const usedVariables = new Set<DataSource["id"]>();
+    // @todo remove data sources checks after migrating to prop expression
     for (const dataSource of dataSources.values()) {
       if (dataSource.type !== "expression") {
         continue;
@@ -272,6 +273,21 @@ const $usedVariables = computed(
       }
     }
     for (const prop of props.values()) {
+      if (prop.type === "expression") {
+        try {
+          validateExpression(prop.value, {
+            transformIdentifier: (identifier) => {
+              const id = decodeDataSourceVariable(identifier);
+              if (id !== undefined) {
+                usedVariables.add(id);
+              }
+              return identifier;
+            },
+          });
+        } catch {
+          // empty block
+        }
+      }
       if (prop.type === "action") {
         for (const value of prop.value) {
           try {
@@ -296,7 +312,6 @@ const $usedVariables = computed(
 );
 
 const deleteVariable = (variable: VariableDataSource) => {
-  // @todo prevent delete when variable is used
   serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
     dataSources.delete(variable.id);
   });
@@ -355,30 +370,31 @@ const ListItem = ({
 };
 
 const getPropExpressionStore = (propId: undefined | string) => {
-  const $propDataSource = computed(
+  const $propExpression = computed(
     [propsStore, dataSourcesStore],
     (props, dataSources) => {
       if (propId === undefined) {
-        return;
+        return "";
       }
       const prop = props.get(propId);
+      if (prop?.type === "expression") {
+        return prop.value;
+      }
       if (prop?.type !== "dataSource") {
-        return;
+        return "";
       }
       const dataSourceId = prop.value;
-      return dataSources.get(dataSourceId);
+      const dataSource = dataSources.get(dataSourceId);
+      // convert variable to expression
+      if (dataSource?.type === "variable") {
+        return encodeDataSourceVariable(dataSource.id);
+      }
+      if (dataSource?.type === "expression") {
+        return dataSource.code;
+      }
+      return "";
     }
   );
-  const $propExpression = computed([$propDataSource], (dataSource) => {
-    // convert variable to expression
-    if (dataSource?.type === "variable") {
-      return encodeDataSourceVariable(dataSource.id);
-    }
-    if (dataSource?.type === "expression") {
-      return dataSource.code;
-    }
-    return "";
-  });
   return $propExpression;
 };
 
@@ -419,6 +435,7 @@ const ListPanel = ({
     return variables;
   }, [matchedVariables]);
   const propId = prop?.id;
+  // @todo const propExpression = prop.value ?? ''
   const propExpression = useStore(
     useMemo(() => getPropExpressionStore(propId), [propId])
   );
@@ -430,28 +447,17 @@ const ListPanel = ({
   const [expression, setExpression] = useState<undefined | string>();
 
   const applyExpression = (expression: string) => {
-    // @todo replace data source expression into prop expression
-    // this pirce would become one liner
+    // @todo remove after migrating to prop extession
     serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
+      // replace data source expression with prop expression
       const dataSource =
         prop?.type === "dataSource" ? dataSources.get(prop.value) : undefined;
-
-      // update existing expression without changing prop
       if (dataSource?.type === "expression") {
-        dataSource.code = expression;
+        dataSources.delete(dataSource.id);
         return;
       }
-
-      // create new expression and bind to prop
-      const dataSourceId = nanoid();
-      dataSources.set(dataSourceId, {
-        id: dataSourceId,
-        type: "expression",
-        name: "expression",
-        code: expression,
-      });
-      onChange({ type: "dataSource", value: dataSourceId });
     });
+    onChange({ type: "expression", value: expression });
   };
 
   return (
@@ -616,7 +622,7 @@ export const VariablesPanel = ({
       <FloatingPanelPopoverTitle
         actions={
           <>
-            {prop?.type === "dataSource" && (
+            {(prop?.type === "dataSource" || prop?.type === "expression") && (
               <Tooltip content="Remove binding" side="bottom">
                 {/* automatically close popover when remove binding */}
                 <FloatingPanelPopoverClose asChild>
