@@ -10,6 +10,7 @@ import {
   ToggleGroupButton,
   Select,
   Tooltip,
+  Box,
 } from "@webstudio-is/design-system";
 import {
   AttachmentIcon,
@@ -29,6 +30,7 @@ import {
   Label,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
+import { VariablesButton } from "../variables";
 
 type UrlControlProps = ControlProps<"url", "string" | "page" | "asset">;
 
@@ -400,9 +402,12 @@ export const UrlControl = ({
   return (
     <VerticalLayout
       label={
-        <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
-        </Label>
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+        </Box>
       }
       deletable={deletable}
       onDelete={onDelete}

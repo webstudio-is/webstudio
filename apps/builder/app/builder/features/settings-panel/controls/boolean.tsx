@@ -1,10 +1,11 @@
-import { Grid, Switch, theme, useId } from "@webstudio-is/design-system";
+import { Box, Grid, Switch, theme, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
   Label,
   RemovePropButton,
 } from "../shared";
+import { VariablesButton } from "../variables";
 
 export const BooleanControl = ({
   meta,
@@ -28,9 +29,12 @@ export const BooleanControl = ({
       align="center"
       gap="2"
     >
-      <Label htmlFor={id} description={meta.description}>
-        {getLabel(meta, propName)}
-      </Label>
+      <Box css={{ position: "relative" }}>
+        <Label htmlFor={id} description={meta.description}>
+          {getLabel(meta, propName)}
+        </Label>
+        <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+      </Box>
       <Switch
         id={id}
         checked={prop?.value ?? false}

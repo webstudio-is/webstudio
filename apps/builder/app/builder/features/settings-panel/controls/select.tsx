@@ -1,6 +1,7 @@
-import { Flex, theme, useId, Select } from "@webstudio-is/design-system";
+import { Flex, theme, useId, Select, Box } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
+import { VariablesButton } from "../variables";
 
 export const SelectControl = ({
   meta,
@@ -21,9 +22,12 @@ export const SelectControl = ({
   return (
     <VerticalLayout
       label={
-        <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
-        </Label>
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+        </Box>
       }
       deletable={deletable}
       onDelete={onDelete}

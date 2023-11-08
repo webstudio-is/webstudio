@@ -1,4 +1,4 @@
-import { InputField, useId } from "@webstudio-is/design-system";
+import { Box, InputField, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -6,6 +6,7 @@ import {
   ResponsiveLayout,
   Label,
 } from "../shared";
+import { VariablesButton } from "../variables";
 
 // @todo:
 //   use ColorPicker (need to refactor it first,
@@ -28,9 +29,12 @@ export const ColorControl = ({
   return (
     <ResponsiveLayout
       label={
-        <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
-        </Label>
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+        </Box>
       }
       deletable={deletable}
       onDelete={onDelete}

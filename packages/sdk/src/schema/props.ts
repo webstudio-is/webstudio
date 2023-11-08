@@ -27,6 +27,11 @@ export const Prop = z.union([
   }),
   z.object({
     ...baseProp,
+    type: z.literal("json"),
+    value: z.unknown(),
+  }),
+  z.object({
+    ...baseProp,
     type: z.literal("asset"),
     value: z.string(), // asset id
   }),
