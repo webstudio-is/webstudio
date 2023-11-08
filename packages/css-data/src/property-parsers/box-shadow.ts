@@ -68,7 +68,7 @@ export const parseBoxShadow = (
           /**
            * https://developer.mozilla.org/en-US/docs/Web/CSS/box-shadow#syntax
            * `inset` and color can be at the start or end and their sequence can be anywhere.
-           * The rest need to foolow the sequence all the time
+           * The rest need to follow the sequence all the time
            */
 
           for (let index = 0; index < layer.length; index++) {
