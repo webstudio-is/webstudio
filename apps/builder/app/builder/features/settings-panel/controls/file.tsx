@@ -78,7 +78,11 @@ export const FileControl = ({
           <Label htmlFor={id} description={meta.description}>
             {getLabel(meta, propName)}
           </Label>
-          <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+          <VariablesButton
+            propId={prop?.id}
+            propName={propName}
+            propMeta={meta}
+          />
         </Box>
       }
       deletable={deletable}

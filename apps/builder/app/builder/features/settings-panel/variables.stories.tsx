@@ -12,7 +12,7 @@ import {
   propsStore,
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
-import { registerContainers, serverSyncStore } from "~/shared/sync";
+import { registerContainers } from "~/shared/sync";
 
 export default {
   title: "Builder/Variables",
@@ -41,16 +41,12 @@ const VariablesPopover = () => {
       <FloatingPanelPopoverContent align="start">
         <VariablesPanel
           propId="my-prop"
+          propName="my-prop"
           propMeta={{
             required: false,
             control: "text",
             type: "string",
             defaultValue: "initial",
-          }}
-          onChange={(propValue) => {
-            serverSyncStore.createTransaction([propsStore], (props) => {
-              props.set("my-prop", { ...initialProp, ...propValue });
-            });
           }}
         />
       </FloatingPanelPopoverContent>
