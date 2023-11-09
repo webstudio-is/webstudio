@@ -29,6 +29,8 @@ jobs:
             console.log('branch', branch);
             console.log('context.repo', JSON.stringify(context.repo));
 
+            const sha = context.payload.pull_request?.head?.sha ?? context.sha;
+
             const status = {
               state: 'success',
               target_url: 'http://example.com',
@@ -38,12 +40,12 @@ jobs:
 
             console.log(JSON.stringify(
               {...context.repo,
-                sha: context.sha,
+                sha,
               ...status
               }));
 
             github.rest.repos.createCommitStatus({
               ...context.repo,
-              sha: context.sha,
+              sha,
               ...status
             });
