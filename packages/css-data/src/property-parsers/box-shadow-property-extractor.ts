@@ -6,6 +6,17 @@ import type {
   UnitValue,
 } from "@webstudio-is/css-engine";
 
+/*
+  extractBoxShadowProperties accepts a TupleValue
+  and just tokenizes the valuess of box-shadow items.
+
+  To validate the box-shadow string value, should be used
+  in combination with parseBoxShadow
+
+  Eg:
+  extractBoxShadowProperties(parseBoxShadow("5em 5em 5em 5em #ffff"))
+*/
+
 export const extractBoxShadowProperties = (
   shadow: TupleValue
 ): {
