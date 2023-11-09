@@ -1,4 +1,8 @@
-import type { InvalidValue, LayersValue } from "@webstudio-is/css-engine";
+import type {
+  InvalidValue,
+  LayersValue,
+  TupleValue,
+} from "@webstudio-is/css-engine";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -11,14 +15,13 @@ import {
 } from "@webstudio-is/design-system";
 import { InformationIcon } from "@webstudio-is/icons";
 import { useState } from "react";
-import type { RenderCategoryProps } from "../../style-sections";
 import type { IntermediateStyleValue } from "../../shared/css-value-input";
 
 type BoxShadowContentProps = {
   index: number;
+  layer: TupleValue;
   value: string;
   onEditLayer: (index: number, layers: LayersValue) => void;
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
 };
 
 export const BoxShadowContent = (props: BoxShadowContentProps) => {
