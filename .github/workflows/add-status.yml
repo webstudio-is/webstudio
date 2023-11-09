@@ -1,0 +1,42 @@
+name: Add status to commit
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  statuses: write # to fetch code (actions/checkout)
+
+jobs:
+  checks:
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add URL to vercel deployment through *.prs.webstudio.is
+        uses: actions/github-script@v6
+        with:
+          script: |
+
+            const branch = context.payload.ref ?? context.payload.pull_request.head.ref;
+            const sha = context.payload.pull_request?.head?.sha ?? context.sha;
+
+            const status = {
+              state: 'success',
+              target_url: `https://${branch.toLowerCase().replace(/[^a-z0-9-]+/g, '')}.prs.webstudio.is`,
+              description: 'click details to see the deployment',
+              context: '⭐ Apps Webstudio URL'
+            };
+
+            github.rest.repos.createCommitStatus({
+              ...context.repo,
+              sha,
+              ...status
+            });

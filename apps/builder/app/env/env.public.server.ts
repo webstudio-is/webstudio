@@ -14,7 +14,6 @@ const env = {
   FEATURES: process.env.FEATURES,
   BUILDER_HOST: process.env.BUILDER_HOST,
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
-  BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN === "true",
 
   IMAGE_BASE_URL: serverEnv.IMAGE_BASE_URL,
   ASSET_BASE_URL: serverEnv.ASSET_BASE_URL,
