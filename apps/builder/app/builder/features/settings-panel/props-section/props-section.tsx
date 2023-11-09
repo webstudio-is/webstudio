@@ -218,7 +218,7 @@ export const PropsSectionContainer = ({
       const props = propsStore.get();
       const prop = props.get(update.id);
       // update data source instead when real prop has data source type
-      // update the prop when new binding is added
+      // update the prop when new expression is added
       if (prop?.type === "dataSource" && update.type !== "dataSource") {
         let dataSourceId = prop.value;
         const dataSources = dataSourcesStore.get();
@@ -239,6 +239,22 @@ export const PropsSectionContainer = ({
         const dataSourceVariables = new Map(dataSourceVariablesStore.get());
         dataSourceVariables.set(dataSourceId, update.value);
         dataSourceVariablesStore.set(dataSourceVariables);
+        // update the variable when real prop has expression type
+        // update the prop when new expression is added
+      } else if (prop?.type === "expression" && update.type !== "expression") {
+        const dataSources = dataSourcesStore.get();
+        // when expression contains only reference to variable update that variable
+        // extract id without parsing expression
+        const potentialVariableId = decodeDataSourceVariable(prop.value);
+        if (
+          potentialVariableId !== undefined &&
+          dataSources.has(potentialVariableId)
+        ) {
+          const dataSourceId = potentialVariableId;
+          const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+          dataSourceVariables.set(dataSourceId, update.value);
+          dataSourceVariablesStore.set(dataSourceVariables);
+        }
       } else {
         serverSyncStore.createTransaction([propsStore], (props) => {
           const istanceProps = propsByInstanceId.get(instance.id) ?? [];

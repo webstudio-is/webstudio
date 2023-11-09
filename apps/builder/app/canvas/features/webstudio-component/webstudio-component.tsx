@@ -175,6 +175,13 @@ const useInstanceProps = (instanceId: Instance["id"]) => {
             }
             continue;
           }
+          if (prop.type === "expression") {
+            const value = dataSourcesLogic.get(prop.id);
+            if (value !== undefined) {
+              instancePropsObject[prop.name] = value;
+            }
+            continue;
+          }
           if (prop.type === "action") {
             const action = dataSourcesLogic.get(prop.id);
             if (typeof action === "function") {

@@ -67,6 +67,9 @@ export const generateJsxElement = ({
           conditionVariableName = scope.getName(prop.id, prop.name);
         }
       }
+      if (prop.type === "expression") {
+        conditionVariableName = scope.getName(prop.id, prop.name);
+      }
       // ignore any other values
       continue;
     }
@@ -101,6 +104,11 @@ export const generateJsxElement = ({
         const dataSourceVariable = scope.getName(prop.id, prop.name);
         generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
       }
+      continue;
+    }
+    if (prop.type === "expression") {
+      const propVariable = scope.getName(prop.id, prop.name);
+      generatedProps += `\n${prop.name}={${propVariable}}`;
       continue;
     }
     if (prop.type === "action") {

@@ -179,26 +179,18 @@ const createInstancesFromTemplate = (
           const propId = generateId();
 
           if (prop.type === "expression") {
-            const dataSource: DataSource = {
+            props.push({
+              id: propId,
+              instanceId,
+              name: prop.name,
               type: "expression",
-              id: generateId(),
-              scopeInstanceId: instanceId,
-              name: "expression",
               // replace all references with variable names
-              code: validateExpression(prop.code, {
+              value: validateExpression(prop.code, {
                 transformIdentifier: (ref) => {
                   const id = dataSourceByRef.get(ref)?.id ?? ref;
                   return encodeDataSourceVariable(id);
                 },
               }),
-            };
-            dataSourceByRef.set(propId, dataSource);
-            props.push({
-              id: propId,
-              instanceId,
-              type: "dataSource",
-              name: prop.name,
-              value: dataSource.id,
             });
             continue;
           }

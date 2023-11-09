@@ -265,16 +265,16 @@ test("generate data for embedding from props bound to data source variables", ()
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "showOtherBox",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: showAttribute,
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
     ],
     dataSources: [
@@ -288,20 +288,6 @@ test("generate data for embedding from props bound to data source variables", ()
           value: false,
         },
       },
-      {
-        id: expectString,
-        scopeInstanceId: expectString,
-        type: "expression",
-        name: "expression",
-        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
-      },
-      {
-        id: expectString,
-        scopeInstanceId: expectString,
-        type: "expression",
-        name: "expression",
-        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
-      },
     ],
     styleSourceSelections: [],
     styleSources: [],
@@ -309,7 +295,7 @@ test("generate data for embedding from props bound to data source variables", ()
   });
 });
 
-test("generate data for embedding from props bound to data source expressions", () => {
+test("generate data for embedding from props with complex expressions", () => {
   expect(
     generateDataFromEmbedTemplate(
       [
@@ -357,16 +343,16 @@ test("generate data for embedding from props bound to data source expressions", 
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "state",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: showAttribute,
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
     dataSources: [
@@ -379,20 +365,6 @@ test("generate data for embedding from props bound to data source expressions", 
           type: "string",
           value: "initial",
         },
-      },
-      {
-        type: "expression",
-        id: expectString,
-        scopeInstanceId: expectString,
-        name: "expression",
-        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
-      },
-      {
-        type: "expression",
-        id: expectString,
-        scopeInstanceId: expectString,
-        name: "expression",
-        code: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
     styleSourceSelections: [],
@@ -463,9 +435,9 @@ test("generate data for embedding from action props", () => {
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "state",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
@@ -504,13 +476,6 @@ test("generate data for embedding from action props", () => {
           type: "string",
           value: "initial",
         },
-      },
-      {
-        id: expectString,
-        scopeInstanceId: expectString,
-        name: "expression",
-        type: "expression",
-        code: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
     ],
     styleSourceSelections: [],

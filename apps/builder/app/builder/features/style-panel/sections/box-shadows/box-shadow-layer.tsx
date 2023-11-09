@@ -60,8 +60,8 @@ export const Layer = (props: LayerProps) => {
         <BoxShadowContent
           index={index}
           value={shadow}
+          layer={layer}
           onEditLayer={props.onEditLayer}
-          createBatchUpdate={props.createBatchUpdate}
         />
       }
     >

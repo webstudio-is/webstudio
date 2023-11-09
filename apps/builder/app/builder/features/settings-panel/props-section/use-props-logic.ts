@@ -96,6 +96,10 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type dataSource must have a meta, we can't provide a default one because we need a list of options"
       );
+    case "expression":
+      throw new Error(
+        "A prop with type expression must have a meta, we can't provide a default one because we need a list of options"
+      );
     default:
       throw new Error(`Usupported data type: ${type satisfies never}`);
   }
@@ -162,27 +166,41 @@ export const usePropsLogic = ({
   }
 
   const savedProps = props.flatMap((prop) => {
-    if (prop.type !== "dataSource") {
-      return [prop];
+    if (prop.type === "expression") {
+      // convert expression prop to value prop
+      const dataSourceValue = dataSourcesLogic.get(prop.id);
+      return [
+        {
+          id: prop.id,
+          instanceId: prop.instanceId,
+          name: prop.name,
+          required: prop.required,
+          // infer type from value
+          ...getPropTypeAndValue(dataSourceValue),
+        } satisfies Prop,
+      ];
     }
-    // convert data source prop to typed prop
-    const dataSourceId = prop.value;
-    const dataSource = dataSources.get(dataSourceId);
-    const dataSourceValue =
-      dataSourcesLogic.get(prop.id) ?? dataSourcesLogic.get(dataSourceId);
-    if (dataSource === undefined) {
-      return [];
+    if (prop.type === "dataSource") {
+      // convert data source prop to typed prop
+      const dataSourceId = prop.value;
+      const dataSource = dataSources.get(dataSourceId);
+      const dataSourceValue =
+        dataSourcesLogic.get(prop.id) ?? dataSourcesLogic.get(dataSourceId);
+      if (dataSource === undefined) {
+        return [];
+      }
+      return [
+        {
+          id: prop.id,
+          instanceId: prop.instanceId,
+          name: prop.name,
+          required: prop.required,
+          // infer type from value
+          ...getPropTypeAndValue(dataSourceValue),
+        } satisfies Prop,
+      ];
     }
-    return [
-      {
-        id: prop.id,
-        instanceId: prop.instanceId,
-        name: prop.name,
-        required: prop.required,
-        // infer type from value
-        ...getPropTypeAndValue(dataSourceValue),
-      } satisfies Prop,
-    ];
+    return [prop];
   });
 
   // we will delete items from these maps as we categorize the props

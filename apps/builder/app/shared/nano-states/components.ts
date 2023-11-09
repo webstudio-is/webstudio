@@ -8,10 +8,15 @@ import {
   type HookContext,
   namespaceMeta,
   getIndexesWithinAncestors,
+  decodeDataSourceVariable,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
-import { dataSourceVariablesStore, propsStore } from "./nano-states";
+import {
+  dataSourceVariablesStore,
+  dataSourcesStore,
+  propsStore,
+} from "./nano-states";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import { shallowEqual } from "shallow-equal";
@@ -47,6 +52,7 @@ const createHookContext = (): HookContext => {
 
     setPropVariable: (instanceId, propName, value) => {
       const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+      const dataSources = new Map(dataSourcesStore.get());
       const props = propsStore.get();
       for (const prop of props.values()) {
         if (
@@ -56,6 +62,21 @@ const createHookContext = (): HookContext => {
         ) {
           const dataSourceId = prop.value;
           dataSourceVariables.set(dataSourceId, value);
+        }
+        if (
+          prop.instanceId === instanceId &&
+          prop.name === propName &&
+          prop.type === "expression"
+        ) {
+          // extract id without parsing expression
+          const potentialVariableId = decodeDataSourceVariable(prop.value);
+          if (
+            potentialVariableId !== undefined &&
+            dataSources.has(potentialVariableId)
+          ) {
+            const dataSourceId = potentialVariableId;
+            dataSourceVariables.set(dataSourceId, value);
+          }
         }
       }
       dataSourceVariablesStore.set(dataSourceVariables);

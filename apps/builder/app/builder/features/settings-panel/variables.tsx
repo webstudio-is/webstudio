@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   Button,
   CssValueListArrowFocus,
@@ -44,7 +45,6 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 import { CodeEditor } from "./code-editor";
 import type { PropValue } from "./shared";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type VariableDataSource = Extract<DataSource, { type: "variable" }>;
 
@@ -253,6 +253,7 @@ const $usedVariables = computed(
   [dataSourcesStore, propsStore],
   (dataSources, props) => {
     const usedVariables = new Set<DataSource["id"]>();
+    // @todo remove data sources checks after migrating to prop expression
     for (const dataSource of dataSources.values()) {
       if (dataSource.type !== "expression") {
         continue;
@@ -272,6 +273,21 @@ const $usedVariables = computed(
       }
     }
     for (const prop of props.values()) {
+      if (prop.type === "expression") {
+        try {
+          validateExpression(prop.value, {
+            transformIdentifier: (identifier) => {
+              const id = decodeDataSourceVariable(identifier);
+              if (id !== undefined) {
+                usedVariables.add(id);
+              }
+              return identifier;
+            },
+          });
+        } catch {
+          // empty block
+        }
+      }
       if (prop.type === "action") {
         for (const value of prop.value) {
           try {
@@ -296,7 +312,6 @@ const $usedVariables = computed(
 );
 
 const deleteVariable = (variable: VariableDataSource) => {
-  // @todo prevent delete when variable is used
   serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
     dataSources.delete(variable.id);
   });
@@ -355,30 +370,31 @@ const ListItem = ({
 };
 
 const getPropExpressionStore = (propId: undefined | string) => {
-  const $propDataSource = computed(
+  const $propExpression = computed(
     [propsStore, dataSourcesStore],
     (props, dataSources) => {
       if (propId === undefined) {
-        return;
+        return "";
       }
       const prop = props.get(propId);
+      if (prop?.type === "expression") {
+        return prop.value;
+      }
       if (prop?.type !== "dataSource") {
-        return;
+        return "";
       }
       const dataSourceId = prop.value;
-      return dataSources.get(dataSourceId);
+      const dataSource = dataSources.get(dataSourceId);
+      // convert variable to expression
+      if (dataSource?.type === "variable") {
+        return encodeDataSourceVariable(dataSource.id);
+      }
+      if (dataSource?.type === "expression") {
+        return dataSource.code;
+      }
+      return "";
     }
   );
-  const $propExpression = computed([$propDataSource], (dataSource) => {
-    // convert variable to expression
-    if (dataSource?.type === "variable") {
-      return encodeDataSourceVariable(dataSource.id);
-    }
-    if (dataSource?.type === "expression") {
-      return dataSource.code;
-    }
-    return "";
-  });
   return $propExpression;
 };
 
@@ -397,6 +413,33 @@ const getExpressionVariables = (expression: string) => {
     },
   });
   return variableIds;
+};
+
+const setPropValue = ({
+  propId,
+  propName,
+  propValue,
+}: {
+  propId: undefined | Prop["id"];
+  propName: Prop["name"];
+  propValue: PropValue;
+}) => {
+  const instanceSelector = selectedInstanceSelectorStore.get();
+  if (instanceSelector === undefined) {
+    return;
+  }
+  const [instanceId] = instanceSelector;
+
+  // create new prop or update existing one
+  serverSyncStore.createTransaction([propsStore], (props) => {
+    let prop = propId === undefined ? undefined : props.get(propId);
+    if (prop === undefined) {
+      prop = { id: nanoid(), instanceId, name: propName, ...propValue };
+    } else {
+      prop = { ...prop, ...propValue };
+    }
+    props.set(prop.id, prop);
+  });
 };
 
 const ListPanel = ({
@@ -419,6 +462,7 @@ const ListPanel = ({
     return variables;
   }, [matchedVariables]);
   const propId = prop?.id;
+  // @todo const propExpression = prop.value ?? ''
   const propExpression = useStore(
     useMemo(() => getPropExpressionStore(propId), [propId])
   );
@@ -430,28 +474,17 @@ const ListPanel = ({
   const [expression, setExpression] = useState<undefined | string>();
 
   const applyExpression = (expression: string) => {
-    // @todo replace data source expression into prop expression
-    // this pirce would become one liner
+    // @todo remove after migrating to prop extession
     serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
+      // replace data source expression with prop expression
       const dataSource =
         prop?.type === "dataSource" ? dataSources.get(prop.value) : undefined;
-
-      // update existing expression without changing prop
       if (dataSource?.type === "expression") {
-        dataSource.code = expression;
+        dataSources.delete(dataSource.id);
         return;
       }
-
-      // create new expression and bind to prop
-      const dataSourceId = nanoid();
-      dataSources.set(dataSourceId, {
-        id: dataSourceId,
-        type: "expression",
-        name: "expression",
-        code: expression,
-      });
-      onChange({ type: "dataSource", value: dataSourceId });
     });
+    onChange({ type: "expression", value: expression });
   };
 
   return (
@@ -532,12 +565,12 @@ const ListPanel = ({
 
 export const VariablesPanel = ({
   propId,
+  propName,
   propMeta,
-  onChange,
 }: {
   propId: undefined | Prop["id"];
+  propName: Prop["id"];
   propMeta: PropMeta;
-  onChange: (value: PropValue) => void;
 }) => {
   // compute prop instead of using passed one
   // because data source props are converted into values
@@ -581,7 +614,7 @@ export const VariablesPanel = ({
     );
   }
 
-  const removeBinding = () => {
+  const removeExpression = () => {
     // delete expression if exists
     if (prop?.type === "dataSource") {
       serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
@@ -592,10 +625,14 @@ export const VariablesPanel = ({
       });
     }
     // reset prop with initial value from meta
-    onChange({
-      type: propMeta.type,
-      value: propMeta.defaultValue,
-    } as PropValue);
+    setPropValue({
+      propId,
+      propName,
+      propValue: {
+        type: propMeta.type,
+        value: propMeta.defaultValue,
+      } as PropValue,
+    });
   };
 
   return (
@@ -604,11 +641,11 @@ export const VariablesPanel = ({
         prop={prop}
         onAdd={() => setView({ name: "add" })}
         onEdit={(variable) => setView({ name: "edit", variable })}
-        onChange={(value) => {
-          if (value === undefined) {
-            removeBinding();
+        onChange={(propValue) => {
+          if (propValue === undefined) {
+            removeExpression();
           } else {
-            onChange(value);
+            setPropValue({ propId, propName, propValue });
           }
         }}
       />
@@ -616,15 +653,15 @@ export const VariablesPanel = ({
       <FloatingPanelPopoverTitle
         actions={
           <>
-            {prop?.type === "dataSource" && (
-              <Tooltip content="Remove binding" side="bottom">
-                {/* automatically close popover when remove binding */}
+            {(prop?.type === "dataSource" || prop?.type === "expression") && (
+              <Tooltip content="Remove expression" side="bottom">
+                {/* automatically close popover when remove expression */}
                 <FloatingPanelPopoverClose asChild>
                   <Button
-                    aria-label="Remove binding"
+                    aria-label="Remove expression"
                     prefix={<TrashIcon />}
                     color="ghost"
-                    onClick={removeBinding}
+                    onClick={removeExpression}
                   />
                 </FloatingPanelPopoverClose>
               </Tooltip>
@@ -647,13 +684,13 @@ export const VariablesPanel = ({
 };
 
 export const VariablesButton = ({
-  prop,
+  propId,
+  propName,
   propMeta,
-  onChange,
 }: {
-  prop: undefined | Prop;
+  propId: undefined | Prop["id"];
+  propName: Prop["name"];
   propMeta: PropMeta;
-  onChange: (value: PropValue) => void;
 }) => {
   if (isFeatureEnabled("bindings") === false) {
     return;
@@ -672,9 +709,9 @@ export const VariablesButton = ({
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent side="left" align="start">
         <VariablesPanel
-          propId={prop?.id}
+          propId={propId}
+          propName={propName}
           propMeta={propMeta}
-          onChange={onChange}
         />
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>

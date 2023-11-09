@@ -10,7 +10,7 @@ import env from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
-import { getBuildParams, dashboardPath } from "~/shared/router-utils";
+import { dashboardPath, isCanvas } from "~/shared/router-utils";
 import { createImageLoader } from "@webstudio-is/image";
 
 export const loader = async ({ request }: LoaderArgs) => {
@@ -25,8 +25,7 @@ export const loader = async ({ request }: LoaderArgs) => {
     });
   }
 
-  const buildParams = getBuildParams(request);
-  if (buildParams === undefined) {
+  if (isCanvas(request) === false) {
     throw redirect(dashboardPath());
   }
 

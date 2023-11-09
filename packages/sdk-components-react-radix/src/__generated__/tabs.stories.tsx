@@ -22,16 +22,16 @@ const Page = (props: { scripts?: ReactNode }) => {
         value={value}
         onValueChange={onValueChange}
       >
-        <TabsList data-ws-id="6" data-ws-component="TabsList">
+        <TabsList data-ws-id="5" data-ws-component="TabsList">
           <TabsTrigger
-            data-ws-id="8"
+            data-ws-id="7"
             data-ws-component="TabsTrigger"
             data-ws-index="0"
           >
             {"Account"}
           </TabsTrigger>
           <TabsTrigger
-            data-ws-id="10"
+            data-ws-id="9"
             data-ws-component="TabsTrigger"
             data-ws-index="1"
           >
@@ -39,14 +39,14 @@ const Page = (props: { scripts?: ReactNode }) => {
           </TabsTrigger>
         </TabsList>
         <TabsContent
-          data-ws-id="12"
+          data-ws-id="11"
           data-ws-component="TabsContent"
           data-ws-index="0"
         >
           {"Make changes to your account here."}
         </TabsContent>
         <TabsContent
-          data-ws-id="14"
+          data-ws-id="13"
           data-ws-component="TabsContent"
           data-ws-index="1"
         >
@@ -221,7 +221,7 @@ html {margin: 0; display: grid; min-height: 100%}
   }
 }
 @media all {
-  [data-ws-id="6"] {
+  [data-ws-id="5"] {
     display: inline-flex;
     height: 2.5rem;
     align-items: center;
@@ -237,7 +237,7 @@ html {margin: 0; display: grid; min-height: 100%}
     padding-bottom: 0.25rem;
     color: rgba(100, 116, 139, 1)
   }
-  [data-ws-id="8"] {
+  [data-ws-id="7"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -257,23 +257,23 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms
   }
-  [data-ws-id="8"]:focus-visible {
+  [data-ws-id="7"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="8"]:disabled {
+  [data-ws-id="7"]:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="8"][data-state=active] {
+  [data-ws-id="7"][data-state=active] {
     background-color: rgba(255, 255, 255, 0.8);
     color: rgba(2, 8, 23, 1);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
   }
-  [data-ws-id="10"] {
+  [data-ws-id="9"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -293,36 +293,36 @@ html {margin: 0; display: grid; min-height: 100%}
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 150ms
   }
-  [data-ws-id="10"]:focus-visible {
+  [data-ws-id="9"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="10"]:disabled {
+  [data-ws-id="9"]:disabled {
     pointer-events: none;
     opacity: 0.5
   }
-  [data-ws-id="10"][data-state=active] {
+  [data-ws-id="9"][data-state=active] {
     background-color: rgba(255, 255, 255, 0.8);
     color: rgba(2, 8, 23, 1);
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
   }
-  [data-ws-id="12"] {
+  [data-ws-id="11"] {
     margin-top: 0.5rem
   }
-  [data-ws-id="12"]:focus-visible {
+  [data-ws-id="11"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;
     outline-offset: 2px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="14"] {
+  [data-ws-id="13"] {
     margin-top: 0.5rem
   }
-  [data-ws-id="14"]:focus-visible {
+  [data-ws-id="13"]:focus-visible {
     outline-width: 2px;
     outline-style: solid;
     outline-color: transparent;

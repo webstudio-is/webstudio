@@ -16,7 +16,7 @@ import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
-import { getBuildOrigin, loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
 
 export { links };
@@ -83,7 +83,6 @@ export const loader = async ({
       domains,
       build: devBuild,
       assets: assets.map((asset) => [asset.id, asset]),
-      buildOrigin: getBuildOrigin(request),
       authToken,
       authPermit,
     };
