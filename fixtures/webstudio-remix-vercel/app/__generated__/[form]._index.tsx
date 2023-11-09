@@ -73,6 +73,7 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 const Page = (props: { scripts?: ReactNode }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
+  let state = formState;
   let onStateChange = (state: any) => {
     formState = state;
     set$formState(formState);
@@ -80,6 +81,7 @@ const Page = (props: { scripts?: ReactNode }) => {
   let datawsshow = formState === "initial" || formState === "error";
   let datawsshow_1 = formState === "success";
   let datawsshow_2 = formState === "error";
+  let state_1 = formState_1;
   let onStateChange_1 = (state: any) => {
     formState_1 = state;
     set$formState_1(formState_1);
@@ -92,7 +94,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Form
         data-ws-id="-1RvizaBcVpHsjvnYxn1c"
         data-ws-component="Form"
-        state={formState_1}
+        state={state_1}
         onStateChange={onStateChange_1}
       >
         {datawsshow_3 && (
@@ -142,7 +144,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Form
         data-ws-id="isNSM3wXcnHFikwNPlEOL"
         data-ws-component="Form"
-        state={formState}
+        state={state}
         onStateChange={onStateChange}
         method={"get"}
         action={"/custom"}

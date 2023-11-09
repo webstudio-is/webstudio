@@ -81,6 +81,7 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
+  let value = accordionValue;
   let onValueChange = (value: any) => {
     accordionValue = value;
     set$accordionValue(accordionValue);
@@ -91,7 +92,7 @@ const Page = (props: { scripts?: ReactNode }) => {
         data-ws-id="AM9fD6dv2Ftc3Xjcsd7Uc"
         data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"
         collapsible={true}
-        value={accordionValue}
+        value={value}
         onValueChange={onValueChange}
       >
         <AccordionItem

@@ -48,7 +48,11 @@ export const CheckControl = ({
           <Label htmlFor={`${id}:${options[0]}`} description={meta.description}>
             {getLabel(meta, propName)}
           </Label>
-          <VariablesButton prop={prop} propMeta={meta} onChange={onChange} />
+          <VariablesButton
+            propId={prop?.id}
+            propName={propName}
+            propMeta={meta}
+          />
         </Box>
       }
       deletable={deletable}
