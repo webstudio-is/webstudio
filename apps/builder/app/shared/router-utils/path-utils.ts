@@ -131,22 +131,12 @@ export const restPatchPath = (props: { authToken?: string }) => {
   }`;
 };
 
-export const getBuildUrl = ({
-  buildOrigin,
-  project,
-}: {
-  buildOrigin: string;
-  project: Project;
-}) => {
-  const url = new URL(buildOrigin);
+export const getBuildUrl = ({ project }: { project: Project }) => {
+  // const url = new URL(buildOrigin);
+  const searchParams = new URLSearchParams();
+  searchParams.set("projectId", project.id);
 
-  if (env.BUILD_REQUIRE_SUBDOMAIN) {
-    url.host = `${project.domain}.${url.host}`;
-  }
-
-  url.searchParams.set("projectId", project.id);
-
-  return url.toString();
+  return `/?${searchParams.toString()}`;
 };
 
 export const getPublishedUrl = (domain: string) => {
