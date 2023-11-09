@@ -26,23 +26,14 @@ jobs:
           script: |
 
             const branch = context.payload.ref ?? context.payload.pull_request.head.ref;
-            console.log('branch', branch);
-            console.log('context.repo', JSON.stringify(context.repo));
-
             const sha = context.payload.pull_request?.head?.sha ?? context.sha;
 
             const status = {
               state: 'success',
-              target_url: 'http://example.com',
-              description: 'Description of the status',
-              context: '🟠 Context of the status'
+              target_url: `${branch.toLowerCase().replace(/[^a-z0-9-]+/g, '')}.prs.webstudio.is`,
+              description: 'click details to see the deployment',
+              context: '⭐ Apps Webstudio URL'
             };
-
-            console.log(JSON.stringify(
-              {...context.repo,
-                sha,
-              ...status
-              }));
 
             github.rest.repos.createCommitStatus({
               ...context.repo,
