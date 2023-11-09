@@ -74,7 +74,7 @@ export const TransitionProperty = ({
     })),
     value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
-    itemToString: (value) => humanizeString(value?.name || "") ?? "",
+    itemToString: (value) => humanizeString(value?.label || ""),
     onItemSelect: (prop) => {
       if (isAnimatableProperty(prop.name) === false) {
         return;
@@ -102,29 +102,31 @@ export const TransitionProperty = ({
         index,
       })}
     >
-      {item.name}
+      {humanizeString(item?.label ?? "")}
     </ComboboxListboxItem>
   );
 
   return (
     <>
-      <Tooltip
-        content={
-          <Flex gap="2" direction="column">
-            <Text variant="regularBold">Property</Text>
-            <Text variant="monoBold" color="moreSubtle">
-              transition-property
-            </Text>
-            <Text>
-              Sets the CSS properties that will
-              <br />
-              be affected by the transition.
-            </Text>
-          </Flex>
-        }
-      >
-        <Label> Property </Label>
-      </Tooltip>
+      <Flex align="center">
+        <Tooltip
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Property</Text>
+              <Text variant="monoBold" color="moreSubtle">
+                transition-property
+              </Text>
+              <Text>
+                Sets the CSS properties that will
+                <br />
+                be affected by the transition.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ display: "inline" }}> Property </Label>
+        </Tooltip>
+      </Flex>
       <Combobox>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>

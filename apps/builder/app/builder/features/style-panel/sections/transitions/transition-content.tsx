@@ -123,11 +123,12 @@ export const TransitionContent = ({
   return (
     <Flex direction="column">
       <Grid
-        gap="2"
+        gap="1"
         css={{
-          px: theme.spacing[8],
-          py: theme.spacing[8],
-          gridTemplateColumns: `1fr ${theme.spacing[22]}`,
+          lineHeight: theme.spacing[13],
+          px: theme.spacing[9],
+          py: theme.spacing[5],
+          gridTemplateColumns: `1fr ${theme.spacing[23]}`,
         }}
       >
         <TransitionProperty
@@ -136,24 +137,26 @@ export const TransitionContent = ({
           onPropertySelection={handlePropertyUpdate}
         />
 
-        <Tooltip
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Duration</Text>
-              <Text variant="monoBold" color="moreSubtle">
-                transition-duration
-              </Text>
-              <Text>
-                Sets the length of time a
-                <br />
-                transition animation should take
-                <br /> to complete.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label>Duration</Label>
-        </Tooltip>
+        <Flex align="center">
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Duration</Text>
+                <Text variant="monoBold" color="moreSubtle">
+                  transition-duration
+                </Text>
+                <Text>
+                  Sets the length of time a
+                  <br />
+                  transition animation should take
+                  <br /> to complete.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ display: "inline" }}>Duration</Label>
+          </Tooltip>
+        </Flex>
         <CssValueInputContainer
           key={"transitionDuration"}
           property={"transitionDuration"}
@@ -173,23 +176,25 @@ export const TransitionContent = ({
           }}
         />
 
-        <Tooltip
-          content={
-            <Flex gap="2" direction="column">
-              <Text variant="regularBold">Delay</Text>
-              <Text variant="monoBold" color="moreSubtle">
-                transition-delay
-              </Text>
-              <Text>
-                Specify the duration to wait
-                <br />
-                before the transition begins.
-              </Text>
-            </Flex>
-          }
-        >
-          <Label>Delay</Label>
-        </Tooltip>
+        <Flex align="center">
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Delay</Text>
+                <Text variant="monoBold" color="moreSubtle">
+                  transition-delay
+                </Text>
+                <Text>
+                  Specify the duration to wait
+                  <br />
+                  before the transition begins.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ display: "inline" }}>Delay</Label>
+          </Tooltip>
+        </Flex>
         <CssValueInputContainer
           property={"transitionDelay"}
           key={"transitionDelay"}
@@ -217,8 +222,8 @@ export const TransitionContent = ({
       <Flex
         direction="column"
         css={{
-          px: theme.spacing[8],
-          py: theme.spacing[8],
+          px: theme.spacing[9],
+          py: theme.spacing[9],
           gap: theme.spacing[3],
           minWidth: theme.spacing[30],
         }}

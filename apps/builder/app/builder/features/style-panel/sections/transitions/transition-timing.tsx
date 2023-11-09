@@ -83,10 +83,20 @@ export const TransitionTiming = ({
     })),
     value: {
       name: inputValue as TimingFunctions,
-      value: timingFunctions[inputValue as TimingFunctions] ?? "",
+      value: timingFunctions[inputValue as TimingFunctions] ?? null,
     },
     selectedItem: undefined,
-    itemToString: (value) => humanizeString(value?.name ?? ""),
+    itemToString: (item) => {
+      if (item === null) {
+        return "";
+      }
+
+      if (item?.value === null) {
+        return item.name;
+      }
+
+      return humanizeString(item.name);
+    },
     onInputChange: (value) => setInputValue(value ?? ""),
     onItemSelect: (prop) => {
       setInputValue(prop.name);
@@ -130,34 +140,36 @@ export const TransitionTiming = ({
         {...getItemProps({ item, index })}
         css={{ paddingLeft: theme.spacing[11] }}
       >
-        {item.name}
+        {humanizeString(item?.name ?? "")}
       </ComboboxListboxItem>
     );
   };
 
   return (
     <>
-      <Tooltip
-        content={
-          <Flex gap="2" direction="column">
-            <Text variant="regularBold">Easing</Text>
-            <Text variant="monoBold" color="moreSubtle">
-              transition-timing-function
-            </Text>
-            <Text>
-              Affects the look and feel of the
-              <br />
-              animation by varying the speed
-              <br />
-              of the transition at different
-              <br />
-              points in its duration.
-            </Text>
-          </Flex>
-        }
-      >
-        <Label>Easing</Label>
-      </Tooltip>
+      <Flex align="center">
+        <Tooltip
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Easing</Text>
+              <Text variant="monoBold" color="moreSubtle">
+                transition-timing-function
+              </Text>
+              <Text>
+                Affects the look and feel of the
+                <br />
+                animation by varying the speed
+                <br />
+                of the transition at different
+                <br />
+                points in its duration.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ display: "inline" }}>Easing</Label>
+        </Tooltip>
+      </Flex>
       <Combobox>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>
