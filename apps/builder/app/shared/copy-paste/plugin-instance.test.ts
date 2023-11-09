@@ -266,6 +266,123 @@ describe("data sources", () => {
     );
   });
 
+  test("are copy pasted when scoped to copied instances 2", () => {
+    instancesStore.set(instances);
+    const dataSources = toMap<DataSource>([
+      {
+        id: "box1$state",
+        scopeInstanceId: "box1",
+        type: "variable",
+        name: "state",
+        value: { type: "string", value: "initial" },
+      },
+    ]);
+    dataSourcesStore.set(dataSources);
+    const props = toMap<Prop>([
+      {
+        id: "box1$stateProp",
+        instanceId: "box1",
+        name: "state",
+        type: "expression",
+        value: "$ws$dataSource$box1$state",
+      },
+      {
+        id: "box2$stateProp",
+        instanceId: "box2",
+        name: "state",
+        type: "expression",
+        value: "$ws$dataSource$box1$state",
+      },
+      {
+        id: "box2$showProp",
+        instanceId: "box2",
+        name: "show",
+        type: "expression",
+        value: `$ws$dataSource$box1$state === 'initial'`,
+      },
+      {
+        id: "box2$onChangeProp",
+        instanceId: "box2",
+        type: "action",
+        name: "onChange",
+        value: [
+          {
+            type: "execute",
+            args: ["value"],
+            code: `$ws$dataSource$box1$state = value`,
+          },
+        ],
+      },
+    ]);
+    propsStore.set(props);
+    selectedInstanceSelectorStore.set(["box1", "body0"]);
+    const clipboardData = onCopy() ?? "";
+    selectedInstanceSelectorStore.set(["body0"]);
+    onPaste(clipboardData);
+
+    const instancesDifference = getMapDifference(
+      instances,
+      instancesStore.get()
+    );
+    const [newBox1, newBox2] = instancesDifference.keys();
+
+    const dataSourcesDifference = getMapDifference(
+      dataSources,
+      dataSourcesStore.get()
+    );
+    const [newDataSource1] = dataSourcesDifference.keys();
+    expect(dataSourcesDifference).toEqual(
+      toMap([
+        {
+          ...dataSources.get("box1$state"),
+          id: newDataSource1,
+          scopeInstanceId: newBox1,
+        },
+      ])
+    );
+
+    const propsDifference = getMapDifference(props, propsStore.get());
+    const [newProp1, newProp2, newProp3, newProp4] = propsDifference.keys();
+    expect(propsDifference).toEqual(
+      toMap([
+        {
+          id: newProp1,
+          instanceId: newBox1,
+          name: "state",
+          type: "expression",
+          value: encodeDataSourceVariable(newDataSource1),
+        },
+        {
+          id: newProp2,
+          instanceId: newBox2,
+          name: "state",
+          type: "expression",
+          value: encodeDataSourceVariable(newDataSource1),
+        },
+        {
+          id: newProp3,
+          instanceId: newBox2,
+          name: "show",
+          type: "expression",
+          value: `${encodeDataSourceVariable(newDataSource1)} === 'initial'`,
+        },
+        {
+          id: newProp4,
+          instanceId: newBox2,
+          name: "onChange",
+          type: "action",
+          value: [
+            {
+              type: "execute",
+              args: ["value"],
+              code: `${encodeDataSourceVariable(newDataSource1)} = value`,
+            },
+          ],
+        },
+      ])
+    );
+  });
+
   test("are inlined into props when not scoped to copied instances or depends on not scoped data source", () => {
     instancesStore.set(instances);
     propsStore.set(props);

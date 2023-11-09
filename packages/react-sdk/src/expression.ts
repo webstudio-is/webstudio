@@ -273,6 +273,24 @@ export const generateDataSources = ({
       body += `let ${name} = (${code});\n`;
     }
 
+    if (prop.type === "expression") {
+      const name = scope.getName(prop.id, prop.name);
+      output.set(prop.id, name);
+      const code = validateExpression(prop.value, {
+        transformIdentifier: (identifier) => {
+          const depId = decodeDataSourceVariable(identifier);
+          const dep = depId ? dataSources.get(depId) : undefined;
+          if (dep) {
+            return scope.getName(dep.id, dep.name);
+          }
+          // eslint-disable-next-line no-console
+          console.error(`Unknown dependency "${identifier}"`);
+          return identifier;
+        },
+      });
+      body += `let ${name} = (${code});\n`;
+    }
+
     // generate actions assigning variables and invoking their setters
     if (prop.type === "action") {
       const name = scope.getName(prop.id, prop.name);

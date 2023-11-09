@@ -635,6 +635,18 @@ export const getInstancesSlice = (rootInstanceId: string) => {
       }
     }
 
+    if (prop.type === "expression") {
+      validateExpression(prop.value, {
+        transformIdentifier(identifier) {
+          const id = decodeDataSourceVariable(identifier);
+          if (id !== undefined) {
+            usedDataSourceIds.add(id);
+          }
+          return identifier;
+        },
+      });
+    }
+
     if (prop.type === "action") {
       for (const value of prop.value) {
         if (value.type === "execute") {

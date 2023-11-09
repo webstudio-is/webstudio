@@ -872,6 +872,96 @@ describe("get instances slice", () => {
     ]);
   });
 
+  test("collect data sources used in expressions within instances 2", () => {
+    // body
+    //   box1
+    //     box2
+    instancesStore.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
+        createInstance("box2", "Box", []),
+      ])
+    );
+    dataSourcesStore.set(
+      toMap([
+        {
+          id: "box1$state",
+          scopeInstanceId: "box1",
+          type: "variable",
+          name: "state",
+          value: { type: "string", value: "initial" },
+        },
+      ])
+    );
+    propsStore.set(
+      toMap([
+        {
+          id: "box1$stateProp",
+          instanceId: "box1",
+          name: "state",
+          type: "expression",
+          value: "$ws$dataSource$box1$state",
+        },
+        {
+          id: "box2$stateProp",
+          instanceId: "box2",
+          name: "state",
+          type: "expression",
+          value: "$ws$dataSource$box1$state",
+        },
+        {
+          id: "box2$showProp",
+          instanceId: "box2",
+          name: "show",
+          type: "expression",
+          value: `$ws$dataSource$box1$state === 'initial'`,
+        },
+        {
+          id: "box2$trueProp",
+          instanceId: "box2",
+          name: "bool-prop",
+          type: "expression",
+          value: `true`,
+        },
+      ])
+    );
+    const { props, dataSources } = getInstancesSlice("box2");
+
+    expect(dataSources).toEqual([
+      {
+        id: "box1$state",
+        scopeInstanceId: "box1",
+        type: "variable",
+        name: "state",
+        value: { type: "string", value: "initial" },
+      },
+    ]);
+    expect(props).toEqual([
+      {
+        id: "box2$stateProp",
+        instanceId: "box2",
+        name: "state",
+        type: "expression",
+        value: "$ws$dataSource$box1$state",
+      },
+      {
+        id: "box2$showProp",
+        instanceId: "box2",
+        name: "show",
+        type: "expression",
+        value: `$ws$dataSource$box1$state === 'initial'`,
+      },
+      {
+        id: "box2$trueProp",
+        instanceId: "box2",
+        name: "bool-prop",
+        type: "expression",
+        value: `true`,
+      },
+    ]);
+  });
+
   test("collect data sources used in actions within instances", () => {
     // body
     //   box1
