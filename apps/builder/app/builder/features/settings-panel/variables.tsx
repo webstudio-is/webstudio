@@ -614,7 +614,7 @@ export const VariablesPanel = ({
     );
   }
 
-  const removeBinding = () => {
+  const removeExpression = () => {
     // delete expression if exists
     if (prop?.type === "dataSource") {
       serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
@@ -643,7 +643,7 @@ export const VariablesPanel = ({
         onEdit={(variable) => setView({ name: "edit", variable })}
         onChange={(propValue) => {
           if (propValue === undefined) {
-            removeBinding();
+            removeExpression();
           } else {
             setPropValue({ propId, propName, propValue });
           }
@@ -654,14 +654,14 @@ export const VariablesPanel = ({
         actions={
           <>
             {(prop?.type === "dataSource" || prop?.type === "expression") && (
-              <Tooltip content="Remove binding" side="bottom">
-                {/* automatically close popover when remove binding */}
+              <Tooltip content="Remove expression" side="bottom">
+                {/* automatically close popover when remove expression */}
                 <FloatingPanelPopoverClose asChild>
                   <Button
-                    aria-label="Remove binding"
+                    aria-label="Remove expression"
                     prefix={<TrashIcon />}
                     color="ghost"
-                    onClick={removeBinding}
+                    onClick={removeExpression}
                   />
                 </FloatingPanelPopoverClose>
               </Tooltip>
