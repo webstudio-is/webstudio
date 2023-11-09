@@ -18,10 +18,6 @@ const env = {
   TRPC_SERVER_URL: process.env.TRPC_SERVER_URL,
   TRPC_SERVER_API_TOKEN: process.env.TRPC_SERVER_API_TOKEN,
 
-  // Canvas build logic
-  BUILD_ORIGIN: process.env.BUILD_ORIGIN,
-  BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN,
-
   PORT: process.env.PORT,
 
   // Preview support

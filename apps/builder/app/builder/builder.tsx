@@ -223,7 +223,6 @@ export type BuilderProps = {
   domains: string[];
   build: Build;
   assets: [Asset["id"], Asset][];
-  buildOrigin: string;
   authToken?: string;
   authPermit: AuthPermit;
 };
@@ -233,7 +232,6 @@ export const Builder = ({
   domains,
   build,
   assets,
-  buildOrigin,
   authToken,
   authPermit,
 }: BuilderProps) => {
@@ -296,7 +294,6 @@ export const Builder = ({
   const navigatorLayout = useNavigatorLayout();
 
   const canvasUrl = getBuildUrl({
-    buildOrigin,
     project,
   });
 

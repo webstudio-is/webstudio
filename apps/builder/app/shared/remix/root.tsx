@@ -6,7 +6,6 @@ import {
   Scripts,
 } from "@remix-run/react";
 import { Env } from "~/shared/env";
-import env from "~/env/env.server";
 import { createHead } from "remix-island";
 
 export const Head = createHead(() => (
@@ -23,9 +22,7 @@ export const Root = ({ Outlet = RemixOutlet }) => {
       <Outlet />
       <Env />
       <Scripts />
-      {process.env.NODE_ENV === "development" && (
-        <LiveReload port={env.BUILD_ORIGIN !== undefined ? 3010 : undefined} />
-      )}
+      {process.env.NODE_ENV === "development" && <LiveReload />}
     </>
   );
 };

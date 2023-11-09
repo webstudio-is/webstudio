@@ -44,11 +44,6 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production PUBLISHER_HOST is required for website functionality. Please set it to your production URL of the builder."
     );
   }
-  if (!process.env.BUILD_ORIGIN) {
-    errors.push(
-      "👉 In production BUILD_ORIGIN is required for security reasons."
-    );
-  }
 }
 
 // check for when user has some S3 env variables but not all required
