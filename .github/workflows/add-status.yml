@@ -7,7 +7,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read # to fetch code (actions/checkout)
+  statuses: write # to fetch code (actions/checkout)
 
 jobs:
   checks:
@@ -35,7 +35,7 @@ jobs:
               context: 'Context of the status'
             };
 
-            github.rest.repos.createCommitStatus({
+            github.repos.createCommitStatus({
               ...context.repo,
               sha: context.sha,
               ...status
