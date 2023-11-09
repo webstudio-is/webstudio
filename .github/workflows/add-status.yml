@@ -1,0 +1,42 @@
+name: Main workflow
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  checks:
+    timeout-minutes: 20
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add URL to vercel deployment through *.prs.webstudio.is
+        uses: actions/github-script@v6
+        with:
+          script: |
+
+            console.log('context.payload.ref', context.payload.ref, 'context.payload.pull_request.head.ref', context.payload.pull_request.head.ref);
+            console.log('context.repo', context.repo);
+
+            const status = {
+              state: 'success',
+              target_url: 'http://example.com',
+              description: 'Description of the status',
+              context: 'Context of the status'
+            };
+
+            github.repos.createCommitStatus({
+              ...context.repo,
+              sha: context.sha,
+              ...status
+            });
