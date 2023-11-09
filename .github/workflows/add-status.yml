@@ -25,7 +25,8 @@ jobs:
         with:
           script: |
 
-            console.log('context.payload.ref', context.payload.ref, 'context.payload.pull_request.head.ref', context.payload.pull_request.head.ref);
+            const branch = context.payload.ref ?? context.payload.pull_request.head.ref;
+            console.log('branch', branch);
             console.log('context.repo', JSON.stringify(context.repo));
 
             const status = {
@@ -35,7 +36,13 @@ jobs:
               context: 'Context of the status'
             };
 
-            await github.rest.repos.createCommitStatus({
+            console.log(JSON.stringify(
+              {...context.repo,
+                sha: context.sha,
+              ...status
+              }));
+
+            github.rest.repos.createCommitStatus({
               ...context.repo,
               sha: context.sha,
               ...status
