@@ -1,4 +1,4 @@
-name: Main workflow
+name: Add status to commit
 
 on:
   push:
