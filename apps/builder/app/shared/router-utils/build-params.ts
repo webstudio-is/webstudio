@@ -36,6 +36,9 @@ export const getBuildOrigin = (
     DEPLOYMENT_URL?: string;
   } = defaultEnv
 ): string => {
+  // eslint-disable-next-line no-console
+  console.log("ENV:", JSON.stringify(env));
+
   const { BUILD_ORIGIN } = env;
   if (BUILD_ORIGIN !== undefined && BUILD_ORIGIN !== "") {
     return BUILD_ORIGIN;
@@ -43,6 +46,9 @@ export const getBuildOrigin = (
 
   // Local development special case
   const host = getRequestHost(request);
+
+  // eslint-disable-next-line no-console
+  console.log("host:", host);
 
   if (isLocalhost(host)) {
     return `http://${host.split(".").pop()}`;
