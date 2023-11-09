@@ -25,7 +25,7 @@ jobs:
         with:
           script: |
 
-            const branch = context.payload.ref ?? context.payload.pull_request.head.ref;
+            const branch = context.payload.pull_request?.head?.ref ?? context.payload.ref?.replace('refs/heads/', '')
             const sha = context.payload.pull_request?.head?.sha ?? context.sha;
 
             const status = {
