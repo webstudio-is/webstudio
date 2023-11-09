@@ -35,7 +35,7 @@ jobs:
               state: 'success',
               target_url: 'http://example.com',
               description: 'Description of the status',
-              context: 'Context of the status'
+              context: '🟠 Context of the status'
             };
 
             console.log(JSON.stringify(
