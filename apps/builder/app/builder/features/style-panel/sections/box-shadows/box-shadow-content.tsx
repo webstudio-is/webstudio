@@ -3,10 +3,7 @@ import type {
   LayersValue,
   TupleValue,
 } from "@webstudio-is/css-engine";
-import {
-  extractBoxShadowProperties,
-  parseBoxShadow,
-} from "@webstudio-is/css-data";
+import { parseBoxShadow } from "@webstudio-is/css-data";
 import {
   Flex,
   Label,
@@ -31,7 +28,6 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
-  const result = extractBoxShadowProperties(props.layer);
 
   const handleChange = (value: string) => {
     setIntermediateValue({
