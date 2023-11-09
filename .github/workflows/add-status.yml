@@ -30,7 +30,7 @@ jobs:
 
             const status = {
               state: 'success',
-              target_url: `${branch.toLowerCase().replace(/[^a-z0-9-]+/g, '')}.prs.webstudio.is`,
+              target_url: `https://${branch.toLowerCase().replace(/[^a-z0-9-]+/g, '')}.prs.webstudio.is`,
               description: 'click details to see the deployment',
               context: '⭐ Apps Webstudio URL'
             };
