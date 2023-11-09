@@ -35,6 +35,8 @@ jobs:
               context: 'Context of the status'
             };
 
+            console.log('github.repos.createCommitStatus', github.repos.createCommitStatus);
+
             github.repos.createCommitStatus({
               ...context.repo,
               sha: context.sha,
