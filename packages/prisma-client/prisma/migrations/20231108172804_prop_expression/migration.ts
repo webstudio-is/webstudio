@@ -68,19 +68,55 @@ export default async () => {
       const chunkSize = 1000;
       let cursor: undefined | string = undefined;
       let hasNext = true;
+
       while (hasNext) {
+        console.log("CHUNK", cursor);
+        console.time("read");
+
+        const cursorOptions: {} = cursor
+          ? {
+              skip: 1, // Skip the cursor
+              cursor: { id: cursor },
+            }
+          : {};
+
         const builds = await prisma.build.findMany({
+          select: {
+            id: true,
+            props: true,
+            dataSources: true,
+          },
           take: chunkSize,
           orderBy: {
             id: "asc",
           },
-          ...(cursor
-            ? {
-                skip: 1, // Skip the cursor
-                cursor: { id: cursor },
-              }
-            : null),
+          where: {
+            AND: [
+              {
+                OR: [
+                  {
+                    props: {
+                      not: "[]",
+                    },
+                  },
+                  {
+                    dataSources: {
+                      not: "[]",
+                    },
+                  },
+                ],
+              },
+              {
+                deployment: null,
+              },
+            ],
+          },
+
+          ...cursorOptions,
         });
+        console.timeEnd("read");
+
+        console.time("parse-change");
         cursor = builds.at(-1)?.id;
         hasNext = builds.length === chunkSize;
         const changedBuilds: typeof builds = [];
@@ -142,14 +178,28 @@ export default async () => {
             console.info(`build ${buildId} cannot be converted`);
           }
         }
-        await Promise.all(
-          changedBuilds.map(({ id, props, dataSources }) =>
-            prisma.build.update({
-              where: { id },
-              data: { props, dataSources },
-            })
-          )
+        console.timeEnd("parse-change");
+        console.log("changedBuilds.length", changedBuilds.length);
+        console.time("update");
+
+        const sql = `
+          UPDATE "Build"
+          SET
+            "props" = data."props",
+            "dataSources" = data."dataSources"
+          FROM unnest(ARRAY[$1], ARRAY[$2], ARRAY[$3]) as data(id, props, "dataSources")
+          WHERE "Build"."id" = data."id"
+        `;
+
+        const res = await prisma.$executeRawUnsafe(
+          sql,
+          changedBuilds.map((changedBuild) => changedBuild.id),
+          changedBuilds.map((changedBuild) => changedBuild.props),
+          changedBuilds.map((changedBuild) => changedBuild.dataSources)
         );
+
+        console.timeEnd("update");
+        console.log("res", res);
       }
     },
     { timeout: 3600000 }
