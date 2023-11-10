@@ -152,6 +152,6 @@ export default async () => {
         );
       }
     },
-    { timeout: 1000 * 60 * 8 }
+    { timeout: 3600000 }
   );
 };
