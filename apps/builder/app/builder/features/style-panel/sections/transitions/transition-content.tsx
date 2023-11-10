@@ -163,7 +163,7 @@ export const TransitionContent = ({
           label={transitionDurationConfig.label}
           styleSource="local"
           /* Browser default for transition-duration */
-          value={duration ?? { type: "unit", value: 0, unit: "s" }}
+          value={duration ?? { type: "unit", value: 0, unit: "ms" }}
           keywords={transitionDurationKeywords}
           deleteProperty={() => {
             handlePropertyUpdate({ duration });
@@ -200,7 +200,7 @@ export const TransitionContent = ({
           key={"transitionDelay"}
           styleSource="local"
           /* Browser default for transition-delay */
-          value={delay ?? { type: "unit", value: 0, unit: "s" }}
+          value={delay ?? { type: "unit", value: 0, unit: "ms" }}
           label={transitionDurationConfig.label}
           keywords={transitionDelayKeywords}
           deleteProperty={() => handlePropertyUpdate({ delay })}
