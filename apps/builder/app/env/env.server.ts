@@ -33,7 +33,7 @@ const env = {
    * https://image-transform.wstd.io/cdn-cgi/image/
    * https://webstudio.is/cdn-cgi/image/
    */
-  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/asset/image/",
+  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/cgi/image/",
   /**
    * Base url or base path for any asset with ending slash.
    * Possible values are
