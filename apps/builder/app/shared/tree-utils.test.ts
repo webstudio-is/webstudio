@@ -867,7 +867,7 @@ test("insert props copy with new ids and apply new instance ids", () => {
   const clonedInstanceIds = new Map<Instance["id"], Instance["id"]>([
     ["instance2", "newInstance2"],
   ]);
-  insertPropsCopyMutable(props, copiedProps, clonedInstanceIds, new Map());
+  insertPropsCopyMutable(props, copiedProps, clonedInstanceIds);
   expect(Array.from(props.entries())).toEqual([
     ["prop1", createProp("prop1", "instance1")],
     ["prop2", createProp("prop2", "instance2")],

@@ -53,12 +53,6 @@ export const Prop = z.union([
   }),
   z.object({
     ...baseProp,
-    type: z.literal("dataSource"),
-    // data source id
-    value: z.string(),
-  }),
-  z.object({
-    ...baseProp,
     type: z.literal("expression"),
     value: z.string(),
   }),

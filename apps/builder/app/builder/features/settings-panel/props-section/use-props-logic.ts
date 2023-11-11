@@ -5,7 +5,6 @@ import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
   dataSourcesLogicStore,
-  dataSourcesStore,
   registeredComponentPropsMetasStore,
 } from "~/shared/nano-states";
 
@@ -92,10 +91,6 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type json must have a meta, we can't provide a default one because we need a list of options"
       );
-    case "dataSource":
-      throw new Error(
-        "A prop with type dataSource must have a meta, we can't provide a default one because we need a list of options"
-      );
     case "expression":
       throw new Error(
         "A prop with type expression must have a meta, we can't provide a default one because we need a list of options"
@@ -158,7 +153,6 @@ export const usePropsLogic = ({
   const meta = useStore(registeredComponentPropsMetasStore).get(
     instance.component
   );
-  const dataSources = useStore(dataSourcesStore);
   const dataSourcesLogic = useStore(dataSourcesLogicStore);
 
   if (meta === undefined) {
@@ -169,26 +163,6 @@ export const usePropsLogic = ({
     if (prop.type === "expression") {
       // convert expression prop to value prop
       const dataSourceValue = dataSourcesLogic.get(prop.id);
-      return [
-        {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          required: prop.required,
-          // infer type from value
-          ...getPropTypeAndValue(dataSourceValue),
-        } satisfies Prop,
-      ];
-    }
-    if (prop.type === "dataSource") {
-      // convert data source prop to typed prop
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      const dataSourceValue =
-        dataSourcesLogic.get(prop.id) ?? dataSourcesLogic.get(dataSourceId);
-      if (dataSource === undefined) {
-        return [];
-      }
       return [
         {
           id: prop.id,
