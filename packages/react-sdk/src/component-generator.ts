@@ -54,19 +54,6 @@ export const generateJsxElement = ({
       if (prop.type === "boolean" && prop.value === false) {
         return "";
       }
-      if (prop.type === "dataSource") {
-        const dataSourceId = prop.value;
-        const dataSource = dataSources.get(dataSourceId);
-        if (dataSource === undefined) {
-          continue;
-        }
-        if (dataSource.type === "variable") {
-          conditionVariableName = scope.getName(dataSource.id, dataSource.name);
-        }
-        if (dataSource.type === "expression") {
-          conditionVariableName = scope.getName(prop.id, prop.name);
-        }
-      }
       if (prop.type === "expression") {
         conditionVariableName = scope.getName(prop.id, prop.name);
       }
@@ -85,25 +72,6 @@ export const generateJsxElement = ({
     }
     // ignore asset and page props which are handled by components internally
     if (prop.type === "asset" || prop.type === "page") {
-      continue;
-    }
-    if (prop.type === "dataSource") {
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      if (dataSource === undefined) {
-        continue;
-      }
-      if (dataSource.type === "variable") {
-        const dataSourceVariable = scope.getName(
-          dataSource.id,
-          dataSource.name
-        );
-        generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
-      }
-      if (dataSource.type === "expression") {
-        const dataSourceVariable = scope.getName(prop.id, prop.name);
-        generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
-      }
       continue;
     }
     if (prop.type === "expression") {

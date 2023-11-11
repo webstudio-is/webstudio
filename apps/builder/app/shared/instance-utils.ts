@@ -325,7 +325,7 @@ export const insertTemplateData = (
         children,
         dropTarget
       );
-      insertPropsCopyMutable(props, insertedProps, new Map(), new Map());
+      insertPropsCopyMutable(props, insertedProps, new Map());
       for (const dataSource of insertedDataSources) {
         dataSources.set(dataSource.id, dataSource);
       }
@@ -615,25 +615,6 @@ export const getInstancesSlice = (rootInstanceId: string) => {
     }
 
     slicedProps.set(prop.id, prop);
-
-    if (prop.type === "dataSource") {
-      const dataSource = dataSources.get(prop.value);
-      if (dataSource?.type === "variable") {
-        usedDataSourceIds.add(dataSource.id);
-      }
-      if (dataSource?.type === "expression") {
-        usedDataSourceIds.add(dataSource.id);
-        validateExpression(dataSource.code, {
-          transformIdentifier(identifier) {
-            const id = decodeDataSourceVariable(identifier);
-            if (id !== undefined) {
-              usedDataSourceIds.add(id);
-            }
-            return identifier;
-          },
-        });
-      }
-    }
 
     if (prop.type === "expression") {
       validateExpression(prop.value, {

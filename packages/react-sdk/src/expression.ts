@@ -250,29 +250,6 @@ export const generateDataSources = ({
 
   for (const prop of props.values()) {
     // generate prop expressions
-    if (prop.type === "dataSource") {
-      const dataSource = dataSources.get(prop.value);
-      if (dataSource?.type !== "expression") {
-        continue;
-      }
-      const name = scope.getName(prop.id, prop.name);
-      output.set(prop.id, name);
-      const code = validateExpression(dataSource.code, {
-        optional: true,
-        transformIdentifier: (identifier) => {
-          const depId = decodeDataSourceVariable(identifier);
-          const dep = depId ? dataSources.get(depId) : undefined;
-          if (dep) {
-            return scope.getName(dep.id, dep.name);
-          }
-          // eslint-disable-next-line no-console
-          console.error(`Unknown dependency "${identifier}"`);
-          return identifier;
-        },
-      });
-      body += `let ${name} = (${code});\n`;
-    }
-
     if (prop.type === "expression") {
       const name = scope.getName(prop.id, prop.name);
       output.set(prop.id, name);

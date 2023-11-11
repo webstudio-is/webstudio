@@ -15,9 +15,6 @@ export const renderControl = ({
   prop,
   ...rest
 }: ControlProps<string, string> & { key?: string }) => {
-  if (prop?.type === "dataSource") {
-    throw Error("Data source is not resolved");
-  }
   if (prop?.type === "expression") {
     throw Error("Expression is not resolved");
   }

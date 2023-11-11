@@ -249,17 +249,12 @@ const EmptyList = ({ onAdd }: { onAdd: () => void }) => {
   );
 };
 
-const $usedVariables = computed(
-  [dataSourcesStore, propsStore],
-  (dataSources, props) => {
-    const usedVariables = new Set<DataSource["id"]>();
-    // @todo remove data sources checks after migrating to prop expression
-    for (const dataSource of dataSources.values()) {
-      if (dataSource.type !== "expression") {
-        continue;
-      }
+const $usedVariables = computed([propsStore], (props) => {
+  const usedVariables = new Set<DataSource["id"]>();
+  for (const prop of props.values()) {
+    if (prop.type === "expression") {
       try {
-        validateExpression(dataSource.code, {
+        validateExpression(prop.value, {
           transformIdentifier: (identifier) => {
             const id = decodeDataSourceVariable(identifier);
             if (id !== undefined) {
@@ -272,10 +267,11 @@ const $usedVariables = computed(
         // empty block
       }
     }
-    for (const prop of props.values()) {
-      if (prop.type === "expression") {
+    if (prop.type === "action") {
+      for (const value of prop.value) {
         try {
-          validateExpression(prop.value, {
+          validateExpression(value.code, {
+            effectful: true,
             transformIdentifier: (identifier) => {
               const id = decodeDataSourceVariable(identifier);
               if (id !== undefined) {
@@ -288,28 +284,10 @@ const $usedVariables = computed(
           // empty block
         }
       }
-      if (prop.type === "action") {
-        for (const value of prop.value) {
-          try {
-            validateExpression(value.code, {
-              effectful: true,
-              transformIdentifier: (identifier) => {
-                const id = decodeDataSourceVariable(identifier);
-                if (id !== undefined) {
-                  usedVariables.add(id);
-                }
-                return identifier;
-              },
-            });
-          } catch {
-            // empty block
-          }
-        }
-      }
     }
-    return usedVariables;
   }
-);
+  return usedVariables;
+});
 
 const deleteVariable = (variable: VariableDataSource) => {
   serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
@@ -367,35 +345,6 @@ const ListItem = ({
       onClick={() => onSelect(variable.id)}
     />
   );
-};
-
-const getPropExpressionStore = (propId: undefined | string) => {
-  const $propExpression = computed(
-    [propsStore, dataSourcesStore],
-    (props, dataSources) => {
-      if (propId === undefined) {
-        return "";
-      }
-      const prop = props.get(propId);
-      if (prop?.type === "expression") {
-        return prop.value;
-      }
-      if (prop?.type !== "dataSource") {
-        return "";
-      }
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      // convert variable to expression
-      if (dataSource?.type === "variable") {
-        return encodeDataSourceVariable(dataSource.id);
-      }
-      if (dataSource?.type === "expression") {
-        return dataSource.code;
-      }
-      return "";
-    }
-  );
-  return $propExpression;
 };
 
 const getExpressionVariables = (expression: string) => {
@@ -461,31 +410,13 @@ const ListPanel = ({
     }
     return variables;
   }, [matchedVariables]);
-  const propId = prop?.id;
-  // @todo const propExpression = prop.value ?? ''
-  const propExpression = useStore(
-    useMemo(() => getPropExpressionStore(propId), [propId])
-  );
+  const propExpression = prop?.type === "expression" ? prop?.value ?? "" : "";
   const exoressionVariables = useMemo(
     () => getExpressionVariables(propExpression),
     [propExpression]
   );
   const usedVariables = useStore($usedVariables);
   const [expression, setExpression] = useState<undefined | string>();
-
-  const applyExpression = (expression: string) => {
-    // @todo remove after migrating to prop extession
-    serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
-      // replace data source expression with prop expression
-      const dataSource =
-        prop?.type === "dataSource" ? dataSources.get(prop.value) : undefined;
-      if (dataSource?.type === "expression") {
-        dataSources.delete(dataSource.id);
-        return;
-      }
-    });
-    onChange({ type: "expression", value: expression });
-  };
 
   return (
     <ScrollArea
@@ -511,7 +442,10 @@ const ListPanel = ({
                 deletable={usedVariables.has(variable.id) === false}
                 onSelect={() =>
                   // convert variable to expression
-                  applyExpression(encodeDataSourceVariable(variable.id))
+                  onChange({
+                    type: "expression",
+                    value: encodeDataSourceVariable(variable.id),
+                  })
                 }
                 onEdit={onEdit}
               />
@@ -552,7 +486,7 @@ const ListPanel = ({
                   return;
                 }
 
-                applyExpression(expression);
+                onChange({ type: "expression", value: expression });
                 setExpression(undefined);
               }}
             />
@@ -615,15 +549,6 @@ export const VariablesPanel = ({
   }
 
   const removeExpression = () => {
-    // delete expression if exists
-    if (prop?.type === "dataSource") {
-      serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
-        const dataSource = dataSources.get(prop.value);
-        if (dataSource?.type === "expression") {
-          dataSources.delete(dataSource.id);
-        }
-      });
-    }
     // reset prop with initial value from meta
     setPropValue({
       propId,
@@ -653,7 +578,7 @@ export const VariablesPanel = ({
       <FloatingPanelPopoverTitle
         actions={
           <>
-            {(prop?.type === "dataSource" || prop?.type === "expression") && (
+            {prop?.type === "expression" && (
               <Tooltip content="Remove expression" side="bottom">
                 {/* automatically close popover when remove expression */}
                 <FloatingPanelPopoverClose asChild>
