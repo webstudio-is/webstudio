@@ -281,8 +281,8 @@ test("generate jsx element with data sources and action", () => {
       <Box
       data-ws-id="box"
       data-ws-component="Box"
-      variable={variable}
-      expression={expression}
+      variable={variableName}
+      expression={variableName + 1}
       onClick={onClick}
       onChange={onChange} />
     `)
@@ -358,7 +358,7 @@ test("generate jsx element with condition based on show prop", () => {
     })
   ).toEqual(
     clear(`
-      {datawsshow &&
+      {(conditionName) &&
       <Box
       data-ws-id="box"
       data-ws-component="Box" />
@@ -529,7 +529,6 @@ test("generate page component with variables and actions", () => {
     clear(`
       const Page = (props: { scripts?: ReactNode }) => {
       let [variableName, set$variableName] = useState<any>("initial")
-      let value = (variableName);
       let onChange = (value: any) => {
       variableName = value
       set$variableName(variableName)
@@ -541,7 +540,7 @@ test("generate page component with variables and actions", () => {
       data-ws-id="input"
       data-ws-component="Input"
       data-ws-index="0"
-      value={value}
+      value={variableName}
       onChange={onChange} />
       {props.scripts}
       </Body>

@@ -12,7 +12,6 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [popoverOpen, set$popoverOpen] = useState<any>(false);
-  let open = popoverOpen;
   let onOpenChange = (open: any) => {
     popoverOpen = open;
     set$popoverOpen(popoverOpen);
@@ -22,7 +21,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Popover
         data-ws-id="1"
         data-ws-component="Popover"
-        open={open}
+        open={popoverOpen}
         onOpenChange={onOpenChange}
       >
         <PopoverTrigger data-ws-id="5" data-ws-component="PopoverTrigger">

@@ -4,6 +4,7 @@ import { type PropMeta, showAttribute } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
+  computeExpression,
   dataSourcesLogicStore,
   registeredComponentPropsMetasStore,
 } from "~/shared/nano-states";
@@ -162,7 +163,7 @@ export const usePropsLogic = ({
   const savedProps = props.flatMap((prop) => {
     if (prop.type === "expression") {
       // convert expression prop to value prop
-      const dataSourceValue = dataSourcesLogic.get(prop.id);
+      const dataSourceValue = computeExpression(prop.value, dataSourcesLogic);
       return [
         {
           id: prop.id,

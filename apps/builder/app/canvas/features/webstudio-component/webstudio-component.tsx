@@ -26,6 +26,7 @@ import {
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import {
+  computeExpression,
   dataSourcesLogicStore,
   instancesStore,
   registeredComponentMetasStore,
@@ -164,7 +165,7 @@ const useInstanceProps = (instanceId: Instance["id"]) => {
             continue;
           }
           if (prop.type === "expression") {
-            const value = dataSourcesLogic.get(prop.id);
+            const value = computeExpression(prop.value, dataSourcesLogic);
             if (value !== undefined) {
               instancePropsObject[prop.name] = value;
             }
