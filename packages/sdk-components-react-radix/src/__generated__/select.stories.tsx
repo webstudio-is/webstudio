@@ -17,12 +17,10 @@ import {
 const Page = (props: { scripts?: ReactNode }) => {
   let [selectValue, set$selectValue] = useState<any>("");
   let [selectOpen, set$selectOpen] = useState<any>(false);
-  let value = selectValue;
   let onValueChange = (value: any) => {
     selectValue = value;
     set$selectValue(selectValue);
   };
-  let open = selectOpen;
   let onOpenChange = (open: any) => {
     selectOpen = open;
     set$selectOpen(selectOpen);
@@ -32,9 +30,9 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Select
         data-ws-id="1"
         data-ws-component="Select"
-        value={value}
+        value={selectValue}
         onValueChange={onValueChange}
-        open={open}
+        open={selectOpen}
         onOpenChange={onOpenChange}
       >
         <SelectTrigger data-ws-id="8" data-ws-component="SelectTrigger">
