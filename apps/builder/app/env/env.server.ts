@@ -38,7 +38,7 @@ const env = {
    * Base url or base path for any asset with ending slash.
    * Possible values are
    * /s/uploads/
-   * /asset/file/
+   * /cgi/asset/
    * https://assets-dev.webstudio.is/
    * https://assets.webstudio.is/
    */
@@ -46,7 +46,7 @@ const env = {
     process.env.ASSET_BASE_URL ??
     process.env.ASSET_CDN_URL ??
     process.env.ASSET_PUBLIC_PATH ??
-    "/",
+    "/cgi/asset/",
 
   // Local assets
   FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,
