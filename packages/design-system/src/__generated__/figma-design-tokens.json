@@ -611,9 +611,9 @@
       },
       "style-source": {
         "token": {
-          "value": "#096cff",
+          "value": "#834df4",
           "type": "color",
-          "description": "For the token variant of the Style Source component."
+          "description": "Style sources that are tokens"
         },
         "tag": {
           "value": "#d54113",
@@ -637,7 +637,7 @@
         },
         "gradient": {
           "token": {
-            "value": "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
+            "value": "linear-gradient(90deg, #834df400 0%, #834df4 31.87%)",
             "type": "color"
           },
           "tag": {
@@ -647,12 +647,21 @@
           "unselected": {
             "value": "linear-gradient(90deg, #68707600 0%, #687076 31.87%)",
             "type": "color"
+          },
+          "local": {
+            "value": "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
+            "type": "color"
           }
         },
         "breakpoint": {
           "value": "#bd2fdb",
           "type": "color",
           "description": "The color of the style source badge that represents a breakpoint. Used in tooltips."
+        },
+        "local": {
+          "value": "#096cff",
+          "type": "color",
+          "description": "For the local variant of the Style Source component."
         }
       },
       "canvas": {
