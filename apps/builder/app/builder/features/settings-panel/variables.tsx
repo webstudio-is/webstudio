@@ -45,6 +45,7 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 import { CodeEditor } from "./code-editor";
 import type { PropValue } from "./shared";
+import { getStartingValue } from "./props-section/use-props-logic";
 
 type VariableDataSource = Extract<DataSource, { type: "variable" }>;
 
@@ -379,9 +380,9 @@ const setPropValue = ({
   }
   const [instanceId] = instanceSelector;
 
-  // create new prop or update existing one
   serverSyncStore.createTransaction([propsStore], (props) => {
     let prop = propId === undefined ? undefined : props.get(propId);
+    // create new prop or update existing one
     if (prop === undefined) {
       prop = { id: nanoid(), instanceId, name: propName, ...propValue };
     } else {
@@ -550,14 +551,19 @@ export const VariablesPanel = ({
 
   const removeExpression = () => {
     // reset prop with initial value from meta
-    setPropValue({
-      propId,
-      propName,
-      propValue: {
-        type: propMeta.type,
-        value: propMeta.defaultValue,
-      } as PropValue,
-    });
+    const propValue = getStartingValue(propMeta);
+    if (propValue) {
+      setPropValue({
+        propId,
+        propName,
+        propValue,
+      });
+    } else if (propId !== undefined) {
+      // delete prop when not possible to infer default value from meta
+      serverSyncStore.createTransaction([propsStore], (props) => {
+        props.delete(propId);
+      });
+    }
   };
 
   return (

@@ -137,11 +137,8 @@ const getPropTypeAndValue = (value: unknown) => {
   if (typeof value === "string") {
     return { type: "string", value } as const;
   }
-  if (Array.isArray(value)) {
-    return { type: "string[]", value } as const;
-  }
-  // fallback to empty string to not break UI
-  return { type: "string", value: "" } as const;
+  // fallback to json
+  return { type: "json", value } as const;
 };
 
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
@@ -160,7 +157,7 @@ export const usePropsLogic = ({
     throw new Error(`Could not get meta for component "${instance.component}"`);
   }
 
-  const savedProps = props.flatMap((prop) => {
+  const savedProps = props.flatMap((prop): Prop[] => {
     if (prop.type === "expression") {
       // convert expression prop to value prop
       const dataSourceValue = computeExpression(prop.value, dataSourcesLogic);
@@ -172,7 +169,7 @@ export const usePropsLogic = ({
           required: prop.required,
           // infer type from value
           ...getPropTypeAndValue(dataSourceValue),
-        } satisfies Prop,
+        },
       ];
     }
     return [prop];
