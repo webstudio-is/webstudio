@@ -249,6 +249,11 @@ export const generateDataSources = ({
   }
 
   for (const prop of props.values()) {
+    // prevent generating parameter variables as component state
+    if (prop.type === "parameter") {
+      output.delete(prop.value);
+      variables.delete(prop.value);
+    }
     // generate actions assigning variables and invoking their setters
     if (prop.type === "action") {
       const name = scope.getName(prop.id, prop.name);

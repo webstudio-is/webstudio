@@ -20,6 +20,11 @@ export const renderControl = ({
     throw Error("Expression is not resolved");
   }
 
+  // never render parameter props
+  if (prop?.type === "parameter") {
+    return;
+  }
+
   // @todo remove once ui for action is implemented
   if (prop?.type === "action") {
     return;

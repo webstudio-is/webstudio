@@ -19,6 +19,7 @@ import {
   validateExpression,
 } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
+import { collectionComponent } from "./core-components";
 
 const generatePropValue = ({
   scope,
@@ -41,6 +42,14 @@ const generatePropValue = ({
     prop.type === "json"
   ) {
     return JSON.stringify(prop.value);
+  }
+  // generate variable name for parameter
+  if (prop.type === "parameter") {
+    const dataSource = dataSources.get(prop.value);
+    if (dataSource === undefined) {
+      return;
+    }
+    return scope.getName(dataSource.id, dataSource.name);
   }
   // inline expression to safely use collection item
   if (prop.type === "expression") {
@@ -78,8 +87,6 @@ export const generateJsxElement = ({
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
 }) => {
-  let conditionValue: undefined | string;
-
   let generatedProps = "";
 
   // id and component props are always defined for styles
@@ -92,6 +99,9 @@ export const generateJsxElement = ({
     generatedProps += `\n${indexAttribute}="${index}"`;
   }
 
+  let conditionValue: undefined | string;
+  let collectionDataValue: undefined | string;
+  let collectionItemValue: undefined | string;
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
@@ -111,6 +121,15 @@ export const generateJsxElement = ({
       // generate separately
       continue;
     }
+    if (instance.component === collectionComponent) {
+      if (prop.name === "data") {
+        collectionDataValue = propValue;
+      }
+      if (prop.name === "item") {
+        collectionItemValue = propValue;
+      }
+      continue;
+    }
     if (propValue !== undefined) {
       generatedProps += `\n${prop.name}={${propValue}}`;
     }
@@ -123,14 +142,30 @@ export const generateJsxElement = ({
     generatedElement += `{(${conditionValue}) &&\n`;
   }
 
-  const [_namespace, shortName] = parseComponentName(instance.component);
-  const componentVariable = scope.getName(instance.component, shortName);
-  if (instance.children.length === 0) {
-    generatedElement += `<${componentVariable}${generatedProps} />\n`;
-  } else {
-    generatedElement += `<${componentVariable}${generatedProps}>\n`;
+  if (instance.component === collectionComponent) {
+    // prevent generating invalid collection
+    if (
+      collectionDataValue === undefined ||
+      collectionItemValue === undefined
+    ) {
+      return "";
+    }
+    const indexVariable = scope.getName(`${instance.id}-index`, "index");
+    generatedElement += `{${collectionDataValue}.map((${collectionItemValue}, ${indexVariable}) =>\n`;
+    generatedElement += `<Fragment key={${indexVariable}}>\n`;
     generatedElement += children;
-    generatedElement += `</${componentVariable}>\n`;
+    generatedElement += `</Fragment>\n`;
+    generatedElement += `)}\n`;
+  } else {
+    const [_namespace, shortName] = parseComponentName(instance.component);
+    const componentVariable = scope.getName(instance.component, shortName);
+    if (instance.children.length === 0) {
+      generatedElement += `<${componentVariable}${generatedProps} />\n`;
+    } else {
+      generatedElement += `<${componentVariable}${generatedProps}>\n`;
+      generatedElement += children;
+      generatedElement += `</${componentVariable}>\n`;
+    }
   }
 
   if (conditionValue) {
