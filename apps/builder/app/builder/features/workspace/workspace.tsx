@@ -27,7 +27,7 @@ const workspaceStyle = css({
 
 const canvasContainerStyle = css({
   position: "absolute",
-  transformStyle: "preserve-3d",
+  //transformStyle: "preserve-3d",
   transformOrigin: "0 0",
 });
 
@@ -103,7 +103,7 @@ const getCanvasStyle = (
     // OS build    22621.1848
     // Experience    Windows Feature Experience Pack 1000.22642.1000.0
     transform: `scale(${scale === 1 ? 0.9999 : scale}%) translateX(-50%)`,
-    opacity: 0.9999,
+    //opacity: 0.9999,
   };
 };
 
