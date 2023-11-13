@@ -384,18 +384,21 @@ export const color = {
   backgroundSpacingTopBottom: "#f1f3f5",
   backgroundSpacingLeftRight: "#f1f3f5",
   backgroundSpacingHover: "#d7dbdf",
-  backgroundStyleSourceToken: "#096cff",
+  backgroundStyleSourceToken: "#834df4",
   backgroundStyleSourceTag: "#d54113",
   backgroundStyleSourceState: "#00894a",
   backgroundStyleSourceNeutral: "#687076",
   backgroundStyleSourceDisabled: "#9da2a6",
   backgroundStyleSourceGradientToken:
-    "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
+    "linear-gradient(90deg, #834df400 0%, #834df4 31.87%)",
   backgroundStyleSourceGradientTag:
     "linear-gradient(90deg, #d5411300 0%, #d54113 31.87%)",
   backgroundStyleSourceGradientUnselected:
     "linear-gradient(90deg, #68707600 0%, #687076 31.87%)",
+  backgroundStyleSourceGradientLocal:
+    "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
   backgroundStyleSourceBreakpoint: "#bd2fdb",
+  backgroundStyleSourceLocal: "#096cff",
   backgroundCanvas: "#c7c7c7",
   backgroundTopbar: "#2d2d2d",
   backgroundGradientPrimary:
