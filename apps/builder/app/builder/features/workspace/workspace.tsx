@@ -102,7 +102,7 @@ const getCanvasStyle = (
     // Installed on    ‎10/‎18/‎2022
     // OS build    22621.1848
     // Experience    Windows Feature Experience Pack 1000.22642.1000.0
-    transform: `scale(${scale === 1 ? 0.9999 : scale}%) translateX(-50%)`,
+    transform: `scale(${scale}%) translateX(-50%)`,
     //opacity: 0.9999,
   };
 };
