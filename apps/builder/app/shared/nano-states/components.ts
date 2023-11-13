@@ -58,14 +58,6 @@ const createHookContext = (): HookContext => {
         if (
           prop.instanceId === instanceId &&
           prop.name === propName &&
-          prop.type === "dataSource"
-        ) {
-          const dataSourceId = prop.value;
-          dataSourceVariables.set(dataSourceId, value);
-        }
-        if (
-          prop.instanceId === instanceId &&
-          prop.name === propName &&
           prop.type === "expression"
         ) {
           // extract id without parsing expression

@@ -26,6 +26,7 @@ import {
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import {
+  computeExpression,
   dataSourcesLogicStore,
   instancesStore,
   registeredComponentMetasStore,
@@ -163,20 +164,8 @@ const useInstanceProps = (instanceId: Instance["id"]) => {
           if (prop.type === "asset" || prop.type === "page") {
             continue;
           }
-          if (prop.type === "dataSource") {
-            const dataSourceId = prop.value;
-            const value =
-              // access expression by prop id
-              dataSourcesLogic.get(prop.id) ??
-              // access variable by data source id
-              dataSourcesLogic.get(dataSourceId);
-            if (value !== undefined) {
-              instancePropsObject[prop.name] = value;
-            }
-            continue;
-          }
           if (prop.type === "expression") {
-            const value = dataSourcesLogic.get(prop.id);
+            const value = computeExpression(prop.value, dataSourcesLogic);
             if (value !== undefined) {
               instancePropsObject[prop.name] = value;
             }

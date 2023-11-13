@@ -290,44 +290,6 @@ export const onPaste = (clipboardData: string): boolean => {
             return identifier;
           };
 
-          if (prop.type === "dataSource") {
-            const dataSource = copiedDataSources.get(prop.value);
-            // convert to value prop when variable is not scoped to copied tree or paste target
-            if (dataSource?.type === "variable") {
-              // data source is within copied tree
-              if (copiedDataSourceIds.has(dataSource.id)) {
-                return prop;
-              }
-              // data source is within paste target
-              if (
-                dataSource.scopeInstanceId !== undefined &&
-                instanceSelector.includes(dataSource.scopeInstanceId)
-              ) {
-                return prop;
-              }
-              return {
-                ...prop,
-                ...dataSource.value,
-              };
-            }
-            if (dataSource?.type === "expression") {
-              const newDataSourceId =
-                copiedDataSourceIds.get(dataSource.id) ?? dataSource.id;
-              const newInstanceId =
-                copiedInstanceIds.get(dataSource.scopeInstanceId) ??
-                dataSource.scopeInstanceId;
-              dataSources.set(newDataSourceId, {
-                ...dataSource,
-                id: newDataSourceId,
-                scopeInstanceId: newInstanceId,
-                code: validateExpression(dataSource.code, {
-                  transformIdentifier,
-                }),
-              });
-              return prop;
-            }
-          }
-
           if (prop.type === "expression") {
             return {
               ...prop,
@@ -359,8 +321,7 @@ export const onPaste = (clipboardData: string): boolean => {
 
           return prop;
         }),
-        copiedInstanceIds,
-        copiedDataSourceIds
+        copiedInstanceIds
       );
 
       insertStyleSourceSelectionsCopyMutable(

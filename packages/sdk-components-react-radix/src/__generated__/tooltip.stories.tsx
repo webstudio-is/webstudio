@@ -12,7 +12,6 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [tooltipOpen, set$tooltipOpen] = useState<any>(false);
-  let open = tooltipOpen;
   let onOpenChange = (open: any) => {
     tooltipOpen = open;
     set$tooltipOpen(tooltipOpen);
@@ -22,7 +21,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Tooltip
         data-ws-id="1"
         data-ws-component="Tooltip"
-        open={open}
+        open={tooltipOpen}
         onOpenChange={onOpenChange}
       >
         <TooltipTrigger data-ws-id="5" data-ws-component="TooltipTrigger">

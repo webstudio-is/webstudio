@@ -17,7 +17,6 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [dialogOpen, set$dialogOpen] = useState<any>(false);
-  let open = dialogOpen;
   let onOpenChange = (open: any) => {
     dialogOpen = open;
     set$dialogOpen(dialogOpen);
@@ -27,7 +26,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Dialog
         data-ws-id="1"
         data-ws-component="Dialog"
-        open={open}
+        open={dialogOpen}
         onOpenChange={onOpenChange}
       >
         <DialogTrigger data-ws-id="5" data-ws-component="DialogTrigger">

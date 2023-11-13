@@ -14,7 +14,6 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
-  let value = accordionValue;
   let onValueChange = (value: any) => {
     accordionValue = value;
     set$accordionValue(accordionValue);
@@ -25,7 +24,7 @@ const Page = (props: { scripts?: ReactNode }) => {
         data-ws-id="1"
         data-ws-component="Accordion"
         collapsible={true}
-        value={value}
+        value={accordionValue}
         onValueChange={onValueChange}
       >
         <AccordionItem

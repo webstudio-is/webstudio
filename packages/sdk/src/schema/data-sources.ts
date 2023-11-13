@@ -34,13 +34,7 @@ export const DataSource = z.union([
     name: z.string(),
     value: DataSourceVariableValue,
   }),
-  z.object({
-    type: z.literal("expression"),
-    id: DataSourceId,
-    scopeInstanceId: z.optional(z.string()),
-    name: z.string(),
-    code: z.string(),
-  }),
+  z.never(),
 ]);
 
 export type DataSource = z.infer<typeof DataSource>;

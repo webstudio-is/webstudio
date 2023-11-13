@@ -276,7 +276,7 @@ export const action = async ({ request, context }: ActionArgs) => {
 
   const result = await n8nHandler({
     formInfo,
-    hookUrl: context.N8N_FORM_EMAIL_HOOK as string,
+    hookUrl: context.N8N_FORM_EMAIL_HOOK,
   });
 
   return result;

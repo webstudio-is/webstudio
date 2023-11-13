@@ -57,7 +57,7 @@ const SiteSettingsContent = (props: Props) => {
   const favIconUrl = asset ? `${asset.name}` : undefined;
 
   const imageLoader = createImageLoader({
-    imageBaseUrl: env.ASSET_BASE_URL,
+    imageBaseUrl: env.IMAGE_BASE_URL,
   });
 
   return (

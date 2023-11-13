@@ -236,16 +236,16 @@ test("generate jsx element with data sources and action", () => {
         createPropPair({
           id: "1",
           instanceId: "box",
-          type: "dataSource",
+          type: "expression",
           name: "variable",
-          value: "variableId",
+          value: "$ws$dataSource$variableId",
         }),
         createPropPair({
           id: "2",
           instanceId: "box",
-          type: "dataSource",
+          type: "expression",
           name: "expression",
-          value: "expressionId",
+          value: `$ws$dataSource$variableId + 1`,
         }),
         createPropPair({
           id: "3",
@@ -272,12 +272,6 @@ test("generate jsx element with data sources and action", () => {
           name: "variableName",
           value: { type: "number", value: 0 },
         }),
-        createDataSourcePair({
-          type: "expression",
-          id: "expressionId",
-          name: "expressionName",
-          code: `$ws$dataSource$variableId + 1`,
-        }),
       ]),
       indexesWithinAncestors: new Map(),
       children: "",
@@ -288,7 +282,7 @@ test("generate jsx element with data sources and action", () => {
       data-ws-id="box"
       data-ws-component="Box"
       variable={variableName}
-      expression={expression}
+      expression={variableName + 1}
       onClick={onClick}
       onChange={onChange} />
     `)
@@ -346,39 +340,6 @@ test("generate jsx element with condition based on show prop", () => {
         createPropPair({
           id: "1",
           instanceId: "box",
-          type: "dataSource",
-          name: showAttribute,
-          value: "conditionId",
-        }),
-      ]),
-      dataSources: new Map([
-        createDataSourcePair({
-          type: "variable",
-          id: "conditionId",
-          name: "conditionName",
-          value: { type: "boolean", value: false },
-        }),
-      ]),
-      indexesWithinAncestors: new Map(),
-      children: "",
-    })
-  ).toEqual(
-    clear(`
-      {conditionName &&
-      <Box
-      data-ws-id="box"
-      data-ws-component="Box" />
-      }
-    `)
-  );
-  expect(
-    generateJsxElement({
-      scope: createScope(),
-      instance: createInstance("box", "Box", []),
-      props: new Map([
-        createPropPair({
-          id: "1",
-          instanceId: "box",
           name: showAttribute,
           type: "expression",
           value: "$ws$dataSource$conditionId",
@@ -397,7 +358,7 @@ test("generate jsx element with condition based on show prop", () => {
     })
   ).toEqual(
     clear(`
-      {datawsshow &&
+      {(conditionName) &&
       <Box
       data-ws-id="box"
       data-ws-component="Box" />
@@ -523,71 +484,6 @@ test("deduplicate base and namespaced components with same short name", () => {
   );
 });
 
-test("generate page component with data sources", () => {
-  expect(
-    generatePageComponent({
-      scope: createScope(),
-      rootInstanceId: "body",
-      instances: new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "input" }]),
-        createInstancePair("input", "Input", []),
-      ]),
-      dataSources: new Map([
-        createDataSourcePair({
-          type: "variable",
-          id: "variableId",
-          name: "variableName",
-          value: { type: "string", value: "initial" },
-        }),
-      ]),
-      props: new Map([
-        createPropPair({
-          id: "1",
-          instanceId: "input",
-          name: "value",
-          type: "dataSource",
-          value: "variableId",
-        }),
-        createPropPair({
-          id: "2",
-          instanceId: "input",
-          name: "onChange",
-          type: "action",
-          value: [
-            {
-              type: "execute",
-              args: ["value"],
-              code: `$ws$dataSource$variableId = value`,
-            },
-          ],
-        }),
-      ]),
-      indexesWithinAncestors: new Map([["input", 0]]),
-    })
-  ).toEqual(
-    clear(`
-      const Page = (props: { scripts?: ReactNode }) => {
-      let [variableName, set$variableName] = useState<any>("initial")
-      let onChange = (value: any) => {
-      variableName = value
-      set$variableName(variableName)
-      }
-      return <Body
-      data-ws-id="body"
-      data-ws-component="Body">
-      <Input
-      data-ws-id="input"
-      data-ws-component="Input"
-      data-ws-index="0"
-      value={variableName}
-      onChange={onChange} />
-      {props.scripts}
-      </Body>
-      }
-    `)
-  );
-});
-
 test("generate page component with variables and actions", () => {
   expect(
     generatePageComponent({
@@ -633,7 +529,6 @@ test("generate page component with variables and actions", () => {
     clear(`
       const Page = (props: { scripts?: ReactNode }) => {
       let [variableName, set$variableName] = useState<any>("initial")
-      let value = (variableName);
       let onChange = (value: any) => {
       variableName = value
       set$variableName(variableName)
@@ -645,7 +540,7 @@ test("generate page component with variables and actions", () => {
       data-ws-id="input"
       data-ws-component="Input"
       data-ws-index="0"
-      value={value}
+      value={variableName}
       onChange={onChange} />
       {props.scripts}
       </Body>

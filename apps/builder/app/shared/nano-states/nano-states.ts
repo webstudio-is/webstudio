@@ -18,7 +18,10 @@ import {
   type StyleSources,
   type StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import { generateDataSources } from "@webstudio-is/react-sdk";
+import {
+  encodeDataSourceVariable,
+  generateDataSources,
+} from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { shallowComputed } from "../store-utils";
@@ -111,6 +114,29 @@ export const dataSourcesLogicStore = computed(
     return new Map();
   }
 );
+
+export const computeExpression = (
+  expression: string,
+  variables: Map<DataSource["id"], unknown>
+) => {
+  let code = "";
+  for (const [id, value] of variables) {
+    // @todo pass dedicated map of variables without actions
+    // skip actions
+    if (typeof value === "function") {
+      continue;
+    }
+    const identifier = encodeDataSourceVariable(id);
+    code += `const ${identifier} = ${JSON.stringify(value)};\n`;
+  }
+  code += `return (${expression})`;
+  try {
+    const result = new Function(code)();
+    return result;
+  } catch {
+    // empty block
+  }
+};
 
 export const stylesStore = atom<Styles>(new Map());
 

@@ -4,6 +4,7 @@ import type {
   Props,
   Scope,
   DataSources,
+  Prop,
 } from "@webstudio-is/sdk";
 import { parseComponentName } from "@webstudio-is/sdk";
 import {
@@ -12,8 +13,55 @@ import {
   indexAttribute,
   showAttribute,
 } from "./tree/webstudio-component";
-import { generateDataSources } from "./expression";
+import {
+  decodeDataSourceVariable,
+  generateDataSources,
+  validateExpression,
+} from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
+
+const generatePropValue = ({
+  scope,
+  prop,
+  dataSources,
+}: {
+  scope: Scope;
+  prop: Prop;
+  dataSources: DataSources;
+}) => {
+  // ignore asset and page props which are handled by components internally
+  if (prop.type === "asset" || prop.type === "page") {
+    return;
+  }
+  if (
+    prop.type === "string" ||
+    prop.type === "number" ||
+    prop.type === "boolean" ||
+    prop.type === "string[]" ||
+    prop.type === "json"
+  ) {
+    return JSON.stringify(prop.value);
+  }
+  // inline expression to safely use collection item
+  if (prop.type === "expression") {
+    return validateExpression(prop.value, {
+      // transpile to safely executable member expressions
+      optional: true,
+      transformIdentifier: (identifier) => {
+        const depId = decodeDataSourceVariable(identifier);
+        const dep = depId ? dataSources.get(depId) : undefined;
+        if (dep) {
+          return scope.getName(dep.id, dep.name);
+        }
+        return identifier;
+      },
+    });
+  }
+  if (prop.type === "action") {
+    return scope.getName(prop.id, prop.name);
+  }
+  prop satisfies never;
+};
 
 export const generateJsxElement = ({
   scope,
@@ -30,7 +78,7 @@ export const generateJsxElement = ({
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
 }) => {
-  let conditionVariableName: undefined | string;
+  let conditionValue: undefined | string;
 
   let generatedProps = "";
 
@@ -48,82 +96,31 @@ export const generateJsxElement = ({
     if (prop.instanceId !== instance.id) {
       continue;
     }
+    const propValue = generatePropValue({ scope, prop, dataSources });
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
-      // prevent instance rendering when hidden
-      if (prop.type === "boolean" && prop.value === false) {
-        return "";
-      }
-      if (prop.type === "dataSource") {
-        const dataSourceId = prop.value;
-        const dataSource = dataSources.get(dataSourceId);
-        if (dataSource === undefined) {
-          continue;
-        }
-        if (dataSource.type === "variable") {
-          conditionVariableName = scope.getName(dataSource.id, dataSource.name);
-        }
-        if (dataSource.type === "expression") {
-          conditionVariableName = scope.getName(prop.id, prop.name);
-        }
-      }
-      if (prop.type === "expression") {
-        conditionVariableName = scope.getName(prop.id, prop.name);
-      }
-      // ignore any other values
-      continue;
-    }
-    if (
-      prop.type === "string" ||
-      prop.type === "number" ||
-      prop.type === "boolean" ||
-      prop.type === "string[]" ||
-      prop.type === "json"
-    ) {
-      generatedProps += `\n${prop.name}={${JSON.stringify(prop.value)}}`;
-      continue;
-    }
-    // ignore asset and page props which are handled by components internally
-    if (prop.type === "asset" || prop.type === "page") {
-      continue;
-    }
-    if (prop.type === "dataSource") {
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      if (dataSource === undefined) {
+      // prevent generating unnecessary condition
+      if (propValue === "true") {
         continue;
       }
-      if (dataSource.type === "variable") {
-        const dataSourceVariable = scope.getName(
-          dataSource.id,
-          dataSource.name
-        );
-        generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
+      // prevent instance rendering when always hidden
+      if (propValue === "false") {
+        return "";
       }
-      if (dataSource.type === "expression") {
-        const dataSourceVariable = scope.getName(prop.id, prop.name);
-        generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
-      }
+      conditionValue = propValue;
+      // generate separately
       continue;
     }
-    if (prop.type === "expression") {
-      const propVariable = scope.getName(prop.id, prop.name);
-      generatedProps += `\n${prop.name}={${propVariable}}`;
-      continue;
+    if (propValue !== undefined) {
+      generatedProps += `\n${prop.name}={${propValue}}`;
     }
-    if (prop.type === "action") {
-      const propVariable = scope.getName(prop.id, prop.name);
-      generatedProps += `\n${prop.name}={${propVariable}}`;
-      continue;
-    }
-    prop satisfies never;
   }
 
   let generatedElement = "";
   // coditionally render instance when show prop is data source
   // {dataSourceVariable && <Instance>}
-  if (conditionVariableName) {
-    generatedElement += `{${conditionVariableName} &&\n`;
+  if (conditionValue) {
+    generatedElement += `{(${conditionValue}) &&\n`;
   }
 
   const [_namespace, shortName] = parseComponentName(instance.component);
@@ -136,7 +133,7 @@ export const generateJsxElement = ({
     generatedElement += `</${componentVariable}>\n`;
   }
 
-  if (conditionVariableName) {
+  if (conditionValue) {
     generatedElement += `}\n`;
   }
 

@@ -13,7 +13,6 @@ import {
 
 const Page = (props: { scripts?: ReactNode }) => {
   let [radioGroupValue, set$radioGroupValue] = useState<any>("");
-  let value = radioGroupValue;
   let onValueChange = (value: any) => {
     radioGroupValue = value;
     set$radioGroupValue(radioGroupValue);
@@ -23,7 +22,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <RadioGroup
         data-ws-id="1"
         data-ws-component="RadioGroup"
-        value={value}
+        value={radioGroupValue}
         onValueChange={onValueChange}
       >
         <Label data-ws-id="6" data-ws-component="Label">
