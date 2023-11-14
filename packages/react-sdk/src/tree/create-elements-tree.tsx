@@ -84,7 +84,7 @@ const renderText = (text: string): Array<JSX.Element> => {
   return lines.map((line, index) => (
     <Fragment key={index}>
       {line}
-      {index < lines.length - 1 ? <br /> : null}
+      {index < lines.length - 1 && <br />}
     </Fragment>
   ));
 };
