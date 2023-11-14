@@ -131,6 +131,10 @@ const createInstanceChildrenElements = ({
     });
     elements.push(element);
   }
+  // let empty children be coalesced with fallback
+  if (elements.length === 0) {
+    return;
+  }
   return elements;
 };
 
@@ -138,7 +142,7 @@ const createInstanceElement = ({
   Component,
   instance,
   instanceSelector,
-  children = [],
+  children,
   components,
 }: {
   instance: Instance;
