@@ -16,14 +16,13 @@ import { mergeRefs } from "@react-aria/utils";
 import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
-  type Components,
-  renderWebstudioComponentChildren,
   idAttribute,
   componentAttribute,
   showAttribute,
   selectorIdAttribute,
   indexAttribute,
   getIndexesWithinAncestors,
+  type WebstudioComponentProps,
 } from "@webstudio-is/react-sdk";
 import {
   computeExpression,
@@ -188,13 +187,6 @@ const useInstanceProps = (instanceId: Instance["id"]) => {
   return instancePropsObject;
 };
 
-type WebstudioComponentProps = {
-  instance: Instance;
-  instanceSelector: Instance["id"][];
-  children: Array<JSX.Element | string>;
-  components: Components;
-};
-
 const existingElements = new Set<string>();
 
 /**
@@ -275,12 +267,10 @@ export const WebstudioComponentCanvas = forwardRef<
 
   /**
    * Prevents edited element from having a size of 0 on the first render.
-   * Directly using `renderWebstudioComponentChildren(children)` in Text Edit
+   * Directly using `children` in Text Edit
    * conflicts with React due to lexical node changes.
    */
-  const initialContentEditableContent = useRef(
-    renderWebstudioComponentChildren(children)
-  );
+  const initialContentEditableContent = useRef(children);
 
   useCollapsedOnNewElement(instanceId);
 
@@ -324,7 +314,7 @@ export const WebstudioComponentCanvas = forwardRef<
   const instanceElement = (
     <>
       <Component {...props} ref={mergeRefs(ref, rootRef)}>
-        {renderWebstudioComponentChildren(children)}
+        {children}
       </Component>
     </>
   );
@@ -333,8 +323,7 @@ export const WebstudioComponentCanvas = forwardRef<
     areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
     false
   ) {
-    initialContentEditableContent.current =
-      renderWebstudioComponentChildren(children);
+    initialContentEditableContent.current = children;
     return instanceElement;
   }
 
@@ -406,7 +395,7 @@ export const WebstudioComponentPreview = forwardRef<
   }
   return (
     <Component {...props} ref={ref}>
-      {renderWebstudioComponentChildren(children)}
+      {children}
     </Component>
   );
 });
