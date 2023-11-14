@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -14,7 +14,7 @@ import {
   SelectItemText as SelectItemText,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [selectValue, set$selectValue] = useState<any>("");
   let [selectOpen, set$selectOpen] = useState<any>(false);
   let onValueChange = (value: any) => {
@@ -119,7 +119,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </SelectViewport>
         </SelectContent>
       </Select>
-      {props.scripts}
     </Box>
   );
 };

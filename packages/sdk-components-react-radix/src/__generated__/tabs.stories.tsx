@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import {
   Tabs as Tabs,
@@ -7,7 +7,7 @@ import {
   TabsContent as TabsContent,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [tabsValue, set$tabsValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     tabsValue = value;
@@ -52,7 +52,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           {"Change your password here."}
         </TabsContent>
       </Tabs>
-      {props.scripts}
     </Box>
   );
 };

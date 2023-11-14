@@ -1,8 +1,8 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [switchChecked, set$switchChecked] = useState<any>(false);
   let onCheckedChange = (checked: any) => {
     switchChecked = checked;
@@ -18,7 +18,6 @@ const Page = (props: { scripts?: ReactNode }) => {
       >
         <SwitchThumb data-ws-id="6" data-ws-component="SwitchThumb" />
       </Switch>
-      {props.scripts}
     </Box>
   );
 };

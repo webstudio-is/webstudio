@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   Text as Text,
@@ -12,7 +12,7 @@ import {
   AccordionContent as AccordionContent,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     accordionValue = value;
@@ -125,7 +125,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      {props.scripts}
     </Box>
   );
 };

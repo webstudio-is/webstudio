@@ -175,10 +175,6 @@ export const generateJsxElement = ({
   return generatedElement;
 };
 
-/**
- * Jsx element and children are generated separately to be able
- * to inject some scripts into Body if necessary
- */
 export const generateJsxChildren = ({
   scope,
   children,
@@ -271,19 +267,18 @@ export const generatePageComponent = ({
     props,
     dataSources,
     indexesWithinAncestors,
-    children:
-      generateJsxChildren({
-        scope,
-        children: instance.children,
-        instances,
-        props,
-        dataSources,
-        indexesWithinAncestors,
-      }) + "{props.scripts}\n",
+    children: generateJsxChildren({
+      scope,
+      children: instance.children,
+      instances,
+      props,
+      dataSources,
+      indexesWithinAncestors,
+    }),
   });
 
   let generatedComponent = "";
-  generatedComponent += `const Page = (props: { scripts?: ReactNode }) => {\n`;
+  generatedComponent += `const Page = () => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;
