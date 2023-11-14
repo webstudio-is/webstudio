@@ -1,4 +1,9 @@
-import type { ForwardRefExoticComponent, RefAttributes } from "react";
+import {
+  Fragment,
+  type ForwardRefExoticComponent,
+  type ReactNode,
+  type RefAttributes,
+} from "react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
 import { type Params, ReactSdkContext } from "../context";
