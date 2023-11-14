@@ -599,7 +599,7 @@ test("generate page component with variables and actions", () => {
     })
   ).toEqual(
     clear(`
-      const Page = (props: { scripts?: ReactNode }) => {
+      const Page = () => {
       let [variableName, set$variableName] = useState<any>("initial")
       let onChange = (value: any) => {
       variableName = value
@@ -614,7 +614,6 @@ test("generate page component with variables and actions", () => {
       data-ws-index="0"
       value={variableName}
       onChange={onChange} />
-      {props.scripts}
       </Body>
       }
     `)
@@ -666,7 +665,7 @@ test("avoid generating collection parameter variable as state", () => {
     })
   ).toEqual(
     clear(`
-    const Page = (props: { scripts?: ReactNode }) => {
+    const Page = () => {
     let [data, set$data] = useState<any>(["apple","orange","mango"])
     return <Body
     data-ws-id="body"
@@ -675,7 +674,6 @@ test("avoid generating collection parameter variable as state", () => {
     <Fragment key={index}>
     </Fragment>
     )}
-    {props.scripts}
     </Body>
     }
     `)

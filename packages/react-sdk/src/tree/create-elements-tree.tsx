@@ -1,9 +1,4 @@
-import {
-  Fragment,
-  type ForwardRefExoticComponent,
-  type RefAttributes,
-  type ReactNode,
-} from "react";
+import type { ForwardRefExoticComponent, RefAttributes } from "react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
 import { type Params, ReactSdkContext } from "../context";
@@ -21,7 +16,6 @@ export const createElementsTree = ({
   rootInstanceId,
   Component,
   components,
-  scripts,
 }: Params & {
   instances: Instances;
   imageLoader: ImageLoader;
@@ -31,7 +25,6 @@ export const createElementsTree = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
-  scripts?: ReactNode;
 }) => {
   const rootInstance = instances.get(rootInstanceId);
   if (rootInstance === undefined) {
@@ -50,12 +43,7 @@ export const createElementsTree = ({
     Component,
     instance: rootInstance,
     instanceSelector: rootInstanceSelector,
-    children: [
-      <Fragment key="children">
-        {children}
-        {scripts}
-      </Fragment>,
-    ],
+    children,
     components,
   });
   return (

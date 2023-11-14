@@ -1,7 +1,6 @@
 /**
  * The only intent of this file is to support typings inside ../templates/route-template for easier development.
  **/
-import type { ReactNode } from "react";
 import type { PageData } from "../templates/route-template";
 import type { Asset, ImageAsset } from "@webstudio-is/sdk";
 
@@ -29,7 +28,7 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "project-id";
 
-const Page = (_props: { scripts: ReactNode }) => {
+const Page = () => {
   return <></>;
 };
 
