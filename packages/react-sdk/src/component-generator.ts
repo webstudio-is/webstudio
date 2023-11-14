@@ -12,14 +12,14 @@ import {
   idAttribute,
   indexAttribute,
   showAttribute,
-} from "./tree/webstudio-component";
+} from "./props";
+import { collectionComponent } from "./core-components";
 import {
   decodeDataSourceVariable,
   generateDataSources,
   validateExpression,
 } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
-import { collectionComponent } from "./core-components";
 
 const generatePropValue = ({
   scope,

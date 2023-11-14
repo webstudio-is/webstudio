@@ -6,13 +6,13 @@ import {
   type Instance,
   type Prop,
 } from "@webstudio-is/sdk";
-import { showAttribute } from "./tree/webstudio-component";
+import { showAttribute } from "./props";
+import { collectionComponent } from "./core-components";
 import {
   generateJsxChildren,
   generateJsxElement,
   generatePageComponent,
 } from "./component-generator";
-import { collectionComponent } from "./core-components";
 
 const clear = (input: string) =>
   stripIndent(input).trimStart().replace(/ +$/, "");

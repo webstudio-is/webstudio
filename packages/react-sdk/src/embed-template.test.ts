@@ -1,6 +1,6 @@
 import { expect, test } from "@jest/globals";
 import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
-import { showAttribute } from "./tree";
+import { showAttribute } from "./props";
 import type { WsComponentMeta } from "./components/component-meta";
 
 const expectString = expect.any(String);
