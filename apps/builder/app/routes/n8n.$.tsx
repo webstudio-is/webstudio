@@ -37,7 +37,14 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     );
   }
 
-  const webhookEnv = zWebhookEnv.parse(env);
+  const webhookEnvParsed = zWebhookEnv.safeParse(env);
+  if (webhookEnvParsed.success === false) {
+    throw new Response(webhookEnvParsed.error.message, {
+      status: 400,
+    });
+  }
+
+  const webhookEnv = webhookEnvParsed.data;
 
   const response = await fetch(`${webhookEnv.N8N_WEBHOOK_URL}/${params["*"]}`, {
     method: "POST",
@@ -65,7 +72,15 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     );
   }
   const responseJson = await response.json();
-  const { title, description } = zN8NResponse.parse(responseJson);
+  const n8nResponseParsed = zN8NResponse.safeParse(responseJson);
+
+  if (n8nResponseParsed.success === false) {
+    throw new Response(n8nResponseParsed.error.message, {
+      status: 400,
+    });
+  }
+
+  const { title, description } = n8nResponseParsed.data;
 
   return json({ user, title, description });
 };
