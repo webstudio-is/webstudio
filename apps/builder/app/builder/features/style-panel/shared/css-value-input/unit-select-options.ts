@@ -7,6 +7,7 @@ import {
   isValidDeclaration,
 } from "@webstudio-is/css-data";
 import type { UnitOption } from "./unit-select";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 
 // To make sorting stable
 const preferedSorting = [
@@ -28,6 +29,17 @@ const preferedSorting = [
 ];
 
 const visibleLengthUnits = ["px", "em", "rem", "dvw", "dvh"] as const;
+
+/*
+The boxShadow property is interdependent on other values of the proeprty,and cannot function in isolation.
+Therefore, employing keywords for this property in UnitSelect mode is not valid.
+
+Consequently, when utilized in Unit-only mode for properties with such interdependencies,
+it is advisable not to display keyword-values as options.
+This precaution is necessary as the use of keywords in this context can lead to
+the generation of invalid values.
+*/
+const propertiesToIgnoreOptinionatedKewords: StyleProperty[] = ["boxShadow"];
 
 export const buildOptions = (
   property: string,
@@ -118,16 +130,18 @@ export const buildOptions = (
   );
 
   // Opinionated set of keywords to show
-  const webstudioKeywords = ["auto", "normal", "none"].filter((keyword) =>
-    propertyKeywordsSet.has(keyword as never)
-  );
+  if (propertiesToIgnoreOptinionatedKewords.includes(property) === false) {
+    const webstudioKeywords = ["auto", "normal", "none"].filter((keyword) =>
+      propertyKeywordsSet.has(keyword as never)
+    );
 
-  for (const keyword of webstudioKeywords) {
-    options.push({
-      id: keyword,
-      label: toPascalCase(keyword),
-      type: "keyword",
-    });
+    for (const keyword of webstudioKeywords) {
+      options.push({
+        id: keyword,
+        label: toPascalCase(keyword),
+        type: "keyword",
+      });
+    }
   }
 
   if (

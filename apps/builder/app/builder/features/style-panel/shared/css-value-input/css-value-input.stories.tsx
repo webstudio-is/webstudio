@@ -10,6 +10,43 @@ export default {
   component: CssValueInput,
 };
 
+export const WithCustomValidator = () => {
+  const [value, setValue] = React.useState<StyleValue>({
+    type: "unit",
+    value: 0,
+    unit: "px",
+  });
+
+  const [intermediateValue, setIntermediateValue] = React.useState<
+    StyleValue | IntermediateStyleValue
+  >();
+
+  return (
+    <CssValueInput
+      styleSource="preset"
+      property="boxShadow"
+      value={value}
+      intermediateValue={intermediateValue}
+      keywords={[]}
+      onChange={(value) => {
+        setIntermediateValue(value);
+      }}
+      onHighlight={(value) => {
+        action("onHighlight")(value);
+      }}
+      onChangeComplete={({ value }) => {
+        // on blur, select, enter etc.
+        setValue(value);
+        setIntermediateValue(undefined);
+        action("onChangeComplete")(value);
+      }}
+      onAbort={() => {
+        action("onAbort")();
+      }}
+    />
+  );
+};
+
 export const WithKeywords = () => {
   const [value, setValue] = React.useState<StyleValue>({
     type: "keyword",
