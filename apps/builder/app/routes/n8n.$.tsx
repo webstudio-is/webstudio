@@ -47,7 +47,11 @@ export const loader = async ({ request, params }: LoaderArgs) => {
 
   const webhookEnv = webhookEnvParsed.data;
 
-  const response = await fetch(`${webhookEnv.N8N_WEBHOOK_URL}/${params["*"]}`, {
+  const n8nWebhookUrl = new URL(webhookEnv.N8N_WEBHOOK_URL);
+  n8nWebhookUrl.pathname = `${params["*"]}`;
+  n8nWebhookUrl.search = new URL(request.url).search;
+
+  const response = await fetch(n8nWebhookUrl.href, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -55,7 +59,6 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     },
     body: JSON.stringify({
       userId: user.id,
-      query: Object.fromEntries(new URL(request.url).searchParams),
     }),
   });
 
