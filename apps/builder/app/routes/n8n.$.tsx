@@ -1,5 +1,9 @@
 import { redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import {
+  isRouteErrorResponse,
+  useLoaderData,
+  useRouteError,
+} from "@remix-run/react";
 import { z } from "zod";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
@@ -28,7 +32,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     const url = new URL(request.url);
     throw redirect(
       loginPath({
-        returnTo: url.pathname,
+        returnTo: `${url.pathname}?${url.searchParams.toString()}`,
       })
     );
   }
@@ -50,8 +54,14 @@ export const loader = async ({ request, params }: LoaderArgs) => {
   if (response.ok === false) {
     const text = await response.text();
 
-    throw new Error(
-      `Fetch error status="${response.status}" text="${text.slice(0, 1000)}"`
+    throw new Response(
+      `Fetch error status="${response.status}"\nMessage:\n${text.slice(
+        0,
+        1000
+      )}"`,
+      {
+        status: response.status,
+      }
     );
   }
   const responseJson = await response.json();
@@ -69,8 +79,23 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
   ];
 };
 
+export const ErrorBoundary = () => {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    return <div style={{ whiteSpace: "pre-wrap" }}>{error.data}</div>;
+  }
+
+  if (error instanceof Error) {
+    return <div style={{ whiteSpace: "pre-wrap" }}>{error.message}</div>;
+  }
+
+  return <div style={{ whiteSpace: "pre-wrap" }}>{String(error)}</div>;
+};
+
 const N8NResponse = () => {
   const data = useLoaderData<typeof loader>();
+
   return <div dangerouslySetInnerHTML={{ __html: data.description }} />;
 };
 
