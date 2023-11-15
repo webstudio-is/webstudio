@@ -92,6 +92,9 @@ export const TransitionTiming = ({
               </SelectItem>
             );
           })}
+          <SelectItem key="custom" value="custom">
+            Custom
+          </SelectItem>
         </SelectGroup>
         <SelectGroup>
           <SelectLabel>Ease In</SelectLabel>
@@ -123,9 +126,6 @@ export const TransitionTiming = ({
             );
           })}
         </SelectGroup>
-        <SelectItem key="custom" value="custom">
-          Custom
-        </SelectItem>
       </Select>
     </>
   );

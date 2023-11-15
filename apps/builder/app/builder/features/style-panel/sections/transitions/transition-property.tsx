@@ -96,11 +96,11 @@ export const TransitionProperty = ({
   const renderItem = (item: NameAndLabel, index: number) => (
     <ComboboxListboxItem
       key={item.name}
-      selectable={false}
       {...getItemProps({
         item,
         index,
       })}
+      selected={item.name === inputValue}
     >
       {humanizeString(item?.label ?? "")}
     </ComboboxListboxItem>

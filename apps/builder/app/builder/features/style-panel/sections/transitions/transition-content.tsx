@@ -125,10 +125,10 @@ export const TransitionContent = ({
       <Grid
         gap="1"
         css={{
-          lineHeight: theme.spacing[13],
           px: theme.spacing[9],
           py: theme.spacing[5],
           gridTemplateColumns: `1fr ${theme.spacing[23]}`,
+          gridTemplateRows: theme.spacing[13],
         }}
       >
         <TransitionProperty
