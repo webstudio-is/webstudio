@@ -48,7 +48,10 @@ export const loader = async ({ request, params }: LoaderArgs) => {
   const webhookEnv = webhookEnvParsed.data;
 
   const n8nWebhookUrl = new URL(webhookEnv.N8N_WEBHOOK_URL);
-  n8nWebhookUrl.pathname = `${params["*"]}`;
+  n8nWebhookUrl.pathname = `${n8nWebhookUrl.pathname}/${params["*"]}`
+    .split("/")
+    .filter(Boolean)
+    .join("/");
   n8nWebhookUrl.search = new URL(request.url).search;
 
   const response = await fetch(n8nWebhookUrl.href, {
