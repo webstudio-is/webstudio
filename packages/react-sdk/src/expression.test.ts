@@ -267,3 +267,29 @@ test("generate variables with actions", () => {
     ])
   );
 });
+
+test("generate function for empty action", () => {
+  const generated = generateDataSources({
+    scope: createScope(),
+    dataSources: new Map(),
+    props: new Map([
+      [
+        "prop1",
+        {
+          id: "prop1",
+          instanceId: "instance1",
+          type: "action",
+          name: "onChange",
+          value: [],
+        },
+      ],
+    ]),
+  });
+  expect(generated.body).toMatchInlineSnapshot(`
+    "let onChange = () => {
+    }
+    "
+  `);
+  expect(generated.variables).toEqual(new Map());
+  expect(generated.output).toEqual(new Map([["prop1", "onChange"]]));
+});
