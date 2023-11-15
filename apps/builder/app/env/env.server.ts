@@ -90,6 +90,9 @@ const env = {
   OPENAI_ORG: process.env.OPENAI_ORG,
 
   PEXELS_API_KEY: process.env.PEXELS_API_KEY,
+
+  N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
+  N8N_WEBHOOK_TOKEN: process.env.N8N_WEBHOOK_TOKEN,
 };
 
 export type ServerEnv = typeof env;
