@@ -9,6 +9,7 @@ import { BooleanControl } from "./boolean";
 import { FileControl } from "./file";
 import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
+import { JsonControl } from "./json";
 
 export const renderControl = ({
   meta,
@@ -17,6 +18,11 @@ export const renderControl = ({
 }: ControlProps<string, string> & { key?: string }) => {
   if (prop?.type === "expression") {
     throw Error("Expression is not resolved");
+  }
+
+  // never render parameter props
+  if (prop?.type === "parameter") {
+    return;
   }
 
   // @todo remove once ui for action is implemented
@@ -147,6 +153,21 @@ export const renderControl = ({
       );
     }
 
+    if (prop.type === "json") {
+      return (
+        <JsonControl
+          meta={{
+            ...meta,
+            defaultValue: undefined,
+            control: "json",
+            type: "json",
+          }}
+          prop={prop}
+          {...rest}
+        />
+      );
+    }
+
     if (prop.type === "asset") {
       return (
         <FileControl
@@ -180,12 +201,6 @@ export const renderControl = ({
     if (prop.type === "string[]") {
       throw new Error(
         `Cannot render a fallback control for prop "${rest.propName}" with type string[], because we don't know the available options for a multiselect control`
-      );
-    }
-
-    if (prop.type === "json") {
-      throw new Error(
-        `Cannot render a fallback control for prop "${rest.propName}" with type json, because we don't know the available options for a multiselect control`
       );
     }
 

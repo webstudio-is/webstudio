@@ -1,16 +1,22 @@
 import {
   Fragment,
   type ForwardRefExoticComponent,
-  type RefAttributes,
   type ReactNode,
+  type RefAttributes,
 } from "react";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
 import { type Params, ReactSdkContext } from "../context";
-import type { WebstudioComponentProps } from "./webstudio-component";
 import type { ImageLoader } from "@webstudio-is/image";
 
 type InstanceSelector = Instance["id"][];
+
+export type WebstudioComponentProps = {
+  instance: Instance;
+  instanceSelector: Instance["id"][];
+  children: ReactNode;
+  components: Components;
+};
 
 export const createElementsTree = ({
   renderer,
@@ -21,7 +27,6 @@ export const createElementsTree = ({
   rootInstanceId,
   Component,
   components,
-  scripts,
 }: Params & {
   instances: Instances;
   imageLoader: ImageLoader;
@@ -31,7 +36,6 @@ export const createElementsTree = ({
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
-  scripts?: ReactNode;
 }) => {
   const rootInstance = instances.get(rootInstanceId);
   if (rootInstance === undefined) {
@@ -50,12 +54,7 @@ export const createElementsTree = ({
     Component,
     instance: rootInstance,
     instanceSelector: rootInstanceSelector,
-    children: [
-      <Fragment key="children">
-        {children}
-        {scripts}
-      </Fragment>,
-    ],
+    children,
     components,
   });
   return (
@@ -73,6 +72,16 @@ export const createElementsTree = ({
   );
 };
 
+const renderText = (text: string): Array<JSX.Element> => {
+  const lines = text.split("\n");
+  return lines.map((line, index) => (
+    <Fragment key={index}>
+      {line}
+      {index < lines.length - 1 && <br />}
+    </Fragment>
+  ));
+};
+
 const createInstanceChildrenElements = ({
   instances,
   instanceSelector,
@@ -88,10 +97,10 @@ const createInstanceChildrenElements = ({
   >;
   components: Components;
 }) => {
-  const elements = [];
+  const elements: ReactNode[] = [];
   for (const child of children) {
     if (child.type === "text") {
-      elements.push(child.value);
+      elements.push(renderText(child.value));
       continue;
     }
     const childInstance = instances.get(child.value);
@@ -115,6 +124,10 @@ const createInstanceChildrenElements = ({
     });
     elements.push(element);
   }
+  // let empty children be coalesced with fallback
+  if (elements.length === 0) {
+    return;
+  }
   return elements;
 };
 
@@ -122,7 +135,7 @@ const createInstanceElement = ({
   Component,
   instance,
   instanceSelector,
-  children = [],
+  children,
   components,
 }: {
   instance: Instance;
@@ -130,7 +143,7 @@ const createInstanceElement = ({
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
-  children?: Array<JSX.Element | string>;
+  children?: ReactNode;
   components: Components;
 }) => {
   return (

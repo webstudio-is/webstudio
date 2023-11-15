@@ -9,7 +9,7 @@ import type {
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
-import { idAttribute } from "../tree/index";
+import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules, getStyleRules } from "./style-rules";
 

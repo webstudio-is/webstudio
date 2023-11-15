@@ -69,9 +69,8 @@ const generateComponentImports = ({
   return componentImports;
 };
 
-const getStoriesImports = ({ hasState }: { hasState: boolean }) => `
-import { type ReactNode${hasState ? `, useState` : ""} } from "react";
-`;
+const getStoriesImports = ({ hasState }: { hasState: boolean }) =>
+  hasState ? `import { useState } from "react";\n` : "";
 
 const getStoriesExports = (name: string, css: string) => `
 export default {
@@ -146,13 +145,7 @@ export const generateStories = async () => {
         usedMetas.set(instance.component, meta);
       }
     }
-    const scope = createScope([
-      "Page",
-      "Story",
-      "props",
-      "ReactNode",
-      "useState",
-    ]);
+    const scope = createScope(["Page", "Story", "props", "useState"]);
     let content = "";
     content += getStoriesImports({
       hasState: data.dataSources.some(

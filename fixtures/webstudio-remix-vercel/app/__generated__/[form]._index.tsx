@@ -6,13 +6,15 @@ import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
 import {
   Body as Body,
+  Form as Form,
+} from "@webstudio-is/sdk-components-react-remix";
+import {
   Box as Box,
   Label as Label,
   Input as Input,
   Button as Button,
   Heading as Heading,
 } from "@webstudio-is/sdk-components-react";
-import { Form as Form } from "@webstudio-is/sdk-components-react-remix";
 
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
@@ -70,7 +72,7 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
   let onStateChange = (state: any) => {
@@ -185,7 +187,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </Box>
         )}
       </Form>
-      {props.scripts}
     </Body>
   );
 };

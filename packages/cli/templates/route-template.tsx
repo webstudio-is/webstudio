@@ -10,7 +10,6 @@ import {
 import type { Page as PageType, SiteMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
-import { Scripts, ScrollRestoration } from "@remix-run/react";
 import {
   fontAssets,
   pageData,
@@ -292,14 +291,7 @@ const Outlet = () => {
         pagesPaths,
       }}
     >
-      <Page
-        scripts={
-          <>
-            <Scripts />
-            <ScrollRestoration />
-          </>
-        }
-      />
+      <Page />
     </ReactSdkContext.Provider>
   );
 };

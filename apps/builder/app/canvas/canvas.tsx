@@ -1,7 +1,6 @@
 import { useMemo, useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
-import { Scripts, ScrollRestoration } from "@remix-run/react";
 import type { Instances, Page } from "@webstudio-is/sdk";
 import {
   type Params,
@@ -122,12 +121,6 @@ const useElementsTree = (
             ? WebstudioComponentPreview
             : WebstudioComponentCanvas,
           components,
-          scripts: (
-            <>
-              <ScrollRestoration />
-              <Scripts />
-            </>
-          ),
         })}
       </WebstudioComponentContext.Provider>
     );
@@ -231,12 +224,7 @@ export const Canvas = ({
   }, []);
 
   if (components.size === 0 || instances.size === 0) {
-    return (
-      <body>
-        <ScrollRestoration />
-        <Scripts />
-      </body>
-    );
+    return <remixComponents.Body />;
   }
 
   return (

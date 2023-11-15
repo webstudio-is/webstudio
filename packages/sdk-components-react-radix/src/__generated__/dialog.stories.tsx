@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   Button as Button,
@@ -15,7 +15,7 @@ import {
   DialogClose as DialogClose,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [dialogOpen, set$dialogOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     dialogOpen = open;
@@ -62,7 +62,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </DialogContent>
         </DialogOverlay>
       </Dialog>
-      {props.scripts}
     </Box>
   );
 };
