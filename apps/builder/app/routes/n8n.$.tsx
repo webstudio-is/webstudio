@@ -1,25 +1,26 @@
 import { redirect } from "@remix-run/node";
-import {
-  isRouteErrorResponse,
-  useLoaderData,
-  useRouteError,
-} from "@remix-run/react";
+import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { z } from "zod";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
 import {
   // eslint-disable-next-line camelcase
-  type V2_ServerRuntimeMetaFunction,
   type LoaderArgs,
   json,
 } from "@remix-run/server-runtime";
 
-const zN8NResponse = z.object({
-  title: z.string(),
-  description: z.string(),
-});
+const zN8NResponse = z.union([
+  z.object({
+    type: z.literal("error"),
+    error: z.string(),
+  }),
 
+  z.object({
+    type: z.literal("redirect"),
+    to: z.string(),
+  }),
+]);
 const zWebhookEnv = z.object({
   N8N_WEBHOOK_URL: z.string(),
   N8N_WEBHOOK_TOKEN: z.string(),
@@ -80,18 +81,21 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     });
   }
 
-  const { title, description } = n8nResponseParsed.data;
+  const n8nResponse = n8nResponseParsed.data;
 
-  return json({ user, title, description });
-};
+  if (n8nResponse.type === "error") {
+    throw new Response(n8nResponse.error, {
+      status: 400,
+    });
+  }
 
-// eslint-disable-next-line camelcase
-export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
-  return [
-    {
-      title: data?.title,
-    },
-  ];
+  if (n8nResponse.type === "redirect") {
+    throw redirect(n8nResponse.to);
+  }
+
+  n8nResponse satisfies never;
+
+  return json({});
 };
 
 export const ErrorBoundary = () => {
@@ -107,11 +111,3 @@ export const ErrorBoundary = () => {
 
   return <div style={{ whiteSpace: "pre-wrap" }}>{String(error)}</div>;
 };
-
-const N8NResponse = () => {
-  const data = useLoaderData<typeof loader>();
-
-  return <div dangerouslySetInnerHTML={{ __html: data.description }} />;
-};
-
-export default N8NResponse;
