@@ -123,7 +123,7 @@ export const TransitionContent = ({
   return (
     <Flex direction="column">
       <Grid
-        gap="1"
+        gap="2"
         css={{
           px: theme.spacing[9],
           py: theme.spacing[5],
@@ -223,7 +223,8 @@ export const TransitionContent = ({
         direction="column"
         css={{
           px: theme.spacing[9],
-          py: theme.spacing[9],
+          paddingTop: theme.spacing[5],
+          paddingBottom: theme.spacing[9],
           gap: theme.spacing[3],
           minWidth: theme.spacing[30],
         }}
