@@ -60,6 +60,7 @@ model User {
   teamId           String?
   projects         Project[]
   clientReferences ClientReferences[]
+  checkout         TransactionLog[]
 }
 
 // User client references in external services like stripe etc
@@ -75,6 +76,35 @@ model ClientReferences {
 
   @@unique([userId, service])
   @@unique([reference, service])
+}
+
+model Product {
+  id          String   @id
+  name        String
+  description String?
+  features    String[]
+  images      String[]
+  meta        Json
+
+  createdAt DateTime         @default(now())
+  checkout  TransactionLog[]
+}
+
+model TransactionLog {
+  // Stripe event id (debug and idempotency purposes)
+  eventId   String
+  // Stripe session id (debug and idempotency purposes)
+  sessionId String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  // paid
+  status    String
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, productId])
+  @@unique([sessionId, productId])
 }
 
 model Project {
