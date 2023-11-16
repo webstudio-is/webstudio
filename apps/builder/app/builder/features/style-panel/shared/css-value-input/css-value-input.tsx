@@ -14,6 +14,7 @@ import {
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import type {
+  InvalidValue,
   KeywordValue,
   StyleProperty,
   StyleValue,
@@ -28,12 +29,12 @@ import {
   useRef,
 } from "react";
 import { useUnitSelect } from "./unit-select";
-import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
+import { parseIntermediateOrInvalidValue as parseIntermediateOrInvalidValueDefault } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { isValidDeclaration } from "@webstudio-is/css-data";
+import { isValidDeclaration as isValidDeclarationDefault } from "@webstudio-is/css-data";
 import {
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
@@ -46,12 +47,19 @@ const useScrub = ({
   onChange,
   onChangeComplete,
   shouldHandleEvent,
+  isValidDeclaration = isValidDeclarationDefault,
+  parseIntermediateOrInvalidValue = parseIntermediateOrInvalidValueDefault,
 }: {
   value: CssValueInputValue;
   property: StyleProperty;
   onChange: (value: CssValueInputValue) => void;
   onChangeComplete: (value: StyleValue) => void;
   shouldHandleEvent?: (node: Node) => boolean;
+  isValidDeclaration: (property: string, value: string) => boolean;
+  parseIntermediateOrInvalidValue: (
+    property: StyleProperty,
+    value: IntermediateStyleValue | InvalidValue
+  ) => StyleValue;
 }): [
   React.MutableRefObject<HTMLDivElement | null>,
   React.MutableRefObject<HTMLInputElement | null>,
@@ -185,7 +193,12 @@ const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEvent,
     });
-  }, [shouldHandleEvent, property]);
+  }, [
+    shouldHandleEvent,
+    property,
+    isValidDeclaration,
+    parseIntermediateOrInvalidValue,
+  ]);
 
   return [scrubRef, inputRef];
 };
@@ -279,6 +292,11 @@ type CssValueInputProps = {
   icon?: ReactNode;
   prefix?: ReactNode;
   showSuffix?: boolean;
+  isValidDeclaration?: (property: string, value: string) => boolean;
+  parseIntermediateOrInvalidValue?: (
+    property: StyleProperty,
+    value: IntermediateStyleValue | InvalidValue
+  ) => StyleValue;
 };
 
 const initialValue: IntermediateStyleValue = {
@@ -346,6 +364,8 @@ export const CssValueInput = ({
   onHighlight,
   onAbort,
   disabled,
+  isValidDeclaration = isValidDeclarationDefault,
+  parseIntermediateOrInvalidValue = parseIntermediateOrInvalidValueDefault,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -520,6 +540,8 @@ export const CssValueInput = ({
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete(value, "scrub-end"),
     shouldHandleEvent,
+    isValidDeclaration,
+    parseIntermediateOrInvalidValue,
   });
 
   const menuProps = getMenuProps();

@@ -1,10 +1,15 @@
 import * as React from "react";
 import { Flex, DeprecatedTextField } from "@webstudio-is/design-system";
-import type { StyleValue } from "@webstudio-is/css-engine";
+import type {
+  InvalidValue,
+  StyleProperty,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
+import { isValidDeclaration, parseCssValue } from "@webstudio-is/css-data";
 
 export default {
   component: CssValueInput,
@@ -42,6 +47,40 @@ export const WithCustomValidator = () => {
       }}
       onAbort={() => {
         action("onAbort")();
+      }}
+      isValidDeclaration={(_, value) =>
+        isValidDeclaration("boxShadow", `${value} 0`)
+      }
+      parseIntermediateOrInvalidValue={(
+        _: StyleProperty,
+        styleValue: IntermediateStyleValue | InvalidValue
+      ): StyleValue => {
+        const value = styleValue.value.trim();
+        const unit = "unit" in styleValue ? styleValue.unit ?? "px" : "px";
+
+        /* Box shaodw needs atleast two values, so we are passing custom validator */
+        let styleInput = parseCssValue("boxShadow", `${value}${unit} 0`);
+        if (styleInput.type !== "invalid") {
+          return {
+            type: "unit",
+            value: parseFloat(value),
+            unit,
+          };
+        }
+
+        styleInput = parseCssValue("boxShadow", `${value} 0`);
+        if (styleInput.type !== "invalid") {
+          return {
+            type: "unit",
+            value: parseFloat(value),
+            unit,
+          };
+        }
+
+        return {
+          type: "invalid",
+          value,
+        };
       }}
     />
   );
