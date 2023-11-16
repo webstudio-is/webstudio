@@ -50,15 +50,31 @@ model Asset {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String?   @unique
-  provider  String?
-  image     String?
-  username  String?
-  createdAt DateTime  @default(now())
-  team      Team?     @relation(fields: [teamId], references: [id])
-  teamId    String?
-  projects  Project[]
+  id               String             @id @default(uuid())
+  email            String?            @unique
+  provider         String?
+  image            String?
+  username         String?
+  createdAt        DateTime           @default(now())
+  team             Team?              @relation(fields: [teamId], references: [id])
+  teamId           String?
+  projects         Project[]
+  clientReferences ClientReferences[]
+}
+
+// User client references in external services like stripe etc
+model ClientReferences {
+  id        String   @id @default(uuid())
+  // userId    String
+  //user      User     @relation(fields: [userId], references: [id])
+  reference String   @default(uuid())
+  service   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  @@unique([userId, service])
+  @@unique([reference, service])
 }
 
 model Project {

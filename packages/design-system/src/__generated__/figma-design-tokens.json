@@ -3,19 +3,19 @@
     "menu drop shadow": {
       "value": [
         {
-          "color": "#0000004d",
-          "type": "dropShadow",
-          "x": 0,
-          "y": 5,
-          "blur": 17,
-          "spread": 0
-        },
-        {
           "color": "#0000001a",
           "type": "dropShadow",
           "x": 0,
           "y": 2,
           "blur": 7,
+          "spread": 0
+        },
+        {
+          "color": "#0000004d",
+          "type": "dropShadow",
+          "x": 0,
+          "y": 5,
+          "blur": 17,
           "spread": 0
         }
       ],
@@ -551,6 +551,11 @@
           "value": "#e9ebed",
           "type": "color",
           "description": "disabled state for button"
+        },
+        "disabled-dark": {
+          "value": "#646464",
+          "type": "color",
+          "description": "For disabled controls that are against a dark background."
         }
       },
       "item": {
@@ -606,9 +611,9 @@
       },
       "style-source": {
         "token": {
-          "value": "#096cff",
+          "value": "#834df4",
           "type": "color",
-          "description": "For the token variant of the Style Source component."
+          "description": "Style sources that are tokens"
         },
         "tag": {
           "value": "#d54113",
@@ -632,7 +637,7 @@
         },
         "gradient": {
           "token": {
-            "value": "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
+            "value": "linear-gradient(90deg, #834df400 0%, #834df4 31.87%)",
             "type": "color"
           },
           "tag": {
@@ -642,12 +647,21 @@
           "unselected": {
             "value": "linear-gradient(90deg, #68707600 0%, #687076 31.87%)",
             "type": "color"
+          },
+          "local": {
+            "value": "linear-gradient(90deg, #096cff00 0%, #096cff 31.87%)",
+            "type": "color"
           }
         },
         "breakpoint": {
           "value": "#bd2fdb",
           "type": "color",
           "description": "The color of the style source badge that represents a breakpoint. Used in tooltips."
+        },
+        "local": {
+          "value": "#096cff",
+          "type": "color",
+          "description": "For the local variant of the Style Source component."
         }
       },
       "canvas": {
@@ -717,6 +731,11 @@
           "type": "color",
           "description": "Hover background for overwritten labels."
         }
+      },
+      "disabled-dark": {
+        "value": "#323232",
+        "type": "color",
+        "description": "For disabled controls that are against a dark background."
       }
     },
     "brand": {
@@ -921,7 +940,7 @@
         "description": "default color for all text and icons"
       },
       "subtle": {
-        "value": "#707375",
+        "value": "#656869",
         "type": "color",
         "description": "color for less prominent elements. Used in small icon button, nested select button, input field, color input, select button, panel button, text area, search field & toast"
       },
@@ -961,14 +980,14 @@
         "description": "color for hidden item element within navigator item component"
       },
       "link": {
-        "value": "#006ADC",
+        "value": "#006adc",
         "type": "color",
         "description": "color for link text"
       },
       "link-visited": {
-        "value": "#793AAF",
+        "value": "#793aaf",
         "type": "color",
-        "description": "color for visited links"
+        "description": "Text links that the user has visited."
       },
       "flex-ui": {
         "main": {
@@ -1089,11 +1108,6 @@
         "value": "#006adc",
         "type": "color",
         "description": "Text links that are not yet visited."
-      },
-      "link-visited": {
-        "value": "#793aaf",
-        "type": "color",
-        "description": "Text links that the user has visited."
       }
     },
     "Brand": {
@@ -1358,16 +1372,16 @@
           "color": "#00000014",
           "type": "dropShadow",
           "x": 0,
-          "y": 1,
-          "blur": 7,
+          "y": 4,
+          "blur": 15,
           "spread": 0
         },
         {
           "color": "#00000014",
           "type": "dropShadow",
           "x": 0,
-          "y": 4,
-          "blur": 15,
+          "y": 1,
+          "blur": 7,
           "spread": 0
         }
       ],

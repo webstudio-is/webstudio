@@ -259,7 +259,8 @@ export const generateDataSources = ({
       const name = scope.getName(prop.id, prop.name);
       output.set(prop.id, name);
       const setters = new Set<DataSourceId>();
-      let args: undefined | string[] = undefined;
+      // important to fallback to empty argumets to render empty function
+      let args: string[] = [];
       let newCode = "";
       for (const value of prop.value) {
         args = value.args;
@@ -285,9 +286,6 @@ export const generateDataSources = ({
           },
         });
         newCode += `\n`;
-      }
-      if (args === undefined) {
-        continue;
       }
       if (typed) {
         args = args.map((arg) => `${arg}: any`);
