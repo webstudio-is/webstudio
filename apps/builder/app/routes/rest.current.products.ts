@@ -36,6 +36,7 @@ export const loader = async ({ request, params }: LoaderArgs) => {
               description: true,
               features: true,
               meta: true,
+              images: true,
             },
           },
         },
