@@ -1,6 +1,10 @@
+-- DropIndex
+DROP INDEX "ClientReferences_userId_service_key";
+
 -- AlterTable
-ALTER TABLE "ClientReferences" ALTER COLUMN "id" DROP DEFAULT,
-ALTER COLUMN "reference" DROP DEFAULT;
+ALTER TABLE "ClientReferences" DROP CONSTRAINT "ClientReferences_pkey",
+DROP COLUMN "id",
+ADD CONSTRAINT "ClientReferences_pkey" PRIMARY KEY ("userId", "service");
 
 -- CreateTable
 CREATE TABLE "TransactionLog" (

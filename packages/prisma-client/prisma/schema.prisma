@@ -65,16 +65,13 @@ model User {
 
 // User client references in external services like stripe etc
 model ClientReferences {
-  id        String   @id @default(uuid())
-  // userId    String
-  //user      User     @relation(fields: [userId], references: [id])
-  reference String   @default(uuid())
+  reference String   @default(dbgenerated())
   service   String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   userId    String
 
-  @@unique([userId, service])
+  @@id([userId, service])
   @@unique([reference, service])
 }
 
