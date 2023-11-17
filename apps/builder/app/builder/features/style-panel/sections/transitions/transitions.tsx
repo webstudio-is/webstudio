@@ -18,7 +18,6 @@ import { LayersList } from "../../style-layers-list";
 import { Layer } from "./transition-layer";
 import { selectedOrLastStyleSourceSelectorStore } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const property: StyleProperty = "transition";
 const label = "Transitions";
@@ -36,10 +35,6 @@ export const TransitionSection = (props: RenderCategoryProps) => {
   const isStyleInLocalState =
     selectedOrLastStyleSourceSelector &&
     selectedOrLastStyleSourceSelector.state === undefined;
-
-  if (isFeatureEnabled("transitions") === false) {
-    return null;
-  }
 
   return (
     <CollapsibleSectionBase
