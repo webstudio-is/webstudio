@@ -17,14 +17,18 @@ import {
   theme,
   css,
   NestedInputButton,
+  Tooltip,
+  Text,
+  Flex,
 } from "@webstudio-is/design-system";
-import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
+import type { KeywordValue } from "@webstudio-is/css-engine";
+import { humanizeString } from "~/shared/string-utils";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: AnimatableProperties; label?: string };
 type TransitionPropertyProps = {
   property: KeywordValue;
-  onPropertySelection: (property: TupleValueItem) => void;
+  onPropertySelection: (params: { property: KeywordValue }) => void;
 };
 
 const commonPropertiesSet = new Set<AnimatableProperties>([
@@ -70,13 +74,13 @@ export const TransitionProperty = ({
     })),
     value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
-    itemToString: (value) => value?.name ?? "",
+    itemToString: (value) => humanizeString(value?.label || ""),
     onItemSelect: (prop) => {
       if (isAnimatableProperty(prop.name) === false) {
         return;
       }
       setInputValue(prop.name);
-      onPropertySelection({ type: "keyword", value: prop.name });
+      onPropertySelection({ property: { type: "keyword", value: prop.name } });
     },
     onInputChange: (value) => setInputValue(value ?? ""),
   });
@@ -92,19 +96,37 @@ export const TransitionProperty = ({
   const renderItem = (item: NameAndLabel, index: number) => (
     <ComboboxListboxItem
       key={item.name}
-      selectable={false}
       {...getItemProps({
         item,
         index,
       })}
+      selected={item.name === inputValue}
     >
-      {item.name}
+      {humanizeString(item?.label ?? "")}
     </ComboboxListboxItem>
   );
 
   return (
     <>
-      <Label> Property </Label>
+      <Flex align="center">
+        <Tooltip
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Property</Text>
+              <Text variant="monoBold" color="moreSubtle">
+                transition-property
+              </Text>
+              <Text>
+                Sets the CSS properties that will
+                <br />
+                be affected by the transition.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ display: "inline" }}> Property </Label>
+        </Tooltip>
+      </Flex>
       <Combobox>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>

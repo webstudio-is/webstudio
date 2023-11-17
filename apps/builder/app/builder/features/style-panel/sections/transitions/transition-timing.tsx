@@ -1,19 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import type { KeywordValue, TupleValueItem } from "@webstudio-is/css-engine";
+import { useState, useEffect } from "react";
+import type { KeywordValue } from "@webstudio-is/css-engine";
 import {
-  Combobox,
-  ComboboxAnchor,
-  ComboboxContent,
-  ComboboxListbox,
-  InputField,
   Label,
-  NestedInputButton,
-  useCombobox,
-  css,
-  ComboboxLabel,
-  theme,
-  ComboboxListboxItem,
-  ComboboxSeparator,
+  Tooltip,
+  Flex,
+  Text,
+  Select,
+  SelectGroup,
+  SelectLabel,
+  SelectItem,
 } from "@webstudio-is/design-system";
 import {
   defaultFunctions,
@@ -21,166 +16,117 @@ import {
   easeOutFunctions,
   easeInOutFunctions,
   timingFunctions,
-  findTimingFunctionFromValue,
   type TimingFunctions,
-  type EaseInFunction,
-  type EaseOutFunction,
-  type DefaultFunction,
-  type EaseInOutFunction,
+  findTimingFunctionFromValue,
 } from "./transition-utils";
-
-type NameAndLabel = { name: TimingFunctions; value: string };
+import { humanizeString } from "~/shared/string-utils";
 
 type TransitionTimingProps = {
   timing: KeywordValue;
-  onTimingSelection: (timing: TupleValueItem) => void;
+  onTimingSelection: (params: { timing: KeywordValue }) => void;
 };
 
-const filterTimingFunctuionsFromList = <T extends TimingFunctions>(
-  functions: NameAndLabel[],
-  timingFunctions: { [key in T]: string }
-) => {
-  return functions.filter(
-    (prop: NameAndLabel): prop is { name: T; value: string } => {
-      return Object.keys(timingFunctions).includes(prop.name);
-    }
-  );
-};
-
-const comboBoxStyles = css({ zIndex: theme.zIndices[1] });
+const options: TimingFunctions[] = Object.keys(
+  timingFunctions
+) as TimingFunctions[];
 
 export const TransitionTiming = ({
   timing,
   onTimingSelection,
 }: TransitionTimingProps) => {
-  const [inputValue, setInputValue] = useState(
-    findTimingFunctionFromValue(timing.value) ?? timing.value ?? ""
+  const [value, setValue] = useState<TimingFunctions | "custom">(
+    findTimingFunctionFromValue(timing.value) ?? "custom"
   );
+
   useEffect(
-    () =>
-      setInputValue(
-        findTimingFunctionFromValue(timing.value) ?? timing.value ?? ""
-      ),
+    () => setValue(findTimingFunctionFromValue(timing.value) ?? "custom"),
     [timing.value]
   );
 
-  const {
-    items,
-    isOpen,
-    getComboboxProps,
-    getToggleButtonProps,
-    getInputProps,
-    getMenuProps,
-    getItemProps,
-  } = useCombobox<NameAndLabel>({
-    items: (Object.keys(timingFunctions) as TimingFunctions[]).map((prop) => ({
-      name: prop,
-      value: timingFunctions[prop],
-    })),
-    value: {
-      name: inputValue as TimingFunctions,
-      value: timingFunctions[inputValue as TimingFunctions] ?? "",
-    },
-    selectedItem: undefined,
-    itemToString: (value) => value?.name ?? "",
-    onInputChange: (value) => setInputValue(value ?? ""),
-    onItemSelect: (prop) => {
-      setInputValue(prop.name);
-      onTimingSelection({ type: "keyword", value: prop.value });
-    },
-  });
-
-  const filteredTimingFunctions = useMemo(() => {
-    const defaults = filterTimingFunctuionsFromList<DefaultFunction>(
-      items,
-      defaultFunctions
-    );
-    const easeIns = filterTimingFunctuionsFromList<EaseInFunction>(
-      items,
-      easeInFunctions
-    );
-    const easeOuts = filterTimingFunctuionsFromList<EaseOutFunction>(
-      items,
-      easeOutFunctions
-    );
-    const easeInOuts = filterTimingFunctuionsFromList<EaseInOutFunction>(
-      items,
-      easeInOutFunctions
-    );
-
-    return {
-      defaults,
-      easeIns,
-      easeOuts,
-      easeInOuts,
-    };
-  }, [items]);
-
-  const { defaults, easeIns, easeOuts, easeInOuts } = filteredTimingFunctions;
-
-  const renderItem = (item: NameAndLabel, index: number) => {
-    return (
-      <ComboboxListboxItem
-        key={item.name}
-        selectable={false}
-        {...getItemProps({ item, index })}
-        css={{ paddingLeft: theme.spacing[11] }}
-      >
-        {item.name}
-      </ComboboxListboxItem>
-    );
-  };
-
   return (
     <>
-      <Label>Timing</Label>
-      <Combobox>
-        <div {...getComboboxProps()}>
-          <ComboboxAnchor>
-            <InputField
-              autoFocus
-              {...getInputProps({ onKeyDown: (e) => e.stopPropagation() })}
-              placeholder="ease"
-              suffix={<NestedInputButton {...getToggleButtonProps()} />}
-            />
-          </ComboboxAnchor>
-          <ComboboxContent
-            align="end"
-            sideOffset={5}
-            className={comboBoxStyles()}
-          >
-            <ComboboxListbox {...getMenuProps()}>
-              {isOpen && (
-                <>
-                  <ComboboxLabel>Default</ComboboxLabel>
-                  {defaults.map(renderItem)}
-                  <ComboboxSeparator />
+      <Flex align="center">
+        <Tooltip
+          content={
+            <Flex gap="2" direction="column">
+              <Text variant="regularBold">Easing</Text>
+              <Text variant="monoBold" color="moreSubtle">
+                transition-timing-function
+              </Text>
+              <Text>
+                Affects the look and feel of the
+                <br />
+                animation by varying the speed
+                <br />
+                of the transition at different
+                <br />
+                points in its duration.
+              </Text>
+            </Flex>
+          }
+        >
+          <Label css={{ display: "inline" }}>Easing</Label>
+        </Tooltip>
+      </Flex>
+      <Select
+        options={options}
+        value={value}
+        onChange={(value) => {
+          setValue(value);
 
-                  <ComboboxLabel>Ease In</ComboboxLabel>
-                  {easeIns.map((prop, index) =>
-                    renderItem(prop, defaults.length + index)
-                  )}
-                  <ComboboxSeparator />
+          if (value === "custom") {
+            return;
+          }
 
-                  <ComboboxLabel>Ease Out</ComboboxLabel>
-                  {easeOuts.map((prop, index) =>
-                    renderItem(prop, defaults.length + easeIns.length + index)
-                  )}
-                  <ComboboxSeparator />
-
-                  <ComboboxLabel>Ease In Out</ComboboxLabel>
-                  {easeInOuts.map((prop, index) =>
-                    renderItem(
-                      prop,
-                      defaults.length + easeIns.length + easeOuts.length + index
-                    )
-                  )}
-                </>
-              )}
-            </ComboboxListbox>
-          </ComboboxContent>
-        </div>
-      </Combobox>
+          onTimingSelection({
+            timing: { type: "keyword", value: timingFunctions[value] },
+          });
+        }}
+      >
+        <SelectGroup>
+          <SelectLabel>Default</SelectLabel>
+          {Object.keys(defaultFunctions).map((defaultFunc) => {
+            return (
+              <SelectItem key={defaultFunc} value={defaultFunc}>
+                {humanizeString(defaultFunc)}
+              </SelectItem>
+            );
+          })}
+          <SelectItem key="custom" value="custom">
+            Custom
+          </SelectItem>
+        </SelectGroup>
+        <SelectGroup>
+          <SelectLabel>Ease In</SelectLabel>
+          {Object.keys(easeInFunctions).map((easeIn) => {
+            return (
+              <SelectItem key={easeIn} value={easeIn}>
+                {humanizeString(easeIn)}
+              </SelectItem>
+            );
+          })}
+        </SelectGroup>
+        <SelectGroup>
+          <SelectLabel>Ease Out</SelectLabel>
+          {Object.keys(easeOutFunctions).map((easeOut) => {
+            return (
+              <SelectItem key={easeOut} value={easeOut}>
+                {humanizeString(easeOut)}
+              </SelectItem>
+            );
+          })}
+        </SelectGroup>
+        <SelectGroup>
+          <SelectLabel>Ease In Out</SelectLabel>
+          {Object.keys(easeInOutFunctions).map((easeInOut) => {
+            return (
+              <SelectItem key={easeInOut} value={easeInOut}>
+                {humanizeString(easeInOut)}
+              </SelectItem>
+            );
+          })}
+        </SelectGroup>
+      </Select>
     </>
   );
 };
