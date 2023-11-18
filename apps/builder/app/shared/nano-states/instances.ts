@@ -15,6 +15,7 @@ export const textEditingInstanceSelectorStore = atom<
 >();
 
 export const instancesStore = atom<Instances>(new Map());
+export const $instances = instancesStore;
 
 export const selectedInstanceStore = computed(
   [instancesStore, selectedInstanceSelectorStore],

@@ -1,13 +1,10 @@
 import { useMemo, useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { computed } from "nanostores";
-import type { Instances, Page } from "@webstudio-is/sdk";
+import type { Instances } from "@webstudio-is/sdk";
 import {
   type Params,
   type Components,
   createElementsTree,
-  normalizeProps,
-  getPropsByInstanceId,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -24,7 +21,6 @@ import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
-  WebstudioComponentContext,
   WebstudioComponentPreview,
 } from "./features/webstudio-component";
 import {
@@ -35,7 +31,6 @@ import {
   registerComponentLibrary,
   registeredComponentsStore,
   subscribeComponentHooks,
-  propsStore,
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -51,6 +46,7 @@ import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
+import { $params } from "./stores";
 
 registerContainers();
 
@@ -74,62 +70,24 @@ const useElementsTree = (
     });
   }
 
-  const pagesMapStore = useMemo(
-    () =>
-      computed(pagesStore, (pages): Map<string, Page> => {
-        if (pages === undefined) {
-          return new Map();
-        }
-        return new Map(
-          [pages.homePage, ...pages.pages].map((page) => [page.id, page])
-        );
-      }),
-    []
-  );
-
-  const propsByInstanceIdStore = useMemo(() => {
-    return computed(
-      [propsStore, assetsStore, pagesMapStore],
-      (props, assets, pages) => {
-        if (pages === undefined) {
-          return new Map();
-        }
-        const normalizedProps = normalizeProps({
-          props: Array.from(props.values()),
-          assetBaseUrl: params.assetBaseUrl,
-          assets,
-          pages,
-        });
-        return getPropsByInstanceId(
-          new Map(normalizedProps.map((prop) => [prop.id, prop]))
-        );
-      }
-    );
-  }, [params.assetBaseUrl, pagesMapStore]);
-
   return useMemo(() => {
-    return (
-      <WebstudioComponentContext.Provider value={{ propsByInstanceIdStore }}>
-        {createElementsTree({
-          renderer: isPreviewMode ? "preview" : "canvas",
-          imageBaseUrl: params.imageBaseUrl,
-          assetBaseUrl: params.assetBaseUrl,
-          imageLoader,
-          instances,
-          rootInstanceId,
-          Component: isPreviewMode
-            ? WebstudioComponentPreview
-            : WebstudioComponentCanvas,
-          components,
-        })}
-      </WebstudioComponentContext.Provider>
-    );
+    return createElementsTree({
+      renderer: isPreviewMode ? "preview" : "canvas",
+      imageBaseUrl: params.imageBaseUrl,
+      assetBaseUrl: params.assetBaseUrl,
+      imageLoader,
+      instances,
+      rootInstanceId,
+      Component: isPreviewMode
+        ? WebstudioComponentPreview
+        : WebstudioComponentCanvas,
+      components,
+    });
   }, [
     params,
     instances,
     rootInstanceId,
     components,
-    propsByInstanceIdStore,
     isPreviewMode,
     imageLoader,
   ]);
@@ -182,6 +140,11 @@ export const Canvas = ({
       propsMetas: radixComponentPropsMetas,
       hooks: radixComponentHooks,
     });
+  });
+
+  useMount(() => {
+    // required to compute asset and page props for rendering
+    $params.set(params);
   });
 
   useEffect(subscribeComponentHooks, []);

@@ -1,0 +1,201 @@
+import { computed } from "nanostores";
+import {
+  createScope,
+  type DataSource,
+  type Instance,
+  type Page,
+  type Prop,
+} from "@webstudio-is/sdk";
+import {
+  encodeDataSourceVariable,
+  generateDataSources,
+  normalizeProps,
+} from "@webstudio-is/react-sdk";
+import { $instances } from "./instances";
+import {
+  $dataSourceVariables,
+  $dataSources,
+  $props,
+  $assets,
+} from "./nano-states";
+import { $selectedPage, $pages } from "./pages";
+import { groupBy } from "../array-utils";
+import type { InstanceSelector } from "../tree-utils";
+import { $params } from "~/canvas/stores";
+
+// result of executing generated code
+// includes variables, computed expressions and action callbacks
+const $dataSourcesLogic = computed(
+  [$dataSources, $dataSourceVariables, $props],
+  (dataSources, dataSourceVariables, props) => {
+    const { variables, body, output } = generateDataSources({
+      scope: createScope(["_getVariable", "_setVariable", "_output"]),
+      dataSources,
+      props,
+    });
+    let generatedCode = "";
+    for (const [dataSourceId, variable] of variables) {
+      const { valueName, setterName } = variable;
+      const initialValue = JSON.stringify(variable.initialValue);
+      generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
+      generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
+    }
+    generatedCode += body;
+    generatedCode += `let _output = new Map();\n`;
+    for (const [dataSourceId, variableName] of output) {
+      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
+    }
+    generatedCode += `return _output\n`;
+
+    try {
+      const executeFn = new Function(
+        "_getVariable",
+        "_setVariable",
+        generatedCode
+      );
+      const getVariable = (id: string) => {
+        return dataSourceVariables.get(id);
+      };
+      const setVariable = (id: string, value: unknown) => {
+        const dataSourceVariables = new Map($dataSourceVariables.get());
+        dataSourceVariables.set(id, value);
+        $dataSourceVariables.set(dataSourceVariables);
+      };
+      return executeFn(getVariable, setVariable);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
+    return new Map();
+  }
+);
+
+const computeExpression = (
+  expression: string,
+  variables: Map<DataSource["id"], unknown>
+) => {
+  let code = "";
+  for (const [id, value] of variables) {
+    // @todo pass dedicated map of variables without actions
+    // skip actions
+    if (typeof value === "function") {
+      continue;
+    }
+    const identifier = encodeDataSourceVariable(id);
+    code += `const ${identifier} = ${JSON.stringify(value)};\n`;
+  }
+  code += `return (${expression})`;
+  try {
+    const result = new Function(code)();
+    return result;
+  } catch {
+    // empty block
+  }
+};
+
+const $pagesMap = computed($pages, (pages): Map<string, Page> => {
+  if (pages === undefined) {
+    return new Map();
+  }
+  return new Map(
+    [pages.homePage, ...pages.pages].map((page) => [page.id, page])
+  );
+});
+
+/**
+ * compute prop values within context of instance ancestors
+ * like a dry-run of rendering and accessing react contexts deep in the tree
+ * essential to support collections which provide different values in each item
+ * for same variables
+ */
+export const $propValuesByInstanceSelector = computed(
+  [
+    $instances,
+    $props,
+    $selectedPage,
+    $dataSourcesLogic,
+    $params,
+    $pagesMap,
+    $assets,
+  ],
+  (instances, props, page, dataSourcesLogic, params, pages, assets) => {
+    const values = new Map<string, unknown>(dataSourcesLogic);
+
+    // collect props and group by instances
+    const propsByInstanceId = groupBy(
+      props.values(),
+      (prop) => prop.instanceId
+    );
+
+    // traverse instances tree and compute props within each instance
+    const propValuesByInstanceSelector = new Map<
+      Instance["id"],
+      Map<Prop["name"], unknown>
+    >();
+    if (page === undefined) {
+      return propValuesByInstanceSelector;
+    }
+    const traverseInstances = (instanceSelector: InstanceSelector) => {
+      const [instanceId] = instanceSelector;
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return;
+      }
+
+      const propValues = new Map<Prop["name"], unknown>();
+      let props = propsByInstanceId.get(instanceId);
+      // @todo store parameters to update with core components later
+      const parameters = new Map<Prop["name"], DataSource["id"]>();
+      if (props) {
+        // ignore asset and page props when params is not provided
+        // important to resolve only in canvas
+        if (params) {
+          props = normalizeProps({
+            props,
+            assetBaseUrl: params.assetBaseUrl,
+            assets,
+            pages,
+          });
+        }
+        for (const prop of props) {
+          // at this point asset and page either already converted to string
+          // or can be ignored
+          if (prop.type === "asset" || prop.type === "page") {
+            continue;
+          }
+          if (prop.type === "expression") {
+            const value = computeExpression(prop.value, values);
+            if (value !== undefined) {
+              propValues.set(prop.name, value);
+            }
+            continue;
+          }
+          if (prop.type === "action") {
+            const action = values.get(prop.id);
+            if (typeof action === "function") {
+              propValues.set(prop.name, action);
+            }
+            continue;
+          }
+          if (prop.type === "parameter") {
+            parameters.set(prop.name, prop.value);
+            continue;
+          }
+          propValues.set(prop.name, prop.value);
+        }
+      }
+
+      propValuesByInstanceSelector.set(
+        JSON.stringify(instanceSelector),
+        propValues
+      );
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          traverseInstances([child.value, ...instanceSelector]);
+        }
+      }
+    };
+    traverseInstances([page.rootInstanceId]);
+    return propValuesByInstanceSelector;
+  }
+);

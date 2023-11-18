@@ -16,10 +16,12 @@ import {
 } from "@webstudio-is/design-system";
 import { decodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import {
+  $propValuesByInstanceSelector,
   dataSourceVariablesStore,
   dataSourcesStore,
   propsIndexStore,
   propsStore,
+  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
@@ -102,7 +104,7 @@ const renderProperty = (
   // fix the issue with changing type while binding expression
   // old prop value is getting preserved in useLocalValue and saved into variable
   // to reproduce try to edit body id prop and then bind json variable to it
-  <Fragment key={prop?.type ?? ""}>
+  <Fragment key={(prop?.type ?? "") + propName}>
     {renderControl({
       key: propName,
       instanceId,
@@ -207,6 +209,20 @@ export const PropsSection = (props: PropsSectionProps) => {
   );
 };
 
+const getPropTypeAndValue = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return { type: "boolean", value } as const;
+  }
+  if (typeof value === "number") {
+    return { type: "number", value } as const;
+  }
+  if (typeof value === "string") {
+    return { type: "string", value } as const;
+  }
+  // fallback to json
+  return { type: "json", value } as const;
+};
+
 export const PropsSectionContainer = ({
   selectedInstance: instance,
 }: {
@@ -216,10 +232,29 @@ export const PropsSectionContainer = ({
     selectedInstance: instance,
   });
   const { propsByInstanceId } = useStore(propsIndexStore);
+  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const propValues = propValuesByInstanceSelector.get(
+    JSON.stringify(instanceSelector)
+  );
 
   const logic = usePropsLogic({
     instance,
-    props: propsByInstanceId.get(instance.id) ?? [],
+
+    // compute expression prop values before rendering props section
+    // to always show already computed values
+    props:
+      propsByInstanceId.get(instance.id)?.map((prop) => {
+        if (prop.type !== "expression") {
+          return prop;
+        }
+        const propValue = propValues?.get(prop.name);
+        if (propValue === undefined) {
+          return prop;
+        }
+        return { ...prop, ...getPropTypeAndValue(propValue) };
+      }) ?? [],
+
     updateProp: (update) => {
       const props = propsStore.get();
       const prop = props.get(update.id);
@@ -257,6 +292,7 @@ export const PropsSectionContainer = ({
         });
       }
     },
+
     deleteProp: (propId) => {
       serverSyncStore.createTransaction([propsStore], (props) => {
         props.delete(propId);
