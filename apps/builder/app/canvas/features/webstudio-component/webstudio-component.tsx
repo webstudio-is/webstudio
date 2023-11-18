@@ -4,29 +4,26 @@ import {
   type ForwardedRef,
   useRef,
   useLayoutEffect,
-  useContext,
   useMemo,
-  createContext,
 } from "react";
 import { Suspense, lazy } from "react";
-import { computed, type Atom, atom } from "nanostores";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRefs } from "@react-aria/utils";
 import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
+  type WebstudioComponentProps,
   idAttribute,
   componentAttribute,
   showAttribute,
   selectorIdAttribute,
   indexAttribute,
   getIndexesWithinAncestors,
-  type WebstudioComponentProps,
 } from "@webstudio-is/react-sdk";
 import {
-  computeExpression,
-  dataSourcesLogicStore,
+  $propValuesByInstanceSelector,
   instancesStore,
   registeredComponentMetasStore,
   selectedInstanceRenderStateStore,
@@ -137,52 +134,29 @@ const $indexesWithinAncestors = computed(
   }
 );
 
-export const WebstudioComponentContext = createContext<{
-  propsByInstanceIdStore: Atom<Map<Instance["id"], Prop[]>>;
-}>({
-  propsByInstanceIdStore: atom(new Map()),
-});
-
-const useInstanceProps = (instanceId: Instance["id"]) => {
-  const { propsByInstanceIdStore } = useContext(WebstudioComponentContext);
+const useInstanceProps = (instanceSelector: InstanceSelector) => {
+  const instanceSelectorKey = JSON.stringify(instanceSelector);
+  const [instanceId] = instanceSelector;
   const instancePropsObjectStore = useMemo(() => {
     return computed(
-      [propsByInstanceIdStore, dataSourcesLogicStore, $indexesWithinAncestors],
-      (propsByInstanceId, dataSourcesLogic, indexesWithinAncestors) => {
+      [$propValuesByInstanceSelector, $indexesWithinAncestors],
+      (propValuesByInstanceSelector, indexesWithinAncestors) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
           instancePropsObject[indexAttribute] = index.toString();
         }
-        const instanceProps = propsByInstanceId.get(instanceId);
-        if (instanceProps === undefined) {
-          return instancePropsObject;
-        }
-        for (const prop of instanceProps) {
-          // asset and page are normalized to string
-          if (prop.type === "asset" || prop.type === "page") {
-            continue;
+        const instanceProps =
+          propValuesByInstanceSelector.get(instanceSelectorKey);
+        if (instanceProps) {
+          for (const [name, value] of instanceProps) {
+            instancePropsObject[name] = value;
           }
-          if (prop.type === "expression") {
-            const value = computeExpression(prop.value, dataSourcesLogic);
-            if (value !== undefined) {
-              instancePropsObject[prop.name] = value;
-            }
-            continue;
-          }
-          if (prop.type === "action") {
-            const action = dataSourcesLogic.get(prop.id);
-            if (typeof action === "function") {
-              instancePropsObject[prop.name] = action;
-            }
-            continue;
-          }
-          instancePropsObject[prop.name] = prop.value;
         }
         return instancePropsObject;
       }
     );
-  }, [propsByInstanceIdStore, instanceId]);
+  }, [instanceSelectorKey, instanceId]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
 };
@@ -261,9 +235,8 @@ export const WebstudioComponentCanvas = forwardRef<
     textEditingInstanceSelectorStore
   );
 
-  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
-    instance.id
-  );
+  const { [showAttribute]: show = true, ...instanceProps } =
+    useInstanceProps(instanceSelector);
 
   /**
    * Prevents edited element from having a size of 0 on the first render.
@@ -378,9 +351,8 @@ export const WebstudioComponentPreview = forwardRef<
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
   const instanceStyles = useInstanceStyles(instance.id);
   useCssRules({ instanceId: instance.id, instanceStyles });
-  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
-    instance.id
-  );
+  const { [showAttribute]: show = true, ...instanceProps } =
+    useInstanceProps(instanceSelector);
   const props = {
     ...mergeProps(restProps, instanceProps, "merge"),
     [idAttribute]: instance.id,

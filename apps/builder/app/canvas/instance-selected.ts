@@ -9,10 +9,8 @@ import {
   selectedInstanceRenderStateStore,
   stylesIndexStore,
   instancesStore,
-  propsStore,
-  dataSourcesLogicStore,
   selectedInstanceSelectorStore,
-  dataSourceVariablesStore,
+  $propValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
@@ -227,12 +225,8 @@ const subscribeSelectedInstance = (
 
   const unsubscribeStylesIndexStore = stylesIndexStore.subscribe(update);
   const unsubscribeInstancesStore = instancesStore.subscribe(update);
-  const unsubscribePropsStore = propsStore.subscribe(update);
-  const unsubscribeDataSourcesLogicStore =
-    dataSourcesLogicStore.subscribe(update);
-
-  const unsubscribeDataSourceVariablesStore =
-    dataSourceVariablesStore.subscribe(update);
+  const unsubscribePropValuesStore =
+    $propValuesByInstanceSelector.subscribe(update);
 
   const unsubscribeIsResizingCanvas = isResizingCanvasStore.subscribe(
     (isResizing) => {
@@ -275,9 +269,7 @@ const subscribeSelectedInstance = (
     unsubscribeWindowResize();
     unsubscribeStylesIndexStore();
     unsubscribeInstancesStore();
-    unsubscribePropsStore();
-    unsubscribeDataSourcesLogicStore();
-    unsubscribeDataSourceVariablesStore();
+    unsubscribePropValuesStore();
   };
 };
 

@@ -14,6 +14,7 @@ const isAbsoluteUrl = (href: string) => {
 const handleLinkClick = (element: HTMLAnchorElement) => {
   const pages = pagesStore.get();
   const href = element.getAttribute("href");
+  console.log(href);
   if (href === null || pages === undefined) {
     return;
   }

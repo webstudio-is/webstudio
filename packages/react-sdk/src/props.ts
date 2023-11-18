@@ -1,6 +1,4 @@
-import type { Instance, Page, Prop, Props, Assets } from "@webstudio-is/sdk";
-
-export type PropsByInstanceId = Map<Instance["id"], Prop[]>;
+import type { Page, Prop, Assets } from "@webstudio-is/sdk";
 
 export type Pages = Map<Page["id"], Page>;
 
@@ -71,19 +69,6 @@ export const normalizeProps = ({
     newProps.push(prop);
   }
   return newProps;
-};
-
-export const getPropsByInstanceId = (props: Props) => {
-  const propsByInstanceId: PropsByInstanceId = new Map();
-  for (const prop of props.values()) {
-    let instanceProps = propsByInstanceId.get(prop.instanceId);
-    if (instanceProps === undefined) {
-      instanceProps = [];
-      propsByInstanceId.set(prop.instanceId, instanceProps);
-    }
-    instanceProps.push(prop);
-  }
-  return propsByInstanceId;
 };
 
 export const idAttribute = "data-ws-id" as const;
