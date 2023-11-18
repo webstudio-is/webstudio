@@ -1,6 +1,8 @@
 import { groupBreakpoints } from "./group-breakpoints";
 import { selectedBreakpointIdStore, breakpointsStore } from "../nano-states";
-import { setInitialCanvasWidth } from "~/builder/features/breakpoints";
+import { setInitialCanvasWidthAsTransaction } from "~/builder/features/breakpoints";
+import { serverSyncStore } from "~/shared/sync";
+import { canvasWidthStore } from "~/builder/shared/nano-states";
 
 /**
  * Order number starts with 1 and covers all existing breakpoints
@@ -12,7 +14,12 @@ export const selectBreakpointByOrder = (orderNumber: number) => {
     index
   );
   if (breakpoint) {
-    selectedBreakpointIdStore.set(breakpoint.id);
-    setInitialCanvasWidth(breakpoint.id);
+    serverSyncStore.createTransaction(
+      [selectedBreakpointIdStore, canvasWidthStore],
+      (selectedBreakpointIdStore, canvasWidthStore) => {
+        selectedBreakpointIdStore.value = breakpoint.id;
+        setInitialCanvasWidthAsTransaction(canvasWidthStore, breakpoint.id);
+      }
+    );
   }
 };

@@ -12,7 +12,10 @@ import { findInitialWidth } from "./find-initial-width";
 
 // Fixes initial canvas width jump on wide screens.
 // Calculate canvas width during SSR based on known initial width for wide screens.
-export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
+export const setInitialCanvasWidthAsTransaction = (
+  canvasWidthStore: { value: number | undefined },
+  breakpointId: Breakpoint["id"]
+) => {
   const workspaceRect = workspaceRectStore.get();
   const breakpoints = breakpointsStore.get();
   const breakpoint = breakpoints.get(breakpointId);
@@ -25,8 +28,7 @@ export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
     breakpoint,
     workspaceRect.width
   );
-
-  canvasWidthStore.set(width);
+  canvasWidthStore.value = width;
   return true;
 };
 
@@ -52,7 +54,7 @@ export const useSetCanvasWidth = () => {
           selectedBreakpoint,
           workspaceRect.width
         );
-        canvasWidthStore.set(width);
+        canvasWidthStore.set({ value: width });
       }
     };
 

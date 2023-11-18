@@ -31,8 +31,10 @@ import {
   synchronizedComponentsMetaStores,
   dataSourceVariablesStore,
   $dragAndDropState,
+  selectedBreakpointIdStore,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
+import { canvasWidthStore } from "~/builder/shared/nano-states";
 
 enableMapSet();
 
@@ -79,6 +81,11 @@ export const registerContainers = () => {
   serverSyncStore.register("props", propsStore);
   serverSyncStore.register("dataSources", dataSourcesStore);
   serverSyncStore.register("assets", assetsStore);
+  serverSyncStore.register(
+    "selectedBreakpointIdStore",
+    selectedBreakpointIdStore
+  );
+  serverSyncStore.register("canvasWidthStore", canvasWidthStore);
   // synchronize whole states
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);

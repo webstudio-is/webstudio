@@ -37,8 +37,8 @@ import {
   isBaseBreakpoint,
   minCanvasWidth,
 } from "~/shared/breakpoints";
-import { scaleStore } from "~/builder/shared/nano-states";
-import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { canvasWidthStore, scaleStore } from "~/builder/shared/nano-states";
+import { setInitialCanvasWidthAsTransaction } from "./use-set-initial-canvas-width";
 import { serverSyncStore } from "~/shared/sync";
 
 export const BreakpointsPopover = () => {
@@ -75,8 +75,13 @@ export const BreakpointsPopover = () => {
       const breakpointsArray = Array.from(breakpoints.values());
       const base =
         breakpointsArray.find(isBaseBreakpoint) ?? breakpointsArray[0];
-      selectedBreakpointIdStore.set(base.id);
-      setInitialCanvasWidth(base.id);
+      serverSyncStore.createTransaction(
+        [selectedBreakpointIdStore, canvasWidthStore],
+        (selectedBreakpointIdStore, canvasWidthStore) => {
+          selectedBreakpointIdStore.value = base.id;
+          setInitialCanvasWidthAsTransaction(canvasWidthStore, base.id);
+        }
+      );
     }
     setBreakpointToDelete(undefined);
     $breakpointsMenuView.set("editor");
@@ -148,8 +153,16 @@ export const BreakpointsPopover = () => {
                         <ListItem
                           asChild
                           onSelect={() => {
-                            selectedBreakpointIdStore.set(breakpoint.id);
-                            setInitialCanvasWidth(breakpoint.id);
+                            serverSyncStore.createTransaction(
+                              [selectedBreakpointIdStore, canvasWidthStore],
+                              (selectedBreakpointIdStore, canvasWidthStore) => {
+                                selectedBreakpointIdStore.value = breakpoint.id;
+                                setInitialCanvasWidthAsTransaction(
+                                  canvasWidthStore,
+                                  breakpoint.id
+                                );
+                              }
+                            );
                           }}
                           index={index}
                           key={breakpoint.id}

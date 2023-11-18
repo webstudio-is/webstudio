@@ -23,6 +23,7 @@ import {
   type KeyboardEvent,
   useEffect,
 } from "react";
+import { serverSyncStore } from "~/shared/sync";
 
 const useEnhancedInput = ({
   onChange,
@@ -86,13 +87,18 @@ export const WidthInput = ({ min }: { min: number }) => {
   const breakpoints = useStore(breakpointsStore);
 
   const onChange = (value: number) => {
-    setCanvasWidth(value);
+    setCanvasWidth({ value });
     const applicableBreakpoint = findApplicableMedia(
       Array.from(breakpoints.values()),
       value
     );
     if (applicableBreakpoint) {
-      selectedBreakpointIdStore.set(applicableBreakpoint.id);
+      serverSyncStore.createTransaction(
+        [selectedBreakpointIdStore],
+        (selectedBreakpointIdStore) => {
+          selectedBreakpointIdStore.value = applicableBreakpoint.id;
+        }
+      );
     }
     if (isResizingCanvasStore.get() === false) {
       isResizingCanvasStore.set(true);
@@ -115,13 +121,13 @@ export const WidthInput = ({ min }: { min: number }) => {
   }, []);
 
   const inputProps = useEnhancedInput({
-    value: canvasWidth ?? 0,
+    value: canvasWidth.value ?? 0,
     onChange,
     onChangeComplete,
     min,
   });
 
-  if (canvasWidth === undefined || selectedBreakpoint === undefined) {
+  if (canvasWidth?.value === undefined || selectedBreakpoint === undefined) {
     return null;
   }
 

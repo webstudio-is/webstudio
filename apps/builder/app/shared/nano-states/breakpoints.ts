@@ -4,17 +4,17 @@ import { isBaseBreakpoint } from "../breakpoints";
 
 export const breakpointsStore = atom<Breakpoints>(new Map());
 
-export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
-  undefined
-);
+export const selectedBreakpointIdStore = atom<{
+  value: undefined | Breakpoint["id"];
+}>({ value: undefined });
 
 export const selectedBreakpointStore = computed(
   [breakpointsStore, selectedBreakpointIdStore],
   (breakpoints, selectedBreakpointId) => {
     const selectedBreakpoint =
-      selectedBreakpointId === undefined
+      selectedBreakpointId?.value === undefined
         ? undefined
-        : breakpoints.get(selectedBreakpointId);
+        : breakpoints.get(selectedBreakpointId.value);
 
     if (breakpoints.size === 0) {
       return;

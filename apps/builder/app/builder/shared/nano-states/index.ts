@@ -13,7 +13,9 @@ export const useIsShareDialogOpen = () => useValue(isShareDialogOpenStore);
 const isPublishDialogOpenStore = atom<boolean>(false);
 export const useIsPublishDialogOpen = () => useValue(isPublishDialogOpenStore);
 
-export const canvasWidthStore = atom<number | undefined>();
+export const canvasWidthStore = atom<{ value: number | undefined }>({
+  value: undefined,
+});
 export const useCanvasWidth = () => useValue(canvasWidthStore);
 
 export const $canvasRect = atom<DOMRect | undefined>();
@@ -24,14 +26,14 @@ export const scaleStore = computed(
   [canvasWidthStore, workspaceRectStore],
   (canvasWidth, workspaceRect) => {
     if (
-      canvasWidth === undefined ||
+      canvasWidth?.value === undefined ||
       workspaceRect === undefined ||
-      canvasWidth <= workspaceRect.width
+      canvasWidth.value <= workspaceRect.width
     ) {
       return 100;
     }
     return Number.parseFloat(
-      ((workspaceRect.width / canvasWidth) * 100).toFixed(2)
+      ((workspaceRect.width / canvasWidth.value) * 100).toFixed(2)
     );
   }
 );

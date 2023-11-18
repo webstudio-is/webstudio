@@ -14,6 +14,7 @@ import {
   isResizingCanvasStore,
   selectedBreakpointIdStore,
 } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 
 const handlesContainerStyle = css({
   position: "absolute",
@@ -89,7 +90,12 @@ const updateBreakpoint = (width: number) => {
     width
   );
   if (applicableBreakpoint) {
-    selectedBreakpointIdStore.set(applicableBreakpoint.id);
+    serverSyncStore.createTransaction(
+      [selectedBreakpointIdStore],
+      (selectedBreakpointIdStore) => {
+        selectedBreakpointIdStore.value = applicableBreakpoint.id;
+      }
+    );
   }
 };
 
@@ -105,7 +111,7 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
 
     const disposeScrubControl = numericScrubControl(ref.current, {
       getInitialValue() {
-        return canvasWidthStore.get();
+        return canvasWidthStore.get().value;
       },
       getValue(state, movement) {
         const value =
@@ -128,7 +134,7 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
         isResizingCanvasStore.set(false);
       },
       onValueInput(event) {
-        canvasWidthStore.set(event.value);
+        canvasWidthStore.set({ value: event.value });
         updateBreakpoint(event.value);
       },
     });

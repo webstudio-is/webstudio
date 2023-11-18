@@ -11,7 +11,9 @@ import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
 import { selectedBreakpointIdStore } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
-import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { setInitialCanvasWidthAsTransaction } from "./use-set-initial-canvas-width";
+import { serverSyncStore } from "~/shared/sync";
+import { canvasWidthStore } from "~/builder/shared/nano-states";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {
@@ -69,8 +71,16 @@ export const BreakpointsSelector = ({
           if (breakpoints.has(breakpointId) === false) {
             return;
           }
-          selectedBreakpointIdStore.set(breakpointId);
-          setInitialCanvasWidth(breakpointId);
+          serverSyncStore.createTransaction(
+            [selectedBreakpointIdStore, canvasWidthStore],
+            (selectedBreakpointIdStore, canvasWidthStore) => {
+              selectedBreakpointIdStore.value = breakpointId;
+              setInitialCanvasWidthAsTransaction(
+                canvasWidthStore,
+                breakpointId
+              );
+            }
+          );
         }}
         css={{ position: "relative" }}
       >

@@ -103,7 +103,12 @@ const useCanvasStyle = (
   const workspaceRect = useStore(workspaceRectStore);
   const [canvasWidth] = useCanvasWidth();
 
-  return getCanvasStyle(initialBreakpoints, scale, workspaceRect, canvasWidth);
+  return getCanvasStyle(
+    initialBreakpoints,
+    scale,
+    workspaceRect,
+    canvasWidth?.value
+  );
 };
 
 const useOutlineStyle = (
@@ -116,14 +121,16 @@ const useOutlineStyle = (
     initialBreakpoints,
     100,
     workspaceRect,
-    canvasWidth
+    canvasWidth?.value
   );
 
   return {
     ...style,
     pointerEvents: "none",
     width:
-      canvasWidth === undefined ? "100%" : (canvasWidth ?? 0) * (scale / 100),
+      canvasWidth === undefined
+        ? "100%"
+        : (canvasWidth?.value ?? 0) * (scale / 100),
   } as const;
 };
 
