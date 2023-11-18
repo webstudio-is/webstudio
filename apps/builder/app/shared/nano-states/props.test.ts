@@ -167,7 +167,7 @@ test("generate action prop callbacks", () => {
     .get(JSON.stringify(["box"]));
   expect(values1?.get("value")).toEqual(1);
 
-  (values1?.get("onChange") as Function)();
+  (values1?.get("onChange") as () => void)();
   const values2 = $propValuesByInstanceSelector
     .get()
     .get(JSON.stringify(["box"]));
