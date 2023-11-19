@@ -11,6 +11,8 @@ import {
   rawTheme,
   theme,
   Button,
+  Box,
+  Text,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -47,6 +49,7 @@ const Menu = ({
               fallback={getAvatarLetter(title)}
               alt={title || "User Avatar"}
             />
+
             <ChevronDownIcon
               width={15}
               height={15}
@@ -88,8 +91,31 @@ export const Header = ({
       className={containerStyle()}
     >
       <WebstudioIcon width={30} height={23} />
-      <Flex gap="1" align="center">
+      <Flex gap="1" align="center" css={{ position: "relative" }}>
         <Menu user={user} userPlanFeatures={userPlanFeatures} />
+        <Flex
+          css={{
+            position: "absolute",
+            left: theme.spacing[6],
+            top: -4,
+            width: 0,
+          }}
+          align={"center"}
+          justify={"center"}
+        >
+          <Box
+            css={{
+              backgroundColor: theme.colors.primary,
+              minWidth: "fit-content",
+              py: theme.spacing[1],
+              px: theme.spacing[3],
+              borderRadius: theme.borderRadius[3],
+              color: theme.colors.white,
+            }}
+          >
+            <Text variant={"small"}>Pro</Text>
+          </Box>
+        </Flex>
       </Flex>
     </Flex>
   );
