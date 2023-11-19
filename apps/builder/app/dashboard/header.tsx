@@ -13,8 +13,9 @@ import {
   Button,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
-import { logoutPath } from "~/shared/router-utils";
+import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 const containerStyle = css({
   px: theme.spacing[13],
@@ -27,7 +28,13 @@ const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
-const Menu = ({ user }: { user: User }) => {
+const Menu = ({
+  user,
+  userPlanFeatures,
+}: {
+  user: User;
+  userPlanFeatures: UserPlanFeatures;
+}) => {
   const navigate = useNavigate();
   const title = user?.username ?? user?.email ?? undefined;
   return (
@@ -53,12 +60,26 @@ const Menu = ({ user }: { user: User }) => {
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
           Logout
         </DropdownMenuItem>
+
+        {userPlanFeatures.hasSubscription && (
+          <DropdownMenuItem
+            onSelect={() => navigate(userPlanSubscriptionPath())}
+          >
+            Subscriptions
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-export const Header = ({ user }: { user: User }) => {
+export const Header = ({
+  user,
+  userPlanFeatures,
+}: {
+  user: User;
+  userPlanFeatures: UserPlanFeatures;
+}) => {
   return (
     <Flex
       as="header"
@@ -68,7 +89,7 @@ export const Header = ({ user }: { user: User }) => {
     >
       <WebstudioIcon width={30} height={23} />
       <Flex gap="1" align="center">
-        <Menu user={user} />
+        <Menu user={user} userPlanFeatures={userPlanFeatures} />
       </Flex>
     </Flex>
   );
