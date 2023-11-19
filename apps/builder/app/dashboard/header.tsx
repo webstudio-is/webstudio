@@ -93,29 +93,31 @@ export const Header = ({
       <WebstudioIcon width={30} height={23} />
       <Flex gap="1" align="center" css={{ position: "relative" }}>
         <Menu user={user} userPlanFeatures={userPlanFeatures} />
-        <Flex
-          css={{
-            position: "absolute",
-            left: theme.spacing[6],
-            top: -4,
-            width: 0,
-          }}
-          align={"center"}
-          justify={"center"}
-        >
-          <Box
+        {userPlanFeatures.hasProPlan && (
+          <Flex
             css={{
-              backgroundColor: theme.colors.primary,
-              minWidth: "fit-content",
-              py: theme.spacing[1],
-              px: theme.spacing[3],
-              borderRadius: theme.borderRadius[3],
-              color: theme.colors.white,
+              position: "absolute",
+              left: theme.spacing[6],
+              top: -4,
+              width: 0,
             }}
+            align={"center"}
+            justify={"center"}
           >
-            <Text variant={"small"}>Pro</Text>
-          </Box>
-        </Flex>
+            <Box
+              css={{
+                backgroundColor: theme.colors.primary,
+                minWidth: "fit-content",
+                py: theme.spacing[1],
+                px: theme.spacing[3],
+                borderRadius: theme.borderRadius[3],
+                color: theme.colors.white,
+              }}
+            >
+              <Text variant={"small"}>Pro</Text>
+            </Box>
+          </Flex>
+        )}
       </Flex>
     </Flex>
   );
