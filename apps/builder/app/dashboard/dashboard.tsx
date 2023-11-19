@@ -32,7 +32,11 @@ export const Dashboard = ({
       <Header user={user} userPlanFeatures={userPlanFeatures} />
       <main>
         <Flex justify="center" as="section" css={{ minWidth: "min-content" }}>
-          <Projects projects={projects} projectTemplates={projectTemplates} />
+          <Projects
+            projects={projects}
+            projectTemplates={projectTemplates}
+            hasProPlan={userPlanFeatures.hasProPlan}
+          />
         </Flex>
       </main>
     </TooltipProvider>

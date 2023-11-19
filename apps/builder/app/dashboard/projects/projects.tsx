@@ -11,9 +11,14 @@ import { useState } from "react";
 type ProjectsProps = {
   projects: Array<DashboardProject>;
   projectTemplates: Array<DashboardProject>;
+  hasProPlan: boolean;
 };
 
-export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
+export const Projects = ({
+  projects,
+  projectTemplates,
+  hasProPlan,
+}: ProjectsProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -45,7 +50,13 @@ export const Projects = ({ projects, projectTemplates }: ProjectsProps) => {
           }}
         >
           {projects.map((project) => {
-            return <ProjectCard {...project} key={project.id} />;
+            return (
+              <ProjectCard
+                {...project}
+                key={project.id}
+                hasProPlan={hasProPlan}
+              />
+            );
           })}
         </Grid>
       </Flex>

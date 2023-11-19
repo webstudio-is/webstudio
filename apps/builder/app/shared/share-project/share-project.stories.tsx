@@ -85,6 +85,7 @@ export const Empty: ComponentStory<typeof ShareProject> = () => {
       <FloatingPanelPopoverContent>
         <ShareProject
           {...props}
+          hasProPlan={false}
           isPending={false}
           builderUrl={({ authToken, mode }) =>
             `https://blabla.com/${authToken}/${mode}`
@@ -106,6 +107,7 @@ export const WithLinks: ComponentStory<typeof ShareProject> = () => {
       <FloatingPanelPopoverContent>
         <ShareProject
           {...props}
+          hasProPlan={false}
           isPending={false}
           builderUrl={({ authToken, mode }) =>
             `https://blabla.com/${authToken}/${mode}`
@@ -127,6 +129,7 @@ export const WithAsyncLinks: ComponentStory<typeof ShareProject> = () => {
       <FloatingPanelPopoverContent>
         <ShareProject
           {...props}
+          hasProPlan={false}
           isPending={false}
           builderUrl={({ authToken, mode }) =>
             `https://blabla.com/${authToken}/${mode}`

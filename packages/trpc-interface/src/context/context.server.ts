@@ -54,6 +54,7 @@ type UserPlanFeatures = {
   allowShareAdminLinks: boolean;
   maxDomainsAllowedPerUser: number;
   hasSubscription: boolean;
+  hasProPlan: boolean;
 };
 
 /**

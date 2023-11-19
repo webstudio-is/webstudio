@@ -47,6 +47,7 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { SiteSettings } from "./features/seo/site-settings";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 registerContainers();
 
@@ -225,6 +226,7 @@ export type BuilderProps = {
   assets: [Asset["id"], Asset][];
   authToken?: string;
   authPermit: AuthPermit;
+  userPlanFeatures: UserPlanFeatures;
 };
 
 export const Builder = ({
@@ -234,6 +236,7 @@ export const Builder = ({
   assets,
   authToken,
   authPermit,
+  userPlanFeatures,
 }: BuilderProps) => {
   useMount(() => {
     // additional data stores
@@ -301,7 +304,11 @@ export const Builder = ({
     <TooltipProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
         <SiteSettings />
-        <Topbar gridArea="header" project={project} />
+        <Topbar
+          gridArea="header"
+          project={project}
+          hasProPlan={userPlanFeatures.hasProPlan}
+        />
         <Main>
           <Workspace
             onTransitionEnd={onTransitionEnd}

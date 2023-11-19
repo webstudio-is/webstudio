@@ -7,6 +7,7 @@ export type UserPlanFeatures = {
   allowShareAdminLinks: boolean;
   maxDomainsAllowedPerUser: number;
   hasSubscription: boolean;
+  hasProPlan: boolean;
 };
 
 // No strings - no secrets
@@ -50,6 +51,7 @@ export const getUserPlanFeatures = async (
       allowShareAdminLinks: true,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription,
+      hasProPlan: true,
     };
   }
 
@@ -57,5 +59,6 @@ export const getUserPlanFeatures = async (
     allowShareAdminLinks: false,
     maxDomainsAllowedPerUser: 5,
     hasSubscription: false,
+    hasProPlan: false,
   };
 };
