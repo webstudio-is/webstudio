@@ -21,7 +21,6 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -67,12 +66,14 @@ const Permission = ({
 type MenuProps = {
   relation: Relation;
   name: string;
+  hasProPlan: boolean;
   onChangePermission: (relation: Relation) => void;
   onChangeName: (name: string) => void;
   onDelete: () => void;
 };
 
 const Menu = ({
+  hasProPlan,
   relation,
   name,
   onChangePermission,
@@ -146,7 +147,7 @@ const Menu = ({
               info="Recipients can make any changes but can not publish the site."
             />
 
-            {isFeatureEnabled("adminRole") && (
+            {hasProPlan && (
               <Permission
                 onCheckedChange={handleCheckedChange("administrators")}
                 checked={relation === "administrators"}
@@ -198,6 +199,7 @@ type SharedLinkItemType = LinkOptions & {
     authToken: string;
     mode: "preview" | "edit";
   }) => string;
+  hasProPlan: boolean;
 };
 
 const SharedLinkItem = ({
@@ -208,6 +210,7 @@ const SharedLinkItem = ({
   onChangeName,
   onDelete,
   builderUrl,
+  hasProPlan,
 }: SharedLinkItemType) => {
   const [currentName, setCurrentName] = useState(name);
 
@@ -236,6 +239,7 @@ const SharedLinkItem = ({
           onChangeName(name);
         }}
         onDelete={onDelete}
+        hasProPlan={hasProPlan}
       />
     </Box>
   );
@@ -248,6 +252,7 @@ type ShareProjectProps = {
   onCreate: () => void;
   builderUrl: SharedLinkItemType["builderUrl"];
   isPending: boolean;
+  hasProPlan: boolean;
 };
 
 const animateCollapsibleHeight = keyframes({
@@ -274,11 +279,11 @@ export const ShareProject = ({
   onCreate,
   builderUrl,
   isPending,
+  hasProPlan,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
     <Fragment key={link.token}>
       <SharedLinkItem
-        {...link}
         onChangeRelation={(relation) => {
           onChange({ ...link, relation });
         }}
@@ -289,6 +294,10 @@ export const ShareProject = ({
           onDelete(link);
         }}
         builderUrl={builderUrl}
+        name={link.name}
+        relation={link.relation}
+        token={link.token}
+        hasProPlan={hasProPlan}
       />
       <Separator />
     </Fragment>

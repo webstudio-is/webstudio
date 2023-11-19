@@ -11,10 +11,13 @@ import {
   rawTheme,
   theme,
   Button,
+  Box,
+  Text,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
-import { logoutPath } from "~/shared/router-utils";
+import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 const containerStyle = css({
   px: theme.spacing[13],
@@ -27,7 +30,13 @@ const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
-const Menu = ({ user }: { user: User }) => {
+const Menu = ({
+  user,
+  userPlanFeatures,
+}: {
+  user: User;
+  userPlanFeatures: UserPlanFeatures;
+}) => {
   const navigate = useNavigate();
   const title = user?.username ?? user?.email ?? undefined;
   return (
@@ -40,6 +49,7 @@ const Menu = ({ user }: { user: User }) => {
               fallback={getAvatarLetter(title)}
               alt={title || "User Avatar"}
             />
+
             <ChevronDownIcon
               width={15}
               height={15}
@@ -53,12 +63,26 @@ const Menu = ({ user }: { user: User }) => {
         <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
           Logout
         </DropdownMenuItem>
+
+        {userPlanFeatures.hasSubscription && (
+          <DropdownMenuItem
+            onSelect={() => navigate(userPlanSubscriptionPath())}
+          >
+            Subscriptions
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
 };
 
-export const Header = ({ user }: { user: User }) => {
+export const Header = ({
+  user,
+  userPlanFeatures,
+}: {
+  user: User;
+  userPlanFeatures: UserPlanFeatures;
+}) => {
   return (
     <Flex
       as="header"
@@ -67,8 +91,33 @@ export const Header = ({ user }: { user: User }) => {
       className={containerStyle()}
     >
       <WebstudioIcon width={30} height={23} />
-      <Flex gap="1" align="center">
-        <Menu user={user} />
+      <Flex gap="1" align="center" css={{ position: "relative" }}>
+        <Menu user={user} userPlanFeatures={userPlanFeatures} />
+        {userPlanFeatures.hasProPlan && (
+          <Flex
+            css={{
+              position: "absolute",
+              left: theme.spacing[6],
+              top: -4,
+              width: 0,
+            }}
+            align={"center"}
+            justify={"center"}
+          >
+            <Box
+              css={{
+                backgroundColor: theme.colors.primary,
+                minWidth: "fit-content",
+                py: theme.spacing[1],
+                px: theme.spacing[3],
+                borderRadius: theme.borderRadius[3],
+                color: theme.colors.white,
+              }}
+            >
+              <Text variant={"small"}>Pro</Text>
+            </Box>
+          </Flex>
+        )}
       </Flex>
     </Flex>
   );

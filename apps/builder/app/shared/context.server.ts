@@ -3,6 +3,7 @@ import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
 import { trpcClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
+import { getUserPlanFeatures } from "./db/user-plan-features.server";
 
 const createAuthorizationContext = async (
   request: Request
@@ -56,6 +57,12 @@ const createEntriContext = () => {
   };
 };
 
+const createUserPlanContext = async (request: Request) => {
+  const user = await authenticator.isAuthenticated(request);
+  const planFeatures = user?.id ? getUserPlanFeatures(user.id) : undefined;
+  return planFeatures;
+};
+
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
@@ -64,10 +71,12 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
   const entri = createEntriContext();
+  const userPlanFeatures = await createUserPlanContext(request);
   return {
     authorization,
     domain,
     deployment,
     entri,
+    userPlanFeatures,
   };
 };

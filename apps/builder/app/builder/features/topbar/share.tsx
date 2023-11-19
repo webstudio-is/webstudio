@@ -15,7 +15,13 @@ import { ShareProjectContainer } from "~/shared/share-project";
 import { $authPermit } from "~/shared/nano-states";
 import { useIsShareDialogOpen } from "~/builder/shared/nano-states";
 
-export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
+export const ShareButton = ({
+  projectId,
+  hasProPlan,
+}: {
+  projectId: Project["id"];
+  hasProPlan: boolean;
+}) => {
   const [isShareOpen, setIsShareOpen] = useIsShareDialogOpen();
   const authPermit = useStore($authPermit);
 
@@ -45,7 +51,7 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
           marginRight: theme.spacing[3],
         }}
       >
-        <ShareProjectContainer projectId={projectId} />
+        <ShareProjectContainer projectId={projectId} hasProPlan={hasProPlan} />
         <FloatingPanelPopoverTitle>Share</FloatingPanelPopoverTitle>
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>

@@ -404,14 +404,16 @@ export const ShareProjectDialog = ({
   isOpen,
   onOpenChange,
   projectId,
+  hasProPlan,
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   projectId: DashboardProject["id"];
+  hasProPlan: boolean;
 }) => {
   return (
     <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
-      <ShareProjectContainer projectId={projectId} />
+      <ShareProjectContainer hasProPlan={hasProPlan} projectId={projectId} />
     </Dialog>
   );
 };

@@ -6,6 +6,8 @@ volumes:
 services:
   db:
     image: postgres
+    # Uncomment to log all queries
+    # command: ["postgres", "-c", "log_statement=all"]
     restart: always
     environment:
       # postgresql://user:pass@localhost:5432/webstudio
