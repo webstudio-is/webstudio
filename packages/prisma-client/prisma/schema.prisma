@@ -100,6 +100,11 @@ model TransactionLog {
   status    String
   createdAt DateTime @default(now())
 
+  // Helper fields we can use for faster api calls and to have additional information for debugging purposes
+  customerId     String?
+  subscriptionId String?
+  customerEmail  String?
+
   @@unique([eventId, productId])
   @@unique([sessionId, productId])
 }
