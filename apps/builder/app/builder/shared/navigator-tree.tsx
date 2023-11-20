@@ -2,7 +2,6 @@ import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
@@ -86,7 +85,7 @@ export const NavigatorTree = () => {
   );
 
   const isItemHidden = useCallback(
-    (instanceId: Instance["id"]) =>
+    ([instanceId]: InstanceSelector) =>
       // fragment is internal component to group other instances
       // for example to support multiple children in slots
       instances.get(instanceId)?.component === "Fragment",
