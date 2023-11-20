@@ -1,18 +1,9 @@
-import { useState } from "react";
 import { nanoid } from "nanoid";
-import type { Instance, Prop } from "@webstudio-is/project-build";
-import {
-  showAttribute,
-  type WsComponentPropsMeta,
-} from "@webstudio-is/react-sdk";
-import type { PropMeta, PropValue } from "../shared";
+import type { Instance, Prop } from "@webstudio-is/sdk";
+import { type PropMeta, showAttribute } from "@webstudio-is/react-sdk";
+import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
-import {
-  dataSourceValuesStore,
-  dataSourcesStore,
-  propsIndexStore,
-  registeredComponentPropsMetasStore,
-} from "~/shared/nano-states";
+import { registeredComponentPropsMetasStore } from "~/shared/nano-states";
 
 type PropOrName = { prop?: Prop; propName: string };
 export type PropAndMeta = { prop?: Prop; propName: string; meta: PropMeta };
@@ -93,9 +84,17 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type string[] must have a meta, we can't provide a default one because we need a list of options"
       );
-    case "dataSource":
+    case "json":
       throw new Error(
-        "A prop with type dataSource must have a meta, we can't provide a default one because we need a list of options"
+        "A prop with type json must have a meta, we can't provide a default one because we need a list of options"
+      );
+    case "expression":
+      throw new Error(
+        "A prop with type expression must have a meta, we can't provide a default one because we need a list of options"
+      );
+    case "parameter":
+      throw new Error(
+        "A prop with type parameter must have a meta, we can't provide a default one because we need a list of options"
       );
     default:
       throw new Error(`Usupported data type: ${type satisfies never}`);
@@ -104,26 +103,9 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
 
 type UsePropsLogicInput = {
   instance: Instance;
+  props: Prop[];
   updateProp: (update: Prop) => void;
   deleteProp: (id: Prop["id"]) => void;
-};
-
-type UsePropsLogicOutput = {
-  meta: WsComponentPropsMeta;
-  /** Similar to Initial, but displayed as a separate group in UI etc.
-   * Currentrly used only for the ID prop. */
-  systemProps: PropAndMeta[];
-  /** Initial (not deletable) props */
-  initialProps: PropAndMeta[];
-  /** Optional props that were added by user */
-  addedProps: PropAndMeta[];
-  /** List of remaining props still available to add */
-  availableProps: NameAndLabel[];
-  handleAdd: (propName: string) => void;
-  handleChange: (prop: PropOrName, value: PropValue) => void;
-  handleDelete: (prop: PropOrName) => void;
-  /** Delete the prop, but keep it in the list of added props */
-  handleSoftDelete: (prop: Prop) => void;
 };
 
 const getAndDelete = <Value>(map: Map<string, Value>, key: string) => {
@@ -145,62 +127,22 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   },
 ];
 
-const getPropTypeAndValue = (value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  if (Array.isArray(value)) {
-    return { type: "string[]", value } as const;
-  }
-  throw Error(`Unexpected prop value ${value}`);
-};
-
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
+  props,
   updateProp,
   deleteProp,
-}: UsePropsLogicInput): UsePropsLogicOutput => {
+}: UsePropsLogicInput) => {
   const meta = useStore(registeredComponentPropsMetasStore).get(
     instance.component
   );
-  const dataSources = useStore(dataSourcesStore);
-  const dataSourceValues = useStore(dataSourceValuesStore);
-  const { propsByInstanceId } = useStore(propsIndexStore);
 
   if (meta === undefined) {
     throw new Error(`Could not get meta for component "${instance.component}"`);
   }
 
-  const savedProps =
-    propsByInstanceId.get(instance.id)?.flatMap((prop) => {
-      if (prop.type !== "dataSource") {
-        return [prop];
-      }
-      // convert data source prop to typed prop
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      const dataSourceValue = dataSourceValues.get(dataSourceId);
-      if (dataSource === undefined) {
-        return [];
-      }
-      return [
-        {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          required: prop.required,
-          // infer type from value
-          ...getPropTypeAndValue(dataSourceValue),
-        } satisfies Prop,
-      ];
-    }) ?? [];
+  const savedProps = props;
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
@@ -251,31 +193,24 @@ export const usePropsLogic = ({
     initialProps.push({ prop, propName: name, meta: known });
   }
 
-  // We keep track of names because sometime prop is in the list but not actually added/saved
-  // Also makes order stable etc.
-  const [addedNames, setAddedNames] = useState<Prop["name"][]>(() =>
-    Array.from(unprocessedSaved.values(), (prop) => prop.name)
-  );
-
   const addedProps: PropAndMeta[] = [];
-  for (const name of addedNames) {
-    const saved = getAndDelete(unprocessedSaved, name);
-    let known = getAndDelete(unprocessedKnown, name);
+  for (const prop of Array.from(unprocessedSaved.values()).reverse()) {
+    // ignore parameter props
+    if (prop.type === "parameter") {
+      continue;
+    }
+
+    let known = getAndDelete(unprocessedKnown, prop.name);
 
     // @todo:
     //   if meta is undefined, this means it's a "custom attribute"
     //   but because custom attributes not implemented yet,
     //   we'll show it as a regular optional prop for now
     if (known === undefined) {
-      if (saved === undefined) {
-        // eslint-disable-next-line no-console
-        console.error(`Cannot find meta for a newly added prop "${name}`);
-        continue;
-      }
-      known = getDefaultMetaForType(saved.type);
+      known = getDefaultMetaForType(prop.type);
     }
 
-    addedProps.push({ prop: saved, propName: name, meta: known });
+    addedProps.push({ prop, propName: prop.name, meta: known });
   }
 
   const handleAdd = (propName: string) => {
@@ -287,7 +222,6 @@ export const usePropsLogic = ({
     if (prop) {
       updateProp(prop);
     }
-    setAddedNames((prev) => [propName, ...prev]);
   };
 
   const handleChange = ({ prop, propName }: PropOrName, value: PropValue) => {
@@ -298,29 +232,37 @@ export const usePropsLogic = ({
     );
   };
 
-  const handleDelete = ({ prop, propName }: PropOrName) => {
-    if (prop) {
-      deleteProp(prop.id);
-    }
-    setAddedNames((prev) => prev.filter((name) => propName !== name));
+  const handleChangeByPropName = (propName: string, value: PropValue) => {
+    const prop = props.find((prop) => prop.name === propName);
+
+    updateProp(
+      prop === undefined
+        ? { id: nanoid(), instanceId: instance.id, name: propName, ...value }
+        : { ...prop, ...value }
+    );
   };
 
-  const handleSoftDelete = (prop: Prop) => {
+  const handleDelete = (prop: Prop) => {
     deleteProp(prop.id);
   };
 
   return {
+    handleAdd,
+    handleChange,
+    handleDelete,
+    handleChangeByPropName,
     meta,
+    /** Similar to Initial, but displayed as a separate group in UI etc.
+     * Currentrly used only for the ID prop. */
     systemProps,
+    /** Initial (not deletable) props */
     initialProps,
+    /** Optional props that were added by user */
     addedProps,
+    /** List of remaining props still available to add */
     availableProps: Array.from(
       unprocessedKnown.entries(),
       ([name, { label }]) => ({ name, label })
     ),
-    handleAdd,
-    handleChange,
-    handleDelete,
-    handleSoftDelete,
   };
 };

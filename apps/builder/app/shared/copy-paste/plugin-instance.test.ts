@@ -8,7 +8,7 @@ import type {
   DataSource,
   DataSources,
   Page,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -31,6 +31,7 @@ registerContainers();
 registeredComponentMetasStore.set(new Map(Object.entries(baseComponentMetas)));
 projectStore.set({ id: "my-project" } as Project);
 pagesStore.set({
+  meta: {},
   homePage: { id: "home-page", rootInstanceId: "body0" } as Page,
   pages: [],
 });
@@ -143,38 +144,31 @@ describe("data sources", () => {
       name: "state",
       value: { type: "string", value: "initial" },
     },
-    {
-      id: "box2$stateInitial",
-      scopeInstanceId: "box2",
-      type: "expression",
-      name: "stateInitial",
-      code: `$ws$dataSource$box1$state === 'initial'`,
-    },
   ] satisfies DataSource[]);
   const props: Props = toMap([
     {
-      id: "box1$state",
+      id: "box1$stateProp",
       instanceId: "box1",
-      type: "dataSource",
       name: "state",
-      value: "box1$state",
+      type: "expression",
+      value: "$ws$dataSource$box1$state",
     },
     {
-      id: "box2$state",
+      id: "box2$stateProp",
       instanceId: "box2",
-      type: "dataSource",
       name: "state",
-      value: "box1$state",
+      type: "expression",
+      value: "$ws$dataSource$box1$state",
     },
     {
-      id: "box2$show",
+      id: "box2$showProp",
       instanceId: "box2",
-      type: "dataSource",
       name: "show",
-      value: "box2$stateInitial",
+      type: "expression",
+      value: `$ws$dataSource$box1$state === 'initial'`,
     },
     {
-      id: "box2$onChange",
+      id: "box2$onChangeProp",
       instanceId: "box2",
       type: "action",
       name: "onChange",
@@ -190,8 +184,8 @@ describe("data sources", () => {
 
   test("are copy pasted when scoped to copied instances", () => {
     instancesStore.set(instances);
-    propsStore.set(props);
     dataSourcesStore.set(dataSources);
+    propsStore.set(props);
     selectedInstanceSelectorStore.set(["box1", "body0"]);
     const clipboardData = onCopy() ?? "";
     selectedInstanceSelectorStore.set(["body0"]);
@@ -207,19 +201,13 @@ describe("data sources", () => {
       dataSources,
       dataSourcesStore.get()
     );
-    const [newDataSource1, newDataSource2] = dataSourcesDifference.keys();
+    const [newDataSource1] = dataSourcesDifference.keys();
     expect(dataSourcesDifference).toEqual(
       toMap([
         {
           ...dataSources.get("box1$state"),
           id: newDataSource1,
           scopeInstanceId: newBox1,
-        },
-        {
-          ...dataSources.get("box2$stateInitial"),
-          id: newDataSource2,
-          scopeInstanceId: newBox2,
-          code: `${encodeDataSourceVariable(newDataSource1)} === 'initial'`,
         },
       ])
     );
@@ -229,27 +217,31 @@ describe("data sources", () => {
     expect(propsDifference).toEqual(
       toMap([
         {
-          ...props.get("box1$state"),
           id: newProp1,
           instanceId: newBox1,
-          value: newDataSource1,
+          name: "state",
+          type: "expression",
+          value: encodeDataSourceVariable(newDataSource1),
         },
         {
-          ...props.get("box2$state"),
           id: newProp2,
           instanceId: newBox2,
-          value: newDataSource1,
+          name: "state",
+          type: "expression",
+          value: encodeDataSourceVariable(newDataSource1),
         },
         {
-          ...props.get("box2$show"),
           id: newProp3,
           instanceId: newBox2,
-          value: newDataSource2,
+          name: "show",
+          type: "expression",
+          value: `${encodeDataSourceVariable(newDataSource1)} === 'initial'`,
         },
         {
-          ...props.get("box2$onChange"),
           id: newProp4,
           instanceId: newBox2,
+          name: "onChange",
+          type: "action",
           value: [
             {
               type: "execute",
@@ -290,16 +282,16 @@ describe("data sources", () => {
         {
           id: newProp1,
           instanceId: newBox2,
-          type: "string",
           name: "state",
-          value: "initial",
+          type: "expression",
+          value: `"initial"`,
         },
         {
           id: newProp2,
           instanceId: newBox2,
-          type: "boolean",
           name: "show",
-          value: true,
+          type: "expression",
+          value: `"initial" === 'initial'`,
         },
         {
           id: newProp3,
@@ -312,7 +304,59 @@ describe("data sources", () => {
     );
   });
 
-  test.todo(
-    "preserve data sources not scoped to new instances within same scope"
-  );
+  test("preserve data sources outside of scope when pasted within their scope", () => {
+    instancesStore.set(instances);
+    propsStore.set(props);
+    dataSourcesStore.set(dataSources);
+    selectedInstanceSelectorStore.set(["box2", "box1", "body0"]);
+    const clipboardData = onCopy() ?? "";
+    selectedInstanceSelectorStore.set(["box1", "body0"]);
+    onPaste(clipboardData);
+
+    const instancesDifference = getMapDifference(
+      instances,
+      instancesStore.get()
+    );
+    const [newBox2] = instancesDifference.keys();
+
+    const dataSourcesDifference = getMapDifference(
+      dataSources,
+      dataSourcesStore.get()
+    );
+    expect(dataSourcesDifference).toEqual(new Map());
+
+    const propsDifference = getMapDifference(props, propsStore.get());
+    const [newProp1, newProp2, newProp3] = propsDifference.keys();
+    expect(propsDifference).toEqual(
+      toMap([
+        {
+          id: newProp1,
+          instanceId: newBox2,
+          name: "state",
+          type: "expression",
+          value: `$ws$dataSource$box1$state`,
+        },
+        {
+          id: newProp2,
+          instanceId: newBox2,
+          name: "show",
+          type: "expression",
+          value: `$ws$dataSource$box1$state === 'initial'`,
+        },
+        {
+          id: newProp3,
+          instanceId: newBox2,
+          type: "action",
+          name: "onChange",
+          value: [
+            {
+              args: ["value"],
+              code: "$ws$dataSource$box1$state = value",
+              type: "execute",
+            },
+          ],
+        },
+      ])
+    );
+  });
 });

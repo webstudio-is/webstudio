@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PropMeta } from "@webstudio-is/generate-arg-types";
+import { PropMeta } from "../prop-meta";
 import type { htmlTags as HtmlTags } from "html-tags";
 import { EmbedTemplateStyleDecl, WsEmbedTemplate } from "../embed-template";
 
@@ -36,6 +36,11 @@ export const ComponentState = z.object({
 
 export type ComponentState = z.infer<typeof ComponentState>;
 
+const ComponentToken = z.object({
+  variant: z.optional(z.string()),
+  styles: z.array(EmbedTemplateStyleDecl),
+});
+
 export const defaultStates: ComponentState[] = [
   { selector: ":hover", label: "Hover" },
   { selector: ":active", label: "Active" },
@@ -44,7 +49,7 @@ export const defaultStates: ComponentState[] = [
   { selector: ":focus-within", label: "Focus Within" },
 ];
 
-const WsComponentMeta = z.object({
+export const WsComponentMeta = z.object({
   category: z.enum(componentCategories).optional(),
   // container - can accept other components with dnd or be edited as text
   // control - usually form controls like inputs, without children
@@ -63,10 +68,13 @@ const WsComponentMeta = z.object({
   // copied or dragged out of its parent instance
   // true by default
   detachable: z.optional(z.boolean()),
-  label: z.string(),
+  label: z.optional(z.string()),
   description: z.string().optional(),
   icon: z.string(),
-  presetStyle: z.optional(z.record(z.string(), EmbedTemplateStyleDecl)),
+  presetStyle: z.optional(
+    z.record(z.string(), z.array(EmbedTemplateStyleDecl))
+  ),
+  presetTokens: z.optional(z.record(z.string(), ComponentToken)),
   states: z.optional(z.array(ComponentState)),
   template: z.optional(WsEmbedTemplate),
   order: z.number().optional(),

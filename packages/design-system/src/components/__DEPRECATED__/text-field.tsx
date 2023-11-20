@@ -10,10 +10,9 @@ import {
 import { useFocusWithin } from "@react-aria/interactions";
 import { css, styled, theme } from "../../stitches.config";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
-import { cssVars } from "@webstudio-is/css-vars";
 
-const backgroundColorVar = cssVars.define("background-color");
-const colorVar = cssVars.define("color");
+const backgroundColorVar = `--ws-text-field-background-color`;
+const colorVar = `--ws-text-field-color`;
 
 const getTextFieldSuffixCssVars = (state: "focus" | "hover") => {
   if (state === "focus") {
@@ -40,8 +39,8 @@ const textFieldIconBaseStyle = css({
 
 const DeprecatedTextFieldIcon = styled("span", textFieldIconBaseStyle, {
   // Icon receives colors from parent.
-  backgroundColor: cssVars.use(backgroundColorVar),
-  color: cssVars.use(colorVar),
+  backgroundColor: `var(${backgroundColorVar})`,
+  color: `var(${colorVar})`,
 });
 
 export const DeprecatedTextFieldInput = styled("input", {

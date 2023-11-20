@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { type ComponentProps } from "react";
 import { useLoaderData, useRouteError } from "@remix-run/react";
 import type { LoaderArgs } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
@@ -9,6 +9,7 @@ import { loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
+import env from "~/env/env.server";
 
 export const loader = async ({
   request,
@@ -31,7 +32,26 @@ export const loader = async ({
     .createCaller(context)
     .findMany({ userId: user.id });
 
-  return { user, projects };
+  const projectIds = env.PROJECT_TEMPLATES;
+
+  const projectTemplates = await dashboardProjectRouter
+    .createCaller(context)
+    .findManyByIds({
+      projectIds,
+    });
+
+  const { userPlanFeatures } = context;
+
+  if (userPlanFeatures === undefined) {
+    throw new Error("User plan features are not defined");
+  }
+
+  return {
+    user,
+    projects,
+    projectTemplates,
+    userPlanFeatures,
+  };
 };
 
 export const ErrorBoundary = () => {

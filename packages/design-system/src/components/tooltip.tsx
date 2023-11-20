@@ -1,11 +1,13 @@
 import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
-import { Fragment, forwardRef } from "react";
+import { Fragment, forwardRef, useEffect } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import { Box } from "./box";
 import { Text } from "./text";
 import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
+import { disableCanvasPointerEvents } from "../utilities";
 
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   Omit<ComponentProps<typeof Content>, "content"> & {
@@ -50,7 +52,7 @@ export const Tooltip = forwardRef(
       defaultOpen,
       delayDuration,
       disableHoverableContent,
-      open,
+      open: openProp,
       onOpenChange,
       triggerProps,
       ...props
@@ -59,6 +61,29 @@ export const Tooltip = forwardRef(
     },
     ref: Ref<HTMLDivElement>
   ) => {
+    // We need to intercept tooltip open
+    const [open = false, setOpen] = useControllableState({
+      prop: openProp,
+      defaultProp: defaultOpen,
+      onChange: (open) => {
+        onOpenChange?.(open);
+      },
+    });
+
+    /**
+     * When the mouse leaves Tooltip.Content and moves over an iframe, the Radix Tooltip stays open.
+     * This happens because Radix's internal grace area relies on the pointermove event, which isn't triggered over iframes.
+     * The current workaround is to set pointer-events: none on the canvas when the tooltip is open.
+     **/
+    useEffect(() => {
+      if (open) {
+        const enableCanvasPointerEvents = disableCanvasPointerEvents();
+        return () => {
+          enableCanvasPointerEvents?.();
+        };
+      }
+    }, [open]);
+
     if (!content) {
       return children;
     }
@@ -67,7 +92,7 @@ export const Tooltip = forwardRef(
       <TooltipPrimitive.Root
         open={open}
         defaultOpen={defaultOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={setOpen}
         delayDuration={delayDuration}
         disableHoverableContent={disableHoverableContent}
       >

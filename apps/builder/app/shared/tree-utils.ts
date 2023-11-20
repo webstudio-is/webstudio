@@ -2,9 +2,6 @@ import { nanoid } from "nanoid";
 import {
   Breakpoint,
   Breakpoints,
-  DataSource,
-  findTreeInstanceIds,
-  findTreeInstanceIdsExcludingSlotDescendants,
   getStyleDeclKey,
   Instance,
   Instances,
@@ -16,9 +13,11 @@ import {
   StyleSources,
   StyleSourceSelection,
   StyleSourceSelections,
-  StyleSourceSelectionsList,
-  StyleSourcesList,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import {
+  findTreeInstanceIds,
+  findTreeInstanceIdsExcludingSlotDescendants,
+} from "@webstudio-is/sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
@@ -306,10 +305,10 @@ export const cloneStyles = (
 };
 
 export const findLocalStyleSourcesWithinInstances = (
-  styleSources: IterableIterator<StyleSource> | StyleSourcesList,
+  styleSources: IterableIterator<StyleSource> | StyleSource[],
   styleSourceSelections:
     | IterableIterator<StyleSourceSelection>
-    | StyleSourceSelectionsList,
+    | StyleSourceSelection[],
   instanceIds: Set<Instance["id"]>
 ) => {
   const localStyleSourceIds = new Set<StyleSource["id"]>();
@@ -491,8 +490,7 @@ export const insertStyleSourcesCopyMutable = (
 export const insertPropsCopyMutable = (
   props: Props,
   copiedProps: Prop[],
-  copiedInstanceIds: Map<Instance["id"], Instance["id"]>,
-  copiedDataSourceIds: Map<DataSource["id"], DataSource["id"]>
+  copiedInstanceIds: Map<Instance["id"], Instance["id"]>
 ) => {
   for (const prop of copiedProps) {
     const newInstanceId = copiedInstanceIds.get(prop.instanceId);
@@ -507,20 +505,11 @@ export const insertPropsCopyMutable = (
 
     // copy prop before inserting
     const newPropId = nanoid();
-    if (prop.type === "dataSource") {
-      props.set(newPropId, {
-        ...prop,
-        id: newPropId,
-        instanceId: newInstanceId,
-        value: copiedDataSourceIds.get(prop.value) ?? prop.value,
-      });
-    } else {
-      props.set(newPropId, {
-        ...prop,
-        id: newPropId,
-        instanceId: newInstanceId,
-      });
-    }
+    props.set(newPropId, {
+      ...prop,
+      id: newPropId,
+      instanceId: newInstanceId,
+    });
   }
 };
 

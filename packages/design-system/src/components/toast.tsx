@@ -100,12 +100,18 @@ export const Toaster = () => {
   const { startPause, endPause } = handlers;
   return (
     <ToastPrimitive.ToastProvider>
-      {toasts.map((toast) => (
+      {toasts.map((toastData) => (
         <StyledToast
-          variant={toast.type}
-          key={toast.id}
+          variant={toastData.type}
+          key={toastData.id}
           onMouseEnter={startPause}
           onMouseLeave={endPause}
+          onClick={() => {
+            // To give a way to dismiss the infinite toast
+            if (toastData.duration === Number.POSITIVE_INFINITY) {
+              toast.dismiss(toastData.id);
+            }
+          }}
         >
           <Box
             css={{
@@ -115,9 +121,11 @@ export const Toaster = () => {
               },
             }}
           >
-            {toast.type === "blank" && <InfoIcon />}
+            {toastData.type === "blank" && <InfoIcon />}
           </Box>
-          <StyledTitle>{resolveValue(toast.message, toast)}</StyledTitle>
+          <StyledTitle>
+            {resolveValue(toastData.message, toastData)}
+          </StyledTitle>
         </StyledToast>
       ))}
       <StyledViewport />

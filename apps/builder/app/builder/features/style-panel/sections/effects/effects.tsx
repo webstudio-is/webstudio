@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { RenderCategoryProps } from "../../style-sections";
@@ -95,6 +95,18 @@ export const EffectsSection = ({
         />
         <TextControl
           property={"backdropFilter"}
+          currentStyle={style}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+        <PropertyName
+          label={styleConfigByName("textUnderlineOffset").label}
+          properties={["textUnderlineOffset"]}
+          style={style}
+          onReset={() => deleteProperty("textUnderlineOffset")}
+        />
+        <TextControl
+          property={"textUnderlineOffset"}
           currentStyle={style}
           setProperty={setProperty}
           deleteProperty={deleteProperty}

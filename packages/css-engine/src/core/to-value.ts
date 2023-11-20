@@ -1,13 +1,14 @@
-import type { StyleValue } from "@webstudio-is/css-data";
 import { captureError } from "@webstudio-is/error-utils";
 import { DEFAULT_FONT_FALLBACK, SYSTEM_FONTS } from "@webstudio-is/fonts";
+import type { StyleValue } from "../schema";
 
 export type TransformValue = (styleValue: StyleValue) => undefined | StyleValue;
 
 const fallbackTransform: TransformValue = (styleValue) => {
   if (styleValue.type === "fontFamily") {
     const firstFontFamily = styleValue.value[0];
-    const fallbacks = SYSTEM_FONTS.get(firstFontFamily);
+
+    const fallbacks = SYSTEM_FONTS.get(firstFontFamily ?? "Arial");
     const fontFamily: string[] = [...styleValue.value];
     if (Array.isArray(fallbacks)) {
       fontFamily.push(...fallbacks);

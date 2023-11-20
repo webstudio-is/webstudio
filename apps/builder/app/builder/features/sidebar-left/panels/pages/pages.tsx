@@ -17,11 +17,10 @@ import {
 import {
   ChevronRightIcon,
   MenuIcon,
-  NewPageIcon,
   PageIcon,
+  PlusIcon,
 } from "@webstudio-is/icons";
-import type { Page, Pages } from "@webstudio-is/project-build";
-import type { Publish } from "~/shared/pubsub";
+import type { Page, Pages } from "@webstudio-is/sdk";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
@@ -31,7 +30,6 @@ import { switchPage } from "~/shared/pages";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
-  publish: Publish;
 };
 
 type PagesTreeNode =
@@ -197,7 +195,7 @@ const PagesPanel = ({
                 <Button
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
-                  prefix={<NewPageIcon />}
+                  prefix={<PlusIcon />}
                   color="ghost"
                 />
               </Tooltip>
@@ -212,13 +210,13 @@ const PagesPanel = ({
           onSelect={selectTreeNode}
           itemData={pagesTree}
           renderItem={renderItem}
-          getItemChildren={(nodeId) => {
+          getItemChildren={([nodeId]) => {
             if (nodeId === pagesTree.id && pagesTree.type === "folder") {
               return pagesTree.children;
             }
             return [];
           }}
-          isItemHidden={(itemId) => itemId === pagesTree.id}
+          isItemHidden={([itemId]) => itemId === pagesTree.id}
           getIsExpanded={() => true}
         />
       </Box>
@@ -226,7 +224,7 @@ const PagesPanel = ({
   );
 };
 
-export const TabContent = (props: TabContentProps) => {
+export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const currentPageId = useStore(selectedPageIdStore);
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
@@ -238,13 +236,16 @@ export const TabContent = (props: TabContentProps) => {
   return (
     <>
       <PagesPanel
-        onClose={() => props.onSetActiveTab("none")}
+        onClose={() => onSetActiveTab("none")}
         onCreateNewPage={() =>
           setEditingPageId((current) =>
             current === newPageId ? undefined : newPageId
           )
         }
-        onSelect={switchPage}
+        onSelect={(pageId) => {
+          switchPage(pageId);
+          onSetActiveTab("none");
+        }}
         selectedPageId={currentPageId}
         onEdit={setEditingPageId}
         editingPageId={editingPageId}

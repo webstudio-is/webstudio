@@ -1,0 +1,51 @@
+name: Publish beta packages on NPM 📦
+
+on:
+  pull_request:
+    types:
+      - labeled
+
+jobs:
+  publish:
+    # prevents this action from running on forks
+    if: |
+      github.repository_owner == 'webstudio-is' &&
+      startsWith(github.event.label.name, 'publish:')
+
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - uses: ./.github/actions/ci-setup
+
+      - name: Creating .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # compute short sha
+      - id: short_sha
+        run: echo "value=$(echo ${{ github.event.pull_request.head.sha || github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - id: tag
+        run: echo "value=$(echo ${{ github.event.label.name }} | cut -d ':' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Creating version using ${{ steps.short_sha.outputs.value }} sha
+        run: pnpm -r exec pnpm version prepatch --preid ${{ steps.short_sha.outputs.value }}
+
+      - run: pnpm turbo run build dts
+
+      - name: Publishing ${{ steps.tag.outputs.value }} tag with sha ${{ steps.short_sha.outputs.value }}
+        run: pnpm -r publish --tag "${{ steps.tag.outputs.value }}" --no-git-checks --access public

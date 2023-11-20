@@ -2,18 +2,10 @@ import {
   type ComponentPropsWithoutRef,
   type ElementRef,
   forwardRef,
-  useMemo,
   useContext,
 } from "react";
-import {
-  Image as WebstudioImage,
-  createImageLoader,
-} from "@webstudio-is/image";
-import {
-  usePropAsset,
-  getInstanceIdFromComponentProps,
-  ReactSdkContext,
-} from "@webstudio-is/react-sdk";
+import { Image as WebstudioImage } from "@webstudio-is/image";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "img";
 
@@ -45,26 +37,26 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ loading = "lazy", ...props }, ref) => {
-    const { imageBaseUrl } = useContext(ReactSdkContext);
-    const asset = usePropAsset(getInstanceIdFromComponentProps(props), "src");
+    const { imageLoader, assetBaseUrl } = useContext(ReactSdkContext);
 
-    const loader = useMemo(() => {
-      return createImageLoader({ imageBaseUrl });
-    }, [imageBaseUrl]);
-
-    const src = asset?.name ?? props.src;
-
-    if (asset == null || loader == null) {
+    if (
+      props.src === undefined ||
+      props.src.startsWith(assetBaseUrl) === false
+    ) {
       return (
         <img
-          key={src}
+          key={props.src}
           loading={loading}
           {...props}
-          src={src || imagePlaceholderSvg}
+          src={props.src || imagePlaceholderSvg}
           ref={ref}
         />
       );
     }
+
+    // webstudio pass resolved assetBaseUrl + asset.name
+    // trim assetBaseUrl and pass only asset.name to image loader
+    const src = props.src.slice(assetBaseUrl.length);
 
     return (
       <WebstudioImage
@@ -80,7 +72,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
         key={src}
         loading={loading}
         {...props}
-        loader={loader}
+        loader={imageLoader}
         src={src}
         ref={ref}
       />

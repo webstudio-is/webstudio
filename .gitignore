@@ -15,6 +15,7 @@ _build
 .cache
 .vercel
 .output
+.netlify
 
 # misc
 .DS_Store
@@ -54,3 +55,4 @@ tsconfig.tsbuildinfo
 
 # to save thunder https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client files
 .thunder
+.env*.local

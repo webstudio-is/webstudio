@@ -1,13 +1,13 @@
-import type { Style } from "@webstudio-is/css-data";
+import type { Style } from "@webstudio-is/css-engine";
 import type {
   Breakpoint,
   StyleDecl,
   Styles,
   StyleSource,
   StyleSourceSelections,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import type { PresetStyle } from "../components/component-meta";
-import { componentAttribute } from "../tree";
+import { componentAttribute } from "../props";
 
 type StyleRule = {
   instanceId: string;

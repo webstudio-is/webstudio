@@ -47,6 +47,14 @@ const replacedHtmlElements = ["IFRAME", "VIDEO", "EMBED", "IMG"];
 
 const skipElementsSet = new Set([...voidHtmlElements, ...replacedHtmlElements]);
 
+const isSelectorSupported = (selector: string) => {
+  try {
+    return Boolean(document.querySelector(selector));
+  } catch {
+    return false;
+  }
+};
+
 const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
   const metas = registeredComponentMetasStore.get();
   const breakpoints = breakpointsStore.get();
@@ -114,11 +122,13 @@ const recalculate = () => {
   }
 
   /**
-   *  Selector to find elements common ancestors
+   *  Selector to find elements common ancestors, in case of no :has selector support select body
    **/
-  const elementSelector = `[${idAttribute}]${instanceIds
-    .map((instanceId) => `:has([${idAttribute}="${instanceId}"])`)
-    .join("")}`;
+  const elementSelector = isSelectorSupported(":has(body)")
+    ? `[${idAttribute}]${instanceIds
+        .map((instanceId) => `:has([${idAttribute}="${instanceId}"])`)
+        .join("")}`
+    : "body";
 
   const elements: Element[] = [];
 

@@ -2,7 +2,7 @@
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#accept
 
 import warnOnce from "warn-once";
-import type { Asset } from "../schema";
+import type { Asset } from "@webstudio-is/sdk";
 
 type SetType<T> = T extends Set<infer U> ? U : never;
 

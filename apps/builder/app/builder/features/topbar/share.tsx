@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import {
   Button,
   FloatingPanelPopover,
@@ -7,15 +8,22 @@ import {
   FloatingPanelAnchor,
   theme,
   Tooltip,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import { useIsShareDialogOpen } from "~/builder/shared/nano-states";
 
-export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
+export const ShareButton = ({
+  projectId,
+  hasProPlan,
+}: {
+  projectId: Project["id"];
+  hasProPlan: boolean;
+}) => {
   const [isShareOpen, setIsShareOpen] = useIsShareDialogOpen();
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
   const isShareDisabled = authPermit !== "own";
   const tooltipContent = isShareDisabled
@@ -37,9 +45,13 @@ export const ShareButton = ({ projectId }: { projectId: Project["id"] }) => {
           </FloatingPanelPopoverTrigger>
         </Tooltip>
       </FloatingPanelAnchor>
-
-      <FloatingPanelPopoverContent css={{ zIndex: theme.zIndices[1] }}>
-        <ShareProjectContainer projectId={projectId} />
+      <FloatingPanelPopoverContent
+        sideOffset={parseFloat(rawTheme.spacing[8])}
+        css={{
+          marginRight: theme.spacing[3],
+        }}
+      >
+        <ShareProjectContainer projectId={projectId} hasProPlan={hasProPlan} />
         <FloatingPanelPopoverTitle>Share</FloatingPanelPopoverTitle>
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>

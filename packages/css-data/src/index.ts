@@ -9,13 +9,15 @@ export {
   properties as propertyDescriptions,
   declarations as declarationDescriptions,
 } from "./__generated__/property-value-descriptions";
-export * from "./schema";
+export * from "./__generated__/animatable-properties";
 
 // longhand property parsers
 export * from "./property-parsers/index";
 // shorthand property parsers
 export * from "./parse-css-value";
 export * from "./parse-css";
+
+export { parseTailwindToWebstudio } from "./tailwind-parser/parse";
 
 import { properties as generatedProperties } from "./__generated__/properties";
 

@@ -2,7 +2,7 @@ import { useContext, useEffect, useMemo } from "react";
 import { useIsomorphicLayoutEffect } from "react-use";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Assets } from "@webstudio-is/asset-uploader";
+import type { Assets, Instance, StyleDecl } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -12,16 +12,15 @@ import {
   type Params,
   ReactSdkContext,
 } from "@webstudio-is/react-sdk";
-import type { Instance, StyleDecl } from "@webstudio-is/project-build";
 import {
   type StyleValue,
   type StyleProperty,
   isValidStaticStyleValue,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 import {
   assetsStore,
   breakpointsStore,
-  isPreviewModeStore,
+  $isPreviewMode,
   registeredComponentMetasStore,
   selectedInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
@@ -33,7 +32,7 @@ import {
   toValue,
   compareMedia,
 } from "@webstudio-is/css-engine";
-import { useSubscribe } from "~/shared/pubsub";
+import { $ephemeralStyles } from "../stores";
 
 const userCssEngine = createCssEngine({ name: "user-styles" });
 const helpersCssEngine = createCssEngine({ name: "helpers" });
@@ -95,7 +94,7 @@ const helperStyles = [
 const subscribePreviewMode = () => {
   let isRendered = false;
 
-  const unsubscribe = isPreviewModeStore.subscribe((isPreviewMode) => {
+  const unsubscribe = $isPreviewMode.subscribe((isPreviewMode) => {
     helpersCssEngine.setAttribute("media", isPreviewMode ? "not all" : "all");
     if (isRendered === false) {
       for (const style of helperStyles) {
@@ -114,9 +113,56 @@ const subscribePreviewMode = () => {
   };
 };
 
+const subscribeEphemeralStyle = (params: Params) => {
+  // track custom properties added on previous ephemeral styles change
+  const addedCustomProperties = new Set<string>();
+  return $ephemeralStyles.subscribe((ephemeralStyles) => {
+    // track custom properties not set on this change
+    const deletedCustomProperties = new Set(addedCustomProperties);
+
+    const assets = assetsStore.get();
+    const transformer = createImageValueTransformer(assets, {
+      assetBaseUrl: params.assetBaseUrl,
+    });
+    for (const styleDecl of ephemeralStyles) {
+      const { instanceId, breakpointId, state, property, value } = styleDecl;
+      const customProperty = `--${toVarNamespace(instanceId, property)}`;
+      document.body.style.setProperty(
+        customProperty,
+        toValue(value, transformer)
+      );
+      addedCustomProperties.add(customProperty);
+      deletedCustomProperties.delete(customProperty);
+
+      const rule = getOrCreateRule({
+        instanceId,
+        breakpointId,
+        state,
+        assets,
+        params,
+      });
+      // this is possible on newly created instances,
+      // properties are not yet defined in the style.
+      if (rule.styleMap.has(property) === false) {
+        const varValue = toVarValue(instanceId, property, value);
+        if (varValue) {
+          rule.styleMap.set(property, varValue);
+        }
+      }
+    }
+
+    for (const property of deletedCustomProperties) {
+      document.body.style.removeProperty(property);
+      addedCustomProperties.delete(property);
+    }
+
+    // rerender style rules if new vars added
+    userCssEngine.render();
+  });
+};
+
 export const useManageDesignModeStyles = (params: Params) => {
-  useUpdateStyle(params);
-  usePreviewStyle(params);
+  useEffect(() => subscribeEphemeralStyle(params), [params]);
   useEffect(subscribePreviewMode, []);
 };
 
@@ -314,72 +360,4 @@ export const useCssRules = ({
 
 const toVarNamespace = (id: string, property: string) => {
   return `${property}-${id}`;
-};
-
-const setCssVar = (
-  params: Params,
-  id: string,
-  property: string,
-  value?: StyleValue
-) => {
-  const customProperty = `--${toVarNamespace(id, property)}`;
-  if (value === undefined) {
-    document.body.style.removeProperty(customProperty);
-    return;
-  }
-
-  const assets = assetsStore.get();
-  const transformer = createImageValueTransformer(assets, {
-    assetBaseUrl: params.assetBaseUrl,
-  });
-
-  document.body.style.setProperty(customProperty, toValue(value, transformer));
-};
-
-const useUpdateStyle = (params: Params) => {
-  useSubscribe("updateStyle", ({ id, updates }) => {
-    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-    const selectedInstanceId = selectedInstanceSelector?.[0];
-    // Only update styles if they match the selected instance
-    // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
-    if (id !== selectedInstanceId) {
-      return;
-    }
-
-    for (const update of updates) {
-      setCssVar(params, id, update.property, undefined);
-    }
-  });
-};
-
-const usePreviewStyle = (params: Params) => {
-  useSubscribe("previewStyle", ({ id, updates, breakpoint, state }) => {
-    const rule = getOrCreateRule({
-      instanceId: id,
-      breakpointId: breakpoint.id,
-      state,
-      assets: assetsStore.get(),
-      params,
-    });
-
-    for (const update of updates) {
-      if (update.operation === "set") {
-        // This is possible on newly created instances, properties are not yet defined in the style.
-        if (rule.styleMap.has(update.property) === false) {
-          const varValue = toVarValue(id, update.property, update.value);
-          if (varValue) {
-            rule.styleMap.set(update.property, varValue);
-          }
-        }
-
-        setCssVar(params, id, update.property, update.value);
-      }
-
-      if (update.operation === "delete") {
-        setCssVar(params, id, update.property, undefined);
-      }
-    }
-
-    userCssEngine.render();
-  });
 };

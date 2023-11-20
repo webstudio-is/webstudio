@@ -9,7 +9,7 @@ import { colord } from "colord";
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
 import { useState } from "react";
-import type { RgbValue, StyleValue } from "@webstudio-is/css-data";
+import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
 
 const parseColor = (color?: StyleValue): RgbValue => {
   const colordValue = colord(toValue(color));

@@ -1,4 +1,4 @@
-import type { StyleValue } from "./schema";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { popularityIndex } from "./popularity-index";
 
 // Data type used before we generate a the constants.
@@ -45,3 +45,13 @@ propertiesData.MozOsxFontSmoothing = {
   appliesTo: "allElements",
 };
 keywordValues.MozOsxFontSmoothing = ["auto", "grayscale"];
+
+keywordValues.listStyleType = [
+  "disc",
+  "circle",
+  "square",
+  "decimal",
+  "georgian",
+  "trad-chinese-informal",
+  "kannada",
+];

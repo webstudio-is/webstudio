@@ -1,5 +1,5 @@
 import { Flex, Grid, theme, Box } from "@webstudio-is/design-system";
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorControl } from "../../controls";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import type { RenderCategoryProps } from "../../style-sections";

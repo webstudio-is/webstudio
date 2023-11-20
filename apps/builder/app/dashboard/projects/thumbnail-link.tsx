@@ -37,4 +37,16 @@ export const ThumbnailLink = forwardRef<
   );
 });
 
+export const Thumbnail = forwardRef<
+  HTMLDivElement,
+  { title: string; onClick: React.MouseEventHandler<HTMLDivElement> }
+>(({ title, onClick }, ref) => {
+  return (
+    <div ref={ref} onClick={onClick} className={thumbnailStyle()} tabIndex={-1}>
+      {getThumbnailAbbreviation(title)}
+    </div>
+  );
+});
+
+Thumbnail.displayName = "Thumbnail";
 ThumbnailLink.displayName = "ThumbnailLink";

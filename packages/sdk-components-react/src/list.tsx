@@ -12,6 +12,7 @@ export type ListTag = typeof unorderedTag | typeof orderedTag;
 
 type Props = ComponentProps<typeof unorderedTag> &
   ComponentProps<typeof orderedTag> & {
+    /** Shows numbers instead of bullets when toggled. See the “List Style Type” property under the “List Item” section in the Style panel for more options. */
     ordered?: boolean;
   };
 

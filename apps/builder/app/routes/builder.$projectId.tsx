@@ -6,6 +6,7 @@ import {
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 import { redirect, type LoaderArgs, json } from "@remix-run/node";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
+import { db as domainDb } from "@webstudio-is/domain/index.server";
 import { db } from "@webstudio-is/project/index.server";
 import {
   AuthorizationError,
@@ -15,7 +16,7 @@ import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { sentryException } from "~/shared/sentry";
-import { getBuildOrigin, loginPath } from "~/shared/router-utils";
+import { loginPath } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
 
 export { links };
@@ -42,7 +43,7 @@ export const loader = async ({
           projectId: project.id,
           // At this point we already knew that if project loaded we have at least "view" permit
           // having that getProjectPermit is heavy operation we can skip check "view" permit
-          permits: ["own", "build"] as const,
+          permits: ["own", "admin", "build"] as const,
         },
         context
       )) ?? "view";
@@ -52,7 +53,20 @@ export const loader = async ({
     }
 
     const devBuild = await loadBuildByProjectId(project.id);
+
     const assets = await loadAssetsByProject(project.id, context);
+
+    const currentProjectDomainsResult = await domainDb.findMany(
+      { projectId: project.id },
+      context
+    );
+
+    const domains = currentProjectDomainsResult.success
+      ? currentProjectDomainsResult.data
+          .filter((projectDomain) => projectDomain.verified)
+          .filter((projectDomain) => projectDomain.domain.status === "ACTIVE")
+          .map((projectDomain) => projectDomain.domain.domain)
+      : [];
 
     const end = Date.now();
 
@@ -64,13 +78,19 @@ export const loader = async ({
 
     const authToken = url.searchParams.get("authToken") ?? undefined;
 
+    const { userPlanFeatures } = context;
+    if (userPlanFeatures === undefined) {
+      throw new Error("User plan features are not defined");
+    }
+
     return {
       project,
+      domains,
       build: devBuild,
       assets: assets.map((asset) => [asset.id, asset]),
-      buildOrigin: getBuildOrigin(request),
       authToken,
       authPermit,
+      userPlanFeatures,
     };
   } catch (error) {
     if (error instanceof AuthorizationError) {
@@ -127,6 +147,13 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
   // to not regenerate auth token and preserve canvas url
   currentUrlCopy.searchParams.delete("pageId");
   nextUrlCopy.searchParams.delete("pageId");
+
+  currentUrlCopy.searchParams.delete("mode");
+  nextUrlCopy.searchParams.delete("mode");
+
+  currentUrlCopy.searchParams.delete("pageHash");
+  nextUrlCopy.searchParams.delete("pageHash");
+
   return currentUrlCopy.href === nextUrlCopy.href
     ? false
     : defaultShouldRevalidate;

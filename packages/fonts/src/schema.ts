@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { styles } from "./font-data";
+import { FONT_STYLES } from "./constants";
 
 export const FontFormat = z.union([
   z.literal("ttf"),
@@ -40,7 +40,7 @@ export type VariationAxes = z.infer<typeof VariationAxes>;
 
 export const FontMetaStatic = z.object({
   family: z.string(),
-  style: z.enum(styles),
+  style: z.enum(FONT_STYLES),
   weight: z.number(),
 });
 

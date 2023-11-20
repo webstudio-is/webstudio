@@ -6,12 +6,15 @@ import {
   HeadingIcon,
   TextIcon,
   ButtonElementIcon,
+  LargeXIcon,
 } from "@webstudio-is/icons/svg";
 import {
+  defaultStates,
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsDialog,
@@ -22,16 +25,11 @@ import {
   propsDialogTitle,
   propsDialogDescription,
 } from "./__generated__/dialog.props";
-
-import { div, button, h2, p } from "@webstudio-is/react-sdk/css-normalize";
+import { buttonReset, getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
 } satisfies PresetStyle<"div">;
-
-const buttonPresetStyle = {
-  button,
-} satisfies PresetStyle<"button">;
 
 const titlePresetStyle = {
   h2,
@@ -44,9 +42,7 @@ const descriptionPresetStyle = {
 // @todo add [data-state] to button and link
 export const metaDialogTrigger: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  label: "Dialog Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -54,9 +50,7 @@ export const metaDialogTrigger: WsComponentMeta = {
 
 export const metaDialogContent: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  label: "Dialog Content",
   presetStyle,
   icon: ContentIcon,
   detachable: false,
@@ -64,9 +58,7 @@ export const metaDialogContent: WsComponentMeta = {
 
 export const metaDialogOverlay: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  label: "Dialog Overlay",
   presetStyle,
   icon: OverlayIcon,
   detachable: false,
@@ -74,29 +66,27 @@ export const metaDialogOverlay: WsComponentMeta = {
 
 export const metaDialogTitle: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: titlePresetStyle,
-  label: "Dialog Title",
   icon: HeadingIcon,
 };
 
 export const metaDialogDescription: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle: descriptionPresetStyle,
-  label: "Dialog Description",
   icon: TextIcon,
 };
 
 export const metaDialogClose: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  presetStyle: buttonPresetStyle,
-  label: "Dialog Close",
+  presetStyle: {
+    button: [buttonReset, button].flat(),
+  },
+  states: defaultStates,
   icon: ButtonElementIcon,
+  label: "Close Button",
 };
 
 /**
@@ -109,36 +99,42 @@ export const metaDialogClose: WsComponentMeta = {
  **/
 export const metaDialog: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
+  order: 4,
   type: "container",
-  label: "Dialog",
   icon: DialogIcon,
-  order: 15,
   stylable: false,
+  description:
+    "Displays content with an overlay that covers the window, triggered by a button. Clicking the overlay will close the dialog.",
   template: [
     {
       type: "instance",
       component: "Dialog",
-      dataSources: {
-        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-        isOpen: { type: "variable", initialValue: "initial" },
+      variables: {
+        dialogOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
-          name: "isOpen",
-          dataSourceName: "isOpen",
+          type: "expression",
+          name: "open",
+          code: "dialogOpen",
+        },
+        {
+          name: "onOpenChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["open"], code: `dialogOpen = open` },
+          ],
         },
       ],
       children: [
         {
           type: "instance",
           component: "DialogTrigger",
-          props: [],
           children: [
             {
               type: "instance",
               component: "Button",
+              styles: getButtonStyles("outline"),
               children: [{ type: "text", value: "Button" }],
             },
           ],
@@ -146,7 +142,6 @@ export const metaDialog: WsComponentMeta = {
         {
           type: "instance",
           component: "DialogOverlay",
-          props: [],
           /**
            * fixed inset-0 z-50 bg-background/80 backdrop-blur-sm
            * flex
@@ -159,12 +154,12 @@ export const metaDialog: WsComponentMeta = {
             tc.backdropBlur("sm"),
             // To allow positioning Content
             tc.flex(),
+            tc.overflow("auto"),
           ].flat(),
           children: [
             {
               type: "instance",
               component: "DialogContent",
-              props: [],
               /**
                * fixed w-full z-50
                * grid gap-4 max-w-lg
@@ -190,13 +185,11 @@ export const metaDialog: WsComponentMeta = {
                   type: "instance",
                   component: "Box",
                   label: "Dialog Header",
-                  props: [],
                   styles: [tc.flex(), tc.flex("col"), tc.gap(1)].flat(),
                   children: [
                     {
                       type: "instance",
                       component: "DialogTitle",
-                      props: [],
                       /**
                        * text-lg leading-none tracking-tight
                        **/
@@ -216,7 +209,6 @@ export const metaDialog: WsComponentMeta = {
                     {
                       type: "instance",
                       component: "DialogDescription",
-                      props: [],
                       /**
                        * text-sm text-muted-foreground
                        **/
@@ -228,7 +220,7 @@ export const metaDialog: WsComponentMeta = {
                       children: [
                         {
                           type: "text",
-                          value: "dialog description text you can edit",
+                          value: "Dialog description text you can edit",
                         },
                       ],
                     },
@@ -244,7 +236,6 @@ export const metaDialog: WsComponentMeta = {
                 {
                   type: "instance",
                   component: "DialogClose",
-                  props: [],
                   /**
                    * absolute right-4 top-4
                    * rounded-sm opacity-70
@@ -269,7 +260,21 @@ export const metaDialog: WsComponentMeta = {
                     tc.hover(tc.opacity(100)),
                     tc.focus(tc.ring("ring", 2, "background", 2)),
                   ].flat(),
-                  children: [{ type: "text", value: "✕" }],
+                  children: [
+                    {
+                      type: "instance",
+                      component: "HtmlEmbed",
+                      label: "Close Icon",
+                      props: [
+                        {
+                          type: "string",
+                          name: "code",
+                          value: LargeXIcon,
+                        },
+                      ],
+                      children: [],
+                    },
+                  ],
                 },
               ],
             },
@@ -282,7 +287,7 @@ export const metaDialog: WsComponentMeta = {
 
 export const propsMetaDialog: WsComponentPropsMeta = {
   props: propsDialog,
-  initialProps: ["isOpen", "modal"],
+  initialProps: ["open"],
 };
 
 export const propsMetaDialogTrigger: WsComponentPropsMeta = {

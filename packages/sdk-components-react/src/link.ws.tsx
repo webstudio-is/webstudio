@@ -27,7 +27,10 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "Link",
+  description:
+    "Use a link to send your users to another page, section, or resource. Configure links in the Settings panel.",
   icon: LinkIcon,
+  invalidAncestors: ["Link"],
   presetStyle,
   order: 1,
   states: [
@@ -40,13 +43,6 @@ export const meta: WsComponentMeta = {
       category: "component-states",
       selector: "[aria-current=page]",
       label: "Current page",
-    },
-  ],
-  template: [
-    {
-      type: "instance",
-      component: "Link",
-      children: [{ type: "text", value: "Link text you can edit" }],
     },
   ],
 };

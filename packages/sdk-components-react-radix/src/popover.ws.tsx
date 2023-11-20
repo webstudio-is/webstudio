@@ -4,13 +4,14 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
+import { getButtonStyles } from "./theme/styles";
 import {
   propsPopover,
   propsPopoverContent,
   propsPopoverTrigger,
 } from "./__generated__/popover.props";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
 
 const presetStyle = {
   div,
@@ -19,9 +20,7 @@ const presetStyle = {
 // @todo add [data-state] to button and link
 export const metaPopoverTrigger: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
-  label: "Popover Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -29,10 +28,8 @@ export const metaPopoverTrigger: WsComponentMeta = {
 
 export const metaPopoverContent: WsComponentMeta = {
   category: "hidden",
-  invalidAncestors: [],
   type: "container",
   presetStyle,
-  label: "Popover Content",
   icon: ContentIcon,
   detachable: false,
 };
@@ -47,36 +44,41 @@ export const metaPopoverContent: WsComponentMeta = {
  **/
 export const metaPopover: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
+  order: 6,
   type: "container",
-  label: "Popover",
   icon: PopoverIcon,
-  order: 15,
   stylable: false,
+  description: "Displays rich content in a portal, triggered by a button.",
   template: [
     {
       type: "instance",
       component: "Popover",
-      dataSources: {
-        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-        isOpen: { type: "variable", initialValue: "initial" },
+      variables: {
+        popoverOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
-          name: "isOpen",
-          dataSourceName: "isOpen",
+          type: "expression",
+          name: "open",
+          code: "popoverOpen",
+        },
+        {
+          name: "onOpenChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["open"], code: `popoverOpen = open` },
+          ],
         },
       ],
       children: [
         {
           type: "instance",
           component: "PopoverTrigger",
-          props: [],
           children: [
             {
               type: "instance",
               component: "Button",
+              styles: getButtonStyles("outline"),
               children: [{ type: "text", value: "Button" }],
             },
           ],
@@ -84,7 +86,6 @@ export const metaPopover: WsComponentMeta = {
         {
           type: "instance",
           component: "PopoverContent",
-          props: [],
           /**
            *  z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none
            **/
@@ -114,7 +115,7 @@ export const metaPopover: WsComponentMeta = {
 
 export const propsMetaPopover: WsComponentPropsMeta = {
   props: propsPopover,
-  initialProps: ["isOpen", "modal"],
+  initialProps: ["open"],
 };
 
 export const propsMetaPopoverTrigger: WsComponentPropsMeta = {

@@ -3,7 +3,7 @@ import {
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
 import type { ControlProps } from "../../style-sections";
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import { Box } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";

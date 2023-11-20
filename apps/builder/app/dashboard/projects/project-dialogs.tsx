@@ -218,6 +218,79 @@ export const RenameProjectDialog = ({
   );
 };
 
+const useDuplicateProject = ({
+  projectId,
+  onOpenChange,
+}: {
+  projectId: DashboardProject["id"];
+  onOpenChange: (isOpen: boolean) => void;
+}) => {
+  const navigate = useNavigate();
+  const { send, state } = trpc.duplicate.useMutation();
+
+  const [errors, setErrors] = useState<string>();
+
+  const handleSubmit = ({ title }: { title: string }) => {
+    const parsed = Title.safeParse(title);
+    const errors =
+      "error" in parsed
+        ? parsed.error.issues.map((issue) => issue.message).join("\n")
+        : undefined;
+
+    setErrors(errors);
+
+    if (parsed.success) {
+      send({ projectId, title }, (data) => {
+        if (data?.id) {
+          navigate(builderPath({ projectId: data.id }));
+          onOpenChange(false);
+        }
+      });
+    }
+  };
+
+  return {
+    handleSubmit,
+    errors,
+    state,
+  };
+};
+
+export const DuplicateProjectDialog = ({
+  isOpen,
+  title,
+  projectId,
+  onOpenChange,
+}: {
+  isOpen: boolean;
+  title: string;
+  projectId: DashboardProject["id"];
+  onOpenChange: (isOpen: boolean) => void;
+}) => {
+  const { handleSubmit, errors, state } = useDuplicateProject({
+    projectId,
+    onOpenChange,
+  });
+  return (
+    <Dialog title="Create" isOpen={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent
+        onSubmit={handleSubmit}
+        errors={errors}
+        title={title}
+        label="Project Title"
+        primaryButton={
+          <Button
+            type="submit"
+            state={state === "idle" ? undefined : "pending"}
+          >
+            Create Project
+          </Button>
+        }
+      />
+    </Dialog>
+  );
+};
+
 const useDeleteProject = ({
   projectId,
   title,
@@ -300,7 +373,7 @@ export const DeleteProjectDialog = ({
             >
               {` ${title} `}
             </Text>
-            below
+            below.
           </Label>
         }
         description="This project and its styles, pages and images will be deleted permanently."
@@ -331,14 +404,16 @@ export const ShareProjectDialog = ({
   isOpen,
   onOpenChange,
   projectId,
+  hasProPlan,
 }: {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   projectId: DashboardProject["id"];
+  hasProPlan: boolean;
 }) => {
   return (
     <Dialog title="Share Project" isOpen={isOpen} onOpenChange={onOpenChange}>
-      <ShareProjectContainer projectId={projectId} />
+      <ShareProjectContainer hasProPlan={hasProPlan} projectId={projectId} />
     </Dialog>
   );
 };

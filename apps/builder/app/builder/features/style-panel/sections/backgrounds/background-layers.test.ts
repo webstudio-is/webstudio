@@ -13,7 +13,7 @@ import type {
   LayersValue,
   StyleProperty,
   StyleValue,
-} from "@webstudio-is/css-data";
+} from "@webstudio-is/css-engine";
 
 describe("setLayerProperty", () => {
   test("should work", () => {

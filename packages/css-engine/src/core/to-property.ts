@@ -1,5 +1,5 @@
-import type { StyleProperty } from "@webstudio-is/css-data";
 import hyphenate from "hyphenate-style-name";
+import type { StyleProperty } from "../schema";
 
 export const toProperty = (property: StyleProperty) => {
   // Currently its a non-standard property and is only officially supported via -webkit- prefix.

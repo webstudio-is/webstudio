@@ -1,60 +1,35 @@
-import { useCallback, useMemo } from "react";
-import { atom, computed, type WritableAtom } from "nanostores";
+import { useMemo } from "react";
+import { atom, computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
-import type { Asset, Assets } from "@webstudio-is/asset-uploader";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
 import type {
-  Breakpoint,
+  Assets,
   DataSource,
   DataSources,
   Instance,
   Prop,
   Props,
   StyleDecl,
-  StyleDeclKey,
   Styles,
   StyleSource,
   StyleSources,
-  StyleSourceSelection,
   StyleSourceSelections,
-} from "@webstudio-is/project-build";
-import {
-  executeComputingExpressions,
-  encodeDataSourceVariable,
-  decodeDataSourceVariable,
-} from "@webstudio-is/react-sdk";
-import type { Style } from "@webstudio-is/css-data";
+} from "@webstudio-is/sdk";
+import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
-import { useMount } from "~/shared/hook-utils/use-mount";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
-import { breakpointsStore } from "./breakpoints";
 import { instancesStore, selectedInstanceSelectorStore } from "./instances";
 import { selectedPageStore } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
 
-const useValue = <T>(atom: WritableAtom<T>) => {
-  const value = useStore(atom);
-
-  const set = useCallback(
-    (value: T | ((current: T) => T)) => {
-      if (typeof value === "function") {
-        atom.set((value as (current: T) => T)(atom.get()));
-      } else {
-        atom.set(value);
-      }
-    },
-    [atom]
-  );
-
-  return [value, set] as const;
-};
-
 export const projectStore = atom<Project | undefined>();
+
+export const $domains = atom<string[]>([]);
 
 export const rootInstanceStore = computed(
   [instancesStore, selectedPageStore],
@@ -67,54 +42,14 @@ export const rootInstanceStore = computed(
 );
 
 export const dataSourcesStore = atom<DataSources>(new Map());
+export const $dataSources = dataSourcesStore;
 export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
-export const useSetDataSources = (
-  dataSources: [DataSource["id"], DataSource][]
-) => {
-  useMount(() => {
-    dataSourcesStore.set(new Map(dataSources));
-  });
-};
-export const dataSourceValuesStore = computed(
-  [dataSourcesStore, dataSourceVariablesStore],
-  (dataSources, dataSourceVariables) => {
-    const outputValues = new Map<DataSource["id"], unknown>();
-    const variables = new Map<string, unknown>();
-    const expressions = new Map<string, string>();
-    for (const [dataSourceId, dataSource] of dataSources) {
-      const name = encodeDataSourceVariable(dataSourceId);
-      if (dataSource.type === "variable") {
-        const value =
-          dataSourceVariables.get(dataSourceId) ?? dataSource.value.value;
-        variables.set(name, value);
-        outputValues.set(dataSourceId, value);
-      }
-      if (dataSource.type === "expression") {
-        expressions.set(name, dataSource.code);
-      }
-    }
-    try {
-      const outputVariables = executeComputingExpressions(
-        expressions,
-        variables
-      );
-      for (const [name, value] of outputVariables) {
-        const id = decodeDataSourceVariable(name);
-        if (id !== undefined) {
-          outputValues.set(id, value);
-        }
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-    return outputValues;
-  }
-);
+export const $dataSourceVariables = dataSourceVariablesStore;
 
 export const propsStore = atom<Props>(new Map());
+export const $props = propsStore;
 export const propsIndexStore = computed(propsStore, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
   for (const prop of props.values()) {
@@ -130,19 +65,9 @@ export const propsIndexStore = computed(propsStore, (props) => {
     propsByInstanceId,
   };
 });
-export const useSetProps = (props: [Prop["id"], Prop][]) => {
-  useMount(() => {
-    propsStore.set(new Map(props));
-  });
-};
 
 export const stylesStore = atom<Styles>(new Map());
 
-export const useSetStyles = (styles: [StyleDeclKey, StyleDecl][]) => {
-  useMount(() => {
-    stylesStore.set(new Map(styles));
-  });
-};
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   const instanceStylesStore = useMemo(() => {
     return shallowComputed([stylesIndexStore], (stylesIndex) => {
@@ -157,42 +82,10 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
 };
 
 export const styleSourcesStore = atom<StyleSources>(new Map());
-/**
- * find all non-local style sources
- * scoped to current tree or whole project
- */
-export const availableStyleSourcesStore = shallowComputed(
-  [styleSourcesStore],
-  (styleSources) => {
-    const availableStylesSources: StyleSource[] = [];
-    for (const styleSource of styleSources.values()) {
-      if (styleSource.type === "local") {
-        continue;
-      }
-      availableStylesSources.push(styleSource);
-    }
-    return availableStylesSources;
-  }
-);
-
-export const useSetStyleSources = (
-  styleSources: [StyleSource["id"], StyleSource][]
-) => {
-  useMount(() => {
-    styleSourcesStore.set(new Map(styleSources));
-  });
-};
 
 export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
   new Map()
 );
-export const useSetStyleSourceSelections = (
-  styleSourceSelections: [Instance["id"], StyleSourceSelection][]
-) => {
-  useMount(() => {
-    styleSourceSelectionsStore.set(new Map(styleSourceSelections));
-  });
-};
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
@@ -245,20 +138,8 @@ export const stylesIndexStore = computed(
   }
 );
 
-export const useSetBreakpoints = (
-  breakpoints: [Breakpoint["id"], Breakpoint][]
-) => {
-  useMount(() => {
-    breakpointsStore.set(new Map(breakpoints));
-  });
-};
-
 export const assetsStore = atom<Assets>(new Map());
-export const useSetAssets = (assets: [Asset["id"], Asset][]) => {
-  useMount(() => {
-    assetsStore.set(new Map(assets));
-  });
-};
+export const $assets = assetsStore;
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
@@ -344,7 +225,8 @@ export const selectedInstanceStyleSourcesStore = computed(
     // generate style source when selection has not local style sources
     // it is synchronized whenever styles are updated
     if (hasLocal === false) {
-      selectedInstanceStyleSources.unshift({
+      // always put local style source last
+      selectedInstanceStyleSources.push({
         type: "local",
         id: nanoid(),
       });
@@ -386,24 +268,11 @@ export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const isPreviewModeStore = atom<boolean>(false);
-export const useIsPreviewMode = () => useValue(isPreviewModeStore);
+export const $isPreviewMode = atom<boolean>(false);
 
-const authPermitStore = atom<AuthPermit>("view");
-export const useAuthPermit = () => useValue(authPermitStore);
-export const useSetAuthPermit = (authPermit: AuthPermit) => {
-  useMount(() => {
-    authPermitStore.set(authPermit);
-  });
-};
+export const $authPermit = atom<AuthPermit>("view");
 
-export const authTokenStore = atom<string | undefined>(undefined);
-export const useAuthToken = () => useValue(authTokenStore);
-export const useSetAuthToken = (authToken: string | undefined) => {
-  useMount(() => {
-    authTokenStore.set(authToken);
-  });
-};
+export const $authToken = atom<string | undefined>(undefined);
 
 export type DragAndDropState = {
   isDragging: boolean;
@@ -412,12 +281,6 @@ export type DragAndDropState = {
   placementIndicator?: Placement;
 };
 
-const dragAndDropStateContainer = atom<DragAndDropState>({
+export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
-export const useDragAndDropState = () => useValue(dragAndDropStateContainer);
-
-export const isDraggingStore = computed(
-  [dragAndDropStateContainer],
-  (state) => state.isDragging
-);

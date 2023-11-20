@@ -32,7 +32,7 @@ const StyledLabel = styled(RadixLabel, {
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
 
-  // https://github.com/webstudio-is/webstudio-builder/issues/1271#issuecomment-1478436340
+  // https://github.com/webstudio-is/webstudio/issues/1271#issuecomment-1478436340
   "&:focus-visible": {
     outline: `2px solid ${theme.colors.borderFocus}`,
     outlineOffset: 1,

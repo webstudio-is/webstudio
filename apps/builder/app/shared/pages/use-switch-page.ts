@@ -1,17 +1,18 @@
+import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
-import { findPageByIdOrPath, type Page } from "@webstudio-is/project-build";
-import { useEffect } from "react";
+import type { Page } from "@webstudio-is/sdk";
+import { findPageByIdOrPath } from "@webstudio-is/project-build";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import {
-  authTokenStore,
+  $authToken,
   pagesStore,
   projectStore,
   selectedPageStore,
   selectedPageIdStore,
   selectedPageHashStore,
   selectedInstanceSelectorStore,
-  isPreviewModeStore,
+  $isPreviewMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 
@@ -38,7 +39,7 @@ const setPageStateFromUrl = () => {
   const pageId = searchParams.get("pageId") ?? pages?.homePage.id;
   const pageHash = searchParams.get("pageHash") ?? "";
 
-  isPreviewModeStore.set(searchParams.get("mode") === "preview");
+  $isPreviewMode.set(searchParams.get("mode") === "preview");
 
   switchPage(pageId, pageHash);
 };
@@ -56,7 +57,7 @@ export const useSyncPageUrl = () => {
   const navigate = useNavigate();
   const page = useStore(selectedPageStore);
   const pageHash = useStore(selectedPageHashStore);
-  const isPreviewMode = useStore(isPreviewModeStore);
+  const isPreviewMode = useStore($isPreviewMode);
 
   // Get pageId and pageHash from URL
   useMount(() => {
@@ -97,7 +98,7 @@ export const useSyncPageUrl = () => {
       builderPath({
         projectId: project.id,
         pageId: page.id === pages.homePage.id ? undefined : page.id,
-        authToken: authTokenStore.get(),
+        authToken: $authToken.get(),
         pageHash: pageHash === "" ? undefined : pageHash,
         mode: isPreviewMode ? "preview" : undefined,
       })

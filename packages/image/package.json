@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/image",
-  "version": "0.83.0",
+  "version": "0.120.0",
   "description": "Image optimization",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,8 +9,8 @@
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build"
@@ -20,32 +20,29 @@
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.2",
-    "@storybook/react": "^7.2.1",
-    "@types/react": "^18.2.16",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/storybook-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.6.2",
+    "@jest/globals": "^29.7.0",
+    "@storybook/react": "^7.4.0",
+    "@types/react": "^18.2.21",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/storybook-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   },
   "peerDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "require": "./lib/index.js"
   },
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",
   "private": false,

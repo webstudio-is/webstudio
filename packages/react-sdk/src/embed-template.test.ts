@@ -1,6 +1,7 @@
 import { expect, test } from "@jest/globals";
 import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
-import { showAttribute } from "./tree";
+import { showAttribute } from "./props";
+import type { WsComponentMeta } from "./components/component-meta";
 
 const expectString = expect.any(String);
 
@@ -20,6 +21,7 @@ test("generate data for embedding from instances and text", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -73,6 +75,7 @@ test("generate data for embedding from props", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -147,6 +150,7 @@ test("generate data for embedding from styles", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -220,14 +224,14 @@ test("generate data for embedding from props bound to data source variables", ()
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            showOtherBoxDataSource: { type: "variable", initialValue: false },
+          variables: {
+            showOtherBoxDataSource: { initialValue: false },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "showOtherBox",
-              dataSourceName: "showOtherBoxDataSource",
+              code: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -237,14 +241,15 @@ test("generate data for embedding from props bound to data source variables", ()
           component: "Box2",
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "showOtherBoxDataSource",
+              code: "showOtherBoxDataSource",
             },
           ],
           children: [],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -260,16 +265,16 @@ test("generate data for embedding from props bound to data source variables", ()
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "showOtherBox",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: showAttribute,
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
     ],
     dataSources: [
@@ -290,25 +295,21 @@ test("generate data for embedding from props bound to data source variables", ()
   });
 });
 
-test("generate data for embedding from props bound to data source expressions", () => {
+test("generate data for embedding from props with complex expressions", () => {
   expect(
     generateDataFromEmbedTemplate(
       [
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            boxState: { type: "variable", initialValue: "initial" },
-            boxStateSuccess: {
-              type: "expression",
-              code: `boxState === 'success'`,
-            },
+          variables: {
+            boxState: { initialValue: "initial" },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "state",
-              dataSourceName: "boxState",
+              code: "boxState",
             },
           ],
           children: [],
@@ -318,14 +319,15 @@ test("generate data for embedding from props bound to data source expressions", 
           component: "Box2",
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "boxStateSuccess",
+              code: "boxState === 'success'",
             },
           ],
           children: [],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -341,16 +343,16 @@ test("generate data for embedding from props bound to data source expressions", 
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "state",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: showAttribute,
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
     dataSources: [
@@ -363,13 +365,6 @@ test("generate data for embedding from props bound to data source expressions", 
           type: "string",
           value: "initial",
         },
-      },
-      {
-        type: "expression",
-        id: expectString,
-        scopeInstanceId: expectString,
-        name: "boxStateSuccess",
-        code: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
     styleSourceSelections: [],
@@ -385,14 +380,14 @@ test("generate data for embedding from action props", () => {
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            boxState: { type: "variable", initialValue: "initial" },
+          variables: {
+            boxState: { initialValue: "initial" },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "state",
-              dataSourceName: "boxState",
+              code: "boxState",
             },
           ],
           children: [
@@ -422,6 +417,7 @@ test("generate data for embedding from action props", () => {
           ],
         },
       ],
+      new Map(),
       defaultBreakpointId
     )
   ).toEqual({
@@ -439,9 +435,9 @@ test("generate data for embedding from action props", () => {
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "state",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
@@ -488,6 +484,93 @@ test("generate data for embedding from action props", () => {
   });
 });
 
+test("generate styles from tokens", () => {
+  const presetTokens: WsComponentMeta["presetTokens"] = {
+    box: {
+      styles: [
+        {
+          property: "width",
+          value: { type: "keyword", value: "max-content" },
+        },
+        {
+          property: "height",
+          value: { type: "keyword", value: "max-content" },
+        },
+      ],
+    },
+    boxBright: {
+      styles: [
+        {
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+        {
+          property: "backgroundColor",
+          value: { type: "keyword", value: "pink" },
+        },
+      ],
+    },
+    boxNone: {
+      styles: [
+        {
+          property: "color",
+          value: { type: "keyword", value: "transparent" },
+        },
+        {
+          property: "backgroundColor",
+          value: { type: "keyword", value: "transparent" },
+        },
+      ],
+    },
+  };
+  const { styleSourceSelections, styleSources, styles } =
+    generateDataFromEmbedTemplate(
+      [
+        {
+          type: "instance",
+          component: "Box",
+          tokens: ["box", "boxBright"],
+          children: [],
+        },
+      ],
+      new Map([["Box", { type: "container", icon: "", presetTokens }]]),
+      defaultBreakpointId
+    );
+  expect(styleSources).toEqual([
+    { id: "Box:box", name: "Box", type: "token" },
+    { id: "Box:boxBright", name: "Box Bright", type: "token" },
+  ]);
+  expect(styleSourceSelections).toEqual([
+    { instanceId: expectString, values: ["Box:box", "Box:boxBright"] },
+  ]);
+  expect(styles).toEqual([
+    {
+      breakpointId: "base",
+      property: "width",
+      styleSourceId: "Box:box",
+      value: { type: "keyword", value: "max-content" },
+    },
+    {
+      breakpointId: "base",
+      property: "height",
+      styleSourceId: "Box:box",
+      value: { type: "keyword", value: "max-content" },
+    },
+    {
+      breakpointId: "base",
+      property: "color",
+      styleSourceId: "Box:boxBright",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      property: "backgroundColor",
+      styleSourceId: "Box:boxBright",
+      value: { type: "keyword", value: "pink" },
+    },
+  ]);
+});
+
 test("add namespace to selected components in embed template", () => {
   expect(
     namespaceMeta(
@@ -498,10 +581,16 @@ test("add namespace to selected components in embed template", () => {
         requiredAncestors: ["Button", "Box"],
         invalidAncestors: ["Tooltip"],
         indexWithinAncestor: "Tooltip",
+        presetTokens: {
+          base: { styles: [] },
+          small: { styles: [] },
+          large: { styles: [] },
+        },
         template: [
           {
             type: "instance",
             component: "Tooltip",
+            tokens: ["base", "small"],
             children: [
               { type: "text", value: "Some text" },
               {
@@ -529,10 +618,16 @@ test("add namespace to selected components in embed template", () => {
     requiredAncestors: ["my-namespace:Button", "Box"],
     invalidAncestors: ["my-namespace:Tooltip"],
     indexWithinAncestor: "my-namespace:Tooltip",
+    presetTokens: {
+      base: { styles: [] },
+      small: { styles: [] },
+      large: { styles: [] },
+    },
     template: [
       {
         type: "instance",
         component: "my-namespace:Tooltip",
+        tokens: ["base", "small"],
         children: [
           { type: "text", value: "Some text" },
           {

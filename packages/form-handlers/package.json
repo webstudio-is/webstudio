@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/form-handlers",
-  "version": "0.83.0",
+  "version": "0.120.0",
   "description": "Webstudio Form Handlers",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,28 +8,22 @@
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json"
   },
-  "dependencies": {
-    "@webstudio-is/project-build": "workspace:^"
-  },
   "devDependencies": {
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
-    "typescript": "5.1.6"
+    "@webstudio-is/tsconfig": "workspace:*"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
     "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "require": "./lib/index.js"
   },
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",
   "private": false,

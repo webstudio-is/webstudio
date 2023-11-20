@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import { createPortal } from "react-dom";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import {
   type Point,
@@ -9,6 +9,7 @@ import {
   useDrag,
   ComponentCard,
   toast,
+  useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
   instancesStore,
@@ -17,15 +18,12 @@ import {
   selectedPageStore,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import {
-  canvasRectStore,
-  isCanvasPointerEventsEnabledStore,
-  scaleStore,
-} from "~/builder/shared/nano-states";
+import { $canvasRect, scaleStore } from "~/builder/shared/nano-states";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
   getComponentTemplateData,
+  getInstanceLabel,
   insertTemplateData,
 } from "~/shared/instance-utils";
 import { MetaIcon } from "~/builder/shared/meta-icon";
@@ -54,7 +52,7 @@ const DragLayer = ({
       }}
     >
       <ComponentCard
-        label={meta.label}
+        label={getInstanceLabel({ component }, meta)}
         icon={<MetaIcon size="auto" icon={meta.icon} />}
         style={{
           transform: `translate3d(${point.x}px, ${point.y}px, 0)`,
@@ -127,8 +125,10 @@ export const useDraggable = ({
 }) => {
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
-  const canvasRect = useStore(canvasRectStore);
+  const canvasRect = useStore($canvasRect);
   const scale = useStore(scaleStore);
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
 
   const dragHandlers = useDrag<Instance["component"]>({
     elementToData(element) {
@@ -144,7 +144,7 @@ export const useDraggable = ({
           dragComponent: componentName,
         },
       });
-      isCanvasPointerEventsEnabledStore.set(false);
+      disableCanvasPointerEvents();
     },
     onMove: (point) => {
       setPoint(point);
@@ -161,7 +161,8 @@ export const useDraggable = ({
         type: "dragEnd",
         payload: { isCanceled },
       });
-      isCanvasPointerEventsEnabledStore.set(true);
+
+      enableCanvasPointerEvents();
     },
   });
 

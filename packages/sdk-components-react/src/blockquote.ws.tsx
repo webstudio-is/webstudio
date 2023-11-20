@@ -63,20 +63,15 @@ export const meta: WsComponentMeta = {
   category: "text",
   type: "container",
   label: "Blockquote",
+  description:
+    "Use to style a quote from an external source like an article or book.",
   icon: BlockquoteIcon,
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "Blockquote",
-      children: [{ type: "text", value: "Blockquote you can edit" }],
-    },
-  ],
   order: 3,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id"],
+  initialProps: ["id", "cite"],
 };

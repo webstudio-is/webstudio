@@ -7,7 +7,7 @@ import {
   DeprecatedPopoverPortal,
   styled,
 } from "@webstudio-is/design-system";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   CssValueInput,
   type IntermediateStyleValue,

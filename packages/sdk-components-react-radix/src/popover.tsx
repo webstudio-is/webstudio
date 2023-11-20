@@ -1,33 +1,21 @@
 /* eslint-disable react/display-name */
 // We can't use .displayName until this is merged https://github.com/styleguidist/react-docgen-typescript/pull/449
 
-import * as PopoverPrimitive from "@radix-ui/react-popover";
-
 import {
-  forwardRef,
-  type ElementRef,
   type ComponentPropsWithoutRef,
-  Children,
   type ReactNode,
+  forwardRef,
+  Children,
 } from "react";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
 
-/**
- * We don't have support for boolean or undefined nor in UI not at Data variables,
- * instead of binding on "open" prop we bind variable on a isOpen prop to be able to show Popover in the builder
- **/
-type BuilderPopoverProps = {
-  isOpen: "initial" | "open" | "closed";
-};
-
+// wrap in forwardRef because Root is functional component without ref
 export const Popover = forwardRef<
-  ElementRef<"div">,
-  ComponentPropsWithoutRef<typeof PopoverPrimitive.Root> & BuilderPopoverProps
->(({ open: openProp, isOpen, ...props }, ref) => {
-  const open =
-    openProp ??
-    (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
-
-  return <PopoverPrimitive.Root open={open} {...props} />;
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>, "defaultOpen">
+>((props, _ref) => {
+  return <PopoverPrimitive.Root {...props} />;
 });
 
 /**
@@ -37,7 +25,7 @@ export const Popover = forwardRef<
  * which would prevent us from displaying styles properly in the builder.
  */
 export const PopoverTrigger = forwardRef<
-  ElementRef<"button">,
+  HTMLButtonElement,
   { children: ReactNode }
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
@@ -50,7 +38,7 @@ export const PopoverTrigger = forwardRef<
 });
 
 export const PopoverContent = forwardRef<
-  ElementRef<typeof PopoverPrimitive.Content>,
+  HTMLDivElement,
   ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(
   (
@@ -68,3 +56,41 @@ export const PopoverContent = forwardRef<
     </PopoverPrimitive.Portal>
   )
 );
+
+/* BUILDER HOOKS */
+
+const namespace = "@webstudio-is/sdk-components-react-radix";
+
+// For each PopoverContent component within the selection,
+// we identify its closest parent Popover component
+// and update its open prop bound to variable.
+export const hooksPopover: Hook = {
+  onNavigatorUnselect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:PopoverContent`) {
+        const popover = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Popover`
+        );
+        if (popover) {
+          context.setPropVariable(popover.id, "open", false);
+        }
+      }
+    }
+  },
+  onNavigatorSelect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:PopoverContent`) {
+        const popover = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Popover`
+        );
+        if (popover) {
+          context.setPropVariable(popover.id, "open", true);
+        }
+      }
+    }
+  },
+};

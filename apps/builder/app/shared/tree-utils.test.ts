@@ -8,8 +8,8 @@ import type {
   Styles,
   StyleSource,
   StyleSourceSelection,
-} from "@webstudio-is/project-build";
-import { getStyleDeclKey } from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import { getStyleDeclKey } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import {
   type InstanceSelector,
@@ -867,7 +867,7 @@ test("insert props copy with new ids and apply new instance ids", () => {
   const clonedInstanceIds = new Map<Instance["id"], Instance["id"]>([
     ["instance2", "newInstance2"],
   ]);
-  insertPropsCopyMutable(props, copiedProps, clonedInstanceIds, new Map());
+  insertPropsCopyMutable(props, copiedProps, clonedInstanceIds);
   expect(Array.from(props.entries())).toEqual([
     ["prop1", createProp("prop1", "instance1")],
     ["prop2", createProp("prop2", "instance2")],

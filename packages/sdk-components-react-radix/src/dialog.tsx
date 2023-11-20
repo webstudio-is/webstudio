@@ -1,33 +1,22 @@
 /* eslint-disable react/display-name */
 // We can't use .displayName until this is merged https://github.com/styleguidist/react-docgen-typescript/pull/449
 
-import * as DialogPrimitive from "@radix-ui/react-dialog";
-
 import {
-  forwardRef,
-  type ElementRef,
   type ComponentPropsWithoutRef,
-  Children,
   type ReactNode,
+  forwardRef,
+  Children,
+  type ComponentProps,
 } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { getClosestInstance, type Hook } from "@webstudio-is/react-sdk";
 
-/**
- * We don't have support for boolean or undefined nor in UI not at Data variables,
- * instead of binding on "open" prop we bind variable on a isOpen prop to be able to show Dialog in the builder
- **/
-type BuilderDialogProps = {
-  isOpen: "initial" | "open" | "closed";
-};
-
+// wrap in forwardRef because Root is functional component without ref
 export const Dialog = forwardRef<
-  ElementRef<"div">,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Root> & BuilderDialogProps
->(({ open: openProp, isOpen, ...props }, ref) => {
-  const open =
-    openProp ??
-    (isOpen === "open" ? true : isOpen === "closed" ? false : undefined);
-
-  return <DialogPrimitive.Root open={open} {...props} />;
+  HTMLDivElement,
+  Omit<ComponentPropsWithoutRef<typeof DialogPrimitive.Root>, "defaultOpen">
+>((props, _ref) => {
+  return <DialogPrimitive.Root {...props} />;
 });
 
 /**
@@ -37,20 +26,20 @@ export const Dialog = forwardRef<
  * which would prevent us from displaying styles properly in the builder.
  */
 export const DialogTrigger = forwardRef<
-  ElementRef<"div">,
+  HTMLButtonElement,
   { children: ReactNode }
 >(({ children, ...props }, ref) => {
   const firstChild = Children.toArray(children)[0];
 
   return (
-    <DialogPrimitive.Trigger asChild={true} {...props}>
+    <DialogPrimitive.Trigger ref={ref} asChild={true} {...props}>
       {firstChild ?? <button>Add button or link</button>}
     </DialogPrimitive.Trigger>
   );
 });
 
 export const DialogOverlay = forwardRef<
-  ElementRef<"div">,
+  HTMLDivElement,
   ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >((props, ref) => {
   return (
@@ -62,5 +51,56 @@ export const DialogOverlay = forwardRef<
 
 export const DialogContent = DialogPrimitive.Content;
 export const DialogClose = DialogPrimitive.Close;
-export const DialogTitle = DialogPrimitive.Title;
+
+type Tag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+const defaultTag = "h1";
+export const DialogTitle = forwardRef<
+  HTMLHeadingElement,
+  ComponentProps<typeof DialogPrimitive.DialogTitle> & { tag?: Tag }
+>(({ tag: Tag = defaultTag, children, ...props }, ref) => (
+  <DialogPrimitive.DialogTitle asChild>
+    <Tag ref={ref} {...props}>
+      {children ?? "Heading title you can edit"}
+    </Tag>
+  </DialogPrimitive.DialogTitle>
+));
+
 export const DialogDescription = DialogPrimitive.Description;
+
+/* BUILDER HOOKS */
+
+const namespace = "@webstudio-is/sdk-components-react-radix";
+
+// For each DialogOverlay component within the selection,
+// we identify its closest parent Dialog component
+// and update its open prop bound to variable.
+export const hooksDialog: Hook = {
+  onNavigatorUnselect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:DialogOverlay`) {
+        const dialog = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Dialog`
+        );
+        if (dialog) {
+          context.setPropVariable(dialog.id, "open", false);
+        }
+      }
+    }
+  },
+  onNavigatorSelect: (context, event) => {
+    for (const instance of event.instancePath) {
+      if (instance.component === `${namespace}:DialogOverlay`) {
+        const dialog = getClosestInstance(
+          event.instancePath,
+          instance,
+          `${namespace}:Dialog`
+        );
+        if (dialog) {
+          context.setPropVariable(dialog.id, "open", true);
+        }
+      }
+    }
+  },
+};

@@ -1,25 +1,21 @@
 import { shallowEqual } from "shallow-equal";
 import { nanoid } from "nanoid";
-import store from "immerhin";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
+  Asset,
   Breakpoint,
   DataSource,
-  findTreeInstanceIds,
   Instance,
   Prop,
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
-  StyleSourceSelections,
-} from "@webstudio-is/project-build";
-import { Asset } from "@webstudio-is/asset-uploader";
+} from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   validateExpression,
   decodeDataSourceVariable,
-  computeExpressionsDependencies,
 } from "@webstudio-is/react-sdk";
 import {
   propsStore,
@@ -33,7 +29,6 @@ import {
   assetsStore,
   projectStore,
   registeredComponentMetasStore,
-  dataSourceValuesStore,
   dataSourcesStore,
 } from "../nano-states";
 import {
@@ -51,9 +46,10 @@ import {
   computeInstancesConstraints,
   deleteInstance,
   findClosestDroppableTarget,
+  getInstancesSlice,
   isInstanceDetachable,
 } from "../instance-utils";
-import { getMapValuesBy, getMapValuesByKeysSet } from "../array-utils";
+import { serverSyncStore } from "../sync";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -71,114 +67,6 @@ const InstanceData = z.object({
 
 type InstanceData = z.infer<typeof InstanceData>;
 
-const findTreeStyleSourceIds = (
-  styleSourceSelections: StyleSourceSelections,
-  treeInstanceIds: Set<Instance["id"]>
-) => {
-  const treeStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const { instanceId, values } of styleSourceSelections.values()) {
-    // skip selections outside of tree
-    if (treeInstanceIds.has(instanceId) === false) {
-      continue;
-    }
-    for (const styleSourceId of values) {
-      treeStyleSourceIds.add(styleSourceId);
-    }
-  }
-  return treeStyleSourceIds;
-};
-
-const getAssetsUsedInStyle = (
-  style: StyleDecl[],
-  foundAssetsIds = new Set<Asset["id"]>()
-) => {
-  const fontFamilies = new Set<string>();
-
-  const processValues = (values: StyleDecl["value"][]) => {
-    for (const value of values) {
-      if (value.type === "fontFamily") {
-        for (const fontFamily of value.value) {
-          fontFamilies.add(fontFamily);
-        }
-        continue;
-      }
-      if (value.type === "image") {
-        if (value.value.type === "asset") {
-          foundAssetsIds.add(value.value.value);
-        }
-        continue;
-      }
-      if (value.type === "var") {
-        processValues(value.fallbacks);
-        continue;
-      }
-      if (value.type === "tuple" || value.type === "layers") {
-        processValues(value.value);
-        continue;
-      }
-      if (
-        value.type === "unit" ||
-        value.type === "keyword" ||
-        value.type === "unparsed" ||
-        value.type === "invalid" ||
-        value.type === "unset" ||
-        value.type === "rgb"
-      ) {
-        continue;
-      }
-      value satisfies never;
-    }
-  };
-
-  processValues(style.map(({ value }) => value));
-
-  for (const asset of assetsStore.get().values()) {
-    if (asset?.type === "font" && fontFamilies.has(asset.meta.family)) {
-      foundAssetsIds.add(asset.id);
-    }
-  }
-
-  return foundAssetsIds;
-};
-
-const getAssetsUsedInProps = (props: Prop[], foundAssetsIds = new Set()) => {
-  for (const prop of props) {
-    if (prop.type === "asset") {
-      foundAssetsIds.add(prop.value);
-      continue;
-    }
-    if (
-      prop.type === "number" ||
-      prop.type === "string" ||
-      prop.type === "boolean" ||
-      prop.type === "page" ||
-      prop.type === "string[]" ||
-      prop.type === "dataSource" ||
-      prop.type === "action"
-    ) {
-      continue;
-    }
-    prop satisfies never;
-  }
-  return foundAssetsIds;
-};
-
-const getPropTypeAndValue = (value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  if (Array.isArray(value)) {
-    return { type: "string[]", value } as const;
-  }
-  throw Error(`Unexpected prop value ${value}`);
-};
-
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   if (isInstanceDetachable(targetInstanceSelector) === false) {
     toast.error(
@@ -193,165 +81,10 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
   }
 
   const [targetInstanceId] = targetInstanceSelector;
-  const instances = instancesStore.get();
-  const treeInstanceIds = findTreeInstanceIds(instances, targetInstanceId);
-  const styleSourceSelections = styleSourceSelectionsStore.get();
-  const treeStyleSourceIds = findTreeStyleSourceIds(
-    styleSourceSelections,
-    treeInstanceIds
-  );
-
-  // first item is guaranteed root of copied tree
-  const treeInstances = getMapValuesByKeysSet(instances, treeInstanceIds);
-
-  const dataSources = dataSourcesStore.get();
-  const expressions = new Map<string, string>();
-  for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "expression") {
-      expressions.set(encodeDataSourceVariable(dataSource.id), dataSource.code);
-    }
-  }
-  const dependencies = computeExpressionsDependencies(expressions);
-
-  const treeDataSources = getMapValuesBy(dataSources, (dataSource) => {
-    if (dataSource.type === "expression") {
-      const expressionDeps = dependencies.get(
-        encodeDataSourceVariable(dataSource.id)
-      );
-      if (expressionDeps) {
-        for (const dependency of expressionDeps) {
-          const dataSourceId = decodeDataSourceVariable(dependency);
-          if (dataSourceId === undefined) {
-            continue;
-          }
-          const dataSource = dataSources.get(dataSourceId);
-          if (dataSource === undefined) {
-            continue;
-          }
-          if (
-            dataSource.scopeInstanceId === undefined ||
-            treeInstanceIds.has(dataSource.scopeInstanceId) === false
-          ) {
-            return false;
-          }
-        }
-      }
-    }
-    return (
-      dataSource.scopeInstanceId !== undefined &&
-      treeInstanceIds.has(dataSource.scopeInstanceId)
-    );
-  });
-  const treeDataSourceIds = new Set(
-    treeDataSources.map((dataSource) => dataSource.id)
-  );
-
-  const dataSourceValues = dataSourceValuesStore.get();
-  const treeProps = getMapValuesBy(propsStore.get(), (prop) =>
-    treeInstanceIds.has(prop.instanceId)
-  ).map((prop) => {
-    if (prop.type === "dataSource") {
-      const dataSourceId = prop.value;
-      // copy data source if scoped to one of copied instances
-      if (treeDataSourceIds.has(dataSourceId)) {
-        return prop;
-      }
-      // convert data source prop to typed prop
-      // when data source is not scoped to one of copied instances
-      const value = dataSourceValues.get(dataSourceId);
-      return {
-        id: prop.id,
-        instanceId: prop.instanceId,
-        name: prop.name,
-        ...getPropTypeAndValue(value),
-      } satisfies Prop;
-    }
-    if (prop.type === "action") {
-      return {
-        ...prop,
-        value: prop.value.flatMap((value) => {
-          if (value.type !== "execute") {
-            return [value];
-          }
-          let shouldKeepAction = true;
-          validateExpression(value.code, {
-            effectful: true,
-            transformIdentifier: (identifier) => {
-              if (value.args.includes(identifier)) {
-                return identifier;
-              }
-              const id = decodeDataSourceVariable(identifier);
-              if (id === undefined) {
-                return identifier;
-              }
-              if (treeDataSourceIds.has(id) === false) {
-                shouldKeepAction = false;
-                return identifier;
-              }
-              const identifierDeps = dependencies.get(id);
-              if (identifierDeps) {
-                for (const dependency of identifierDeps) {
-                  const id = decodeDataSourceVariable(dependency);
-                  if (id === undefined) {
-                    continue;
-                  }
-                  if (treeDataSourceIds.has(id) === false) {
-                    shouldKeepAction = false;
-                    return identifier;
-                  }
-                }
-              }
-              return identifier;
-            },
-          });
-          if (shouldKeepAction) {
-            return [value];
-          }
-          return [];
-        }),
-      };
-    }
-    return prop;
-  });
-
-  const treeStyleSourceSelections = getMapValuesByKeysSet(
-    styleSourceSelections,
-    treeInstanceIds
-  );
-
-  const treeStyleSources = getMapValuesByKeysSet(
-    styleSourcesStore.get(),
-    treeStyleSourceIds
-  );
-
-  const treeStyles = getMapValuesBy(stylesStore.get(), (styleDecl) =>
-    treeStyleSourceIds.has(styleDecl.styleSourceId)
-  );
-
-  const treeBreapointIds = new Set<Breakpoint["id"]>();
-  for (const styleDecl of treeStyles) {
-    treeBreapointIds.add(styleDecl.breakpointId);
-  }
-  const treeBreapoints = getMapValuesByKeysSet(
-    breakpointsStore.get(),
-    treeBreapointIds
-  );
-
-  const treeAssets = getMapValuesByKeysSet(
-    assetsStore.get(),
-    getAssetsUsedInProps(treeProps, getAssetsUsedInStyle(treeStyles))
-  );
 
   return {
     instanceSelector: targetInstanceSelector,
-    breakpoints: treeBreapoints,
-    instances: treeInstances,
-    styleSources: treeStyleSources,
-    dataSources: treeDataSources,
-    props: treeProps,
-    styleSourceSelections: treeStyleSourceSelections,
-    styles: treeStyles,
-    assets: treeAssets,
+    ...getInstancesSlice(targetInstanceId),
   };
 };
 
@@ -426,7 +159,7 @@ export const onPaste = (clipboardData: string): boolean => {
   }
   const dropTarget = potentialDropTarget;
 
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [
       breakpointsStore,
       instancesStore,
@@ -468,16 +201,34 @@ export const onPaste = (clipboardData: string): boolean => {
         dropTarget
       );
 
+      // duplicate data sources only within copied tree
       const copiedDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+      const copiedDataSources = new Map<DataSource["id"], DataSource>();
       for (const dataSource of data.dataSources) {
-        copiedDataSourceIds.set(dataSource.id, nanoid());
+        const { scopeInstanceId } = dataSource;
+        if (
+          scopeInstanceId !== undefined &&
+          copiedInstanceIds.has(scopeInstanceId)
+        ) {
+          copiedDataSourceIds.set(dataSource.id, nanoid());
+        }
+        copiedDataSources.set(dataSource.id, dataSource);
       }
 
       for (const dataSource of data.dataSources) {
         let { scopeInstanceId } = dataSource;
-        if (scopeInstanceId !== undefined) {
-          scopeInstanceId = copiedInstanceIds.get(scopeInstanceId);
+        if (scopeInstanceId === undefined) {
+          continue;
         }
+        // reject data sources outside of copied tree and not scoped to ancestors
+        if (
+          copiedInstanceIds.has(scopeInstanceId) === false &&
+          instanceSelector.includes(scopeInstanceId) === false
+        ) {
+          continue;
+        }
+        scopeInstanceId = copiedInstanceIds.get(scopeInstanceId);
+
         const newId = copiedDataSourceIds.get(dataSource.id);
         if (newId === undefined) {
           continue;
@@ -487,26 +238,6 @@ export const onPaste = (clipboardData: string): boolean => {
             ...dataSource,
             id: newId,
             scopeInstanceId,
-          });
-        }
-        if (dataSource.type === "expression") {
-          dataSources.set(newId, {
-            ...dataSource,
-            id: newId,
-            scopeInstanceId,
-            code: validateExpression(dataSource.code, {
-              transformIdentifier: (id) => {
-                const dataSourceId = decodeDataSourceVariable(id);
-                if (dataSourceId === undefined) {
-                  return id;
-                }
-                const newId = copiedDataSourceIds.get(dataSourceId);
-                if (newId === undefined) {
-                  return id;
-                }
-                return encodeDataSourceVariable(newId);
-              },
-            }),
           });
         }
       }
@@ -526,38 +257,73 @@ export const onPaste = (clipboardData: string): boolean => {
       insertPropsCopyMutable(
         props,
         data.props.map((prop) => {
-          if (prop.type === "action") {
+          let actionDiscarded = false;
+          const transformIdentifier = (
+            identifier: string,
+            assignee: boolean
+          ) => {
+            const dataSourceId = decodeDataSourceVariable(identifier);
+            if (dataSourceId === undefined) {
+              return identifier;
+            }
+            // data source is within copied tree
+            const newId = copiedDataSourceIds.get(dataSourceId);
+            if (newId !== undefined) {
+              return encodeDataSourceVariable(newId);
+            }
+            const dataSource = copiedDataSources.get(dataSourceId);
+            // data source is within paste target
+            if (
+              dataSource?.scopeInstanceId !== undefined &&
+              instanceSelector.includes(dataSource.scopeInstanceId)
+            ) {
+              return identifier;
+            }
+            // left operand of assign operator cannot be inlined
+            if (assignee) {
+              actionDiscarded = true;
+            }
+            // inline variable not scoped to copied tree or paste target
+            if (dataSource?.type === "variable") {
+              return JSON.stringify(dataSource.value.value);
+            }
+            return identifier;
+          };
+
+          if (prop.type === "expression") {
             return {
               ...prop,
-              value: prop.value.map((value) => {
-                if (value.type !== "execute") {
-                  return value;
-                }
-                return {
-                  ...value,
-                  code: validateExpression(value.code, {
-                    effectful: true,
-                    transformIdentifier: (id) => {
-                      const dataSourceId = decodeDataSourceVariable(id);
-                      if (dataSourceId === undefined) {
-                        return id;
-                      }
-                      const newId = copiedDataSourceIds.get(dataSourceId);
-                      if (newId === undefined) {
-                        return id;
-                      }
-                      return encodeDataSourceVariable(newId);
-                    },
-                  }),
-                };
+              value: validateExpression(prop.value, {
+                transformIdentifier,
               }),
             };
           }
+
+          if (prop.type === "action") {
+            return {
+              ...prop,
+              value: prop.value.flatMap((value) => {
+                if (value.type !== "execute") {
+                  return [value];
+                }
+                actionDiscarded = false;
+                const newCode = validateExpression(value.code, {
+                  effectful: true,
+                  transformIdentifier,
+                });
+                if (actionDiscarded) {
+                  return [];
+                }
+                return [{ ...value, code: newCode }];
+              }),
+            };
+          }
+
           return prop;
         }),
-        copiedInstanceIds,
-        copiedDataSourceIds
+        copiedInstanceIds
       );
+
       insertStyleSourceSelectionsCopyMutable(
         styleSourceSelections,
         data.styleSourceSelections,

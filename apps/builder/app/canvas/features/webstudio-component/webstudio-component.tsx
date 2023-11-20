@@ -1,35 +1,34 @@
 import {
-  type MouseEvent,
-  type FormEvent,
   useEffect,
   forwardRef,
   type ForwardedRef,
   useRef,
   useLayoutEffect,
+  useMemo,
 } from "react";
 import { Suspense, lazy } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import store from "immerhin";
+import { mergeRefs } from "@react-aria/utils";
+import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
+import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
-  type Instance,
-  findTreeInstanceIds,
-  Instances,
-} from "@webstudio-is/project-build";
-import {
-  type Components,
-  renderWebstudioComponentChildren,
+  type WebstudioComponentProps,
   idAttribute,
   componentAttribute,
   showAttribute,
-  useInstanceProps,
   selectorIdAttribute,
+  indexAttribute,
+  getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import {
+  $propValuesByInstanceSelector,
   instancesStore,
-  isPreviewModeStore,
+  registeredComponentMetasStore,
   selectedInstanceRenderStateStore,
   selectedInstanceSelectorStore,
+  selectedPageStore,
   selectedStyleSourceSelectorStore,
   useInstanceStyles,
 } from "~/shared/nano-states";
@@ -39,11 +38,9 @@ import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
 } from "~/shared/tree-utils";
-import { handleLinkClick } from "./link";
-import { mergeRefs } from "@react-aria/utils";
-import { composeEventHandlers } from "@radix-ui/primitive";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
+import { serverSyncStore } from "~/shared/sync";
 
 const TextEditor = lazy(() => import("../text-editor"));
 
@@ -72,10 +69,17 @@ const ContentEditable = ({
       return;
     }
 
-    if (rootElement?.tagName === "BUTTON") {
+    if (rootElement?.tagName === "BUTTON" || rootElement.tagName === "A") {
+      // <button> with contentEditable does not let to press space
+      // <a> stops working with inline-flex when only 1 character left
+      // so add span inside and use it as editor element in lexical
       const span = document.createElement("span");
-      span.contentEditable = "true";
+      for (const child of rootElement.childNodes) {
+        rootElement.removeChild(child);
+        span.appendChild(child);
+      }
       rootElement.appendChild(span);
+
       rootElement = span;
     }
     if (rootElement) {
@@ -119,29 +123,42 @@ const getInstanceSelector = (
   return undefined;
 };
 
-type WebstudioComponentDevProps = {
-  instance: Instance;
-  instanceSelector: InstanceSelector;
-  children: Array<JSX.Element | string>;
-  components: Components;
-};
+const $indexesWithinAncestors = computed(
+  [registeredComponentMetasStore, instancesStore, selectedPageStore],
+  (metas, instances, page) => {
+    return getIndexesWithinAncestors(
+      metas,
+      instances,
+      page ? [page.rootInstanceId] : []
+    );
+  }
+);
 
-/**
- * For some components that are wrapped with Radix Slot-like components (Triggers etc where asChild=true),
- * Slots in react-aria https://react-spectrum.adobe.com/react-spectrum/layout.html#slots
- * events are passed implicitly. We aim to merge these implicit events with the explicitly defined ones.
- **/
-type ImplicitEvents = {
-  onClick?: undefined | ((event: never) => void);
-  onSubmit?: undefined | ((event: never) => void);
-  /**
-   * We ignore the remaining events because we currently detect events using the 'on' prefix.
-   * This approach (defining type like above instead of Partial<Record<`on${string}`, Handler>>)
-   * is necessary due to our TypeScript settings, where 'no exactOptionalPropertyTypes' is set,
-   * which makes it impossible to define a Partial<Record<>> with optional keys.
-   *  (without exactOptionalPropertyTypes ts defines it as {[key: string]: Handler | undefined)}
-   *   instead of {[key: string]?: Handler | undefined)})
-   **/
+const useInstanceProps = (instanceSelector: InstanceSelector) => {
+  const instanceSelectorKey = JSON.stringify(instanceSelector);
+  const [instanceId] = instanceSelector;
+  const instancePropsObjectStore = useMemo(() => {
+    return computed(
+      [$propValuesByInstanceSelector, $indexesWithinAncestors],
+      (propValuesByInstanceSelector, indexesWithinAncestors) => {
+        const instancePropsObject: Record<Prop["name"], unknown> = {};
+        const index = indexesWithinAncestors.get(instanceId);
+        if (index !== undefined) {
+          instancePropsObject[indexAttribute] = index.toString();
+        }
+        const instanceProps =
+          propValuesByInstanceSelector.get(instanceSelectorKey);
+        if (instanceProps) {
+          for (const [name, value] of instanceProps) {
+            instancePropsObject[name] = value;
+          }
+        }
+        return instancePropsObject;
+      }
+    );
+  }, [instanceSelectorKey, instanceId]);
+  const instancePropsObject = useStore(instancePropsObjectStore);
+  return instancePropsObject;
 };
 
 const existingElements = new Set<string>();
@@ -162,11 +179,53 @@ const useCollapsedOnNewElement = (instanceId: Instance["id"]) => {
   }, [instanceId]);
 };
 
+/**
+ * We combine Radix's implicit event handlers with user-defined ones,
+ * such as onClick or onSubmit. For instance, a Button within
+ * a TooltipTrigger receives an onClick handler from the TooltipTrigger.
+ * We might also need an additional onClick handler on the Button for other
+ * purposes (setting variable).
+ **/
+const mergeProps = (
+  // here we assume all on* props are callbacks
+  // cast to avoid extra checks
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  restProps: Record<string, any>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  instanceProps: Record<string, any>,
+  callbackStrategy: "merge" | "delete"
+) => {
+  // merge props into single object
+  const props = { ...restProps, ...instanceProps };
+  for (const propName of Object.keys(props)) {
+    const restPropValue = restProps[propName];
+    const instancePropValue = instanceProps[propName];
+
+    const isHandler = /^on[A-Z]/.test(propName);
+    if (isHandler === false) {
+      continue;
+    }
+    // combine handlers for preview
+    if (callbackStrategy === "merge") {
+      props[propName] = (...args: unknown[]) => {
+        restPropValue?.(...args);
+        instancePropValue?.(...args);
+      };
+    }
+    // delete all handlers from canvas mode
+    if (callbackStrategy === "delete") {
+      delete props[propName];
+    }
+  }
+  return props;
+};
+
 // eslint-disable-next-line react/display-name
-export const WebstudioComponentDev = forwardRef<
+export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
-  WebstudioComponentDevProps & ImplicitEvents
+  WebstudioComponentProps
 >(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+  const rootRef = useRef<null | HTMLDivElement>(null);
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
@@ -176,19 +235,15 @@ export const WebstudioComponentDev = forwardRef<
     textEditingInstanceSelectorStore
   );
 
-  const instanceProps = useInstanceProps(instance.id);
-  const { [showAttribute]: show = true, ...userProps } = instanceProps;
-
-  const isPreviewMode = useStore(isPreviewModeStore);
+  const { [showAttribute]: show = true, ...instanceProps } =
+    useInstanceProps(instanceSelector);
 
   /**
    * Prevents edited element from having a size of 0 on the first render.
-   * Directly using `renderWebstudioComponentChildren(children)` in Text Edit
+   * Directly using `children` in Text Edit
    * conflicts with React due to lexical node changes.
    */
-  const initialContentEditableContent = useRef(
-    renderWebstudioComponentChildren(children)
-  );
+  const initialContentEditableContent = useRef(children);
 
   useCollapsedOnNewElement(instanceId);
 
@@ -206,12 +261,6 @@ export const WebstudioComponentDev = forwardRef<
     }
   });
 
-  const readonlyProps =
-    isPreviewMode === false &&
-    (instance.component === "Input" || instance.component === "Textarea")
-      ? { readOnly: true }
-      : undefined;
-
   const Component = components.get(instance.component);
 
   if (show === false) {
@@ -222,65 +271,23 @@ export const WebstudioComponentDev = forwardRef<
     return <></>;
   }
 
-  const props = {
-    ...userProps,
-    ...readonlyProps,
+  const props: {
+    [componentAttribute]: string;
+    [idAttribute]: string;
+  } & Record<string, unknown> = {
+    ...mergeProps(restProps, instanceProps, "delete"),
+    // current props should override bypassed from parent
+    // important for data-ws-* props
     tabIndex: 0,
-    onClick: (event: MouseEvent) => {
-      if (event.currentTarget instanceof HTMLAnchorElement) {
-        // @todo use Navigation API once implemented everywhere
-        // https://developer.mozilla.org/en-US/docs/Web/API/Navigation_API
-        handleLinkClick(event);
-        event.preventDefault();
-      } else if (typeof userProps.onClick === "function") {
-        // bypass onClick for non-link component, for example button
-        userProps.onClick(event);
-      }
-    },
-    onSubmit: (event: FormEvent) => {
-      // Prevent submitting the form when clicking a button type submit
-      event.preventDefault();
-      if (typeof userProps.onSubmit === "function") {
-        // bypass handler
-        userProps.onSubmit(event);
-      }
-    },
+    [selectorIdAttribute]: instanceSelector.join(","),
     [componentAttribute]: instance.component,
     [idAttribute]: instance.id,
-    [selectorIdAttribute]: instanceSelector.join(","),
   };
-
-  const composedHandlers: ImplicitEvents = {};
-
-  /**
-   * We combine Radix's implicit event handlers with user-defined ones, such as onClick or onSubmit.
-   * For instance, a Button within a TooltipTrigger receives
-   * an onClick handler from the TooltipTrigger.
-   * We might also need an additional onClick handler on the Button for other purposes (setting variable).
-   **/
-  for (const [key, value] of Object.entries(restProps)) {
-    const propHandler = props[key as keyof typeof props];
-    if (
-      key.startsWith("on") &&
-      propHandler !== undefined &&
-      typeof propHandler === "function"
-    ) {
-      composedHandlers[key as keyof ImplicitEvents] = composeEventHandlers(
-        value,
-        propHandler
-      );
-    }
-  }
-
-  // Do not pass Radix handlers in edit mode
-  const componentProps = isPreviewMode
-    ? { ...restProps, ...props, ...composedHandlers }
-    : props;
 
   const instanceElement = (
     <>
-      <Component {...componentProps} ref={ref}>
-        {renderWebstudioComponentChildren(children)}
+      <Component {...props} ref={mergeRefs(ref, rootRef)}>
+        {children}
       </Component>
     </>
   );
@@ -289,27 +296,27 @@ export const WebstudioComponentDev = forwardRef<
     areInstanceSelectorsEqual(textEditingInstanceSelector, instanceSelector) ===
     false
   ) {
-    initialContentEditableContent.current =
-      renderWebstudioComponentChildren(children);
+    initialContentEditableContent.current = children;
     return instanceElement;
   }
 
   return (
     <Suspense fallback={instanceElement}>
       <TextEditor
+        rootRef={rootRef}
         rootInstanceSelector={instanceSelector}
         instances={instances}
         contentEditable={
           <ContentEditable
             renderComponentWithRef={(elementRef) => (
-              <Component {...componentProps} ref={mergeRefs(ref, elementRef)}>
+              <Component {...props} ref={mergeRefs(ref, elementRef, rootRef)}>
                 {initialContentEditableContent.current}
               </Component>
             )}
           />
         }
         onChange={(instancesList) => {
-          store.createTransaction([instancesStore], (instances) => {
+          serverSyncStore.createTransaction([instancesStore], (instances) => {
             const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
             for (const updatedInstance of instancesList) {
               instances.set(updatedInstance.id, updatedInstance);
@@ -334,5 +341,33 @@ export const WebstudioComponentDev = forwardRef<
         }}
       />
     </Suspense>
+  );
+});
+
+// eslint-disable-next-line react/display-name
+export const WebstudioComponentPreview = forwardRef<
+  HTMLElement,
+  WebstudioComponentProps
+>(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+  const instanceStyles = useInstanceStyles(instance.id);
+  useCssRules({ instanceId: instance.id, instanceStyles });
+  const { [showAttribute]: show = true, ...instanceProps } =
+    useInstanceProps(instanceSelector);
+  const props = {
+    ...mergeProps(restProps, instanceProps, "merge"),
+    [idAttribute]: instance.id,
+    [componentAttribute]: instance.component,
+  };
+  if (show === false) {
+    return <></>;
+  }
+  const Component = components.get(instance.component);
+  if (Component === undefined) {
+    return <></>;
+  }
+  return (
+    <Component {...props} ref={ref}>
+      {children}
+    </Component>
   );
 });

@@ -1,111 +1,86 @@
 import jsep from "jsep";
 import jsepAssignment from "@jsep-plugin/assignment";
+import jsepObject from "@jsep-plugin/object";
 import type {
   UpdateExpression,
   AssignmentExpression,
 } from "@jsep-plugin/assignment";
+import type { ObjectExpression, Property } from "@jsep-plugin/object";
+import type { DataSources, Props, Scope } from "@webstudio-is/sdk";
 
 jsep.plugins.register(jsepAssignment);
+jsep.plugins.register(jsepObject);
 
 type TransformIdentifier = (id: string, assignee: boolean) => string;
 
-type Node = jsep.CoreExpression | UpdateExpression | AssignmentExpression;
+type Node =
+  | jsep.CoreExpression
+  | UpdateExpression
+  | AssignmentExpression
+  | ObjectExpression
+  | Property;
 
 const generateCode = (
   node: Node,
   failOnForbidden: boolean,
-  effectful: boolean,
-  transformIdentifier: TransformIdentifier
+  options: {
+    effectful: boolean;
+    optional: boolean;
+    transformIdentifier: TransformIdentifier;
+  }
 ): string => {
   if (node.type === "Identifier") {
-    return transformIdentifier(node.name, false);
+    return options.transformIdentifier(node.name, false);
   }
   if (node.type === "MemberExpression") {
-    if (failOnForbidden) {
-      const object = generateCode(
-        node.object as Node,
-        false,
-        effectful,
-        transformIdentifier
-      );
-      const property = generateCode(
-        node.property as Node,
-        false,
-        effectful,
-        transformIdentifier
-      );
-      throw Error(`Cannot access "${property}" of "${object}"`);
+    const object = generateCode(node.object as Node, failOnForbidden, options);
+    const property = node.property as Node;
+    let propertyString: string;
+    // prevent transforming identifiers from member expressions like "b" in "a.b"
+    if (property.type === "Identifier" && node.computed === false) {
+      propertyString = property.name;
+    } else {
+      propertyString = generateCode(property, failOnForbidden, options);
     }
-    const object = generateCode(
-      node.object as Node,
-      failOnForbidden,
-      effectful,
-      transformIdentifier
-    );
-    const property = generateCode(
-      node.property as Node,
-      failOnForbidden,
-      effectful,
-      transformIdentifier
-    );
-    return `${object}.${property}`;
+    if (node.computed) {
+      if (options.optional) {
+        return `${object}?.[${propertyString}]`;
+      } else {
+        return `${object}[${propertyString}]`;
+      }
+    }
+    if (options.optional) {
+      return `${object}?.${propertyString}`;
+    } else {
+      return `${object}.${propertyString}`;
+    }
   }
   if (node.type === "Literal") {
     return node.raw;
   }
   if (node.type === "UnaryExpression") {
-    const arg = generateCode(
-      node.argument as Node,
-      failOnForbidden,
-      effectful,
-      transformIdentifier
-    );
+    const arg = generateCode(node.argument as Node, failOnForbidden, options);
     return `${node.operator}${arg}`;
   }
   if (node.type === "BinaryExpression") {
-    const left = generateCode(
-      node.left as Node,
-      failOnForbidden,
-      effectful,
-      transformIdentifier
-    );
-    const right = generateCode(
-      node.right as Node,
-      failOnForbidden,
-      effectful,
-      transformIdentifier
-    );
+    const left = generateCode(node.left as Node, failOnForbidden, options);
+    const right = generateCode(node.right as Node, failOnForbidden, options);
     return `${left} ${node.operator} ${right}`;
   }
   if (node.type === "ArrayExpression") {
     const elements = node.elements.map((element) =>
-      generateCode(
-        element as Node,
-        failOnForbidden,
-        effectful,
-        transformIdentifier
-      )
+      generateCode(element as Node, failOnForbidden, options)
     );
     return `[${elements.join(", ")}]`;
   }
   if (node.type === "CallExpression") {
     if (failOnForbidden) {
-      const callee = generateCode(
-        node.callee as Node,
-        false,
-        effectful,
-        transformIdentifier
-      );
+      const callee = generateCode(node.callee as Node, false, options);
       throw Error(`Cannot call "${callee}"`);
     }
-    const callee = generateCode(
-      node.callee as Node,
-      failOnForbidden,
-      effectful,
-      transformIdentifier
-    );
+    const callee = generateCode(node.callee as Node, failOnForbidden, options);
     const args = node.arguments.map((arg) =>
-      generateCode(arg as Node, failOnForbidden, effectful, transformIdentifier)
+      generateCode(arg as Node, failOnForbidden, options)
     );
     return `${callee}(${args.join(", ")})`;
   }
@@ -125,26 +100,39 @@ const generateCode = (
     if (node.operator !== "=") {
       throw Error(`Only "=" assignment operator is supported`);
     }
-    if (effectful === false) {
+    if (options.effectful === false) {
       throw Error(`Cannot use assignment in this expression`);
     }
-    const left = generateCode(
-      node.left as Node,
-      failOnForbidden,
-      effectful,
+    const left = generateCode(node.left as Node, failOnForbidden, {
+      ...options,
       // override and mark all identifiers inside of left expression as assignee
-      (id) => transformIdentifier(id, true)
-    );
-    const right = generateCode(
-      node.right as Node,
-      failOnForbidden,
-      effectful,
-      transformIdentifier
-    );
+      transformIdentifier: (id) => options.transformIdentifier(id, true),
+    });
+    const right = generateCode(node.right as Node, failOnForbidden, options);
     return `${left} ${node.operator} ${right}`;
   }
   if (node.type === "UpdateExpression") {
     throw Error(`"${node.operator}" operator is not supported`);
+  }
+  if (node.type === "ObjectExpression") {
+    const properties = node.properties.map((property) =>
+      generateCode(property, failOnForbidden, options)
+    );
+    return `{${properties.join(", ")}}`;
+  }
+  if (node.type === "Property") {
+    const key = node.key as Node;
+    let keyString: string;
+    if (key.type === "Identifier" && node.computed === false) {
+      keyString = key.name;
+    } else {
+      keyString = generateCode(key, failOnForbidden, options);
+    }
+    const value = generateCode(node.value as Node, failOnForbidden, options);
+    if (node.computed) {
+      return `[${keyString}]: ${value}`;
+    }
+    return `${keyString}: ${value}`;
   }
   node satisfies never;
   return "";
@@ -152,215 +140,31 @@ const generateCode = (
 
 export const validateExpression = (
   code: string,
-  options?: { effectful?: boolean; transformIdentifier?: TransformIdentifier }
+  options?: {
+    /**
+     * Enable assignment operator for actions
+     */
+    effectful?: boolean;
+    /**
+     * Add optional chaining to access nested properties safely
+     * and without checks even when not exist
+     */
+    optional?: boolean;
+    transformIdentifier?: TransformIdentifier;
+  }
 ) => {
-  const { effectful = false, transformIdentifier = (id: string) => id } =
-    options ?? {};
+  const {
+    effectful = false,
+    optional = false,
+    transformIdentifier = (id: string) => id,
+  } = options ?? {};
   const expression = jsep(code) as Node;
-  return generateCode(expression, true, effectful, transformIdentifier);
-};
-
-const sortTopologically = (
-  list: Set<string>,
-  depsById: Map<string, Set<string>>,
-  explored = new Set<string>(),
-  sorted: string[] = []
-) => {
-  for (const id of list) {
-    if (explored.has(id)) {
-      continue;
-    }
-    explored.add(id);
-    const deps = depsById.get(id);
-    if (deps) {
-      sortTopologically(deps, depsById, explored, sorted);
-    }
-    sorted.push(id);
-  }
-  return sorted;
-};
-
-/**
- * Generates a function body expecting map as _variables argument
- * and outputing map of results
- */
-export const generateComputingExpressions = (
-  expressions: Map<string, string>,
-  allowedVariables: Set<string>
-) => {
-  const depsById = new Map<string, Set<string>>();
-  const inputVariables = new Set<string>();
-  for (const [id, code] of expressions) {
-    const deps = new Set<string>();
-    validateExpression(code, {
-      transformIdentifier: (identifier) => {
-        if (allowedVariables.has(identifier)) {
-          inputVariables.add(identifier);
-          return identifier;
-        }
-        if (expressions.has(identifier)) {
-          deps.add(identifier);
-          return identifier;
-        }
-        throw Error(`Unknown dependency "${identifier}"`);
-      },
-    });
-    depsById.set(id, deps);
-  }
-
-  const sortedExpressions = sortTopologically(
-    new Set(expressions.keys()),
-    depsById
-  );
-
-  // generate code computing all expressions
-  let generatedCode = "";
-
-  for (const id of inputVariables) {
-    generatedCode += `const ${id} = _variables.get('${id}');\n`;
-  }
-
-  for (const id of sortedExpressions) {
-    const code = expressions.get(id);
-    if (code === undefined) {
-      continue;
-    }
-    generatedCode += `const ${id} = (${code});\n`;
-  }
-
-  generatedCode += `return new Map([\n`;
-  for (const id of sortedExpressions) {
-    generatedCode += `  ['${id}', ${id}],\n`;
-  }
-  generatedCode += `]);`;
-
-  return generatedCode;
-};
-
-export const executeComputingExpressions = (
-  expressions: Map<string, string>,
-  variables: Map<string, unknown>
-) => {
-  const generatedCode = generateComputingExpressions(
-    expressions,
-    new Set(variables.keys())
-  );
-  const executeFn = new Function("_variables", generatedCode);
-  const values = executeFn(variables) as Map<string, unknown>;
-  return values;
-};
-
-export const generateEffectfulExpression = (
-  code: string,
-  args: Set<string>,
-  allowedVariables: Set<string>
-) => {
-  const inputVariables = new Set<string>();
-  const outputVariables = new Set<string>();
-  validateExpression(code, {
-    effectful: true,
-    transformIdentifier: (identifier, assignee) => {
-      if (args.has(identifier)) {
-        return identifier;
-      }
-      if (allowedVariables.has(identifier)) {
-        if (assignee) {
-          outputVariables.add(identifier);
-        } else {
-          inputVariables.add(identifier);
-        }
-        return identifier;
-      }
-      throw Error(`Unknown dependency "${identifier}"`);
-    },
+  return generateCode(expression, true, {
+    effectful,
+    optional,
+    transformIdentifier,
   });
-
-  // generate code computing all expressions
-  let generatedCode = "";
-
-  for (const id of args) {
-    generatedCode += `let ${id} = _args.get('${id}');\n`;
-  }
-  for (const id of inputVariables) {
-    generatedCode += `let ${id} = _variables.get('${id}');\n`;
-  }
-  for (const id of outputVariables) {
-    if (inputVariables.has(id) === false) {
-      generatedCode += `let ${id};\n`;
-    }
-  }
-
-  generatedCode += `${code};\n`;
-
-  generatedCode += `return new Map([\n`;
-  for (const id of outputVariables) {
-    generatedCode += `  ['${id}', ${id}],\n`;
-  }
-  generatedCode += `]);`;
-
-  return generatedCode;
 };
-
-export const executeEffectfulExpression = (
-  code: string,
-  args: Map<string, unknown>,
-  variables: Map<string, unknown>
-) => {
-  const generatedCode = generateEffectfulExpression(
-    code,
-    new Set(args.keys()),
-    new Set(variables.keys())
-  );
-  const executeFn = new Function("_variables", "_args", generatedCode);
-  const values = executeFn(variables, args) as Map<string, unknown>;
-  return values;
-};
-
-const computeExpressionDependencies = (
-  expressions: Map<string, string>,
-  expressionId: string,
-  dependencies: Map<string, Set<string>>
-) => {
-  // prevent recalculating expressions over again
-  const depsById = dependencies.get(expressionId);
-  if (depsById) {
-    return depsById;
-  }
-  const parentDeps = new Set<string>();
-  const code = expressions.get(expressionId);
-  if (code === undefined) {
-    return parentDeps;
-  }
-  // write before recursive call to avoid infinite cycle
-  dependencies.set(expressionId, parentDeps);
-  validateExpression(code, {
-    transformIdentifier: (id) => {
-      parentDeps.add(id);
-      const childDeps = computeExpressionDependencies(
-        expressions,
-        id,
-        dependencies
-      );
-      for (const depId of childDeps) {
-        parentDeps.add(depId);
-      }
-      return id;
-    },
-  });
-  return parentDeps;
-};
-
-export const computeExpressionsDependencies = (
-  expressions: Map<string, string>
-) => {
-  const dependencies = new Map<string, Set<string>>();
-  for (const id of expressions.keys()) {
-    computeExpressionDependencies(expressions, id, dependencies);
-  }
-  return dependencies;
-};
-
-type Values = Map<string, unknown>;
 
 const dataSourceVariablePrefix = "$ws$dataSource$";
 
@@ -373,14 +177,6 @@ export const encodeDataSourceVariable = (id: string) => {
   return `${dataSourceVariablePrefix}${encoded}`;
 };
 
-export const encodeVariablesMap = (values: Values) => {
-  const encodedValues: Values = new Map();
-  for (const [id, value] of values) {
-    encodedValues.set(encodeDataSourceVariable(id), value);
-  }
-  return encodedValues;
-};
-
 export const decodeDataSourceVariable = (name: string) => {
   if (name.startsWith(dataSourceVariablePrefix)) {
     const encoded = name.slice(dataSourceVariablePrefix.length);
@@ -389,13 +185,126 @@ export const decodeDataSourceVariable = (name: string) => {
   return;
 };
 
-export const decodeVariablesMap = (values: Values) => {
-  const decodedValues: Values = new Map();
-  for (const [name, value] of values) {
-    const id = decodeDataSourceVariable(name);
-    if (id !== undefined) {
-      decodedValues.set(id, value);
+/*
+
+// header
+
+let formState_1 = _getVariable('#formState_1')
+let set$formState = value => _setVariable('#formStateId', value)
+
+// body
+
+let formInitial_1 = formState_1 === 'initial'
+
+let onStateChange_1 = (state) => {
+  formState_1 = state;
+
+  set$formState(formState_1)
+}
+
+// footer
+
+let _output = new Map();
+_output.set('#', formState_1)
+_output.set('#', formInitial_1)
+_output.set('#', onStateChange_1)
+return _output
+
+*/
+
+type DataSourceId = string;
+type DataSourceOrPropId = string;
+type VariableName = string;
+
+export const generateDataSources = ({
+  scope,
+  typed = false,
+  dataSources,
+  props,
+}: {
+  scope: Scope;
+  typed?: boolean;
+  dataSources: DataSources;
+  props: Props;
+}) => {
+  const variables = new Map<
+    DataSourceId,
+    { valueName: VariableName; setterName: VariableName; initialValue: unknown }
+  >();
+  let body = "";
+  const output = new Map<DataSourceOrPropId, VariableName>();
+
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "variable") {
+      // save variables to generate header and footer depending on environment
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      const setterName = scope.getName(
+        `set$${dataSource.id}`,
+        `set$${dataSource.name}`
+      );
+      const initialValue = dataSource.value.value;
+      output.set(dataSource.id, valueName);
+      variables.set(dataSource.id, { valueName, setterName, initialValue });
     }
   }
-  return decodedValues;
+
+  for (const prop of props.values()) {
+    // prevent generating parameter variables as component state
+    if (prop.type === "parameter") {
+      output.delete(prop.value);
+      variables.delete(prop.value);
+    }
+    // generate actions assigning variables and invoking their setters
+    if (prop.type === "action") {
+      const name = scope.getName(prop.id, prop.name);
+      output.set(prop.id, name);
+      const setters = new Set<DataSourceId>();
+      // important to fallback to empty argumets to render empty function
+      let args: string[] = [];
+      let newCode = "";
+      for (const value of prop.value) {
+        args = value.args;
+        newCode += validateExpression(value.code, {
+          optional: true,
+          effectful: true,
+          transformIdentifier: (identifier, assignee) => {
+            if (args?.includes(identifier)) {
+              return identifier;
+            }
+            const depId = decodeDataSourceVariable(identifier);
+            const dep = depId ? dataSources.get(depId) : undefined;
+            if (dep) {
+              const name = scope.getName(dep.id, dep.name);
+              if (assignee) {
+                setters.add(dep.id);
+              }
+              return name;
+            }
+            // eslint-disable-next-line no-console
+            console.error(`Unknown dependency "${identifier}"`);
+            return identifier;
+          },
+        });
+        newCode += `\n`;
+      }
+      if (typed) {
+        args = args.map((arg) => `${arg}: any`);
+      }
+      body += `let ${name} = (${args.join(", ")}) => {\n`;
+      body += newCode;
+      for (const dataSourceId of setters.values()) {
+        const variable = variables.get(dataSourceId);
+        if (variable) {
+          body += `${variable.setterName}(${variable.valueName})\n`;
+        }
+      }
+      body += `}\n`;
+    }
+  }
+
+  return {
+    variables,
+    body,
+    output,
+  };
 };

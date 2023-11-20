@@ -1,23 +1,22 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import type { htmlTags as HtmlTags } from "html-tags";
-import {
-  html,
-  type Style,
-  type StyleProperty,
-  type StyleValue,
-} from "@webstudio-is/css-data";
-import { properties } from "@webstudio-is/css-data";
-import {
-  StyleSourceSelections,
-  type Breakpoints,
-  type Instance,
-  type Instances,
-  type StyleDecl,
-  type StyleSource as StyleSourceType,
-  Breakpoint,
-} from "@webstudio-is/project-build";
+import type {
+  Style,
+  StyleProperty,
+  StyleValue,
+} from "@webstudio-is/css-engine";
 import { compareMedia } from "@webstudio-is/css-engine";
+import { html, properties } from "@webstudio-is/css-data";
+import type {
+  StyleSourceSelections,
+  Breakpoints,
+  Instance,
+  Instances,
+  StyleDecl,
+  StyleSource as StyleSourceType,
+  Breakpoint,
+} from "@webstudio-is/sdk";
 import {
   type StyleSourceSelector,
   instancesStore,

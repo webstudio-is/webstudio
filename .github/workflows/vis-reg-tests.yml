@@ -32,7 +32,7 @@ jobs:
         uses: lost-pixel/lost-pixel@v3.1.0
         env:
           LOST_PIXEL_CONFIG_DIR: packages/design-system
-          LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}
+          LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
   builder:
     timeout-minutes: 20
     runs-on: ubuntu-latest
@@ -53,4 +53,4 @@ jobs:
         uses: lost-pixel/lost-pixel@v3.1.0
         env:
           LOST_PIXEL_CONFIG_DIR: apps/builder
-          LOST_PIXEL_API_KEY: ${{ secrets.LOST_PIXEL_API_KEY }}
+          LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a

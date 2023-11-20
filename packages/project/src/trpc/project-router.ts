@@ -22,9 +22,15 @@ export const projectRouter = router({
       return await db.project.markAsDeleted(input.projectId, ctx);
     }),
   duplicate: procedure
-    .input(z.object({ projectId: z.string() }))
+    .input(z.object({ projectId: z.string(), title: z.optional(z.string()) }))
     .mutation(async ({ input, ctx }) => {
-      return await db.project.duplicate(input.projectId, ctx);
+      return await db.project.duplicate(
+        {
+          projectId: input.projectId,
+          title: input.title,
+        },
+        ctx
+      );
     }),
   create: procedure
     .input(z.object({ title: Title }))

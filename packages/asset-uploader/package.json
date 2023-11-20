@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/asset-uploader",
-  "version": "0.83.0",
+  "version": "0.120.0",
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,51 +9,49 @@
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.0.0",
-    "@smithy/signature-v4": "^1.0.2",
-    "@webstudio-is/fonts": "workspace:^",
-    "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/trpc-interface": "workspace:^",
-    "immer": "^10.0.2",
-    "nanoid": "^4.0.2",
-    "sharp": "^0.30.7",
+    "@smithy/signature-v4": "^2.0.2",
+    "@webstudio-is/fonts": "workspace:*",
+    "@webstudio-is/prisma-client": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "fontkit": "^2.0.2",
+    "image-size": "^1.0.2",
+    "immer": "^10.0.3",
+    "nanoid": "^5.0.1",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.2",
-    "@types/node": "^18.11.18",
-    "@types/sharp": "^0.30.4",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.6.2",
-    "typescript": "5.1.6",
+    "@jest/globals": "^29.7.0",
+    "@types/fontkit": "^2.0.3",
+    "@types/node": "^18.17.1",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "typescript": "5.2.2",
     "zod": "^3.21.4"
   },
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "import": "./lib/index.js"
     },
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "types": "./lib/types/index.server.d.ts",
       "import": "./lib/index.server.js"
     }
   },
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",
-  "private": false,
+  "private": true,
   "sideEffects": false
 }

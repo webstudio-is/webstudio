@@ -50,15 +50,63 @@ model Asset {
 }
 
 model User {
-  id        String    @id @default(uuid())
-  email     String?   @unique
-  provider  String?
-  image     String?
-  username  String?
-  createdAt DateTime  @default(now())
-  team      Team?     @relation(fields: [teamId], references: [id])
-  teamId    String?
-  projects  Project[]
+  id               String             @id @default(uuid())
+  email            String?            @unique
+  provider         String?
+  image            String?
+  username         String?
+  createdAt        DateTime           @default(now())
+  team             Team?              @relation(fields: [teamId], references: [id])
+  teamId           String?
+  projects         Project[]
+  clientReferences ClientReferences[]
+  checkout         TransactionLog[]
+}
+
+// User client references in external services like stripe etc
+model ClientReferences {
+  reference String   @default(dbgenerated())
+  service   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+
+  @@id([userId, service])
+  @@unique([reference, service])
+}
+
+model Product {
+  id          String   @id
+  name        String
+  description String?
+  features    String[]
+  images      String[]
+  meta        Json
+
+  createdAt DateTime         @default(now())
+  checkout  TransactionLog[]
+}
+
+model TransactionLog {
+  // Stripe event id (debug and idempotency purposes)
+  eventId   String
+  // Stripe session id (debug and idempotency purposes)
+  sessionId String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  // paid
+  status    String
+  createdAt DateTime @default(now())
+
+  // Helper fields we can use for faster api calls and to have additional information for debugging purposes
+  customerId     String?
+  subscriptionId String?
+  customerEmail  String?
+
+  @@unique([eventId, productId])
+  @@unique([sessionId, productId])
 }
 
 model Project {
@@ -86,11 +134,12 @@ enum PublishStatus {
 }
 
 model Build {
-  id        String   @unique @default(uuid())
-  version   Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  pages     String
+  id                String   @unique @default(uuid())
+  version           Int      @default(0)
+  lastTransactionId String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+  pages             String
 
   project   Project @relation(fields: [projectId], references: [id])
   projectId String
@@ -113,6 +162,7 @@ enum AuthorizationRelation {
   viewers
   editors
   builders
+  administrators
 }
 
 model AuthorizationToken {

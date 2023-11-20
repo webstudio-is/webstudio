@@ -22,6 +22,8 @@ export const createS3Client = (options: S3ClientOptions): AssetClient => {
     region: options.region,
     service: "s3",
     sha256: Sha256,
+    // should never be enabled when work with s3
+    uriEscapePath: false,
   });
 
   const uploadFile: AssetClient["uploadFile"] = async (name, type, data) => {

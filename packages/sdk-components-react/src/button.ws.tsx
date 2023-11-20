@@ -18,6 +18,8 @@ export const meta: WsComponentMeta = {
   type: "container",
   invalidAncestors: ["Button"],
   label: "Button",
+  description:
+    "Use a button to submit forms or trigger actions within a page. Do not use a button to navigate users to another resource or another page - that’s what a link is used for.",
   icon: ButtonElementIcon,
   presetStyle,
   states: [
@@ -26,13 +28,6 @@ export const meta: WsComponentMeta = {
     { selector: ":enabled", label: "Enabled" },
   ],
   order: 1,
-  template: [
-    {
-      type: "instance",
-      component: "Button",
-      children: [{ type: "text", value: "Button you can edit" }],
-    },
-  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

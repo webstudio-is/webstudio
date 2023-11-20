@@ -1,4 +1,3 @@
-import { cssVars } from "@webstudio-is/css-vars";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +13,11 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
-const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
-const menuTriggerVisibilityOverrideVar = cssVars.define(
-  "menu-trigger-visibility-override"
-);
-const menuTriggerGradientVar = cssVars.define("menu-trigger-gradient");
+const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
+const menuTriggerVisibilityOverrideVar =
+  "--ws-style-source-menu-trigger-visibility-override";
+const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
+const visibility = `var(${menuTriggerVisibilityOverrideVar}, var(${menuTriggerVisibilityVar}))`;
 
 export const menuCssVars = ({
   show,
@@ -50,13 +49,23 @@ const MenuTrigger = styled("button", {
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   color: theme.colors.foregroundContrastMain,
-  visibility: cssVars.use(
-    menuTriggerVisibilityOverrideVar,
-    cssVars.use(menuTriggerVisibilityVar)
-  ),
-  background: theme.colors.backgroundButtonHover,
+  visibility,
   "&:hover, &[data-state=open]": {
     ...menuCssVars({ show: true }),
+    "&::after": {
+      content: '""',
+      display: "block",
+      position: "absolute",
+      top: 0,
+      right: 0,
+      width: "100%",
+      height: "100%",
+      visibility,
+      backgroundColor: theme.colors.backgroundButtonHover,
+      borderTopRightRadius: theme.borderRadius[4],
+      borderBottomRightRadius: theme.borderRadius[4],
+      pointerEvents: "none",
+    },
   },
 });
 
@@ -66,11 +75,8 @@ const MenuTriggerGradient = styled(Box, {
   right: 0,
   width: theme.spacing[11],
   height: "100%",
-  visibility: cssVars.use(
-    menuTriggerVisibilityOverrideVar,
-    cssVars.use(menuTriggerVisibilityVar)
-  ),
-  background: cssVars.use(menuTriggerGradientVar),
+  visibility,
+  background: `var(${menuTriggerGradientVar})`,
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",
@@ -100,7 +106,7 @@ const Menu = (props: MenuProps) => {
   );
 };
 
-export type ItemSource = "token" | "tag" | "local";
+export type ItemSource = "token" | "componentToken" | "tag" | "local";
 
 type EditableTextProps = {
   label: string;
@@ -159,6 +165,11 @@ const StyleSourceContainer = styled(Box, {
           theme.colors.backgroundStyleSourceGradientToken,
       },
       token: {
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
+        [menuTriggerGradientVar]:
+          theme.colors.backgroundStyleSourceGradientToken,
+      },
+      componentToken: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
         [menuTriggerGradientVar]:
           theme.colors.backgroundStyleSourceGradientToken,

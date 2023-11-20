@@ -8,7 +8,6 @@ import {
   ToolbarToggleGroup,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import type { Publish } from "~/shared/pubsub";
 import { selectedPageStore } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
@@ -33,16 +32,16 @@ const topbarContainerStyle = css({
 type TopbarProps = {
   gridArea: string;
   project: Project;
-  publish: Publish;
+  hasProPlan: boolean;
 };
 
-export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
+export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
   const page = useStore(selectedPageStore);
 
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
-        <Menu publish={publish} />
+        <Menu />
       </Flex>
       <Flex
         css={{ px: theme.spacing[9], maxWidth: theme.spacing[24] }}
@@ -70,7 +69,7 @@ export const Topbar = ({ gridArea, project, publish }: TopbarProps) => {
           <ViewMode />
           <SyncStatus />
           <PreviewButton />
-          <ShareButton projectId={project.id} />
+          <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
           <PublishButton projectId={project.id} />
         </ToolbarToggleGroup>
       </Toolbar>

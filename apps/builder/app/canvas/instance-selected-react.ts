@@ -1,38 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
-import { useStore } from "@nanostores/react";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { subscribeSelectedInstance } from "./instance-selected";
-
-/**
- * Debounce task execution until useEffect
- */
-const useDebounceEffect = () => {
-  const [updateCallback, setUpdateCallback] = useState(() => () => {
-    /* empty */
-  });
-
-  useEffect(() => {
-    // Because of how our styles works we need to update after React render to be sure that
-    // all styles are applied
-    updateCallback();
-  }, [updateCallback]);
-
-  return useCallback((task: () => void) => {
-    setUpdateCallback(() => task);
-  }, []);
-};
+import { useEffect } from "react";
+import { subscribeSelected } from "./instance-selected";
+import { useEffectQueue } from "~/shared/hook-utils/use-effect-queue";
 
 export const useSelectedInstance = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const execTaskInEffect = useDebounceEffect();
+  const execTaskInEffect = useEffectQueue();
 
   useEffect(() => {
-    if (selectedInstanceSelector === undefined) {
-      return;
-    }
-    return subscribeSelectedInstance(
-      selectedInstanceSelector,
-      execTaskInEffect
-    );
-  }, [selectedInstanceSelector, execTaskInEffect]);
+    return subscribeSelected(execTaskInEffect);
+  }, [execTaskInEffect]);
 };

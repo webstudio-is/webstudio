@@ -86,6 +86,7 @@ export type SelectProps<Option = SelectOption> = {
   defaultValue?: Option;
   value?: Option;
   onChange?: (option: Option) => void;
+  onItemHighlight?: (value?: Option) => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   placeholder?: string;
@@ -118,6 +119,7 @@ const SelectBase = <Option,>(
     placeholder = "Select an option",
     onChange,
     onOpenChange,
+    onItemHighlight,
     open,
     getLabel = defaultGetValue,
     getValue = defaultGetValue,
@@ -169,6 +171,15 @@ const SelectBase = <Option,>(
                   key={getValue(option)}
                   value={getValue(option) ?? ""}
                   textValue={getLabel(option)}
+                  onMouseEnter={() => {
+                    onItemHighlight?.(option);
+                  }}
+                  onMouseLeave={() => {
+                    onItemHighlight?.();
+                  }}
+                  onFocus={() => {
+                    onItemHighlight?.(option);
+                  }}
                 >
                   {getLabel(option)}
                 </SelectItem>

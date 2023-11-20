@@ -1,9 +1,12 @@
 import type { PropItem } from "react-docgen-typescript";
-import { PropMeta } from "./types";
+import { PropMeta } from "@webstudio-is/react-sdk";
 
 export type FilterPredicate = (prop: PropItem) => boolean;
 
-export const propsToArgTypes = (props: Record<string, PropItem>) => {
+export const propsToArgTypes = (
+  props: Record<string, PropItem>,
+  exclude: string[]
+) => {
   const entries = Object.entries(props);
   return (
     entries
@@ -12,6 +15,8 @@ export const propsToArgTypes = (props: Record<string, PropItem>) => {
       })
       // Exclude webstudio builder props see react-sdk/src/tree/webstudio-component.tsx
       .filter(([propName]) => propName.startsWith("data-ws-") === false)
+      // Exclude props that are in the exclude list
+      .filter(([propName]) => exclude.includes(propName) === false)
       .reduce(
         (result, current) => {
           const [propName, prop] = current;
@@ -36,17 +41,30 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
   const { type, name, description, defaultValue } = propItem;
 
   // eslint-disable-next-line @typescript-eslint/ban-types
-  const makePropMeta = (type: string, control: string, extra?: {}) =>
-    PropMeta.parse({
+  const makePropMeta = (type: string, control: string, extra?: {}) => {
+    let value = defaultValue?.value;
+    // react-docgen-typescript incorrectly parse jsdoc default values as strings
+    // to fix check and cast to correct type
+    if (type === "boolean") {
+      if (value === "true") {
+        value = true;
+      }
+      if (value === "false") {
+        value = false;
+      }
+    }
+    if (type === "number" && typeof value === "string") {
+      value = Number(value);
+    }
+    return PropMeta.parse({
       type,
       required: propItem.required,
       control,
-      ...(defaultValue?.value == null
-        ? {}
-        : { defaultValue: defaultValue.value }),
+      ...(value == null ? {} : { defaultValue: value }),
       ...(description ? { description } : {}),
       ...extra,
     });
+  };
 
   // args that end with background or color e.g. iconColor
   if (matchers.color.test(name) && type.name === "string") {

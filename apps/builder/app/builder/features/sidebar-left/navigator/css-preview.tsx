@@ -13,7 +13,7 @@ import { createCssEngine } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
 import * as Prism from "prismjs";
-import type { Style, StyleProperty } from "@webstudio-is/css-data";
+import type { Style, StyleProperty } from "@webstudio-is/css-engine";
 import { captureError } from "@webstudio-is/error-utils";
 
 const preStyle = css(textVariants.mono, {

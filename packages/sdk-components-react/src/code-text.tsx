@@ -1,31 +1,16 @@
-import {
-  forwardRef,
-  createElement,
-  type ElementRef,
-  type ComponentProps,
-} from "react";
-import { cssVars } from "@webstudio-is/css-vars";
+import { type ElementRef, type ComponentProps, forwardRef } from "react";
 
 export const defaultTag = "code";
 
-export const displayVarNamespace = cssVars.define("code-display");
-
-const blockStyle = {
-  [cssVars.define(displayVarNamespace)]: "block",
-};
-
-type Props = Omit<ComponentProps<typeof defaultTag>, "inline"> & {
-  inline?: boolean;
-  meta?: string;
-};
-
-export const CodeText = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  ({ inline = false, ...props }, ref) => {
-    // @todo in the future we should expose the inline prop a an attribute
-    // and define the display style in `presetStyle` in meta.
-    const style = inline ? undefined : blockStyle;
-    return createElement(defaultTag, { ...props, style, ref });
-  }
-);
+export const CodeText = forwardRef<
+  ElementRef<typeof defaultTag>,
+  ComponentProps<typeof defaultTag>
+>(({ children, ...props }, ref) => {
+  return (
+    <code {...props} ref={ref}>
+      {children ?? "Code you can edit"}
+    </code>
+  );
+});
 
 CodeText.displayName = "CodeText";

@@ -1,5 +1,6 @@
 .cache
 .env
+.env.*
 .vercel
 .output
 

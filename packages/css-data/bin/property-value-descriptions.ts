@@ -127,7 +127,7 @@ for (let i = 0; i < newPropertiesNames.length; ) {
   }
 
   properties.forEach((name, index) => {
-    propertiesGenerated[name] = descriptions[index]
+    propertiesGenerated[name] = (descriptions[index] ?? "")
       .replace(new RegExp(`^\`?${name}\`?:`), "")
       .trim();
   });
@@ -251,7 +251,7 @@ for (let i = 0; i < newDeclarationsDescriptionsEntries.length; ) {
 
   batch.forEach((value, index) => {
     const [descriptionKey, decl] = value;
-    const description = descriptions[index]
+    const description = (descriptions[index] ?? "")
       .replace(new RegExp(`^\`${decl}\` -`), "")
       .trim();
     if (descriptionKey.endsWith(":{color}")) {
@@ -341,7 +341,7 @@ async function generate(message: string): Promise<string | [number, string]> {
 
   const completion = (await response.json()) as CreateChatCompletionResponse;
 
-  const content = completion.choices[0].message?.content.trim() || "";
+  const content = completion.choices[0]?.message?.content.trim() || "";
 
   if (content === "") {
     return [404, "No response"];

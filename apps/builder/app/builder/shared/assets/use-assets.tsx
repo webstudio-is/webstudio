@@ -1,41 +1,31 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import warnOnce from "warn-once";
-import store from "immerhin";
-import { type AssetType, type Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/sdk";
+import type { AssetType } from "@webstudio-is/asset-uploader";
 import { toast } from "@webstudio-is/design-system";
 import { sanitizeS3Key } from "@webstudio-is/asset-uploader";
 import { restAssetsUploadPath, restAssetsPath } from "~/shared/router-utils";
-import type { AssetContainer, PreviewAsset } from "./types";
+import type {
+  AssetContainer,
+  UploadedAssetContainer,
+  UploadingAssetContainer,
+} from "./types";
 import type { ActionData } from "~/builder/shared/assets";
-import {
-  assetsStore,
-  authTokenStore,
-  projectStore,
-} from "~/shared/nano-states";
+import { assetsStore, $authToken, projectStore } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
+import { serverSyncStore } from "~/shared/sync";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
-  store.createTransaction([assetsStore], (assets) => {
+  serverSyncStore.createTransaction([assetsStore], (assets) => {
     for (const assetId of assetIds) {
       assets.delete(assetId);
     }
   });
 };
 
-// stubbed asset is necessary to preserve position of asset
-// while uploading and after it is uploaded
-// undefined is not stored in db and only persisted in current session
-const stubAssets = (ids: Asset["id"][]) => {
-  store.createTransaction([assetsStore], (assets) => {
-    for (const assetId of ids) {
-      assets.set(assetId, undefined);
-    }
-  });
-};
-
 const setAsset = (asset: Asset) => {
-  store.createTransaction([assetsStore], (assets) => {
+  serverSyncStore.createTransaction([assetsStore], (assets) => {
     assets.set(asset.id, asset);
   });
 };
@@ -75,9 +65,9 @@ const deleteUploadingFileData = (id: FileData["assetId"]) => {
 const assetContainersStore = computed(
   [assetsStore, uploadingFilesDataStore],
   (assets, uploadingFilesData) => {
-    const uploadingAssets = new Map<PreviewAsset["id"], AssetContainer>();
+    const uploadingContainers: UploadingAssetContainer[] = [];
     for (const { assetId, type, file, objectURL } of uploadingFilesData) {
-      uploadingAssets.set(assetId, {
+      uploadingContainers.push({
         status: "uploading",
         objectURL: objectURL,
         asset: {
@@ -89,21 +79,21 @@ const assetContainersStore = computed(
         },
       });
     }
-    const assetContainers: Array<AssetContainer> = [];
-    for (const [assetId, asset] of assets) {
-      const uploadingAsset = uploadingAssets.get(assetId);
-      if (uploadingAsset) {
-        assetContainers.push(uploadingAsset);
-        continue;
-      }
-      if (asset) {
-        assetContainers.push({
-          status: "uploaded",
-          asset,
-        });
-      }
+    const uploadedContainers: UploadedAssetContainer[] = [];
+    for (const asset of assets.values()) {
+      uploadedContainers.push({
+        status: "uploaded",
+        asset,
+      });
     }
-    return assetContainers;
+    // sort newest uploaded assets first
+    uploadedContainers.sort(
+      (leftContainer, rightContainer) =>
+        new Date(rightContainer.asset.createdAt).getTime() -
+        new Date(leftContainer.asset.createdAt).getTime()
+    );
+    // put uploading assets first
+    return [...uploadingContainers, ...uploadedContainers];
   }
 );
 
@@ -180,7 +170,7 @@ export const useUploadAsset = () => {
 
   const uploadAssets = (type: AssetType, files: File[]) => {
     const projectId = projectStore.get()?.id;
-    const authToken = authTokenStore.get();
+    const authToken = $authToken.get();
     if (projectId === undefined) {
       return;
     }
@@ -188,7 +178,6 @@ export const useUploadAsset = () => {
     const filesData = getFilesData(type, files);
 
     addUploadingFilesData(filesData);
-    stubAssets(filesData.map((fileData) => fileData.assetId));
 
     for (const fileData of filesData) {
       const assetId = fileData.assetId;

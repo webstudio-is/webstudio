@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/css-engine",
-  "version": "0.83.0",
+  "version": "0.120.0",
   "description": "CSS Renderer for Webstudio",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,42 +8,39 @@
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck && pnpm test",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
+    "build": "rm -rf lib && esbuild src/index.ts --outdir=lib --bundle --format=esm --packages=external",
     "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "storybook:dev": "storybook dev -p 6006",
     "storybook:build": "storybook build"
   },
   "dependencies": {
-    "@webstudio-is/css-data": "workspace:^",
-    "@webstudio-is/error-utils": "workspace:^",
-    "@webstudio-is/fonts": "workspace:^",
-    "hyphenate-style-name": "^1.0.4",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@webstudio-is/error-utils": "workspace:*",
+    "@webstudio-is/fonts": "workspace:*",
+    "hyphenate-style-name": "^1.0.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.2",
+    "@jest/globals": "^29.7.0",
     "@types/hyphenate-style-name": "^1.0.0",
-    "@types/react": "^18.2.16",
+    "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/storybook-config": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.6.2",
-    "typescript": "5.1.6"
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/storybook-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "5.2.2"
   },
   "exports": {
-    "source": "./src/index.ts",
+    "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    "import": "./lib/index.js",
+    "require": "./lib/index.js"
   },
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",
   "private": false,

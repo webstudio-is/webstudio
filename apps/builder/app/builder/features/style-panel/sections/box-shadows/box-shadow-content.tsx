@@ -1,4 +1,8 @@
-import type { InvalidValue, LayersValue } from "@webstudio-is/css-data";
+import type {
+  InvalidValue,
+  LayersValue,
+  TupleValue,
+} from "@webstudio-is/css-engine";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -11,22 +15,18 @@ import {
 } from "@webstudio-is/design-system";
 import { InformationIcon } from "@webstudio-is/icons";
 import { useState } from "react";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { IntermediateStyleValue } from "../../shared/css-value-input";
 
-type IntermediateValue = {
-  type: "intermediate";
+type BoxShadowContentProps = {
+  index: number;
+  layer: TupleValue;
   value: string;
+  onEditLayer: (index: number, layers: LayersValue) => void;
 };
 
-const useContent = ({
-  onEditLayer,
-  index,
-}: {
-  onEditLayer: (index: number, layers: LayersValue) => void;
-  index: number;
-}) => {
+export const BoxShadowContent = (props: BoxShadowContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
-    IntermediateValue | InvalidValue | undefined
+    IntermediateStyleValue | InvalidValue | undefined
   >();
 
   const handleChange = (value: string) => {
@@ -49,21 +49,9 @@ const useContent = ({
       return;
     }
 
-    onEditLayer(index, layers);
+    props.onEditLayer(props.index, layers);
   };
 
-  return { handleChange, handleComplete, intermediateValue };
-};
-
-type BoxShadowContentProps = {
-  index: number;
-  value: string;
-  onEditLayer: (index: number, layers: LayersValue) => void;
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
-};
-
-export const BoxShadowContent = (props: BoxShadowContentProps) => {
-  const { intermediateValue, handleChange, handleComplete } = useContent(props);
   return (
     <Flex
       direction="column"
@@ -98,7 +86,7 @@ export const BoxShadowContent = (props: BoxShadowContentProps) => {
         value={intermediateValue?.value ?? props.value ?? ""}
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-        onChange={(event) => handleChange(event.target.value)}
+        onChange={handleChange}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             handleComplete();

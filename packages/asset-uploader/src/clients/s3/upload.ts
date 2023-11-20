@@ -2,6 +2,7 @@ import { arrayBuffer } from "node:stream/consumers";
 import type { SignatureV4 } from "@smithy/signature-v4";
 import { getAssetData } from "../../utils/get-asset-data";
 import { createSizeLimiter } from "../../utils/size-limiter";
+import { extendedEncodeURIComponent } from "../../utils/sanitize-s3-key";
 
 export const uploadToS3 = async ({
   signer,
@@ -30,7 +31,10 @@ export const uploadToS3 = async ({
   // Also check if S3 client has an option to check the size limit
   const data = await arrayBuffer(limitSize(dataStream));
 
-  const url = new URL(`/${bucket}/${name}`, endpoint);
+  const url = new URL(
+    `/${bucket}/${extendedEncodeURIComponent(name)}`,
+    endpoint
+  );
 
   const s3Request = await signer.sign({
     method: "PUT",

@@ -1,7 +1,7 @@
-import { StorySection } from "@webstudio-is/design-system";
-import { BreakpointsSelector } from "./breakpoints-selector";
-import type { Breakpoint, Breakpoints } from "@webstudio-is/project-build";
 import { nanoid } from "nanoid";
+import { StorySection } from "@webstudio-is/design-system";
+import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
+import { BreakpointsSelector } from "./breakpoints-selector";
 
 const createBreakpoints = (breakpoints: Array<Breakpoint>): Breakpoints => {
   const breakpointsMap: [Breakpoint["id"], Breakpoint][] = breakpoints.map(

@@ -2,16 +2,15 @@ import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/project-build";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
   rootInstanceStore,
   selectedInstanceSelectorStore,
-  useDragAndDropState,
   textEditingInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
   registeredComponentMetasStore,
+  $dragAndDropState,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import {
@@ -29,7 +28,7 @@ export const NavigatorTree = () => {
   const rootInstance = useStore(rootInstanceStore);
   const instances = useStore(instancesStore);
   const metas = useStore(registeredComponentMetasStore);
-  const [state, setState] = useDragAndDropState();
+  const state = useStore($dragAndDropState);
 
   const dragPayload = state.dragPayload;
 
@@ -86,7 +85,7 @@ export const NavigatorTree = () => {
   );
 
   const isItemHidden = useCallback(
-    (instanceId: Instance["id"]) =>
+    ([instanceId]: InstanceSelector) =>
       // fragment is internal component to group other instances
       // for example to support multiple children in slots
       instances.get(instanceId)?.component === "Fragment",
@@ -102,23 +101,21 @@ export const NavigatorTree = () => {
         parentSelector: payload.dropTarget.itemSelector,
         position: payload.dropTarget.position,
       });
-      setState({ isDragging: false });
+      $dragAndDropState.set({ isDragging: false });
     },
-    [setState]
+    []
   );
 
   const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
-    // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio-builder/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
+    // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
     // and then focus cause handleSelect to be called with the same instanceSelector
     // This avoids additional rerender on node delete
-    if (
-      shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector) ===
-      false
-    ) {
-      selectedInstanceSelectorStore.set(instanceSelector);
-      textEditingInstanceSelectorStore.set(undefined);
-      selectedStyleSourceSelectorStore.set(undefined);
+    if (shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector)) {
+      return;
     }
+    selectedInstanceSelectorStore.set(instanceSelector);
+    textEditingInstanceSelectorStore.set(undefined);
+    selectedStyleSourceSelectorStore.set(undefined);
   }, []);
 
   if (rootInstance === undefined) {
@@ -142,21 +139,21 @@ export const NavigatorTree = () => {
           );
           return;
         }
-        setState((state) => ({
-          ...state,
+        $dragAndDropState.set({
+          ...$dragAndDropState.get(),
           dragPayload: {
             origin: "panel",
             type: "reparent",
             dragInstanceSelector,
           },
-        }));
+        });
       }}
       onDropTargetChange={(dropTarget) => {
-        setState((state) => ({ ...state, dropTarget }));
+        $dragAndDropState.set({ ...$dragAndDropState.get(), dropTarget });
       }}
       onDragEnd={handleDragEnd}
       onCancel={() => {
-        setState({ isDragging: false });
+        $dragAndDropState.set({ isDragging: false });
       }}
     />
   );

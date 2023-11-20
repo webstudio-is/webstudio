@@ -51,11 +51,12 @@ export const onPaste = (clipboardData: string): boolean => {
   if (baseBreakpoint === undefined) {
     return false;
   }
+  const metas = registeredComponentMetasStore.get();
   const templateData = generateDataFromEmbedTemplate(
     template,
+    metas,
     baseBreakpoint.id
   );
-  const metas = registeredComponentMetasStore.get();
   const newInstances = new Map(
     templateData.instances.map((instance) => [instance.id, instance])
   );

@@ -25,6 +25,8 @@ export const meta: WsComponentMeta = {
   category: "forms",
   type: "control",
   label: "Text Area",
+  description:
+    "A multi-line text input for collecting longer string data from your users.",
   icon: FormTextAreaIcon,
   presetStyle,
   order: 4,
@@ -35,10 +37,11 @@ export const meta: WsComponentMeta = {
     { selector: ":invalid", label: "Invalid" },
     { selector: ":required", label: "Required" },
     { selector: ":optional", label: "Optional" },
-    { selector: ":disabled", label: "Disabled" },
-    { selector: ":enabled", label: "Enabled" },
-    { selector: ":read-only", label: "Read Only" },
-    { selector: ":read-write", label: "Read Write" },
+    // Additional states will go into submenu
+    //{ selector: ":disabled", label: "Disabled" },
+    //{ selector: ":enabled", label: "Enabled" },
+    //{ selector: ":read-only", label: "Read Only" },
+    //{ selector: ":read-write", label: "Read Write" },
   ],
 };
 

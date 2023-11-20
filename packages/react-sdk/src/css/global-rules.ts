@@ -1,5 +1,5 @@
 import type { CssEngine } from "@webstudio-is/css-engine";
-import type { Assets, FontAsset } from "@webstudio-is/asset-uploader";
+import type { Assets, FontAsset } from "@webstudio-is/sdk";
 import { getFontFaces } from "@webstudio-is/fonts";
 
 export const addGlobalRules = (
@@ -14,7 +14,7 @@ export const addGlobalRules = (
 
   const fontAssets: FontAsset[] = [];
   for (const asset of assets.values()) {
-    if (asset?.type === "font") {
+    if (asset.type === "font") {
       fontAssets.push(asset);
     }
   }

@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   theme,
   PanelTabs,
@@ -14,14 +15,13 @@ import {
   Flex,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
   selectedInstanceStore,
-  isDraggingStore,
   registeredComponentMetasStore,
+  $dragAndDropState,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
@@ -55,7 +55,6 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
 };
 
 type InspectorProps = {
-  publish: Publish;
   navigatorLayout: Settings["navigatorLayout"];
 };
 
@@ -65,11 +64,13 @@ const contentStyle = {
   overflow: "auto",
 };
 
-export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
+const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
+
+export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const selectedInstance = useStore(selectedInstanceStore);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
-  const isDragging = useStore(isDraggingStore);
+  const isDragging = useStore($isDragging);
   const metas = useStore(registeredComponentMetasStore);
 
   if (navigatorLayout === "docked" && isDragging) {
@@ -119,16 +120,12 @@ export const Inspector = ({ publish, navigatorLayout }: InspectorProps) => {
             </PanelTabsList>
             <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
               <InstanceInfo instance={selectedInstance} />
-              <StylePanel
-                publish={publish}
-                selectedInstance={selectedInstance}
-              />
+              <StylePanel selectedInstance={selectedInstance} />
             </PanelTabsContent>
             <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
               <ScrollArea>
                 <InstanceInfo instance={selectedInstance} />
                 <SettingsPanelContainer
-                  publish={publish}
                   key={
                     selectedInstance.id /* Re-render when instance changes */
                   }

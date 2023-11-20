@@ -1,16 +1,15 @@
 import { useLayoutEffect, useRef } from "react";
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   type Point,
-  type Placement,
   type ItemDropTarget,
   useAutoScroll,
   useDrag,
   useDrop,
   computeIndicatorPlacement,
-  toast,
 } from "@webstudio-is/design-system";
 import {
+  $dragAndDropState,
   instancesStore,
   registeredComponentMetasStore,
 } from "~/shared/nano-states";
@@ -18,12 +17,11 @@ import { publish, useSubscribe } from "~/shared/pubsub";
 import {
   computeInstancesConstraints,
   findClosestDroppableComponentIndex,
-  findClosestEditableInstanceSelector,
+  findClosestDetachableInstanceSelector,
   getComponentTemplateData,
   insertTemplateData,
   reparentInstance,
   type InsertConstraints,
-  isInstanceDetachable,
 } from "~/shared/instance-utils";
 import {
   getElementByInstanceSelector,
@@ -41,7 +39,7 @@ declare module "~/shared/pubsub" {
     dragMove: DragMovePayload;
     dragStart: DragStartPayload;
     dropTargetChange: undefined | ItemDropTarget;
-    placementIndicatorChange: undefined | Placement;
+    cancelCurrentDrag: undefined;
   }
 }
 
@@ -229,21 +227,15 @@ export const useDragAndDrop = () => {
       }
       // When trying to drag an instance inside editor, drag the editor instead
       return (
-        findClosestEditableInstanceSelector(
+        findClosestDetachableInstanceSelector(
           instanceSelector,
           instancesStore.get(),
           registeredComponentMetasStore.get()
-        ) ?? instanceSelector
+        ) ?? false
       );
     },
 
     onStart({ data: dragInstanceSelector }) {
-      if (isInstanceDetachable(dragInstanceSelector) === false) {
-        toast.error(
-          "This instance can not be moved outside of its parent component."
-        );
-        return;
-      }
       publish({
         type: "dragStart",
         payload: {
@@ -304,9 +296,9 @@ export const useDragAndDrop = () => {
   useSubscribe("dropTargetChange", (dropTarget) => {
     state.current.dropTarget = dropTarget;
     if (dropTarget === undefined) {
-      publish({
-        type: "placementIndicatorChange",
-        payload: undefined,
+      $dragAndDropState.set({
+        ...$dragAndDropState.get(),
+        placementIndicator: undefined,
       });
       return;
     }
@@ -314,9 +306,9 @@ export const useDragAndDrop = () => {
     if (element === undefined) {
       return;
     }
-    publish({
-      type: "placementIndicatorChange",
-      payload: computeIndicatorPlacement({
+    $dragAndDropState.set({
+      ...$dragAndDropState.get(),
+      placementIndicator: computeIndicatorPlacement({
         ...sharedDropOptions,
         element,
         placement: dropTarget.placement,

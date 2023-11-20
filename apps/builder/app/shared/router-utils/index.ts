@@ -1,2 +1,2 @@
-export * from "./build-params";
+export * from "./is-canvas";
 export * from "./path-utils";

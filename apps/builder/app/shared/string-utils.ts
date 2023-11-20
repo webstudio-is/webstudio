@@ -1,4 +1,4 @@
-import { noCase } from "no-case";
+import { noCase } from "change-case";
 import { titleCase } from "title-case";
 
 // Initialize the cache with abbreviations that don't follow the title case rules.

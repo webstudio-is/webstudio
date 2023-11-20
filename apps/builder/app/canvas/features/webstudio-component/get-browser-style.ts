@@ -1,10 +1,6 @@
 import { detectFont } from "detect-font";
-import {
-  type Style,
-  type StyleValue,
-  type Unit,
-  keywordValues,
-} from "@webstudio-is/css-data";
+import type { Style, StyleValue, Unit } from "@webstudio-is/css-engine";
+import { keywordValues } from "@webstudio-is/css-data";
 import { properties, units } from "@webstudio-is/css-data";
 
 const unitsList = Object.values(units).flat();

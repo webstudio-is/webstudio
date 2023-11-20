@@ -2,13 +2,33 @@
  * Quik and dirty implementation of tailwind classes conversion to webstudio styles.
  */
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
-import { theme } from "./tailwind-theme";
-import { parseCssValue, parseBoxShadow } from "@webstudio-is/css-data";
-import type { EvaluatedDefaultTheme } from "./radix-common-types";
+import type {
+  StyleValue,
+  StyleProperty,
+  TupleValue,
+  TupleValueItem,
+} from "@webstudio-is/css-engine";
+import * as theme from "./__generated__/tailwind-theme";
+
+export const property = (
+  property: StyleProperty,
+  value: string
+): EmbedTemplateStyleDecl => {
+  if (value.startsWith("--")) {
+    return {
+      property,
+      value: { type: "var", value: value.slice(2), fallbacks: [] },
+    };
+  }
+  return {
+    property,
+    value: { type: "unparsed", value },
+  };
+};
 
 // https://github.com/tailwindlabs/tailwindcss/blob/master/src/css/preflight.css
 const preflight = (): EmbedTemplateStyleDecl[] => {
-  const borderColorValue = parseCssValue("color", theme("colors")["border"]);
+  const borderColorValue = theme.colors.border;
 
   return [
     {
@@ -48,15 +68,12 @@ const preflight = (): EmbedTemplateStyleDecl[] => {
 };
 
 export const z = (
-  zIndex?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["zIndex"]>
+  value: StringEnumToNumeric<keyof typeof theme.zIndex>
 ): EmbedTemplateStyleDecl[] => {
-  const valueString = theme("zIndex")[zIndex ?? "auto"];
-  const value = parseCssValue("zIndex", valueString);
-
   return [
     {
       property: "zIndex",
-      value,
+      value: theme.zIndex[value],
     },
   ];
 };
@@ -71,28 +88,14 @@ export const overflow = (
 ];
 
 export const rounded = (
-  radius?: keyof EvaluatedDefaultTheme["borderRadius"]
+  value: keyof typeof theme.borderRadius = "DEFAULT"
 ): EmbedTemplateStyleDecl[] => {
-  const valueString = theme("borderRadius")[radius ?? "DEFAULT"];
-  const value = parseCssValue("borderTopWidth", valueString);
-
+  const styleValue = theme.borderRadius[value];
   return [
-    {
-      property: "borderTopLeftRadius",
-      value,
-    },
-    {
-      property: "borderTopRightRadius",
-      value,
-    },
-    {
-      property: "borderBottomRightRadius",
-      value,
-    },
-    {
-      property: "borderBottomLeftRadius",
-      value,
-    },
+    { property: "borderTopLeftRadius", value: styleValue },
+    { property: "borderTopRightRadius", value: styleValue },
+    { property: "borderBottomRightRadius", value: styleValue },
+    { property: "borderBottomLeftRadius", value: styleValue },
   ];
 };
 
@@ -106,72 +109,112 @@ type NonNumeric<T extends string> = T extends `${infer Z extends number}`
   : T;
 
 export const border = (
-  borderWidth?: StringEnumToNumeric<keyof EvaluatedDefaultTheme["borderWidth"]>
+  borderWidthOrColor?:
+    | StringEnumToNumeric<keyof typeof theme.borderWidth>
+    | keyof typeof theme.colors
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${borderWidth ?? "DEFAULT"}` as const;
+  if (
+    typeof borderWidthOrColor === "number" ||
+    borderWidthOrColor === undefined
+  ) {
+    const styleValue = theme.borderWidth[borderWidthOrColor ?? "DEFAULT"];
+    return [
+      ...preflight(),
+      { property: "borderTopWidth", value: styleValue },
+      { property: "borderRightWidth", value: styleValue },
+      { property: "borderBottomWidth", value: styleValue },
+      { property: "borderLeftWidth", value: styleValue },
+    ];
+  }
 
-  const valueString = theme("borderWidth")?.[key] ?? "1px";
+  const styleValue = theme.colors[borderWidthOrColor];
 
-  const value = parseCssValue("borderTopWidth", valueString);
   return [
-    ...preflight(),
-    { property: "borderTopWidth", value },
-    { property: "borderRightWidth", value },
-    { property: "borderBottomWidth", value },
-    { property: "borderLeftWidth", value },
+    { property: "borderTopColor", value: styleValue },
+    { property: "borderRightColor", value: styleValue },
+    { property: "borderBottomColor", value: styleValue },
+    { property: "borderLeftColor", value: styleValue },
   ];
 };
 
-export const px = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
+export const borderB = (
+  borderWidthOrColor?:
+    | StringEnumToNumeric<keyof typeof theme.borderWidth>
+    | keyof typeof theme.colors
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}` as const;
-  const valueString = theme("padding")?.[key] ?? "0";
-  const value = parseCssValue("paddingLeft", valueString);
+  let widthValue: StyleValue = { type: "unit", value: 1, unit: "number" };
+  let colorValue: StyleValue = theme.colors.border;
+  if (
+    typeof borderWidthOrColor === "number" ||
+    borderWidthOrColor === undefined
+  ) {
+    widthValue = theme.borderWidth[borderWidthOrColor ?? "DEFAULT"];
+  } else {
+    colorValue = theme.colors[borderWidthOrColor];
+  }
 
   return [
-    { property: "paddingLeft", value },
-    { property: "paddingRight", value },
+    {
+      property: "borderBottomWidth",
+      value: widthValue,
+    },
+    {
+      property: "borderBottomStyle",
+      value: { type: "keyword", value: "solid" },
+    },
+    {
+      property: "borderBottomColor",
+      value: colorValue,
+    },
   ];
 };
 
-export const py = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
-): EmbedTemplateStyleDecl[] => {
-  const key = `${padding}` as const;
-  const valueString = theme("padding")[key];
-  const value = parseCssValue("paddingTop", valueString);
+const paddingProperty =
+  (property: "paddingTop" | "paddingRight" | "paddingBottom" | "paddingLeft") =>
+  (
+    padding:
+      | StringEnumToNumeric<keyof typeof theme.padding>
+      | NonNumeric<keyof typeof theme.padding>
+  ): EmbedTemplateStyleDecl[] => {
+    return [{ property, value: theme.padding[padding] }];
+  };
 
-  return [
-    { property: "paddingTop", value },
-    { property: "paddingBottom", value },
-  ];
+export const pt: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingTop")(padding);
 };
 
-export const p = (
-  padding:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["padding"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["padding"]>
-): EmbedTemplateStyleDecl[] => {
-  return [...px(padding), ...py(padding)];
+export const pb: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingBottom")(padding);
+};
+
+export const pl: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingLeft")(padding);
+};
+
+export const pr: ReturnType<typeof paddingProperty> = (padding) => {
+  return paddingProperty("paddingRight")(padding);
+};
+
+export const px: ReturnType<typeof paddingProperty> = (padding) => {
+  return [pl(padding), pr(padding)].flat();
+};
+
+export const py: ReturnType<typeof paddingProperty> = (padding) => {
+  return [pt(padding), pb(padding)].flat();
+};
+
+export const p: ReturnType<typeof paddingProperty> = (padding) => {
+  return [px(padding), py(padding)].flat();
 };
 
 const marginProperty =
   (property: "marginTop" | "marginRight" | "marginBottom" | "marginLeft") =>
   (
     margin:
-      | StringEnumToNumeric<keyof EvaluatedDefaultTheme["margin"]>
-      | NonNumeric<keyof EvaluatedDefaultTheme["margin"]>
+      | StringEnumToNumeric<keyof typeof theme.margin>
+      | NonNumeric<keyof typeof theme.margin>
   ): EmbedTemplateStyleDecl[] => {
-    const key = `${margin}` as const;
-    const valueString = theme("margin")?.[key] ?? "0";
-    const value = parseCssValue(property, valueString);
-
-    return [{ property, value }];
+    return [{ property, value: theme.margin[margin] }];
   };
 
 export const ml: ReturnType<typeof marginProperty> = (margin) => {
@@ -204,84 +247,93 @@ export const m: ReturnType<typeof marginProperty> = (margin) => {
 
 export const w = (
   spacing:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["width"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["width"]>
+    | StringEnumToNumeric<keyof typeof theme.width>
+    | NonNumeric<keyof typeof theme.width>
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${spacing}` as const;
-  const valueString = theme("width")?.[key] ?? "0";
-  const value = parseCssValue("width", valueString);
-
-  return [{ property: "width", value }];
+  return [{ property: "width", value: theme.width[spacing] }];
 };
 
 export const h = (
   spacing:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["height"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["height"]>
+    | StringEnumToNumeric<keyof typeof theme.height>
+    | NonNumeric<keyof typeof theme.height>
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${spacing}` as const;
-  const valueString = theme("height")?.[key] ?? "0";
-  const value = parseCssValue("height", valueString);
+  return [{ property: "height", value: theme.height[spacing] }];
+};
 
-  return [{ property: "height", value }];
+export const minH = (
+  spacing: StringEnumToNumeric<keyof typeof theme.minHeight>
+): EmbedTemplateStyleDecl[] => {
+  return [{ property: "minHeight", value: theme.minHeight[spacing] }];
 };
 
 export const opacity = (
-  opacity: StringEnumToNumeric<keyof EvaluatedDefaultTheme["opacity"]>
+  opacity: StringEnumToNumeric<keyof typeof theme.opacity>
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${opacity}` as const;
-  const valueString = theme("opacity")?.[key] ?? "0";
-  const value = parseCssValue("opacity", valueString);
-
   return [
     {
       property: "opacity",
-      value,
+      value: theme.opacity[opacity],
+    },
+  ];
+};
+
+export const cursor = (
+  cursor: keyof typeof theme.cursor
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "cursor",
+      value: theme.cursor[cursor],
     },
   ];
 };
 
 export const maxW = (
   spacing:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["maxWidth"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["maxWidth"]>
+    | StringEnumToNumeric<keyof typeof theme.maxWidth>
+    | NonNumeric<keyof typeof theme.maxWidth>
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${spacing}` as const;
-  const valueString = theme("maxWidth")?.[key] ?? "0";
-  const value = parseCssValue("width", valueString);
-
-  return [{ property: "maxWidth", value }];
+  return [{ property: "maxWidth", value: theme.maxWidth[spacing] }];
 };
 
 const positionStyle = (
   property: "left" | "right" | "top" | "bottom",
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof typeof theme.inset>
+    | NonNumeric<keyof typeof theme.inset>
 ): EmbedTemplateStyleDecl => {
-  const key = `${spacing}` as const;
-  const valueString = theme("spacing")?.[key] ?? "0";
-  const value = parseCssValue(property, valueString);
-
-  return { property, value };
+  return { property, value: theme.inset[spacing] };
 };
 
 export const top = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof typeof theme.inset>
+    | NonNumeric<keyof typeof theme.inset>
 ): EmbedTemplateStyleDecl[] => [positionStyle("top", spacing)];
 
 export const right = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof typeof theme.inset>
+    | NonNumeric<keyof typeof theme.inset>
 ): EmbedTemplateStyleDecl[] => [positionStyle("right", spacing)];
 
 export const bottom = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof typeof theme.inset>
+    | NonNumeric<keyof typeof theme.inset>
 ): EmbedTemplateStyleDecl[] => [positionStyle("bottom", spacing)];
 
 export const left = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof typeof theme.inset>
+    | NonNumeric<keyof typeof theme.inset>
 ): EmbedTemplateStyleDecl[] => [positionStyle("left", spacing)];
 
 export const inset = (
-  spacing: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  spacing:
+    | StringEnumToNumeric<keyof typeof theme.inset>
+    | NonNumeric<keyof typeof theme.inset>
 ): EmbedTemplateStyleDecl[] => [
   positionStyle("left", spacing),
   positionStyle("right", spacing),
@@ -289,23 +341,53 @@ export const inset = (
   positionStyle("bottom", spacing),
 ];
 
-export const backdropBlur = (
-  blur: keyof EvaluatedDefaultTheme["blur"]
+export const aspect = (
+  value: "auto" | "square" | "video"
 ): EmbedTemplateStyleDecl[] => {
-  const valueString = theme("blur")[blur];
-  const value = {
-    type: "unparsed" as const,
-    value: `blur(${valueString})`,
-  };
+  let unparsed: string = value;
+  if (value === "square") {
+    unparsed = "1 / 1";
+  }
+  if (value === "video") {
+    unparsed = "16 / 9";
+  }
+  return [
+    {
+      property: "aspectRatio",
+      value: { type: "unparsed", value: unparsed },
+    },
+  ];
+};
 
-  return [{ property: "backdropFilter", value }];
+export const backdropBlur = (
+  blur: keyof typeof theme.blur
+): EmbedTemplateStyleDecl[] => {
+  return [{ property: "backdropFilter", value: theme.blur[blur] }];
+};
+
+export const list = (
+  listStyle: keyof typeof theme.listStyleType
+): EmbedTemplateStyleDecl[] => {
+  return [{ property: "listStyleType", value: theme.listStyleType[listStyle] }];
+};
+
+export const select = (_selectValue: "none"): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "userSelect",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ];
 };
 
 export const bg = (
-  color: keyof EvaluatedDefaultTheme["colors"],
+  color: keyof typeof theme.colors,
   alpha?: number
 ): EmbedTemplateStyleDecl[] => {
-  const value = parseCssValue("backgroundColor", theme("colors")[color]);
+  const value = theme.colors[color];
 
   if (alpha !== undefined && value.type === "rgb") {
     value.alpha = alpha / 100;
@@ -387,12 +469,94 @@ export const justify = (
   ];
 };
 
+export const inlineFlex = (): EmbedTemplateStyleDecl[] => {
+  return [
+    { property: "display", value: { type: "keyword", value: "inline-flex" } },
+  ];
+};
+
+export const block = (): EmbedTemplateStyleDecl[] => {
+  return [{ property: "display", value: { type: "keyword", value: "block" } }];
+};
+
 const flexDirection = { row: "row", col: "column" } as const;
 type FlexDirection = keyof typeof flexDirection;
 
-export const flex = (flexParam?: FlexDirection): EmbedTemplateStyleDecl[] => {
+type FlexSizing = 1 | "auto" | "initial" | "none";
+
+export const flex = (
+  flexParam?: FlexDirection | FlexSizing
+): EmbedTemplateStyleDecl[] => {
   if (flexParam === undefined) {
     return [{ property: "display", value: { type: "keyword", value: "flex" } }];
+  }
+
+  if (flexParam === 1) {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "unit", value: 0, unit: "%" },
+      },
+    ];
+  }
+
+  if (flexParam === "auto") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
+  }
+
+  if (flexParam === "initial") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 1, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
+  }
+
+  if (flexParam === "none") {
+    return [
+      {
+        property: "flexGrow",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexShrink",
+        value: { type: "unit", value: 0, unit: "number" },
+      },
+      {
+        property: "flexBasis",
+        value: { type: "keyword", value: "auto" },
+      },
+    ];
   }
 
   return [
@@ -410,21 +574,24 @@ export const grow = (): EmbedTemplateStyleDecl[] => {
   return [
     {
       property: "flexGrow",
-      value: {
-        type: "unit",
-        value: 1,
-        unit: "number",
-      },
+      value: { type: "unit", value: 1, unit: "number" },
+    },
+  ];
+};
+
+export const shrink = (value: number): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "flexGrow",
+      value: { type: "unit", value, unit: "number" },
     },
   ];
 };
 
 export const gap = (
-  gapValue: StringEnumToNumeric<keyof EvaluatedDefaultTheme["spacing"]>
+  gapValue: StringEnumToNumeric<keyof typeof theme.spacing>
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${gapValue}` as const;
-  const valueString = theme("spacing")?.[key] ?? "0";
-  const value = parseCssValue("rowGap", valueString);
+  const value = theme.spacing[gapValue];
 
   return [
     { property: "rowGap", value },
@@ -432,31 +599,58 @@ export const gap = (
   ];
 };
 
+export const lineClamp = (
+  lineClampValue: StringEnumToNumeric<keyof typeof theme.lineClamp>
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+    {
+      property: "display",
+
+      value: {
+        type: "keyword",
+        value: "-webkit-box",
+      },
+    },
+    {
+      property: "-webkit-box-orient" as "display",
+      value: {
+        type: "keyword",
+        value: "vertical",
+      },
+    },
+    {
+      property: "-webkit-line-clamp" as "display",
+      value: theme.lineClamp[lineClampValue],
+    },
+  ];
+};
+
 export const leading = (
   lineHeight:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["lineHeight"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["lineHeight"]>
+    | StringEnumToNumeric<keyof typeof theme.lineHeight>
+    | NonNumeric<keyof typeof theme.lineHeight>
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${lineHeight}` as const;
-  const valueString = theme("lineHeight")[key];
-  const value = parseCssValue("lineHeight", valueString);
-
-  return [{ property: "lineHeight", value }];
+  return [{ property: "lineHeight", value: theme.lineHeight[lineHeight] }];
 };
 
 export const tracking = (
   letterSpacing:
-    | StringEnumToNumeric<keyof EvaluatedDefaultTheme["letterSpacing"]>
-    | NonNumeric<keyof EvaluatedDefaultTheme["letterSpacing"]>
+    | StringEnumToNumeric<keyof typeof theme.letterSpacing>
+    | NonNumeric<keyof typeof theme.letterSpacing>
 ): EmbedTemplateStyleDecl[] => {
-  const key = `${letterSpacing}` as const;
-  const valueString = theme("letterSpacing")[key];
-  const value = parseCssValue("letterSpacing", valueString);
-
-  return [{ property: "letterSpacing", value }];
+  return [
+    { property: "letterSpacing", value: theme.letterSpacing[letterSpacing] },
+  ];
 };
 
-export const outline = (value: "none"): EmbedTemplateStyleDecl[] => {
+export const outline = (_value: "none"): EmbedTemplateStyleDecl[] => {
   return [
     {
       property: "outlineWidth",
@@ -477,93 +671,210 @@ export const outline = (value: "none"): EmbedTemplateStyleDecl[] => {
   ];
 };
 
-const textSizes = [
-  "sm",
-  "base",
-  "lg",
-  "xs",
-  "xl",
-  "2xl",
-  "3xl",
-  "4xl",
-  "5xl",
-  "6xl",
-  "7xl",
-  "8xl",
-  "9xl",
-] as const satisfies readonly (keyof EvaluatedDefaultTheme["fontSize"])[];
-type TextSize = keyof EvaluatedDefaultTheme["fontSize"];
+const textSizes = Object.keys(theme.fontSize);
+type TextSize = keyof typeof theme.fontSize;
 
 const isTextSize = (value: string): value is TextSize =>
-  textSizes.includes(value as TextSize);
+  textSizes.includes(value);
 
 export const text = (
-  sizeOrColor: TextSize | keyof EvaluatedDefaultTheme["colors"]
+  sizeOrColor: TextSize | keyof typeof theme.colors
 ): EmbedTemplateStyleDecl[] => {
   if (isTextSize(sizeOrColor)) {
-    const valueArr = theme("fontSize")[sizeOrColor];
-    const [fontSizeString, { lineHeight: lineHeightString }] = valueArr;
-
-    const fontSize = parseCssValue("fontSize", fontSizeString);
-    const lineHeight = parseCssValue("lineHeight", lineHeightString);
     return [
-      { property: "fontSize", value: fontSize },
-      { property: "lineHeight", value: lineHeight },
+      { property: "fontSize", value: theme.fontSize[sizeOrColor] },
+      { property: "lineHeight", value: theme.fontSizeLineHeight[sizeOrColor] },
     ];
   }
-
-  const value = parseCssValue("color", theme("colors")[sizeOrColor]);
-
   return [
     {
       property: "color",
-      value,
+      value: theme.colors[sizeOrColor],
+    },
+  ];
+};
+
+export const noUnderline = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textDecorationLine",
+      value: { type: "keyword", value: "none" },
+    },
+  ];
+};
+
+export const underline = (): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textDecorationLine",
+      value: { type: "keyword", value: "underline" },
+    },
+  ];
+};
+
+export const underlineOffset = (
+  offset: StringEnumToNumeric<keyof typeof theme.textUnderlineOffset>
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "textUnderlineOffset",
+      value: theme.textUnderlineOffset[offset],
+    },
+  ];
+};
+
+const weights = {
+  thin: "100",
+  extralight: "200",
+  light: "300",
+  normal: "400",
+  medium: "500",
+  semibold: "600",
+  bold: "700",
+  extrabold: "800",
+  black: "900",
+} as const;
+
+export const font = (
+  weight:
+    | "thin"
+    | "extralight"
+    | "light"
+    | "normal"
+    | "medium"
+    | "semibold"
+    | "bold"
+    | "extrabold"
+    | "black"
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "fontWeight",
+      value: { type: "keyword", value: weights[weight] },
+    },
+  ];
+};
+
+export const whitespace = (
+  value: "normal" | "nowrap" | "pre" | "pre-line" | "pre-wrap" | "break-spaces"
+): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "whiteSpace",
+      value: { type: "keyword", value },
     },
   ];
 };
 
 export const shadow = (
-  shadowSize: keyof EvaluatedDefaultTheme["boxShadow"]
+  shadowSize: keyof typeof theme.boxShadow
 ): EmbedTemplateStyleDecl[] => {
-  const valueString = theme("boxShadow")[shadowSize];
-  const value = parseBoxShadow(valueString);
-
   return [
     {
       property: "boxShadow",
-      value,
+      value: theme.boxShadow[shadowSize],
     },
   ];
 };
 
 export const ring = (
-  ringColor: keyof EvaluatedDefaultTheme["colors"],
-  ringWidth: StringEnumToNumeric<keyof EvaluatedDefaultTheme["ringWidth"]>,
-  ringOffsetColor: keyof EvaluatedDefaultTheme["colors"] = "background",
-  ringOffsetWidth: StringEnumToNumeric<
-    keyof EvaluatedDefaultTheme["ringOffsetWidth"]
-  > = 0,
-  inset: "inset" | "" = ""
+  ringColor: keyof typeof theme.colors,
+  ringWidth: StringEnumToNumeric<keyof typeof theme.ringWidth>,
+  ringOffsetColor: keyof typeof theme.colors = "background",
+  ringOffsetWidth: StringEnumToNumeric<keyof typeof theme.ringOffsetWidth> = 0
 ): EmbedTemplateStyleDecl[] => {
-  const ringWidthUnits = theme("ringWidth")[ringWidth];
-  const ringOffsetWidthUnits = theme("ringOffsetWidth")[ringOffsetWidth];
-  const ringColorRgb = theme("colors")[ringColor];
-  const ringOffsetColorRgb = theme("colors")[ringOffsetColor];
-  const ringOffsetShadow = `${inset} 0 0 0 ${ringOffsetWidthUnits} ${ringOffsetColorRgb}`;
+  const ringWidthStyleValue = theme.ringWidth[ringWidth];
+  const ringOffsetWidthStyleValue = theme.ringOffsetWidth[ringOffsetWidth];
+  const ringColorStyleValue = theme.colors[ringColor];
+  const ringOffsetColorStyleValue = theme.colors[ringOffsetColor];
 
-  const ringWidthParsed = parseFloat(ringWidthUnits);
-  const ringOffsetWidthParsed = parseFloat(ringOffsetWidthUnits);
+  // 0 0 0 ringOffsetWidth ringOffsetColor
+  const ringOffsetShadow: TupleValue = {
+    type: "tuple",
+    value: [
+      { type: "unit", value: 0, unit: "number" },
+      { type: "unit", value: 0, unit: "number" },
+      { type: "unit", value: 0, unit: "number" },
+      ringOffsetWidthStyleValue as TupleValueItem,
+      ringOffsetColorStyleValue as TupleValueItem,
+    ],
+  };
 
-  const ringShadow = `${inset} 0 0 0 ${
-    ringWidthParsed + ringOffsetWidthParsed
-  }px ${ringColorRgb}`;
+  const ringWidthValue =
+    ringWidthStyleValue.type === "unit" ? ringWidthStyleValue.value : 0;
+  const ringOffsetWidthValue =
+    ringOffsetWidthStyleValue.type === "unit"
+      ? ringOffsetWidthStyleValue.value
+      : 0;
 
-  const value = parseBoxShadow(`${ringOffsetShadow}, ${ringShadow}`);
+  // 0 0 0 ringWidth + ringOffsetWidth ringColor
+  const ringShadow: TupleValue = {
+    type: "tuple",
+    value: [
+      { type: "unit", value: 0, unit: "number" },
+      { type: "unit", value: 0, unit: "number" },
+      { type: "unit", value: 0, unit: "number" },
+      {
+        type: "unit",
+        value: ringWidthValue + ringOffsetWidthValue,
+        unit:
+          ringWidthStyleValue.type === "unit"
+            ? ringWidthStyleValue.unit
+            : "number",
+      },
+      ringColorStyleValue as TupleValueItem,
+    ],
+  };
 
   return [
     {
       property: "boxShadow",
-      value,
+      value: {
+        type: "layers",
+        value: [ringOffsetShadow, ringShadow],
+      },
+    },
+  ];
+};
+
+export const pointerEvents = (
+  value: "none" | "auto"
+): EmbedTemplateStyleDecl[] => {
+  return [{ property: "pointerEvents", value: { type: "keyword", value } }];
+};
+
+export const transition = (
+  value: "none" | "all" | "transform"
+): EmbedTemplateStyleDecl[] => {
+  if (value === "none") {
+    return [
+      {
+        property: "transitionProperty",
+        value: { type: "keyword", value: "all" },
+      },
+    ];
+  }
+  return [
+    {
+      property: "transitionProperty",
+      value: { type: "keyword", value },
+    },
+    {
+      property: "transitionTimingFunction",
+      value: { type: "unparsed", value: "cubic-bezier(0.4, 0, 0.2, 1)" },
+    },
+    {
+      property: "transitionDuration",
+      value: { type: "unparsed", value: "150ms" },
+    },
+  ];
+};
+
+export const duration = (ms: number): EmbedTemplateStyleDecl[] => {
+  return [
+    {
+      property: "transitionDuration",
+      value: { type: "unit", value: ms, unit: "ms" },
     },
   ];
 };
@@ -583,6 +894,24 @@ export const focus = (
   return value.map((decl) => ({
     ...decl,
     state: ":focus",
+  }));
+};
+
+export const focusVisible = (
+  value: EmbedTemplateStyleDecl[]
+): EmbedTemplateStyleDecl[] => {
+  return value.map((decl) => ({
+    ...decl,
+    state: ":focus-visible",
+  }));
+};
+
+export const disabled = (
+  value: EmbedTemplateStyleDecl[]
+): EmbedTemplateStyleDecl[] => {
+  return value.map((decl) => ({
+    ...decl,
+    state: ":disabled",
   }));
 };
 

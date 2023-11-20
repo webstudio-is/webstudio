@@ -11,7 +11,7 @@ We use [Tokens Studio for Figma](https://docs.tokens.studio) plugin to sync desi
 2. Ask Oleg to add you to the `@webstudio-is/core` team if you are not already in it.
 3. Go to https://github.com/settings/personal-access-tokens/new
    - Under "Resource owner" choose "webstudio-is" <br /><img src="./assets/1.png" width="349" />
-   - Under "Repository access" choose `webstudio-is/webstudio-builder` <br /><img src="./assets/2.png" width="514" />
+   - Under "Repository access" choose `webstudio-is/webstudio` <br /><img src="./assets/2.png" width="514" />
    - Set "Repository permissions" / "Contents" to "Read and write", and leave other permissions as is <br /><img src="./assets/3.png" width="806" />
    - Press "Generate token and request access"
    - COPY THE TOKEN NOW AND SAVE IT SOMEWHERE SAFE (you won't be able to see it again)
@@ -28,7 +28,7 @@ In case sync provider is not configured in the plugin, you can add one using the
 
 - Name: up to you
 - Personal Access Token: token generated using the instructions above
-- Repository: `webstudio-is/webstudio-builder`
+- Repository: `webstudio-is/webstudio`
 - Branch: `figma-tokens`
 - File Path: `packages/design-system/src/__generated__/figma-design-tokens.json`
 - baseUrl: leave empty
@@ -48,7 +48,7 @@ The process:
 3. Assign some reviewers. Feel free to always assign me (@rpominov). A Pull Request can't be merged without at least one review. Also you might need a developer's help if you've renamed or removed a token that was used in code. <br/><img src="./assets/10.png" width="329" />
 4. Click "Create pull request" button. (It might be hidden behind "Draft pull request") <br/><img src="./assets/12.png" width="372" />
 5. In the PR you can already see the changes in the deployed app <br/><img src="./assets/8.png" width="926" />
-6. Also, you can see the cnahges in a Storybook using this link https://figma-tokens--638affb61acca1e593c6e558.chromatic.com/ or by going to the bottom of PR page > "Show all checks" > "Storybook Publish: !webstudio-is/webstudio-builder" > "Details" <br/><img src="./assets/9.png" width="924" />
+6. Also, you can see the cnahges in a Storybook using this link https://figma-tokens--638affb61acca1e593c6e558.chromatic.com/ or by going to the bottom of PR page > "Show all checks" > "Storybook Publish: !webstudio-is/webstudio" > "Details" <br/><img src="./assets/9.png" width="924" />
 7. If you see "This branch is out-of-date with the base branch" message at the bottom, this means that when you look at the changes with the links above, you see all your changes applied, but some of the changes made by developers might not be applied. To fix that, click "Update branch" button, but make sure to choose "Update with merge commit" <br/><img src="./assets/7.png" width="1029" />
 8. Sometimes a visual regression test may fail in the PR. Next sections describes how to fix it.
 

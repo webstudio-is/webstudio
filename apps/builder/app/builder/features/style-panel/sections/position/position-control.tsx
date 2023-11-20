@@ -10,7 +10,7 @@ import type {
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
 import { getPositionModifiersGroup, useScrub } from "../shared/scrub";
 import { ValueText } from "../shared/value-text";
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { InputPopover } from "../shared/input-popover";
 import { PositionTooltip } from "./position-tooltip";
 

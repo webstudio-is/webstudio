@@ -9,14 +9,20 @@ import { BooleanControl } from "./boolean";
 import { FileControl } from "./file";
 import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
+import { JsonControl } from "./json";
 
 export const renderControl = ({
   meta,
   prop,
   ...rest
 }: ControlProps<string, string> & { key?: string }) => {
-  if (prop?.type === "dataSource") {
-    throw Error("Data source is not resolved");
+  if (prop?.type === "expression") {
+    throw Error("Expression is not resolved");
+  }
+
+  // never render parameter props
+  if (prop?.type === "parameter") {
+    return;
   }
 
   // @todo remove once ui for action is implemented
@@ -140,6 +146,21 @@ export const renderControl = ({
             defaultValue: undefined,
             control: "boolean",
             type: "boolean",
+          }}
+          prop={prop}
+          {...rest}
+        />
+      );
+    }
+
+    if (prop.type === "json") {
+      return (
+        <JsonControl
+          meta={{
+            ...meta,
+            defaultValue: undefined,
+            control: "json",
+            type: "json",
           }}
           prop={prop}
           {...rest}

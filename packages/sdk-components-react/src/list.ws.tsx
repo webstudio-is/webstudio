@@ -46,13 +46,37 @@ export const meta: WsComponentMeta = {
   category: "general",
   type: "container",
   label: "List",
+  description: "Groups content, like links in a menu or steps in a recipe.",
   icon: ListIcon,
   states: defaultStates,
   presetStyle,
   order: 3,
+  template: [
+    {
+      type: "instance",
+      component: "List",
+      children: [
+        {
+          type: "instance",
+          component: "ListItem",
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "ListItem",
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "ListItem",
+          children: [],
+        },
+      ],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "ordered", "type", "start", "reversed"],
+  initialProps: ["id", "ordered", "start", "reversed"],
 };

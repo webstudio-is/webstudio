@@ -1,16 +1,23 @@
 import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
-import type { Asset, Assets } from "@webstudio-is/asset-uploader";
-import type { Build } from "@webstudio-is/project-build";
+import type {
+  Asset,
+  Assets,
+  Breakpoint,
+  Instance,
+  StyleDecl,
+  StyleDeclKey,
+  StyleSourceSelection,
+} from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
-import { idAttribute } from "../tree";
+import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules, getStyleRules } from "./style-rules";
 
 type Data = {
   assets: Asset[];
-  breakpoints?: Build["breakpoints"];
-  styles?: Build["styles"];
-  styleSourceSelections?: Build["styleSourceSelections"];
+  breakpoints: [Breakpoint["id"], Breakpoint][];
+  styles: [StyleDeclKey, StyleDecl][];
+  styleSourceSelections: [Instance["id"], StyleSourceSelection][];
   componentMetas: Map<string, WsComponentMeta>;
 };
 
@@ -43,9 +50,7 @@ export const createImageValueTransformer =
   };
 
 export const generateCssText = (data: Data, options: CssOptions) => {
-  const assets = new Map<Asset["id"], Asset>(
-    data.assets.map((asset) => [asset.id, asset])
-  );
+  const assets: Assets = new Map(data.assets.map((asset) => [asset.id, asset]));
   const breakpoints = new Map(data.breakpoints);
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);

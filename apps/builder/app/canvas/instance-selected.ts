@@ -1,4 +1,4 @@
-import type { Instance } from "@webstudio-is/project-build";
+import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
@@ -9,8 +9,8 @@ import {
   selectedInstanceRenderStateStore,
   stylesIndexStore,
   instancesStore,
-  propsStore,
-  dataSourceValuesStore,
+  selectedInstanceSelectorStore,
+  $propValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
@@ -72,8 +72,8 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
   };
 };
 
-export const subscribeSelectedInstance = (
-  selectedInstanceSelector: InstanceSelector,
+const subscribeSelectedInstance = (
+  selectedInstanceSelector: Readonly<InstanceSelector>,
   queueTask: (task: () => void) => void
 ) => {
   if (selectedInstanceSelector.length === 0) {
@@ -85,11 +85,7 @@ export const subscribeSelectedInstance = (
 
   let elements = getElementsByInstanceSelector(selectedInstanceSelector);
 
-  if (elements.length === 0) {
-    return;
-  }
-
-  elements[0].scrollIntoView({
+  elements[0]?.scrollIntoView({
     behavior: "smooth",
     block: "nearest",
   });
@@ -118,7 +114,7 @@ export const subscribeSelectedInstance = (
     }
 
     // Synchronously execute setDataCollapsed to calculate right outline
-    // This fixes an issue, when new element outline was calulated before collapsed elements calculations
+    // This fixes an issue, when new element outline was calculated before collapsed elements calculations
     setDataCollapsed(instanceId, true);
   };
 
@@ -192,9 +188,7 @@ export const subscribeSelectedInstance = (
 
   // Lightweight update
   const updateOutline = () => {
-    queueTask(() => {
-      showOutline();
-    });
+    showOutline();
   };
 
   const resizeObserver = new ResizeObserver(update);
@@ -231,9 +225,8 @@ export const subscribeSelectedInstance = (
 
   const unsubscribeStylesIndexStore = stylesIndexStore.subscribe(update);
   const unsubscribeInstancesStore = instancesStore.subscribe(update);
-  const unsubscribePropsStore = propsStore.subscribe(update);
-  const unsubscribeDataSourceValuesStore =
-    dataSourceValuesStore.subscribe(update);
+  const unsubscribePropValuesStore =
+    $propValuesByInstanceSelector.subscribe(update);
 
   const unsubscribeIsResizingCanvas = isResizingCanvasStore.subscribe(
     (isResizing) => {
@@ -276,7 +269,28 @@ export const subscribeSelectedInstance = (
     unsubscribeWindowResize();
     unsubscribeStylesIndexStore();
     unsubscribeInstancesStore();
-    unsubscribePropsStore();
-    unsubscribeDataSourceValuesStore();
+    unsubscribePropValuesStore();
+  };
+};
+
+export const subscribeSelected = (queueTask: (task: () => void) => void) => {
+  let previousSelectedInstance: readonly string[] | undefined = undefined;
+  let unsubscribeSelectedInstance = () => {};
+
+  const unsubscribe = selectedInstanceSelectorStore.subscribe(
+    (instanceSelector) => {
+      if (instanceSelector !== previousSelectedInstance) {
+        unsubscribeSelectedInstance();
+        unsubscribeSelectedInstance =
+          subscribeSelectedInstance(instanceSelector ?? [], queueTask) ??
+          (() => {});
+        previousSelectedInstance = instanceSelector;
+      }
+    }
+  );
+
+  return () => {
+    unsubscribe();
+    unsubscribeSelectedInstance();
   };
 };

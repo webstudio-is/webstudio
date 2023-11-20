@@ -1,4 +1,4 @@
-import { componentAttribute, idAttribute } from "../tree";
+import { componentAttribute, idAttribute } from "../props";
 
 export type AnyComponent = React.ForwardRefExoticComponent<
   Omit<

@@ -1,25 +1,108 @@
-import type { Data } from "@webstudio-is/react-sdk";
+import type {
+  Asset,
+  Breakpoint,
+  DataSource,
+  Deployment,
+  Instance,
+  Page,
+  Pages,
+  Prop,
+  StyleDecl,
+  StyleDeclKey,
+  StyleSource,
+  StyleSourceSelection,
+} from "@webstudio-is/sdk";
 
-export const loadProject = async ({
-  apiUrl,
-  projectId,
-}: {
-  apiUrl: string;
+export type Data = {
+  page: Page;
+  pages: Array<Page>;
+  build: {
+    id: string;
+    projectId: string;
+    version: number;
+    createdAt: string;
+    updatedAt: string;
+    pages: Pages;
+    breakpoints: [Breakpoint["id"], Breakpoint][];
+    styles: [StyleDeclKey, StyleDecl][];
+    styleSources: [StyleSource["id"], StyleSource][];
+    styleSourceSelections: [Instance["id"], StyleSourceSelection][];
+    props: [Prop["id"], Prop][];
+    instances: [Instance["id"], Instance][];
+    dataSources: [DataSource["id"], DataSource][];
+    deployment?: Deployment | undefined;
+  };
+  assets: Array<Asset>;
+};
+
+export const loadProjectDataById = async (params: {
   projectId: string;
-}): Promise<Array<Data>> => {
-  if (apiUrl === undefined) {
-    throw new Error("Webstudio API URL is required.");
-  }
-  const baseUrl = new URL(apiUrl);
-  const projectUrl = new URL(`/rest/project/${projectId}`, baseUrl);
-  const projectResponse = await fetch(projectUrl);
-
-  if (projectResponse.ok) {
-    return await projectResponse.json();
+  origin: string;
+  authToken?: string;
+}): Promise<Data> => {
+  const result = await getLatestBuildUsingProjectId(params);
+  if (result.buildId === null) {
+    throw new Error(`The project is not published yet`);
   }
 
-  // In the case where the status code is not 2xx,
-  // we don't know what to do with the response other than just show an error message.
-  const message = await projectResponse.text();
+  const url = new URL(params.origin);
+  url.pathname = `/rest/build/${result.buildId}`;
+
+  if (params.authToken) {
+    url.searchParams.append("authToken", params.authToken);
+  }
+
+  const response = await fetch(url.href);
+
+  if (response.ok) {
+    return await response.json();
+  }
+
+  const message = await response.text();
+  throw new Error(message.slice(0, 1000));
+};
+
+export const loadProjectDataByBuildId = async (params: {
+  buildId: string;
+  origin: string;
+  authToken: string;
+}): Promise<Data> => {
+  const url = new URL(params.origin);
+  url.pathname = `/rest/build/${params.buildId}`;
+
+  const response = await fetch(url.href, {
+    headers: {
+      Authorization: params.authToken,
+    },
+  });
+
+  if (response.ok) {
+    return await response.json();
+  }
+
+  const message = await response.text();
+  throw new Error(message.slice(0, 1000));
+};
+
+// @todo: broken as expects non 200 code
+export const getLatestBuildUsingProjectId = async (params: {
+  projectId: string;
+  origin: string;
+  authToken?: string;
+}): Promise<{ buildId: string | null }> => {
+  const { origin, projectId, authToken } = params;
+  const url = new URL(origin);
+  url.pathname = `/rest/buildId/${projectId}`;
+
+  if (authToken) {
+    url.searchParams.append("authToken", authToken);
+  }
+  const response = await fetch(url.href);
+
+  if (response.ok) {
+    return await response.json();
+  }
+
+  const message = await response.text();
   throw new Error(message.slice(0, 1000));
 };

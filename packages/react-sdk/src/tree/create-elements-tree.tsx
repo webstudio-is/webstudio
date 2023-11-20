@@ -1,60 +1,41 @@
 import {
   Fragment,
   type ForwardRefExoticComponent,
-  type RefAttributes,
   type ReactNode,
+  type RefAttributes,
 } from "react";
-import type { ReadableAtom } from "nanostores";
-import type { Assets } from "@webstudio-is/asset-uploader";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import type { Components } from "../components/components-utils";
-import {
-  type Params,
-  type DataSourceValues,
-  ReactSdkContext,
-} from "../context";
-import type { Pages, PropsByInstanceId } from "../props";
-import type { WebstudioComponentProps } from "./webstudio-component";
-import type { IndexesWithinAncestors } from "../instance-utils";
+import { type Params, ReactSdkContext } from "../context";
+import type { ImageLoader } from "@webstudio-is/image";
 
 type InstanceSelector = Instance["id"][];
 
+export type WebstudioComponentProps = {
+  instance: Instance;
+  instanceSelector: Instance["id"][];
+  children: ReactNode;
+  components: Components;
+};
+
 export const createElementsTree = ({
   renderer,
-  imageBaseUrl,
   assetBaseUrl,
+  imageBaseUrl,
+  imageLoader,
   instances,
   rootInstanceId,
-  propsByInstanceIdStore,
-  assetsStore,
-  pagesStore,
-  dataSourceValuesStore,
-  executeEffectfulExpression,
-  onDataSourceUpdate,
-  indexesWithinAncestors,
   Component,
   components,
-  scripts,
 }: Params & {
   instances: Instances;
+  imageLoader: ImageLoader;
   rootInstanceId: Instance["id"];
-  propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
-  assetsStore: ReadableAtom<Assets>;
-  pagesStore: ReadableAtom<Pages>;
-  executeEffectfulExpression: (
-    expression: string,
-    args: DataSourceValues,
-    values: DataSourceValues
-  ) => DataSourceValues;
-  dataSourceValuesStore: ReadableAtom<DataSourceValues>;
-  onDataSourceUpdate: (newValues: DataSourceValues) => void;
-  indexesWithinAncestors: IndexesWithinAncestors;
 
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
   components: Components;
-  scripts?: ReactNode;
 }) => {
   const rootInstance = instances.get(rootInstanceId);
   if (rootInstance === undefined) {
@@ -73,44 +54,32 @@ export const createElementsTree = ({
     Component,
     instance: rootInstance,
     instanceSelector: rootInstanceSelector,
-    children: [
-      <Fragment key="children">
-        {children}
-        {scripts}
-      </Fragment>,
-    ],
+    children,
     components,
   });
   return (
     <ReactSdkContext.Provider
       value={{
-        propsByInstanceIdStore,
-        assetsStore,
-        pagesStore,
-        dataSourceValuesStore,
         renderer,
-        imageBaseUrl,
+        imageLoader,
+        pagesPaths: new Set(),
         assetBaseUrl,
-        indexesWithinAncestors,
-        executeEffectfulExpression,
-        setDataSourceValues: onDataSourceUpdate,
-        setBoundDataSourceValue: (instanceId, propName, value) => {
-          const propsByInstanceId = propsByInstanceIdStore.get();
-          const props = propsByInstanceId.get(instanceId);
-          const prop = props?.find((prop) => prop.name === propName);
-          if (prop?.type !== "dataSource") {
-            throw Error(`${propName} is not data source`);
-          }
-          const dataSourceId = prop.value;
-          const newValues = new Map();
-          newValues.set(dataSourceId, value);
-          onDataSourceUpdate(newValues);
-        },
+        imageBaseUrl,
       }}
     >
       {root}
     </ReactSdkContext.Provider>
   );
+};
+
+const renderText = (text: string): Array<JSX.Element> => {
+  const lines = text.split("\n");
+  return lines.map((line, index) => (
+    <Fragment key={index}>
+      {line}
+      {index < lines.length - 1 && <br />}
+    </Fragment>
+  ));
 };
 
 const createInstanceChildrenElements = ({
@@ -128,10 +97,10 @@ const createInstanceChildrenElements = ({
   >;
   components: Components;
 }) => {
-  const elements = [];
+  const elements: ReactNode[] = [];
   for (const child of children) {
     if (child.type === "text") {
-      elements.push(child.value);
+      elements.push(renderText(child.value));
       continue;
     }
     const childInstance = instances.get(child.value);
@@ -155,6 +124,10 @@ const createInstanceChildrenElements = ({
     });
     elements.push(element);
   }
+  // let empty children be coalesced with fallback
+  if (elements.length === 0) {
+    return;
+  }
   return elements;
 };
 
@@ -162,7 +135,7 @@ const createInstanceElement = ({
   Component,
   instance,
   instanceSelector,
-  children = [],
+  children,
   components,
 }: {
   instance: Instance;
@@ -170,7 +143,7 @@ const createInstanceElement = ({
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
-  children?: Array<JSX.Element | string>;
+  children?: ReactNode;
   components: Components;
 }) => {
   return (

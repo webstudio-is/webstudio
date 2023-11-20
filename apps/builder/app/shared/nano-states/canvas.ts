@@ -1,6 +1,7 @@
 import { atom, computed } from "nanostores";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import { instancesStore } from "./instances";
+import type { InstanceSelector } from "../tree-utils";
 
 export type TextToolbarState = {
   selectionRect: undefined | DOMRect;
@@ -55,8 +56,16 @@ export const hoveredInstanceOutlineAndInstanceStore = computed(
   getInstanceOutlineAndInstance
 );
 
+export const $collaborativeInstanceSelector = atom<
+  undefined | InstanceSelector
+>(undefined);
+
+export const $collaborativeInstanceRect = atom<undefined | DOMRect>(undefined);
+
 export const synchronizedCanvasStores = [
   ["textToolbar", textToolbarStore],
   ["selectedInstanceOutline", selectedInstanceOutlineStore],
   ["hoveredInstanceOutline", hoveredInstanceOutlineStore],
+  ["$collaborativeInstanceSelector", $collaborativeInstanceSelector],
+  ["$collaborativeInstanceRect", $collaborativeInstanceRect],
 ] as const;

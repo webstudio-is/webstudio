@@ -254,7 +254,7 @@ const DomainItem = (props: {
 
   const refreshDomainResult = props.refreshDomainResult;
 
-  // @todo this should gone https://github.com/webstudio-is/webstudio-builder/issues/1723
+  // @todo this should gone https://github.com/webstudio-is/webstudio/issues/1723
   const handleVerify = useCallback(() => {
     verify(
       {
@@ -273,7 +273,7 @@ const DomainItem = (props: {
     );
   }, [domain, projectId, refreshDomainResult, verify]);
 
-  // @todo this should gone https://github.com/webstudio-is/webstudio-builder/issues/1723
+  // @todo this should gone https://github.com/webstudio-is/webstudio/issues/1723
   const handleUpdateStatus = useCallback(() => {
     updateStatus(
       {
@@ -304,7 +304,7 @@ const DomainItem = (props: {
     updateStatus,
   ]);
 
-  // @todo this should gone https://github.com/webstudio-is/webstudio-builder/issues/1723
+  // @todo this should gone https://github.com/webstudio-is/webstudio/issues/1723
   useEffect(() => {
     if (initiallyOpen) {
       setIsStatusLoading(false);

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { type Unit } from "@webstudio-is/css-data";
 import * as SelectPrimitive from "@radix-ui/react-select";
+import type { Unit } from "@webstudio-is/css-engine";
 import {
   SelectScrollUpButton,
   SelectScrollDownButton,

@@ -8,12 +8,13 @@ import type {
   WsComponentMeta,
   WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
 import {
   propsCollapsible,
   propsCollapsibleContent,
   propsCollapsibleTrigger,
 } from "./__generated__/collapsible.props";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
@@ -21,32 +22,30 @@ const presetStyle = {
 
 export const metaCollapsible: WsComponentMeta = {
   category: "radix",
+  order: 5,
   type: "container",
   presetStyle,
-  label: "Collapsible",
   icon: CollapsibleIcon,
+  description:
+    "An interactive component which expands and collapses some content, triggered by a button.",
   template: [
     {
       type: "instance",
       component: "Collapsible",
-      dataSources: {
-        collapsibleOpen: { type: "variable", initialValue: false },
+      variables: {
+        collapsibleOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "open",
-          dataSourceName: "collapsibleOpen",
+          code: "collapsibleOpen",
         },
         {
           name: "onOpenChange",
           type: "action",
           value: [
-            {
-              type: "execute",
-              args: ["open"],
-              code: `collapsibleOpen = open`,
-            },
+            { type: "execute", args: ["open"], code: `collapsibleOpen = open` },
           ],
         },
       ],
@@ -58,6 +57,7 @@ export const metaCollapsible: WsComponentMeta = {
             {
               type: "instance",
               component: "Button",
+              styles: getButtonStyles("outline"),
               children: [{ type: "text", value: "Click to toggle content" }],
             },
           ],
@@ -81,7 +81,6 @@ export const metaCollapsible: WsComponentMeta = {
 export const metaCollapsibleTrigger: WsComponentMeta = {
   category: "hidden",
   type: "container",
-  label: "Collapsible Trigger",
   icon: TriggerIcon,
   stylable: false,
   detachable: false,
@@ -91,7 +90,6 @@ export const metaCollapsibleContent: WsComponentMeta = {
   category: "hidden",
   type: "container",
   presetStyle,
-  label: "Collapsible Content",
   icon: ContentIcon,
   detachable: false,
 };

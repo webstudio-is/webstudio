@@ -1,14 +1,26 @@
-import store from "immerhin";
 import { toast } from "@webstudio-is/design-system";
 import {
   type Instance,
   type Instances,
-  findTreeInstanceIdsExcludingSlotDescendants,
-} from "@webstudio-is/project-build";
+  type StyleSource,
+  getStyleDeclKey,
+  findTreeInstanceIds,
+  StyleSourceSelection,
+  StyleDecl,
+  Asset,
+  StyleSources,
+  Breakpoints,
+  DataSources,
+  Props,
+  DataSource,
+} from "@webstudio-is/sdk";
+import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
   type EmbedTemplateData,
+  decodeDataSourceVariable,
+  validateExpression,
 } from "@webstudio-is/react-sdk";
 import {
   propsStore,
@@ -18,10 +30,10 @@ import {
   styleSourcesStore,
   instancesStore,
   selectedStyleSourceSelectorStore,
-  textEditingInstanceSelectorStore,
   breakpointsStore,
   registeredComponentMetasStore,
   dataSourcesStore,
+  assetsStore,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -31,19 +43,31 @@ import {
   reparentInstanceMutable,
   getAncestorInstanceSelector,
   insertPropsCopyMutable,
-  insertStyleSourcesCopyMutable,
-  insertStyleSourceSelectionsCopyMutable,
-  insertStylesCopyMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
-import { getElementByInstanceSelector } from "./dom-utils";
+import { humanizeString } from "./string-utils";
+import { serverSyncStore } from "./sync";
+import type { StyleValue } from "@webstudio-is/css-engine";
+
+const getLabelFromComponentName = (component: Instance["component"]) => {
+  if (component.includes(":")) {
+    // strip namespace
+    const [_namespace, baseName] = component.split(":");
+    component = baseName;
+  }
+  return humanizeString(component);
+};
 
 export const getInstanceLabel = (
-  instance: { label?: string },
+  instance: { component: string; label?: string },
   meta: WsComponentMeta
 ) => {
-  return instance.label || meta.label;
+  return (
+    instance.label ||
+    meta.label ||
+    getLabelFromComponentName(instance.component)
+  );
 };
 
 export const findClosestEditableInstanceSelector = (
@@ -75,6 +99,28 @@ export const findClosestEditableInstanceSelector = (
           return;
         }
       }
+    }
+    return getAncestorInstanceSelector(instanceSelector, instanceId);
+  }
+};
+
+export const findClosestDetachableInstanceSelector = (
+  instanceSelector: InstanceSelector,
+  instances: Instances,
+  metas: Map<string, WsComponentMeta>
+) => {
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    const meta = metas.get(instance.component);
+    if (meta === undefined) {
+      return;
+    }
+    const detachable = meta.detachable ?? true;
+    if (meta.type === "rich-text-child" || detachable === false) {
+      continue;
     }
     return getAncestorInstanceSelector(instanceSelector, instanceId);
   }
@@ -250,24 +296,23 @@ export const insertTemplateData = (
     instances: insertedInstances,
     props: insertedProps,
     dataSources: insertedDataSources,
-    styleSourceSelections: insertedStyleSourceSelections,
-    styleSources: insertedStyleSources,
-    styles: insertedStyles,
   } = templateData;
   const rootInstanceId = insertedInstances[0].id;
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [
       instancesStore,
-      propsStore,
+      // insert data sources before props to avoid error
+      // about missing data source when compute data source logic
       dataSourcesStore,
+      propsStore,
       styleSourceSelectionsStore,
       styleSourcesStore,
       stylesStore,
     ],
     (
       instances,
-      props,
       dataSources,
+      props,
       styleSourceSelections,
       styleSources,
       styles
@@ -280,22 +325,33 @@ export const insertTemplateData = (
         children,
         dropTarget
       );
-      insertPropsCopyMutable(props, insertedProps, new Map(), new Map());
+      insertPropsCopyMutable(props, insertedProps, new Map());
       for (const dataSource of insertedDataSources) {
         dataSources.set(dataSource.id, dataSource);
       }
-      insertStyleSourcesCopyMutable(
-        styleSources,
-        insertedStyleSources,
-        new Set()
-      );
-      insertStyleSourceSelectionsCopyMutable(
-        styleSourceSelections,
-        insertedStyleSourceSelections,
-        new Map(),
-        new Map()
-      );
-      insertStylesCopyMutable(styles, insertedStyles, new Map(), new Map());
+
+      // insert only new style sources and their styles to support
+      // embed template tokens which have persistent id
+      // so when user changes these styles and then again add component with token
+      // nothing breaks visually
+      const insertedStyleSources = new Set<StyleSource["id"]>();
+      for (const styleSource of templateData.styleSources) {
+        if (styleSources.has(styleSource.id) === false) {
+          insertedStyleSources.add(styleSource.id);
+          styleSources.set(styleSource.id, styleSource);
+        }
+      }
+      for (const styleDecl of templateData.styles) {
+        if (insertedStyleSources.has(styleDecl.styleSourceId)) {
+          styles.set(getStyleDeclKey(styleDecl), styleDecl);
+        }
+      }
+      for (const styleSourceSelection of templateData.styleSourceSelections) {
+        styleSourceSelections.set(
+          styleSourceSelection.instanceId,
+          styleSourceSelection
+        );
+      }
     }
   );
 
@@ -323,34 +379,41 @@ export const getComponentTemplateData = (component: string) => {
   if (baseBreakpoint === undefined) {
     return;
   }
-  return generateDataFromEmbedTemplate(template, baseBreakpoint.id);
+  return generateDataFromEmbedTemplate(template, metas, baseBreakpoint.id);
 };
 
 export const reparentInstance = (
   targetInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  store.createTransaction([instancesStore, propsStore], (instances, props) => {
-    reparentInstanceMutable(
-      instances,
-      props,
-      registeredComponentMetasStore.get(),
-      targetInstanceSelector,
-      dropTarget
-    );
-  });
+  serverSyncStore.createTransaction(
+    [instancesStore, propsStore],
+    (instances, props) => {
+      reparentInstanceMutable(
+        instances,
+        props,
+        registeredComponentMetasStore.get(),
+        targetInstanceSelector,
+        dropTarget
+      );
+    }
+  );
   selectedInstanceSelectorStore.set(targetInstanceSelector);
   selectedStyleSourceSelectorStore.set(undefined);
 };
 
 export const deleteInstance = (instanceSelector: InstanceSelector) => {
+  // @todo tell user they can't delete root
+  if (instanceSelector.length === 1) {
+    return false;
+  }
   if (isInstanceDetachable(instanceSelector) === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
-    return;
+    return false;
   }
-  store.createTransaction(
+  serverSyncStore.createTransaction(
     [
       instancesStore,
       propsStore,
@@ -433,71 +496,194 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
           styles.delete(styleDeclKey);
         }
       }
-
-      if (parentInstance) {
-        selectedInstanceSelectorStore.set(
-          getAncestorInstanceSelector(instanceSelector, parentInstance.id)
-        );
-        selectedStyleSourceSelectorStore.set(undefined);
-      }
     }
   );
+  return true;
 };
 
-export const deleteSelectedInstance = () => {
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  // cannot delete instance while editing
-  if (textEditingInstanceSelector) {
-    return;
-  }
-  // @todo tell user they can't delete root
+const traverseStyleValue = (
+  value: StyleValue,
+  callback: (value: StyleValue) => void
+) => {
   if (
-    selectedInstanceSelector === undefined ||
-    selectedInstanceSelector.length === 1
+    value.type === "fontFamily" ||
+    value.type === "image" ||
+    value.type === "unit" ||
+    value.type === "keyword" ||
+    value.type === "unparsed" ||
+    value.type === "invalid" ||
+    value.type === "unset" ||
+    value.type === "rgb"
   ) {
+    callback(value);
     return;
   }
-  deleteInstance(selectedInstanceSelector);
+  if (value.type === "var") {
+    for (const item of value.fallbacks) {
+      traverseStyleValue(item, callback);
+    }
+    return;
+  }
+  if (value.type === "tuple" || value.type === "layers") {
+    for (const item of value.value) {
+      traverseStyleValue(item, callback);
+    }
+    return;
+  }
+  value satisfies never;
 };
 
-export const enterEditingMode = (event?: KeyboardEvent) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  const editableInstanceSelector = findClosestEditableInstanceSelector(
-    selectedInstanceSelector,
-    instancesStore.get(),
-    registeredComponentMetasStore.get()
-  );
-  if (editableInstanceSelector === undefined) {
-    return;
-  }
-  const element = getElementByInstanceSelector(editableInstanceSelector);
-  if (element === undefined) {
-    return;
-  }
-  // When an event is triggered from the Builder,
-  // the canvas element may be unfocused, so it's important to focus the element on the canvas.
-  element.focus();
-  // Prevents inserting a newline when entering text-editing mode
-  event?.preventDefault();
-  selectedInstanceSelectorStore.set(editableInstanceSelector);
-  textEditingInstanceSelectorStore.set(editableInstanceSelector);
-};
+export const getInstancesSlice = (rootInstanceId: string) => {
+  const assets = assetsStore.get();
+  const instances = instancesStore.get();
+  const dataSources = dataSourcesStore.get();
+  const props = propsStore.get();
+  const styleSourceSelections = styleSourceSelectionsStore.get();
+  const styleSources = styleSourcesStore.get();
+  const breakpoints = breakpointsStore.get();
+  const styles = stylesStore.get();
 
-export const escapeSelection = () => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
+  // collect the instance by id and all its descendants including portal instances
+  const slicedInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
+  const slicedInstances: Instance[] = [];
+  const slicedStyleSourceSelections: StyleSourceSelection[] = [];
+  const slicedStyleSources: StyleSources = new Map();
+  for (const instanceId of slicedInstanceIds) {
+    const instance = instances.get(instanceId);
+    if (instance) {
+      slicedInstances.push(instance);
+    }
+
+    // collect all style sources bound to these instances
+    const styleSourceSelection = styleSourceSelections.get(instanceId);
+    if (styleSourceSelection) {
+      slicedStyleSourceSelections.push(styleSourceSelection);
+      for (const styleSourceId of styleSourceSelection.values) {
+        if (slicedStyleSources.has(styleSourceId)) {
+          continue;
+        }
+        const styleSource = styleSources.get(styleSourceId);
+        if (styleSource === undefined) {
+          continue;
+        }
+        slicedStyleSources.set(styleSourceId, styleSource);
+      }
+    }
   }
-  // exit text editing mode first without unselecting instance
-  if (textEditingInstanceSelector) {
-    textEditingInstanceSelectorStore.set(undefined);
-    return;
+
+  const slicedAssetIds = new Set<Asset["id"]>();
+  const slicedFontFamilies = new Set<string>();
+
+  // collect styles bound to these style sources
+  const slicedStyles: StyleDecl[] = [];
+  const slicedBreapoints: Breakpoints = new Map();
+  for (const styleDecl of styles.values()) {
+    if (slicedStyleSources.has(styleDecl.styleSourceId) === false) {
+      continue;
+    }
+    slicedStyles.push(styleDecl);
+
+    // collect breakpoints
+    if (slicedBreapoints.has(styleDecl.breakpointId) === false) {
+      const breakpoint = breakpoints.get(styleDecl.breakpointId);
+      if (breakpoint) {
+        slicedBreapoints.set(styleDecl.breakpointId, breakpoint);
+      }
+    }
+
+    // collect assets including fonts
+    traverseStyleValue(styleDecl.value, (value) => {
+      if (value.type === "fontFamily") {
+        for (const fontFamily of value.value) {
+          slicedFontFamilies.add(fontFamily);
+        }
+      }
+      if (value.type === "image") {
+        if (value.value.type === "asset") {
+          slicedAssetIds.add(value.value.value);
+        }
+      }
+    });
   }
-  selectedInstanceSelectorStore.set(undefined);
-  selectedStyleSourceSelectorStore.set(undefined);
+
+  // collect props bound to these instances
+  const slicedProps: Props = new Map();
+  const usedDataSourceIds = new Set<DataSource["id"]>();
+  for (const prop of props.values()) {
+    if (slicedInstanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
+
+    slicedProps.set(prop.id, prop);
+
+    if (prop.type === "expression") {
+      validateExpression(prop.value, {
+        transformIdentifier(identifier) {
+          const id = decodeDataSourceVariable(identifier);
+          if (id !== undefined) {
+            usedDataSourceIds.add(id);
+          }
+          return identifier;
+        },
+      });
+    }
+
+    if (prop.type === "action") {
+      for (const value of prop.value) {
+        if (value.type === "execute") {
+          validateExpression(value.code, {
+            effectful: true,
+            transformIdentifier(identifier) {
+              const id = decodeDataSourceVariable(identifier);
+              if (id !== undefined) {
+                usedDataSourceIds.add(id);
+              }
+              return identifier;
+            },
+          });
+        }
+      }
+    }
+
+    // collect assets
+    if (prop.type === "asset") {
+      slicedAssetIds.add(prop.value);
+    }
+  }
+
+  // collect variables scoped to instances slice
+  // or used by expressions or actions even outside of the tree
+  // such variables can be bound to sliced root on paste
+  const slicedDataSources: DataSources = new Map();
+  for (const dataSource of dataSources.values()) {
+    if (
+      // check if data source itself can be copied
+      (dataSource.scopeInstanceId !== undefined &&
+        slicedInstanceIds.has(dataSource.scopeInstanceId)) ||
+      usedDataSourceIds.has(dataSource.id)
+    ) {
+      slicedDataSources.set(dataSource.id, dataSource);
+    }
+  }
+
+  const slicedAssets: Asset[] = [];
+  for (const asset of assets.values()) {
+    if (
+      slicedAssetIds.has(asset.id) ||
+      (asset.type === "font" && slicedFontFamilies.has(asset.meta.family))
+    ) {
+      slicedAssets.push(asset);
+    }
+  }
+
+  return {
+    instances: slicedInstances,
+    styleSourceSelections: slicedStyleSourceSelections,
+    styleSources: Array.from(slicedStyleSources.values()),
+    breakpoints: Array.from(slicedBreapoints.values()),
+    styles: slicedStyles,
+    dataSources: Array.from(slicedDataSources.values()),
+    props: Array.from(slicedProps.values()),
+    assets: slicedAssets,
+  };
 };

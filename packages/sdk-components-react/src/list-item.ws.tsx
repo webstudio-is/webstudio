@@ -18,16 +18,10 @@ export const meta: WsComponentMeta = {
   type: "container",
   requiredAncestors: ["List"],
   label: "List Item",
+  description: "Adds a new item to an existing list.",
   icon: ListItemIcon,
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "ListItem",
-      children: [{ type: "text", value: "List Item you can edit" }],
-    },
-  ],
   order: 4,
 };
 

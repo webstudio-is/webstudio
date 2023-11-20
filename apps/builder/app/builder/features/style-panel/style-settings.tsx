@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
   categories,
   renderCategory,
@@ -9,8 +9,12 @@ import {
 import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
 import { useStore } from "@nanostores/react";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { useStyleInfoByInstanceId } from "./shared/style-info";
+import {
+  selectedInstanceIntanceToTagStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
+import { computed } from "nanostores";
+import { useParentStyle } from "./parent-style";
 
 export type StyleSettingsProps = {
   currentStyle: StyleInfo;
@@ -19,17 +23,15 @@ export type StyleSettingsProps = {
   createBatchUpdate: CreateBatchUpdate;
 };
 
-const useParentStyle = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const parentInstanceSelector =
-    // root does not have parent
-    selectedInstanceSelector?.length === 1
-      ? undefined
-      : selectedInstanceSelector?.slice(1);
-  const parentStyleInfo = useStyleInfoByInstanceId(parentInstanceSelector);
-
-  return parentStyleInfo;
-};
+const selectedInstanceTagStore = computed(
+  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+  (instanceSelector, instanceToTag) => {
+    if (instanceSelector === undefined || instanceToTag === undefined) {
+      return;
+    }
+    return instanceToTag.get(instanceSelector[0]);
+  }
+);
 
 export const StyleSettings = ({
   setProperty,
@@ -37,6 +39,7 @@ export const StyleSettings = ({
   createBatchUpdate,
   currentStyle,
 }: StyleSettingsProps) => {
+  const selectedInstanceTag = useStore(selectedInstanceTagStore);
   const all = [];
   const parentStyle = useParentStyle();
 
@@ -49,7 +52,7 @@ export const StyleSettings = ({
       category,
     };
 
-    if (shouldRenderCategory(categoryProps, parentStyle)) {
+    if (shouldRenderCategory(categoryProps, parentStyle, selectedInstanceTag)) {
       all.push(
         <Fragment key={category}>{renderCategory(categoryProps)}</Fragment>
       );

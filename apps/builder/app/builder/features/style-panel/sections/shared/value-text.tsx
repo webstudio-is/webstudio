@@ -1,5 +1,5 @@
 import { styled, Text } from "@webstudio-is/design-system";
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { useMemo, type ComponentProps } from "react";
 import { theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";

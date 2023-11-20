@@ -1,5 +1,5 @@
 import { test, expect } from "@jest/globals";
-import type { Instance, Instances } from "@webstudio-is/project-build";
+import type { Instance, Instances } from "@webstudio-is/sdk";
 import { getIndexesWithinAncestors } from "./instance-utils";
 import type { WsComponentMeta } from ".";
 

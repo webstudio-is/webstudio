@@ -99,5 +99,9 @@ export const findAuthenticatedUser = async (request: Request) => {
   if (user == null) {
     return null;
   }
-  return await getUserById(user.id);
+  try {
+    return await getUserById(user.id);
+  } catch (error) {
+    return null;
+  }
 };

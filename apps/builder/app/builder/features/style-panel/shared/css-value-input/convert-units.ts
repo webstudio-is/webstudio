@@ -1,4 +1,4 @@
-import type { Unit } from "@webstudio-is/css-data";
+import type { Unit } from "@webstudio-is/css-engine";
 
 const convertibleUnits = ["px", "ch", "vw", "vh", "em", "rem"] as const;
 

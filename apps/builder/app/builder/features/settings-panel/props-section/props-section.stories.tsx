@@ -1,4 +1,7 @@
 import { useState } from "react";
+import type { Instance, Prop, Asset } from "@webstudio-is/sdk";
+import type { PropMeta } from "@webstudio-is/react-sdk";
+import { textVariants } from "@webstudio-is/design-system";
 import { PropsSection } from "./props-section";
 import { usePropsLogic } from "./use-props-logic";
 import {
@@ -10,10 +13,6 @@ import {
   selectedPageIdStore,
 } from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
-import type { Instance, Prop } from "@webstudio-is/project-build";
-import type { WsComponentPropsMeta } from "@webstudio-is/react-sdk";
-import { textVariants } from "@webstudio-is/design-system";
-import type { Asset } from "@webstudio-is/asset-uploader";
 // eslint-disable-next-line import/no-internal-modules
 import catPath from "./props-panel.stories.assets/cat.jpg";
 
@@ -35,6 +34,7 @@ const page = (name: string, path: string) => ({
 });
 
 pagesStore.set({
+  meta: {},
   homePage: page("Home", "/"),
   pages: [
     page("About", "/about"),
@@ -123,8 +123,6 @@ assetsStore.set(
     )
   )
 );
-
-type PropMeta = WsComponentPropsMeta["props"][string];
 
 const textProp = (label?: string, defaultValue?: string): PropMeta => ({
   type: "string",
@@ -362,14 +360,14 @@ const startingProps: Prop[] = [
     instanceId,
     name: "addedUrlAttachment",
     type: "asset",
-    value: Array.from(assetsStore.get().keys() ?? [])[0] ?? "",
+    value: (Array.from(assetsStore.get().keys())[0] as string) ?? "",
   },
   {
     id: unique(),
     instanceId,
     name: "addedFile",
     type: "asset",
-    value: Array.from(assetsStore.get().keys() ?? [])[0] ?? "",
+    value: (Array.from(assetsStore.get().keys())[0] as string) ?? "",
   },
 ];
 
@@ -391,6 +389,7 @@ export const Story = () => {
 
   const logic = usePropsLogic({
     instance,
+    props,
     updateProp: handleUpdate,
     deleteProp: handleDelete,
   });

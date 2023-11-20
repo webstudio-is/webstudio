@@ -1,16 +1,17 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import {
+import { titleCase } from "title-case";
+import { noCase } from "change-case";
+import type {
   Instance,
-  type InstancesList,
-  PropsList,
-  StyleSourceSelectionsList,
-  StyleSourcesList,
-  StylesList,
+  Prop,
+  StyleSourceSelection,
+  StyleSource,
+  StyleDecl,
   Breakpoint,
   DataSource,
-} from "@webstudio-is/project-build";
-import { StyleValue, type StyleProperty } from "@webstudio-is/css-data";
+} from "@webstudio-is/sdk";
+import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { Simplify } from "type-fest";
 import { encodeDataSourceVariable, validateExpression } from "./expression";
 import type { WsComponentMeta } from "./components/component-meta";
@@ -22,30 +23,18 @@ const EmbedTemplateText = z.object({
 
 type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;
 
-const EmbedTemplateDataSource = z.union([
-  z.object({
-    type: z.literal("variable"),
-    initialValue: z.union([
-      z.string(),
-      z.number(),
-      z.boolean(),
-      z.array(z.string()),
-    ]),
-  }),
-  z.object({
-    type: z.literal("expression"),
-    code: z.string(),
-  }),
-]);
+const EmbedTemplateVariable = z.object({
+  initialValue: z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(z.string()),
+  ]),
+});
 
-type EmbedTemplateDataSource = z.infer<typeof EmbedTemplateDataSource>;
+type EmbedTemplateVariable = z.infer<typeof EmbedTemplateVariable>;
 
-const EmbedTemplateProp = z.union([
-  z.object({
-    type: z.literal("dataSource"),
-    name: z.string(),
-    dataSourceName: z.string(),
-  }),
+export const EmbedTemplateProp = z.union([
   z.object({
     type: z.literal("number"),
     name: z.string(),
@@ -67,6 +56,11 @@ const EmbedTemplateProp = z.union([
     value: z.array(z.string()),
   }),
   z.object({
+    type: z.literal("expression"),
+    name: z.string(),
+    code: z.string(),
+  }),
+  z.object({
     type: z.literal("action"),
     name: z.string(),
     value: z.array(
@@ -79,7 +73,7 @@ const EmbedTemplateProp = z.union([
   }),
 ]);
 
-type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
+export type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
 
 const EmbedTemplateStyleDeclRaw = z.object({
   // State selector, e.g. :hover
@@ -101,8 +95,9 @@ export type EmbedTemplateInstance = {
   type: "instance";
   component: string;
   label?: string;
-  dataSources?: Record<string, EmbedTemplateDataSource>;
+  variables?: Record<string, EmbedTemplateVariable>;
   props?: EmbedTemplateProp[];
+  tokens?: string[];
   styles?: EmbedTemplateStyleDecl[];
   children: Array<EmbedTemplateInstance | EmbedTemplateText>;
 };
@@ -113,8 +108,9 @@ export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
       type: z.literal("instance"),
       component: z.string(),
       label: z.optional(z.string()),
-      dataSources: z.optional(z.record(z.string(), EmbedTemplateDataSource)),
+      variables: z.optional(z.record(z.string(), EmbedTemplateVariable)),
       props: z.optional(z.array(EmbedTemplateProp)),
+      tokens: z.optional(z.array(z.string())),
       styles: z.optional(z.array(EmbedTemplateStyleDecl)),
       children: WsEmbedTemplate,
     })
@@ -126,8 +122,8 @@ export const WsEmbedTemplate = z.lazy(() =>
 
 export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
 
-const getDataSourceValue = (
-  value: Extract<EmbedTemplateDataSource, { type: "variable" }>["initialValue"]
+const getVariablValue = (
+  value: EmbedTemplateVariable["initialValue"]
 ): Extract<DataSource, { type: "variable" }>["value"] => {
   if (typeof value === "string") {
     return { type: "string", value };
@@ -147,55 +143,58 @@ const getDataSourceValue = (
 
 const createInstancesFromTemplate = (
   treeTemplate: WsEmbedTemplate,
-  instances: InstancesList,
-  props: PropsList,
+  instances: Instance[],
+  props: Prop[],
   dataSourceByRef: Map<string, DataSource>,
-  styleSourceSelections: StyleSourceSelectionsList,
-  styleSources: StyleSourcesList,
-  styles: StylesList,
-  defaultBreakpointId: Breakpoint["id"]
+  styleSourceSelections: StyleSourceSelection[],
+  styleSources: StyleSource[],
+  styles: StyleDecl[],
+  metas: Map<Instance["component"], WsComponentMeta>,
+  defaultBreakpointId: Breakpoint["id"],
+  generateId: () => string
 ) => {
   const parentChildren: Instance["children"] = [];
   for (const item of treeTemplate) {
     if (item.type === "instance") {
-      const instanceId = nanoid();
+      const instanceId = generateId();
 
-      if (item.dataSources) {
-        for (const [name, dataSource] of Object.entries(item.dataSources)) {
+      if (item.variables) {
+        for (const [name, variable] of Object.entries(item.variables)) {
           if (dataSourceByRef.has(name)) {
             throw Error(`${name} data source already defined`);
           }
-          if (dataSource.type === "variable") {
-            dataSourceByRef.set(name, {
-              type: "variable",
-              id: nanoid(),
-              scopeInstanceId: instanceId,
-              name,
-              value: getDataSourceValue(dataSource.initialValue),
-            });
-          }
-          if (dataSource.type === "expression") {
-            dataSourceByRef.set(name, {
-              type: "expression",
-              id: nanoid(),
-              scopeInstanceId: instanceId,
-              name,
-              // replace all references with variable names
-              code: validateExpression(dataSource.code, {
-                transformIdentifier: (ref) => {
-                  const id = dataSourceByRef.get(ref)?.id ?? ref;
-                  return encodeDataSourceVariable(id);
-                },
-              }),
-            });
-          }
+          dataSourceByRef.set(name, {
+            type: "variable",
+            id: generateId(),
+            scopeInstanceId: instanceId,
+            name,
+            value: getVariablValue(variable.initialValue),
+          });
         }
       }
 
       // populate props
       if (item.props) {
         for (const prop of item.props) {
-          const propId = nanoid();
+          const propId = generateId();
+
+          if (prop.type === "expression") {
+            props.push({
+              id: propId,
+              instanceId,
+              name: prop.name,
+              type: "expression",
+              // replace all references with variable names
+              value: validateExpression(prop.code, {
+                transformIdentifier: (ref) => {
+                  const id = dataSourceByRef.get(ref)?.id ?? ref;
+                  return encodeDataSourceVariable(id);
+                },
+              }),
+            });
+            continue;
+          }
+
           // action cannot be bound to data source
           if (prop.type === "action") {
             props.push({
@@ -225,35 +224,50 @@ const createInstancesFromTemplate = (
             });
             continue;
           }
-          if (prop.type === "dataSource") {
-            const dataSource = dataSourceByRef.get(prop.dataSourceName);
-            if (dataSource === undefined) {
-              throw Error(`${prop.dataSourceName} data source is not defined`);
-            }
-            props.push({
-              id: propId,
-              instanceId,
-              type: "dataSource",
-              name: prop.name,
-              value: dataSource.id,
-            });
-            continue;
-          }
+
           props.push({ id: propId, instanceId, ...prop });
+        }
+      }
+
+      const styleSourceIds: string[] = [];
+
+      // convert tokens into style sources and styles
+      if (item.tokens) {
+        const meta = metas.get(item.component);
+        if (meta?.presetTokens) {
+          for (const name of item.tokens) {
+            const tokenValue = meta.presetTokens[name];
+            if (tokenValue) {
+              const styleSourceId = `${item.component}:${name}`;
+              styleSourceIds.push(styleSourceId);
+              styleSources.push({
+                type: "token",
+                id: styleSourceId,
+                name: titleCase(noCase(name)),
+              });
+              for (const styleDecl of tokenValue.styles) {
+                styles.push({
+                  breakpointId: defaultBreakpointId,
+                  styleSourceId,
+                  state: styleDecl.state,
+                  property: styleDecl.property,
+                  value: styleDecl.value,
+                });
+              }
+            }
+          }
         }
       }
 
       // populate styles
       if (item.styles) {
-        const styleSourceId = nanoid();
+        const styleSourceId = generateId();
         styleSources.push({
           type: "local",
           id: styleSourceId,
         });
-        styleSourceSelections.push({
-          instanceId,
-          values: [styleSourceId],
-        });
+        // always put local style source last
+        styleSourceIds.push(styleSourceId);
         for (const styleDecl of item.styles) {
           styles.push({
             breakpointId: defaultBreakpointId,
@@ -263,6 +277,13 @@ const createInstancesFromTemplate = (
             value: styleDecl.value,
           });
         }
+      }
+
+      if (styleSourceIds.length > 0) {
+        styleSourceSelections.push({
+          instanceId,
+          values: styleSourceIds,
+        });
       }
 
       // populate instances
@@ -283,7 +304,9 @@ const createInstancesFromTemplate = (
         styleSourceSelections,
         styleSources,
         styles,
-        defaultBreakpointId
+        metas,
+        defaultBreakpointId,
+        generateId
       );
       parentChildren.push({
         type: "id",
@@ -303,14 +326,16 @@ const createInstancesFromTemplate = (
 
 export const generateDataFromEmbedTemplate = (
   treeTemplate: WsEmbedTemplate,
-  defaultBreakpointId: Breakpoint["id"]
+  metas: Map<Instance["component"], WsComponentMeta>,
+  defaultBreakpointId: Breakpoint["id"],
+  generateId: () => string = nanoid
 ) => {
-  const instances: InstancesList = [];
-  const props: PropsList = [];
+  const instances: Instance[] = [];
+  const props: Prop[] = [];
   const dataSourceByRef = new Map<string, DataSource>();
-  const styleSourceSelections: StyleSourceSelectionsList = [];
-  const styleSources: StyleSourcesList = [];
-  const styles: StylesList = [];
+  const styleSourceSelections: StyleSourceSelection[] = [];
+  const styleSources: StyleSource[] = [];
+  const styles: StyleDecl[] = [];
 
   const children = createInstancesFromTemplate(
     treeTemplate,
@@ -320,7 +345,9 @@ export const generateDataFromEmbedTemplate = (
     styleSourceSelections,
     styleSources,
     styles,
-    defaultBreakpointId
+    metas,
+    defaultBreakpointId,
+    generateId
   );
 
   return {

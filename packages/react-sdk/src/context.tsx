@@ -1,9 +1,6 @@
-import { type ReadableAtom, atom } from "nanostores";
 import { createContext } from "react";
-import type { Assets } from "@webstudio-is/asset-uploader";
-import type { DataSource, Instance, Prop } from "@webstudio-is/project-build";
-import type { Pages, PropsByInstanceId } from "./props";
-import type { IndexesWithinAncestors } from "./instance-utils";
+import type { Page } from "@webstudio-is/sdk";
+import type { ImageLoader } from "@webstudio-is/image";
 
 export type Params = {
   renderer?: "canvas" | "preview";
@@ -32,42 +29,19 @@ export type Params = {
   assetBaseUrl: string;
 };
 
-export type DataSourceValues = Map<DataSource["id"], unknown>;
-
 export const ReactSdkContext = createContext<
   Params & {
-    propsByInstanceIdStore: ReadableAtom<PropsByInstanceId>;
-    assetsStore: ReadableAtom<Assets>;
-    pagesStore: ReadableAtom<Pages>;
-    dataSourceValuesStore: ReadableAtom<DataSourceValues>;
-    executeEffectfulExpression: (
-      expression: string,
-      args: DataSourceValues,
-      values: DataSourceValues
-    ) => DataSourceValues;
-    setDataSourceValues: (newValues: DataSourceValues) => void;
-    setBoundDataSourceValue: (
-      instanceId: Instance["id"],
-      prop: Prop["name"],
-      value: unknown
-    ) => void;
-    indexesWithinAncestors: IndexesWithinAncestors;
+    imageLoader: ImageLoader;
+    /**
+     * List of pages paths for link component
+     * to navigate without reloading on published sites
+     * always empty for builder which handle anchor clicks globally
+     */
+    pagesPaths: Set<Page["path"]>;
   }
 >({
-  imageBaseUrl: "/",
   assetBaseUrl: "/",
-  propsByInstanceIdStore: atom(new Map()),
-  assetsStore: atom(new Map()),
-  pagesStore: atom(new Map()),
-  dataSourceValuesStore: atom(new Map()),
-  executeEffectfulExpression: () => {
-    throw Error("React SDK executeEffectfulExpression is not implemented");
-  },
-  setDataSourceValues: () => {
-    throw Error("React SDK setBoundDataSourceValue is not implemented");
-  },
-  setBoundDataSourceValue: () => {
-    throw Error("React SDK setBoundDataSourceValue is not implemented");
-  },
-  indexesWithinAncestors: new Map(),
+  imageBaseUrl: "/",
+  imageLoader: ({ src }) => src,
+  pagesPaths: new Set(),
 });

@@ -1,18 +1,21 @@
 import { Flex, Separator } from "@webstudio-is/design-system";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import { Header, CloseButton } from "../header";
-import type { Publish } from "~/shared/pubsub";
-import { usePublishInstanceTreeShortcuts } from "~/builder/shared/shortcuts";
 import { CssPreview } from "./css-preview";
+import { useHotkeys } from "react-hotkeys-hook";
+import { emitCommand } from "~/builder/shared/commands";
 
 type NavigatorProps = {
   isClosable?: boolean;
   onClose?: () => void;
-  publish: Publish;
 };
 
-export const Navigator = ({ isClosable, onClose, publish }: NavigatorProps) => {
-  const shortcutRef = usePublishInstanceTreeShortcuts<HTMLDivElement>(publish);
+export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
+  const shortcutRef = useHotkeys<HTMLDivElement>(
+    "enter",
+    () => emitCommand("editInstanceText"),
+    []
+  );
 
   return (
     <Flex ref={shortcutRef} css={{ height: "100%", flexDirection: "column" }}>

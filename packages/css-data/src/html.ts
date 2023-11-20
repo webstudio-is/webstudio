@@ -4,7 +4,7 @@
 // https://trac.webkit.org/browser/trunk/Source/WebCore/css/html.css
 
 import type { htmlTags as HtmlTags } from "html-tags";
-import type { StyleProperty, StyleValue } from "./schema";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 
 type StyleDecl = {
   property: StyleProperty;

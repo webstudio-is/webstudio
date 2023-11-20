@@ -1,5 +1,5 @@
 import { Box, Flex, Grid, theme } from "@webstudio-is/design-system";
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";

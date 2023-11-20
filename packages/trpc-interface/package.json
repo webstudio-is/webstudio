@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/trpc-interface",
-  "version": "0.83.0",
+  "version": "0.120.0",
   "description": "Webstudio TRPC Interface",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,37 +9,36 @@
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@trpc/client": "^10.9.0",
-    "@trpc/server": "^10.9.0",
-    "@webstudio-is/prisma-client": "workspace:^",
+    "@trpc/client": "^10.38.1",
+    "@trpc/server": "^10.38.1",
+    "@webstudio-is/prisma-client": "workspace:*",
     "ts-custom-error": "^3.3.1",
     "uuid": "^9.0.0",
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
-    "typescript": "5.1.6"
+    "@types/node": "^18.17.1",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "typescript": "5.2.2"
   },
   "exports": {
     "./index.server": {
-      "source": "./src/index.server.ts",
-      "import": "./lib/index.server.js"
+      "webstudio": "./src/index.server.ts",
+      "import": "./lib/index.server.js",
+      "types": "./lib/types/index.server.d.ts"
     }
   },
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",
-  "private": false,
+  "private": true,
   "sideEffects": false
 }

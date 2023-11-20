@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Button,
   useId,
@@ -17,12 +18,17 @@ import {
   Separator,
   ScrollArea,
   Box,
+  rawTheme,
+  styled,
+  Select,
+  theme,
+  TextArea,
 } from "@webstudio-is/design-system";
+import stripIndent from "strip-indent";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -35,11 +41,13 @@ import {
   CheckCircleIcon,
   ExternalLinkIcon,
   AlertIcon,
+  CopyIcon,
 } from "@webstudio-is/icons";
 import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
+import { humanizeString } from "~/shared/string-utils";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -337,7 +345,10 @@ const ErrorText = ({ children }: { children: string }) => (
   </Flex>
 );
 
-const Content = (props: { projectId: Project["id"] }) => {
+const Content = (props: {
+  projectId: Project["id"];
+  onExportClick: () => void;
+}) => {
   const [newDomains, setNewDomains] = useState(new Set<string>());
   const {
     data: domainsResult,
@@ -445,6 +456,7 @@ const Content = (props: { projectId: Project["id"] }) => {
           });
         }}
         isPublishing={isPublishing}
+        onExportClick={props.onExportClick}
       />
 
       {projectData?.success === true ? (
@@ -465,24 +477,205 @@ const Content = (props: { projectId: Project["id"] }) => {
   );
 };
 
+/**
+ * @todo change colors on theme colors when tokens will be ready
+ * https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
+ **/
+const StyledLink = styled("a", {
+  color: "#006ADC", // @todo theme.colors.foregroundLink,
+  "&:visited": {
+    color: "#793AAF", // @todo theme.colors.foregroundLinkVisited,
+  },
+});
+
+const deployTargets = {
+  vercel: {
+    command: "npx vercel",
+    docs: "https://vercel.com/docs/cli",
+  },
+  netlify: {
+    command: `
+npx netlify-cli login
+npx netlify-cli sites:create
+npx netlify-cli build
+npx netlify-cli deploy`,
+    docs: "https://docs.netlify.com/cli/get-started/",
+  },
+} as const;
+
+type DeployTargets = keyof typeof deployTargets;
+
+const isDeployTargets = (value: string): value is DeployTargets =>
+  Object.keys(deployTargets).includes(value);
+
+const ExportContent = () => {
+  const npxCommand = "npx webstudio";
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
+
+  return (
+    <Grid
+      columns={1}
+      gap={3}
+      css={{
+        margin: theme.spacing[9],
+        marginTop: theme.spacing[5],
+      }}
+    >
+      <Grid columns={1} gap={1}>
+        <Text color="main" variant="labelsTitleCase">
+          Step 1
+        </Text>
+        <Text color="subtle">
+          Download and install Node v18+ from{" "}
+          <StyledLink
+            href="https://nodejs.org/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            nodejs.org
+          </StyledLink>{" "}
+          or with{" "}
+          <StyledLink
+            href="https://nodejs.org/en/download/package-manager"
+            target="_blank"
+            rel="noreferrer"
+          >
+            a package manager
+          </StyledLink>
+          .
+        </Text>
+      </Grid>
+
+      <Grid columns={1} gap={2}>
+        <Grid columns={1} gap={1}>
+          <Text color="main" variant="labelsTitleCase">
+            Step 2
+          </Text>
+          <Text color="subtle">
+            Run this command in your Terminal to install Webstudio CLI and sync
+            your project.
+          </Text>
+        </Grid>
+
+        <Flex gap={2}>
+          <InputField css={{ flex: 1 }} readOnly value={npxCommand} />
+
+          <Tooltip content={"Copy to clipboard"}>
+            <Button
+              color="neutral"
+              onClick={() => {
+                navigator.clipboard.writeText(npxCommand);
+              }}
+              prefix={<CopyIcon />}
+            >
+              Copy
+            </Button>
+          </Tooltip>
+        </Flex>
+      </Grid>
+      <Grid columns={1} gap={2}>
+        <Grid columns={1} gap={1}>
+          <Text color="main" variant="labelsTitleCase">
+            Step 3
+          </Text>
+          <Text color="subtle">
+            Run this command to publish to{" "}
+            <StyledLink
+              href={deployTargets[deployTarget].docs}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {humanizeString(deployTarget)}
+            </StyledLink>{" "}
+          </Text>
+        </Grid>
+
+        <Select
+          fullWidth
+          css={{ zIndex: theme.zIndices[2] }}
+          value={deployTarget}
+          options={Object.keys(deployTargets)}
+          getLabel={(value) => humanizeString(value)}
+          onChange={(value) => {
+            if (isDeployTargets(value)) {
+              setDeployTarget(value);
+            }
+          }}
+        />
+
+        <Flex gap={2} align="end">
+          <TextArea
+            css={{ flex: 1 }}
+            readOnly
+            value={stripIndent(deployTargets[deployTarget].command)
+              .trimStart()
+              .replace(/ +$/, "")}
+          />
+          <Tooltip content={"Copy to clipboard"}>
+            <Button
+              color="neutral"
+              onClick={() => {
+                navigator.clipboard.writeText(
+                  deployTargets[deployTarget].command
+                );
+              }}
+              prefix={<CopyIcon />}
+            >
+              Copy
+            </Button>
+          </Tooltip>
+        </Flex>
+      </Grid>
+      <Grid columns={1} gap={1}>
+        <Text color="subtle">
+          Read the detailed documentation{" "}
+          <StyledLink
+            href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
+            target="_blank"
+            rel="noreferrer"
+          >
+            here
+          </StyledLink>
+        </Text>
+      </Grid>
+    </Grid>
+  );
+};
+
 type PublishProps = {
   projectId: Project["id"];
 };
+
 export const PublishButton = ({ projectId }: PublishProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
+  const [dialogContentType, setDialogContentType] = useState<
+    "publish" | "export"
+  >("publish");
 
-  const isPublishDisabled = authPermit !== "own";
-  const tooltipContent = isPublishDisabled
-    ? "Only owner can publish projects"
-    : undefined;
+  const isPublishEnabled = authPermit === "own" || authPermit === "admin";
+
+  const tooltipContent = isPublishEnabled
+    ? undefined
+    : "Only owner or admin can publish projects";
+
+  const handleExportClick = () => {
+    setDialogContentType("export");
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen === false) {
+      setDialogContentType("publish");
+    }
+    setIsOpen(isOpen);
+  };
 
   return (
-    <FloatingPanelPopover modal open={isOpen} onOpenChange={setIsOpen}>
+    <FloatingPanelPopover modal open={isOpen} onOpenChange={handleOpenChange}>
       <FloatingPanelAnchor>
         <Tooltip side="bottom" content={tooltipContent}>
           <FloatingPanelPopoverTrigger asChild>
-            <Button disabled={isPublishDisabled} color="positive">
+            <Button disabled={isPublishEnabled === false} color="positive">
               Publish
             </Button>
           </FloatingPanelPopoverTrigger>
@@ -490,14 +683,27 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       </FloatingPanelAnchor>
 
       <FloatingPanelPopoverContent
+        sideOffset={parseFloat(rawTheme.spacing[8])}
         css={{
           zIndex: theme.zIndices[1],
           width: theme.spacing[33],
           maxWidth: theme.spacing[33],
+          marginRight: theme.spacing[3],
         }}
       >
-        <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
-        <Content projectId={projectId} />
+        {dialogContentType === "export" && (
+          <>
+            <FloatingPanelPopoverTitle>Export</FloatingPanelPopoverTitle>
+            <ExportContent />
+          </>
+        )}
+
+        {dialogContentType === "publish" && (
+          <>
+            <FloatingPanelPopoverTitle>Publish</FloatingPanelPopoverTitle>
+            <Content projectId={projectId} onExportClick={handleExportClick} />
+          </>
+        )}
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>
   );

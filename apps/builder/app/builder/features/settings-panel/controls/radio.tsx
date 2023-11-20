@@ -8,11 +8,13 @@ import {
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
+import { VariablesButton } from "../variables";
 
 export const RadioControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"radio" | "inline-radio", "string">) => {
@@ -25,7 +27,22 @@ export const RadioControl = ({
   const id = useId();
 
   return (
-    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
+    <VerticalLayout
+      label={
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton
+            propId={prop?.id}
+            propName={propName}
+            propMeta={meta}
+          />
+        </Box>
+      }
+      deletable={deletable}
+      onDelete={onDelete}
+    >
       <Box css={{ paddingTop: theme.spacing[2] }}>
         <RadioGroup
           name="value"

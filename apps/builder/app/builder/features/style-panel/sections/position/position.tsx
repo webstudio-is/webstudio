@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { RenderCategoryProps } from "../../style-sections";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
@@ -6,23 +6,9 @@ import { SelectControl, TextControl } from "../../controls";
 import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import { PositionControl } from "./position-control";
-import { useStyleInfoByInstanceId } from "../../shared/style-info";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
+import { useParentStyle } from "../../parent-style";
 
 const properties: StyleProperty[] = ["position"];
-
-const useParentStyle = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const parentInstanceSelector =
-    // root does not have parent
-    selectedInstanceSelector?.length === 1
-      ? undefined
-      : selectedInstanceSelector?.slice(1);
-  const parentStyleInfo = useStyleInfoByInstanceId(parentInstanceSelector);
-
-  return parentStyleInfo;
-};
 
 const positionControlVisibleProperties = [
   "relative",
@@ -55,7 +41,7 @@ export const PositionSection = ({
   const { items: unfilteredPositionItems } = styleConfigByName("position");
 
   // Filter out "inherit" as we have no a good way to handle it
-  // @todo remove after https://github.com/webstudio-is/webstudio-builder/issues/1536
+  // @todo remove after https://github.com/webstudio-is/webstudio/issues/1536
   const positionItems = unfilteredPositionItems.filter(
     (item) => item.name !== "inherit"
   );

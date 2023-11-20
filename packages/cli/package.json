@@ -1,0 +1,54 @@
+{
+  "name": "webstudio",
+  "version": "0.120.0",
+  "description": "Webstudio CLI",
+  "author": "Webstudio <github@webstudio.is>",
+  "homepage": "https://webstudio.is",
+  "type": "module",
+  "bin": {
+    "webstudio-cli": "./bin.js",
+    "webstudio": "./bin.js"
+  },
+  "files": [
+    "lib/*",
+    "templates/*",
+    "bin.js",
+    "!*.{test,stories}.*"
+  ],
+  "scripts": {
+    "typecheck": "tsc",
+    "checks": "pnpm typecheck",
+    "build": "rm -rf lib && esbuild src/cli.ts --outdir=lib --bundle --format=esm --packages=external",
+    "local-run": "tsx --no-warnings ./src/bin.ts",
+    "dev": "esbuild src/cli.ts --watch --bundle --format=esm --packages=external --outdir=./lib"
+  },
+  "license": "AGPL-3.0-or-later",
+  "dependencies": {
+    "@webstudio-is/http-client": "workspace:*",
+    "@webstudio-is/image": "workspace:*",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
+    "@webstudio-is/sdk-components-react-radix": "workspace:*",
+    "@webstudio-is/sdk-components-react-remix": "workspace:*",
+    "deepmerge": "^4.3.1",
+    "env-paths": "^3.0.0",
+    "execa": "^7.2.0",
+    "ora": "^7.0.1",
+    "p-limit": "^4.0.0",
+    "picocolors": "^1.0.0",
+    "prompts": "^2.4.2",
+    "strip-indent": "^4.0.0",
+    "title-case": "^4.1.0",
+    "yargs": "^17.7.2",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.17.1",
+    "@types/prompts": "^2.4.5",
+    "@webstudio-is/form-handlers": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "tsx": "^3.12.8",
+    "typescript": "5.2.2"
+  }
+}

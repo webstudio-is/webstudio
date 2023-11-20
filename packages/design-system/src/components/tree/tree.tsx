@@ -22,6 +22,7 @@ import {
   getItemSelectorFromElement,
 } from "./item-utils";
 import { ScrollArea } from "../scroll-area";
+import { theme } from "../..";
 
 export type TreeProps<Data extends { id: string }> = {
   root: Data;
@@ -29,10 +30,10 @@ export type TreeProps<Data extends { id: string }> = {
   dragItemSelector: undefined | ItemSelector;
   dropTarget: undefined | ItemDropTarget;
 
-  canLeaveParent: (itemId: ItemId) => boolean;
+  canLeaveParent: (itemSelector: ItemSelector) => boolean;
   findClosestDroppableIndex: (itemSelector: ItemSelector) => number;
-  getItemChildren: (itemId: ItemId) => Data[];
-  isItemHidden: (itemId: ItemId) => boolean;
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
+  isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   onSelect?: (itemSelector: ItemSelector) => void;
@@ -80,6 +81,7 @@ export const Tree = <Data extends { id: string }>({
 }: TreeProps<Data>) => {
   const { getIsExpanded, setIsExpanded } = useExpandState({
     selectedItemSelector,
+    getItemChildren,
   });
 
   const rootRef = useRef<HTMLElement | null>(null);
@@ -209,8 +211,7 @@ export const Tree = <Data extends { id: string }>({
         return false;
       }
 
-      const [dragItemId] = dragItemSelector;
-      if (canLeaveParent(dragItemId) === false) {
+      if (canLeaveParent(dragItemSelector) === false) {
         return false;
       }
 
@@ -266,10 +267,11 @@ export const Tree = <Data extends { id: string }>({
 
   return (
     <ScrollArea
+      // TODO allow resizing of the panel instead.
+      direction="both"
       css={{
         width: "100%",
-        overflowY: "auto",
-        overflowX: "hidden",
+        overflow: "hidden",
         flexBasis: 0,
         flexGrow: 1,
       }}
@@ -286,6 +288,10 @@ export const Tree = <Data extends { id: string }>({
         onBlur={keyboardNavigation.handleBlur}
         onKeyDown={keyboardNavigation.handleKeyDown}
         onClick={keyboardNavigation.handleClick}
+        css={{
+          // To not intersect last element with the scroll
+          marginBottom: theme.spacing[7],
+        }}
       >
         <TreeNode
           renderItem={renderItem}
@@ -296,8 +302,8 @@ export const Tree = <Data extends { id: string }>({
           selectedItemSelector={selectedItemSelector}
           itemData={root}
           getIsExpanded={getIsExpanded}
-          setIsExpanded={(itemSelector, isExpanded) => {
-            setIsExpanded(itemSelector, isExpanded);
+          setIsExpanded={(itemSelector, value, all) => {
+            setIsExpanded(itemSelector, value, all);
             dropHandlers.handleDomMutation();
           }}
           dropTargetItemSelector={shiftedDropTarget?.itemSelector}
@@ -329,22 +335,25 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 }: {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
-  getItemChildren: (itemId: ItemId) => Data[];
-  isItemHidden: (itemId: ItemId) => boolean;
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
+  isItemHidden: (itemSelector: ItemSelector) => boolean;
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
-  setIsExpanded: (itemSelector: ItemSelector, isExpanded: boolean) => void;
+  setIsExpanded: (
+    itemSelector: ItemSelector,
+    value: boolean,
+    all?: boolean
+  ) => void;
   onEsc: () => void;
   editingItemId: ItemId | undefined;
 }) => {
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
     const traverse = (itemSelector: ItemSelector) => {
-      const [itemId] = itemSelector;
-      if (isItemHidden(itemId) === false) {
+      if (isItemHidden(itemSelector) === false) {
         result.push(itemSelector);
       }
       if (getIsExpanded(itemSelector)) {
-        for (const child of getItemChildren(itemId)) {
+        for (const child of getItemChildren(itemSelector)) {
           traverse([child.id, ...itemSelector]);
         }
       }
@@ -375,7 +384,10 @@ const useKeyboardNavigation = <Data extends { id: string }>({
       setIsExpanded(selectedItemSelector, false);
     }
     if (event.key === " ") {
-      setIsExpanded(selectedItemSelector, !getIsExpanded(selectedItemSelector));
+      setIsExpanded(
+        selectedItemSelector,
+        getIsExpanded(selectedItemSelector) === false
+      );
       // prevent scrolling
       event.preventDefault();
     }
@@ -476,10 +488,12 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   };
 };
 
-const useExpandState = ({
+const useExpandState = <Data extends { id: string }>({
   selectedItemSelector,
+  getItemChildren,
 }: {
   selectedItemSelector: undefined | ItemSelector;
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
 }) => {
   const [record, setRecord] = useState<Record<string, boolean>>({});
 
@@ -527,10 +541,25 @@ const useExpandState = ({
   );
 
   const setIsExpanded = useCallback(
-    (itemSelector: ItemSelector, expanded: boolean) => {
-      setRecord((record) => ({ ...record, [itemSelector.join()]: expanded }));
+    (itemSelector: ItemSelector, value: boolean, all?: boolean) => {
+      setRecord((record) => {
+        if (all) {
+          const newRecord = { ...record };
+          const addChildren = (parentSelector: string[]) => {
+            for (const child of getItemChildren(parentSelector)) {
+              const itemSelector = [child.id, ...parentSelector];
+              newRecord[itemSelector.join()] = value;
+              addChildren(itemSelector);
+            }
+          };
+          newRecord[itemSelector.join()] = value;
+          addChildren(itemSelector);
+          return newRecord;
+        }
+        return { ...record, [itemSelector.join()]: value };
+      });
     },
-    []
+    [getItemChildren]
   );
 
   return { getIsExpanded, setIsExpanded };

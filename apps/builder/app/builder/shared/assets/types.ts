@@ -1,6 +1,6 @@
-import type { Asset } from "@webstudio-is/asset-uploader";
+import type { Asset } from "@webstudio-is/sdk";
 
-export type PreviewAsset = Pick<
+type PreviewAsset = Pick<
   Asset,
   "name" | "id" | "format" | "description" | "type"
 >;
@@ -13,7 +13,7 @@ export type UploadedAssetContainer = {
 export type UploadingAssetContainer = {
   status: "uploading";
   objectURL: string;
-  asset: Asset | PreviewAsset;
+  asset: PreviewAsset;
 };
 
 /**

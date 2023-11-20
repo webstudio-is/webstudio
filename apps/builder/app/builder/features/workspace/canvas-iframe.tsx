@@ -1,31 +1,31 @@
-import { forwardRef } from "react";
-import { type CSS, css } from "@webstudio-is/design-system";
+import { forwardRef, useEffect, useState } from "react";
+import {
+  type CSS,
+  css,
+  canvasPointerEventsPropertyName,
+} from "@webstudio-is/design-system";
 
 const iframeStyle = css({
   border: "none",
-  variants: {
-    pointerEvents: {
-      none: {
-        pointerEvents: "none",
-      },
-      auto: {},
-    },
-  },
+  pointerEvents: `var(${canvasPointerEventsPropertyName})`,
 });
 
 type CanvasIframeProps = {
-  pointerEvents: "auto" | "none";
   css: CSS;
 } & JSX.IntrinsicElements["iframe"];
 
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
-  ({ pointerEvents = "auto", css, ...rest }, ref) => {
+  ({ css, ...rest }, ref) => {
+    // initialize canvas after builder is rendered
+    // and synchronizatio is initialized
+    const [isInitialized, setInitialized] = useState(false);
+    useEffect(() => {
+      setInitialized(true);
+    }, []);
     return (
-      <iframe
-        {...rest}
-        ref={ref}
-        className={iframeStyle({ pointerEvents, css })}
-      />
+      isInitialized && (
+        <iframe {...rest} ref={ref} className={iframeStyle({ css })} />
+      )
     );
   }
 );

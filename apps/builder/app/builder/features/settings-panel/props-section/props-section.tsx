@@ -1,5 +1,6 @@
-import store from "immerhin";
-import type { Instance } from "@webstudio-is/project-build";
+import { Fragment, useState } from "react";
+import { useStore } from "@nanostores/react";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   theme,
   useCombobox,
@@ -13,8 +14,15 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
-import { dataSourceVariablesStore, propsStore } from "~/shared/nano-states";
+import { decodeDataSourceVariable } from "@webstudio-is/react-sdk";
+import {
+  $propValuesByInstanceSelector,
+  dataSourceVariablesStore,
+  dataSourcesStore,
+  propsIndexStore,
+  propsStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
   useStyleData,
@@ -27,7 +35,7 @@ import {
   type PropAndMeta,
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
-import { useState } from "react";
+import { serverSyncStore } from "~/shared/sync";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -92,36 +100,52 @@ const renderProperty = (
   }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
   deletable?: boolean
-) =>
-  renderControl({
-    key: propName,
-    instanceId,
-    meta,
-    prop,
-    propName,
-    onDelete: deletable
-      ? () => logic.handleDelete({ prop, propName })
-      : undefined,
-    onSoftDelete: () => prop && logic.handleSoftDelete(prop),
-    onChange: (propValue, asset) => {
-      logic.handleChange({ prop, propName }, propValue);
+) => (
+  // fix the issue with changing type while binding expression
+  // old prop value is getting preserved in useLocalValue and saved into variable
+  // to reproduce try to edit body id prop and then bind json variable to it
+  <Fragment key={(prop?.type ?? "") + propName}>
+    {renderControl({
+      key: propName,
+      instanceId,
+      meta,
+      prop,
+      propName,
+      deletable: deletable ?? false,
+      onDelete: () => {
+        if (prop) {
+          logic.handleDelete(prop);
+        }
+      },
+      onChange: (propValue, asset) => {
+        logic.handleChange({ prop, propName }, propValue);
 
-      // @todo: better way to do this?
-      if (
-        component === "Image" &&
-        propName === "src" &&
-        asset &&
-        "width" in asset.meta &&
-        "height" in asset.meta
-      ) {
-        setCssProperty("aspectRatio")({
-          type: "unit",
-          unit: "number",
-          value: asset.meta.width / asset.meta.height,
-        });
-      }
-    },
-  });
+        // @todo: better way to do this?
+        if (
+          component === "Image" &&
+          propName === "src" &&
+          asset &&
+          "width" in asset.meta &&
+          "height" in asset.meta
+        ) {
+          logic.handleChangeByPropName("width", {
+            value: asset.meta.width,
+            type: "number",
+          });
+          logic.handleChangeByPropName("height", {
+            value: asset.meta.height,
+            type: "number",
+          });
+
+          setCssProperty("height")({
+            type: "keyword",
+            value: "fit-content",
+          });
+        }
+      },
+    })}
+  </Fragment>
+);
 
 const AddPropertyForm = ({
   availableProps,
@@ -185,37 +209,92 @@ export const PropsSection = (props: PropsSectionProps) => {
   );
 };
 
+const getPropTypeAndValue = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return { type: "boolean", value } as const;
+  }
+  if (typeof value === "number") {
+    return { type: "number", value } as const;
+  }
+  if (typeof value === "string") {
+    return { type: "string", value } as const;
+  }
+  // fallback to json
+  return { type: "json", value } as const;
+};
+
 export const PropsSectionContainer = ({
   selectedInstance: instance,
-  publish,
 }: {
-  publish: Publish;
   selectedInstance: Instance;
 }) => {
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
-    publish,
   });
+  const { propsByInstanceId } = useStore(propsIndexStore);
+  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const propValues = propValuesByInstanceSelector.get(
+    JSON.stringify(instanceSelector)
+  );
 
   const logic = usePropsLogic({
     instance,
+
+    // compute expression prop values before rendering props section
+    // to always show already computed values
+    props:
+      propsByInstanceId.get(instance.id)?.map((prop) => {
+        if (prop.type !== "expression") {
+          return prop;
+        }
+        const propValue = propValues?.get(prop.name);
+        if (propValue === undefined) {
+          return prop;
+        }
+        return { ...prop, ...getPropTypeAndValue(propValue) };
+      }) ?? [],
+
     updateProp: (update) => {
       const props = propsStore.get();
       const prop = props.get(update.id);
-      // update data source instead when real prop has data source type
-      if (prop?.type === "dataSource") {
-        const dataSourceId = prop.value;
-        const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-        dataSourceVariables.set(dataSourceId, update.value);
-        dataSourceVariablesStore.set(dataSourceVariables);
+      // update the variable when real prop has expression type
+      // update the prop when new expression is added
+      if (prop?.type === "expression" && update.type !== "expression") {
+        const dataSources = dataSourcesStore.get();
+        // when expression contains only reference to variable update that variable
+        // extract id without parsing expression
+        const potentialVariableId = decodeDataSourceVariable(prop.value);
+        if (
+          potentialVariableId !== undefined &&
+          dataSources.has(potentialVariableId)
+        ) {
+          const dataSourceId = potentialVariableId;
+          const dataSourceVariables = new Map(dataSourceVariablesStore.get());
+          dataSourceVariables.set(dataSourceId, update.value);
+          dataSourceVariablesStore.set(dataSourceVariables);
+        }
       } else {
-        store.createTransaction([propsStore], (props) => {
+        const { propsByInstanceId } = propsIndexStore.get();
+        serverSyncStore.createTransaction([propsStore], (props) => {
+          const instanceProps = propsByInstanceId.get(instance.id) ?? [];
+          // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
+          // see for details https://github.com/webstudio-is/webstudio/pull/2170
+          const duplicateProps = instanceProps
+            .filter((prop) => prop.id !== update.id)
+            .filter((prop) => prop.name === update.name);
+
+          for (const prop of duplicateProps) {
+            props.delete(prop.id);
+          }
+
           props.set(update.id, update);
         });
       }
     },
+
     deleteProp: (propId) => {
-      store.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([propsStore], (props) => {
         props.delete(propId);
       });
     },

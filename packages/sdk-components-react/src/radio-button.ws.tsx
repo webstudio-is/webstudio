@@ -24,6 +24,8 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["Button"],
   type: "control",
   label: "Radio",
+  description:
+    "Use within a form to allow your users to select a single option from a set of mutually exclusive choices. Group multiple radios by matching their “Name” properties.",
   icon: RadioCheckedIcon,
   presetStyle,
   order: 5,
@@ -32,10 +34,11 @@ export const meta: WsComponentMeta = {
     { selector: ":checked", label: "Checked" },
     { selector: ":required", label: "Required" },
     { selector: ":optional", label: "Optional" },
-    { selector: ":disabled", label: "Disabled" },
-    { selector: ":enabled", label: "Enabled" },
-    { selector: ":read-only", label: "Read Only" },
-    { selector: ":read-write", label: "Read Write" },
+    // Additional states will go into submenu
+    //{ selector: ":disabled", label: "Disabled" },
+    //{ selector: ":enabled", label: "Enabled" },
+    //{ selector: ":read-only", label: "Read Only" },
+    //{ selector: ":read-write", label: "Read Write" },
   ],
   template: [
     {

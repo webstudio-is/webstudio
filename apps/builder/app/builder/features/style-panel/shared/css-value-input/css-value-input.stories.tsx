@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Flex, DeprecatedTextField } from "@webstudio-is/design-system";
-import type { StyleValue } from "@webstudio-is/css-data";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import { action } from "@storybook/addon-actions";
 import { toValue } from "@webstudio-is/css-engine";

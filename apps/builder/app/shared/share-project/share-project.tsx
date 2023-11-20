@@ -10,20 +10,22 @@ import {
   rawTheme,
   Separator,
   Switch,
-  InputField,
   theme,
   Tooltip,
   useId,
   Collapsible,
   keyframes,
+  Text,
+  InputField,
+  PopoverPortal,
 } from "@webstudio-is/design-system";
-import { CopyIcon, InfoIcon, MenuIcon, PlusIcon } from "@webstudio-is/icons";
+import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
     direction="column"
-    css={{ padding: theme.spacing[7] }}
+    css={{ px: theme.spacing[7], py: theme.spacing[5] }}
     gap="1"
     {...props}
   />
@@ -43,12 +45,19 @@ const Permission = ({
 }: PermissionProps) => {
   const id = useId();
 
+  const tooltipContent = (
+    <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+      <Text variant="titles">{title}</Text>
+      <Text>{info}</Text>
+    </Flex>
+  );
+
   return (
     <Flex align="center" gap="1">
       <Switch checked={checked} id={id} onCheckedChange={onCheckedChange} />
       <Label htmlFor={id}>{title}</Label>
-      <Tooltip content={info} variant="wrapped">
-        <InfoIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+      <Tooltip content={tooltipContent} variant="wrapped">
+        <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
     </Flex>
   );
@@ -57,12 +66,14 @@ const Permission = ({
 type MenuProps = {
   relation: Relation;
   name: string;
+  hasProPlan: boolean;
   onChangePermission: (relation: Relation) => void;
   onChangeName: (name: string) => void;
   onDelete: () => void;
 };
 
 const Menu = ({
+  hasProPlan,
   relation,
   name,
   onChangePermission,
@@ -95,32 +106,40 @@ const Menu = ({
           aria-label="Menu Button for options"
         ></Button>
       </PopoverTrigger>
-      <PopoverContent css={{ zIndex: theme.zIndices[1] }}>
-        <Item>
-          <Label>Name</Label>
-          <InputField
-            autoFocus
-            color={customLinkName.length === 0 ? "error" : undefined}
-            value={customLinkName}
-            onChange={(event) => setCustomLinkName(event.target.value)}
-            onBlur={saveCustomLinkName}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                saveCustomLinkName();
-              }
-            }}
-          />
-        </Item>
-        <Separator />
-        <Item>
-          <Label>Permissions</Label>
-          <Permission
-            checked={relation === "viewers"}
-            onCheckedChange={handleCheckedChange("viewers")}
-            title="View"
-            info="Recipients can only view the site"
-          />
-          {/*
+      <PopoverPortal>
+        <PopoverContent
+          css={{
+            padding: 0,
+            width: theme.spacing[24],
+          }}
+          sideOffset={0}
+        >
+          <Item>
+            <Label>Name</Label>
+            <InputField
+              color={customLinkName.length === 0 ? "error" : undefined}
+              value={customLinkName}
+              onChange={(event) => setCustomLinkName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  saveCustomLinkName();
+                }
+              }}
+              placeholder="Breakpoint name"
+              name="Name"
+              autoFocus
+            />
+          </Item>
+          <Separator />
+          <Item>
+            <Label>Permissions</Label>
+            <Permission
+              checked={relation === "viewers"}
+              onCheckedChange={handleCheckedChange("viewers")}
+              title="View"
+              info="Recipients can only view the site"
+            />
+            {/*
            Hide temporarily until we have a way to allow edit content but not edit tree, etc.
 
           <Permission
@@ -130,26 +149,36 @@ const Menu = ({
             info="Recipients can view the site and edit content like text and images, but they will not be able to change the styles or structure of your site."
           />
           */}
-          <Permission
-            onCheckedChange={handleCheckedChange("builders")}
-            checked={relation === "builders"}
-            title="Build"
-            info="Recipients can view the site and edit content like text and images and change the styles or structure of your site."
-          />
-        </Item>
-        <Separator />
-        <Item>
-          {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
-          <Button
-            color="destructive"
-            onClick={() => {
-              onDelete();
-            }}
-          >
-            Delete Link
-          </Button>
-        </Item>
-      </PopoverContent>
+            <Permission
+              onCheckedChange={handleCheckedChange("builders")}
+              checked={relation === "builders"}
+              title="Build"
+              info="Recipients can make any changes but can not publish the site."
+            />
+
+            {hasProPlan && (
+              <Permission
+                onCheckedChange={handleCheckedChange("administrators")}
+                checked={relation === "administrators"}
+                title="Admin"
+                info="Recipients can make any changes and can also publish the site."
+              />
+            )}
+          </Item>
+          <Separator />
+          <Item>
+            {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
+            <Button
+              color="destructive"
+              onClick={() => {
+                onDelete();
+              }}
+            >
+              Delete Link
+            </Button>
+          </Item>
+        </PopoverContent>
+      </PopoverPortal>
     </Popover>
   );
 };
@@ -163,7 +192,7 @@ const itemStyle = css({
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-type Relation = "viewers" | "editors" | "builders";
+type Relation = "viewers" | "editors" | "builders" | "administrators";
 
 export type LinkOptions = {
   token: string;
@@ -179,6 +208,7 @@ type SharedLinkItemType = LinkOptions & {
     authToken: string;
     mode: "preview" | "edit";
   }) => string;
+  hasProPlan: boolean;
 };
 
 const SharedLinkItem = ({
@@ -189,6 +219,7 @@ const SharedLinkItem = ({
   onChangeName,
   onDelete,
   builderUrl,
+  hasProPlan,
 }: SharedLinkItemType) => {
   const [currentName, setCurrentName] = useState(name);
 
@@ -217,6 +248,7 @@ const SharedLinkItem = ({
           onChangeName(name);
         }}
         onDelete={onDelete}
+        hasProPlan={hasProPlan}
       />
     </Box>
   );
@@ -228,6 +260,8 @@ type ShareProjectProps = {
   onDelete: (link: LinkOptions) => void;
   onCreate: () => void;
   builderUrl: SharedLinkItemType["builderUrl"];
+  isPending: boolean;
+  hasProPlan: boolean;
 };
 
 const animateCollapsibleHeight = keyframes({
@@ -253,11 +287,12 @@ export const ShareProject = ({
   onDelete,
   onCreate,
   builderUrl,
+  isPending,
+  hasProPlan,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
     <Fragment key={link.token}>
       <SharedLinkItem
-        {...link}
         onChangeRelation={(relation) => {
           onChange({ ...link, relation });
         }}
@@ -268,6 +303,10 @@ export const ShareProject = ({
           onDelete(link);
         }}
         builderUrl={builderUrl}
+        name={link.name}
+        relation={link.relation}
+        token={link.token}
+        hasProPlan={hasProPlan}
       />
       <Separator />
     </Fragment>
@@ -277,7 +316,10 @@ export const ShareProject = ({
     <Box className={itemStyle({ css: { py: theme.spacing["9"] } })}>
       <Button
         color="neutral"
-        prefix={<PlusIcon />}
+        state={isPending ? "pending" : undefined}
+        prefix={
+          isPending ? <Flex css={{ width: theme.spacing[9] }} /> : <PlusIcon />
+        }
         onClick={() => {
           onCreate();
         }}

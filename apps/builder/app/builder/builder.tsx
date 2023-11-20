@@ -1,17 +1,17 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, type ReactNode } from "react";
+import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { type Publish, usePublish } from "~/shared/pubsub";
+import { usePublish, $publisher } from "~/shared/pubsub";
+import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
-import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
-import { isCanvasPointerEventsEnabledStore } from "./shared/nano-states";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
 // eslint-disable-next-line import/no-internal-modules
@@ -22,30 +22,32 @@ import {
   useReadCanvasRect,
   Workspace,
 } from "./features/workspace";
-import { usePublishShortcuts } from "./shared/shortcuts";
 import {
+  assetsStore,
+  $authPermit,
+  $authToken,
+  breakpointsStore,
+  dataSourcesStore,
+  instancesStore,
+  $isPreviewMode,
   pagesStore,
   projectStore,
-  useIsPreviewMode,
-  useSetAssets,
-  useSetAuthPermit,
-  useSetAuthToken,
-  useSetBreakpoints,
-  useSetDataSources,
-  useSetInstances,
-  useSetPages,
-  useSetProps,
-  useSetStyles,
-  useSetStyleSources,
-  useSetStyleSourceSelections,
+  propsStore,
+  styleSourceSelectionsStore,
+  styleSourcesStore,
+  stylesStore,
+  $domains,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
-import type { Asset } from "@webstudio-is/asset-uploader";
 import { BlockingAlerts } from "./features/blocking-alerts";
-import { useStore } from "@nanostores/react";
 import { useSyncPageUrl } from "~/shared/pages";
+import { useMount } from "~/shared/hook-utils/use-mount";
+import { subscribeCommands } from "~/builder/shared/commands";
+import { AiCommandBar } from "./features/ai/ai-command-bar";
+import { SiteSettings } from "./features/seo/site-settings";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 registerContainers();
 
@@ -55,12 +57,6 @@ export const links = () => {
     { rel: "stylesheet", href: builderStyles },
     { rel: "stylesheet", href: prismStyles },
   ];
-};
-
-const useSetProject = (project: Project) => {
-  useEffect(() => {
-    projectStore.set(project);
-  }, [project]);
 };
 
 const useNavigatorLayout = () => {
@@ -114,13 +110,14 @@ const SidePanel = ({
   );
 };
 
-const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
+const Main = ({ children }: { children: ReactNode }) => (
   <Flex
     as="main"
     direction="column"
     css={{
       gridArea: "main",
       overflow: "hidden",
+      position: "relative",
     }}
   >
     {children}
@@ -197,13 +194,11 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
 type NavigatorPanelProps = {
   isPreviewMode: boolean;
   navigatorLayout: "docked" | "undocked";
-  publish: Publish;
 };
 
 const NavigatorPanel = ({
   isPreviewMode,
   navigatorLayout,
-  publish,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
     return null;
@@ -218,7 +213,7 @@ const NavigatorPanel = ({
           height: "100%",
         }}
       >
-        <Navigator isClosable={false} publish={publish} />
+        <Navigator isClosable={false} />
       </Box>
     </SidePanel>
   );
@@ -226,30 +221,44 @@ const NavigatorPanel = ({
 
 export type BuilderProps = {
   project: Project;
+  domains: string[];
   build: Build;
   assets: [Asset["id"], Asset][];
-  buildOrigin: string;
   authToken?: string;
   authPermit: AuthPermit;
+  userPlanFeatures: UserPlanFeatures;
 };
 
 export const Builder = ({
   project,
+  domains,
   build,
   assets,
-  buildOrigin,
   authToken,
   authPermit,
+  userPlanFeatures,
 }: BuilderProps) => {
-  useSetProject(project);
-  useSetPages(build.pages);
-  useSetBreakpoints(build.breakpoints);
-  useSetProps(build.props);
-  useSetDataSources(build.dataSources);
-  useSetStyles(build.styles);
-  useSetStyleSources(build.styleSources);
-  useSetStyleSourceSelections(build.styleSourceSelections);
-  useSetInstances(build.instances);
+  useMount(() => {
+    // additional data stores
+    projectStore.set(project);
+    $domains.set(domains);
+    $authPermit.set(authPermit);
+    $authToken.set(authToken);
+
+    // set initial containers value
+    assetsStore.set(new Map(assets));
+    instancesStore.set(new Map(build.instances));
+    dataSourcesStore.set(new Map(build.dataSources));
+    // props should be after data sources to compute logic
+    propsStore.set(new Map(build.props));
+    pagesStore.set(build.pages);
+    styleSourcesStore.set(new Map(build.styleSources));
+    styleSourceSelectionsStore.set(new Map(build.styleSourceSelections));
+    breakpointsStore.set(new Map(build.breakpoints));
+    stylesStore.set(new Map(build.styles));
+  });
+
+  useEffect(subscribeCommands, []);
 
   useUnmount(() => {
     pagesStore.set(undefined);
@@ -257,11 +266,11 @@ export const Builder = ({
 
   useSyncPageUrl();
 
-  useSetAssets(assets);
-  useSetAuthToken(authToken);
-  useSetAuthPermit(authPermit);
-
   const [publish, publishRef] = usePublish();
+  useEffect(() => {
+    $publisher.set({ publish });
+  }, [publish]);
+
   useBuilderStore(publish);
   useSyncServer({
     buildId: build.id,
@@ -270,10 +279,8 @@ export const Builder = ({
     authPermit,
     version: build.version,
   });
-  useSharedShortcuts({ source: "builder" });
 
-  const [isPreviewMode] = useIsPreviewMode();
-  usePublishShortcuts(publish);
+  const isPreviewMode = useStore($isPreviewMode);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
@@ -286,27 +293,30 @@ export const Builder = ({
     },
     [publishRef, onRefReadCanvas]
   );
-  const isCanvasPointerEventsEnabled = useStore(
-    isCanvasPointerEventsEnabledStore
-  );
 
   const navigatorLayout = useNavigatorLayout();
 
   const canvasUrl = getBuildUrl({
-    buildOrigin,
     project,
   });
 
   return (
     <TooltipProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar gridArea="header" project={project} publish={publish} />
+        <SiteSettings />
+        <Topbar
+          gridArea="header"
+          project={project}
+          hasProPlan={userPlanFeatures.hasProPlan}
+        />
         <Main>
-          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+          <Workspace
+            onTransitionEnd={onTransitionEnd}
+            initialBreakpoints={build.breakpoints}
+          >
             <CanvasIframe
               ref={iframeRefCallback}
               src={canvasUrl}
-              pointerEvents={isCanvasPointerEventsEnabled ? "auto" : "none"}
               title={project.title}
               css={{
                 height: "100%",
@@ -315,6 +325,7 @@ export const Builder = ({
               }}
             />
           </Workspace>
+          <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
           <SidebarLeft publish={publish} />
@@ -322,14 +333,13 @@ export const Builder = ({
         <NavigatorPanel
           isPreviewMode={isPreviewMode}
           navigatorLayout={navigatorLayout}
-          publish={publish}
         />
         <SidePanel
           gridArea="inspector"
           isPreviewMode={isPreviewMode}
           css={{ overflow: "hidden" }}
         >
-          <Inspector publish={publish} navigatorLayout={navigatorLayout} />
+          <Inspector navigatorLayout={navigatorLayout} />
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />

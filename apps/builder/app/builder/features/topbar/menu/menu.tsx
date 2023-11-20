@@ -1,5 +1,5 @@
 import { useNavigate } from "@remix-run/react";
-import store from "immerhin";
+import { useStore } from "@nanostores/react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
@@ -15,7 +15,6 @@ import {
   DropdownMenuPortal,
   Tooltip,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
@@ -28,10 +27,10 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { useIsPreviewMode } from "~/shared/nano-states";
-import { deleteSelectedInstance } from "~/shared/instance-utils";
+import { $authPermit } from "~/shared/nano-states";
+import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -90,25 +89,21 @@ const ViewMenuItem = () => {
   );
 };
 
-type MenuProps = {
-  publish: Publish;
-};
-
-export const Menu = ({ publish }: MenuProps) => {
+export const Menu = () => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
-  const [isPreviewMode, setIsPreviewMode] = useIsPreviewMode();
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
 
-  const isPublishDisabled = authPermit !== "own";
+  const isPublishEnabled = authPermit === "own" || authPermit === "admin";
+
   const isShareDisabled = authPermit !== "own";
 
-  const disabledPublishTooltipContent = isPublishDisabled
-    ? "Only owner can publish projects"
-    : undefined;
+  const disabledPublishTooltipContent = isPublishEnabled
+    ? undefined
+    : "Only owner or admin can publish projects";
 
-  const disabledShareTooltipContent = isPublishDisabled
+  const disabledShareTooltipContent = isShareDisabled
     ? "Only owner can share projects"
     : undefined;
 
@@ -130,20 +125,20 @@ export const Menu = ({ publish }: MenuProps) => {
             Dashboard
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => store.undo()}>
+          <DropdownMenuItem onSelect={() => emitCommand("undo")}>
             Undo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => store.redo()}>
+          <DropdownMenuItem onSelect={() => emitCommand("redo")}>
             Redo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["shift", "cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          {/* https://github.com/webstudio-is/webstudio-builder/issues/499
+          {/* https://github.com/webstudio-is/webstudio/issues/499
 
           <DropdownMenuItem
             onSelect={() => {
@@ -163,18 +158,14 @@ export const Menu = ({ publish }: MenuProps) => {
           </DropdownMenuItem>
 
           */}
-          <DropdownMenuItem onSelect={deleteSelectedInstance}>
+          <DropdownMenuItem onSelect={() => emitCommand("deleteInstance")}>
             Delete
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["backspace"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => {
-              publish({ type: "openBreakpointsMenu" });
-            }}
-          >
+          <DropdownMenuItem onSelect={() => emitCommand("openBreakpointsMenu")}>
             Breakpoints
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "b"]} />
@@ -183,11 +174,7 @@ export const Menu = ({ publish }: MenuProps) => {
           <DropdownMenuSeparator />
           <ThemeMenuItem />
           <ViewMenuItem />
-          <DropdownMenuItem
-            onSelect={() => {
-              setIsPreviewMode(!isPreviewMode);
-            }}
-          >
+          <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
             Preview
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "shift", "p"]} />
@@ -210,9 +197,18 @@ export const Menu = ({ publish }: MenuProps) => {
               onSelect={() => {
                 setIsPublishOpen(true);
               }}
-              disabled={isPublishDisabled}
+              disabled={isPublishEnabled === false}
             >
               Publish
+            </DropdownMenuItem>
+          </Tooltip>
+          <Tooltip side="right" content={undefined}>
+            <DropdownMenuItem
+              onSelect={() => {
+                $isSiteSettigsOpen.set(true);
+              }}
+            >
+              Site Settings
             </DropdownMenuItem>
           </Tooltip>
         </DropdownMenuContent>

@@ -1,9 +1,7 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  type StyleProperty,
-  propertyDescriptions,
-} from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
+import { propertyDescriptions } from "@webstudio-is/css-data";
 import {
   theme,
   Button,
@@ -20,11 +18,12 @@ import type {
   Breakpoints,
   StyleSource,
   StyleSources,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
 import { toProperty } from "@webstudio-is/css-engine";
 import {
   breakpointsStore,
   instancesStore,
+  registeredComponentMetasStore,
   selectedBreakpointStore,
   selectedInstanceStore,
   selectedStyleSourceStore,
@@ -36,6 +35,7 @@ import {
   type StyleValueInfo,
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
+import { getInstanceLabel } from "~/shared/instance-utils";
 import { StyleSourceBadge } from "../style-source";
 
 // We don't return source name only in case of preset or default value.
@@ -133,6 +133,7 @@ const TooltipContent = ({
   const instances = useStore(instancesStore);
   const styleSources = useStore(styleSourcesStore);
   const instance = useStore(selectedInstanceStore);
+  const metas = useStore(registeredComponentMetasStore);
   const selectedStyleSource = useStore(selectedStyleSourceStore);
 
   const descriptionWithFallback = description ?? getDescription(properties);
@@ -166,10 +167,21 @@ const TooltipContent = ({
 
     breakpointSet.add(`${breakpointName}`);
 
-    let instanceTitle = instance?.label ?? instance?.component;
+    let instanceTitle: undefined | string;
+    if (instance) {
+      const meta = metas.get(instance.component);
+      if (meta) {
+        instanceTitle = getInstanceLabel(instance, meta);
+      }
+    }
     if (styleValueInfo.inherited && styleValueInfo.local === undefined) {
       const localInstance = instances.get(styleValueInfo.inherited.instanceId);
-      instanceTitle = localInstance?.label ?? localInstance?.component;
+      if (localInstance) {
+        const meta = metas.get(localInstance.component);
+        if (meta) {
+          instanceTitle = getInstanceLabel(localInstance, meta);
+        }
+      }
     }
 
     if (instanceTitle !== undefined) {

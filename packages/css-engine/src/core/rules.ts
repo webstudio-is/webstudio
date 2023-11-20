@@ -1,4 +1,4 @@
-import type { Style, StyleProperty, StyleValue } from "@webstudio-is/css-data";
+import type { Style, StyleProperty, StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
 import { toProperty } from "./to-property";
 

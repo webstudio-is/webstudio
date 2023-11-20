@@ -4,13 +4,14 @@ import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
+import { div } from "@webstudio-is/react-sdk/css-normalize";
 import * as tc from "./theme/tailwind-classes";
 import {
   propsTooltip,
   propsTooltipContent,
   propsTooltipTrigger,
 } from "./__generated__/tooltip.props";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
+import { getButtonStyles } from "./theme/styles";
 
 const presetStyle = {
   div,
@@ -20,9 +21,7 @@ const presetStyle = {
 export const metaTooltipTrigger: WsComponentMeta = {
   category: "hidden",
   detachable: false,
-  invalidAncestors: [],
   type: "container",
-  label: "Tooltip Trigger",
   icon: TriggerIcon,
   stylable: false,
 };
@@ -30,10 +29,8 @@ export const metaTooltipTrigger: WsComponentMeta = {
 export const metaTooltipContent: WsComponentMeta = {
   category: "hidden",
   detachable: false,
-  invalidAncestors: [],
   type: "container",
   presetStyle,
-  label: "Tooltip Content",
   icon: ContentIcon,
 };
 
@@ -47,36 +44,42 @@ export const metaTooltipContent: WsComponentMeta = {
  **/
 export const metaTooltip: WsComponentMeta = {
   category: "radix",
-  invalidAncestors: [],
+  order: 7,
   type: "container",
-  label: "Tooltip",
   icon: TooltipIcon,
-  order: 15,
   stylable: false,
+  description:
+    "Displays content that is related to the trigger, when the trigger is hovered with the mouse or focused with the keyboard. You are reading an example of a tooltip right now.",
   template: [
     {
       type: "instance",
       component: "Tooltip",
-      dataSources: {
-        // We don't have support for boolean or undefined, instead of binding on open we bind on a string
-        isOpen: { type: "variable", initialValue: "initial" },
+      variables: {
+        tooltipOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
-          name: "isOpen",
-          dataSourceName: "isOpen",
+          type: "expression",
+          name: "open",
+          code: "tooltipOpen",
+        },
+        {
+          name: "onOpenChange",
+          type: "action",
+          value: [
+            { type: "execute", args: ["open"], code: `tooltipOpen = open` },
+          ],
         },
       ],
       children: [
         {
           type: "instance",
           component: "TooltipTrigger",
-          props: [],
           children: [
             {
               type: "instance",
               component: "Button",
+              styles: getButtonStyles("outline"),
               children: [{ type: "text", value: "Button" }],
             },
           ],
@@ -84,7 +87,6 @@ export const metaTooltip: WsComponentMeta = {
         {
           type: "instance",
           component: "TooltipContent",
-          props: [],
           /**
            *  z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md
            **/
@@ -115,7 +117,7 @@ export const metaTooltip: WsComponentMeta = {
 
 export const propsMetaTooltip: WsComponentPropsMeta = {
   props: propsTooltip,
-  initialProps: ["isOpen", "delayDuration", "disableHoverableContent"],
+  initialProps: ["open", "delayDuration", "disableHoverableContent"],
 };
 
 export const propsMetaTooltipTrigger: WsComponentPropsMeta = {

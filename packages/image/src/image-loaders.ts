@@ -11,7 +11,11 @@ export type ImageLoaderOptions = {
  **/
 export const createImageLoader =
   (loaderOptions: ImageLoaderOptions): ImageLoader =>
-  ({ width, src, quality }) => {
+  (props) => {
+    const width = props.format === "raw" ? 16 : props.width;
+    const quality = props.format === "raw" ? 100 : props.quality;
+    const { format, src } = props;
+
     if (process.env.NODE_ENV !== "production") {
       warnOnce(
         allSizes.includes(width) === false,
@@ -22,7 +26,7 @@ export const createImageLoader =
     const searchParams = new URLSearchParams();
     searchParams.set("width", width.toString());
     searchParams.set("quality", quality.toString());
-    searchParams.set("format", "auto");
+    searchParams.set("format", format ?? "auto");
 
     // Cloudflare docs say that we don't need to urlencode the path params
     return `${imageBaseUrl}${src}?${searchParams.toString()}`;

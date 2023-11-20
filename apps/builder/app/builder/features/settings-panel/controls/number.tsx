@@ -1,43 +1,60 @@
-import { InputField, useId } from "@webstudio-is/design-system";
+import { Box, InputField, useId } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
   useLocalValue,
-  HorizontalLayout,
+  ResponsiveLayout,
+  Label,
 } from "../shared";
+import { useState } from "react";
+import { VariablesButton } from "../variables";
 
 export const NumberControl = ({
   meta,
   prop,
   propName,
   onChange,
+  deletable,
   onDelete,
-  onSoftDelete,
 }: ControlProps<"number", "number">) => {
   const id = useId();
 
+  const [isInvalid, setIsInvalid] = useState(false);
   const localValue = useLocalValue(prop ? prop.value : "", (value) => {
     if (typeof value === "number") {
       onChange({ type: "number", value });
     }
     if (value === "") {
-      onSoftDelete();
+      setIsInvalid(true);
     }
   });
 
   return (
-    <HorizontalLayout
-      id={id}
-      label={getLabel(meta, propName)}
+    <ResponsiveLayout
+      label={
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton
+            propId={prop?.id}
+            propName={propName}
+            propMeta={meta}
+          />
+        </Box>
+      }
+      deletable={deletable}
       onDelete={onDelete}
     >
       <InputField
         id={id}
         type="number"
         value={localValue.value}
-        onChange={({ target: { valueAsNumber, value } }) =>
-          localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
-        }
+        color={isInvalid ? "error" : undefined}
+        onChange={({ target: { valueAsNumber, value } }) => {
+          localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber);
+          setIsInvalid(false);
+        }}
         onBlur={localValue.save}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
@@ -45,6 +62,6 @@ export const NumberControl = ({
           }
         }}
       />
-    </HorizontalLayout>
+    </ResponsiveLayout>
   );
 };

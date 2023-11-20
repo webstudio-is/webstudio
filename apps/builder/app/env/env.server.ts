@@ -10,10 +10,6 @@ const env = {
   // Secret session key, context encode
   AUTH_SECRET: process.env.AUTH_SECRET,
 
-  // Publishing
-  PUBLISHER_ENDPOINT: process.env.PUBLISHER_ENDPOINT,
-  PUBLISHER_TOKEN: process.env.PUBLISHER_TOKEN,
-
   // DEPLOYMENT_ENVIRONMENT development | preview | production
   DEPLOYMENT_ENVIRONMENT: process.env.DEPLOYMENT_ENVIRONMENT,
   DEPLOYMENT_URL: process.env.DEPLOYMENT_URL,
@@ -21,10 +17,6 @@ const env = {
   // Trpc on SaaS
   TRPC_SERVER_URL: process.env.TRPC_SERVER_URL,
   TRPC_SERVER_API_TOKEN: process.env.TRPC_SERVER_API_TOKEN,
-
-  // Canvas build logic
-  BUILD_ORIGIN: process.env.BUILD_ORIGIN,
-  BUILD_REQUIRE_SUBDOMAIN: process.env.BUILD_REQUIRE_SUBDOMAIN,
 
   PORT: process.env.PORT,
 
@@ -41,12 +33,12 @@ const env = {
    * https://image-transform.wstd.io/cdn-cgi/image/
    * https://webstudio.is/cdn-cgi/image/
    */
-  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/asset/image/",
+  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/cgi/image/",
   /**
    * Base url or base path for any asset with ending slash.
    * Possible values are
    * /s/uploads/
-   * /asset/file/
+   * /cgi/asset/
    * https://assets-dev.webstudio.is/
    * https://assets.webstudio.is/
    */
@@ -54,7 +46,7 @@ const env = {
     process.env.ASSET_BASE_URL ??
     process.env.ASSET_CDN_URL ??
     process.env.ASSET_PUBLIC_PATH ??
-    "/",
+    "/cgi/asset/",
 
   // Local assets
   FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,
@@ -77,6 +69,30 @@ const env = {
    */
   ENTRI_APPLICATION_ID: process.env.ENTRI_APPLICATION_ID ?? "webstudio",
   ENTRI_SECRET: process.env.ENTRI_SECRET,
+
+  /**
+   * Projects as templates in dashboard
+   */
+  PROJECT_TEMPLATES:
+    process.env.PROJECT_TEMPLATES?.split(",").map((projectId) =>
+      projectId.trim()
+    ) ?? [],
+
+  /**
+   * OpenAI secrets for AI features
+   *
+   * OPENAI_KEY is a personal API key that you should generate here https://platform.openai.com/account/api-keys
+   * OPENAI_ORG can be found at https://platform.openai.com/account/org-settings
+   *
+   * Both are mandatory as OpenAI will bill OPENAI_ORG
+   */
+  OPENAI_KEY: process.env.OPENAI_KEY,
+  OPENAI_ORG: process.env.OPENAI_ORG,
+
+  PEXELS_API_KEY: process.env.PEXELS_API_KEY,
+
+  N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
+  N8N_WEBHOOK_TOKEN: process.env.N8N_WEBHOOK_TOKEN,
 };
 
 export type ServerEnv = typeof env;

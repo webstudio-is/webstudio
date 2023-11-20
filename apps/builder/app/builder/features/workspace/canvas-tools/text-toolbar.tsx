@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { computePosition, flip, offset, shift } from "@floating-ui/dom";
 import { theme, Flex, IconButton, Tooltip } from "@webstudio-is/design-system";
@@ -11,25 +12,13 @@ import {
   LinkIcon,
   PaintBrushIcon,
 } from "@webstudio-is/icons";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import {
+  selectedInstanceIntanceToTagStore,
+  selectedInstanceSelectorStore,
+} from "~/shared/nano-states";
 import { type TextToolbarState, textToolbarStore } from "~/shared/nano-states";
-import type { Publish } from "~/shared/pubsub";
 import { scaleStore } from "~/builder/shared/nano-states";
-
-type Format =
-  | "bold"
-  | "italic"
-  | "superscript"
-  | "subscript"
-  | "link"
-  | "span"
-  | "clear";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    formatTextToolbar: Format;
-  }
-}
+import { emitCommand } from "~/builder/shared/commands";
 
 const getRectForRelativeRect = (
   parent: DOMRect,
@@ -49,13 +38,33 @@ const getRectForRelativeRect = (
   };
 };
 
+const $isWithinLink = computed(
+  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+  (selectedInstanceSelector, selectedInstanceIntanceToTag) => {
+    if (
+      selectedInstanceSelector === undefined ||
+      selectedInstanceIntanceToTag === undefined
+    ) {
+      return false;
+    }
+    for (const instanceId of selectedInstanceSelector) {
+      const tag = selectedInstanceIntanceToTag.get(instanceId);
+      if (tag === "a") {
+        return true;
+      }
+    }
+    return false;
+  }
+);
+
 type ToolbarProps = {
   state: TextToolbarState;
-  onToggle: (value: Format) => void;
   scale: number;
 };
 
-const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
+const Toolbar = ({ state, scale }: ToolbarProps) => {
+  const isWithinLink = useStore($isWithinLink);
+
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -116,7 +125,7 @@ const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
         <IconButton
           aria-label="Clear styles"
           disabled={isCleared}
-          onClick={() => onToggle("clear")}
+          onClick={() => emitCommand("formatClear")}
         >
           <CrossSmallIcon />
         </IconButton>
@@ -126,7 +135,7 @@ const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
         <IconButton
           aria-label="Bold"
           variant={state.isBold ? "local" : "default"}
-          onClick={() => onToggle("bold")}
+          onClick={() => emitCommand("formatBold")}
         >
           <BoldIcon />
         </IconButton>
@@ -136,7 +145,7 @@ const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
         <IconButton
           aria-label="Italic"
           variant={state.isItalic ? "local" : "default"}
-          onClick={() => onToggle("italic")}
+          onClick={() => emitCommand("formatItalic")}
         >
           <TextItalicIcon />
         </IconButton>
@@ -146,7 +155,7 @@ const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
         <IconButton
           aria-label="Superscript"
           variant={state.isSuperscript ? "local" : "default"}
-          onClick={() => onToggle("superscript")}
+          onClick={() => emitCommand("formatSuperscript")}
         >
           <SuperscriptIcon />
         </IconButton>
@@ -156,27 +165,29 @@ const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
         <IconButton
           aria-label="Subscript"
           variant={state.isSubscript ? "local" : "default"}
-          onClick={() => onToggle("subscript")}
+          onClick={() => emitCommand("formatSubscript")}
         >
           <SubscriptIcon />
         </IconButton>
       </Tooltip>
 
-      <Tooltip content="Inline link">
-        <IconButton
-          aria-label="Inline link"
-          variant={state.isLink ? "local" : "default"}
-          onClick={() => onToggle("link")}
-        >
-          <LinkIcon />
-        </IconButton>
-      </Tooltip>
+      {isWithinLink === false && (
+        <Tooltip content="Inline link">
+          <IconButton
+            aria-label="Inline link"
+            variant={state.isLink ? "local" : "default"}
+            onClick={() => emitCommand("formatLink")}
+          >
+            <LinkIcon />
+          </IconButton>
+        </Tooltip>
+      )}
 
       <Tooltip content="Wrap with span">
         <IconButton
           aria-label="Wrap with span"
           variant={state.isSpan ? "local" : "default"}
-          onClick={() => onToggle("span")}
+          onClick={() => emitCommand("formatSpan")}
         >
           <PaintBrushIcon />
         </IconButton>
@@ -185,11 +196,7 @@ const Toolbar = ({ state, onToggle, scale }: ToolbarProps) => {
   );
 };
 
-type TextToolbarProps = {
-  publish: Publish;
-};
-
-export const TextToolbar = ({ publish }: TextToolbarProps) => {
+export const TextToolbar = () => {
   const textToolbar = useStore(textToolbarStore);
   const scale = useStore(scaleStore);
   const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
@@ -201,16 +208,5 @@ export const TextToolbar = ({ publish }: TextToolbarProps) => {
     return null;
   }
 
-  return (
-    <Toolbar
-      state={textToolbar}
-      scale={scale}
-      onToggle={(value) =>
-        publish({
-          type: "formatTextToolbar",
-          payload: value,
-        })
-      }
-    />
-  );
+  return <Toolbar state={textToolbar} scale={scale} />;
 };

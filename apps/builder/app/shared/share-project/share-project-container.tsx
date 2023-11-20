@@ -11,10 +11,10 @@ const trpc = createTrpcRemixProxy<AuthorizationTokensRouter>(
 );
 
 const useShareProjectContainer = (projectId: Project["id"]) => {
-  const { data, load } = trpc.findMany.useQuery();
-  const { send: createToken } = trpc.create.useMutation();
-  const { send: removeToken } = trpc.remove.useMutation();
-  const { send: updateToken } = trpc.update.useMutation();
+  const { data, load, state: loadState } = trpc.findMany.useQuery();
+  const { send: createToken, state: createState } = trpc.create.useMutation();
+  const { send: removeToken, state: removeState } = trpc.remove.useMutation();
+  const { send: updateToken, state: updateState } = trpc.update.useMutation();
   const [links, setLinks] = useState(data ?? []);
 
   useEffect(() => {
@@ -48,6 +48,11 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
     if (projectId === undefined) {
       return;
     }
+    const updatedLinks = links.filter((currentLink) => {
+      return currentLink.token !== link.token;
+    });
+
+    setLinks(updatedLinks);
 
     removeToken({ projectId: projectId, token: link.token });
   };
@@ -64,32 +69,50 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
     });
   };
 
+  const isPending =
+    loadState !== "idle" ||
+    createState !== "idle" ||
+    removeState !== "idle" ||
+    updateState !== "idle";
+
   return {
     links,
     handleChangeDebounced,
     handleDelete,
     handleCreate,
+    isPending,
   };
 };
 
 type ShareButtonProps = {
   projectId: Project["id"];
+  hasProPlan: boolean;
 };
 
 /**
  * we place the logic inside Popover so that the fetcher does not exist outside of it.
  * Then remix will not call `trpc.findMany.useQuery` if Popover is closed
  */
-export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
-  const { links, handleChangeDebounced, handleDelete, handleCreate } =
-    useShareProjectContainer(projectId);
+export const ShareProjectContainer = ({
+  projectId,
+  hasProPlan,
+}: ShareButtonProps) => {
+  const {
+    links,
+    handleChangeDebounced,
+    handleDelete,
+    handleCreate,
+    isPending,
+  } = useShareProjectContainer(projectId);
 
   return (
     <ShareProject
+      hasProPlan={hasProPlan}
       links={links}
       onChange={handleChangeDebounced}
       onDelete={handleDelete}
       onCreate={handleCreate}
+      isPending={isPending}
       builderUrl={({ authToken, mode }) =>
         builderUrl({
           projectId,

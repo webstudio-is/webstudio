@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import {
@@ -10,7 +10,7 @@ import {
   ToggleGroupButton,
   Select,
   Tooltip,
-  Label,
+  Box,
 } from "@webstudio-is/design-system";
 import {
   AttachmentIcon,
@@ -19,19 +19,18 @@ import {
   PageIcon,
   PhoneIcon,
 } from "@webstudio-is/icons";
-import {
-  findTreeInstanceIds,
-  type Instance,
-  type Page,
-} from "@webstudio-is/project-build";
+import type { Instance, Page } from "@webstudio-is/sdk";
+import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
 import {
   type ControlProps,
   getLabel,
   useLocalValue,
   VerticalLayout,
+  Label,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
+import { VariablesButton } from "../variables";
 
 type UrlControlProps = ControlProps<"url", "string" | "page" | "asset">;
 
@@ -40,7 +39,7 @@ type BaseControlProps = {
   instanceId: string;
   prop: UrlControlProps["prop"];
   onChange: UrlControlProps["onChange"];
-  onSoftDelete: UrlControlProps["onSoftDelete"];
+  onDelete: UrlControlProps["onDelete"];
 };
 
 const Row = ({ children }: { children: ReactNode }) => (
@@ -49,11 +48,47 @@ const Row = ({ children }: { children: ReactNode }) => (
   </Flex>
 );
 
+const canParse = (value: string) => {
+  try {
+    return Boolean(new URL(value));
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Add protocol to URL if it appears absolute and valid. Leave it unchanged otherwise.
+ **/
+const addHttpsIfMissing = (url: string) => {
+  if (url.startsWith("//") && canParse(`https:${url}`)) {
+    return new URL(`https:${url}`).href;
+  }
+
+  if (url.startsWith("/")) {
+    return url;
+  }
+
+  if (canParse(url)) {
+    return new URL(url).href;
+  }
+
+  if (canParse(`https://${url}`)) {
+    return new URL(`https://${url}`).href;
+  }
+
+  return url;
+};
+
 const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
   const localValue = useLocalValue(
     prop?.type === "string" ? prop.value : "",
     (value) => onChange({ type: "string", value })
   );
+
+  useEffect(() => {
+    return () => localValue.set(addHttpsIfMissing(localValue.value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Row>
@@ -62,9 +97,13 @@ const BaseUrl = ({ prop, onChange, id }: BaseControlProps) => {
         value={localValue.value}
         placeholder="http://www.url.com"
         onChange={(event) => localValue.set(event.target.value)}
-        onBlur={localValue.save}
+        onBlur={() => {
+          localValue.set(addHttpsIfMissing(localValue.value));
+          localValue.save();
+        }}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
+            localValue.set(addHttpsIfMissing(localValue.value));
             localValue.save();
           }
         }}
@@ -145,7 +184,7 @@ const BaseEmail = ({ prop, onChange, id }: BaseControlProps) => {
           type="email"
           placeholder="email@address.com"
           onChange={(event) =>
-            localValue.set((value) => ({ ...value, email: event.target.value }))
+            localValue.set({ ...localValue.value, email: event.target.value })
           }
           onBlur={localValue.save}
           onKeyDown={(event) => {
@@ -163,10 +202,10 @@ const BaseEmail = ({ prop, onChange, id }: BaseControlProps) => {
           value={localValue.value.subject}
           placeholder="You've got mail!"
           onChange={(event) =>
-            localValue.set((value) => ({
-              ...value,
+            localValue.set({
+              ...localValue.value,
               subject: event.target.value,
-            }))
+            })
           }
           onBlur={localValue.save}
           onKeyDown={(event) => {
@@ -297,12 +336,12 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
   );
 };
 
-const BaseAttachment = ({ prop, onChange, onSoftDelete }: BaseControlProps) => (
+const BaseAttachment = ({ prop, onChange, onDelete }: BaseControlProps) => (
   <Row>
     <SelectAsset
       prop={prop?.type === "asset" ? prop : undefined}
       onChange={onChange}
-      onSoftDelete={onSoftDelete}
+      onDelete={onDelete}
     />
   </Row>
 );
@@ -350,9 +389,9 @@ export const UrlControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
-  onSoftDelete,
 }: UrlControlProps) => {
   const [mode, setMode] = useState<Mode>(propToMode(prop));
 
@@ -362,9 +401,20 @@ export const UrlControl = ({
 
   return (
     <VerticalLayout
-      label={getLabel(meta, propName)}
+      label={
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={id} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton
+            propId={prop?.id}
+            propName={propName}
+            propMeta={meta}
+          />
+        </Box>
+      }
+      deletable={deletable}
       onDelete={onDelete}
-      id={id}
     >
       <Flex
         css={{
@@ -397,7 +447,7 @@ export const UrlControl = ({
         instanceId={instanceId}
         prop={prop}
         onChange={onChange}
-        onSoftDelete={onSoftDelete}
+        onDelete={onDelete}
       />
     </VerticalLayout>
   );

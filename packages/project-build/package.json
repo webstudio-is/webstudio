@@ -1,52 +1,50 @@
 {
   "name": "@webstudio-is/project-build",
-  "version": "0.83.0",
+  "version": "0.120.0",
   "description": "Webstudio Project Build",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "license": "AGPL-3.0-or-later",
+  "private": true,
   "type": "module",
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "import": "./lib/index.js"
     },
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "types": "./lib/types/index.server.d.ts",
       "import": "./lib/index.server.js"
     }
   },
   "files": [
     "lib/*",
-    "src/*",
-    "!*.test.*"
+    "!*.{test,stories}.*"
   ],
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@webstudio-is/css-data": "workspace:^",
-    "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/trpc-interface": "workspace:^",
-    "nanoid": "^4.0.2",
+    "@webstudio-is/prisma-client": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "nanoid": "^5.0.1",
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@jest/globals": "^29.6.2",
-    "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
-    "jest": "^29.6.2",
-    "type-fest": "^3.7.1",
-    "typescript": "5.1.6"
+    "@jest/globals": "^29.7.0",
+    "@webstudio-is/http-client": "workspace:*",
+    "@webstudio-is/jest-config": "workspace:*",
+    "@webstudio-is/tsconfig": "workspace:*",
+    "type-fest": "^4.3.1",
+    "typescript": "5.2.2"
   }
 }

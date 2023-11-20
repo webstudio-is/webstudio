@@ -3,8 +3,14 @@ import { router, procedure } from "./trpc";
 
 import { prisma } from "@webstudio-is/prisma-client";
 
-const Relation = z.enum(["viewers", "editors", "builders", "owners"]);
-const AuthPermit = z.enum(["view", "edit", "build", "own"]);
+const Relation = z.enum([
+  "viewers",
+  "editors",
+  "builders",
+  "administrators",
+  "owners",
+]);
+const AuthPermit = z.enum(["view", "edit", "build", "admin", "own"]);
 export type AuthPermit = z.infer<typeof AuthPermit>;
 
 const DeleteCreateInput = z.discriminatedUnion("namespace", [
@@ -152,9 +158,10 @@ export const authorizationRouter = router({
       }
 
       const permitToRelationRewrite = {
-        view: ["viewers", "editors", "builders"],
-        edit: ["editors", "builders"],
-        build: ["builders"],
+        view: ["viewers", "editors", "builders", "administrators"],
+        edit: ["editors", "builders", "administrators"],
+        build: ["builders", "administrators"],
+        admin: ["administrators"],
       } as const;
 
       if (subjectSet.namespace === "Token" && input.permit !== "own") {

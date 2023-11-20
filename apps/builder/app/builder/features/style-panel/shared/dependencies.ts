@@ -1,4 +1,15 @@
-import type { AppliesTo, StyleProperty } from "@webstudio-is/css-data";
+import type { CustomProperty, StyleProperty } from "@webstudio-is/css-engine";
+import type { properties } from "@webstudio-is/css-data";
+
+type Properties = typeof properties & {
+  [custom: CustomProperty]: {
+    appliesTo: "allElements";
+    initial: string;
+    inherited: boolean;
+  };
+};
+
+export type AppliesTo = Properties[StyleProperty]["appliesTo"];
 
 const displayInline = [
   "inline",

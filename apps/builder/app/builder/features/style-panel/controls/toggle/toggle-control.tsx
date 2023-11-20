@@ -6,7 +6,7 @@ import {
 import type { StyleInfo, StyleSource } from "../../shared/style-info";
 import { useState, type ReactElement } from "react";
 import { PropertyTooltip } from "../../shared/property-name";
-import type { StyleProperty } from "@webstudio-is/css-data";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 
 export type ToggleGroupControlProps = {
   style: StyleInfo;

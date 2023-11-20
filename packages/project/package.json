@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/project",
-  "version": "0.83.0",
+  "version": "0.120.0",
   "description": "Webstudio Project",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,45 +8,43 @@
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "dev": "build-package --watch",
-    "build": "build-package",
+    "dev": "pnpm build --watch",
+    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "dts": "tsc --project tsconfig.dts.json"
   },
   "dependencies": {
-    "@trpc/server": "^10.9.0",
-    "@webstudio-is/asset-uploader": "workspace:^",
-    "@webstudio-is/prisma-client": "workspace:^",
-    "@webstudio-is/project-build": "workspace:^",
-    "@webstudio-is/trpc-interface": "workspace:^",
-    "nanoid": "^4.0.2",
+    "@trpc/server": "^10.38.1",
+    "@webstudio-is/asset-uploader": "workspace:*",
+    "@webstudio-is/prisma-client": "workspace:*",
+    "@webstudio-is/project-build": "workspace:*",
+    "@webstudio-is/trpc-interface": "workspace:*",
+    "nanoid": "^5.0.1",
     "slugify": "^1.6.6",
     "uuid": "^9.0.0",
     "zod": "^3.21.4"
   },
   "devDependencies": {
     "@types/uuid": "^8.3.4",
-    "@webstudio-is/scripts": "workspace:^",
-    "@webstudio-is/tsconfig": "workspace:^",
-    "typescript": "5.1.6"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "typescript": "5.2.2"
   },
   "exports": {
     ".": {
-      "source": "./src/index.ts",
+      "webstudio": "./src/index.ts",
       "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js",
-      "require": "./lib/cjs/index.js"
+      "import": "./lib/index.js"
     },
     "./index.server": {
-      "source": "./src/index.server.ts",
+      "webstudio": "./src/index.server.ts",
       "types": "./lib/types/index.server.d.ts",
       "import": "./lib/index.server.js"
     }
   },
   "files": [
     "lib/*",
-    "src/*"
+    "!*.{test,stories}.*"
   ],
   "license": "AGPL-3.0-or-later",
-  "private": false,
+  "private": true,
   "sideEffects": false
 }

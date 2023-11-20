@@ -21,6 +21,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   invalidAncestors: ["Form"],
   label: "Form",
+  description: "Collect information from your users using validation rules.",
   icon: FormIcon,
   presetStyle,
   order: 0,
@@ -32,14 +33,21 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Form",
-      dataSources: {
-        formState: { type: "variable", initialValue: "initial" },
+      variables: {
+        formState: { initialValue: "initial" },
       },
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "state",
-          dataSourceName: "formState",
+          code: "formState",
+        },
+        {
+          type: "action",
+          name: "onStateChange",
+          value: [
+            { type: "execute", args: ["state"], code: `formState = state` },
+          ],
         },
       ],
       children: [
@@ -47,17 +55,11 @@ export const meta: WsComponentMeta = {
           type: "instance",
           label: "Form Content",
           component: "Box",
-          dataSources: {
-            formInitial: {
-              type: "expression",
-              code: `formState === 'initial' || formState === 'error'`,
-            },
-          },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "formInitial",
+              code: "formState === 'initial' || formState === 'error'",
             },
           ],
           children: [
@@ -95,17 +97,11 @@ export const meta: WsComponentMeta = {
           type: "instance",
           label: "Success Message",
           component: "Box",
-          dataSources: {
-            formSuccess: {
-              type: "expression",
-              code: `formState === 'success'`,
-            },
-          },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "formSuccess",
+              code: "formState === 'success'",
             },
           ],
           children: [
@@ -117,17 +113,11 @@ export const meta: WsComponentMeta = {
           type: "instance",
           label: "Error Message",
           component: "Box",
-          dataSources: {
-            formError: {
-              type: "expression",
-              code: `formState === 'error'`,
-            },
-          },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "formError",
+              code: "formState === 'error'",
             },
           ],
           children: [{ type: "text", value: "Sorry, something went wrong." }],

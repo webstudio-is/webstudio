@@ -4,15 +4,19 @@ import {
   SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
-import { BoxShadowLayers } from "./box-shadow-layers";
-import { addBoxShadow, property } from "./box-shadow-utils";
+import { LayersList } from "../../style-layers-list";
+import { Layer } from "./box-shadow-layer";
+import { addLayer } from "../../style-layer-utils";
+import { parseBoxShadow } from "@webstudio-is/css-data";
 
+const property: StyleProperty = "boxShadow";
 const label = "Box Shadows";
 
 export const BoxShadowsSection = (props: RenderCategoryProps) => {
@@ -34,9 +38,10 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
-                addBoxShadow(
+                addLayer(
+                  property,
                   // Just using some default shadow by default
-                  "0px 2px 5px 0px rgba(0, 0, 0, 0.2)",
+                  parseBoxShadow("0px 2px 5px 0px rgba(0, 0, 0, 0.2)"),
                   currentStyle,
                   props.createBatchUpdate
                 );
@@ -60,7 +65,14 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <BoxShadowLayers layers={value} {...props} />
+        <LayersList
+          property={property}
+          layers={value}
+          {...props}
+          renderLayer={(layersProps) => (
+            <Layer key={layersProps.index} {...layersProps} />
+          )}
+        />
       )}
     </CollapsibleSectionBase>
   );

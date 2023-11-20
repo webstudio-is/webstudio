@@ -7,6 +7,7 @@ import {
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import { type ControlProps, getLabel, VerticalLayout, Label } from "../shared";
+import { VariablesButton } from "../variables";
 
 const add = (array: string[], item: string) => {
   if (array.includes(item)) {
@@ -26,6 +27,7 @@ export const CheckControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
 }: ControlProps<"check" | "inline-check" | "multi-select", "string[]">) => {
@@ -40,7 +42,22 @@ export const CheckControl = ({
   const id = useId();
 
   return (
-    <VerticalLayout label={getLabel(meta, propName)} onDelete={onDelete}>
+    <VerticalLayout
+      label={
+        <Box css={{ position: "relative" }}>
+          <Label htmlFor={`${id}:${options[0]}`} description={meta.description}>
+            {getLabel(meta, propName)}
+          </Label>
+          <VariablesButton
+            propId={prop?.id}
+            propName={propName}
+            propMeta={meta}
+          />
+        </Box>
+      }
+      deletable={deletable}
+      onDelete={onDelete}
+    >
       <Box css={{ paddingTop: theme.spacing[2] }}>
         {options.map((option) => (
           <CheckboxAndLabel key={option}>

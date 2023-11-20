@@ -4,7 +4,7 @@ import {
   type AppContext,
   AuthorizationError,
 } from "@webstudio-is/trpc-interface/index.server";
-import type { Asset } from "./schema";
+import type { Asset } from "@webstudio-is/sdk";
 
 export const deleteAssets = async (
   props: {

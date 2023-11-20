@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FileLocker, MigrationMeta } from "umzug";
-import confirm from "@inquirer/confirm";
+import prompts from "prompts";
 import { inspect } from "node:util";
 import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
@@ -20,12 +20,14 @@ const ensureUserWantsToContinue = async (defaultResult = false) => {
     return;
   }
 
-  const result = await confirm({
+  const { shouldContinue } = await prompts({
+    type: "confirm",
+    name: "shouldContinue",
     message: "Continue?",
-    default: defaultResult,
+    initial: defaultResult,
   });
 
-  if (result === false) {
+  if (shouldContinue === false) {
     logger.info("Aborted.");
     process.exit(0);
   }
@@ -141,8 +143,8 @@ const isNoopSql = (sqlScript: string) => {
   );
 };
 
-const ensureNoChangesInPrismaSchema = () => {
-  const sqlScript = prismaMigrations.cliDiff();
+const ensureNoChangesInPrismaSchema = async () => {
+  const sqlScript = await prismaMigrations.cliDiff();
   if (isNoopSql(sqlScript ?? "") === false) {
     throw new UserError(
       "There are changes in schema.prisma. Please create a schema migration first."
@@ -159,7 +161,7 @@ export const createSchema = async ({ name }: { name: string }) => {
   // We need the database to be up to date before we can do a diff.
   ensureNoPending(status);
 
-  const sqlScript = prismaMigrations.cliDiff();
+  const sqlScript = await prismaMigrations.cliDiff();
 
   if (isNoopSql(sqlScript ?? "")) {
     logger.info("No changes to apply");
@@ -186,7 +188,7 @@ export const createData = async ({ name }: { name: string }) => {
 
   ensureNoFailed(status);
   ensureNoPending(status);
-  ensureNoChangesInPrismaSchema();
+  await ensureNoChangesInPrismaSchema();
 
   const migrationName = prismaMigrations.generateMigrationName(name);
 
@@ -216,7 +218,7 @@ ${schemaContent}`;
   writeFile(schemaFilePath, schemaContent);
   logger.info(`Created: ${schemaFilePath}`);
 
-  prismaMigrations.generateMigrationClient(migrationName);
+  await prismaMigrations.generateMigrationClient(migrationName);
   logger.info(
     `Created: ${path.join(
       prismaMigrations.migrationsDir,

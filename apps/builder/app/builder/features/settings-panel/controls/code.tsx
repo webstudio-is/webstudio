@@ -6,9 +6,9 @@ export const CodeControl = ({
   meta,
   prop,
   propName,
+  deletable,
   onChange,
   onDelete,
-  onSoftDelete,
 }: ControlProps<"code", "string">) => {
   return (
     <TextControl
@@ -19,6 +19,7 @@ export const CodeControl = ({
       }}
       prop={prop}
       propName={propName}
+      deletable={deletable}
       onChange={(value) => {
         if (value.type === "string") {
           // sanitize html before saving
@@ -33,7 +34,6 @@ export const CodeControl = ({
         }
       }}
       onDelete={onDelete}
-      onSoftDelete={onSoftDelete}
     />
   );
 };

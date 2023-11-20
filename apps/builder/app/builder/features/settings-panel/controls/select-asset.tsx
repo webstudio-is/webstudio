@@ -27,19 +27,12 @@ type AssetControlProps = ControlProps<unknown, "asset">;
 
 type Props = {
   accept?: string;
-  disabled?: boolean;
   prop: AssetControlProps["prop"];
   onChange: AssetControlProps["onChange"];
-  onSoftDelete: AssetControlProps["onSoftDelete"];
+  onDelete: AssetControlProps["onDelete"];
 };
 
-export const SelectAsset = ({
-  prop,
-  onChange,
-  onSoftDelete,
-  accept,
-  disabled = false,
-}: Props) => {
+export const SelectAsset = ({ prop, onChange, onDelete, accept }: Props) => {
   const assetStore = useMemo(
     () =>
       computed(assetsStore, (assets) =>
@@ -67,14 +60,14 @@ export const SelectAsset = ({
           />
         }
       >
-        <Button color="neutral" css={{ flex: 1 }} disabled={disabled}>
+        <Button color="neutral" css={{ flex: 1 }}>
           {asset?.name ?? "Choose source"}
         </Button>
       </FloatingPanel>
-      {prop && disabled === false ? (
+      {prop ? (
         <SmallIconButton
           icon={<TrashIcon />}
-          onClick={onSoftDelete}
+          onClick={onDelete}
           variant="destructive"
         />
       ) : null}

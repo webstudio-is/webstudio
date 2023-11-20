@@ -10,7 +10,6 @@ import {
   ChevronFilledDownIcon,
   ChevronFilledRightIcon,
 } from "@webstudio-is/icons";
-import { cssVars } from "@webstudio-is/css-vars";
 import { Box } from "../box";
 import { Flex } from "../flex";
 import { Text } from "../text";
@@ -33,10 +32,10 @@ export const getPlacementIndicatorAlignment = (depth: number) => {
   return depth * INDENT + ITEM_PADDING_LEFT;
 };
 
-const suffixWidthVar = cssVars.define("suffix-width");
+const suffixWidthVar = `--ws-tree-node-suffix-width`;
 
 const itemButtonVars = {
-  paddingRight: cssVars.define("item-button-padding-right"),
+  paddingRight: `--ws-tree-node-item-button-padding-right`,
 };
 const getItemButtonCssVars = ({
   suffixVisible,
@@ -44,7 +43,7 @@ const getItemButtonCssVars = ({
   suffixVisible: boolean;
 }) => {
   if (suffixVisible) {
-    const suffixWidth = cssVars.use(suffixWidthVar, "0px");
+    const suffixWidth = `var(${suffixWidthVar}, 0px)`;
     return {
       // We have to use a padding to make space for the suffix
       // because we can't put it inside ItemButton (see comment in TreeItemBody)
@@ -67,7 +66,7 @@ const ItemButton = styled("button", {
   pt: 0,
   pb: 0,
   pl: ITEM_PADDING_LEFT,
-  pr: cssVars.use(itemButtonVars.paddingRight),
+  pr: `var(${itemButtonVars.paddingRight})`,
   flexBasis: 0,
   flexGrow: 1,
   position: "relative",
@@ -116,8 +115,8 @@ const CollapsibleTrigger = styled("button", {
 const TriggerPlaceholder = styled(Box, { width: INDENT });
 
 const suffixContainerVars = {
-  opacity: cssVars.define("suffix-opacity"),
-  pointerEvents: cssVars.define("suffix-pointer-events"),
+  opacity: "--ws-tree-node-suffix-opacity",
+  pointerEvents: "--ws-tree-node-suffix-pointer-events",
 };
 const getSuffixContainerCssVars = ({
   suffixVisible,
@@ -145,8 +144,8 @@ const SuffixContainer = styled(Flex, {
 
   // We use opacity to hide the suffix buttons
   // becuase when `visibility` is used it's impossible to focus the button.
-  opacity: cssVars.use(suffixContainerVars.opacity),
-  pointerEvents: cssVars.use(suffixContainerVars.pointerEvents),
+  opacity: `var(${suffixContainerVars.opacity})`,
+  pointerEvents: `var(${suffixContainerVars.pointerEvents})`,
 });
 
 const hoverStyle = {
@@ -241,7 +240,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   isAlwaysExpanded: boolean;
   shouldRenderExpandButton: boolean;
   isExpanded: boolean;
-  onToggle: () => void;
+  onToggle: (all: boolean) => void;
 };
 
 export const TreeItemBody = <Data extends { id: string }>({
@@ -351,7 +350,7 @@ export const TreeItemBody = <Data extends { id: string }>({
           style={{ left: (level - 1) * INDENT + ITEM_PADDING_LEFT }}
           // We don't want this trigger to be focusable
           tabIndex={-1}
-          onClick={onToggle}
+          onClick={(event) => onToggle(event.altKey)}
         >
           {isExpanded ? <ChevronFilledDownIcon /> : <ChevronFilledRightIcon />}
         </CollapsibleTrigger>
@@ -393,12 +392,16 @@ export const TreeItemLabel = forwardRef(TreeItemLabelBase);
 
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
-  getItemChildren: (itemId: ItemId) => Data[];
-  isItemHidden: (itemId: ItemId) => boolean;
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
+  isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
-  setIsExpanded?: (itemSelector: ItemSelector, expanded: boolean) => void;
+  setIsExpanded?: (
+    itemSelector: ItemSelector,
+    value: boolean,
+    all?: boolean
+  ) => void;
 
   selectedItemSelector?: ItemSelector;
   dropTargetItemSelector?: ItemSelector;
@@ -430,11 +433,11 @@ export const TreeNode = <Data extends { id: string }>({
     isItemHidden,
   } = commonProps;
 
-  const itemChildren = getItemChildren(itemData.id);
-
   const itemSelector = [itemData.id, ...(parentSelector ?? [])];
 
-  const itemIsHidden = isItemHidden(itemData.id);
+  const itemChildren = getItemChildren(itemSelector);
+
+  const itemIsHidden = isItemHidden(itemSelector);
   // hidden items and root are always expanded
   const isAlwaysExpanded = itemIsHidden || level === 0;
 
@@ -460,7 +463,13 @@ export const TreeNode = <Data extends { id: string }>({
           isAlwaysExpanded,
           shouldRenderExpandButton,
           isExpanded,
-          onToggle: () => setIsExpanded?.(itemSelector, isExpanded === false),
+          onToggle: (all) => {
+            setIsExpanded?.(
+              itemSelector,
+              getIsExpanded(itemSelector) === false,
+              all
+            );
+          },
         })}
       {isExpandable &&
         isExpanded &&

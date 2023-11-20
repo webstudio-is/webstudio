@@ -12,7 +12,7 @@ import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
 import { toValue } from "@webstudio-is/css-engine";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
-import type { StyleProperty, UnitValue } from "@webstudio-is/css-data";
+import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";
 import { type ReactNode } from "react";
 import { useSelectedInstanceKv } from "../../shared/instances-kv";
 

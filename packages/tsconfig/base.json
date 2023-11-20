@@ -9,7 +9,7 @@
     "inlineSources": false,
     "isolatedModules": true,
     "moduleResolution": "bundler",
-    "customConditions": ["source"],
+    "customConditions": ["webstudio"],
     "noUnusedLocals": true,
     "noUnusedParameters": false,
     "preserveWatchOutput": true,

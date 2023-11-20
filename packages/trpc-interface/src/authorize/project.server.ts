@@ -54,10 +54,17 @@ export const hasProjectPermit = async (
     // Allow load webstudiois for clone
     // @todo Rethink permissions for this use-case
     // The plan is to make new permission for projects which are allowed to be publicly clonable by anyone
-    // https://github.com/webstudio-is/webstudio-builder/issues/1038
+    // https://github.com/webstudio-is/webstudio/issues/1038
     if (
       props.permit === "view" &&
       props.projectId === "62154aaef0cb0860ccf85d6e"
+    ) {
+      return true;
+    }
+
+    if (
+      props.permit === "view" &&
+      context.authorization.projectTemplates.includes(props.projectId)
     ) {
       return true;
     }

@@ -31,6 +31,8 @@ export const meta: WsComponentMeta = {
   category: "media",
   type: "embed",
   label: "Image",
+  description:
+    "Add an image asset to the page. Webstudio automatically converts images to WebP or AVIF format and makes them responsive for best performance.",
   icon: ImageIcon,
   states: defaultStates,
   presetStyle,
