@@ -119,7 +119,7 @@ const Menu = ({
             <InputField
               color={customLinkName.length === 0 ? "error" : undefined}
               value={customLinkName}
-              onChange={(event) => setCustomLinkName(event.target.value)}
+              onChange={(event) => setCustomLinkName(event.target.value.trim())}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   saveCustomLinkName();
