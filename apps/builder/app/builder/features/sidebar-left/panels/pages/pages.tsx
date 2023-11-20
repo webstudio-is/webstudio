@@ -210,13 +210,13 @@ const PagesPanel = ({
           onSelect={selectTreeNode}
           itemData={pagesTree}
           renderItem={renderItem}
-          getItemChildren={(nodeId) => {
+          getItemChildren={([nodeId]) => {
             if (nodeId === pagesTree.id && pagesTree.type === "folder") {
               return pagesTree.children;
             }
             return [];
           }}
-          isItemHidden={(itemId) => itemId === pagesTree.id}
+          isItemHidden={([itemId]) => itemId === pagesTree.id}
           getIsExpanded={() => true}
         />
       </Box>

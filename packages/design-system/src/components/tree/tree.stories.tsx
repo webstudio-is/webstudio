@@ -95,7 +95,9 @@ export const StressTest = () => {
           });
         }}
         canLeaveParent={() => true}
-        getItemChildren={(itemId) => findItemById(root, itemId)?.children ?? []}
+        getItemChildren={(itemSelector) =>
+          findItemById(root, itemSelector[0])?.children ?? []
+        }
         isItemHidden={(itemSelector) =>
           findItemById(root, itemSelector[0])?.isHidden ?? false
         }

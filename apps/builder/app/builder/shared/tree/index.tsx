@@ -19,6 +19,7 @@ import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { serverSyncStore } from "~/shared/sync";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 export const InstanceTree = (
   props: Omit<
@@ -31,7 +32,7 @@ export const InstanceTree = (
   const editingItemId = useStore(editingItemIdStore);
 
   const canLeaveParent = useCallback(
-    (instanceId: Instance["id"]) => {
+    ([instanceId]: InstanceSelector) => {
       const instance = instances.get(instanceId);
       if (instance === undefined) {
         return false;
@@ -43,7 +44,7 @@ export const InstanceTree = (
   );
 
   const getItemChildren = useCallback(
-    (instanceId: Instance["id"]) => {
+    ([instanceId]: InstanceSelector) => {
       const instance = instances.get(instanceId);
       const children: Instance[] = [];
       if (instance === undefined) {
