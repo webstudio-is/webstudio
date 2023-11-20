@@ -81,10 +81,20 @@ const Menu = ({
   onDelete,
 }: MenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [customLinkName, setCustomLinkName] = useState<string>(name);
   const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
     if (checked) {
       onChangePermission(relation);
     }
+  };
+
+  const saveCustomLinkName = () => {
+    if (customLinkName.length === 0) {
+      return;
+    }
+
+    onChangeName(customLinkName);
+    setIsOpen(false);
   };
 
   return (
@@ -107,16 +117,16 @@ const Menu = ({
           <Item>
             <Label>Name</Label>
             <InputField
-              value={name}
-              onChange={(event) => {
-                onChangeName(event.target.value);
-              }}
+              color={customLinkName.length === 0 ? "error" : undefined}
+              value={customLinkName}
+              onChange={(event) => setCustomLinkName(event.target.value.trim())}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
-                  setIsOpen(false);
+                  saveCustomLinkName();
                 }
               }}
-              placeholder="Breakpoint name"
+              onBlur={() => onChangeName(customLinkName)}
+              placeholder="Share Project"
               name="Name"
               autoFocus
             />
