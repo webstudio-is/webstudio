@@ -125,7 +125,7 @@ const Menu = ({
                   saveCustomLinkName();
                 }
               }}
-              onBlur={saveCustomLinkName}
+              onBlur={() => onChangeName(customLinkName)}
               placeholder="Share Project"
               name="Name"
               autoFocus
