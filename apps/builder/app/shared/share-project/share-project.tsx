@@ -125,7 +125,8 @@ const Menu = ({
                   saveCustomLinkName();
                 }
               }}
-              placeholder="Breakpoint name"
+              onBlur={saveCustomLinkName}
+              placeholder="Share Project"
               name="Name"
               autoFocus
             />
