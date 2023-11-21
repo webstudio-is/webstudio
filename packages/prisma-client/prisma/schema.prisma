@@ -110,17 +110,18 @@ model TransactionLog {
 }
 
 model Project {
-  id            String                 @id @default(uuid())
-  createdAt     DateTime               @default(now())
-  title         String
-  domain        String                 @unique
-  user          User?                  @relation(fields: [userId], references: [id])
-  userId        String?
-  build         Build[]
-  isDeleted     Boolean                @default(false)
-  files         File[]
-  projectDomain ProjectDomain[]
-  latestBuild   LatestBuildPerProject?
+  id                 String                 @id @default(uuid())
+  createdAt          DateTime               @default(now())
+  title              String
+  domain             String                 @unique
+  user               User?                  @relation(fields: [userId], references: [id])
+  userId             String?
+  build              Build[]
+  isDeleted          Boolean                @default(false)
+  files              File[]
+  projectDomain      ProjectDomain[]
+  latestBuild        LatestBuildPerProject?
+  authorizationToken AuthorizationToken[]
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -167,13 +168,14 @@ enum AuthorizationRelation {
 
 model AuthorizationToken {
   token     String                @default(uuid())
-  // No relation to Project, as the Authorization system is not tied to a project
   projectId String
+  project   Project               @relation(fields: [projectId], references: [id])
   name      String                @default("")
   relation  AuthorizationRelation @default(viewers)
   createdAt DateTime              @default(now())
 
   @@id([token, projectId])
+  @@unique([token])
 }
 
 enum DomainStatus {
