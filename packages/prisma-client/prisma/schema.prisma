@@ -89,7 +89,7 @@ model Product {
 
 model TransactionLog {
   // Stripe event id (debug and idempotency purposes)
-  eventId      String
+  eventId      String   @id
   eventType    String
   eventCreated Int
   // Stripe session id (debug and idempotency purposes)
