@@ -13,6 +13,35 @@ export type UserPlanFeatures = {
 // No strings - no secrets
 ({}) as UserPlanFeatures satisfies Record<string, boolean | number>;
 
+export const getTokenPlanFeatures = async (token: string) => {
+  const projectOwnerIdByToken = await prisma.authorizationToken.findUnique({
+    where: {
+      token,
+    },
+    select: {
+      project: {
+        select: {
+          id: true,
+          userId: true,
+        },
+      },
+    },
+  });
+
+  if (projectOwnerIdByToken === null) {
+    throw new Error(`Project owner can't be found for token ${token}`);
+  }
+
+  const userId = projectOwnerIdByToken.project.userId;
+  if (userId === null) {
+    throw new Error(
+      `Project ${projectOwnerIdByToken.project.id} has null instead of userId`
+    );
+  }
+
+  return await getUserPlanFeatures(userId);
+};
+
 export const getUserPlanFeatures = async (
   userId: string
 ): Promise<UserPlanFeatures> => {
