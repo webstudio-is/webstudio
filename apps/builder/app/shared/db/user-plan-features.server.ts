@@ -45,15 +45,9 @@ export const getTokenPlanFeatures = async (token: string) => {
 export const getUserPlanFeatures = async (
   userId: string
 ): Promise<UserPlanFeatures> => {
-  const transactionLog = await prisma.transactionLog.findMany({
+  const userProducts = await prisma.userProduct.findMany({
     where: { userId },
-    orderBy: {
-      createdAt: "desc",
-    },
     select: {
-      eventId: true,
-      sessionId: true,
-      createdAt: true,
       customerId: true,
       subscriptionId: true,
       product: {
@@ -71,8 +65,8 @@ export const getUserPlanFeatures = async (
 
   // This is fast and dirty implementation
   // @todo: implement this using products meta, custom table with aggregated transaction info
-  if (transactionLog.length > 0) {
-    const hasSubscription = transactionLog.some(
+  if (userProducts.length > 0) {
+    const hasSubscription = userProducts.some(
       (log) => log.subscriptionId !== null
     );
 

@@ -61,6 +61,7 @@ model User {
   projects         Project[]
   clientReferences ClientReferences[]
   checkout         TransactionLog[]
+  products         UserProduct[]
 }
 
 // User client references in external services like stripe etc
@@ -83,22 +84,25 @@ model Product {
   images      String[]
   meta        Json
 
-  createdAt DateTime         @default(now())
-  checkout  TransactionLog[]
+  createdAt    DateTime         @default(now())
+  checkout     TransactionLog[]
+  userProducts UserProduct[]
 }
 
 model TransactionLog {
   // Stripe event id (debug and idempotency purposes)
-  eventId   String
+  eventId      String   @id
+  eventType    String
+  eventCreated Int
   // Stripe session id (debug and idempotency purposes)
-  sessionId String
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  sessionId    String
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
   // paid
-  status    String
-  createdAt DateTime @default(now())
+  status       String
+  createdAt    DateTime @default(now())
 
   // Helper fields we can use for faster api calls and to have additional information for debugging purposes
   customerId     String?
@@ -106,7 +110,20 @@ model TransactionLog {
   customerEmail  String?
 
   @@unique([eventId, productId])
-  @@unique([sessionId, productId])
+}
+
+view UserProduct {
+  userId         String
+  user           User    @relation(fields: [userId], references: [id])
+  productId      String
+  product        Product @relation(fields: [productId], references: [id])
+  // subscriptionId and customerId not null for subscriptions
+  subscriptionId String?
+  customerId     String?
+  // Easier to debug
+  customerEmail  String?
+
+  @@unique([userId, productId])
 }
 
 model Project {
