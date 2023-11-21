@@ -151,7 +151,7 @@ const EditableText = ({
 const StyleSourceContainer = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
-  minWidth: theme.spacing[15],
+  minWidth: theme.spacing[14],
   maxWidth: "100%",
   position: "relative",
   color: theme.colors.foregroundContrastMain,
