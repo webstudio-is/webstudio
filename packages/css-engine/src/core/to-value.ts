@@ -73,7 +73,7 @@ export const toValue = (
     }
 
     // @todo image-set
-    return `url(${value.value.url})`;
+    return `url("${value.value.url}")`;
   }
 
   if (value.type === "unparsed") {
