@@ -480,7 +480,7 @@ describe("CssEngine", () => {
     expect(engine.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
-          background-image: url(foo.png)
+          background-image: url("foo.png")
         }
       }"
     `);
