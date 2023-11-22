@@ -22,6 +22,8 @@ const fallbackTransform: TransformValue = (styleValue) => {
   }
 };
 
+const sanitizeCssUrl = (str: string) => str.replace(/["\\]{1}/g, "\\$&");
+
 export const toValue = (
   styleValue: undefined | StyleValue,
   transformValue?: TransformValue
@@ -73,7 +75,7 @@ export const toValue = (
     }
 
     // @todo image-set
-    return `url("${value.value.url}")`;
+    return `url("${sanitizeCssUrl(value.value.url)}")`;
   }
 
   if (value.type === "unparsed") {

@@ -131,4 +131,40 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     });
     expect(value).toBe("10px 20px 30px 40px");
   });
+
+  test("sanitize url", () => {
+    const assets = new Map<string, { path: string }>([
+      ["1234567890", { path: `fo"o\\o.png` }],
+    ]);
+
+    const value = toValue(
+      {
+        type: "image",
+        value: {
+          type: "asset",
+          value: "1234567890",
+        },
+      },
+      (styleValue) => {
+        if (styleValue.type === "image" && styleValue.value.type === "asset") {
+          const asset = assets.get(styleValue.value.value);
+          if (asset === undefined) {
+            return {
+              type: "keyword",
+              value: "none",
+            };
+          }
+          return {
+            type: "image",
+            value: {
+              type: "url",
+              url: asset.path,
+            },
+          };
+        }
+      }
+    );
+
+    expect(value).toMatchInlineSnapshot(`"url("fo\\"o\\\\o.png")"`);
+  });
 });
