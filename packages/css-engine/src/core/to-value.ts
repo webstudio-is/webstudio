@@ -22,7 +22,8 @@ const fallbackTransform: TransformValue = (styleValue) => {
   }
 };
 
-const sanitizeCssUrl = (str: string) => str.replace(/["\\]{1}/g, "\\$&");
+// Use JSON.stringify to escape double quotes and backslashes in strings as it automatically replaces " with \" and \ with \\.
+const sanitizeCssUrl = (str: string) => JSON.stringify(str);
 
 export const toValue = (
   styleValue: undefined | StyleValue,
@@ -75,7 +76,7 @@ export const toValue = (
     }
 
     // @todo image-set
-    return `url("${sanitizeCssUrl(value.value.url)}")`;
+    return `url(${sanitizeCssUrl(value.value.url)})`;
   }
 
   if (value.type === "unparsed") {

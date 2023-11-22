@@ -16,7 +16,8 @@ export type FontFace = {
   fontStretch?: string;
 };
 
-const sanitizeCssUrl = (str: string) => str.replace(/["\\]{1}/g, "\\$&");
+// Use JSON.stringify to escape double quotes and backslashes in strings as it automatically replaces " with \" and \ with \\.
+const sanitizeCssUrl = (str: string) => JSON.stringify(str);
 
 const formatFace = (
   asset: PartialFontAsset,
@@ -29,7 +30,7 @@ const formatFace = (
       fontFamily: asset.meta.family,
       fontStyle: "normal",
       fontDisplay: "swap",
-      src: `url("${sanitizeCssUrl(url)}") format("${format}")`,
+      src: `url(${sanitizeCssUrl(url)}) format("${format}")`,
       fontStretch: wdth ? `${wdth.min}% ${wdth.max}%` : undefined,
       fontWeight: wght ? `${wght.min} ${wght.max}` : undefined,
     };
@@ -39,7 +40,7 @@ const formatFace = (
     fontStyle: asset.meta.style,
     fontWeight: asset.meta.weight,
     fontDisplay: "swap",
-    src: `url("${sanitizeCssUrl(url)}") format("${format}")`,
+    src: `url(${sanitizeCssUrl(url)}) format("${format}")`,
   };
 };
 
@@ -75,7 +76,7 @@ export const getFontFaces = (
     }
 
     // We already have that font face, so we need to add the new src
-    face.src += `, url("${sanitizeCssUrl(url)}") format("${format}")`;
+    face.src += `, url(${sanitizeCssUrl(url)}) format("${format}")`;
   }
   return Array.from(faces.values());
 };
