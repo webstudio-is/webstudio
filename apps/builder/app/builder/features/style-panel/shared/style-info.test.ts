@@ -202,7 +202,8 @@ test("compute inherited styles", () => {
       ]),
 
       cascadedBreakpointIds,
-      selectedBreakpointId
+      selectedBreakpointId,
+      new Set()
     )
   ).toMatchInlineSnapshot(`
     {
@@ -307,7 +308,8 @@ test("compute styles from previous sources", () => {
       stylesByInstanceId,
       selectedInstanceSelector,
       selectedStyleSourceSelector,
-      "bp"
+      "bp",
+      new Set()
     )
   ).toMatchInlineSnapshot(`
     {
@@ -374,7 +376,8 @@ test("compute styles from next sources", () => {
       stylesByInstanceId,
       selectedInstanceSelector,
       selectedStyleSourceSelector,
-      "bp"
+      "bp",
+      new Set()
     )
   ).toMatchInlineSnapshot(`
     {
