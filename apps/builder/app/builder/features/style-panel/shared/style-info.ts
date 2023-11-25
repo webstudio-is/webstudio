@@ -70,11 +70,13 @@ const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
   outlineWidth: { value: 0, type: "unit", unit: "px" },
 };
 
+type StatefulValue = { state: string; value: StyleValue };
+
 export type StyleValueInfo = {
   value: StyleValue;
   // either stateful and local exist or stateless and local or just local
   // @todo improve with more clear structure
-  stateful?: StyleValue;
+  stateful?: StatefulValue;
   local?: StyleValue;
   stateless?: StyleValue;
   previousSource?: SourceValueInfo;
@@ -172,7 +174,7 @@ const getLocalStyles = (
 ) => {
   const statelessStyles = new Map<StyleProperty, StyleValue>();
   const localStyles = new Map<StyleProperty, StyleValue>();
-  const statefulStyles = new Map<StyleProperty, StyleValue>();
+  const statefulStyles = new Map<StyleProperty, StatefulValue>();
   const instanceStyles = stylesByStyleSourceId.get(
     styleSourceSelector.styleSourceId
   );
@@ -194,7 +196,10 @@ const getLocalStyles = (
       if (styleDecl.state === styleSourceSelector.state) {
         localStyles.set(styleDecl.property, styleDecl.value);
       } else {
-        statefulStyles.set(styleDecl.property, styleDecl.value);
+        statefulStyles.set(styleDecl.property, {
+          state: styleDecl.state,
+          value: styleDecl.value,
+        });
       }
     }
   }
@@ -514,7 +519,7 @@ const useStyleInfoByInstanceAndStyleSource = (
   const selectedStyle = useMemo((): {
     statelessStyles: Map<StyleProperty, StyleValue>;
     localStyles: Map<StyleProperty, StyleValue>;
-    statefulStyles: Map<StyleProperty, StyleValue>;
+    statefulStyles: Map<StyleProperty, StatefulValue>;
   } => {
     if (
       selectedBreakpointId === undefined ||
@@ -699,7 +704,7 @@ const useStyleInfoByInstanceAndStyleSource = (
       const stateless = statelessStyles.get(property);
       const ownValue =
         local ??
-        stateful ??
+        stateful?.value ??
         stateless ??
         nextSource?.value ??
         previousSource?.value ??
