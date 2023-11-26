@@ -31,6 +31,7 @@ import {
   synchronizedComponentsMetaStores,
   dataSourceVariablesStore,
   $dragAndDropState,
+  $selectedInstanceStates,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -109,6 +110,8 @@ export const registerContainers = () => {
   );
   clientStores.set("dragAndDropState", $dragAndDropState);
   clientStores.set("ephemeralStyles", $ephemeralStyles);
+  clientStores.set("selectedInstanceStates", $selectedInstanceStates);
+
   for (const [name, store] of synchronizedBreakpointsStores) {
     clientStores.set(name, store);
   }

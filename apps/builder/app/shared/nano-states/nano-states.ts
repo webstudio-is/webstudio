@@ -67,6 +67,7 @@ export const propsIndexStore = computed(propsStore, (props) => {
 });
 
 export const stylesStore = atom<Styles>(new Map());
+export const $styles = stylesStore;
 
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   const instanceStylesStore = useMemo(() => {
@@ -263,6 +264,13 @@ export const selectedStyleSourceStore = computed(
     );
   }
 );
+export const $selectedStyleSource = selectedStyleSourceStore;
+
+/**
+ * Store the list of active states inferred from dom element
+ * to display style values as remote
+ */
+export const $selectedInstanceStates = atom(new Set<string>());
 
 export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined

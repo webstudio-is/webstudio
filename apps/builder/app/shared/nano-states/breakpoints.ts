@@ -7,6 +7,7 @@ export const breakpointsStore = atom<Breakpoints>(new Map());
 export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
   undefined
 );
+export const $selectedBreakpointId = selectedBreakpointIdStore;
 
 export const selectedBreakpointStore = computed(
   [breakpointsStore, selectedBreakpointIdStore],
