@@ -7,6 +7,7 @@ import {
   type Prop,
 } from "@webstudio-is/sdk";
 import {
+  collectionComponent,
   encodeDataSourceVariable,
   generateDataSources,
   normalizeProps,
@@ -22,6 +23,11 @@ import { $selectedPage, $pages } from "./pages";
 import { groupBy } from "../array-utils";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
+
+export const getIndexedInstanceId = (
+  instanceId: Instance["id"],
+  index: number
+) => `${instanceId}[${index}]`;
 
 // result of executing generated code
 // includes variables, computed expressions and action callbacks
@@ -144,7 +150,6 @@ export const $propValuesByInstanceSelector = computed(
 
       const propValues = new Map<Prop["name"], unknown>();
       let props = propsByInstanceId.get(instanceId);
-      // @todo store parameters to update with core components later
       const parameters = new Map<Prop["name"], DataSource["id"]>();
       if (props) {
         // ignore asset and page props when params is not provided
@@ -189,6 +194,22 @@ export const $propValuesByInstanceSelector = computed(
         JSON.stringify(instanceSelector),
         propValues
       );
+      if (instance.component === collectionComponent) {
+        const data = propValues.get("data");
+        const itemVariableId = parameters.get("item");
+        if (Array.isArray(data) && itemVariableId !== undefined) {
+          data.forEach((item, index) => {
+            values.set(itemVariableId, item);
+            for (const child of instance.children) {
+              if (child.type === "id") {
+                const indexId = getIndexedInstanceId(instanceId, index);
+                traverseInstances([child.value, indexId, ...instanceSelector]);
+              }
+            }
+          });
+        }
+        return;
+      }
       for (const child of instance.children) {
         if (child.type === "id") {
           traverseInstances([child.value, ...instanceSelector]);

@@ -10,8 +10,11 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
+import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
+  $propValuesByInstanceSelector,
   editingItemIdStore,
+  getIndexedInstanceId,
   instancesStore,
   registeredComponentMetasStore,
 } from "~/shared/nano-states";
@@ -30,6 +33,7 @@ export const InstanceTree = (
   const metas = useStore(registeredComponentMetasStore);
   const instances = useStore(instancesStore);
   const editingItemId = useStore(editingItemIdStore);
+  const propValues = useStore($propValuesByInstanceSelector);
 
   const canLeaveParent = useCallback(
     ([instanceId]: InstanceSelector) => {
@@ -44,9 +48,37 @@ export const InstanceTree = (
   );
 
   const getItemChildren = useCallback(
-    ([instanceId]: InstanceSelector) => {
-      const instance = instances.get(instanceId);
+    (instanceSelector: InstanceSelector) => {
+      const [instanceId, parentId] = instanceSelector;
+      let instance = instances.get(instanceId);
       const children: Instance[] = [];
+
+      // put fake collection item instances according to collection data
+      if (instance?.component === collectionComponent) {
+        const data = propValues
+          .get(JSON.stringify(instanceSelector))
+          ?.get("data");
+        // create items only when collection has content
+        if (Array.isArray(data) && instance.children.length > 0) {
+          data.forEach((_item, index) => {
+            children.push({
+              type: "instance",
+              id: getIndexedInstanceId(instanceId, index),
+              component: "ws:collection-item",
+              children: [],
+            });
+          });
+        }
+        return children;
+      }
+
+      // put parent children as own when parent is a collection
+      if (instance === undefined) {
+        const parentInstance = instances.get(parentId);
+        if (parentInstance?.component === collectionComponent) {
+          instance = parentInstance;
+        }
+      }
       if (instance === undefined) {
         return children;
       }
@@ -63,7 +95,7 @@ export const InstanceTree = (
       }
       return children;
     },
-    [instances]
+    [instances, propValues]
   );
 
   const updateInstanceLabel = useCallback(

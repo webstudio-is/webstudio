@@ -2,6 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
+import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
   hoveredInstanceSelectorStore,
   instancesStore,
@@ -70,8 +71,11 @@ export const NavigatorTree = () => {
       const componentSelector: string[] = [];
       for (const instanceId of instanceSelector) {
         const component = instances.get(instanceId)?.component;
+        // collection produce fake instances
+        // and fragment does not have constraints
         if (component === undefined) {
-          return -1;
+          componentSelector.push("Fragment");
+          continue;
         }
         componentSelector.push(component);
       }
@@ -85,10 +89,16 @@ export const NavigatorTree = () => {
   );
 
   const isItemHidden = useCallback(
-    ([instanceId]: InstanceSelector) =>
-      // fragment is internal component to group other instances
-      // for example to support multiple children in slots
-      instances.get(instanceId)?.component === "Fragment",
+    (instanceSelector: InstanceSelector) => {
+      const [instanceId, parentInstanceId] = instanceSelector;
+      return (
+        // fragment is internal component to group other instances
+        // for example to support multiple children in slots
+        instances.get(instanceId)?.component === "Fragment" ||
+        // hide collection items which are temporary generated
+        instances.get(parentInstanceId)?.component === collectionComponent
+      );
+    },
     [instances]
   );
 
