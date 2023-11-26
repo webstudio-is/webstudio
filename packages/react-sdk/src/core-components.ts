@@ -1,5 +1,4 @@
 import { ListIcon } from "@webstudio-is/icons/svg";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -10,7 +9,7 @@ export const portalComponent = "Slot";
 export const collectionComponent = "ws:collection";
 
 const collectionMeta: WsComponentMeta = {
-  category: isFeatureEnabled("bindings") ? "general" : "hidden",
+  category: "general",
   order: 7,
   type: "container",
   label: "Collection",

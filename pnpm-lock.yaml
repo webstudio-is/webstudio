@@ -1571,9 +1571,6 @@ importers:
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
-      '@webstudio-is/feature-flags':
-        specifier: workspace:^
-        version: link:../feature-flags
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
