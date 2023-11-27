@@ -20,7 +20,6 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
     })
     .option("template", {
       type: "string",
-      default: "vercel",
       describe: `[Experimental] Template to use for the build [choices: ${PROJECT_TEMPALTES.toString()}]`,
     });
 
