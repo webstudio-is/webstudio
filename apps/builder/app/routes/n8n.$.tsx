@@ -5,6 +5,7 @@ import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
 import { type LoaderArgs, json } from "@remix-run/server-runtime";
+import cookie from "cookie";
 
 const zN8NResponse = z.union([
   z.object({
@@ -52,6 +53,14 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     .join("/");
   n8nWebhookUrl.search = new URL(request.url).search;
 
+  const requestUrl = new URL(request.url);
+  const host =
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+
+  if (host != null) {
+    requestUrl.host = host;
+  }
+
   const response = await fetch(n8nWebhookUrl.href, {
     method: "POST",
     headers: {
@@ -60,6 +69,9 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     },
     body: JSON.stringify({
       userId: user.id,
+      // For anonymous tracking like posthog
+      cookies: cookie.parse(request.headers.get("cookie") ?? ""),
+      requestUrl: requestUrl.href,
     }),
   });
 
