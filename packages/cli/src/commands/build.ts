@@ -20,14 +20,14 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
     })
     .option("template", {
       type: "string",
-      describe: `Template to use for the build [choices: ${PROJECT_TEMPALTES.toString()}]`,
+      describe: `Template to use for the build [choices: ${PROJECT_TEMPALTES.join(
+        ", "
+      )}]`,
     });
 
 // @todo: use options.assets to define if we need to download assets
 export const build = async (
-  options: StrictYargsOptionsToInterface<typeof buildOptions> & {
-    template: string;
-  }
+  options: StrictYargsOptionsToInterface<typeof buildOptions>
 ) => {
   try {
     await access(LOCAL_DATA_FILE);

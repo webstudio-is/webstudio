@@ -82,6 +82,26 @@ export const initFlow = async (
 
   await sync({ buildId: undefined, origin: undefined, authToken: undefined });
 
+  /*
+    If a project is already linked, we sync direclty without asking for deploy target.
+    We need to request for deploy target here as the current flow is running in a existing project.
+  */
+
+  if (projectTemplate === undefined) {
+    const { deployTarget } = await prompt({
+      type: "select",
+      name: "deployTarget",
+      message: "Where would you like to deploy your project?",
+      choices: PROJECT_TEMPALTES.map((template) => {
+        return {
+          title: titleCase(template),
+          value: template,
+        };
+      }),
+    });
+    projectTemplate = deployTarget;
+  }
+
   await build({
     ...options,
     ...(projectTemplate && { template: projectTemplate }),

@@ -197,9 +197,16 @@ export const prebuild = async (options: {
   /**
    * Template to use for the build in addition to defaults template
    **/
-  template: string;
+  template?: string;
 }) => {
+  if (options.template === undefined) {
+    throw new Error(
+      `\n Template is not provided \n Please check webstudio --help for more details`
+    );
+  }
+
   if (
+    options.template !== "vanilla" &&
     (await isCliTemplate(options.template)) === false &&
     options.template.startsWith(".") === false
   ) {
@@ -223,7 +230,7 @@ export const prebuild = async (options: {
 
   await copyTemplates();
 
-  if (options.template !== undefined) {
+  if (options.template !== "vanilla") {
     await copyTemplates(options.template);
   }
 

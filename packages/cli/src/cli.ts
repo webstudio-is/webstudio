@@ -10,7 +10,6 @@ import { initFlow } from "./commands/init-flow";
 import makeCLI from "yargs";
 import packageJson from "../package.json" assert { type: "json" };
 import type { CommonYargsArgv } from "./commands/yargs-types";
-import yargs from "yargs";
 
 export const main = async () => {
   try {
