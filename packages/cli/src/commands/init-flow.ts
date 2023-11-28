@@ -58,27 +58,18 @@ export const initFlow = async (
     }
     await link({ link: projectLink });
 
-    const { shouldSetupDeployTarget } = await prompt({
-      type: "confirm",
-      name: "shouldSetupDeployTarget",
-      message: "Would you like to setup a deploy target?",
-      initial: false,
+    const { deployTarget } = await prompt({
+      type: "select",
+      name: "deployTarget",
+      message: "Where would you like to deploy your project?",
+      choices: PROJECT_TEMPALTES.map((template) => {
+        return {
+          title: titleCase(template),
+          value: template,
+        };
+      }),
     });
-
-    if (shouldSetupDeployTarget === true) {
-      const { deployTarget } = await prompt({
-        type: "select",
-        name: "deployTarget",
-        message: "Where would you like to deploy your project?",
-        choices: PROJECT_TEMPALTES.map((template) => {
-          return {
-            title: titleCase(template),
-            value: template,
-          };
-        }),
-      });
-      projectTemplate = deployTarget;
-    }
+    projectTemplate = deployTarget;
 
     const { installDeps } = await prompt({
       type: "confirm",

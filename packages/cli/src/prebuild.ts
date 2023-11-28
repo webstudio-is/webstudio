@@ -197,10 +197,9 @@ export const prebuild = async (options: {
   /**
    * Template to use for the build in addition to defaults template
    **/
-  template?: string;
+  template: string;
 }) => {
   if (
-    options.template !== undefined &&
     (await isCliTemplate(options.template)) === false &&
     options.template.startsWith(".") === false
   ) {
