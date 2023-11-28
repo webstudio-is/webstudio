@@ -28,6 +28,7 @@ import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-
 import type { Project } from "@webstudio-is/project";
 
 export const projectStore = atom<Project | undefined>();
+export const $project = projectStore;
 
 export const $domains = atom<string[]>([]);
 
@@ -83,10 +84,12 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
 };
 
 export const styleSourcesStore = atom<StyleSources>(new Map());
+export const $styleSources = styleSourcesStore;
 
 export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
   new Map()
 );
+export const $styleSourceSelections = styleSourceSelectionsStore;
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
