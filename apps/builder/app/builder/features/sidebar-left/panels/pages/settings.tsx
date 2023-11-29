@@ -43,7 +43,11 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
-import { deleteInstance } from "~/shared/instance-utils";
+import {
+  deleteInstance,
+  getInstancesSlice,
+  insertInstancesSliceCopy,
+} from "~/shared/instance-utils";
 import {
   assetsStore,
   $domains,
@@ -634,7 +638,7 @@ const NewPageSettingsView = ({
 }: {
   onSubmit: () => void;
   isSubmitting: boolean;
-  onClose?: () => void;
+  onClose: () => void;
 } & ComponentProps<typeof FormFields>) => {
   return (
     <>
@@ -771,13 +775,49 @@ const deletePage = (pageId: Page["id"]) => {
   });
 };
 
+const duplicatePage = (pageId: Page["id"]) => {
+  const pages = pagesStore.get();
+  const page =
+    pages?.homePage.id === pageId
+      ? pages.homePage
+      : pages?.pages.find((page) => page.id === pageId);
+  if (page === undefined) {
+    return;
+  }
+
+  const newPageId = nanoid();
+  const { name = page.name, copyNumber } =
+    // extract a number from "name (copyNumber)"
+    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
+
+  const slice = getInstancesSlice(page.rootInstanceId);
+  insertInstancesSliceCopy({
+    slice,
+    availableDataSources: new Set(),
+    beforeTransactionEnd: (rootInstanceId, draft) => {
+      const newPage = {
+        ...page,
+        id: newPageId,
+        rootInstanceId,
+        name: newName,
+        path: nameToPath(pages, newName),
+      };
+      draft.pages?.pages.push(newPage);
+    },
+  });
+  return newPageId;
+};
+
 export const PageSettings = ({
   onClose,
+  onDuplicate,
   onDelete,
   pageId,
 }: {
-  onClose?: () => void;
-  onDelete?: () => void;
+  onClose: () => void;
+  onDuplicate: (newPageId: string) => void;
+  onDelete: () => void;
   pageId: string;
 }) => {
   const pages = useStore(pagesStore);
@@ -832,7 +872,7 @@ export const PageSettings = ({
 
   const hanldeDelete = () => {
     deletePage(pageId);
-    onDelete?.();
+    onDelete();
   };
 
   if (page === undefined) {
@@ -843,6 +883,12 @@ export const PageSettings = ({
     <PageSettingsView
       onClose={onClose}
       onDelete={hanldeDelete}
+      onDuplicate={() => {
+        const newPageId = duplicatePage(pageId);
+        if (newPageId !== undefined) {
+          onDuplicate(newPageId);
+        }
+      }}
       errors={errors}
       values={values}
       onChange={handleChange}
@@ -852,11 +898,13 @@ export const PageSettings = ({
 
 const PageSettingsView = ({
   onDelete,
+  onDuplicate,
   onClose,
   ...formFieldsProps
 }: {
   onDelete: () => void;
-  onClose?: () => void;
+  onDuplicate: () => void;
+  onClose: () => void;
 } & ComponentProps<typeof FormFields>) => {
   return (
     <>
@@ -875,6 +923,15 @@ const PageSettingsView = ({
                 />
               </Tooltip>
             )}
+            <Tooltip content="Duplicate page" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<CopyIcon />}
+                onClick={onDuplicate}
+                aria-label="Duplicate page"
+                tabIndex={2}
+              />
+            </Tooltip>
             {onClose && (
               <Tooltip content="Close page settings" side="bottom">
                 <Button
