@@ -17,6 +17,7 @@ import {
   DataSource,
   Prop,
   Breakpoint,
+  Pages,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
@@ -50,6 +51,7 @@ import {
   $styleSources,
   $styles,
   $styleSourceSelections,
+  $pages,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -800,7 +802,7 @@ export const insertInstancesSliceCopy = ({
   availableDataSources: Set<DataSource["id"]>;
   beforeTransactionEnd?: (
     rootInstanceI: Instance["id"],
-    draft: { instances: Instances }
+    draft: { instances: Instances; pages: undefined | Pages }
   ) => void;
 }) => {
   const projectId = $project.get()?.id;
@@ -836,6 +838,7 @@ export const insertInstancesSliceCopy = ({
       $styleSources,
       $styles,
       $styleSourceSelections,
+      $pages,
     ],
     (
       assets,
@@ -845,7 +848,8 @@ export const insertInstancesSliceCopy = ({
       breakpoints,
       styleSources,
       styles,
-      styleSourceSelections
+      styleSourceSelections,
+      pages
     ) => {
       /**
        * insert reusables without changing their ids to not bloat data
@@ -1173,7 +1177,7 @@ export const insertInstancesSliceCopy = ({
       // invoke callback to allow additional changes within same transaction
       const rootInstanceId =
         newInstanceIds.get(slice.instances[0].id) ?? slice.instances[0].id;
-      beforeTransactionEnd?.(rootInstanceId, { instances });
+      beforeTransactionEnd?.(rootInstanceId, { instances, pages });
     }
   );
 };

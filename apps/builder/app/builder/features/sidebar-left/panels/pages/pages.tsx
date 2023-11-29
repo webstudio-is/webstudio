@@ -269,6 +269,10 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
                 switchPage();
               }
             }}
+            onDuplicate={(newPageId) => {
+              setEditingPageId(undefined);
+              switchPage(newPageId);
+            }}
             pageId={editingPageId}
             key={editingPageId}
           />
