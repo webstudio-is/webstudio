@@ -1101,6 +1101,12 @@ export const insertInstancesSliceCopy = ({
             }),
           };
         }
+        if (prop.type === "parameter") {
+          prop = {
+            ...prop,
+            value: newDataSourceIds.get(prop.value) ?? prop.value,
+          };
+        }
         const newId = nanoid();
         props.set(newId, {
           ...prop,

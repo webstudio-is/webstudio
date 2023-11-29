@@ -1378,6 +1378,13 @@ describe("insert instances slice copy", () => {
               },
             ],
           },
+          {
+            id: "parameterId",
+            instanceId: "body",
+            name: "myProp3",
+            type: "parameter",
+            value: "variableId",
+          },
         ],
       },
       availableDataSources: new Set(),
@@ -1413,6 +1420,13 @@ describe("insert instances slice copy", () => {
             code: `${encodeDataSourceVariable(newVariableId)} = ""`,
           },
         ],
+      },
+      {
+        id: expect.not.stringMatching("parameterId"),
+        instanceId: expect.not.stringMatching("body"),
+        name: "myProp3",
+        type: "parameter",
+        value: newVariableId,
       },
     ]);
   });
@@ -1543,6 +1557,13 @@ describe("insert instances slice copy", () => {
               },
             ],
           },
+          {
+            id: "parameterId",
+            instanceId: "fragment",
+            name: "myProp3",
+            type: "parameter",
+            value: "variableId",
+          },
         ],
       },
       availableDataSources: new Set(),
@@ -1576,6 +1597,13 @@ describe("insert instances slice copy", () => {
             code: `$ws$dataSource$variableId = ""`,
           },
         ],
+      },
+      {
+        id: "parameterId",
+        instanceId: "fragment",
+        name: "myProp3",
+        type: "parameter",
+        value: `variableId`,
       },
     ]);
   });
