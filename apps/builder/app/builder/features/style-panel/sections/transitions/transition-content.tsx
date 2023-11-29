@@ -260,6 +260,8 @@ export const TransitionContent = ({
           onChange={handleChange}
           onBlur={handleComplete}
           onKeyDown={(event) => {
+            event.stopPropagation();
+
             if (event.key === "Enter") {
               handleComplete();
               event.preventDefault();

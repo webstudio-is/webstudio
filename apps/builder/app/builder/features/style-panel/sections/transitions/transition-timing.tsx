@@ -26,9 +26,10 @@ type TransitionTimingProps = {
   onTimingSelection: (params: { timing: KeywordValue }) => void;
 };
 
-const options: TimingFunctions[] = Object.keys(
-  timingFunctions
-) as TimingFunctions[];
+const options: TimingFunctions[] = [
+  ...Object.keys(timingFunctions),
+  "custom",
+] as TimingFunctions[] & "custom";
 
 export const TransitionTiming = ({
   timing,
@@ -75,6 +76,7 @@ export const TransitionTiming = ({
           setValue(value);
 
           if (value === "custom") {
+            onTimingSelection({ timing: { type: "keyword", value: "" } });
             return;
           }
 
