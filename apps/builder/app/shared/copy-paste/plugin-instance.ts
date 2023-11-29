@@ -290,6 +290,13 @@ export const onPaste = (clipboardData: string): boolean => {
             return identifier;
           };
 
+          if (prop.type === "parameter") {
+            return {
+              ...prop,
+              value: copiedDataSourceIds.get(prop.value) ?? prop.value,
+            };
+          }
+
           if (prop.type === "expression") {
             return {
               ...prop,

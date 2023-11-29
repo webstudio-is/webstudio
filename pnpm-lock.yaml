@@ -1574,6 +1574,9 @@ importers:
       '@webstudio-is/fonts':
         specifier: workspace:*
         version: link:../fonts
+      '@webstudio-is/icons':
+        specifier: workspace:^
+        version: link:../icons
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../image

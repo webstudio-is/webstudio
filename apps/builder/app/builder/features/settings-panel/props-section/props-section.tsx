@@ -249,9 +249,6 @@ export const PropsSectionContainer = ({
           return prop;
         }
         const propValue = propValues?.get(prop.name);
-        if (propValue === undefined) {
-          return prop;
-        }
         return { ...prop, ...getPropTypeAndValue(propValue) };
       }) ?? [],
 

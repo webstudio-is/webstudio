@@ -5,6 +5,8 @@ import {
   type Params,
   type Components,
   createElementsTree,
+  coreMetas,
+  corePropsMetas,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -123,6 +125,11 @@ export const Canvas = ({
   const isPreviewMode = useStore($isPreviewMode);
 
   useMount(() => {
+    registerComponentLibrary({
+      components: {},
+      metas: coreMetas,
+      propsMetas: corePropsMetas,
+    });
     registerComponentLibrary({
       components: baseComponents,
       metas: baseComponentMetas,

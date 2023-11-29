@@ -27,6 +27,7 @@ import {
   validateExpression,
   encodeDataSourceVariable,
   portalComponent,
+  collectionComponent,
 } from "@webstudio-is/react-sdk";
 import {
   propsStore,
@@ -264,8 +265,11 @@ export const findClosestDroppableTarget = (
   const componentSelector: string[] = [];
   for (const instanceId of instanceSelector) {
     const component = instances.get(instanceId)?.component;
+    // collection produce fake instances
+    // and fragment does not have constraints
     if (component === undefined) {
-      return;
+      componentSelector.push("Fragment");
+      continue;
     }
     componentSelector.push(component);
   }
@@ -446,11 +450,12 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
     ) => {
       let targetInstanceId = instanceSelector[0];
       const parentInstanceId = instanceSelector[1];
-      const grandparentInstanceId = instanceSelector[2];
       let parentInstance =
         parentInstanceId === undefined
           ? undefined
           : instances.get(parentInstanceId);
+      const grandparentInstanceId = instanceSelector[2];
+      const grandparentInstance = instances.get(grandparentInstanceId);
 
       // delete parent fragment too if its last child is going to be deleted
       // use case for slots: slot became empty and remove display: contents
@@ -458,10 +463,15 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
       if (
         parentInstance?.component === "Fragment" &&
         parentInstance.children.length === 1 &&
-        grandparentInstanceId !== undefined
+        grandparentInstance
       ) {
         targetInstanceId = parentInstance.id;
-        parentInstance = instances.get(grandparentInstanceId);
+        parentInstance = grandparentInstance;
+      }
+
+      // skip parent fake "item" instance and use grandparent collection as parent
+      if (grandparentInstance?.component === collectionComponent) {
+        parentInstance = grandparentInstance;
       }
 
       const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
@@ -1089,6 +1099,12 @@ export const insertInstancesSliceCopy = ({
                 { ...value, code: replaceDataSources(code, newDataSourceIds) },
               ];
             }),
+          };
+        }
+        if (prop.type === "parameter") {
+          prop = {
+            ...prop,
+            value: newDataSourceIds.get(prop.value) ?? prop.value,
           };
         }
         const newId = nanoid();

@@ -3,6 +3,7 @@ import { describe, test, expect, beforeEach } from "@jest/globals";
 import {
   encodeDataSourceVariable,
   portalComponent,
+  collectionComponent,
   type WsComponentMeta,
 } from "@webstudio-is/react-sdk";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
@@ -25,6 +26,7 @@ import {
   deleteInstance,
   getInstancesSlice,
   insertInstancesSliceCopy,
+  reparentInstance,
 } from "./instance-utils";
 import {
   $assets,
@@ -382,14 +384,6 @@ describe("find closest droppable target", () => {
       parentSelector: ["box", "body"],
       position: "end",
     });
-    expect(
-      findClosestDroppableTarget(
-        defaultMetasMap,
-        instances,
-        ["not-existing", "body"],
-        emptyInsertConstraints
-      )
-    ).toEqual(undefined);
   });
 
   test("puts in the end of root instance", () => {
@@ -520,49 +514,106 @@ test("insert template data with only new style sources", () => {
   );
 });
 
-test("delete instance with its children", () => {
-  // body
-  //   box1
-  //     box11
-  //   box2
-  instancesStore.set(
-    new Map([
-      createInstancePair("body", "Body", [
-        { type: "id", value: "box1" },
-        { type: "id", value: "box2" },
-      ]),
-      createInstancePair("box1", "Box", [{ type: "id", value: "box11" }]),
-      createInstancePair("box11", "Box", []),
-      createInstancePair("box2", "Box", []),
-    ])
-  );
-  registeredComponentMetasStore.set(createFakeComponentMetas({}));
-  deleteInstance(["box1", "body"]);
-  expect(instancesStore.get()).toEqual(
-    new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
-      createInstancePair("box2", "Box", []),
-    ])
-  );
+describe("reparent instance", () => {
+  test("from collectioo item", () => {
+    // body
+    //   list
+    //     box
+    instancesStore.set(
+      new Map([
+        createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
+        createInstancePair("list", collectionComponent, [
+          { type: "id", value: "box" },
+        ]),
+        createInstancePair("box", "Box", []),
+      ])
+    );
+    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    reparentInstance(["box", "list[0]", "list", "body"], {
+      parentSelector: ["body"],
+      position: 1,
+    });
+    expect(instancesStore.get()).toEqual(
+      new Map([
+        createInstancePair("body", "Body", [
+          { type: "id", value: "list" },
+          { type: "id", value: "box" },
+        ]),
+        createInstancePair("list", collectionComponent, []),
+        createInstancePair("box", "Box", []),
+      ])
+    );
+  });
 });
 
-test("prevent deleting root instance", () => {
-  // body
-  //   box1
-  instancesStore.set(
-    new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
-      createInstancePair("box1", "Box", []),
-    ])
-  );
-  registeredComponentMetasStore.set(createFakeComponentMetas({}));
-  deleteInstance(["body"]);
-  expect(instancesStore.get()).toEqual(
-    new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
-      createInstancePair("box1", "Box", []),
-    ])
-  );
+describe("delete instance", () => {
+  test("delete instance with its children", () => {
+    // body
+    //   box1
+    //     box11
+    //   box2
+    instancesStore.set(
+      new Map([
+        createInstancePair("body", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+        ]),
+        createInstancePair("box1", "Box", [{ type: "id", value: "box11" }]),
+        createInstancePair("box11", "Box", []),
+        createInstancePair("box2", "Box", []),
+      ])
+    );
+    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    deleteInstance(["box1", "body"]);
+    expect(instancesStore.get()).toEqual(
+      new Map([
+        createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
+        createInstancePair("box2", "Box", []),
+      ])
+    );
+  });
+
+  test("prevent deleting root instance", () => {
+    // body
+    //   box1
+    instancesStore.set(
+      new Map([
+        createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstancePair("box1", "Box", []),
+      ])
+    );
+    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    deleteInstance(["body"]);
+    expect(instancesStore.get()).toEqual(
+      new Map([
+        createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
+        createInstancePair("box1", "Box", []),
+      ])
+    );
+  });
+
+  test("delete instance from collection item", () => {
+    // body
+    //   list
+    //     box
+    instancesStore.set(
+      new Map([
+        createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
+        createInstancePair("list", collectionComponent, [
+          { type: "id", value: "box" },
+        ]),
+        createInstancePair("box", "Box", []),
+      ])
+    );
+    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    deleteInstance(["box", "list[0]", "list", "body"]);
+    expect(instancesStore.get()).toEqual(
+      new Map([
+        createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
+        createInstancePair("list", collectionComponent, []),
+      ])
+    );
+  });
 });
 
 describe("get instances slice", () => {
@@ -1327,6 +1378,13 @@ describe("insert instances slice copy", () => {
               },
             ],
           },
+          {
+            id: "parameterId",
+            instanceId: "body",
+            name: "myProp3",
+            type: "parameter",
+            value: "variableId",
+          },
         ],
       },
       availableDataSources: new Set(),
@@ -1362,6 +1420,13 @@ describe("insert instances slice copy", () => {
             code: `${encodeDataSourceVariable(newVariableId)} = ""`,
           },
         ],
+      },
+      {
+        id: expect.not.stringMatching("parameterId"),
+        instanceId: expect.not.stringMatching("body"),
+        name: "myProp3",
+        type: "parameter",
+        value: newVariableId,
       },
     ]);
   });
@@ -1492,6 +1557,13 @@ describe("insert instances slice copy", () => {
               },
             ],
           },
+          {
+            id: "parameterId",
+            instanceId: "fragment",
+            name: "myProp3",
+            type: "parameter",
+            value: "variableId",
+          },
         ],
       },
       availableDataSources: new Set(),
@@ -1525,6 +1597,13 @@ describe("insert instances slice copy", () => {
             code: `$ws$dataSource$variableId = ""`,
           },
         ],
+      },
+      {
+        id: "parameterId",
+        instanceId: "fragment",
+        name: "myProp3",
+        type: "parameter",
+        value: `variableId`,
       },
     ]);
   });

@@ -49,7 +49,7 @@ export const JsonControl = ({
       <Box css={{ py: theme.spacing[2] }}>
         <CodeEditor
           // reset editor every time value is changed
-          key={localValue.value}
+          key={valueString}
           variables={emptyVariables}
           defaultValue={localValue.value}
           onChange={localValue.set}

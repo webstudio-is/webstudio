@@ -484,6 +484,64 @@ test("generate data for embedding from action props", () => {
   });
 });
 
+test("generate data for embedding from parameter props", () => {
+  const data = generateDataFromEmbedTemplate(
+    [
+      {
+        type: "instance",
+        component: "Box",
+        variables: {
+          parameterName: { initialValue: "" },
+        },
+        props: [
+          {
+            type: "parameter",
+            name: "myParameter",
+            variableName: "parameterName",
+          },
+        ],
+        children: [],
+      },
+    ],
+    new Map(),
+    defaultBreakpointId
+  );
+  const instanceId = data.instances[0].id;
+  const variableId = data.dataSources[0].id;
+  expect(data).toEqual({
+    children: [{ type: "id", value: instanceId }],
+    instances: [
+      {
+        type: "instance",
+        id: instanceId,
+        component: "Box",
+        children: [],
+      },
+    ],
+    props: [
+      {
+        id: expectString,
+        instanceId,
+        name: "myParameter",
+        type: "parameter",
+        value: variableId,
+      },
+    ],
+    dataSources: [
+      {
+        type: "variable",
+        id: variableId,
+        scopeInstanceId: instanceId,
+        name: "parameterName",
+        value: { type: "string", value: "" },
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  });
+});
+
 test("generate styles from tokens", () => {
   const presetTokens: WsComponentMeta["presetTokens"] = {
     box: {

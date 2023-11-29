@@ -10,7 +10,11 @@ import type {
   Page,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
-import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
+import {
+  collectionComponent,
+  encodeDataSourceVariable,
+  coreMetas,
+} from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { registerContainers } from "../sync";
 import {
@@ -28,7 +32,9 @@ import { onCopy, onPaste } from "./plugin-instance";
 enableMapSet();
 registerContainers();
 
-registeredComponentMetasStore.set(new Map(Object.entries(baseComponentMetas)));
+registeredComponentMetasStore.set(
+  new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
+);
 projectStore.set({ id: "my-project" } as Project);
 pagesStore.set({
   meta: {},
@@ -355,6 +361,92 @@ describe("data sources", () => {
               type: "execute",
             },
           ],
+        },
+      ])
+    );
+  });
+
+  test("copy parameter prop with new data source", () => {
+    const instances: Instances = toMap([
+      createInstance("body", "Body", [{ type: "id", value: "list" }]),
+      createInstance("list", collectionComponent, []),
+    ] satisfies Instance[]);
+    const dataSources: DataSources = toMap([
+      {
+        id: "itemDataSource",
+        scopeInstanceId: "list",
+        type: "variable",
+        name: "item",
+        value: { type: "json", value: {} },
+      },
+    ] satisfies DataSource[]);
+    const props: Props = toMap([
+      {
+        id: "dataProp",
+        instanceId: "list",
+        name: "data",
+        type: "json",
+        value: [],
+      },
+      {
+        id: "itemProp",
+        instanceId: "list",
+        name: "item",
+        type: "parameter",
+        value: "itemDataSource",
+      },
+    ] satisfies Prop[]);
+    instancesStore.set(instances);
+    propsStore.set(props);
+    dataSourcesStore.set(dataSources);
+    selectedInstanceSelectorStore.set(["list", "body"]);
+    const clipboardData = onCopy() ?? "";
+    selectedInstanceSelectorStore.set(["body"]);
+    onPaste(clipboardData);
+
+    const instancesDifference = getMapDifference(
+      instances,
+      instancesStore.get()
+    );
+    const [collectionId] = instancesDifference.keys();
+
+    const dataSourcesDifference = getMapDifference(
+      dataSources,
+      dataSourcesStore.get()
+    );
+    const [itemDataSourceId] = dataSourcesDifference.keys();
+    expect(dataSourcesDifference).toEqual(
+      new Map([
+        [
+          itemDataSourceId,
+          {
+            id: itemDataSourceId,
+            scopeInstanceId: collectionId,
+            type: "variable",
+            name: "item",
+            value: { type: "json", value: {} },
+          },
+        ],
+      ])
+    );
+
+    const propsDifference = getMapDifference(props, propsStore.get());
+    const [dataPropId, itemPropId] = propsDifference.keys();
+    expect(propsDifference).toEqual(
+      toMap([
+        {
+          id: dataPropId,
+          instanceId: collectionId,
+          name: "data",
+          type: "json",
+          value: [],
+        },
+        {
+          id: itemPropId,
+          instanceId: collectionId,
+          name: "item",
+          type: "parameter",
+          value: itemDataSourceId,
         },
       ])
     );
