@@ -11,6 +11,7 @@ import type {
   Asset,
   Instance,
   Instances,
+  Page,
   Prop,
   StyleDecl,
   StyleDeclKey,
@@ -33,6 +34,7 @@ import {
   $breakpoints,
   $dataSources,
   $instances,
+  $pages,
   $project,
   $props,
   $styleSourceSelections,
@@ -1038,6 +1040,7 @@ describe("insert instances slice copy", () => {
   };
 
   beforeEach(() => {
+    $pages.set({ homePage: { id: "" } as Page, pages: [] });
     $project.set({ id: "current_project" } as Project);
     $assets.set(new Map());
     $breakpoints.set(new Map());
