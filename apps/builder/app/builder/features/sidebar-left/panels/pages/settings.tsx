@@ -786,11 +786,10 @@ const duplicatePage = (pageId: Page["id"]) => {
   }
 
   const newPageId = nanoid();
-  const { name = page.name, indexString } =
-    // parse "name" or "name (indexString)"
-    page.name.match(/^(?<name>.+) \((?<indexString>\d+)\)$/)?.groups ?? {};
-  const index = Number(indexString ?? "0") + 1;
-  const newName = `${name} (${index})`;
+  const { name = page.name, copyNumber } =
+    // extract a number from "name (copyNumber)"
+    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
 
   const slice = getInstancesSlice(page.rootInstanceId);
   insertInstancesSliceCopy({
