@@ -30,10 +30,10 @@ export type TreeProps<Data extends { id: string }> = {
   dragItemSelector: undefined | ItemSelector;
   dropTarget: undefined | ItemDropTarget;
 
-  canLeaveParent: (itemId: ItemId) => boolean;
+  canLeaveParent: (itemSelector: ItemSelector) => boolean;
   findClosestDroppableIndex: (itemSelector: ItemSelector) => number;
-  getItemChildren: (itemId: ItemId) => Data[];
-  isItemHidden: (itemId: ItemId) => boolean;
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
+  isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   onSelect?: (itemSelector: ItemSelector) => void;
@@ -211,8 +211,7 @@ export const Tree = <Data extends { id: string }>({
         return false;
       }
 
-      const [dragItemId] = dragItemSelector;
-      if (canLeaveParent(dragItemId) === false) {
+      if (canLeaveParent(dragItemSelector) === false) {
         return false;
       }
 
@@ -336,8 +335,8 @@ const useKeyboardNavigation = <Data extends { id: string }>({
 }: {
   root: Data;
   selectedItemSelector: undefined | ItemSelector;
-  getItemChildren: (itemId: ItemId) => Data[];
-  isItemHidden: (itemId: ItemId) => boolean;
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
+  isItemHidden: (itemSelector: ItemSelector) => boolean;
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
   setIsExpanded: (
     itemSelector: ItemSelector,
@@ -350,12 +349,11 @@ const useKeyboardNavigation = <Data extends { id: string }>({
   const flatCurrentlyExpandedTree = useMemo(() => {
     const result: ItemSelector[] = [];
     const traverse = (itemSelector: ItemSelector) => {
-      const [itemId] = itemSelector;
-      if (isItemHidden(itemId) === false) {
+      if (isItemHidden(itemSelector) === false) {
         result.push(itemSelector);
       }
       if (getIsExpanded(itemSelector)) {
-        for (const child of getItemChildren(itemId)) {
+        for (const child of getItemChildren(itemSelector)) {
           traverse([child.id, ...itemSelector]);
         }
       }
@@ -495,7 +493,7 @@ const useExpandState = <Data extends { id: string }>({
   getItemChildren,
 }: {
   selectedItemSelector: undefined | ItemSelector;
-  getItemChildren: (itemId: string) => Data[];
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
 }) => {
   const [record, setRecord] = useState<Record<string, boolean>>({});
 
@@ -548,7 +546,7 @@ const useExpandState = <Data extends { id: string }>({
         if (all) {
           const newRecord = { ...record };
           const addChildren = (parentSelector: string[]) => {
-            for (const child of getItemChildren(parentSelector[0])) {
+            for (const child of getItemChildren(parentSelector)) {
               const itemSelector = [child.id, ...parentSelector];
               newRecord[itemSelector.join()] = value;
               addChildren(itemSelector);

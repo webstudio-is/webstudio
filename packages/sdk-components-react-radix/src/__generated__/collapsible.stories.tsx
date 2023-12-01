@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   Button as Button,
@@ -10,9 +10,8 @@ import {
   CollapsibleContent as CollapsibleContent,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [collapsibleOpen, set$collapsibleOpen] = useState<any>(false);
-  let open = collapsibleOpen;
   let onOpenChange = (open: any) => {
     collapsibleOpen = open;
     set$collapsibleOpen(collapsibleOpen);
@@ -22,7 +21,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Collapsible
         data-ws-id="1"
         data-ws-component="Collapsible"
-        open={open}
+        open={collapsibleOpen}
         onOpenChange={onOpenChange}
       >
         <CollapsibleTrigger
@@ -42,7 +41,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </Text>
         </CollapsibleContent>
       </Collapsible>
-      {props.scripts}
     </Box>
   );
 };

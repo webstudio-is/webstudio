@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   Button as Button,
@@ -17,9 +17,8 @@ import {
   NavigationMenuViewport as NavigationMenuViewport,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [menuValue, set$menuValue] = useState<any>("");
-  let value = menuValue;
   let onValueChange = (value: any) => {
     menuValue = value;
     set$menuValue(menuValue);
@@ -29,7 +28,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <NavigationMenu
         data-ws-id="1"
         data-ws-component="NavigationMenu"
-        value={value}
+        value={menuValue}
         onValueChange={onValueChange}
       >
         <NavigationMenuList
@@ -304,7 +303,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           />
         </Box>
       </NavigationMenu>
-      {props.scripts}
     </Box>
   );
 };

@@ -3,10 +3,7 @@ import type { Instance, Prop } from "@webstudio-is/sdk";
 import { type PropMeta, showAttribute } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
-import {
-  dataSourcesLogicStore,
-  registeredComponentPropsMetasStore,
-} from "~/shared/nano-states";
+import { registeredComponentPropsMetasStore } from "~/shared/nano-states";
 
 type PropOrName = { prop?: Prop; propName: string };
 export type PropAndMeta = { prop?: Prop; propName: string; meta: PropMeta };
@@ -95,6 +92,10 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
       throw new Error(
         "A prop with type expression must have a meta, we can't provide a default one because we need a list of options"
       );
+    case "parameter":
+      throw new Error(
+        "A prop with type parameter must have a meta, we can't provide a default one because we need a list of options"
+      );
     default:
       throw new Error(`Usupported data type: ${type satisfies never}`);
   }
@@ -126,23 +127,6 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   },
 ];
 
-const getPropTypeAndValue = (value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  if (Array.isArray(value)) {
-    return { type: "string[]", value } as const;
-  }
-  // fallback to empty string to not break UI
-  return { type: "string", value: "" } as const;
-};
-
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
@@ -153,29 +137,12 @@ export const usePropsLogic = ({
   const meta = useStore(registeredComponentPropsMetasStore).get(
     instance.component
   );
-  const dataSourcesLogic = useStore(dataSourcesLogicStore);
 
   if (meta === undefined) {
     throw new Error(`Could not get meta for component "${instance.component}"`);
   }
 
-  const savedProps = props.flatMap((prop) => {
-    if (prop.type === "expression") {
-      // convert expression prop to value prop
-      const dataSourceValue = dataSourcesLogic.get(prop.id);
-      return [
-        {
-          id: prop.id,
-          instanceId: prop.instanceId,
-          name: prop.name,
-          required: prop.required,
-          // infer type from value
-          ...getPropTypeAndValue(dataSourceValue),
-        } satisfies Prop,
-      ];
-    }
-    return [prop];
-  });
+  const savedProps = props;
 
   // we will delete items from these maps as we categorize the props
   const unprocessedSaved = new Map(savedProps.map((prop) => [prop.name, prop]));
@@ -228,6 +195,11 @@ export const usePropsLogic = ({
 
   const addedProps: PropAndMeta[] = [];
   for (const prop of Array.from(unprocessedSaved.values()).reverse()) {
+    // ignore parameter props
+    if (prop.type === "parameter") {
+      continue;
+    }
+
     let known = getAndDelete(unprocessedKnown, prop.name);
 
     // @todo:

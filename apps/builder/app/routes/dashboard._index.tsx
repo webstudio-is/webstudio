@@ -40,7 +40,18 @@ export const loader = async ({
       projectIds,
     });
 
-  return { user, projects, projectTemplates };
+  const { userPlanFeatures } = context;
+
+  if (userPlanFeatures === undefined) {
+    throw new Error("User plan features are not defined");
+  }
+
+  return {
+    user,
+    projects,
+    projectTemplates,
+    userPlanFeatures,
+  };
 };
 
 export const ErrorBoundary = () => {

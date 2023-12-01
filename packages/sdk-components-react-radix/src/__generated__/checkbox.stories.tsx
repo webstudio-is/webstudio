@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -10,9 +10,8 @@ import {
   CheckboxIndicator as CheckboxIndicator,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
-  let checked = checkboxChecked;
   let onCheckedChange = (checked: any) => {
     checkboxChecked = checked;
     set$checkboxChecked(checkboxChecked);
@@ -23,7 +22,7 @@ const Page = (props: { scripts?: ReactNode }) => {
         <Checkbox
           data-ws-id="3"
           data-ws-component="Checkbox"
-          checked={checked}
+          checked={checkboxChecked}
           onCheckedChange={onCheckedChange}
         >
           <CheckboxIndicator
@@ -43,7 +42,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           {"Checkbox"}
         </Text>
       </Label>
-      {props.scripts}
     </Box>
   );
 };

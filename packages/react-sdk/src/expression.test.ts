@@ -268,66 +268,28 @@ test("generate variables with actions", () => {
   );
 });
 
-test("generate variables witha prop expressions", () => {
+test("generate function for empty action", () => {
   const generated = generateDataSources({
     scope: createScope(),
-    dataSources: new Map([
-      [
-        "dataSource1",
-        {
-          id: "dataSource1",
-          scopeInstanceId: "instance1",
-          type: "variable",
-          name: "myVar",
-          value: { type: "string", value: "initial" },
-        },
-      ],
-    ]),
+    dataSources: new Map(),
     props: new Map([
       [
         "prop1",
         {
           id: "prop1",
           instanceId: "instance1",
-          type: "expression",
-          name: "exp",
-          value: `$ws$dataSource$dataSource1 + "Name"`,
-        },
-      ],
-      [
-        "prop2",
-        {
-          id: "prop2",
-          instanceId: "instance2",
-          type: "expression",
-          name: "exp",
-          value: `$ws$dataSource$dataSource1 + "Value"`,
+          type: "action",
+          name: "onChange",
+          value: [],
         },
       ],
     ]),
   });
   expect(generated.body).toMatchInlineSnapshot(`
-"let exp = (myVar + "Name");
-let exp_1 = (myVar + "Value");
-"
-`);
-  expect(generated.variables).toEqual(
-    new Map([
-      [
-        "dataSource1",
-        {
-          initialValue: "initial",
-          setterName: "set$myVar",
-          valueName: "myVar",
-        },
-      ],
-    ])
-  );
-  expect(generated.output).toEqual(
-    new Map([
-      ["dataSource1", "myVar"],
-      ["prop1", "exp"],
-      ["prop2", "exp_1"],
-    ])
-  );
+    "let onChange = () => {
+    }
+    "
+  `);
+  expect(generated.variables).toEqual(new Map());
+  expect(generated.output).toEqual(new Map([["prop1", "onChange"]]));
 });

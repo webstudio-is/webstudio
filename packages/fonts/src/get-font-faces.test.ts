@@ -2,6 +2,32 @@ import { describe, test, expect } from "@jest/globals";
 import { getFontFaces, type PartialFontAsset } from "./get-font-faces";
 
 describe("getFontFaces()", () => {
+  test("sanitize url", () => {
+    const assets: Array<PartialFontAsset> = [
+      {
+        format: "woff",
+        meta: {
+          family: "Roboto",
+          style: "normal",
+          weight: 400,
+        },
+        name: `robot"o.woff`,
+      },
+    ];
+    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" }))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "fontDisplay": "swap",
+    "fontFamily": "Roboto",
+    "fontStyle": "normal",
+    "fontWeight": 400,
+    "src": "url("/fonts/robot\\"o.woff") format("woff")",
+  },
+]
+`);
+  });
+
   test("different formats", () => {
     const assets: Array<PartialFontAsset> = [
       {
@@ -23,7 +49,18 @@ describe("getFontFaces()", () => {
         name: "roboto.ttf",
       },
     ];
-    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" })).toMatchSnapshot();
+    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" }))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "fontDisplay": "swap",
+    "fontFamily": "Roboto",
+    "fontStyle": "normal",
+    "fontWeight": 400,
+    "src": "url("/fonts/roboto.woff") format("woff"), url("/fonts/roboto.ttf") format("truetype")",
+  },
+]
+`);
   });
 
   test("different style", () => {
@@ -47,7 +84,25 @@ describe("getFontFaces()", () => {
         name: "roboto-italic.ttf",
       },
     ];
-    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" })).toMatchSnapshot();
+    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" }))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "fontDisplay": "swap",
+    "fontFamily": "Roboto",
+    "fontStyle": "normal",
+    "fontWeight": 400,
+    "src": "url("/fonts/roboto.ttf") format("truetype")",
+  },
+  {
+    "fontDisplay": "swap",
+    "fontFamily": "Roboto",
+    "fontStyle": "italic",
+    "fontWeight": 400,
+    "src": "url("/fonts/roboto-italic.ttf") format("truetype")",
+  },
+]
+`);
   });
 
   test("different weight", () => {
@@ -71,7 +126,25 @@ describe("getFontFaces()", () => {
         name: "roboto-bold.ttf",
       },
     ];
-    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" })).toMatchSnapshot();
+    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" }))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "fontDisplay": "swap",
+    "fontFamily": "Roboto",
+    "fontStyle": "normal",
+    "fontWeight": 400,
+    "src": "url("/fonts/roboto.ttf") format("truetype")",
+  },
+  {
+    "fontDisplay": "swap",
+    "fontFamily": "Roboto",
+    "fontStyle": "normal",
+    "fontWeight": 500,
+    "src": "url("/fonts/roboto-bold.ttf") format("truetype")",
+  },
+]
+`);
   });
 
   test("variable font", () => {
@@ -99,6 +172,18 @@ describe("getFontFaces()", () => {
         name: "inter.ttf",
       },
     ];
-    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" })).toMatchSnapshot();
+    expect(getFontFaces(assets, { assetBaseUrl: "/fonts/" }))
+      .toMatchInlineSnapshot(`
+[
+  {
+    "fontDisplay": "swap",
+    "fontFamily": "Inter",
+    "fontStretch": "25% 151%",
+    "fontStyle": "normal",
+    "fontWeight": "100 1000",
+    "src": "url("/fonts/inter.ttf") format("truetype")",
+  },
+]
+`);
   });
 });

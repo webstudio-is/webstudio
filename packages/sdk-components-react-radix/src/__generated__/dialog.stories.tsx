@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   Button as Button,
@@ -15,9 +15,8 @@ import {
   DialogClose as DialogClose,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [dialogOpen, set$dialogOpen] = useState<any>(false);
-  let open = dialogOpen;
   let onOpenChange = (open: any) => {
     dialogOpen = open;
     set$dialogOpen(dialogOpen);
@@ -27,7 +26,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Dialog
         data-ws-id="1"
         data-ws-component="Dialog"
-        open={open}
+        open={dialogOpen}
         onOpenChange={onOpenChange}
       >
         <DialogTrigger data-ws-id="5" data-ws-component="DialogTrigger">
@@ -63,7 +62,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </DialogContent>
         </DialogOverlay>
       </Dialog>
-      {props.scripts}
     </Box>
   );
 };

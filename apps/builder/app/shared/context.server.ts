@@ -3,6 +3,10 @@ import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
 import { trpcClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
+import {
+  getTokenPlanFeatures,
+  getUserPlanFeatures,
+} from "./db/user-plan-features.server";
 
 const createAuthorizationContext = async (
   request: Request
@@ -56,6 +60,25 @@ const createEntriContext = () => {
   };
 };
 
+const createUserPlanContext = async (
+  request: Request,
+  authorization: AppContext["authorization"]
+) => {
+  const url = new URL(request.url);
+
+  const authToken = url.searchParams.get("authToken");
+  // When a shared link is accessed, identified by the presence of an authToken,
+  // the system retrieves the plan features associated with the project owner's account.
+  if (authToken !== null) {
+    const planFeatures = await getTokenPlanFeatures(authToken);
+    return planFeatures;
+  }
+
+  const user = await authenticator.isAuthenticated(request);
+  const planFeatures = user?.id ? getUserPlanFeatures(user.id) : undefined;
+  return planFeatures;
+};
+
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
@@ -64,10 +87,12 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
   const entri = createEntriContext();
+  const userPlanFeatures = await createUserPlanContext(request, authorization);
   return {
     authorization,
     domain,
     deployment,
     entri,
+    userPlanFeatures,
   };
 };

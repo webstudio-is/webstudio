@@ -9,10 +9,11 @@ import {
   selectedInstanceRenderStateStore,
   stylesIndexStore,
   instancesStore,
-  propsStore,
-  dataSourcesLogicStore,
   selectedInstanceSelectorStore,
-  dataSourceVariablesStore,
+  $propValuesByInstanceSelector,
+  $styles,
+  $selectedInstanceStates,
+  styleSourceSelectionsStore,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
@@ -137,7 +138,7 @@ const subscribeSelectedInstance = (
       return;
     }
 
-    const element = elements[0];
+    const [element] = elements;
     // trigger style recomputing every time instance styles are changed
     selectedInstanceBrowserStyleStore.set(getBrowserStyle(element));
 
@@ -160,6 +161,27 @@ const subscribeSelectedInstance = (
 
     const unitSizes = calculateUnitSizes(element);
     selectedInstanceUnitSizesStore.set(unitSizes);
+
+    const availableStates = new Set<string>();
+    const instanceStyleSourceIds = new Set(
+      styleSourceSelectionsStore.get().get(instanceId)?.values
+    );
+    const styles = $styles.get();
+    for (const styleDecl of styles.values()) {
+      if (
+        instanceStyleSourceIds.has(styleDecl.styleSourceId) &&
+        styleDecl.state
+      ) {
+        availableStates.add(styleDecl.state);
+      }
+    }
+    const activeStates = new Set<string>();
+    for (const state of availableStates) {
+      if (element.matches(state)) {
+        activeStates.add(state);
+      }
+    }
+    $selectedInstanceStates.set(activeStates);
   };
 
   let updateStoreTimeouHandle: undefined | ReturnType<typeof setTimeout>;
@@ -227,12 +249,8 @@ const subscribeSelectedInstance = (
 
   const unsubscribeStylesIndexStore = stylesIndexStore.subscribe(update);
   const unsubscribeInstancesStore = instancesStore.subscribe(update);
-  const unsubscribePropsStore = propsStore.subscribe(update);
-  const unsubscribeDataSourcesLogicStore =
-    dataSourcesLogicStore.subscribe(update);
-
-  const unsubscribeDataSourceVariablesStore =
-    dataSourceVariablesStore.subscribe(update);
+  const unsubscribePropValuesStore =
+    $propValuesByInstanceSelector.subscribe(update);
 
   const unsubscribeIsResizingCanvas = isResizingCanvasStore.subscribe(
     (isResizing) => {
@@ -275,9 +293,7 @@ const subscribeSelectedInstance = (
     unsubscribeWindowResize();
     unsubscribeStylesIndexStore();
     unsubscribeInstancesStore();
-    unsubscribePropsStore();
-    unsubscribeDataSourcesLogicStore();
-    unsubscribeDataSourceVariablesStore();
+    unsubscribePropValuesStore();
   };
 };
 

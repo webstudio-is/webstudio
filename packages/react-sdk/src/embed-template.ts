@@ -24,12 +24,7 @@ const EmbedTemplateText = z.object({
 type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;
 
 const EmbedTemplateVariable = z.object({
-  initialValue: z.union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-    z.array(z.string()),
-  ]),
+  initialValue: z.unknown(),
 });
 
 type EmbedTemplateVariable = z.infer<typeof EmbedTemplateVariable>;
@@ -56,9 +51,19 @@ export const EmbedTemplateProp = z.union([
     value: z.array(z.string()),
   }),
   z.object({
+    type: z.literal("json"),
+    name: z.string(),
+    value: z.unknown(),
+  }),
+  z.object({
     type: z.literal("expression"),
     name: z.string(),
     code: z.string(),
+  }),
+  z.object({
+    type: z.literal("parameter"),
+    name: z.string(),
+    variableName: z.string(),
   }),
   z.object({
     type: z.literal("action"),
@@ -137,8 +142,7 @@ const getVariablValue = (
   if (Array.isArray(value)) {
     return { type: "string[]", value };
   }
-  value satisfies never;
-  throw Error("Impossible case");
+  return { type: "json", value };
 };
 
 const createInstancesFromTemplate = (
@@ -221,6 +225,22 @@ const createInstancesFromTemplate = (
                   }),
                 };
               }),
+            });
+            continue;
+          }
+
+          if (prop.type === "parameter") {
+            const dataSourceId = dataSourceByRef.get(prop.variableName)?.id;
+            if (dataSourceId === undefined) {
+              continue;
+            }
+            props.push({
+              id: propId,
+              instanceId,
+              name: prop.name,
+              type: "parameter",
+              // replace variable reference with variable id
+              value: dataSourceId,
             });
             continue;
           }

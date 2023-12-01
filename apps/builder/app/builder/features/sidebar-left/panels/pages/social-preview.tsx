@@ -34,7 +34,7 @@ export const SocialPreview = ({
   ogUrl,
 }: SocialPreviewProps) => {
   const imageLoader = createImageLoader({
-    imageBaseUrl: env.ASSET_BASE_URL,
+    imageBaseUrl: env.IMAGE_BASE_URL,
   });
 
   return (

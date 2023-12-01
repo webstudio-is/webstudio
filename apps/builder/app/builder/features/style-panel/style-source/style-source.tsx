@@ -151,7 +151,7 @@ const EditableText = ({
 const StyleSourceContainer = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
-  minWidth: theme.spacing[13],
+  minWidth: theme.spacing[14],
   maxWidth: "100%",
   position: "relative",
   color: theme.colors.foregroundContrastMain,
@@ -160,9 +160,9 @@ const StyleSourceContainer = styled(Box, {
   variants: {
     source: {
       local: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
+        backgroundColor: theme.colors.backgroundStyleSourceLocal,
         [menuTriggerGradientVar]:
-          theme.colors.backgroundStyleSourceGradientToken,
+          theme.colors.backgroundStyleSourceGradientLocal,
       },
       token: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
@@ -219,10 +219,25 @@ const StyleSourceButton = styled("button", {
 
 const StyleSourceState = styled(Text, {
   padding: theme.spacing[3],
-  backgroundColor: theme.colors.backgroundStyleSourceToken,
   borderTopRightRadius: theme.borderRadius[3],
   borderBottomRightRadius: theme.borderRadius[3],
   cursor: "default",
+  variants: {
+    source: {
+      local: {
+        backgroundColor: theme.colors.backgroundStyleSourceLocal,
+      },
+      token: {
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
+      },
+      componentToken: {
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
+      },
+      tag: {
+        backgroundColor: theme.colors.backgroundStyleSourceTag,
+      },
+    },
+  },
 });
 
 type StyleSourceProps = {
@@ -283,7 +298,7 @@ export const StyleSource = ({
         </StyleSourceButton>
       </Flex>
       {stateLabel !== undefined && (
-        <StyleSourceState css={{ lineHeight: 1 }}>
+        <StyleSourceState source={source} css={{ lineHeight: 1 }}>
           {stateLabel}
         </StyleSourceState>
       )}

@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
@@ -11,9 +11,8 @@ import {
   RadioGroupIndicator as RadioGroupIndicator,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [radioGroupValue, set$radioGroupValue] = useState<any>("");
-  let value = radioGroupValue;
   let onValueChange = (value: any) => {
     radioGroupValue = value;
     set$radioGroupValue(radioGroupValue);
@@ -23,7 +22,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <RadioGroup
         data-ws-id="1"
         data-ws-component="RadioGroup"
-        value={value}
+        value={radioGroupValue}
         onValueChange={onValueChange}
       >
         <Label data-ws-id="6" data-ws-component="Label">
@@ -96,7 +95,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </Text>
         </Label>
       </RadioGroup>
-      {props.scripts}
     </Box>
   );
 };

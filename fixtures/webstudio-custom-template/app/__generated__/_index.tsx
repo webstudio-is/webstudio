@@ -4,10 +4,8 @@
 import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
-import {
-  Body as Body,
-  Heading as Heading,
-} from "@webstudio-is/sdk-components-react";
+import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
+import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
@@ -45,13 +43,12 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "0d856812-61d8-4014-a20a-82e01c0eb8ee";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   return (
     <Body data-ws-id="ibXgMoi9_ipHx1gVrvii0" data-ws-component="Body">
       <Heading data-ws-id="7pwqBSgrfuuOfk1JblWcL" data-ws-component="Heading">
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
-      {props.scripts}
     </Body>
   );
 };

@@ -191,6 +191,9 @@ export default async () => {
           WHERE "Build"."id" = data."id"
         `;
 
+        if (changedBuilds.length === 0) {
+          return;
+        }
         const res = await prisma.$executeRawUnsafe(
           sql,
           changedBuilds.map((changedBuild) => changedBuild.id),

@@ -6,7 +6,8 @@ import {
   type Instance,
   type Prop,
 } from "@webstudio-is/sdk";
-import { showAttribute } from "./tree/webstudio-component";
+import { showAttribute } from "./props";
+import { collectionComponent } from "./core-components";
 import {
   generateJsxChildren,
   generateJsxElement,
@@ -281,8 +282,8 @@ test("generate jsx element with data sources and action", () => {
       <Box
       data-ws-id="box"
       data-ws-component="Box"
-      variable={variable}
-      expression={expression}
+      variable={variableName}
+      expression={variableName + 1}
       onClick={onClick}
       onChange={onChange} />
     `)
@@ -358,7 +359,7 @@ test("generate jsx element with condition based on show prop", () => {
     })
   ).toEqual(
     clear(`
-      {datawsshow &&
+      {(conditionName) &&
       <Box
       data-ws-id="box"
       data-ws-component="Box" />
@@ -484,6 +485,77 @@ test("deduplicate base and namespaced components with same short name", () => {
   );
 });
 
+test("generate collection component as map", () => {
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      children: [{ type: "id", value: "list" }],
+      instances: new Map([
+        createInstancePair("list", collectionComponent, [
+          { type: "id", value: "label" },
+          { type: "id", value: "button" },
+        ]),
+        createInstancePair("label", "Label", []),
+        createInstancePair("button", "Button", []),
+      ]),
+      dataSources: new Map([
+        createDataSourcePair({
+          id: "dataSourceList",
+          scopeInstanceId: "list",
+          type: "variable",
+          name: "data",
+          value: { type: "json", value: ["apple", "orange", "mango"] },
+        }),
+        createDataSourcePair({
+          id: "dataSourceItem",
+          scopeInstanceId: "list",
+          type: "variable",
+          name: "element",
+          value: { type: "json", value: `` },
+        }),
+      ]),
+      props: new Map([
+        createPropPair({
+          id: "propData",
+          instanceId: "list",
+          name: "data",
+          type: "expression",
+          value: "$ws$dataSource$dataSourceList",
+        }),
+        createPropPair({
+          id: "propItem",
+          instanceId: "list",
+          name: "item",
+          type: "parameter",
+          value: "dataSourceItem",
+        }),
+        createPropPair({
+          id: "buttonAriaLabel",
+          instanceId: "button",
+          name: "aria-label",
+          type: "expression",
+          value: "$ws$dataSource$dataSourceItem",
+        }),
+      ]),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toEqual(
+    clear(`
+    {data.map((element, index) =>
+    <Fragment key={index}>
+    <Label
+    data-ws-id="label"
+    data-ws-component="Label" />
+    <Button
+    data-ws-id="button"
+    data-ws-component="Button"
+    aria-label={element} />
+    </Fragment>
+    )}
+    `)
+  );
+});
+
 test("generate page component with variables and actions", () => {
   expect(
     generatePageComponent({
@@ -527,9 +599,8 @@ test("generate page component with variables and actions", () => {
     })
   ).toEqual(
     clear(`
-      const Page = (props: { scripts?: ReactNode }) => {
+      const Page = () => {
       let [variableName, set$variableName] = useState<any>("initial")
-      let value = (variableName);
       let onChange = (value: any) => {
       variableName = value
       set$variableName(variableName)
@@ -541,11 +612,70 @@ test("generate page component with variables and actions", () => {
       data-ws-id="input"
       data-ws-component="Input"
       data-ws-index="0"
-      value={value}
+      value={variableName}
       onChange={onChange} />
-      {props.scripts}
       </Body>
       }
+    `)
+  );
+});
+
+test("avoid generating collection parameter variable as state", () => {
+  expect(
+    generatePageComponent({
+      scope: createScope(),
+      rootInstanceId: "body",
+      instances: new Map([
+        createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
+        createInstancePair("list", collectionComponent, []),
+      ]),
+      dataSources: new Map([
+        createDataSourcePair({
+          id: "dataSourceList",
+          scopeInstanceId: "list",
+          type: "variable",
+          name: "data",
+          value: { type: "json", value: ["apple", "orange", "mango"] },
+        }),
+        createDataSourcePair({
+          id: "dataSourceItem",
+          scopeInstanceId: "list",
+          type: "variable",
+          name: "element",
+          value: { type: "json", value: `` },
+        }),
+      ]),
+      props: new Map([
+        createPropPair({
+          id: "propData",
+          instanceId: "list",
+          name: "data",
+          type: "expression",
+          value: "$ws$dataSource$dataSourceList",
+        }),
+        createPropPair({
+          id: "propItem",
+          instanceId: "list",
+          name: "item",
+          type: "parameter",
+          value: "dataSourceItem",
+        }),
+      ]),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toEqual(
+    clear(`
+    const Page = () => {
+    let [data, set$data] = useState<any>(["apple","orange","mango"])
+    return <Body
+    data-ws-id="body"
+    data-ws-component="Body">
+    {data.map((element, index) =>
+    <Fragment key={index}>
+    </Fragment>
+    )}
+    </Body>
+    }
     `)
   );
 });

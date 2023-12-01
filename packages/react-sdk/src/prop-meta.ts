@@ -132,16 +132,11 @@ const Url = z.object({
   defaultValue: z.string().optional(),
 });
 
-// we neither generate object nor support it in props panel, listed here for completeness
-// can't use name "Object" for the variable because it causes bugs when Object.assign() is used in compiled output
-const ObjectType = z.object({
+const Json = z.object({
   ...common,
-  control: z.literal("object"),
-
-  // @todo not sure what type should be here
-  // (we don't support Object yet, added for completeness)
-  type: z.literal("Record<string, string>"),
-  defaultValue: z.record(z.string()).optional(),
+  control: z.literal("json"),
+  type: z.literal("json"),
+  defaultValue: z.unknown().optional(),
 });
 
 // we neither generate date nor support it in props panel, listed here for completeness
@@ -177,7 +172,7 @@ export const PropMeta = z.union([
   InlineCheck,
   File,
   Url,
-  ObjectType,
+  Json,
   Date,
   Action,
 ]);

@@ -1,6 +1,7 @@
 export * from "./css/index";
 export * from "./tree/index";
 export * from "./app/index";
+export * from "./core-components";
 export * from "./components/components-utils";
 export { PropMeta } from "./prop-meta";
 export {
@@ -13,12 +14,7 @@ export {
   defaultStates,
 } from "./components/component-meta";
 export * from "./embed-template";
-export {
-  normalizeProps,
-  getPropsByInstanceId,
-  getInstanceIdFromComponentProps,
-  getIndexWithinAncestorFromComponentProps,
-} from "./props";
+export * from "./props";
 export { type Params, ReactSdkContext } from "./context";
 export {
   validateExpression,

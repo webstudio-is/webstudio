@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   Button as Button,
@@ -10,9 +10,8 @@ import {
   PopoverContent as PopoverContent,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [popoverOpen, set$popoverOpen] = useState<any>(false);
-  let open = popoverOpen;
   let onOpenChange = (open: any) => {
     popoverOpen = open;
     set$popoverOpen(popoverOpen);
@@ -22,7 +21,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Popover
         data-ws-id="1"
         data-ws-component="Popover"
-        open={open}
+        open={popoverOpen}
         onOpenChange={onOpenChange}
       >
         <PopoverTrigger data-ws-id="5" data-ws-component="PopoverTrigger">
@@ -36,7 +35,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </Text>
         </PopoverContent>
       </Popover>
-      {props.scripts}
     </Box>
   );
 };

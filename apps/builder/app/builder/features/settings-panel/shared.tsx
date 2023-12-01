@@ -23,11 +23,16 @@ import {
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 
-export type PropValue = Prop extends infer T
-  ? T extends { value: unknown; type: unknown }
-    ? { value: T["value"]; type: T["type"] }
-    : never
-  : never;
+export type PropValue =
+  | { type: "number"; value: number }
+  | { type: "string"; value: string }
+  | { type: "boolean"; value: boolean }
+  | { type: "json"; value: unknown }
+  | { type: "string[]"; value: string[] }
+  | { type: "expression"; value: string }
+  | { type: "asset"; value: Asset["id"] }
+  | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
+  | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] };
 
 // Weird code is to make type distributive
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types

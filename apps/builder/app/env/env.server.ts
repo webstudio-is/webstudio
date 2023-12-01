@@ -33,12 +33,12 @@ const env = {
    * https://image-transform.wstd.io/cdn-cgi/image/
    * https://webstudio.is/cdn-cgi/image/
    */
-  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/asset/image/",
+  IMAGE_BASE_URL: process.env.IMAGE_BASE_URL ?? "/cgi/image/",
   /**
    * Base url or base path for any asset with ending slash.
    * Possible values are
    * /s/uploads/
-   * /asset/file/
+   * /cgi/asset/
    * https://assets-dev.webstudio.is/
    * https://assets.webstudio.is/
    */
@@ -46,7 +46,7 @@ const env = {
     process.env.ASSET_BASE_URL ??
     process.env.ASSET_CDN_URL ??
     process.env.ASSET_PUBLIC_PATH ??
-    "/",
+    "/cgi/asset/",
 
   // Local assets
   FILE_UPLOAD_PATH: process.env.FILE_UPLOAD_PATH,
@@ -90,6 +90,9 @@ const env = {
   OPENAI_ORG: process.env.OPENAI_ORG,
 
   PEXELS_API_KEY: process.env.PEXELS_API_KEY,
+
+  N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
+  N8N_WEBHOOK_TOKEN: process.env.N8N_WEBHOOK_TOKEN,
 };
 
 export type ServerEnv = typeof env;

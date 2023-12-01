@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { useState } from "react";
 import {
   Box as Box,
   Button as Button,
@@ -10,9 +10,8 @@ import {
   TooltipContent as TooltipContent,
 } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [tooltipOpen, set$tooltipOpen] = useState<any>(false);
-  let open = tooltipOpen;
   let onOpenChange = (open: any) => {
     tooltipOpen = open;
     set$tooltipOpen(tooltipOpen);
@@ -22,7 +21,7 @@ const Page = (props: { scripts?: ReactNode }) => {
       <Tooltip
         data-ws-id="1"
         data-ws-component="Tooltip"
-        open={open}
+        open={tooltipOpen}
         onOpenChange={onOpenChange}
       >
         <TooltipTrigger data-ws-id="5" data-ws-component="TooltipTrigger">
@@ -36,7 +35,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </Text>
         </TooltipContent>
       </Tooltip>
-      {props.scripts}
     </Box>
   );
 };

@@ -80,7 +80,12 @@ export const PageSettingsEdit = () => {
         borderRadius: theme.borderRadius[4],
       }}
     >
-      <PageSettings onClose={() => {}} onDelete={() => {}} pageId="pageId" />
+      <PageSettings
+        onClose={() => {}}
+        onDuplicate={() => {}}
+        onDelete={() => {}}
+        pageId="pageId"
+      />
     </Grid>
   );
 };

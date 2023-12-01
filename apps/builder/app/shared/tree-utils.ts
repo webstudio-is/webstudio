@@ -19,7 +19,10 @@ import {
   findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/sdk";
 import { equalMedia } from "@webstudio-is/css-engine";
-import type { WsComponentMeta } from "@webstudio-is/react-sdk";
+import {
+  collectionComponent,
+  type WsComponentMeta,
+} from "@webstudio-is/react-sdk";
 
 // slots can have multiple parents so instance should be addressed
 // with full rendered path to avoid double selections with slots
@@ -225,11 +228,22 @@ export const reparentInstanceMutable = (
   instanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  const [instanceId, parentInstanceId] = instanceSelector;
-  const prevParent =
+  const [instanceId, parentInstanceId, grandparentInstanceId] =
+    instanceSelector;
+  const grandparentInstance =
+    grandparentInstanceId === undefined
+      ? undefined
+      : instances.get(grandparentInstanceId);
+
+  let prevParent =
     parentInstanceId === undefined
       ? undefined
       : instances.get(parentInstanceId);
+  // skip parent fake "item" instance and use grandparent collection as parent
+  if (grandparentInstance?.component === collectionComponent) {
+    prevParent = grandparentInstance;
+  }
+
   dropTarget =
     getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
   dropTarget =

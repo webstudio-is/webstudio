@@ -78,13 +78,15 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
   const component = getInstanceComponent(instances, instanceId);
   const presetStyle =
     tagName !== undefined && component !== undefined
-      ? getPresetStyleRule(metas.get(component), tagName)
+      ? getPresetStyleRule(metas.get(component), tagName, new Set())
       : undefined;
 
-  const cascadedStyle = getCascadedInfo(stylesByInstanceId, instanceId, [
-    ...cascadedBreakpointIds,
-    selectedBreakpointId,
-  ]);
+  const cascadedStyle = getCascadedInfo(
+    stylesByInstanceId,
+    instanceId,
+    [...cascadedBreakpointIds, selectedBreakpointId],
+    new Set()
+  );
 
   const widthStyle = cascadedStyle?.width?.value ?? presetStyle?.width;
   const heightStyle = cascadedStyle?.height?.value ?? presetStyle?.height;

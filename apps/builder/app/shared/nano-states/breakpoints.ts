@@ -3,10 +3,12 @@ import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import { isBaseBreakpoint } from "../breakpoints";
 
 export const breakpointsStore = atom<Breakpoints>(new Map());
+export const $breakpoints = breakpointsStore;
 
 export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
   undefined
 );
+export const $selectedBreakpointId = selectedBreakpointIdStore;
 
 export const selectedBreakpointStore = computed(
   [breakpointsStore, selectedBreakpointIdStore],

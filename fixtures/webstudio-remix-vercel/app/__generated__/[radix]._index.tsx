@@ -4,12 +4,7 @@
 import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
-import {
-  Body as Body,
-  Text as Text,
-  Box as Box,
-  HtmlEmbed as HtmlEmbed,
-} from "@webstudio-is/sdk-components-react";
+import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Accordion as Accordion,
   AccordionItem as AccordionItem,
@@ -17,6 +12,11 @@ import {
   AccordionTrigger as AccordionTrigger,
   AccordionContent as AccordionContent,
 } from "@webstudio-is/sdk-components-react-radix";
+import {
+  Text as Text,
+  Box as Box,
+  HtmlEmbed as HtmlEmbed,
+} from "@webstudio-is/sdk-components-react";
 
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
@@ -79,9 +79,8 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
-  let value = accordionValue;
   let onValueChange = (value: any) => {
     accordionValue = value;
     set$accordionValue(accordionValue);
@@ -92,7 +91,7 @@ const Page = (props: { scripts?: ReactNode }) => {
         data-ws-id="AM9fD6dv2Ftc3Xjcsd7Uc"
         data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"
         collapsible={true}
-        value={value}
+        value={accordionValue}
         onValueChange={onValueChange}
       >
         <AccordionItem
@@ -202,7 +201,6 @@ const Page = (props: { scripts?: ReactNode }) => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      {props.scripts}
     </Body>
   );
 };

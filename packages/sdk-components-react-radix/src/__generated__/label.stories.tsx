@@ -1,14 +1,12 @@
-import { type ReactNode } from "react";
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Label as Label } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+const Page = () => {
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Label data-ws-id="1" data-ws-component="Label">
         {"Form Label"}
       </Label>
-      {props.scripts}
     </Box>
   );
 };

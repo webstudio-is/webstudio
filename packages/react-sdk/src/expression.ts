@@ -249,31 +249,18 @@ export const generateDataSources = ({
   }
 
   for (const prop of props.values()) {
-    // generate prop expressions
-    if (prop.type === "expression") {
-      const name = scope.getName(prop.id, prop.name);
-      output.set(prop.id, name);
-      const code = validateExpression(prop.value, {
-        transformIdentifier: (identifier) => {
-          const depId = decodeDataSourceVariable(identifier);
-          const dep = depId ? dataSources.get(depId) : undefined;
-          if (dep) {
-            return scope.getName(dep.id, dep.name);
-          }
-          // eslint-disable-next-line no-console
-          console.error(`Unknown dependency "${identifier}"`);
-          return identifier;
-        },
-      });
-      body += `let ${name} = (${code});\n`;
+    // prevent generating parameter variables as component state
+    if (prop.type === "parameter") {
+      output.delete(prop.value);
+      variables.delete(prop.value);
     }
-
     // generate actions assigning variables and invoking their setters
     if (prop.type === "action") {
       const name = scope.getName(prop.id, prop.name);
       output.set(prop.id, name);
       const setters = new Set<DataSourceId>();
-      let args: undefined | string[] = undefined;
+      // important to fallback to empty argumets to render empty function
+      let args: string[] = [];
       let newCode = "";
       for (const value of prop.value) {
         args = value.args;
@@ -299,9 +286,6 @@ export const generateDataSources = ({
           },
         });
         newCode += `\n`;
-      }
-      if (args === undefined) {
-        continue;
       }
       if (typed) {
         args = args.map((arg) => `${arg}: any`);

@@ -96,8 +96,11 @@ const findClosestDroppableInstanceSelector = (
   const componentSelector: string[] = [];
   for (const instanceId of instanceSelector) {
     const component = instances.get(instanceId)?.component;
+    // collection produce fake instances
+    // and fragment does not have constraints
     if (component === undefined) {
-      return;
+      componentSelector.push("Fragment");
+      continue;
     }
     componentSelector.push(component);
   }
