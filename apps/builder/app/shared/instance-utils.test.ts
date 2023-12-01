@@ -1818,3 +1818,7 @@ describe("insert instances slice copy", () => {
     ]);
   });
 });
+
+test("insert instance child", () => {
+  //
+});

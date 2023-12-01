@@ -7,6 +7,7 @@ export const isResizingCanvasStore = atom(false);
 export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
+export const $selectedInstanceSelector = selectedInstanceSelectorStore;
 
 export const editingItemIdStore = atom<undefined | string>(undefined);
 
