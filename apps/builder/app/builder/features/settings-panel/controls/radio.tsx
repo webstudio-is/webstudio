@@ -15,7 +15,7 @@ export const RadioControl = ({
   prop,
   propName,
   deletable,
-  disabled,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"radio" | "inline-radio", "string">) => {
@@ -31,7 +31,11 @@ export const RadioControl = ({
     <VerticalLayout
       label={
         <Box css={{ position: "relative" }}>
-          <Label htmlFor={id} description={meta.description}>
+          <Label
+            htmlFor={id}
+            description={meta.description}
+            readOnly={readOnly}
+          >
             {getLabel(meta, propName)}
           </Label>
           <VariablesButton
@@ -46,7 +50,7 @@ export const RadioControl = ({
     >
       <Box css={{ paddingTop: theme.spacing[2] }}>
         <RadioGroup
-          disabled={disabled}
+          disabled={readOnly}
           name="value"
           value={prop?.value}
           onValueChange={(value) => onChange({ type: "string", value })}
