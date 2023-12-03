@@ -132,7 +132,7 @@ export const Label = ({
       {readOnly && (
         <Tooltip
           content={
-            "The property's value is controlled by complex expression and cannot be changed"
+            "The value is controlled by an expression and cannot be changed."
           }
           variant="wrapped"
         >
