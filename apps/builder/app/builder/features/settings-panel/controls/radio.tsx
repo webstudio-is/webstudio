@@ -15,6 +15,7 @@ export const RadioControl = ({
   prop,
   propName,
   deletable,
+  disabled,
   onChange,
   onDelete,
 }: ControlProps<"radio" | "inline-radio", "string">) => {
@@ -45,6 +46,7 @@ export const RadioControl = ({
     >
       <Box css={{ paddingTop: theme.spacing[2] }}>
         <RadioGroup
+          disabled={disabled}
           name="value"
           value={prop?.value}
           onValueChange={(value) => onChange({ type: "string", value })}

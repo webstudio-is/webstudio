@@ -7,6 +7,7 @@ export const CodeControl = ({
   prop,
   propName,
   deletable,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"code", "string">) => {
@@ -19,6 +20,7 @@ export const CodeControl = ({
       }}
       prop={prop}
       propName={propName}
+      readOnly={readOnly}
       deletable={deletable}
       onChange={(value) => {
         if (value.type === "string") {

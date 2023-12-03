@@ -15,6 +15,7 @@ export const NumberControl = ({
   propName,
   onChange,
   deletable,
+  readOnly,
   onDelete,
 }: ControlProps<"number", "number">) => {
   const id = useId();
@@ -33,7 +34,11 @@ export const NumberControl = ({
     <ResponsiveLayout
       label={
         <Box css={{ position: "relative" }}>
-          <Label htmlFor={id} description={meta.description}>
+          <Label
+            htmlFor={id}
+            description={meta.description}
+            readOnly={readOnly}
+          >
             {getLabel(meta, propName)}
           </Label>
           <VariablesButton
@@ -48,6 +53,7 @@ export const NumberControl = ({
     >
       <InputField
         id={id}
+        disabled={readOnly}
         type="number"
         value={localValue.value}
         color={isInvalid ? "error" : undefined}
