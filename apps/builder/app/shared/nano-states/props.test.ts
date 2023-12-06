@@ -276,9 +276,8 @@ test("compute expression from collection items", () => {
     toMap([
       {
         id: "itemId",
-        type: "variable",
+        type: "parameter",
         name: "item",
-        value: { type: "json", value: {} },
       },
     ])
   );

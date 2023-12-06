@@ -490,9 +490,6 @@ test("generate data for embedding from parameter props", () => {
       {
         type: "instance",
         component: "Box",
-        variables: {
-          parameterName: { initialValue: "" },
-        },
         props: [
           {
             type: "parameter",
@@ -529,11 +526,10 @@ test("generate data for embedding from parameter props", () => {
     ],
     dataSources: [
       {
-        type: "variable",
+        type: "parameter",
         id: variableId,
         scopeInstanceId: instanceId,
         name: "parameterName",
-        value: { type: "string", value: "" },
       },
     ],
     styleSourceSelections: [],

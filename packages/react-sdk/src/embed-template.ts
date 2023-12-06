@@ -230,10 +230,14 @@ const createInstancesFromTemplate = (
           }
 
           if (prop.type === "parameter") {
-            const dataSourceId = dataSourceByRef.get(prop.variableName)?.id;
-            if (dataSourceId === undefined) {
-              continue;
-            }
+            const dataSourceId = generateId();
+            // generate data sources implicitly
+            dataSourceByRef.set(prop.variableName, {
+              type: "parameter",
+              id: dataSourceId,
+              scopeInstanceId: instanceId,
+              name: prop.variableName,
+            });
             props.push({
               id: propId,
               instanceId,

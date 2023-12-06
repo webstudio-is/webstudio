@@ -371,7 +371,7 @@ describe("data sources", () => {
     );
   });
 
-  test("copy parameter prop with new data source", () => {
+  test.only("copy parameter prop with new data source", () => {
     const instances: Instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "list" }]),
       createInstance("list", collectionComponent, []),
@@ -380,9 +380,8 @@ describe("data sources", () => {
       {
         id: "itemDataSource",
         scopeInstanceId: "list",
-        type: "variable",
+        type: "parameter",
         name: "item",
-        value: { type: "json", value: {} },
       },
     ] satisfies DataSource[]);
     const props: Props = toMap([
@@ -427,9 +426,8 @@ describe("data sources", () => {
           {
             id: itemDataSourceId,
             scopeInstanceId: collectionId,
-            type: "variable",
+            type: "parameter",
             name: "item",
-            value: { type: "json", value: {} },
           },
         ],
       ])

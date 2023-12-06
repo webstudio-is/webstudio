@@ -199,7 +199,7 @@ export const usePropsLogic = ({
     const potentialVariableId = decodeDataSourceVariable(prop.value);
     return (
       potentialVariableId === undefined ||
-      dataSources.has(potentialVariableId) === false
+      dataSources.get(potentialVariableId)?.type !== "variable"
     );
   };
 

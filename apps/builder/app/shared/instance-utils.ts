@@ -768,8 +768,7 @@ const inlineUnavailableDataSources = ({
       if (dataSource?.type === "variable") {
         return JSON.stringify(dataSource.value.value);
       }
-      dataSource?.type satisfies undefined;
-      return identifier;
+      return "";
     },
   });
   return { code: newCode, isDiscarded };

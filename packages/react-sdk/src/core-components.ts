@@ -18,9 +18,6 @@ const collectionMeta: WsComponentMeta = {
     {
       type: "instance",
       component: collectionComponent,
-      variables: {
-        collectionItem: { initialValue: "" },
-      },
       props: [
         {
           name: "data",
