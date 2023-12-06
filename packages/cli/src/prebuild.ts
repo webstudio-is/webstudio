@@ -93,8 +93,6 @@ export const downloadAsset = async (
   // Error: EXDEV: cross-device link not permitted
   const tempAssetPath = `${assetPath}.tmp`;
 
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
   try {
     await access(assetPath);
   } catch {
