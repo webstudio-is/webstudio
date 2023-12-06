@@ -1,12 +1,24 @@
 import { nanoid } from "nanoid";
 import type { Instance, Prop } from "@webstudio-is/sdk";
-import { type PropMeta, showAttribute } from "@webstudio-is/react-sdk";
+import {
+  type PropMeta,
+  showAttribute,
+  decodeDataSourceVariable,
+} from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
-import { registeredComponentPropsMetasStore } from "~/shared/nano-states";
+import {
+  $dataSources,
+  registeredComponentPropsMetasStore,
+} from "~/shared/nano-states";
 
 type PropOrName = { prop?: Prop; propName: string };
-export type PropAndMeta = { prop?: Prop; propName: string; meta: PropMeta };
+export type PropAndMeta = {
+  prop?: Prop;
+  propName: string;
+  meta: PropMeta;
+  readOnly: boolean;
+};
 export type NameAndLabel = { name: string; label?: string };
 
 // The value we set prop to when it's added
@@ -104,6 +116,7 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
 type UsePropsLogicInput = {
   instance: Instance;
   props: Prop[];
+  propValues?: Map<Prop["name"], unknown>;
   updateProp: (update: Prop) => void;
   deleteProp: (id: Prop["id"]) => void;
 };
@@ -127,16 +140,32 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   },
 ];
 
+const getPropTypeAndValue = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return { type: "boolean", value } as const;
+  }
+  if (typeof value === "number") {
+    return { type: "number", value } as const;
+  }
+  if (typeof value === "string") {
+    return { type: "string", value } as const;
+  }
+  // fallback to json
+  return { type: "json", value } as const;
+};
+
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
   props,
+  propValues,
   updateProp,
   deleteProp,
 }: UsePropsLogicInput) => {
   const meta = useStore(registeredComponentPropsMetasStore).get(
     instance.component
   );
+  const dataSources = useStore($dataSources);
 
   if (meta === undefined) {
     throw new Error(`Could not get meta for component "${instance.component}"`);
@@ -152,14 +181,41 @@ export const usePropsLogic = ({
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
-  const systemProps = systemPropsMeta.map(({ name, meta }) => {
+  const resolvePropExpression = (prop?: Prop) => {
+    if (prop?.type !== "expression") {
+      return prop;
+    }
+    const propValue = propValues?.get(prop.name);
+    return { ...prop, ...getPropTypeAndValue(propValue) };
+  };
+
+  /**
+   * make sure expression can be edited if consists only of single variable
+   */
+  const isReadOnly = (prop?: Prop) => {
+    if (prop?.type !== "expression") {
+      return false;
+    }
+    const potentialVariableId = decodeDataSourceVariable(prop.value);
+    return (
+      potentialVariableId === undefined ||
+      dataSources.has(potentialVariableId) === false
+    );
+  };
+
+  const systemProps: PropAndMeta[] = systemPropsMeta.map(({ name, meta }) => {
     let saved = getAndDelete<Prop>(unprocessedSaved, name);
     if (saved === undefined && meta.defaultValue !== undefined) {
       saved = getStartingProp(instance.id, meta, name);
     }
     getAndDelete(unprocessedKnown, name);
     initialPropsNames.delete(name);
-    return { prop: saved, propName: name, meta };
+    return {
+      prop: resolvePropExpression(saved),
+      propName: name,
+      meta,
+      readOnly: isReadOnly(saved),
+    };
   });
 
   const initialProps: PropAndMeta[] = [];
@@ -190,7 +246,12 @@ export const usePropsLogic = ({
       prop = getStartingProp(instance.id, known, name);
     }
 
-    initialProps.push({ prop, propName: name, meta: known });
+    initialProps.push({
+      prop: resolvePropExpression(prop),
+      propName: name,
+      meta: known,
+      readOnly: isReadOnly(prop),
+    });
   }
 
   const addedProps: PropAndMeta[] = [];
@@ -210,7 +271,12 @@ export const usePropsLogic = ({
       known = getDefaultMetaForType(prop.type);
     }
 
-    addedProps.push({ prop, propName: prop.name, meta: known });
+    addedProps.push({
+      prop: resolvePropExpression(prop),
+      propName: prop.name,
+      meta: known,
+      readOnly: isReadOnly(prop),
+    });
   }
 
   const handleAdd = (propName: string) => {

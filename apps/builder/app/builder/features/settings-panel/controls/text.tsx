@@ -14,6 +14,7 @@ export const TextControl = ({
   prop,
   propName,
   deletable,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"text", "string">) => {
@@ -28,6 +29,7 @@ export const TextControl = ({
   const input = (
     <TextArea
       id={id}
+      disabled={readOnly}
       autoGrow
       value={localValue.value}
       rows={meta.rows ?? 1}
@@ -41,7 +43,7 @@ export const TextControl = ({
 
   const labelElement = (
     <Box css={{ position: "relative" }}>
-      <Label htmlFor={id} description={meta.description}>
+      <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
         {label}
       </Label>
       <VariablesButton propId={prop?.id} propName={propName} propMeta={meta} />

@@ -98,7 +98,7 @@ const renderProperty = (
     component,
     instanceId,
   }: PropsSectionProps,
-  { prop, propName, meta }: PropAndMeta,
+  { prop, propName, meta, readOnly }: PropAndMeta,
   deletable?: boolean
 ) => (
   // fix the issue with changing type while binding expression
@@ -111,6 +111,7 @@ const renderProperty = (
       meta,
       prop,
       propName,
+      readOnly,
       deletable: deletable ?? false,
       onDelete: () => {
         if (prop) {
@@ -209,20 +210,6 @@ export const PropsSection = (props: PropsSectionProps) => {
   );
 };
 
-const getPropTypeAndValue = (value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  // fallback to json
-  return { type: "json", value } as const;
-};
-
 export const PropsSectionContainer = ({
   selectedInstance: instance,
 }: {
@@ -240,17 +227,8 @@ export const PropsSectionContainer = ({
 
   const logic = usePropsLogic({
     instance,
-
-    // compute expression prop values before rendering props section
-    // to always show already computed values
-    props:
-      propsByInstanceId.get(instance.id)?.map((prop) => {
-        if (prop.type !== "expression") {
-          return prop;
-        }
-        const propValue = propValues?.get(prop.name);
-        return { ...prop, ...getPropTypeAndValue(propValue) };
-      }) ?? [],
+    props: propsByInstanceId.get(instance.id) ?? [],
+    propValues,
 
     updateProp: (update) => {
       const props = propsStore.get();

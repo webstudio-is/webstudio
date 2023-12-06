@@ -12,6 +12,7 @@ export const BooleanControl = ({
   prop,
   propName,
   deletable,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"boolean", "boolean">) => {
@@ -30,7 +31,7 @@ export const BooleanControl = ({
       gap="2"
     >
       <Box css={{ position: "relative" }}>
-        <Label htmlFor={id} description={meta.description}>
+        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
           {getLabel(meta, propName)}
         </Label>
         <VariablesButton
@@ -41,6 +42,7 @@ export const BooleanControl = ({
       </Box>
       <Switch
         id={id}
+        disabled={readOnly}
         checked={prop?.value ?? false}
         onCheckedChange={(value) => onChange({ type: "boolean", value })}
       />

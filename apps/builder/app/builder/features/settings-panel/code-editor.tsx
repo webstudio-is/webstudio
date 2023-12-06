@@ -326,11 +326,13 @@ const paragraphStyle = css({
  * Could be used to edit css as well in the future.
  */
 export const CodeEditor = ({
+  readOnly = false,
   variables,
   defaultValue,
   onChange,
   onBlur,
 }: {
+  readOnly?: boolean;
   variables: Map<string, string>;
   defaultValue: string;
   onChange: (newCode: string) => void;
@@ -338,6 +340,7 @@ export const CodeEditor = ({
 }) => {
   const initialConfig = {
     namespace: "CodeEditor",
+    editable: readOnly === false,
     nodes: [MentionNode],
     theme: {
       root: rootStyle.toString(),
