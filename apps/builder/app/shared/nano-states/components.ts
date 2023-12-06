@@ -125,6 +125,7 @@ export const registeredComponentHooksStore = atom<Hook[]>([]);
 export const registeredComponentMetasStore = atom(
   new Map<string, WsComponentMeta>()
 );
+export const $registeredComponentMetas = registeredComponentMetasStore;
 
 export const registeredComponentPropsMetasStore = atom(
   new Map<string, WsComponentPropsMeta>()

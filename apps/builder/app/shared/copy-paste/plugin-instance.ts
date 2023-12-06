@@ -1,5 +1,4 @@
 import { shallowEqual } from "shallow-equal";
-import { nanoid } from "nanoid";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
@@ -7,49 +6,37 @@ import {
   Breakpoint,
   DataSource,
   Instance,
+  Instances,
   Prop,
   StyleDecl,
   StyleSource,
   StyleSourceSelection,
+  findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/sdk";
 import {
-  encodeDataSourceVariable,
-  validateExpression,
-  decodeDataSourceVariable,
-} from "@webstudio-is/react-sdk";
-import {
-  propsStore,
-  stylesStore,
-  selectedInstanceSelectorStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  instancesStore,
-  selectedPageStore,
-  breakpointsStore,
-  assetsStore,
-  projectStore,
-  registeredComponentMetasStore,
-  dataSourcesStore,
+  $selectedInstanceSelector,
+  $selectedPage,
+  $project,
+  $registeredComponentMetas,
+  $instances,
+  $dataSources,
 } from "../nano-states";
 import {
   type InstanceSelector,
-  insertInstancesCopyMutable,
-  insertPropsCopyMutable,
-  insertStylesCopyMutable,
-  insertStyleSourcesCopyMutable,
-  insertStyleSourceSelectionsCopyMutable,
-  findLocalStyleSourcesWithinInstances,
-  mergeNewBreakpointsMutable,
   type DroppableTarget,
+  getInstanceOrCreateFragmentIfNecessary,
+  wrapEditableChildrenAroundDropTargetMutable,
 } from "../tree-utils";
 import {
   computeInstancesConstraints,
   deleteInstance,
+  findAvailableDataSources,
   findClosestDroppableTarget,
   getInstancesSlice,
+  insertInstancesSliceCopy,
   isInstanceDetachable,
 } from "../instance-utils";
-import { serverSyncStore } from "../sync";
+import { portalComponent } from "@webstudio-is/react-sdk";
 
 const version = "@webstudio/instance/v0.1";
 
@@ -105,11 +92,98 @@ const parse = (clipboardData: string): InstanceData | undefined => {
 
 export const mimeType = "application/json";
 
+export const getPortalFragmentSelector = (
+  instances: Instances,
+  instanceSelector: InstanceSelector
+) => {
+  const instance = instances.get(instanceSelector[0]);
+  if (
+    instance?.component !== portalComponent ||
+    instance.children.length === 0 ||
+    instance.children[0].type !== "id"
+  ) {
+    return;
+  }
+  // first portal child is always fragment
+  return [instance.children[0].value, ...instanceSelector];
+};
+
+const getPasteTarget = (
+  data: InstanceData,
+  instanceSelector: InstanceSelector
+): undefined | DroppableTarget => {
+  const instances = $instances.get();
+
+  // paste after selected instance
+  if (shallowEqual(instanceSelector, data.instanceSelector)) {
+    // body is not allowed to copy
+    // so clipboard always have at least two level instance selector
+    const [currentInstanceId, parentInstanceId] = instanceSelector;
+    const parentInstance = instances.get(parentInstanceId);
+    if (parentInstance === undefined) {
+      return;
+    }
+    const indexWithinChildren = parentInstance.children.findIndex(
+      (child) => child.type === "id" && child.value === currentInstanceId
+    );
+    return {
+      parentSelector: instanceSelector.slice(1),
+      position: indexWithinChildren + 1,
+    };
+  }
+
+  const newInstances: Instances = new Map();
+  for (const instance of data.instances) {
+    newInstances.set(instance.id, instance);
+  }
+  const metas = $registeredComponentMetas.get();
+  const rootInstanceId = data.instances[0].id;
+  const pasteTarget = findClosestDroppableTarget(
+    metas,
+    instances,
+    instanceSelector,
+    computeInstancesConstraints(metas, newInstances, [rootInstanceId])
+  );
+  if (pasteTarget === undefined) {
+    return;
+  }
+
+  const newInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    newInstances,
+    data.instances[0].id
+  );
+  const preservedChildIds = new Set<Instance["id"]>();
+  for (const instance of data.instances) {
+    for (const child of instance.children) {
+      if (child.type === "id" && newInstanceIds.has(child.value) === false) {
+        preservedChildIds.add(child.value);
+      }
+    }
+  }
+
+  // portal descendants ids are preserved
+  // so need to prevent pasting portal inside its copies
+  // to avoid circular tree
+  const dropTargetSelector =
+    // consider portal fragment when check for cycles to avoid cases
+    // like pasting portal directly into portal
+    getPortalFragmentSelector(instances, pasteTarget.parentSelector) ??
+    pasteTarget.parentSelector;
+  for (const instanceId of dropTargetSelector) {
+    if (preservedChildIds.has(instanceId)) {
+      return;
+    }
+  }
+
+  return pasteTarget;
+};
+
 export const onPaste = (clipboardData: string): boolean => {
   const data = parse(clipboardData);
 
-  const selectedPage = selectedPageStore.get();
-  const project = projectStore.get();
+  const selectedPage = $selectedPage.get();
+  const project = $project.get();
+  const metas = $registeredComponentMetas.get();
 
   if (
     data === undefined ||
@@ -119,237 +193,56 @@ export const onPaste = (clipboardData: string): boolean => {
     return false;
   }
 
-  const metas = registeredComponentMetasStore.get();
-  const newInstances = new Map(
-    data.instances.map((instance) => [instance.id, instance])
-  );
-  const rootInstanceId = data.instances[0].id;
   // paste to the root if nothing is selected
-  const instanceSelector = selectedInstanceSelectorStore.get() ?? [
+  const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  let potentialDropTarget: undefined | DroppableTarget;
-  if (shallowEqual(instanceSelector, data.instanceSelector)) {
-    // paste after selected instance
-    const instances = instancesStore.get();
-    // body is not allowed to copy
-    // so clipboard always have at least two level instance selector
-    const [currentInstanceId, parentInstanceId] = instanceSelector;
-    const parentInstance = instances.get(parentInstanceId);
-    if (parentInstance === undefined) {
-      return false;
-    }
-    const indexWithinChildren = parentInstance.children.findIndex(
-      (child) => child.type === "id" && child.value === currentInstanceId
-    );
-    potentialDropTarget = {
-      parentSelector: instanceSelector.slice(1),
-      position: indexWithinChildren + 1,
-    };
-  } else {
-    potentialDropTarget = findClosestDroppableTarget(
-      metas,
-      instancesStore.get(),
-      instanceSelector,
-      computeInstancesConstraints(metas, newInstances, [rootInstanceId])
-    );
-  }
-  if (potentialDropTarget === undefined) {
+  const pasteTarget = getPasteTarget(data, instanceSelector);
+  if (pasteTarget === undefined) {
     return false;
   }
-  const dropTarget = potentialDropTarget;
 
-  serverSyncStore.createTransaction(
-    [
-      breakpointsStore,
-      instancesStore,
-      dataSourcesStore,
-      styleSourcesStore,
-      propsStore,
-      styleSourceSelectionsStore,
-      stylesStore,
-      assetsStore,
-    ],
-    (
-      breakpoints,
-      instances,
-      dataSources,
-      styleSources,
-      props,
-      styleSourceSelections,
-      styles,
-      assets
-    ) => {
-      for (const asset of data.assets) {
-        // asset can be already present if pasting to the same project
-        if (assets.has(asset.id) === false) {
-          // we use the same asset.id so the references are preserved
-          assets.set(asset.id, { ...asset, projectId: project.id });
-        }
+  insertInstancesSliceCopy({
+    slice: data,
+    availableDataSources: findAvailableDataSources(
+      $dataSources.get(),
+      instanceSelector
+    ),
+    beforeTransactionEnd: (rootInstanceId, draft) => {
+      let dropTarget = pasteTarget;
+      dropTarget =
+        getInstanceOrCreateFragmentIfNecessary(draft.instances, dropTarget) ??
+        dropTarget;
+      dropTarget =
+        wrapEditableChildrenAroundDropTargetMutable(
+          draft.instances,
+          draft.props,
+          metas,
+          dropTarget
+        ) ?? dropTarget;
+      const [parentId] = dropTarget.parentSelector;
+      const parentInstance = draft.instances.get(parentId);
+      if (parentInstance === undefined) {
+        return;
       }
-
-      const mergedBreakpointIds = mergeNewBreakpointsMutable(
-        breakpoints,
-        data.breakpoints
-      );
-
-      const copiedInstanceIds = insertInstancesCopyMutable(
-        instances,
-        props,
-        registeredComponentMetasStore.get(),
-        data.instances,
-        dropTarget
-      );
-
-      // duplicate data sources only within copied tree
-      const copiedDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
-      const copiedDataSources = new Map<DataSource["id"], DataSource>();
-      for (const dataSource of data.dataSources) {
-        const { scopeInstanceId } = dataSource;
-        if (
-          scopeInstanceId !== undefined &&
-          copiedInstanceIds.has(scopeInstanceId)
-        ) {
-          copiedDataSourceIds.set(dataSource.id, nanoid());
-        }
-        copiedDataSources.set(dataSource.id, dataSource);
+      const child: Instance["children"][number] = {
+        type: "id",
+        value: rootInstanceId,
+      };
+      const { position } = dropTarget;
+      if (position === "end") {
+        parentInstance.children.push(child);
+      } else {
+        parentInstance.children.splice(position, 0, child);
       }
+    },
+  });
 
-      for (const dataSource of data.dataSources) {
-        let { scopeInstanceId } = dataSource;
-        if (scopeInstanceId === undefined) {
-          continue;
-        }
-        // reject data sources outside of copied tree and not scoped to ancestors
-        if (
-          copiedInstanceIds.has(scopeInstanceId) === false &&
-          instanceSelector.includes(scopeInstanceId) === false
-        ) {
-          continue;
-        }
-        scopeInstanceId = copiedInstanceIds.get(scopeInstanceId);
-
-        const newId = copiedDataSourceIds.get(dataSource.id);
-        if (newId === undefined) {
-          continue;
-        }
-        if (dataSource.type === "variable") {
-          dataSources.set(newId, {
-            ...dataSource,
-            id: newId,
-            scopeInstanceId,
-          });
-        }
-      }
-
-      const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
-        data.styleSources,
-        data.styleSourceSelections,
-        new Set(copiedInstanceIds.keys())
-      );
-
-      const copiedStyleSourceIds = insertStyleSourcesCopyMutable(
-        styleSources,
-        data.styleSources,
-        localStyleSourceIds
-      );
-
-      insertPropsCopyMutable(
-        props,
-        data.props.map((prop) => {
-          let actionDiscarded = false;
-          const transformIdentifier = (
-            identifier: string,
-            assignee: boolean
-          ) => {
-            const dataSourceId = decodeDataSourceVariable(identifier);
-            if (dataSourceId === undefined) {
-              return identifier;
-            }
-            // data source is within copied tree
-            const newId = copiedDataSourceIds.get(dataSourceId);
-            if (newId !== undefined) {
-              return encodeDataSourceVariable(newId);
-            }
-            const dataSource = copiedDataSources.get(dataSourceId);
-            // data source is within paste target
-            if (
-              dataSource?.scopeInstanceId !== undefined &&
-              instanceSelector.includes(dataSource.scopeInstanceId)
-            ) {
-              return identifier;
-            }
-            // left operand of assign operator cannot be inlined
-            if (assignee) {
-              actionDiscarded = true;
-            }
-            // inline variable not scoped to copied tree or paste target
-            if (dataSource?.type === "variable") {
-              return JSON.stringify(dataSource.value.value);
-            }
-            return identifier;
-          };
-
-          if (prop.type === "parameter") {
-            return {
-              ...prop,
-              value: copiedDataSourceIds.get(prop.value) ?? prop.value,
-            };
-          }
-
-          if (prop.type === "expression") {
-            return {
-              ...prop,
-              value: validateExpression(prop.value, {
-                transformIdentifier,
-              }),
-            };
-          }
-
-          if (prop.type === "action") {
-            return {
-              ...prop,
-              value: prop.value.flatMap((value) => {
-                if (value.type !== "execute") {
-                  return [value];
-                }
-                actionDiscarded = false;
-                const newCode = validateExpression(value.code, {
-                  effectful: true,
-                  transformIdentifier,
-                });
-                if (actionDiscarded) {
-                  return [];
-                }
-                return [{ ...value, code: newCode }];
-              }),
-            };
-          }
-
-          return prop;
-        }),
-        copiedInstanceIds
-      );
-
-      insertStyleSourceSelectionsCopyMutable(
-        styleSourceSelections,
-        data.styleSourceSelections,
-        copiedInstanceIds,
-        copiedStyleSourceIds
-      );
-      insertStylesCopyMutable(
-        styles,
-        data.styles,
-        copiedStyleSourceIds,
-        mergedBreakpointIds
-      );
-    }
-  );
   return true;
 };
 
 export const onCopy = () => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
   if (selectedInstanceSelector === undefined) {
     return;
   }
@@ -361,7 +254,7 @@ export const onCopy = () => {
 };
 
 export const onCut = () => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
   if (selectedInstanceSelector === undefined) {
     return;
   }

@@ -801,8 +801,8 @@ export const insertInstancesSliceCopy = ({
   slice: InstancesSlice;
   availableDataSources: Set<DataSource["id"]>;
   beforeTransactionEnd?: (
-    rootInstanceI: Instance["id"],
-    draft: { instances: Instances; pages: undefined | Pages }
+    rootInstanceId: Instance["id"],
+    draft: { instances: Instances; props: Props; pages: undefined | Pages }
   ) => void;
 }) => {
   const projectId = $project.get()?.id;
@@ -1177,7 +1177,7 @@ export const insertInstancesSliceCopy = ({
       // invoke callback to allow additional changes within same transaction
       const rootInstanceId =
         newInstanceIds.get(slice.instances[0].id) ?? slice.instances[0].id;
-      beforeTransactionEnd?.(rootInstanceId, { instances, pages });
+      beforeTransactionEnd?.(rootInstanceId, { instances, props, pages });
     }
   );
 };
