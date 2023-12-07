@@ -3,7 +3,6 @@ import { createWriteStream } from "node:fs";
 import {
   rm,
   access,
-  mkdtemp,
   rename,
   cp,
   readFile,
@@ -11,7 +10,6 @@ import {
   readdir,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
-import { tmpdir } from "node:os";
 import { cwd } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pLimit from "p-limit";
@@ -88,15 +86,18 @@ type RemixRoutes = {
 export const downloadAsset = async (
   url: string,
   name: string,
-  assetBaseUrl: string,
-  temporaryDir: string
+  assetBaseUrl: string
 ) => {
   const assetPath = join("public", assetBaseUrl, name);
-  const tempAssetPath = join(temporaryDir, name);
+  // fs.rename cannot be used to move a file to a different mount point or drive
+  // Error: EXDEV: cross-device link not permitted
+  const tempAssetPath = `${assetPath}.tmp`;
 
   try {
     await access(assetPath);
   } catch {
+    await ensureFolderExists(dirname(assetPath));
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -114,7 +115,6 @@ export const downloadAsset = async (
         writableStream
       );
 
-      await ensureFolderExists(dirname(assetPath));
       await rename(tempAssetPath, assetPath);
     } catch (error) {
       console.error(`Error in downloading file ${name} \n ${error}`);
@@ -366,8 +366,6 @@ export const prebuild = async (options: {
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
-  const temporaryDir = await mkdtemp(join(tmpdir(), "webstudio-"));
-
   const imageLoader = createImageLoader({
     imageBaseUrl: assetBuildUrl,
   });
@@ -381,9 +379,7 @@ export const prebuild = async (options: {
         });
 
         assetsToDownload.push(
-          limit(() =>
-            downloadAsset(imageSrc, asset.name, assetBaseUrl, temporaryDir)
-          )
+          limit(() => downloadAsset(imageSrc, asset.name, assetBaseUrl))
         );
       }
 
@@ -393,8 +389,7 @@ export const prebuild = async (options: {
             downloadAsset(
               `${assetBuildUrl}${asset.name}`,
               asset.name,
-              assetBaseUrl,
-              temporaryDir
+              assetBaseUrl
             )
           )
         );
