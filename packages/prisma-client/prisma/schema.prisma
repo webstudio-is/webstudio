@@ -91,23 +91,30 @@ model Product {
 
 model TransactionLog {
   // Stripe event id (debug and idempotency purposes)
-  eventId      String   @id
-  eventType    String
-  eventCreated Int
-  // Stripe session id (debug and idempotency purposes)
-  sessionId    String
-  productId    String
-  product      Product  @relation(fields: [productId], references: [id])
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  // paid
-  status       String
-  createdAt    DateTime @default(now())
+  eventId String @id
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
 
-  // Helper fields we can use for faster api calls and to have additional information for debugging purposes
-  customerId     String?
-  subscriptionId String?
-  customerEmail  String?
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  eventData Json? @default(dbgenerated())
+
+  eventType    String? @default(dbgenerated())
+  eventCreated Int?    @default(dbgenerated())
+
+  // paid
+  status String? @default(dbgenerated())
+
+  customerId    String? @default(dbgenerated())
+  customerEmail String? @default(dbgenerated())
+
+  subscriptionId String? @default(dbgenerated())
+
+  // Used for Refund
+  paymentIntent String? @default(dbgenerated())
 
   @@unique([eventId, productId])
 }
