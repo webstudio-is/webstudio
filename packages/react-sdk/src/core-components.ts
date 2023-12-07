@@ -14,6 +14,7 @@ const collectionMeta: WsComponentMeta = {
   type: "container",
   label: "Collection",
   icon: ListIcon,
+  stylable: false,
   template: [
     {
       type: "instance",
