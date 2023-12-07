@@ -23,12 +23,27 @@ export const loader = async ({ request, params }: LoaderArgs) => {
     where: { id: user.id },
     select: {
       id: true,
+
       username: true,
+      products: {
+        select: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              features: true,
+              meta: true,
+              images: true,
+            },
+          },
+        },
+      },
       checkout: {
         select: {
           eventId: true,
-          sessionId: true,
           createdAt: true,
+
           product: {
             select: {
               id: true,
