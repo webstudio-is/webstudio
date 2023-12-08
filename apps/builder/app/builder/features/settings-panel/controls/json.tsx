@@ -55,7 +55,9 @@ export const JsonControl = ({
           key={valueString}
           readOnly={readOnly}
           variables={emptyVariables}
-          defaultValue={localValue.value}
+          // actual local value is not important because code editor
+          // is uncontrolled and has own local value
+          defaultValue={valueString}
           onChange={localValue.set}
           onBlur={localValue.save}
         />
