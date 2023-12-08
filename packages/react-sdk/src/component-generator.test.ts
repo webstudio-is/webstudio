@@ -640,9 +640,8 @@ test("avoid generating collection parameter variable as state", () => {
         createDataSourcePair({
           id: "dataSourceItem",
           scopeInstanceId: "list",
-          type: "variable",
+          type: "parameter",
           name: "element",
-          value: { type: "json", value: `` },
         }),
       ]),
       props: new Map([
