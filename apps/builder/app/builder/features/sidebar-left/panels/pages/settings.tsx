@@ -389,45 +389,36 @@ const FormFields = ({
                   }}
                 />
               </InputErrorsTooltip>
-              {pathVariableId !== undefined && (
-                <Grid
-                  gap={1}
-                  css={{
-                    gridTemplateColumns: "1fr 3fr",
-                    paddingLeft: theme.spacing[13],
-                  }}
-                >
-                  {pathParamNames.map((name) => (
-                    <Fragment key={name}>
-                      <Label htmlFor={`${fieldIds.path}-${name}`}>{name}</Label>
-                      <InputField
-                        tabIndex={1}
-                        id={`${fieldIds.path}-${name}`}
-                        name="path"
-                        value={params?.[name] ?? ""}
-                        onChange={(event) => {
-                          if (pathVariableId === undefined) {
-                            return;
+              {pathVariableId !== undefined &&
+                pathParamNames.map((name) => (
+                  <Fragment key={name}>
+                    <Label htmlFor={`${fieldIds.path}-${name}`}>{name}</Label>
+                    <InputField
+                      tabIndex={1}
+                      id={`${fieldIds.path}-${name}`}
+                      name="path"
+                      value={params?.[name] ?? ""}
+                      onChange={(event) => {
+                        if (pathVariableId === undefined) {
+                          return;
+                        }
+                        const dataSourceVariables = new Map(
+                          $dataSourceVariables.get()
+                        );
+                        // delete stale fields
+                        const newParams: Record<string, string> = {};
+                        for (const name of pathParamNames) {
+                          if (params?.[name]) {
+                            newParams[name] = params[name];
                           }
-                          const dataSourceVariables = new Map(
-                            $dataSourceVariables.get()
-                          );
-                          // delete stale fields
-                          const newParams: Record<string, string> = {};
-                          for (const name of pathParamNames) {
-                            if (params?.[name]) {
-                              newParams[name] = params[name];
-                            }
-                          }
-                          newParams[name] = event.target.value;
-                          dataSourceVariables.set(pathVariableId, newParams);
-                          $dataSourceVariables.set(dataSourceVariables);
-                        }}
-                      />
-                    </Fragment>
-                  ))}
-                </Grid>
-              )}
+                        }
+                        newParams[name] = event.target.value;
+                        dataSourceVariables.set(pathVariableId, newParams);
+                        $dataSourceVariables.set(dataSourceVariables);
+                      }}
+                    />
+                  </Fragment>
+                ))}
               <CopyPageDomainAndPathButton
                 pageDomainAndPath={pageDomainAndPath}
               />
