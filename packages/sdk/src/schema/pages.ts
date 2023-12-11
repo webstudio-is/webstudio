@@ -1,4 +1,4 @@
-import { z, type ZodType } from "zod";
+import { z } from "zod";
 
 const MIN_TITLE_LENGTH = 2;
 
@@ -32,6 +32,7 @@ const commonPageFields = {
       .optional(),
   }),
   rootInstanceId: z.string(),
+  pathVariableId: z.optional(z.string()),
 } as const;
 
 export const HomePagePath = z
@@ -43,38 +44,28 @@ const HomePage = z.object({
   path: HomePagePath,
 });
 
-export const pathValidators = (
-  baseValidator: ZodType<string>
-): ZodType<string> =>
-  baseValidator
-    .refine((path) => path !== "", "Can't be empty")
-    .refine((path) => path !== "/", "Can't be just a /")
-    .refine(
-      (path) => path === "" || path.startsWith("/"),
-      "Must start with a /"
-    )
-    .refine((path) => path.endsWith("/") === false, "Can't end with a /")
-    .refine(
-      (path) => path.includes("//") === false,
-      "Can't contain repeating /"
-    )
-    .refine(
-      (path) => /^[-_a-z0-9\\/]*$/.test(path),
-      "Only a-z, 0-9, -, _ and / are allowed"
-    )
-    .refine(
-      // We use /s for our system stuff like /s/css or /s/uploads
-      (path) => path !== "/s" && path.startsWith("/s/") === false,
-      "/s prefix is reserved for the system"
-    )
-    .refine(
-      // Remix serves build artefacts like JS bundles from /build
-      // And we cannot customize it due to bug in Remix: https://github.com/remix-run/remix/issues/2933
-      (path) => path !== "/build" && path.startsWith("/build/") === false,
-      "/build prefix is reserved for the system"
-    );
-
-export const PagePath = pathValidators(z.string());
+export const PagePath = z
+  .string()
+  .refine((path) => path !== "", "Can't be empty")
+  .refine((path) => path !== "/", "Can't be just a /")
+  .refine((path) => path === "" || path.startsWith("/"), "Must start with a /")
+  .refine((path) => path.endsWith("/") === false, "Can't end with a /")
+  .refine((path) => path.includes("//") === false, "Can't contain repeating /")
+  .refine(
+    (path) => /^[-_a-z0-9*:\\/]*$/.test(path),
+    "Only a-z, 0-9, -, _, /, : and * are allowed"
+  )
+  .refine(
+    // We use /s for our system stuff like /s/css or /s/uploads
+    (path) => path !== "/s" && path.startsWith("/s/") === false,
+    "/s prefix is reserved for the system"
+  )
+  .refine(
+    // Remix serves build artefacts like JS bundles from /build
+    // And we cannot customize it due to bug in Remix: https://github.com/remix-run/remix/issues/2933
+    (path) => path !== "/build" && path.startsWith("/build/") === false,
+    "/build prefix is reserved for the system"
+  );
 
 const Page = z.object({
   ...commonPageFields,

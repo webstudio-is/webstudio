@@ -1,14 +1,16 @@
 import { z } from "zod";
 import {
-  useState,
-  useCallback,
   type ComponentProps,
   type FocusEventHandler,
+  useState,
+  useCallback,
+  Fragment,
 } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   type Page,
   type Pages,
@@ -16,6 +18,7 @@ import {
   HomePagePath,
   PageTitle,
   PagePath,
+  DataSource,
 } from "@webstudio-is/sdk";
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
 import {
@@ -56,6 +59,8 @@ import {
   projectStore,
   selectedInstanceSelectorStore,
   selectedPageIdStore,
+  $dataSources,
+  $dataSourceVariables,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { removeByMutable } from "~/shared/array-utils";
@@ -67,6 +72,7 @@ import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
 import env from "~/shared/env";
+import { compilePathnamePattern, parsePathnamePattern } from "./url-pattern";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -96,6 +102,29 @@ type Errors = {
   [fieldName in FieldName]?: string[];
 };
 
+const LegacyPagePath = z
+  .string()
+  .refine((path) => path !== "", "Can't be empty")
+  .refine((path) => path !== "/", "Can't be just a /")
+  .refine((path) => path === "" || path.startsWith("/"), "Must start with a /")
+  .refine((path) => path.endsWith("/") === false, "Can't end with a /")
+  .refine((path) => path.includes("//") === false, "Can't contain repeating /")
+  .refine(
+    (path) => /^[-_a-z0-9\\/]*$/.test(path),
+    "Only a-z, 0-9, -, _, / are allowed"
+  )
+  .refine(
+    // We use /s for our system stuff like /s/css or /s/uploads
+    (path) => path !== "/s" && path.startsWith("/s/") === false,
+    "/s prefix is reserved for the system"
+  )
+  .refine(
+    // Remix serves build artefacts like JS bundles from /build
+    // And we cannot customize it due to bug in Remix: https://github.com/remix-run/remix/issues/2933
+    (path) => path !== "/build" && path.startsWith("/build/") === false,
+    "/build prefix is reserved for the system"
+  );
+
 const HomePageValues = z.object({
   name: PageName,
   path: HomePagePath,
@@ -105,7 +134,7 @@ const HomePageValues = z.object({
 
 const PageValues = z.object({
   name: PageName,
-  path: PagePath,
+  path: isFeatureEnabled("bindings") ? PagePath : LegacyPagePath,
   title: PageTitle,
   description: z.string().optional(),
 });
@@ -224,12 +253,14 @@ const CopyPageDomainAndPathButton = ({
 const FormFields = ({
   disabled,
   autoSelect,
+  pathVariableId,
   errors,
   values,
   onChange,
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
+  pathVariableId?: DataSource["id"];
   errors: Errors;
   values: Values;
   onChange: (
@@ -258,7 +289,15 @@ const FormFields = ({
 
   const publishedUrl = new URL(`https://${domain}`);
 
-  const pageDomainAndPath = [publishedUrl.host, values?.path]
+  const pathParamNames = parsePathnamePattern(values.path);
+  const dataSourceVariables = useStore($dataSourceVariables);
+  const params =
+    pathVariableId !== undefined
+      ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
+      : undefined;
+
+  const compiledPath = compilePathnamePattern(values.path ?? "", params ?? {});
+  const pageDomainAndPath = [publishedUrl.host, compiledPath]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");
@@ -350,6 +389,36 @@ const FormFields = ({
                   }}
                 />
               </InputErrorsTooltip>
+              {pathVariableId !== undefined &&
+                pathParamNames.map((name) => (
+                  <Fragment key={name}>
+                    <Label htmlFor={`${fieldIds.path}-${name}`}>{name}</Label>
+                    <InputField
+                      tabIndex={1}
+                      id={`${fieldIds.path}-${name}`}
+                      name="path"
+                      value={params?.[name] ?? ""}
+                      onChange={(event) => {
+                        if (pathVariableId === undefined) {
+                          return;
+                        }
+                        const dataSourceVariables = new Map(
+                          $dataSourceVariables.get()
+                        );
+                        // delete stale fields
+                        const newParams: Record<string, string> = {};
+                        for (const name of pathParamNames) {
+                          if (params?.[name]) {
+                            newParams[name] = params[name];
+                          }
+                        }
+                        newParams[name] = event.target.value;
+                        dataSourceVariables.set(pathVariableId, newParams);
+                        $dataSourceVariables.set(dataSourceVariables);
+                      }}
+                    />
+                  </Fragment>
+                ))}
               <CopyPageDomainAndPathButton
                 pageDomainAndPath={pageDomainAndPath}
               />
@@ -718,40 +787,55 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     }
   };
 
-  serverSyncStore.createTransaction([pagesStore], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-
-    // swap home page
-    if (values.isHomePage && pages.homePage.id !== pageId) {
-      const newHomePageIndex = pages.pages.findIndex(
-        (page) => page.id === pageId
-      );
-
-      if (newHomePageIndex === -1) {
-        throw new Error(`Page with id ${pageId} not found`);
+  serverSyncStore.createTransaction(
+    [pagesStore, $dataSources],
+    (pages, dataSources) => {
+      if (pages === undefined) {
+        return;
       }
 
-      const tmp = pages.homePage;
-      pages.homePage = pages.pages[newHomePageIndex];
+      // swap home page
+      if (values.isHomePage && pages.homePage.id !== pageId) {
+        const newHomePageIndex = pages.pages.findIndex(
+          (page) => page.id === pageId
+        );
 
-      pages.homePage.path = "";
-      pages.pages[newHomePageIndex] = tmp;
+        if (newHomePageIndex === -1) {
+          throw new Error(`Page with id ${pageId} not found`);
+        }
 
-      tmp.path = nameToPath(pages, tmp.name);
-    }
+        const tmp = pages.homePage;
+        pages.homePage = pages.pages[newHomePageIndex];
 
-    if (pages.homePage.id === pageId) {
-      updatePageMutable(pages.homePage, values);
-    }
+        pages.homePage.path = "";
+        pages.pages[newHomePageIndex] = tmp;
 
-    for (const page of pages.pages) {
-      if (page.id === pageId) {
-        updatePageMutable(page, values);
+        tmp.path = nameToPath(pages, tmp.name);
+      }
+
+      if (pages.homePage.id === pageId) {
+        updatePageMutable(pages.homePage, values);
+      }
+
+      for (const page of pages.pages) {
+        if (page.id === pageId) {
+          // create "Page params" variable when pattern is specified in path
+          const paramNames = parsePathnamePattern(page.path);
+          if (paramNames.length > 0 && page.pathVariableId === undefined) {
+            page.pathVariableId = nanoid();
+            dataSources.set(page.pathVariableId, {
+              id: page.pathVariableId,
+              // scope new variable to body
+              scopeInstanceId: page.rootInstanceId,
+              type: "parameter",
+              name: "Page params",
+            });
+          }
+          updatePageMutable(page, values);
+        }
       }
     }
-  });
+  );
 };
 
 const deletePage = (pageId: Page["id"]) => {
@@ -881,6 +965,7 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
+      pathVariableId={page.pathVariableId}
       onClose={onClose}
       onDelete={hanldeDelete}
       onDuplicate={() => {

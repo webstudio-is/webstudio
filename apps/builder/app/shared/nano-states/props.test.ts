@@ -329,3 +329,48 @@ test("compute expression from collection items", () => {
 
   cleanStores($propValuesByInstanceSelector);
 });
+
+test("access parameter value from variables values", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "parameterId",
+        type: "parameter",
+        name: "paramName",
+      },
+    ])
+  );
+  $dataSourceVariables.set(new Map([["parameterId", "paramValue"]]));
+  $props.set(
+    toMap([
+      {
+        id: "parameterPropId",
+        name: "param",
+        instanceId: "body",
+        type: "expression",
+        value: "$ws$dataSource$parameterId",
+      },
+    ])
+  );
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([["param", "paramValue"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
