@@ -34,22 +34,37 @@ export const getIndexedInstanceId = (
 const $dataSourcesLogic = computed(
   [$dataSources, $dataSourceVariables, $props],
   (dataSources, dataSourceVariables, props) => {
+    const scope = createScope(["_getVariable", "_setVariable", "_output"]);
     const { variables, body, output } = generateDataSources({
-      scope: createScope(["_getVariable", "_setVariable", "_output"]),
+      scope,
       dataSources,
       props,
     });
     let generatedCode = "";
+    // render state variables
     for (const [dataSourceId, variable] of variables) {
       const { valueName, setterName } = variable;
       const initialValue = JSON.stringify(variable.initialValue);
       generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
       generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
     }
+    // render parameters
+    for (const [dataSourceId, dataSource] of dataSources) {
+      if (dataSource.type === "parameter") {
+        const variableName = scope.getName(dataSourceId, dataSource.name);
+        generatedCode += `let ${variableName} = _getVariable("${dataSourceId}");\n`;
+      }
+    }
     generatedCode += body;
     generatedCode += `let _output = new Map();\n`;
     for (const [dataSourceId, variableName] of output) {
       generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
+    }
+    for (const [dataSourceId, dataSource] of dataSources) {
+      if (dataSource.type === "parameter") {
+        const variableName = scope.getName(dataSourceId, dataSource.name);
+        generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
+      }
     }
     generatedCode += `return _output\n`;
 
