@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password #ChangeMe
+      - POSTGRES_DB=webstudio
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+  
+  webstudio:
+    image: webstudio:latest
+    restart: always
+    build:
+      context: .
+    depends_on:
+      - postgres
+    environment:
+      - DB_HOST=postgres
+      - DB_PASS=password
+      - DEV_LOGIN=true
+      - AUTH_SECRET=pass
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:

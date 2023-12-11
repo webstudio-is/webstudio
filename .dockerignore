@@ -1,0 +1,6 @@
+node_modules
+*.md
+dist
+
+docker-compose.yml
+Dockerfile
