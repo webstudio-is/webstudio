@@ -12,7 +12,8 @@ import {
   AccordionContent as AccordionContent,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     accordionValue = value;

@@ -28,11 +28,16 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "project-id";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   return <></>;
 };
 
 export { Page };
+
+export const getRemixParams = ({ ...params }: Params): Params => {
+  return params;
+};
 
 export const pagesPaths = new Set<string>();
 

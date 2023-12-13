@@ -7,7 +7,8 @@ import {
   TabsContent as TabsContent,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [tabsValue, set$tabsValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     tabsValue = value;

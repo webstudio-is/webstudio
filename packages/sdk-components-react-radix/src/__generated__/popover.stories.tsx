@@ -10,7 +10,8 @@ import {
   PopoverContent as PopoverContent,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [popoverOpen, set$popoverOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     popoverOpen = open;

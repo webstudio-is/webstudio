@@ -7,6 +7,7 @@ import {
   type LoaderArgs,
   json,
 } from "@remix-run/server-runtime";
+import { useLoaderData } from "@remix-run/react";
 import type { Page as PageType, SiteMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
@@ -19,6 +20,7 @@ import {
   formsProperties,
   Page,
   imageAssets,
+  getRemixParams,
 } from "../__generated__/index";
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
@@ -29,6 +31,8 @@ export type PageData = {
 };
 
 export const loader = async (arg: LoaderArgs) => {
+  const params = getRemixParams(arg.params);
+
   const host =
     arg.request.headers.get("x-forwarded-host") ||
     arg.request.headers.get("host") ||
@@ -46,6 +50,7 @@ export const loader = async (arg: LoaderArgs) => {
       host,
       url: url.href,
       excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
+      params,
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
@@ -282,6 +287,7 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
+  const { params } = useLoaderData();
   return (
     <ReactSdkContext.Provider
       value={{
@@ -291,7 +297,7 @@ const Outlet = () => {
         pagesPaths,
       }}
     >
-      <Page />
+      <Page params={params} />
     </ReactSdkContext.Provider>
   );
 };

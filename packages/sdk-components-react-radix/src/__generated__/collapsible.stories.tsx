@@ -10,7 +10,8 @@ import {
   CollapsibleContent as CollapsibleContent,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [collapsibleOpen, set$collapsibleOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     collapsibleOpen = open;

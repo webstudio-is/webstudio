@@ -5,6 +5,7 @@ import type {
   Scope,
   DataSources,
   Prop,
+  Page,
 } from "@webstudio-is/sdk";
 import { parseComponentName } from "@webstudio-is/sdk";
 import {
@@ -231,34 +232,49 @@ export const generateJsxChildren = ({
 
 export const generatePageComponent = ({
   scope,
-  rootInstanceId,
+  page,
   instances,
   props,
   dataSources,
   indexesWithinAncestors,
 }: {
   scope: Scope;
-  rootInstanceId: Instance["id"];
+  page: Page;
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
 }) => {
-  const instance = instances.get(rootInstanceId);
+  const instance = instances.get(page.rootInstanceId);
   if (instance === undefined) {
     return "";
   }
-  const { variables, body: dataSourcesBody } = generateDataSources({
+  const { body: dataSourcesBody } = generateDataSources({
     typed: true,
     scope,
     dataSources,
     props,
   });
   let generatedDataSources = "";
-  for (const { valueName, setterName, initialValue } of variables.values()) {
-    const initialValueString = JSON.stringify(initialValue);
-    generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "variable") {
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      const setterName = scope.getName(
+        `set$${dataSource.id}`,
+        `set$${dataSource.name}`
+      );
+      const initialValue = dataSource.value.value;
+      const initialValueString = JSON.stringify(initialValue);
+      generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+    }
+    if (dataSource.type === "parameter") {
+      if (dataSource.id === page.pathVariableId) {
+        const valueName = scope.getName(dataSource.id, dataSource.name);
+        generatedDataSources += `let ${valueName} = _props.params\n`;
+      }
+    }
   }
+
   generatedDataSources += dataSourcesBody;
 
   const generatedJsx = generateJsxElement({
@@ -278,7 +294,8 @@ export const generatePageComponent = ({
   });
 
   let generatedComponent = "";
-  generatedComponent += `const Page = () => {\n`;
+  generatedComponent += `type Params = Record<string, string | undefined>\n`;
+  generatedComponent += `const Page = (_props: { params: Params }) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

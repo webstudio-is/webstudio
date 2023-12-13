@@ -14,7 +14,8 @@ import {
   SelectItemText as SelectItemText,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [selectValue, set$selectValue] = useState<any>("");
   let [selectOpen, set$selectOpen] = useState<any>(false);
   let onValueChange = (value: any) => {

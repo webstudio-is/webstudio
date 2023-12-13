@@ -11,7 +11,8 @@ import {
   RadioGroupIndicator as RadioGroupIndicator,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [radioGroupValue, set$radioGroupValue] = useState<any>("");
   let onValueChange = (value: any) => {
     radioGroupValue = value;
