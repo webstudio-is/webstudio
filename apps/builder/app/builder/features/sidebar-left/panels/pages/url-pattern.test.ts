@@ -1,5 +1,9 @@
 import { expect, test } from "@jest/globals";
-import { compilePathnamePattern, parsePathnamePattern } from "./url-pattern";
+import {
+  compilePathnamePattern,
+  parsePathnamePattern,
+  validatePathnamePattern,
+} from "./url-pattern";
 
 test("parse keys from pathname pattern", () => {
   expect(parsePathnamePattern("/blog/:id/:date")).toEqual(["id", "date"]);
@@ -65,4 +69,74 @@ test("ignore compiling empty values", () => {
       0: "",
     })
   ).toEqual("/blog/*/:slug");
+});
+
+test("validate invalid pattern", () => {
+  expect(validatePathnamePattern("/:name*?")).toEqual([
+    `Invalid path pattern '/:name*?'`,
+  ]);
+});
+
+test("validate named groups", () => {
+  expect(validatePathnamePattern("/:name")).toEqual([]);
+  expect(validatePathnamePattern("/:name/last")).toEqual([]);
+});
+
+test("validate named groups with optional modifier", () => {
+  expect(validatePathnamePattern("/:name?")).toEqual([]);
+  expect(validatePathnamePattern("/:name?/last")).toEqual([]);
+});
+
+test('validate "one or more" named group modifier', () => {
+  expect(validatePathnamePattern("/:name+/:slug+")).toEqual([
+    "+ modifier is not allowed at ':name+', ':slug+'",
+  ]);
+});
+
+test('validate "zero or more" named group modifier', () => {
+  expect(validatePathnamePattern("/:name*")).toEqual([]);
+  expect(validatePathnamePattern("/:name*/:another*/:slug*")).toEqual([
+    "* modifier is not allowed at ':name*', ':another*' and can be used only in the end",
+  ]);
+});
+
+test("validate wildcard groups", () => {
+  expect(validatePathnamePattern("/*")).toEqual([]);
+  expect(validatePathnamePattern("/*?/*?")).toEqual([
+    `? modifier is not allowed on wildcard group at '*?'`,
+  ]);
+  expect(validatePathnamePattern("/*/*")).toEqual([
+    `Wildcard group '*' is allowed only in the end`,
+  ]);
+  expect(validatePathnamePattern("/*/last")).toEqual([
+    `Wildcard group '*' is allowed only in the end`,
+  ]);
+  expect(validatePathnamePattern("/*?/*/last")).toEqual([
+    `? modifier is not allowed on wildcard group at '*?'`,
+    `Wildcard group '*' is allowed only in the end`,
+  ]);
+});
+
+test("forbid wildcard group with static parts before", () => {
+  expect(validatePathnamePattern("/blog-*")).toEqual([
+    `Cannot use wildcard at 'blog-*'`,
+  ]);
+});
+
+test(`forbid named group with "zero or more" modifier and static parts before`, () => {
+  expect(validatePathnamePattern("/blog-:slug*")).toEqual([
+    `Cannot use named group at 'blog-:slug*'`,
+  ]);
+});
+
+test(`forbid named group with static parts before or after`, () => {
+  expect(validatePathnamePattern("/prefix-:id")).toEqual([
+    `Cannot use named group at 'prefix-:id'`,
+  ]);
+  expect(validatePathnamePattern("/:id-suffix")).toEqual([
+    `Cannot use named group at ':id-suffix'`,
+  ]);
+  expect(validatePathnamePattern("/prefix-:id-suffix")).toEqual([
+    `Cannot use named group at 'prefix-:id-suffix'`,
+  ]);
 });
