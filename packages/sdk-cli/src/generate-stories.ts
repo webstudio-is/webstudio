@@ -86,7 +86,7 @@ const Story = {
 ${css}
       \`}
       </style>
-      <Page />
+      <Page params={{}} />
     </>
   }
 }
