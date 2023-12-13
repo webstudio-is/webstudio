@@ -18,7 +18,6 @@ import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
-import { StyleSourceBadge } from "~/builder/features/style-panel/style-source";
 
 const containerStyle = css({
   px: theme.spacing[13],
