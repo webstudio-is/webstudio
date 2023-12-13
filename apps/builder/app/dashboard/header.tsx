@@ -11,13 +11,14 @@ import {
   rawTheme,
   theme,
   Button,
-  Box,
   Text,
+  styled,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
 import type { User } from "~/shared/db/user.server";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { StyleSourceBadge } from "~/builder/features/style-panel/style-source";
 
 const containerStyle = css({
   px: theme.spacing[13],
@@ -29,6 +30,22 @@ const containerStyle = css({
 const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
+
+export const ProBadge = styled(Text, {
+  display: "inline-flex",
+  borderRadius: theme.borderRadius[2],
+  px: theme.spacing[3],
+  py: theme.spacing[1],
+  height: theme.spacing[9],
+  color: theme.colors.foregroundContrastMain,
+  alignItems: "center",
+  maxWidth: "100%",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  // @tood doesn't work in tooltips, needs a workaround
+  textOverflow: "ellipsis",
+  background: theme.colors.backgroundStyleSourceNeutral,
+});
 
 const Menu = ({
   user,
@@ -44,6 +61,13 @@ const Menu = ({
       <DropdownMenuTrigger asChild>
         <Button color="ghost" aria-label="Menu Button" css={{ height: "100%" }}>
           <Flex gap="1" align="center">
+            {userPlanFeatures.hasProPlan && (
+              <>
+                <ProBadge>Pro</ProBadge>
+                <div />
+              </>
+            )}
+
             <Avatar
               src={user?.image || undefined}
               fallback={getAvatarLetter(title)}
@@ -91,34 +115,8 @@ export const Header = ({
       className={containerStyle()}
     >
       <WebstudioIcon width={30} height={23} />
-      <Flex gap="1" align="center" css={{ position: "relative" }}>
-        <Menu user={user} userPlanFeatures={userPlanFeatures} />
-        {userPlanFeatures.hasProPlan && (
-          <Flex
-            css={{
-              position: "absolute",
-              left: theme.spacing[6],
-              top: -4,
-              width: 0,
-            }}
-            align={"center"}
-            justify={"center"}
-          >
-            <Box
-              css={{
-                backgroundColor: theme.colors.primary,
-                minWidth: "fit-content",
-                py: theme.spacing[1],
-                px: theme.spacing[3],
-                borderRadius: theme.borderRadius[3],
-                color: theme.colors.white,
-              }}
-            >
-              <Text variant={"small"}>Pro</Text>
-            </Box>
-          </Flex>
-        )}
-      </Flex>
+
+      <Menu user={user} userPlanFeatures={userPlanFeatures} />
     </Flex>
   );
 };
