@@ -33,7 +33,10 @@ const handleLinkClick = (element: HTMLAnchorElement) => {
 
 export const subscribeInterceptedEvents = () => {
   const handleClick = (event: MouseEvent) => {
-    if (event.target instanceof HTMLElement) {
+    if (
+      event.target instanceof HTMLElement ||
+      event.target instanceof SVGElement
+    ) {
       const a = event.target.closest("a");
       if (a) {
         event.preventDefault();
