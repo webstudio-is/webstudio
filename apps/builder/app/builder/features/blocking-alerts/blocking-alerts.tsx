@@ -22,6 +22,8 @@ const useTooSmallMessage = () => {
 };
 
 // @todo: move to design system
+// https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
+// https://discord.com/channels/955905230107738152/1048308525673238558/1184833931569266738
 const Link = styled("a", {
   color: theme.colors.foregroundLink,
   "&:visited": {
@@ -63,7 +65,7 @@ const useUnsupportedBrowser = () => {
         and many more. We plan to support Firefox and Safari in the near future.
         <br />
         <br />
-        The website you're building should function correctly across all
+        The website you&apos;re building should function correctly across all
         browsers!
       </>
     );
