@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { css, Flex, Text, theme } from "@webstudio-is/design-system";
 import { AlertIcon } from "@webstudio-is/icons";
 
@@ -16,7 +17,7 @@ const contentStyle = css({
   color: theme.colors.foregroundDestructive,
 });
 
-export const Alert = ({ message }: { message: string }) => {
+export const Alert = ({ message }: { message: string | ReactNode }) => {
   return (
     <Flex align="center" justify="center" className={containerStyle()}>
       <Flex
@@ -26,7 +27,7 @@ export const Alert = ({ message }: { message: string }) => {
         className={contentStyle()}
       >
         <AlertIcon size={22} />
-        <Text color="contrast" variant="labelsSentenceCase" align="center">
+        <Text color="contrast" align="center">
           {message}
         </Text>
       </Flex>

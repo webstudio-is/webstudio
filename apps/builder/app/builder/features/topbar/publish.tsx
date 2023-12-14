@@ -477,14 +477,13 @@ const Content = (props: {
   );
 };
 
-/**
- * @todo change colors on theme colors when tokens will be ready
- * https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
- **/
-const StyledLink = styled("a", {
-  color: "#006ADC", // @todo theme.colors.foregroundLink,
+// @todo: move to design system
+// https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
+// https://discord.com/channels/955905230107738152/1048308525673238558/1184833931569266738
+const Link = styled("a", {
+  color: theme.colors.foregroundLink,
   "&:visited": {
-    color: "#793AAF", // @todo theme.colors.foregroundLinkVisited,
+    color: theme.colors.foregroundLinkVisited,
   },
 });
 
@@ -527,21 +526,17 @@ const ExportContent = () => {
         </Text>
         <Text color="subtle">
           Download and install Node v18+ from{" "}
-          <StyledLink
-            href="https://nodejs.org/"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <Link href="https://nodejs.org/" target="_blank" rel="noreferrer">
             nodejs.org
-          </StyledLink>{" "}
+          </Link>{" "}
           or with{" "}
-          <StyledLink
+          <Link
             href="https://nodejs.org/en/download/package-manager"
             target="_blank"
             rel="noreferrer"
           >
             a package manager
-          </StyledLink>
+          </Link>
           .
         </Text>
       </Grid>
@@ -580,13 +575,13 @@ const ExportContent = () => {
           </Text>
           <Text color="subtle">
             Run this command to publish to{" "}
-            <StyledLink
+            <Link
               href={deployTargets[deployTarget].docs}
               target="_blank"
               rel="noreferrer"
             >
               {humanizeString(deployTarget)}
-            </StyledLink>{" "}
+            </Link>{" "}
           </Text>
         </Grid>
 
@@ -629,13 +624,13 @@ const ExportContent = () => {
       <Grid columns={1} gap={1}>
         <Text color="subtle">
           Read the detailed documentation{" "}
-          <StyledLink
+          <Link
             href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
             target="_blank"
             rel="noreferrer"
           >
             here
-          </StyledLink>
+          </Link>
         </Text>
       </Grid>
     </Grid>
