@@ -35,8 +35,9 @@ const useUnsupportedBrowser = () => {
   const [message, setMessage] = useState<ReactNode>();
   useEffect(() => {
     if ("chrome" in window || isFeatureEnabled("unsupportedBrowsers")) {
-      //return;
+      return;
     }
+
     setMessage(
       <>
         The Webstudio Builder UI currently supports any{" "}
