@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Alert } from "./alert";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -21,13 +21,21 @@ const useTooSmallMessage = () => {
 };
 
 const useUnsupportedBrowser = () => {
-  const [message, setMessage] = useState<string>();
+  const [message, setMessage] = useState<ReactNode>();
   useEffect(() => {
     if ("chrome" in window || isFeatureEnabled("unsupportedBrowsers")) {
       return;
     }
     setMessage(
-      "Webstudio currently supports Google Chrome and Microsoft Edge. We plan to support more browsers in the near future."
+      <>
+        The Webstudio Builder UI currently supports Chromium-based browsers such
+        as Google Chrome and Microsoft Edge. We plan to support more browsers in
+        the near future.
+        <br />
+        <br />
+        The website you're building should function correctly across all
+        browsers.
+      </>
     );
   }, []);
   return message;
