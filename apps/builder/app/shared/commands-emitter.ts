@@ -61,7 +61,7 @@ const findCommandsMatchingHotkeys = (event: KeyboardEvent) => {
   }
 
   const commandMetas = $commandMetas.get();
-  let matchingCommands = new Set<CommandMeta<string>>();
+  const matchingCommands = new Set<CommandMeta<string>>();
   for (const commandMeta of commandMetas.values()) {
     if (commandMeta.defaultHotkeys === undefined) {
       continue;
