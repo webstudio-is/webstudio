@@ -24,7 +24,7 @@ import {
   type Params,
   type WsComponentMeta,
   normalizeProps,
-  getRemixRoute,
+  generateRemixRoute,
   generateRemixParams,
 } from "@webstudio-is/react-sdk";
 import type {
@@ -512,7 +512,7 @@ ${utilsExport}
       https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
     */
 
-    const fileName = getRemixRoute(pathname);
+    const fileName = generateRemixRoute(pathname);
 
     const routeFileContent = routeFileTemplate.replace(
       "../__generated__/index",

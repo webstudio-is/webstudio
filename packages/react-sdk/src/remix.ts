@@ -2,6 +2,10 @@ const getRemixSegment = (segment: string) => {
   if (segment === "*") {
     return "$";
   }
+  // matches following examples
+  // :name
+  // :name?
+  // :name*
   const match = segment.match(/^:(?<name>\w+)(?<modifier>\*|\?)?$/);
   const name = match?.groups?.name;
   const modifier = match?.groups?.modifier;
@@ -17,7 +21,16 @@ const getRemixSegment = (segment: string) => {
   return `[${segment}]`;
 };
 
-export const getRemixRoute = (pathname: string) => {
+/**
+ * transforms url pattern subset to remix route format
+ *
+ * /:name/ -> .$name. - named dynamic segment
+ * /:name?/ -> .($name). - optional dynamic segment
+ * /* -> .$ - splat in the end of pattern
+ * /:name* -> .$ - named splat which gets specified name at runtime
+ *
+ */
+export const generateRemixRoute = (pathname: string) => {
   if (pathname.startsWith("/")) {
     pathname = pathname.slice(1);
   }
