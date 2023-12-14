@@ -67,6 +67,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           <PropertyName
             title={label}
             style={currentStyle}
+            description="Animate the transition between states on this instance."
             properties={[property]}
             label={
               <SectionTitleLabel color={layersStyleSource}>
