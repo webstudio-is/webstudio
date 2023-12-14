@@ -389,7 +389,7 @@ const FormFields = ({
                   Path
                   <Tooltip
                     content={
-                      "Path may contain dynamic parameters '/:name/rest' or wildcard with the rest of url in the end '/*' or '/:name*'"
+                      "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
                     }
                     variant="wrapped"
                   >

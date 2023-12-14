@@ -57,7 +57,7 @@ export const validatePathnamePattern = (pathname: string) => {
   const namedGroupsWithPlus = Array.from(pathname.matchAll(/:\w+\+/g)).flat();
   if (namedGroupsWithPlus.length > 0) {
     const list = namedGroupsWithPlus.map((item) => `'${item}'`).join(", ");
-    messages.push(`+ modifier is not allowed at ${list}`);
+    messages.push(`Dynamic parameters ${list} shouldn't have the + modifier.`);
   }
 
   // :name* in the middle
@@ -67,9 +67,7 @@ export const validatePathnamePattern = (pathname: string) => {
   ).flat();
   if (namedGroupsWithAsterisk.length > 0) {
     const list = namedGroupsWithAsterisk.map((item) => `'${item}'`).join(", ");
-    messages.push(
-      `* modifier is not allowed at ${list} and can be used only in the end`
-    );
+    messages.push(`${list} should end the path.`);
   }
 
   // *? everywhere
@@ -77,7 +75,7 @@ export const validatePathnamePattern = (pathname: string) => {
     pathname.matchAll(/\*\?/g)
   ).flat();
   if (wildcardGroupsWithQuestion.length > 0) {
-    messages.push(`? modifier is not allowed on wildcard group at '*?'`);
+    messages.push(`Optional wildcard '*?' is not allowed.`);
   }
 
   // * in the middle
@@ -88,7 +86,7 @@ export const validatePathnamePattern = (pathname: string) => {
     pathname.matchAll(/(?<!:\w+)\*(?!\?)(?!$)/g)
   ).flat();
   if (wildcardGroups.length > 0) {
-    messages.push(`Wildcard group '*' is allowed only in the end`);
+    messages.push(`Wildcard '*' should end the path.`);
   }
 
   // show segment errors only when syntax is valid
@@ -100,11 +98,15 @@ export const validatePathnamePattern = (pathname: string) => {
     const group = segment.match(/(?<group>:\w+(\*|\?)?)/)?.groups?.group;
     if (group) {
       if (group.length !== segment.length) {
-        messages.push(`Cannot use named group at '${segment}'`);
+        messages.push(
+          `Static parts cannot be mixed with dynamic parameters at '${segment}'.`
+        );
       }
     } else if (segment.includes("*")) {
       if (segment.length > 1) {
-        messages.push(`Cannot use wildcard at '${segment}'`);
+        messages.push(
+          `Static parts cannot be mixed with dynamic parameters at '${segment}'.`
+        );
       }
     }
   }

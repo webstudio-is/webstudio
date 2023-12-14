@@ -89,54 +89,54 @@ test("validate named groups with optional modifier", () => {
 
 test('validate "one or more" named group modifier', () => {
   expect(validatePathnamePattern("/:name+/:slug+")).toEqual([
-    "+ modifier is not allowed at ':name+', ':slug+'",
+    "Dynamic parameters ':name+', ':slug+' shouldn't have the + modifier.",
   ]);
 });
 
 test('validate "zero or more" named group modifier', () => {
   expect(validatePathnamePattern("/:name*")).toEqual([]);
   expect(validatePathnamePattern("/:name*/:another*/:slug*")).toEqual([
-    "* modifier is not allowed at ':name*', ':another*' and can be used only in the end",
+    "':name*', ':another*' should end the path.",
   ]);
 });
 
 test("validate wildcard groups", () => {
   expect(validatePathnamePattern("/*")).toEqual([]);
   expect(validatePathnamePattern("/*?/*?")).toEqual([
-    `? modifier is not allowed on wildcard group at '*?'`,
+    `Optional wildcard '*?' is not allowed.`,
   ]);
   expect(validatePathnamePattern("/*/*")).toEqual([
-    `Wildcard group '*' is allowed only in the end`,
+    `Wildcard '*' should end the path.`,
   ]);
   expect(validatePathnamePattern("/*/last")).toEqual([
-    `Wildcard group '*' is allowed only in the end`,
+    `Wildcard '*' should end the path.`,
   ]);
   expect(validatePathnamePattern("/*?/*/last")).toEqual([
-    `? modifier is not allowed on wildcard group at '*?'`,
-    `Wildcard group '*' is allowed only in the end`,
+    `Optional wildcard '*?' is not allowed.`,
+    `Wildcard '*' should end the path.`,
   ]);
 });
 
 test("forbid wildcard group with static parts before", () => {
   expect(validatePathnamePattern("/blog-*")).toEqual([
-    `Cannot use wildcard at 'blog-*'`,
+    `Static parts cannot be mixed with dynamic parameters at 'blog-*'.`,
   ]);
 });
 
 test(`forbid named group with "zero or more" modifier and static parts before`, () => {
   expect(validatePathnamePattern("/blog-:slug*")).toEqual([
-    `Cannot use named group at 'blog-:slug*'`,
+    `Static parts cannot be mixed with dynamic parameters at 'blog-:slug*'.`,
   ]);
 });
 
 test(`forbid named group with static parts before or after`, () => {
   expect(validatePathnamePattern("/prefix-:id")).toEqual([
-    `Cannot use named group at 'prefix-:id'`,
+    `Static parts cannot be mixed with dynamic parameters at 'prefix-:id'.`,
   ]);
   expect(validatePathnamePattern("/:id-suffix")).toEqual([
-    `Cannot use named group at ':id-suffix'`,
+    `Static parts cannot be mixed with dynamic parameters at ':id-suffix'.`,
   ]);
   expect(validatePathnamePattern("/prefix-:id-suffix")).toEqual([
-    `Cannot use named group at 'prefix-:id-suffix'`,
+    `Static parts cannot be mixed with dynamic parameters at 'prefix-:id-suffix'.`,
   ]);
 });
