@@ -52,8 +52,8 @@ export const PagePath = z
   .refine((path) => path.endsWith("/") === false, "Can't end with a /")
   .refine((path) => path.includes("//") === false, "Can't contain repeating /")
   .refine(
-    (path) => /^[-_a-z0-9*:\\/]*$/.test(path),
-    "Only a-z, 0-9, -, _, /, : and * are allowed"
+    (path) => /^[-_a-z0-9*:?\\/]*$/.test(path),
+    "Only a-z, 0-9, -, _, /, :, ? and * are allowed"
   )
   .refine(
     // We use /s for our system stuff like /s/css or /s/uploads
