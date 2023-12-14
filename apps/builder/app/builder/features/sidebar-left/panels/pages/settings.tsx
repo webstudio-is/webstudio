@@ -35,6 +35,8 @@ import {
   Separator,
   Text,
   ScrollArea,
+  rawTheme,
+  Flex,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -43,6 +45,7 @@ import {
   CheckMarkIcon,
   LinkIcon,
   HomeIcon,
+  HelpIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
@@ -72,7 +75,11 @@ import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
 import env from "~/shared/env";
-import { compilePathnamePattern, parsePathnamePattern } from "./url-pattern";
+import {
+  compilePathnamePattern,
+  parsePathnamePattern,
+  validatePathnamePattern,
+} from "./url-pattern";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -171,13 +178,16 @@ const validateValues = (
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;
   }
-  if (
-    pages !== undefined &&
-    values.path !== undefined &&
-    isPathUnique(pages, pageId, values.path) === false
-  ) {
-    errors.path = errors.path ?? [];
-    errors.path.push("All paths must be unique");
+  if (pages !== undefined && values.path !== undefined) {
+    if (isPathUnique(pages, pageId, values.path) === false) {
+      errors.path = errors.path ?? [];
+      errors.path.push("All paths must be unique");
+    }
+    const messages = validatePathnamePattern(values.path);
+    if (messages.length > 0) {
+      errors.path = errors.path ?? [];
+      errors.path.push(...messages);
+    }
   }
   return errors;
 };
@@ -374,7 +384,22 @@ const FormFields = ({
 
           {values.isHomePage === false && (
             <Grid gap={1}>
-              <Label htmlFor={fieldIds.path}>Path</Label>
+              <Label htmlFor={fieldIds.path}>
+                <Flex align="center" css={{ gap: theme.spacing[3] }}>
+                  Path
+                  <Tooltip
+                    content={
+                      "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
+                    }
+                    variant="wrapped"
+                  >
+                    <HelpIcon
+                      color={rawTheme.colors.foregroundSubtle}
+                      tabIndex={0}
+                    />
+                  </Tooltip>
+                </Flex>
+              </Label>
               <InputErrorsTooltip errors={errors.path}>
                 <InputField
                   tabIndex={1}
