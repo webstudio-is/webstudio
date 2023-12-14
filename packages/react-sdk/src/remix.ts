@@ -42,6 +42,15 @@ export const generateRemixRoute = (pathname: string) => {
   return `${base}${tail}.tsx`;
 };
 
+/**
+ * generates a function to convert remix params to compatible with url pattern groups
+ *
+ * for /:name* pattern
+ * params["*"] is replaced with params["name"]
+ *
+ * for /* pattern
+ * params["*"] is replaced with params[0]
+ */
 export const generateRemixParams = (pathname: string) => {
   const name = pathname.match(/:(?<name>\w+)\*$/)?.groups?.name;
   let generated = "";
