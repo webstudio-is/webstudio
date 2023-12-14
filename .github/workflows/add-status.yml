@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - main
-  pull_request:
+  pull_request_target:
 
 permissions:
-  statuses: write # to fetch code (actions/checkout)
+  statuses: write # This is required for the GitHub Script createCommitStatus to work
 
 jobs:
   add-status:
