@@ -20,7 +20,7 @@
 
 ## Contributing
 
-- [Contributing Guide](https://github.com/webstudio-is/webstudio-community/blob/main/docs/contributing.md)
+- [Contributing Guide](https://github.com/webstudio-is/webstudio-community/tree/main/docs/contributing)
 - [Github Discussions](https://github.com/webstudio-is/webstudio-community/discussions)
 - [Wishlist](https://github.com/webstudio-is/webstudio-community/discussions/categories/wishlist)
 - [Builder Issues Tracker](https://github.com/webstudio-is/webstudio/issues)
