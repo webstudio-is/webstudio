@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Alert } from "./alert";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { styled, theme } from "@webstudio-is/design-system";
 
 const useTooSmallMessage = () => {
   const [message, setMessage] = useState<string>();
@@ -20,21 +21,50 @@ const useTooSmallMessage = () => {
   return message;
 };
 
+// @todo: move to design system
+const Link = styled("a", {
+  color: theme.colors.foregroundLink,
+  "&:visited": {
+    color: theme.colors.foregroundLinkVisited,
+  },
+});
+
 const useUnsupportedBrowser = () => {
   const [message, setMessage] = useState<ReactNode>();
   useEffect(() => {
     if ("chrome" in window || isFeatureEnabled("unsupportedBrowsers")) {
-      return;
+      //return;
     }
     setMessage(
       <>
-        The Webstudio Builder UI currently supports Chromium-based browsers such
-        as Google Chrome and Microsoft Edge. We plan to support more browsers in
-        the near future.
+        The Webstudio Builder UI currently supports any{" "}
+        <Link
+          href="https://en.wikipedia.org/wiki/Chromium_(web_browser)"
+          target="_blank"
+        >
+          Chromium-based
+        </Link>{" "}
+        browsers such as{" "}
+        <Link href="https://www.google.com/chrome" target="_blank">
+          Google Chrome
+        </Link>
+        ,{" "}
+        <Link href="https://www.microsoft.com/en-us/edge" target="_blank">
+          Microsoft Edge
+        </Link>
+        ,{" "}
+        <Link href="https://brave.com/" target="_blank">
+          Brave
+        </Link>
+        ,{" "}
+        <Link href="https://arc.net/" target="_blank">
+          Arc
+        </Link>{" "}
+        and many more. We plan to support Firefox and Safari in the near future.
         <br />
         <br />
         The website you're building should function correctly across all
-        browsers.
+        browsers!
       </>
     );
   }, []);
