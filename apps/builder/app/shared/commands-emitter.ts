@@ -1,4 +1,3 @@
-import { isHotkeyPressed } from "react-hotkeys-hook";
 import { atom } from "nanostores";
 import { $publisher, subscribe } from "~/shared/pubsub";
 import { clientSyncStore } from "~/shared/sync";
@@ -44,33 +43,35 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
 export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 clientSyncStore.register("commandMetas", $commandMetas);
 
-// this is a hack to workaround react-hotkeys-hook implementation
-// of isHotkeyPressed which matches every specified keys
-// even when more keys pressed. This resulted in cmd+z and cmd+shift+z
-// both match when only cmd+z is pressed
-//
-// here find hotkeys which have more keys pressed at a time
-const findCommandsMatchingHeaviestHotkeys = () => {
+const findCommandsMatchingHotkeys = (event: KeyboardEvent) => {
+  const { key, ctrlKey, metaKey, shiftKey, altKey } = event;
+  const pressedKeys = new Set<string>();
+  pressedKeys.add(key.toLocaleLowerCase());
+  if (ctrlKey) {
+    pressedKeys.add("ctrl");
+  }
+  if (metaKey) {
+    pressedKeys.add("meta");
+  }
+  if (shiftKey) {
+    pressedKeys.add("shift");
+  }
+  if (altKey) {
+    pressedKeys.add("altKey");
+  }
+
   const commandMetas = $commandMetas.get();
-  let maxHotkeySize = 0;
-  let matchingCommands = new Set<CommandMeta<string>>();
+  const matchingCommands = new Set<CommandMeta<string>>();
   for (const commandMeta of commandMetas.values()) {
     if (commandMeta.defaultHotkeys === undefined) {
       continue;
     }
     for (const hotkey of commandMeta.defaultHotkeys) {
-      const keys = hotkey.split("+");
-      const hotkeySize = keys.length;
-      if (isHotkeyPressed(keys) === false) {
-        continue;
-      }
-      // reset commands list when found more heavy hotkey
-      if (maxHotkeySize < hotkeySize) {
-        maxHotkeySize = hotkeySize;
-        matchingCommands = new Set();
-      }
-      // hotkey matches haviest one
-      if (maxHotkeySize === hotkeySize) {
+      const keys = hotkey.toLocaleLowerCase().split("+");
+      if (
+        keys.length === pressedKeys.size &&
+        keys.every((key) => pressedKeys.has(key))
+      ) {
         matchingCommands.add(commandMeta);
       }
     }
@@ -128,7 +129,7 @@ export const createCommandsEmitter = <CommandName extends string>({
     const handleKeyDown = (event: KeyboardEvent) => {
       let emitted = false;
       let preventDefault = true;
-      for (const commandMeta of findCommandsMatchingHeaviestHotkeys()) {
+      for (const commandMeta of findCommandsMatchingHotkeys(event)) {
         if (
           commandMeta.disableHotkeyOutsideApp &&
           commandHandlers.has(commandMeta.name) === false
