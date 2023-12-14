@@ -10,7 +10,7 @@ permissions:
   statuses: write # to fetch code (actions/checkout)
 
 jobs:
-  checks:
+  add-status:
     timeout-minutes: 20
 
     env:
