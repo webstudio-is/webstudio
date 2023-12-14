@@ -63,7 +63,8 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   return (
     <Body data-ws-id="EDEfpMPRqDejthtwkH7ws" data-ws-component="Body">
       <Image
@@ -76,6 +77,10 @@ const Page = () => {
 };
 
 export { Page };
+
+export const getRemixParams = ({ ...params }: Params): Params => {
+  return params;
+};
 
 export const pagesPaths = new Set([
   "",

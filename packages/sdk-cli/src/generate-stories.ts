@@ -8,6 +8,7 @@ import {
   createScope,
   parseComponentName,
   getStyleDeclKey,
+  type Page,
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
@@ -85,7 +86,7 @@ const Story = {
 ${css}
       \`}
       </style>
-      <Page />
+      <Page params={{}} />
     </>
   }
 }
@@ -160,7 +161,7 @@ export const generateStories = async () => {
     content += `\n`;
     content += generatePageComponent({
       scope,
-      rootInstanceId,
+      page: { rootInstanceId } as Page,
       instances,
       props: new Map(data.props.map((prop) => [prop.id, prop])),
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),

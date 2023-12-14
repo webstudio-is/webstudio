@@ -1,7 +1,8 @@
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Label as Label } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Label data-ws-id="1" data-ws-component="Label">
@@ -137,7 +138,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} />
       </>
     );
   },

@@ -24,6 +24,8 @@ import {
   type Params,
   type WsComponentMeta,
   normalizeProps,
+  generateRemixRoute,
+  generateRemixParams,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -74,13 +76,6 @@ type SiteDataByPage = {
     params?: Params;
     pages: Array<Page>;
   };
-};
-
-type RemixRoutes = {
-  routes: Array<{
-    path: string;
-    file: string;
-  }>;
 };
 
 export const downloadAsset = async (
@@ -255,10 +250,6 @@ export const prebuild = async (options: {
     throw new Error(`Project domain is missing from the site data`);
   }
 
-  const remixRoutes: RemixRoutes = {
-    routes: [],
-  };
-
   const radixComponentNamespacedMetas = Object.entries(
     radixComponentMetas
   ).reduce(
@@ -287,16 +278,6 @@ export const prebuild = async (options: {
   const siteDataByPage: SiteDataByPage = {};
 
   for (const page of Object.values(siteData.pages)) {
-    const originPath = page.path;
-    const path = originPath === "" ? "index" : originPath.replace("/", "");
-
-    if (path !== "index") {
-      remixRoutes.routes.push({
-        path: originPath === "" ? "/" : originPath,
-        file: `routes/${path}.tsx`,
-      });
-    }
-
     const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIds(
       instanceMap,
@@ -330,7 +311,7 @@ export const prebuild = async (options: {
       }
     }
 
-    siteDataByPage[path] = {
+    siteDataByPage[page.path] = {
       build: {
         props,
         instances,
@@ -341,10 +322,10 @@ export const prebuild = async (options: {
       assets: siteData.assets,
     };
 
-    componentsByPage[path] = new Set();
+    componentsByPage[page.path] = new Set();
     for (const [_instanceId, instance] of instances) {
       if (instance.component) {
-        componentsByPage[path].add(instance.component);
+        componentsByPage[page.path].add(instance.component);
         const meta = metas.get(instance.component);
         if (meta) {
           projectMetas.set(instance.component, meta);
@@ -412,7 +393,7 @@ export const prebuild = async (options: {
     "utf8"
   );
 
-  for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
+  for (const [pathname, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
@@ -425,7 +406,7 @@ export const prebuild = async (options: {
       "projectId",
       "formsProperties",
       "Page",
-      "props",
+      "_props",
     ]);
     const namespaces = new Map<
       string,
@@ -468,7 +449,7 @@ export const prebuild = async (options: {
       componentImports += `import { ${specifiers} } from "${namespace}";\n`;
     }
 
-    const pageData = siteDataByPage[pathName];
+    const pageData = siteDataByPage[pathname];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       site: siteData.build.pages.meta,
@@ -485,7 +466,7 @@ export const prebuild = async (options: {
     });
     const pageComponent = generatePageComponent({
       scope,
-      rootInstanceId,
+      page: pageData.page,
       instances,
       props,
       dataSources,
@@ -514,6 +495,8 @@ ${pageComponent}
 
 export { Page }
 
+${generateRemixParams(pathname)}
+
 ${utilsExport}
 `;
 
@@ -529,13 +512,7 @@ ${utilsExport}
       https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
     */
 
-    const fileName =
-      pathName === "main" || pathName === "index"
-        ? "_index.tsx"
-        : `${pathName
-            .split("/")
-            .map((route) => `[${route}]`)
-            .join(".")}._index.tsx`;
+    const fileName = generateRemixRoute(pathname);
 
     const routeFileContent = routeFileTemplate.replace(
       "../__generated__/index",

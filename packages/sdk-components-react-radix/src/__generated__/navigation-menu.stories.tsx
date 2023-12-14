@@ -17,7 +17,8 @@ import {
   NavigationMenuViewport as NavigationMenuViewport,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [menuValue, set$menuValue] = useState<any>("");
   let onValueChange = (value: any) => {
     menuValue = value;
@@ -1236,7 +1237,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} />
       </>
     );
   },

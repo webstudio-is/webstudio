@@ -79,7 +79,8 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     accordionValue = value;
@@ -206,6 +207,10 @@ const Page = () => {
 };
 
 export { Page };
+
+export const getRemixParams = ({ ...params }: Params): Params => {
+  return params;
+};
 
 export const pagesPaths = new Set([
   "",

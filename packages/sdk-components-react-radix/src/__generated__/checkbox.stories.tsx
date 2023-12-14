@@ -10,7 +10,8 @@ import {
   CheckboxIndicator as CheckboxIndicator,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
   let onCheckedChange = (checked: any) => {
     checkboxChecked = checked;
@@ -261,7 +262,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} />
       </>
     );
   },

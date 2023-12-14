@@ -4,6 +4,7 @@ import {
   createScope,
   type DataSource,
   type Instance,
+  type Page,
   type Prop,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "./props";
@@ -560,7 +561,7 @@ test("generate page component with variables and actions", () => {
   expect(
     generatePageComponent({
       scope: createScope(),
-      rootInstanceId: "body",
+      page: { rootInstanceId: "body" } as Page,
       instances: new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "input" }]),
         createInstancePair("input", "Input", []),
@@ -599,7 +600,8 @@ test("generate page component with variables and actions", () => {
     })
   ).toEqual(
     clear(`
-      const Page = () => {
+      type Params = Record<string, string | undefined>
+      const Page = (_props: { params: Params }) => {
       let [variableName, set$variableName] = useState<any>("initial")
       let onChange = (value: any) => {
       variableName = value
@@ -624,7 +626,7 @@ test("avoid generating collection parameter variable as state", () => {
   expect(
     generatePageComponent({
       scope: createScope(),
-      rootInstanceId: "body",
+      page: { rootInstanceId: "body" } as Page,
       instances: new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
         createInstancePair("list", collectionComponent, []),
@@ -664,7 +666,8 @@ test("avoid generating collection parameter variable as state", () => {
     })
   ).toEqual(
     clear(`
-    const Page = () => {
+    type Params = Record<string, string | undefined>
+    const Page = (_props: { params: Params }) => {
     let [data, set$data] = useState<any>(["apple","orange","mango"])
     return <Body
     data-ws-id="body"
@@ -674,6 +677,45 @@ test("avoid generating collection parameter variable as state", () => {
     </Fragment>
     )}
     </Body>
+    }
+    `)
+  );
+});
+
+test("generate params variable when present", () => {
+  expect(
+    generatePageComponent({
+      scope: createScope(["params"]),
+      page: { rootInstanceId: "body", pathVariableId: "pathParamsId" } as Page,
+      instances: new Map([createInstancePair("body", "Body", [])]),
+      dataSources: new Map([
+        createDataSourcePair({
+          id: "pathParamsId",
+          scopeInstanceId: "body",
+          type: "parameter",
+          name: "params",
+        }),
+      ]),
+      props: new Map([
+        createPropPair({
+          id: "paramPropId",
+          instanceId: "body",
+          name: "data-slug",
+          type: "expression",
+          value: "$ws$dataSource$pathParamsId.slug",
+        }),
+      ]),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toEqual(
+    clear(`
+    type Params = Record<string, string | undefined>
+    const Page = (_props: { params: Params }) => {
+    let params_1 = _props.params
+    return <Body
+    data-ws-id="body"
+    data-ws-component="Body"
+    data-slug={params_1?.slug} />
     }
     `)
   );

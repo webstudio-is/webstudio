@@ -10,7 +10,8 @@ import {
   TooltipContent as TooltipContent,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [tooltipOpen, set$tooltipOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     tooltipOpen = open;
@@ -258,7 +259,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} />
       </>
     );
   },
