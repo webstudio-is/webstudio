@@ -1,8 +1,13 @@
-import { ChevronDownIcon, WebstudioIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  UploadIcon,
+  WebstudioIcon,
+} from "@webstudio-is/icons";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuPortal,
   DropdownMenuItem,
   DropdownMenuLabel,
   Flex,
@@ -81,20 +86,35 @@ const Menu = ({
           </Flex>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{title}</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-          Logout
-        </DropdownMenuItem>
-
-        {userPlanFeatures.hasSubscription && (
-          <DropdownMenuItem
-            onSelect={() => navigate(userPlanSubscriptionPath())}
-          >
-            Subscriptions
+      <DropdownMenuPortal>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{title}</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
+            Logout
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
+
+          {userPlanFeatures.hasSubscription && (
+            <DropdownMenuItem
+              onSelect={() => navigate(userPlanSubscriptionPath())}
+            >
+              Manage Subscription
+            </DropdownMenuItem>
+          )}
+          {userPlanFeatures.hasProPlan === false && (
+            <DropdownMenuItem
+              onSelect={() => {
+                window.location.assign("https://webstudio.is/pricing");
+              }}
+              css={{
+                gap: theme.spacing[3],
+              }}
+            >
+              <UploadIcon />
+              <div>Upgrade to Pro</div>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
     </DropdownMenu>
   );
 };

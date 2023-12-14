@@ -160,6 +160,7 @@ export * from "./text";
 export * from "./tooltip";
 export * from "./trigger";
 export * from "./twitter";
+export * from "./upload";
 export * from "./video";
 export * from "./viewport";
 export * from "./vimeo";
