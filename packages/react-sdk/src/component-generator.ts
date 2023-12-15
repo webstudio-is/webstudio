@@ -273,6 +273,15 @@ export const generatePageComponent = ({
         generatedDataSources += `let ${valueName} = _props.params\n`;
       }
     }
+    if (dataSource.type === "resource") {
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      // call resource by bound variable name
+      const resourceName = scope.getName(
+        dataSource.resourceId,
+        dataSource.name
+      );
+      generatedDataSources += `let ${valueName} = _props.resources["${resourceName}"]\n`;
+    }
   }
 
   generatedDataSources += dataSourcesBody;
@@ -295,7 +304,8 @@ export const generatePageComponent = ({
 
   let generatedComponent = "";
   generatedComponent += `type Params = Record<string, string | undefined>\n`;
-  generatedComponent += `const Page = (_props: { params: Params }) => {\n`;
+  generatedComponent += `type Resources = Record<string, unknown>\n`;
+  generatedComponent += `const Page = (_props: { params: Params, resources: Resources }) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

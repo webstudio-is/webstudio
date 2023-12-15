@@ -297,7 +297,7 @@ const Outlet = () => {
         pagesPaths,
       }}
     >
-      <Page params={params} />
+      <Page params={params} resources={{}} />
     </ReactSdkContext.Provider>
   );
 };
