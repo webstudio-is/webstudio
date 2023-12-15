@@ -122,6 +122,7 @@ type Props = {
 } & ComponentProps<typeof StyledLabel>;
 
 export const isLabelButton = (color: Props["color"]) =>
+  color === "default" ||
   color === "preset" ||
   color === "local" ||
   color === "overwritten" ||
