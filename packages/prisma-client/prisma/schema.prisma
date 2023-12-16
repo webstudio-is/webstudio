@@ -175,6 +175,7 @@ model Build {
   styleSourceSelections String @default("[]")
   props                 String @default("[]")
   dataSources           String @default("[]")
+  resources             String @default("[]")
   instances             String @default("[]")
 
   deployment    String?

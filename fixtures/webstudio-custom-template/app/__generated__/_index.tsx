@@ -44,7 +44,8 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "0d856812-61d8-4014-a20a-82e01c0eb8ee";
 
 type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   return (
     <Body data-ws-id="ibXgMoi9_ipHx1gVrvii0" data-ws-component="Body">
       <Heading data-ws-id="7pwqBSgrfuuOfk1JblWcL" data-ws-component="Heading">

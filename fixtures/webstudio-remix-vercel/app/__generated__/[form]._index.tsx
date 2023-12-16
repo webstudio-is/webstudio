@@ -73,7 +73,8 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
   let onStateChange = (state: any) => {

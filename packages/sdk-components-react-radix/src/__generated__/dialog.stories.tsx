@@ -16,7 +16,8 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   let [dialogOpen, set$dialogOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     dialogOpen = open;
@@ -412,7 +413,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page params={{}} />
+        <Page params={{}} resources={{}} />
       </>
     );
   },

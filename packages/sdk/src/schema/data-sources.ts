@@ -40,6 +40,13 @@ export const DataSource = z.union([
     scopeInstanceId: z.optional(z.string()),
     name: z.string(),
   }),
+  z.object({
+    type: z.literal("resource"),
+    id: DataSourceId,
+    scopeInstanceId: z.optional(z.string()),
+    name: z.string(),
+    resourceId: z.string(),
+  }),
 ]);
 
 export type DataSource = z.infer<typeof DataSource>;
