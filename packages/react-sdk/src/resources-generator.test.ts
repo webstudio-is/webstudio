@@ -49,7 +49,7 @@ test("generate getjson resource loader", () => {
       const [
       resourceName,
       ] = await Promise.all([
-      _getjson(\"https://my-json.com\"),
+      _getjson("https://my-json.com"),
       ])
       return {
       resourceName,

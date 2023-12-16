@@ -528,10 +528,10 @@ ${utilsExport}
     const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = routeFileTemplate
-      .replace('../__generated__/index"', `../__generated__/${remixRoute}\"`)
+      .replace('../__generated__/index"', `../__generated__/${remixRoute}"`)
       .replace(
         '../__generated__/index.server"',
-        `../__generated__/${remixRoute}.server\"`
+        `../__generated__/${remixRoute}.server"`
       );
 
     await ensureFileInPath(join(routesDir, fileName), routeFileContent);
