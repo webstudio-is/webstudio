@@ -172,7 +172,7 @@ export const $propValuesByInstanceSelector = computed(
       }
 
       const propValues = new Map<Prop["name"], unknown>();
-      let props = propsByInstanceId.get(instanceId);
+      const props = propsByInstanceId.get(instanceId);
       const parameters = new Map<Prop["name"], DataSource["id"]>();
       if (props) {
         for (const prop of props) {
