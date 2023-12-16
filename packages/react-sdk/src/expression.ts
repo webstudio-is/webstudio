@@ -185,6 +185,31 @@ export const decodeDataSourceVariable = (name: string) => {
   return;
 };
 
+export const generateExpression = ({
+  expression,
+  dataSources,
+  scope,
+}: {
+  expression: string;
+  dataSources: DataSources;
+  scope: Scope;
+}) => {
+  return validateExpression(expression, {
+    // parse any expression
+    effectful: true,
+    // transpile to safely executable member expressions
+    optional: true,
+    transformIdentifier: (identifier) => {
+      const depId = decodeDataSourceVariable(identifier);
+      const dep = depId ? dataSources.get(depId) : undefined;
+      if (dep) {
+        return scope.getName(dep.id, dep.name);
+      }
+      return identifier;
+    },
+  });
+};
+
 /*
 
 // header

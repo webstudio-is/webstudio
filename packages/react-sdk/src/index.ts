@@ -31,3 +31,4 @@ export {
   generateJsxElement,
   generateJsxChildren,
 } from "./component-generator";
+export { generateResourcesLoader } from "./resources-generator";
