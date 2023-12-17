@@ -344,7 +344,7 @@ export const typography = {
   },
   monoBoldLink: {
     fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
-    fontWeight: 500,
+    fontWeight: 700,
     fontSize: "12px",
     lineHeight: "16px",
     letterSpacing: "0em",
