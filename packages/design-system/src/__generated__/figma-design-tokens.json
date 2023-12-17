@@ -1496,7 +1496,7 @@
     "Mono Bold Link": {
       "value": {
         "fontFamily": "{fontFamilies.roboto-mono}",
-        "fontWeight": "{fontWeights.roboto-mono-3}",
+        "fontWeight": "{fontWeights.roboto-mono-4}",
         "lineHeight": "{lineHeights.0}",
         "fontSize": "{fontSize.2}",
         "letterSpacing": "{letterSpacing.2}",
