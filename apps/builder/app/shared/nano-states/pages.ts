@@ -2,8 +2,10 @@ import { atom, computed } from "nanostores";
 import type { Page, Pages } from "@webstudio-is/sdk";
 
 export const pagesStore = atom<undefined | Pages>(undefined);
+export const $pages = pagesStore;
 
 export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
+export const $selectedPageId = selectedPageIdStore;
 export const selectedPageHashStore = atom<string>("");
 
 export const selectedPageStore = computed(
@@ -18,3 +20,4 @@ export const selectedPageStore = computed(
     return pages.pages.find((page) => page.id === selectedPageId);
   }
 );
+export const $selectedPage = selectedPageStore;

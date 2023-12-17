@@ -14,7 +14,6 @@ type InstanceSelector = Instance["id"][];
 export type WebstudioComponentProps = {
   instance: Instance;
   instanceSelector: Instance["id"][];
-  children: ReactNode;
   components: Components;
 };
 
@@ -43,18 +42,10 @@ export const createElementsTree = ({
   }
 
   const rootInstanceSelector = [rootInstanceId];
-  const children = createInstanceChildrenElements({
-    instances,
-    instanceSelector: rootInstanceSelector,
-    Component,
-    children: rootInstance.children,
-    components,
-  });
   const root = createInstanceElement({
     Component,
     instance: rootInstance,
     instanceSelector: rootInstanceSelector,
-    children,
     components,
   });
   return (
@@ -82,7 +73,7 @@ const renderText = (text: string): Array<JSX.Element> => {
   ));
 };
 
-const createInstanceChildrenElements = ({
+export const createInstanceChildrenElements = ({
   instances,
   instanceSelector,
   children,
@@ -108,18 +99,10 @@ const createInstanceChildrenElements = ({
       continue;
     }
     const childInstanceSelector = [child.value, ...instanceSelector];
-    const children = createInstanceChildrenElements({
-      instances,
-      instanceSelector: childInstanceSelector,
-      children: childInstance.children,
-      Component,
-      components,
-    });
     const element = createInstanceElement({
       instance: childInstance,
       instanceSelector: childInstanceSelector,
       Component,
-      children,
       components,
     });
     elements.push(element);
@@ -135,7 +118,6 @@ const createInstanceElement = ({
   Component,
   instance,
   instanceSelector,
-  children,
   components,
 }: {
   instance: Instance;
@@ -143,7 +125,6 @@ const createInstanceElement = ({
   Component: ForwardRefExoticComponent<
     WebstudioComponentProps & RefAttributes<HTMLElement>
   >;
-  children?: ReactNode;
   components: Components;
 }) => {
   return (
@@ -152,8 +133,6 @@ const createInstanceElement = ({
       instance={instance}
       instanceSelector={instanceSelector}
       components={components}
-    >
-      {children}
-    </Component>
+    />
   );
 };

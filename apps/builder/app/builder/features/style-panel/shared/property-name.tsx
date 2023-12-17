@@ -37,11 +37,13 @@ import {
 import { humanizeString } from "~/shared/string-utils";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { StyleSourceBadge } from "../style-source";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
 // We don't return source name only in case of preset or default value.
 const getSourceName = (
   styleSources: StyleSources,
   styleValueInfo: StyleValueInfo,
+  meta?: WsComponentMeta,
   selectedStyleSource?: StyleSource
 ) => {
   if (styleValueInfo.nextSource) {
@@ -55,10 +57,20 @@ const getSourceName = (
     }
   }
 
-  if (styleValueInfo.local) {
+  if (styleValueInfo.local || styleValueInfo.stateless) {
     return selectedStyleSource?.type === "token"
       ? selectedStyleSource.name
       : "Local";
+  }
+
+  if (styleValueInfo.stateful) {
+    const selector = styleValueInfo.stateful.state;
+    const state =
+      meta?.states?.find((item) => item.selector === selector)?.label ??
+      humanizeString(selector);
+    return selectedStyleSource?.type === "token"
+      ? `${selectedStyleSource.name} (${state})`
+      : `Local (${state})`;
   }
 
   if (styleValueInfo.previousSource) {
@@ -148,10 +160,12 @@ const TooltipContent = ({
     if (styleValueInfo === undefined) {
       continue;
     }
+    const meta = instance ? metas.get(instance.component) : undefined;
 
     const sourceName = getSourceName(
       styleSources,
       styleValueInfo,
+      meta,
       selectedStyleSource
     );
 
@@ -168,11 +182,8 @@ const TooltipContent = ({
     breakpointSet.add(`${breakpointName}`);
 
     let instanceTitle: undefined | string;
-    if (instance) {
-      const meta = metas.get(instance.component);
-      if (meta) {
-        instanceTitle = getInstanceLabel(instance, meta);
-      }
+    if (instance && meta) {
+      instanceTitle = getInstanceLabel(instance, meta);
     }
     if (styleValueInfo.inherited && styleValueInfo.local === undefined) {
       const localInstance = instances.get(styleValueInfo.inherited.instanceId);
@@ -232,7 +243,11 @@ const TooltipContent = ({
             ))}
 
             {Array.from(styleSourceNameSet).map((sourceName) => (
-              <StyleSourceBadge key={sourceName} source="token" variant="small">
+              <StyleSourceBadge
+                key={sourceName}
+                source={sourceName === "Local" ? "local" : "token"}
+                variant="small"
+              >
                 {sourceName}
               </StyleSourceBadge>
             ))}

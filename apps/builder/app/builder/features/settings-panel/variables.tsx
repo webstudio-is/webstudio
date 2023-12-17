@@ -33,21 +33,21 @@ import {
 import type { DataSource, Prop } from "@webstudio-is/sdk";
 import {
   PropMeta,
+  collectionComponent,
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   validateExpression,
 } from "@webstudio-is/react-sdk";
 import {
-  dataSourcesStore,
-  propsStore,
-  selectedInstanceSelectorStore,
+  $dataSources,
+  $instances,
+  $props,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { CodeEditor } from "./code-editor";
 import type { PropValue } from "./shared";
 import { getStartingValue } from "./props-section/use-props-logic";
-
-type VariableDataSource = Extract<DataSource, { type: "variable" }>;
 
 /**
  * convert value expression to js value
@@ -82,6 +82,12 @@ const parseVariableValue = (code: string) => {
   return result;
 };
 
+const renameVariable = (variable: DataSource, name: string) => {
+  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
+    dataSources.set(variable.id, { ...variable, name });
+  });
+};
+
 const saveVariable = (
   dataSourceId: string = nanoid(),
   name: string,
@@ -92,13 +98,16 @@ const saveVariable = (
     return { error };
   }
 
-  const instanceSelector = selectedInstanceSelectorStore.get();
+  const instanceSelector = $selectedInstanceSelector.get();
   if (instanceSelector === undefined) {
     return;
   }
   const [instanceId] = instanceSelector;
-  serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
-    let variableValue: VariableDataSource["value"] = { type: "json", value };
+  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
+    let variableValue: Extract<DataSource, { type: "variable" }>["value"] = {
+      type: "json",
+      value,
+    };
     if (typeof value === "string") {
       variableValue = { type: "string", value };
     }
@@ -124,7 +133,7 @@ const VariablePanel = ({
   variable,
   onBack,
 }: {
-  variable?: VariableDataSource;
+  variable?: DataSource;
   onBack: () => void;
 }) => {
   // variable value cannot have an access to other variables
@@ -133,7 +142,9 @@ const VariablePanel = ({
   const [name, setName] = useState(variable?.name ?? "");
   const [nameErrors, setNameErrors] = useState<undefined | string[]>();
   const [value, setValue] = useState(
-    JSON.stringify(variable?.value.value ?? "")
+    JSON.stringify(
+      variable?.type === "variable" ? variable?.value.value ?? "" : ""
+    )
   );
   const [valueErrors, setValueErrors] = useState<undefined | string[]>();
 
@@ -177,18 +188,21 @@ const VariablePanel = ({
             />
           </InputErrorsTooltip>
         </Flex>
-        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-          <Label>Value</Label>
-          <InputErrorsTooltip errors={valueErrors}>
-            <div>
-              <CodeEditor
-                variables={variables}
-                defaultValue={value}
-                onChange={setValue}
-              />
-            </div>
-          </InputErrorsTooltip>
-        </Flex>
+        {/* only value variables (new and existing) can have value field */}
+        {(variable === undefined || variable.type === "variable") && (
+          <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+            <Label>Value</Label>
+            <InputErrorsTooltip errors={valueErrors}>
+              <div>
+                <CodeEditor
+                  variables={variables}
+                  defaultValue={value}
+                  onChange={setValue}
+                />
+              </div>
+            </InputErrorsTooltip>
+          </Flex>
+        )}
         <Flex justify="end" css={{ gap: theme.spacing[5] }}>
           <Button color="neutral" onClick={onBack}>
             Cancel
@@ -199,11 +213,18 @@ const VariablePanel = ({
                 setNameErrors([`Variable name is required`]);
                 return;
               }
-              const result = saveVariable(variable?.id, name, value);
-              if (result?.error !== undefined) {
-                setValueErrors([result.error]);
+              if (variable === undefined || variable.type === "variable") {
+                const result = saveVariable(variable?.id, name, value);
+                if (result?.error !== undefined) {
+                  setValueErrors([result.error]);
+                  return;
+                }
+                onBack();
                 return;
               }
+
+              // only rename any other type of variable
+              renameVariable(variable, name);
               onBack();
             }}
           >
@@ -216,15 +237,24 @@ const VariablePanel = ({
 };
 
 const $selectedInstanceVariables = computed(
-  [selectedInstanceSelectorStore, dataSourcesStore],
-  (instanceSelector, dataSources) => {
-    const matchedVariables: VariableDataSource[] = [];
+  [$selectedInstanceSelector, $dataSources, $instances],
+  (instanceSelector, dataSources, instances) => {
+    const matchedVariables: DataSource[] = [];
     if (instanceSelector === undefined) {
       return matchedVariables;
     }
     for (const dataSource of dataSources.values()) {
+      const [instanceId] = instanceSelector;
+      // prevent showing "item" parameter on collection component
+      // to avoid circular undefined variable runtime error
       if (
-        dataSource.type === "variable" &&
+        dataSource.type === "parameter" &&
+        instanceId === dataSource.scopeInstanceId &&
+        instances.get(instanceId)?.component === collectionComponent
+      ) {
+        continue;
+      }
+      if (
         dataSource.scopeInstanceId !== undefined &&
         instanceSelector.includes(dataSource.scopeInstanceId)
       ) {
@@ -250,7 +280,7 @@ const EmptyList = ({ onAdd }: { onAdd: () => void }) => {
   );
 };
 
-const $usedVariables = computed([propsStore], (props) => {
+const $usedVariables = computed([$props], (props) => {
   const usedVariables = new Set<DataSource["id"]>();
   for (const prop of props.values()) {
     if (prop.type === "expression") {
@@ -290,8 +320,8 @@ const $usedVariables = computed([propsStore], (props) => {
   return usedVariables;
 });
 
-const deleteVariable = (variable: VariableDataSource) => {
-  serverSyncStore.createTransaction([dataSourcesStore], (dataSources) => {
+const deleteVariable = (variable: DataSource) => {
+  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
     dataSources.delete(variable.id);
   });
 };
@@ -307,15 +337,17 @@ const ListItem = ({
   index: number;
   selected: boolean;
   deletable: boolean;
-  variable: VariableDataSource;
+  variable: DataSource;
   onSelect: (variableId: DataSource["id"]) => void;
-  onEdit: (variable: VariableDataSource) => void;
+  onEdit: (variable: DataSource) => void;
 }) => {
   return (
     <CssValueListItem
       label={
         <Label truncate>
-          {variable.name}: {JSON.stringify(variable.value.value)}
+          {variable.type === "variable"
+            ? `${variable.name}: ${JSON.stringify(variable.value.value)}`
+            : variable.name}
         </Label>
       }
       id={variable.id}
@@ -349,7 +381,7 @@ const ListItem = ({
 };
 
 const getExpressionVariables = (expression: string) => {
-  const variableIds = new Set<VariableDataSource["id"]>();
+  const variableIds = new Set<DataSource["id"]>();
   if (expression === "") {
     return variableIds;
   }
@@ -374,13 +406,13 @@ const setPropValue = ({
   propName: Prop["name"];
   propValue: PropValue;
 }) => {
-  const instanceSelector = selectedInstanceSelectorStore.get();
+  const instanceSelector = $selectedInstanceSelector.get();
   if (instanceSelector === undefined) {
     return;
   }
   const [instanceId] = instanceSelector;
 
-  serverSyncStore.createTransaction([propsStore], (props) => {
+  serverSyncStore.createTransaction([$props], (props) => {
     let prop = propId === undefined ? undefined : props.get(propId);
     // create new prop or update existing one
     if (prop === undefined) {
@@ -400,7 +432,7 @@ const ListPanel = ({
 }: {
   prop: undefined | Prop;
   onAdd: () => void;
-  onEdit: (variable: VariableDataSource) => void;
+  onEdit: (variable: DataSource) => void;
   onChange: (value: undefined | PropValue) => void;
 }) => {
   const matchedVariables = useStore($selectedInstanceVariables);
@@ -440,7 +472,10 @@ const ListPanel = ({
                 variable={variable}
                 // mark all variables used in expression as selected
                 selected={exoressionVariables.has(variable.id)}
-                deletable={usedVariables.has(variable.id) === false}
+                deletable={
+                  variable.type === "variable" &&
+                  usedVariables.has(variable.id) === false
+                }
                 onSelect={() =>
                   // convert variable to expression
                   onChange({
@@ -512,7 +547,7 @@ export const VariablesPanel = ({
   const prop = useStore(
     useMemo(
       () =>
-        computed(propsStore, (props) => {
+        computed($props, (props) => {
           if (propId) {
             return props.get(propId);
           }
@@ -522,9 +557,7 @@ export const VariablesPanel = ({
   );
 
   const [view, setView] = useState<
-    | { name: "list" }
-    | { name: "add" }
-    | { name: "edit"; variable: VariableDataSource }
+    { name: "list" } | { name: "add" } | { name: "edit"; variable: DataSource }
   >({ name: "list" });
   if (view.name === "add") {
     return (
@@ -560,7 +593,7 @@ export const VariablesPanel = ({
       });
     } else if (propId !== undefined) {
       // delete prop when not possible to infer default value from meta
-      serverSyncStore.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([$props], (props) => {
         props.delete(propId);
       });
     }

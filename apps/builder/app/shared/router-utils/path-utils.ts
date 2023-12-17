@@ -87,6 +87,13 @@ export const loginPath = (params: {
 
 export const logoutPath = () => "/logout";
 
+export const userPlanSubscriptionPath = () => {
+  const urlSearchParams = new URLSearchParams();
+  urlSearchParams.set("return_url", window.location.href);
+
+  return `/n8n/billing_portal/sessions?${urlSearchParams.toString()}`;
+};
+
 export const authCallbackPath = ({
   provider,
 }: {

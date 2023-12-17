@@ -45,7 +45,7 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["CodeText"],
   states: defaultStates,
   presetStyle,
-  order: 8,
+  order: 9,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -25,9 +25,21 @@ const createRouter = (element: JSX.Element) =>
     },
   ]);
 
+const userPlanFeatures = {
+  hasProPlan: false,
+  hasSubscription: false,
+  allowShareAdminLinks: false,
+  maxDomainsAllowedPerUser: 5,
+};
+
 export const Empty: ComponentStory<typeof Dashboard> = () => {
   const router = createRouter(
-    <Dashboard user={user} projects={[]} projectTemplates={[]} />
+    <Dashboard
+      user={user}
+      projects={[]}
+      projectTemplates={[]}
+      userPlanFeatures={userPlanFeatures}
+    />
   );
   return <RouterProvider router={router} />;
 };
@@ -46,7 +58,12 @@ export const WithProjects: ComponentStory<typeof Dashboard> = () => {
     },
   ];
   const router = createRouter(
-    <Dashboard user={user} projects={projects} projectTemplates={projects} />
+    <Dashboard
+      user={user}
+      projects={projects}
+      projectTemplates={projects}
+      userPlanFeatures={userPlanFeatures}
+    />
   );
   return <RouterProvider router={router} />;
 };

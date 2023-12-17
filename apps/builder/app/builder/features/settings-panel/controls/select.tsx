@@ -8,6 +8,7 @@ export const SelectControl = ({
   prop,
   propName,
   deletable,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"select", "string">) => {
@@ -23,7 +24,11 @@ export const SelectControl = ({
     <VerticalLayout
       label={
         <Box css={{ position: "relative" }}>
-          <Label htmlFor={id} description={meta.description}>
+          <Label
+            htmlFor={id}
+            description={meta.description}
+            readOnly={readOnly}
+          >
             {getLabel(meta, propName)}
           </Label>
           <VariablesButton
@@ -39,6 +44,7 @@ export const SelectControl = ({
       <Flex css={{ py: theme.spacing[2] }}>
         <Select
           id={id}
+          disabled={readOnly}
           value={prop?.value}
           options={options}
           getLabel={humanizeString}

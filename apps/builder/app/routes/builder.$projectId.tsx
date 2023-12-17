@@ -78,6 +78,11 @@ export const loader = async ({
 
     const authToken = url.searchParams.get("authToken") ?? undefined;
 
+    const { userPlanFeatures } = context;
+    if (userPlanFeatures === undefined) {
+      throw new Error("User plan features are not defined");
+    }
+
     return {
       project,
       domains,
@@ -85,6 +90,7 @@ export const loader = async ({
       assets: assets.map((asset) => [asset.id, asset]),
       authToken,
       authPermit,
+      userPlanFeatures,
     };
   } catch (error) {
     if (error instanceof AuthorizationError) {

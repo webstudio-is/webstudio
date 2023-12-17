@@ -32,9 +32,10 @@ const topbarContainerStyle = css({
 type TopbarProps = {
   gridArea: string;
   project: Project;
+  hasProPlan: boolean;
 };
 
-export const Topbar = ({ gridArea, project }: TopbarProps) => {
+export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
   const page = useStore(selectedPageStore);
 
   return (
@@ -68,7 +69,7 @@ export const Topbar = ({ gridArea, project }: TopbarProps) => {
           <ViewMode />
           <SyncStatus />
           <PreviewButton />
-          <ShareButton projectId={project.id} />
+          <ShareButton projectId={project.id} hasProPlan={hasProPlan} />
           <PublishButton projectId={project.id} />
         </ToolbarToggleGroup>
       </Toolbar>

@@ -2,6 +2,7 @@ import { expect, test } from "@jest/globals";
 import {
   getMapValuesBy,
   getMapValuesByKeysSet,
+  groupBy,
   removeByMutable,
 } from "./array-utils";
 
@@ -61,4 +62,13 @@ test("getMapValuesBy", () => {
   expect(
     getMapValuesBy(map, (value) => value.includes("3") || value.includes("5"))
   ).toEqual(["value3", "value5"]);
+});
+
+test("groupBy", () => {
+  expect(groupBy([1, 2, 3, 4, 5], (item) => item % 2)).toEqual(
+    new Map([
+      [0, [2, 4]],
+      [1, [1, 3, 5]],
+    ])
+  );
 });

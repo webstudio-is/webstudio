@@ -30,6 +30,10 @@ export const renderControl = ({
     return;
   }
 
+  if (meta.control === "json" && (prop === undefined || prop.type === "json")) {
+    return <JsonControl meta={meta} prop={prop} {...rest} />;
+  }
+
   if (
     meta.control === "text" &&
     (prop === undefined || prop.type === "string")

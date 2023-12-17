@@ -8,7 +8,7 @@ import {
 import equal from "fast-deep-equal";
 import type { PropMeta } from "@webstudio-is/react-sdk";
 import type { Prop, Asset } from "@webstudio-is/sdk";
-import { SubtractIcon } from "@webstudio-is/icons";
+import { HelpIcon, SubtractIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,
   Label as BaseLabel,
@@ -20,6 +20,7 @@ import {
   Text,
   theme,
   type CSS,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 
@@ -52,6 +53,7 @@ export type ControlProps<Control, PropType> = {
   prop: PropByType<PropType> | undefined;
   propName: string;
   deletable: boolean;
+  readOnly: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
   onDelete: () => void;
 };
@@ -84,6 +86,7 @@ type LabelProps = ComponentPropsWithoutRef<typeof BaseLabel> & {
   children: string;
   description?: string;
   openOnClick?: boolean;
+  readOnly?: boolean;
 };
 
 export const Label = ({
@@ -91,29 +94,52 @@ export const Label = ({
   children,
   description,
   openOnClick = false,
+  readOnly,
   ...rest
 }: LabelProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  let label: ReactNode;
+
   if (description == null) {
-    return <SimpleLabel htmlFor={htmlFor}>{children}</SimpleLabel>;
+    label = <SimpleLabel htmlFor={htmlFor}>{children}</SimpleLabel>;
+  } else {
+    label = (
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        content={
+          <Flex
+            direction="column"
+            gap="2"
+            css={{ maxWidth: theme.spacing[28] }}
+          >
+            <Text variant="titles">{children}</Text>
+            <Text>{description}</Text>
+          </Flex>
+        }
+      >
+        <BaseLabel truncate htmlFor={htmlFor} {...rest}>
+          {children}
+        </BaseLabel>
+      </Tooltip>
+    );
   }
 
   return (
-    <Tooltip
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      content={
-        <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-          <Text variant="titles">{children}</Text>
-          <Text>{description}</Text>
-        </Flex>
-      }
-    >
-      <BaseLabel truncate htmlFor={htmlFor} {...rest}>
-        {children}
-      </BaseLabel>
-    </Tooltip>
+    <Flex align="center" css={{ gap: theme.spacing[3] }}>
+      {label}
+      {readOnly && (
+        <Tooltip
+          content={
+            "The value is controlled by an expression and cannot be changed."
+          }
+          variant="wrapped"
+        >
+          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+        </Tooltip>
+      )}
+    </Flex>
   );
 };
 

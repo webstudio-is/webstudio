@@ -4,24 +4,19 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
-import {
-  createScope,
-  type Assets,
-  type DataSource,
-  type DataSources,
-  type Instance,
-  type Prop,
-  type Props,
-  type StyleDecl,
-  type Styles,
-  type StyleSource,
-  type StyleSources,
-  type StyleSourceSelections,
+import type {
+  Assets,
+  DataSource,
+  DataSources,
+  Instance,
+  Prop,
+  Props,
+  StyleDecl,
+  Styles,
+  StyleSource,
+  StyleSources,
+  StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import {
-  encodeDataSourceVariable,
-  generateDataSources,
-} from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { shallowComputed } from "../store-utils";
@@ -33,6 +28,7 @@ import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-
 import type { Project } from "@webstudio-is/project";
 
 export const projectStore = atom<Project | undefined>();
+export const $project = projectStore;
 
 export const $domains = atom<string[]>([]);
 
@@ -47,11 +43,14 @@ export const rootInstanceStore = computed(
 );
 
 export const dataSourcesStore = atom<DataSources>(new Map());
+export const $dataSources = dataSourcesStore;
 export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
+export const $dataSourceVariables = dataSourceVariablesStore;
 
 export const propsStore = atom<Props>(new Map());
+export const $props = propsStore;
 export const propsIndexStore = computed(propsStore, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
   for (const prop of props.values()) {
@@ -68,77 +67,8 @@ export const propsIndexStore = computed(propsStore, (props) => {
   };
 });
 
-// result of executing generated code
-// includes variables, computed expressions and action callbacks
-export const dataSourcesLogicStore = computed(
-  [dataSourcesStore, dataSourceVariablesStore, propsStore],
-  (dataSources, dataSourceVariables, props) => {
-    const { variables, body, output } = generateDataSources({
-      scope: createScope(["_getVariable", "_setVariable", "_output"]),
-      dataSources,
-      props,
-    });
-    let generatedCode = "";
-    for (const [dataSourceId, variable] of variables) {
-      const { valueName, setterName } = variable;
-      const initialValue = JSON.stringify(variable.initialValue);
-      generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
-      generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
-    }
-    generatedCode += body;
-    generatedCode += `let _output = new Map();\n`;
-    for (const [dataSourceId, variableName] of output) {
-      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
-    }
-    generatedCode += `return _output\n`;
-
-    try {
-      const executeFn = new Function(
-        "_getVariable",
-        "_setVariable",
-        generatedCode
-      );
-      const getVariable = (id: string) => {
-        return dataSourceVariables.get(id);
-      };
-      const setVariable = (id: string, value: unknown) => {
-        const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-        dataSourceVariables.set(id, value);
-        dataSourceVariablesStore.set(dataSourceVariables);
-      };
-      return executeFn(getVariable, setVariable);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-    return new Map();
-  }
-);
-
-export const computeExpression = (
-  expression: string,
-  variables: Map<DataSource["id"], unknown>
-) => {
-  let code = "";
-  for (const [id, value] of variables) {
-    // @todo pass dedicated map of variables without actions
-    // skip actions
-    if (typeof value === "function") {
-      continue;
-    }
-    const identifier = encodeDataSourceVariable(id);
-    code += `const ${identifier} = ${JSON.stringify(value)};\n`;
-  }
-  code += `return (${expression})`;
-  try {
-    const result = new Function(code)();
-    return result;
-  } catch {
-    // empty block
-  }
-};
-
 export const stylesStore = atom<Styles>(new Map());
+export const $styles = stylesStore;
 
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   const instanceStylesStore = useMemo(() => {
@@ -154,10 +84,12 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
 };
 
 export const styleSourcesStore = atom<StyleSources>(new Map());
+export const $styleSources = styleSourcesStore;
 
 export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
   new Map()
 );
+export const $styleSourceSelections = styleSourceSelectionsStore;
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
@@ -211,6 +143,7 @@ export const stylesIndexStore = computed(
 );
 
 export const assetsStore = atom<Assets>(new Map());
+export const $assets = assetsStore;
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
@@ -334,6 +267,13 @@ export const selectedStyleSourceStore = computed(
     );
   }
 );
+export const $selectedStyleSource = selectedStyleSourceStore;
+
+/**
+ * Store the list of active states inferred from dom element
+ * to display style values as remote
+ */
+export const $selectedInstanceStates = atom(new Set<string>());
 
 export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined

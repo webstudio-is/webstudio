@@ -16,10 +16,12 @@ import {
 } from "@webstudio-is/design-system";
 import { decodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import {
+  $propValuesByInstanceSelector,
   dataSourceVariablesStore,
   dataSourcesStore,
   propsIndexStore,
   propsStore,
+  selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
@@ -96,19 +98,20 @@ const renderProperty = (
     component,
     instanceId,
   }: PropsSectionProps,
-  { prop, propName, meta }: PropAndMeta,
+  { prop, propName, meta, readOnly }: PropAndMeta,
   deletable?: boolean
 ) => (
   // fix the issue with changing type while binding expression
   // old prop value is getting preserved in useLocalValue and saved into variable
   // to reproduce try to edit body id prop and then bind json variable to it
-  <Fragment key={prop?.type ?? ""}>
+  <Fragment key={(prop?.type ?? "") + propName}>
     {renderControl({
       key: propName,
       instanceId,
       meta,
       prop,
       propName,
+      readOnly,
       deletable: deletable ?? false,
       onDelete: () => {
         if (prop) {
@@ -216,10 +219,17 @@ export const PropsSectionContainer = ({
     selectedInstance: instance,
   });
   const { propsByInstanceId } = useStore(propsIndexStore);
+  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const propValues = propValuesByInstanceSelector.get(
+    JSON.stringify(instanceSelector)
+  );
 
   const logic = usePropsLogic({
     instance,
     props: propsByInstanceId.get(instance.id) ?? [],
+    propValues,
+
     updateProp: (update) => {
       const props = propsStore.get();
       const prop = props.get(update.id);
@@ -257,6 +267,7 @@ export const PropsSectionContainer = ({
         });
       }
     },
+
     deleteProp: (propId) => {
       serverSyncStore.createTransaction([propsStore], (props) => {
         props.delete(propId);

@@ -3,7 +3,6 @@ import { createWriteStream } from "node:fs";
 import {
   rm,
   access,
-  mkdtemp,
   rename,
   cp,
   readFile,
@@ -11,7 +10,6 @@ import {
   readdir,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
-import { tmpdir } from "node:os";
 import { cwd } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pLimit from "p-limit";
@@ -26,6 +24,8 @@ import {
   type Params,
   type WsComponentMeta,
   normalizeProps,
+  generateRemixRoute,
+  generateRemixParams,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -78,25 +78,21 @@ type SiteDataByPage = {
   };
 };
 
-type RemixRoutes = {
-  routes: Array<{
-    path: string;
-    file: string;
-  }>;
-};
-
 export const downloadAsset = async (
   url: string,
   name: string,
-  assetBaseUrl: string,
-  temporaryDir: string
+  assetBaseUrl: string
 ) => {
   const assetPath = join("public", assetBaseUrl, name);
-  const tempAssetPath = join(temporaryDir, name);
+  // fs.rename cannot be used to move a file to a different mount point or drive
+  // Error: EXDEV: cross-device link not permitted
+  const tempAssetPath = `${assetPath}.tmp`;
 
   try {
     await access(assetPath);
   } catch {
+    await ensureFolderExists(dirname(assetPath));
+
     try {
       const response = await fetch(url);
       if (!response.ok) {
@@ -114,7 +110,6 @@ export const downloadAsset = async (
         writableStream
       );
 
-      await ensureFolderExists(dirname(assetPath));
       await rename(tempAssetPath, assetPath);
     } catch (error) {
       console.error(`Error in downloading file ${name} \n ${error}`);
@@ -199,8 +194,14 @@ export const prebuild = async (options: {
    **/
   template?: string;
 }) => {
+  if (options.template === undefined) {
+    throw new Error(
+      `\n Template is not provided \n Please check webstudio --help for more details`
+    );
+  }
+
   if (
-    options.template !== undefined &&
+    options.template !== "vanilla" &&
     (await isCliTemplate(options.template)) === false &&
     options.template.startsWith(".") === false
   ) {
@@ -224,7 +225,7 @@ export const prebuild = async (options: {
 
   await copyTemplates();
 
-  if (options.template !== undefined) {
+  if (options.template !== "vanilla") {
     await copyTemplates(options.template);
   }
 
@@ -248,10 +249,6 @@ export const prebuild = async (options: {
   if (domain === undefined) {
     throw new Error(`Project domain is missing from the site data`);
   }
-
-  const remixRoutes: RemixRoutes = {
-    routes: [],
-  };
 
   const radixComponentNamespacedMetas = Object.entries(
     radixComponentMetas
@@ -281,16 +278,6 @@ export const prebuild = async (options: {
   const siteDataByPage: SiteDataByPage = {};
 
   for (const page of Object.values(siteData.pages)) {
-    const originPath = page.path;
-    const path = originPath === "" ? "index" : originPath.replace("/", "");
-
-    if (path !== "index") {
-      remixRoutes.routes.push({
-        path: originPath === "" ? "/" : originPath,
-        file: `routes/${path}.tsx`,
-      });
-    }
-
     const instanceMap = new Map(siteData.build.instances);
     const pageInstanceSet = findTreeInstanceIds(
       instanceMap,
@@ -324,7 +311,7 @@ export const prebuild = async (options: {
       }
     }
 
-    siteDataByPage[path] = {
+    siteDataByPage[page.path] = {
       build: {
         props,
         instances,
@@ -335,10 +322,10 @@ export const prebuild = async (options: {
       assets: siteData.assets,
     };
 
-    componentsByPage[path] = new Set();
+    componentsByPage[page.path] = new Set();
     for (const [_instanceId, instance] of instances) {
       if (instance.component) {
-        componentsByPage[path].add(instance.component);
+        componentsByPage[page.path].add(instance.component);
         const meta = metas.get(instance.component);
         if (meta) {
           projectMetas.set(instance.component, meta);
@@ -360,8 +347,6 @@ export const prebuild = async (options: {
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
-  const temporaryDir = await mkdtemp(join(tmpdir(), "webstudio-"));
-
   const imageLoader = createImageLoader({
     imageBaseUrl: assetBuildUrl,
   });
@@ -375,9 +360,7 @@ export const prebuild = async (options: {
         });
 
         assetsToDownload.push(
-          limit(() =>
-            downloadAsset(imageSrc, asset.name, assetBaseUrl, temporaryDir)
-          )
+          limit(() => downloadAsset(imageSrc, asset.name, assetBaseUrl))
         );
       }
 
@@ -387,8 +370,7 @@ export const prebuild = async (options: {
             downloadAsset(
               `${assetBuildUrl}${asset.name}`,
               asset.name,
-              assetBaseUrl,
-              temporaryDir
+              assetBaseUrl
             )
           )
         );
@@ -411,7 +393,7 @@ export const prebuild = async (options: {
     "utf8"
   );
 
-  for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
+  for (const [pathname, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
@@ -424,7 +406,7 @@ export const prebuild = async (options: {
       "projectId",
       "formsProperties",
       "Page",
-      "props",
+      "_props",
     ]);
     const namespaces = new Map<
       string,
@@ -467,7 +449,7 @@ export const prebuild = async (options: {
       componentImports += `import { ${specifiers} } from "${namespace}";\n`;
     }
 
-    const pageData = siteDataByPage[pathName];
+    const pageData = siteDataByPage[pathname];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       site: siteData.build.pages.meta,
@@ -484,7 +466,7 @@ export const prebuild = async (options: {
     });
     const pageComponent = generatePageComponent({
       scope,
-      rootInstanceId,
+      page: pageData.page,
       instances,
       props,
       dataSources,
@@ -513,6 +495,8 @@ ${pageComponent}
 
 export { Page }
 
+${generateRemixParams(pathname)}
+
 ${utilsExport}
 `;
 
@@ -528,13 +512,7 @@ ${utilsExport}
       https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
     */
 
-    const fileName =
-      pathName === "main" || pathName === "index"
-        ? "_index.tsx"
-        : `${pathName
-            .split("/")
-            .map((route) => `[${route}]`)
-            .join(".")}._index.tsx`;
+    const fileName = generateRemixRoute(pathname);
 
     const routeFileContent = routeFileTemplate.replace(
       "../__generated__/index",

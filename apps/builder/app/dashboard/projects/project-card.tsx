@@ -175,13 +175,14 @@ const useProjectCard = () => {
 type ProjectCardProps = Pick<
   DashboardProject,
   "id" | "title" | "domain" | "isPublished"
->;
+> & { hasProPlan: boolean };
 
 export const ProjectCard = ({
   id,
   title,
   domain,
   isPublished,
+  hasProPlan,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -258,6 +259,7 @@ export const ProjectCard = ({
         isOpen={isShareDialogOpen}
         onOpenChange={setIsShareDialogOpen}
         projectId={id}
+        hasProPlan={hasProPlan}
       />
     </Box>
   );
@@ -268,7 +270,7 @@ export const ProjectTemplateCard = ({
   title,
   domain,
   isPublished,
-}: ProjectCardProps) => {
+}: Omit<ProjectCardProps, "hasProPlan">) => {
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
 

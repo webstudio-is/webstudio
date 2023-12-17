@@ -160,6 +160,7 @@ export { TextIcon } from "./text";
 export { TooltipIcon } from "./tooltip";
 export { TriggerIcon } from "./trigger";
 export { TwitterIcon } from "./twitter";
+export { UploadIcon } from "./upload";
 export { VideoIcon } from "./video";
 export { ViewportIcon } from "./viewport";
 export { VimeoIcon } from "./vimeo";

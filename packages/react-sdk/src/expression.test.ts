@@ -7,6 +7,9 @@ import {
 } from "./expression";
 import { createScope } from "@webstudio-is/sdk";
 
+const toMap = <T extends { id: string }>(list: T[]) =>
+  new Map(list.map((item) => [item.id, item]));
+
 test("allow literals and array expressions", () => {
   expect(
     validateExpression(`["", '', 0, true, false, null, undefined]`)
@@ -292,4 +295,30 @@ test("generate function for empty action", () => {
   `);
   expect(generated.variables).toEqual(new Map());
   expect(generated.output).toEqual(new Map([["prop1", "onChange"]]));
+});
+
+test("prevent generating parameter variables", () => {
+  const generated = generateDataSources({
+    scope: createScope(),
+    dataSources: toMap([
+      {
+        id: "dataSourceid",
+        scopeInstanceId: "instanceId",
+        type: "parameter",
+        name: "myParameter",
+      },
+    ]),
+    props: toMap([
+      {
+        id: "propId",
+        instanceId: "instanceId",
+        type: "expression",
+        name: "value",
+        value: "$ws$dataSource$dataSourceId",
+      },
+    ]),
+  });
+  expect(generated.body).toEqual("");
+  expect(generated.variables).toEqual(new Map());
+  expect(generated.output).toEqual(new Map());
 });

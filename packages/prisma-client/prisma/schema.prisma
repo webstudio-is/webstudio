@@ -61,6 +61,7 @@ model User {
   projects         Project[]
   clientReferences ClientReferences[]
   checkout         TransactionLog[]
+  products         UserProduct[]
 }
 
 // User client references in external services like stripe etc
@@ -83,39 +84,68 @@ model Product {
   images      String[]
   meta        Json
 
-  createdAt DateTime         @default(now())
-  checkout  TransactionLog[]
+  createdAt    DateTime         @default(now())
+  checkout     TransactionLog[]
+  userProducts UserProduct[]
 }
 
 model TransactionLog {
   // Stripe event id (debug and idempotency purposes)
-  eventId   String
-  // Stripe session id (debug and idempotency purposes)
-  sessionId String
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  // paid
-  status    String
+  eventId String @id
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
   createdAt DateTime @default(now())
 
+  eventData Json? @default(dbgenerated())
+
+  eventType    String? @default(dbgenerated())
+  eventCreated Int?    @default(dbgenerated())
+
+  // paid
+  status String? @default(dbgenerated())
+
+  customerId    String? @default(dbgenerated())
+  customerEmail String? @default(dbgenerated())
+
+  subscriptionId String? @default(dbgenerated())
+
+  // Used for Refund
+  paymentIntent String? @default(dbgenerated())
+
   @@unique([eventId, productId])
-  @@unique([sessionId, productId])
+}
+
+view UserProduct {
+  userId         String
+  user           User    @relation(fields: [userId], references: [id])
+  productId      String
+  product        Product @relation(fields: [productId], references: [id])
+  // subscriptionId and customerId not null for subscriptions
+  subscriptionId String?
+  customerId     String?
+  // Easier to debug
+  customerEmail  String?
+
+  @@unique([userId, productId])
 }
 
 model Project {
-  id            String                 @id @default(uuid())
-  createdAt     DateTime               @default(now())
-  title         String
-  domain        String                 @unique
-  user          User?                  @relation(fields: [userId], references: [id])
-  userId        String?
-  build         Build[]
-  isDeleted     Boolean                @default(false)
-  files         File[]
-  projectDomain ProjectDomain[]
-  latestBuild   LatestBuildPerProject?
+  id                 String                 @id @default(uuid())
+  createdAt          DateTime               @default(now())
+  title              String
+  domain             String                 @unique
+  user               User?                  @relation(fields: [userId], references: [id])
+  userId             String?
+  build              Build[]
+  isDeleted          Boolean                @default(false)
+  files              File[]
+  projectDomain      ProjectDomain[]
+  latestBuild        LatestBuildPerProject?
+  authorizationToken AuthorizationToken[]
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -145,6 +175,7 @@ model Build {
   styleSourceSelections String @default("[]")
   props                 String @default("[]")
   dataSources           String @default("[]")
+  resources             String @default("[]")
   instances             String @default("[]")
 
   deployment    String?
@@ -162,13 +193,14 @@ enum AuthorizationRelation {
 
 model AuthorizationToken {
   token     String                @default(uuid())
-  // No relation to Project, as the Authorization system is not tied to a project
   projectId String
+  project   Project               @relation(fields: [projectId], references: [id])
   name      String                @default("")
   relation  AuthorizationRelation @default(viewers)
   createdAt DateTime              @default(now())
 
   @@id([token, projectId])
+  @@unique([token])
 }
 
 enum DomainStatus {

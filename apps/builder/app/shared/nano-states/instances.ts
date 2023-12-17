@@ -7,6 +7,7 @@ export const isResizingCanvasStore = atom(false);
 export const selectedInstanceSelectorStore = atom<undefined | InstanceSelector>(
   undefined
 );
+export const $selectedInstanceSelector = selectedInstanceSelectorStore;
 
 export const editingItemIdStore = atom<undefined | string>(undefined);
 
@@ -15,6 +16,7 @@ export const textEditingInstanceSelectorStore = atom<
 >();
 
 export const instancesStore = atom<Instances>(new Map());
+export const $instances = instancesStore;
 
 export const selectedInstanceStore = computed(
   [instancesStore, selectedInstanceSelectorStore],

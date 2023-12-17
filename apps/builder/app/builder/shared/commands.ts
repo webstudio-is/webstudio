@@ -1,5 +1,6 @@
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
+  $dataSources,
   $isPreviewMode,
   editingItemIdStore,
   instancesStore,
@@ -11,12 +12,18 @@ import {
   $breakpointsMenuView,
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
-import { onCopy, onPaste } from "~/shared/copy-paste/plugin-instance";
-import { deleteInstance } from "~/shared/instance-utils";
+import {
+  deleteInstance,
+  findAvailableDataSources,
+  getInstancesSlice,
+  insertInstancesSliceCopy,
+  isInstanceDetachable,
+} from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { $publisher } from "~/shared/pubsub";
 import { $activeSidebarPanel } from "./nano-states";
+import { toast } from "@webstudio-is/design-system";
 
 const makeBreakpointCommand = <CommandName extends string>(
   name: CommandName,
@@ -157,7 +164,52 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
-        onPaste(onCopy() ?? "");
+        const instanceSelector = selectedInstanceSelectorStore.get();
+        if (instanceSelector === undefined) {
+          return;
+        }
+        if (isInstanceDetachable(instanceSelector) === false) {
+          toast.error(
+            "This instance can not be moved outside of its parent component."
+          );
+          return;
+        }
+        // @todo tell user they can't copy or cut root
+        if (instanceSelector.length === 1) {
+          return;
+        }
+        // body is not allowed to copy
+        // so clipboard always have at least two level instance selector
+        const [targetInstanceId, parentInstanceId] = instanceSelector;
+        const parentInstanceSelector = instanceSelector.slice(1);
+        const slice = getInstancesSlice(targetInstanceId);
+        insertInstancesSliceCopy({
+          slice,
+          availableDataSources: findAvailableDataSources(
+            $dataSources.get(),
+            parentInstanceSelector
+          ),
+          beforeTransactionEnd: (rootInstanceId, draft) => {
+            const parentInstance = draft.instances.get(parentInstanceId);
+            if (parentInstance === undefined) {
+              return;
+            }
+            // put after current instance
+            const indexWithinChildren = parentInstance.children.findIndex(
+              (child) => child.type === "id" && child.value === targetInstanceId
+            );
+            const position = indexWithinChildren + 1;
+            parentInstance.children.splice(position, 0, {
+              type: "id",
+              value: rootInstanceId,
+            });
+            // select new instance
+            selectedInstanceSelectorStore.set([
+              rootInstanceId,
+              ...parentInstanceSelector,
+            ]);
+          },
+        });
       },
     },
     {

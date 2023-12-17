@@ -4,29 +4,32 @@ import {
   type ForwardedRef,
   useRef,
   useLayoutEffect,
-  useContext,
   useMemo,
-  createContext,
+  Fragment,
+  type ReactNode,
 } from "react";
 import { Suspense, lazy } from "react";
-import { computed, type Atom, atom } from "nanostores";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRefs } from "@react-aria/utils";
 import type { Instance, Instances, Prop } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import {
+  type WebstudioComponentProps,
   idAttribute,
   componentAttribute,
   showAttribute,
   selectorIdAttribute,
   indexAttribute,
   getIndexesWithinAncestors,
-  type WebstudioComponentProps,
+  createInstanceChildrenElements,
+  collectionComponent,
+  type AnyComponent,
 } from "@webstudio-is/react-sdk";
 import {
-  computeExpression,
-  dataSourcesLogicStore,
+  $propValuesByInstanceSelector,
+  getIndexedInstanceId,
   instancesStore,
   registeredComponentMetasStore,
   selectedInstanceRenderStateStore,
@@ -95,6 +98,20 @@ const ContentEditable = ({
   return renderComponentWithRef(ref);
 };
 
+const StubComponent = forwardRef<HTMLDivElement, { children?: ReactNode }>(
+  (props, ref) => {
+    return (
+      <div
+        {...props}
+        ref={ref}
+        style={{ display: props.children ? "contents" : "block" }}
+      />
+    );
+  }
+);
+
+StubComponent.displayName = "StubComponent";
+
 // this utility is temporary solution to compute instance selectors
 // for rich text subtree which cannot have slots so its safe to traverse ancestors
 // until editor instance is reached
@@ -137,52 +154,29 @@ const $indexesWithinAncestors = computed(
   }
 );
 
-export const WebstudioComponentContext = createContext<{
-  propsByInstanceIdStore: Atom<Map<Instance["id"], Prop[]>>;
-}>({
-  propsByInstanceIdStore: atom(new Map()),
-});
-
-const useInstanceProps = (instanceId: Instance["id"]) => {
-  const { propsByInstanceIdStore } = useContext(WebstudioComponentContext);
+const useInstanceProps = (instanceSelector: InstanceSelector) => {
+  const instanceSelectorKey = JSON.stringify(instanceSelector);
+  const [instanceId] = instanceSelector;
   const instancePropsObjectStore = useMemo(() => {
     return computed(
-      [propsByInstanceIdStore, dataSourcesLogicStore, $indexesWithinAncestors],
-      (propsByInstanceId, dataSourcesLogic, indexesWithinAncestors) => {
+      [$propValuesByInstanceSelector, $indexesWithinAncestors],
+      (propValuesByInstanceSelector, indexesWithinAncestors) => {
         const instancePropsObject: Record<Prop["name"], unknown> = {};
         const index = indexesWithinAncestors.get(instanceId);
         if (index !== undefined) {
           instancePropsObject[indexAttribute] = index.toString();
         }
-        const instanceProps = propsByInstanceId.get(instanceId);
-        if (instanceProps === undefined) {
-          return instancePropsObject;
-        }
-        for (const prop of instanceProps) {
-          // asset and page are normalized to string
-          if (prop.type === "asset" || prop.type === "page") {
-            continue;
+        const instanceProps =
+          propValuesByInstanceSelector.get(instanceSelectorKey);
+        if (instanceProps) {
+          for (const [name, value] of instanceProps) {
+            instancePropsObject[name] = value;
           }
-          if (prop.type === "expression") {
-            const value = computeExpression(prop.value, dataSourcesLogic);
-            if (value !== undefined) {
-              instancePropsObject[prop.name] = value;
-            }
-            continue;
-          }
-          if (prop.type === "action") {
-            const action = dataSourcesLogic.get(prop.id);
-            if (typeof action === "function") {
-              instancePropsObject[prop.name] = action;
-            }
-            continue;
-          }
-          instancePropsObject[prop.name] = prop.value;
         }
         return instancePropsObject;
       }
     );
-  }, [propsByInstanceIdStore, instanceId]);
+  }, [instanceSelectorKey, instanceId]);
   const instancePropsObject = useStore(instancePropsObjectStore);
   return instancePropsObject;
 };
@@ -250,7 +244,7 @@ const mergeProps = (
 export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
->(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+>(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const rootRef = useRef<null | HTMLDivElement>(null);
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
@@ -261,10 +255,16 @@ export const WebstudioComponentCanvas = forwardRef<
     textEditingInstanceSelectorStore
   );
 
-  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
-    instance.id
-  );
+  const { [showAttribute]: show = true, ...instanceProps } =
+    useInstanceProps(instanceSelector);
 
+  const children = createInstanceChildrenElements({
+    instances,
+    instanceSelector,
+    children: instance.children,
+    Component: WebstudioComponentCanvas,
+    components,
+  });
   /**
    * Prevents edited element from having a size of 0 on the first render.
    * Directly using `children` in Text Edit
@@ -288,15 +288,40 @@ export const WebstudioComponentCanvas = forwardRef<
     }
   });
 
-  const Component = components.get(instance.component);
-
   if (show === false) {
     return <></>;
   }
 
-  if (Component === undefined) {
-    return <></>;
+  if (instance.component === collectionComponent) {
+    const data = instanceProps.data;
+    // render stub component when no data or children
+    if (
+      Array.isArray(data) &&
+      data.length > 0 &&
+      instance.children.length > 0
+    ) {
+      return data.map((_item, index) => {
+        return (
+          <Fragment key={index}>
+            {createInstanceChildrenElements({
+              instances,
+              // create fake indexed id to distinct items for select and hover
+              instanceSelector: [
+                getIndexedInstanceId(instance.id, index),
+                ...instanceSelector,
+              ],
+              children: instance.children,
+              Component: WebstudioComponentCanvas,
+              components,
+            })}
+          </Fragment>
+        );
+      });
+    }
   }
+
+  const Component =
+    components.get(instance.component) ?? (StubComponent as AnyComponent);
 
   const props: {
     [componentAttribute]: string;
@@ -375,12 +400,12 @@ export const WebstudioComponentCanvas = forwardRef<
 export const WebstudioComponentPreview = forwardRef<
   HTMLElement,
   WebstudioComponentProps
->(({ instance, instanceSelector, children, components, ...restProps }, ref) => {
+>(({ instance, instanceSelector, components, ...restProps }, ref) => {
+  const instances = useStore(instancesStore);
   const instanceStyles = useInstanceStyles(instance.id);
   useCssRules({ instanceId: instance.id, instanceStyles });
-  const { [showAttribute]: show = true, ...instanceProps } = useInstanceProps(
-    instance.id
-  );
+  const { [showAttribute]: show = true, ...instanceProps } =
+    useInstanceProps(instanceSelector);
   const props = {
     ...mergeProps(restProps, instanceProps, "merge"),
     [idAttribute]: instance.id,
@@ -389,13 +414,48 @@ export const WebstudioComponentPreview = forwardRef<
   if (show === false) {
     return <></>;
   }
+
+  if (instance.component === collectionComponent) {
+    const data = instanceProps.data;
+    // render stub component when no data or children
+    if (
+      Array.isArray(data) &&
+      data.length > 0 &&
+      instance.children.length > 0
+    ) {
+      return data.map((_item, index) => {
+        return (
+          <Fragment key={index}>
+            {createInstanceChildrenElements({
+              instances,
+              // create fake indexed id to distinct items for select and hover
+              instanceSelector: [
+                getIndexedInstanceId(instance.id, index),
+                ...instanceSelector,
+              ],
+              children: instance.children,
+              Component: WebstudioComponentPreview,
+              components,
+            })}
+          </Fragment>
+        );
+      });
+    }
+  }
+
   const Component = components.get(instance.component);
   if (Component === undefined) {
     return <></>;
   }
   return (
     <Component {...props} ref={ref}>
-      {children}
+      {createInstanceChildrenElements({
+        instances,
+        instanceSelector,
+        children: instance.children,
+        Component: WebstudioComponentPreview,
+        components,
+      })}
     </Component>
   );
 });

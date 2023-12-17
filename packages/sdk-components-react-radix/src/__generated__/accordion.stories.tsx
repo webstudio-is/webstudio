@@ -12,7 +12,9 @@ import {
   AccordionContent as AccordionContent,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     accordionValue = value;
@@ -437,7 +439,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} resources={{}} />
       </>
     );
   },

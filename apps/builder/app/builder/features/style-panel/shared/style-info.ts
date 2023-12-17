@@ -27,6 +27,7 @@ import {
   breakpointsStore,
   styleSourceSelectionsStore,
   registeredComponentMetasStore,
+  $selectedInstanceStates,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -69,9 +70,15 @@ const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
   outlineWidth: { value: 0, type: "unit", unit: "px" },
 };
 
+type StatefulValue = { state: string; value: StyleValue };
+
 export type StyleValueInfo = {
   value: StyleValue;
+  // either stateful and local exist or stateless and local or just local
+  // @todo improve with more clear structure
+  stateful?: StatefulValue;
   local?: StyleValue;
+  stateless?: StyleValue;
   previousSource?: SourceValueInfo;
   nextSource?: SourceValueInfo;
   cascaded?: CascadedValueInfo;
@@ -109,7 +116,12 @@ export const getStyleSource = (
   // show source to use if at least one of control properties matches
   // so user could see if something is set or something is inherited
   for (const info of styleValueInfos) {
-    if (info?.nextSource && info.local) {
+    if (info?.nextSource && (info.local || info.stateful)) {
+      return "overwritten";
+    }
+  }
+  for (const info of styleValueInfos) {
+    if (info?.stateful && info.local) {
       return "overwritten";
     }
   }
@@ -119,26 +131,27 @@ export const getStyleSource = (
     }
   }
   for (const info of styleValueInfos) {
-    if (
-      info?.previousSource !== undefined ||
-      info?.nextSource !== undefined ||
-      info?.cascaded !== undefined
-    ) {
+    if (info?.stateless || info?.stateful) {
       return "remote";
     }
   }
   for (const info of styleValueInfos) {
-    if (info?.preset !== undefined) {
+    if (info?.previousSource || info?.nextSource || info?.cascaded) {
+      return "remote";
+    }
+  }
+  for (const info of styleValueInfos) {
+    if (info?.preset) {
       return "preset";
     }
   }
   for (const info of styleValueInfos) {
-    if (info?.htmlValue !== undefined) {
+    if (info?.htmlValue) {
       return "default";
     }
   }
   for (const info of styleValueInfos) {
-    if (info?.inherited !== undefined) {
+    if (info?.inherited) {
       return "remote";
     }
   }
@@ -153,36 +166,44 @@ for (const [property, value] of Object.entries(properties)) {
   }
 }
 
-const getSelectedStyle = (
+const getLocalStyles = (
   stylesByStyleSourceId: Map<StyleSourceType["id"], StyleDecl[]>,
   breakpointId: string,
-  styleSourceSelector: StyleSourceSelector
+  styleSourceSelector: StyleSourceSelector,
+  activeStates: Set<string>
 ) => {
-  const style: Style = {};
+  const statelessStyles = new Map<StyleProperty, StyleValue>();
+  const localStyles = new Map<StyleProperty, StyleValue>();
+  const statefulStyles = new Map<StyleProperty, StatefulValue>();
   const instanceStyles = stylesByStyleSourceId.get(
     styleSourceSelector.styleSourceId
   );
   if (instanceStyles === undefined) {
-    return style;
+    return { statelessStyles, localStyles, statefulStyles };
   }
   for (const styleDecl of instanceStyles) {
-    // @todo consider making stateless styles remote when state is selected
-    if (
-      styleDecl.breakpointId === breakpointId &&
-      styleDecl.state === undefined
-    ) {
-      style[styleDecl.property] = styleDecl.value;
+    if (styleDecl.breakpointId !== breakpointId) {
+      continue;
+    }
+    if (styleDecl.state === undefined) {
+      if (styleSourceSelector.state === undefined) {
+        localStyles.set(styleDecl.property, styleDecl.value);
+      } else {
+        statelessStyles.set(styleDecl.property, styleDecl.value);
+      }
+    }
+    if (styleDecl.state && activeStates.has(styleDecl.state)) {
+      if (styleDecl.state === styleSourceSelector.state) {
+        localStyles.set(styleDecl.property, styleDecl.value);
+      } else {
+        statefulStyles.set(styleDecl.property, {
+          state: styleDecl.state,
+          value: styleDecl.value,
+        });
+      }
     }
   }
-  for (const styleDecl of instanceStyles) {
-    if (
-      styleDecl.breakpointId === breakpointId &&
-      styleDecl.state === styleSourceSelector.state
-    ) {
-      style[styleDecl.property] = styleDecl.value;
-    }
-  }
-  return style;
+  return { statelessStyles, localStyles, statefulStyles };
 };
 
 /**
@@ -210,7 +231,8 @@ export const getCascadedBreakpointIds = (
 export const getCascadedInfo = (
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   instanceId: string,
-  cascadedBreakpointIds: string[]
+  cascadedBreakpointIds: string[],
+  activeStates: Set<string>
 ) => {
   const cascadedStyle: CascadedProperties = {};
   const instanceStyles = stylesByInstanceId.get(instanceId);
@@ -222,6 +244,18 @@ export const getCascadedInfo = (
       if (
         styleDecl.breakpointId === breakpointId &&
         styleDecl.state === undefined
+      ) {
+        cascadedStyle[styleDecl.property] = {
+          breakpointId,
+          value: styleDecl.value,
+        };
+      }
+    }
+    for (const styleDecl of instanceStyles) {
+      if (
+        styleDecl.breakpointId === breakpointId &&
+        styleDecl.state &&
+        activeStates.has(styleDecl.state)
       ) {
         cascadedStyle[styleDecl.property] = {
           breakpointId,
@@ -250,7 +284,7 @@ export const getInstanceComponent = (
 export const getPresetStyleRule = (
   meta: undefined | WsComponentMeta,
   tagName: HtmlTags,
-  styleSourceSelector?: StyleSourceSelector
+  activeStates: Set<string>
 ) => {
   const presetStyles = meta?.presetStyle?.[tagName];
   if (presetStyles === undefined) {
@@ -258,11 +292,12 @@ export const getPresetStyleRule = (
   }
   const presetStyle: Style = {};
   for (const styleDecl of presetStyles) {
-    // @todo consider making stateless styles remote when state is selected
     if (styleDecl.state === undefined) {
       presetStyle[styleDecl.property] = styleDecl.value;
     }
-    if (styleDecl.state === styleSourceSelector?.state) {
+  }
+  for (const styleDecl of presetStyles) {
+    if (styleDecl.state && activeStates.has(styleDecl.state)) {
       presetStyle[styleDecl.property] = styleDecl.value;
     }
   }
@@ -280,7 +315,8 @@ export const getInheritedInfo = (
   instanceSelector: InstanceSelector,
   selectedInstanceIntanceToTag: Map<Instance["id"], HtmlTags>,
   cascadedBreakpointIds: string[],
-  selectedBreakpointId: string
+  selectedBreakpointId: string,
+  activeStates: Set<string>
 ) => {
   const inheritedStyle: InheritedProperties = {};
   // skip current instance and start with root til parent
@@ -324,8 +360,22 @@ export const getInheritedInfo = (
       for (const styleDecl of ancestorInstanceStyles) {
         if (
           styleDecl.breakpointId === breakpointId &&
-          styleDecl.state === undefined &&
-          inheritableProperties.has(styleDecl.property)
+          inheritableProperties.has(styleDecl.property) &&
+          styleDecl.state === undefined
+        ) {
+          inheritedStyle[styleDecl.property] = {
+            instanceId: ancestorInstance.id,
+            styleSourceId: styleDecl.styleSourceId,
+            value: styleDecl.value,
+          };
+        }
+      }
+      for (const styleDecl of ancestorInstanceStyles) {
+        if (
+          styleDecl.breakpointId === breakpointId &&
+          inheritableProperties.has(styleDecl.property) &&
+          styleDecl.state &&
+          activeStates.has(styleDecl.state)
         ) {
           inheritedStyle[styleDecl.property] = {
             instanceId: ancestorInstance.id,
@@ -344,7 +394,8 @@ export const getPreviousSourceInfo = (
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   selectedInstanceSelector: InstanceSelector,
   selectedStyleSourceSelector: StyleSourceSelector,
-  breakpointId: Breakpoint["id"]
+  breakpointId: Breakpoint["id"],
+  activeStates: Set<string>
 ) => {
   const previousSourceStyle: SourceProperties = {};
   const [selectedInstanceId] = selectedInstanceSelector;
@@ -362,7 +413,21 @@ export const getPreviousSourceInfo = (
   for (const styleDecl of instanceStyles) {
     if (
       styleDecl.breakpointId === breakpointId &&
-      previousSourceIds.includes(styleDecl.styleSourceId)
+      previousSourceIds.includes(styleDecl.styleSourceId) &&
+      styleDecl.state === undefined
+    ) {
+      previousSourceStyle[styleDecl.property] = {
+        styleSourceId: styleDecl.styleSourceId,
+        value: styleDecl.value,
+      };
+    }
+  }
+  for (const styleDecl of instanceStyles) {
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      previousSourceIds.includes(styleDecl.styleSourceId) &&
+      styleDecl.state &&
+      activeStates.has(styleDecl.state)
     ) {
       previousSourceStyle[styleDecl.property] = {
         styleSourceId: styleDecl.styleSourceId,
@@ -378,7 +443,8 @@ export const getNextSourceInfo = (
   stylesByInstanceId: Map<Instance["id"], StyleDecl[]>,
   selectedInstanceSelector: InstanceSelector,
   selectedStyleSourceSelector: StyleSourceSelector,
-  breakpointId: Breakpoint["id"]
+  breakpointId: Breakpoint["id"],
+  activeStates: Set<string>
 ) => {
   const nextSourceStyle: SourceProperties = {};
   const [selectedInstanceId] = selectedInstanceSelector;
@@ -396,7 +462,21 @@ export const getNextSourceInfo = (
   for (const styleDecl of instanceStyles) {
     if (
       styleDecl.breakpointId === breakpointId &&
-      nextSourceIds.includes(styleDecl.styleSourceId)
+      nextSourceIds.includes(styleDecl.styleSourceId) &&
+      styleDecl.state === undefined
+    ) {
+      nextSourceStyle[styleDecl.property] = {
+        styleSourceId: styleDecl.styleSourceId,
+        value: styleDecl.value,
+      };
+    }
+  }
+  for (const styleDecl of instanceStyles) {
+    if (
+      styleDecl.breakpointId === breakpointId &&
+      nextSourceIds.includes(styleDecl.styleSourceId) &&
+      styleDecl.state &&
+      activeStates.has(styleDecl.state)
     ) {
       nextSourceStyle[styleDecl.property] = {
         styleSourceId: styleDecl.styleSourceId,
@@ -427,20 +507,42 @@ const useStyleInfoByInstanceAndStyleSource = (
   const { stylesByInstanceId, stylesByStyleSourceId } =
     useStore(stylesIndexStore);
   const styleSourceSelections = useStore(styleSourceSelectionsStore);
+  const selectedInstanceStates = useStore($selectedInstanceStates);
+  const activeStates = useMemo(() => {
+    const activeStates = new Set(selectedInstanceStates);
+    if (styleSourceSelector?.state !== undefined) {
+      activeStates.add(styleSourceSelector.state);
+    }
+    return activeStates;
+  }, [styleSourceSelector, selectedInstanceStates]);
 
-  const selectedStyle = useMemo(() => {
+  const selectedStyle = useMemo((): {
+    statelessStyles: Map<StyleProperty, StyleValue>;
+    localStyles: Map<StyleProperty, StyleValue>;
+    statefulStyles: Map<StyleProperty, StatefulValue>;
+  } => {
     if (
       selectedBreakpointId === undefined ||
       styleSourceSelector === undefined
     ) {
-      return {};
+      return {
+        statelessStyles: new Map(),
+        localStyles: new Map(),
+        statefulStyles: new Map(),
+      };
     }
-    return getSelectedStyle(
+    return getLocalStyles(
       stylesByStyleSourceId,
       selectedBreakpointId,
-      styleSourceSelector
+      styleSourceSelector,
+      activeStates
     );
-  }, [stylesByStyleSourceId, selectedBreakpointId, styleSourceSelector]);
+  }, [
+    stylesByStyleSourceId,
+    selectedBreakpointId,
+    activeStates,
+    styleSourceSelector,
+  ]);
 
   const cascadedBreakpointIds = useMemo(
     () => getCascadedBreakpointIds(breakpoints, selectedBreakpointId),
@@ -462,7 +564,8 @@ const useStyleInfoByInstanceAndStyleSource = (
       instanceSelector,
       instanceToTag,
       cascadedBreakpointIds,
-      selectedBreakpointId
+      selectedBreakpointId,
+      activeStates
     );
   }, [
     instances,
@@ -472,6 +575,7 @@ const useStyleInfoByInstanceAndStyleSource = (
     selectedBreakpointId,
     instanceSelector,
     instanceToTag,
+    activeStates,
   ]);
 
   const cascadedInfo = useMemo(() => {
@@ -481,9 +585,15 @@ const useStyleInfoByInstanceAndStyleSource = (
     return getCascadedInfo(
       stylesByInstanceId,
       instanceSelector[0],
-      cascadedBreakpointIds
+      cascadedBreakpointIds,
+      activeStates
     );
-  }, [stylesByInstanceId, instanceSelector, cascadedBreakpointIds]);
+  }, [
+    stylesByInstanceId,
+    instanceSelector,
+    cascadedBreakpointIds,
+    activeStates,
+  ]);
 
   const previousSourceInfo = useMemo(() => {
     if (
@@ -498,7 +608,8 @@ const useStyleInfoByInstanceAndStyleSource = (
       stylesByInstanceId,
       instanceSelector,
       styleSourceSelector,
-      selectedBreakpointId
+      selectedBreakpointId,
+      activeStates
     );
   }, [
     styleSourceSelections,
@@ -506,6 +617,7 @@ const useStyleInfoByInstanceAndStyleSource = (
     instanceSelector,
     styleSourceSelector,
     selectedBreakpointId,
+    activeStates,
   ]);
 
   const nextSourceInfo = useMemo(() => {
@@ -521,7 +633,8 @@ const useStyleInfoByInstanceAndStyleSource = (
       stylesByInstanceId,
       instanceSelector,
       styleSourceSelector,
-      selectedBreakpointId
+      selectedBreakpointId,
+      activeStates
     );
   }, [
     styleSourceSelections,
@@ -529,6 +642,7 @@ const useStyleInfoByInstanceAndStyleSource = (
     instanceSelector,
     styleSourceSelector,
     selectedBreakpointId,
+    activeStates,
   ]);
 
   const presetStyle = useMemo(() => {
@@ -541,12 +655,15 @@ const useStyleInfoByInstanceAndStyleSource = (
     if (tagName === undefined || component === undefined) {
       return;
     }
-    return getPresetStyleRule(
-      metas.get(component),
-      tagName,
-      styleSourceSelector
-    );
-  }, [instances, metas, instanceSelector, instanceToTag, styleSourceSelector]);
+    return getPresetStyleRule(metas.get(component), tagName, activeStates);
+  }, [
+    instances,
+    metas,
+    instanceSelector,
+    instanceToTag,
+    activeStates,
+    styleSourceSelector,
+  ]);
 
   const htmlStyle = useMemo(() => {
     const instanceId = instanceSelector?.[0];
@@ -581,9 +698,14 @@ const useStyleInfoByInstanceAndStyleSource = (
       const cascaded = cascadedInfo[property];
       const previousSource = previousSourceInfo[property];
       const nextSource = nextSourceInfo[property];
-      const local = selectedStyle?.[property];
+      const { statelessStyles, localStyles, statefulStyles } = selectedStyle;
+      const stateful = statefulStyles.get(property);
+      const local = localStyles.get(property);
+      const stateless = statelessStyles.get(property);
       const ownValue =
         local ??
+        stateful?.value ??
+        stateless ??
         nextSource?.value ??
         previousSource?.value ??
         cascaded?.value ??
@@ -607,7 +729,9 @@ const useStyleInfoByInstanceAndStyleSource = (
           const currentColor = ownColor ?? inheritedColor ?? defaultValue;
           styleInfoData[property] = {
             value,
+            stateful,
             local,
+            stateless,
             nextSource,
             previousSource,
             cascaded,
@@ -619,7 +743,9 @@ const useStyleInfoByInstanceAndStyleSource = (
         } else {
           styleInfoData[property] = {
             value,
+            stateful,
             local,
+            stateless,
             nextSource,
             previousSource,
             cascaded,

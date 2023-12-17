@@ -17,6 +17,7 @@ export const ColorControl = ({
   prop,
   propName,
   deletable,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"color", "string">) => {
@@ -30,7 +31,11 @@ export const ColorControl = ({
     <ResponsiveLayout
       label={
         <Box css={{ position: "relative" }}>
-          <Label htmlFor={id} description={meta.description}>
+          <Label
+            htmlFor={id}
+            description={meta.description}
+            readOnly={readOnly}
+          >
             {getLabel(meta, propName)}
           </Label>
           <VariablesButton
@@ -45,6 +50,7 @@ export const ColorControl = ({
     >
       <InputField
         id={id}
+        disabled={readOnly}
         value={localValue.value}
         onChange={(event) => localValue.set(event.target.value)}
         onBlur={localValue.save}

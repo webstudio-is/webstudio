@@ -9,6 +9,7 @@ import type {
   StyleSourceSelection,
   Deployment,
   DataSource,
+  Resource,
 } from "@webstudio-is/sdk";
 
 export type Build = {
@@ -25,5 +26,6 @@ export type Build = {
   props: [Prop["id"], Prop][];
   instances: [Instance["id"], Instance][];
   dataSources: [DataSource["id"], DataSource][];
+  resources: [Resource["id"], Resource][];
   deployment?: Deployment | undefined;
 };

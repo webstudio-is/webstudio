@@ -21,7 +21,6 @@ import {
 } from "@webstudio-is/design-system";
 import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -67,12 +66,14 @@ const Permission = ({
 type MenuProps = {
   relation: Relation;
   name: string;
+  hasProPlan: boolean;
   onChangePermission: (relation: Relation) => void;
   onChangeName: (name: string) => void;
   onDelete: () => void;
 };
 
 const Menu = ({
+  hasProPlan,
   relation,
   name,
   onChangePermission,
@@ -80,10 +81,20 @@ const Menu = ({
   onDelete,
 }: MenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [customLinkName, setCustomLinkName] = useState<string>(name);
   const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
     if (checked) {
       onChangePermission(relation);
     }
+  };
+
+  const saveCustomLinkName = () => {
+    if (customLinkName.length === 0) {
+      return;
+    }
+
+    onChangeName(customLinkName);
+    setIsOpen(false);
   };
 
   return (
@@ -106,16 +117,16 @@ const Menu = ({
           <Item>
             <Label>Name</Label>
             <InputField
-              value={name}
-              onChange={(event) => {
-                onChangeName(event.target.value);
-              }}
+              color={customLinkName.length === 0 ? "error" : undefined}
+              value={customLinkName}
+              onChange={(event) => setCustomLinkName(event.target.value.trim())}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
-                  setIsOpen(false);
+                  saveCustomLinkName();
                 }
               }}
-              placeholder="Breakpoint name"
+              onBlur={() => onChangeName(customLinkName)}
+              placeholder="Share Project"
               name="Name"
               autoFocus
             />
@@ -146,7 +157,7 @@ const Menu = ({
               info="Recipients can make any changes but can not publish the site."
             />
 
-            {isFeatureEnabled("adminRole") && (
+            {hasProPlan && (
               <Permission
                 onCheckedChange={handleCheckedChange("administrators")}
                 checked={relation === "administrators"}
@@ -198,6 +209,7 @@ type SharedLinkItemType = LinkOptions & {
     authToken: string;
     mode: "preview" | "edit";
   }) => string;
+  hasProPlan: boolean;
 };
 
 const SharedLinkItem = ({
@@ -208,6 +220,7 @@ const SharedLinkItem = ({
   onChangeName,
   onDelete,
   builderUrl,
+  hasProPlan,
 }: SharedLinkItemType) => {
   const [currentName, setCurrentName] = useState(name);
 
@@ -236,6 +249,7 @@ const SharedLinkItem = ({
           onChangeName(name);
         }}
         onDelete={onDelete}
+        hasProPlan={hasProPlan}
       />
     </Box>
   );
@@ -248,6 +262,7 @@ type ShareProjectProps = {
   onCreate: () => void;
   builderUrl: SharedLinkItemType["builderUrl"];
   isPending: boolean;
+  hasProPlan: boolean;
 };
 
 const animateCollapsibleHeight = keyframes({
@@ -274,11 +289,11 @@ export const ShareProject = ({
   onCreate,
   builderUrl,
   isPending,
+  hasProPlan,
 }: ShareProjectProps) => {
   const items = links.map((link) => (
     <Fragment key={link.token}>
       <SharedLinkItem
-        {...link}
         onChangeRelation={(relation) => {
           onChange({ ...link, relation });
         }}
@@ -289,6 +304,10 @@ export const ShareProject = ({
           onDelete(link);
         }}
         builderUrl={builderUrl}
+        name={link.name}
+        relation={link.relation}
+        token={link.token}
+        hasProPlan={hasProPlan}
       />
       <Separator />
     </Fragment>

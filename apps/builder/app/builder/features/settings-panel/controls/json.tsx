@@ -16,6 +16,7 @@ export const JsonControl = ({
   prop,
   propName,
   deletable,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"json", "json">) => {
@@ -35,7 +36,9 @@ export const JsonControl = ({
     <VerticalLayout
       label={
         <Box css={{ position: "relative" }}>
-          <Label description={meta.description}>{label}</Label>
+          <Label description={meta.description} readOnly={readOnly}>
+            {label}
+          </Label>
           <VariablesButton
             propId={prop?.id}
             propName={propName}
@@ -49,9 +52,12 @@ export const JsonControl = ({
       <Box css={{ py: theme.spacing[2] }}>
         <CodeEditor
           // reset editor every time value is changed
-          key={localValue.value}
+          key={valueString}
+          readOnly={readOnly}
           variables={emptyVariables}
-          defaultValue={localValue.value}
+          // actual local value is not important because code editor
+          // is uncontrolled and has own local value
+          defaultValue={valueString}
           onChange={localValue.set}
           onBlur={localValue.save}
         />

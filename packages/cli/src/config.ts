@@ -53,6 +53,7 @@ export const jsonToGlobalConfig = (json: unknown) => {
 export type GlobalConfig = z.infer<typeof zGlobalConfig>;
 
 export const PROJECT_TEMPALTES = [
+  "vanilla",
   "vercel",
   "netlify-functions",
   "netlify-edge-functions",

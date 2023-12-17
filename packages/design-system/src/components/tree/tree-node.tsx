@@ -392,8 +392,8 @@ export const TreeItemLabel = forwardRef(TreeItemLabelBase);
 
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
-  getItemChildren: (itemId: ItemId) => Data[];
-  isItemHidden: (itemId: ItemId) => boolean;
+  getItemChildren: (itemSelector: ItemSelector) => Data[];
+  isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
   getIsExpanded: (itemSelector: ItemSelector) => boolean;
@@ -433,11 +433,11 @@ export const TreeNode = <Data extends { id: string }>({
     isItemHidden,
   } = commonProps;
 
-  const itemChildren = getItemChildren(itemData.id);
-
   const itemSelector = [itemData.id, ...(parentSelector ?? [])];
 
-  const itemIsHidden = isItemHidden(itemData.id);
+  const itemChildren = getItemChildren(itemSelector);
+
+  const itemIsHidden = isItemHidden(itemSelector);
   // hidden items and root are always expanded
   const isAlwaysExpanded = itemIsHidden || level === 0;
 

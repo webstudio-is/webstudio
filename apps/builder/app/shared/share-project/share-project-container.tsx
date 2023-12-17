@@ -86,13 +86,17 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
 
 type ShareButtonProps = {
   projectId: Project["id"];
+  hasProPlan: boolean;
 };
 
 /**
  * we place the logic inside Popover so that the fetcher does not exist outside of it.
  * Then remix will not call `trpc.findMany.useQuery` if Popover is closed
  */
-export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
+export const ShareProjectContainer = ({
+  projectId,
+  hasProPlan,
+}: ShareButtonProps) => {
   const {
     links,
     handleChangeDebounced,
@@ -103,6 +107,7 @@ export const ShareProjectContainer = ({ projectId }: ShareButtonProps) => {
 
   return (
     <ShareProject
+      hasProPlan={hasProPlan}
       links={links}
       onChange={handleChangeDebounced}
       onDelete={handleDelete}

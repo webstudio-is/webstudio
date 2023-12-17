@@ -28,6 +28,7 @@ export const CheckControl = ({
   prop,
   propName,
   deletable,
+  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"check" | "inline-check" | "multi-select", "string[]">) => {
@@ -45,7 +46,11 @@ export const CheckControl = ({
     <VerticalLayout
       label={
         <Box css={{ position: "relative" }}>
-          <Label htmlFor={`${id}:${options[0]}`} description={meta.description}>
+          <Label
+            htmlFor={`${id}:${options[0]}`}
+            description={meta.description}
+            readOnly={readOnly}
+          >
             {getLabel(meta, propName)}
           </Label>
           <VariablesButton
@@ -62,6 +67,7 @@ export const CheckControl = ({
         {options.map((option) => (
           <CheckboxAndLabel key={option}>
             <Checkbox
+              disabled={readOnly}
               checked={value.includes(option)}
               onCheckedChange={(checked) => {
                 onChange({
