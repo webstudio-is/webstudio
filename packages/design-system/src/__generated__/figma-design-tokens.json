@@ -979,16 +979,6 @@
         "type": "color",
         "description": "color for hidden item element within navigator item component"
       },
-      "link": {
-        "value": "#006adc",
-        "type": "color",
-        "description": "color for link text"
-      },
-      "link-visited": {
-        "value": "#793aaf",
-        "type": "color",
-        "description": "Text links that the user has visited."
-      },
       "flex-ui": {
         "main": {
           "value": "#c7c7c7",
@@ -1103,11 +1093,6 @@
         "value": "#ff22ae",
         "type": "color",
         "description": "The inverse color of our primary blue, when we want a contrasting highlight."
-      },
-      "link-not-visited": {
-        "value": "#006adc",
-        "type": "color",
-        "description": "Text links that are not yet visited."
       },
       "link-hover": {
         "main": {
@@ -1526,6 +1511,8 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }
