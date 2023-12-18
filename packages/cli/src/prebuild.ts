@@ -26,6 +26,7 @@ import {
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
+  generateResourcesLoader,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -36,6 +37,7 @@ import type {
   Asset,
   FontAsset,
   ImageAsset,
+  Resource,
 } from "@webstudio-is/sdk";
 import {
   createScope,
@@ -70,6 +72,7 @@ type SiteDataByPage = {
       props: [Prop["id"], Prop][];
       instances: [Instance["id"], Instance][];
       dataSources: [DataSource["id"], DataSource][];
+      resources: [Resource["id"], Resource][];
       deployment?: Deployment | undefined;
     };
     assets: Array<Asset>;
@@ -311,11 +314,19 @@ export const prebuild = async (options: {
       }
     }
 
+    const resources: [Resource["id"], Resource][] = [];
+    for (const [resourceId, resource] of siteData.build.resources ?? []) {
+      if (pageInstanceSet.has(resource.instanceId)) {
+        resources.push([resourceId, resource]);
+      }
+    }
+
     siteDataByPage[page.path] = {
       build: {
         props,
         instances,
         dataSources,
+        resources,
       },
       pages: siteData.pages,
       page,
@@ -460,6 +471,7 @@ export const prebuild = async (options: {
     const instances = new Map(pageData.build.instances);
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
+    const resources = new Map(pageData.build.resources);
     const utilsExport = generateUtilsExport({
       pages: siteData.build.pages,
       props,
@@ -512,15 +524,28 @@ ${utilsExport}
       https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
     */
 
-    const fileName = generateRemixRoute(pathname);
+    const remixRoute = generateRemixRoute(pathname);
+    const fileName = `${remixRoute}.tsx`;
 
-    const routeFileContent = routeFileTemplate.replace(
-      "../__generated__/index",
-      `../__generated__/${fileName}`
-    );
+    const routeFileContent = routeFileTemplate
+      .replace('../__generated__/index"', `../__generated__/${remixRoute}"`)
+      .replace(
+        '../__generated__/index.server"',
+        `../__generated__/${remixRoute}.server"`
+      );
 
     await ensureFileInPath(join(routesDir, fileName), routeFileContent);
     await ensureFileInPath(join(generatedDir, fileName), pageExports);
+
+    await ensureFileInPath(
+      join(generatedDir, `${remixRoute}.server.tsx`),
+      generateResourcesLoader({
+        scope,
+        page: pageData.page,
+        dataSources,
+        resources,
+      })
+    );
   }
 
   spinner.text = "Generating css file";

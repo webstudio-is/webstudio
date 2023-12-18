@@ -15,11 +15,7 @@ import {
   showAttribute,
 } from "./props";
 import { collectionComponent } from "./core-components";
-import {
-  decodeDataSourceVariable,
-  generateDataSources,
-  validateExpression,
-} from "./expression";
+import { generateExpression, generateDataSources } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 const generatePropValue = ({
@@ -54,17 +50,10 @@ const generatePropValue = ({
   }
   // inline expression to safely use collection item
   if (prop.type === "expression") {
-    return validateExpression(prop.value, {
-      // transpile to safely executable member expressions
-      optional: true,
-      transformIdentifier: (identifier) => {
-        const depId = decodeDataSourceVariable(identifier);
-        const dep = depId ? dataSources.get(depId) : undefined;
-        if (dep) {
-          return scope.getName(dep.id, dep.name);
-        }
-        return identifier;
-      },
+    return generateExpression({
+      expression: prop.value,
+      dataSources,
+      scope,
     });
   }
   if (prop.type === "action") {

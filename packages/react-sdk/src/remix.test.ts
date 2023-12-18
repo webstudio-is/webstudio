@@ -2,34 +2,32 @@ import { expect, test } from "@jest/globals";
 import { generateRemixParams, generateRemixRoute } from "./remix";
 
 test("convert home page to remix route", () => {
-  expect(generateRemixRoute("")).toEqual("_index.tsx");
-  expect(generateRemixRoute("/")).toEqual("_index.tsx");
+  expect(generateRemixRoute("")).toEqual("_index");
+  expect(generateRemixRoute("/")).toEqual("_index");
 });
 
 test("convert path to remix route", () => {
-  expect(generateRemixRoute("/blog")).toEqual("[blog]._index.tsx");
+  expect(generateRemixRoute("/blog")).toEqual("[blog]._index");
   expect(generateRemixRoute("/blog/my-introduction")).toEqual(
-    "[blog].[my-introduction]._index.tsx"
+    "[blog].[my-introduction]._index"
   );
 });
 
 test("convert wildcard to remix route", () => {
-  expect(generateRemixRoute("/blog/*")).toEqual("[blog].$.tsx");
+  expect(generateRemixRoute("/blog/*")).toEqual("[blog].$");
 });
 
 test("convert named group with * modifier to remix route", () => {
-  expect(generateRemixRoute("/blog/:slug*")).toEqual("[blog].$.tsx");
+  expect(generateRemixRoute("/blog/:slug*")).toEqual("[blog].$");
 });
 
 test("convert named group with ? modifier to remix route", () => {
-  expect(generateRemixRoute("/:id?/:slug?")).toEqual(
-    "($id).($slug)._index.tsx"
-  );
+  expect(generateRemixRoute("/:id?/:slug?")).toEqual("($id).($slug)._index");
 });
 
 test("convert named groups to remix route", () => {
   expect(generateRemixRoute("/blog/:id/:date")).toEqual(
-    "[blog].$id.$date._index.tsx"
+    "[blog].$id.$date._index"
   );
 });
 
