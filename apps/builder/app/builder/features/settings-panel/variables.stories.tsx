@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { useState } from "react";
-import { CodeEditor as CodeEditorComponent } from "./code-editor";
 import {
   Button,
   FloatingPanelPopover,
@@ -16,7 +15,7 @@ import { registerContainers } from "~/shared/sync";
 
 export default {
   title: "Builder/Variables",
-  component: CodeEditorComponent,
+  component: VariablesPanel,
 } satisfies Meta;
 
 registerContainers();
