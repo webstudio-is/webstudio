@@ -59,7 +59,7 @@ export const Layer = (props: LayerProps) => {
       content={
         <BoxShadowContent
           index={index}
-          value={shadow}
+          shadow={shadow}
           layer={layer}
           onEditLayer={props.onEditLayer}
         />

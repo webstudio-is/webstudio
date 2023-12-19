@@ -143,6 +143,8 @@ export { ResetIcon } from "./reset";
 export { ScrollIcon } from "./scroll";
 export { SectionLinkIcon } from "./section-link";
 export { SelectIcon } from "./select";
+export { ShadowInsetIcon } from "./shadow-inset";
+export { ShadowNormalIcon } from "./shadow-normal";
 export { ShrinkIcon } from "./shrink";
 export { SliderIcon } from "./slider";
 export { SlotComponentIcon } from "./slot-component";
