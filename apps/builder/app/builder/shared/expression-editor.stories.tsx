@@ -37,7 +37,7 @@ export const ExpressionEditor: StoryObj = {
   render: () => (
     <>
       <p>
-        Start typing "h" or "o" or press "Tab" to start variables completion
+        {`Start typing "h" or "o" or press "Tab" to start variables completion`}
       </p>
       <ExpressionStory />
     </>
