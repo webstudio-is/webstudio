@@ -89,9 +89,10 @@ const scopeCompletionSource: CompletionSource = (context) => {
   if (path === null) {
     return null;
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let target: any = scope;
   for (const step of path.path) {
-    target = target[step];
+    target = target?.[step];
     if (target == null) {
       return null;
     }
