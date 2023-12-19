@@ -35,11 +35,11 @@ export const generateRemixRoute = (pathname: string) => {
     pathname = pathname.slice(1);
   }
   if (pathname === "") {
-    return `_index.tsx`;
+    return `_index`;
   }
   const base = pathname.split("/").map(getRemixSegment).join(".");
   const tail = pathname.endsWith("*") ? "" : "._index";
-  return `${base}${tail}.tsx`;
+  return `${base}${tail}`;
 };
 
 /**

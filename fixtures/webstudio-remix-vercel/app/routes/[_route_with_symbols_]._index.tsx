@@ -21,7 +21,8 @@ import {
   Page,
   imageAssets,
   getRemixParams,
-} from "../__generated__/[_route_with_symbols_]._index.tsx";
+} from "../__generated__/[_route_with_symbols_]._index";
+import { loadResources } from "../__generated__/[_route_with_symbols_]._index.server";
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
@@ -32,6 +33,7 @@ export type PageData = {
 
 export const loader = async (arg: LoaderArgs) => {
   const params = getRemixParams(arg.params);
+  const resources = await loadResources({ params });
 
   const host =
     arg.request.headers.get("x-forwarded-host") ||
@@ -51,6 +53,7 @@ export const loader = async (arg: LoaderArgs) => {
       url: url.href,
       excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
       params,
+      resources,
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
@@ -287,7 +290,7 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
-  const { params } = useLoaderData();
+  const { params, resources } = useLoaderData<typeof loader>();
   return (
     <ReactSdkContext.Provider
       value={{
@@ -297,7 +300,7 @@ const Outlet = () => {
         pagesPaths,
       }}
     >
-      <Page params={params} resources={{}} />
+      <Page params={params} resources={resources} />
     </ReactSdkContext.Provider>
   );
 };

@@ -7,9 +7,10 @@ import {
   Label,
 } from "../shared";
 import { VariablesButton } from "../variables";
-import { CodeEditor } from "../code-editor";
-
-const emptyVariables = new Map();
+import {
+  ExpressionEditor,
+  formatValue,
+} from "~/builder/shared/expression-editor";
 
 export const JsonControl = ({
   meta,
@@ -20,7 +21,7 @@ export const JsonControl = ({
   onChange,
   onDelete,
 }: ControlProps<"json", "json">) => {
-  const valueString = JSON.stringify(prop?.value ?? "");
+  const valueString = formatValue(prop?.value ?? "");
   const localValue = useLocalValue(valueString, (value) => {
     try {
       // wrap into parens to treat object expression as value instead of block
@@ -50,14 +51,9 @@ export const JsonControl = ({
       onDelete={onDelete}
     >
       <Box css={{ py: theme.spacing[2] }}>
-        <CodeEditor
-          // reset editor every time value is changed
-          key={valueString}
+        <ExpressionEditor
           readOnly={readOnly}
-          variables={emptyVariables}
-          // actual local value is not important because code editor
-          // is uncontrolled and has own local value
-          defaultValue={valueString}
+          value={localValue.value}
           onChange={localValue.set}
           onBlur={localValue.save}
         />

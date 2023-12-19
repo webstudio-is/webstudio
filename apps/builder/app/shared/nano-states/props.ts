@@ -142,11 +142,19 @@ export const $propValuesByInstanceSelector = computed(
   (instances, props, page, dataSourcesLogic, params, pages, assets) => {
     const values = new Map<string, unknown>(dataSourcesLogic);
 
+    let propsList = Array.from(props.values());
+    // ignore asset and page props when params is not provided
+    if (params) {
+      // use whole props list to let access hash props from other pages and instances
+      propsList = normalizeProps({
+        props: propsList,
+        assetBaseUrl: params.assetBaseUrl,
+        assets,
+        pages,
+      });
+    }
     // collect props and group by instances
-    const propsByInstanceId = groupBy(
-      props.values(),
-      (prop) => prop.instanceId
-    );
+    const propsByInstanceId = groupBy(propsList, (prop) => prop.instanceId);
 
     // traverse instances tree and compute props within each instance
     const propValuesByInstanceSelector = new Map<
@@ -164,19 +172,9 @@ export const $propValuesByInstanceSelector = computed(
       }
 
       const propValues = new Map<Prop["name"], unknown>();
-      let props = propsByInstanceId.get(instanceId);
+      const props = propsByInstanceId.get(instanceId);
       const parameters = new Map<Prop["name"], DataSource["id"]>();
       if (props) {
-        // ignore asset and page props when params is not provided
-        // important to resolve only in canvas
-        if (params) {
-          props = normalizeProps({
-            props,
-            assetBaseUrl: params.assetBaseUrl,
-            assets,
-            pages,
-          });
-        }
         for (const prop of props) {
           // at this point asset and page either already converted to string
           // or can be ignored
