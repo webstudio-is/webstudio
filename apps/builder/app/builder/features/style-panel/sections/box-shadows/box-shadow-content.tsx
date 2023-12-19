@@ -37,6 +37,29 @@ import { toPascalCase } from "../../shared/keyword-utils";
 import { ColorControl } from "../../controls";
 import type { SetProperty } from "../../shared/use-style-data";
 
+/*
+  We can't split and use individual css properties for box-shadow.
+  So, the best way to get eh validation from inputs is to use a fallback
+  css-property that accepts the same value as the input that we are trying to validate.
+
+  box-shadow: color, inset, offsetX, offsetY, blur, spread;
+
+  - offsetX -> length -> +ve & -ve
+  - offsetY -> length -> +ve & -ve
+  - blur -> length -> +ve
+  - spread -> length -> +ve & -ve
+
+  You can check more details from the spec
+  https://www.w3.org/TR/css-backgrounds-3/#box-shadow
+
+  To match the validation, we need to use
+  - outline-offset -> length -> +ve & -ve
+  https://www.w3.org/TR/css-ui-4/#outline-offset
+
+  - border-top-width -> length -> +ve
+  https://www.w3.org/TR/css-backgrounds-3/#propdef-border-top-width
+*/
+
 type BoxShadowContentProps = {
   index: number;
   layer: TupleValue;
@@ -137,13 +160,17 @@ export const BoxShadowContent = ({
           <Label css={{ display: "inline" }}>X</Label>
           <CssValueInputContainer
             key="boxShadowOffsetX"
-            property="borderTopWidth"
+            property="outlineOffset"
             label="Offset X"
             styleSource="local"
             keywords={[]}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value) => handlePropertyChange({ offsetX: value })}
-            deleteProperty={() => {}}
+            deleteProperty={() =>
+              handlePropertyChange({
+                offsetX: offsetX ?? undefined,
+              })
+            }
           />
         </Flex>
 
@@ -157,7 +184,11 @@ export const BoxShadowContent = ({
             keywords={[]}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value) => handlePropertyChange({ blur: value })}
-            deleteProperty={() => {}}
+            deleteProperty={() =>
+              handlePropertyChange({
+                blur: blur ?? undefined,
+              })
+            }
           />
         </Flex>
 
@@ -165,13 +196,17 @@ export const BoxShadowContent = ({
           <Label css={{ display: "inline" }}>Y</Label>
           <CssValueInputContainer
             key="boxShadowOffsetY"
-            property="borderTopWidth"
+            property="outlineOffset"
             label="Offset Y"
             styleSource="local"
             keywords={[]}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value) => handlePropertyChange({ offsetY: value })}
-            deleteProperty={() => {}}
+            deleteProperty={() =>
+              handlePropertyChange({
+                offsetY: offsetY ?? undefined,
+              })
+            }
           />
         </Flex>
 
@@ -179,13 +214,17 @@ export const BoxShadowContent = ({
           <Label css={{ display: "inline" }}>Spread</Label>
           <CssValueInputContainer
             key="boxShadowSpread"
-            property="borderTopWidth"
+            property="outlineOffset"
             label="BoxShadow Spread"
             styleSource="local"
             keywords={[]}
             value={spread ?? { type: "unit", value: 0, unit: "px" }}
             setValue={(value) => handlePropertyChange({ spread: value })}
-            deleteProperty={() => {}}
+            deleteProperty={() =>
+              handlePropertyChange({
+                spread: spread ?? undefined,
+              })
+            }
           />
         </Flex>
       </Grid>
@@ -210,7 +249,9 @@ export const BoxShadowContent = ({
               },
             }}
             setProperty={colorControlCallback}
-            deleteProperty={() => {}}
+            deleteProperty={() =>
+              handlePropertyChange({ color: colorControlProp })
+            }
           />
         </Flex>
 
