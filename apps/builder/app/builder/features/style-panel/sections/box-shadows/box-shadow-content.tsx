@@ -38,25 +38,26 @@ import { ColorControl } from "../../controls";
 import type { SetProperty } from "../../shared/use-style-data";
 
 /*
-  We can't split and use individual css properties for box-shadow.
-  So, the best way to get eh validation from inputs is to use a fallback
-  css-property that accepts the same value as the input that we are trying to validate.
+  When it comes to checking and validating individual CSS properties for the box-shadow,
+  splitting them fails the validation. As it needs a minimum of 2 values to validate.
+  Instead, a workaround is to use a fallback CSS property
+  that can handle the same values as the input being validated.
+
+  Here's the box-shadow property with its components:
 
   box-shadow: color, inset, offsetX, offsetY, blur, spread;
-
-  - offsetX -> length -> +ve & -ve
-  - offsetY -> length -> +ve & -ve
-  - blur -> length -> +ve
-  - spread -> length -> +ve & -ve
-
   You can check more details from the spec
   https://www.w3.org/TR/css-backgrounds-3/#box-shadow
 
-  To match the validation, we need to use
-  - outline-offset -> length -> +ve & -ve
+  offsetX: length, takes positive and negative values.
+  offsetY: length, takes positive and negative values.
+  blur: length, takes only positive values.
+  spread: length, takes both positive and negative values.
+
+  outline-offset: length, takes positive and negative values.
   https://www.w3.org/TR/css-ui-4/#outline-offset
 
-  - border-top-width -> length -> +ve
+  border-top-width: length, takes only positive values.
   https://www.w3.org/TR/css-backgrounds-3/#propdef-border-top-width
 */
 
@@ -160,6 +161,9 @@ export const BoxShadowContent = ({
           <Label css={{ display: "inline" }}>X</Label>
           <CssValueInputContainer
             key="boxShadowOffsetX"
+            /*
+              outline-offset is a fake property for validating box-shadow's offsetX.
+            */
             property="outlineOffset"
             label="Offset X"
             styleSource="local"
@@ -178,6 +182,9 @@ export const BoxShadowContent = ({
           <Label css={{ display: "inline" }}>Blur</Label>
           <CssValueInputContainer
             key="boxShadowBlur"
+            /*
+              border-top-width is a fake property for validating box-shadow's blur.
+            */
             property="borderTopWidth"
             label="BoxShadow Blur"
             styleSource="local"
@@ -196,6 +203,9 @@ export const BoxShadowContent = ({
           <Label css={{ display: "inline" }}>Y</Label>
           <CssValueInputContainer
             key="boxShadowOffsetY"
+            /*
+              outline-offset is a fake property for validating box-shadow's offsetY.
+            */
             property="outlineOffset"
             label="Offset Y"
             styleSource="local"
@@ -214,6 +224,9 @@ export const BoxShadowContent = ({
           <Label css={{ display: "inline" }}>Spread</Label>
           <CssValueInputContainer
             key="boxShadowSpread"
+            /*
+              outline-offset is a fake property for validating box-shadow's spread.
+            */
             property="outlineOffset"
             label="BoxShadow Spread"
             styleSource="local"
