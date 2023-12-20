@@ -317,7 +317,12 @@ export const ExpressionEditor = ({
           ...historyKeymap,
           ...completionKeymap,
           // use tab to trigger completion
-          { key: "Tab", run: startCompletion },
+          {
+            key: "Tab",
+            preventDefault: true,
+            stopPropagation: true,
+            run: startCompletion,
+          },
         ]),
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),

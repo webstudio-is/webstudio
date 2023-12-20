@@ -534,7 +534,14 @@ const ListPanel = ({
                 }
 
                 try {
-                  validateExpression(expression);
+                  validateExpression(expression, {
+                    transformIdentifier: (id) => {
+                      if (editorAliases.has(id) === false) {
+                        throw Error(`Unknown variable "${id}"`);
+                      }
+                      return id;
+                    },
+                  });
                 } catch (error) {
                   // @todo show errors
                   (error as Error).message;
