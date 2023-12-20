@@ -1,8 +1,13 @@
-import { ChevronDownIcon, WebstudioIcon } from "@webstudio-is/icons";
+import {
+  ChevronDownIcon,
+  UploadIcon,
+  WebstudioIcon,
+} from "@webstudio-is/icons";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
+  DropdownMenuPortal,
   DropdownMenuItem,
   DropdownMenuLabel,
   Flex,
@@ -11,8 +16,8 @@ import {
   rawTheme,
   theme,
   Button,
-  Box,
   Text,
+  styled,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -30,6 +35,22 @@ const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
+export const ProBadge = styled(Text, {
+  display: "inline-flex",
+  borderRadius: theme.borderRadius[2],
+  px: theme.spacing[3],
+  py: theme.spacing[1],
+  height: theme.spacing[9],
+  color: theme.colors.foregroundContrastMain,
+  alignItems: "center",
+  maxWidth: "100%",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  // @tood doesn't work in tooltips, needs a workaround
+  textOverflow: "ellipsis",
+  background: theme.colors.backgroundStyleSourceNeutral,
+});
+
 const Menu = ({
   user,
   userPlanFeatures,
@@ -44,6 +65,13 @@ const Menu = ({
       <DropdownMenuTrigger asChild>
         <Button color="ghost" aria-label="Menu Button" css={{ height: "100%" }}>
           <Flex gap="1" align="center">
+            {userPlanFeatures.hasProPlan && (
+              <>
+                <ProBadge>Pro</ProBadge>
+                <div />
+              </>
+            )}
+
             <Avatar
               src={user?.image || undefined}
               fallback={getAvatarLetter(title)}
@@ -58,20 +86,35 @@ const Menu = ({
           </Flex>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{title}</DropdownMenuLabel>
-        <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-          Logout
-        </DropdownMenuItem>
-
-        {userPlanFeatures.hasSubscription && (
-          <DropdownMenuItem
-            onSelect={() => navigate(userPlanSubscriptionPath())}
-          >
-            Subscriptions
+      <DropdownMenuPortal>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>{title}</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
+            Logout
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
+
+          {userPlanFeatures.hasSubscription && (
+            <DropdownMenuItem
+              onSelect={() => navigate(userPlanSubscriptionPath())}
+            >
+              Manage Subscription
+            </DropdownMenuItem>
+          )}
+          {userPlanFeatures.hasProPlan === false && (
+            <DropdownMenuItem
+              onSelect={() => {
+                window.location.assign("https://webstudio.is/pricing");
+              }}
+              css={{
+                gap: theme.spacing[3],
+              }}
+            >
+              <UploadIcon />
+              <div>Upgrade to Pro</div>
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenuPortal>
     </DropdownMenu>
   );
 };
@@ -91,34 +134,8 @@ export const Header = ({
       className={containerStyle()}
     >
       <WebstudioIcon width={30} height={23} />
-      <Flex gap="1" align="center" css={{ position: "relative" }}>
-        <Menu user={user} userPlanFeatures={userPlanFeatures} />
-        {userPlanFeatures.hasProPlan && (
-          <Flex
-            css={{
-              position: "absolute",
-              left: theme.spacing[6],
-              top: -4,
-              width: 0,
-            }}
-            align={"center"}
-            justify={"center"}
-          >
-            <Box
-              css={{
-                backgroundColor: theme.colors.primary,
-                minWidth: "fit-content",
-                py: theme.spacing[1],
-                px: theme.spacing[3],
-                borderRadius: theme.borderRadius[3],
-                color: theme.colors.white,
-              }}
-            >
-              <Text variant={"small"}>Pro</Text>
-            </Box>
-          </Flex>
-        )}
-      </Flex>
+
+      <Menu user={user} userPlanFeatures={userPlanFeatures} />
     </Flex>
   );
 };

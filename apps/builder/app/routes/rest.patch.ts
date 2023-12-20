@@ -11,6 +11,7 @@ import {
   StyleSourceSelections,
   StyleSources,
   Styles,
+  Resources,
 } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import {
@@ -30,6 +31,8 @@ import {
   serializeStyleSourceSelections,
   serializeStyles,
   serializeDataSources,
+  parseData,
+  serializeData,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -102,6 +105,7 @@ export const action = async ({ request }: ActionArgs) => {
       instances?: Instances;
       props?: Props;
       dataSources?: DataSources;
+      resources?: Resources;
       styleSources?: StyleSources;
       styleSourceSelections?: StyleSourceSelections;
       styles?: Styles;
@@ -173,6 +177,12 @@ export const action = async ({ request }: ActionArgs) => {
           continue;
         }
 
+        if (namespace === "resources") {
+          const resources = buildData.resources ?? parseData(build.resources);
+          buildData.resources = applyPatches(resources, patches);
+          continue;
+        }
+
         if (namespace === "breakpoints") {
           const breakpoints =
             buildData.breakpoints ?? parseBreakpoints(build.breakpoints);
@@ -223,6 +233,12 @@ export const action = async ({ request }: ActionArgs) => {
     if (buildData.dataSources) {
       dbBuildData.dataSources = serializeDataSources(
         DataSources.parse(buildData.dataSources)
+      );
+    }
+
+    if (buildData.resources) {
+      dbBuildData.resources = serializeData(
+        Resources.parse(buildData.resources)
       );
     }
 

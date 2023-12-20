@@ -1,3 +1,4 @@
+export * from "./remix";
 export * from "./css/index";
 export * from "./tree/index";
 export * from "./app/index";
@@ -30,3 +31,4 @@ export {
   generateJsxElement,
   generateJsxChildren,
 } from "./component-generator";
+export { generateResourcesLoader } from "./resources-generator";

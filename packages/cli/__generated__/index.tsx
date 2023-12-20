@@ -1,8 +1,8 @@
 /**
  * The only intent of this file is to support typings inside ../templates/route-template for easier development.
  **/
-import type { PageData } from "../templates/route-template";
 import type { Asset, ImageAsset } from "@webstudio-is/sdk";
+import type { PageData } from "../templates/route-template";
 
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
@@ -28,11 +28,17 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "project-id";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   return <></>;
 };
 
 export { Page };
+
+export const getRemixParams = ({ ...params }: Params): Params => {
+  return params;
+};
 
 export const pagesPaths = new Set<string>();
 

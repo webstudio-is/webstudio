@@ -48,6 +48,11 @@ import { serverSyncStore } from "~/shared/sync";
 import { CodeEditor } from "./code-editor";
 import type { PropValue } from "./shared";
 import { getStartingValue } from "./props-section/use-props-logic";
+import {
+  ExpressionEditor,
+  formatValue,
+  formatValuePreview,
+} from "~/builder/shared/expression-editor";
 
 /**
  * convert value expression to js value
@@ -137,12 +142,11 @@ const VariablePanel = ({
   onBack: () => void;
 }) => {
   // variable value cannot have an access to other variables
-  const variables = useMemo(() => new Map(), []);
   const nameId = useId();
   const [name, setName] = useState(variable?.name ?? "");
   const [nameErrors, setNameErrors] = useState<undefined | string[]>();
   const [value, setValue] = useState(
-    JSON.stringify(
+    formatValue(
       variable?.type === "variable" ? variable?.value.value ?? "" : ""
     )
   );
@@ -194,11 +198,7 @@ const VariablePanel = ({
             <Label>Value</Label>
             <InputErrorsTooltip errors={valueErrors}>
               <div>
-                <CodeEditor
-                  variables={variables}
-                  defaultValue={value}
-                  onChange={setValue}
-                />
+                <ExpressionEditor value={value} onChange={setValue} />
               </div>
             </InputErrorsTooltip>
           </Flex>
@@ -346,7 +346,7 @@ const ListItem = ({
       label={
         <Label truncate>
           {variable.type === "variable"
-            ? `${variable.name}: ${JSON.stringify(variable.value.value)}`
+            ? `${variable.name}: ${formatValuePreview(variable.value.value)}`
             : variable.name}
         </Label>
       }

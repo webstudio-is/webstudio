@@ -5,6 +5,7 @@ import type {
   Scope,
   DataSources,
   Prop,
+  Page,
 } from "@webstudio-is/sdk";
 import { parseComponentName } from "@webstudio-is/sdk";
 import {
@@ -14,11 +15,7 @@ import {
   showAttribute,
 } from "./props";
 import { collectionComponent } from "./core-components";
-import {
-  decodeDataSourceVariable,
-  generateDataSources,
-  validateExpression,
-} from "./expression";
+import { generateExpression, generateDataSources } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 const generatePropValue = ({
@@ -53,17 +50,10 @@ const generatePropValue = ({
   }
   // inline expression to safely use collection item
   if (prop.type === "expression") {
-    return validateExpression(prop.value, {
-      // transpile to safely executable member expressions
-      optional: true,
-      transformIdentifier: (identifier) => {
-        const depId = decodeDataSourceVariable(identifier);
-        const dep = depId ? dataSources.get(depId) : undefined;
-        if (dep) {
-          return scope.getName(dep.id, dep.name);
-        }
-        return identifier;
-      },
+    return generateExpression({
+      expression: prop.value,
+      dataSources,
+      scope,
     });
   }
   if (prop.type === "action") {
@@ -231,34 +221,58 @@ export const generateJsxChildren = ({
 
 export const generatePageComponent = ({
   scope,
-  rootInstanceId,
+  page,
   instances,
   props,
   dataSources,
   indexesWithinAncestors,
 }: {
   scope: Scope;
-  rootInstanceId: Instance["id"];
+  page: Page;
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
 }) => {
-  const instance = instances.get(rootInstanceId);
+  const instance = instances.get(page.rootInstanceId);
   if (instance === undefined) {
     return "";
   }
-  const { variables, body: dataSourcesBody } = generateDataSources({
+  const { body: dataSourcesBody } = generateDataSources({
     typed: true,
     scope,
     dataSources,
     props,
   });
   let generatedDataSources = "";
-  for (const { valueName, setterName, initialValue } of variables.values()) {
-    const initialValueString = JSON.stringify(initialValue);
-    generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "variable") {
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      const setterName = scope.getName(
+        `set$${dataSource.id}`,
+        `set$${dataSource.name}`
+      );
+      const initialValue = dataSource.value.value;
+      const initialValueString = JSON.stringify(initialValue);
+      generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+    }
+    if (dataSource.type === "parameter") {
+      if (dataSource.id === page.pathVariableId) {
+        const valueName = scope.getName(dataSource.id, dataSource.name);
+        generatedDataSources += `let ${valueName} = _props.params\n`;
+      }
+    }
+    if (dataSource.type === "resource") {
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      // call resource by bound variable name
+      const resourceName = scope.getName(
+        dataSource.resourceId,
+        dataSource.name
+      );
+      generatedDataSources += `let ${valueName} = _props.resources["${resourceName}"]\n`;
+    }
   }
+
   generatedDataSources += dataSourcesBody;
 
   const generatedJsx = generateJsxElement({
@@ -278,7 +292,9 @@ export const generatePageComponent = ({
   });
 
   let generatedComponent = "";
-  generatedComponent += `const Page = () => {\n`;
+  generatedComponent += `type Params = Record<string, string | undefined>\n`;
+  generatedComponent += `type Resources = Record<string, unknown>\n`;
+  generatedComponent += `const Page = (_props: { params: Params, resources: Resources }) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

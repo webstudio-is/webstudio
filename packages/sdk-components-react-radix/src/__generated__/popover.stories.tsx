@@ -10,7 +10,9 @@ import {
   PopoverContent as PopoverContent,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   let [popoverOpen, set$popoverOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     popoverOpen = open;
@@ -260,7 +262,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} resources={{}} />
       </>
     );
   },

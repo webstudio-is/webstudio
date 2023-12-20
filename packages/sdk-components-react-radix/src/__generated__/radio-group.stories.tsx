@@ -11,7 +11,9 @@ import {
   RadioGroupIndicator as RadioGroupIndicator,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   let [radioGroupValue, set$radioGroupValue] = useState<any>("");
   let onValueChange = (value: any) => {
     radioGroupValue = value;
@@ -397,7 +399,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} resources={{}} />
       </>
     );
   },

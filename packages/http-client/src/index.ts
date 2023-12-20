@@ -7,6 +7,7 @@ import type {
   Page,
   Pages,
   Prop,
+  Resource,
   StyleDecl,
   StyleDeclKey,
   StyleSource,
@@ -30,6 +31,7 @@ export type Data = {
     props: [Prop["id"], Prop][];
     instances: [Instance["id"], Instance][];
     dataSources: [DataSource["id"], DataSource][];
+    resources: [Resource["id"], Resource][];
     deployment?: Deployment | undefined;
   };
   assets: Array<Asset>;

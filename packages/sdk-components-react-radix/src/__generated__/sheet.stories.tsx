@@ -15,7 +15,9 @@ import {
   DialogClose as DialogClose,
 } from "../components";
 
-const Page = () => {
+type Params = Record<string, string | undefined>;
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   let [sheetOpen, set$sheetOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     sheetOpen = open;
@@ -420,7 +422,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} resources={{}} />
       </>
     );
   },

@@ -155,7 +155,7 @@ Note: this does not fix any issues that might have been caused by the failed run
 | Applying migrations in prod | `prisma migrate deploy` | `migrations migrate`  | |
 | Resolving failed migrations | `prisma migrate resolve --<applied\|rolled-back> <name>` | `migrations resolve <applied\|rolled-back> <name>` | |
 | Status of migrations | `prisma migrate status` | `migrations status` | |
-| Reseting database | `prisma migrate reset` | `migrations reset --dev` | |
+| Resetting database | `prisma migrate reset` | `migrations reset --dev` | |
 <!-- prettier-ignore-end -->
 
 Also, if a migration file of an applied migration is missing or have been modified, Prisma may treats this as a fatal issue. We also detect these issues and they appear in the `status` output, but we don't do anything beyond that.
