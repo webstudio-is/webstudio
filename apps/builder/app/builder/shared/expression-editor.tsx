@@ -81,6 +81,9 @@ const VariablesData = Facet.define<{
   aliases: Aliases;
 }>();
 
+// completion based on
+// https://github.com/codemirror/lang-javascript/blob/4dcee95aee9386fd2c8ad55f93e587b39d968489/src/complete.ts
+
 // Defines a completion source that completes from the given scope
 // object (for example `globalThis`). Will enter properties
 // of the object when completing properties on a directly-named path.
@@ -119,6 +122,8 @@ const scopeCompletionSource: CompletionSource = (context) => {
 /**
  * Highlight variables and replace their $ws$dataSource$name like labels
  * with user names
+ *
+ * https://codemirror.net/examples/decoration/#atomic-ranges
  */
 
 class VariableWidget extends WidgetType {
@@ -316,6 +321,7 @@ export const ExpressionEditor = ({
         ]),
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
+        // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L57-L70
         EditorView.updateListener.of((update) => {
           if (
             // prevent invoking callback when focus or selection is changed
@@ -338,7 +344,7 @@ export const ExpressionEditor = ({
   }, [scope, aliases, readOnly]);
 
   // update editor with react value
-
+  // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L158-L169
   useEffect(() => {
     const view = viewRef.current;
     if (view === undefined) {
