@@ -158,7 +158,23 @@ export const BoxShadowContent = ({
         }}
       >
         <Flex direction="column">
-          <Label css={{ display: "inline" }}>X</Label>
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">X Offset</Text>
+                <Text variant="monoBold">offset-x</Text>
+                <Text>
+                  Sets the horizontal offset of the
+                  <br />
+                  shadow. Negative values place
+                  <br />
+                  the shadow to the left.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ width: "fit-content" }}>X</Label>
+          </Tooltip>
           <CssValueInputContainer
             key="boxShadowOffsetX"
             /*
@@ -179,7 +195,23 @@ export const BoxShadowContent = ({
         </Flex>
 
         <Flex direction="column">
-          <Label css={{ display: "inline" }}>Blur</Label>
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Blur Radius</Text>
+                <Text variant="monoBold">blur-radius</Text>
+                <Text>
+                  The larger this value, the bigger
+                  <br />
+                  the blur, so the shadow becomes
+                  <br />
+                  bigger and lighter.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ width: "fit-content" }}>Blur</Label>
+          </Tooltip>
           <CssValueInputContainer
             key="boxShadowBlur"
             /*
@@ -200,7 +232,23 @@ export const BoxShadowContent = ({
         </Flex>
 
         <Flex direction="column">
-          <Label css={{ display: "inline" }}>Y</Label>
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Y Offset</Text>
+                <Text variant="monoBold">offset-y</Text>
+                <Text>
+                  Sets the vertical offset of the
+                  <br />
+                  shadow. Negative values place
+                  <br />
+                  the shadow above.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ width: "fit-content" }}>Y</Label>
+          </Tooltip>
           <CssValueInputContainer
             key="boxShadowOffsetY"
             /*
@@ -221,7 +269,25 @@ export const BoxShadowContent = ({
         </Flex>
 
         <Flex direction="column">
-          <Label css={{ display: "inline" }}>Spread</Label>
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Spread Radius</Text>
+                <Text variant="monoBold">spread-radius</Text>
+                <Text>
+                  Positive values will cause the
+                  <br />
+                  shadow to expand and grow
+                  <br />
+                  bigger, negative values will cause
+                  <br />
+                  the shadow to shrink.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ width: "fit-content" }}>Spread</Label>
+          </Tooltip>
           <CssValueInputContainer
             key="boxShadowSpread"
             /*
@@ -248,11 +314,25 @@ export const BoxShadowContent = ({
           px: theme.spacing[9],
           marginTop: theme.spacing[5],
           paddingBottom: theme.spacing[5],
-          gridTemplateColumns: "2fr 1fr",
+          gridTemplateColumns: "3fr 1fr",
         }}
       >
         <Flex direction="column">
-          <Label css={{ display: "inline" }}>Color</Label>
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Color</Text>
+                <Text variant="monoBold">color</Text>
+                <Text>
+                  Sets the shadow color and
+                  <br />
+                  opacity.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ width: "fit-content" }}>Color</Label>
+          </Tooltip>
           <ColorControl
             property="color"
             currentStyle={{
@@ -268,8 +348,24 @@ export const BoxShadowContent = ({
           />
         </Flex>
 
-        <Flex direction="column" align="center">
-          <Label css={{ display: "inline" }}>Inset</Label>
+        <Flex direction="column">
+          <Tooltip
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Inset</Text>
+                <Text variant="monoBold">inset</Text>
+                <Text>
+                  Changes the shadow from
+                  <br />
+                  an outer shadow (outset) to an
+                  <br />
+                  inner shadow (inset).
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ display: "inline" }}>Inset</Label>
+          </Tooltip>
           <ToggleGroup
             type="single"
             value={inset?.value ?? "normal"}
@@ -313,7 +409,11 @@ export const BoxShadowContent = ({
               variant="wrapped"
               content={
                 <Text>
-                  Paste a box-shadow value, for example:
+                  Paste a box-shadow CSS code
+                  <br />
+                  without the property name, for
+                  <br />
+                  example:
                   <br />
                   <br />
                   0px 2px 5px 0px rgba(0, 0, 0, 0.2)
