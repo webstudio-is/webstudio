@@ -468,7 +468,7 @@ const ListPanel = ({
       aliases.set(encodeDataSourceVariable(variable.id), variable.name);
     }
     return aliases;
-  }, []);
+  }, [matchedVariables]);
 
   return (
     <ScrollArea
