@@ -94,9 +94,6 @@ importers:
       '@lexical/headless':
         specifier: ^0.12.2
         version: 0.12.2(lexical@0.12.2)
-      '@lexical/html':
-        specifier: ^0.12.2
-        version: 0.12.2(lexical@0.12.2)
       '@lexical/link':
         specifier: ^0.12.2
         version: 0.12.2(lexical@0.12.2)

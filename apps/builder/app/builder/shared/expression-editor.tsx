@@ -12,6 +12,7 @@ import {
   drawSelection,
   dropCursor,
   EditorView,
+  tooltips,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
@@ -186,46 +187,45 @@ const rootStyle = css({
   "& .cm-line": {
     padding: 0,
   },
-  "& .cm-tooltip": {
+});
+
+const autocompletionStyle = css({
+  "&.cm-tooltip.cm-tooltip-autocomplete": {
+    ...textVariants.mono,
     border: "none",
     backgroundColor: "transparent",
-  },
-  "& .cm-tooltip.cm-tooltip-autocomplete ul": {
-    minWidth: 160,
-    maxWidth: 260,
-    width: "max-content",
-    boxSizing: "border-box",
-    borderRadius: theme.borderRadius[6],
-    backgroundColor: theme.colors.backgroundMenu,
-    border: `1px solid ${theme.colors.borderMain}`,
-    boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
-    padding: theme.spacing[3],
-    "& li": {
-      ...textVariants.labelsTitleCase,
-      textTransform: "none",
-      // outline: "none",
-      // cursor: "default",
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      color: theme.colors.foregroundMain,
+    "& ul": {
+      minWidth: 160,
+      maxWidth: 260,
+      width: "max-content",
+      boxSizing: "border-box",
+      borderRadius: theme.borderRadius[6],
+      backgroundColor: theme.colors.backgroundMenu,
+      border: `1px solid ${theme.colors.borderMain}`,
+      boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
       padding: theme.spacing[3],
-      borderRadius: theme.borderRadius[3],
-      "&[aria-selected]": {
+      "& li": {
+        ...textVariants.labelsTitleCase,
+        textTransform: "none",
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
         color: theme.colors.foregroundMain,
-        backgroundColor: theme.colors.backgroundItemMenuItemHover,
-      },
-      "& .cm-completionIcon": {
-        display: "none",
-      },
-      "& .cm-completionLabel": {
-        flexGrow: 1,
-      },
-      "& .cm-completionDetail": {
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        fontStyle: "normal",
-        color: theme.colors.hint,
+        padding: theme.spacing[3],
+        borderRadius: theme.borderRadius[3],
+        "&[aria-selected]": {
+          color: theme.colors.foregroundMain,
+          backgroundColor: theme.colors.backgroundItemMenuItemHover,
+        },
+        "& .cm-completionLabel": {
+          flexGrow: 1,
+        },
+        "& .cm-completionDetail": {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          fontStyle: "normal",
+          color: theme.colors.hint,
+        },
       },
     },
   },
@@ -293,10 +293,18 @@ export const ExpressionEditor = ({
         dropCursor(),
         bracketMatching(),
         closeBrackets(),
+        EditorView.lineWrapping,
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         javascript({}),
         VariablesData.of({ scope, aliases }),
-        autocompletion({ override: [scopeCompletionSource] }),
+        // render autocomplete in body
+        // to prevent popover scroll overflow
+        tooltips({ parent: document.body }),
+        autocompletion({
+          override: [scopeCompletionSource],
+          icons: false,
+          tooltipClass: () => autocompletionStyle.toString(),
+        }),
         variables,
         keymap.of([
           ...closeBracketsKeymap,

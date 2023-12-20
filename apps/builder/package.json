@@ -31,7 +31,6 @@
     "@fontsource-variable/manrope": "^5.0.15",
     "@fontsource/roboto-mono": "^5.0.13",
     "@lexical/headless": "^0.12.2",
-    "@lexical/html": "^0.12.2",
     "@lexical/link": "^0.12.2",
     "@lexical/react": "^0.12.2",
     "@lexical/selection": "^0.12.2",
