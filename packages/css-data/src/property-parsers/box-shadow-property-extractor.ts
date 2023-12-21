@@ -17,16 +17,17 @@ import type {
   extractBoxShadowProperties(parseBoxShadow("5em 5em 5em 5em #ffff"))
 */
 
-export const extractBoxShadowProperties = (
-  shadow: TupleValue
-): {
+export type ExtractedBoxShadowProperties = {
   inset: KeywordValue | null;
   color: RgbValue | KeywordValue | null;
   offsetX: UnitValue | null;
   offsetY: UnitValue | null;
   blur: UnitValue | null;
   spread: UnitValue | null;
-} => {
+};
+export const extractBoxShadowProperties = (
+  shadow: TupleValue
+): ExtractedBoxShadowProperties => {
   let properties = [...shadow.value];
   let inset: KeywordValue | null = null;
   let color: KeywordValue | RgbValue | null = null;

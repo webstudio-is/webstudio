@@ -143,6 +143,8 @@ export * from "./reset";
 export * from "./scroll";
 export * from "./section-link";
 export * from "./select";
+export * from "./shadow-inset";
+export * from "./shadow-normal";
 export * from "./shrink";
 export * from "./slider";
 export * from "./slot-component";
