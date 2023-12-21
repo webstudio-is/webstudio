@@ -233,3 +233,109 @@ export const $propValuesByInstanceSelector = computed(
     return propValuesByInstanceSelector;
   }
 );
+
+export const $variableValuesByInstanceSelector = computed(
+  [$instances, $props, $selectedPage, $dataSources, $dataSourceVariables],
+  (instances, props, page, dataSources, dataSourceVariables) => {
+    const propsByInstanceId = groupBy(
+      props.values(),
+      (prop) => prop.instanceId
+    );
+
+    const variablesByInstanceId = groupBy(
+      dataSources.values(),
+      (dataSource) => dataSource.scopeInstanceId
+    );
+
+    // traverse instances tree and compute props within each instance
+    const variableValuesByInstanceSelector = new Map<
+      Instance["id"],
+      Map<Prop["name"], unknown>
+    >();
+    if (page === undefined) {
+      return variableValuesByInstanceSelector;
+    }
+    const traverseInstances = (
+      instanceSelector: InstanceSelector,
+      parentVariableValues: Map<string, unknown>
+    ) => {
+      const [instanceId] = instanceSelector;
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return;
+      }
+
+      const variableValues = new Map<string, unknown>(parentVariableValues);
+      variableValuesByInstanceSelector.set(
+        JSON.stringify(instanceSelector),
+        variableValues
+      );
+      const variables = variablesByInstanceId.get(instanceId);
+      if (variables) {
+        for (const variable of variables) {
+          const value = dataSourceVariables.get(variable.id);
+          if (variable.type === "variable") {
+            variableValues.set(variable.id, value ?? variable.value.value);
+          } else if (value !== undefined) {
+            variableValues.set(variable.id, value);
+          }
+        }
+      }
+
+      const propValues = new Map<Prop["name"], unknown>();
+      const props = propsByInstanceId.get(instanceId);
+      const parameters = new Map<Prop["name"], DataSource["id"]>();
+      if (props) {
+        for (const prop of props) {
+          if (
+            prop.type === "asset" ||
+            prop.type === "page" ||
+            prop.type === "action"
+          ) {
+            continue;
+          }
+          if (prop.type === "expression") {
+            const value = computeExpression(prop.value, variableValues);
+            if (value !== undefined) {
+              propValues.set(prop.name, value);
+            }
+            continue;
+          }
+          if (prop.type === "parameter") {
+            parameters.set(prop.name, prop.value);
+            continue;
+          }
+          propValues.set(prop.name, prop.value);
+        }
+      }
+
+      if (instance.component === collectionComponent) {
+        const data = propValues.get("data");
+        const itemVariableId = parameters.get("item");
+        if (Array.isArray(data) && itemVariableId !== undefined) {
+          data.forEach((item, index) => {
+            const itemVariableValues = new Map(variableValues);
+            itemVariableValues.set(itemVariableId, item);
+            for (const child of instance.children) {
+              if (child.type === "id") {
+                const indexId = getIndexedInstanceId(instanceId, index);
+                traverseInstances(
+                  [child.value, indexId, ...instanceSelector],
+                  itemVariableValues
+                );
+              }
+            }
+          });
+        }
+        return;
+      }
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          traverseInstances([child.value, ...instanceSelector], variableValues);
+        }
+      }
+    };
+    traverseInstances([page.rootInstanceId], new Map());
+    return variableValuesByInstanceSelector;
+  }
+);

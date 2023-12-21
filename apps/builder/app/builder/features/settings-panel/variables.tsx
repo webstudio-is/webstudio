@@ -43,9 +43,9 @@ import {
   $instances,
   $props,
   $selectedInstanceSelector,
+  $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { CodeEditor } from "./code-editor";
 import type { PropValue } from "./shared";
 import { getStartingValue } from "./props-section/use-props-logic";
 import {
@@ -265,6 +265,14 @@ const $selectedInstanceVariables = computed(
   }
 );
 
+const $selectedInstanceVariableValues = computed(
+  [$selectedInstanceSelector, $variableValuesByInstanceSelector],
+  (instanceSelector, variableValuesByInstanceSelector) => {
+    const key = JSON.stringify(instanceSelector);
+    return variableValuesByInstanceSelector.get(key) ?? new Map();
+  }
+);
+
 const EmptyList = ({ onAdd }: { onAdd: () => void }) => {
   return (
     <Flex direction="column" css={{ gap: theme.spacing[5] }}>
@@ -331,6 +339,7 @@ const ListItem = ({
   selected,
   deletable,
   variable,
+  value,
   onSelect,
   onEdit,
 }: {
@@ -338,6 +347,7 @@ const ListItem = ({
   selected: boolean;
   deletable: boolean;
   variable: DataSource;
+  value: unknown;
   onSelect: (variableId: DataSource["id"]) => void;
   onEdit: (variable: DataSource) => void;
 }) => {
@@ -345,9 +355,9 @@ const ListItem = ({
     <CssValueListItem
       label={
         <Label truncate>
-          {variable.type === "variable"
-            ? `${variable.name}: ${formatValuePreview(variable.value.value)}`
-            : variable.name}
+          {value === undefined
+            ? variable.name
+            : `${variable.name}: ${formatValuePreview(value)}`}
         </Label>
       }
       id={variable.id}
@@ -436,13 +446,6 @@ const ListPanel = ({
   onChange: (value: undefined | PropValue) => void;
 }) => {
   const matchedVariables = useStore($selectedInstanceVariables);
-  const editorVariables = useMemo(() => {
-    const variables = new Map<string, string>();
-    for (const variable of matchedVariables) {
-      variables.set(encodeDataSourceVariable(variable.id), variable.name);
-    }
-    return variables;
-  }, [matchedVariables]);
   const propExpression = prop?.type === "expression" ? prop?.value ?? "" : "";
   const exoressionVariables = useMemo(
     () => getExpressionVariables(propExpression),
@@ -450,6 +453,22 @@ const ListPanel = ({
   );
   const usedVariables = useStore($usedVariables);
   const [expression, setExpression] = useState<undefined | string>();
+
+  const variableValues = useStore($selectedInstanceVariableValues);
+  const editorScope = useMemo(() => {
+    const scope: Record<string, unknown> = {};
+    for (const [variableId, variableValue] of variableValues) {
+      scope[encodeDataSourceVariable(variableId)] = variableValue;
+    }
+    return scope;
+  }, [variableValues]);
+  const editorAliases = useMemo(() => {
+    const aliases = new Map<string, string>();
+    for (const variable of matchedVariables) {
+      aliases.set(encodeDataSourceVariable(variable.id), variable.name);
+    }
+    return aliases;
+  }, [matchedVariables]);
 
   return (
     <ScrollArea
@@ -470,6 +489,7 @@ const ListPanel = ({
                 key={variable.id}
                 index={index}
                 variable={variable}
+                value={variableValues.get(variable.id)}
                 // mark all variables used in expression as selected
                 selected={exoressionVariables.has(variable.id)}
                 deletable={
@@ -496,11 +516,10 @@ const ListPanel = ({
             }}
           >
             <Label>Expression</Label>
-            <CodeEditor
-              // reset uncontrolled editor when saved expression is changed
-              key={propExpression}
-              variables={editorVariables}
-              defaultValue={expression ?? propExpression}
+            <ExpressionEditor
+              scope={editorScope}
+              aliases={editorAliases}
+              value={expression ?? propExpression}
               onChange={setExpression}
               onBlur={() => {
                 // skip when expression is not changed
@@ -515,7 +534,14 @@ const ListPanel = ({
                 }
 
                 try {
-                  validateExpression(expression);
+                  validateExpression(expression, {
+                    transformIdentifier: (id) => {
+                      if (editorAliases.has(id) === false) {
+                        throw Error(`Unknown variable "${id}"`);
+                      }
+                      return id;
+                    },
+                  });
                 } catch (error) {
                   // @todo show errors
                   (error as Error).message;

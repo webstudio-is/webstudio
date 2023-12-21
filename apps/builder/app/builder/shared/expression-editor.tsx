@@ -12,6 +12,7 @@ import {
   drawSelection,
   dropCursor,
   EditorView,
+  tooltips,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
@@ -80,6 +81,9 @@ const VariablesData = Facet.define<{
   aliases: Aliases;
 }>();
 
+// completion based on
+// https://github.com/codemirror/lang-javascript/blob/4dcee95aee9386fd2c8ad55f93e587b39d968489/src/complete.ts
+
 // Defines a completion source that completes from the given scope
 // object (for example `globalThis`). Will enter properties
 // of the object when completing properties on a directly-named path.
@@ -118,6 +122,8 @@ const scopeCompletionSource: CompletionSource = (context) => {
 /**
  * Highlight variables and replace their $ws$dataSource$name like labels
  * with user names
+ *
+ * https://codemirror.net/examples/decoration/#atomic-ranges
  */
 
 class VariableWidget extends WidgetType {
@@ -186,46 +192,45 @@ const rootStyle = css({
   "& .cm-line": {
     padding: 0,
   },
-  "& .cm-tooltip": {
+});
+
+const autocompletionStyle = css({
+  "&.cm-tooltip.cm-tooltip-autocomplete": {
+    ...textVariants.mono,
     border: "none",
     backgroundColor: "transparent",
-  },
-  "& .cm-tooltip.cm-tooltip-autocomplete ul": {
-    minWidth: 160,
-    maxWidth: 260,
-    width: "max-content",
-    boxSizing: "border-box",
-    borderRadius: theme.borderRadius[6],
-    backgroundColor: theme.colors.backgroundMenu,
-    border: `1px solid ${theme.colors.borderMain}`,
-    boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
-    padding: theme.spacing[3],
-    "& li": {
-      ...textVariants.labelsTitleCase,
-      textTransform: "none",
-      // outline: "none",
-      // cursor: "default",
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      color: theme.colors.foregroundMain,
+    "& ul": {
+      minWidth: 160,
+      maxWidth: 260,
+      width: "max-content",
+      boxSizing: "border-box",
+      borderRadius: theme.borderRadius[6],
+      backgroundColor: theme.colors.backgroundMenu,
+      border: `1px solid ${theme.colors.borderMain}`,
+      boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
       padding: theme.spacing[3],
-      borderRadius: theme.borderRadius[3],
-      "&[aria-selected]": {
+      "& li": {
+        ...textVariants.labelsTitleCase,
+        textTransform: "none",
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
         color: theme.colors.foregroundMain,
-        backgroundColor: theme.colors.backgroundItemMenuItemHover,
-      },
-      "& .cm-completionIcon": {
-        display: "none",
-      },
-      "& .cm-completionLabel": {
-        flexGrow: 1,
-      },
-      "& .cm-completionDetail": {
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        fontStyle: "normal",
-        color: theme.colors.hint,
+        padding: theme.spacing[3],
+        borderRadius: theme.borderRadius[3],
+        "&[aria-selected]": {
+          color: theme.colors.foregroundMain,
+          backgroundColor: theme.colors.backgroundItemMenuItemHover,
+        },
+        "& .cm-completionLabel": {
+          flexGrow: 1,
+        },
+        "& .cm-completionDetail": {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          fontStyle: "normal",
+          color: theme.colors.hint,
+        },
       },
     },
   },
@@ -293,10 +298,18 @@ export const ExpressionEditor = ({
         dropCursor(),
         bracketMatching(),
         closeBrackets(),
+        EditorView.lineWrapping,
         syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
         javascript({}),
         VariablesData.of({ scope, aliases }),
-        autocompletion({ override: [scopeCompletionSource] }),
+        // render autocomplete in body
+        // to prevent popover scroll overflow
+        tooltips({ parent: document.body }),
+        autocompletion({
+          override: [scopeCompletionSource],
+          icons: false,
+          tooltipClass: () => autocompletionStyle.toString(),
+        }),
         variables,
         keymap.of([
           ...closeBracketsKeymap,
@@ -304,10 +317,16 @@ export const ExpressionEditor = ({
           ...historyKeymap,
           ...completionKeymap,
           // use tab to trigger completion
-          { key: "Tab", run: startCompletion },
+          {
+            key: "Tab",
+            preventDefault: true,
+            stopPropagation: true,
+            run: startCompletion,
+          },
         ]),
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
+        // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L57-L70
         EditorView.updateListener.of((update) => {
           if (
             // prevent invoking callback when focus or selection is changed
@@ -330,7 +349,7 @@ export const ExpressionEditor = ({
   }, [scope, aliases, readOnly]);
 
   // update editor with react value
-
+  // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L158-L169
   useEffect(() => {
     const view = viewRef.current;
     if (view === undefined) {
