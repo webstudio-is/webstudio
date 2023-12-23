@@ -3,7 +3,7 @@ import type { Resource } from "./schema/resources";
 export const loadResource = async (resourceData: Resource) => {
   const { url, method, headers, body } = resourceData;
   const requestHeaders = new Headers(
-    headers.map(({ name, value }) => [name, value])
+    headers.map(({ name, value }): [string, string] => [name, value])
   );
   const requestInit: RequestInit = {
     method,
