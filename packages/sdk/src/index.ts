@@ -12,3 +12,4 @@ export * from "./schema/deployment";
 
 export * from "./instances-utils";
 export * from "./scope";
+export * from "./resource-loader";

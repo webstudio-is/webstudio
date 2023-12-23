@@ -2,18 +2,29 @@ import { z } from "zod";
 
 const ResourceId = z.string();
 
-export const Resource = z.union([
-  // !!! this is prototype only resource type
-  // build other resources before exposing to production
-  z.object({
-    type: z.literal("getjson"),
-    id: ResourceId,
-    instanceId: z.string(),
-    // expression
-    url: z.string(),
-  }),
-  z.never(),
+const Method = z.union([
+  z.literal("get"),
+  z.literal("post"),
+  z.literal("put"),
+  z.literal("delete"),
 ]);
+
+const Header = z.object({
+  name: z.string(),
+  // expression
+  value: z.string(),
+});
+
+export const Resource = z.object({
+  id: ResourceId,
+  name: z.string(),
+  method: Method,
+  // expression
+  url: z.string(),
+  headers: z.array(Header),
+  // expression
+  body: z.optional(z.string()),
+});
 
 export type Resource = z.infer<typeof Resource>;
 

@@ -1,19 +1,6 @@
 import type { DataSources, Page, Resources, Scope } from "@webstudio-is/sdk";
 import { generateExpression } from "./expression";
 
-const getjsonCode = `
-const _getjson = async (url: string) => {
-  const response = await fetch(url)
-  if (response.ok) {
-    const data = await response.json()
-    return data;
-  }
-  return {
-    error: await response.text()
-  }
-}
-`.trimStart();
-
 export const generateResourcesLoader = ({
   scope,
   page,
@@ -25,55 +12,84 @@ export const generateResourcesLoader = ({
   dataSources: DataSources;
   resources: Resources;
 }) => {
-  let generatedStores = "";
+  let generatedVariables = "";
+  let generatedOutput = "";
   let generatedLoaders = "";
-  let hasGetjson = false;
+  let hasResources = false;
 
   for (const dataSource of dataSources.values()) {
-    if (dataSource.type !== "resource") {
-      continue;
+    if (dataSource.type === "variable") {
+      const name = scope.getName(dataSource.id, dataSource.name);
+      const value = JSON.stringify(dataSource.value.value);
+      generatedVariables += `let ${name} = ${value}\n`;
     }
-    const resource = resources.get(dataSource.resourceId);
-    if (resource === undefined) {
-      continue;
+
+    if (dataSource.type === "parameter") {
+      // support only page path params parameter
+      if (dataSource.id !== page.pathVariableId) {
+        continue;
+      }
+      const name = scope.getName(dataSource.id, dataSource.name);
+      generatedVariables += `const ${name} = _props.params\n`;
     }
-    // call resource by bound variable name
-    const resourceName = scope.getName(resource.id, dataSource.name);
-    if (resource.type === "getjson") {
-      hasGetjson = true;
+
+    if (dataSource.type === "resource") {
+      const resource = resources.get(dataSource.resourceId);
+      if (resource === undefined) {
+        continue;
+      }
+      hasResources = true;
+      // call resource by bound variable name
+      const resourceName = scope.getName(resource.id, dataSource.name);
+      generatedOutput += `${resourceName},\n`;
+      generatedLoaders += `loadResource({\n`;
       const url = generateExpression({
         expression: resource.url,
         dataSources,
         scope,
       });
-      generatedStores += `${resourceName},\n`;
-      generatedLoaders += `_getjson(${url}),\n`;
+      generatedLoaders += `url: ${url},\n`;
+      generatedLoaders += `method: "${resource.method}",\n`;
+      if (resource.headers.length > 0) {
+        generatedLoaders += `headers: [\n`;
+        for (const header of resource.headers) {
+          const value = generateExpression({
+            expression: header.value,
+            dataSources,
+            scope,
+          });
+          generatedLoaders += `{ name: "${header.name}", value: ${value} },\n`;
+        }
+        generatedLoaders += `],\n`;
+      }
+      if (resource.body !== undefined) {
+        const body = generateExpression({
+          expression: resource.body,
+          dataSources,
+          scope,
+        });
+        generatedLoaders += `body: ${body},\n`;
+      }
+      generatedLoaders += `}),\n`;
     }
   }
 
-  const paramsVariable = page.pathVariableId
-    ? dataSources.get(page.pathVariableId)
-    : undefined;
-  const paramsName = paramsVariable
-    ? scope.getName(paramsVariable.id, paramsVariable.name)
-    : undefined;
-
   let generated = "";
-  if (hasGetjson) {
-    generated += getjsonCode;
+  if (hasResources) {
+    generated += `import { loadResource } from "@webstudio-is/sdk";\n`;
   }
   generated += `type Params = Record<string, string | undefined>\n`;
   generated += `export const loadResources = async (_props: { params: Params }) => {\n`;
-  if (paramsName !== undefined) {
-    generated += `const ${paramsName} = _props.params\n`;
+  if (hasResources) {
+    generated += generatedVariables;
+    generated += `const [\n`;
+    generated += generatedOutput;
+    generated += `] = await Promise.all([\n`;
+    generated += generatedLoaders;
+    generated += `])\n`;
   }
-  generated += `const [\n`;
-  generated += generatedStores;
-  generated += `] = await Promise.all([\n`;
-  generated += generatedLoaders;
-  generated += `])\n`;
   generated += `return {\n`;
-  generated += generatedStores;
+  generated += generatedOutput;
   generated += `} as Record<string, unknown>\n`;
   generated += `}\n`;
   return generated;
