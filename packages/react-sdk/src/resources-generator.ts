@@ -12,60 +12,68 @@ export const generateResourcesLoader = ({
   dataSources: DataSources;
   resources: Resources;
 }) => {
+  let generatedVariables = "";
   let generatedOutput = "";
   let generatedLoaders = "";
   let hasResources = false;
 
   for (const dataSource of dataSources.values()) {
-    if (dataSource.type !== "resource") {
-      continue;
+    if (dataSource.type === "variable") {
+      const name = scope.getName(dataSource.id, dataSource.name);
+      const value = JSON.stringify(dataSource.value.value);
+      generatedVariables += `let ${name} = ${value}\n`;
     }
-    const resource = resources.get(dataSource.resourceId);
-    if (resource === undefined) {
-      continue;
-    }
-    hasResources = true;
-    // call resource by bound variable name
-    const resourceName = scope.getName(resource.id, dataSource.name);
-    generatedOutput += `${resourceName},\n`;
-    generatedLoaders += `loadResource({\n`;
-    const url = generateExpression({
-      expression: resource.url,
-      dataSources,
-      scope,
-    });
-    generatedLoaders += `url: ${url},\n`;
-    generatedLoaders += `method: "${resource.method}",\n`;
-    if (resource.headers.length > 0) {
-      generatedLoaders += `headers: [\n`;
-      for (const header of resource.headers) {
-        header.name;
-        const value = generateExpression({
-          expression: header.value,
-          dataSources,
-          scope,
-        });
-        generatedLoaders += `{ name: "${header.name}", value: ${value} },\n`;
+
+    if (dataSource.type === "parameter") {
+      // support only page path params parameter
+      if (dataSource.id !== page.pathVariableId) {
+        continue;
       }
-      generatedLoaders += `],\n`;
+      const name = scope.getName(dataSource.id, dataSource.name);
+      generatedVariables += `const ${name} = _props.params\n`;
     }
-    if (resource.body !== undefined) {
-      const body = generateExpression({
-        expression: resource.body,
+
+    if (dataSource.type === "resource") {
+      const resource = resources.get(dataSource.resourceId);
+      if (resource === undefined) {
+        continue;
+      }
+      hasResources = true;
+      // call resource by bound variable name
+      const resourceName = scope.getName(resource.id, dataSource.name);
+      generatedOutput += `${resourceName},\n`;
+      generatedLoaders += `loadResource({\n`;
+      const url = generateExpression({
+        expression: resource.url,
         dataSources,
         scope,
       });
-      generatedLoaders += `body: ${body},\n`;
+      generatedLoaders += `url: ${url},\n`;
+      generatedLoaders += `method: "${resource.method}",\n`;
+      if (resource.headers.length > 0) {
+        generatedLoaders += `headers: [\n`;
+        for (const header of resource.headers) {
+          header.name;
+          const value = generateExpression({
+            expression: header.value,
+            dataSources,
+            scope,
+          });
+          generatedLoaders += `{ name: "${header.name}", value: ${value} },\n`;
+        }
+        generatedLoaders += `],\n`;
+      }
+      if (resource.body !== undefined) {
+        const body = generateExpression({
+          expression: resource.body,
+          dataSources,
+          scope,
+        });
+        generatedLoaders += `body: ${body},\n`;
+      }
+      generatedLoaders += `}),\n`;
     }
-    generatedLoaders += `}),\n`;
   }
-
-  const paramsVariable = page.pathVariableId
-    ? dataSources.get(page.pathVariableId)
-    : undefined;
-  const paramsName = paramsVariable
-    ? scope.getName(paramsVariable.id, paramsVariable.name)
-    : undefined;
 
   let generated = "";
   if (hasResources) {
@@ -73,10 +81,8 @@ export const generateResourcesLoader = ({
   }
   generated += `type Params = Record<string, string | undefined>\n`;
   generated += `export const loadResources = async (_props: { params: Params }) => {\n`;
-  if (paramsName !== undefined) {
-    generated += `const ${paramsName} = _props.params\n`;
-  }
   if (hasResources) {
+    generated += generatedVariables;
     generated += `const [\n`;
     generated += generatedOutput;
     generated += `] = await Promise.all([\n`;

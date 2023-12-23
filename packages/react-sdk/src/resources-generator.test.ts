@@ -104,7 +104,7 @@ test("generate variable and use in resources loader", () => {
       import { loadResource } from "@webstudio-is/sdk";
       type Params = Record<string, string | undefined>
       export const loadResources = async (_props: { params: Params }) => {
-      const AcessToken = "my-token"
+      let AccessToken = "my-token"
       const [
       variableName,
       ] = await Promise.all([
