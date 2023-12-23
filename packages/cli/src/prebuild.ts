@@ -305,18 +305,22 @@ export const prebuild = async (options: {
       }
     }
 
+    const resourceIds = new Set<Resource["id"]>();
     for (const [dataSourceId, dataSource] of siteData.build.dataSources) {
       if (
         dataSource.scopeInstanceId === undefined ||
         pageInstanceSet.has(dataSource.scopeInstanceId)
       ) {
         dataSources.push([dataSourceId, dataSource]);
+        if (dataSource.type === "resource") {
+          resourceIds.add(dataSource.resourceId);
+        }
       }
     }
 
     const resources: [Resource["id"], Resource][] = [];
     for (const [resourceId, resource] of siteData.build.resources ?? []) {
-      if (pageInstanceSet.has(resource.instanceId)) {
+      if (resourceIds.has(resourceId)) {
         resources.push([resourceId, resource]);
       }
     }

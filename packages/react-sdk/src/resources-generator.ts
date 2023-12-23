@@ -53,7 +53,6 @@ export const generateResourcesLoader = ({
       if (resource.headers.length > 0) {
         generatedLoaders += `headers: [\n`;
         for (const header of resource.headers) {
-          header.name;
           const value = generateExpression({
             expression: header.value,
             dataSources,
