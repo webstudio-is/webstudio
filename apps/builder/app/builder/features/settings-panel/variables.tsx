@@ -16,6 +16,10 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
+  PanelTabs,
+  PanelTabsContent,
+  PanelTabsList,
+  PanelTabsTrigger,
   ScrollArea,
   Separator,
   SmallIconButton,
@@ -42,6 +46,7 @@ import {
   $dataSources,
   $instances,
   $props,
+  $resources,
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
@@ -53,6 +58,7 @@ import {
   formatValue,
   formatValuePreview,
 } from "~/builder/shared/expression-editor";
+import { ResourcePanel } from "./resource-panel";
 
 /**
  * convert value expression to js value
@@ -94,10 +100,11 @@ const renameVariable = (variable: DataSource, name: string) => {
 };
 
 const saveVariable = (
-  dataSourceId: string = nanoid(),
+  dataSource: undefined | DataSource,
   name: string,
   valueString: string
 ): undefined | { error?: string } => {
+  const dataSourceId = dataSource?.id ?? nanoid();
   const { value, error } = parseVariableValue(valueString);
   if (error !== undefined) {
     return { error };
@@ -108,38 +115,46 @@ const saveVariable = (
     return;
   }
   const [instanceId] = instanceSelector;
-  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-    let variableValue: Extract<DataSource, { type: "variable" }>["value"] = {
-      type: "json",
-      value,
-    };
-    if (typeof value === "string") {
-      variableValue = { type: "string", value };
+  serverSyncStore.createTransaction(
+    [$dataSources, $resources],
+    (dataSources, resources) => {
+      // cleanup resource when value variable is set
+      if (dataSource?.type === "resource") {
+        resources.delete(dataSource.resourceId);
+      }
+
+      let variableValue: Extract<DataSource, { type: "variable" }>["value"] = {
+        type: "json",
+        value,
+      };
+      if (typeof value === "string") {
+        variableValue = { type: "string", value };
+      }
+      if (typeof value === "number") {
+        variableValue = { type: "number", value };
+      }
+      if (typeof value === "boolean") {
+        variableValue = { type: "boolean", value };
+      }
+      dataSources.set(dataSourceId, {
+        id: dataSourceId,
+        // preserve existing instance scope when edit
+        scopeInstanceId:
+          dataSources.get(dataSourceId)?.scopeInstanceId ?? instanceId,
+        name,
+        type: "variable",
+        value: variableValue,
+      });
     }
-    if (typeof value === "number") {
-      variableValue = { type: "number", value };
-    }
-    if (typeof value === "boolean") {
-      variableValue = { type: "boolean", value };
-    }
-    dataSources.set(dataSourceId, {
-      id: dataSourceId,
-      // preserve existing instance scope when edit
-      scopeInstanceId:
-        dataSources.get(dataSourceId)?.scopeInstanceId ?? instanceId,
-      name,
-      type: "variable",
-      value: variableValue,
-    });
-  });
+  );
 };
 
-const VariablePanel = ({
+const VariableValuePanel = ({
   variable,
-  onBack,
+  onCancel,
 }: {
   variable?: DataSource;
-  onBack: () => void;
+  onCancel: () => void;
 }) => {
   // variable value cannot have an access to other variables
   const nameId = useId();
@@ -152,6 +167,78 @@ const VariablePanel = ({
   );
   const [valueErrors, setValueErrors] = useState<undefined | string[]>();
 
+  return (
+    <Flex
+      direction="column"
+      css={{
+        overflow: "hidden",
+        gap: theme.spacing[9],
+        px: theme.spacing[9],
+        pb: theme.spacing[9],
+      }}
+    >
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Label htmlFor={nameId}>Name</Label>
+        <InputErrorsTooltip errors={nameErrors}>
+          <InputField
+            id={nameId}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </InputErrorsTooltip>
+      </Flex>
+      {/* resource variable can be replaced with value variable
+          parameters can change only name */}
+      {variable?.type !== "parameter" && (
+        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+          <Label>Value</Label>
+          <InputErrorsTooltip errors={valueErrors}>
+            <div>
+              <ExpressionEditor value={value} onChange={setValue} />
+            </div>
+          </InputErrorsTooltip>
+        </Flex>
+      )}
+      <Flex justify="end" css={{ gap: theme.spacing[5] }}>
+        <Button color="neutral" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button
+          onClick={() => {
+            if (name.length === 0) {
+              setNameErrors([`Variable name is required`]);
+              return;
+            }
+            if (variable?.type === "parameter") {
+              renameVariable(variable, name);
+              onCancel();
+            }
+            // save value variable and convert from resource variable if necessary
+            const result = saveVariable(variable, name, value);
+            if (result?.error !== undefined) {
+              setValueErrors([result.error]);
+              return;
+            }
+            onCancel();
+          }}
+        >
+          Save
+        </Button>
+      </Flex>
+    </Flex>
+  );
+};
+
+const VariablePanel = ({
+  variable,
+  onBack,
+}: {
+  variable?: DataSource;
+  onBack: () => void;
+}) => {
+  const [tab, setTab] = useState(
+    variable?.type === "resource" ? "resource" : "value"
+  );
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -167,72 +254,32 @@ const VariablePanel = ({
   }, [onBack]);
 
   return (
-    <ScrollArea
-      css={{
-        display: "flex",
-        flexDirection: "column",
-        width: theme.spacing[30],
-      }}
-    >
-      <Flex
-        direction="column"
-        css={{
-          overflow: "hidden",
-          p: theme.spacing[9],
-          gap: theme.spacing[5],
-        }}
-      >
-        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-          <Label htmlFor={nameId}>Name</Label>
-          <InputErrorsTooltip errors={nameErrors}>
-            <InputField
-              id={nameId}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </InputErrorsTooltip>
-        </Flex>
-        {/* only value variables (new and existing) can have value field */}
-        {(variable === undefined || variable.type === "variable") && (
-          <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-            <Label>Value</Label>
-            <InputErrorsTooltip errors={valueErrors}>
-              <div>
-                <ExpressionEditor value={value} onChange={setValue} />
-              </div>
-            </InputErrorsTooltip>
-          </Flex>
-        )}
-        <Flex justify="end" css={{ gap: theme.spacing[5] }}>
-          <Button color="neutral" onClick={onBack}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (name.length === 0) {
-                setNameErrors([`Variable name is required`]);
-                return;
-              }
-              if (variable === undefined || variable.type === "variable") {
-                const result = saveVariable(variable?.id, name, value);
-                if (result?.error !== undefined) {
-                  setValueErrors([result.error]);
-                  return;
-                }
-                onBack();
-                return;
-              }
-
-              // only rename any other type of variable
-              renameVariable(variable, name);
-              onBack();
-            }}
-          >
-            Save
-          </Button>
-        </Flex>
+    <PanelTabs value={tab} onValueChange={setTab} asChild>
+      <Flex direction="column">
+        <ScrollArea
+          css={{
+            // flex fixes content overflowing artificial scroll area
+            display: "flex",
+            flexDirection: "column",
+            width: theme.spacing[30],
+          }}
+        >
+          {/* user can change only parameter name */}
+          {variable?.type !== "parameter" && (
+            <PanelTabsList>
+              <PanelTabsTrigger value="value">Value</PanelTabsTrigger>
+              <PanelTabsTrigger value="resource">Resource</PanelTabsTrigger>
+            </PanelTabsList>
+          )}
+          <PanelTabsContent value="value">
+            <VariableValuePanel variable={variable} onCancel={onBack} />
+          </PanelTabsContent>
+          <PanelTabsContent value="resource">
+            <ResourcePanel variable={variable} onCancel={onBack} />
+          </PanelTabsContent>
+        </ScrollArea>
       </Flex>
-    </ScrollArea>
+    </PanelTabs>
   );
 };
 
