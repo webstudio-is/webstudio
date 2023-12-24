@@ -207,7 +207,7 @@ export const ProjectCard = ({
       >
         <Grid className={thumbnailStyle()}>
           <ThumbnailLink title={title} to={linkPath} ref={thumbnailRef} />
-          {isTransitioning && <Spinner />}
+          {isTransitioning && <Spinner delay={0} />}
         </Grid>
 
         <Flex
