@@ -82,10 +82,10 @@ const CaretColorPlugin = () => {
     const color = colord(elementColor).toRgb();
     if (color.a < 0.1) {
       // Apply caret color with animated color
-      const engine = createRegularStyleSheet({ name: "text-editor-caret" });
+      const sheet = createRegularStyleSheet({ name: "text-editor-caret" });
 
       // Animation on cursor needed to make it visible on any background
-      engine.addPlaintextRule(`
+      sheet.addPlaintextRule(`
 
         @keyframes ${caretClassName}-keyframes {
           from {caret-color: #666;}
@@ -101,11 +101,11 @@ const CaretColorPlugin = () => {
       `);
 
       rootElement.classList.add(caretClassName);
-      engine.render();
+      sheet.render();
 
       return () => {
         rootElement.classList.remove(caretClassName);
-        engine.unmount();
+        sheet.unmount();
       };
     }
   }, [caretClassName, editor]);
@@ -198,19 +198,19 @@ export const TextEditor = ({
   const [italicClassName] = useState(() => `a${nanoid()}`);
 
   useLayoutEffect(() => {
-    const engine = createRegularStyleSheet({ name: "text-editor" });
+    const sheet = createRegularStyleSheet({ name: "text-editor" });
 
     // reset paragraph styles and make it work inside <a>
-    engine.addPlaintextRule(`
+    sheet.addPlaintextRule(`
       .${paragraphClassName} { display: inline-block; margin: 0; }
     `);
     /// set italic style for bold italic combination on the same element
-    engine.addPlaintextRule(`
+    sheet.addPlaintextRule(`
       .${italicClassName} { font-style: italic; }
     `);
-    engine.render();
+    sheet.render();
     return () => {
-      engine.unmount();
+      sheet.unmount();
     };
   }, [paragraphClassName, italicClassName]);
 
