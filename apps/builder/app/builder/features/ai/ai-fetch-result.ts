@@ -5,7 +5,7 @@ import {
   handleAiRequest,
   commandDetect,
 } from "@webstudio-is/ai";
-import { createRegularStyleSheet } from "@webstudio-is/css-engine";
+import { createRegularStyleSheet } from "@webstudio-is/css-sheet";
 import {
   generateJsxElement,
   generateJsxChildren,
@@ -304,17 +304,17 @@ const $jsx = computed(
       )
     );
 
-    const engine = createRegularStyleSheet({ name: "ssr" });
+    const sheet = createRegularStyleSheet({ name: "ssr" });
 
     const styleRules = getStyleRules(styles, treeStyleSourceSelections);
     for (const { breakpointId, instanceId, state, style } of styleRules) {
-      engine.addStyleRule(`[${idAttribute}="${instanceId}"]${state ?? ""}`, {
+      sheet.addStyleRule(`[${idAttribute}="${instanceId}"]${state ?? ""}`, {
         breakpoint: breakpointId,
         style,
       });
     }
 
-    const css = engine.cssText.replace(/\n/gm, " ");
+    const css = sheet.cssText.replace(/\n/gm, " ");
     return [
       css.length > 0 ? `<style>{\`${css}\`}</style>` : "",
       jsx

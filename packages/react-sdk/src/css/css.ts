@@ -1,7 +1,7 @@
 import {
   createRegularStyleSheet,
   type TransformValue,
-} from "@webstudio-is/css-engine";
+} from "@webstudio-is/css-sheet";
 import type {
   Asset,
   Assets,
@@ -58,15 +58,15 @@ export const generateCssText = (data: Data, options: CssOptions) => {
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);
 
-  const engine = createRegularStyleSheet({ name: "ssr" });
+  const sheet = createRegularStyleSheet({ name: "ssr" });
 
-  addGlobalRules(engine, {
+  addGlobalRules(sheet, {
     assets,
     assetBaseUrl: options.assetBaseUrl,
   });
 
   for (const breakpoint of breakpoints.values()) {
-    engine.addMediaRule(breakpoint.id, breakpoint);
+    sheet.addMediaRule(breakpoint.id, breakpoint);
   }
 
   for (const [component, meta] of data.componentMetas) {
@@ -76,13 +76,13 @@ export const generateCssText = (data: Data, options: CssOptions) => {
     }
     const rules = getPresetStyleRules(component, presetStyle);
     for (const [selector, style] of rules) {
-      engine.addStyleRule(selector, { style });
+      sheet.addStyleRule(selector, { style });
     }
   }
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
   for (const { breakpointId, instanceId, state, style } of styleRules) {
-    engine.addStyleRule(
+    sheet.addStyleRule(
       `[${idAttribute}="${instanceId}"]${state ?? ""}`,
       {
         breakpoint: breakpointId,
@@ -92,5 +92,5 @@ export const generateCssText = (data: Data, options: CssOptions) => {
     );
   }
 
-  return engine.cssText;
+  return sheet.cssText;
 };

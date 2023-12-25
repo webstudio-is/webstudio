@@ -26,7 +26,7 @@ const preStyle = css(textVariants.mono, {
 // - Compiles a CSS string from the style info
 // - Groups by category and separates categories with comments
 const getCssText = (instanceStyle: StyleInfo) => {
-  const cssEngine = createRegularStyleSheet();
+  const sheet = createRegularStyleSheet();
   type StyleValueInfoMap = Map<
     StyleProperty,
     StyleValueInfo[keyof StyleValueInfo]
@@ -72,7 +72,7 @@ const getCssText = (instanceStyle: StyleInfo) => {
     if (styles.size === 0) {
       return;
     }
-    const rule = cssEngine.addStyleRule(comment, {
+    const rule = sheet.addStyleRule(comment, {
       style: Object.fromEntries(styles) as Style,
     });
     result.push(`/* ${comment} */`);

@@ -39,7 +39,7 @@ const helpersSheet = createRegularStyleSheet({ name: "helpers" });
 const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
-const presetStylesEngine = createRegularStyleSheet({ name: "preset-styles" });
+const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper
@@ -191,7 +191,7 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
   }, [assets]);
 
   useIsomorphicLayoutEffect(() => {
-    presetStylesEngine.clear();
+    presetSheet.clear();
     for (const [component, meta] of metas) {
       const presetStyle = meta.presetStyle;
       if (presetStyle === undefined) {
@@ -199,10 +199,10 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
       }
       const rules = getPresetStyleRules(component, presetStyle);
       for (const [selector, style] of rules) {
-        presetStylesEngine.addStyleRule(selector, { style });
+        presetSheet.addStyleRule(selector, { style });
       }
     }
-    presetStylesEngine.render();
+    presetSheet.render();
   }, [metas]);
 
   return null;
