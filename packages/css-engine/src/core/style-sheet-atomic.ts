@@ -25,7 +25,8 @@ export class StyleSheetAtomic extends StyleSheet {
         { [property]: value } as Style,
         transformValue
       );
-      newStyleRule.selectorText = `.${hash(newStyleRule.cssText)}`;
+      // "c" makes sure hash always starts with a letter.
+      newStyleRule.selectorText = `.c${hash(newStyleRule.cssText)}`;
 
       for (const styleRule of mediaRule.rules) {
         // This property-value combination has already been added.

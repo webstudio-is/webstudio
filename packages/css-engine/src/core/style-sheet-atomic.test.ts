@@ -25,7 +25,7 @@ describe("Style Sheet Atomic", () => {
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .1y9jjw5 {
+        .c1y9jjw5 {
           display: block
         }
       }"
@@ -36,10 +36,10 @@ describe("Style Sheet Atomic", () => {
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .1y9jjw5 {
+        .c1y9jjw5 {
           display: block
         }
-        .1kh19hs {
+        .c1kh19hs {
           color: red
         }
       }"
@@ -53,15 +53,15 @@ describe("Style Sheet Atomic", () => {
     // Default media query should allways be the first to have the lowest source order specificity
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
-        .1y9jjw5 {
+        .c1y9jjw5 {
           display: block
         }
-        .1kh19hs {
+        .c1kh19hs {
           color: red
         }
       }
       @media all and (min-width: 0px) {
-        .1c4iqej {
+        .c1c4iqej {
           color: blue
         }
       }"
@@ -79,10 +79,10 @@ describe("Style Sheet Atomic", () => {
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .1y9jjw5 {
+        .c1y9jjw5 {
           display: block
         }
-        .1kh19hs {
+        .c1kh19hs {
           color: red
         }
       }"
@@ -100,10 +100,10 @@ describe("Style Sheet Atomic", () => {
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .1y9jjw5 {
+        .c1y9jjw5 {
           display: block
         }
-        .1kh19hs {
+        .c1kh19hs {
           color: red
         }
       }"
@@ -118,13 +118,13 @@ describe("Style Sheet Atomic", () => {
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
-        .1y9jjw5 {
+        .c1y9jjw5 {
           display: block
         }
-        .1kh19hs {
+        .c1kh19hs {
           color: red
         }
-        .7g7pdu {
+        .c7g7pdu {
           color: green
         }
       }"

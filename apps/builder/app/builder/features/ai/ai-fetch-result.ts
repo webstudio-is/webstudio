@@ -5,7 +5,7 @@ import {
   handleAiRequest,
   commandDetect,
 } from "@webstudio-is/ai";
-import { createRegularStyleSheet } from "@webstudio-is/css-sheet";
+import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import {
   generateJsxElement,
   generateJsxChildren,
