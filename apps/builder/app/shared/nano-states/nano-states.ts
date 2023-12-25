@@ -11,6 +11,7 @@ import type {
   Instance,
   Prop,
   Props,
+  Resource,
   StyleDecl,
   Styles,
   StyleSource,
@@ -48,6 +49,8 @@ export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
 export const $dataSourceVariables = dataSourceVariablesStore;
+
+export const $resources = atom(new Map<Resource["id"], Resource>());
 
 export const propsStore = atom<Props>(new Map());
 export const $props = propsStore;
