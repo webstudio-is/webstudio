@@ -1,5 +1,5 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
-import { CssEngine } from "./css-engine";
+import { StyleSheetRegular } from "./style-sheet-regular";
 
 const style0 = {
   display: { type: "keyword", value: "block" },
@@ -20,22 +20,22 @@ const style2 = {
 const mediaRuleOptions1 = { minWidth: 300 } as const;
 const mediaId1 = "1";
 
-describe("CssEngine", () => {
-  let engine: CssEngine;
+describe("Style Sheet Regular", () => {
+  let sheet: StyleSheetRegular;
 
   const reset = () => {
-    engine = new CssEngine({ name: "test" });
+    sheet = new StyleSheetRegular();
   };
 
   beforeEach(reset);
 
   test("minWidth media rule", () => {
-    engine.addMediaRule("0", { minWidth: 0 });
-    engine.addStyleRule(".c1", {
+    sheet.addMediaRule("0", { minWidth: 0 });
+    sheet.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "red" } },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c1 {
           color: red
@@ -45,12 +45,12 @@ describe("CssEngine", () => {
   });
 
   test("maxWidth media rule", () => {
-    engine.addMediaRule("0", { maxWidth: 1000 });
-    engine.addStyleRule(".c1", {
+    sheet.addMediaRule("0", { maxWidth: 1000 });
+    sheet.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "red" } },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (max-width: 1000px) {
         .c1 {
           color: red
@@ -60,12 +60,12 @@ describe("CssEngine", () => {
   });
 
   test("maxWidth and maxWith media rule", () => {
-    engine.addMediaRule("0", { maxWidth: 1000, minWidth: 360 });
-    engine.addStyleRule(".c1", {
+    sheet.addMediaRule("0", { maxWidth: 1000, minWidth: 360 });
+    sheet.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "red" } },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 360px) and (max-width: 1000px) {
         .c1 {
           color: red
@@ -75,22 +75,22 @@ describe("CssEngine", () => {
   });
 
   test("use default media rule when there is no matching one registered", () => {
-    engine.addStyleRule(".c", {
+    sheet.addStyleRule(".c", {
       style: style0,
       breakpoint: "x",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
           display: block
         }
       }"
     `);
-    engine.addStyleRule(".c1", {
+    sheet.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "red" } },
       breakpoint: "x",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
           display: block
@@ -101,13 +101,13 @@ describe("CssEngine", () => {
       }"
     `);
 
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    engine.addStyleRule(".c1", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    sheet.addStyleRule(".c1", {
       style: { color: { type: "keyword", value: "blue" } },
       breakpoint: mediaId0,
     });
     // Default media query should allways be the first to have the lowest source order specificity
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
           display: block
@@ -125,25 +125,25 @@ describe("CssEngine", () => {
   });
 
   test("sort media queries based on lower min-width", () => {
-    engine.addMediaRule(mediaId1, mediaRuleOptions1);
-    engine.addStyleRule(".c2", {
+    sheet.addMediaRule(mediaId1, mediaRuleOptions1);
+    sheet.addStyleRule(".c2", {
       style: style1,
       breakpoint: mediaId1,
     });
 
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    engine.addStyleRule(".c1", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    sheet.addStyleRule(".c1", {
       style: style0,
       breakpoint: mediaId0,
     });
 
-    engine.addStyleRule(".c3", {
+    sheet.addStyleRule(".c3", {
       style: style0,
       breakpoint: "x",
     });
 
     // Default media query should allways be the first to have the lowest source order specificity
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c3 {
           display: block
@@ -163,15 +163,15 @@ describe("CssEngine", () => {
   });
 
   test("keep the sort order when minWidth is not defined", () => {
-    engine.addStyleRule(".c0", {
+    sheet.addStyleRule(".c0", {
       style: style0,
       breakpoint: "x",
     });
-    engine.addStyleRule(".c1", {
+    sheet.addStyleRule(".c1", {
       style: style1,
       breakpoint: "x",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c0 {
           display: block
@@ -184,15 +184,15 @@ describe("CssEngine", () => {
 
     reset();
 
-    engine.addStyleRule(".c1", {
+    sheet.addStyleRule(".c1", {
       style: style1,
       breakpoint: "x",
     });
-    engine.addStyleRule(".c0", {
+    sheet.addStyleRule(".c0", {
       style: style0,
       breakpoint: "x",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c1 {
           display: flex
@@ -205,15 +205,15 @@ describe("CssEngine", () => {
   });
 
   test("rule with multiple properties", () => {
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    engine.addStyleRule(".c", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    sheet.addStyleRule(".c", {
       style: {
         ...style0,
         color: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           display: block;
@@ -224,14 +224,14 @@ describe("CssEngine", () => {
   });
 
   test("hyphenate property", () => {
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    engine.addStyleRule(".c", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    sheet.addStyleRule(".c", {
       style: {
         backgroundColor: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           background-color: red
@@ -241,15 +241,15 @@ describe("CssEngine", () => {
   });
 
   test("add rule", () => {
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    const rule1 = engine.addStyleRule(".c", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    const rule1 = sheet.addStyleRule(".c", {
       style: {
         ...style0,
         color: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           display: block;
@@ -263,14 +263,14 @@ describe("CssEngine", () => {
         color: red
       }"
     `);
-    engine.addStyleRule(".c2", {
+    sheet.addStyleRule(".c2", {
       style: {
         ...style0,
         color: { type: "keyword", value: "green" },
       },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           display: block;
@@ -285,15 +285,15 @@ describe("CssEngine", () => {
   });
 
   test("update rule", () => {
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    const rule = engine.addStyleRule(".c", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    const rule = sheet.addStyleRule(".c", {
       style: {
         ...style0,
         color: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           display: block;
@@ -317,7 +317,7 @@ describe("CssEngine", () => {
       }"
     `);
 
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           display: block;
@@ -328,22 +328,22 @@ describe("CssEngine", () => {
   });
 
   test("update media rule options", () => {
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    engine.addStyleRule(".c", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    sheet.addStyleRule(".c", {
       style: {
         color: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           color: red
         }
       }"
     `);
-    engine.addMediaRule(mediaId0, { minWidth: 10 });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    sheet.addMediaRule(mediaId0, { minWidth: 10 });
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 10px) {
         .c {
           color: red
@@ -353,20 +353,20 @@ describe("CssEngine", () => {
   });
 
   test("don't override media queries", () => {
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    engine.addStyleRule(".c", {
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    sheet.addStyleRule(".c", {
       style: style0,
       breakpoint: "0",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           display: block
         }
       }"
     `);
-    engine.addMediaRule(mediaId0, mediaRuleOptions0);
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
           display: block
@@ -376,29 +376,29 @@ describe("CssEngine", () => {
   });
 
   test("plaintext rule", () => {
-    engine.addPlaintextRule(".c { color: red }");
-    expect(engine.cssText).toMatchInlineSnapshot(`".c { color: red }"`);
+    sheet.addPlaintextRule(".c { color: red }");
+    expect(sheet.cssText).toMatchInlineSnapshot(`".c { color: red }"`);
   });
 
   test("plaintext - no duplicates", () => {
-    engine.addPlaintextRule(".c { color: red }");
-    engine.addPlaintextRule(".c { color: red }");
-    engine.addPlaintextRule(".c { color: green }");
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    sheet.addPlaintextRule(".c { color: red }");
+    sheet.addPlaintextRule(".c { color: red }");
+    sheet.addPlaintextRule(".c { color: green }");
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       ".c { color: red }
       .c { color: green }"
     `);
   });
 
   test("font family rule", () => {
-    engine.addFontFaceRule({
+    sheet.addFontFaceRule({
       fontFamily: "Roboto",
       fontStyle: "normal",
       fontWeight: 400,
       fontDisplay: "swap",
       src: "url(/src)",
     });
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@font-face {
         font-family: Roboto; font-style: normal; font-weight: 400; font-display: swap; src: url(/src);
       }"
@@ -406,16 +406,16 @@ describe("CssEngine", () => {
   });
 
   test("clear", () => {
-    engine.addStyleRule(".c", {
+    sheet.addStyleRule(".c", {
       style: style0,
       breakpoint: "0",
     });
-    engine.clear();
-    expect(engine.cssText).toMatchInlineSnapshot(`""`);
+    sheet.clear();
+    expect(sheet.cssText).toMatchInlineSnapshot(`""`);
   });
 
   test("get all rule style keys", () => {
-    const rule = engine.addStyleRule(".c", {
+    const rule = sheet.addStyleRule(".c", {
       style: style2,
       breakpoint: "0",
     });
@@ -428,12 +428,12 @@ describe("CssEngine", () => {
   });
 
   test("delete style from rule", () => {
-    const rule = engine.addStyleRule(".c", {
+    const rule = sheet.addStyleRule(".c", {
       style: style2,
       breakpoint: "0",
     });
     rule.styleMap.delete("display");
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
           color: black
@@ -446,7 +446,7 @@ describe("CssEngine", () => {
     const assets = new Map<string, { path: string }>([
       ["1234", { path: "foo.png" }],
     ]);
-    const rule = engine.addStyleRule(
+    const rule = sheet.addStyleRule(
       ".c",
       {
         style: {
@@ -477,7 +477,7 @@ describe("CssEngine", () => {
       }
     );
     rule.styleMap.delete("display");
-    expect(engine.cssText).toMatchInlineSnapshot(`
+    expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
           background-image: url("foo.png")

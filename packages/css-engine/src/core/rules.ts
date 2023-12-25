@@ -20,6 +20,9 @@ class StylePropertyMap {
     this.#isDirty = true;
     this.onChange?.();
   }
+  get(property: StyleProperty) {
+    return this.#styleMap.get(property);
+  }
   has(property: StyleProperty) {
     return this.#styleMap.has(property);
   }

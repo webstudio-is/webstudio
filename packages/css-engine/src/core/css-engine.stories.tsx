@@ -1,4 +1,5 @@
 import { CssEngine } from "./css-engine";
+import { StyleSheetRegular } from "./style-sheet-regular";
 
 export default {
   component: "CssEngine",
@@ -12,9 +13,10 @@ const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId = "0";
 
 export const Basic = () => {
-  const engine = new CssEngine({ name: "test" });
-  engine.addMediaRule(mediaId, mediaRuleOptions0);
-  const rule = engine.addStyleRule(".test", {
+  const sheet = new StyleSheetRegular();
+  const engine = new CssEngine({ name: "test", sheet });
+  sheet.addMediaRule(mediaId, mediaRuleOptions0);
+  const rule = sheet.addStyleRule(".test", {
     style: style0,
     breakpoint: "0",
   });
@@ -32,7 +34,7 @@ export const Basic = () => {
       </button>
       <button
         onClick={() => {
-          engine.addStyleRule(".test", {
+          sheet.addStyleRule(".test", {
             style: {
               backgroundColor: { type: "keyword", value: "yellow" },
             },

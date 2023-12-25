@@ -16,6 +16,7 @@
     "storybook:build": "storybook build"
   },
   "dependencies": {
+    "@emotion/hash": "^0.9.1",
     "@webstudio-is/error-utils": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
     "hyphenate-style-name": "^1.0.4"
