@@ -1,10 +1,10 @@
 import { StyleRule } from "./rules";
 import type { TransformValue } from "./to-value";
-import { StyleSheetBase, type CssRule } from "./style-sheet-base";
+import { StyleSheet, type CssRule } from "./style-sheet";
 
 const defaultMediaRuleId = "__default-media-rule__";
 
-export class StyleSheetRegular extends StyleSheetBase {
+export class StyleSheetRegular extends StyleSheet {
   addStyleRule(
     selectorText: string,
     rule: CssRule,

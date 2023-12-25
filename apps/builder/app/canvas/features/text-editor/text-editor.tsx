@@ -18,7 +18,7 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
-import { createCssEngine } from "@webstudio-is/css-engine";
+import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -82,7 +82,7 @@ const CaretColorPlugin = () => {
     const color = colord(elementColor).toRgb();
     if (color.a < 0.1) {
       // Apply caret color with animated color
-      const engine = createCssEngine({ name: "text-editor-caret" });
+      const engine = createRegularStyleSheet({ name: "text-editor-caret" });
 
       // Animation on cursor needed to make it visible on any background
       engine.addPlaintextRule(`
@@ -198,7 +198,7 @@ export const TextEditor = ({
   const [italicClassName] = useState(() => `a${nanoid()}`);
 
   useLayoutEffect(() => {
-    const engine = createCssEngine({ name: "text-editor" });
+    const engine = createRegularStyleSheet({ name: "text-editor" });
 
     // reset paragraph styles and make it work inside <a>
     engine.addPlaintextRule(`

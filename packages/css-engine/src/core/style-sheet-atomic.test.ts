@@ -1,5 +1,6 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
 import { StyleSheetAtomic } from "./style-sheet-atomic";
+import { createAtomicStyleSheet } from ".";
 
 const style0 = {
   display: { type: "keyword", value: "block" },
@@ -12,7 +13,7 @@ describe("Style Sheet Atomic", () => {
   let sheet: StyleSheetAtomic;
 
   const reset = () => {
-    sheet = new StyleSheetAtomic();
+    sheet = createAtomicStyleSheet();
   };
 
   beforeEach(reset);

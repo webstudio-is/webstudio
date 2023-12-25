@@ -5,7 +5,7 @@ import {
   handleAiRequest,
   commandDetect,
 } from "@webstudio-is/ai";
-import { createCssEngine } from "@webstudio-is/css-engine";
+import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import {
   generateJsxElement,
   generateJsxChildren,
@@ -304,7 +304,7 @@ const $jsx = computed(
       )
     );
 
-    const engine = createCssEngine({ name: "ssr" });
+    const engine = createRegularStyleSheet({ name: "ssr" });
 
     const styleRules = getStyleRules(styles, treeStyleSourceSelections);
     for (const { breakpointId, instanceId, state, style } of styleRules) {

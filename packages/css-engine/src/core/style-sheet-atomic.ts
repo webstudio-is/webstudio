@@ -2,18 +2,18 @@ import type { Style, StyleProperty } from "../schema";
 import { StyleRule } from "./rules";
 import type { TransformValue } from "./to-value";
 import hash from "@emotion/hash";
-import { StyleSheetBase, type CssRule } from "./style-sheet-base";
+import { StyleSheet, type CssRule } from "./style-sheet";
 
 const defaultMediaRuleId = "__default-media-rule__";
 
-export class StyleSheetAtomic extends StyleSheetBase {
+export class StyleSheetAtomic extends StyleSheet {
   addStyleRule(rule: CssRule, transformValue?: TransformValue) {
     const mediaRule = this.addMediaRule(rule.breakpoint || defaultMediaRuleId);
     if (mediaRule === undefined) {
       // Should be impossible to reach since we have a default media rule.
       throw new Error("No media rule found");
     }
-    let styleRules = [];
+    const styleRules = [];
     let property: StyleProperty;
     for (property in rule.style) {
       const value = rule.style[property];

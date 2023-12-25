@@ -1,4 +1,7 @@
-import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
+import {
+  createRegularStyleSheet,
+  type TransformValue,
+} from "@webstudio-is/css-engine";
 import type {
   Asset,
   Assets,
@@ -55,7 +58,7 @@ export const generateCssText = (data: Data, options: CssOptions) => {
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);
 
-  const engine = createCssEngine({ name: "ssr" });
+  const engine = createRegularStyleSheet({ name: "ssr" });
 
   addGlobalRules(engine, {
     assets,

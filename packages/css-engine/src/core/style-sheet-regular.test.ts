@@ -1,5 +1,6 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
 import { StyleSheetRegular } from "./style-sheet-regular";
+import { createRegularStyleSheet } from ".";
 
 const style0 = {
   display: { type: "keyword", value: "block" },
@@ -24,7 +25,7 @@ describe("Style Sheet Regular", () => {
   let sheet: StyleSheetRegular;
 
   const reset = () => {
-    sheet = new StyleSheetRegular();
+    sheet = createRegularStyleSheet();
   };
 
   beforeEach(reset);
