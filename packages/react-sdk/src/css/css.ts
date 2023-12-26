@@ -1,7 +1,7 @@
 import {
   createRegularStyleSheet,
   type TransformValue,
-} from "@webstudio-is/css-sheet";
+} from "@webstudio-is/css-engine";
 import type {
   Asset,
   Assets,
@@ -15,6 +15,7 @@ import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules, getStyleRules } from "./style-rules";
+import { createAtomicStyleSheet } from "@webstudio-is/css-engine";
 
 type Data = {
   assets: Asset[];
@@ -52,21 +53,25 @@ export const createImageValueTransformer =
     }
   };
 
-export const generateCssText = (data: Data, options: CssOptions) => {
+export const generateCss = (data: Data, options: CssOptions) => {
   const assets: Assets = new Map(data.assets.map((asset) => [asset.id, asset]));
   const breakpoints = new Map(data.breakpoints);
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);
+  const classMap: Map<string, Array<string>> = new Map();
 
-  const sheet = createRegularStyleSheet({ name: "ssr" });
+  const globalSheet = createRegularStyleSheet({ name: "ssr-global" });
+  // @todo add support for both regular and atomic style sheets
+  //const sheet = createRegularStyleSheet({ name: "ssr" });
+  const atomicSheet = createAtomicStyleSheet({ name: "ssr" });
 
-  addGlobalRules(sheet, {
+  addGlobalRules(globalSheet, {
     assets,
     assetBaseUrl: options.assetBaseUrl,
   });
 
   for (const breakpoint of breakpoints.values()) {
-    sheet.addMediaRule(breakpoint.id, breakpoint);
+    atomicSheet.addMediaRule(breakpoint.id, breakpoint);
   }
 
   for (const [component, meta] of data.componentMetas) {
@@ -76,21 +81,25 @@ export const generateCssText = (data: Data, options: CssOptions) => {
     }
     const rules = getPresetStyleRules(component, presetStyle);
     for (const [selector, style] of rules) {
-      sheet.addStyleRule(selector, { style });
+      globalSheet.addStyleRule(selector, { style });
     }
   }
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
   for (const { breakpointId, instanceId, state, style } of styleRules) {
-    sheet.addStyleRule(
-      `[${idAttribute}="${instanceId}"]${state ?? ""}`,
-      {
-        breakpoint: breakpointId,
-        style,
-      },
-      createImageValueTransformer(assets, options)
-    );
+    const transformer = createImageValueTransformer(assets, options);
+    const styleRule = {
+      breakpoint: breakpointId,
+      style,
+    };
+    // @todo add support for both regular and atomic style sheets
+    //sheet.addStyleRule(
+    //  `[${idAttribute}="${instanceId}"]${state ?? ""}`,
+    //  styleRule,
+    //  transformer
+    //);
+    const { classes } = atomicSheet.addStyleRule(styleRule, transformer);
+    classMap.set(instanceId, classes);
   }
-
-  return sheet.cssText;
+  return { cssText: globalSheet.cssText + atomicSheet.cssText, classMap };
 };

@@ -14,6 +14,7 @@ export class StyleSheetAtomic extends StyleSheet {
       throw new Error("No media rule found");
     }
     const styleRules = [];
+    const classes = [];
     let property: StyleProperty;
     for (property in rule.style) {
       const value = rule.style[property];
@@ -26,7 +27,9 @@ export class StyleSheetAtomic extends StyleSheet {
         transformValue
       );
       // "c" makes sure hash always starts with a letter.
-      newStyleRule.selectorText = `.c${hash(newStyleRule.cssText)}`;
+      const className = `c${hash(newStyleRule.cssText)}`;
+      classes.push(className);
+      newStyleRule.selectorText = `.${className}`;
 
       for (const styleRule of mediaRule.rules) {
         // This property-value combination has already been added.
@@ -47,7 +50,7 @@ export class StyleSheetAtomic extends StyleSheet {
       }
     }
 
-    return styleRules;
+    return { styleRules, classes };
   }
 
   #onChangeRule = () => {

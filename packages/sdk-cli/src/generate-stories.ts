@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
-  generateCssText,
+  generateCss,
   generateDataFromEmbedTemplate,
   generatePageComponent,
   getIndexesWithinAncestors,
@@ -169,7 +169,7 @@ export const generateStories = async () => {
         rootInstanceId,
       ]),
     });
-    const css = generateCssText(
+    const css = generateCss(
       {
         assets: [],
         breakpoints: [

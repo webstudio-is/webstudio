@@ -69,6 +69,7 @@ export const generateJsxElement = ({
   dataSources,
   indexesWithinAncestors,
   children,
+  classMap,
 }: {
   scope: Scope;
   instance: Instance;
@@ -76,6 +77,7 @@ export const generateJsxElement = ({
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
+  classMap?: Map<string, Array<string>>;
 }) => {
   let generatedProps = "";
 
@@ -92,6 +94,8 @@ export const generateJsxElement = ({
   let conditionValue: undefined | string;
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
+
+  const classes = Array.from(classMap?.get(instance.id) ?? []);
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
@@ -120,9 +124,18 @@ export const generateJsxElement = ({
       }
       continue;
     }
+    // We need to merge atomic classes with user-defined className prop.
+    if (prop.name === "className" && propValue !== undefined) {
+      classes.push(propValue);
+      continue;
+    }
     if (propValue !== undefined) {
       generatedProps += `\n${prop.name}={${propValue}}`;
     }
+  }
+
+  if (classes.length !== 0) {
+    generatedProps += `\nclassName="${classes.join(" ")}"`;
   }
 
   let generatedElement = "";
@@ -172,6 +185,7 @@ export const generateJsxChildren = ({
   props,
   dataSources,
   indexesWithinAncestors,
+  classMap,
 }: {
   scope: Scope;
   children: Instance["children"];
@@ -179,6 +193,7 @@ export const generateJsxChildren = ({
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
+  classMap?: Map<string, Array<string>>;
 }) => {
   let generatedChildren = "";
   for (const child of children) {
@@ -203,7 +218,9 @@ export const generateJsxChildren = ({
         props,
         dataSources,
         indexesWithinAncestors,
+        classMap,
         children: generateJsxChildren({
+          classMap,
           scope,
           children: instance.children,
           instances,
@@ -226,6 +243,7 @@ export const generatePageComponent = ({
   props,
   dataSources,
   indexesWithinAncestors,
+  classMap,
 }: {
   scope: Scope;
   page: Page;
@@ -233,6 +251,7 @@ export const generatePageComponent = ({
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
+  classMap: Map<string, Array<string>>;
 }) => {
   const instance = instances.get(page.rootInstanceId);
   if (instance === undefined) {
@@ -281,6 +300,7 @@ export const generatePageComponent = ({
     props,
     dataSources,
     indexesWithinAncestors,
+    classMap,
     children: generateJsxChildren({
       scope,
       children: instance.children,
@@ -288,6 +308,7 @@ export const generatePageComponent = ({
       props,
       dataSources,
       indexesWithinAncestors,
+      classMap,
     }),
   });
 

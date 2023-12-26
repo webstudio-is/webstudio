@@ -16,7 +16,7 @@ import pLimit from "p-limit";
 import ora from "ora";
 import merge from "deepmerge";
 import {
-  generateCssText,
+  generateCss,
   generateUtilsExport,
   generatePageComponent,
   getIndexesWithinAncestors,
@@ -394,6 +394,23 @@ export const prebuild = async (options: {
     }
   }
 
+  spinner.text = "Generating css file";
+  const { cssText, classMap } = generateCss(
+    {
+      assets: siteData.assets,
+      breakpoints: siteData.build?.breakpoints,
+      styles: siteData.build?.styles,
+      styleSourceSelections: siteData.build?.styleSourceSelections,
+      // pass only used metas to not generate unused preset styles
+      componentMetas: projectMetas,
+    },
+    {
+      assetBaseUrl,
+    }
+  );
+
+  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
+
   spinner.text = "Generating routes and pages";
 
   const routeFileTemplate = await readFile(
@@ -486,6 +503,7 @@ export const prebuild = async (options: {
       instances,
       props,
       dataSources,
+      classMap,
       indexesWithinAncestors: getIndexesWithinAncestors(
         projectMetas,
         instances,
@@ -551,22 +569,6 @@ ${utilsExport}
       })
     );
   }
-
-  spinner.text = "Generating css file";
-  const cssText = generateCssText(
-    {
-      assets: siteData.assets,
-      breakpoints: siteData.build?.breakpoints,
-      styles: siteData.build?.styles,
-      styleSourceSelections: siteData.build?.styleSourceSelections,
-      // pass only used metas to not generate unused preset styles
-      componentMetas: projectMetas,
-    },
-    {
-      assetBaseUrl,
-    }
-  );
-  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
 
   await writeFile(
     join(generatedDir, "[sitemap.xml].ts"),
