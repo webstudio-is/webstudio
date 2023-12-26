@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
-import { type ReactNode, useState } from "react";
+import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
@@ -91,6 +91,7 @@ export const pagesPaths = new Set([
   "/_route_with_symbols_",
   "/form",
   "/heading-with-id",
+  "/resources",
 ]);
 
 export const formsProperties = new Map<

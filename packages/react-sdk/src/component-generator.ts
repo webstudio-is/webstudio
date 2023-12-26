@@ -141,7 +141,8 @@ export const generateJsxElement = ({
       return "";
     }
     const indexVariable = scope.getName(`${instance.id}-index`, "index");
-    generatedElement += `{${collectionDataValue}.map((${collectionItemValue}, ${indexVariable}) =>\n`;
+    // fix implicit any error
+    generatedElement += `{${collectionDataValue}?.map((${collectionItemValue}: any, ${indexVariable}: number) =>\n`;
     generatedElement += `<Fragment key={${indexVariable}}>\n`;
     generatedElement += children;
     generatedElement += `</Fragment>\n`;
@@ -269,7 +270,8 @@ export const generatePageComponent = ({
         dataSource.resourceId,
         dataSource.name
       );
-      generatedDataSources += `let ${valueName} = _props.resources["${resourceName}"]\n`;
+      // cast to any to fix accessing fields from unknown error
+      generatedDataSources += `let ${valueName}: any = _props.resources["${resourceName}"]\n`;
     }
   }
 

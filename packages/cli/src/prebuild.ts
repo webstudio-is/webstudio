@@ -27,6 +27,7 @@ import {
   generateRemixRoute,
   generateRemixParams,
   generateResourcesLoader,
+  collectionComponent,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -339,12 +340,13 @@ export const prebuild = async (options: {
 
     componentsByPage[page.path] = new Set();
     for (const [_instanceId, instance] of instances) {
-      if (instance.component) {
-        componentsByPage[page.path].add(instance.component);
-        const meta = metas.get(instance.component);
-        if (meta) {
-          projectMetas.set(instance.component, meta);
-        }
+      if (instance.component === collectionComponent) {
+        continue;
+      }
+      componentsByPage[page.path].add(instance.component);
+      const meta = metas.get(instance.component);
+      if (meta) {
+        projectMetas.set(instance.component, meta);
       }
     }
   }
@@ -412,7 +414,7 @@ export const prebuild = async (options: {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
-      "ReactNode",
+      "Fragment",
       "PageData",
       "Asset",
       "fontAssets",
@@ -495,7 +497,7 @@ export const prebuild = async (options: {
 
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
-import { type ReactNode, useState } from "react";
+import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
 ${componentImports}

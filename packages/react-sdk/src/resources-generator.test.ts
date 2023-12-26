@@ -43,6 +43,8 @@ test("generate resources loader", () => {
       variableName,
       ] = await Promise.all([
       loadResource({
+      id: "resourceId",
+      name: "resourceName",
       url: "https://my-json.com",
       method: "post",
       headers: [
@@ -109,6 +111,8 @@ test("generate variable and use in resources loader", () => {
       variableName,
       ] = await Promise.all([
       loadResource({
+      id: "resourceId",
+      name: "resourceName",
       url: "https://my-json.com/",
       method: "post",
       headers: [
@@ -169,6 +173,8 @@ test("generate page params variable and use in resources loader", () => {
       variableName,
       ] = await Promise.all([
       loadResource({
+      id: "resourceId",
+      name: "resourceName",
       url: "https://my-json.com/" + Pageparams?.slug,
       method: "post",
       headers: [
