@@ -63,7 +63,7 @@ export const generateCss = (data: Data, options: CssOptions) => {
   const globalSheet = createRegularStyleSheet({ name: "ssr-global" });
   // @todo add support for both regular and atomic style sheets
   //const sheet = createRegularStyleSheet({ name: "ssr" });
-  const atomicSheet = createAtomicStyleSheet({ name: "ssr" });
+  const atomicSheet = createAtomicStyleSheet({ name: "ssr-atomic" });
 
   addGlobalRules(globalSheet, {
     assets,
@@ -93,13 +93,13 @@ export const generateCss = (data: Data, options: CssOptions) => {
       style,
     };
     // @todo add support for both regular and atomic style sheets
-    //sheet.addStyleRule(
+    //atomicSheet.addStyleRule(
     //  `[${idAttribute}="${instanceId}"]${state ?? ""}`,
     //  styleRule,
     //  transformer
     //);
     const { classes } = atomicSheet.addStyleRule(styleRule, transformer);
-    classMap.set(instanceId, classes);
+    classMap.set(instanceId, [...(classMap.get(instanceId) ?? []), ...classes]);
   }
   return { cssText: globalSheet.cssText + atomicSheet.cssText, classMap };
 };
