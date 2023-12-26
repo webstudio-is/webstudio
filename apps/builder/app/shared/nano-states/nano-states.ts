@@ -51,6 +51,7 @@ export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
 export const $dataSourceVariables = dataSourceVariablesStore;
 
 export const $resources = atom(new Map<Resource["id"], Resource>());
+export const $resourceValues = atom(new Map<Resource["id"], unknown>());
 
 export const propsStore = atom<Props>(new Map());
 export const $props = propsStore;

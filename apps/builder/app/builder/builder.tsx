@@ -38,6 +38,7 @@ import {
   stylesStore,
   $domains,
   $resources,
+  subscribeResources,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -261,6 +262,7 @@ export const Builder = ({
   });
 
   useEffect(subscribeCommands, []);
+  useEffect(subscribeResources, []);
 
   useUnmount(() => {
     pagesStore.set(undefined);
