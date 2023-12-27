@@ -43,6 +43,8 @@ export const generateResourcesLoader = ({
       const resourceName = scope.getName(resource.id, dataSource.name);
       generatedOutput += `${resourceName},\n`;
       generatedLoaders += `loadResource({\n`;
+      generatedLoaders += `id: "${resource.id}",\n`;
+      generatedLoaders += `name: ${JSON.stringify(resource.name)},\n`;
       const url = generateExpression({
         expression: resource.url,
         dataSources,
@@ -50,19 +52,18 @@ export const generateResourcesLoader = ({
       });
       generatedLoaders += `url: ${url},\n`;
       generatedLoaders += `method: "${resource.method}",\n`;
-      if (resource.headers.length > 0) {
-        generatedLoaders += `headers: [\n`;
-        for (const header of resource.headers) {
-          const value = generateExpression({
-            expression: header.value,
-            dataSources,
-            scope,
-          });
-          generatedLoaders += `{ name: "${header.name}", value: ${value} },\n`;
-        }
-        generatedLoaders += `],\n`;
+      generatedLoaders += `headers: [\n`;
+      for (const header of resource.headers) {
+        const value = generateExpression({
+          expression: header.value,
+          dataSources,
+          scope,
+        });
+        generatedLoaders += `{ name: "${header.name}", value: ${value} },\n`;
       }
-      if (resource.body !== undefined) {
+      generatedLoaders += `],\n`;
+      // prevent computing empty expression
+      if (resource.body !== undefined && resource.body.length > 0) {
         const body = generateExpression({
           expression: resource.body,
           dataSources,

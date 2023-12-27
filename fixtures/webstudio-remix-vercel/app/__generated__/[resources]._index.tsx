@@ -5,7 +5,10 @@ import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
-import { Image as Image } from "@webstudio-is/sdk-components-react";
+import {
+  Box as Box,
+  HtmlEmbed as HtmlEmbed,
+} from "@webstudio-is/sdk-components-react";
 
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
@@ -50,12 +53,17 @@ export const pageData: PageData = {
     code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
   page: {
-    id: "szYLvBduHPmbtqQKCDY0b",
-    name: "RouteWithSymbols",
-    title: "RouteWithSymbols",
-    meta: { description: "" },
-    rootInstanceId: "EDEfpMPRqDejthtwkH7ws",
-    path: "/_route_with_symbols_",
+    id: "TS39WeBd0Qr3QgbSlzdf2",
+    name: "resources",
+    title: "resources",
+    meta: {
+      description: "",
+      excludePageFromSearch: false,
+      socialImageAssetId: "",
+      custom: [{ property: "", content: "" }],
+    },
+    rootInstanceId: "AWY2qZfpbykoiWELeJhse",
+    path: "/resources",
   },
 };
 export const user: { email: string | null } | undefined = {
@@ -66,13 +74,20 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 type Params = Record<string, string | undefined>;
 type Resources = Record<string, unknown>;
 const Page = (_props: { params: Params; resources: Resources }) => {
+  let list: any = _props.resources["list_1"];
   return (
-    <Body data-ws-id="EDEfpMPRqDejthtwkH7ws" data-ws-component="Body">
-      <Image
-        data-ws-id="AdXSAYCx4QDo5QN6nLoGs"
-        data-ws-component="Image"
-        src={"/assets/small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp"}
-      />
+    <Body data-ws-id="AWY2qZfpbykoiWELeJhse" data-ws-component="Body">
+      {list?.data?.map((collectionItem: any, index: number) => (
+        <Fragment key={index}>
+          <Box data-ws-id="-F-b3eIEZ8WKW_F-Aw8nN" data-ws-component="Box">
+            <HtmlEmbed
+              data-ws-id="05oK4Ks0ocFv3w8MJOcNR"
+              data-ws-component="HtmlEmbed"
+              code={collectionItem?.name}
+            />
+          </Box>
+        </Fragment>
+      ))}
     </Body>
   );
 };
