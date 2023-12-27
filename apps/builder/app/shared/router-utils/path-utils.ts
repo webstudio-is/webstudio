@@ -161,3 +161,5 @@ export const getPublishedUrl = (domain: string) => {
 
 export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>
   typeof subEndpoint === "string" ? `/rest/ai/${subEndpoint}` : "/rest/ai";
+
+export const restResourcesLoader = () => `/rest/resources-loader`;

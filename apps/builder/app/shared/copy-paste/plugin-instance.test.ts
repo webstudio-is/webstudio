@@ -371,7 +371,7 @@ describe("data sources", () => {
     );
   });
 
-  test.only("copy parameter prop with new data source", () => {
+  test("copy parameter prop with new data source", () => {
     const instances: Instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "list" }]),
       createInstance("list", collectionComponent, []),

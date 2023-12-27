@@ -33,6 +33,7 @@ import {
   $dragAndDropState,
   $selectedInstanceStates,
   $resources,
+  $resourceValues,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -85,6 +86,7 @@ export const registerContainers = () => {
   // synchronize whole states
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);
+  clientStores.set("resourceValues", $resourceValues);
   clientStores.set("selectedPageId", selectedPageIdStore);
   clientStores.set("selectedPageHash", selectedPageHashStore);
   clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
