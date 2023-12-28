@@ -11,8 +11,8 @@ import type {
   StyleDeclKey,
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
+import { idAttribute } from "@webstudio-is/react-sdk";
 import type { WsComponentMeta } from "../components/component-meta";
-import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules, getStyleRules } from "./style-rules";
 import { createAtomicStyleSheet } from "@webstudio-is/css-engine";
@@ -27,10 +27,14 @@ type Data = {
 
 type CssOptions = {
   assetBaseUrl: string;
+  atomic: boolean;
 };
 
 export const createImageValueTransformer =
-  (assets: Assets, options: CssOptions): TransformValue =>
+  (
+    assets: Assets,
+    { assetBaseUrl }: { assetBaseUrl: string }
+  ): TransformValue =>
   (styleValue) => {
     if (styleValue.type === "image" && styleValue.value.type === "asset") {
       const asset = assets.get(styleValue.value.value);
@@ -39,7 +43,6 @@ export const createImageValueTransformer =
       }
 
       // @todo reuse image loaders and generate image-set
-      const { assetBaseUrl } = options;
       const url = `${assetBaseUrl}${asset.name}`;
 
       return {
@@ -53,25 +56,25 @@ export const createImageValueTransformer =
     }
   };
 
-export const generateCss = (data: Data, options: CssOptions) => {
+export const generateCss = (
+  data: Data,
+  { assetBaseUrl, atomic }: CssOptions
+) => {
   const assets: Assets = new Map(data.assets.map((asset) => [asset.id, asset]));
   const breakpoints = new Map(data.breakpoints);
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);
   const classMap: Map<string, Array<string>> = new Map();
 
-  const globalSheet = createRegularStyleSheet({ name: "ssr-global" });
-  // @todo add support for both regular and atomic style sheets
-  //const sheet = createRegularStyleSheet({ name: "ssr" });
-  const atomicSheet = createAtomicStyleSheet({ name: "ssr-atomic" });
+  const regularSheet = createRegularStyleSheet({ name: "ssr-regular" });
+  const atomicSheet = atomic
+    ? createAtomicStyleSheet({ name: "ssr-atomic" })
+    : undefined;
 
-  addGlobalRules(globalSheet, {
-    assets,
-    assetBaseUrl: options.assetBaseUrl,
-  });
+  addGlobalRules(regularSheet, { assets, assetBaseUrl });
 
   for (const breakpoint of breakpoints.values()) {
-    atomicSheet.addMediaRule(breakpoint.id, breakpoint);
+    (atomicSheet ?? regularSheet).addMediaRule(breakpoint.id, breakpoint);
   }
 
   for (const [component, meta] of data.componentMetas) {
@@ -81,25 +84,41 @@ export const generateCss = (data: Data, options: CssOptions) => {
     }
     const rules = getPresetStyleRules(component, presetStyle);
     for (const [selector, style] of rules) {
-      globalSheet.addStyleRule(selector, { style });
+      regularSheet.addStyleRule({ style }, selector);
     }
   }
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
+  // Put style rules without state last.
+  styleRules.sort((rule1, rule2) => {
+    return rule1.state === undefined ? -1 : rule2.state === undefined ? 1 : 0;
+  });
+  const imageValueTransformer = createImageValueTransformer(assets, {
+    assetBaseUrl,
+  });
+
   for (const { breakpointId, instanceId, state, style } of styleRules) {
-    const transformer = createImageValueTransformer(assets, options);
-    const styleRule = {
-      breakpoint: breakpointId,
-      style,
-    };
-    // @todo add support for both regular and atomic style sheets
-    //atomicSheet.addStyleRule(
-    //  `[${idAttribute}="${instanceId}"]${state ?? ""}`,
-    //  styleRule,
-    //  transformer
-    //);
-    const { classes } = atomicSheet.addStyleRule(styleRule, transformer);
-    classMap.set(instanceId, [...(classMap.get(instanceId) ?? []), ...classes]);
+    if (atomicSheet) {
+      const { classes } = atomicSheet.addStyleRule(
+        { breakpoint: breakpointId, style },
+        state,
+        imageValueTransformer
+      );
+      classMap.set(instanceId, [
+        ...(classMap.get(instanceId) ?? []),
+        ...classes,
+      ]);
+      continue;
+    }
+    regularSheet.addStyleRule(
+      { breakpoint: breakpointId, style },
+      `[${idAttribute}="${instanceId}"]${state ?? ""}`,
+      imageValueTransformer
+    );
   }
-  return { cssText: globalSheet.cssText + atomicSheet.cssText, classMap };
+
+  return {
+    cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
+    classMap,
+  };
 };

@@ -32,10 +32,13 @@ describe("Style Sheet Regular", () => {
 
   test("minWidth media rule", () => {
     sheet.addMediaRule("0", { minWidth: 0 });
-    sheet.addStyleRule(".c1", {
-      style: { color: { type: "keyword", value: "red" } },
-      breakpoint: "0",
-    });
+    sheet.addStyleRule(
+      {
+        style: { color: { type: "keyword", value: "red" } },
+        breakpoint: "0",
+      },
+      ".c1"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c1 {
@@ -47,10 +50,13 @@ describe("Style Sheet Regular", () => {
 
   test("maxWidth media rule", () => {
     sheet.addMediaRule("0", { maxWidth: 1000 });
-    sheet.addStyleRule(".c1", {
-      style: { color: { type: "keyword", value: "red" } },
-      breakpoint: "0",
-    });
+    sheet.addStyleRule(
+      {
+        style: { color: { type: "keyword", value: "red" } },
+        breakpoint: "0",
+      },
+      ".c1"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (max-width: 1000px) {
         .c1 {
@@ -62,10 +68,13 @@ describe("Style Sheet Regular", () => {
 
   test("maxWidth and maxWith media rule", () => {
     sheet.addMediaRule("0", { maxWidth: 1000, minWidth: 360 });
-    sheet.addStyleRule(".c1", {
-      style: { color: { type: "keyword", value: "red" } },
-      breakpoint: "0",
-    });
+    sheet.addStyleRule(
+      {
+        style: { color: { type: "keyword", value: "red" } },
+        breakpoint: "0",
+      },
+      ".c1"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 360px) and (max-width: 1000px) {
         .c1 {
@@ -76,10 +85,13 @@ describe("Style Sheet Regular", () => {
   });
 
   test("use default media rule when there is no matching one registered", () => {
-    sheet.addStyleRule(".c", {
-      style: style0,
-      breakpoint: "x",
-    });
+    sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: "x",
+      },
+      ".c"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
@@ -87,10 +99,13 @@ describe("Style Sheet Regular", () => {
         }
       }"
     `);
-    sheet.addStyleRule(".c1", {
-      style: { color: { type: "keyword", value: "red" } },
-      breakpoint: "x",
-    });
+    sheet.addStyleRule(
+      {
+        style: { color: { type: "keyword", value: "red" } },
+        breakpoint: "x",
+      },
+      ".c1"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c {
@@ -103,10 +118,13 @@ describe("Style Sheet Regular", () => {
     `);
 
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule(".c1", {
-      style: { color: { type: "keyword", value: "blue" } },
-      breakpoint: mediaId0,
-    });
+    sheet.addStyleRule(
+      {
+        style: { color: { type: "keyword", value: "blue" } },
+        breakpoint: mediaId0,
+      },
+      ".c1"
+    );
     // Default media query should allways be the first to have the lowest source order specificity
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
@@ -127,21 +145,30 @@ describe("Style Sheet Regular", () => {
 
   test("sort media queries based on lower min-width", () => {
     sheet.addMediaRule(mediaId1, mediaRuleOptions1);
-    sheet.addStyleRule(".c2", {
-      style: style1,
-      breakpoint: mediaId1,
-    });
+    sheet.addStyleRule(
+      {
+        style: style1,
+        breakpoint: mediaId1,
+      },
+      ".c2"
+    );
 
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule(".c1", {
-      style: style0,
-      breakpoint: mediaId0,
-    });
+    sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: mediaId0,
+      },
+      ".c1"
+    );
 
-    sheet.addStyleRule(".c3", {
-      style: style0,
-      breakpoint: "x",
-    });
+    sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: "x",
+      },
+      ".c3"
+    );
 
     // Default media query should allways be the first to have the lowest source order specificity
     expect(sheet.cssText).toMatchInlineSnapshot(`
@@ -164,14 +191,20 @@ describe("Style Sheet Regular", () => {
   });
 
   test("keep the sort order when minWidth is not defined", () => {
-    sheet.addStyleRule(".c0", {
-      style: style0,
-      breakpoint: "x",
-    });
-    sheet.addStyleRule(".c1", {
-      style: style1,
-      breakpoint: "x",
-    });
+    sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: "x",
+      },
+      ".c0"
+    );
+    sheet.addStyleRule(
+      {
+        style: style1,
+        breakpoint: "x",
+      },
+      ".c1"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c0 {
@@ -185,14 +218,20 @@ describe("Style Sheet Regular", () => {
 
     reset();
 
-    sheet.addStyleRule(".c1", {
-      style: style1,
-      breakpoint: "x",
-    });
-    sheet.addStyleRule(".c0", {
-      style: style0,
-      breakpoint: "x",
-    });
+    sheet.addStyleRule(
+      {
+        style: style1,
+        breakpoint: "x",
+      },
+      ".c1"
+    );
+    sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: "x",
+      },
+      ".c0"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
         .c1 {
@@ -207,13 +246,16 @@ describe("Style Sheet Regular", () => {
 
   test("rule with multiple properties", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule(".c", {
-      style: {
-        ...style0,
-        color: { type: "keyword", value: "red" },
+    sheet.addStyleRule(
+      {
+        style: {
+          ...style0,
+          color: { type: "keyword", value: "red" },
+        },
+        breakpoint: "0",
       },
-      breakpoint: "0",
-    });
+      ".c"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
@@ -226,12 +268,15 @@ describe("Style Sheet Regular", () => {
 
   test("hyphenate property", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule(".c", {
-      style: {
-        backgroundColor: { type: "keyword", value: "red" },
+    sheet.addStyleRule(
+      {
+        style: {
+          backgroundColor: { type: "keyword", value: "red" },
+        },
+        breakpoint: "0",
       },
-      breakpoint: "0",
-    });
+      ".c"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
@@ -243,13 +288,16 @@ describe("Style Sheet Regular", () => {
 
   test("add rule", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    const rule1 = sheet.addStyleRule(".c", {
-      style: {
-        ...style0,
-        color: { type: "keyword", value: "red" },
+    const rule1 = sheet.addStyleRule(
+      {
+        style: {
+          ...style0,
+          color: { type: "keyword", value: "red" },
+        },
+        breakpoint: "0",
       },
-      breakpoint: "0",
-    });
+      ".c"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
@@ -264,13 +312,16 @@ describe("Style Sheet Regular", () => {
         color: red
       }"
     `);
-    sheet.addStyleRule(".c2", {
-      style: {
-        ...style0,
-        color: { type: "keyword", value: "green" },
+    sheet.addStyleRule(
+      {
+        style: {
+          ...style0,
+          color: { type: "keyword", value: "green" },
+        },
+        breakpoint: "0",
       },
-      breakpoint: "0",
-    });
+      ".c2"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
@@ -287,13 +338,16 @@ describe("Style Sheet Regular", () => {
 
   test("update rule", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    const rule = sheet.addStyleRule(".c", {
-      style: {
-        ...style0,
-        color: { type: "keyword", value: "red" },
+    const rule = sheet.addStyleRule(
+      {
+        style: {
+          ...style0,
+          color: { type: "keyword", value: "red" },
+        },
+        breakpoint: "0",
       },
-      breakpoint: "0",
-    });
+      ".c"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
@@ -330,12 +384,15 @@ describe("Style Sheet Regular", () => {
 
   test("update media rule options", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule(".c", {
-      style: {
-        color: { type: "keyword", value: "red" },
+    sheet.addStyleRule(
+      {
+        style: {
+          color: { type: "keyword", value: "red" },
+        },
+        breakpoint: "0",
       },
-      breakpoint: "0",
-    });
+      ".c"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
@@ -355,10 +412,13 @@ describe("Style Sheet Regular", () => {
 
   test("don't override media queries", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule(".c", {
-      style: style0,
-      breakpoint: "0",
-    });
+    sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: "0",
+      },
+      ".c"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all and (min-width: 0px) {
         .c {
@@ -407,19 +467,25 @@ describe("Style Sheet Regular", () => {
   });
 
   test("clear", () => {
-    sheet.addStyleRule(".c", {
-      style: style0,
-      breakpoint: "0",
-    });
+    sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: "0",
+      },
+      ".c"
+    );
     sheet.clear();
     expect(sheet.cssText).toMatchInlineSnapshot(`""`);
   });
 
   test("get all rule style keys", () => {
-    const rule = sheet.addStyleRule(".c", {
-      style: style2,
-      breakpoint: "0",
-    });
+    const rule = sheet.addStyleRule(
+      {
+        style: style2,
+        breakpoint: "0",
+      },
+      ".c"
+    );
     expect(Array.from(rule.styleMap.keys())).toMatchInlineSnapshot(`
       [
         "display",
@@ -429,10 +495,13 @@ describe("Style Sheet Regular", () => {
   });
 
   test("delete style from rule", () => {
-    const rule = sheet.addStyleRule(".c", {
-      style: style2,
-      breakpoint: "0",
-    });
+    const rule = sheet.addStyleRule(
+      {
+        style: style2,
+        breakpoint: "0",
+      },
+      ".c"
+    );
     rule.styleMap.delete("display");
     expect(sheet.cssText).toMatchInlineSnapshot(`
       "@media all {
@@ -448,7 +517,6 @@ describe("Style Sheet Regular", () => {
       ["1234", { path: "foo.png" }],
     ]);
     const rule = sheet.addStyleRule(
-      ".c",
       {
         style: {
           backgroundImage: {
@@ -461,6 +529,7 @@ describe("Style Sheet Regular", () => {
         },
         breakpoint: "0",
       },
+      ".c",
       (styleValue) => {
         if (styleValue.type === "image" && styleValue.value.type === "asset") {
           const asset = assets.get(styleValue.value.value);

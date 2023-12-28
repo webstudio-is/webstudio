@@ -14,10 +14,7 @@ const mediaId = "0";
 export const Basic = () => {
   const sheet = createRegularStyleSheet();
   sheet.addMediaRule(mediaId, mediaRuleOptions0);
-  const rule = sheet.addStyleRule(".test", {
-    style: style0,
-    breakpoint: "0",
-  });
+  const rule = sheet.addStyleRule({ style: style0, breakpoint: "0" }, ".test");
   sheet.render();
   return (
     <>
@@ -32,12 +29,13 @@ export const Basic = () => {
       </button>
       <button
         onClick={() => {
-          sheet.addStyleRule(".test", {
-            style: {
-              backgroundColor: { type: "keyword", value: "yellow" },
+          sheet.addStyleRule(
+            {
+              style: { backgroundColor: { type: "keyword", value: "yellow" } },
+              breakpoint: "0",
             },
-            breakpoint: "0",
-          });
+            ".test"
+          );
           sheet.render();
         }}
       >

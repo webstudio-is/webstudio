@@ -6,8 +6,8 @@ const defaultMediaRuleId = "__default-media-rule__";
 
 export class StyleSheetRegular extends StyleSheet {
   addStyleRule(
-    selectorText: string,
     rule: CssRule,
+    selectorText: string,
     transformValue?: TransformValue
   ) {
     const mediaRule = this.addMediaRule(rule.breakpoint || defaultMediaRuleId);

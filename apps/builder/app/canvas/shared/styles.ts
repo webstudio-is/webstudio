@@ -199,7 +199,7 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
       }
       const rules = getPresetStyleRules(component, presetStyle);
       for (const [selector, style] of rules) {
-        presetSheet.addStyleRule(selector, { style });
+        presetSheet.addStyleRule({ style }, selector);
       }
     }
     presetSheet.render();
@@ -247,10 +247,13 @@ const getOrCreateRule = ({
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
   if (rule === undefined) {
-    rule = userSheet.addStyleRule(`[${idAttribute}="${instanceId}"]${state}`, {
-      breakpoint: breakpointId,
-      style: {},
-    });
+    rule = userSheet.addStyleRule(
+      {
+        breakpoint: breakpointId,
+        style: {},
+      },
+      `[${idAttribute}="${instanceId}"]${state}`
+    );
     wrappedRulesMap.set(key, rule);
   }
   rule.styleMap.setTransformer(

@@ -72,9 +72,10 @@ const getCssText = (instanceStyle: StyleInfo) => {
     if (styles.size === 0) {
       return;
     }
-    const rule = sheet.addStyleRule(comment, {
-      style: Object.fromEntries(styles) as Style,
-    });
+    const rule = sheet.addStyleRule(
+      { style: Object.fromEntries(styles) as Style },
+      comment
+    );
     result.push(`/* ${comment} */`);
     result.push(rule.styleMap.toString());
   };

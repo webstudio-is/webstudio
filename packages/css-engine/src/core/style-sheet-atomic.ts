@@ -7,7 +7,11 @@ import { StyleSheet, type CssRule } from "./style-sheet";
 const defaultMediaRuleId = "__default-media-rule__";
 
 export class StyleSheetAtomic extends StyleSheet {
-  addStyleRule(rule: CssRule, transformValue?: TransformValue) {
+  addStyleRule(
+    rule: CssRule,
+    selectorSuffix: string = "",
+    transformValue?: TransformValue
+  ) {
     const mediaRule = this.addMediaRule(rule.breakpoint || defaultMediaRuleId);
     if (mediaRule === undefined) {
       // Should be impossible to reach since we have a default media rule.
@@ -15,6 +19,7 @@ export class StyleSheetAtomic extends StyleSheet {
     }
     const styleRules = [];
     const classes = [];
+
     let property: StyleProperty;
     for (property in rule.style) {
       const value = rule.style[property];
@@ -26,15 +31,18 @@ export class StyleSheetAtomic extends StyleSheet {
         { [property]: value } as Style,
         transformValue
       );
+      styleRules.push(newStyleRule);
       // "c" makes sure hash always starts with a letter.
-      const className = `c${hash(newStyleRule.cssText)}`;
+      const className = `c${hash(
+        newStyleRule.cssText + selectorSuffix + rule.breakpoint
+      )}`;
       classes.push(className);
-      newStyleRule.selectorText = `.${className}`;
+      newStyleRule.selectorText = `.${className}${selectorSuffix}`;
 
       for (const styleRule of mediaRule.rules) {
         // This property-value combination has already been added.
         if (
-          styleRule instanceof StyleRule &&
+          "selectorText" in styleRule &&
           newStyleRule.selectorText === styleRule.selectorText
         ) {
           break;
@@ -42,8 +50,8 @@ export class StyleSheetAtomic extends StyleSheet {
         addRule = true;
         break;
       }
+
       if (addRule) {
-        styleRules.push(newStyleRule);
         newStyleRule.onChange = this.#onChangeRule;
         mediaRule.insertRule(newStyleRule);
         this.markAsDirty();

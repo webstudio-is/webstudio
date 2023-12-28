@@ -308,10 +308,10 @@ const $jsx = computed(
 
     const styleRules = getStyleRules(styles, treeStyleSourceSelections);
     for (const { breakpointId, instanceId, state, style } of styleRules) {
-      sheet.addStyleRule(`[${idAttribute}="${instanceId}"]${state ?? ""}`, {
-        breakpoint: breakpointId,
-        style,
-      });
+      sheet.addStyleRule(
+        { breakpoint: breakpointId, style },
+        `[${idAttribute}="${instanceId}"]${state ?? ""}`
+      );
     }
 
     const css = sheet.cssText.replace(/\n/gm, " ");

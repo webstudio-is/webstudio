@@ -19,32 +19,36 @@ describe("Style Sheet Atomic", () => {
   beforeEach(reset);
 
   test("use default media rule when there is no matching one registered", () => {
-    sheet.addStyleRule({
-      style: style0,
-      breakpoint: "x",
-    });
+    const { classes } = sheet.addStyleRule(
+      {
+        style: style0,
+        breakpoint: "x",
+      },
+      ":hover"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
-      "@media all {
-        .c1y9jjw5 {
-          display: block
-        }
-      }"
-    `);
+"@media all {
+  .c1pw5kj8:hover {
+    display: block
+  }
+}"
+`);
+    expect(classes).toEqual(["c1pw5kj8"]);
     sheet.addStyleRule({
       style: { color: { type: "keyword", value: "red" } },
       breakpoint: "x",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
-      "@media all {
-        .c1y9jjw5 {
-          display: block
-        }
-        .c1kh19hs {
-          color: red
-        }
-      }"
-    `);
-
+"@media all {
+  .c1pw5kj8:hover {
+    display: block
+  }
+  .c1r6dys4 {
+    color: red
+  }
+}"
+`);
+    expect(classes).toEqual(["c1pw5kj8"]);
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
     sheet.addStyleRule({
       style: { color: { type: "keyword", value: "blue" } },
@@ -52,20 +56,20 @@ describe("Style Sheet Atomic", () => {
     });
     // Default media query should allways be the first to have the lowest source order specificity
     expect(sheet.cssText).toMatchInlineSnapshot(`
-      "@media all {
-        .c1y9jjw5 {
-          display: block
-        }
-        .c1kh19hs {
-          color: red
-        }
-      }
-      @media all and (min-width: 0px) {
-        .c1c4iqej {
-          color: blue
-        }
-      }"
-    `);
+"@media all {
+  .c1pw5kj8:hover {
+    display: block
+  }
+  .c1r6dys4 {
+    color: red
+  }
+}
+@media all and (min-width: 0px) {
+  .c1abs1wg {
+    color: blue
+  }
+}"
+`);
   });
 
   test("rule with multiple properties", () => {
@@ -78,15 +82,15 @@ describe("Style Sheet Atomic", () => {
       breakpoint: "0",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
-      "@media all and (min-width: 0px) {
-        .c1y9jjw5 {
-          display: block
-        }
-        .c1kh19hs {
-          color: red
-        }
-      }"
-    `);
+"@media all and (min-width: 0px) {
+  .cj26d0t {
+    display: block
+  }
+  .c1g8spfr {
+    color: red
+  }
+}"
+`);
   });
 
   test("add rule", () => {
@@ -99,15 +103,15 @@ describe("Style Sheet Atomic", () => {
       breakpoint: "0",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
-      "@media all and (min-width: 0px) {
-        .c1y9jjw5 {
-          display: block
-        }
-        .c1kh19hs {
-          color: red
-        }
-      }"
-    `);
+"@media all and (min-width: 0px) {
+  .cj26d0t {
+    display: block
+  }
+  .c1g8spfr {
+    color: red
+  }
+}"
+`);
     sheet.addStyleRule({
       style: {
         // It should prevent duplicates
@@ -117,17 +121,17 @@ describe("Style Sheet Atomic", () => {
       breakpoint: "0",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
-      "@media all and (min-width: 0px) {
-        .c1y9jjw5 {
-          display: block
-        }
-        .c1kh19hs {
-          color: red
-        }
-        .c7g7pdu {
-          color: green
-        }
-      }"
-    `);
+"@media all and (min-width: 0px) {
+  .cj26d0t {
+    display: block
+  }
+  .c1g8spfr {
+    color: red
+  }
+  .crf0z62 {
+    color: green
+  }
+}"
+`);
   });
 });
