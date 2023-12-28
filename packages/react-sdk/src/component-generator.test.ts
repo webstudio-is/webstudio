@@ -542,7 +542,7 @@ test("generate collection component as map", () => {
     })
   ).toEqual(
     clear(`
-    {data.map((element, index) =>
+    {data?.map((element: any, index: number) =>
     <Fragment key={index}>
     <Label
     data-ws-id="label"
@@ -674,7 +674,7 @@ test("avoid generating collection parameter variable as state", () => {
     return <Body
     data-ws-id="body"
     data-ws-component="Body">
-    {data.map((element, index) =>
+    {data?.map((element: any, index: number) =>
     <Fragment key={index}>
     </Fragment>
     )}
@@ -770,7 +770,7 @@ test("generate resources loading", () => {
     type Resources = Record<string, unknown>
     const Page = (_props: { params: Params, resources: Resources }) => {
     let [data, set$data] = useState<any>("data")
-    let data_1 = _props.resources["data_2"]
+    let data_1: any = _props.resources["data_2"]
     return <Body
     data-ws-id="body"
     data-ws-component="Body"

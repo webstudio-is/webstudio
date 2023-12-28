@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "583e33b6-d105-45b8-ad11-a763f14760d4",
+    "id": "c8c21b00-1c66-4fb1-903d-5fd207fe24a2",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 222,
-    "createdAt": "2023-11-03T13:22:34.879Z",
-    "updatedAt": "2023-11-10T17:10:50.248Z",
+    "version": 228,
+    "createdAt": "2023-12-26T09:13:01.469Z",
+    "updatedAt": "2023-12-26T09:13:01.469Z",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -70,6 +70,24 @@
           },
           "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
           "path": "/heading-with-id"
+        },
+        {
+          "id": "TS39WeBd0Qr3QgbSlzdf2",
+          "name": "resources",
+          "title": "resources",
+          "meta": {
+            "description": "",
+            "excludePageFromSearch": false,
+            "socialImageAssetId": "",
+            "custom": [
+              {
+                "property": "",
+                "content": ""
+              }
+            ]
+          },
+          "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
+          "path": "/resources"
         }
       ]
     },
@@ -2073,6 +2091,36 @@
             "instanceId": "qmxnOlSxUGpuhuonVArWJ"
           }
         }
+      ],
+      [
+        "QlPyQWR-xy_0Lw2-akDvI",
+        {
+          "id": "QlPyQWR-xy_0Lw2-akDvI",
+          "instanceId": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "name": "data",
+          "type": "expression",
+          "value": "$ws$dataSource$PgXFOzhK1YDdnv2BuvlwR.data"
+        }
+      ],
+      [
+        "HRyG-UjWjdupsAVbyRc-H",
+        {
+          "id": "HRyG-UjWjdupsAVbyRc-H",
+          "instanceId": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "name": "item",
+          "type": "parameter",
+          "value": "MShox7Ngja3P8_t6XGMBw"
+        }
+      ],
+      [
+        "CHRYq1SSaV_uPOgkM6Cv1",
+        {
+          "id": "CHRYq1SSaV_uPOgkM6Cv1",
+          "instanceId": "05oK4Ks0ocFv3w8MJOcNR",
+          "name": "code",
+          "type": "expression",
+          "value": "$ws$dataSource$MShox7Ngja3P8_t6XGMBw.name"
+        }
       ]
     ],
     "dataSources": [
@@ -2114,9 +2162,40 @@
             "value": "initial"
           }
         }
+      ],
+      [
+        "PgXFOzhK1YDdnv2BuvlwR",
+        {
+          "type": "resource",
+          "id": "PgXFOzhK1YDdnv2BuvlwR",
+          "scopeInstanceId": "AWY2qZfpbykoiWELeJhse",
+          "name": "list",
+          "resourceId": "1vX6SQdaCjJN6MvJlG_cQ"
+        }
+      ],
+      [
+        "MShox7Ngja3P8_t6XGMBw",
+        {
+          "type": "parameter",
+          "id": "MShox7Ngja3P8_t6XGMBw",
+          "scopeInstanceId": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "name": "collectionItem"
+        }
       ]
     ],
-    "resources": [],
+    "resources": [
+      [
+        "1vX6SQdaCjJN6MvJlG_cQ",
+        {
+          "id": "1vX6SQdaCjJN6MvJlG_cQ",
+          "name": "list",
+          "method": "get",
+          "url": "\"https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json\"",
+          "headers": [],
+          "body": ""
+        }
+      ]
+    ],
     "instances": [
       [
         "On9cvWCxr5rdZtY9O1Bv0",
@@ -3078,6 +3157,57 @@
             }
           ]
         }
+      ],
+      [
+        "AWY2qZfpbykoiWELeJhse",
+        {
+          "type": "instance",
+          "id": "AWY2qZfpbykoiWELeJhse",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "WGSZGPAhyIuWhM1DJ7HbZ"
+            }
+          ]
+        }
+      ],
+      [
+        "WGSZGPAhyIuWhM1DJ7HbZ",
+        {
+          "type": "instance",
+          "id": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "component": "ws:collection",
+          "children": [
+            {
+              "type": "id",
+              "value": "-F-b3eIEZ8WKW_F-Aw8nN"
+            }
+          ]
+        }
+      ],
+      [
+        "-F-b3eIEZ8WKW_F-Aw8nN",
+        {
+          "type": "instance",
+          "id": "-F-b3eIEZ8WKW_F-Aw8nN",
+          "component": "Box",
+          "children": [
+            {
+              "type": "id",
+              "value": "05oK4Ks0ocFv3w8MJOcNR"
+            }
+          ]
+        }
+      ],
+      [
+        "05oK4Ks0ocFv3w8MJOcNR",
+        {
+          "type": "instance",
+          "id": "05oK4Ks0ocFv3w8MJOcNR",
+          "component": "HtmlEmbed",
+          "children": []
+        }
       ]
     ],
     "deployment": {
@@ -3161,6 +3291,24 @@
       },
       "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
       "path": "/heading-with-id"
+    },
+    {
+      "id": "TS39WeBd0Qr3QgbSlzdf2",
+      "name": "resources",
+      "title": "resources",
+      "meta": {
+        "description": "",
+        "excludePageFromSearch": false,
+        "socialImageAssetId": "",
+        "custom": [
+          {
+            "property": "",
+            "content": ""
+          }
+        ]
+      },
+      "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
+      "path": "/resources"
     }
   ],
   "assets": [

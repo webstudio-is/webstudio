@@ -13,6 +13,7 @@ import {
   $dataSourceVariables,
   $dataSources,
   $props,
+  $resourceValues,
 } from "./nano-states";
 import { $params } from "~/canvas/stores";
 
@@ -378,6 +379,45 @@ test("access parameter value from variables values", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
+test("compute props bound to resource variables", () => {
+  $instances.set(
+    toMap([{ id: "body", type: "instance", component: "Body", children: [] }])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "resourceVariableId",
+        type: "resource",
+        name: "paramName",
+        resourceId: "resourceId",
+      },
+    ])
+  );
+  $resourceValues.set(new Map([["resourceId", "my-value"]]));
+  $props.set(
+    toMap([
+      {
+        id: "resourcePropId",
+        name: "resource",
+        instanceId: "body",
+        type: "expression",
+        value: "$ws$dataSource$resourceVariableId",
+      },
+    ])
+  );
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([["resource", "my-value"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
 test("compute variable values for root", () => {
   $instances.set(
     toMap([{ id: "body", type: "instance", component: "Body", children: [] }])
@@ -562,6 +602,37 @@ test("compute item values for collection", () => {
       [
         JSON.stringify(["collection"]),
         new Map<string, unknown>([["dataId", ["apple", "banana", "orange"]]]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
+
+test("compute resource variable values", () => {
+  $instances.set(
+    toMap([{ id: "body", type: "instance", component: "Body", children: [] }])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "resourceVariableId",
+        scopeInstanceId: "body",
+        type: "resource",
+        name: "variableName",
+        resourceId: "resourceId",
+      },
+    ])
+  );
+  $resourceValues.set(new Map([["resourceId", "my-value"]]));
+  $props.set(new Map());
+
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([["resourceVariableId", "my-value"]]),
       ],
     ])
   );
