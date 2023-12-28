@@ -89,7 +89,7 @@ export const generateCss = (
   }
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
-  // Put style rules without state last.
+  // Put style rules without state first.
   styleRules.sort((rule1, rule2) => {
     return rule1.state === undefined ? -1 : rule2.state === undefined ? 1 : 0;
   });
