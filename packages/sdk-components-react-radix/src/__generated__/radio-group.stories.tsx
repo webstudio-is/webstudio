@@ -26,12 +26,18 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         data-ws-component="RadioGroup"
         value={radioGroupValue}
         onValueChange={onValueChange}
+        className="c6gk6ar c13wsd00 cgt00fz cydvc77"
       >
-        <Label data-ws-id="6" data-ws-component="Label">
+        <Label
+          data-ws-id="6"
+          data-ws-component="Label"
+          className="c6gk6ar c4v7k5r cgt00fz cydvc77"
+        >
           <RadioGroupItem
             data-ws-id="8"
             data-ws-component="RadioGroupItem"
             value={"default"}
+            className="c1rc9sce c18dp5gp clw3og8 c17f8p6x c15ce0qo c1yisi8r cpvsov c1inucbi c1dab7w1 c1uf7v01 czynn8e cuelx18 c17v08sn c1czmfdb c8nta89 cgassre c1ndsw6v cjrlou9 c945vvj c132tyaz c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l cegrmbm c1grhw0w"
           >
             <RadioGroupIndicator
               data-ws-id="11"
@@ -50,11 +56,16 @@ const Page = (_props: { params: Params; resources: Resources }) => {
             {"Default"}
           </Text>
         </Label>
-        <Label data-ws-id="15" data-ws-component="Label">
+        <Label
+          data-ws-id="15"
+          data-ws-component="Label"
+          className="c6gk6ar c4v7k5r cgt00fz cydvc77"
+        >
           <RadioGroupItem
             data-ws-id="17"
             data-ws-component="RadioGroupItem"
             value={"comfortable"}
+            className="c1rc9sce c18dp5gp clw3og8 c17f8p6x c15ce0qo c1yisi8r cpvsov c1inucbi c1dab7w1 c1uf7v01 czynn8e cuelx18 c17v08sn c1czmfdb c8nta89 cgassre c1ndsw6v cjrlou9 c945vvj c132tyaz c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l cegrmbm c1grhw0w"
           >
             <RadioGroupIndicator
               data-ws-id="20"
@@ -73,11 +84,16 @@ const Page = (_props: { params: Params; resources: Resources }) => {
             {"Comfortable"}
           </Text>
         </Label>
-        <Label data-ws-id="24" data-ws-component="Label">
+        <Label
+          data-ws-id="24"
+          data-ws-component="Label"
+          className="c6gk6ar c4v7k5r cgt00fz cydvc77"
+        >
           <RadioGroupItem
             data-ws-id="26"
             data-ws-component="RadioGroupItem"
             value={"compact"}
+            className="c1rc9sce c18dp5gp clw3og8 c17f8p6x c15ce0qo c1yisi8r cpvsov c1inucbi c1dab7w1 c1uf7v01 czynn8e cuelx18 c17v08sn c1czmfdb c8nta89 cgassre c1ndsw6v cjrlou9 c945vvj c132tyaz c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l cegrmbm c1grhw0w"
           >
             <RadioGroupIndicator
               data-ws-id="29"
@@ -271,129 +287,287 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px;
     min-height: 1em
   }
-}
-@media all {
-  [data-ws-id="1"] {
-    display: flex;
-    flex-direction: column;
-    row-gap: 0.5rem;
+}@media all {
+  .c6gk6ar {
+    display: flex
+  }
+  .c13wsd00 {
+    flex-direction: column
+  }
+  .cgt00fz {
+    row-gap: 0.5rem
+  }
+  .cydvc77 {
     column-gap: 0.5rem
   }
-  [data-ws-id="6"] {
-    display: flex;
-    align-items: center;
-    row-gap: 0.5rem;
+  .c4v7k5r {
+    align-items: center
+  }
+  .cgt00fz {
+    row-gap: 0.5rem
+  }
+  .cydvc77 {
     column-gap: 0.5rem
   }
-  [data-ws-id="8"] {
-    aspect-ratio: 1 / 1;
-    height: 1rem;
-    width: 1rem;
-    border-top-left-radius: 9999px;
-    border-top-right-radius: 9999px;
-    border-bottom-right-radius: 9999px;
-    border-bottom-left-radius: 9999px;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(15, 23, 42, 1);
-    border-right-color: rgba(15, 23, 42, 1);
-    border-bottom-color: rgba(15, 23, 42, 1);
-    border-left-color: rgba(15, 23, 42, 1);
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
+  .c1rc9sce {
+    aspect-ratio: 1 / 1
+  }
+  .c18dp5gp {
+    height: 1rem
+  }
+  .clw3og8 {
+    width: 1rem
+  }
+  .c17f8p6x {
+    border-top-left-radius: 9999px
+  }
+  .c15ce0qo {
+    border-top-right-radius: 9999px
+  }
+  .c1yisi8r {
+    border-bottom-right-radius: 9999px
+  }
+  .cpvsov {
+    border-bottom-left-radius: 9999px
+  }
+  .c1inucbi {
+    border-top-style: solid
+  }
+  .c1dab7w1 {
+    border-right-style: solid
+  }
+  .c1uf7v01 {
+    border-bottom-style: solid
+  }
+  .czynn8e {
+    border-left-style: solid
+  }
+  .cuelx18 {
+    border-top-color: rgba(15, 23, 42, 1)
+  }
+  .c17v08sn {
+    border-right-color: rgba(15, 23, 42, 1)
+  }
+  .c1czmfdb {
+    border-bottom-color: rgba(15, 23, 42, 1)
+  }
+  .c8nta89 {
+    border-left-color: rgba(15, 23, 42, 1)
+  }
+  .cgassre {
+    border-top-width: 1px
+  }
+  .c1ndsw6v {
+    border-right-width: 1px
+  }
+  .cjrlou9 {
+    border-bottom-width: 1px
+  }
+  .c945vvj {
+    border-left-width: 1px
+  }
+  .c132tyaz {
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="8"]:focus-visible {
-    outline-width: 2px;
-    outline-style: solid;
-    outline-color: transparent;
-    outline-offset: 2px;
+  .c1t6bql4:focus-visible {
+    outline-width: 2px
+  }
+  .czph7hf:focus-visible {
+    outline-style: solid
+  }
+  .cncn1ro:focus-visible {
+    outline-color: transparent
+  }
+  .cb270vo:focus-visible {
+    outline-offset: 2px
+  }
+  .c1rgsd1l:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="8"]:disabled {
-    cursor: not-allowed;
+  .cegrmbm:disabled {
+    cursor: not-allowed
+  }
+  .c1grhw0w:disabled {
     opacity: 0.5
   }
-  [data-ws-id="15"] {
-    display: flex;
-    align-items: center;
-    row-gap: 0.5rem;
+  .c4v7k5r {
+    align-items: center
+  }
+  .cgt00fz {
+    row-gap: 0.5rem
+  }
+  .cydvc77 {
     column-gap: 0.5rem
   }
-  [data-ws-id="17"] {
-    aspect-ratio: 1 / 1;
-    height: 1rem;
-    width: 1rem;
-    border-top-left-radius: 9999px;
-    border-top-right-radius: 9999px;
-    border-bottom-right-radius: 9999px;
-    border-bottom-left-radius: 9999px;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(15, 23, 42, 1);
-    border-right-color: rgba(15, 23, 42, 1);
-    border-bottom-color: rgba(15, 23, 42, 1);
-    border-left-color: rgba(15, 23, 42, 1);
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
+  .c1rc9sce {
+    aspect-ratio: 1 / 1
+  }
+  .c18dp5gp {
+    height: 1rem
+  }
+  .clw3og8 {
+    width: 1rem
+  }
+  .c17f8p6x {
+    border-top-left-radius: 9999px
+  }
+  .c15ce0qo {
+    border-top-right-radius: 9999px
+  }
+  .c1yisi8r {
+    border-bottom-right-radius: 9999px
+  }
+  .cpvsov {
+    border-bottom-left-radius: 9999px
+  }
+  .c1inucbi {
+    border-top-style: solid
+  }
+  .c1dab7w1 {
+    border-right-style: solid
+  }
+  .c1uf7v01 {
+    border-bottom-style: solid
+  }
+  .czynn8e {
+    border-left-style: solid
+  }
+  .cuelx18 {
+    border-top-color: rgba(15, 23, 42, 1)
+  }
+  .c17v08sn {
+    border-right-color: rgba(15, 23, 42, 1)
+  }
+  .c1czmfdb {
+    border-bottom-color: rgba(15, 23, 42, 1)
+  }
+  .c8nta89 {
+    border-left-color: rgba(15, 23, 42, 1)
+  }
+  .cgassre {
+    border-top-width: 1px
+  }
+  .c1ndsw6v {
+    border-right-width: 1px
+  }
+  .cjrlou9 {
+    border-bottom-width: 1px
+  }
+  .c945vvj {
+    border-left-width: 1px
+  }
+  .c132tyaz {
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="17"]:focus-visible {
-    outline-width: 2px;
-    outline-style: solid;
-    outline-color: transparent;
-    outline-offset: 2px;
+  .c1t6bql4:focus-visible {
+    outline-width: 2px
+  }
+  .czph7hf:focus-visible {
+    outline-style: solid
+  }
+  .cncn1ro:focus-visible {
+    outline-color: transparent
+  }
+  .cb270vo:focus-visible {
+    outline-offset: 2px
+  }
+  .c1rgsd1l:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="17"]:disabled {
-    cursor: not-allowed;
+  .cegrmbm:disabled {
+    cursor: not-allowed
+  }
+  .c1grhw0w:disabled {
     opacity: 0.5
   }
-  [data-ws-id="24"] {
-    display: flex;
-    align-items: center;
-    row-gap: 0.5rem;
+  .c4v7k5r {
+    align-items: center
+  }
+  .cgt00fz {
+    row-gap: 0.5rem
+  }
+  .cydvc77 {
     column-gap: 0.5rem
   }
-  [data-ws-id="26"] {
-    aspect-ratio: 1 / 1;
-    height: 1rem;
-    width: 1rem;
-    border-top-left-radius: 9999px;
-    border-top-right-radius: 9999px;
-    border-bottom-right-radius: 9999px;
-    border-bottom-left-radius: 9999px;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(15, 23, 42, 1);
-    border-right-color: rgba(15, 23, 42, 1);
-    border-bottom-color: rgba(15, 23, 42, 1);
-    border-left-color: rgba(15, 23, 42, 1);
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
+  .c1rc9sce {
+    aspect-ratio: 1 / 1
+  }
+  .c18dp5gp {
+    height: 1rem
+  }
+  .clw3og8 {
+    width: 1rem
+  }
+  .c17f8p6x {
+    border-top-left-radius: 9999px
+  }
+  .c15ce0qo {
+    border-top-right-radius: 9999px
+  }
+  .c1yisi8r {
+    border-bottom-right-radius: 9999px
+  }
+  .cpvsov {
+    border-bottom-left-radius: 9999px
+  }
+  .c1inucbi {
+    border-top-style: solid
+  }
+  .c1dab7w1 {
+    border-right-style: solid
+  }
+  .c1uf7v01 {
+    border-bottom-style: solid
+  }
+  .czynn8e {
+    border-left-style: solid
+  }
+  .cuelx18 {
+    border-top-color: rgba(15, 23, 42, 1)
+  }
+  .c17v08sn {
+    border-right-color: rgba(15, 23, 42, 1)
+  }
+  .c1czmfdb {
+    border-bottom-color: rgba(15, 23, 42, 1)
+  }
+  .c8nta89 {
+    border-left-color: rgba(15, 23, 42, 1)
+  }
+  .cgassre {
+    border-top-width: 1px
+  }
+  .c1ndsw6v {
+    border-right-width: 1px
+  }
+  .cjrlou9 {
+    border-bottom-width: 1px
+  }
+  .c945vvj {
+    border-left-width: 1px
+  }
+  .c132tyaz {
     color: rgba(15, 23, 42, 1)
   }
-  [data-ws-id="26"]:focus-visible {
-    outline-width: 2px;
-    outline-style: solid;
-    outline-color: transparent;
-    outline-offset: 2px;
+  .c1t6bql4:focus-visible {
+    outline-width: 2px
+  }
+  .czph7hf:focus-visible {
+    outline-style: solid
+  }
+  .cncn1ro:focus-visible {
+    outline-color: transparent
+  }
+  .cb270vo:focus-visible {
+    outline-offset: 2px
+  }
+  .c1rgsd1l:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="26"]:disabled {
-    cursor: not-allowed;
+  .cegrmbm:disabled {
+    cursor: not-allowed
+  }
+  .c1grhw0w:disabled {
     opacity: 0.5
   }
 }

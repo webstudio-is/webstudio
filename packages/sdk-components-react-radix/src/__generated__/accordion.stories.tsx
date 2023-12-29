@@ -33,16 +33,26 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="6"
           data-ws-component="AccordionItem"
           data-ws-index="0"
+          className="cjrlou9 c1uf7v01 c1x5uwe6"
         >
-          <AccordionHeader data-ws-id="8" data-ws-component="AccordionHeader">
+          <AccordionHeader
+            data-ws-id="8"
+            data-ws-component="AccordionHeader"
+            className="c6gk6ar"
+          >
             <AccordionTrigger
               data-ws-id="10"
               data-ws-component="AccordionTrigger"
+              className="c6gk6ar cn4ngym c1ee1pe1 c1xcrn9h c4v7k5r csg71e3 c1mdun74 c1bfvzwl cwry1sa cvfe049 clf46de c2xz4jt"
             >
               <Text data-ws-id="12" data-ws-component="Text">
                 {"Is it accessible?"}
               </Text>
-              <Box data-ws-id="13" data-ws-component="Box">
+              <Box
+                data-ws-id="13"
+                data-ws-component="Box"
+                className="c1h3z08b c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+              >
                 <HtmlEmbed
                   data-ws-id="15"
                   data-ws-component="HtmlEmbed"
@@ -56,6 +66,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <AccordionContent
             data-ws-id="17"
             data-ws-component="AccordionContent"
+            className="c1e2gixt c1mfk609 c121vm9z c1bfvzwl"
           >
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
@@ -64,16 +75,26 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="19"
           data-ws-component="AccordionItem"
           data-ws-index="1"
+          className="cjrlou9 c1uf7v01 c1x5uwe6"
         >
-          <AccordionHeader data-ws-id="21" data-ws-component="AccordionHeader">
+          <AccordionHeader
+            data-ws-id="21"
+            data-ws-component="AccordionHeader"
+            className="c6gk6ar"
+          >
             <AccordionTrigger
               data-ws-id="23"
               data-ws-component="AccordionTrigger"
+              className="c6gk6ar cn4ngym c1ee1pe1 c1xcrn9h c4v7k5r csg71e3 c1mdun74 c1bfvzwl cwry1sa cvfe049 clf46de c2xz4jt"
             >
               <Text data-ws-id="25" data-ws-component="Text">
                 {"Is it styled?"}
               </Text>
-              <Box data-ws-id="26" data-ws-component="Box">
+              <Box
+                data-ws-id="26"
+                data-ws-component="Box"
+                className="c1h3z08b c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+              >
                 <HtmlEmbed
                   data-ws-id="28"
                   data-ws-component="HtmlEmbed"
@@ -87,6 +108,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <AccordionContent
             data-ws-id="30"
             data-ws-component="AccordionContent"
+            className="c1e2gixt c1mfk609 c121vm9z c1bfvzwl"
           >
             {
               "Yes. It comes with default styles that matches the other components' aesthetic."
@@ -97,16 +119,26 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="32"
           data-ws-component="AccordionItem"
           data-ws-index="2"
+          className="cjrlou9 c1uf7v01 c1x5uwe6"
         >
-          <AccordionHeader data-ws-id="34" data-ws-component="AccordionHeader">
+          <AccordionHeader
+            data-ws-id="34"
+            data-ws-component="AccordionHeader"
+            className="c6gk6ar"
+          >
             <AccordionTrigger
               data-ws-id="36"
               data-ws-component="AccordionTrigger"
+              className="c6gk6ar cn4ngym c1ee1pe1 c1xcrn9h c4v7k5r csg71e3 c1mdun74 c1bfvzwl cwry1sa cvfe049 clf46de c2xz4jt"
             >
               <Text data-ws-id="38" data-ws-component="Text">
                 {"Is it animated?"}
               </Text>
-              <Box data-ws-id="39" data-ws-component="Box">
+              <Box
+                data-ws-id="39"
+                data-ws-component="Box"
+                className="c1h3z08b c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+              >
                 <HtmlEmbed
                   data-ws-id="41"
                   data-ws-component="HtmlEmbed"
@@ -120,6 +152,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <AccordionContent
             data-ws-id="43"
             data-ws-component="AccordionContent"
+            className="c1e2gixt c1mfk609 c121vm9z c1bfvzwl"
           >
             {
               "Yes. It's animated by default, but you can disable it if you prefer."
@@ -311,129 +344,242 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-}
-@media all {
-  [data-ws-id="6"] {
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
+}@media all {
+  .cjrlou9 {
+    border-bottom-width: 1px
+  }
+  .c1uf7v01 {
+    border-bottom-style: solid
+  }
+  .c1x5uwe6 {
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  [data-ws-id="8"] {
+  .c6gk6ar {
     display: flex
   }
-  [data-ws-id="10"] {
-    display: flex;
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: 0%;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    font-weight: 500;
-    --accordion-trigger-icon-transform: 0deg
+  .c6gk6ar {
+    display: flex
   }
-  [data-ws-id="10"]:hover {
-    text-decoration-line: underline
+  .cn4ngym {
+    flex-grow: 1
   }
-  [data-ws-id="10"][data-state=open] {
-    --accordion-trigger-icon-transform: 180deg
+  .c1ee1pe1 {
+    flex-shrink: 1
   }
-  [data-ws-id="13"] {
-    rotate: var(--accordion-trigger-icon-transform);
-    height: 1rem;
-    width: 1rem;
-    flex-grow: 0;
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms
+  .c1xcrn9h {
+    flex-basis: 0%
   }
-  [data-ws-id="17"] {
-    overflow: hidden;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+  .c4v7k5r {
+    align-items: center
+  }
+  .csg71e3 {
+    justify-content: space-between
+  }
+  .c1mdun74 {
+    padding-top: 1rem
+  }
+  .c1bfvzwl {
     padding-bottom: 1rem
   }
-  [data-ws-id="19"] {
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
-    border-bottom-color: rgba(226, 232, 240, 1)
+  .cwry1sa {
+    font-weight: 500
   }
-  [data-ws-id="21"] {
-    display: flex
-  }
-  [data-ws-id="23"] {
-    display: flex;
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: 0%;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    font-weight: 500;
+  .cvfe049 {
     --accordion-trigger-icon-transform: 0deg
   }
-  [data-ws-id="23"]:hover {
+  .clf46de:hover {
     text-decoration-line: underline
   }
-  [data-ws-id="23"][data-state=open] {
+  .c2xz4jt[data-state=open] {
     --accordion-trigger-icon-transform: 180deg
   }
-  [data-ws-id="26"] {
-    rotate: var(--accordion-trigger-icon-transform);
-    height: 1rem;
-    width: 1rem;
-    flex-grow: 0;
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  .c1h3z08b {
+    rotate: var(--accordion-trigger-icon-transform)
+  }
+  .c18dp5gp {
+    height: 1rem
+  }
+  .clw3og8 {
+    width: 1rem
+  }
+  .c1qmz361 {
+    flex-grow: 0
+  }
+  .cu8n5i6 {
+    transition-property: all
+  }
+  .cqhjzs2 {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
+  }
+  .c1498b83 {
     transition-duration: 200ms
   }
-  [data-ws-id="30"] {
-    overflow: hidden;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+  .c1e2gixt {
+    overflow: hidden
+  }
+  .c1mfk609 {
+    font-size: 0.875rem
+  }
+  .c121vm9z {
+    line-height: 1.25rem
+  }
+  .c1bfvzwl {
     padding-bottom: 1rem
   }
-  [data-ws-id="32"] {
-    border-bottom-width: 1px;
-    border-bottom-style: solid;
+  .c1uf7v01 {
+    border-bottom-style: solid
+  }
+  .c1x5uwe6 {
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  [data-ws-id="34"] {
+  .c6gk6ar {
     display: flex
   }
-  [data-ws-id="36"] {
-    display: flex;
-    flex-grow: 1;
-    flex-shrink: 1;
-    flex-basis: 0%;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    font-weight: 500;
+  .c6gk6ar {
+    display: flex
+  }
+  .cn4ngym {
+    flex-grow: 1
+  }
+  .c1ee1pe1 {
+    flex-shrink: 1
+  }
+  .c1xcrn9h {
+    flex-basis: 0%
+  }
+  .c4v7k5r {
+    align-items: center
+  }
+  .csg71e3 {
+    justify-content: space-between
+  }
+  .c1mdun74 {
+    padding-top: 1rem
+  }
+  .c1bfvzwl {
+    padding-bottom: 1rem
+  }
+  .cwry1sa {
+    font-weight: 500
+  }
+  .cvfe049 {
     --accordion-trigger-icon-transform: 0deg
   }
-  [data-ws-id="36"]:hover {
+  .clf46de:hover {
     text-decoration-line: underline
   }
-  [data-ws-id="36"][data-state=open] {
+  .c2xz4jt[data-state=open] {
     --accordion-trigger-icon-transform: 180deg
   }
-  [data-ws-id="39"] {
-    rotate: var(--accordion-trigger-icon-transform);
-    height: 1rem;
-    width: 1rem;
-    flex-grow: 0;
-    transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  .c1h3z08b {
+    rotate: var(--accordion-trigger-icon-transform)
+  }
+  .c18dp5gp {
+    height: 1rem
+  }
+  .clw3og8 {
+    width: 1rem
+  }
+  .c1qmz361 {
+    flex-grow: 0
+  }
+  .cu8n5i6 {
+    transition-property: all
+  }
+  .cqhjzs2 {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
+  }
+  .c1498b83 {
     transition-duration: 200ms
   }
-  [data-ws-id="43"] {
-    overflow: hidden;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+  .c1e2gixt {
+    overflow: hidden
+  }
+  .c1mfk609 {
+    font-size: 0.875rem
+  }
+  .c121vm9z {
+    line-height: 1.25rem
+  }
+  .c1bfvzwl {
+    padding-bottom: 1rem
+  }
+  .c1uf7v01 {
+    border-bottom-style: solid
+  }
+  .c1x5uwe6 {
+    border-bottom-color: rgba(226, 232, 240, 1)
+  }
+  .c6gk6ar {
+    display: flex
+  }
+  .c6gk6ar {
+    display: flex
+  }
+  .cn4ngym {
+    flex-grow: 1
+  }
+  .c1ee1pe1 {
+    flex-shrink: 1
+  }
+  .c1xcrn9h {
+    flex-basis: 0%
+  }
+  .c4v7k5r {
+    align-items: center
+  }
+  .csg71e3 {
+    justify-content: space-between
+  }
+  .c1mdun74 {
+    padding-top: 1rem
+  }
+  .c1bfvzwl {
+    padding-bottom: 1rem
+  }
+  .cwry1sa {
+    font-weight: 500
+  }
+  .cvfe049 {
+    --accordion-trigger-icon-transform: 0deg
+  }
+  .clf46de:hover {
+    text-decoration-line: underline
+  }
+  .c2xz4jt[data-state=open] {
+    --accordion-trigger-icon-transform: 180deg
+  }
+  .c1h3z08b {
+    rotate: var(--accordion-trigger-icon-transform)
+  }
+  .c18dp5gp {
+    height: 1rem
+  }
+  .clw3og8 {
+    width: 1rem
+  }
+  .c1qmz361 {
+    flex-grow: 0
+  }
+  .cu8n5i6 {
+    transition-property: all
+  }
+  .cqhjzs2 {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
+  }
+  .c1498b83 {
+    transition-duration: 200ms
+  }
+  .c1e2gixt {
+    overflow: hidden
+  }
+  .c1mfk609 {
+    font-size: 0.875rem
+  }
+  .c121vm9z {
+    line-height: 1.25rem
+  }
+  .c1bfvzwl {
     padding-bottom: 1rem
   }
 }
