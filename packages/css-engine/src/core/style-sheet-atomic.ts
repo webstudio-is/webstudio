@@ -48,7 +48,6 @@ export class StyleSheetAtomic extends StyleSheet {
           break;
         }
         addRule = true;
-        break;
       }
 
       if (addRule) {
