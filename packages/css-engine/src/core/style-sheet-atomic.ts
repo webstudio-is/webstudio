@@ -19,7 +19,6 @@ export class StyleSheetAtomic extends StyleSheet {
     let property: StyleProperty;
     for (property in rule.style) {
       const value = rule.style[property];
-      let addRule = mediaRule.rules.length === 0;
 
       // We need to create the new rule to be able to compare the selectorText aka hash.
       const newStyleRule = new StyleRule(
@@ -36,20 +35,15 @@ export class StyleSheetAtomic extends StyleSheet {
       classes.push(className);
       newStyleRule.selectorText = `.${className}${selectorSuffix}`;
 
-      for (const styleRule of mediaRule.rules) {
-        // This property-value combination has already been added.
-        if (
+      const ruleExists = mediaRule.rules.some((styleRule) => {
+        return (
           "selectorText" in styleRule &&
+          // This property-value combination has already been added.
           newStyleRule.selectorText === styleRule.selectorText
-        ) {
-          break;
-        }
-        addRule = true;
-        // Since we need to add that rule, already, we can break out of the loop.
-        break;
-      }
+        );
+      });
 
-      if (addRule) {
+      if (ruleExists === false) {
         mediaRule.insertRule(newStyleRule);
         this.markAsDirty();
       }
