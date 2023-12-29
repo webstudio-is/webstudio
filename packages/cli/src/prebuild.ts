@@ -397,7 +397,7 @@ export const prebuild = async (options: {
   }
 
   spinner.text = "Generating css file";
-  const { cssText, classMap } = generateCss(
+  const { cssText, classesMap } = generateCss(
     {
       assets: siteData.assets,
       breakpoints: siteData.build?.breakpoints,
@@ -505,7 +505,7 @@ export const prebuild = async (options: {
       instances,
       props,
       dataSources,
-      classMap,
+      classesMap,
       indexesWithinAncestors: getIndexesWithinAncestors(
         projectMetas,
         instances,

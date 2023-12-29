@@ -64,7 +64,7 @@ export const generateCss = (
   const breakpoints = new Map(data.breakpoints);
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);
-  const classMap: Map<string, Array<string>> = new Map();
+  const classesMap: Map<string, Array<string>> = new Map();
 
   const regularSheet = createRegularStyleSheet({ name: "ssr-regular" });
   const atomicSheet = atomic
@@ -104,8 +104,8 @@ export const generateCss = (
         state,
         imageValueTransformer
       );
-      classMap.set(instanceId, [
-        ...(classMap.get(instanceId) ?? []),
+      classesMap.set(instanceId, [
+        ...(classesMap.get(instanceId) ?? []),
         ...classes,
       ]);
       continue;
@@ -119,6 +119,6 @@ export const generateCss = (
 
   return {
     cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
-    classMap,
+    classesMap,
   };
 };
