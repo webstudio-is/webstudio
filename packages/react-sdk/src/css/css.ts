@@ -11,11 +11,11 @@ import type {
   StyleDeclKey,
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
-import { idAttribute } from "@webstudio-is/react-sdk";
+import { createAtomicStyleSheet } from "@webstudio-is/css-engine";
 import type { WsComponentMeta } from "../components/component-meta";
+import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules, getStyleRules } from "./style-rules";
-import { createAtomicStyleSheet } from "@webstudio-is/css-engine";
 
 type Data = {
   assets: Asset[];
