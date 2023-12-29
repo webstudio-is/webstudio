@@ -408,6 +408,8 @@ export const prebuild = async (options: {
     },
     {
       assetBaseUrl,
+      // @todo switch to atomic depending on site settings
+      atomic: false,
     }
   );
 
