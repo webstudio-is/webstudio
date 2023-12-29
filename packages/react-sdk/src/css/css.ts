@@ -58,7 +58,7 @@ export const createImageValueTransformer =
 
 export const generateCss = (
   data: Data,
-  { assetBaseUrl, atomic }: CssOptions
+  { assetBaseUrl, atomic = false }: CssOptions
 ) => {
   const assets: Assets = new Map(data.assets.map((asset) => [asset.id, asset]));
   const breakpoints = new Map(data.breakpoints);
