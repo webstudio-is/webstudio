@@ -49,6 +49,8 @@ export class StyleSheetAtomic extends StyleSheet {
           break;
         }
         addRule = true;
+        // Since we need to add that rule, already, we can break out of the loop.
+        break;
       }
 
       if (addRule) {
