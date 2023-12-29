@@ -11,10 +11,7 @@ export class StyleSheetRegular extends StyleSheet {
     transformValue?: TransformValue
   ) {
     const mediaRule = this.addMediaRule(rule.breakpoint || defaultMediaRuleId);
-    if (mediaRule === undefined) {
-      // Should be impossible to reach.
-      throw new Error("No media rule found");
-    }
+
     this.markAsDirty();
     const styleRule = new StyleRule(
       selectorText,
