@@ -59,7 +59,7 @@ const Outlet = () => {
 };
 
 /**
- * @todo add support for published site on localhost
+ * @todo add support for published project on localhost
  * consider switching current route to something like /canvas
  */
 

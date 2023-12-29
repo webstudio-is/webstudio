@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Heading as Heading,

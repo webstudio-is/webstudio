@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import {
   Body as Body,
   Form as Form,
@@ -53,7 +53,7 @@ export const imageAssets: ImageAsset[] = [
   },
 ];
 export const pageData: PageData = {
-  site: {
+  project: {
     siteName: "KittyGuardedZone",
     faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     code: "<script>console.log('KittyGuardedZone')</script>\n",

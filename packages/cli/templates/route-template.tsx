@@ -8,7 +8,7 @@ import {
   json,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import type { Page as PageType, SiteMeta } from "@webstudio-is/sdk";
+import type { Page as PageType, ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
@@ -27,7 +27,7 @@ import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
 export type PageData = {
-  site?: SiteMeta;
+  project?: ProjectMeta;
   page: PageType;
 };
 
@@ -68,7 +68,7 @@ export const headers = () => {
 };
 
 export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
-  const { page, site } = pageData;
+  const { page, project } = pageData;
 
   const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [];
 
@@ -92,16 +92,16 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
 
   const origin = `https://${data?.host}`;
 
-  if (site?.siteName) {
+  if (project?.siteName) {
     metas.push({
       property: "og:site_name",
-      content: site.siteName,
+      content: project.siteName,
     });
     metas.push({
       "script:ld+json": {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: site.siteName,
+        name: project.siteName,
         url: origin,
       },
     });
@@ -160,11 +160,11 @@ export const links: LinksFunction = () => {
     href: css,
   });
 
-  const { site } = pageData;
+  const { project } = pageData;
 
-  if (site?.faviconAssetId) {
+  if (project?.faviconAssetId) {
     const imageAsset = imageAssets.find(
-      (asset) => asset.id === site.faviconAssetId
+      (asset) => asset.id === project.faviconAssetId
     );
 
     if (imageAsset) {
