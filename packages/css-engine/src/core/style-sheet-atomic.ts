@@ -29,7 +29,8 @@ export class StyleSheetAtomic extends StyleSheet {
       const newStyleRule = new StyleRule(
         "",
         { [property]: value } as Style,
-        transformValue
+        transformValue,
+        this.#onChangeRule
       );
       styleRules.push(newStyleRule);
       // "c" makes sure hash always starts with a letter.
@@ -51,7 +52,6 @@ export class StyleSheetAtomic extends StyleSheet {
       }
 
       if (addRule) {
-        newStyleRule.onChange = this.#onChangeRule;
         mediaRule.insertRule(newStyleRule);
         this.markAsDirty();
       }

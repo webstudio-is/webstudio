@@ -16,8 +16,12 @@ export class StyleSheetRegular extends StyleSheet {
       throw new Error("No media rule found");
     }
     this.markAsDirty();
-    const styleRule = new StyleRule(selectorText, rule.style, transformValue);
-    styleRule.onChange = this.#onChangeRule;
+    const styleRule = new StyleRule(
+      selectorText,
+      rule.style,
+      transformValue,
+      this.#onChangeRule
+    );
     mediaRule.insertRule(styleRule);
     return styleRule;
   }

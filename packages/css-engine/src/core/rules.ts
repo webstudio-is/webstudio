@@ -8,9 +8,10 @@ class StylePropertyMap {
   #string = "";
   #indent = 0;
   #transformValue?: TransformValue;
-  onChange?: () => void;
-  constructor(transformValue?: TransformValue) {
+  #onChange?: () => void;
+  constructor(transformValue?: TransformValue, onChange?: () => void) {
     this.#transformValue = transformValue;
+    this.#onChange = onChange;
   }
   setTransformer(transformValue: TransformValue) {
     this.#transformValue = transformValue;
@@ -18,7 +19,7 @@ class StylePropertyMap {
   set(property: StyleProperty, value?: StyleValue) {
     this.#styleMap.set(property, value);
     this.#isDirty = true;
-    this.onChange?.();
+    this.#onChange?.();
   }
   get(property: StyleProperty) {
     return this.#styleMap.get(property);
@@ -35,12 +36,12 @@ class StylePropertyMap {
   delete(property: StyleProperty) {
     this.#styleMap.delete(property);
     this.#isDirty = true;
-    this.onChange?.();
+    this.#onChange?.();
   }
   clear() {
     this.#styleMap.clear();
     this.#isDirty = true;
-    this.onChange?.();
+    this.#onChange?.();
   }
   toString({ indent = 0 } = {}) {
     if (this.#isDirty === false && indent === this.#indent) {
@@ -69,23 +70,19 @@ class StylePropertyMap {
 export class StyleRule {
   styleMap;
   selectorText;
-  onChange?: () => void;
   constructor(
     selectorText: string,
     style: Style,
-    transformValue?: TransformValue
+    transformValue?: TransformValue,
+    onChange?: () => void
   ) {
-    this.styleMap = new StylePropertyMap(transformValue);
+    this.styleMap = new StylePropertyMap(transformValue, onChange);
     this.selectorText = selectorText;
     let property: StyleProperty;
     for (property in style) {
       this.styleMap.set(property, style[property]);
     }
-    this.styleMap.onChange = this.#onChange;
   }
-  #onChange = () => {
-    this.onChange?.();
-  };
   get cssText() {
     return this.toString();
   }
@@ -142,9 +139,10 @@ export class MediaRule {
 
 export class PlaintextRule {
   cssText;
-  styleMap = new StylePropertyMap();
+  styleMap;
   constructor(cssText: string) {
     this.cssText = cssText;
+    this.styleMap = new StylePropertyMap();
   }
   toString() {
     return this.cssText;
