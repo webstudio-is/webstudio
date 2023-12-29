@@ -13,10 +13,6 @@ export class StyleSheetAtomic extends StyleSheet {
     transformValue?: TransformValue
   ) {
     const mediaRule = this.addMediaRule(rule.breakpoint || defaultMediaRuleId);
-    if (mediaRule === undefined) {
-      // Should be impossible to reach since we have a default media rule.
-      throw new Error("No media rule found");
-    }
     const styleRules = [];
     const classes = [];
 

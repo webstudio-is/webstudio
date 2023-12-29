@@ -38,6 +38,11 @@ export class StyleSheet {
       this.#isDirty = true;
     }
 
+    if (mediaRule === undefined) {
+      // Should be impossible to reach.
+      throw new Error("No media rule found");
+    }
+
     return mediaRule;
   }
   addPlaintextRule(cssText: string) {
