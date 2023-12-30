@@ -6,6 +6,8 @@ import { theme } from "@webstudio-is/design-system";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { registeredComponentMetasStore } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { QuickSettings } from "./quick-settings";
+import type { Publish } from "~/shared/pubsub";
 
 type LabelPosition = "top" | "inside" | "bottom";
 type LabelRefCallback = (element: HTMLElement | null) => void;
@@ -18,8 +20,14 @@ type LabelRefCallback = (element: HTMLElement | null) => void;
  */
 const useLabelPosition = (
   instanceRect: Rect
-): [LabelRefCallback, LabelPosition] => {
+): [LabelRefCallback, LabelPosition, Rect] => {
   const [position, setPosition] = useState<LabelPosition>("top");
+  const [labelRect, setLabelRect] = useState<Rect>({
+    top: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+  });
 
   const ref = useCallback(
     (element: null | HTMLElement) => {
@@ -33,11 +41,17 @@ const useLabelPosition = (
         nextPosition = instanceRect.height < 250 ? "bottom" : "inside";
       }
       setPosition(nextPosition);
+      setLabelRect({
+        top: labelRect.top,
+        left: labelRect.left,
+        width: labelRect.width,
+        height: labelRect.height,
+      });
     },
     [instanceRect]
   );
 
-  return [ref, position];
+  return [ref, position, labelRect];
 };
 
 const LabelContainer = styled(
@@ -57,6 +71,7 @@ const LabelContainer = styled(
     minWidth: theme.spacing[13],
     whiteSpace: "nowrap",
     backgroundColor: theme.colors.blue9,
+    pointerEvents: "auto",
   },
   {
     variants: {
@@ -76,12 +91,13 @@ const LabelContainer = styled(
 );
 
 type LabelProps = {
-  instance: { label?: string; component: Instance["component"] };
+  instance: Instance;
   instanceRect: Rect;
+  publish?: Publish;
 };
 
-export const Label = ({ instance, instanceRect }: LabelProps) => {
-  const [labelRef, position] = useLabelPosition(instanceRect);
+export const Label = ({ instance, instanceRect, publish }: LabelProps) => {
+  const [labelRef, position, labelRect] = useLabelPosition(instanceRect);
   const metas = useStore(registeredComponentMetasStore);
   const meta = metas.get(instance.component);
   if (meta === undefined) {
@@ -91,6 +107,11 @@ export const Label = ({ instance, instanceRect }: LabelProps) => {
     <LabelContainer position={position} ref={labelRef}>
       <MetaIcon size="1em" icon={meta.icon} />
       {getInstanceLabel(instance, meta)}
+      <QuickSettings
+        labelRect={labelRect}
+        instance={instance}
+        publish={publish}
+      />
     </LabelContainer>
   );
 };
