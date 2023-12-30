@@ -108,7 +108,7 @@ If you want to build a production version of the app, you can run `npm run build
 
 ### Vercel
 
-Once you've built the project locally, you can use the [Vercel CLI](https://vercel.com/docs/cli) to deploy your site directly to [Vercel](https://vercel.com):
+Once you've built the project locally, you can use the [Vercel CLI](https://vercel.com/docs/cli) to deploy your project directly to [Vercel](https://vercel.com):
 
 ```bash
 vercel deploy
@@ -118,7 +118,7 @@ Follow the instructions [here](https://vercel.com/docs/cli) to install the `verc
 
 ### Netlify
 
-If you want to deploy to netlify, you can use [Netlify CLI](https://docs.netlify.com/cli/get-started/) to deploy your site directly to [Netlify](https://netlify.com/):
+If you want to deploy to netlify, you can use [Netlify CLI](https://docs.netlify.com/cli/get-started/) to deploy your project directly to [Netlify](https://netlify.com/):
 
 ```bash
 netlify deploy

@@ -251,7 +251,7 @@ export const prebuild = async (options: {
 
   const domain = siteData.build.deployment?.projectDomain;
   if (domain === undefined) {
-    throw new Error(`Project domain is missing from the site data`);
+    throw new Error(`Project domain is missing from the project data`);
   }
 
   const radixComponentNamespacedMetas = Object.entries(
@@ -469,7 +469,7 @@ export const prebuild = async (options: {
     const pageData = siteDataByPage[pathname];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
-      site: siteData.build.pages.meta,
+      project: siteData.build.pages.meta,
       page: pageData.page,
     };
 
@@ -499,7 +499,7 @@ export const prebuild = async (options: {
 /* This is a auto generated file for building the project */ \n
 import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 ${componentImports}
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}

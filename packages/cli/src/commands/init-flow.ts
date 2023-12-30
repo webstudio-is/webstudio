@@ -119,7 +119,7 @@ export const initFlow = async (
     [
       "Now you can:",
       folderName && `Go to your project: ${pc.dim(`cd ${folderName}`)}`,
-      `Run ${pc.dim("npm run dev")} to preview your site on a local server.`,
+      `Run ${pc.dim("npm run dev")} to preview your project on a local server.`,
       projectTemplate && getDeploymentInstructions(projectTemplate),
     ]
       .filter(Boolean)
@@ -138,8 +138,10 @@ const getDeploymentInstructions = (
       return [
         `To deploy to Netlify, run the following commands: `,
         `Run ${pc.dim("npx netlify-cli login")} to login to Netlify.`,
-        `Run ${pc.dim("npx netlify-cli sites:create")} to create a new site.`,
-        `Run ${pc.dim("npx netlify-cli build")} to build the site`,
+        `Run ${pc.dim(
+          "npx netlify-cli sites:create"
+        )} to create a new project.`,
+        `Run ${pc.dim("npx netlify-cli build")} to build the project`,
         `Run ${pc.dim("npx netlify-cli deploy")} to deploy on Netlify.`,
       ].join("\n");
   }
