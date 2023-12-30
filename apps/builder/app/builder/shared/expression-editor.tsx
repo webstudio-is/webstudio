@@ -242,6 +242,7 @@ const emptyAliases: Aliases = new Map();
 export const ExpressionEditor = ({
   scope = emptyScope,
   aliases = emptyAliases,
+  autoFocus = false,
   readOnly = false,
   value,
   onChange,
@@ -255,6 +256,7 @@ export const ExpressionEditor = ({
    * variable aliases to show instead of $ws$dataSource$id
    */
   aliases?: Aliases;
+  autoFocus?: boolean;
   readOnly?: boolean;
   value: string;
   onChange: (newValue: string) => void;
@@ -278,11 +280,14 @@ export const ExpressionEditor = ({
       doc: "",
       parent: editorRef.current,
     });
+    if (autoFocus) {
+      view.focus();
+    }
     viewRef.current = view;
     return () => {
       view.destroy();
     };
-  }, []);
+  }, [autoFocus]);
 
   // update extensions whenever variables data is changed
 
