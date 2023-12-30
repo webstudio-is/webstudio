@@ -1,5 +1,6 @@
 import {
   createRegularStyleSheet,
+  createAtomicStyleSheet,
   type TransformValue,
 } from "@webstudio-is/css-engine";
 import type {
@@ -11,7 +12,6 @@ import type {
   StyleDeclKey,
   StyleSourceSelection,
 } from "@webstudio-is/sdk";
-import { createAtomicStyleSheet } from "@webstudio-is/css-engine";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
