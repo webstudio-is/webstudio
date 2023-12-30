@@ -64,7 +64,7 @@ export const generateCss = (
   const breakpoints = new Map(data.breakpoints);
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);
-  const classesMap: Map<string, Array<string>> = new Map();
+  const classesMap = new Map<string, Array<string>>();
 
   const regularSheet = createRegularStyleSheet({ name: "ssr-regular" });
   const atomicSheet = atomic
