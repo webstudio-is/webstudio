@@ -1,7 +1,7 @@
 import { Links, Meta, Outlet as DefaultOutlet } from "@remix-run/react";
 
 /**
- * We are using Outlet prop from index layout when user renders site from a subdomain.
+ * We are using Outlet prop from index layout when user renders project from a subdomain.
  */
 export const Root = ({
   Outlet = DefaultOutlet,

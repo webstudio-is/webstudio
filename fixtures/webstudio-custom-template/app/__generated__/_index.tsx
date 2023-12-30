@@ -3,7 +3,7 @@
 
 import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
@@ -22,7 +22,7 @@ export const imageAssets: ImageAsset[] = [
   },
 ];
 export const pageData: PageData = {
-  site: {
+  project: {
     siteName: "Fixture Site",
     faviconAssetId: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
     code: '<script>console.log(\'HELLO\')</script>\n<meta property="saas:test" content="test">',
