@@ -5,8 +5,8 @@ export type {
   PlaintextRule,
   FontFaceRule,
 } from "./rules";
-export { StyleSheetRegular } from "./style-sheet-regular";
-export { StyleSheetAtomic } from "./style-sheet-atomic";
+export type { StyleSheetRegular } from "./style-sheet-regular";
+export type { StyleSheetAtomic } from "./style-sheet-atomic";
 export * from "./create-style-sheet";
 export * from "./to-value";
 export * from "./to-property";
