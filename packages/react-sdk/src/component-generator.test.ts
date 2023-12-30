@@ -560,6 +560,7 @@ test("generate collection component as map", () => {
 test("generate page component with variables and actions", () => {
   expect(
     generatePageComponent({
+      classesMap: new Map(),
       scope: createScope(),
       page: { rootInstanceId: "body" } as Page,
       instances: new Map([
