@@ -1,6 +1,6 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
-import { StyleSheetRegular } from "./style-sheet-regular";
-import { createRegularStyleSheet } from ".";
+import type { StyleSheetRegular } from "./style-sheet-regular";
+import { createRegularStyleSheet } from "./create-style-sheet";
 
 const style0 = {
   display: { type: "keyword", value: "block" },

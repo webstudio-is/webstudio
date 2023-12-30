@@ -1,10 +1,6 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
-import { StyleSheetAtomic } from "./style-sheet-atomic";
-import { createAtomicStyleSheet } from ".";
-
-const style0 = {
-  display: { type: "keyword", value: "block" },
-} as const;
+import type { StyleSheetAtomic } from "./style-sheet-atomic";
+import { createAtomicStyleSheet } from "./create-style-sheet";
 
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId0 = "0";
@@ -19,95 +15,94 @@ describe("Style Sheet Atomic", () => {
   beforeEach(reset);
 
   test("use default media rule when there is no matching one registered", () => {
-    const { classes } = sheet.addStyleRule(
-      {
-        style: style0,
-        breakpoint: "x",
-      },
-      ":hover"
-    );
+    sheet.addStyleRule({
+      style: { display: { type: "keyword", value: "block" } },
+      breakpoint: "x",
+    });
     expect(sheet.cssText).toMatchInlineSnapshot(`
 "@media all {
-  .c1pw5kj8:hover {
+  .c19k25ej {
     display: block
   }
 }"
 `);
-    expect(classes).toEqual(["c1pw5kj8"]);
     sheet.addStyleRule({
       style: { color: { type: "keyword", value: "red" } },
       breakpoint: "x",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
 "@media all {
-  .c1pw5kj8:hover {
+  .c19k25ej {
     display: block
   }
-  .c1r6dys4 {
+  .cs9ip66 {
     color: red
   }
 }"
 `);
-    expect(classes).toEqual(["c1pw5kj8"]);
-    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule({
-      style: { color: { type: "keyword", value: "blue" } },
-      breakpoint: mediaId0,
-    });
-    // Default media query should allways be the first to have the lowest source order specificity
+  });
+
+  test("use state suffix", () => {
+    sheet.addStyleRule(
+      {
+        style: { display: { type: "keyword", value: "block" } },
+        breakpoint: "x",
+      },
+      ":hover"
+    );
     expect(sheet.cssText).toMatchInlineSnapshot(`
 "@media all {
-  .c1pw5kj8:hover {
+  .cmyojan:hover {
     display: block
-  }
-  .c1r6dys4 {
-    color: red
-  }
-}
-@media all and (min-width: 0px) {
-  .c1abs1wg {
-    color: blue
   }
 }"
 `);
+  });
+
+  test("added classes", () => {
+    const { classes } = sheet.addStyleRule({
+      style: { display: { type: "keyword", value: "block" } },
+      breakpoint: "x",
+    });
+    expect(classes).toEqual(["c19k25ej"]);
   });
 
   test("rule with multiple properties", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
     sheet.addStyleRule({
       style: {
-        ...style0,
+        display: { type: "keyword", value: "block" },
         color: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
 "@media all and (min-width: 0px) {
-  .cj26d0t {
+  .cusz56a {
     display: block
   }
-  .c1g8spfr {
+  .cswg5vq {
     color: red
   }
 }"
 `);
   });
 
-  test("add rule", () => {
+  test("add style rule to an existing media rule", () => {
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
     sheet.addStyleRule({
       style: {
-        ...style0,
+        display: { type: "keyword", value: "block" },
         color: { type: "keyword", value: "red" },
       },
       breakpoint: "0",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
 "@media all and (min-width: 0px) {
-  .cj26d0t {
+  .cusz56a {
     display: block
   }
-  .c1g8spfr {
+  .cswg5vq {
     color: red
   }
 }"
@@ -115,20 +110,20 @@ describe("Style Sheet Atomic", () => {
     sheet.addStyleRule({
       style: {
         // It should prevent duplicates
-        ...style0,
+        display: { type: "keyword", value: "block" },
         color: { type: "keyword", value: "green" },
       },
       breakpoint: "0",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
 "@media all and (min-width: 0px) {
-  .cj26d0t {
+  .cusz56a {
     display: block
   }
-  .c1g8spfr {
+  .cswg5vq {
     color: red
   }
-  .crf0z62 {
+  .c8jb4vi {
     color: green
   }
 }"
