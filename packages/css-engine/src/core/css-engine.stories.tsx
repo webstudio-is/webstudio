@@ -1,4 +1,4 @@
-import { CssEngine } from "./css-engine";
+import { createRegularStyleSheet } from "./create-style-sheet";
 
 export default {
   component: "CssEngine",
@@ -12,33 +12,31 @@ const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId = "0";
 
 export const Basic = () => {
-  const engine = new CssEngine({ name: "test" });
-  engine.addMediaRule(mediaId, mediaRuleOptions0);
-  const rule = engine.addStyleRule(".test", {
-    style: style0,
-    breakpoint: "0",
-  });
-  engine.render();
+  const sheet = createRegularStyleSheet();
+  sheet.addMediaRule(mediaId, mediaRuleOptions0);
+  const rule = sheet.addStyleRule({ style: style0, breakpoint: "0" }, ".test");
+  sheet.render();
   return (
     <>
       <div className="test">Should be red</div>
       <button
         onClick={() => {
           rule.styleMap.set("color", { type: "keyword", value: "green" });
-          engine.render();
+          sheet.render();
         }}
       >
         Make it green
       </button>
       <button
         onClick={() => {
-          engine.addStyleRule(".test", {
-            style: {
-              backgroundColor: { type: "keyword", value: "yellow" },
+          sheet.addStyleRule(
+            {
+              style: { backgroundColor: { type: "keyword", value: "yellow" } },
+              breakpoint: "0",
             },
-            breakpoint: "0",
-          });
-          engine.render();
+            ".test"
+          );
+          sheet.render();
         }}
       >
         Add rule with yellow background

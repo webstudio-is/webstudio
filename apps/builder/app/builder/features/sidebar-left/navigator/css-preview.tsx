@@ -9,7 +9,7 @@ import {
   useStyleInfo,
   type StyleValueInfo,
 } from "../../style-panel/shared/style-info";
-import { createCssEngine } from "@webstudio-is/css-engine";
+import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
 import * as Prism from "prismjs";
@@ -26,7 +26,7 @@ const preStyle = css(textVariants.mono, {
 // - Compiles a CSS string from the style info
 // - Groups by category and separates categories with comments
 const getCssText = (instanceStyle: StyleInfo) => {
-  const cssEngine = createCssEngine();
+  const sheet = createRegularStyleSheet();
   type StyleValueInfoMap = Map<
     StyleProperty,
     StyleValueInfo[keyof StyleValueInfo]
@@ -72,9 +72,10 @@ const getCssText = (instanceStyle: StyleInfo) => {
     if (styles.size === 0) {
       return;
     }
-    const rule = cssEngine.addStyleRule(comment, {
-      style: Object.fromEntries(styles) as Style,
-    });
+    const rule = sheet.addStyleRule(
+      { style: Object.fromEntries(styles) as Style },
+      comment
+    );
     result.push(`/* ${comment} */`);
     result.push(rule.styleMap.toString());
   };
