@@ -125,8 +125,10 @@ export const generateJsxElement = ({
       continue;
     }
     // We need to merge atomic classes with user-defined className prop.
-    if (prop.name === "className" && propValue !== undefined) {
-      classes.push(propValue);
+    if (prop.name === "className") {
+      if (prop.type === "string") {
+        classes.push(prop.value);
+      }
       continue;
     }
     if (propValue !== undefined) {

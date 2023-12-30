@@ -560,7 +560,6 @@ test("generate collection component as map", () => {
 test("generate page component with variables and actions", () => {
   expect(
     generatePageComponent({
-      classesMap: new Map([["body", ["cls"]]]),
       scope: createScope(),
       page: { rootInstanceId: "body" } as Page,
       instances: new Map([
@@ -611,8 +610,7 @@ test("generate page component with variables and actions", () => {
       }
       return <Body
       data-ws-id="body"
-      data-ws-component="Body"
-      className="cls">
+      data-ws-component="Body">
       <Input
       data-ws-id="input"
       data-ws-component="Input"
@@ -625,10 +623,43 @@ test("generate page component with variables and actions", () => {
   );
 });
 
+test("add classes and merge classes", () => {
+  expect(
+    generatePageComponent({
+      classesMap: new Map([["body", ["cls1"]]]),
+      scope: createScope(),
+      page: { rootInstanceId: "body" } as Page,
+      instances: new Map([createInstancePair("body", "Body", [])]),
+      dataSources: new Map(),
+      props: new Map([
+        createPropPair({
+          id: "1",
+          instanceId: "body",
+          name: "className",
+          type: "string",
+          value: "cls2",
+        }),
+      ]),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toEqual(
+    clear(`
+    type Params = Record<string, string | undefined>
+    type Resources = Record<string, unknown>
+    const Page = (_props: { params: Params, resources: Resources }) => {
+    return <Body
+    data-ws-id="body"
+    data-ws-component="Body"
+    className="cls1 cls2" />
+    }
+    `)
+  );
+});
+
 test("avoid generating collection parameter variable as state", () => {
   expect(
     generatePageComponent({
-      classesMap: new Map([["body", ["cls"]]]),
+      classesMap: new Map(),
       scope: createScope(),
       page: { rootInstanceId: "body" } as Page,
       instances: new Map([
@@ -676,8 +707,7 @@ test("avoid generating collection parameter variable as state", () => {
     let [data, set$data] = useState<any>(["apple","orange","mango"])
     return <Body
     data-ws-id="body"
-    data-ws-component="Body"
-    className="cls">
+    data-ws-component="Body">
     {data?.map((element: any, index: number) =>
     <Fragment key={index}>
     </Fragment>
@@ -691,7 +721,7 @@ test("avoid generating collection parameter variable as state", () => {
 test("generate params variable when present", () => {
   expect(
     generatePageComponent({
-      classesMap: new Map([["body", ["cls"]]]),
+      classesMap: new Map(),
       scope: createScope(["params"]),
       page: { rootInstanceId: "body", pathVariableId: "pathParamsId" } as Page,
       instances: new Map([createInstancePair("body", "Body", [])]),
@@ -723,8 +753,7 @@ test("generate params variable when present", () => {
     return <Body
     data-ws-id="body"
     data-ws-component="Body"
-    data-slug={params_1?.slug}
-    className="cls" />
+    data-slug={params_1?.slug} />
     }
     `)
   );
@@ -733,7 +762,7 @@ test("generate params variable when present", () => {
 test("generate resources loading", () => {
   expect(
     generatePageComponent({
-      classesMap: new Map([["body", ["cls"]]]),
+      classesMap: new Map(),
       scope: createScope(),
       page: { rootInstanceId: "body" } as Page,
       instances: new Map([createInstancePair("body", "Body", [])]),
@@ -782,8 +811,7 @@ test("generate resources loading", () => {
     data-ws-id="body"
     data-ws-component="Body"
     data-data={data}
-    data-resource={data_1}
-    className="cls" />
+    data-resource={data_1} />
     }
     `)
   );
