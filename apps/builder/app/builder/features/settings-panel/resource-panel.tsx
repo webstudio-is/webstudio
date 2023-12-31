@@ -1,7 +1,9 @@
+import { computed } from "nanostores";
 import { nanoid } from "nanoid";
 import { useId, useMemo, useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { DataSource, Resource } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import {
   Box,
   Button,
@@ -11,6 +13,7 @@ import {
   Label,
   Select,
   SmallIconButton,
+  TextArea,
   theme,
 } from "@webstudio-is/design-system";
 import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
@@ -23,11 +26,20 @@ import {
   $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { ExpressionEditor } from "~/builder/shared/expression-editor";
-import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
-import { computed } from "nanostores";
+import {
+  BindingPopover,
+  evaluateExpressionWithinScope,
+  isLiteralExpression,
+} from "~/builder/shared/binding-popover";
 
-const HeaderPair = (props: {
+const HeaderPair = ({
+  editorAliases,
+  editorScope,
+  name,
+  value,
+  onChange,
+  onDelete,
+}: {
   editorAliases: Map<string, string>;
   editorScope: Record<string, unknown>;
   name: string;
@@ -36,6 +48,7 @@ const HeaderPair = (props: {
   onDelete: () => void;
 }) => {
   const nameId = useId();
+  const valueId = useId();
 
   return (
     <Grid
@@ -55,18 +68,30 @@ const HeaderPair = (props: {
       <InputField
         css={{ gridArea: "name-input" }}
         id={nameId}
-        value={props.name}
+        value={name}
         onChange={(event) => {
-          props.onChange(event.target.value, props.value);
+          onChange(event.target.value, value);
         }}
       />
-      <Label css={{ gridArea: "value" }}>Value (Expression)</Label>
-      <Box css={{ gridArea: "value-input" }}>
-        <ExpressionEditor
-          scope={props.editorScope}
-          aliases={props.editorAliases}
-          value={props.value}
-          onChange={(newValue) => props.onChange(props.name, newValue)}
+      <Label htmlFor={valueId} css={{ gridArea: "value" }}>
+        Value
+      </Label>
+      <Box css={{ gridArea: "value-input", position: "relative" }}>
+        <BindingPopover
+          scope={editorScope}
+          aliases={editorAliases}
+          value={value}
+          onChange={(newValue) => onChange(name, newValue)}
+        />
+        <InputField
+          id={valueId}
+          // expressions with variables cannot be edited
+          disabled={isLiteralExpression(value) === false}
+          value={String(evaluateExpressionWithinScope(value, editorScope))}
+          // update text value as string literal
+          onChange={(event) =>
+            onChange(name, JSON.stringify(event.target.value))
+          }
         />
       </Box>
 
@@ -90,7 +115,7 @@ const HeaderPair = (props: {
         <SmallIconButton
           variant="destructive"
           icon={<DeleteIcon />}
-          onClick={props.onDelete}
+          onClick={onDelete}
         />
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -144,7 +169,8 @@ const Headers = ({
         css={{ justifySelf: "center" }}
         prefix={<PlusIcon />}
         onClick={() => {
-          const newHeaders = [...headers, { name: "", value: "" }];
+          // use empty string expression as default
+          const newHeaders = [...headers, { name: "", value: `""` }];
           onChange(newHeaders);
         }}
       >
@@ -206,14 +232,17 @@ export const ResourcePanel = ({
 
   const nameId = useId();
   const [name, setName] = useState(variable?.name ?? "");
-  const [url, setUrl] = useState(resource?.url ?? "");
+  const urlId = useId();
+  // empty string as default
+  const [url, setUrl] = useState(resource?.url ?? `""`);
   const [method, setMethod] = useState<Resource["method"]>(
     resource?.method ?? "get"
   );
   const [headers, setHeaders] = useState<Resource["headers"]>(
     resource?.headers ?? []
   );
-  const [body, setBody] = useState(resource?.body ?? "");
+  // empty string as default
+  const [body, setBody] = useState(resource?.body ?? `""`);
 
   const matchedVariables = useStore($selectedInstanceVariables);
   const variableValues = useStore($selectedInstanceVariableValues);
@@ -257,13 +286,23 @@ export const ResourcePanel = ({
         />
       </Flex>
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label>URL (Expression)</Label>
-        <ExpressionEditor
-          scope={editorScope}
-          aliases={editorAliases}
-          value={url}
-          onChange={setUrl}
-        />
+        <Label htmlFor={urlId}>URL</Label>
+        <Box css={{ position: "relative" }}>
+          <BindingPopover
+            scope={editorScope}
+            aliases={editorAliases}
+            value={url}
+            onChange={setUrl}
+          />
+          <InputField
+            id={urlId}
+            // expressions with variables cannot be edited
+            disabled={isLiteralExpression(url) === false}
+            value={String(evaluateExpressionWithinScope(url, editorScope))}
+            // update text value as string literal
+            onChange={(event) => setUrl(JSON.stringify(event.target.value))}
+          />
+        </Box>
       </Flex>
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label>Method</Label>
@@ -285,13 +324,24 @@ export const ResourcePanel = ({
       </Flex>
       {method !== "get" && (
         <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-          <Label>Body (Expression)</Label>
-          <ExpressionEditor
-            scope={editorScope}
-            aliases={editorAliases}
-            value={body}
-            onChange={setBody}
-          />
+          <Label>Body</Label>
+          <Box css={{ position: "relative" }}>
+            <BindingPopover
+              scope={editorScope}
+              aliases={editorAliases}
+              value={body}
+              onChange={setBody}
+            />
+            <TextArea
+              autoGrow={true}
+              maxRows={10}
+              // expressions with variables cannot be edited
+              disabled={isLiteralExpression(body) === false}
+              value={String(evaluateExpressionWithinScope(body, editorScope))}
+              // update text value as string literal
+              onChange={(newValue) => setBody(JSON.stringify(newValue))}
+            />
+          </Box>
         </Flex>
       )}
 
