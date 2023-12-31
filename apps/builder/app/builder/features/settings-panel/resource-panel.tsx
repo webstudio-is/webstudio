@@ -219,10 +219,10 @@ const $selectedInstanceVariables = computed(
 
 export const ResourcePanel = ({
   variable,
-  onCancel,
+  onClose,
 }: {
   variable?: DataSource;
-  onCancel: () => void;
+  onClose: () => void;
 }) => {
   const resources = useStore($resources);
   const resource =
@@ -346,7 +346,7 @@ export const ResourcePanel = ({
       )}
 
       <Flex justify="end" css={{ gap: theme.spacing[5] }}>
-        <Button color="neutral" onClick={onCancel}>
+        <Button color="neutral" onClick={onClose}>
           Cancel
         </Button>
         <Button
@@ -379,7 +379,7 @@ export const ResourcePanel = ({
                 resources.set(newResource.id, newResource);
               }
             );
-            onCancel();
+            onClose();
           }}
         >
           Save
