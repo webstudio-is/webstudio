@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { matchSorter } from "match-sorter";
-import { Annotation, EditorState, Facet, StateEffect } from "@codemirror/state";
+import { Facet } from "@codemirror/state";
 import {
   type DecorationSet,
   type ViewUpdate,
@@ -31,6 +31,7 @@ import {
 } from "@codemirror/autocomplete";
 import { completionPath, javascript } from "@codemirror/lang-javascript";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
+import { CodeEditor } from "./code-editor";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -69,8 +70,6 @@ export const formatValuePreview = (value: unknown) => {
   }
   return typeof value;
 };
-
-const ExternalChange = Annotation.define<boolean>();
 
 type Scope = Record<string, unknown>;
 
@@ -168,32 +167,6 @@ const variables = ViewPlugin.fromClass(
   }
 );
 
-const rootStyle = css({
-  ...textVariants.mono,
-  boxSizing: "border-box",
-  color: theme.colors.foregroundMain,
-  borderRadius: theme.borderRadius[4],
-  border: `1px solid ${theme.colors.borderMain}`,
-  background: theme.colors.backgroundControls,
-  paddingTop: 6,
-  paddingBottom: 4,
-  paddingRight: theme.spacing[2],
-  paddingLeft: theme.spacing[3],
-  "&:focus-within": {
-    borderColor: theme.colors.borderFocus,
-    outline: `1px solid ${theme.colors.borderFocus}`,
-  },
-  "& .cm-focused": {
-    outline: "none",
-  },
-  "& .cm-content": {
-    padding: 0,
-  },
-  "& .cm-line": {
-    padding: 0,
-  },
-});
-
 const autocompletionStyle = css({
   "&.cm-tooltip.cm-tooltip-autocomplete": {
     ...textVariants.mono,
@@ -262,114 +235,51 @@ export const ExpressionEditor = ({
   onChange: (newValue: string) => void;
   onBlur?: () => void;
 }) => {
-  const editorRef = useRef<null | HTMLDivElement>(null);
-  const viewRef = useRef<undefined | EditorView>();
-
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const onBlurRef = useRef(onBlur);
-  onBlurRef.current = onBlur;
-
-  // setup editor
-
-  useEffect(() => {
-    if (editorRef.current === null) {
-      return;
-    }
-    const view = new EditorView({
-      doc: "",
-      parent: editorRef.current,
-    });
-    if (autoFocus) {
-      view.focus();
-    }
-    viewRef.current = view;
-    return () => {
-      view.destroy();
-    };
-  }, [autoFocus]);
-
-  // update extensions whenever variables data is changed
-
-  useEffect(() => {
-    const view = viewRef.current;
-    if (view === undefined) {
-      return;
-    }
-    view.dispatch({
-      effects: StateEffect.reconfigure.of([
-        history(),
-        drawSelection(),
-        dropCursor(),
-        bracketMatching(),
-        closeBrackets(),
-        EditorView.lineWrapping,
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-        javascript({}),
-        VariablesData.of({ scope, aliases }),
-        // render autocomplete in body
-        // to prevent popover scroll overflow
-        tooltips({ parent: document.body }),
-        autocompletion({
-          override: [scopeCompletionSource],
-          icons: false,
-          tooltipClass: () => autocompletionStyle.toString(),
-        }),
-        variables,
-        keymap.of([
-          ...closeBracketsKeymap,
-          ...defaultKeymap,
-          ...historyKeymap,
-          ...completionKeymap,
-          // use tab to trigger completion
-          {
-            key: "Tab",
-            preventDefault: true,
-            stopPropagation: true,
-            run: startCompletion,
-          },
-        ]),
-        EditorView.editable.of(readOnly === false),
-        EditorState.readOnly.of(readOnly === true),
-        // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L57-L70
-        EditorView.updateListener.of((update) => {
-          if (
-            // prevent invoking callback when focus or selection is changed
-            update.docChanged &&
-            // prevent invoking callback when the change came from react value
-            update.transactions.some((trx) =>
-              trx.annotation(ExternalChange)
-            ) === false
-          ) {
-            onChangeRef.current(update.state.doc.toString());
-          }
-        }),
-        EditorView.domEventHandlers({
-          blur: () => {
-            onBlurRef.current?.();
-          },
-        }),
+  const extensions = useMemo(
+    () => [
+      history(),
+      drawSelection(),
+      dropCursor(),
+      bracketMatching(),
+      closeBrackets(),
+      EditorView.lineWrapping,
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      javascript({}),
+      VariablesData.of({ scope, aliases }),
+      // render autocomplete in body
+      // to prevent popover scroll overflow
+      tooltips({ parent: document.body }),
+      autocompletion({
+        override: [scopeCompletionSource],
+        icons: false,
+        tooltipClass: () => autocompletionStyle.toString(),
+      }),
+      variables,
+      keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+        // use tab to trigger completion
+        {
+          key: "Tab",
+          preventDefault: true,
+          stopPropagation: true,
+          run: startCompletion,
+        },
       ]),
-    });
-  }, [scope, aliases, readOnly]);
+    ],
+    [scope, aliases]
+  );
 
-  // update editor with react value
-  // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L158-L169
-  useEffect(() => {
-    const view = viewRef.current;
-    if (view === undefined) {
-      return;
-    }
-    // prevent updating when editor has the same state
-    // and can be the source of new value
-    if (value === view.state.doc.toString()) {
-      return;
-    }
-    view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: value },
-      annotations: [ExternalChange.of(true)],
-    });
-  }, [value]);
-
-  return <div className={rootStyle.toString()} ref={editorRef}></div>;
+  return (
+    <CodeEditor
+      extensions={extensions}
+      readOnly={readOnly}
+      autoFocus={autoFocus}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+    />
+  );
 };
