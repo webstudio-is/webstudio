@@ -638,7 +638,7 @@ test("add classes and merge classes", () => {
           instanceId: "body",
           name: "className",
           type: "string",
-          value: "cls2",
+          value: 'cls2 "cls3"',
         }),
       ]),
       indexesWithinAncestors: new Map(),
@@ -651,7 +651,7 @@ test("add classes and merge classes", () => {
     return <Body
     data-ws-id="body"
     data-ws-component="Body"
-    className="cls1 cls2" />
+    className="cls1 cls2 \\"cls3\\"" />
     }
     `)
   );
