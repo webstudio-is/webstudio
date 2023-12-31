@@ -69,7 +69,10 @@ const autocompletionStyle = css({
 
 const wrapperStyle = css({
   "& .cm-content": {
-    maxHeight: 200,
+    // 1 line is 16px
+    // set min 10 lines and max 20 lines
+    minHeight: 160,
+    maxHeight: 320,
   },
 });
 
