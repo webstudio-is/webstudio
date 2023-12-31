@@ -172,7 +172,6 @@ const BindingButton = forwardRef<HTMLButtonElement>((props, ref) => (
       position: "absolute",
       top: 0,
       left: 0,
-      transform: "translate(-50%, -50%)",
       width: 14,
       height: 14,
       borderRadius: "50%",
@@ -180,11 +179,12 @@ const BindingButton = forwardRef<HTMLButtonElement>((props, ref) => (
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
+      transform: "translate(-50%, -50%) scale(1)",
+      transition: "transform 60ms",
       "--dot-display": "block",
       "--plus-display": "none",
       "&:hover, &[aria-expanded=true]": {
-        width: 22,
-        height: 22,
+        transform: `translate(-50%, -50%) scale(1.5)`,
         "--dot-display": "none",
         "--plus-display": "block",
       },
@@ -198,7 +198,7 @@ const BindingButton = forwardRef<HTMLButtonElement>((props, ref) => (
           style={{ display: `var(--dot-display)` }}
         />
         <PlusIcon
-          size={18}
+          size={10}
           fill="white"
           style={{ display: `var(--plus-display)` }}
         />
