@@ -261,3 +261,5 @@ export const VariablePopoverTrigger = forwardRef<
     </FloatingPanelPopover>
   );
 });
+
+VariablePopoverTrigger.displayName = "VariablePopoverTrigger";
