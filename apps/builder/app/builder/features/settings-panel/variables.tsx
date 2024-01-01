@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
@@ -13,13 +13,7 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
   FloatingPanelPopoverTrigger,
-  InputErrorsTooltip,
-  InputField,
   Label,
-  PanelTabs,
-  PanelTabsContent,
-  PanelTabsList,
-  PanelTabsTrigger,
   ScrollArea,
   Separator,
   SmallIconButton,
@@ -46,7 +40,6 @@ import {
   $dataSources,
   $instances,
   $props,
-  $resources,
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
@@ -55,233 +48,9 @@ import type { PropValue } from "./shared";
 import { getStartingValue } from "./props-section/use-props-logic";
 import {
   ExpressionEditor,
-  formatValue,
   formatValuePreview,
 } from "~/builder/shared/expression-editor";
-import { ResourcePanel } from "./resource-panel";
-
-/**
- * convert value expression to js value
- * validating out accessing any identifier
- */
-const parseVariableValue = (code: string) => {
-  const result: { value?: unknown; error?: string } = {};
-  const ids = new Set<string>();
-  try {
-    code = validateExpression(code, {
-      optional: true,
-      transformIdentifier: (id) => {
-        ids.add(id);
-        return id;
-      },
-    });
-  } catch (error) {
-    result.error = (error as Error).message;
-    return result;
-  }
-  if (ids.size === 0) {
-    try {
-      // wrap with parentheses to treat {} as object instead of block
-      result.value = eval(`(${code})`);
-    } catch (error) {
-      result.error = `Parse Error: ${(error as Error).message}`;
-    }
-  } else {
-    const idsList = Array.from(ids).join(", ");
-    result.error = `Cannot use variables ${idsList} as variable value`;
-  }
-  return result;
-};
-
-const renameVariable = (variable: DataSource, name: string) => {
-  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-    dataSources.set(variable.id, { ...variable, name });
-  });
-};
-
-const saveVariable = (
-  dataSource: undefined | DataSource,
-  name: string,
-  valueString: string
-): undefined | { error?: string } => {
-  const dataSourceId = dataSource?.id ?? nanoid();
-  const { value, error } = parseVariableValue(valueString);
-  if (error !== undefined) {
-    return { error };
-  }
-
-  const instanceSelector = $selectedInstanceSelector.get();
-  if (instanceSelector === undefined) {
-    return;
-  }
-  const [instanceId] = instanceSelector;
-  serverSyncStore.createTransaction(
-    [$dataSources, $resources],
-    (dataSources, resources) => {
-      // cleanup resource when value variable is set
-      if (dataSource?.type === "resource") {
-        resources.delete(dataSource.resourceId);
-      }
-
-      let variableValue: Extract<DataSource, { type: "variable" }>["value"] = {
-        type: "json",
-        value,
-      };
-      if (typeof value === "string") {
-        variableValue = { type: "string", value };
-      }
-      if (typeof value === "number") {
-        variableValue = { type: "number", value };
-      }
-      if (typeof value === "boolean") {
-        variableValue = { type: "boolean", value };
-      }
-      dataSources.set(dataSourceId, {
-        id: dataSourceId,
-        // preserve existing instance scope when edit
-        scopeInstanceId:
-          dataSources.get(dataSourceId)?.scopeInstanceId ?? instanceId,
-        name,
-        type: "variable",
-        value: variableValue,
-      });
-    }
-  );
-};
-
-const VariableValuePanel = ({
-  variable,
-  onCancel,
-}: {
-  variable?: DataSource;
-  onCancel: () => void;
-}) => {
-  // variable value cannot have an access to other variables
-  const nameId = useId();
-  const [name, setName] = useState(variable?.name ?? "");
-  const [nameErrors, setNameErrors] = useState<undefined | string[]>();
-  const [value, setValue] = useState(
-    formatValue(
-      variable?.type === "variable" ? variable?.value.value ?? "" : ""
-    )
-  );
-  const [valueErrors, setValueErrors] = useState<undefined | string[]>();
-
-  return (
-    <Flex
-      direction="column"
-      css={{
-        overflow: "hidden",
-        gap: theme.spacing[9],
-        px: theme.spacing[9],
-        pb: theme.spacing[9],
-      }}
-    >
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={nameId}>Name</Label>
-        <InputErrorsTooltip errors={nameErrors}>
-          <InputField
-            id={nameId}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </InputErrorsTooltip>
-      </Flex>
-      {/* resource variable can be replaced with value variable
-          parameters can change only name */}
-      {variable?.type !== "parameter" && (
-        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-          <Label>Value</Label>
-          <InputErrorsTooltip errors={valueErrors}>
-            <div>
-              <ExpressionEditor value={value} onChange={setValue} />
-            </div>
-          </InputErrorsTooltip>
-        </Flex>
-      )}
-      <Flex justify="end" css={{ gap: theme.spacing[5] }}>
-        <Button color="neutral" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          onClick={() => {
-            if (name.length === 0) {
-              setNameErrors([`Variable name is required`]);
-              return;
-            }
-            if (variable?.type === "parameter") {
-              renameVariable(variable, name);
-              onCancel();
-            }
-            // save value variable and convert from resource variable if necessary
-            const result = saveVariable(variable, name, value);
-            if (result?.error !== undefined) {
-              setValueErrors([result.error]);
-              return;
-            }
-            onCancel();
-          }}
-        >
-          Save
-        </Button>
-      </Flex>
-    </Flex>
-  );
-};
-
-const VariablePanel = ({
-  variable,
-  onBack,
-}: {
-  variable?: DataSource;
-  onBack: () => void;
-}) => {
-  const [tab, setTab] = useState(
-    variable?.type === "resource" ? "resource" : "value"
-  );
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        // prevent closing popover
-        event.preventDefault();
-        onBack();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown, { capture: true });
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown, { capture: true });
-    };
-  }, [onBack]);
-
-  return (
-    <PanelTabs value={tab} onValueChange={setTab} asChild>
-      <Flex direction="column">
-        <ScrollArea
-          css={{
-            // flex fixes content overflowing artificial scroll area
-            display: "flex",
-            flexDirection: "column",
-            width: theme.spacing[30],
-          }}
-        >
-          {/* user can change only parameter name */}
-          {variable?.type !== "parameter" && (
-            <PanelTabsList>
-              <PanelTabsTrigger value="value">Value</PanelTabsTrigger>
-              <PanelTabsTrigger value="resource">Resource</PanelTabsTrigger>
-            </PanelTabsList>
-          )}
-          <PanelTabsContent value="value">
-            <VariableValuePanel variable={variable} onCancel={onBack} />
-          </PanelTabsContent>
-          <PanelTabsContent value="resource">
-            <ResourcePanel variable={variable} onCancel={onBack} />
-          </PanelTabsContent>
-        </ScrollArea>
-      </Flex>
-    </PanelTabs>
-  );
-};
+import { VariablePopoverTrigger } from "./variable-popover";
 
 const $selectedInstanceVariables = computed(
   [$selectedInstanceSelector, $dataSources, $instances],
@@ -320,16 +89,16 @@ const $selectedInstanceVariableValues = computed(
   }
 );
 
-const EmptyList = ({ onAdd }: { onAdd: () => void }) => {
+const EmptyList = () => {
   return (
     <Flex direction="column" css={{ gap: theme.spacing[5] }}>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
         <Text variant="labelsSentenceCase">No variables yet</Text>
       </Flex>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
-        <Button prefix={<PlusIcon />} onClick={onAdd}>
-          Create variable
-        </Button>
+        <VariablePopoverTrigger>
+          <Button prefix={<PlusIcon />}>Create variable</Button>
+        </VariablePopoverTrigger>
       </Flex>
     </Flex>
   );
@@ -388,7 +157,6 @@ const ListItem = ({
   variable,
   value,
   onSelect,
-  onEdit,
 }: {
   index: number;
   selected: boolean;
@@ -396,7 +164,6 @@ const ListItem = ({
   variable: DataSource;
   value: unknown;
   onSelect: (variableId: DataSource["id"]) => void;
-  onEdit: (variable: DataSource) => void;
 }) => {
   return (
     <CssValueListItem
@@ -412,13 +179,14 @@ const ListItem = ({
       active={selected}
       buttons={
         <>
-          <Tooltip content="Edit variable" side="bottom">
-            <SmallIconButton
-              tabIndex={-1}
-              aria-label="Edit variable"
-              icon={<MenuIcon />}
-              onClick={() => onEdit(variable)}
-            />
+          <Tooltip content="Edit variable" side="bottom" asChild>
+            <VariablePopoverTrigger variable={variable}>
+              <SmallIconButton
+                tabIndex={-1}
+                aria-label="Edit variable"
+                icon={<MenuIcon />}
+              />
+            </VariablePopoverTrigger>
           </Tooltip>
           <Tooltip content="Delete variable" side="bottom">
             <SmallIconButton
@@ -483,13 +251,9 @@ const setPropValue = ({
 
 const ListPanel = ({
   prop,
-  onAdd,
-  onEdit,
   onChange,
 }: {
   prop: undefined | Prop;
-  onAdd: () => void;
-  onEdit: (variable: DataSource) => void;
   onChange: (value: undefined | PropValue) => void;
 }) => {
   const matchedVariables = useStore($selectedInstanceVariables);
@@ -527,7 +291,7 @@ const ListPanel = ({
       }}
     >
       {matchedVariables.length === 0 ? (
-        <EmptyList onAdd={onAdd} />
+        <EmptyList />
       ) : (
         <>
           <CssValueListArrowFocus>
@@ -550,7 +314,6 @@ const ListPanel = ({
                     value: encodeDataSourceVariable(variable.id),
                   })
                 }
-                onEdit={onEdit}
               />
             ))}
           </CssValueListArrowFocus>
@@ -629,32 +392,6 @@ export const VariablesPanel = ({
     )
   );
 
-  const [view, setView] = useState<
-    { name: "list" } | { name: "add" } | { name: "edit"; variable: DataSource }
-  >({ name: "list" });
-  if (view.name === "add") {
-    return (
-      <>
-        <VariablePanel onBack={() => setView({ name: "list" })} />
-        {/* put after content to avoid auto focusing "Close" button */}
-        <FloatingPanelPopoverTitle>New Variable</FloatingPanelPopoverTitle>
-      </>
-    );
-  }
-
-  if (view.name === "edit") {
-    return (
-      <>
-        <VariablePanel
-          variable={view.variable}
-          onBack={() => setView({ name: "list" })}
-        />
-        {/* put after content to avoid auto focusing "Close" button */}
-        <FloatingPanelPopoverTitle>Edit Variable</FloatingPanelPopoverTitle>
-      </>
-    );
-  }
-
   const removeExpression = () => {
     // reset prop with initial value from meta
     const propValue = getStartingValue(propMeta);
@@ -676,8 +413,6 @@ export const VariablesPanel = ({
     <>
       <ListPanel
         prop={prop}
-        onAdd={() => setView({ name: "add" })}
-        onEdit={(variable) => setView({ name: "edit", variable })}
         onChange={(propValue) => {
           if (propValue === undefined) {
             removeExpression();
@@ -703,13 +438,14 @@ export const VariablesPanel = ({
                 </FloatingPanelPopoverClose>
               </Tooltip>
             )}
-            <Tooltip content="New variable" side="bottom">
-              <Button
-                aria-label="New variable"
-                prefix={<PlusIcon />}
-                color="ghost"
-                onClick={() => setView({ name: "add" })}
-              />
+            <Tooltip content="New variable" side="bottom" asChild>
+              <VariablePopoverTrigger>
+                <Button
+                  aria-label="New variable"
+                  prefix={<PlusIcon />}
+                  color="ghost"
+                />
+              </VariablePopoverTrigger>
             </Tooltip>
           </>
         }
