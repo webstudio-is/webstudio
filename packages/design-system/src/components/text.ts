@@ -1,4 +1,5 @@
 import { css, theme, styled } from "../stitches.config";
+import { truncate } from "../utilities";
 import { typography } from "../__generated__/figma-design-tokens";
 
 const normalize = {
@@ -46,9 +47,7 @@ export const textStyle = css({
     },
     truncate: {
       true: {
-        whiteSpace: "nowrap",
-        textOverflow: "ellipsis",
-        overflow: "hidden",
+        ...truncate(),
 
         // To make sure text is not clipped vertically
         pt: "0.5em",

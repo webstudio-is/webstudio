@@ -9,6 +9,8 @@ import {
   Flex,
   Grid,
   Text,
+  textVariants,
+  truncate,
   theme,
   Box,
 } from "@webstudio-is/design-system";
@@ -68,6 +70,15 @@ const usePublishedLink = ({ domain }: { domain: string }) => {
   return { url };
 };
 
+const linkStyle = css({
+  color: theme.colors.foregroundSubtle,
+  ...textVariants.regular,
+  ...truncate(),
+  "&:hover": {
+    textDecoration: "underline",
+  },
+});
+
 const PublishedLink = ({
   domain,
   tabIndex,
@@ -77,21 +88,14 @@ const PublishedLink = ({
 }) => {
   const { url } = usePublishedLink({ domain });
   return (
-    <Text
-      as="a"
+    <a
       href={url?.href}
       target="_blank"
-      truncate
-      color="subtle"
       tabIndex={tabIndex}
-      css={{
-        "&:not(:hover)": {
-          textDecoration: "none",
-        },
-      }}
+      className={linkStyle()}
     >
       {url?.host}
-    </Text>
+    </a>
   );
 };
 
