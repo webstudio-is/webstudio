@@ -26,7 +26,7 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import {
-  InformationIcon,
+  InfoCircleIcon,
   ShadowInsetIcon,
   ShadowNormalIcon,
 } from "@webstudio-is/icons";
@@ -420,7 +420,7 @@ export const BoxShadowContent = ({
                 </Text>
               }
             >
-              <InformationIcon />
+              <InfoCircleIcon />
             </Tooltip>
           </Flex>
         </Label>

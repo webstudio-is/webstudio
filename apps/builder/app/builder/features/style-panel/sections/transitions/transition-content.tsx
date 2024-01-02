@@ -23,7 +23,7 @@ import {
   parseTransition,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
-import { InformationIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import type { DeleteProperty } from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
@@ -240,7 +240,7 @@ export const TransitionContent = ({
                 </Text>
               }
             >
-              <InformationIcon />
+              <InfoCircleIcon />
             </Tooltip>
           </Flex>
         </Label>
