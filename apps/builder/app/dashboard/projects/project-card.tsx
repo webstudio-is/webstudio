@@ -101,6 +101,7 @@ const PublishedLink = ({
     <a
       href={url?.href}
       target="_blank"
+      rel="noreferrer"
       tabIndex={tabIndex}
       className={linkStyle()}
     >
