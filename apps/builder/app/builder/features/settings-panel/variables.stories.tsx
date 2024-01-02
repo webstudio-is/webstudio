@@ -8,10 +8,14 @@ import {
 } from "@webstudio-is/design-system";
 import { VariablesPanel } from "./variables";
 import {
-  propsStore,
-  selectedInstanceSelectorStore,
+  $pages,
+  $selectedInstanceSelector,
+  $selectedPageId,
+  $props,
+  $instances,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
+import type { Page } from "@webstudio-is/sdk";
 
 export default {
   title: "Builder/Variables",
@@ -19,7 +23,17 @@ export default {
 } satisfies Meta;
 
 registerContainers();
-selectedInstanceSelectorStore.set(["root"]);
+$selectedInstanceSelector.set(["root"]);
+$instances.set(
+  new Map([
+    ["root", { id: "root", type: "instance", component: "Box", children: [] }],
+  ])
+);
+$selectedPageId.set("home");
+$pages.set({
+  homePage: { id: "home", rootInstanceId: "root" } as Page,
+  pages: [],
+});
 
 const initialProp = {
   id: "my-prop",
@@ -28,7 +42,7 @@ const initialProp = {
   type: "string",
   value: "initial",
 } as const;
-propsStore.set(new Map([[initialProp.id, initialProp]]));
+$props.set(new Map([[initialProp.id, initialProp]]));
 
 const VariablesPopover = () => {
   const [isOpen, setIsOpen] = useState(true);

@@ -281,7 +281,7 @@ export type VimeoOptions = Omit<
   | "title"
   | "portrait"
 > & {
-  /** Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your site feel slower. */
+  /** Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower. */
   showPreview?: boolean;
   /** Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats. */
   doNotTrack?: VimeoPlayerOptions["dnt"];

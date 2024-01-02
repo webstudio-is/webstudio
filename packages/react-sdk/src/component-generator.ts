@@ -69,6 +69,7 @@ export const generateJsxElement = ({
   dataSources,
   indexesWithinAncestors,
   children,
+  classesMap,
 }: {
   scope: Scope;
   instance: Instance;
@@ -76,6 +77,7 @@ export const generateJsxElement = ({
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
+  classesMap?: Map<string, Array<string>>;
 }) => {
   let generatedProps = "";
 
@@ -92,6 +94,8 @@ export const generateJsxElement = ({
   let conditionValue: undefined | string;
   let collectionDataValue: undefined | string;
   let collectionItemValue: undefined | string;
+
+  const classes = Array.from(classesMap?.get(instance.id) ?? []);
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
@@ -120,9 +124,20 @@ export const generateJsxElement = ({
       }
       continue;
     }
+    // We need to merge atomic classes with user-defined className prop.
+    if (prop.name === "className") {
+      if (prop.type === "string") {
+        classes.push(prop.value);
+      }
+      continue;
+    }
     if (propValue !== undefined) {
       generatedProps += `\n${prop.name}={${propValue}}`;
     }
+  }
+
+  if (classes.length !== 0) {
+    generatedProps += `\nclassName=${JSON.stringify(classes.join(" "))}`;
   }
 
   let generatedElement = "";
@@ -141,7 +156,8 @@ export const generateJsxElement = ({
       return "";
     }
     const indexVariable = scope.getName(`${instance.id}-index`, "index");
-    generatedElement += `{${collectionDataValue}.map((${collectionItemValue}, ${indexVariable}) =>\n`;
+    // fix implicit any error
+    generatedElement += `{${collectionDataValue}?.map((${collectionItemValue}: any, ${indexVariable}: number) =>\n`;
     generatedElement += `<Fragment key={${indexVariable}}>\n`;
     generatedElement += children;
     generatedElement += `</Fragment>\n`;
@@ -172,6 +188,7 @@ export const generateJsxChildren = ({
   props,
   dataSources,
   indexesWithinAncestors,
+  classesMap,
 }: {
   scope: Scope;
   children: Instance["children"];
@@ -179,6 +196,7 @@ export const generateJsxChildren = ({
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
+  classesMap?: Map<string, Array<string>>;
 }) => {
   let generatedChildren = "";
   for (const child of children) {
@@ -203,7 +221,9 @@ export const generateJsxChildren = ({
         props,
         dataSources,
         indexesWithinAncestors,
+        classesMap,
         children: generateJsxChildren({
+          classesMap,
           scope,
           children: instance.children,
           instances,
@@ -226,6 +246,7 @@ export const generatePageComponent = ({
   props,
   dataSources,
   indexesWithinAncestors,
+  classesMap,
 }: {
   scope: Scope;
   page: Page;
@@ -233,6 +254,7 @@ export const generatePageComponent = ({
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
+  classesMap: Map<string, Array<string>>;
 }) => {
   const instance = instances.get(page.rootInstanceId);
   if (instance === undefined) {
@@ -269,7 +291,8 @@ export const generatePageComponent = ({
         dataSource.resourceId,
         dataSource.name
       );
-      generatedDataSources += `let ${valueName} = _props.resources["${resourceName}"]\n`;
+      // cast to any to fix accessing fields from unknown error
+      generatedDataSources += `let ${valueName}: any = _props.resources["${resourceName}"]\n`;
     }
   }
 
@@ -281,6 +304,7 @@ export const generatePageComponent = ({
     props,
     dataSources,
     indexesWithinAncestors,
+    classesMap,
     children: generateJsxChildren({
       scope,
       children: instance.children,
@@ -288,6 +312,7 @@ export const generatePageComponent = ({
       props,
       dataSources,
       indexesWithinAncestors,
+      classesMap,
     }),
   });
 

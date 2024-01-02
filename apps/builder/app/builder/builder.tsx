@@ -37,6 +37,8 @@ import {
   styleSourcesStore,
   stylesStore,
   $domains,
+  $resources,
+  subscribeResources,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -46,7 +48,7 @@ import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
-import { SiteSettings } from "./features/seo/site-settings";
+import { ProjectSettings } from "./features/seo/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 registerContainers();
@@ -249,6 +251,7 @@ export const Builder = ({
     assetsStore.set(new Map(assets));
     instancesStore.set(new Map(build.instances));
     dataSourcesStore.set(new Map(build.dataSources));
+    $resources.set(new Map(build.resources));
     // props should be after data sources to compute logic
     propsStore.set(new Map(build.props));
     pagesStore.set(build.pages);
@@ -259,6 +262,7 @@ export const Builder = ({
   });
 
   useEffect(subscribeCommands, []);
+  useEffect(subscribeResources, []);
 
   useUnmount(() => {
     pagesStore.set(undefined);
@@ -303,7 +307,7 @@ export const Builder = ({
   return (
     <TooltipProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <SiteSettings />
+        <ProjectSettings />
         <Topbar
           gridArea="header"
           project={project}

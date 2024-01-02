@@ -22,6 +22,7 @@
   "dependencies": {
     "@codemirror/autocomplete": "^6.11.1",
     "@codemirror/commands": "^6.3.2",
+    "@codemirror/lang-html": "^6.4.7",
     "@codemirror/lang-javascript": "^6.2.1",
     "@codemirror/language": "^6.9.3",
     "@codemirror/state": "^6.3.3",
@@ -31,7 +32,6 @@
     "@fontsource-variable/manrope": "^5.0.15",
     "@fontsource/roboto-mono": "^5.0.13",
     "@lexical/headless": "^0.12.2",
-    "@lexical/html": "^0.12.2",
     "@lexical/link": "^0.12.2",
     "@lexical/react": "^0.12.2",
     "@lexical/selection": "^0.12.2",

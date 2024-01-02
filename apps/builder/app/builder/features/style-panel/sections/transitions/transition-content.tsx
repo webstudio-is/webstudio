@@ -6,7 +6,6 @@ import {
   type TupleValue,
   KeywordValue,
   UnitValue,
-  StyleValue,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -22,6 +21,7 @@ import {
 import {
   extractTransitionProperties,
   parseTransition,
+  type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import { InformationIcon } from "@webstudio-is/icons";
 import type { DeleteProperty } from "../../shared/use-style-data";
@@ -37,13 +37,6 @@ type TransitionContentProps = {
   transition: string;
   onEditLayer: (index: number, layer: LayersValue) => void;
   deleteProperty: DeleteProperty;
-};
-
-type ExtractedTransitionProperties = {
-  property?: KeywordValue | null;
-  timing?: KeywordValue | null;
-  delay?: StyleValue | null;
-  duration?: StyleValue | null;
 };
 
 export const TransitionContent = ({

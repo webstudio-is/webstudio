@@ -16,7 +16,7 @@ export const cloneAssets = async (
 
     /**
      * Don't use unless absolutely have to (e.g. because of transactions)
-     * and unless it's obvious on the call site that permission is checked
+     * and unless it's obvious on the call project that permission is checked
      */
     dontCheckEditPermission?: boolean;
   },

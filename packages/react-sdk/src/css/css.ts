@@ -1,4 +1,8 @@
-import { createCssEngine, type TransformValue } from "@webstudio-is/css-engine";
+import {
+  createRegularStyleSheet,
+  createAtomicStyleSheet,
+  type TransformValue,
+} from "@webstudio-is/css-engine";
 import type {
   Asset,
   Assets,
@@ -23,10 +27,14 @@ type Data = {
 
 type CssOptions = {
   assetBaseUrl: string;
+  atomic: boolean;
 };
 
 export const createImageValueTransformer =
-  (assets: Assets, options: CssOptions): TransformValue =>
+  (
+    assets: Assets,
+    { assetBaseUrl }: { assetBaseUrl: string }
+  ): TransformValue =>
   (styleValue) => {
     if (styleValue.type === "image" && styleValue.value.type === "asset") {
       const asset = assets.get(styleValue.value.value);
@@ -35,7 +43,6 @@ export const createImageValueTransformer =
       }
 
       // @todo reuse image loaders and generate image-set
-      const { assetBaseUrl } = options;
       const url = `${assetBaseUrl}${asset.name}`;
 
       return {
@@ -49,21 +56,25 @@ export const createImageValueTransformer =
     }
   };
 
-export const generateCssText = (data: Data, options: CssOptions) => {
+export const generateCss = (
+  data: Data,
+  { assetBaseUrl, atomic = false }: CssOptions
+) => {
   const assets: Assets = new Map(data.assets.map((asset) => [asset.id, asset]));
   const breakpoints = new Map(data.breakpoints);
   const styles = new Map(data.styles);
   const styleSourceSelections = new Map(data.styleSourceSelections);
+  const classesMap = new Map<string, Array<string>>();
 
-  const engine = createCssEngine({ name: "ssr" });
+  const regularSheet = createRegularStyleSheet({ name: "ssr-regular" });
+  const atomicSheet = atomic
+    ? createAtomicStyleSheet({ name: "ssr-atomic" })
+    : undefined;
 
-  addGlobalRules(engine, {
-    assets,
-    assetBaseUrl: options.assetBaseUrl,
-  });
+  addGlobalRules(regularSheet, { assets, assetBaseUrl });
 
   for (const breakpoint of breakpoints.values()) {
-    engine.addMediaRule(breakpoint.id, breakpoint);
+    (atomicSheet ?? regularSheet).addMediaRule(breakpoint.id, breakpoint);
   }
 
   for (const [component, meta] of data.componentMetas) {
@@ -73,21 +84,38 @@ export const generateCssText = (data: Data, options: CssOptions) => {
     }
     const rules = getPresetStyleRules(component, presetStyle);
     for (const [selector, style] of rules) {
-      engine.addStyleRule(selector, { style });
+      regularSheet.addStyleRule({ style }, selector);
     }
   }
 
   const styleRules = getStyleRules(styles, styleSourceSelections);
+
+  const imageValueTransformer = createImageValueTransformer(assets, {
+    assetBaseUrl,
+  });
+
   for (const { breakpointId, instanceId, state, style } of styleRules) {
-    engine.addStyleRule(
+    if (atomicSheet) {
+      const { classes } = atomicSheet.addStyleRule(
+        { breakpoint: breakpointId, style },
+        state,
+        imageValueTransformer
+      );
+      classesMap.set(instanceId, [
+        ...(classesMap.get(instanceId) ?? []),
+        ...classes,
+      ]);
+      continue;
+    }
+    regularSheet.addStyleRule(
+      { breakpoint: breakpointId, style },
       `[${idAttribute}="${instanceId}"]${state ?? ""}`,
-      {
-        breakpoint: breakpointId,
-        style,
-      },
-      createImageValueTransformer(assets, options)
+      imageValueTransformer
     );
   }
 
-  return engine.cssText;
+  return {
+    cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
+    classesMap,
+  };
 };

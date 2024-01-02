@@ -138,7 +138,7 @@ const Menu = ({
               checked={relation === "viewers"}
               onCheckedChange={handleCheckedChange("viewers")}
               title="View"
-              info="Recipients can only view the site"
+              info="Recipients can only view the project"
             />
             {/*
            Hide temporarily until we have a way to allow edit content but not edit tree, etc.
@@ -147,14 +147,14 @@ const Menu = ({
             onCheckedChange={handleCheckedChange("editors")}
             checked={relation === "editors"}
             title="Edit Content"
-            info="Recipients can view the site and edit content like text and images, but they will not be able to change the styles or structure of your site."
+            info="Recipients can view the project and edit content like text and images, but they will not be able to change the styles or structure of your project."
           />
           */}
             <Permission
               onCheckedChange={handleCheckedChange("builders")}
               checked={relation === "builders"}
               title="Build"
-              info="Recipients can make any changes but can not publish the site."
+              info="Recipients can make any changes but can not publish the project."
             />
 
             {hasProPlan && (
@@ -162,7 +162,7 @@ const Menu = ({
                 onCheckedChange={handleCheckedChange("administrators")}
                 checked={relation === "administrators"}
                 title="Admin"
-                info="Recipients can make any changes and can also publish the site."
+                info="Recipients can make any changes and can also publish the project."
               />
             )}
           </Item>

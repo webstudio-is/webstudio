@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useMemo } from "react";
 import { matchSorter } from "match-sorter";
-import { Annotation, EditorState, Facet, StateEffect } from "@codemirror/state";
+import { Facet } from "@codemirror/state";
 import {
   type DecorationSet,
   type ViewUpdate,
@@ -12,6 +12,7 @@ import {
   drawSelection,
   dropCursor,
   EditorView,
+  tooltips,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
@@ -30,6 +31,7 @@ import {
 } from "@codemirror/autocomplete";
 import { completionPath, javascript } from "@codemirror/lang-javascript";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
+import { CodeEditor } from "./code-editor";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -69,8 +71,6 @@ export const formatValuePreview = (value: unknown) => {
   return typeof value;
 };
 
-const ExternalChange = Annotation.define<boolean>();
-
 type Scope = Record<string, unknown>;
 
 type Aliases = Map<string, string>;
@@ -79,6 +79,9 @@ const VariablesData = Facet.define<{
   scope: Scope;
   aliases: Aliases;
 }>();
+
+// completion based on
+// https://github.com/codemirror/lang-javascript/blob/4dcee95aee9386fd2c8ad55f93e587b39d968489/src/complete.ts
 
 // Defines a completion source that completes from the given scope
 // object (for example `globalThis`). Will enter properties
@@ -118,6 +121,8 @@ const scopeCompletionSource: CompletionSource = (context) => {
 /**
  * Highlight variables and replace their $ws$dataSource$name like labels
  * with user names
+ *
+ * https://codemirror.net/examples/decoration/#atomic-ranges
  */
 
 class VariableWidget extends WidgetType {
@@ -162,70 +167,43 @@ const variables = ViewPlugin.fromClass(
   }
 );
 
-const rootStyle = css({
-  ...textVariants.mono,
-  boxSizing: "border-box",
-  color: theme.colors.foregroundMain,
-  borderRadius: theme.borderRadius[4],
-  border: `1px solid ${theme.colors.borderMain}`,
-  background: theme.colors.backgroundControls,
-  paddingTop: 6,
-  paddingBottom: 4,
-  paddingRight: theme.spacing[2],
-  paddingLeft: theme.spacing[3],
-  "&:focus-within": {
-    borderColor: theme.colors.borderFocus,
-    outline: `1px solid ${theme.colors.borderFocus}`,
-  },
-  "& .cm-focused": {
-    outline: "none",
-  },
-  "& .cm-content": {
-    padding: 0,
-  },
-  "& .cm-line": {
-    padding: 0,
-  },
-  "& .cm-tooltip": {
+const autocompletionStyle = css({
+  "&.cm-tooltip.cm-tooltip-autocomplete": {
+    ...textVariants.mono,
     border: "none",
     backgroundColor: "transparent",
-  },
-  "& .cm-tooltip.cm-tooltip-autocomplete ul": {
-    minWidth: 160,
-    maxWidth: 260,
-    width: "max-content",
-    boxSizing: "border-box",
-    borderRadius: theme.borderRadius[6],
-    backgroundColor: theme.colors.backgroundMenu,
-    border: `1px solid ${theme.colors.borderMain}`,
-    boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
-    padding: theme.spacing[3],
-    "& li": {
-      ...textVariants.labelsTitleCase,
-      textTransform: "none",
-      // outline: "none",
-      // cursor: "default",
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      color: theme.colors.foregroundMain,
+    "& ul": {
+      minWidth: 160,
+      maxWidth: 260,
+      width: "max-content",
+      boxSizing: "border-box",
+      borderRadius: theme.borderRadius[6],
+      backgroundColor: theme.colors.backgroundMenu,
+      border: `1px solid ${theme.colors.borderMain}`,
+      boxShadow: `${theme.shadows.menuDropShadow}, inset 0 0 0 1px ${theme.colors.borderMenuInner}`,
       padding: theme.spacing[3],
-      borderRadius: theme.borderRadius[3],
-      "&[aria-selected]": {
+      "& li": {
+        ...textVariants.labelsTitleCase,
+        textTransform: "none",
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
         color: theme.colors.foregroundMain,
-        backgroundColor: theme.colors.backgroundItemMenuItemHover,
-      },
-      "& .cm-completionIcon": {
-        display: "none",
-      },
-      "& .cm-completionLabel": {
-        flexGrow: 1,
-      },
-      "& .cm-completionDetail": {
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        fontStyle: "normal",
-        color: theme.colors.hint,
+        padding: theme.spacing[3],
+        borderRadius: theme.borderRadius[3],
+        "&[aria-selected]": {
+          color: theme.colors.foregroundMain,
+          backgroundColor: theme.colors.backgroundItemMenuItemHover,
+        },
+        "& .cm-completionLabel": {
+          flexGrow: 1,
+        },
+        "& .cm-completionDetail": {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          fontStyle: "normal",
+          color: theme.colors.hint,
+        },
       },
     },
   },
@@ -237,6 +215,7 @@ const emptyAliases: Aliases = new Map();
 export const ExpressionEditor = ({
   scope = emptyScope,
   aliases = emptyAliases,
+  autoFocus = false,
   readOnly = false,
   value,
   onChange,
@@ -250,102 +229,57 @@ export const ExpressionEditor = ({
    * variable aliases to show instead of $ws$dataSource$id
    */
   aliases?: Aliases;
+  autoFocus?: boolean;
   readOnly?: boolean;
   value: string;
   onChange: (newValue: string) => void;
   onBlur?: () => void;
 }) => {
-  const editorRef = useRef<null | HTMLDivElement>(null);
-  const viewRef = useRef<undefined | EditorView>();
-
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const onBlurRef = useRef(onBlur);
-  onBlurRef.current = onBlur;
-
-  // setup editor
-
-  useEffect(() => {
-    if (editorRef.current === null) {
-      return;
-    }
-    const view = new EditorView({
-      doc: "",
-      parent: editorRef.current,
-    });
-    viewRef.current = view;
-    return () => {
-      view.destroy();
-    };
-  }, []);
-
-  // update extensions whenever variables data is changed
-
-  useEffect(() => {
-    const view = viewRef.current;
-    if (view === undefined) {
-      return;
-    }
-    view.dispatch({
-      effects: StateEffect.reconfigure.of([
-        history(),
-        drawSelection(),
-        dropCursor(),
-        bracketMatching(),
-        closeBrackets(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-        javascript({}),
-        VariablesData.of({ scope, aliases }),
-        autocompletion({ override: [scopeCompletionSource] }),
-        variables,
-        keymap.of([
-          ...closeBracketsKeymap,
-          ...defaultKeymap,
-          ...historyKeymap,
-          ...completionKeymap,
-          // use tab to trigger completion
-          { key: "Tab", run: startCompletion },
-        ]),
-        EditorView.editable.of(readOnly === false),
-        EditorState.readOnly.of(readOnly === true),
-        EditorView.updateListener.of((update) => {
-          if (
-            // prevent invoking callback when focus or selection is changed
-            update.docChanged &&
-            // prevent invoking callback when the change came from react value
-            update.transactions.some((trx) =>
-              trx.annotation(ExternalChange)
-            ) === false
-          ) {
-            onChangeRef.current(update.state.doc.toString());
-          }
-        }),
-        EditorView.domEventHandlers({
-          blur: () => {
-            onBlurRef.current?.();
-          },
-        }),
+  const extensions = useMemo(
+    () => [
+      history(),
+      drawSelection(),
+      dropCursor(),
+      bracketMatching(),
+      closeBrackets(),
+      EditorView.lineWrapping,
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      javascript({}),
+      VariablesData.of({ scope, aliases }),
+      // render autocomplete in body
+      // to prevent popover scroll overflow
+      tooltips({ parent: document.body }),
+      autocompletion({
+        override: [scopeCompletionSource],
+        icons: false,
+        tooltipClass: () => autocompletionStyle.toString(),
+      }),
+      variables,
+      keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+        // use tab to trigger completion
+        {
+          key: "Tab",
+          preventDefault: true,
+          stopPropagation: true,
+          run: startCompletion,
+        },
       ]),
-    });
-  }, [scope, aliases, readOnly]);
+    ],
+    [scope, aliases]
+  );
 
-  // update editor with react value
-
-  useEffect(() => {
-    const view = viewRef.current;
-    if (view === undefined) {
-      return;
-    }
-    // prevent updating when editor has the same state
-    // and can be the source of new value
-    if (value === view.state.doc.toString()) {
-      return;
-    }
-    view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: value },
-      annotations: [ExternalChange.of(true)],
-    });
-  }, [value]);
-
-  return <div className={rootStyle.toString()} ref={editorRef}></div>;
+  return (
+    <CodeEditor
+      extensions={extensions}
+      readOnly={readOnly}
+      autoFocus={autoFocus}
+      value={value}
+      onChange={onChange}
+      onBlur={onBlur}
+    />
+  );
 };

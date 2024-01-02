@@ -16,7 +16,7 @@ import pLimit from "p-limit";
 import ora from "ora";
 import merge from "deepmerge";
 import {
-  generateCssText,
+  generateCss,
   generateUtilsExport,
   generatePageComponent,
   getIndexesWithinAncestors,
@@ -27,6 +27,7 @@ import {
   generateRemixRoute,
   generateRemixParams,
   generateResourcesLoader,
+  collectionComponent,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -250,7 +251,7 @@ export const prebuild = async (options: {
 
   const domain = siteData.build.deployment?.projectDomain;
   if (domain === undefined) {
-    throw new Error(`Project domain is missing from the site data`);
+    throw new Error(`Project domain is missing from the project data`);
   }
 
   const radixComponentNamespacedMetas = Object.entries(
@@ -305,18 +306,22 @@ export const prebuild = async (options: {
       }
     }
 
+    const resourceIds = new Set<Resource["id"]>();
     for (const [dataSourceId, dataSource] of siteData.build.dataSources) {
       if (
         dataSource.scopeInstanceId === undefined ||
         pageInstanceSet.has(dataSource.scopeInstanceId)
       ) {
         dataSources.push([dataSourceId, dataSource]);
+        if (dataSource.type === "resource") {
+          resourceIds.add(dataSource.resourceId);
+        }
       }
     }
 
     const resources: [Resource["id"], Resource][] = [];
     for (const [resourceId, resource] of siteData.build.resources ?? []) {
-      if (pageInstanceSet.has(resource.instanceId)) {
+      if (resourceIds.has(resourceId)) {
         resources.push([resourceId, resource]);
       }
     }
@@ -335,12 +340,13 @@ export const prebuild = async (options: {
 
     componentsByPage[page.path] = new Set();
     for (const [_instanceId, instance] of instances) {
-      if (instance.component) {
-        componentsByPage[page.path].add(instance.component);
-        const meta = metas.get(instance.component);
-        if (meta) {
-          projectMetas.set(instance.component, meta);
-        }
+      if (instance.component === collectionComponent) {
+        continue;
+      }
+      componentsByPage[page.path].add(instance.component);
+      const meta = metas.get(instance.component);
+      if (meta) {
+        projectMetas.set(instance.component, meta);
       }
     }
   }
@@ -390,6 +396,25 @@ export const prebuild = async (options: {
     }
   }
 
+  spinner.text = "Generating css file";
+  const { cssText, classesMap } = generateCss(
+    {
+      assets: siteData.assets,
+      breakpoints: siteData.build?.breakpoints,
+      styles: siteData.build?.styles,
+      styleSourceSelections: siteData.build?.styleSourceSelections,
+      // pass only used metas to not generate unused preset styles
+      componentMetas: projectMetas,
+    },
+    {
+      assetBaseUrl,
+      // @todo switch to atomic depending on site settings
+      atomic: false,
+    }
+  );
+
+  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
+
   spinner.text = "Generating routes and pages";
 
   const routeFileTemplate = await readFile(
@@ -408,7 +433,7 @@ export const prebuild = async (options: {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
-      "ReactNode",
+      "Fragment",
       "PageData",
       "Asset",
       "fontAssets",
@@ -463,7 +488,7 @@ export const prebuild = async (options: {
     const pageData = siteDataByPage[pathname];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
-      site: siteData.build.pages.meta,
+      project: siteData.build.pages.meta,
       page: pageData.page,
     };
 
@@ -482,6 +507,7 @@ export const prebuild = async (options: {
       instances,
       props,
       dataSources,
+      classesMap,
       indexesWithinAncestors: getIndexesWithinAncestors(
         projectMetas,
         instances,
@@ -491,9 +517,9 @@ export const prebuild = async (options: {
 
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
-import { type ReactNode, useState } from "react";
+import { Fragment, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Asset, ImageAsset, SiteMeta } from "@webstudio-is/sdk";
+import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 ${componentImports}
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
@@ -547,22 +573,6 @@ ${utilsExport}
       })
     );
   }
-
-  spinner.text = "Generating css file";
-  const cssText = generateCssText(
-    {
-      assets: siteData.assets,
-      breakpoints: siteData.build?.breakpoints,
-      styles: siteData.build?.styles,
-      styleSourceSelections: siteData.build?.styleSourceSelections,
-      // pass only used metas to not generate unused preset styles
-      componentMetas: projectMetas,
-    },
-    {
-      assetBaseUrl,
-    }
-  );
-  await ensureFileInPath(join(generatedDir, "index.css"), cssText);
 
   await writeFile(
     join(generatedDir, "[sitemap.xml].ts"),

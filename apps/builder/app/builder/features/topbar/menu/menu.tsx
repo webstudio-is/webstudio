@@ -30,7 +30,7 @@ import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
-import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
+import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -205,10 +205,10 @@ export const Menu = () => {
           <Tooltip side="right" content={undefined}>
             <DropdownMenuItem
               onSelect={() => {
-                $isSiteSettigsOpen.set(true);
+                $isProjectSettingsOpen.set(true);
               }}
             >
-              Site Settings
+              Project Settings
             </DropdownMenuItem>
           </Tooltip>
         </DropdownMenuContent>

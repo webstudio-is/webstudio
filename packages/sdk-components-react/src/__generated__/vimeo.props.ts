@@ -653,7 +653,7 @@ export const props: Record<string, PropMeta> = {
   },
   showPreview: {
     description:
-      "Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your site feel slower.",
+      "Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower.",
     required: false,
     control: "boolean",
     type: "boolean",
