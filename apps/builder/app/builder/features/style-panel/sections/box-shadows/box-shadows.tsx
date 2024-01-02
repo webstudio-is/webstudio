@@ -54,6 +54,7 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
             title="Box Shadows"
             style={currentStyle}
             properties={[property]}
+            description="Adds shadow effects around an element's frame."
             label={
               <SectionTitleLabel color={layersStyleSource}>
                 {label}
