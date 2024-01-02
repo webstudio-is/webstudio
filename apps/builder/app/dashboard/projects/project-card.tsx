@@ -88,6 +88,7 @@ const linkStyle = css({
   },
 });
 
+// @todo use Link component once ready https://github.com/webstudio-is/webstudio/pull/2697
 const PublishedLink = ({
   domain,
   tabIndex,
