@@ -9,11 +9,14 @@ import {
   Flex,
   Grid,
   Text,
+  textVariants,
+  truncate,
   theme,
   Box,
+  Tooltip,
+  rawTheme,
 } from "@webstudio-is/design-system";
-import { MenuIcon } from "@webstudio-is/icons";
-import type { DashboardProject } from "@webstudio-is/prisma-client";
+import { InfoCircleIcon, MenuIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { builderPath, getPublishedUrl } from "~/shared/router-utils";
 import {
@@ -26,6 +29,7 @@ import {
 import { Thumbnail, ThumbnailLink } from "./thumbnail-link";
 import { useNavigation } from "@remix-run/react";
 import { Spinner } from "../spinner";
+import type { DashboardProject } from "@webstudio-is/dashboard";
 
 const containerStyle = css({
   overflow: "hidden",
@@ -56,6 +60,13 @@ const footerStyle = css({
   px: theme.spacing[7],
 });
 
+const titleStyle = css({
+  userSelect: "auto",
+  ...truncate(),
+});
+
+const infoIconStyle = css({ flexShrink: 0 });
+
 const usePublishedLink = ({ domain }: { domain: string }) => {
   const [url, setUrl] = useState<URL>();
 
@@ -68,6 +79,17 @@ const usePublishedLink = ({ domain }: { domain: string }) => {
   return { url };
 };
 
+const linkStyle = css({
+  ...textVariants.regular,
+  ...truncate(),
+  cursor: "pointer",
+  color: theme.colors.foregroundSubtle,
+  "&:hover": {
+    textDecoration: "underline",
+  },
+});
+
+// @todo use Link component once ready https://github.com/webstudio-is/webstudio/pull/2697
 const PublishedLink = ({
   domain,
   tabIndex,
@@ -77,21 +99,15 @@ const PublishedLink = ({
 }) => {
   const { url } = usePublishedLink({ domain });
   return (
-    <Text
-      as="a"
+    <a
       href={url?.href}
       target="_blank"
-      truncate
-      color="subtle"
+      rel="noreferrer"
       tabIndex={tabIndex}
-      css={{
-        "&:not(:hover)": {
-          textDecoration: "none",
-        },
-      }}
+      className={linkStyle()}
     >
       {url?.host}
-    </Text>
+    </a>
   );
 };
 
@@ -172,10 +188,15 @@ const useProjectCard = () => {
   };
 };
 
-type ProjectCardProps = Pick<
-  DashboardProject,
-  "id" | "title" | "domain" | "isPublished"
-> & { hasProPlan: boolean };
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+};
+
+type ProjectCardProps = DashboardProject & { hasProPlan: boolean };
 
 export const ProjectCard = ({
   id,
@@ -183,6 +204,8 @@ export const ProjectCard = ({
   domain,
   isPublished,
   hasProPlan,
+  createdAt,
+  latestBuild,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -194,7 +217,6 @@ export const ProjectCard = ({
   const linkPath = builderPath({ projectId: id });
   // Transition to the project has started, we may need to show a spinner
   const isTransitioning = state !== "idle" && linkPath === location.pathname;
-
   return (
     <Box as="article" hidden={isHidden}>
       <Flex
@@ -218,9 +240,31 @@ export const ProjectCard = ({
           className={footerStyle()}
         >
           <Flex direction="column" justify="around">
-            <Text variant="titles" truncate css={{ userSelect: "auto" }}>
-              {title}
-            </Text>
+            <Flex gap="1">
+              <Text variant="titles" className={titleStyle()}>
+                {title}
+              </Text>
+              <Tooltip
+                variant="wrapped"
+                content={
+                  <Text variant="small">
+                    Created on {formatDate(createdAt)}
+                    {latestBuild?.publishStatus === "PUBLISHED" && (
+                      <>
+                        <br />
+                        Published on {formatDate(latestBuild.updatedAt)}
+                      </>
+                    )}
+                  </Text>
+                }
+              >
+                <InfoCircleIcon
+                  color={rawTheme.colors.foregroundSubtle}
+                  tabIndex={-1}
+                  className={infoIconStyle()}
+                />
+              </Tooltip>
+            </Flex>
             {isPublished ? (
               <PublishedLink domain={domain} tabIndex={-1} />
             ) : (
