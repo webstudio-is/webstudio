@@ -23,7 +23,6 @@ import {
   $dataSources,
   $resources,
   $selectedInstanceSelector,
-  $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -82,6 +81,9 @@ const HeaderPair = ({
           aliases={editorAliases}
           value={value}
           onChange={(newValue) => onChange(name, newValue)}
+          onRemove={(evaluatedValue) =>
+            onChange(name, JSON.stringify(evaluatedValue))
+          }
         />
         <InputField
           id={valueId}
@@ -180,40 +182,30 @@ const Headers = ({
   );
 };
 
-const $selectedInstanceVariableValues = computed(
-  [$selectedInstanceSelector, $variableValuesByInstanceSelector],
-  (instanceSelector, variableValuesByInstanceSelector) => {
-    const key = JSON.stringify(instanceSelector);
-    return variableValuesByInstanceSelector.get(key) ?? new Map();
-  }
-);
-
-const $selectedInstanceVariables = computed(
-  [$selectedInstanceSelector, $dataSources, $selectedPage],
-  (instanceSelector, dataSources, page) => {
-    const matchedVariables: DataSource[] = [];
+const $selectedInstanceScope = computed(
+  [$selectedInstanceSelector, $variableValuesByInstanceSelector, $dataSources],
+  (instanceSelector, variableValuesByInstanceSelector, dataSources) => {
+    const scope: Record<string, unknown> = {};
+    const aliases = new Map<string, string>();
     if (instanceSelector === undefined) {
-      return matchedVariables;
+      return { scope, aliases };
     }
-    for (const dataSource of dataSources.values()) {
-      if (
-        dataSource.scopeInstanceId === undefined ||
-        instanceSelector.includes(dataSource.scopeInstanceId) === false
-      ) {
-        continue;
-      }
-      // support only value variables and page page params parameter
-      if (
-        dataSource.type === "parameter" &&
-        dataSource.id === page?.pathVariableId
-      ) {
-        matchedVariables.push(dataSource);
-      }
-      if (dataSource.type === "variable") {
-        matchedVariables.push(dataSource);
+    const values = variableValuesByInstanceSelector.get(
+      JSON.stringify(instanceSelector)
+    );
+    if (values) {
+      for (const [dataSourceId, value] of values) {
+        const dataSource = dataSources.get(dataSourceId);
+        // prevent resources using data of other resources
+        if (dataSource === undefined || dataSource.type === "resource") {
+          continue;
+        }
+        const name = encodeDataSourceVariable(dataSourceId);
+        scope[name] = value;
+        aliases.set(name, dataSource.name);
       }
     }
-    return matchedVariables;
+    return { scope, aliases };
   }
 );
 
@@ -244,28 +236,20 @@ export const ResourcePanel = ({
   // empty string as default
   const [body, setBody] = useState(resource?.body ?? `""`);
 
-  const matchedVariables = useStore($selectedInstanceVariables);
-  const variableValues = useStore($selectedInstanceVariableValues);
+  const { scope: scopeWithCurrentVariable, aliases } = useStore(
+    $selectedInstanceScope
+  );
   const currentVariableId = variable?.id;
-  const editorScope = useMemo(() => {
-    const scope: Record<string, unknown> = {};
-    for (const [variableId, variableValue] of variableValues) {
-      // prevent showing currently edited variable in suggestions
-      // to avoid cirular dependeny
-      if (currentVariableId === variableId) {
-        continue;
-      }
-      scope[encodeDataSourceVariable(variableId)] = variableValue;
+  // prevent showing currently edited variable in suggestions
+  // to avoid cirular dependeny
+  const scope = useMemo(() => {
+    if (currentVariableId === undefined) {
+      return scopeWithCurrentVariable;
     }
-    return scope;
-  }, [variableValues, currentVariableId]);
-  const editorAliases = useMemo(() => {
-    const aliases = new Map<string, string>();
-    for (const variable of matchedVariables) {
-      aliases.set(encodeDataSourceVariable(variable.id), variable.name);
-    }
-    return aliases;
-  }, [matchedVariables]);
+    const newScope: Record<string, unknown> = { ...scopeWithCurrentVariable };
+    delete newScope[encodeDataSourceVariable(currentVariableId)];
+    return newScope;
+  }, [scopeWithCurrentVariable, currentVariableId]);
 
   return (
     <Flex
@@ -289,16 +273,19 @@ export const ResourcePanel = ({
         <Label htmlFor={urlId}>URL</Label>
         <Box css={{ position: "relative" }}>
           <BindingPopover
-            scope={editorScope}
-            aliases={editorAliases}
+            scope={scope}
+            aliases={aliases}
             value={url}
             onChange={setUrl}
+            onRemove={(evaluatedValue) =>
+              setUrl(JSON.stringify(evaluatedValue))
+            }
           />
           <InputField
             id={urlId}
             // expressions with variables cannot be edited
             disabled={isLiteralExpression(url) === false}
-            value={String(evaluateExpressionWithinScope(url, editorScope))}
+            value={String(evaluateExpressionWithinScope(url, scope))}
             // update text value as string literal
             onChange={(event) => setUrl(JSON.stringify(event.target.value))}
           />
@@ -316,8 +303,8 @@ export const ResourcePanel = ({
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label>Headers</Label>
         <Headers
-          editorScope={editorScope}
-          editorAliases={editorAliases}
+          editorScope={scope}
+          editorAliases={aliases}
           headers={headers}
           onChange={setHeaders}
         />
@@ -327,17 +314,20 @@ export const ResourcePanel = ({
           <Label>Body</Label>
           <Box css={{ position: "relative" }}>
             <BindingPopover
-              scope={editorScope}
-              aliases={editorAliases}
+              scope={scope}
+              aliases={aliases}
               value={body}
               onChange={setBody}
+              onRemove={(evaluatedValue) =>
+                setBody(JSON.stringify(evaluatedValue))
+              }
             />
             <TextArea
               autoGrow={true}
               maxRows={10}
               // expressions with variables cannot be edited
               disabled={isLiteralExpression(body) === false}
-              value={String(evaluateExpressionWithinScope(body, editorScope))}
+              value={String(evaluateExpressionWithinScope(body, scope))}
               // update text value as string literal
               onChange={(newValue) => setBody(JSON.stringify(newValue))}
             />

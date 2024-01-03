@@ -116,7 +116,6 @@ const getDefaultMetaForType = (type: Prop["type"]): PropMeta => {
 type UsePropsLogicInput = {
   instance: Instance;
   props: Prop[];
-  propValues?: Map<Prop["name"], unknown>;
   updateProp: (update: Prop) => void;
   deleteProp: (id: Prop["id"]) => void;
 };
@@ -140,25 +139,10 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
   },
 ];
 
-const getPropTypeAndValue = (value: unknown) => {
-  if (typeof value === "boolean") {
-    return { type: "boolean", value } as const;
-  }
-  if (typeof value === "number") {
-    return { type: "number", value } as const;
-  }
-  if (typeof value === "string") {
-    return { type: "string", value } as const;
-  }
-  // fallback to json
-  return { type: "json", value } as const;
-};
-
 /** usePropsLogic expects that key={instanceId} is used on the ancestor component */
 export const usePropsLogic = ({
   instance,
   props,
-  propValues,
   updateProp,
   deleteProp,
 }: UsePropsLogicInput) => {
@@ -180,14 +164,6 @@ export const usePropsLogic = ({
   );
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
-
-  const resolvePropExpression = (prop?: Prop) => {
-    if (prop?.type !== "expression") {
-      return prop;
-    }
-    const propValue = propValues?.get(prop.name);
-    return { ...prop, ...getPropTypeAndValue(propValue) };
-  };
 
   /**
    * make sure expression can be edited if consists only of single variable
@@ -211,7 +187,7 @@ export const usePropsLogic = ({
     getAndDelete(unprocessedKnown, name);
     initialPropsNames.delete(name);
     return {
-      prop: resolvePropExpression(saved),
+      prop: saved,
       propName: name,
       meta,
       readOnly: isReadOnly(saved),
@@ -247,7 +223,7 @@ export const usePropsLogic = ({
     }
 
     initialProps.push({
-      prop: resolvePropExpression(prop),
+      prop,
       propName: name,
       meta: known,
       readOnly: isReadOnly(prop),
@@ -272,7 +248,7 @@ export const usePropsLogic = ({
     }
 
     addedProps.push({
-      prop: resolvePropExpression(prop),
+      prop,
       propName: prop.name,
       meta: known,
       readOnly: isReadOnly(prop),

@@ -1,3 +1,4 @@
+import { useStore } from "@nanostores/react";
 import { theme, Box } from "@webstudio-is/design-system";
 import {
   type ControlProps,
@@ -5,57 +6,71 @@ import {
   useLocalValue,
   VerticalLayout,
   Label,
+  updateExpressionValue,
+  $selectedInstanceScope,
 } from "../shared";
-import { VariablesButton } from "../variables";
 import {
   ExpressionEditor,
   formatValue,
 } from "~/builder/shared/expression-editor";
+import { BindingPopover } from "~/builder/shared/binding-popover";
 
 export const JsonControl = ({
   meta,
   prop,
   propName,
+  computedValue,
   deletable,
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"json", "json">) => {
-  const valueString = formatValue(prop?.value ?? "");
+}: ControlProps<"json", "json" | "expression">) => {
+  const valueString = formatValue(computedValue ?? "");
   const localValue = useLocalValue(valueString, (value) => {
     try {
       // wrap into parens to treat object expression as value instead of block
       const parsedValue = eval(`(${value})`);
-      onChange({ type: "json", value: parsedValue });
+      if (prop?.type === "expression") {
+        updateExpressionValue(prop.value, parsedValue);
+      } else {
+        onChange({ type: "json", value: parsedValue });
+      }
     } catch {
       // empty block
     }
   });
   const label = getLabel(meta, propName);
 
+  const { scope, aliases } = useStore($selectedInstanceScope);
+  const expression = prop?.type === "expression" ? prop.value : valueString;
+
   return (
     <VerticalLayout
       label={
-        <Box css={{ position: "relative" }}>
-          <Label description={meta.description} readOnly={readOnly}>
-            {label}
-          </Label>
-          <VariablesButton
-            propId={prop?.id}
-            propName={propName}
-            propMeta={meta}
-          />
-        </Box>
+        <Label description={meta.description} readOnly={readOnly}>
+          {label}
+        </Label>
       }
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Box css={{ py: theme.spacing[2] }}>
+      <Box css={{ position: "relative", py: theme.spacing[2] }}>
         <ExpressionEditor
           readOnly={readOnly}
           value={localValue.value}
           onChange={localValue.set}
           onBlur={localValue.save}
+        />
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          value={expression}
+          onChange={(newExpression) =>
+            onChange({ type: "expression", value: newExpression })
+          }
+          onRemove={(evaluatedValue) =>
+            onChange({ type: "json", value: evaluatedValue })
+          }
         />
       </Box>
     </VerticalLayout>

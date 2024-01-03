@@ -214,7 +214,10 @@ export const VariablesSection = () => {
         </SectionTitle>
       }
     >
-      <VariablesList />
+      {/* prevent applyig gap to list items */}
+      <div>
+        <VariablesList />
+      </div>
     </CollapsibleSectionBase>
   );
 };

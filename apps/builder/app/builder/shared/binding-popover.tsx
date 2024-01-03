@@ -213,12 +213,14 @@ export const BindingPopover = ({
   aliases,
   value,
   onChange,
+  onRemove,
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
   acceptableType?: "text" | "any";
   value: string;
   onChange: (newValue: string) => void;
+  onRemove: (evaluatedValue: unknown) => void;
 }) => {
   const [open, onOpenChange] = useState(false);
   const [error, setError] = useState<undefined | string>();
@@ -280,7 +282,7 @@ export const BindingPopover = ({
                       value,
                       scope
                     );
-                    onChange(JSON.stringify(evaluatedValue));
+                    onRemove(evaluatedValue);
                     onOpenChange(false);
                   }}
                 />
