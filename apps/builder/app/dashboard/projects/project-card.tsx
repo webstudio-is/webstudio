@@ -80,9 +80,10 @@ const usePublishedLink = ({ domain }: { domain: string }) => {
 };
 
 const linkStyle = css({
-  color: theme.colors.foregroundSubtle,
   ...textVariants.regular,
   ...truncate(),
+  cursor: "pointer",
+  color: theme.colors.foregroundSubtle,
   "&:hover": {
     textDecoration: "underline",
   },
