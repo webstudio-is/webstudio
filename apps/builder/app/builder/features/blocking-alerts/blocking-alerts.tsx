@@ -25,9 +25,9 @@ const useTooSmallMessage = () => {
 // https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
 // https://discord.com/channels/955905230107738152/1048308525673238558/1184833931569266738
 const Link = styled("a", {
-  color: theme.colors.foregroundLinkHoverMain,
+  color: "inherit",
   "&:visited": {
-    color: theme.colors.foregroundLinkHoverMain,
+    color: "inherit",
   },
 });
 
@@ -35,7 +35,7 @@ const useUnsupportedBrowser = () => {
   const [message, setMessage] = useState<ReactNode>();
   useEffect(() => {
     if ("chrome" in window || isFeatureEnabled("unsupportedBrowsers")) {
-      return;
+      // return;
     }
 
     setMessage(
