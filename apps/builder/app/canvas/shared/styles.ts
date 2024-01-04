@@ -28,18 +28,18 @@ import {
 import {
   type StyleRule,
   type PlaintextRule,
-  createCssEngine,
+  createRegularStyleSheet,
   toValue,
   compareMedia,
 } from "@webstudio-is/css-engine";
 import { $ephemeralStyles } from "../stores";
 
-const userCssEngine = createCssEngine({ name: "user-styles" });
-const helpersCssEngine = createCssEngine({ name: "helpers" });
-const fontsAndDefaultsCssEngine = createCssEngine({
+const userSheet = createRegularStyleSheet({ name: "user-styles" });
+const helpersSheet = createRegularStyleSheet({ name: "helpers" });
+const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
-const presetStylesEngine = createCssEngine({ name: "preset-styles" });
+const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper
@@ -95,19 +95,19 @@ const subscribePreviewMode = () => {
   let isRendered = false;
 
   const unsubscribe = $isPreviewMode.subscribe((isPreviewMode) => {
-    helpersCssEngine.setAttribute("media", isPreviewMode ? "not all" : "all");
+    helpersSheet.setAttribute("media", isPreviewMode ? "not all" : "all");
     if (isRendered === false) {
       for (const style of helperStyles) {
-        helpersCssEngine.addPlaintextRule(style);
+        helpersSheet.addPlaintextRule(style);
       }
-      helpersCssEngine.render();
+      helpersSheet.render();
       isRendered = true;
     }
   });
 
   return () => {
-    helpersCssEngine.clear();
-    helpersCssEngine.render();
+    helpersSheet.clear();
+    helpersSheet.render();
     unsubscribe();
     isRendered = false;
   };
@@ -157,7 +157,7 @@ const subscribeEphemeralStyle = (params: Params) => {
     }
 
     // rerender style rules if new vars added
-    userCssEngine.render();
+    userSheet.render();
   });
 };
 
@@ -176,22 +176,22 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
       compareMedia
     );
     for (const breakpoint of sortedBreakpoints) {
-      userCssEngine.addMediaRule(breakpoint.id, breakpoint);
+      userSheet.addMediaRule(breakpoint.id, breakpoint);
     }
-    userCssEngine.render();
+    userSheet.render();
   }, [breakpoints]);
 
   useIsomorphicLayoutEffect(() => {
-    fontsAndDefaultsCssEngine.clear();
-    addGlobalRules(fontsAndDefaultsCssEngine, {
+    fontsAndDefaultsSheet.clear();
+    addGlobalRules(fontsAndDefaultsSheet, {
       assets,
       assetBaseUrl: params.assetBaseUrl,
     });
-    fontsAndDefaultsCssEngine.render();
+    fontsAndDefaultsSheet.render();
   }, [assets]);
 
   useIsomorphicLayoutEffect(() => {
-    presetStylesEngine.clear();
+    presetSheet.clear();
     for (const [component, meta] of metas) {
       const presetStyle = meta.presetStyle;
       if (presetStyle === undefined) {
@@ -199,10 +199,10 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
       }
       const rules = getPresetStyleRules(component, presetStyle);
       for (const [selector, style] of rules) {
-        presetStylesEngine.addStyleRule(selector, { style });
+        presetSheet.addStyleRule({ style }, selector);
       }
     }
-    presetStylesEngine.render();
+    presetSheet.render();
   }, [metas]);
 
   return null;
@@ -247,12 +247,12 @@ const getOrCreateRule = ({
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
   if (rule === undefined) {
-    rule = userCssEngine.addStyleRule(
-      `[${idAttribute}="${instanceId}"]${state}`,
+    rule = userSheet.addStyleRule(
       {
         breakpoint: breakpointId,
         style: {},
-      }
+      },
+      `[${idAttribute}="${instanceId}"]${state}`
     );
     wrappedRulesMap.set(key, rule);
   }
@@ -354,7 +354,7 @@ export const useCssRules = ({
       }
     }
 
-    userCssEngine.render();
+    userSheet.render();
   }, [instanceId, selectedState, instanceStyles, breakpoints]);
 };
 

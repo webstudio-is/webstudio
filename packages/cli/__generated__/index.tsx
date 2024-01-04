@@ -8,7 +8,7 @@ export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
 
 export const pageData: PageData = {
-  site: {
+  project: {
     siteName: "",
     faviconAssetId: "",
     code: "",

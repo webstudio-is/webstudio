@@ -1,7 +1,7 @@
 {
   "name": "@webstudio-is/sdk",
   "version": "0.123.0",
-  "description": "Webstudio site data schema",
+  "description": "Webstudio project data schema",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "license": "AGPL-3.0-or-later",

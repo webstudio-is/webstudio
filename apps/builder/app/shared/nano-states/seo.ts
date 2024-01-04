@@ -1,3 +1,3 @@
 import { atom } from "nanostores";
 
-export const $isSiteSettigsOpen = atom<boolean>(false);
+export const $isProjectSettingsOpen = atom<boolean>(false);

@@ -1,7 +1,7 @@
 import { pagesStore } from "~/shared/nano-states/pages";
 import { PageSettings } from "./settings";
 
-import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
+import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { assetsStore, projectStore } from "~/shared/nano-states";
 
@@ -9,7 +9,7 @@ export default {
   component: PageSettings,
 };
 
-$isSiteSettigsOpen.set(true);
+$isProjectSettingsOpen.set(true);
 
 assetsStore.set(
   new Map([
@@ -35,7 +35,7 @@ assetsStore.set(
 
 pagesStore.set({
   meta: {
-    siteName: "Site name",
+    siteName: "Project name",
     faviconAssetId: "imageId",
     code: "code",
   },

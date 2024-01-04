@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
-  generateCssText,
+  generateCss,
   generateDataFromEmbedTemplate,
   generatePageComponent,
   getIndexesWithinAncestors,
@@ -146,6 +146,21 @@ export const generateStories = async () => {
         usedMetas.set(instance.component, meta);
       }
     }
+    const { cssText, classesMap } = generateCss(
+      {
+        assets: [],
+        breakpoints: [
+          [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
+        ],
+        styles: data.styles.map((item) => [getStyleDeclKey(item), item]),
+        styleSourceSelections: data.styleSourceSelections.map((item) => [
+          item.instanceId,
+          item,
+        ]),
+        componentMetas: usedMetas,
+      },
+      { assetBaseUrl: "/", atomic: true }
+    );
     const scope = createScope(["Page", "Story", "props", "useState"]);
     let content = "";
     content += getStoriesImports({
@@ -160,6 +175,7 @@ export const generateStories = async () => {
     });
     content += `\n`;
     content += generatePageComponent({
+      classesMap,
       scope,
       page: { rootInstanceId } as Page,
       instances,
@@ -169,22 +185,8 @@ export const generateStories = async () => {
         rootInstanceId,
       ]),
     });
-    const css = generateCssText(
-      {
-        assets: [],
-        breakpoints: [
-          [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
-        ],
-        styles: data.styles.map((item) => [getStyleDeclKey(item), item]),
-        styleSourceSelections: data.styleSourceSelections.map((item) => [
-          item.instanceId,
-          item,
-        ]),
-        componentMetas: usedMetas,
-      },
-      { assetBaseUrl: "/" }
-    );
-    content += getStoriesExports(name, css);
+
+    content += getStoriesExports(name, cssText);
     await writeFile(
       join(storiesDir, kebabCase(name) + ".stories.tsx"),
       content

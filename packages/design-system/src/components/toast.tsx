@@ -1,7 +1,7 @@
 import * as ToastPrimitive from "@radix-ui/react-toast";
 import toast, { resolveValue, useToaster } from "react-hot-toast/headless";
 import { keyframes, styled } from "../stitches.config";
-import { InfoIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { Box } from "./box";
 import { theme } from "../stitches.config";
 
@@ -121,7 +121,7 @@ export const Toaster = () => {
               },
             }}
           >
-            {toastData.type === "blank" && <InfoIcon />}
+            {toastData.type === "blank" && <InfoCircleIcon />}
           </Box>
           <StyledTitle>
             {resolveValue(toastData.message, toastData)}

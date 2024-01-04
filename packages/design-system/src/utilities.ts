@@ -81,3 +81,9 @@ export const useDisableCanvasPointerEvents = () => {
 
   return enableDisable;
 };
+
+export const truncate = () => ({
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+  overflow: "hidden",
+});

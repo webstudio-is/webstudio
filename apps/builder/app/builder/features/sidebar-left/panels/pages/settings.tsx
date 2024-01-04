@@ -500,7 +500,7 @@ const FormFields = ({
                 color={errors.title && "error"}
                 id={fieldIds.title}
                 name="title"
-                placeholder="My awesome site - About"
+                placeholder="My awesome project - About"
                 disabled={disabled}
                 value={values.title}
                 onChange={(event) => {
@@ -558,8 +558,8 @@ const FormFields = ({
           <Text color="subtle">
             This image appears when you share a link to this page on social
             media sites. If no image is set here, the Social Image set in the
-            Site Settings will be used. The optimal dimensions for the image are
-            1200x630 px or larger with a 1.91:1 aspect ratio.
+            Project Settings will be used. The optimal dimensions for the image
+            are 1200x630 px or larger with a 1.91:1 aspect ratio.
           </Text>
           <Grid gap={1} flow={"column"}>
             <ImageControl

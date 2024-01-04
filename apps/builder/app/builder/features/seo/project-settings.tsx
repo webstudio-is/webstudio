@@ -14,7 +14,7 @@ import {
   css,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
-import { $isSiteSettigsOpen } from "~/shared/nano-states/seo";
+import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { ImageControl } from "./image-control";
 import { assetsStore, pagesStore } from "~/shared/nano-states";
 import env from "~/shared/env";
@@ -40,7 +40,7 @@ const imgStyle = css({
   borderColor: theme.colors.borderMain,
 });
 
-const SiteSettingsContent = (props: Props) => {
+const ProjectSettingsContent = (props: Props) => {
   const ids = useIds(["siteName", "favicon", "code"]);
   const handleChange =
     <T extends keyof Value>(name: T) =>
@@ -75,12 +75,12 @@ const SiteSettingsContent = (props: Props) => {
           px: theme.spacing[5],
         }}
       >
-        <Label htmlFor={ids.siteName}>Site Name</Label>
+        <Label htmlFor={ids.siteName}>Project Name</Label>
         <InputField
           id={ids.siteName}
           value={props.value.siteName ?? ""}
           onChange={(event) => handleChange("siteName")(event.target.value)}
-          placeholder="Current Site Name"
+          placeholder="Current Project Name"
           name="Name"
           autoFocus
         />
@@ -125,7 +125,7 @@ const SiteSettingsContent = (props: Props) => {
         </Label>
         <Text color="subtle">
           Custom code and scripts will be added at the end of the &lt;head&gt;
-          tag to every page across the published site.
+          tag to every page across the published project.
         </Text>
         <TextArea
           id={ids.code}
@@ -141,7 +141,7 @@ const SiteSettingsContent = (props: Props) => {
   );
 };
 
-const SiteSettingsView = () => {
+const ProjectSettingsView = () => {
   const [value, setValue] = useState(
     pagesStore.get()?.meta ?? {
       siteName: "",
@@ -150,7 +150,7 @@ const SiteSettingsView = () => {
     }
   );
 
-  const isOpen = useStore($isSiteSettigsOpen);
+  const isOpen = useStore($isProjectSettingsOpen);
 
   const handleSave = useEffectEvent(() => {
     serverSyncStore.createTransaction([pagesStore], (pages) => {
@@ -167,7 +167,7 @@ const SiteSettingsView = () => {
       open={isOpen}
       onOpenChange={(isOpen) => {
         handleSave();
-        $isSiteSettigsOpen.set(isOpen);
+        $isProjectSettingsOpen.set(isOpen);
       }}
     >
       <DialogContent
@@ -181,21 +181,21 @@ const SiteSettingsView = () => {
           zIndex: theme.zIndices[1],
         }}
       >
-        <SiteSettingsContent value={value} onChange={setValue} />
+        <ProjectSettingsContent value={value} onChange={setValue} />
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
          */}
-        <DialogTitle>Site Settings</DialogTitle>
+        <DialogTitle>Project Settings</DialogTitle>
       </DialogContent>
     </Dialog>
   );
 };
 
-export const SiteSettings = () => {
+export const ProjectSettings = () => {
   const [settingDialogLazyOpen, setSettingDialogLazyOpen] = useState(false);
 
   useEffect(() => {
-    return $isSiteSettigsOpen.subscribe((isOpen) => {
+    return $isProjectSettingsOpen.subscribe((isOpen) => {
       if (isOpen) {
         setSettingDialogLazyOpen(true);
       }
@@ -206,5 +206,5 @@ export const SiteSettings = () => {
     return null;
   }
 
-  return <SiteSettingsView />;
+  return <ProjectSettingsView />;
 };

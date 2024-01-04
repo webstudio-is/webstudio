@@ -1,22 +1,29 @@
+import { useStore } from "@nanostores/react";
 import { Box, Grid, Switch, theme, useId } from "@webstudio-is/design-system";
+import { BindingPopover } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
   Label,
   RemovePropButton,
+  $selectedInstanceScope,
+  updateExpressionValue,
 } from "../shared";
-import { VariablesButton } from "../variables";
 
 export const BooleanControl = ({
   meta,
   prop,
   propName,
+  computedValue,
   deletable,
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"boolean", "boolean">) => {
+}: ControlProps<"boolean", "boolean" | "expression">) => {
   const id = useId();
+  const { scope, aliases } = useStore($selectedInstanceScope);
+  const expression =
+    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
 
   return (
     <Grid
@@ -30,22 +37,34 @@ export const BooleanControl = ({
       align="center"
       gap="2"
     >
+      <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+        {getLabel(meta, propName)}
+      </Label>
       <Box css={{ position: "relative" }}>
-        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
-        </Label>
-        <VariablesButton
-          propId={prop?.id}
-          propName={propName}
-          propMeta={meta}
+        <Switch
+          id={id}
+          disabled={readOnly}
+          checked={Boolean(computedValue ?? false)}
+          onCheckedChange={(value) => {
+            if (prop?.type === "expression") {
+              updateExpressionValue(prop.value, value);
+            } else {
+              onChange({ type: "boolean", value });
+            }
+          }}
+        />
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          value={expression}
+          onChange={(newExpression) =>
+            onChange({ type: "expression", value: newExpression })
+          }
+          onRemove={(evaluatedValue) =>
+            onChange({ type: "boolean", value: Boolean(evaluatedValue) })
+          }
         />
       </Box>
-      <Switch
-        id={id}
-        disabled={readOnly}
-        checked={prop?.value ?? false}
-        onCheckedChange={(value) => onChange({ type: "boolean", value })}
-      />
       {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
   );

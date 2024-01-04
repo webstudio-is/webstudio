@@ -177,7 +177,7 @@ const BackgroundsCollapsibleSection = ({
           <PropertyName
             style={currentStyle}
             title="Backgrounds"
-            description="Sets background color, image or gradient and composes them with layers"
+            description="Add one or more backgrounds to the instance such as a color, image, or gradient."
             properties={layeredBackgroundProps}
             label={
               <SectionTitleLabel color={layersStyleSource}>

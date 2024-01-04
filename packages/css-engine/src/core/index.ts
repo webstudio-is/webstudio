@@ -1,4 +1,3 @@
-export { CssEngine } from "./css-engine";
 export type {
   AnyRule,
   StyleRule,
@@ -6,7 +5,9 @@ export type {
   PlaintextRule,
   FontFaceRule,
 } from "./rules";
-export * from "./create-css-engine";
+export type { StyleSheetRegular } from "./style-sheet-regular";
+export type { StyleSheetAtomic } from "./style-sheet-atomic";
+export * from "./create-style-sheet";
 export * from "./to-value";
 export * from "./to-property";
 export * from "./match-media";

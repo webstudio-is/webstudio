@@ -20,16 +20,22 @@ const Page = (_props: { params: Params; resources: Resources }) => {
   };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
-      <Label data-ws-id="1" data-ws-component="Label">
+      <Label
+        data-ws-id="1"
+        data-ws-component="Label"
+        className="c6gk6ar cgt00fz cydvc77 c4v7k5r"
+      >
         <Checkbox
           data-ws-id="3"
           data-ws-component="Checkbox"
           checked={checkboxChecked}
           onCheckedChange={onCheckedChange}
+          className="c18dp5gp clw3og8 c1qmz361 c1d9pxa5 cnjyf56 c1jpjw0a c1lxvq7u c1inucbi c1dab7w1 c1uf7v01 czynn8e cuelx18 c17v08sn c1czmfdb c8nta89 cgassre c1ndsw6v cjrlou9 c945vvj c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l cegrmbm c1grhw0w ccop5vc c19tq2u"
         >
           <CheckboxIndicator
             data-ws-id="8"
             data-ws-component="CheckboxIndicator"
+            className="c6gk6ar c4v7k5r cvzkkb6 c2a7z25"
           >
             <HtmlEmbed
               data-ws-id="10"
@@ -210,54 +216,110 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px;
     min-height: 1em
   }
-}
-@media all {
-  [data-ws-id="1"] {
-    display: flex;
-    row-gap: 0.5rem;
-    column-gap: 0.5rem;
+}@media all {
+  .c6gk6ar {
+    display: flex
+  }
+  .cgt00fz {
+    row-gap: 0.5rem
+  }
+  .cydvc77 {
+    column-gap: 0.5rem
+  }
+  .c4v7k5r {
     align-items: center
   }
-  [data-ws-id="3"] {
-    height: 1rem;
-    width: 1rem;
-    flex-grow: 0;
-    border-top-left-radius: 0.125rem;
-    border-top-right-radius: 0.125rem;
-    border-bottom-right-radius: 0.125rem;
-    border-bottom-left-radius: 0.125rem;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    border-top-color: rgba(15, 23, 42, 1);
-    border-right-color: rgba(15, 23, 42, 1);
-    border-bottom-color: rgba(15, 23, 42, 1);
-    border-left-color: rgba(15, 23, 42, 1);
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
+  .c18dp5gp {
+    height: 1rem
+  }
+  .clw3og8 {
+    width: 1rem
+  }
+  .c1qmz361 {
+    flex-grow: 0
+  }
+  .c1d9pxa5 {
+    border-top-left-radius: 0.125rem
+  }
+  .cnjyf56 {
+    border-top-right-radius: 0.125rem
+  }
+  .c1jpjw0a {
+    border-bottom-right-radius: 0.125rem
+  }
+  .c1lxvq7u {
+    border-bottom-left-radius: 0.125rem
+  }
+  .c1inucbi {
+    border-top-style: solid
+  }
+  .c1dab7w1 {
+    border-right-style: solid
+  }
+  .c1uf7v01 {
+    border-bottom-style: solid
+  }
+  .czynn8e {
+    border-left-style: solid
+  }
+  .cuelx18 {
+    border-top-color: rgba(15, 23, 42, 1)
+  }
+  .c17v08sn {
+    border-right-color: rgba(15, 23, 42, 1)
+  }
+  .c1czmfdb {
+    border-bottom-color: rgba(15, 23, 42, 1)
+  }
+  .c8nta89 {
+    border-left-color: rgba(15, 23, 42, 1)
+  }
+  .cgassre {
+    border-top-width: 1px
+  }
+  .c1ndsw6v {
+    border-right-width: 1px
+  }
+  .cjrlou9 {
+    border-bottom-width: 1px
+  }
+  .c945vvj {
     border-left-width: 1px
   }
-  [data-ws-id="3"]:focus-visible {
-    outline-width: 2px;
-    outline-style: solid;
-    outline-color: transparent;
-    outline-offset: 2px;
+  .c1t6bql4:focus-visible {
+    outline-width: 2px
+  }
+  .czph7hf:focus-visible {
+    outline-style: solid
+  }
+  .cncn1ro:focus-visible {
+    outline-color: transparent
+  }
+  .cb270vo:focus-visible {
+    outline-offset: 2px
+  }
+  .c1rgsd1l:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  [data-ws-id="3"]:disabled {
-    cursor: not-allowed;
+  .cegrmbm:disabled {
+    cursor: not-allowed
+  }
+  .c1grhw0w:disabled {
     opacity: 0.5
   }
-  [data-ws-id="3"][data-state=checked] {
-    background-color: rgba(15, 23, 42, 1);
+  .ccop5vc[data-state=checked] {
+    background-color: rgba(15, 23, 42, 1)
+  }
+  .c19tq2u[data-state=checked] {
     color: rgba(248, 250, 252, 1)
   }
-  [data-ws-id="8"] {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .c4v7k5r {
+    align-items: center
+  }
+  .cvzkkb6 {
+    justify-content: center
+  }
+  .c2a7z25 {
     color: currentColor
   }
 }
