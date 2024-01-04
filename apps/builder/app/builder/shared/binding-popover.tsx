@@ -172,13 +172,8 @@ const BindingButton = forwardRef<HTMLButtonElement>((props, ref) => (
       position: "absolute",
       top: 0,
       left: 0,
-      width: 14,
-      height: 14,
-      borderRadius: "50%",
-      backgroundColor: "#834DF4",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
+      boxSizing: "border-box",
+      padding: 2,
       transform: "translate(-50%, -50%) scale(1)",
       transition: "transform 60ms",
       "--dot-display": "block",
@@ -191,7 +186,17 @@ const BindingButton = forwardRef<HTMLButtonElement>((props, ref) => (
     }}
     {...props}
     icon={
-      <>
+      <Box
+        css={{
+          width: 12,
+          height: 12,
+          borderRadius: "50%",
+          backgroundColor: "#834DF4",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <DotIcon
           size={14}
           fill="white"
@@ -202,7 +207,7 @@ const BindingButton = forwardRef<HTMLButtonElement>((props, ref) => (
           fill="white"
           style={{ display: `var(--plus-display)` }}
         />
-      </>
+      </Box>
     }
   />
 ));
