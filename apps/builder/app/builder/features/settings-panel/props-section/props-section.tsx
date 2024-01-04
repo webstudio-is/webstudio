@@ -14,11 +14,8 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import { decodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
-  dataSourceVariablesStore,
-  dataSourcesStore,
   propsIndexStore,
   propsStore,
   selectedInstanceSelectorStore,
@@ -94,6 +91,7 @@ const PropsCombobox = ({
 const renderProperty = (
   {
     propsLogic: logic,
+    propValues,
     setCssProperty,
     component,
     instanceId,
@@ -103,13 +101,15 @@ const renderProperty = (
 ) => (
   // fix the issue with changing type while binding expression
   // old prop value is getting preserved in useLocalValue and saved into variable
-  // to reproduce try to edit body id prop and then bind json variable to it
+  // when unmount to reproduce try to edit body id prop
+  // and then bind json variable to it
   <Fragment key={(prop?.type ?? "") + propName}>
     {renderControl({
       key: propName,
       instanceId,
       meta,
       prop,
+      computedValue: propValues.get(propName),
       propName,
       readOnly,
       deletable: deletable ?? false,
@@ -165,6 +165,7 @@ const AddPropertyForm = ({
 
 type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
+  propValues: Map<string, unknown>;
   component: Instance["component"];
   instanceId: string;
   setCssProperty: SetCssProperty;
@@ -228,44 +229,21 @@ export const PropsSectionContainer = ({
   const logic = usePropsLogic({
     instance,
     props: propsByInstanceId.get(instance.id) ?? [],
-    propValues,
 
     updateProp: (update) => {
-      const props = propsStore.get();
-      const prop = props.get(update.id);
-      // update the variable when real prop has expression type
-      // update the prop when new expression is added
-      if (prop?.type === "expression" && update.type !== "expression") {
-        const dataSources = dataSourcesStore.get();
-        // when expression contains only reference to variable update that variable
-        // extract id without parsing expression
-        const potentialVariableId = decodeDataSourceVariable(prop.value);
-        if (
-          potentialVariableId !== undefined &&
-          dataSources.has(potentialVariableId)
-        ) {
-          const dataSourceId = potentialVariableId;
-          const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-          dataSourceVariables.set(dataSourceId, update.value);
-          dataSourceVariablesStore.set(dataSourceVariables);
+      const { propsByInstanceId } = propsIndexStore.get();
+      const instanceProps = propsByInstanceId.get(instance.id) ?? [];
+      // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
+      // see for details https://github.com/webstudio-is/webstudio/pull/2170
+      const duplicateProps = instanceProps
+        .filter((prop) => prop.id !== update.id)
+        .filter((prop) => prop.name === update.name);
+      serverSyncStore.createTransaction([propsStore], (props) => {
+        for (const prop of duplicateProps) {
+          props.delete(prop.id);
         }
-      } else {
-        const { propsByInstanceId } = propsIndexStore.get();
-        serverSyncStore.createTransaction([propsStore], (props) => {
-          const instanceProps = propsByInstanceId.get(instance.id) ?? [];
-          // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
-          // see for details https://github.com/webstudio-is/webstudio/pull/2170
-          const duplicateProps = instanceProps
-            .filter((prop) => prop.id !== update.id)
-            .filter((prop) => prop.name === update.name);
-
-          for (const prop of duplicateProps) {
-            props.delete(prop.id);
-          }
-
-          props.set(update.id, update);
-        });
-      }
+        props.set(update.id, update);
+      });
     },
 
     deleteProp: (propId) => {
@@ -284,6 +262,7 @@ export const PropsSectionContainer = ({
   return (
     <PropsSection
       propsLogic={logic}
+      propValues={propValues ?? new Map()}
       component={instance.component}
       instanceId={instance.id}
       setCssProperty={setCssProperty}

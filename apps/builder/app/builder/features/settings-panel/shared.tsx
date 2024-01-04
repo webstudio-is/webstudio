@@ -1,3 +1,4 @@
+import { computed } from "nanostores";
 import {
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -6,7 +7,11 @@ import {
   useEffect,
 } from "react";
 import equal from "fast-deep-equal";
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import {
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  type PropMeta,
+} from "@webstudio-is/react-sdk";
 import type { Prop, Asset } from "@webstudio-is/sdk";
 import { HelpIcon, SubtractIcon } from "@webstudio-is/icons";
 import {
@@ -23,6 +28,12 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
+import {
+  $dataSourceVariables,
+  $dataSources,
+  $selectedInstanceSelector,
+  $variableValuesByInstanceSelector,
+} from "~/shared/nano-states";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -52,6 +63,7 @@ export type ControlProps<Control, PropType> = {
   // and we don't want to show user something like a 0 for number when it's in fact not set to any value
   prop: PropByType<PropType> | undefined;
   propName: string;
+  computedValue: unknown;
   deletable: boolean;
   readOnly: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
@@ -283,3 +295,45 @@ export const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
     {children}
   </Flex>
 );
+
+export const $selectedInstanceScope = computed(
+  [$selectedInstanceSelector, $variableValuesByInstanceSelector, $dataSources],
+  (instanceSelector, variableValuesByInstanceSelector, dataSources) => {
+    const scope: Record<string, unknown> = {};
+    const aliases = new Map<string, string>();
+    if (instanceSelector === undefined) {
+      return { scope, aliases };
+    }
+    const values = variableValuesByInstanceSelector.get(
+      JSON.stringify(instanceSelector)
+    );
+    if (values) {
+      for (const [dataSourceId, value] of values) {
+        const dataSource = dataSources.get(dataSourceId);
+        if (dataSource === undefined) {
+          continue;
+        }
+        const name = encodeDataSourceVariable(dataSourceId);
+        scope[name] = value;
+        aliases.set(name, dataSource.name);
+      }
+    }
+    return { scope, aliases };
+  }
+);
+
+export const updateExpressionValue = (expression: string, value: unknown) => {
+  const dataSources = $dataSources.get();
+  // when expression contains only reference to variable update that variable
+  // extract id without parsing expression
+  const potentialVariableId = decodeDataSourceVariable(expression);
+  if (
+    potentialVariableId !== undefined &&
+    dataSources.has(potentialVariableId)
+  ) {
+    const dataSourceId = potentialVariableId;
+    const dataSourceVariables = new Map($dataSourceVariables.get());
+    dataSourceVariables.set(dataSourceId, value);
+    $dataSourceVariables.set(dataSourceVariables);
+  }
+};

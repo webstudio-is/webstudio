@@ -1,4 +1,5 @@
-import { Flex, theme, useId, TextArea, Box } from "@webstudio-is/design-system";
+import { useStore } from "@nanostores/react";
+import { Flex, theme, useId, TextArea } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -6,48 +7,69 @@ import {
   VerticalLayout,
   ResponsiveLayout,
   Label,
+  updateExpressionValue,
+  $selectedInstanceScope,
 } from "../shared";
-import { VariablesButton } from "../variables";
+import { BindingPopover } from "~/builder/shared/binding-popover";
 
 export const TextControl = ({
   meta,
   prop,
   propName,
   deletable,
+  computedValue,
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"text", "string">) => {
-  const localValue = useLocalValue(prop?.value ?? "", (value) => {
-    onChange({ type: "string", value });
+}: ControlProps<"text", "string" | "expression">) => {
+  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+    if (prop?.type === "expression") {
+      updateExpressionValue(prop.value, value);
+    } else {
+      onChange({ type: "string", value });
+    }
   });
   const id = useId();
   const label = getLabel(meta, propName);
   const rows = meta.rows ?? 1;
   const isTwoColumnLayout = rows < 2;
 
+  const { scope, aliases } = useStore($selectedInstanceScope);
+  const expression =
+    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+
   const input = (
-    <TextArea
-      id={id}
-      disabled={readOnly}
-      autoGrow
-      value={localValue.value}
-      rows={meta.rows ?? 1}
-      // Set maxRows to 3 when meta.rows is undefined or equal to 1, otherwise set it to rows * 2
-      maxRows={Math.max(2 * (meta.rows ?? 1), 3)}
-      onChange={localValue.set}
-      onBlur={localValue.save}
-      onSubmit={localValue.save}
-    />
+    <>
+      <TextArea
+        id={id}
+        disabled={readOnly}
+        autoGrow
+        value={localValue.value}
+        rows={meta.rows ?? 1}
+        // Set maxRows to 3 when meta.rows is undefined or equal to 1, otherwise set it to rows * 2
+        maxRows={Math.max(2 * (meta.rows ?? 1), 3)}
+        onChange={localValue.set}
+        onBlur={localValue.save}
+        onSubmit={localValue.save}
+      />
+      <BindingPopover
+        scope={scope}
+        aliases={aliases}
+        value={expression}
+        onChange={(newExpression) =>
+          onChange({ type: "expression", value: newExpression })
+        }
+        onRemove={(evaluatedValue) =>
+          onChange({ type: "string", value: String(evaluatedValue) })
+        }
+      />
+    </>
   );
 
   const labelElement = (
-    <Box css={{ position: "relative" }}>
-      <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-        {label}
-      </Label>
-      <VariablesButton propId={prop?.id} propName={propName} propMeta={meta} />
-    </Box>
+    <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+      {label}
+    </Label>
   );
 
   if (isTwoColumnLayout) {
@@ -57,7 +79,7 @@ export const TextControl = ({
         deletable={deletable}
         onDelete={onDelete}
       >
-        <Flex>{input}</Flex>
+        <Flex css={{ position: "relative" }}>{input}</Flex>
       </ResponsiveLayout>
     );
   }
@@ -68,7 +90,7 @@ export const TextControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Flex css={{ py: theme.spacing[2] }}>{input}</Flex>
+      <Flex css={{ py: theme.spacing[2], position: "relative" }}>{input}</Flex>
     </VerticalLayout>
   );
 };

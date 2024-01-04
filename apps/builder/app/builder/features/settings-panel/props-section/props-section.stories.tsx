@@ -400,6 +400,7 @@ export const Story = () => {
         <PropsSection
           instanceId={instanceId}
           propsLogic={logic}
+          propValues={new Map()}
           component="Button"
           setCssProperty={() => () => undefined}
         />
