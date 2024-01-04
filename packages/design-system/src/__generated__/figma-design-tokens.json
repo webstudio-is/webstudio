@@ -1093,28 +1093,6 @@
         "value": "#ff22ae",
         "type": "color",
         "description": "The inverse color of our primary blue, when we want a contrasting highlight."
-      },
-      "link-hover": {
-        "main": {
-          "value": "#656869",
-          "type": "color",
-          "description": "The color of a text link in the hover state when the normal text is foreground.main"
-        },
-        "text-subtle": {
-          "value": "#656869",
-          "type": "color",
-          "description": "The color of a text link in the hover state when the normal text is foreground.text-subtle"
-        },
-        "text-more-subtle": {
-          "value": "#656869",
-          "type": "color",
-          "description": "The color of a text link in the hover state when the normal text is foreground.text-more-subtle"
-        },
-        "contrast": {
-          "value": "#adb1b4",
-          "type": "color",
-          "description": "The color of a text link in the hover state when the normal text is foreground.contrast.main"
-        }
       }
     },
     "Brand": {
