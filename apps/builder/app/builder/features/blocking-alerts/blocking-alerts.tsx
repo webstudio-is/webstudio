@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Alert } from "./alert";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { styled, theme } from "@webstudio-is/design-system";
+import { styled } from "@webstudio-is/design-system";
 
 const useTooSmallMessage = () => {
   const [message, setMessage] = useState<string>();
