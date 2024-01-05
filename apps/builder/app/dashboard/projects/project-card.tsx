@@ -9,7 +9,6 @@ import {
   Flex,
   Grid,
   Text,
-  textVariants,
   truncate,
   theme,
   Box,
