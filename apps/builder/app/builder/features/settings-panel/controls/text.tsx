@@ -12,7 +12,6 @@ import {
 } from "../shared";
 import { BindingPopover } from "~/builder/shared/binding-popover";
 import { humanizeString } from "~/shared/string-utils";
-import { useEffect } from "react";
 
 export const TextControl = ({
   meta,
