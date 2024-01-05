@@ -40,10 +40,7 @@ export const CheckControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<
-  "check" | "inline-check" | "multi-select",
-  "string[]" | "expression"
->) => {
+}: ControlProps<"check" | "inline-check" | "multi-select">) => {
   const value = Array.isArray(computedValue)
     ? computedValue.map((item) => String(item))
     : [];
@@ -94,6 +91,14 @@ export const CheckControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            const valid =
+              Array.isArray(value) &&
+              value.every((item) => typeof item === "string");
+            if (value !== undefined && valid === false) {
+              return `${humanizeString(propName)} expects an array of strings`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

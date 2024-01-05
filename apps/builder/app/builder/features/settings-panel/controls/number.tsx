@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { Box, InputField } from "@webstudio-is/design-system";
 import { BindingPopover } from "~/builder/shared/binding-popover";
+import { humanizeString } from "~/shared/string-utils";
 import {
   type ControlProps,
   getLabel,
@@ -21,7 +22,7 @@ export const NumberControl = ({
   deletable,
   readOnly,
   onDelete,
-}: ControlProps<"number", "number" | "expression">) => {
+}: ControlProps<"number">) => {
   const id = useId();
 
   const [isInvalid, setIsInvalid] = useState(false);
@@ -77,6 +78,11 @@ export const NumberControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "number") {
+              return `${humanizeString(propName)} expects a number value`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

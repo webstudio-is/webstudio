@@ -23,6 +23,7 @@ import type { Instance, Page } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
 import { BindingPopover } from "~/builder/shared/binding-popover";
+import { humanizeString } from "~/shared/string-utils";
 import {
   type ControlProps,
   getLabel,
@@ -34,10 +35,7 @@ import {
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 
-type UrlControlProps = ControlProps<
-  "url",
-  "string" | "page" | "asset" | "expression"
->;
+type UrlControlProps = ControlProps<"url">;
 
 type BaseControlProps = {
   id: string;
@@ -498,6 +496,12 @@ export const UrlControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "string") {
+              const name = humanizeString(propName);
+              return `${name} expects a string value, page or file`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

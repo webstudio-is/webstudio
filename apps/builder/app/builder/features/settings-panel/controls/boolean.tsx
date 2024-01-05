@@ -9,6 +9,7 @@ import {
   $selectedInstanceScope,
   updateExpressionValue,
 } from "../shared";
+import { humanizeString } from "~/shared/string-utils";
 
 export const BooleanControl = ({
   meta,
@@ -19,7 +20,7 @@ export const BooleanControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"boolean", "boolean" | "expression">) => {
+}: ControlProps<"boolean">) => {
   const id = useId();
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
@@ -56,6 +57,11 @@ export const BooleanControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "boolean") {
+              return `${humanizeString(propName)} expects a boolean value`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

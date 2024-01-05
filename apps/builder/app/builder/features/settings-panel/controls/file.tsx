@@ -12,6 +12,7 @@ import {
   $selectedInstanceScope,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
+import { humanizeString } from "~/shared/string-utils";
 
 const UrlInput = ({
   id,
@@ -56,7 +57,7 @@ export const FileControl = ({
   deletable,
   onChange,
   onDelete,
-}: ControlProps<"file", "asset" | "string" | "expression">) => {
+}: ControlProps<"file">) => {
   const id = useId();
 
   const localStringValue = useLocalValue(
@@ -97,6 +98,12 @@ export const FileControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "string") {
+              const name = humanizeString(propName);
+              return `${name} expects a string value or file`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

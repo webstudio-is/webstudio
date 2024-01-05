@@ -52,16 +52,12 @@ type PropMetaByControl<Control> = Control extends string
   ? Extract<PropMeta, { control: Control }>
   : never;
 
-type PropByType<Type> = Type extends string
-  ? Extract<Prop, { type: Type }>
-  : never;
-
-export type ControlProps<Control, PropType> = {
+export type ControlProps<Control> = {
   instanceId: string;
   meta: PropMetaByControl<Control>;
   // prop is optional because we don't have it when an intial prop is not set
   // and we don't want to show user something like a 0 for number when it's in fact not set to any value
-  prop: PropByType<PropType> | undefined;
+  prop: Prop | undefined;
   propName: string;
   computedValue: unknown;
   deletable: boolean;

@@ -14,7 +14,7 @@ export const renderControl = ({
   meta,
   prop,
   ...rest
-}: ControlProps<string, string> & { key?: string }) => {
+}: ControlProps<string> & { key?: string }) => {
   const computed = rest.computedValue;
 
   // never render parameter props
@@ -27,107 +27,53 @@ export const renderControl = ({
     return;
   }
 
-  if (
-    meta.control === "json" &&
-    (prop === undefined ||
-      prop.type === "json" ||
-      (prop.type === "expression" && typeof computed === "object"))
-  ) {
+  if (meta.control === "json") {
     return <JsonControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    meta.control === "text" &&
-    (prop === undefined ||
-      prop.type === "string" ||
-      (prop.type === "expression" && typeof computed === "string"))
-  ) {
+  if (meta.control === "text") {
     return <TextControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    meta.control === "code" &&
-    (prop === undefined ||
-      prop.type === "string" ||
-      (prop.type === "expression" && typeof computed === "string"))
-  ) {
+  if (meta.control === "code") {
     return <CodeControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    meta.control === "color" &&
-    (prop === undefined || prop.type === "string")
-  ) {
+  if (meta.control === "color") {
     return (
       <TextControl meta={{ ...meta, control: "text" }} prop={prop} {...rest} />
     );
   }
 
-  if (
-    meta.control === "number" &&
-    (prop === undefined ||
-      prop.type === "number" ||
-      (prop.type === "expression" && typeof computed === "number"))
-  ) {
+  if (meta.control === "number") {
     return <NumberControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    meta.control === "boolean" &&
-    (prop === undefined ||
-      prop.type === "boolean" ||
-      (prop.type === "expression" && typeof computed === "boolean"))
-  ) {
+  if (meta.control === "boolean") {
     return <BooleanControl meta={meta} prop={prop} {...rest} />;
   }
 
   if (
-    (meta.control === "check" ||
-      meta.control === "inline-check" ||
-      meta.control === "multi-select") &&
-    (prop === undefined ||
-      prop.type === "string[]" ||
-      (prop.type === "expression" && typeof computed === "object"))
+    meta.control === "check" ||
+    meta.control === "inline-check" ||
+    meta.control === "multi-select"
   ) {
     return <CheckControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    (meta.control === "radio" || meta.control === "inline-radio") &&
-    (prop === undefined ||
-      prop.type === "string" ||
-      (prop.type === "expression" && typeof computed === "string"))
-  ) {
+  if (meta.control === "radio" || meta.control === "inline-radio") {
     return <RadioControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    meta.control === "select" &&
-    (prop === undefined ||
-      prop.type === "string" ||
-      (prop.type === "expression" && typeof computed === "string"))
-  ) {
+  if (meta.control === "select") {
     return <SelectControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    meta.control === "file" &&
-    (prop === undefined ||
-      prop.type === "asset" ||
-      prop.type === "string" ||
-      (prop.type === "expression" && typeof computed === "string"))
-  ) {
+  if (meta.control === "file") {
     return <FileControl meta={meta} prop={prop} {...rest} />;
   }
 
-  if (
-    meta.control === "url" &&
-    (prop === undefined ||
-      prop.type === "string" ||
-      prop.type === "page" ||
-      prop.type === "asset" ||
-      (prop.type === "expression" && typeof computed === "string"))
-  ) {
+  if (meta.control === "url") {
     return <UrlControl meta={meta} prop={prop} {...rest} />;
   }
 

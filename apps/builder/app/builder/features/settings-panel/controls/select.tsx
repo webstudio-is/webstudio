@@ -21,7 +21,7 @@ export const SelectControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"select", "string" | "expression">) => {
+}: ControlProps<"select">) => {
   const id = useId();
 
   const value = computedValue === undefined ? undefined : String(computedValue);
@@ -64,6 +64,18 @@ export const SelectControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (
+              value !== undefined &&
+              meta.options.includes(String(value)) === false
+            ) {
+              const formatter = new Intl.ListFormat(undefined, {
+                type: "disjunction",
+              });
+              const options = formatter.format(meta.options);
+              return `${humanizeString(propName)} expects one of ${options}`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

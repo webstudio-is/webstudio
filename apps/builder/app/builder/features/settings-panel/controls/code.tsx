@@ -11,6 +11,7 @@ import {
 } from "../shared";
 import { HtmlEditor } from "~/builder/shared/html-editor";
 import { BindingPopover } from "~/builder/shared/binding-popover";
+import { humanizeString } from "~/shared/string-utils";
 
 export const CodeControl = ({
   meta,
@@ -21,7 +22,7 @@ export const CodeControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"code", "string" | "expression">) => {
+}: ControlProps<"code">) => {
   const metaOverride = {
     ...meta,
     control: "text" as const,
@@ -65,6 +66,11 @@ export const CodeControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "string") {
+              return `${humanizeString(propName)} expects a string value`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
