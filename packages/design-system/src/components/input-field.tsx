@@ -170,7 +170,6 @@ const Input = forwardRef(
     { css, className, color, disabled = false, variant, ...props }: InputProps,
     ref: Ref<HTMLInputElement>
   ) => {
-    console.log({ variant });
     return (
       <input
         {...props}
@@ -214,7 +213,7 @@ export const InputField = forwardRef(
       onFocusWithin: onFocus,
       onBlurWithin: onBlur,
     });
-    console.log(111, inputProps);
+
     return (
       <Container
         css={css}
