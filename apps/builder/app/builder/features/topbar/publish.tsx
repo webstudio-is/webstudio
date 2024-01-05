@@ -23,6 +23,7 @@ import {
   Select,
   theme,
   TextArea,
+  Link,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
@@ -477,16 +478,6 @@ const Content = (props: {
   );
 };
 
-// @todo: move to design system
-// https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
-// https://discord.com/channels/955905230107738152/1048308525673238558/1184833931569266738
-const Link = styled("a", {
-  color: "inherit",
-  "&:visited": {
-    color: "inherit",
-  },
-});
-
 const deployTargets = {
   vercel: {
     command: "npx vercel",
@@ -526,11 +517,19 @@ const ExportContent = () => {
         </Text>
         <Text color="subtle">
           Download and install Node v18+ from{" "}
-          <Link href="https://nodejs.org/" target="_blank" rel="noreferrer">
+          <Link
+            variant="inherit"
+            color="inherit"
+            href="https://nodejs.org/"
+            target="_blank"
+            rel="noreferrer"
+          >
             nodejs.org
           </Link>{" "}
           or with{" "}
           <Link
+            variant="inherit"
+            color="inherit"
             href="https://nodejs.org/en/download/package-manager"
             target="_blank"
             rel="noreferrer"
@@ -576,6 +575,8 @@ const ExportContent = () => {
           <Text color="subtle">
             Run this command to publish to{" "}
             <Link
+              variant="inherit"
+              color="inherit"
               href={deployTargets[deployTarget].docs}
               target="_blank"
               rel="noreferrer"
@@ -625,6 +626,8 @@ const ExportContent = () => {
         <Text color="subtle">
           Read the detailed documentation{" "}
           <Link
+            variant="inherit"
+            color="inherit"
             href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
             target="_blank"
             rel="noreferrer"
