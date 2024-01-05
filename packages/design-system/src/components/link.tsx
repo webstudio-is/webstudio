@@ -42,9 +42,24 @@ export const Link = styled("a", {
         "&:hover, &:visited": { color: "inherit" },
       },
     },
+    underline: {
+      none: {
+        textDecoration: "none",
+        "&:hover": { textDecoration: "none" },
+      },
+      hover: {
+        textDecoration: "none",
+        "&:hover": { textDecoration: "underline" },
+      },
+      always: {
+        textDecoration: "underline",
+        "&:hover": { textDecoration: "underline" },
+      },
+    },
   },
   defaultVariants: {
     variant: "regular",
     color: "main",
+    underline: "hover",
   },
 });

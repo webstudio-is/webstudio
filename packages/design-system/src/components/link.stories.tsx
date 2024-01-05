@@ -8,7 +8,7 @@ export default {
 
 const LinkStory = () => (
   <>
-    <StorySection title="Variants">
+    <StorySection title="Variant">
       <StoryGrid
         css={{
           alignItems: "flex-start",
@@ -29,6 +29,21 @@ const LinkStory = () => (
             Inherit
           </Link>
         </div>
+      </StoryGrid>
+    </StorySection>
+    <StorySection title="Underline">
+      <StoryGrid
+        css={{
+          alignItems: "flex-start",
+        }}
+      >
+        <Link href="" underline="none">
+          None
+        </Link>
+        <Link href="">Hover</Link>
+        <Link href="" underline="always">
+          Always
+        </Link>
       </StoryGrid>
     </StorySection>
     <StorySection title="Colors">
