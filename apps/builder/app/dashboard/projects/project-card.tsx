@@ -9,12 +9,12 @@ import {
   Flex,
   Grid,
   Text,
-  textVariants,
   truncate,
   theme,
   Box,
   Tooltip,
   rawTheme,
+  Link,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, MenuIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
@@ -79,17 +79,6 @@ const usePublishedLink = ({ domain }: { domain: string }) => {
   return { url };
 };
 
-const linkStyle = css({
-  ...textVariants.regular,
-  ...truncate(),
-  cursor: "pointer",
-  color: theme.colors.foregroundSubtle,
-  "&:hover": {
-    textDecoration: "underline",
-  },
-});
-
-// @todo use Link component once ready https://github.com/webstudio-is/webstudio/pull/2697
 const PublishedLink = ({
   domain,
   tabIndex,
@@ -99,15 +88,17 @@ const PublishedLink = ({
 }) => {
   const { url } = usePublishedLink({ domain });
   return (
-    <a
+    <Link
       href={url?.href}
       target="_blank"
       rel="noreferrer"
       tabIndex={tabIndex}
-      className={linkStyle()}
+      color="subtle"
+      underline="hover"
+      css={truncate()}
     >
       {url?.host}
-    </a>
+    </Link>
   );
 };
 

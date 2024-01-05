@@ -85,6 +85,11 @@ export const Demo = () => {
           <TextArea value={value} onChange={setValue} />
         </StoryGrid>
       </StorySection>
+      <StorySection title="Mono">
+        <StoryGrid css={{ width: 250 }}>
+          <TextArea variant="mono" value={value} onChange={setValue} />
+        </StoryGrid>
+      </StorySection>
     </>
   );
 };

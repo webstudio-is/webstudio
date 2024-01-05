@@ -19,10 +19,10 @@ import {
   ScrollArea,
   Box,
   rawTheme,
-  styled,
   Select,
   theme,
   TextArea,
+  Link,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
@@ -187,6 +187,7 @@ const ChangeProjectDomain = ({
         <Grid gap={1}>
           <Label htmlFor={id}>Domain:</Label>
           <InputField
+            variant="mono"
             id={id}
             placeholder="Domain"
             value={domain}
@@ -477,16 +478,6 @@ const Content = (props: {
   );
 };
 
-// @todo: move to design system
-// https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
-// https://discord.com/channels/955905230107738152/1048308525673238558/1184833931569266738
-const Link = styled("a", {
-  color: theme.colors.foregroundLink,
-  "&:visited": {
-    color: theme.colors.foregroundLinkVisited,
-  },
-});
-
 const deployTargets = {
   vercel: {
     command: "npx vercel",
@@ -526,11 +517,19 @@ const ExportContent = () => {
         </Text>
         <Text color="subtle">
           Download and install Node v18+ from{" "}
-          <Link href="https://nodejs.org/" target="_blank" rel="noreferrer">
+          <Link
+            variant="inherit"
+            color="inherit"
+            href="https://nodejs.org/"
+            target="_blank"
+            rel="noreferrer"
+          >
             nodejs.org
           </Link>{" "}
           or with{" "}
           <Link
+            variant="inherit"
+            color="inherit"
             href="https://nodejs.org/en/download/package-manager"
             target="_blank"
             rel="noreferrer"
@@ -553,7 +552,12 @@ const ExportContent = () => {
         </Grid>
 
         <Flex gap={2}>
-          <InputField css={{ flex: 1 }} readOnly value={npxCommand} />
+          <InputField
+            css={{ flex: 1 }}
+            variant="mono"
+            readOnly
+            value={npxCommand}
+          />
 
           <Tooltip content={"Copy to clipboard"}>
             <Button
@@ -576,6 +580,8 @@ const ExportContent = () => {
           <Text color="subtle">
             Run this command to publish to{" "}
             <Link
+              variant="inherit"
+              color="inherit"
               href={deployTargets[deployTarget].docs}
               target="_blank"
               rel="noreferrer"
@@ -601,6 +607,7 @@ const ExportContent = () => {
         <Flex gap={2} align="end">
           <TextArea
             css={{ flex: 1 }}
+            variant="mono"
             readOnly
             value={stripIndent(deployTargets[deployTarget].command)
               .trimStart()
@@ -608,6 +615,7 @@ const ExportContent = () => {
           />
           <Tooltip content={"Copy to clipboard"}>
             <Button
+              css={{ flexShrink: 0 }}
               color="neutral"
               onClick={() => {
                 navigator.clipboard.writeText(
@@ -625,6 +633,8 @@ const ExportContent = () => {
         <Text color="subtle">
           Read the detailed documentation{" "}
           <Link
+            variant="inherit"
+            color="inherit"
             href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
             target="_blank"
             rel="noreferrer"

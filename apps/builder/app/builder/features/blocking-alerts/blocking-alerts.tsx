@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Alert } from "./alert";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { styled, theme } from "@webstudio-is/design-system";
+import { Link } from "@webstudio-is/design-system";
 
 const useTooSmallMessage = () => {
   const [message, setMessage] = useState<string>();
@@ -21,21 +21,11 @@ const useTooSmallMessage = () => {
   return message;
 };
 
-// @todo: move to design system
-// https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
-// https://discord.com/channels/955905230107738152/1048308525673238558/1184833931569266738
-const Link = styled("a", {
-  color: theme.colors.foregroundLink,
-  "&:visited": {
-    color: theme.colors.foregroundLinkVisited,
-  },
-});
-
 const useUnsupportedBrowser = () => {
   const [message, setMessage] = useState<ReactNode>();
   useEffect(() => {
     if ("chrome" in window || isFeatureEnabled("unsupportedBrowsers")) {
-      return;
+      //return;
     }
 
     setMessage(
@@ -44,23 +34,45 @@ const useUnsupportedBrowser = () => {
         <Link
           href="https://en.wikipedia.org/wiki/Chromium_(web_browser)"
           target="_blank"
+          color="inherit"
+          variant="inherit"
         >
           Chromium-based
         </Link>{" "}
         browsers such as{" "}
-        <Link href="https://www.google.com/chrome" target="_blank">
+        <Link
+          href="https://www.google.com/chrome"
+          target="_blank"
+          color="inherit"
+          variant="inherit"
+        >
           Google Chrome
         </Link>
         ,{" "}
-        <Link href="https://www.microsoft.com/en-us/edge" target="_blank">
+        <Link
+          href="https://www.microsoft.com/en-us/edge"
+          target="_blank"
+          color="inherit"
+          variant="inherit"
+        >
           Microsoft Edge
         </Link>
         ,{" "}
-        <Link href="https://brave.com/" target="_blank">
+        <Link
+          href="https://brave.com/"
+          target="_blank"
+          color="inherit"
+          variant="inherit"
+        >
           Brave
         </Link>
         ,{" "}
-        <Link href="https://arc.net/" target="_blank">
+        <Link
+          href="https://arc.net/"
+          target="_blank"
+          color="inherit"
+          variant="inherit"
+        >
           Arc
         </Link>{" "}
         and many more. We plan to support Firefox and Safari in the near future.

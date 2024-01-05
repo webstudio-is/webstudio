@@ -5,18 +5,18 @@
         {
           "color": "#0000001a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 2,
-          "blur": 7,
-          "spread": 0
+          "x": "0",
+          "y": "2",
+          "blur": "7",
+          "spread": "0"
         },
         {
           "color": "#0000004d",
           "type": "dropShadow",
-          "x": 0,
-          "y": 5,
-          "blur": 17,
-          "spread": 0
+          "x": "0",
+          "y": "5",
+          "blur": "17",
+          "spread": "0"
         }
       ],
       "type": "boxShadow"
@@ -449,7 +449,7 @@
           "description": "used for destructive button and accent color on destructive toast"
         },
         "notification": {
-          "value": "#ffefef",
+          "value": "#ffe9e9",
           "type": "color",
           "description": "background for destructive toast"
         }
@@ -484,7 +484,7 @@
           "type": "color"
         },
         "notification": {
-          "value": "#edf6ff",
+          "value": "#e0f0ff",
           "type": "color",
           "description": "background for info banner & toast"
         }
@@ -979,16 +979,6 @@
         "type": "color",
         "description": "color for hidden item element within navigator item component"
       },
-      "link": {
-        "value": "#006adc",
-        "type": "color",
-        "description": "color for link text"
-      },
-      "link-visited": {
-        "value": "#793aaf",
-        "type": "color",
-        "description": "Text links that the user has visited."
-      },
       "flex-ui": {
         "main": {
           "value": "#c7c7c7",
@@ -1103,11 +1093,6 @@
         "value": "#ff22ae",
         "type": "color",
         "description": "The inverse color of our primary blue, when we want a contrasting highlight."
-      },
-      "link-not-visited": {
-        "value": "#006adc",
-        "type": "color",
-        "description": "Text links that are not yet visited."
       }
     },
     "Brand": {
@@ -1115,10 +1100,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 4,
-          "blur": 4,
-          "spread": 0
+          "x": "0",
+          "y": "4",
+          "blur": "4",
+          "spread": "0"
         },
         "type": "boxShadow",
         "description": "elevation for small things within the dashboard"
@@ -1127,10 +1112,10 @@
         "value": {
           "color": "#1717171a",
           "type": "dropShadow",
-          "x": 0,
-          "y": 8,
-          "blur": 16,
-          "spread": 0
+          "x": "0",
+          "y": "8",
+          "blur": "16",
+          "spread": "0"
         },
         "type": "boxShadow",
         "description": "elevation for big things within the dashboard"
@@ -1371,18 +1356,18 @@
         {
           "color": "#00000014",
           "type": "dropShadow",
-          "x": 0,
-          "y": 4,
-          "blur": 15,
-          "spread": 0
+          "x": "0",
+          "y": "4",
+          "blur": "15",
+          "spread": "0"
         },
         {
           "color": "#00000014",
           "type": "dropShadow",
-          "x": 0,
-          "y": 1,
-          "blur": 7,
-          "spread": 0
+          "x": "0",
+          "y": "1",
+          "blur": "7",
+          "spread": "0"
         }
       ],
       "type": "boxShadow",
@@ -1426,13 +1411,6 @@
       "value": "linear-gradient(180deg, #9697fc 0%, #4a4efa00 100%)",
       "type": "color"
     },
-    "backgrond": {
-      "menu-hint": {
-        "value": "#dedede",
-        "type": "color",
-        "description": "For the background of the hint menu item."
-      }
-    },
     "Link": {
       "value": {
         "fontFamily": "{fontFamilies.inter}",
@@ -1447,6 +1425,66 @@
       },
       "type": "typography",
       "description": "link text"
+    },
+    "Regular Link": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-0}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.underline}"
+      },
+      "type": "typography",
+      "description": "Regular text underlined to represent links within a body of Regular text"
+    },
+    "Label Link": {
+      "value": {
+        "fontFamily": "{fontFamilies.inter}",
+        "fontWeight": "{fontWeights.inter-2}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.0}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.underline}"
+      },
+      "type": "typography",
+      "description": "Label text with underline to represent links in Label text. Sentence case."
+    },
+    "Mono Bold Link": {
+      "value": {
+        "fontFamily": "{fontFamilies.roboto-mono}",
+        "fontWeight": "{fontWeights.roboto-mono-4}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.2}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.underline}"
+      },
+      "type": "typography",
+      "description": "Mono Bold text style with underline to indicate a text link"
+    },
+    "Mono Link": {
+      "value": {
+        "fontFamily": "{fontFamilies.roboto-mono}",
+        "fontWeight": "{fontWeights.roboto-mono-3}",
+        "lineHeight": "{lineHeights.0}",
+        "fontSize": "{fontSize.2}",
+        "letterSpacing": "{letterSpacing.2}",
+        "paragraphSpacing": "{paragraphSpacing.0}",
+        "paragraphIndent": "{paragraphIndent.0}",
+        "textCase": "{textCase.none}",
+        "textDecoration": "{textDecoration.underline}"
+      },
+      "type": "typography",
+      "description": "Mono text style with underline to indicate a text link"
     }
   },
   "$themes": [],

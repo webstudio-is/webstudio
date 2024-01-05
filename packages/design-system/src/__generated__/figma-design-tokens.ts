@@ -30,20 +30,20 @@ export const lineHeights = {
 } as const;
 
 export const fontWeights = {
-  inter0: 400,
-  inter1: 700,
-  inter2: 500,
-  inter3: 700,
-  inter4: 600,
-  robotoMono4: 700,
-  manrope5: 700,
-  manrope6: 400,
-  manrope7: 600,
-  manrope8: 200,
-  manrope9: 800,
-  robotoMono3: 500,
-  inter5: 600,
-  manrope10: 800,
+  inter_0: 400,
+  inter_1: 700,
+  inter_2: 500,
+  inter_3: 700,
+  inter_4: 600,
+  robotoMono_4: 700,
+  manrope_5: 700,
+  manrope_6: 400,
+  manrope_7: 600,
+  manrope_8: 200,
+  manrope_9: 800,
+  robotoMono_3: 500,
+  inter_5: 600,
+  manrope_10: 800,
 } as const;
 
 export const letterSpacing = {
@@ -320,6 +320,48 @@ export const typography = {
     textDecoration: "underline",
     textIndent: "0px",
   },
+  regularLink: {
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "16px",
+    letterSpacing: "0.005em",
+    textTransform: "none",
+    textDecoration: "underline",
+    textIndent: "0px",
+  },
+  labelLink: {
+    fontFamily:
+      "Inter Variable, InterVariable, Inter, -apple-system, system-ui, sans-serif",
+    fontWeight: 500,
+    fontSize: "12px",
+    lineHeight: "16px",
+    letterSpacing: "0.005em",
+    textTransform: "none",
+    textDecoration: "underline",
+    textIndent: "0px",
+  },
+  monoBoldLink: {
+    fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
+    fontWeight: 700,
+    fontSize: "12px",
+    lineHeight: "16px",
+    letterSpacing: "0em",
+    textTransform: "none",
+    textDecoration: "underline",
+    textIndent: "0px",
+  },
+  monoLink: {
+    fontFamily: "Roboto Mono, RobotoMono, menlo, monospace",
+    fontWeight: 500,
+    fontSize: "12px",
+    lineHeight: "16px",
+    letterSpacing: "0em",
+    textTransform: "none",
+    textDecoration: "underline",
+    textIndent: "0px",
+  },
 } as const;
 
 export const textCase = {
@@ -354,13 +396,13 @@ export const color = {
   backgroundNeutralNotification: "#ffffff",
   backgroundNeutralDark: "#7e868c",
   backgroundDestructiveMain: "#dc2929",
-  backgroundDestructiveNotification: "#ffefef",
+  backgroundDestructiveNotification: "#ffe9e9",
   backgroundSuccessMain: "#00894a",
   backgroundSuccessNotification: "#e9f9ee",
   backgroundAlertMain: "#f5d90a",
   backgroundAlertNotification: "#fffbd1",
   backgroundInfoMain: "#0175dc",
-  backgroundInfoNotification: "#edf6ff",
+  backgroundInfoNotification: "#e0f0ff",
   backgroundPresetMain: "#e6e8eb",
   backgroundPresetHover: "#dfe3e6",
   backgroundLocalMain: "#e1f0ff",
@@ -469,8 +511,6 @@ export const color = {
   foregroundInfo: "#096cff",
   foregroundDisabled: "#c1c8cd",
   foregroundHiddenItem: "#7e868c",
-  foregroundLink: "#006adc",
-  foregroundLinkVisited: "#793aaf",
   foregroundFlexUiMain: "#c7c7c7",
   foregroundFlexUiHover: "#96c7f2",
   foregroundContrastMain: "#ffffff",
@@ -492,29 +532,27 @@ export const color = {
   foregroundOverwrittenMain: "#bf0007",
   foregroundOverwrittenFlexUi: "#dc3d43",
   foregroundInversePrimary: "#ff22ae",
-  foregroundLinkNotVisited: "#006adc",
   maintenanceLight: "#ededed",
   maintenanceMedium: "#c7c7c7",
   maintenanceDark: "#858585",
   maintenanceSpacerViz: "#f9c6c6",
   darkBlueFade: "linear-gradient(180deg, #11273f 0%, #11273f00 100%)",
   strokeFade: "linear-gradient(180deg, #9697fc 0%, #4a4efa00 100%)",
-  backgrondMenuHint: "#dedede",
 } as const;
 
 export const borderWidth = { "0": 1, "1": 2 } as const;
 
-export const dimension = { paragraphIndent0: "0px" } as const;
+export const dimension = { paragraphIndent_0: "0px" } as const;
 
 export const fontSizes = {
-  fontSize0: "8px",
-  fontSize1: "10px",
-  fontSize2: "12px",
-  fontSize3: "16px",
-  fontSize4: "20px",
-  fontSize5: "32px",
-  fontSize6: "48px",
-  fontSize7: "360px",
+  fontSize_0: "8px",
+  fontSize_1: "10px",
+  fontSize_2: "12px",
+  fontSize_3: "16px",
+  fontSize_4: "20px",
+  fontSize_5: "32px",
+  fontSize_6: "48px",
+  fontSize_7: "360px",
 } as const;
 
-export const other = { tokenSetOrder0: "global" } as const;
+export const other = { tokenSetOrder_0: "global" } as const;

@@ -31,7 +31,6 @@ export const inputFieldColors = ["placeholder", "set", "error"] as const;
 
 const inputStyle = css({
   all: "unset",
-  ...textVariants.regular,
   color: theme.colors.foregroundMain,
   flexGrow: 1,
   flexShrink: 1,
@@ -52,6 +51,15 @@ const inputStyle = css({
       WebkitAppearance: "none",
       margin: 0,
     },
+  },
+  variants: {
+    variant: {
+      regular: textVariants.regular,
+      mono: textVariants.mono,
+    },
+  },
+  defaultVariants: {
+    variant: "regular",
   },
 });
 
@@ -154,23 +162,26 @@ type InputProps = {
   type?: (typeof inputFieldTypes)[number];
   color?: (typeof inputFieldColors)[number];
   css?: CSS;
+  variant?: "regular" | "mono";
 } & Omit<ComponentProps<"input">, "prefix" | "onFocus" | "onBlur">;
 
 const Input = forwardRef(
   (
-    { css, className, color, disabled = false, ...props }: InputProps,
+    { css, className, color, disabled = false, variant, ...props }: InputProps,
     ref: Ref<HTMLInputElement>
-  ) => (
-    <input
-      {...props}
-      spellCheck={false}
-      data-input-field-input // to distinguish from potential other inputs in prefix/suffix
-      data-color={color}
-      disabled={disabled}
-      className={inputStyle({ className, css })}
-      ref={ref}
-    />
-  )
+  ) => {
+    return (
+      <input
+        {...props}
+        spellCheck={false}
+        data-input-field-input // to distinguish from potential other inputs in prefix/suffix
+        data-color={color}
+        disabled={disabled}
+        className={inputStyle({ className, css, variant })}
+        ref={ref}
+      />
+    );
+  }
 );
 Input.displayName = "Input";
 
@@ -185,7 +196,7 @@ export const InputField = forwardRef(
       inputRef,
       onFocus,
       onBlur,
-      ...props
+      ...inputProps
     }: InputProps & {
       prefix?: ReactNode;
       suffix?: ReactNode;
@@ -212,7 +223,7 @@ export const InputField = forwardRef(
         {...focusWithinProps}
         ref={mergeRefs(ref, containerRef ?? null)}
       >
-        <Input {...props} ref={inputRef} />
+        <Input {...inputProps} ref={inputRef} />
       </Container>
     );
   }
