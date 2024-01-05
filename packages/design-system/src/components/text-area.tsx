@@ -15,7 +15,7 @@ const PADDING_TOP = 6;
 const PADDING_BOTTOM = 4;
 const BORDER = 1;
 
-const gridStyle = css(textVariants.regular, {
+const gridStyle = css({
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
   border: `${BORDER}px solid ${theme.colors.borderMain}`,
@@ -37,6 +37,10 @@ const gridStyle = css(textVariants.regular, {
         resize: "none",
       },
     },
+    variant: {
+      regular: textVariants.regular,
+      mono: textVariants.mono,
+    },
     state: {
       invalid: {
         color: theme.colors.foregroundDestructive,
@@ -46,9 +50,12 @@ const gridStyle = css(textVariants.regular, {
       },
     },
   },
+  defaultVariants: {
+    variant: "regular",
+  },
 });
 
-const commonStyle = css(textVariants.regular, {
+const commonStyle = css({
   border: "none",
   paddingRight: theme.spacing[4],
   paddingLeft: theme.spacing[3],
@@ -71,6 +78,15 @@ const commonStyle = css(textVariants.regular, {
     color: theme.colors.foregroundDisabled,
     background: theme.colors.backgroundInputDisabled,
   },
+  variants: {
+    variant: {
+      regular: textVariants.regular,
+      mono: textVariants.mono,
+    },
+  },
+  defaultVariants: {
+    variant: "regular",
+  },
 });
 
 const textAreaStyle = css(commonStyle, {});
@@ -87,6 +103,7 @@ type Props = Omit<
   defaultValue?: string;
   onChange?: (value: string) => void;
   autoGrow?: boolean;
+  variant?: "regular" | "mono";
 };
 
 export const TextArea = forwardRef(
@@ -100,6 +117,7 @@ export const TextArea = forwardRef(
       value,
       onChange,
       autoGrow,
+      variant = "regular",
       ...props
     }: Props,
     ref: Ref<HTMLTextAreaElement>
@@ -126,6 +144,7 @@ export const TextArea = forwardRef(
         className={gridStyle({
           state,
           autoGrow,
+          variant,
           css: { height, minHeight, maxHeight },
         })}
         onClick={(event) => {
@@ -153,6 +172,7 @@ export const TextArea = forwardRef(
               css: { visibility: "hidden", ...css },
               state,
               className,
+              variant,
             })}
           >
             {textValue}{" "}
@@ -164,6 +184,7 @@ export const TextArea = forwardRef(
               css,
               state,
               className,
+              variant,
             })}
             onChange={(event) => setTextValue(event.target.value)}
             value={textValue}

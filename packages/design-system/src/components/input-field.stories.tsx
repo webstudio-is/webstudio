@@ -29,6 +29,12 @@ export const Demo = () => (
       </StoryGrid>
     </StorySection>
 
+    <StorySection title="Mono">
+      <StoryGrid horizontal>
+        <InputField defaultValue="mono text" variant="mono" />
+      </StoryGrid>
+    </StorySection>
+
     <StorySection title="Nested Controls">
       <StoryGrid horizontal>
         {inputFieldColors.map((color) => (

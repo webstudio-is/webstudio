@@ -19,7 +19,6 @@ import {
   ScrollArea,
   Box,
   rawTheme,
-  styled,
   Select,
   theme,
   TextArea,
@@ -188,6 +187,7 @@ const ChangeProjectDomain = ({
         <Grid gap={1}>
           <Label htmlFor={id}>Domain:</Label>
           <InputField
+            variant="mono"
             id={id}
             placeholder="Domain"
             value={domain}
@@ -552,7 +552,12 @@ const ExportContent = () => {
         </Grid>
 
         <Flex gap={2}>
-          <InputField css={{ flex: 1 }} readOnly value={npxCommand} />
+          <InputField
+            css={{ flex: 1 }}
+            variant="mono"
+            readOnly
+            value={npxCommand}
+          />
 
           <Tooltip content={"Copy to clipboard"}>
             <Button
@@ -602,6 +607,7 @@ const ExportContent = () => {
         <Flex gap={2} align="end">
           <TextArea
             css={{ flex: 1 }}
+            variant="mono"
             readOnly
             value={stripIndent(deployTargets[deployTarget].command)
               .trimStart()
@@ -609,6 +615,7 @@ const ExportContent = () => {
           />
           <Tooltip content={"Copy to clipboard"}>
             <Button
+              css={{ flexShrink: 0 }}
               color="neutral"
               onClick={() => {
                 navigator.clipboard.writeText(
