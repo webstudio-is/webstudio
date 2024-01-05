@@ -1,11 +1,12 @@
-import { linkStyle } from "./link";
+import { Box } from "./box";
+import { Link } from "./link";
 import { StorySection, StoryGrid } from "./storybook";
 
 export default {
   title: "Library/Link",
 };
 
-export const Link = () => (
+const LinkStory = () => (
   <>
     <StorySection title="Variants">
       <StoryGrid
@@ -13,15 +14,21 @@ export const Link = () => (
           alignItems: "flex-start",
         }}
       >
-        <a className={linkStyle()} href="">
-          Regular
-        </a>
-        <a className={linkStyle({ variant: "label" })} href="">
+        <Link href="">Regular</Link>
+        <Link variant="label" href="">
           Label
-        </a>
-        <a className={linkStyle({ variant: "mono" })} href="">
+        </Link>
+        <Link variant="mono" href="">
           Mono
-        </a>
+        </Link>
+        <Link variant="monoBold" href="">
+          Mono Bold
+        </Link>
+        <div style={{ fontSize: 20 }}>
+          <Link variant="inherit" href="">
+            Inherit
+          </Link>
+        </div>
       </StoryGrid>
     </StorySection>
     <StorySection title="Colors">
@@ -30,19 +37,28 @@ export const Link = () => (
           alignItems: "flex-start",
         }}
       >
-        <a className={linkStyle()} href="">
+        <Link color="main" href="">
           Main
-        </a>
-        <a className={linkStyle({ color: "contrast" })} href="">
-          Contrast
-        </a>
-        <a className={linkStyle({ color: "subtle" })} href="">
+        </Link>
+        <Box css={{ backgroundColor: "black" }}>
+          <Link color="contrast" href="">
+            Contrast
+          </Link>
+        </Box>
+        <Link color="subtle" href="">
           Subtle
-        </a>
-        <a className={linkStyle({ color: "moreSubtle" })} href="">
+        </Link>
+        <Link color="moreSubtle" href="">
           More Subtle
-        </a>
+        </Link>
+        <div style={{ color: "blue" }}>
+          <Link color="inherit" href="">
+            Inherit
+          </Link>
+        </div>
       </StoryGrid>
     </StorySection>
   </>
 );
+
+export { LinkStory as Link };
