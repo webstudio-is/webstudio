@@ -52,7 +52,9 @@ const useEnhancedInput = ({
 
   const getValue = () => {
     const value = inputRef.current?.valueAsNumber;
-    return typeof value === "number" && isNaN(value) === false ? value : min;
+    return typeof value === "number" && Number.isNaN(value) === false
+      ? value
+      : min;
   };
 
   return {
