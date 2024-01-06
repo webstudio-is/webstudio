@@ -23,7 +23,6 @@ import type { Instance, Page } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
 import { BindingPopover } from "~/builder/shared/binding-popover";
-import { humanizeString } from "~/shared/string-utils";
 import {
   type ControlProps,
   getLabel,
@@ -442,6 +441,7 @@ export const UrlControl = ({
 
   const BaseControl = modes[mode].control;
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -450,7 +450,7 @@ export const UrlControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -498,8 +498,7 @@ export const UrlControl = ({
           aliases={aliases}
           validate={(value) => {
             if (value !== undefined && typeof value !== "string") {
-              const name = humanizeString(propName);
-              return `${name} expects a string value, page or file`;
+              return `${label} expects a string value, page or file`;
             }
           }}
           value={expression}

@@ -2,7 +2,6 @@ import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
 import { Box, InputField } from "@webstudio-is/design-system";
 import { BindingPopover } from "~/builder/shared/binding-popover";
-import { humanizeString } from "~/shared/string-utils";
 import {
   type ControlProps,
   getLabel,
@@ -43,6 +42,7 @@ export const NumberControl = ({
     }
   );
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -51,7 +51,7 @@ export const NumberControl = ({
     <ResponsiveLayout
       label={
         <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -80,7 +80,7 @@ export const NumberControl = ({
           aliases={aliases}
           validate={(value) => {
             if (value !== undefined && typeof value !== "number") {
-              return `${humanizeString(propName)} expects a number value`;
+              return `${label} expects a number value`;
             }
           }}
           value={expression}

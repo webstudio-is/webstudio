@@ -9,7 +9,6 @@ import {
   $selectedInstanceScope,
   updateExpressionValue,
 } from "../shared";
-import { humanizeString } from "~/shared/string-utils";
 
 export const BooleanControl = ({
   meta,
@@ -22,6 +21,7 @@ export const BooleanControl = ({
   onDelete,
 }: ControlProps<"boolean">) => {
   const id = useId();
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -39,7 +39,7 @@ export const BooleanControl = ({
       gap="2"
     >
       <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-        {getLabel(meta, propName)}
+        {label}
       </Label>
       <Box css={{ position: "relative" }}>
         <Switch
@@ -59,7 +59,7 @@ export const BooleanControl = ({
           aliases={aliases}
           validate={(value) => {
             if (value !== undefined && typeof value !== "boolean") {
-              return `${humanizeString(propName)} expects a boolean value`;
+              return `${label} expects a boolean value`;
             }
           }}
           value={expression}

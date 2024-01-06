@@ -11,7 +11,6 @@ import {
   $selectedInstanceScope,
 } from "../shared";
 import { BindingPopover } from "~/builder/shared/binding-popover";
-import { humanizeString } from "~/shared/string-utils";
 
 export const TextControl = ({
   meta,
@@ -58,7 +57,7 @@ export const TextControl = ({
         aliases={aliases}
         validate={(value) => {
           if (value !== undefined && typeof value !== "string") {
-            return `${humanizeString(propName)} expects a string value`;
+            return `${label} expects a string value`;
           }
         }}
         value={expression}

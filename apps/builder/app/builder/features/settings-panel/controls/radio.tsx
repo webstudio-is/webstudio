@@ -36,6 +36,7 @@ export const RadioControl = ({
       : [value, ...meta.options];
 
   const id = useId();
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -44,7 +45,7 @@ export const RadioControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -82,7 +83,7 @@ export const RadioControl = ({
                 type: "disjunction",
               });
               const options = formatter.format(meta.options);
-              return `${humanizeString(propName)} expects one of ${options}`;
+              return `${label} expects one of ${options}`;
             }
           }}
           value={expression}

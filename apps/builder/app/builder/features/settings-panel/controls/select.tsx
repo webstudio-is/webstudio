@@ -31,6 +31,7 @@ export const SelectControl = ({
       ? meta.options
       : [value, ...meta.options];
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -39,7 +40,7 @@ export const SelectControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -73,7 +74,7 @@ export const SelectControl = ({
                 type: "disjunction",
               });
               const options = formatter.format(meta.options);
-              return `${humanizeString(propName)} expects one of ${options}`;
+              return `${label} expects one of ${options}`;
             }
           }}
           value={expression}

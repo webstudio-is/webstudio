@@ -12,7 +12,6 @@ import {
   $selectedInstanceScope,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
-import { humanizeString } from "~/shared/string-utils";
 
 const UrlInput = ({
   id,
@@ -79,6 +78,7 @@ export const FileControl = ({
     }
   );
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -87,7 +87,7 @@ export const FileControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -100,8 +100,7 @@ export const FileControl = ({
           aliases={aliases}
           validate={(value) => {
             if (value !== undefined && typeof value !== "string") {
-              const name = humanizeString(propName);
-              return `${name} expects a string value or file`;
+              return `${label} expects a string value or file`;
             }
           }}
           value={expression}

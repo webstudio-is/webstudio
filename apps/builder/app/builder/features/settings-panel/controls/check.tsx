@@ -49,6 +49,7 @@ export const CheckControl = ({
   const options = Array.from(new Set([...meta.options, ...value]));
 
   const id = useId();
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -61,7 +62,7 @@ export const CheckControl = ({
           description={meta.description}
           readOnly={readOnly}
         >
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -96,7 +97,7 @@ export const CheckControl = ({
               Array.isArray(value) &&
               value.every((item) => typeof item === "string");
             if (value !== undefined && valid === false) {
-              return `${humanizeString(propName)} expects an array of strings`;
+              return `${label} expects an array of strings`;
             }
           }}
           value={expression}
