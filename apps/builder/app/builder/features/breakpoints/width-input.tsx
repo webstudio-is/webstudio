@@ -17,12 +17,7 @@ import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states";
-import {
-  useState,
-  type ChangeEvent,
-  type KeyboardEvent,
-  useEffect,
-} from "react";
+import { useState, type KeyboardEvent, useEffect } from "react";
 
 const useEnhancedInput = ({
   onChange,
@@ -55,15 +50,23 @@ const useEnhancedInput = ({
     onChangeComplete: handleChangeComplete,
   });
 
+  const getValue = () => {
+    const value = inputRef.current?.valueAsNumber;
+    return typeof value === "number" && Number.isNaN(value) === false
+      ? value
+      : min;
+  };
+
   return {
     ref: scrubRef,
     inputRef,
-    onChange(event: ChangeEvent<HTMLInputElement>) {
-      setIntermediateValue(event.target.valueAsNumber);
+    onChange() {
+      setIntermediateValue(getValue());
     },
     onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
       if (event.key === "Enter") {
-        return handleChangeComplete(event.currentTarget.valueAsNumber);
+        handleChangeComplete(getValue());
+        return;
       }
       const nextValue = handleNumericInputArrowKeys(currentValue, event);
       if (nextValue !== currentValue) {
@@ -72,7 +75,7 @@ const useEnhancedInput = ({
       }
     },
     onBlur() {
-      handleChangeComplete(inputRef.current?.valueAsNumber ?? 0);
+      handleChangeComplete(getValue());
     },
     type: "number" as const,
     value: currentValue,
