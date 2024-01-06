@@ -7,12 +7,13 @@ import {
   SmallIconButton,
   Text,
 } from "@webstudio-is/design-system";
+import { TrashIcon } from "@webstudio-is/icons";
+import type { Prop } from "@webstudio-is/sdk";
 import { assetsStore } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
-import { TrashIcon } from "@webstudio-is/icons";
 
 // tests whether we can use ImageManager for the given "accept" value
 const isImageAccept = (accept?: string) => {
@@ -23,11 +24,11 @@ const isImageAccept = (accept?: string) => {
   );
 };
 
-type AssetControlProps = ControlProps<unknown, "asset">;
+type AssetControlProps = ControlProps<unknown>;
 
 type Props = {
   accept?: string;
-  prop: AssetControlProps["prop"];
+  prop?: Extract<Prop, { type: "asset" }>;
   onChange: AssetControlProps["onChange"];
   onDelete: AssetControlProps["onDelete"];
 };

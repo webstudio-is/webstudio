@@ -21,7 +21,7 @@ export const CodeControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"code", "string" | "expression">) => {
+}: ControlProps<"code">) => {
   const metaOverride = {
     ...meta,
     control: "text" as const,
@@ -65,6 +65,11 @@ export const CodeControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "string") {
+              return `${label} expects a string value`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

@@ -27,7 +27,7 @@ export const RadioControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"radio" | "inline-radio", "string" | "expression">) => {
+}: ControlProps<"radio" | "inline-radio">) => {
   const value = computedValue === undefined ? undefined : String(computedValue);
   // making sure that the current value is in the list of options
   const options =
@@ -36,6 +36,7 @@ export const RadioControl = ({
       : [value, ...meta.options];
 
   const id = useId();
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -44,7 +45,7 @@ export const RadioControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -73,6 +74,18 @@ export const RadioControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (
+              value !== undefined &&
+              meta.options.includes(String(value)) === false
+            ) {
+              const formatter = new Intl.ListFormat(undefined, {
+                type: "disjunction",
+              });
+              const options = formatter.format(meta.options);
+              return `${label} expects one of ${options}`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

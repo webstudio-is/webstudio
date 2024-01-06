@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
 import {
@@ -98,55 +98,48 @@ const renderProperty = (
   }: PropsSectionProps,
   { prop, propName, meta, readOnly }: PropAndMeta,
   deletable?: boolean
-) => (
-  // fix the issue with changing type while binding expression
-  // old prop value is getting preserved in useLocalValue and saved into variable
-  // when unmount to reproduce try to edit body id prop
-  // and then bind json variable to it
-  <Fragment key={(prop?.type ?? "") + propName}>
-    {renderControl({
-      key: propName,
-      instanceId,
-      meta,
-      prop,
-      computedValue: propValues.get(propName),
-      propName,
-      readOnly,
-      deletable: deletable ?? false,
-      onDelete: () => {
-        if (prop) {
-          logic.handleDelete(prop);
-        }
-      },
-      onChange: (propValue, asset) => {
-        logic.handleChange({ prop, propName }, propValue);
+) =>
+  renderControl({
+    key: propName,
+    instanceId,
+    meta,
+    prop,
+    computedValue: propValues.get(propName),
+    propName,
+    readOnly,
+    deletable: deletable ?? false,
+    onDelete: () => {
+      if (prop) {
+        logic.handleDelete(prop);
+      }
+    },
+    onChange: (propValue, asset) => {
+      logic.handleChange({ prop, propName }, propValue);
 
-        // @todo: better way to do this?
-        if (
-          component === "Image" &&
-          propName === "src" &&
-          asset &&
-          "width" in asset.meta &&
-          "height" in asset.meta
-        ) {
-          logic.handleChangeByPropName("width", {
-            value: asset.meta.width,
-            type: "number",
-          });
-          logic.handleChangeByPropName("height", {
-            value: asset.meta.height,
-            type: "number",
-          });
+      // @todo: better way to do this?
+      if (
+        component === "Image" &&
+        propName === "src" &&
+        asset &&
+        "width" in asset.meta &&
+        "height" in asset.meta
+      ) {
+        logic.handleChangeByPropName("width", {
+          value: asset.meta.width,
+          type: "number",
+        });
+        logic.handleChangeByPropName("height", {
+          value: asset.meta.height,
+          type: "number",
+        });
 
-          setCssProperty("height")({
-            type: "keyword",
-            value: "fit-content",
-          });
-        }
-      },
-    })}
-  </Fragment>
-);
+        setCssProperty("height")({
+          type: "keyword",
+          value: "fit-content",
+        });
+      }
+    },
+  });
 
 const AddPropertyForm = ({
   availableProps,
