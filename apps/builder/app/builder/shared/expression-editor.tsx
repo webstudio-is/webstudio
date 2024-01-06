@@ -219,7 +219,7 @@ const errorStyle = css({
 export const ExpressionEditor = ({
   scope = emptyScope,
   aliases = emptyAliases,
-  error = false,
+  color,
   autoFocus = false,
   readOnly = false,
   value,
@@ -234,7 +234,7 @@ export const ExpressionEditor = ({
    * variable aliases to show instead of $ws$dataSource$id
    */
   aliases?: Aliases;
-  error?: boolean;
+  color?: "error";
   autoFocus?: boolean;
   readOnly?: boolean;
   value: string;
@@ -281,7 +281,7 @@ export const ExpressionEditor = ({
   return (
     <CodeEditor
       extensions={extensions}
-      className={error ? errorStyle.toString() : undefined}
+      className={color === "error" ? errorStyle.toString() : undefined}
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={value}
