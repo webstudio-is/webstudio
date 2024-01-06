@@ -21,7 +21,7 @@ export const NumberControl = ({
   deletable,
   readOnly,
   onDelete,
-}: ControlProps<"number", "number" | "expression">) => {
+}: ControlProps<"number">) => {
   const id = useId();
 
   const [isInvalid, setIsInvalid] = useState(false);
@@ -42,6 +42,7 @@ export const NumberControl = ({
     }
   );
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -50,7 +51,7 @@ export const NumberControl = ({
     <ResponsiveLayout
       label={
         <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -77,6 +78,11 @@ export const NumberControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "number") {
+              return `${label} expects a number value`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

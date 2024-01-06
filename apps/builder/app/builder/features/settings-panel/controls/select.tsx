@@ -21,7 +21,7 @@ export const SelectControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"select", "string" | "expression">) => {
+}: ControlProps<"select">) => {
   const id = useId();
 
   const value = computedValue === undefined ? undefined : String(computedValue);
@@ -31,6 +31,7 @@ export const SelectControl = ({
       ? meta.options
       : [value, ...meta.options];
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -39,7 +40,7 @@ export const SelectControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -64,6 +65,18 @@ export const SelectControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (
+              value !== undefined &&
+              meta.options.includes(String(value)) === false
+            ) {
+              const formatter = new Intl.ListFormat(undefined, {
+                type: "disjunction",
+              });
+              const options = formatter.format(meta.options);
+              return `${label} expects one of ${options}`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

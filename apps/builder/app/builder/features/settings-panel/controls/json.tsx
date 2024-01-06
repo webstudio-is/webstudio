@@ -24,7 +24,7 @@ export const JsonControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"json", "json" | "expression">) => {
+}: ControlProps<"json">) => {
   const valueString = formatValue(computedValue ?? "");
   const localValue = useLocalValue(valueString, (value) => {
     try {

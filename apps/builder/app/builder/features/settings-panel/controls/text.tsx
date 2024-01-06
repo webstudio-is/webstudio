@@ -21,7 +21,7 @@ export const TextControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"text", "string" | "expression">) => {
+}: ControlProps<"text">) => {
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
@@ -55,6 +55,11 @@ export const TextControl = ({
       <BindingPopover
         scope={scope}
         aliases={aliases}
+        validate={(value) => {
+          if (value !== undefined && typeof value !== "string") {
+            return `${label} expects a string value`;
+          }
+        }}
         value={expression}
         onChange={(newExpression) =>
           onChange({ type: "expression", value: newExpression })

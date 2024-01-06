@@ -56,7 +56,7 @@ export const FileControl = ({
   deletable,
   onChange,
   onDelete,
-}: ControlProps<"file", "asset" | "string" | "expression">) => {
+}: ControlProps<"file">) => {
   const id = useId();
 
   const localStringValue = useLocalValue(
@@ -78,6 +78,7 @@ export const FileControl = ({
     }
   );
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -86,7 +87,7 @@ export const FileControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -97,6 +98,11 @@ export const FileControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "string") {
+              return `${label} expects a string value or file`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

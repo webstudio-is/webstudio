@@ -34,10 +34,7 @@ import {
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 
-type UrlControlProps = ControlProps<
-  "url",
-  "string" | "page" | "asset" | "expression"
->;
+type UrlControlProps = ControlProps<"url">;
 
 type BaseControlProps = {
   id: string;
@@ -444,6 +441,7 @@ export const UrlControl = ({
 
   const BaseControl = modes[mode].control;
 
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -452,7 +450,7 @@ export const UrlControl = ({
     <VerticalLayout
       label={
         <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
+          {label}
         </Label>
       }
       deletable={deletable}
@@ -498,6 +496,11 @@ export const UrlControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "string") {
+              return `${label} expects a string value, page or file`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

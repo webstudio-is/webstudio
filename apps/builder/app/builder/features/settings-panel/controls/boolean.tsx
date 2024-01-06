@@ -19,8 +19,9 @@ export const BooleanControl = ({
   readOnly,
   onChange,
   onDelete,
-}: ControlProps<"boolean", "boolean" | "expression">) => {
+}: ControlProps<"boolean">) => {
   const id = useId();
+  const label = getLabel(meta, propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -38,7 +39,7 @@ export const BooleanControl = ({
       gap="2"
     >
       <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-        {getLabel(meta, propName)}
+        {label}
       </Label>
       <Box css={{ position: "relative" }}>
         <Switch
@@ -56,6 +57,11 @@ export const BooleanControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "boolean") {
+              return `${label} expects a boolean value`;
+            }
+          }}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

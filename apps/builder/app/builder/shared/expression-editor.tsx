@@ -212,9 +212,14 @@ const autocompletionStyle = css({
 const emptyScope: Scope = {};
 const emptyAliases: Aliases = new Map();
 
+const errorStyle = css({
+  borderColor: theme.colors.borderDestructiveMain,
+});
+
 export const ExpressionEditor = ({
   scope = emptyScope,
   aliases = emptyAliases,
+  color,
   autoFocus = false,
   readOnly = false,
   value,
@@ -229,6 +234,7 @@ export const ExpressionEditor = ({
    * variable aliases to show instead of $ws$dataSource$id
    */
   aliases?: Aliases;
+  color?: "error";
   autoFocus?: boolean;
   readOnly?: boolean;
   value: string;
@@ -275,6 +281,7 @@ export const ExpressionEditor = ({
   return (
     <CodeEditor
       extensions={extensions}
+      className={color === "error" ? errorStyle.toString() : undefined}
       readOnly={readOnly}
       autoFocus={autoFocus}
       value={value}
