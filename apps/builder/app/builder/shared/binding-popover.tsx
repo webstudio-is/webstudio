@@ -261,8 +261,8 @@ export const BindingPopover = ({
   onRemove: (evaluatedValue: unknown) => void;
 }) => {
   const [open, onOpenChange] = useState(false);
-  const hasUnsavedChange = useRef<boolean>();
-  const preventedClosing = useRef<boolean>();
+  const hasUnsavedChange = useRef<boolean>(false);
+  const preventedClosing = useRef<boolean>(false);
 
   if (isFeatureEnabled("bindings") === false) {
     return;
