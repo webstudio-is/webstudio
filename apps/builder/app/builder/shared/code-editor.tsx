@@ -38,6 +38,7 @@ const rootStyle = css({
 
 export const CodeEditor = ({
   extensions,
+  className,
   readOnly = false,
   autoFocus = false,
   value,
@@ -45,6 +46,7 @@ export const CodeEditor = ({
   onBlur,
 }: {
   extensions: Extension[];
+  className?: string;
   readOnly?: boolean;
   autoFocus?: boolean;
   value: string;
@@ -130,5 +132,9 @@ export const CodeEditor = ({
     });
   }, [value]);
 
-  return <div className={rootStyle.toString()} ref={editorRef}></div>;
+  let rootClassName = rootStyle.toString();
+  if (className) {
+    rootClassName += ` ${className}`;
+  }
+  return <div className={rootClassName} ref={editorRef}></div>;
 };

@@ -164,6 +164,7 @@ const BindingPanel = ({
             <ExpressionEditor
               scope={scope}
               aliases={aliases}
+              error={error !== undefined || valueError !== undefined}
               autoFocus={true}
               value={expression}
               onChange={(value) => {
