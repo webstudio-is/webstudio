@@ -50,6 +50,10 @@ import { ResourceForm } from "./resource-panel";
 const parseJsonValue = (code: string) => {
   const result: { value?: unknown; error?: string } = {};
   const ids = new Set<string>();
+  if (code.trim().length === 0) {
+    result.error = "Value is required";
+    return result;
+  }
   try {
     code = validateExpression(code, {
       optional: true,
@@ -273,7 +277,7 @@ const JsonForm = forwardRef<
       variable?.type === "variable" &&
       (variable.value.type === "json" || variable.value.type === "string[]")
         ? formatValue(variable.value.value)
-        : `""`,
+        : ``,
     validate: (value) => parseJsonValue(value).error,
   });
   const form = composeFields(nameField, valueField);
