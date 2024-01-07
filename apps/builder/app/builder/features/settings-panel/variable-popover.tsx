@@ -1,7 +1,14 @@
 import { nanoid } from "nanoid";
-import { forwardRef, useId, useState, type ReactNode } from "react";
 import {
-  Button,
+  forwardRef,
+  useId,
+  useState,
+  type ReactNode,
+  useImperativeHandle,
+  type Ref,
+  useRef,
+} from "react";
+import {
   Flex,
   FloatingPanelPopover,
   FloatingPanelPopoverContent,
@@ -10,11 +17,9 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
-  PanelTabs,
-  PanelTabsContent,
-  PanelTabsList,
-  PanelTabsTrigger,
   ScrollArea,
+  Select,
+  Switch,
   theme,
 } from "@webstudio-is/design-system";
 import { validateExpression } from "@webstudio-is/react-sdk";
@@ -29,15 +34,26 @@ import {
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { ResourcePanel } from "./resource-panel";
+import { humanizeString } from "~/shared/string-utils";
+import {
+  useField,
+  type Field,
+  composeFields,
+  type ComposedFields,
+} from "~/shared/form-utils";
+import { ResourceForm } from "./resource-panel";
 
 /**
  * convert value expression to js value
  * validating out accessing any identifier
  */
-const parseVariableValue = (code: string) => {
+const parseJsonValue = (code: string) => {
   const result: { value?: unknown; error?: string } = {};
   const ids = new Set<string>();
+  if (code.trim().length === 0) {
+    result.error = "Value is required";
+    return result;
+  }
   try {
     code = validateExpression(code, {
       optional: true,
@@ -64,154 +80,384 @@ const parseVariableValue = (code: string) => {
   return result;
 };
 
-const renameVariable = (variable: DataSource, name: string) => {
-  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-    dataSources.set(variable.id, { ...variable, name });
-  });
+type VariableType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "json"
+  | "resource"
+  | "parameter";
+
+type PanelApi = ComposedFields & {
+  save: () => void;
 };
 
-const saveVariable = (
-  dataSource: undefined | DataSource,
-  name: string,
-  valueString: string
-): undefined | { error?: string } => {
-  const dataSourceId = dataSource?.id ?? nanoid();
-  const { value, error } = parseVariableValue(valueString);
-  if (error !== undefined) {
-    return { error };
-  }
-  const instanceSelector = $selectedInstanceSelector.get();
-  if (instanceSelector === undefined) {
-    return;
-  }
-  const [instanceId] = instanceSelector;
-  let variableValue: Extract<DataSource, { type: "variable" }>["value"] = {
-    type: "json",
-    value,
-  };
-  if (typeof value === "string") {
-    variableValue = { type: "string", value };
-  }
-  if (typeof value === "number") {
-    variableValue = { type: "number", value };
-  }
-  if (typeof value === "boolean") {
-    variableValue = { type: "boolean", value };
-  }
-  serverSyncStore.createTransaction(
-    [$dataSources, $resources],
-    (dataSources, resources) => {
-      // cleanup resource when value variable is set
-      if (dataSource?.type === "resource") {
-        resources.delete(dataSource.resourceId);
+const ParameterForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
+  const form = composeFields(nameField);
+  useImperativeHandle(ref, () => ({
+    ...form,
+    save: () => {
+      // only existing parameter variables can be renamed
+      if (variable === undefined) {
+        return;
       }
-      dataSources.set(dataSourceId, {
-        id: dataSourceId,
-        // preserve existing instance scope when edit
-        scopeInstanceId:
-          dataSources.get(dataSourceId)?.scopeInstanceId ?? instanceId,
-        name,
-        type: "variable",
-        value: variableValue,
+      const name = nameField.value;
+      serverSyncStore.createTransaction([$dataSources], (dataSources) => {
+        dataSources.set(variable.id, { ...variable, name });
       });
-    }
-  );
+    },
+  }));
+  return <></>;
+});
+ParameterForm.displayName = "ParameterForm";
+
+const useValuePanelRef = ({
+  ref,
+  variable,
+  form,
+  name,
+  variableValue,
+}: {
+  ref: Ref<undefined | PanelApi>;
+  variable?: DataSource;
+  form: ComposedFields;
+  name: string;
+  variableValue: Extract<DataSource, { type: "variable" }>["value"];
+}) => {
+  useImperativeHandle(ref, () => ({
+    ...form,
+    save: () => {
+      const instanceSelector = $selectedInstanceSelector.get();
+      if (instanceSelector === undefined) {
+        return;
+      }
+      const [instanceId] = instanceSelector;
+      const dataSourceId = variable?.id ?? nanoid();
+      // preserve existing instance scope when edit
+      const scopeInstanceId = variable?.scopeInstanceId ?? instanceId;
+      serverSyncStore.createTransaction(
+        [$dataSources, $resources],
+        (dataSources, resources) => {
+          // cleanup resource when value variable is set
+          if (variable?.type === "resource") {
+            resources.delete(variable.resourceId);
+          }
+          dataSources.set(dataSourceId, {
+            id: dataSourceId,
+            scopeInstanceId,
+            name,
+            type: "variable",
+            value: variableValue,
+          });
+        }
+      );
+    },
+  }));
 };
 
-const VariableValuePanel = ({
-  variable,
-  onClose,
-}: {
-  variable?: DataSource;
-  onClose: () => void;
-}) => {
-  // variable value cannot have an access to other variables
-  const nameId = useId();
-  const [name, setName] = useState(variable?.name ?? "");
-  const [nameErrors, setNameErrors] = useState<undefined | string[]>();
+const StringForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
   const [value, setValue] = useState(
-    formatValue(
-      variable?.type === "variable" ? variable?.value.value ?? "" : ""
-    )
+    variable?.type === "variable" && variable.value.type === "string"
+      ? variable.value.value
+      : ""
   );
-  const [valueErrors, setValueErrors] = useState<undefined | string[]>();
-
+  const form = composeFields(nameField);
+  useValuePanelRef({
+    ref,
+    variable,
+    form,
+    name: nameField.value,
+    variableValue: { type: "string", value },
+  });
+  const valueId = useId();
   return (
-    <Flex
-      direction="column"
-      css={{
-        overflow: "hidden",
-        gap: theme.spacing[9],
-        px: theme.spacing[9],
-        pb: theme.spacing[9],
-      }}
-    >
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={nameId}>Name</Label>
-        <InputErrorsTooltip errors={nameErrors}>
-          <InputField
-            id={nameId}
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-        </InputErrorsTooltip>
-      </Flex>
-      {/* resource variable can be replaced with value variable
-          parameters can change only name */}
-      {variable?.type !== "parameter" && (
-        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-          <Label>Value</Label>
-          <InputErrorsTooltip errors={valueErrors}>
-            <div>
-              <ExpressionEditor value={value} onChange={setValue} />
-            </div>
-          </InputErrorsTooltip>
-        </Flex>
-      )}
-      <Flex justify="end" css={{ gap: theme.spacing[5] }}>
-        <Button color="neutral" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          onClick={() => {
-            if (name.length === 0) {
-              setNameErrors([`Variable name is required`]);
-              return;
-            }
-            if (variable?.type === "parameter") {
-              renameVariable(variable, name);
-              onClose();
-            }
-            // save value variable and convert from resource variable if necessary
-            const result = saveVariable(variable, name, value);
-            if (result?.error !== undefined) {
-              setValueErrors([result.error]);
-              return;
-            }
-            onClose();
-          }}
-        >
-          Save
-        </Button>
-      </Flex>
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label htmlFor={valueId}>Value</Label>
+      <InputField
+        id={valueId}
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+      />
     </Flex>
   );
-};
+});
+StringForm.displayName = "StringForm";
 
-const VariablePanel = ({
-  variable,
-  onClose,
-}: {
-  variable?: DataSource;
-  onClose: () => void;
-}) => {
-  const [tab, setTab] = useState(
-    variable?.type === "resource" ? "resource" : "value"
+const NumberForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
+  const valueField = useField<number | string>({
+    initialValue:
+      variable?.type === "variable" && variable.value.type === "number"
+        ? variable.value.value
+        : "",
+    validate: (value) => {
+      if (typeof value === "string" && value.length === 0) {
+        return "Value expects a number";
+      }
+      const number = Number(value);
+      return Number.isNaN(number) ? "Invalid number" : undefined;
+    },
+  });
+  const form = composeFields(nameField, valueField);
+  useValuePanelRef({
+    ref,
+    variable,
+    form,
+    name: nameField.value,
+    variableValue: { type: "number", value: Number(valueField.value) },
+  });
+  const valueId = useId();
+  return (
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label htmlFor={valueId}>Value</Label>
+      <InputErrorsTooltip
+        errors={valueField.error ? [valueField.error] : undefined}
+      >
+        <InputField
+          id={valueId}
+          type="number"
+          color={valueField.error ? "error" : undefined}
+          value={valueField.value}
+          onChange={(event) => {
+            valueField.onChange(
+              Number.isNaN(event.target.valueAsNumber)
+                ? event.target.value
+                : event.target.valueAsNumber
+            );
+          }}
+          onBlur={valueField.onBlur}
+        />
+      </InputErrorsTooltip>
+    </Flex>
+  );
+});
+NumberForm.displayName = "NumberForm";
+
+const BooleanForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
+  const [value, setValue] = useState(
+    variable?.type === "variable" && variable.value.type === "boolean"
+      ? variable.value.value
+      : false
+  );
+  const form = composeFields(nameField);
+  useValuePanelRef({
+    ref,
+    variable,
+    form,
+    name: nameField.value,
+    variableValue: { type: "boolean", value },
+  });
+  const valueId = useId();
+  return (
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label htmlFor={valueId}>Value</Label>
+      <Switch id={valueId} checked={value} onCheckedChange={setValue} />
+    </Flex>
+  );
+});
+BooleanForm.displayName = "BooleanForm";
+
+const JsonForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
+  const valueField = useField<string>({
+    initialValue:
+      variable?.type === "variable" &&
+      (variable.value.type === "json" || variable.value.type === "string[]")
+        ? formatValue(variable.value.value)
+        : ``,
+    validate: (value) => parseJsonValue(value).error,
+  });
+  const form = composeFields(nameField, valueField);
+  useValuePanelRef({
+    ref,
+    variable,
+    form,
+    name: nameField.value,
+    variableValue: {
+      type: "json",
+      value: parseJsonValue(valueField.value).value,
+    },
+  });
+  return (
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label>Value</Label>
+      <InputErrorsTooltip
+        errors={valueField.error ? [valueField.error] : undefined}
+      >
+        {/* use div to position tooltip */}
+        <div>
+          <ExpressionEditor
+            color={valueField.error ? "error" : undefined}
+            value={valueField.value}
+            onChange={valueField.onChange}
+            onBlur={valueField.onBlur}
+          />
+        </div>
+      </InputErrorsTooltip>
+    </Flex>
+  );
+});
+JsonForm.displayName = "JsonForm";
+
+const VariablePanel = forwardRef<
+  undefined | PanelApi,
+  {
+    variable?: DataSource;
+  }
+>(({ variable }, ref) => {
+  const nameField = useField({
+    initialValue: variable?.name ?? "",
+    validate: (value) =>
+      value.trim().length === 0 ? "Name is required" : undefined,
+  });
+  const nameId = useId();
+  const nameFieldElement = (
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label htmlFor={nameId}>Name</Label>
+      <InputErrorsTooltip
+        errors={nameField.error ? [nameField.error] : undefined}
+      >
+        <InputField
+          id={nameId}
+          color={nameField.error ? "error" : undefined}
+          value={nameField.value}
+          onChange={(event) => nameField.onChange(event.target.value)}
+          onBlur={nameField.onBlur}
+        />
+      </InputErrorsTooltip>
+    </Flex>
   );
 
+  const [type, setType] = useState<VariableType>(() => {
+    if (variable?.type === "parameter" || variable?.type === "resource") {
+      return variable.type;
+    }
+    if (variable?.type === "variable") {
+      const type = variable.value.type;
+      if (type === "string" || type === "number" || type === "boolean") {
+        return type;
+      }
+      return "json";
+    }
+    return "string";
+  });
+  const typeFieldElement = (
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label>Type</Label>
+      <Select<VariableType>
+        options={["string", "number", "boolean", "json", "resource"]}
+        getLabel={(value: VariableType) =>
+          value === "json" ? "JSON" : humanizeString(value)
+        }
+        value={type}
+        onChange={setType}
+      />
+    </Flex>
+  );
+
+  if (type === "parameter") {
+    return (
+      <>
+        {nameFieldElement}
+        <ParameterForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+  if (type === "string") {
+    return (
+      <>
+        {nameFieldElement}
+        {typeFieldElement}
+        <StringForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+  if (type === "number") {
+    return (
+      <>
+        {nameFieldElement}
+        {typeFieldElement}
+        <NumberForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+  if (type === "boolean") {
+    return (
+      <>
+        {nameFieldElement}
+        {typeFieldElement}
+        <BooleanForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+  if (type === "json") {
+    return (
+      <>
+        {nameFieldElement}
+        {typeFieldElement}
+        <JsonForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+  if (type === "resource") {
+    return (
+      <>
+        {nameFieldElement}
+        {typeFieldElement}
+        <ResourceForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+});
+VariablePanel.displayName = "VariablePanel";
+
+export const VariablePopoverTrigger = forwardRef<
+  HTMLButtonElement,
+  { variable?: DataSource; children: ReactNode }
+>(({ variable, children }, ref) => {
+  const [open, setOpen] = useState(false);
+  const panelRef = useRef<undefined | PanelApi>();
+  const saveAndClose = () => {
+    if (panelRef.current) {
+      if (panelRef.current.allErrorsVisible === false) {
+        panelRef.current.showAllErrors();
+        return;
+      }
+      if (panelRef.current.valid) {
+        panelRef.current.save();
+      }
+    }
+    setOpen(false);
+  };
   return (
-    <PanelTabs value={tab} onValueChange={setTab} asChild>
-      <Flex direction="column">
+    <FloatingPanelPopover
+      modal
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (newOpen === false) {
+          saveAndClose();
+          return;
+        }
+        setOpen(newOpen);
+      }}
+    >
+      <FloatingPanelPopoverTrigger ref={ref} asChild>
+        {children}
+      </FloatingPanelPopoverTrigger>
+      <FloatingPanelPopoverContent side="left" align="start">
         <ScrollArea
           css={{
             // flex fixes content overflowing artificial scroll area
@@ -220,37 +466,28 @@ const VariablePanel = ({
             width: theme.spacing[30],
           }}
         >
-          {/* user can change only parameter name */}
-          {variable?.type !== "parameter" && (
-            <PanelTabsList>
-              <PanelTabsTrigger value="value">Value</PanelTabsTrigger>
-              <PanelTabsTrigger value="resource">Resource</PanelTabsTrigger>
-            </PanelTabsList>
-          )}
-          <PanelTabsContent value="value">
-            <VariableValuePanel variable={variable} onClose={onClose} />
-          </PanelTabsContent>
-          <PanelTabsContent value="resource">
-            <ResourcePanel variable={variable} onClose={onClose} />
-          </PanelTabsContent>
+          <Flex
+            direction="column"
+            css={{
+              overflow: "hidden",
+              gap: theme.spacing[9],
+              pt: theme.spacing[5],
+              px: theme.spacing[9],
+              pb: theme.spacing[9],
+            }}
+          >
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveAndClose();
+              }}
+            >
+              {/* submit is not triggered when press enter on input without submit button */}
+              <button style={{ display: "none" }}>submit</button>
+              <VariablePanel ref={panelRef} variable={variable} />
+            </form>
+          </Flex>
         </ScrollArea>
-      </Flex>
-    </PanelTabs>
-  );
-};
-
-export const VariablePopoverTrigger = forwardRef<
-  HTMLButtonElement,
-  { variable?: DataSource; children: ReactNode }
->(({ variable, children }, ref) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <FloatingPanelPopover modal open={open} onOpenChange={setOpen}>
-      <FloatingPanelPopoverTrigger ref={ref} asChild>
-        {children}
-      </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent side="left" align="start">
-        <VariablePanel variable={variable} onClose={() => setOpen(false)} />
         {/* put after content to avoid auto focusing "Close" button */}
         {variable === undefined ? (
           <FloatingPanelPopoverTitle>New Variable</FloatingPanelPopoverTitle>

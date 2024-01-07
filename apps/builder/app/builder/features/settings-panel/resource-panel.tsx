@@ -1,6 +1,12 @@
 import { computed } from "nanostores";
 import { nanoid } from "nanoid";
-import { useId, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useId,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import { useStore } from "@nanostores/react";
 import type { DataSource, Resource } from "@webstudio-is/sdk";
 import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
@@ -9,6 +15,7 @@ import {
   Button,
   Flex,
   Grid,
+  InputErrorsTooltip,
   InputField,
   Label,
   Select,
@@ -30,6 +37,25 @@ import {
   evaluateExpressionWithinScope,
   isLiteralExpression,
 } from "~/builder/shared/binding-popover";
+import {
+  type Field,
+  type ComposedFields,
+  useField,
+  composeFields,
+} from "~/shared/form-utils";
+
+const validateHeaderName = (value: string) =>
+  value.trim().length === 0 ? "Header name is required" : undefined;
+
+const validateHeaderValue = (value: string, scope: Record<string, unknown>) => {
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  if (typeof evaluatedValue !== "string") {
+    return "Header value expects a string";
+  }
+  if (evaluatedValue.length === 0) {
+    return "Header value is required";
+  }
+};
 
 const HeaderPair = ({
   editorAliases,
@@ -49,6 +75,17 @@ const HeaderPair = ({
   const nameId = useId();
   const valueId = useId();
 
+  // temporary fields to validate name and value only onBlur
+  // invalid headers will be removed on save
+  const nameField = useField({
+    initialValue: name,
+    validate: validateHeaderName,
+  });
+  const valueField = useField({
+    initialValue: value,
+    validate: (value) => validateHeaderValue(value, editorScope),
+  });
+
   return (
     <Grid
       gap={2}
@@ -64,14 +101,21 @@ const HeaderPair = ({
       <Label htmlFor={nameId} css={{ gridArea: "name" }}>
         Name
       </Label>
-      <InputField
-        css={{ gridArea: "name-input" }}
-        id={nameId}
-        value={name}
-        onChange={(event) => {
-          onChange(event.target.value, value);
-        }}
-      />
+      <InputErrorsTooltip
+        errors={nameField.error ? [nameField.error] : undefined}
+      >
+        <InputField
+          css={{ gridArea: "name-input" }}
+          id={nameId}
+          color={nameField.error ? "error" : undefined}
+          value={name}
+          onChange={(event) => {
+            nameField.onChange(event.target.value);
+            onChange(event.target.value, value);
+          }}
+          onBlur={nameField.onBlur}
+        />
+      </InputErrorsTooltip>
       <Label htmlFor={valueId} css={{ gridArea: "value" }}>
         Value
       </Label>
@@ -80,21 +124,34 @@ const HeaderPair = ({
           scope={editorScope}
           aliases={editorAliases}
           value={value}
-          onChange={(newValue) => onChange(name, newValue)}
-          onRemove={(evaluatedValue) =>
-            onChange(name, JSON.stringify(evaluatedValue))
-          }
+          onChange={(newValue) => {
+            valueField.onChange(newValue);
+            valueField.onBlur();
+            onChange(name, newValue);
+          }}
+          onRemove={(evaluatedValue) => {
+            valueField.onChange(JSON.stringify(evaluatedValue));
+            valueField.onBlur();
+            onChange(name, JSON.stringify(evaluatedValue));
+          }}
         />
-        <InputField
-          id={valueId}
-          // expressions with variables cannot be edited
-          disabled={isLiteralExpression(value) === false}
-          value={String(evaluateExpressionWithinScope(value, editorScope))}
-          // update text value as string literal
-          onChange={(event) =>
-            onChange(name, JSON.stringify(event.target.value))
-          }
-        />
+        <InputErrorsTooltip
+          errors={valueField.error ? [valueField.error] : undefined}
+        >
+          <InputField
+            id={valueId}
+            // expressions with variables cannot be edited
+            disabled={isLiteralExpression(value) === false}
+            color={valueField.error ? "error" : undefined}
+            value={String(evaluateExpressionWithinScope(value, editorScope))}
+            // update text value as string literal
+            onChange={(event) => {
+              valueField.onChange(JSON.stringify(event.target.value));
+              onChange(name, JSON.stringify(event.target.value));
+            }}
+            onBlur={valueField.onBlur}
+          />
+        </InputErrorsTooltip>
       </Box>
 
       <Grid
@@ -209,33 +266,14 @@ const $selectedInstanceScope = computed(
   }
 );
 
-export const ResourcePanel = ({
-  variable,
-  onClose,
-}: {
-  variable?: DataSource;
-  onClose: () => void;
-}) => {
-  const resources = useStore($resources);
-  const resource =
-    variable?.type === "resource"
-      ? resources.get(variable.resourceId)
-      : undefined;
+type PanelApi = ComposedFields & {
+  save: () => void;
+};
 
-  const nameId = useId();
-  const [name, setName] = useState(variable?.name ?? "");
-  const urlId = useId();
-  // empty string as default
-  const [url, setUrl] = useState(resource?.url ?? `""`);
-  const [method, setMethod] = useState<Resource["method"]>(
-    resource?.method ?? "get"
-  );
-  const [headers, setHeaders] = useState<Resource["headers"]>(
-    resource?.headers ?? []
-  );
-  // empty string as default
-  const [body, setBody] = useState(resource?.body ?? `""`);
-
+export const ResourceForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
   const { scope: scopeWithCurrentVariable, aliases } = useStore(
     $selectedInstanceScope
   );
@@ -251,44 +289,126 @@ export const ResourcePanel = ({
     return newScope;
   }, [scopeWithCurrentVariable, currentVariableId]);
 
+  const resources = useStore($resources);
+  const resource =
+    variable?.type === "resource"
+      ? resources.get(variable.resourceId)
+      : undefined;
+
+  const urlField = useField<string>({
+    initialValue: resource?.url ?? `""`,
+    validate: (value) => {
+      const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+      if (typeof evaluatedValue !== "string") {
+        return "URL expects a string";
+      }
+      if (evaluatedValue.length === 0) {
+        return "URL is required";
+      }
+    },
+  });
+  const [method, setMethod] = useState<Resource["method"]>(
+    resource?.method ?? "get"
+  );
+  const headersField = useField<Resource["headers"]>({
+    initialValue: resource?.headers ?? [],
+    validate: (_value) => undefined,
+  });
+  const bodyField = useField<string>({
+    initialValue: resource?.body ?? `""`,
+    validate: (value) => {
+      const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+      if (typeof evaluatedValue !== "string") {
+        return "Body expects a string";
+      }
+    },
+  });
+
+  const form = composeFields(nameField, urlField, headersField, bodyField);
+  useImperativeHandle(ref, () => ({
+    ...form,
+    save: () => {
+      const instanceSelector = $selectedInstanceSelector.get();
+      if (instanceSelector === undefined) {
+        return;
+      }
+      const [instanceId] = instanceSelector;
+      const newHeaders = headersField.value.flatMap((header) => {
+        // exclude invalid headers
+        if (
+          validateHeaderName(header.name) !== undefined ||
+          validateHeaderValue(header.value, scope) !== undefined
+        ) {
+          return [];
+        }
+        return [header];
+      });
+      // clear invalid headers on save
+      headersField.onChange(newHeaders);
+      const newResource: Resource = {
+        id: resource?.id ?? nanoid(),
+        name: nameField.value,
+        url: urlField.value,
+        method,
+        headers: newHeaders,
+        body: bodyField.value,
+      };
+      const newVariable: DataSource = {
+        id: variable?.id ?? nanoid(),
+        // preserve existing instance scope when edit
+        scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
+        name: nameField.value,
+        type: "resource",
+        resourceId: newResource.id,
+      };
+      serverSyncStore.createTransaction(
+        [$dataSources, $resources],
+        (dataSources, resources) => {
+          dataSources.set(newVariable.id, newVariable);
+          resources.set(newResource.id, newResource);
+        }
+      );
+    },
+  }));
+
+  const urlId = useId();
+
   return (
-    <Flex
-      direction="column"
-      css={{
-        overflow: "hidden",
-        gap: theme.spacing[9],
-        px: theme.spacing[9],
-        pb: theme.spacing[9],
-      }}
-    >
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={nameId}>Name</Label>
-        <InputField
-          id={nameId}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
-      </Flex>
+    <>
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={urlId}>URL</Label>
         <Box css={{ position: "relative" }}>
           <BindingPopover
             scope={scope}
             aliases={aliases}
-            value={url}
-            onChange={setUrl}
-            onRemove={(evaluatedValue) =>
-              setUrl(JSON.stringify(evaluatedValue))
-            }
+            value={urlField.value}
+            onChange={(value) => {
+              urlField.onChange(value);
+              urlField.onBlur();
+            }}
+            onRemove={(evaluatedValue) => {
+              urlField.onChange(JSON.stringify(evaluatedValue));
+              urlField.onBlur();
+            }}
           />
-          <InputField
-            id={urlId}
-            // expressions with variables cannot be edited
-            disabled={isLiteralExpression(url) === false}
-            value={String(evaluateExpressionWithinScope(url, scope))}
-            // update text value as string literal
-            onChange={(event) => setUrl(JSON.stringify(event.target.value))}
-          />
+          <InputErrorsTooltip
+            errors={urlField.error ? [urlField.error] : undefined}
+          >
+            <InputField
+              id={urlId}
+              // expressions with variables cannot be edited
+              disabled={isLiteralExpression(urlField.value) === false}
+              color={urlField.error ? "error" : undefined}
+              value={String(
+                evaluateExpressionWithinScope(urlField.value, scope)
+              )}
+              // update text value as string literal
+              onChange={(event) =>
+                urlField.onChange(JSON.stringify(event.target.value))
+              }
+              onBlur={urlField.onBlur}
+            />
+          </InputErrorsTooltip>
         </Box>
       </Flex>
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
@@ -305,8 +425,8 @@ export const ResourcePanel = ({
         <Headers
           editorScope={scope}
           editorAliases={aliases}
-          headers={headers}
-          onChange={setHeaders}
+          headers={headersField.value}
+          onChange={headersField.onChange}
         />
       </Flex>
       {method !== "get" && (
@@ -316,65 +436,39 @@ export const ResourcePanel = ({
             <BindingPopover
               scope={scope}
               aliases={aliases}
-              value={body}
-              onChange={setBody}
-              onRemove={(evaluatedValue) =>
-                setBody(JSON.stringify(evaluatedValue))
-              }
+              value={bodyField.value}
+              onChange={(value) => {
+                bodyField.onChange(value);
+                bodyField.onBlur();
+              }}
+              onRemove={(evaluatedValue) => {
+                bodyField.onChange(JSON.stringify(evaluatedValue));
+                bodyField.onBlur();
+              }}
             />
-            <TextArea
-              autoGrow={true}
-              maxRows={10}
-              // expressions with variables cannot be edited
-              disabled={isLiteralExpression(body) === false}
-              value={String(evaluateExpressionWithinScope(body, scope))}
-              // update text value as string literal
-              onChange={(newValue) => setBody(JSON.stringify(newValue))}
-            />
+            <InputErrorsTooltip
+              errors={bodyField.error ? [bodyField.error] : undefined}
+            >
+              <TextArea
+                autoGrow={true}
+                maxRows={10}
+                // expressions with variables cannot be edited
+                disabled={isLiteralExpression(bodyField.value) === false}
+                state={bodyField.error ? "invalid" : undefined}
+                value={String(
+                  evaluateExpressionWithinScope(bodyField.value, scope)
+                )}
+                // update text value as string literal
+                onChange={(newValue) =>
+                  bodyField.onChange(JSON.stringify(newValue))
+                }
+                onBlur={bodyField.onBlur}
+              />
+            </InputErrorsTooltip>
           </Box>
         </Flex>
       )}
-
-      <Flex justify="end" css={{ gap: theme.spacing[5] }}>
-        <Button color="neutral" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          onClick={() => {
-            const instanceSelector = $selectedInstanceSelector.get();
-            if (instanceSelector === undefined) {
-              return;
-            }
-            const [instanceId] = instanceSelector;
-            const newResource: Resource = {
-              id: resource?.id ?? nanoid(),
-              name,
-              url,
-              method,
-              headers,
-              body,
-            };
-            const newVariable: DataSource = {
-              id: variable?.id ?? nanoid(),
-              // preserve existing instance scope when edit
-              scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
-              name,
-              type: "resource",
-              resourceId: newResource.id,
-            };
-            serverSyncStore.createTransaction(
-              [$dataSources, $resources],
-              (dataSources, resources) => {
-                dataSources.set(newVariable.id, newVariable);
-                resources.set(newResource.id, newResource);
-              }
-            );
-            onClose();
-          }}
-        >
-          Save
-        </Button>
-      </Flex>
-    </Flex>
+    </>
   );
-};
+});
+ResourceForm.displayName = "ResourceForm";

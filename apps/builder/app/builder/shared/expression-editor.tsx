@@ -53,9 +53,6 @@ export const formatValuePreview = (value: unknown) => {
   if (Number.isNaN(value)) {
     return "nan";
   }
-  if (Array.isArray(value)) {
-    return "array";
-  }
   if (typeof value === "number") {
     return value.toString();
   }
@@ -68,7 +65,7 @@ export const formatValuePreview = (value: unknown) => {
   if (value === null) {
     return "null";
   }
-  return typeof value;
+  return "JSON";
 };
 
 type Scope = Record<string, unknown>;
