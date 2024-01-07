@@ -17,8 +17,8 @@ import {
 import {
   ChevronRightIcon,
   MenuIcon,
+  NewPageIcon,
   PageIcon,
-  PlusIcon,
 } from "@webstudio-is/icons";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
@@ -174,7 +174,7 @@ const PagesPanel = ({
                 <Button
                   onClick={() => onCreateNewPage()}
                   aria-label="New page"
-                  prefix={<PlusIcon />}
+                  prefix={<NewPageIcon />}
                   color="ghost"
                 />
               </Tooltip>
