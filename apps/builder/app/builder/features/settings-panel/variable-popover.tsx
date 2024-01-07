@@ -430,19 +430,26 @@ export const VariablePopoverTrigger = forwardRef<
 >(({ variable, children }, ref) => {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<undefined | PanelApi>();
+  const saveAndClose = () => {
+    if (panelRef.current) {
+      if (panelRef.current.allErrorsVisible === false) {
+        panelRef.current.showAllErrors();
+        return;
+      }
+      if (panelRef.current.valid) {
+        panelRef.current.save();
+      }
+    }
+    setOpen(false);
+  };
   return (
     <FloatingPanelPopover
       modal
       open={open}
       onOpenChange={(newOpen) => {
-        if (newOpen === false && panelRef.current) {
-          if (panelRef.current.allErrorsVisible === false) {
-            panelRef.current.showAllErrors();
-            return;
-          }
-          if (panelRef.current.valid) {
-            panelRef.current.save();
-          }
+        if (newOpen === false) {
+          saveAndClose();
+          return;
         }
         setOpen(newOpen);
       }}
@@ -469,7 +476,16 @@ export const VariablePopoverTrigger = forwardRef<
               pb: theme.spacing[9],
             }}
           >
-            <VariablePanel ref={panelRef} variable={variable} />
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                saveAndClose();
+              }}
+            >
+              {/* submit is not triggered when press enter on input without submit button */}
+              <button style={{ display: "none" }}>submit</button>
+              <VariablePanel ref={panelRef} variable={variable} />
+            </form>
           </Flex>
         </ScrollArea>
         {/* put after content to avoid auto focusing "Close" button */}
