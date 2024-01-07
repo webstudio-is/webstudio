@@ -15,7 +15,6 @@ import {
   ScrollArea,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import type { Publish } from "~/shared/pubsub";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { TabName } from "../../types";
 import { Header, CloseButton } from "../../header";
@@ -32,17 +31,15 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
-  publish: Publish;
 };
 
-export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
+export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore(registeredComponentMetasStore);
   const { metaByCategory, componentNamesByMeta } = useMemo(
     () => getMetaMaps(metaByComponentName),
     [metaByComponentName]
   );
   const { dragCard, handleInsert, draggableContainerRef } = useDraggable({
-    publish,
     metaByComponentName,
   });
   const { pressProps } = usePress({

@@ -3,7 +3,7 @@ import { Store, type Change } from "immerhin";
 import { enableMapSet } from "immer";
 import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
-import { type Publish, subscribe } from "~/shared/pubsub";
+import { publish, subscribe } from "~/shared/pubsub";
 import {
   projectStore,
   pagesStore,
@@ -143,7 +143,7 @@ export const registerContainers = () => {
   }
 };
 
-const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
+const syncStoresChanges = (name: SyncEventSource) => {
   const unsubscribeRemoteChanges = subscribe(
     "sendStoreChanges",
     ({ source, namespace, changes }) => {
@@ -203,7 +203,7 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   };
 };
 
-const syncStoresState = (name: SyncEventSource, publish: Publish) => {
+const syncStoresState = (name: SyncEventSource) => {
   const latestData = new Map<string, unknown>();
 
   const unsubscribeRemoteChanges = subscribe(
@@ -272,7 +272,7 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   };
 };
 
-export const useCanvasStore = (publish: Publish) => {
+export const useCanvasStore = () => {
   useEffect(() => {
     // connect to builder to get latest changes
     publish({
@@ -301,8 +301,8 @@ export const useCanvasStore = (publish: Publish) => {
 
     // subscribe stores after connect even so builder is ready to receive
     // changes from immerhin queue
-    const unsubscribeStoresState = syncStoresState("canvas", publish);
-    const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
+    const unsubscribeStoresState = syncStoresState("canvas");
+    const unsubscribeStoresChanges = syncStoresChanges("canvas");
 
     return () => {
       publish({
@@ -312,10 +312,10 @@ export const useCanvasStore = (publish: Publish) => {
       unsubscribeStoresState();
       unsubscribeStoresChanges();
     };
-  }, [publish]);
+  }, []);
 };
 
-export const useBuilderStore = (publish: Publish) => {
+export const useBuilderStore = () => {
   useEffect(() => {
     let unsubscribeStoresState: undefined | (() => void);
     let unsubscribeStoresChanges: undefined | (() => void);
@@ -324,8 +324,8 @@ export const useBuilderStore = (publish: Publish) => {
       // changes from immerhin queue
       // @todo subscribe prematurely and compute initial changes
       // from current state whenever new app is connected
-      unsubscribeStoresState = syncStoresState("builder", publish);
-      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
+      unsubscribeStoresState = syncStoresState("builder");
+      unsubscribeStoresChanges = syncStoresChanges("builder");
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
@@ -363,5 +363,5 @@ export const useBuilderStore = (publish: Publish) => {
       unsubscribeStoresState?.();
       unsubscribeStoresChanges?.();
     };
-  }, [publish]);
+  }, []);
 };

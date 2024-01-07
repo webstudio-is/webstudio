@@ -1,5 +1,5 @@
 import { createNanoEvents } from "nanoevents";
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { batchUpdate } from "./raf-queue";
 
 export const createPubsub = <PublishMap>() => {
@@ -11,8 +11,8 @@ export const createPubsub = <PublishMap>() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const emitter = createNanoEvents<Record<any, any>>();
 
-  if (typeof window === "object") {
-    window.addEventListener(
+  if (globalThis.addEventListener) {
+    globalThis.addEventListener(
       "message",
       (event: MessageEvent) => {
         // @todo this has no type safety built in, could be anything from any source.
@@ -27,32 +27,36 @@ export const createPubsub = <PublishMap>() => {
     );
   }
 
+  const iframes = new Set<HTMLIFrameElement>();
+  const registerIframe = (element: HTMLIFrameElement) => {
+    iframes.add(element);
+    return () => {
+      iframes.delete(element);
+    };
+  };
+
   return {
+    registerIframe,
+
     /**
      * To publish a postMessage event on the current window and parent window from the iframe.
      */
     publish<Type extends keyof PublishMap>(action: Action<Type>) {
-      window.parent.postMessage(action, "*");
-      window.postMessage(action, "*");
-    },
-
-    /**
-     * To publish a postMessage event on the iframe and parent window from the parent window.
-     */
-    usePublish() {
-      const iframeRef = useRef<HTMLIFrameElement | null>(null);
-      const publishCallback = useCallback(
-        <Type extends keyof PublishMap>(action: Action<Type>) => {
-          const element = iframeRef.current;
-          if (element?.contentWindow == null) {
-            return;
-          }
-          element.contentWindow.postMessage(action, "*");
-          window.postMessage(action, "*");
-        },
-        [iframeRef]
-      );
-      return [publishCallback, iframeRef] as const;
+      // avoid double events when no parent window
+      // and window.parent references window itself
+      if (typeof window !== "undefined" && window.parent !== window) {
+        window.parent.postMessage(action, "*");
+      }
+      // broadcast actions to connected plugins
+      for (const element of iframes) {
+        element.contentWindow?.postMessage(action, "*");
+      }
+      // support node environment for testing
+      if (globalThis.postMessage) {
+        globalThis.postMessage(action, "*");
+      } else {
+        emitter.emit(action.type, action.payload);
+      }
     },
 
     /**

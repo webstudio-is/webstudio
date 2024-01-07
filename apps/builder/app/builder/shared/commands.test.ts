@@ -7,7 +7,7 @@ import {
   selectedInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
-import { emitCommand } from "./commands";
+import { emitCommand, subscribeCommands } from "./commands";
 
 registerContainers();
 
@@ -20,6 +20,12 @@ const createInstancePair = (
 };
 
 const metas = new Map(Object.entries(baseMetas));
+
+globalThis.document = {
+  addEventListener: () => {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any;
+subscribeCommands();
 
 describe("deleteInstance", () => {
   // body
