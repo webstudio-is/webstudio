@@ -550,6 +550,15 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     description: "Defines the language used in the element.",
   },
+  loading: {
+    description:
+      "Not a Vimeo attribute: Loading attribute for the iframe allows to eager or lazy load the source",
+    required: false,
+    control: "radio",
+    type: "string",
+    defaultValue: "lazy",
+    options: ["eager", "lazy"],
+  },
   loop: {
     description:
       "Whether to restart the video automatically after reaching the end.",
@@ -653,7 +662,7 @@ export const props: Record<string, PropMeta> = {
   },
   showPreview: {
     description:
-      "Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower.",
+      "Not a Vimeo attribute: Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower.",
     required: false,
     control: "boolean",
     type: "boolean",
