@@ -355,7 +355,9 @@ const VariablePanel = forwardRef<
       <Label>Type</Label>
       <Select<VariableType>
         options={["string", "number", "boolean", "json", "resource"]}
-        getLabel={humanizeString}
+        getLabel={(value: VariableType) =>
+          value === "json" ? "JSON" : humanizeString(value)
+        }
         value={type}
         onChange={setType}
       />
