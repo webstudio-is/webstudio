@@ -20,41 +20,16 @@ import {
   PageIcon,
   PlusIcon,
 } from "@webstudio-is/icons";
-import type { Page, Pages } from "@webstudio-is/sdk";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import { $pages, $selectedPageId } from "~/shared/nano-states";
+import { $pages, $selectedPageId, $folders } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
+import { toTreeData, type TreeData } from "./page-utils";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
-};
-
-type PagesTreeNode =
-  | {
-      // currently used only for root node
-      type: "folder";
-      id: string;
-      children: PagesTreeNode[];
-    }
-  | {
-      type: "page";
-      id: string;
-      data: Page;
-    };
-
-const toTreeData = (pages: Pages): PagesTreeNode => {
-  return {
-    type: "folder",
-    id: "root",
-    children: [pages.homePage, ...pages.pages].map((data) => ({
-      type: "page",
-      id: data.id,
-      data,
-    })),
-  };
 };
 
 const MenuButton = styled(DeprecatedIconButton, {
@@ -130,10 +105,14 @@ const PagesPanel = ({
   editingPageId?: string;
 }) => {
   const pages = useStore($pages);
-  const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
+  const folders = useStore($folders);
+  const treeData = useMemo(
+    () => pages && toTreeData(folders, pages),
+    [folders, pages]
+  );
 
   const renderItem = useCallback(
-    (props: TreeItemRenderProps<PagesTreeNode>) => {
+    (props: TreeItemRenderProps<TreeData>) => {
       if (props.itemData.type === "folder") {
         return null;
       }
@@ -170,7 +149,7 @@ const PagesPanel = ({
     [onSelect]
   );
 
-  if (pagesTree === undefined) {
+  if (treeData === undefined) {
     return null;
   }
 
@@ -205,18 +184,18 @@ const PagesPanel = ({
         }
       />
       <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
-        <TreeNode<PagesTreeNode>
-          selectedItemSelector={[selectedPageId, pagesTree.id]}
+        <TreeNode<TreeData>
+          selectedItemSelector={[selectedPageId, treeData.id]}
           onSelect={selectTreeNode}
-          itemData={pagesTree}
+          itemData={treeData}
           renderItem={renderItem}
           getItemChildren={([nodeId]) => {
-            if (nodeId === pagesTree.id && pagesTree.type === "folder") {
-              return pagesTree.children;
+            if (nodeId === treeData.id && treeData.type === "folder") {
+              return treeData.children;
             }
             return [];
           }}
-          isItemHidden={([itemId]) => itemId === pagesTree.id}
+          isItemHidden={([itemId]) => itemId === treeData.id}
           getIsExpanded={() => true}
         />
       </Box>

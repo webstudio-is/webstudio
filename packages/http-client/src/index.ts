@@ -3,6 +3,7 @@ import type {
   Breakpoint,
   DataSource,
   Deployment,
+  Folder,
   Instance,
   Page,
   Pages,
@@ -23,6 +24,7 @@ export type Data = {
     version: number;
     createdAt: string;
     updatedAt: string;
+    folders: Array<Folder>;
     pages: Pages;
     breakpoints: [Breakpoint["id"], Breakpoint][];
     styles: [StyleDeclKey, StyleDecl][];

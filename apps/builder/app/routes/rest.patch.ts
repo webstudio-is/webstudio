@@ -6,6 +6,7 @@ import {
   Breakpoints,
   Instances,
   Pages,
+  Folder,
   Props,
   DataSources,
   StyleSourceSelections,
@@ -16,6 +17,7 @@ import {
 import type { Build } from "@webstudio-is/project-build";
 import {
   parsePages,
+  parseFolders,
   parseInstances,
   parseStyleSourceSelections,
   parseStyleSources,
@@ -101,6 +103,7 @@ export const action = async ({ request }: ActionArgs) => {
 
     const buildData: {
       pages?: Pages;
+      folders?: Array<Folder>;
       breakpoints?: Breakpoints;
       instances?: Instances;
       props?: Props;
@@ -125,6 +128,12 @@ export const action = async ({ request }: ActionArgs) => {
           // lazily parse build data before patching
           const pages = buildData.pages ?? parsePages(build.pages);
           buildData.pages = applyPatches(pages, patches);
+          continue;
+        }
+
+        if (namespace === "folders") {
+          const folders = buildData.folders ?? parseFolders(build.folders);
+          buildData.folders = applyPatches(folders, patches);
           continue;
         }
 

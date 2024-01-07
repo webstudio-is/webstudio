@@ -1,5 +1,6 @@
 export * from "./db/build";
 export * from "./db/pages";
+export * from "./db/folders";
 export * from "./db/breakpoints";
 export * from "./db/styles";
 export * from "./db/style-sources";

@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const MIN_TITLE_LENGTH = 2;
 
+export const PageId = z.string();
+
 export const PageName = z
   .string()
   .refine((value) => value.trim() !== "", "Can't be empty");
@@ -14,7 +16,7 @@ export const PageTitle = z
   );
 
 const commonPageFields = {
-  id: z.string(),
+  id: PageId,
   name: PageName,
   title: PageTitle,
   meta: z.object({
