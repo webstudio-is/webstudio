@@ -17,6 +17,7 @@ import {
 import {
   ChevronRightIcon,
   MenuIcon,
+  NewFolderIcon,
   NewPageIcon,
   PageIcon,
 } from "@webstudio-is/icons";
@@ -91,17 +92,19 @@ const ItemSuffix = ({
 
 const PagesPanel = ({
   onClose,
+  onCreateNewFolder,
   onCreateNewPage,
   onSelect,
   selectedPageId,
   onEdit,
   editingPageId,
 }: {
-  onClose?: () => void;
-  onCreateNewPage?: () => void;
+  onClose: () => void;
+  onCreateNewFolder: () => void;
+  onCreateNewPage: () => void;
   onSelect: (pageId: string) => void;
   selectedPageId: string;
-  onEdit?: (pageId: string | undefined) => void;
+  onEdit: (pageId: string | undefined) => void;
   editingPageId?: string;
 }) => {
   const pages = useStore($pages);
@@ -123,14 +126,12 @@ const PagesPanel = ({
         <TreeItemBody
           {...props}
           suffix={
-            onEdit && (
-              <ItemSuffix
-                isParentSelected={props.isSelected ?? false}
-                itemId={props.itemData.id}
-                editingItemId={editingPageId}
-                onEdit={onEdit}
-              />
-            )
+            <ItemSuffix
+              isParentSelected={props.isSelected ?? false}
+              itemId={props.itemData.id}
+              editingItemId={editingPageId}
+              onEdit={onEdit}
+            />
           }
           alwaysShowSuffix={isEditing}
           forceFocus={isEditing}
@@ -169,17 +170,23 @@ const PagesPanel = ({
         title="Pages"
         suffix={
           <>
-            {onCreateNewPage && (
-              <Tooltip content="New page" side="bottom">
-                <Button
-                  onClick={() => onCreateNewPage()}
-                  aria-label="New page"
-                  prefix={<NewPageIcon />}
-                  color="ghost"
-                />
-              </Tooltip>
-            )}
-            {onClose && <CloseButton onClick={onClose} />}
+            <Tooltip content="New folder" side="bottom">
+              <Button
+                onClick={() => onCreateNewFolder()}
+                aria-label="New folder"
+                prefix={<NewFolderIcon />}
+                color="ghost"
+              />
+            </Tooltip>
+            <Tooltip content="New page" side="bottom">
+              <Button
+                onClick={() => onCreateNewPage()}
+                aria-label="New page"
+                prefix={<NewPageIcon />}
+                color="ghost"
+              />
+            </Tooltip>
+            <CloseButton onClick={onClose} />
           </>
         }
       />
@@ -203,10 +210,54 @@ const PagesPanel = ({
   );
 };
 
+const newPageId = "new-page";
+const newFolderId = "new-folder";
+
+const PageEditor = ({
+  editingPageId,
+  setEditingPageId,
+}: {
+  editingPageId?: string;
+  setEditingPageId: (pageId?: string) => void;
+}) => {
+  const currentPageId = useStore($selectedPageId);
+  if (editingPageId === undefined) {
+    return;
+  }
+  if (editingPageId === newPageId) {
+    return (
+      <NewPageSettings
+        onClose={() => setEditingPageId(undefined)}
+        onSuccess={(pageId) => {
+          setEditingPageId(undefined);
+          switchPage(pageId);
+        }}
+      />
+    );
+  }
+  return (
+    <PageSettings
+      onClose={() => setEditingPageId(undefined)}
+      onDelete={() => {
+        setEditingPageId(undefined);
+        if (editingPageId === currentPageId) {
+          switchPage();
+        }
+      }}
+      onDuplicate={(newPageId) => {
+        setEditingPageId(undefined);
+        switchPage(newPageId);
+      }}
+      pageId={editingPageId}
+      key={editingPageId}
+    />
+  );
+};
+
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const currentPageId = useStore($selectedPageId);
-  const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
+  const [editingFolderId, setEditingFolderId] = useState<string>();
 
   if (currentPageId === undefined) {
     return null;
@@ -216,6 +267,11 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
     <>
       <PagesPanel
         onClose={() => onSetActiveTab("none")}
+        onCreateNewFolder={() =>
+          setEditingFolderId((current) =>
+            current === newFolderId ? undefined : newFolderId
+          )
+        }
         onCreateNewPage={() =>
           setEditingPageId((current) =>
             current === newPageId ? undefined : newPageId
@@ -230,32 +286,10 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         editingPageId={editingPageId}
       />
       <SettingsPanel isOpen={editingPageId !== undefined}>
-        {editingPageId === newPageId && (
-          <NewPageSettings
-            onClose={() => setEditingPageId(undefined)}
-            onSuccess={(pageId) => {
-              setEditingPageId(undefined);
-              switchPage(pageId);
-            }}
-          />
-        )}
-        {editingPageId !== newPageId && editingPageId !== undefined && (
-          <PageSettings
-            onClose={() => setEditingPageId(undefined)}
-            onDelete={() => {
-              setEditingPageId(undefined);
-              if (editingPageId === currentPageId) {
-                switchPage();
-              }
-            }}
-            onDuplicate={(newPageId) => {
-              setEditingPageId(undefined);
-              switchPage(newPageId);
-            }}
-            pageId={editingPageId}
-            key={editingPageId}
-          />
-        )}
+        <PageEditor
+          editingPageId={editingPageId}
+          setEditingPageId={setEditingPageId}
+        />
       </SettingsPanel>
     </>
   );
