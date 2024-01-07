@@ -108,6 +108,7 @@ const ParameterForm = forwardRef<
   }));
   return <></>;
 });
+ParameterForm.displayName = "ParameterForm";
 
 const useValuePanelRef = ({
   ref,
@@ -182,6 +183,7 @@ const StringForm = forwardRef<
     </Flex>
   );
 });
+StringForm.displayName = "StringForm";
 
 const NumberForm = forwardRef<
   undefined | PanelApi,
@@ -221,7 +223,6 @@ const NumberForm = forwardRef<
           color={valueField.error ? "error" : undefined}
           value={valueField.value}
           onChange={(event) => {
-            console.log(event.target.valueAsNumber, event.target.value);
             valueField.onChange(
               Number.isNaN(event.target.valueAsNumber)
                 ? event.target.value
@@ -234,6 +235,7 @@ const NumberForm = forwardRef<
     </Flex>
   );
 });
+NumberForm.displayName = "NumberForm";
 
 const BooleanForm = forwardRef<
   undefined | PanelApi,
@@ -260,6 +262,7 @@ const BooleanForm = forwardRef<
     </Flex>
   );
 });
+BooleanForm.displayName = "BooleanForm";
 
 const JsonForm = forwardRef<
   undefined | PanelApi,
@@ -303,6 +306,7 @@ const JsonForm = forwardRef<
     </Flex>
   );
 });
+JsonForm.displayName = "JsonForm";
 
 const VariablePanel = forwardRef<
   undefined | PanelApi,
@@ -411,9 +415,8 @@ const VariablePanel = forwardRef<
       </>
     );
   }
-
-  return;
 });
+VariablePanel.displayName = "VariablePanel";
 
 export const VariablePopoverTrigger = forwardRef<
   HTMLButtonElement,

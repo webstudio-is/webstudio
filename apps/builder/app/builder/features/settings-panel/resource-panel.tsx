@@ -471,3 +471,4 @@ export const ResourceForm = forwardRef<
     </>
   );
 });
+ResourceForm.displayName = "ResourceForm";
