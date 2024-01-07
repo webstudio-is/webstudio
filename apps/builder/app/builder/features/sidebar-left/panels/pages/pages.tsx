@@ -28,6 +28,7 @@ import { NewPageSettings, PageSettings } from "./settings";
 import { $pages, $selectedPageId, $folders } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import { toTreeData, type TreeData } from "./page-utils";
+import { FolderSettings } from "./folder-settings";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -217,7 +218,7 @@ const PageEditor = ({
   editingPageId,
   setEditingPageId,
 }: {
-  editingPageId?: string;
+  editingPageId: string;
   setEditingPageId: (pageId?: string) => void;
 }) => {
   const currentPageId = useStore($selectedPageId);
@@ -254,6 +255,35 @@ const PageEditor = ({
   );
 };
 
+const FolderEditor = ({
+  editingFolderId,
+  setEditingFolderId,
+}: {
+  editingFolderId: string;
+  setEditingFolderId: (pageId?: string) => void;
+}) => {
+  if (editingFolderId === newFolderId) {
+    return (
+      <NewPageSettings
+        onClose={() => setEditingFolderId(undefined)}
+        onSuccess={() => {
+          setEditingFolderId(undefined);
+        }}
+      />
+    );
+  }
+  return (
+    <FolderSettings
+      onClose={() => setEditingFolderId(undefined)}
+      onDelete={() => {
+        setEditingFolderId(undefined);
+      }}
+      pageId={editingFolderId}
+      key={editingFolderId}
+    />
+  );
+};
+
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const currentPageId = useStore($selectedPageId);
   const [editingPageId, setEditingPageId] = useState<string>();
@@ -286,10 +316,18 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         editingPageId={editingPageId}
       />
       <SettingsPanel isOpen={editingPageId !== undefined}>
-        <PageEditor
-          editingPageId={editingPageId}
-          setEditingPageId={setEditingPageId}
-        />
+        {editingPageId && (
+          <PageEditor
+            editingPageId={editingPageId}
+            setEditingPageId={setEditingPageId}
+          />
+        )}
+        {editingFolderId && (
+          <FolderEditor
+            editingFolderId={editingFolderId}
+            setEditingFolderId={setEditingFolderId}
+          />
+        )}
       </SettingsPanel>
     </>
   );

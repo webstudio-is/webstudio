@@ -1,11 +1,5 @@
 import { z } from "zod";
-import {
-  type ComponentProps,
-  type FocusEventHandler,
-  useState,
-  useCallback,
-  Fragment,
-} from "react";
+import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -55,13 +49,13 @@ import {
   insertInstancesSliceCopy,
 } from "~/shared/instance-utils";
 import {
-  $assets,
+  assetsStore,
   $domains,
-  $instances,
-  $pages,
-  $project,
-  $selectedInstanceSelector,
-  $selectedPageId,
+  instancesStore,
+  pagesStore,
+  projectStore,
+  selectedInstanceSelectorStore,
+  selectedPageIdStore,
   $dataSources,
   $dataSourceVariables,
 } from "~/shared/nano-states";
@@ -283,14 +277,14 @@ const FormFields = ({
   ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
-  const assets = useStore($assets);
-  const pages = useStore($pages);
+  const assets = useStore(assetsStore);
+  const pages = useStore(pagesStore);
   const socialImageAsset = assets.get(values.socialImageAssetId);
   const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
-  const project = $project.get();
+  const project = projectStore.get();
   const customDomain: string | undefined = $domains.get()[0];
   const projectDomain = `${project?.domain}.${
     env.PUBLISHER_HOST ?? "wstd.work"
@@ -653,7 +647,7 @@ export const NewPageSettings = ({
   onClose: () => void;
   onSuccess: (pageId: Page["id"]) => void;
 }) => {
-  const pages = useStore($pages);
+  const pages = useStore(pagesStore);
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
@@ -666,7 +660,7 @@ export const NewPageSettings = ({
       const pageId = nanoid();
 
       serverSyncStore.createTransaction(
-        [$pages, $instances],
+        [pagesStore, instancesStore],
         (pages, instances) => {
           if (pages === undefined) {
             return;
@@ -687,7 +681,7 @@ export const NewPageSettings = ({
             component: "Body",
             children: [],
           });
-          $selectedInstanceSelector.set(undefined);
+          selectedInstanceSelectorStore.set(undefined);
         }
       );
 
@@ -702,25 +696,29 @@ export const NewPageSettings = ({
       onSubmit={handleSubmit}
       onClose={onClose}
       isSubmitting={false}
-      errors={errors}
-      disabled={false}
-      values={values}
-      onChange={(val) => {
-        setValues((values) => {
-          const changes = { [val.field]: val.value };
+    >
+      <FormFields
+        autoSelect
+        errors={errors}
+        disabled={false}
+        values={values}
+        onChange={(val) => {
+          setValues((values) => {
+            const changes = { [val.field]: val.value };
 
-          if (val.field === "name") {
-            if (values.path === nameToPath(pages, values.name)) {
-              changes.path = nameToPath(pages, val.value);
+            if (val.field === "name") {
+              if (values.path === nameToPath(pages, values.name)) {
+                changes.path = nameToPath(pages, val.value);
+              }
+              if (values.title === values.name) {
+                changes.title = val.value;
+              }
             }
-            if (values.title === values.name) {
-              changes.title = val.value;
-            }
-          }
-          return { ...values, ...changes };
-        });
-      }}
-    />
+            return { ...values, ...changes };
+          });
+        }}
+      />
+    </NewPageSettingsView>
   );
 };
 
@@ -728,31 +726,30 @@ const NewPageSettingsView = ({
   onSubmit,
   isSubmitting,
   onClose,
-  ...formFieldsProps
+  children,
 }: {
   onSubmit: () => void;
   isSubmitting: boolean;
   onClose: () => void;
-} & ComponentProps<typeof FormFields>) => {
+  children: JSX.Element;
+}) => {
   return (
     <>
       <Header
         title="New Page Settings"
         suffix={
           <>
-            {onClose && (
-              <Tooltip content="Cancel" side="bottom">
-                <Button
-                  onClick={onClose}
-                  aria-label="Cancel"
-                  prefix={<ChevronDoubleLeftIcon />}
-                  color="ghost"
-                  // Tab should go:
-                  //   trought form fields -> create button -> cancel button
-                  tabIndex={3}
-                />
-              </Tooltip>
-            )}
+            <Tooltip content="Cancel" side="bottom">
+              <Button
+                onClick={onClose}
+                aria-label="Cancel"
+                prefix={<ChevronDoubleLeftIcon />}
+                color="ghost"
+                // Tab should go:
+                //   trought form fields -> create button -> cancel button
+                tabIndex={3}
+              />
+            </Tooltip>
             <HeaderSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
@@ -764,18 +761,14 @@ const NewPageSettingsView = ({
           </>
         }
       />
-      <Box
-        css={{
-          overflow: "auto",
-        }}
-      >
+      <Box css={{ overflow: "auto" }}>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             onSubmit();
           }}
         >
-          <FormFields autoSelect {...formFieldsProps} />
+          {children}
           <input type="submit" hidden />
         </form>
       </Box>
@@ -813,7 +806,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   };
 
   serverSyncStore.createTransaction(
-    [$pages, $dataSources],
+    [pagesStore, $dataSources],
     (pages, dataSources) => {
       if (pages === undefined) {
         return;
@@ -864,11 +857,11 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 };
 
 const deletePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
+  const pages = pagesStore.get();
   // deselect page before deleting to avoid flash of content
-  if ($selectedPageId.get() === pageId) {
-    $selectedPageId.set(pages?.homePage.id);
-    $selectedInstanceSelector.set(undefined);
+  if (selectedPageIdStore.get() === pageId) {
+    selectedPageIdStore.set(pages?.homePage.id);
+    selectedInstanceSelectorStore.set(undefined);
   }
   const rootInstanceId = pages?.pages.find(
     (page) => page.id === pageId
@@ -876,7 +869,7 @@ const deletePage = (pageId: Page["id"]) => {
   if (rootInstanceId !== undefined) {
     deleteInstance([rootInstanceId]);
   }
-  serverSyncStore.createTransaction([$pages], (pages) => {
+  serverSyncStore.createTransaction([pagesStore], (pages) => {
     if (pages === undefined) {
       return;
     }
@@ -885,7 +878,7 @@ const deletePage = (pageId: Page["id"]) => {
 };
 
 const duplicatePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
+  const pages = pagesStore.get();
   const page =
     pages?.homePage.id === pageId
       ? pages.homePage
@@ -929,7 +922,7 @@ export const PageSettings = ({
   onDelete: () => void;
   pageId: string;
 }) => {
-  const pages = useStore($pages);
+  const pages = useStore(pagesStore);
   const page = pages && findPageByIdOrPath(pages, pageId);
 
   const isHomePage = page?.id === pages?.homePage.id;
@@ -990,19 +983,22 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
-      pathVariableId={page.pathVariableId}
       onClose={onClose}
-      onDelete={hanldeDelete}
+      onDelete={values.isHomePage === false ? hanldeDelete : undefined}
       onDuplicate={() => {
         const newPageId = duplicatePage(pageId);
         if (newPageId !== undefined) {
           onDuplicate(newPageId);
         }
       }}
-      errors={errors}
-      values={values}
-      onChange={handleChange}
-    />
+    >
+      <FormFields
+        pathVariableId={page.pathVariableId}
+        errors={errors}
+        values={values}
+        onChange={handleChange}
+      />
+    </PageSettingsView>
   );
 };
 
@@ -1010,19 +1006,20 @@ const PageSettingsView = ({
   onDelete,
   onDuplicate,
   onClose,
-  ...formFieldsProps
+  children,
 }: {
-  onDelete: () => void;
+  onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
-} & ComponentProps<typeof FormFields>) => {
+  children: JSX.Element;
+}) => {
   return (
     <>
       <Header
         title="Page Settings"
         suffix={
           <>
-            {formFieldsProps.values.isHomePage === false && (
+            {onDelete && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
                   color="ghost"
@@ -1042,32 +1039,26 @@ const PageSettingsView = ({
                 tabIndex={2}
               />
             </Tooltip>
-            {onClose && (
-              <Tooltip content="Close page settings" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<ChevronDoubleLeftIcon />}
-                  onClick={onClose}
-                  aria-label="Close page settings"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
+            <Tooltip content="Close page settings" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<ChevronDoubleLeftIcon />}
+                onClick={onClose}
+                aria-label="Close page settings"
+                tabIndex={2}
+              />
+            </Tooltip>
           </>
         }
       />
-      <Box
-        css={{
-          overflow: "auto",
-        }}
-      >
+      <Box css={{ overflow: "auto" }}>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             onClose?.();
           }}
         >
-          <FormFields {...formFieldsProps} />
+          {children}
           <input type="submit" hidden />
         </form>
       </Box>
