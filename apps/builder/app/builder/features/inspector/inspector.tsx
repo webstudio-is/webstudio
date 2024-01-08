@@ -27,6 +27,7 @@ import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
   const metas = useStore(registeredComponentMetasStore);
@@ -105,36 +106,42 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
       skipDelayDuration={0}
     >
       <FloatingPanelProvider container={tabsRef}>
-        <PanelTabs
-          ref={tabsRef}
-          value={availableTabs.includes(tab) ? tab : availableTabs[0]}
-          onValueChange={setTab}
-          asChild
-        >
-          <Flex direction="column">
-            <PanelTabsList>
-              {isStyleTabVisible && (
-                <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
-              )}
-              <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
-            </PanelTabsList>
-            <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
-              <InstanceInfo instance={selectedInstance} />
-              <StylePanel selectedInstance={selectedInstance} />
-            </PanelTabsContent>
-            <PanelTabsContent value="settings" css={contentStyle} tabIndex={-1}>
-              <ScrollArea>
+        <BindingPopoverProvider value={{ containerRef: tabsRef }}>
+          <PanelTabs
+            ref={tabsRef}
+            value={availableTabs.includes(tab) ? tab : availableTabs[0]}
+            onValueChange={setTab}
+            asChild
+          >
+            <Flex direction="column">
+              <PanelTabsList>
+                {isStyleTabVisible && (
+                  <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
+                )}
+                <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
+              </PanelTabsList>
+              <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
                 <InstanceInfo instance={selectedInstance} />
-                <SettingsPanelContainer
-                  key={
-                    selectedInstance.id /* Re-render when instance changes */
-                  }
-                  selectedInstance={selectedInstance}
-                />
-              </ScrollArea>
-            </PanelTabsContent>
-          </Flex>
-        </PanelTabs>
+                <StylePanel selectedInstance={selectedInstance} />
+              </PanelTabsContent>
+              <PanelTabsContent
+                value="settings"
+                css={contentStyle}
+                tabIndex={-1}
+              >
+                <ScrollArea>
+                  <InstanceInfo instance={selectedInstance} />
+                  <SettingsPanelContainer
+                    key={
+                      selectedInstance.id /* Re-render when instance changes */
+                    }
+                    selectedInstance={selectedInstance}
+                  />
+                </ScrollArea>
+              </PanelTabsContent>
+            </Flex>
+          </PanelTabs>
+        </BindingPopoverProvider>
       </FloatingPanelProvider>
     </EnhancedTooltipProvider>
   );

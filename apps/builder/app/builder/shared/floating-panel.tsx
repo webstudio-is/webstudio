@@ -1,4 +1,13 @@
 import {
+  type MutableRefObject,
+  type RefObject,
+  useContext,
+  useRef,
+  useState,
+  createContext,
+  useLayoutEffect,
+} from "react";
+import {
   FloatingPanelPopover,
   theme,
   css,
@@ -6,27 +15,22 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
 } from "@webstudio-is/design-system";
-import {
-  type MutableRefObject,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { FloatingPanelContext } from "./floating-panel-provider";
 
-const useSideOffset = ({
+export const useSideOffset = ({
   isOpen,
+  containerRef,
 }: {
   isOpen: boolean;
+  containerRef?: RefObject<HTMLElement>;
 }): [MutableRefObject<HTMLButtonElement | null>, number] => {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const { container: containerRef } = useContext(FloatingPanelContext);
   const [sideOffset, setSideOffset] = useState(0);
 
-  useEffect(() => {
+  // use layout effect to avoid popover jumping
+  useLayoutEffect(() => {
     if (
       isOpen === false ||
+      containerRef === undefined ||
       containerRef.current === null ||
       triggerRef.current === null
     ) {
@@ -41,9 +45,30 @@ const useSideOffset = ({
   return [triggerRef, sideOffset];
 };
 
+const FloatingPanelContext = createContext<{
+  container: RefObject<HTMLElement>;
+}>({
+  container: {
+    current: null,
+  },
+});
+
+export const FloatingPanelProvider = ({
+  children,
+  container,
+}: {
+  children: JSX.Element;
+  container: RefObject<HTMLElement>;
+}) => (
+  <FloatingPanelContext.Provider value={{ container }}>
+    {children}
+  </FloatingPanelContext.Provider>
+);
+
 const useLogic = (open?: boolean, onOpenChange?: (isOpen: boolean) => void) => {
+  const { container: containerRef } = useContext(FloatingPanelContext);
   const [isOpen, setIsOpen] = useState(Boolean(open));
-  const [triggerRef, sideOffset] = useSideOffset({ isOpen });
+  const [triggerRef, sideOffset] = useSideOffset({ isOpen, containerRef });
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     onOpenChange?.(open);

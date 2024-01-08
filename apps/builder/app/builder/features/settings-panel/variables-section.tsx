@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
@@ -33,7 +34,10 @@ import {
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { formatValuePreview } from "~/builder/shared/expression-editor";
-import { VariablePopoverTrigger } from "./variable-popover";
+import {
+  VariablePopoverProvider,
+  VariablePopoverTrigger,
+} from "./variable-popover";
 
 /**
  * find variables defined specifically on this selected instance
@@ -184,40 +188,43 @@ const VariablesList = () => {
 };
 
 export const VariablesSection = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useOpenState({
     label: "variables",
     isOpenDefault: true,
   });
   return (
-    <CollapsibleSectionBase
-      label="Variables"
-      fullWidth={true}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      trigger={
-        <SectionTitle
-          suffix={
-            <VariablePopoverTrigger>
-              <SectionTitleButton
-                prefix={<PlusIcon />}
-                // open panel when add new varable
-                onClick={() => {
-                  if (isOpen === false) {
-                    setIsOpen(true);
-                  }
-                }}
-              />
-            </VariablePopoverTrigger>
-          }
-        >
-          <SectionTitleLabel>Variables</SectionTitleLabel>
-        </SectionTitle>
-      }
-    >
-      {/* prevent applyig gap to list items */}
-      <div>
-        <VariablesList />
-      </div>
-    </CollapsibleSectionBase>
+    <VariablePopoverProvider value={{ containerRef }}>
+      <CollapsibleSectionBase
+        label="Variables"
+        fullWidth={true}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        trigger={
+          <SectionTitle
+            suffix={
+              <VariablePopoverTrigger>
+                <SectionTitleButton
+                  prefix={<PlusIcon />}
+                  // open panel when add new varable
+                  onClick={() => {
+                    if (isOpen === false) {
+                      setIsOpen(true);
+                    }
+                  }}
+                />
+              </VariablePopoverTrigger>
+            }
+          >
+            <SectionTitleLabel>Variables</SectionTitleLabel>
+          </SectionTitle>
+        }
+      >
+        {/* prevent applyig gap to list items */}
+        <div ref={containerRef}>
+          <VariablesList />
+        </div>
+      </CollapsibleSectionBase>
+    </VariablePopoverProvider>
   );
 };

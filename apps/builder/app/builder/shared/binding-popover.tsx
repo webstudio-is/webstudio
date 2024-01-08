@@ -1,9 +1,12 @@
 import {
+  type ButtonHTMLAttributes,
+  type RefObject,
   forwardRef,
   useMemo,
   useRef,
   useState,
-  type ButtonHTMLAttributes,
+  createContext,
+  useContext,
 } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { DotIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
@@ -26,6 +29,7 @@ import {
 } from "@webstudio-is/design-system";
 import { validateExpression } from "@webstudio-is/react-sdk";
 import { ExpressionEditor, formatValuePreview } from "./expression-editor";
+import { useSideOffset } from "./floating-panel";
 
 export const evaluateExpressionWithinScope = (
   expression: string,
@@ -250,6 +254,12 @@ const BindingButton = forwardRef<
 });
 BindingButton.displayName = "BindingButton";
 
+const BindingPopoverContext = createContext<{
+  containerRef?: RefObject<HTMLElement>;
+}>({});
+
+export const BindingPopoverProvider = BindingPopoverContext.Provider;
+
 export const BindingPopover = ({
   scope,
   aliases,
@@ -265,7 +275,9 @@ export const BindingPopover = ({
   onChange: (newValue: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
 }) => {
-  const [open, onOpenChange] = useState(false);
+  const { containerRef } = useContext(BindingPopoverContext);
+  const [isOpen, onOpenChange] = useState(false);
+  const [triggerRef, sideOffset] = useSideOffset({ isOpen, containerRef });
   const hasUnsavedChange = useRef<boolean>(false);
   const preventedClosing = useRef<boolean>(false);
 
@@ -276,7 +288,7 @@ export const BindingPopover = ({
   return (
     <FloatingPanelPopover
       modal
-      open={open}
+      open={isOpen}
       onOpenChange={(newOpen) => {
         // handle special case for popover close
         if (newOpen === false) {
@@ -291,10 +303,14 @@ export const BindingPopover = ({
         onOpenChange(newOpen);
       }}
     >
-      <FloatingPanelPopoverTrigger asChild>
+      <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
         <BindingButton error={valueError} />
       </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent side="top" align="start">
+      <FloatingPanelPopoverContent
+        sideOffset={sideOffset}
+        side="left"
+        align="start"
+      >
         <BindingPanel
           scope={scope}
           aliases={aliases}
