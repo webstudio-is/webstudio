@@ -272,7 +272,7 @@ const useVimeo = ({
     return createPlayer(elementRef.current, stableOptions, { loading }, () => {
       setPlayerStatus("ready");
     });
-  }, [stableOptions, playerStatus]);
+  }, [stableOptions, playerStatus, loading]);
   return { previewImageUrl, playerStatus, setPlayerStatus, elementRef };
 };
 
