@@ -81,12 +81,28 @@ type Params = Record<string, string | undefined>;
 type Resources = Record<string, unknown>;
 const Page = (_props: { params: Params; resources: Resources }) => {
   return (
-    <Body data-ws-id="On9cvWCxr5rdZtY9O1Bv0" data-ws-component="Body">
-      <Heading data-ws-id="nVMWvMsaLCcb0o1wuNQgg" data-ws-component="Heading">
+    <Body
+      data-ws-id="On9cvWCxr5rdZtY9O1Bv0"
+      data-ws-component="Body"
+      className="c1wfdiy8 cg4dwmz c1psdgn0 ciwrswx"
+    >
+      <Heading
+        data-ws-id="nVMWvMsaLCcb0o1wuNQgg"
+        data-ws-component="Heading"
+        className="cr3bcad"
+      >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
-      <Box data-ws-id="f0kF-WmL7DQg7MSyRvqY1" data-ws-component="Box">
-        <Box data-ws-id="5XDbqPrZDeCwq4YJ3CHsc" data-ws-component="Box">
+      <Box
+        data-ws-id="f0kF-WmL7DQg7MSyRvqY1"
+        data-ws-component="Box"
+        className="ct8bqew c18lita3 c1ac63p"
+      >
+        <Box
+          data-ws-id="5XDbqPrZDeCwq4YJ3CHsc"
+          data-ws-component="Box"
+          className="cdojbwh c4wr6vh cn27x24 cl3i1h5"
+        >
           <Heading
             data-ws-id="oLXYe1UQiVMhVnZGvJSMr"
             data-ws-component="Heading"
@@ -127,6 +143,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
             data-ws-id="9I4GRU1sev48hREkQcKQ-"
             data-ws-component="Link"
             href={"/_route_with_symbols_"}
+            className="cnpb7qg"
           >
             {"Symbols in path"}
           </Link>
@@ -134,17 +151,23 @@ const Page = (_props: { params: Params; resources: Resources }) => {
             data-ws-id="81ejLVXyFEV1SxiJrWhyw"
             data-ws-component="Link"
             href={"/heading-with-id#my-heading"}
+            className="cnpb7qg"
           >
             {"Link to instance"}
           </Link>
         </Box>
-        <Box data-ws-id="qPnkiFGDj8dITWb1kmpGl" data-ws-component="Box">
+        <Box
+          data-ws-id="qPnkiFGDj8dITWb1kmpGl"
+          data-ws-component="Box"
+          className="cdojbwh c4wr6vh cn27x24 cl3i1h5"
+        >
           <Image
             data-ws-id="pX1ovPI7NdC0HRjkw6Kpw"
             data-ws-component="Image"
             src={
               "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
             }
+            className="c1arp7pb"
           />
         </Box>
       </Box>
