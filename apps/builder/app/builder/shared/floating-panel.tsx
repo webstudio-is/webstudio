@@ -2,7 +2,6 @@ import {
   type MutableRefObject,
   type RefObject,
   useContext,
-  useEffect,
   useRef,
   useState,
   createContext,
