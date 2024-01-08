@@ -74,12 +74,13 @@ const CopyToClipboard = (props: { text: string }) => {
 };
 
 const getCname = (domain: string) => {
-  const domainArray = domain.split(".");
-  const cnameArray = domainArray.slice(0, -2);
-  if (cnameArray.length === 0) {
+  const url = new URL(`https://${domain}`);
+  const subdomain = url.hostname.split(".")[0];
+
+  if (subdomain == "") {
     return "@";
   }
-  return cnameArray.join(".");
+  return subdomain;
 };
 
 export const getStatus = (projectDomain: Domain) =>
