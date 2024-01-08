@@ -318,6 +318,7 @@ const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "quality",
   "showPreview",
   "autoplay",
+  "loading",
   "backgroundMode",
   "doNotTrack",
   "loop",

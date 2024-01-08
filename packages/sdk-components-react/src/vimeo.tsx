@@ -143,10 +143,11 @@ const warmConnections = () => {
 
 const createPlayer = (
   parent: Element,
-  options: VimeoPlayerOptions,
+  vimeoOptions: VimeoPlayerOptions,
+  extendedOptions: { loading: VimeoOptions["loading"] },
   callback: () => void
 ) => {
-  const url = getUrl(options);
+  const url = getUrl(vimeoOptions);
   if (url === undefined) {
     return;
   }
@@ -162,6 +163,9 @@ const createPlayer = (
     "style",
     "position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s;"
   );
+  if (extendedOptions.loading) {
+    iframe.setAttribute("loading", extendedOptions.loading);
+  }
 
   // Show iframe only once it's loaded to avoid weird flashes.
   iframe.addEventListener(
@@ -219,9 +223,11 @@ const useVimeo = ({
   options,
   renderer,
   showPreview,
+  loading,
 }: {
   options: VimeoPlayerOptions;
   showPreview?: boolean;
+  loading: VimeoOptions["loading"];
   renderer: ContextType<typeof ReactSdkContext>["renderer"];
 }) => {
   const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("initial");
@@ -263,10 +269,10 @@ const useVimeo = ({
     if (elementRef.current === null || playerStatus === "initial") {
       return;
     }
-    return createPlayer(elementRef.current, stableOptions, () => {
+    return createPlayer(elementRef.current, stableOptions, { loading }, () => {
       setPlayerStatus("ready");
     });
-  }, [stableOptions, playerStatus]);
+  }, [stableOptions, playerStatus, loading]);
   return { previewImageUrl, playerStatus, setPlayerStatus, elementRef };
 };
 
@@ -281,8 +287,10 @@ export type VimeoOptions = Omit<
   | "title"
   | "portrait"
 > & {
-  /** Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower. */
+  /** Not a Vimeo attribute: Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower. */
   showPreview?: boolean;
+  /** Not a Vimeo attribute: Loading attribute for the iframe allows to eager or lazy load the source */
+  loading?: "eager" | "lazy";
   /** Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats. */
   doNotTrack?: VimeoPlayerOptions["dnt"];
   /** Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive. */
@@ -310,6 +318,7 @@ export const Vimeo = forwardRef<Ref, Props>(
   (
     {
       url,
+      loading,
       autoplay = false,
       autopause = true,
       backgroundMode = false,
@@ -342,6 +351,7 @@ export const Vimeo = forwardRef<Ref, Props>(
       useVimeo({
         renderer,
         showPreview,
+        loading,
         options: {
           url,
           autoplay,
