@@ -12,6 +12,8 @@ import {
   Separator,
   Button,
   css,
+  CheckboxAndLabel,
+  Checkbox,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
@@ -24,12 +26,8 @@ import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "../ai/hooks/effect-event";
 import type { Pages } from "@webstudio-is/sdk";
 
-type Value = NonNullable<Pages["meta"]>;
-
-type Props = {
-  value: Value;
-  onChange: (value: Value) => void;
-};
+type ProjectMeta = NonNullable<Pages["meta"]>;
+type ProjectSettings = NonNullable<Pages["settings"]>;
 
 const imgStyle = css({
   width: 72,
@@ -40,19 +38,22 @@ const imgStyle = css({
   borderColor: theme.colors.borderMain,
 });
 
-const ProjectSettingsContent = (props: Props) => {
+const ProjectSettingsContentMeta = (props: {
+  meta: ProjectMeta;
+  onMetaChange: (value: ProjectMeta) => void;
+}) => {
   const ids = useIds(["siteName", "favicon", "code"]);
   const handleChange =
-    <T extends keyof Value>(name: T) =>
-    (val: Value[T]) => {
-      props.onChange({
-        ...props.value,
-        [name]: val,
+    <T extends keyof ProjectMeta>(name: T) =>
+    (value: ProjectMeta[T]) => {
+      props.onMetaChange({
+        ...props.meta,
+        [name]: value,
       });
     };
 
   const assets = useStore(assetsStore);
-  const asset = assets.get(props.value.faviconAssetId ?? "");
+  const asset = assets.get(props.meta.faviconAssetId ?? "");
 
   const favIconUrl = asset ? `${asset.name}` : undefined;
 
@@ -61,12 +62,7 @@ const ProjectSettingsContent = (props: Props) => {
   });
 
   return (
-    <Grid
-      gap={2}
-      css={{
-        my: theme.spacing[5],
-      }}
-    >
+    <>
       <Grid
         gap={1}
         css={{
@@ -78,7 +74,7 @@ const ProjectSettingsContent = (props: Props) => {
         <Label htmlFor={ids.siteName}>Project Name</Label>
         <InputField
           id={ids.siteName}
-          value={props.value.siteName ?? ""}
+          value={props.meta.siteName ?? ""}
           onChange={(event) => handleChange("siteName")(event.target.value)}
           placeholder="Current Project Name"
           name="Name"
@@ -106,7 +102,7 @@ const ProjectSettingsContent = (props: Props) => {
               Upload a 32 x 32 px image to display in browser tabs.
             </Text>
             <ImageControl
-              assetId={props.value.faviconAssetId ?? ""}
+              assetId={props.meta.faviconAssetId ?? ""}
               onAssetIdChange={handleChange("faviconAssetId")}
             >
               <Button id={ids.favicon} css={{ justifySelf: "start" }}>
@@ -132,21 +128,65 @@ const ProjectSettingsContent = (props: Props) => {
           rows={5}
           autoGrow
           maxRows={10}
-          value={props.value.code ?? ""}
+          value={props.meta.code ?? ""}
           onChange={handleChange("code")}
         />
       </Grid>
-      <div />
-    </Grid>
+    </>
+  );
+};
+
+const ProjectAdvancedSettings = (props: {
+  settings: ProjectSettings;
+  onSettingsChange: (settings: ProjectSettings) => void;
+}) => {
+  const ids = useIds(["atomicStyles"]);
+
+  const handleChange =
+    <T extends keyof ProjectSettings>(name: T) =>
+    (val: ProjectSettings[T]) => {
+      props.onSettingsChange({
+        ...props.settings,
+        [name]: val,
+      });
+    };
+
+  return (
+    <>
+      <Separator />
+      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+        <Label sectionTitle>Publish Settings</Label>
+        <CheckboxAndLabel>
+          <Checkbox
+            checked={props.settings.atomicStyles ?? true}
+            id={ids.atomicStyles}
+            onCheckedChange={(checked) => {
+              if (typeof checked === "boolean") {
+                handleChange("atomicStyles")(checked);
+              }
+            }}
+          />
+          <Label htmlFor={ids.atomicStyles}>
+            Generate atomic CSS when publishing
+          </Label>
+        </CheckboxAndLabel>
+      </Grid>
+    </>
   );
 };
 
 const ProjectSettingsView = () => {
-  const [value, setValue] = useState(
+  const [meta, setMeta] = useState(
     pagesStore.get()?.meta ?? {
       siteName: "",
       faviconAssetId: "",
       code: "",
+    }
+  );
+
+  const [settings, setSettings] = useState(
+    pagesStore.get()?.settings ?? {
+      atomicStyles: true,
     }
   );
 
@@ -158,7 +198,8 @@ const ProjectSettingsView = () => {
         return;
       }
 
-      pages.meta = value;
+      pages.meta = meta;
+      pages.settings = settings;
     });
   });
 
@@ -181,7 +222,19 @@ const ProjectSettingsView = () => {
           zIndex: theme.zIndices[1],
         }}
       >
-        <ProjectSettingsContent value={value} onChange={setValue} />
+        <Grid
+          gap={2}
+          css={{
+            my: theme.spacing[5],
+          }}
+        >
+          <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />
+          <ProjectAdvancedSettings
+            settings={settings}
+            onSettingsChange={setSettings}
+          />
+          <div />
+        </Grid>
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
          */}

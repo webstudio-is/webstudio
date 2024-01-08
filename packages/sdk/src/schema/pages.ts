@@ -73,16 +73,24 @@ const Page = z.object({
 });
 
 const ProjectMeta = z.object({
+  // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
 });
+
+const ProjectSettings = z.object({
+  // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
+  atomicStyles: z.boolean().optional(),
+});
+
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 
 export type Page = z.infer<typeof Page>;
 
 export const Pages = z.object({
   meta: ProjectMeta.optional(),
+  settings: ProjectSettings.optional(),
   homePage: HomePage,
   pages: z
     .array(Page)
