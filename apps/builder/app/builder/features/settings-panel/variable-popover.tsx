@@ -1,13 +1,17 @@
 import { nanoid } from "nanoid";
 import {
+  type ReactNode,
+  type Ref,
+  type RefObject,
   forwardRef,
   useId,
   useState,
-  type ReactNode,
   useImperativeHandle,
-  type Ref,
   useRef,
+  createContext,
+  useContext,
 } from "react";
+import { mergeRefs } from "@react-aria/utils";
 import {
   Flex,
   FloatingPanelPopover,
@@ -41,6 +45,8 @@ import {
   composeFields,
   type ComposedFields,
 } from "~/shared/form-utils";
+import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
+import { useSideOffset } from "~/builder/shared/floating-panel";
 import { ResourceForm } from "./resource-panel";
 
 /**
@@ -424,11 +430,20 @@ const VariablePanel = forwardRef<
 });
 VariablePanel.displayName = "VariablePanel";
 
+const VariablePopoverContext = createContext<{
+  containerRef?: RefObject<HTMLElement>;
+}>({});
+
+export const VariablePopoverProvider = VariablePopoverContext.Provider;
+
 export const VariablePopoverTrigger = forwardRef<
   HTMLButtonElement,
   { variable?: DataSource; children: ReactNode }
 >(({ variable, children }, ref) => {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setOpen] = useState(false);
+  const { containerRef } = useContext(VariablePopoverContext);
+  const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
+  const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<undefined | PanelApi>();
   const saveAndClose = () => {
     if (panelRef.current) {
@@ -445,7 +460,7 @@ export const VariablePopoverTrigger = forwardRef<
   return (
     <FloatingPanelPopover
       modal
-      open={open}
+      open={isOpen}
       onOpenChange={(newOpen) => {
         if (newOpen === false) {
           saveAndClose();
@@ -454,10 +469,15 @@ export const VariablePopoverTrigger = forwardRef<
         setOpen(newOpen);
       }}
     >
-      <FloatingPanelPopoverTrigger ref={ref} asChild>
+      <FloatingPanelPopoverTrigger ref={mergeRefs(ref, triggerRef)} asChild>
         {children}
       </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent side="left" align="start">
+      <FloatingPanelPopoverContent
+        ref={bindingPopoverContainerRef}
+        sideOffset={sideOffsset}
+        side="left"
+        align="start"
+      >
         <ScrollArea
           css={{
             // flex fixes content overflowing artificial scroll area
@@ -484,7 +504,11 @@ export const VariablePopoverTrigger = forwardRef<
             >
               {/* submit is not triggered when press enter on input without submit button */}
               <button style={{ display: "none" }}>submit</button>
-              <VariablePanel ref={panelRef} variable={variable} />
+              <BindingPopoverProvider
+                value={{ containerRef: bindingPopoverContainerRef }}
+              >
+                <VariablePanel ref={panelRef} variable={variable} />
+              </BindingPopoverProvider>
             </form>
           </Flex>
         </ScrollArea>
