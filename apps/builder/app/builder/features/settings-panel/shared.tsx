@@ -226,12 +226,11 @@ export const VerticalLayout = ({
   onDelete,
   children,
 }: LayoutProps) => (
-  <Box>
+  <Box css={{ "&:hover": { [bindingVisibilityProperty]: "visible" } }}>
     <Grid
       css={{
         gridTemplateColumns: deletable ? `1fr max-content` : `1fr`,
         justifyItems: "start",
-        "&:hover": { [bindingVisibilityProperty]: "visible" },
       }}
       align="center"
       gap="1"

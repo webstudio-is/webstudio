@@ -1,6 +1,9 @@
 import { useStore } from "@nanostores/react";
 import { Box, Grid, Switch, theme, useId } from "@webstudio-is/design-system";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import {
+  BindingPopover,
+  bindingVisibilityProperty,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -34,6 +37,7 @@ export const BooleanControl = ({
           : `1fr max-content`,
         minHeight: theme.spacing[13],
         justifyItems: "start",
+        "&:hover": { [bindingVisibilityProperty]: "visible" },
       }}
       align="center"
       gap="2"

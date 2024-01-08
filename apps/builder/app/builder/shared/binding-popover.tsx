@@ -214,7 +214,7 @@ const BindingButton = forwardRef<
           boxSizing: "border-box",
           padding: 2,
           transform: "translate(-50%, -50%) scale(1)",
-          transition: "transform 60ms",
+          transition: "transform 60ms, visibility 0ms 200ms",
           "--dot-display": "block",
           "--plus-display": "none",
           "&:hover, &[aria-expanded=true]": {
