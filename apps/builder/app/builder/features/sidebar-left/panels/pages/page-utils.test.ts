@@ -59,7 +59,7 @@ test("with empty folder", () => {
     {
       id: "folderId",
       name: "Folder",
-      path: "/folder",
+      slug: "folder",
       children: [],
     },
   ]);
@@ -103,7 +103,7 @@ test("with page inside a folder", () => {
     {
       id: "folderId",
       name: "Folder",
-      path: "/folder",
+      slug: "folder",
       children: ["pageId"],
     },
   ]);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
+import { type FocusEventHandler, useState, useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -20,56 +20,34 @@ import {
   Button,
   Box,
   Label,
-  TextArea,
   InputErrorsTooltip,
   Tooltip,
   InputField,
   Grid,
-  Checkbox,
-  Separator,
-  Text,
   ScrollArea,
   rawTheme,
   Flex,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
-  CopyIcon,
   TrashIcon,
-  CheckMarkIcon,
-  LinkIcon,
-  HomeIcon,
   HelpIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { deleteInstance } from "~/shared/instance-utils";
 import {
-  assetsStore,
-  $domains,
   instancesStore,
   pagesStore,
-  projectStore,
   selectedInstanceSelectorStore,
   selectedPageIdStore,
   $dataSources,
-  $dataSourceVariables,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
-import { SearchPreview } from "./search-preview";
-import { ImageControl } from "~/builder/features/seo/image-control";
-import { ImageInfo } from "./image-info";
-import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { CustomMetadata } from "./custom-metadata";
-import env from "~/shared/env";
-import {
-  compilePathnamePattern,
-  parsePathnamePattern,
-  validatePathnamePattern,
-} from "./url-pattern";
+import { parsePathnamePattern, validatePathnamePattern } from "./url-pattern";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -201,59 +179,9 @@ const toFormPage = (page: Page, isHomePage: boolean): Values => {
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
 
-const CopyPageDomainAndPathButton = ({
-  pageDomainAndPath,
-}: {
-  pageDomainAndPath: string;
-}) => {
-  const [pathIconState, setPathIconState] = useState<
-    "link" | "copy" | "checkmark"
-  >("link");
-
-  let pathIcon = <CopyIcon />;
-  if (pathIconState === "checkmark") {
-    pathIcon = <CheckMarkIcon />;
-  } else if (pathIconState === "link") {
-    pathIcon = <LinkIcon />;
-  }
-
-  return (
-    <Tooltip
-      content={pathIconState === "checkmark" ? "Copied" : "Click to copy"}
-    >
-      <Button
-        color="ghost"
-        type="button"
-        onPointerDown={(event) => {
-          navigator.clipboard.writeText(`https://${pageDomainAndPath}`);
-          setPathIconState("checkmark");
-          // Prevent tooltip to be closed
-          event.stopPropagation();
-        }}
-        // Recreating Icon without pointer-events: none cause mouse leave/enter event to be fired again
-        prefix={
-          <Grid align="center" css={{ pointerEvents: "none" }}>
-            {pathIcon}
-          </Grid>
-        }
-        css={{ justifySelf: "start" }}
-        onMouseEnter={() => {
-          setPathIconState("copy");
-        }}
-        onMouseLeave={() => {
-          setPathIconState("link");
-        }}
-      >
-        {pageDomainAndPath}
-      </Button>
-    </Tooltip>
-  );
-};
-
 const FormFields = ({
   disabled,
   autoSelect,
-  pathVariableId,
   errors,
   values,
   onChange,
@@ -273,35 +201,6 @@ const FormFields = ({
   ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
-  const assets = useStore(assetsStore);
-  const pages = useStore(pagesStore);
-  const socialImageAsset = assets.get(values.socialImageAssetId);
-  const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
-
-  const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
-
-  const project = projectStore.get();
-  const customDomain: string | undefined = $domains.get()[0];
-  const projectDomain = `${project?.domain}.${
-    env.PUBLISHER_HOST ?? "wstd.work"
-  }`;
-  const domain = customDomain ?? projectDomain;
-
-  const publishedUrl = new URL(`https://${domain}`);
-
-  const pathParamNames = parsePathnamePattern(values.path);
-  const dataSourceVariables = useStore($dataSourceVariables);
-  const params =
-    pathVariableId !== undefined
-      ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
-      : undefined;
-
-  const compiledPath = compilePathnamePattern(values.path ?? "", params ?? {});
-  const pageDomainAndPath = [publishedUrl.host, compiledPath]
-    .filter(Boolean)
-    .join("/")
-    .replace(/\/+/g, "/");
-  const pageUrl = `https://${pageDomainAndPath}`;
 
   const TOPBAR_HEIGHT = 40;
   const HEADER_HEIGHT = 40;
@@ -316,7 +215,7 @@ const FormFields = ({
          */}
         <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.name}>Page Name</Label>
+            <Label htmlFor={fieldIds.name}>Folder Name</Label>
             <InputErrorsTooltip errors={errors.name}>
               <InputField
                 tabIndex={1}
@@ -333,278 +232,41 @@ const FormFields = ({
                 }}
               />
             </InputErrorsTooltip>
-
-            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-              {values.isHomePage ? (
-                <HomeIcon />
-              ) : (
-                <Checkbox
-                  id={fieldIds.isHomePage}
-                  onCheckedChange={() => {
-                    onChange({ field: "path", value: "" });
-                    onChange({
-                      field: "isHomePage",
-                      value: !values.isHomePage,
-                    });
-                  }}
-                />
-              )}
-
-              <Label
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                }}
-                htmlFor={fieldIds.isHomePage}
-              >
-                {values.isHomePage
-                  ? `“${values.name}” is the home page`
-                  : `Make “${values.name}” the home page`}
-              </Label>
-            </Grid>
-            {values.isHomePage === true && (
-              <>
-                <div />
-                <CopyPageDomainAndPathButton
-                  pageDomainAndPath={pageDomainAndPath}
-                />
-              </>
-            )}
-          </Grid>
-
-          {values.isHomePage === false && (
-            <Grid gap={1}>
-              <Label htmlFor={fieldIds.path}>
-                <Flex align="center" css={{ gap: theme.spacing[3] }}>
-                  Path
-                  <Tooltip
-                    content={
-                      "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-                    }
-                    variant="wrapped"
-                  >
-                    <HelpIcon
-                      color={rawTheme.colors.foregroundSubtle}
-                      tabIndex={0}
-                    />
-                  </Tooltip>
-                </Flex>
-              </Label>
-              <InputErrorsTooltip errors={errors.path}>
-                <InputField
-                  tabIndex={1}
-                  color={errors.path && "error"}
-                  id={fieldIds.path}
-                  name="path"
-                  placeholder="/about"
-                  disabled={disabled}
-                  value={values?.path}
-                  onChange={(event) => {
-                    onChange({ field: "path", value: event.target.value });
-                  }}
-                />
-              </InputErrorsTooltip>
-              {pathVariableId !== undefined &&
-                pathParamNames.map((name) => (
-                  <Fragment key={name}>
-                    <Label htmlFor={`${fieldIds.path}-${name}`}>{name}</Label>
-                    <InputField
-                      tabIndex={1}
-                      id={`${fieldIds.path}-${name}`}
-                      name="path"
-                      value={params?.[name] ?? ""}
-                      onChange={(event) => {
-                        if (pathVariableId === undefined) {
-                          return;
-                        }
-                        const dataSourceVariables = new Map(
-                          $dataSourceVariables.get()
-                        );
-                        // delete stale fields
-                        const newParams: Record<string, string> = {};
-                        for (const name of pathParamNames) {
-                          if (params?.[name]) {
-                            newParams[name] = params[name];
-                          }
-                        }
-                        newParams[name] = event.target.value;
-                        dataSourceVariables.set(pathVariableId, newParams);
-                        $dataSourceVariables.set(dataSourceVariables);
-                      }}
-                    />
-                  </Fragment>
-                ))}
-              <CopyPageDomainAndPathButton
-                pageDomainAndPath={pageDomainAndPath}
-              />
-            </Grid>
-          )}
-        </Grid>
-
-        <Separator />
-
-        {/**
-         * ----------------------========<<<Search Results>>>>========----------------------
-         */}
-        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-          <Grid gap={2}>
-            <Label sectionTitle>Search</Label>
-            <Text color="subtle">
-              Optimize the way this page appears in search engine results pages.
-            </Text>
-            <Grid gap={1}>
-              <Label>Search Result Preview</Label>
-              <Box
-                css={{
-                  padding: theme.spacing[5],
-                  background: theme.colors.white,
-                  borderRadius: theme.borderRadius[4],
-                  border: `1px solid ${theme.colors.borderMain}`,
-                }}
-              >
-                <Box
-                  css={{
-                    transformOrigin: "top left",
-                    transform: "scale(0.667)",
-                    width: 600,
-                    height: 80,
-                  }}
-                >
-                  <SearchPreview
-                    siteName={pages?.meta?.siteName ?? ""}
-                    faviconUrl={faviconUrl}
-                    pageUrl={pageUrl}
-                    titleLink={values.title}
-                    snippet={values.description}
-                  />
-                </Box>
-              </Box>
-            </Grid>
           </Grid>
 
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.title}>Title</Label>
-            <InputErrorsTooltip errors={errors.title}>
+            <Label htmlFor={fieldIds.path}>
+              <Flex align="center" css={{ gap: theme.spacing[3] }}>
+                Path
+                <Tooltip
+                  content={
+                    "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
+                  }
+                  variant="wrapped"
+                >
+                  <HelpIcon
+                    color={rawTheme.colors.foregroundSubtle}
+                    tabIndex={0}
+                  />
+                </Tooltip>
+              </Flex>
+            </Label>
+            <InputErrorsTooltip errors={errors.path}>
               <InputField
                 tabIndex={1}
-                color={errors.title && "error"}
-                id={fieldIds.title}
-                name="title"
-                placeholder="My awesome project - About"
+                color={errors.path && "error"}
+                id={fieldIds.path}
+                name="path"
+                placeholder="/about"
                 disabled={disabled}
-                value={values.title}
+                value={values?.path}
                 onChange={(event) => {
-                  onChange({ field: "title", value: event.target.value });
+                  onChange({ field: "path", value: event.target.value });
                 }}
               />
             </InputErrorsTooltip>
           </Grid>
-
-          <Grid gap={1}>
-            <Label htmlFor={fieldIds.description}>Description</Label>
-            <InputErrorsTooltip errors={errors.description}>
-              <TextArea
-                tabIndex={1}
-                state={errors.description && "invalid"}
-                id={fieldIds.description}
-                name="description"
-                disabled={disabled}
-                value={values.description}
-                onChange={(value) => {
-                  onChange({ field: "description", value });
-                }}
-                autoGrow
-                maxRows={10}
-              />
-            </InputErrorsTooltip>
-            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-              <Checkbox
-                id={fieldIds.excludePageFromSearch}
-                checked={values.excludePageFromSearch}
-                onCheckedChange={() => {
-                  onChange({
-                    field: "excludePageFromSearch",
-                    value: !values.excludePageFromSearch,
-                  });
-                }}
-              />
-
-              <Label htmlFor={fieldIds.excludePageFromSearch}>
-                Exclude this page from search results
-              </Label>
-            </Grid>
-          </Grid>
         </Grid>
-
-        <Separator />
-
-        {/**
-         * ----------------------========<<<Social Sharing>>>>========----------------------
-         */}
-        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-          <Label htmlFor={fieldIds.socialImageAssetId} sectionTitle>
-            Social Image
-          </Label>
-          <Text color="subtle">
-            This image appears when you share a link to this page on social
-            media sites. If no image is set here, the Social Image set in the
-            Project Settings will be used. The optimal dimensions for the image
-            are 1200x630 px or larger with a 1.91:1 aspect ratio.
-          </Text>
-          <Grid gap={1} flow={"column"}>
-            <ImageControl
-              assetId={values.socialImageAssetId}
-              onAssetIdChange={(socialImageAssetId) =>
-                onChange({
-                  field: "socialImageAssetId",
-                  value: socialImageAssetId,
-                })
-              }
-            >
-              <Button
-                id={fieldIds.socialImageAssetId}
-                css={{ justifySelf: "start" }}
-                color="neutral"
-              >
-                Choose Image From Assets
-              </Button>
-            </ImageControl>
-          </Grid>
-
-          {socialImageAsset?.type === "image" && (
-            <ImageInfo
-              asset={socialImageAsset}
-              onDelete={() => {
-                onChange({
-                  field: "socialImageAssetId",
-                  value: "",
-                });
-              }}
-            />
-          )}
-          <div />
-          <SocialPreview
-            asset={
-              socialImageAsset?.type === "image" ? socialImageAsset : undefined
-            }
-            ogUrl={pageUrl}
-            ogTitle={values.title}
-            ogDescription={values.description}
-          />
-        </Grid>
-
-        <Separator />
-
-        <CustomMetadata
-          customMetas={values.customMetas}
-          onChange={(customMetas) => {
-            onChange({
-              field: "customMetas",
-              value: customMetas,
-            });
-          }}
-        />
-        <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
     </Grid>
   );

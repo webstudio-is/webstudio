@@ -6,7 +6,7 @@ const FolderId = z.string();
 export const Folder = z.object({
   id: FolderId,
   name: z.string(),
-  path: z.string(),
+  slug: z.string(),
   children: z.array(z.union([FolderId, PageId])),
 });
 

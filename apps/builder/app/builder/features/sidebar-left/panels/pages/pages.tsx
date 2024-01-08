@@ -28,7 +28,7 @@ import { NewPageSettings, PageSettings } from "./settings";
 import { $pages, $selectedPageId, $folders } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import { toTreeData, type TreeData } from "./page-utils";
-import { FolderSettings } from "./folder-settings";
+import { FolderSettings, NewFolderSettings } from "./folder-settings";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -262,9 +262,10 @@ const FolderEditor = ({
   editingFolderId: string;
   setEditingFolderId: (pageId?: string) => void;
 }) => {
+  console.log(editingFolderId);
   if (editingFolderId === newFolderId) {
     return (
-      <NewPageSettings
+      <NewFolderSettings
         onClose={() => setEditingFolderId(undefined)}
         onSuccess={() => {
           setEditingFolderId(undefined);
@@ -297,15 +298,13 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
     <>
       <PagesPanel
         onClose={() => onSetActiveTab("none")}
-        onCreateNewFolder={() =>
-          setEditingFolderId((current) =>
-            current === newFolderId ? undefined : newFolderId
-          )
-        }
+        onCreateNewFolder={() => {
+          setEditingFolderId(
+            editingFolderId === newFolderId ? undefined : newFolderId
+          );
+        }}
         onCreateNewPage={() =>
-          setEditingPageId((current) =>
-            current === newPageId ? undefined : newPageId
-          )
+          setEditingPageId(editingPageId === newPageId ? undefined : newPageId)
         }
         onSelect={(pageId) => {
           switchPage(pageId);
@@ -315,20 +314,23 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         onEdit={setEditingPageId}
         editingPageId={editingPageId}
       />
-      <SettingsPanel isOpen={editingPageId !== undefined}>
-        {editingPageId && (
+
+      {editingPageId && (
+        <SettingsPanel isOpen>
           <PageEditor
             editingPageId={editingPageId}
             setEditingPageId={setEditingPageId}
           />
-        )}
-        {editingFolderId && (
+        </SettingsPanel>
+      )}
+      {editingFolderId && (
+        <SettingsPanel isOpen>
           <FolderEditor
             editingFolderId={editingFolderId}
             setEditingFolderId={setEditingFolderId}
           />
-        )}
-      </SettingsPanel>
+        </SettingsPanel>
+      )}
     </>
   );
 };

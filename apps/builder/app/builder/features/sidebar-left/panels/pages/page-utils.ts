@@ -11,7 +11,7 @@ type TreeFolder = {
   type: "folder";
   id: Folder["id"];
   name: Folder["name"];
-  path: Folder["path"];
+  slug: Folder["slug"];
   children: Array<TreeData>;
 };
 
@@ -47,7 +47,7 @@ export const toTreeData = (
       type: "folder" as const,
       id: folder.id,
       name: folder.name,
-      path: folder.path,
+      slug: folder.slug,
       children,
     };
   };
@@ -59,7 +59,7 @@ export const toTreeData = (
     type: "folder",
     id: "root",
     name: "Root",
-    path: "",
+    slug: "",
     children: [toTreePage(pages.homePage), ...foldersArray, ...pagesArray],
   };
 };
