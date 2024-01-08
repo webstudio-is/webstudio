@@ -191,6 +191,8 @@ const BindingPanel = ({
   );
 };
 
+export const bindingVisibilityProperty = "--ws-binding-visibility";
+
 const BindingButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement> & { error?: string }
@@ -204,6 +206,8 @@ const BindingButton = forwardRef<
       <SmallIconButton
         ref={ref}
         css={{
+          // hide by default
+          visibility: `var(${bindingVisibilityProperty}, hidden)`,
           position: "absolute",
           top: 0,
           left: 0,
@@ -214,6 +218,8 @@ const BindingButton = forwardRef<
           "--dot-display": "block",
           "--plus-display": "none",
           "&:hover, &[aria-expanded=true]": {
+            // always show when interacted with
+            visibility: "visible",
             transform: `translate(-50%, -50%) scale(1.5)`,
             "--dot-display": "none",
             "--plus-display": "block",

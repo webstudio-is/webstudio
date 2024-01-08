@@ -497,6 +497,8 @@ export const VariablePopoverTrigger = forwardRef<
             }}
           >
             <form
+              // exclude from the flow
+              style={{ display: "contents" }}
               onSubmit={(event) => {
                 event.preventDefault();
                 saveAndClose();

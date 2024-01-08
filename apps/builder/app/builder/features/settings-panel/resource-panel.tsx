@@ -34,6 +34,7 @@ import {
 } from "~/shared/nano-states";
 import {
   BindingPopover,
+  bindingVisibilityProperty,
   evaluateExpressionWithinScope,
   isLiteralExpression,
 } from "~/builder/shared/binding-popover";
@@ -96,6 +97,7 @@ const HeaderPair = ({
          "name name-input button"
          "value  value-input  button"
         `,
+        "&:hover": { [bindingVisibilityProperty]: "visible" },
       }}
     >
       <Label htmlFor={nameId} css={{ gridArea: "name" }}>
@@ -375,7 +377,13 @@ export const ResourceForm = forwardRef<
 
   return (
     <>
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Flex
+        direction="column"
+        css={{
+          gap: theme.spacing[3],
+          "&:hover": { [bindingVisibilityProperty]: "visible" },
+        }}
+      >
         <Label htmlFor={urlId}>URL</Label>
         <Box css={{ position: "relative" }}>
           <BindingPopover
@@ -430,7 +438,13 @@ export const ResourceForm = forwardRef<
         />
       </Flex>
       {method !== "get" && (
-        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Flex
+          direction="column"
+          css={{
+            gap: theme.spacing[3],
+            "&:hover": { [bindingVisibilityProperty]: "visible" },
+          }}
+        >
           <Label>Body</Label>
           <Box css={{ position: "relative" }}>
             <BindingPopover
