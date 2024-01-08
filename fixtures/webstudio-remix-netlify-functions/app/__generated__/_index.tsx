@@ -13,6 +13,7 @@ import {
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
 export const pageData: PageData = {
+  project: { siteName: "", faviconAssetId: "", code: "" },
   page: {
     id: "9di_L14CzctvSruIoKVvE",
     name: "Home",

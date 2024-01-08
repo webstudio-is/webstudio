@@ -397,6 +397,7 @@ export const prebuild = async (options: {
   }
 
   spinner.text = "Generating css file";
+
   const { cssText, classesMap } = generateCss(
     {
       assets: siteData.assets,
@@ -408,8 +409,7 @@ export const prebuild = async (options: {
     },
     {
       assetBaseUrl,
-      // @todo switch to atomic depending on site settings
-      atomic: false,
+      atomic: siteData.build.pages.settings?.atomicStyles ?? true,
     }
   );
 
