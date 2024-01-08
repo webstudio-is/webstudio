@@ -45,10 +45,10 @@ const ProjectSettingsContentMeta = (props: {
   const ids = useIds(["siteName", "favicon", "code"]);
   const handleChange =
     <T extends keyof ProjectMeta>(name: T) =>
-    (val: ProjectMeta[T]) => {
+    (value: ProjectMeta[T]) => {
       props.onMetaChange({
         ...props.meta,
-        [name]: val,
+        [name]: value,
       });
     };
 
@@ -155,11 +155,7 @@ const ProjectAdvancedSettings = (props: {
     <>
       <Separator />
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label sectionTitle>Advanced Settings</Label>
-        <Text color="subtle">
-          Fine-tune your project with a range of settings, ensuring optimal site
-          functionality and performance tailored to your unique requirements.
-        </Text>
+        <Label sectionTitle>Publish Settings</Label>
         <CheckboxAndLabel>
           <Checkbox
             checked={props.settings.atomicStyles ?? true}
@@ -171,7 +167,7 @@ const ProjectAdvancedSettings = (props: {
             }}
           />
           <Label htmlFor={ids.atomicStyles}>
-            Apply Atomic CSS Styles When Publishing
+            Generate atomic CSS when publishing
           </Label>
         </CheckboxAndLabel>
       </Grid>
