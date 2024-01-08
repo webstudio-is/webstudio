@@ -48,7 +48,11 @@ type Resources = Record<string, unknown>;
 const Page = (_props: { params: Params; resources: Resources }) => {
   return (
     <Body data-ws-id="ibXgMoi9_ipHx1gVrvii0" data-ws-component="Body">
-      <Heading data-ws-id="7pwqBSgrfuuOfk1JblWcL" data-ws-component="Heading">
+      <Heading
+        data-ws-id="7pwqBSgrfuuOfk1JblWcL"
+        data-ws-component="Heading"
+        className="c11x2bo2"
+      >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
     </Body>
