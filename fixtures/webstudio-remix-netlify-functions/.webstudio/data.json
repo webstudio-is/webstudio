@@ -1,11 +1,19 @@
 {
   "build": {
-    "id": "a298339d-fb81-44ef-a688-e5b1221f9532",
+    "id": "d194ee5e-772b-4455-bf5a-8d1b7d846518",
     "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
-    "version": 18,
-    "createdAt": "2023-09-23T09:29:28.107Z",
-    "updatedAt": "2023-09-23T09:29:28.107Z",
+    "version": 21,
+    "createdAt": "2024-01-08T07:32:44.126Z",
+    "updatedAt": "2024-01-08T07:32:44.126Z",
     "pages": {
+      "meta": {
+        "siteName": "",
+        "faviconAssetId": "",
+        "code": ""
+      },
+      "settings": {
+        "atomicStyles": false
+      },
       "homePage": {
         "id": "9di_L14CzctvSruIoKVvE",
         "name": "Home",
