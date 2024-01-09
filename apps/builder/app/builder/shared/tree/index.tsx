@@ -13,10 +13,10 @@ import type { Instance } from "@webstudio-is/sdk";
 import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
-  editingItemIdStore,
+  $editingItemId,
   getIndexedInstanceId,
-  instancesStore,
-  registeredComponentMetasStore,
+  $instances,
+  $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
@@ -30,9 +30,9 @@ export const InstanceTree = (
     "renderItem" | "canLeaveParent" | "getItemChildren" | "editingItemId"
   >
 ) => {
-  const metas = useStore(registeredComponentMetasStore);
-  const instances = useStore(instancesStore);
-  const editingItemId = useStore(editingItemIdStore);
+  const metas = useStore($registeredComponentMetas);
+  const instances = useStore($instances);
+  const editingItemId = useStore($editingItemId);
   const propValues = useStore($propValuesByInstanceSelector);
 
   const canLeaveParent = useCallback(
@@ -100,7 +100,7 @@ export const InstanceTree = (
 
   const updateInstanceLabel = useCallback(
     (instanceId: string, value: string) => {
-      serverSyncStore.createTransaction([instancesStore], (instances) => {
+      serverSyncStore.createTransaction([$instances], (instances) => {
         const instance = instances.get(instanceId);
         if (instance === undefined) {
           return;
@@ -129,7 +129,7 @@ export const InstanceTree = (
               updateInstanceLabel(props.itemData.id, val);
             }}
             onChangeEditing={(isEditing) => {
-              editingItemIdStore.set(
+              $editingItemId.set(
                 isEditing === true ? props.itemData.id : undefined
               );
             }}

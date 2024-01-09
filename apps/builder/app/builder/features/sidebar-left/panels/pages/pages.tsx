@@ -25,7 +25,7 @@ import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
+import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 type TabContentProps = {
@@ -129,7 +129,7 @@ const PagesPanel = ({
   onEdit?: (pageId: string | undefined) => void;
   editingPageId?: string;
 }) => {
-  const pages = useStore(pagesStore);
+  const pages = useStore($pages);
   const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
 
   const renderItem = useCallback(
@@ -225,7 +225,7 @@ const PagesPanel = ({
 };
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
-  const currentPageId = useStore(selectedPageIdStore);
+  const currentPageId = useStore($selectedPageId);
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
 

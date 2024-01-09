@@ -55,13 +55,13 @@ import {
   insertInstancesSliceCopy,
 } from "~/shared/instance-utils";
 import {
-  assetsStore,
+  $assets,
   $domains,
-  instancesStore,
-  pagesStore,
-  projectStore,
-  selectedInstanceSelectorStore,
-  selectedPageIdStore,
+  $instances,
+  $pages,
+  $project,
+  $selectedInstanceSelector,
+  $selectedPageId,
   $dataSources,
   $dataSourceVariables,
 } from "~/shared/nano-states";
@@ -283,14 +283,14 @@ const FormFields = ({
   ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
-  const assets = useStore(assetsStore);
-  const pages = useStore(pagesStore);
+  const assets = useStore($assets);
+  const pages = useStore($pages);
   const socialImageAsset = assets.get(values.socialImageAssetId);
   const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
-  const project = projectStore.get();
+  const project = $project.get();
   const customDomain: string | undefined = $domains.get()[0];
   const projectDomain = `${project?.domain}.${
     env.PUBLISHER_HOST ?? "wstd.work"
@@ -653,7 +653,7 @@ export const NewPageSettings = ({
   onClose: () => void;
   onSuccess: (pageId: Page["id"]) => void;
 }) => {
-  const pages = useStore(pagesStore);
+  const pages = useStore($pages);
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
@@ -666,7 +666,7 @@ export const NewPageSettings = ({
       const pageId = nanoid();
 
       serverSyncStore.createTransaction(
-        [pagesStore, instancesStore],
+        [$pages, $instances],
         (pages, instances) => {
           if (pages === undefined) {
             return;
@@ -687,7 +687,7 @@ export const NewPageSettings = ({
             component: "Body",
             children: [],
           });
-          selectedInstanceSelectorStore.set(undefined);
+          $selectedInstanceSelector.set(undefined);
         }
       );
 
@@ -813,7 +813,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   };
 
   serverSyncStore.createTransaction(
-    [pagesStore, $dataSources],
+    [$pages, $dataSources],
     (pages, dataSources) => {
       if (pages === undefined) {
         return;
@@ -864,11 +864,11 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 };
 
 const deletePage = (pageId: Page["id"]) => {
-  const pages = pagesStore.get();
+  const pages = $pages.get();
   // deselect page before deleting to avoid flash of content
-  if (selectedPageIdStore.get() === pageId) {
-    selectedPageIdStore.set(pages?.homePage.id);
-    selectedInstanceSelectorStore.set(undefined);
+  if ($selectedPageId.get() === pageId) {
+    $selectedPageId.set(pages?.homePage.id);
+    $selectedInstanceSelector.set(undefined);
   }
   const rootInstanceId = pages?.pages.find(
     (page) => page.id === pageId
@@ -876,7 +876,7 @@ const deletePage = (pageId: Page["id"]) => {
   if (rootInstanceId !== undefined) {
     deleteInstance([rootInstanceId]);
   }
-  serverSyncStore.createTransaction([pagesStore], (pages) => {
+  serverSyncStore.createTransaction([$pages], (pages) => {
     if (pages === undefined) {
       return;
     }
@@ -885,7 +885,7 @@ const deletePage = (pageId: Page["id"]) => {
 };
 
 const duplicatePage = (pageId: Page["id"]) => {
-  const pages = pagesStore.get();
+  const pages = $pages.get();
   const page =
     pages?.homePage.id === pageId
       ? pages.homePage
@@ -929,7 +929,7 @@ export const PageSettings = ({
   onDelete: () => void;
   pageId: string;
 }) => {
-  const pages = useStore(pagesStore);
+  const pages = useStore($pages);
   const page = pages && findPageByIdOrPath(pages, pageId);
 
   const isHomePage = page?.id === pages?.homePage.id;

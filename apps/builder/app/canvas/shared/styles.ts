@@ -18,12 +18,12 @@ import {
   isValidStaticStyleValue,
 } from "@webstudio-is/css-engine";
 import {
-  assetsStore,
-  breakpointsStore,
+  $assets,
+  $breakpoints,
   $isPreviewMode,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
 import {
   type StyleRule,
@@ -120,7 +120,7 @@ const subscribeEphemeralStyle = (params: Params) => {
     // track custom properties not set on this change
     const deletedCustomProperties = new Set(addedCustomProperties);
 
-    const assets = assetsStore.get();
+    const assets = $assets.get();
     const transformer = createImageValueTransformer(assets, {
       assetBaseUrl: params.assetBaseUrl,
     });
@@ -167,9 +167,9 @@ export const useManageDesignModeStyles = (params: Params) => {
 };
 
 export const GlobalStyles = ({ params }: { params: Params }) => {
-  const breakpoints = useStore(breakpointsStore);
-  const assets = useStore(assetsStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const breakpoints = useStore($breakpoints);
+  const assets = useStore($assets);
+  const metas = useStore($registeredComponentMetas);
 
   useIsomorphicLayoutEffect(() => {
     const sortedBreakpoints = Array.from(breakpoints.values()).sort(
@@ -263,9 +263,9 @@ const getOrCreateRule = ({
 };
 
 const useSelectedState = (instanceId: Instance["id"]) => {
-  const selectedStateStore = useMemo(() => {
+  const $selectedState = useMemo(() => {
     return computed(
-      [selectedInstanceSelectorStore, selectedStyleSourceSelectorStore],
+      [$selectedInstanceSelector, $selectedStyleSourceSelector],
       (selectedInstanceSelector, selectedStyleSourceSelector) => {
         if (selectedInstanceSelector?.[0] !== instanceId) {
           return;
@@ -274,7 +274,7 @@ const useSelectedState = (instanceId: Instance["id"]) => {
       }
     );
   }, [instanceId]);
-  const selectedState = useStore(selectedStateStore);
+  const selectedState = useStore($selectedState);
   return selectedState;
 };
 
@@ -286,13 +286,13 @@ export const useCssRules = ({
   instanceStyles: StyleDecl[];
 }) => {
   const params = useContext(ReactSdkContext);
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const selectedState = useSelectedState(instanceId);
 
   useIsomorphicLayoutEffect(() => {
     // expect assets to be up to date by the time styles are changed
     // to avoid all styles rerendering when assets are changed
-    const assets = assetsStore.get();
+    const assets = $assets.get();
 
     // find all instance rules and collect rendered properties
     const deletedPropertiesByRule = new Map<

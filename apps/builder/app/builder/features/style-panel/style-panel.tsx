@@ -12,7 +12,7 @@ import { useStyleData } from "./shared/use-style-data";
 import { StyleSettings } from "./style-settings";
 
 import { StyleSourcesSection } from "./style-source-section";
-import { selectedInstanceRenderStateStore } from "~/shared/nano-states";
+import { $selectedInstanceRenderState } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
 type StylePanelProps = {
@@ -25,9 +25,7 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
       selectedInstance,
     });
 
-  const selectedInstanceRenderState = useStore(
-    selectedInstanceRenderStateStore
-  );
+  const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
 
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.

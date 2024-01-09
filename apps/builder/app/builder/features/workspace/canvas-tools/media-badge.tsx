@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { Flex, Text, css, theme } from "@webstudio-is/design-system";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import { $selectedBreakpoint } from "~/shared/nano-states";
 
 const labelStyle = css({
   position: "absolute",
@@ -17,7 +17,7 @@ const badgeStyle = css({
 });
 
 export const MediaBadge = () => {
-  const breakpoint = useStore(selectedBreakpointStore);
+  const breakpoint = useStore($selectedBreakpoint);
   if (breakpoint === undefined) {
     return null;
   }

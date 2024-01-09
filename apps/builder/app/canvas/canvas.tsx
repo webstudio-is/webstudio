@@ -26,12 +26,12 @@ import {
   WebstudioComponentPreview,
 } from "./features/webstudio-component";
 import {
-  assetsStore,
-  pagesStore,
-  instancesStore,
-  selectedPageStore,
+  $assets,
+  $pages,
+  $instances,
+  $selectedPage,
   registerComponentLibrary,
-  registeredComponentsStore,
+  $registeredComponents,
   subscribeComponentHooks,
   $isPreviewMode,
 } from "~/shared/nano-states";
@@ -58,7 +58,7 @@ const useElementsTree = (
   params: Params,
   imageLoader: ImageLoader
 ) => {
-  const page = useStore(selectedPageStore);
+  const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
 
@@ -66,9 +66,9 @@ const useElementsTree = (
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
     // eslint-disable-next-line no-console
     console.log({
-      assetsStore: assetsStore.get().size,
-      pagesStore: pagesStore.get()?.pages.length ?? 0,
-      instancesStore: instancesStore.get().size,
+      $assets: $assets.get().size,
+      $pages: $pages.get()?.pages.length ?? 0,
+      $instances: $instances.get().size,
     });
   }
 
@@ -162,7 +162,7 @@ export const Canvas = ({
     $publisher.set({ publish });
   }, []);
 
-  const selectedPage = useStore(selectedPageStore);
+  const selectedPage = useStore($selectedPage);
 
   useEffect(() => {
     const rootInstanceId = selectedPage?.rootInstanceId;
@@ -184,8 +184,8 @@ export const Canvas = ({
 
   useEffect(subscribeInterceptedEvents, []);
 
-  const components = useStore(registeredComponentsStore);
-  const instances = useStore(instancesStore);
+  const components = useStore($registeredComponents);
+  const instances = useStore($instances);
   const elements = useElementsTree(components, instances, params, imageLoader);
 
   const [isInitialized, setInitialized] = useState(false);

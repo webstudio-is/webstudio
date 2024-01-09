@@ -10,11 +10,11 @@ import {
   insertTemplateData,
 } from "../instance-utils";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedPage,
 } from "../nano-states";
 import { isBaseBreakpoint } from "../breakpoints";
 
@@ -188,7 +188,7 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  const breakpoints = breakpointsStore.get();
+  const breakpoints = $breakpoints.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   if (baseBreakpoint === undefined) {
@@ -209,11 +209,11 @@ export const parse = (clipboardData: string, options?: Options) => {
 
 export const onPaste = (clipboardData: string): boolean => {
   const data = parse(clipboardData);
-  const selectedPage = selectedPageStore.get();
+  const selectedPage = $selectedPage.get();
   if (data === undefined || selectedPage === undefined) {
     return false;
   }
-  const metas = registeredComponentMetasStore.get();
+  const metas = $registeredComponentMetas.get();
   const newInstances = new Map(
     data.instances.map((instance) => [instance.id, instance])
   );
@@ -221,12 +221,12 @@ export const onPaste = (clipboardData: string): boolean => {
     .filter((child) => child.type === "id")
     .map((child) => child.value);
   // paste to the root if nothing is selected
-  const instanceSelector = selectedInstanceSelectorStore.get() ?? [
+  const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
   const dropTarget = findClosestDroppableTarget(
     metas,
-    instancesStore.get(),
+    $instances.get(),
     instanceSelector,
     computeInstancesConstraints(metas, newInstances, rootInstanceIds)
   );

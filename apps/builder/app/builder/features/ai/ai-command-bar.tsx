@@ -36,8 +36,8 @@ import {
 } from "react";
 import {
   $collaborativeInstanceSelector,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
+  $selectedInstanceSelector,
+  $selectedPage,
 } from "~/shared/nano-states";
 import { useMediaRecorder } from "./hooks/media-recorder";
 import { useLongPressToggle } from "./hooks/long-press-toggle";
@@ -198,12 +198,12 @@ export const AiCommandBar = ({ isPreviewMode }: { isPreviewMode: boolean }) => {
 
     // Skip Abort Logic for now
     try {
-      const page = selectedPageStore.get();
+      const page = $selectedPage.get();
       const rootInstanceSelector = page?.rootInstanceId
         ? [page.rootInstanceId]
         : [];
       const instanceSelector =
-        selectedInstanceSelectorStore.get() ?? rootInstanceSelector;
+        $selectedInstanceSelector.get() ?? rootInstanceSelector;
 
       const [instanceId] = instanceSelector;
 

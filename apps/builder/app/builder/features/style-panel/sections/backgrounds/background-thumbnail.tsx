@@ -5,7 +5,7 @@ import {
   createImageLoader,
 } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
+import { $assets } from "~/shared/nano-states";
 import type { StyleInfo } from "../../shared/style-info";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
 import env from "~/shared/env";
@@ -85,7 +85,7 @@ export const getLayerName = (layerStyle: StyleInfo, assets: Assets) => {
 };
 
 export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
-  const assets = useStore(assetsStore);
+  const assets = useStore($assets);
   const backgroundImageStyle = props.layerStyle.backgroundImage?.value;
 
   if (

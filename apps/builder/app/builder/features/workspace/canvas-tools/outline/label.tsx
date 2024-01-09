@@ -4,7 +4,7 @@ import { styled, type Rect } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import { registeredComponentMetasStore } from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 
 type LabelPosition = "top" | "inside" | "bottom";
@@ -82,7 +82,7 @@ type LabelProps = {
 
 export const Label = ({ instance, instanceRect }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
-  const metas = useStore(registeredComponentMetasStore);
+  const metas = useStore($registeredComponentMetas);
   const meta = metas.get(instance.component);
   if (meta === undefined) {
     return <></>;

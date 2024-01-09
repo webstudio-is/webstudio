@@ -5,10 +5,10 @@ import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
 import { queueStatus } from "~/builder/shared/sync";
 
-const isOnlineStore = atom(false);
+const $isOnline = atom(false);
 
 const subscribeIsOnline = () => {
-  const handle = () => isOnlineStore.set(navigator.onLine);
+  const handle = () => $isOnline.set(navigator.onLine);
   addEventListener("offline", handle);
   addEventListener("online", handle);
   return () => {
@@ -19,7 +19,7 @@ const subscribeIsOnline = () => {
 
 export const SyncStatus = () => {
   const statusObject = useStore(queueStatus);
-  const isOnline = useStore(isOnlineStore);
+  const isOnline = useStore($isOnline);
   useEffect(subscribeIsOnline, []);
 
   if (

@@ -12,13 +12,13 @@ import {
   useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
 import {
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedPage,
 } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { $canvasRect, scaleStore } from "~/builder/shared/nano-states";
+import { $canvasRect, $scale } from "~/builder/shared/nano-states";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
@@ -35,7 +35,7 @@ const DragLayer = ({
   component: Instance["component"];
   point: Point;
 }) => {
-  const metas = useStore(registeredComponentMetasStore);
+  const metas = useStore($registeredComponentMetas);
   const meta = metas.get(component);
   if (meta === undefined) {
     return null;
@@ -126,7 +126,7 @@ export const useDraggable = ({
   const [dragComponent, setDragComponent] = useState<Instance["component"]>();
   const [point, setPoint] = useState<Point>({ x: 0, y: 0 });
   const canvasRect = useStore($canvasRect);
-  const scale = useStore(scaleStore);
+  const scale = useStore($scale);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
 
@@ -175,7 +175,7 @@ export const useDraggable = ({
   ) : undefined;
 
   const handleInsert = (component: string) => {
-    const selectedPage = selectedPageStore.get();
+    const selectedPage = $selectedPage.get();
     if (selectedPage === undefined) {
       return;
     }
@@ -189,13 +189,13 @@ export const useDraggable = ({
     const rootInstanceIds = templateData.children
       .filter((child) => child.type === "id")
       .map((child) => child.value);
-    const instanceSelector = selectedInstanceSelectorStore.get() ?? [
+    const instanceSelector = $selectedInstanceSelector.get() ?? [
       selectedPage.rootInstanceId,
     ];
-    const metas = registeredComponentMetasStore.get();
+    const metas = $registeredComponentMetas.get();
     const dropTarget = findClosestDroppableTarget(
       metas,
-      instancesStore.get(),
+      $instances.get(),
       // fallback to root as drop target
       instanceSelector,
       computeInstancesConstraints(metas, newInstances, rootInstanceIds)

@@ -1,9 +1,6 @@
 import { idAttribute } from "@webstudio-is/react-sdk";
-import {
-  hoveredInstanceSelectorStore,
-  instancesStore,
-} from "~/shared/nano-states";
-import { hoveredInstanceOutlineStore } from "~/shared/nano-states";
+import { $hoveredInstanceSelector, $instances } from "~/shared/nano-states";
+import { $hoveredInstanceOutline } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
   getElementsByInstanceSelector,
@@ -21,7 +18,7 @@ export const subscribeInstanceHovering = () => {
   const updateHoveredInstance = (element: Element) => {
     const instanceSelector = getInstanceSelectorFromElement(element);
     if (instanceSelector) {
-      hoveredInstanceSelectorStore.set(instanceSelector);
+      $hoveredInstanceSelector.set(instanceSelector);
     }
   };
 
@@ -42,12 +39,12 @@ export const subscribeInstanceHovering = () => {
   const handleMouseOut = () => {
     mouseOutTimeoutId = setTimeout(() => {
       hoveredElement = undefined;
-      hoveredInstanceSelectorStore.set(undefined);
-      hoveredInstanceOutlineStore.set(undefined);
+      $hoveredInstanceSelector.set(undefined);
+      $hoveredInstanceOutline.set(undefined);
     }, 100);
 
     // Fixes the bug, that new hover occures during timeout
-    const unsubscribe = hoveredInstanceSelectorStore.listen(() => {
+    const unsubscribe = $hoveredInstanceSelector.listen(() => {
       clearTimeout(mouseOutTimeoutId);
       unsubscribe();
     });
@@ -70,14 +67,14 @@ export const subscribeInstanceHovering = () => {
     }
 
     const [instanceId] = instanceSelector;
-    const instances = instancesStore.get();
+    const instances = $instances.get();
     const instance = instances.get(instanceId);
     if (instance === undefined) {
       return;
     }
 
     if (!isScrolling) {
-      hoveredInstanceOutlineStore.set({
+      $hoveredInstanceOutline.set({
         instanceId: instance.id,
         rect: getAllElementsBoundingBox(elements),
       });
@@ -89,7 +86,7 @@ export const subscribeInstanceHovering = () => {
   const unsubscribeScrollState = subscribeScrollState({
     onScrollStart() {
       isScrolling = true;
-      hoveredInstanceOutlineStore.set(undefined);
+      $hoveredInstanceOutline.set(undefined);
     },
     onScrollEnd() {
       isScrolling = false;
@@ -106,13 +103,13 @@ export const subscribeInstanceHovering = () => {
   });
 
   // update rect whenever hovered instance is changed
-  const unsubscribeHoveredInstanceId = hoveredInstanceSelectorStore.subscribe(
+  const unsubscribeHoveredInstanceId = $hoveredInstanceSelector.subscribe(
     (instanceSelector) => {
       if (instanceSelector) {
         const elements = getElementsByInstanceSelector(instanceSelector);
         updateHoveredRect(elements, instanceSelector);
       } else {
-        hoveredInstanceOutlineStore.set(undefined);
+        $hoveredInstanceOutline.set(undefined);
       }
     }
   );

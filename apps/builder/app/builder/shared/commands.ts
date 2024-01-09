@@ -2,11 +2,11 @@ import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $dataSources,
   $isPreviewMode,
-  editingItemIdStore,
-  instancesStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
-  textEditingInstanceSelectorStore,
+  $editingItemId,
+  $instances,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
+  $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -37,8 +37,8 @@ const makeBreakpointCommand = <CommandName extends string>(
 });
 
 const deleteSelectedInstance = () => {
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
   // cannot delete instance while editing
   if (textEditingInstanceSelector) {
     return;
@@ -50,7 +50,7 @@ const deleteSelectedInstance = () => {
     return;
   }
   let newSelectedInstanceSelector: undefined | InstanceSelector;
-  const instances = instancesStore.get();
+  const instances = $instances.get();
   const [selectedInstanceId, parentInstanceId] = selectedInstanceSelector;
   const parentInstance = instances.get(parentInstanceId);
   if (parentInstance) {
@@ -71,8 +71,8 @@ const deleteSelectedInstance = () => {
     }
   }
   if (deleteInstance(selectedInstanceSelector)) {
-    selectedInstanceSelectorStore.set(newSelectedInstanceSelector);
-    selectedStyleSourceSelectorStore.set(undefined);
+    $selectedInstanceSelector.set(newSelectedInstanceSelector);
+    $selectedStyleSourceSelector.set(undefined);
   }
 };
 
@@ -164,7 +164,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
-        const instanceSelector = selectedInstanceSelectorStore.get();
+        const instanceSelector = $selectedInstanceSelector.get();
         if (instanceSelector === undefined) {
           return;
         }
@@ -204,7 +204,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
               value: rootInstanceId,
             });
             // select new instance
-            selectedInstanceSelectorStore.set([
+            $selectedInstanceSelector.set([
               rootInstanceId,
               ...parentInstanceSelector,
             ]);
@@ -216,12 +216,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "editInstanceLabel",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
-        const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+        const selectedInstanceSelector = $selectedInstanceSelector.get();
         if (selectedInstanceSelector === undefined) {
           return;
         }
         const [targetInstanceId] = selectedInstanceSelector;
-        editingItemIdStore.set(targetInstanceId);
+        $editingItemId.set(targetInstanceId);
       },
     },
 

@@ -19,17 +19,17 @@ import type {
 } from "@webstudio-is/sdk";
 import {
   type StyleSourceSelector,
-  instancesStore,
-  selectedInstanceSelectorStore,
-  selectedInstanceIntanceToTagStore,
-  stylesIndexStore,
-  selectedOrLastStyleSourceSelectorStore,
-  breakpointsStore,
-  styleSourceSelectionsStore,
-  registeredComponentMetasStore,
+  $instances,
+  $selectedInstanceSelector,
+  $selectedInstanceIntanceToTag,
+  $stylesIndex,
+  $selectedOrLastStyleSourceSelector,
+  $breakpoints,
+  $styleSourceSelections,
+  $registeredComponentMetas,
   $selectedInstanceStates,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import { $selectedBreakpoint } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
@@ -494,19 +494,18 @@ const useStyleInfoByInstanceAndStyleSource = (
   instanceSelector: InstanceSelector | undefined,
   styleSourceSelector: StyleSourceSelector | undefined
 ) => {
-  const breakpoints = useStore(breakpointsStore);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const breakpoints = useStore($breakpoints);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
   const selectedBreakpointId = selectedBreakpoint?.id;
 
-  // We do not move selectedInstanceIntanceToTagStore out of here as it contains ascendants of selected element
+  // We do not move $selectedInstanceIntanceToTag out of here as it contains ascendants of selected element
   // And we do not gonna iterate over children
-  const instanceToTag = useStore(selectedInstanceIntanceToTagStore);
+  const instanceToTag = useStore($selectedInstanceIntanceToTag);
 
-  const instances = useStore(instancesStore);
-  const metas = useStore(registeredComponentMetasStore);
-  const { stylesByInstanceId, stylesByStyleSourceId } =
-    useStore(stylesIndexStore);
-  const styleSourceSelections = useStore(styleSourceSelectionsStore);
+  const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
+  const { stylesByInstanceId, stylesByStyleSourceId } = useStore($stylesIndex);
+  const styleSourceSelections = useStore($styleSourceSelections);
   const selectedInstanceStates = useStore($selectedInstanceStates);
   const activeStates = useMemo(() => {
     const activeStates = new Set(selectedInstanceStates);
@@ -771,9 +770,9 @@ const useStyleInfoByInstanceAndStyleSource = (
 };
 
 export const useStyleInfo = () => {
-  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const instanceSelector = useStore($selectedInstanceSelector);
 
-  const styleSourceSelector = useStore(selectedOrLastStyleSourceSelectorStore);
+  const styleSourceSelector = useStore($selectedOrLastStyleSourceSelector);
 
   return useStyleInfoByInstanceAndStyleSource(
     instanceSelector,
@@ -784,7 +783,7 @@ export const useStyleInfo = () => {
 const isAncestorOrSelfOfSelectedInstance = (
   instanceSelector: InstanceSelector
 ) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
 
   if (selectedInstanceSelector === undefined) {
     return false;
@@ -808,7 +807,7 @@ const isAncestorOrSelfOfSelectedInstance = (
 export const useStyleInfoByInstanceId = (
   instanceSelector: InstanceSelector | undefined
 ) => {
-  const styleSourceSelections = useStore(styleSourceSelectionsStore);
+  const styleSourceSelections = useStore($styleSourceSelections);
 
   if (
     instanceSelector !== undefined &&
@@ -818,7 +817,7 @@ export const useStyleInfoByInstanceId = (
     console.error(
       `The style works correctly only on ancestors of the selected element,
        as our style data only includes information about these ancestors.
-       See selectedInstanceIntanceToTagStore for details.`
+       See $selectedInstanceIntanceToTag for details.`
     );
   }
 

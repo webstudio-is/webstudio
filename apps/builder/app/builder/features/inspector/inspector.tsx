@@ -19,8 +19,8 @@ import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
-  selectedInstanceStore,
-  registeredComponentMetasStore,
+  $selectedInstance,
+  $registeredComponentMetas,
   $dragAndDropState,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
@@ -30,7 +30,7 @@ import { getInstanceLabel } from "~/shared/instance-utils";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 
 const InstanceInfo = ({ instance }: { instance: Instance }) => {
-  const metas = useStore(registeredComponentMetasStore);
+  const metas = useStore($registeredComponentMetas);
   const componentMeta = metas.get(instance.component);
   if (componentMeta === undefined) {
     return null;
@@ -68,11 +68,11 @@ const contentStyle = {
 const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
 
 export const Inspector = ({ navigatorLayout }: InspectorProps) => {
-  const selectedInstance = useStore(selectedInstanceStore);
+  const selectedInstance = useStore($selectedInstance);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
   const isDragging = useStore($isDragging);
-  const metas = useStore(registeredComponentMetasStore);
+  const metas = useStore($registeredComponentMetas);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;

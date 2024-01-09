@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/design-system";
 import { TrashIcon } from "@webstudio-is/icons";
 import type { Prop } from "@webstudio-is/sdk";
-import { assetsStore } from "~/shared/nano-states";
+import { $assets } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps } from "../shared";
@@ -34,15 +34,15 @@ type Props = {
 };
 
 export const SelectAsset = ({ prop, onChange, onDelete, accept }: Props) => {
-  const assetStore = useMemo(
+  const $asset = useMemo(
     () =>
-      computed(assetsStore, (assets) =>
+      computed($assets, (assets) =>
         prop ? assets.get(prop.value) : undefined
       ),
     [prop]
   );
 
-  const asset = useStore(assetStore);
+  const asset = useStore($asset);
 
   if (isImageAccept(accept) === false) {
     return <Text color="destructive">Unsupported accept value: {accept}</Text>;

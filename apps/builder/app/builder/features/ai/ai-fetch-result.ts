@@ -18,15 +18,15 @@ import { Instance, createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
 import { getMapValuesByKeysSet } from "~/shared/array-utils";
 import {
-  breakpointsStore,
-  dataSourcesStore,
-  instancesStore,
-  projectStore,
-  propsStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  styleSourceSelectionsStore,
-  stylesStore,
+  $breakpoints,
+  $dataSources,
+  $instances,
+  $project,
+  $props,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $styleSourceSelections,
+  $styles,
 } from "~/shared/nano-states";
 import { applyOperations, patchTextInstance } from "./apply-operations";
 import { restAi } from "~/shared/router-utils";
@@ -84,7 +84,7 @@ export const fetchResult = async (
     throw new Error(commandsResponse.data.message);
   }
 
-  const project = projectStore.get();
+  const project = $project.get();
 
   const availableComponentsNames = $availableComponentsNames.get();
   const [styles, jsx] = $jsx.get() || ["", ""];
@@ -203,7 +203,7 @@ export const fetchResult = async (
 };
 
 const $availableComponentsNames = computed(
-  [registeredComponentMetasStore],
+  [$registeredComponentMetas],
   (metas) => {
     const exclude = [
       "Body",
@@ -244,14 +244,14 @@ const restoreComponentsNamespace = (operations: operations.WsOperations) => {
 
 const $jsx = computed(
   [
-    selectedInstanceSelectorStore,
-    instancesStore,
-    propsStore,
-    dataSourcesStore,
-    registeredComponentMetasStore,
-    breakpointsStore,
-    stylesStore,
-    styleSourceSelectionsStore,
+    $selectedInstanceSelector,
+    $instances,
+    $props,
+    $dataSources,
+    $registeredComponentMetas,
+    $breakpoints,
+    $styles,
+    $styleSourceSelections,
   ],
   (
     selectedInstanceSelector,

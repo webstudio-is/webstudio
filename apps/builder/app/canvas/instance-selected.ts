@@ -2,18 +2,18 @@ import type { Instance } from "@webstudio-is/sdk";
 import { idAttribute, selectorIdAttribute } from "@webstudio-is/react-sdk";
 import { subscribeWindowResize } from "~/shared/dom-hooks";
 import {
-  isResizingCanvasStore,
-  selectedInstanceBrowserStyleStore,
-  selectedInstanceIntanceToTagStore,
-  selectedInstanceUnitSizesStore,
-  selectedInstanceRenderStateStore,
-  stylesIndexStore,
-  instancesStore,
-  selectedInstanceSelectorStore,
+  $isResizingCanvas,
+  $selectedInstanceBrowserStyle,
+  $selectedInstanceIntanceToTag,
+  $selectedInstanceUnitSizes,
+  $selectedInstanceRenderState,
+  $stylesIndex,
+  $instances,
+  $selectedInstanceSelector,
   $propValuesByInstanceSelector,
   $styles,
   $selectedInstanceStates,
-  styleSourceSelectionsStore,
+  $styleSourceSelections,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
@@ -21,7 +21,7 @@ import {
   getElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
-import { selectedInstanceOutlineStore } from "~/shared/nano-states";
+import { $selectedInstanceOutline } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";
@@ -31,14 +31,14 @@ const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
 
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
-  selectedInstanceOutlineStore.set({
+  $selectedInstanceOutline.set({
     instanceId,
     rect: getAllElementsBoundingBox(elements),
   });
 };
 
 const hideOutline = () => {
-  selectedInstanceOutlineStore.set(undefined);
+  $selectedInstanceOutline.set(undefined);
 };
 
 const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
@@ -124,7 +124,7 @@ const subscribeSelectedInstance = (
   updateDataCollapsed();
 
   const showOutline = () => {
-    if (isResizingCanvasStore.get()) {
+    if ($isResizingCanvas.get()) {
       return;
     }
     setOutline(instanceId, elements);
@@ -140,7 +140,7 @@ const subscribeSelectedInstance = (
 
     const [element] = elements;
     // trigger style recomputing every time instance styles are changed
-    selectedInstanceBrowserStyleStore.set(getBrowserStyle(element));
+    $selectedInstanceBrowserStyle.set(getBrowserStyle(element));
 
     // Map self and ancestor instance ids to tag names
     const instanceToTag = new Map<Instance["id"], HtmlTags>();
@@ -157,14 +157,14 @@ const subscribeSelectedInstance = (
       }
     }
 
-    selectedInstanceIntanceToTagStore.set(instanceToTag);
+    $selectedInstanceIntanceToTag.set(instanceToTag);
 
     const unitSizes = calculateUnitSizes(element);
-    selectedInstanceUnitSizesStore.set(unitSizes);
+    $selectedInstanceUnitSizes.set(unitSizes);
 
     const availableStates = new Set<string>();
     const instanceStyleSourceIds = new Set(
-      styleSourceSelectionsStore.get().get(instanceId)?.values
+      $styleSourceSelections.get().get(instanceId)?.values
     );
     const styles = $styles.get();
     for (const styleDecl of styles.values()) {
@@ -247,14 +247,14 @@ const subscribeSelectedInstance = (
 
   updateObservers();
 
-  const unsubscribeStylesIndexStore = stylesIndexStore.subscribe(update);
-  const unsubscribeInstancesStore = instancesStore.subscribe(update);
+  const unsubscribe$stylesIndex = $stylesIndex.subscribe(update);
+  const unsubscribe$instances = $instances.subscribe(update);
   const unsubscribePropValuesStore =
     $propValuesByInstanceSelector.subscribe(update);
 
-  const unsubscribeIsResizingCanvas = isResizingCanvasStore.subscribe(
+  const unsubscribeIsResizingCanvas = $isResizingCanvas.subscribe(
     (isResizing) => {
-      if (isResizing && selectedInstanceOutlineStore.get()) {
+      if (isResizing && $selectedInstanceOutline.get()) {
         return hideOutline();
       }
       showOutline();
@@ -279,20 +279,20 @@ const subscribeSelectedInstance = (
     },
   });
 
-  selectedInstanceRenderStateStore.set("mounted");
+  $selectedInstanceRenderState.set("mounted");
 
   return () => {
     clearTimeout(updateStoreTimeouHandle);
     hideOutline();
-    selectedInstanceRenderStateStore.set("pending");
+    $selectedInstanceRenderState.set("pending");
     resizeObserver.disconnect();
     mutationObserver.disconnect();
     bodyStyleMutationObserver.disconnect();
     unsubscribeIsResizingCanvas();
     unsubscribeScrollState();
     unsubscribeWindowResize();
-    unsubscribeStylesIndexStore();
-    unsubscribeInstancesStore();
+    unsubscribe$stylesIndex();
+    unsubscribe$instances();
     unsubscribePropValuesStore();
   };
 };
@@ -301,7 +301,7 @@ export const subscribeSelected = (queueTask: (task: () => void) => void) => {
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeSelectedInstance = () => {};
 
-  const unsubscribe = selectedInstanceSelectorStore.subscribe(
+  const unsubscribe = $selectedInstanceSelector.subscribe(
     (instanceSelector) => {
       if (instanceSelector !== previousSelectedInstance) {
         unsubscribeSelectedInstance();

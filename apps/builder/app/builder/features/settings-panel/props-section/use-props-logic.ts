@@ -9,7 +9,7 @@ import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
   $dataSources,
-  registeredComponentPropsMetasStore,
+  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 
 type PropOrName = { prop?: Prop; propName: string };
@@ -146,9 +146,7 @@ export const usePropsLogic = ({
   updateProp,
   deleteProp,
 }: UsePropsLogicInput) => {
-  const meta = useStore(registeredComponentPropsMetasStore).get(
-    instance.component
-  );
+  const meta = useStore($registeredComponentPropsMetas).get(instance.component);
   const dataSources = useStore($dataSources);
 
   if (meta === undefined) {

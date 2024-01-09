@@ -1,10 +1,10 @@
 import { describe, test, expect } from "@jest/globals";
 import { parse } from "./plugin-markdown";
-import { breakpointsStore } from "../nano-states";
+import { $breakpoints } from "../nano-states";
 
 const options = { generateId: () => "123" };
 
-breakpointsStore.set(new Map([["0", { id: "0", label: "base" }]]));
+$breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
 
 describe("Plugin Markdown", () => {
   test("paragraph", () => {

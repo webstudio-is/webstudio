@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
-  instancesStore,
+  $instances,
   $isPreviewMode,
   $dragAndDropState,
 } from "~/shared/nano-states";
@@ -18,7 +18,7 @@ import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
 import { ResizeHandles } from "./resize-handles";
 import { MediaBadge } from "./media-badge";
 import { applyScale } from "./outline";
-import { scaleStore } from "~/builder/shared/nano-states";
+import { $scale } from "~/builder/shared/nano-states";
 
 const containerStyle = css({
   position: "absolute",
@@ -39,8 +39,8 @@ export const CanvasTools = () => {
 
   const isPreviewMode = useStore($isPreviewMode);
   const dragAndDropState = useStore($dragAndDropState);
-  const instances = useStore(instancesStore);
-  const scale = useStore(scaleStore);
+  const instances = useStore($instances);
+  const scale = useStore($scale);
   if (
     dragAndDropState.isDragging &&
     dragAndDropState.placementIndicator !== undefined

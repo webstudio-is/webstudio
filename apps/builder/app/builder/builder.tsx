@@ -23,19 +23,19 @@ import {
   Workspace,
 } from "./features/workspace";
 import {
-  assetsStore,
+  $assets,
   $authPermit,
   $authToken,
-  breakpointsStore,
-  dataSourcesStore,
-  instancesStore,
+  $breakpoints,
+  $dataSources,
+  $instances,
   $isPreviewMode,
-  pagesStore,
-  projectStore,
-  propsStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
+  $pages,
+  $project,
+  $props,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
   $domains,
   $resources,
   subscribeResources,
@@ -69,7 +69,7 @@ const useNavigatorLayout = () => {
 };
 
 const useSetWindowTitle = () => {
-  const project = useStore(projectStore);
+  const project = useStore($project);
   useEffect(() => {
     document.title = `${project?.title} | Webstudio`;
   }, [project?.title]);
@@ -242,30 +242,30 @@ export const Builder = ({
 }: BuilderProps) => {
   useMount(() => {
     // additional data stores
-    projectStore.set(project);
+    $project.set(project);
     $domains.set(domains);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
 
     // set initial containers value
-    assetsStore.set(new Map(assets));
-    instancesStore.set(new Map(build.instances));
-    dataSourcesStore.set(new Map(build.dataSources));
+    $assets.set(new Map(assets));
+    $instances.set(new Map(build.instances));
+    $dataSources.set(new Map(build.dataSources));
     $resources.set(new Map(build.resources));
     // props should be after data sources to compute logic
-    propsStore.set(new Map(build.props));
-    pagesStore.set(build.pages);
-    styleSourcesStore.set(new Map(build.styleSources));
-    styleSourceSelectionsStore.set(new Map(build.styleSourceSelections));
-    breakpointsStore.set(new Map(build.breakpoints));
-    stylesStore.set(new Map(build.styles));
+    $props.set(new Map(build.props));
+    $pages.set(build.pages);
+    $styleSources.set(new Map(build.styleSources));
+    $styleSourceSelections.set(new Map(build.styleSourceSelections));
+    $breakpoints.set(new Map(build.breakpoints));
+    $styles.set(new Map(build.styles));
   });
 
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
 
   useUnmount(() => {
-    pagesStore.set(undefined);
+    $pages.set(undefined);
   });
 
   useSyncPageUrl();

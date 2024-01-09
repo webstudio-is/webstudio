@@ -18,7 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { ImageControl } from "./image-control";
-import { assetsStore, pagesStore } from "~/shared/nano-states";
+import { $assets, $pages } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
@@ -52,7 +52,7 @@ const ProjectSettingsContentMeta = (props: {
       });
     };
 
-  const assets = useStore(assetsStore);
+  const assets = useStore($assets);
   const asset = assets.get(props.meta.faviconAssetId ?? "");
 
   const favIconUrl = asset ? `${asset.name}` : undefined;
@@ -177,7 +177,7 @@ const ProjectAdvancedSettings = (props: {
 
 const ProjectSettingsView = () => {
   const [meta, setMeta] = useState(
-    pagesStore.get()?.meta ?? {
+    $pages.get()?.meta ?? {
       siteName: "",
       faviconAssetId: "",
       code: "",
@@ -185,7 +185,7 @@ const ProjectSettingsView = () => {
   );
 
   const [settings, setSettings] = useState(
-    pagesStore.get()?.settings ?? {
+    $pages.get()?.settings ?? {
       atomicStyles: true,
     }
   );
@@ -193,7 +193,7 @@ const ProjectSettingsView = () => {
   const isOpen = useStore($isProjectSettingsOpen);
 
   const handleSave = useEffectEvent(() => {
-    serverSyncStore.createTransaction([pagesStore], (pages) => {
+    serverSyncStore.createTransaction([$pages], (pages) => {
       if (pages === undefined) {
         return;
       }

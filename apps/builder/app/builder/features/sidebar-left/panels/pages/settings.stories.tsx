@@ -1,9 +1,9 @@
-import { pagesStore } from "~/shared/nano-states/pages";
+import { $pages } from "~/shared/nano-states/pages";
 import { PageSettings } from "./settings";
 
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
-import { assetsStore, projectStore } from "~/shared/nano-states";
+import { $assets, $project } from "~/shared/nano-states";
 
 export default {
   component: PageSettings,
@@ -11,7 +11,7 @@ export default {
 
 $isProjectSettingsOpen.set(true);
 
-assetsStore.set(
+$assets.set(
   new Map([
     [
       "imageId",
@@ -33,7 +33,7 @@ assetsStore.set(
   ])
 );
 
-pagesStore.set({
+$pages.set({
   meta: {
     siteName: "Project name",
     faviconAssetId: "imageId",
@@ -59,7 +59,7 @@ pagesStore.set({
   ],
 });
 
-projectStore.set({
+$project.set({
   id: "projectId",
   title: "Project title",
   createdAt: `${new Date()}`,
