@@ -7,6 +7,7 @@ import {
   useState,
   createContext,
   useContext,
+  type ReactNode,
 } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { DotIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
@@ -191,6 +192,21 @@ const BindingPanel = ({
   );
 };
 
+const bindingOpacityProperty = "--ws-binding-opacity";
+
+export const BindingControl = ({ children }: { children: ReactNode }) => {
+  return (
+    <Box
+      css={{
+        position: "relative",
+        "&:hover": { [bindingOpacityProperty]: 1 },
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
+
 const BindingButton = forwardRef<
   HTMLButtonElement,
   ButtonHTMLAttributes<HTMLButtonElement> & { error?: string }
@@ -204,16 +220,22 @@ const BindingButton = forwardRef<
       <SmallIconButton
         ref={ref}
         css={{
+          // hide by default
+          opacity: `var(${bindingOpacityProperty}, 0)`,
           position: "absolute",
           top: 0,
           left: 0,
           boxSizing: "border-box",
           padding: 2,
           transform: "translate(-50%, -50%) scale(1)",
-          transition: "transform 60ms",
+          transition: "transform 60ms, opacity 0ms 60ms",
+          // https://easings.net/#easeInOutSine
+          transitionTimingFunction: "cubic-bezier(0.37, 0, 0.63, 1)",
           "--dot-display": "block",
           "--plus-display": "none",
-          "&:hover, &[aria-expanded=true]": {
+          "&:hover, &:focus-visible, &[aria-expanded=true]": {
+            // always show when interacted with
+            opacity: 1,
             transform: `translate(-50%, -50%) scale(1.5)`,
             "--dot-display": "none",
             "--plus-display": "block",

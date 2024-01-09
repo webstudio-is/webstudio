@@ -1,6 +1,9 @@
 import { useStore } from "@nanostores/react";
-import { Box, Grid, Switch, theme, useId } from "@webstudio-is/design-system";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import { Grid, Switch, theme, useId } from "@webstudio-is/design-system";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -41,7 +44,7 @@ export const BooleanControl = ({
       <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
         {label}
       </Label>
-      <Box css={{ position: "relative" }}>
+      <BindingControl>
         <Switch
           id={id}
           disabled={readOnly}
@@ -70,7 +73,7 @@ export const BooleanControl = ({
             onChange({ type: "boolean", value: Boolean(evaluatedValue) })
           }
         />
-      </Box>
+      </BindingControl>
       {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
   );
