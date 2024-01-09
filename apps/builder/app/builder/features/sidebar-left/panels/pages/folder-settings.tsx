@@ -190,7 +190,7 @@ const FormFields = ({
   );
 };
 
-const nameToSlug = (folders: Folders | undefined, name: string) => {
+const nameToSlug = (name: string) => {
   if (name === "") {
     return "";
   }
@@ -209,7 +209,7 @@ export const NewFolderSettings = ({
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
-    slug: nameToSlug(folders, fieldDefaultValues.name),
+    slug: nameToSlug(fieldDefaultValues.name),
   });
   const errors = validateValues(folders, undefined, values);
   const handleSubmit = () => {
@@ -242,13 +242,13 @@ export const NewFolderSettings = ({
         errors={errors}
         disabled={false}
         values={values}
-        onChange={(val) => {
+        onChange={(value) => {
           setValues((values) => {
-            const changes = { [val.field]: val.value };
+            const changes = { [value.field]: value.value };
 
-            if (val.field === "name") {
-              if (values.slug === nameToSlug(folders, values.name)) {
-                changes.slug = nameToSlug(folders, val.value);
+            if (value.field === "name") {
+              if (values.slug === nameToSlug(values.name)) {
+                changes.slug = nameToSlug(value.value);
               }
             }
             return { ...values, ...changes };
