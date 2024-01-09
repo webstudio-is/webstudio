@@ -9,7 +9,7 @@ import {
   $selectedInstanceSelector,
   $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";
@@ -144,7 +144,7 @@ export const Workspace = ({
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
     $selectedInstanceSelector.set(undefined);
-    textEditingInstanceSelectorStore.set(undefined);
+    $textEditingInstanceSelector.set(undefined);
     $selectedStyleSourceSelector.set(undefined);
   };
 

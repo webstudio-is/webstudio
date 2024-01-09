@@ -13,7 +13,7 @@ import {
   $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { Fragment } from "react";
 
@@ -64,7 +64,7 @@ export const Breadcrumbs = () => {
                         instance.id
                       )
                     );
-                    textEditingInstanceSelectorStore.set(undefined);
+                    $textEditingInstanceSelector.set(undefined);
                     $selectedStyleSourceSelector.set(undefined);
                   }}
                 >

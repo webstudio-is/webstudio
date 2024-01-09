@@ -8,7 +8,7 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedStyleSourceSelector,
-  textEditingInstanceSelectorStore,
+  $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
   CLEAR_FORMAT_COMMAND,
@@ -47,7 +47,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // the canvas element may be unfocused, so it's important to focus the element on the canvas.
         element.focus();
         $selectedInstanceSelector.set(editableInstanceSelector);
-        textEditingInstanceSelectorStore.set(editableInstanceSelector);
+        $textEditingInstanceSelector.set(editableInstanceSelector);
       },
     },
 
@@ -58,14 +58,13 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       disableHotkeyOutsideApp: true,
       handler: () => {
         const selectedInstanceSelector = $selectedInstanceSelector.get();
-        const textEditingInstanceSelector =
-          textEditingInstanceSelectorStore.get();
+        const textEditingInstanceSelector = $textEditingInstanceSelector.get();
         if (selectedInstanceSelector === undefined) {
           return;
         }
         // exit text editing mode first without unselecting instance
         if (textEditingInstanceSelector) {
-          textEditingInstanceSelectorStore.set(undefined);
+          $textEditingInstanceSelector.set(undefined);
           return;
         }
         // unselect both instance and style source

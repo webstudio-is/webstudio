@@ -10,7 +10,7 @@ export const $selectedInstanceSelector = atom<undefined | InstanceSelector>(
 
 export const $editingItemId = atom<undefined | string>(undefined);
 
-export const textEditingInstanceSelectorStore = atom<
+export const $textEditingInstanceSelector = atom<
   undefined | InstanceSelector
 >();
 
@@ -28,6 +28,6 @@ export const $selectedInstance = computed(
 );
 
 export const $synchronizedInstances = [
-  ["textEditingInstanceSelector", textEditingInstanceSelectorStore],
+  ["textEditingInstanceSelector", $textEditingInstanceSelector],
   ["isResizingCanvas", $isResizingCanvas],
 ] as const;

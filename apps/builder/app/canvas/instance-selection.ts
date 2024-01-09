@@ -6,7 +6,7 @@ import {
   $selectedInstanceSelector,
   $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { emitCommand } from "./shared/commands";
 
 export const subscribeInstanceSelection = () => {
@@ -60,7 +60,7 @@ export const subscribeInstanceSelection = () => {
     if (clickCount === 1) {
       $selectedInstanceSelector.set(instanceSelector);
       // reset text editor when another instance is selected
-      textEditingInstanceSelectorStore.set(undefined);
+      $textEditingInstanceSelector.set(undefined);
       $selectedStyleSourceSelector.set(undefined);
     }
 
@@ -75,7 +75,7 @@ export const subscribeInstanceSelection = () => {
       // enable text editor when double click on its instance or one of its descendants
       if (editableInstanceSelector) {
         $selectedInstanceSelector.set(editableInstanceSelector);
-        textEditingInstanceSelectorStore.set(editableInstanceSelector);
+        $textEditingInstanceSelector.set(editableInstanceSelector);
         $selectedStyleSourceSelector.set(undefined);
       }
     }

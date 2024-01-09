@@ -38,7 +38,7 @@ import {
   $selectedStyleSourceSelector,
   useInstanceStyles,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import {
   type InstanceSelector,
@@ -251,9 +251,7 @@ export const WebstudioComponentCanvas = forwardRef<
   useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore($instances);
 
-  const textEditingInstanceSelector = useStore(
-    textEditingInstanceSelectorStore
-  );
+  const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
 
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
@@ -387,7 +385,7 @@ export const WebstudioComponentCanvas = forwardRef<
             instanceSelector,
             instanceId
           );
-          textEditingInstanceSelectorStore.set(undefined);
+          $textEditingInstanceSelector.set(undefined);
           $selectedInstanceSelector.set(newSelectedSelector);
           $selectedStyleSourceSelector.set(undefined);
         }}

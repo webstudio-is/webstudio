@@ -6,7 +6,7 @@ import {
   $instances,
   $selectedInstanceSelector,
   $selectedStyleSourceSelector,
-  textEditingInstanceSelectorStore,
+  $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -37,7 +37,7 @@ const makeBreakpointCommand = <CommandName extends string>(
 });
 
 const deleteSelectedInstance = () => {
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
+  const textEditingInstanceSelector = $textEditingInstanceSelector.get();
   const selectedInstanceSelector = $selectedInstanceSelector.get();
   // cannot delete instance while editing
   if (textEditingInstanceSelector) {

@@ -3,7 +3,7 @@ import {
   $selectedInstanceOutlineAndInstance,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
 import { Label } from "./label";
@@ -12,9 +12,7 @@ import { $scale } from "~/builder/shared/nano-states";
 
 export const SelectedInstanceOutline = () => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
-  const textEditingInstanceSelector = useStore(
-    textEditingInstanceSelectorStore
-  );
+  const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const outline = useStore($selectedInstanceOutlineAndInstance);
   const scale = useStore($scale);
   const isEditingCurrentInstance =

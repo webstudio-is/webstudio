@@ -3,7 +3,7 @@ import {
   $hoveredInstanceOutlineAndInstance,
   $hoveredInstanceSelector,
   $selectedInstanceSelector,
-  textEditingInstanceSelectorStore,
+  $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
 import { Outline } from "./outline";
@@ -16,9 +16,7 @@ export const HoveredInstanceOutline = () => {
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const outline = useStore($hoveredInstanceOutlineAndInstance);
   const scale = useStore($scale);
-  const textEditingInstanceSelector = useStore(
-    textEditingInstanceSelectorStore
-  );
+  const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
   const isEditingText = textEditingInstanceSelector !== undefined;
   const isHoveringSelectedInstance = areInstanceSelectorsEqual(
     selectedInstanceSelector,

@@ -8,7 +8,7 @@ import {
   $instances,
   $rootInstance,
   $selectedInstanceSelector,
-  textEditingInstanceSelectorStore,
+  $textEditingInstanceSelector,
   $selectedStyleSourceSelector,
   $registeredComponentMetas,
   $dragAndDropState,
@@ -124,7 +124,7 @@ export const NavigatorTree = () => {
       return;
     }
     $selectedInstanceSelector.set(instanceSelector);
-    textEditingInstanceSelectorStore.set(undefined);
+    $textEditingInstanceSelector.set(undefined);
     $selectedStyleSourceSelector.set(undefined);
   }, []);
 
