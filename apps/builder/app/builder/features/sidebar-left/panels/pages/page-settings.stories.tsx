@@ -1,5 +1,5 @@
 import { $pages } from "~/shared/nano-states/pages";
-import { PageSettings } from "./settings";
+import { PageSettings } from "./page-settings";
 
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";

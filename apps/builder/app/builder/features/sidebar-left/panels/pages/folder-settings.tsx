@@ -25,12 +25,7 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
-import {
-  instancesStore,
-  selectedInstanceSelectorStore,
-  $dataSources,
-  $folders,
-} from "~/shared/nano-states";
+import { $dataSources, $folders } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
@@ -221,26 +216,14 @@ export const NewFolderSettings = ({
     if (Object.keys(errors).length === 0) {
       const folderId = nanoid();
 
-      serverSyncStore.createTransaction(
-        [$folders, instancesStore],
-        (folders, instances) => {
-          const rootInstanceId = nanoid();
-          folders.set(folderId, {
-            id: folderId,
-            name: values.name,
-            slug: values.slug,
-            children: [],
-          });
-
-          instances.set(rootInstanceId, {
-            type: "instance",
-            id: rootInstanceId,
-            component: "Body",
-            children: [],
-          });
-          selectedInstanceSelectorStore.set(undefined);
-        }
-      );
+      serverSyncStore.createTransaction([$folders], (folders) => {
+        folders.set(folderId, {
+          id: folderId,
+          name: values.name,
+          slug: values.slug,
+          children: [],
+        });
+      });
 
       updateFolder(folderId, values);
 

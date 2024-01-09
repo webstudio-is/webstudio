@@ -24,7 +24,7 @@ import {
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
-import { NewPageSettings, PageSettings } from "./settings";
+import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId, $folders } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import { toTreeData, type TreeData } from "./page-utils";

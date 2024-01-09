@@ -1,3 +1,4 @@
+// DEPRECATED: use parseData and serializeData from build.ts
 import { nanoid } from "nanoid";
 import {
   type Breakpoint,

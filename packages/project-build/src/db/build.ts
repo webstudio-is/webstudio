@@ -17,16 +17,16 @@ import {
   createInitialBreakpoints,
   parseBreakpoints,
   serializeBreakpoints,
-} from "./__DEPRECATED__breakpoints";
-import { parseStyles } from "./__DEPRECATED__styles";
-import { parseStyleSources } from "./__DEPRECATED__style-sources";
-import { parseStyleSourceSelections } from "./__DEPRECATED__style-source-selections";
-import { parseProps } from "./__DEPRECATED__props";
-import { parseDataSources } from "./__DEPRECATED__data-sources";
-import { parseInstances, serializeInstances } from "./__DEPRECATED__instances";
+} from "./__DEPRECATED__/breakpoints";
+import { parseStyles } from "./__DEPRECATED__/styles";
+import { parseStyleSources } from "./__DEPRECATED__/style-sources";
+import { parseStyleSourceSelections } from "./__DEPRECATED__/style-source-selections";
+import { parseProps } from "./__DEPRECATED__/props";
+import { parseDataSources } from "./__DEPRECATED__/data-sources";
+import { parseInstances, serializeInstances } from "./__DEPRECATED__/instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Data } from "@webstudio-is/http-client";
-import { parsePages, serializePages } from "./__DEPRECATED__pages";
+import { parsePages, serializePages } from "./__DEPRECATED__/pages";
 
 export const parseData = <Type extends { id: string }>(
   string: string

@@ -1,3 +1,4 @@
+// DEPRECATED: use parseData and serializeData from build.ts
 import { Instances, Instance } from "@webstudio-is/sdk";
 
 export const parseInstances = (instancesString: string): Instances => {
