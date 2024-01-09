@@ -34,7 +34,6 @@ import {
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { validateSlug } from "./url-pattern";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -93,12 +92,7 @@ const validateValues = (
   if (folders !== undefined && values.slug !== undefined) {
     if (isSlugUnique(folders, folderId, values.slug) === false) {
       errors.slug = errors.slug ?? [];
-      errors.slug.push("All paths must be unique");
-    }
-    const messages = validateSlug(values.slug);
-    if (messages.length > 0) {
-      errors.slug = errors.slug ?? [];
-      errors.slug.push(...messages);
+      errors.slug.push("Slug needs to be unique within a folder");
     }
   }
   return errors;
