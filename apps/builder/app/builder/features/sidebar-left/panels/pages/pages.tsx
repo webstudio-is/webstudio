@@ -264,7 +264,6 @@ const FolderEditor = ({
   editingFolderId: string;
   setEditingFolderId: (pageId?: string) => void;
 }) => {
-  console.log(editingFolderId);
   if (editingFolderId === newFolderId) {
     return (
       <NewFolderSettings
