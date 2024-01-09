@@ -22,11 +22,13 @@ export const toTreeData = (
   pages: Pages
 ): TreeData => {
   const pagesMap = new Map(pages.pages.map((page) => [page.id, page]));
-  const toTreePage = (page: Page) => ({
-    type: "page" as const,
-    id: page.id,
-    data: page,
-  });
+  const toTreePage = (page: Page) => {
+    return {
+      type: "page",
+      id: page.id,
+      data: page,
+    } satisfies TreePage;
+  };
   const folderToTree = (folder: Folder) => {
     const children: Array<TreeData> = [];
     for (const id of folder.children) {
@@ -44,12 +46,12 @@ export const toTreeData = (
       }
     }
     return {
-      type: "folder" as const,
+      type: "folder",
       id: folder.id,
       name: folder.name,
       slug: folder.slug,
       children,
-    };
+    } satisfies TreeFolder;
   };
 
   const foldersArray = Array.from(folders.values()).map(folderToTree);
@@ -60,6 +62,6 @@ export const toTreeData = (
     id: "root",
     name: "Root",
     slug: "",
-    children: [toTreePage(pages.homePage), ...foldersArray, ...pagesArray],
-  };
+    children: [toTreePage(pages.homePage), ...pagesArray, ...foldersArray],
+  } satisfies TreeFolder;
 };
