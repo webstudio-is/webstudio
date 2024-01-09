@@ -1,8 +1,8 @@
 import { useStore } from "@nanostores/react";
-import { Box, Grid, Switch, theme, useId } from "@webstudio-is/design-system";
+import { Grid, Switch, theme, useId } from "@webstudio-is/design-system";
 import {
+  BindingControl,
   BindingPopover,
-  bindingVisibilityProperty,
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
@@ -37,7 +37,6 @@ export const BooleanControl = ({
           : `1fr max-content`,
         minHeight: theme.spacing[13],
         justifyItems: "start",
-        "&:hover": { [bindingVisibilityProperty]: "visible" },
       }}
       align="center"
       gap="2"
@@ -45,7 +44,7 @@ export const BooleanControl = ({
       <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
         {label}
       </Label>
-      <Box css={{ position: "relative" }}>
+      <BindingControl>
         <Switch
           id={id}
           disabled={readOnly}
@@ -74,7 +73,7 @@ export const BooleanControl = ({
             onChange({ type: "boolean", value: Boolean(evaluatedValue) })
           }
         />
-      </Box>
+      </BindingControl>
       {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
   );

@@ -1,7 +1,10 @@
 import { useStore } from "@nanostores/react";
 import { useId, type ReactNode } from "react";
 import { Flex, InputField, theme } from "@webstudio-is/design-system";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -39,10 +42,7 @@ const UrlInput = ({
 );
 
 const Row = ({ children }: { children: ReactNode }) => (
-  <Flex
-    css={{ height: theme.spacing[13], position: "relative" }}
-    align="center"
-  >
+  <Flex css={{ height: theme.spacing[13] }} align="center">
     {children}
   </Flex>
 );
@@ -94,23 +94,25 @@ export const FileControl = ({
       onDelete={onDelete}
     >
       <Row>
-        <UrlInput id={id} readOnly={readOnly} localValue={localStringValue} />
-        <BindingPopover
-          scope={scope}
-          aliases={aliases}
-          validate={(value) => {
-            if (value !== undefined && typeof value !== "string") {
-              return `${label} expects a string value or file`;
+        <BindingControl>
+          <UrlInput id={id} readOnly={readOnly} localValue={localStringValue} />
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            validate={(value) => {
+              if (value !== undefined && typeof value !== "string") {
+                return `${label} expects a string value or file`;
+              }
+            }}
+            value={expression}
+            onChange={(newExpression) =>
+              onChange({ type: "expression", value: newExpression })
             }
-          }}
-          value={expression}
-          onChange={(newExpression) =>
-            onChange({ type: "expression", value: newExpression })
-          }
-          onRemove={(evaluatedValue) =>
-            onChange({ type: "string", value: String(evaluatedValue) })
-          }
-        />
+            onRemove={(evaluatedValue) =>
+              onChange({ type: "string", value: String(evaluatedValue) })
+            }
+          />
+        </BindingControl>
       </Row>
       <Row>
         <SelectAsset

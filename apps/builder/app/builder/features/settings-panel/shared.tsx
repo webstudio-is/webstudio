@@ -34,7 +34,7 @@ import {
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { bindingVisibilityProperty } from "~/builder/shared/binding-popover";
+import { spacePropertiesNames } from "../style-panel/sections/space/types";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -226,7 +226,7 @@ export const VerticalLayout = ({
   onDelete,
   children,
 }: LayoutProps) => (
-  <Box css={{ "&:hover": { [bindingVisibilityProperty]: "visible" } }}>
+  <Box>
     <Grid
       css={{
         gridTemplateColumns: deletable ? `1fr max-content` : `1fr`,
@@ -239,7 +239,7 @@ export const VerticalLayout = ({
       {label}
       {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
-    {children}
+    <Box css={{ py: theme.spacing[2] }}>{children}</Box>
   </Box>
 );
 
@@ -255,7 +255,6 @@ export const HorizontalLayout = ({
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[13],
-      "&:hover": { [bindingVisibilityProperty]: "visible" },
     }}
     align="center"
     gap="2"

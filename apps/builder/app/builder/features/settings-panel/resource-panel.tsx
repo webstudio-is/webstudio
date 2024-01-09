@@ -33,8 +33,8 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import {
+  BindingControl,
   BindingPopover,
-  bindingVisibilityProperty,
   evaluateExpressionWithinScope,
   isLiteralExpression,
 } from "~/builder/shared/binding-popover";
@@ -97,7 +97,6 @@ const HeaderPair = ({
          "name name-input button"
          "value  value-input  button"
         `,
-        "&:hover": { [bindingVisibilityProperty]: "visible" },
       }}
     >
       <Label htmlFor={nameId} css={{ gridArea: "name" }}>
@@ -122,38 +121,40 @@ const HeaderPair = ({
         Value
       </Label>
       <Box css={{ gridArea: "value-input", position: "relative" }}>
-        <BindingPopover
-          scope={editorScope}
-          aliases={editorAliases}
-          value={value}
-          onChange={(newValue) => {
-            valueField.onChange(newValue);
-            valueField.onBlur();
-            onChange(name, newValue);
-          }}
-          onRemove={(evaluatedValue) => {
-            valueField.onChange(JSON.stringify(evaluatedValue));
-            valueField.onBlur();
-            onChange(name, JSON.stringify(evaluatedValue));
-          }}
-        />
-        <InputErrorsTooltip
-          errors={valueField.error ? [valueField.error] : undefined}
-        >
-          <InputField
-            id={valueId}
-            // expressions with variables cannot be edited
-            disabled={isLiteralExpression(value) === false}
-            color={valueField.error ? "error" : undefined}
-            value={String(evaluateExpressionWithinScope(value, editorScope))}
-            // update text value as string literal
-            onChange={(event) => {
-              valueField.onChange(JSON.stringify(event.target.value));
-              onChange(name, JSON.stringify(event.target.value));
+        <BindingControl>
+          <BindingPopover
+            scope={editorScope}
+            aliases={editorAliases}
+            value={value}
+            onChange={(newValue) => {
+              valueField.onChange(newValue);
+              valueField.onBlur();
+              onChange(name, newValue);
             }}
-            onBlur={valueField.onBlur}
+            onRemove={(evaluatedValue) => {
+              valueField.onChange(JSON.stringify(evaluatedValue));
+              valueField.onBlur();
+              onChange(name, JSON.stringify(evaluatedValue));
+            }}
           />
-        </InputErrorsTooltip>
+          <InputErrorsTooltip
+            errors={valueField.error ? [valueField.error] : undefined}
+          >
+            <InputField
+              id={valueId}
+              // expressions with variables cannot be edited
+              disabled={isLiteralExpression(value) === false}
+              color={valueField.error ? "error" : undefined}
+              value={String(evaluateExpressionWithinScope(value, editorScope))}
+              // update text value as string literal
+              onChange={(event) => {
+                valueField.onChange(JSON.stringify(event.target.value));
+                onChange(name, JSON.stringify(event.target.value));
+              }}
+              onBlur={valueField.onBlur}
+            />
+          </InputErrorsTooltip>
+        </BindingControl>
       </Box>
 
       <Grid
@@ -377,15 +378,9 @@ export const ResourceForm = forwardRef<
 
   return (
     <>
-      <Flex
-        direction="column"
-        css={{
-          gap: theme.spacing[3],
-          "&:hover": { [bindingVisibilityProperty]: "visible" },
-        }}
-      >
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={urlId}>URL</Label>
-        <Box css={{ position: "relative" }}>
+        <BindingControl>
           <BindingPopover
             scope={scope}
             aliases={aliases}
@@ -417,7 +412,7 @@ export const ResourceForm = forwardRef<
               onBlur={urlField.onBlur}
             />
           </InputErrorsTooltip>
-        </Box>
+        </BindingControl>
       </Flex>
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label>Method</Label>
@@ -438,15 +433,9 @@ export const ResourceForm = forwardRef<
         />
       </Flex>
       {method !== "get" && (
-        <Flex
-          direction="column"
-          css={{
-            gap: theme.spacing[3],
-            "&:hover": { [bindingVisibilityProperty]: "visible" },
-          }}
-        >
+        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
           <Label>Body</Label>
-          <Box css={{ position: "relative" }}>
+          <BindingControl>
             <BindingPopover
               scope={scope}
               aliases={aliases}
@@ -479,7 +468,7 @@ export const ResourceForm = forwardRef<
                 onBlur={bodyField.onBlur}
               />
             </InputErrorsTooltip>
-          </Box>
+          </BindingControl>
         </Flex>
       )}
     </>

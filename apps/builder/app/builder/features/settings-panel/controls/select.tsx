@@ -1,8 +1,11 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
-import { Flex, theme, Select } from "@webstudio-is/design-system";
+import { Select } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -46,7 +49,7 @@ export const SelectControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Flex css={{ position: "relative", py: theme.spacing[2] }}>
+      <BindingControl>
         <Select
           fullWidth
           id={id}
@@ -85,7 +88,7 @@ export const SelectControl = ({
             onChange({ type: "string", value: String(evaluatedValue) })
           }
         />
-      </Flex>
+      </BindingControl>
     </VerticalLayout>
   );
 };

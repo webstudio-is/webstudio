@@ -1,7 +1,10 @@
 import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { Box, InputField } from "@webstudio-is/design-system";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import { InputField } from "@webstudio-is/design-system";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -57,7 +60,7 @@ export const NumberControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Box css={{ position: "relative" }}>
+      <BindingControl>
         <InputField
           id={id}
           disabled={readOnly}
@@ -95,7 +98,7 @@ export const NumberControl = ({
             });
           }}
         />
-      </Box>
+      </BindingControl>
     </ResponsiveLayout>
   );
 };

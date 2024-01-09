@@ -1,14 +1,11 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
-import {
-  Box,
-  RadioGroup,
-  Radio,
-  RadioAndLabel,
-  theme,
-} from "@webstudio-is/design-system";
+import { RadioGroup, Radio, RadioAndLabel } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -51,7 +48,7 @@ export const RadioControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Box css={{ position: "relative", paddingTop: theme.spacing[2] }}>
+      <BindingControl>
         <RadioGroup
           disabled={readOnly}
           name="value"
@@ -94,7 +91,7 @@ export const RadioControl = ({
             onChange({ type: "string", value: String(evaluatedValue) })
           }
         />
-      </Box>
+      </BindingControl>
     </VerticalLayout>
   );
 };
