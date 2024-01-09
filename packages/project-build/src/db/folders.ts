@@ -1,9 +1,13 @@
 import type { Folder } from "@webstudio-is/sdk";
 
-export const parseFolders = (foldersString: string): Array<Folder> => {
-  return JSON.parse(foldersString) as Array<Folder>;
+export const parseFolders = (
+  foldersString: string
+): Map<Folder["id"], Folder> => {
+  const folders = JSON.parse(foldersString) as Array<Folder>;
+  return new Map(folders.map((folder) => [folder.id, folder]));
 };
 
-export const serializeFolders = (folders: Array<Folder>) => {
-  return JSON.stringify(folders);
+export const serializeFolders = (folders: Map<Folder["id"], Folder>) => {
+  const foldersValues: Array<Folder> = Array.from(folders.values());
+  return JSON.stringify(foldersValues);
 };

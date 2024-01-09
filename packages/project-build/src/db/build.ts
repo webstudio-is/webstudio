@@ -47,7 +47,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
-    const folders = parseFolders(build.folders);
+    const folders = Array.from(parseFolders(build.folders));
     const pages = parsePages(build.pages);
     const breakpoints = Array.from(parseBreakpoints(build.breakpoints));
     const styles = Array.from(parseStyles(build.styles));
@@ -157,9 +157,9 @@ export const createBuild = async (
   const defaultFolder = Folder.parse({
     id: nanoid(),
     name: "Untitled",
-    path: "",
+    slug: "",
     children: [],
-  });
+  } satisfies Folder);
 
   const defaultPages = Pages.parse({
     meta: {},
@@ -177,7 +177,7 @@ export const createBuild = async (
   await client.build.create({
     data: {
       projectId: props.projectId,
-      folders: serializeFolders([defaultFolder]),
+      folders: serializeFolders(new Map([[defaultFolder.id, defaultFolder]])),
       pages: serializePages(defaultPages),
       breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
       instances: serializeInstances(new Map(newInstances)),

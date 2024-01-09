@@ -113,3 +113,7 @@ export const validatePathnamePattern = (pathname: string) => {
 
   return messages;
 };
+
+export const validateSlug = (slug: string) => {
+  return [];
+};

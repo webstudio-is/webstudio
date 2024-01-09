@@ -4,17 +4,7 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import {
-  type Page,
-  type Pages,
-  PageName,
-  HomePagePath,
-  PageTitle,
-  PagePath,
-  DataSource,
-} from "@webstudio-is/sdk";
-import { findPageByIdOrPath } from "@webstudio-is/project-build";
+import { Folder, FolderName, FolderSlug } from "@webstudio-is/sdk";
 import {
   theme,
   Button,
@@ -35,34 +25,20 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
-import { deleteInstance } from "~/shared/instance-utils";
 import {
   instancesStore,
-  pagesStore,
   selectedInstanceSelectorStore,
-  selectedPageIdStore,
   $dataSources,
+  $folders,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
-import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { parsePathnamePattern, validatePathnamePattern } from "./url-pattern";
+import { validateSlug } from "./url-pattern";
 
 const fieldDefaultValues = {
   name: "Untitled",
-  path: "/untitled",
-  title: "Untitled",
-  description: "",
-  isHomePage: false,
-  excludePageFromSearch: false,
-  socialImageAssetId: "",
-  customMetas: [
-    {
-      property: "",
-      content: "",
-    },
-  ],
+  slug: "untitled",
 };
 
 const fieldNames = Object.keys(
@@ -77,102 +53,61 @@ type Errors = {
   [fieldName in FieldName]?: string[];
 };
 
-const LegacyPagePath = z
-  .string()
-  .refine((path) => path !== "", "Can't be empty")
-  .refine((path) => path !== "/", "Can't be just a /")
-  .refine((path) => path === "" || path.startsWith("/"), "Must start with a /")
-  .refine((path) => path.endsWith("/") === false, "Can't end with a /")
-  .refine((path) => path.includes("//") === false, "Can't contain repeating /")
-  .refine(
-    (path) => /^[-_a-z0-9\\/]*$/.test(path),
-    "Only a-z, 0-9, -, _, / are allowed"
-  )
-  .refine(
-    // We use /s for our system stuff like /s/css or /s/uploads
-    (path) => path !== "/s" && path.startsWith("/s/") === false,
-    "/s prefix is reserved for the system"
-  )
-  .refine(
-    // Remix serves build artefacts like JS bundles from /build
-    // And we cannot customize it due to bug in Remix: https://github.com/remix-run/remix/issues/2933
-    (path) => path !== "/build" && path.startsWith("/build/") === false,
-    "/build prefix is reserved for the system"
-  );
-
-const HomePageValues = z.object({
-  name: PageName,
-  path: HomePagePath,
-  title: PageTitle,
-  description: z.string().optional(),
+const FolderValues = z.object({
+  name: FolderName,
+  slug: FolderSlug,
 });
 
-const PageValues = z.object({
-  name: PageName,
-  path: isFeatureEnabled("bindings") ? PagePath : LegacyPagePath,
-  title: PageTitle,
-  description: z.string().optional(),
-});
-
-const isPathUnique = (
-  pages: Pages,
+const isSlugUnique = (
+  folders: Map<Folder["id"], Folder>,
   // undefined page id means new page
-  pageId: undefined | Page["id"],
-  path: string
+  folderId: undefined | Folder["id"],
+  slug: string
 ) => {
-  const list = [];
-  const set = new Set();
-  list.push(path);
-  set.add(path);
-  for (const page of pages.pages) {
-    if (page.id !== pageId) {
-      list.push(page.path);
-      set.add(page.path);
-    }
-  }
-  return list.length === set.size;
+  // @todo we need to validate if this folder is unique within its parent
+  //const list = [];
+  //const set = new Set();
+  //list.push(path);
+  //set.add(path);
+  //for (const page of pages.pages) {
+  //  if (page.id !== folderId) {
+  //    list.push(page.path);
+  //    set.add(page.path);
+  //  }
+  //}
+  //return list.length === set.size;
+  return true;
 };
 
 const validateValues = (
-  pages: undefined | Pages,
-  // undefined page id means new page
-  pageId: undefined | Page["id"],
-  values: Values,
-  isHomePage: boolean
+  folders: undefined | Map<Folder["id"], Folder>,
+  // undefined folder id means new folder
+  folderId: undefined | Folder["id"],
+  values: Values
 ): Errors => {
-  const Validator = isHomePage ? HomePageValues : PageValues;
-  const parsedResult = Validator.safeParse(values);
+  const parsedResult = FolderValues.safeParse(values);
   const errors: Errors = {};
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;
   }
-  if (pages !== undefined && values.path !== undefined) {
-    if (isPathUnique(pages, pageId, values.path) === false) {
-      errors.path = errors.path ?? [];
-      errors.path.push("All paths must be unique");
+  if (folders !== undefined && values.slug !== undefined) {
+    if (isSlugUnique(folders, folderId, values.slug) === false) {
+      errors.slug = errors.slug ?? [];
+      errors.slug.push("All paths must be unique");
     }
-    const messages = validatePathnamePattern(values.path);
+    const messages = validateSlug(values.slug);
     if (messages.length > 0) {
-      errors.path = errors.path ?? [];
-      errors.path.push(...messages);
+      errors.slug = errors.slug ?? [];
+      errors.slug.push(...messages);
     }
   }
   return errors;
 };
 
-const toFormPage = (page: Page, isHomePage: boolean): Values => {
+const toForm = (folder: Folder): Values => {
   return {
-    name: page.name,
-    path: page.path,
-    title: page.title,
-    description: page.meta.description ?? fieldDefaultValues.description,
-    socialImageAssetId:
-      page.meta.socialImageAssetId ?? fieldDefaultValues.socialImageAssetId,
-    excludePageFromSearch:
-      page.meta.excludePageFromSearch ??
-      fieldDefaultValues.excludePageFromSearch,
-    isHomePage,
-    customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
+    name: folder.name,
+    slug: folder.slug,
   };
 };
 
@@ -188,7 +123,6 @@ const FormFields = ({
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
-  pathVariableId?: DataSource["id"];
   errors: Errors;
   values: Values;
   onChange: (
@@ -210,9 +144,6 @@ const FormFields = ({
   return (
     <Grid>
       <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
-        {/**
-         * ----------------------========<<<Page props>>>>========----------------------
-         */}
         <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Folder Name</Label>
@@ -235,13 +166,11 @@ const FormFields = ({
           </Grid>
 
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.path}>
+            <Label htmlFor={fieldIds.slug}>
               <Flex align="center" css={{ gap: theme.spacing[3] }}>
-                Path
+                Slug
                 <Tooltip
-                  content={
-                    "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-                  }
+                  content={"@todo tooltip content for slug"}
                   variant="wrapped"
                 >
                   <HelpIcon
@@ -251,17 +180,17 @@ const FormFields = ({
                 </Tooltip>
               </Flex>
             </Label>
-            <InputErrorsTooltip errors={errors.path}>
+            <InputErrorsTooltip errors={errors.slug}>
               <InputField
                 tabIndex={1}
-                color={errors.path && "error"}
-                id={fieldIds.path}
-                name="path"
-                placeholder="/about"
+                color={errors.slug && "error"}
+                id={fieldIds.slug}
+                name="slug"
+                placeholder="folder"
                 disabled={disabled}
-                value={values?.path}
+                value={values?.slug}
                 onChange={(event) => {
-                  onChange({ field: "path", value: event.target.value });
+                  onChange({ field: "slug", value: event.target.value });
                 }}
               />
             </InputErrorsTooltip>
@@ -272,30 +201,15 @@ const FormFields = ({
   );
 };
 
-const nameToPath = (pages: Pages | undefined, name: string) => {
+const nameToSlug = (
+  folders: Map<Folder["id"], Folder> | undefined,
+  name: string
+) => {
   if (name === "") {
     return "";
   }
 
-  const slug = slugify(name, { lower: true, strict: true });
-  const path = `/${slug}`;
-
-  // for TypeScript
-  if (pages === undefined) {
-    return path;
-  }
-
-  if (findPageByIdOrPath(pages, path) === undefined) {
-    return path;
-  }
-
-  let suffix = 1;
-
-  while (findPageByIdOrPath(pages, `${path}${suffix}`) !== undefined) {
-    suffix++;
-  }
-
-  return `${path}${suffix}`;
+  return slugify(name, { lower: true, strict: true });
 };
 
 export const NewFolderSettings = ({
@@ -303,34 +217,31 @@ export const NewFolderSettings = ({
   onSuccess,
 }: {
   onClose: () => void;
-  onSuccess: (pageId: Page["id"]) => void;
+  onSuccess: (folderId: Folder["id"]) => void;
 }) => {
-  const pages = useStore(pagesStore);
+  const folders = useStore($folders);
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
-    path: nameToPath(pages, fieldDefaultValues.name),
+    slug: nameToSlug(folders, fieldDefaultValues.name),
   });
-  const errors = validateValues(pages, undefined, values, false);
-
+  const errors = validateValues(folders, undefined, values);
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
-      const pageId = nanoid();
+      const folderId = nanoid();
 
       serverSyncStore.createTransaction(
-        [pagesStore, instancesStore],
-        (pages, instances) => {
-          if (pages === undefined) {
+        [$folders, instancesStore],
+        (folders, instances) => {
+          if (folders === undefined) {
             return;
           }
           const rootInstanceId = nanoid();
-          pages.pages.push({
-            id: pageId,
+          folders.set(folderId, {
+            id: folderId,
             name: values.name,
-            path: values.path,
-            title: values.title,
-            rootInstanceId,
-            meta: {},
+            slug: values.slug,
+            children: [],
           });
 
           instances.set(rootInstanceId, {
@@ -343,9 +254,9 @@ export const NewFolderSettings = ({
         }
       );
 
-      updateFolder(pageId, values);
+      updateFolder(folderId, values);
 
-      onSuccess(pageId);
+      onSuccess(folderId);
     }
   };
 
@@ -365,11 +276,8 @@ export const NewFolderSettings = ({
             const changes = { [val.field]: val.value };
 
             if (val.field === "name") {
-              if (values.path === nameToPath(pages, values.name)) {
-                changes.path = nameToPath(pages, val.value);
-              }
-              if (values.title === values.name) {
-                changes.title = val.value;
+              if (values.slug === nameToSlug(folders, values.name)) {
+                changes.slug = nameToSlug(folders, val.value);
               }
             }
             return { ...values, ...changes };
@@ -434,129 +342,47 @@ const NewFolderSettingsView = ({
   );
 };
 
-const updateFolder = (pageId: Page["id"], values: Partial<Values>) => {
-  const updateFolderMutable = (page: Page, values: Partial<Values>) => {
-    if (values.name !== undefined) {
-      page.name = values.name;
-    }
-    if (values.path !== undefined) {
-      page.path = values.path;
-    }
-    if (values.title !== undefined) {
-      page.title = values.title;
-    }
-
-    if (values.description !== undefined) {
-      page.meta.description = values.description;
-    }
-
-    if (values.excludePageFromSearch !== undefined) {
-      page.meta.excludePageFromSearch = values.excludePageFromSearch;
-    }
-
-    if (values.socialImageAssetId !== undefined) {
-      page.meta.socialImageAssetId = values.socialImageAssetId;
-    }
-
-    if (values.customMetas !== undefined) {
-      page.meta.custom = values.customMetas;
-    }
-  };
-
-  serverSyncStore.createTransaction(
-    [pagesStore, $dataSources],
-    (pages, dataSources) => {
-      if (pages === undefined) {
-        return;
-      }
-
-      // swap home page
-      if (values.isHomePage && pages.homePage.id !== pageId) {
-        const newHomePageIndex = pages.pages.findIndex(
-          (page) => page.id === pageId
-        );
-
-        if (newHomePageIndex === -1) {
-          throw new Error(`Page with id ${pageId} not found`);
-        }
-
-        const tmp = pages.homePage;
-        pages.homePage = pages.pages[newHomePageIndex];
-
-        pages.homePage.path = "";
-        pages.pages[newHomePageIndex] = tmp;
-
-        tmp.path = nameToPath(pages, tmp.name);
-      }
-
-      if (pages.homePage.id === pageId) {
-        updateFolderMutable(pages.homePage, values);
-      }
-
-      for (const page of pages.pages) {
-        if (page.id === pageId) {
-          // create "Page params" variable when pattern is specified in path
-          const paramNames = parsePathnamePattern(page.path);
-          if (paramNames.length > 0 && page.pathVariableId === undefined) {
-            page.pathVariableId = nanoid();
-            dataSources.set(page.pathVariableId, {
-              id: page.pathVariableId,
-              // scope new variable to body
-              scopeInstanceId: page.rootInstanceId,
-              type: "parameter",
-              name: "Page params",
-            });
-          }
-          updateFolderMutable(page, values);
-        }
-      }
-    }
-  );
-};
-
-const deleteFolder = (pageId: Page["id"]) => {
-  const pages = pagesStore.get();
-  // deselect page before deleting to avoid flash of content
-  if (selectedPageIdStore.get() === pageId) {
-    selectedPageIdStore.set(pages?.homePage.id);
-    selectedInstanceSelectorStore.set(undefined);
-  }
-  const rootInstanceId = pages?.pages.find(
-    (page) => page.id === pageId
-  )?.rootInstanceId;
-  if (rootInstanceId !== undefined) {
-    deleteInstance([rootInstanceId]);
-  }
-  serverSyncStore.createTransaction([pagesStore], (pages) => {
-    if (pages === undefined) {
+const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
+  serverSyncStore.createTransaction([$folders, $dataSources], (folders) => {
+    const folder = folders?.get(folderId);
+    if (folder === undefined) {
       return;
     }
-    removeByMutable(pages.pages, (page) => page.id === pageId);
+    if (values.name !== undefined) {
+      folder.name = values.name;
+    }
+    if (values.slug !== undefined) {
+      folder.slug = values.slug;
+    }
+  });
+};
+
+const deleteFolder = (folderId: Folder["id"]) => {
+  // @todo ask them if they want to delete all pages as well.
+  serverSyncStore.createTransaction([$folders], (folders) => {
+    folders?.delete(folderId);
   });
 };
 
 export const FolderSettings = ({
   onClose,
   onDelete,
-  pageId,
+  folderId,
 }: {
   onClose: () => void;
   onDelete: () => void;
-  pageId: string;
+  folderId: string;
 }) => {
-  const pages = useStore(pagesStore);
-  const page = pages && findPageByIdOrPath(pages, pageId);
-
-  const isHomePage = page?.id === pages?.homePage.id;
-
+  const folders = useStore($folders);
+  const folder = folders?.get(folderId);
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
-    ...(page ? toFormPage(page, isHomePage) : fieldDefaultValues),
+    ...(folder ? toForm(folder) : fieldDefaultValues),
     ...unsavedValues,
   };
 
-  const errors = validateValues(pages, pageId, values, values.isHomePage);
+  const errors = validateValues(folders, folderId, values);
 
   const debouncedFn = useEffectEvent(() => {
     if (
@@ -566,7 +392,7 @@ export const FolderSettings = ({
       return;
     }
 
-    updateFolder(pageId, unsavedValues);
+    updateFolder(folderId, unsavedValues);
 
     setUnsavedValues({});
   });
@@ -591,26 +417,21 @@ export const FolderSettings = ({
     ) {
       return;
     }
-    updateFolder(pageId, unsavedValues);
+    updateFolder(folderId, unsavedValues);
   });
 
   const hanldeDelete = () => {
-    deleteFolder(pageId);
+    deleteFolder(folderId);
     onDelete();
   };
 
-  if (page === undefined) {
+  if (folder === undefined) {
     return null;
   }
 
   return (
     <FolderSettingsView onClose={onClose} onDelete={hanldeDelete}>
-      <FormFields
-        pathVariableId={page.pathVariableId}
-        errors={errors}
-        values={values}
-        onChange={handleChange}
-      />
+      <FormFields errors={errors} values={values} onChange={handleChange} />
     </FolderSettingsView>
   );
 };

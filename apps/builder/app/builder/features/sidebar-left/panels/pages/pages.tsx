@@ -117,7 +117,7 @@ const PagesPanel = ({
 
   const renderItem = useCallback(
     (props: TreeItemRenderProps<TreeData>) => {
-      if (props.itemData.type === "folder") {
+      if (props.itemData.id === "root") {
         return null;
       }
 
@@ -138,7 +138,9 @@ const PagesPanel = ({
           forceFocus={isEditing}
         >
           <TreeItemLabel prefix={<PageIcon />}>
-            {props.itemData.data.name}
+            {props.itemData.type === "folder"
+              ? props.itemData.name
+              : props.itemData.data.name}
           </TreeItemLabel>
         </TreeItemBody>
       );
@@ -279,7 +281,7 @@ const FolderEditor = ({
       onDelete={() => {
         setEditingFolderId(undefined);
       }}
-      pageId={editingFolderId}
+      folderId={editingFolderId}
       key={editingFolderId}
     />
   );

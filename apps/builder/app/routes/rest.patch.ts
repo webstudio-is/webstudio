@@ -6,13 +6,13 @@ import {
   Breakpoints,
   Instances,
   Pages,
-  Folder,
   Props,
   DataSources,
   StyleSourceSelections,
   StyleSources,
   Styles,
   Resources,
+  Folders,
 } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import {
@@ -35,6 +35,7 @@ import {
   serializeDataSources,
   parseData,
   serializeData,
+  serializeFolders,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -103,7 +104,7 @@ export const action = async ({ request }: ActionArgs) => {
 
     const buildData: {
       pages?: Pages;
-      folders?: Array<Folder>;
+      folders?: Folders;
       breakpoints?: Breakpoints;
       instances?: Instances;
       props?: Props;
@@ -217,6 +218,10 @@ export const action = async ({ request }: ActionArgs) => {
       version: clientVersion + 1,
       lastTransactionId,
     };
+
+    if (buildData.folders) {
+      dbBuildData.folders = serializeFolders(Folders.parse(buildData.folders));
+    }
 
     if (buildData.pages) {
       // parse with zod before serialization to avoid saving invalid data
