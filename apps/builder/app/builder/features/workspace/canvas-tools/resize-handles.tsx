@@ -10,7 +10,7 @@ import { useEffect, useRef } from "react";
 import { canvasWidthStore } from "~/builder/shared/nano-states";
 import { minCanvasWidth } from "~/shared/breakpoints";
 import {
-  breakpointsStore,
+  $breakpoints,
   isResizingCanvasStore,
   selectedBreakpointIdStore,
 } from "~/shared/nano-states";
@@ -85,7 +85,7 @@ const handleIcon = (
 
 const updateBreakpoint = (width: number) => {
   const applicableBreakpoint = findApplicableMedia(
-    Array.from(breakpointsStore.get().values()),
+    Array.from($breakpoints.get().values()),
     width
   );
   if (applicableBreakpoint) {

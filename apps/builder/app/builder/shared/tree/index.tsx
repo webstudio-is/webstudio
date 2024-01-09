@@ -15,8 +15,8 @@ import {
   $propValuesByInstanceSelector,
   editingItemIdStore,
   getIndexedInstanceId,
-  instancesStore,
-  registeredComponentMetasStore,
+  $instances,
+  $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
@@ -30,8 +30,8 @@ export const InstanceTree = (
     "renderItem" | "canLeaveParent" | "getItemChildren" | "editingItemId"
   >
 ) => {
-  const metas = useStore(registeredComponentMetasStore);
-  const instances = useStore(instancesStore);
+  const metas = useStore($registeredComponentMetas);
+  const instances = useStore($instances);
   const editingItemId = useStore(editingItemIdStore);
   const propValues = useStore($propValuesByInstanceSelector);
 
@@ -100,7 +100,7 @@ export const InstanceTree = (
 
   const updateInstanceLabel = useCallback(
     (instanceId: string, value: string) => {
-      serverSyncStore.createTransaction([instancesStore], (instances) => {
+      serverSyncStore.createTransaction([$instances], (instances) => {
         const instance = instances.get(instanceId);
         if (instance === undefined) {
           return;

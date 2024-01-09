@@ -17,8 +17,8 @@ import {
 import {
   $propValuesByInstanceSelector,
   propsIndexStore,
-  propsStore,
-  selectedInstanceSelectorStore,
+  $props,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
@@ -214,7 +214,7 @@ export const PropsSectionContainer = ({
   });
   const { propsByInstanceId } = useStore(propsIndexStore);
   const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
-  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const instanceSelector = useStore($selectedInstanceSelector);
   const propValues = propValuesByInstanceSelector.get(
     JSON.stringify(instanceSelector)
   );
@@ -231,7 +231,7 @@ export const PropsSectionContainer = ({
       const duplicateProps = instanceProps
         .filter((prop) => prop.id !== update.id)
         .filter((prop) => prop.name === update.name);
-      serverSyncStore.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([$props], (props) => {
         for (const prop of duplicateProps) {
           props.delete(prop.id);
         }
@@ -240,7 +240,7 @@ export const PropsSectionContainer = ({
     },
 
     deleteProp: (propId) => {
-      serverSyncStore.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([$props], (props) => {
         props.delete(propId);
       });
     },

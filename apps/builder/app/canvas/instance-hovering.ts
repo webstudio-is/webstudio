@@ -1,8 +1,5 @@
 import { idAttribute } from "@webstudio-is/react-sdk";
-import {
-  hoveredInstanceSelectorStore,
-  instancesStore,
-} from "~/shared/nano-states";
+import { hoveredInstanceSelectorStore, $instances } from "~/shared/nano-states";
 import { hoveredInstanceOutlineStore } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
@@ -70,7 +67,7 @@ export const subscribeInstanceHovering = () => {
     }
 
     const [instanceId] = instanceSelector;
-    const instances = instancesStore.get();
+    const instances = $instances.get();
     const instance = instances.get(instanceId);
     if (instance === undefined) {
       return;

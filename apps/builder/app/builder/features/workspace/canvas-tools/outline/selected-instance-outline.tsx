@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import {
   selectedInstanceOutlineAndInstanceStore,
-  selectedInstanceSelectorStore,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
@@ -11,7 +11,7 @@ import { applyScale } from "./apply-scale";
 import { scaleStore } from "~/builder/shared/nano-states";
 
 export const SelectedInstanceOutline = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
   );

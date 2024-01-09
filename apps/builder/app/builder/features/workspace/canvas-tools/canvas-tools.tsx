@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import { css } from "@webstudio-is/design-system";
 import { PlacementIndicator } from "@webstudio-is/design-system";
 import {
-  instancesStore,
+  $instances,
   $isPreviewMode,
   $dragAndDropState,
 } from "~/shared/nano-states";
@@ -39,7 +39,7 @@ export const CanvasTools = () => {
 
   const isPreviewMode = useStore($isPreviewMode);
   const dragAndDropState = useStore($dragAndDropState);
-  const instances = useStore(instancesStore);
+  const instances = useStore($instances);
   const scale = useStore(scaleStore);
   if (
     dragAndDropState.isDragging &&

@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { InputField, useId } from "@webstudio-is/design-system";
 import {
-  registeredComponentMetasStore,
+  $registeredComponentMetas,
   selectedInstanceStore,
 } from "~/shared/nano-states";
 import { useSettingsLogic } from "./use-settings-logic";
@@ -11,7 +11,7 @@ import { getInstanceLabel } from "~/shared/instance-utils";
 export const SettingsSection = () => {
   const { setLabel, handleBlur, handleKeyDown } = useSettingsLogic();
   const selectedInstance = useStore(selectedInstanceStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const metas = useStore($registeredComponentMetas);
   const id = useId();
 
   if (selectedInstance === undefined) {

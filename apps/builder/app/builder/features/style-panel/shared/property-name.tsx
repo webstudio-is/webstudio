@@ -21,13 +21,13 @@ import type {
 } from "@webstudio-is/sdk";
 import { toProperty } from "@webstudio-is/css-engine";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
   selectedBreakpointStore,
   selectedInstanceStore,
   selectedStyleSourceStore,
-  styleSourcesStore,
+  $styleSources,
 } from "~/shared/nano-states";
 import {
   type StyleInfo,
@@ -140,12 +140,12 @@ const TooltipContent = ({
   style: StyleInfo;
   onReset?: undefined | (() => void);
 }) => {
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const instances = useStore(instancesStore);
-  const styleSources = useStore(styleSourcesStore);
+  const instances = useStore($instances);
+  const styleSources = useStore($styleSources);
   const instance = useStore(selectedInstanceStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const metas = useStore($registeredComponentMetas);
   const selectedStyleSource = useStore(selectedStyleSourceStore);
 
   const descriptionWithFallback = description ?? getDescription(properties);

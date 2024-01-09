@@ -12,12 +12,12 @@ import type {
   UploadingAssetContainer,
 } from "./types";
 import type { ActionData } from "~/builder/shared/assets";
-import { assetsStore, $authToken, projectStore } from "~/shared/nano-states";
+import { $assets, $authToken, $projects } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
 import { serverSyncStore } from "~/shared/sync";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
-  serverSyncStore.createTransaction([assetsStore], (assets) => {
+  serverSyncStore.createTransaction([$assets], (assets) => {
     for (const assetId of assetIds) {
       assets.delete(assetId);
     }
@@ -25,7 +25,7 @@ export const deleteAssets = (assetIds: Asset["id"][]) => {
 };
 
 const setAsset = (asset: Asset) => {
-  serverSyncStore.createTransaction([assetsStore], (assets) => {
+  serverSyncStore.createTransaction([$assets], (assets) => {
     assets.set(asset.id, asset);
   });
 };
@@ -63,7 +63,7 @@ const deleteUploadingFileData = (id: FileData["assetId"]) => {
 };
 
 const assetContainersStore = computed(
-  [assetsStore, uploadingFilesDataStore],
+  [$assets, uploadingFilesDataStore],
   (assets, uploadingFilesData) => {
     const uploadingContainers: UploadingAssetContainer[] = [];
     for (const { assetId, type, file, objectURL } of uploadingFilesData) {
@@ -169,7 +169,7 @@ export const useUploadAsset = () => {
   };
 
   const uploadAssets = (type: AssetType, files: File[]) => {
-    const projectId = projectStore.get()?.id;
+    const projectId = $projects.get()?.id;
     const authToken = $authToken.get();
     if (projectId === undefined) {
       return;

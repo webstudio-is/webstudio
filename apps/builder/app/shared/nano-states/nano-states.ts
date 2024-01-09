@@ -23,18 +23,18 @@ import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
-import { instancesStore, selectedInstanceSelectorStore } from "./instances";
-import { selectedPageStore } from "./pages";
+import { $instances, $selectedInstanceSelector } from "./instances";
+import { $selectedPage } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
 
-export const projectStore = atom<Project | undefined>();
-export const $project = projectStore;
+export const $projects = atom<Project | undefined>();
+export const $project = $projects;
 
 export const $domains = atom<string[]>([]);
 
 export const rootInstanceStore = computed(
-  [instancesStore, selectedPageStore],
+  [$instances, $selectedPage],
   (instances, selectedPage) => {
     if (selectedPage === undefined) {
       return undefined;
@@ -43,19 +43,16 @@ export const rootInstanceStore = computed(
   }
 );
 
-export const dataSourcesStore = atom<DataSources>(new Map());
-export const $dataSources = dataSourcesStore;
-export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
+export const $dataSources = atom<DataSources>(new Map());
+export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
-export const $dataSourceVariables = dataSourceVariablesStore;
 
 export const $resources = atom(new Map<Resource["id"], Resource>());
 export const $resourceValues = atom(new Map<Resource["id"], unknown>());
 
-export const propsStore = atom<Props>(new Map());
-export const $props = propsStore;
-export const propsIndexStore = computed(propsStore, (props) => {
+export const $props = atom<Props>(new Map());
+export const propsIndexStore = computed($props, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
   for (const prop of props.values()) {
     const { instanceId } = prop;
@@ -71,11 +68,10 @@ export const propsIndexStore = computed(propsStore, (props) => {
   };
 });
 
-export const stylesStore = atom<Styles>(new Map());
-export const $styles = stylesStore;
+export const $styles = atom<Styles>(new Map());
 
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
-  const instanceStylesStore = useMemo(() => {
+  const instance$styles = useMemo(() => {
     return shallowComputed([stylesIndexStore], (stylesIndex) => {
       if (instanceId === undefined) {
         return [];
@@ -83,24 +79,20 @@ export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
       return stylesIndex.stylesByInstanceId.get(instanceId) ?? [];
     });
   }, [instanceId]);
-  const instanceStyles = useStore(instanceStylesStore);
+  const instanceStyles = useStore(instance$styles);
   return instanceStyles;
 };
 
-export const styleSourcesStore = atom<StyleSources>(new Map());
-export const $styleSources = styleSourcesStore;
+export const $styleSources = atom<StyleSources>(new Map());
 
-export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
-  new Map()
-);
-export const $styleSourceSelections = styleSourceSelectionsStore;
+export const $styleSourceSelections = atom<StyleSourceSelections>(new Map());
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
   state?: string;
 };
 
-export const selectedStyleSourceSelectorStore = atom<
+export const $selectedStyleSourceSelector = atom<
   undefined | StyleSourceSelector
 >(undefined);
 
@@ -114,7 +106,7 @@ export const selectedStyleSourceSelectorStore = atom<
  * of styles
  */
 export const stylesIndexStore = computed(
-  [stylesStore, styleSourceSelectionsStore],
+  [$styles, $styleSourceSelections],
   (styles, styleSourceSelections) => {
     const stylesByStyleSourceId = new Map<StyleSource["id"], StyleDecl[]>();
     for (const styleDecl of styles.values()) {
@@ -146,8 +138,7 @@ export const stylesIndexStore = computed(
   }
 );
 
-export const assetsStore = atom<Assets>(new Map());
-export const $assets = assetsStore;
+export const $assets = atom<Assets>(new Map());
 
 export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
 
@@ -177,7 +168,7 @@ export const selectedInstanceRenderStateStore = atom<
 >("notMounted");
 
 export const selectedInstanceStatesByStyleSourceIdStore = computed(
-  [stylesStore, styleSourceSelectionsStore, selectedInstanceSelectorStore],
+  [$styles, $styleSourceSelections, $selectedInstanceSelector],
   (styles, styleSourceSelections, selectedInstanceSelector) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
     if (selectedInstanceSelector === undefined) {
@@ -206,12 +197,8 @@ export const selectedInstanceStatesByStyleSourceIdStore = computed(
   }
 );
 
-export const selectedInstanceStyleSourcesStore = computed(
-  [
-    styleSourceSelectionsStore,
-    styleSourcesStore,
-    selectedInstanceSelectorStore,
-  ],
+export const selectedInstance$styleSources = computed(
+  [$styleSourceSelections, $styleSources, $selectedInstanceSelector],
   (styleSourceSelections, styleSources, selectedInstanceSelector) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
     if (selectedInstanceSelector === undefined) {
@@ -244,7 +231,7 @@ export const selectedInstanceStyleSourcesStore = computed(
 );
 
 export const selectedOrLastStyleSourceSelectorStore = computed(
-  [selectedInstanceStyleSourcesStore, selectedStyleSourceSelectorStore],
+  [selectedInstance$styleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     if (selectedStyleSourceSelector !== undefined) {
       return selectedStyleSourceSelector;
@@ -262,7 +249,7 @@ export const selectedOrLastStyleSourceSelectorStore = computed(
  * to the last style source of selected instance
  */
 export const selectedStyleSourceStore = computed(
-  [selectedInstanceStyleSourcesStore, selectedStyleSourceSelectorStore],
+  [selectedInstance$styleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     return (
       styleSources.find(

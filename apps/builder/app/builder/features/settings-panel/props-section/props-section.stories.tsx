@@ -5,12 +5,12 @@ import { textVariants } from "@webstudio-is/design-system";
 import { PropsSection } from "./props-section";
 import { usePropsLogic } from "./use-props-logic";
 import {
-  assetsStore,
-  instancesStore,
-  pagesStore,
-  propsStore,
+  $assets,
+  $instances,
+  $pages,
+  $props,
   registerComponentLibrary,
-  selectedPageIdStore,
+  $selectedPageId,
 } from "~/shared/nano-states";
 import { setMockEnv } from "~/shared/env";
 // eslint-disable-next-line import/no-internal-modules
@@ -33,7 +33,7 @@ const page = (name: string, path: string) => ({
   rootInstanceId: unique(),
 });
 
-pagesStore.set({
+$pages.set({
   meta: {},
   homePage: page("Home", "/"),
   pages: [
@@ -43,21 +43,19 @@ pagesStore.set({
   ],
 });
 
-const getSectionInstanceId = (
-  name: string,
-  page = pagesStore.get()?.homePage
-) => (page === undefined ? "" : `${page.id}-${name}`);
+const getSectionInstanceId = (name: string, page = $pages.get()?.homePage) =>
+  page === undefined ? "" : `${page.id}-${name}`;
 
 const addLinkableSections = (
   names: string[],
-  page = pagesStore.get()?.homePage
+  page = $pages.get()?.homePage
 ) => {
   if (page === undefined) {
     return;
   }
 
-  const instances = instancesStore.get();
-  const props = propsStore.get();
+  const instances = $instances.get();
+  const props = $props.get();
 
   const rootInstance: Instance = {
     id: page.rootInstanceId,
@@ -92,9 +90,9 @@ const addLinkableSections = (
 addLinkableSections(["contacts", "about"]);
 const rootInstance = addLinkableSections(
   ["company", "employees"],
-  pagesStore.get()?.pages[0]
+  $pages.get()?.pages[0]
 );
-selectedPageIdStore.set(pagesStore.get()?.homePage.id);
+$selectedPageId.set($pages.get()?.homePage.id);
 
 const instance: Instance = {
   id: instanceId,
@@ -116,7 +114,7 @@ const imageAsset = (name = "cat", format = "jpg"): Asset => ({
   meta: { width: 128, height: 180 },
 });
 
-assetsStore.set(
+$assets.set(
   new Map(
     [imageAsset("cat"), imageAsset("car", "png"), imageAsset("beach")].map(
       (asset) => [asset.id, asset]
@@ -329,7 +327,7 @@ const startingProps: Prop[] = [
     instanceId,
     name: "addedUrlPage",
     type: "page",
-    value: pagesStore.get()?.pages[0].id ?? "",
+    value: $pages.get()?.pages[0].id ?? "",
   },
   {
     id: unique(),
@@ -337,7 +335,7 @@ const startingProps: Prop[] = [
     name: "addedUrlSection",
     type: "page",
     value: {
-      pageId: pagesStore.get()?.homePage.id ?? "",
+      pageId: $pages.get()?.homePage.id ?? "",
       instanceId: getSectionInstanceId("about"),
     },
   },
@@ -360,14 +358,14 @@ const startingProps: Prop[] = [
     instanceId,
     name: "addedUrlAttachment",
     type: "asset",
-    value: (Array.from(assetsStore.get().keys())[0] as string) ?? "",
+    value: (Array.from($assets.get().keys())[0] as string) ?? "",
   },
   {
     id: unique(),
     instanceId,
     name: "addedFile",
     type: "asset",
-    value: (Array.from(assetsStore.get().keys())[0] as string) ?? "",
+    value: (Array.from($assets.get().keys())[0] as string) ?? "",
   },
 ];
 

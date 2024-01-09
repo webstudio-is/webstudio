@@ -5,19 +5,19 @@ import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
-  projectStore,
-  pagesStore,
-  instancesStore,
-  propsStore,
-  dataSourcesStore,
-  breakpointsStore,
-  stylesStore,
-  styleSourcesStore,
-  styleSourceSelectionsStore,
-  assetsStore,
-  selectedPageIdStore,
-  selectedPageHashStore,
-  selectedInstanceSelectorStore,
+  $projects,
+  $pages,
+  $instances,
+  $props,
+  $dataSources,
+  $breakpoints,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+  $assets,
+  $selectedPageId,
+  $selectedPageHash,
+  $selectedInstanceSelector,
   selectedInstanceBrowserStyleStore,
   selectedInstanceUnitSizesStore,
   selectedInstanceIntanceToTagStore,
@@ -25,11 +25,11 @@ import {
   hoveredInstanceSelectorStore,
   $isPreviewMode,
   synchronizedCanvasStores,
-  synchronizedInstancesStores,
-  synchronizedBreakpointsStores,
-  selectedStyleSourceSelectorStore,
+  synchronized$instancess,
+  synchronized$breakpointss,
+  $selectedStyleSourceSelector,
   synchronizedComponentsMetaStores,
-  dataSourceVariablesStore,
+  $dataSourceVariables,
   $dragAndDropState,
   $selectedInstanceStates,
   $resources,
@@ -73,23 +73,23 @@ const initializedStores = new Set<string>();
 
 export const registerContainers = () => {
   // synchronize patches
-  serverSyncStore.register("pages", pagesStore);
-  serverSyncStore.register("breakpoints", breakpointsStore);
-  serverSyncStore.register("instances", instancesStore);
-  serverSyncStore.register("styles", stylesStore);
-  serverSyncStore.register("styleSources", styleSourcesStore);
-  serverSyncStore.register("styleSourceSelections", styleSourceSelectionsStore);
-  serverSyncStore.register("props", propsStore);
-  serverSyncStore.register("dataSources", dataSourcesStore);
+  serverSyncStore.register("pages", $pages);
+  serverSyncStore.register("breakpoints", $breakpoints);
+  serverSyncStore.register("instances", $instances);
+  serverSyncStore.register("styles", $styles);
+  serverSyncStore.register("styleSources", $styleSources);
+  serverSyncStore.register("styleSourceSelections", $styleSourceSelections);
+  serverSyncStore.register("props", $props);
+  serverSyncStore.register("dataSources", $dataSources);
   serverSyncStore.register("resources", $resources);
-  serverSyncStore.register("assets", assetsStore);
+  serverSyncStore.register("assets", $assets);
   // synchronize whole states
-  clientStores.set("project", projectStore);
-  clientStores.set("dataSourceVariables", dataSourceVariablesStore);
+  clientStores.set("project", $projects);
+  clientStores.set("dataSourceVariables", $dataSourceVariables);
   clientStores.set("resourceValues", $resourceValues);
-  clientStores.set("selectedPageId", selectedPageIdStore);
-  clientStores.set("selectedPageHash", selectedPageHashStore);
-  clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
+  clientStores.set("selectedPageId", $selectedPageId);
+  clientStores.set("selectedPageHash", $selectedPageHash);
+  clientStores.set("selectedInstanceSelector", $selectedInstanceSelector);
   clientStores.set(
     "selectedInstanceBrowserStyle",
     selectedInstanceBrowserStyleStore
@@ -108,18 +108,15 @@ export const registerContainers = () => {
   );
   clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
   clientStores.set("isPreviewMode", $isPreviewMode);
-  clientStores.set(
-    "selectedStyleSourceSelector",
-    selectedStyleSourceSelectorStore
-  );
+  clientStores.set("selectedStyleSourceSelector", $selectedStyleSourceSelector);
   clientStores.set("dragAndDropState", $dragAndDropState);
   clientStores.set("ephemeralStyles", $ephemeralStyles);
   clientStores.set("selectedInstanceStates", $selectedInstanceStates);
 
-  for (const [name, store] of synchronizedBreakpointsStores) {
+  for (const [name, store] of synchronized$breakpointss) {
     clientStores.set(name, store);
   }
-  for (const [name, store] of synchronizedInstancesStores) {
+  for (const [name, store] of synchronized$instancess) {
     clientStores.set(name, store);
   }
   for (const [name, store] of synchronizedCanvasStores) {

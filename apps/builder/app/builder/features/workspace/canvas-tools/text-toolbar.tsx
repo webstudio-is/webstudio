@@ -14,7 +14,7 @@ import {
 } from "@webstudio-is/icons";
 import {
   selectedInstanceIntanceToTagStore,
-  selectedInstanceSelectorStore,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { type TextToolbarState, textToolbarStore } from "~/shared/nano-states";
 import { scaleStore } from "~/builder/shared/nano-states";
@@ -39,7 +39,7 @@ const getRectForRelativeRect = (
 };
 
 const $isWithinLink = computed(
-  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+  [$selectedInstanceSelector, selectedInstanceIntanceToTagStore],
   (selectedInstanceSelector, selectedInstanceIntanceToTag) => {
     if (
       selectedInstanceSelector === undefined ||
@@ -199,7 +199,7 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
 export const TextToolbar = () => {
   const textToolbar = useStore(textToolbarStore);
   const scale = useStore(scaleStore);
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
 
   if (
     textToolbar?.selectionRect === undefined ||

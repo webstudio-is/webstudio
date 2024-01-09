@@ -1,12 +1,9 @@
 import { useStore } from "@nanostores/react";
-import {
-  breakpointsStore,
-  selectedBreakpointStore,
-} from "~/shared/nano-states";
+import { $breakpoints, selectedBreakpointStore } from "~/shared/nano-states";
 import { BreakpointsSelector } from "./breakpoints-selector";
 
 export const BreakpointsSelectorContainer = () => {
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   if (selectedBreakpoint === undefined) {
     return null;

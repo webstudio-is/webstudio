@@ -10,9 +10,9 @@ import {
   selectedBreakpointStore,
   selectedOrLastStyleSourceSelectorStore,
   selectedStyleSourceStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
 } from "~/shared/nano-states";
 import { useStyleInfo } from "./style-info";
 import { serverSyncStore } from "~/shared/sync";
@@ -98,7 +98,7 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
 
       $ephemeralStyles.set([]);
       serverSyncStore.createTransaction(
-        [styleSourceSelectionsStore, styleSourcesStore, stylesStore],
+        [$styleSourceSelections, $styleSources, $styles],
         (styleSourceSelections, styleSources, styles) => {
           const instanceId = selectedInstance.id;
           const breakpointId = selectedBreakpoint.id;

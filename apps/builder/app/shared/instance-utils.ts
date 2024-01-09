@@ -31,26 +31,18 @@ import {
   collectionComponent,
 } from "@webstudio-is/react-sdk";
 import {
-  propsStore,
-  stylesStore,
-  selectedInstanceSelectorStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  instancesStore,
-  selectedStyleSourceSelectorStore,
-  breakpointsStore,
-  registeredComponentMetasStore,
-  dataSourcesStore,
-  assetsStore,
+  $props,
+  $styles,
+  $selectedInstanceSelector,
+  $styleSourceSelections,
+  $styleSources,
   $instances,
+  $selectedStyleSourceSelector,
+  $registeredComponentMetas,
+  $dataSources,
   $assets,
   $project,
-  $dataSources,
-  $props,
   $breakpoints,
-  $styleSources,
-  $styles,
-  $styleSourceSelections,
   $pages,
 } from "./nano-states";
 import {
@@ -144,8 +136,8 @@ export const findClosestDetachableInstanceSelector = (
 };
 
 export const isInstanceDetachable = (instanceSelector: InstanceSelector) => {
-  const instances = instancesStore.get();
-  const metas = registeredComponentMetasStore.get();
+  const instances = $instances.get();
+  const metas = $registeredComponentMetas.get();
   const [instanceId] = instanceSelector;
   const instance = instances.get(instanceId);
   if (instance === undefined) {
@@ -320,14 +312,14 @@ export const insertTemplateData = (
   const rootInstanceId = insertedInstances[0].id;
   serverSyncStore.createTransaction(
     [
-      instancesStore,
+      $instances,
       // insert data sources before props to avoid error
       // about missing data source when compute data source logic
-      dataSourcesStore,
-      propsStore,
-      styleSourceSelectionsStore,
-      styleSourcesStore,
-      stylesStore,
+      $dataSources,
+      $props,
+      $styleSourceSelections,
+      $styleSources,
+      $styles,
     ],
     (
       instances,
@@ -340,7 +332,7 @@ export const insertTemplateData = (
       insertInstancesMutable(
         instances,
         props,
-        registeredComponentMetasStore.get(),
+        $registeredComponentMetas.get(),
         insertedInstances,
         children,
         dropTarget
@@ -375,15 +367,12 @@ export const insertTemplateData = (
     }
   );
 
-  selectedInstanceSelectorStore.set([
-    rootInstanceId,
-    ...dropTarget.parentSelector,
-  ]);
-  selectedStyleSourceSelectorStore.set(undefined);
+  $selectedInstanceSelector.set([rootInstanceId, ...dropTarget.parentSelector]);
+  $selectedStyleSourceSelector.set(undefined);
 };
 
 export const getComponentTemplateData = (component: string) => {
-  const metas = registeredComponentMetasStore.get();
+  const metas = $registeredComponentMetas.get();
   const componentMeta = metas.get(component);
   // when template not specified fallback to template with the component
   const template = componentMeta?.template ?? [
@@ -393,7 +382,7 @@ export const getComponentTemplateData = (component: string) => {
       children: [],
     },
   ];
-  const breakpoints = breakpointsStore.get();
+  const breakpoints = $breakpoints.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   if (baseBreakpoint === undefined) {
@@ -407,19 +396,19 @@ export const reparentInstance = (
   dropTarget: DroppableTarget
 ) => {
   serverSyncStore.createTransaction(
-    [instancesStore, propsStore],
+    [$instances, $props],
     (instances, props) => {
       reparentInstanceMutable(
         instances,
         props,
-        registeredComponentMetasStore.get(),
+        $registeredComponentMetas.get(),
         targetInstanceSelector,
         dropTarget
       );
     }
   );
-  selectedInstanceSelectorStore.set(targetInstanceSelector);
-  selectedStyleSourceSelectorStore.set(undefined);
+  $selectedInstanceSelector.set(targetInstanceSelector);
+  $selectedStyleSourceSelector.set(undefined);
 };
 
 export const deleteInstance = (instanceSelector: InstanceSelector) => {
@@ -435,12 +424,12 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
   }
   serverSyncStore.createTransaction(
     [
-      instancesStore,
-      propsStore,
-      styleSourceSelectionsStore,
-      styleSourcesStore,
-      stylesStore,
-      dataSourcesStore,
+      $instances,
+      $props,
+      $styleSourceSelections,
+      $styleSources,
+      $styles,
+      $dataSources,
     ],
     (
       instances,
@@ -571,14 +560,14 @@ type InstancesSlice = {
 };
 
 export const getInstancesSlice = (rootInstanceId: string) => {
-  const assets = assetsStore.get();
-  const instances = instancesStore.get();
-  const dataSources = dataSourcesStore.get();
-  const props = propsStore.get();
-  const styleSourceSelections = styleSourceSelectionsStore.get();
-  const styleSources = styleSourcesStore.get();
-  const breakpoints = breakpointsStore.get();
-  const styles = stylesStore.get();
+  const assets = $assets.get();
+  const instances = $instances.get();
+  const dataSources = $dataSources.get();
+  const props = $props.get();
+  const styleSourceSelections = $styleSourceSelections.get();
+  const styleSources = $styleSources.get();
+  const breakpoints = $breakpoints.get();
+  const styles = $styles.get();
 
   // collect the instance by id and all its descendants including portal instances
   const slicedInstanceIds = findTreeInstanceIds(instances, rootInstanceId);

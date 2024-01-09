@@ -40,15 +40,7 @@ import {
   $styleSourceSelections,
   $styleSources,
   $styles,
-  assetsStore,
-  breakpointsStore,
-  dataSourcesStore,
-  instancesStore,
-  propsStore,
-  registeredComponentMetasStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
+  $registeredComponentMetas,
 } from "./nano-states";
 import { registerContainers } from "./sync";
 import type { Project } from "@webstudio-is/project";
@@ -429,12 +421,10 @@ describe("find closest droppable target", () => {
 });
 
 test("insert template data with only new style sources", () => {
-  instancesStore.set(new Map([createInstancePair("body", "Body", [])]));
-  styleSourceSelectionsStore.set(new Map());
-  styleSourcesStore.set(
-    new Map([["1", { type: "token", id: "1", name: "Zero" }]])
-  );
-  stylesStore.set(
+  $instances.set(new Map([createInstancePair("body", "Body", [])]));
+  $styleSourceSelections.set(new Map());
+  $styleSources.set(new Map([["1", { type: "token", id: "1", name: "Zero" }]]));
+  $styles.set(
     new Map([
       [
         "1:base:color:",
@@ -483,16 +473,16 @@ test("insert template data with only new style sources", () => {
     },
     { parentSelector: ["body"], position: "end" }
   );
-  expect(styleSourceSelectionsStore.get()).toEqual(
+  expect($styleSourceSelections.get()).toEqual(
     new Map([["box1", { instanceId: "box1", values: ["1", "2"] }]])
   );
-  expect(styleSourcesStore.get()).toEqual(
+  expect($styleSources.get()).toEqual(
     new Map([
       ["1", { type: "token", id: "1", name: "Zero" }],
       ["2", { type: "token", id: "2", name: "Two" }],
     ])
   );
-  expect(stylesStore.get()).toEqual(
+  expect($styles.get()).toEqual(
     new Map([
       [
         "1:base:color:",
@@ -521,7 +511,7 @@ describe("reparent instance", () => {
     // body
     //   list
     //     box
-    instancesStore.set(
+    $instances.set(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
         createInstancePair("list", collectionComponent, [
@@ -530,12 +520,12 @@ describe("reparent instance", () => {
         createInstancePair("box", "Box", []),
       ])
     );
-    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentInstance(["box", "list[0]", "list", "body"], {
       parentSelector: ["body"],
       position: 1,
     });
-    expect(instancesStore.get()).toEqual(
+    expect($instances.get()).toEqual(
       new Map([
         createInstancePair("body", "Body", [
           { type: "id", value: "list" },
@@ -554,7 +544,7 @@ describe("delete instance", () => {
     //   box1
     //     box11
     //   box2
-    instancesStore.set(
+    $instances.set(
       new Map([
         createInstancePair("body", "Body", [
           { type: "id", value: "box1" },
@@ -565,9 +555,9 @@ describe("delete instance", () => {
         createInstancePair("box2", "Box", []),
       ])
     );
-    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
     deleteInstance(["box1", "body"]);
-    expect(instancesStore.get()).toEqual(
+    expect($instances.get()).toEqual(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
         createInstancePair("box2", "Box", []),
@@ -578,15 +568,15 @@ describe("delete instance", () => {
   test("prevent deleting root instance", () => {
     // body
     //   box1
-    instancesStore.set(
+    $instances.set(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
         createInstancePair("box1", "Box", []),
       ])
     );
-    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
     deleteInstance(["body"]);
-    expect(instancesStore.get()).toEqual(
+    expect($instances.get()).toEqual(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
         createInstancePair("box1", "Box", []),
@@ -598,7 +588,7 @@ describe("delete instance", () => {
     // body
     //   list
     //     box
-    instancesStore.set(
+    $instances.set(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
         createInstancePair("list", collectionComponent, [
@@ -607,9 +597,9 @@ describe("delete instance", () => {
         createInstancePair("box", "Box", []),
       ])
     );
-    registeredComponentMetasStore.set(createFakeComponentMetas({}));
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
     deleteInstance(["box", "list[0]", "list", "body"]);
-    expect(instancesStore.get()).toEqual(
+    expect($instances.get()).toEqual(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
         createInstancePair("list", collectionComponent, []),
@@ -625,7 +615,7 @@ describe("get instances slice", () => {
     //     slot
     //       slotChild
     //   bodyChild2
-    instancesStore.set(
+    $instances.set(
       toMap([
         createInstance("body", "Body", [
           { type: "id", value: "bodyChild1" },
@@ -650,21 +640,21 @@ describe("get instances slice", () => {
     // body
     //   box1
     //     box2
-    instancesStore.set(
+    $instances.set(
       toMap([
         createInstance("body", "Body", [{ type: "id", value: "box1" }]),
         createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
         createInstance("box2", "Box", []),
       ])
     );
-    styleSourceSelectionsStore.set(
+    $styleSourceSelections.set(
       new Map([
         ["body", { instanceId: "box1", values: ["localBody", "token1"] }],
         ["box1", { instanceId: "box1", values: ["localBox1", "token2"] }],
         ["box2", { instanceId: "box2", values: ["localBox2", "token2"] }],
       ])
     );
-    styleSourcesStore.set(
+    $styleSources.set(
       new Map([
         ["localBody", { id: "localBody", type: "local" }],
         ["localBox1", { id: "localBox1", type: "local" }],
@@ -673,7 +663,7 @@ describe("get instances slice", () => {
         ["token2", { id: "token2", type: "token", name: "token2" }],
       ])
     );
-    stylesStore.set(
+    $styles.set(
       new Map([
         createStyleDeclPair("localBody1", "base", "color", "red"),
         createStyleDeclPair("localBox1", "base", "color", "green"),
@@ -682,7 +672,7 @@ describe("get instances slice", () => {
         createStyleDeclPair("token2", "base", "color", "orange"),
       ])
     );
-    breakpointsStore.set(
+    $breakpoints.set(
       new Map([
         ["base", { id: "base", label: "base" }],
         ["big", { id: "big", label: "big", minWidth: 768 }],
@@ -713,14 +703,14 @@ describe("get instances slice", () => {
     // body
     //   box1
     //     box2
-    instancesStore.set(
+    $instances.set(
       toMap([
         createInstance("body", "Body", [{ type: "id", value: "box1" }]),
         createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
         createInstance("box2", "Box", []),
       ])
     );
-    propsStore.set(
+    $props.set(
       toMap([
         createProp("body", "bodyProp", "data-body"),
         createProp("box1", "box1Prop", "data-box1"),
@@ -739,14 +729,14 @@ describe("get instances slice", () => {
     // body
     //   box1
     //     box2
-    instancesStore.set(
+    $instances.set(
       toMap([
         createInstance("body", "Body", [{ type: "id", value: "box1" }]),
         createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
         createInstance("box2", "Box", []),
       ])
     );
-    propsStore.set(
+    $props.set(
       new Map([
         [
           "bodyProp",
@@ -770,19 +760,19 @@ describe("get instances slice", () => {
         ],
       ])
     );
-    styleSourceSelectionsStore.set(
+    $styleSourceSelections.set(
       new Map([
         ["body", { instanceId: "box1", values: ["localBody"] }],
         ["box1", { instanceId: "box1", values: ["localBox1"] }],
       ])
     );
-    styleSourcesStore.set(
+    $styleSources.set(
       new Map([
         ["localBody", { id: "localBody", type: "local" }],
         ["localBox1", { id: "localBox1", type: "local" }],
       ])
     );
-    stylesStore.set(
+    $styles.set(
       new Map([
         createStyleDeclPair("localBody1", "base", "fontFamily", {
           type: "fontFamily",
@@ -802,8 +792,8 @@ describe("get instances slice", () => {
         }),
       ])
     );
-    breakpointsStore.set(new Map([["base", { id: "base", label: "base" }]]));
-    assetsStore.set(
+    $breakpoints.set(new Map([["base", { id: "base", label: "base" }]]));
+    $assets.set(
       toMap([
         createImageAsset("asset1"),
         createImageAsset("asset2"),
@@ -826,14 +816,14 @@ describe("get instances slice", () => {
     // body
     //   box1
     //     box2
-    instancesStore.set(
+    $instances.set(
       toMap([
         createInstance("body", "Body", [{ type: "id", value: "box1" }]),
         createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
         createInstance("box2", "Box", []),
       ])
     );
-    dataSourcesStore.set(
+    $dataSources.set(
       toMap([
         {
           id: "box1$state",
@@ -844,7 +834,7 @@ describe("get instances slice", () => {
         },
       ])
     );
-    propsStore.set(
+    $props.set(
       toMap([
         {
           id: "box1$stateProp",
@@ -916,14 +906,14 @@ describe("get instances slice", () => {
     // body
     //   box1
     //     box2
-    instancesStore.set(
+    $instances.set(
       toMap([
         createInstance("body", "Body", [{ type: "id", value: "box1" }]),
         createInstance("box1", "Box", [{ type: "id", value: "box2" }]),
         createInstance("box2", "Box", []),
       ])
     );
-    dataSourcesStore.set(
+    $dataSources.set(
       toMap([
         {
           id: "box1$state",
@@ -941,7 +931,7 @@ describe("get instances slice", () => {
         },
       ])
     );
-    propsStore.set(
+    $props.set(
       toMap([
         {
           id: "box2$onChange1",

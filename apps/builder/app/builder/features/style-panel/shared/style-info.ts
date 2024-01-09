@@ -19,14 +19,14 @@ import type {
 } from "@webstudio-is/sdk";
 import {
   type StyleSourceSelector,
-  instancesStore,
-  selectedInstanceSelectorStore,
+  $instances,
+  $selectedInstanceSelector,
   selectedInstanceIntanceToTagStore,
   stylesIndexStore,
   selectedOrLastStyleSourceSelectorStore,
-  breakpointsStore,
-  styleSourceSelectionsStore,
-  registeredComponentMetasStore,
+  $breakpoints,
+  $styleSourceSelections,
+  $registeredComponentMetas,
   $selectedInstanceStates,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
@@ -494,7 +494,7 @@ const useStyleInfoByInstanceAndStyleSource = (
   instanceSelector: InstanceSelector | undefined,
   styleSourceSelector: StyleSourceSelector | undefined
 ) => {
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const selectedBreakpointId = selectedBreakpoint?.id;
 
@@ -502,11 +502,11 @@ const useStyleInfoByInstanceAndStyleSource = (
   // And we do not gonna iterate over children
   const instanceToTag = useStore(selectedInstanceIntanceToTagStore);
 
-  const instances = useStore(instancesStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
   const { stylesByInstanceId, stylesByStyleSourceId } =
     useStore(stylesIndexStore);
-  const styleSourceSelections = useStore(styleSourceSelectionsStore);
+  const styleSourceSelections = useStore($styleSourceSelections);
   const selectedInstanceStates = useStore($selectedInstanceStates);
   const activeStates = useMemo(() => {
     const activeStates = new Set(selectedInstanceStates);
@@ -771,7 +771,7 @@ const useStyleInfoByInstanceAndStyleSource = (
 };
 
 export const useStyleInfo = () => {
-  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const instanceSelector = useStore($selectedInstanceSelector);
 
   const styleSourceSelector = useStore(selectedOrLastStyleSourceSelectorStore);
 
@@ -784,7 +784,7 @@ export const useStyleInfo = () => {
 const isAncestorOrSelfOfSelectedInstance = (
   instanceSelector: InstanceSelector
 ) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
 
   if (selectedInstanceSelector === undefined) {
     return false;
@@ -808,7 +808,7 @@ const isAncestorOrSelfOfSelectedInstance = (
 export const useStyleInfoByInstanceId = (
   instanceSelector: InstanceSelector | undefined
 ) => {
-  const styleSourceSelections = useStore(styleSourceSelectionsStore);
+  const styleSourceSelections = useStore($styleSourceSelections);
 
   if (
     instanceSelector !== undefined &&

@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { instancesStore } from "./instances";
+import { $instances } from "./instances";
 import type { InstanceSelector } from "../tree-utils";
 
 export type TextToolbarState = {
@@ -43,7 +43,7 @@ export const selectedInstanceOutlineStore = atom<undefined | InstanceOutline>(
 );
 
 export const selectedInstanceOutlineAndInstanceStore = computed(
-  [instancesStore, selectedInstanceOutlineStore],
+  [$instances, selectedInstanceOutlineStore],
   getInstanceOutlineAndInstance
 );
 
@@ -52,7 +52,7 @@ export const hoveredInstanceOutlineStore = atom<undefined | InstanceOutline>(
 );
 
 export const hoveredInstanceOutlineAndInstanceStore = computed(
-  [instancesStore, hoveredInstanceOutlineStore],
+  [$instances, hoveredInstanceOutlineStore],
   getInstanceOutlineAndInstance
 );
 

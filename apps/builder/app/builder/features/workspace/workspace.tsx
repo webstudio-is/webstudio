@@ -6,8 +6,8 @@ import {
   workspaceRectStore,
 } from "~/builder/shared/nano-states";
 import {
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
@@ -143,9 +143,9 @@ export const Workspace = ({
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
-    selectedInstanceSelectorStore.set(undefined);
+    $selectedInstanceSelector.set(undefined);
     textEditingInstanceSelectorStore.set(undefined);
-    selectedStyleSourceSelectorStore.set(undefined);
+    $selectedStyleSourceSelector.set(undefined);
   };
 
   return (

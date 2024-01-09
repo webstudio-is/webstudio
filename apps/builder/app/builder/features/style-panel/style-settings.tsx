@@ -11,7 +11,7 @@ import type { StyleInfo } from "./shared/style-info";
 import { useStore } from "@nanostores/react";
 import {
   selectedInstanceIntanceToTagStore,
-  selectedInstanceSelectorStore,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { computed } from "nanostores";
 import { useParentStyle } from "./parent-style";
@@ -24,7 +24,7 @@ export type StyleSettingsProps = {
 };
 
 const selectedInstanceTagStore = computed(
-  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+  [$selectedInstanceSelector, selectedInstanceIntanceToTagStore],
   (instanceSelector, instanceToTag) => {
     if (instanceSelector === undefined || instanceToTag === undefined) {
       return;

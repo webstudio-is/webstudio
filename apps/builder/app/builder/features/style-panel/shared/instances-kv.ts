@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 import { map } from "nanostores";
 import { useCallback } from "react";
-import { selectedInstanceSelectorStore } from "~/shared/nano-states";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 const instancesKv = map<Record<string, unknown>>({});
 
@@ -11,7 +11,7 @@ const instancesKv = map<Record<string, unknown>>({});
  * allowing the default UI behavior to be used until the user modifies the state.
  */
 export const useSelectedInstanceKv = <T>(key: string, defaultValue: T) => {
-  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const instanceSelector = useStore($selectedInstanceSelector);
   const keyInstanceSelector = instanceSelector
     ? `${instanceSelector.join(",")}-${key}`
     : `undefined-${key}`;

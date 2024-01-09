@@ -2,7 +2,7 @@ import { useStore } from "@nanostores/react";
 import {
   hoveredInstanceOutlineAndInstanceStore,
   hoveredInstanceSelectorStore,
-  selectedInstanceSelectorStore,
+  $selectedInstanceSelector,
   textEditingInstanceSelectorStore,
 } from "~/shared/nano-states";
 import { areInstanceSelectorsEqual } from "~/shared/tree-utils";
@@ -12,7 +12,7 @@ import { applyScale } from "./apply-scale";
 import { scaleStore } from "~/builder/shared/nano-states";
 
 export const HoveredInstanceOutline = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const hoveredInstanceSelector = useStore(hoveredInstanceSelectorStore);
   const outline = useStore(hoveredInstanceOutlineAndInstanceStore);
   const scale = useStore(scaleStore);

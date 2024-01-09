@@ -4,17 +4,14 @@ import {
   workspaceRectStore,
   canvasWidthStore,
 } from "~/builder/shared/nano-states";
-import {
-  breakpointsStore,
-  selectedBreakpointStore,
-} from "~/shared/nano-states";
+import { $breakpoints, selectedBreakpointStore } from "~/shared/nano-states";
 import { findInitialWidth } from "./find-initial-width";
 
 // Fixes initial canvas width jump on wide screens.
 // Calculate canvas width during SSR based on known initial width for wide screens.
 export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
   const workspaceRect = workspaceRectStore.get();
-  const breakpoints = breakpointsStore.get();
+  const breakpoints = $breakpoints.get();
   const breakpoint = breakpoints.get(breakpointId);
   if (workspaceRect === undefined || breakpoint === undefined) {
     return false;
@@ -36,7 +33,7 @@ export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
 export const useSetCanvasWidth = () => {
   useEffect(() => {
     const update = () => {
-      const breakpoints = breakpointsStore.get();
+      const breakpoints = $breakpoints.get();
       const workspaceRect = workspaceRectStore.get();
       if (workspaceRect === undefined || breakpoints.size === 0) {
         return;
@@ -56,7 +53,7 @@ export const useSetCanvasWidth = () => {
       }
     };
 
-    const unsubscribeBreakpointStore = breakpointsStore.subscribe(update);
+    const unsubscribeBreakpointStore = $breakpoints.subscribe(update);
     const unsubscribeRectStore = workspaceRectStore.listen((workspaceRect) => {
       if (workspaceRect === undefined) {
         return;

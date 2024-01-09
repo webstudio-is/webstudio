@@ -6,10 +6,10 @@ import {
   getPresetStyleRule,
 } from "~/builder/features/style-panel/shared/style-info";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedPageStore,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
+  $selectedPage,
   stylesIndexStore,
 } from "~/shared/nano-states";
 import { selectedBreakpointStore } from "~/shared/nano-states";
@@ -56,11 +56,11 @@ const isSelectorSupported = (selector: string) => {
 };
 
 const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
-  const metas = registeredComponentMetasStore.get();
-  const breakpoints = breakpointsStore.get();
+  const metas = $registeredComponentMetas.get();
+  const breakpoints = $breakpoints.get();
   const selectedBreakpoint = selectedBreakpointStore.get();
   const { stylesByInstanceId } = stylesIndexStore.get();
-  const instances = instancesStore.get();
+  const instances = $instances.get();
   const selectedBreakpointId = selectedBreakpoint?.id;
 
   if (selectedBreakpointId === undefined) {
@@ -106,7 +106,7 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
 const MAX_SIZE_TO_USE_OPTIMIZATION = 50;
 
 const recalculate = () => {
-  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+  const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
   // Below algorithm quickly finds the common ancestor of all elements with an instanceId.
   // However, for a large number of elements, it's more efficient to calculate from the root.

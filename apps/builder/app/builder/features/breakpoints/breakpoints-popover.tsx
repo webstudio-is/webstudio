@@ -26,8 +26,8 @@ import { BreakpointsPopoverToolbarButton } from "./breakpoints-popover-toolbar-b
 import { WidthInput } from "./width-input";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
-  breakpointsStore,
-  stylesStore,
+  $breakpoints,
+  $styles,
   selectedBreakpointIdStore,
   selectedBreakpointStore,
 } from "~/shared/nano-states";
@@ -46,7 +46,7 @@ export const BreakpointsPopover = () => {
   const [breakpointToDelete, setBreakpointToDelete] = useState<
     Breakpoint | undefined
   >();
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const selectedBreakpoint = useStore(selectedBreakpointStore);
   const scale = useStore(scaleStore);
 
@@ -59,7 +59,7 @@ export const BreakpointsPopover = () => {
       return;
     }
     serverSyncStore.createTransaction(
-      [breakpointsStore, stylesStore],
+      [$breakpoints, $styles],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;
         breakpoints.delete(breakpointId);

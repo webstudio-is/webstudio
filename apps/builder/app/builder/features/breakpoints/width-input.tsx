@@ -12,7 +12,7 @@ import {
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
-import { breakpointsStore, isResizingCanvasStore } from "~/shared/nano-states";
+import { $breakpoints, isResizingCanvasStore } from "~/shared/nano-states";
 import {
   selectedBreakpointIdStore,
   selectedBreakpointStore,
@@ -86,7 +86,7 @@ export const WidthInput = ({ min }: { min: number }) => {
   const id = useId();
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
   const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
 
   const onChange = (value: number) => {
     setCanvasWidth(value);

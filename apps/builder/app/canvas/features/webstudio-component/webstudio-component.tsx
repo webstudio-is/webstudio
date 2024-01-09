@@ -30,12 +30,12 @@ import {
 import {
   $propValuesByInstanceSelector,
   getIndexedInstanceId,
-  instancesStore,
-  registeredComponentMetasStore,
+  $instances,
+  $registeredComponentMetas,
   selectedInstanceRenderStateStore,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
-  selectedStyleSourceSelectorStore,
+  $selectedInstanceSelector,
+  $selectedPage,
+  $selectedStyleSourceSelector,
   useInstanceStyles,
 } from "~/shared/nano-states";
 import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
@@ -144,7 +144,7 @@ const getInstanceSelector = (
 };
 
 const $indexesWithinAncestors = computed(
-  [registeredComponentMetasStore, instancesStore, selectedPageStore],
+  [$registeredComponentMetas, $instances, $selectedPage],
   (metas, instances, page) => {
     return getIndexesWithinAncestors(
       metas,
@@ -249,7 +249,7 @@ export const WebstudioComponentCanvas = forwardRef<
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
-  const instances = useStore(instancesStore);
+  const instances = useStore($instances);
 
   const textEditingInstanceSelector = useStore(
     textEditingInstanceSelectorStore
@@ -274,7 +274,7 @@ export const WebstudioComponentCanvas = forwardRef<
 
   useCollapsedOnNewElement(instanceId);
 
-  // this assumes presence of `useStore(selectedInstanceSelectorStore)` above
+  // this assumes presence of `useStore($selectedInstanceSelector)` above
   // we rely on root re-rendering after selected instance changes
   useEffect(() => {
     // 1 means root
@@ -368,7 +368,7 @@ export const WebstudioComponentCanvas = forwardRef<
           />
         }
         onChange={(instancesList) => {
-          serverSyncStore.createTransaction([instancesStore], (instances) => {
+          serverSyncStore.createTransaction([$instances], (instances) => {
             const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
             for (const updatedInstance of instancesList) {
               instances.set(updatedInstance.id, updatedInstance);
@@ -381,15 +381,15 @@ export const WebstudioComponentCanvas = forwardRef<
           });
         }}
         onSelectInstance={(instanceId) => {
-          const instances = instancesStore.get();
+          const instances = $instances.get();
           const newSelectedSelector = getInstanceSelector(
             instances,
             instanceSelector,
             instanceId
           );
           textEditingInstanceSelectorStore.set(undefined);
-          selectedInstanceSelectorStore.set(newSelectedSelector);
-          selectedStyleSourceSelectorStore.set(undefined);
+          $selectedInstanceSelector.set(newSelectedSelector);
+          $selectedStyleSourceSelector.set(undefined);
         }}
       />
     </Suspense>
@@ -401,7 +401,7 @@ export const WebstudioComponentPreview = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
-  const instances = useStore(instancesStore);
+  const instances = useStore($instances);
   const instanceStyles = useInstanceStyles(instance.id);
   useCssRules({ instanceId: instance.id, instanceStyles });
   const { [showAttribute]: show = true, ...instanceProps } =

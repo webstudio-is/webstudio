@@ -8,7 +8,7 @@ import {
   ToolbarToggleGroup,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { selectedPageStore } from "~/shared/nano-states";
+import { $selectedPage } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -36,7 +36,7 @@ type TopbarProps = {
 };
 
 export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
-  const page = useStore(selectedPageStore);
+  const page = useStore($selectedPage);
 
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>

@@ -8,12 +8,12 @@ import {
   selectedInstanceUnitSizesStore,
   selectedInstanceRenderStateStore,
   stylesIndexStore,
-  instancesStore,
-  selectedInstanceSelectorStore,
+  $instances,
+  $selectedInstanceSelector,
   $propValuesByInstanceSelector,
   $styles,
   $selectedInstanceStates,
-  styleSourceSelectionsStore,
+  $styleSourceSelections,
 } from "~/shared/nano-states";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 import {
@@ -164,7 +164,7 @@ const subscribeSelectedInstance = (
 
     const availableStates = new Set<string>();
     const instanceStyleSourceIds = new Set(
-      styleSourceSelectionsStore.get().get(instanceId)?.values
+      $styleSourceSelections.get().get(instanceId)?.values
     );
     const styles = $styles.get();
     for (const styleDecl of styles.values()) {
@@ -248,7 +248,7 @@ const subscribeSelectedInstance = (
   updateObservers();
 
   const unsubscribeStylesIndexStore = stylesIndexStore.subscribe(update);
-  const unsubscribeInstancesStore = instancesStore.subscribe(update);
+  const unsubscribe$instances = $instances.subscribe(update);
   const unsubscribePropValuesStore =
     $propValuesByInstanceSelector.subscribe(update);
 
@@ -292,7 +292,7 @@ const subscribeSelectedInstance = (
     unsubscribeScrollState();
     unsubscribeWindowResize();
     unsubscribeStylesIndexStore();
-    unsubscribeInstancesStore();
+    unsubscribe$instances();
     unsubscribePropValuesStore();
   };
 };
@@ -301,7 +301,7 @@ export const subscribeSelected = (queueTask: (task: () => void) => void) => {
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeSelectedInstance = () => {};
 
-  const unsubscribe = selectedInstanceSelectorStore.subscribe(
+  const unsubscribe = $selectedInstanceSelector.subscribe(
     (instanceSelector) => {
       if (instanceSelector !== previousSelectedInstance) {
         unsubscribeSelectedInstance();
