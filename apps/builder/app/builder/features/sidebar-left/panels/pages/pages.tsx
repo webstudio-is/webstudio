@@ -29,6 +29,7 @@ import { $pages, $selectedPageId, $folders } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import { toTreeData, type TreeData } from "./page-utils";
 import { FolderSettings, NewFolderSettings } from "./folder-settings";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -173,14 +174,16 @@ const PagesPanel = ({
         title="Pages"
         suffix={
           <>
-            <Tooltip content="New folder" side="bottom">
-              <Button
-                onClick={() => onCreateNewFolder()}
-                aria-label="New folder"
-                prefix={<NewFolderIcon />}
-                color="ghost"
-              />
-            </Tooltip>
+            {isFeatureEnabled("folders") && (
+              <Tooltip content="New folder" side="bottom">
+                <Button
+                  onClick={() => onCreateNewFolder()}
+                  aria-label="New folder"
+                  prefix={<NewFolderIcon />}
+                  color="ghost"
+                />
+              </Tooltip>
+            )}
             <Tooltip content="New page" side="bottom">
               <Button
                 onClick={() => onCreateNewPage()}
