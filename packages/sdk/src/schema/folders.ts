@@ -21,7 +21,6 @@ export const Folder = z.object({
   name: FolderName,
   slug: z.string(),
   children: z.array(z.union([FolderId, PageId])),
-  parentFolderId: z.string().optional(),
 });
 
 export type Folder = z.infer<typeof Folder>;

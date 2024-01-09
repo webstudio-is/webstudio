@@ -17,17 +17,16 @@ import {
   createInitialBreakpoints,
   parseBreakpoints,
   serializeBreakpoints,
-} from "./breakpoints";
-import { parseStyles } from "./styles";
-import { parseStyleSources } from "./style-sources";
-import { parseStyleSourceSelections } from "./style-source-selections";
-import { parseProps } from "./props";
-import { parseDataSources } from "./data-sources";
-import { parseInstances, serializeInstances } from "./instances";
+} from "./__DEPRECATED__breakpoints";
+import { parseStyles } from "./__DEPRECATED__styles";
+import { parseStyleSources } from "./__DEPRECATED__style-sources";
+import { parseStyleSourceSelections } from "./__DEPRECATED__style-source-selections";
+import { parseProps } from "./__DEPRECATED__props";
+import { parseDataSources } from "./__DEPRECATED__data-sources";
+import { parseInstances, serializeInstances } from "./__DEPRECATED__instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Data } from "@webstudio-is/http-client";
-import { parseFolders, serializeFolders } from "./folders";
-import { parsePages, serializePages } from "./pages";
+import { parsePages, serializePages } from "./__DEPRECATED__pages";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -47,7 +46,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
-    const folders = Array.from(parseFolders(build.folders));
+    const folders = Array.from(parseData<Folder>(build.folders));
     const pages = parsePages(build.pages);
     const breakpoints = Array.from(parseBreakpoints(build.breakpoints));
     const styles = Array.from(parseStyles(build.styles));
@@ -177,7 +176,7 @@ export const createBuild = async (
   await client.build.create({
     data: {
       projectId: props.projectId,
-      folders: serializeFolders(new Map([[defaultFolder.id, defaultFolder]])),
+      folders: serializeData(new Map([[defaultFolder.id, defaultFolder]])),
       pages: serializePages(defaultPages),
       breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
       instances: serializeInstances(new Map(newInstances)),

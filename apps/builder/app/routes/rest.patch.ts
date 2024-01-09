@@ -13,11 +13,11 @@ import {
   Styles,
   Resources,
   Folders,
+  Folder,
 } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import {
   parsePages,
-  parseFolders,
   parseInstances,
   parseStyleSourceSelections,
   parseStyleSources,
@@ -35,7 +35,6 @@ import {
   serializeDataSources,
   parseData,
   serializeData,
-  serializeFolders,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -133,7 +132,7 @@ export const action = async ({ request }: ActionArgs) => {
         }
 
         if (namespace === "folders") {
-          const folders = buildData.folders ?? parseFolders(build.folders);
+          const folders = buildData.folders ?? parseData<Folder>(build.folders);
           buildData.folders = applyPatches(folders, patches);
           continue;
         }
@@ -220,7 +219,7 @@ export const action = async ({ request }: ActionArgs) => {
     };
 
     if (buildData.folders) {
-      dbBuildData.folders = serializeFolders(Folders.parse(buildData.folders));
+      dbBuildData.folders = serializeData(Folders.parse(buildData.folders));
     }
 
     if (buildData.pages) {
