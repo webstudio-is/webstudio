@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { useId, type ReactNode } from "react";
+import { useId } from "react";
 import { Flex, InputField, theme } from "@webstudio-is/design-system";
 import {
   BindingControl,
@@ -39,12 +39,6 @@ const UrlInput = ({
     }}
     css={{ width: "100%" }}
   />
-);
-
-const Row = ({ children }: { children: ReactNode }) => (
-  <Flex css={{ height: theme.spacing[13] }} align="center">
-    {children}
-  </Flex>
 );
 
 export const FileControl = ({
@@ -93,7 +87,7 @@ export const FileControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Row>
+      <Flex css={{ gap: theme.spacing[3] }} direction="column" justify="center">
         <BindingControl>
           <UrlInput id={id} readOnly={readOnly} localValue={localStringValue} />
           <BindingPopover
@@ -113,15 +107,13 @@ export const FileControl = ({
             }
           />
         </BindingControl>
-      </Row>
-      <Row>
         <SelectAsset
           prop={prop?.type === "asset" ? prop : undefined}
           accept={meta.accept}
           onChange={onChange}
           onDelete={onDelete}
         />
-      </Row>
+      </Flex>
     </VerticalLayout>
   );
 };

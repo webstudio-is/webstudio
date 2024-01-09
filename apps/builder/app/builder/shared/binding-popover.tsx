@@ -233,7 +233,7 @@ const BindingButton = forwardRef<
           transitionTimingFunction: "cubic-bezier(0.37, 0, 0.63, 1)",
           "--dot-display": "block",
           "--plus-display": "none",
-          "&:hover, &[aria-expanded=true]": {
+          "&:hover, &:focus-visible, &[aria-expanded=true]": {
             // always show when interacted with
             opacity: 1,
             transform: `translate(-50%, -50%) scale(1.5)`,
