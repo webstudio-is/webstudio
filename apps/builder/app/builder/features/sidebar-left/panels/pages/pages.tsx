@@ -24,7 +24,7 @@ import type { Page, Pages } from "@webstudio-is/sdk";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
-import { NewPageSettings, PageSettings } from "./settings";
+import { NewPageSettings, PageSettings } from "./page-settings";
 import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
