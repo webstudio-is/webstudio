@@ -224,9 +224,6 @@ export const NewFolderSettings = ({
       serverSyncStore.createTransaction(
         [$folders, instancesStore],
         (folders, instances) => {
-          if (folders === undefined) {
-            return;
-          }
           const rootInstanceId = nanoid();
           folders.set(folderId, {
             id: folderId,
@@ -365,7 +362,7 @@ export const FolderSettings = ({
   folderId: string;
 }) => {
   const folders = useStore($folders);
-  const folder = folders?.get(folderId);
+  const folder = folders.get(folderId);
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
