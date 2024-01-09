@@ -34,7 +34,6 @@ import {
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
-import { spacePropertiesNames } from "../style-panel/sections/space/types";
 
 export type PropValue =
   | { type: "number"; value: number }
