@@ -1,4 +1,4 @@
-import type { Page, Pages, Folder } from "@webstudio-is/sdk";
+import type { Page, Pages, Folder, Folders } from "@webstudio-is/sdk";
 
 type TreePage = {
   type: "page";
@@ -18,7 +18,7 @@ type TreeFolder = {
 export type TreeData = TreeFolder | TreePage;
 
 export const toTreeData = (
-  folders: Map<Folder["id"], Folder> = new Map(),
+  folders: Folders = new Map(),
   pages: Pages
 ): TreeData => {
   const pagesMap = new Map(pages.pages.map((page) => [page.id, page]));

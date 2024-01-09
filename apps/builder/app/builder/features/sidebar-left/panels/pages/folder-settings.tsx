@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { Folder, FolderName, FolderSlug } from "@webstudio-is/sdk";
+import { Folder, FolderName, FolderSlug, Folders } from "@webstudio-is/sdk";
 import {
   theme,
   Button,
@@ -58,7 +58,7 @@ const FolderValues = z.object({
 });
 
 const isSlugUnique = (
-  folders: Map<Folder["id"], Folder>,
+  folders: Folders,
   // undefined page id means new page
   folderId: undefined | Folder["id"],
   slug: string
@@ -79,7 +79,7 @@ const isSlugUnique = (
 };
 
 const validateValues = (
-  folders: undefined | Map<Folder["id"], Folder>,
+  folders: undefined | Folders,
   // undefined folder id means new folder
   folderId: undefined | Folder["id"],
   values: Values
@@ -195,10 +195,7 @@ const FormFields = ({
   );
 };
 
-const nameToSlug = (
-  folders: Map<Folder["id"], Folder> | undefined,
-  name: string
-) => {
+const nameToSlug = (folders: Folders | undefined, name: string) => {
   if (name === "") {
     return "";
   }
