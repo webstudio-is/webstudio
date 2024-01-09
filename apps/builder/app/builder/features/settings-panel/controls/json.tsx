@@ -1,5 +1,4 @@
 import { useStore } from "@nanostores/react";
-import { theme, Box } from "@webstudio-is/design-system";
 import {
   type ControlProps,
   getLabel,
@@ -13,7 +12,10 @@ import {
   ExpressionEditor,
   formatValue,
 } from "~/builder/shared/expression-editor";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 
 export const JsonControl = ({
   meta,
@@ -54,7 +56,7 @@ export const JsonControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Box css={{ position: "relative", py: theme.spacing[2] }}>
+      <BindingControl>
         <ExpressionEditor
           readOnly={readOnly}
           value={localValue.value}
@@ -72,7 +74,7 @@ export const JsonControl = ({
             onChange({ type: "json", value: evaluatedValue })
           }
         />
-      </Box>
+      </BindingControl>
     </VerticalLayout>
   );
 };

@@ -238,7 +238,7 @@ export const VerticalLayout = ({
       {label}
       {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
-    {children}
+    <Box css={{ py: theme.spacing[2] }}>{children}</Box>
   </Box>
 );
 

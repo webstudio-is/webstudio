@@ -10,7 +10,6 @@ import {
   ToggleGroupButton,
   Select,
   Tooltip,
-  Box,
 } from "@webstudio-is/design-system";
 import {
   AttachmentIcon,
@@ -22,7 +21,10 @@ import {
 import type { Instance, Page } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
 import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -483,7 +485,7 @@ export const UrlControl = ({
         </ToggleGroup>
       </Flex>
 
-      <Box css={{ position: "relative" }}>
+      <BindingControl>
         <BaseControl
           id={id}
           instanceId={instanceId}
@@ -509,7 +511,7 @@ export const UrlControl = ({
             onChange({ type: "string", value: String(evaluatedValue) })
           }
         />
-      </Box>
+      </BindingControl>
     </VerticalLayout>
   );
 };
