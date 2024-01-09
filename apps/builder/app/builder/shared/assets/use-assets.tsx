@@ -62,7 +62,7 @@ const deleteUploadingFileData = (id: FileData["assetId"]) => {
   );
 };
 
-const assetContainersStore = computed(
+const $assetContainers = computed(
   [$assets, uploadingFilesDataStore],
   (assets, uploadingFilesData) => {
     const uploadingContainers: UploadingAssetContainer[] = [];
@@ -209,7 +209,7 @@ const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {
 };
 
 export const useAssets = (type: AssetType) => {
-  const assetContainers = useStore(assetContainersStore);
+  const assetContainers = useStore($assetContainers);
 
   const assetsByType = useMemo(() => {
     return filterByType(assetContainers, type);

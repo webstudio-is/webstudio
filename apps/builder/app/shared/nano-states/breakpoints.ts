@@ -4,13 +4,12 @@ import { isBaseBreakpoint } from "../breakpoints";
 
 export const $breakpoints = atom<Breakpoints>(new Map());
 
-export const selectedBreakpointIdStore = atom<undefined | Breakpoint["id"]>(
+export const $selectedBreakpointId = atom<undefined | Breakpoint["id"]>(
   undefined
 );
-export const $selectedBreakpointId = selectedBreakpointIdStore;
 
-export const selectedBreakpointStore = computed(
-  [$breakpoints, selectedBreakpointIdStore],
+export const $selectedBreakpoint = computed(
+  [$breakpoints, $selectedBreakpointId],
   (breakpoints, selectedBreakpointId) => {
     const selectedBreakpoint =
       selectedBreakpointId === undefined
@@ -31,5 +30,5 @@ export const selectedBreakpointStore = computed(
 );
 
 export const synchronized$breakpointss = [
-  ["selectedBreakpointId", selectedBreakpointIdStore],
+  ["selectedBreakpointId", $selectedBreakpointId],
 ] as const;

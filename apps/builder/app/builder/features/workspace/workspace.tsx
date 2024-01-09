@@ -1,9 +1,9 @@
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
-  scaleStore,
+  $scale,
   useCanvasWidth,
-  workspaceRectStore,
+  $workspaceRect,
 } from "~/builder/shared/nano-states";
 import {
   $selectedInstanceSelector,
@@ -39,7 +39,7 @@ const useMeasureWorkspace = () => {
       return;
     }
     const observer = new ResizeObserver((entries) => {
-      workspaceRectStore.set(entries[0].contentRect);
+      $workspaceRect.set(entries[0].contentRect);
     });
     observer.observe(element);
     return () => {
@@ -99,8 +99,8 @@ const getCanvasStyle = (
 const useCanvasStyle = (
   initialBreakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
-  const scale = useStore(scaleStore);
-  const workspaceRect = useStore(workspaceRectStore);
+  const scale = useStore($scale);
+  const workspaceRect = useStore($workspaceRect);
   const [canvasWidth] = useCanvasWidth();
 
   return getCanvasStyle(initialBreakpoints, scale, workspaceRect, canvasWidth);
@@ -109,8 +109,8 @@ const useCanvasStyle = (
 const useOutlineStyle = (
   initialBreakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
-  const scale = useStore(scaleStore);
-  const workspaceRect = useStore(workspaceRectStore);
+  const scale = useStore($scale);
+  const workspaceRect = useStore($workspaceRect);
   const [canvasWidth] = useCanvasWidth();
   const style = getCanvasStyle(
     initialBreakpoints,

@@ -7,9 +7,9 @@ import {
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
-  selectedBreakpointStore,
-  selectedOrLastStyleSourceSelectorStore,
-  selectedStyleSourceStore,
+  $selectedBreakpoint,
+  $selectedOrLastStyleSourceSelector,
+  $selectedStyleSource,
   $styleSourceSelections,
   $styleSources,
   $styles,
@@ -61,14 +61,14 @@ export type CreateBatchUpdate = () => {
 };
 
 export const useStyleData = ({ selectedInstance }: UseStyleData) => {
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
 
   const currentStyle = useStyleInfo();
 
   const publishUpdates = useCallback(
     (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
-      const selectedStyleSource = selectedStyleSourceStore.get();
-      const styleSourceSelector = selectedOrLastStyleSourceSelectorStore.get();
+      const selectedStyleSource = $selectedStyleSource.get();
+      const styleSourceSelector = $selectedOrLastStyleSourceSelector.get();
 
       if (
         updates.length === 0 ||

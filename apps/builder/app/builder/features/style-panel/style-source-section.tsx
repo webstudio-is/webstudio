@@ -27,10 +27,10 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  selectedInstanceStatesByStyleSourceIdStore,
-  selectedInstanceStore,
+  $selectedInstanceStatesByStyleSourceId,
+  $selectedInstance,
   selectedInstance$styleSources,
-  selectedOrLastStyleSourceSelectorStore,
+  $selectedOrLastStyleSourceSelector,
   $selectedStyleSourceSelector,
   $styleSourceSelections,
   $styleSources,
@@ -360,8 +360,8 @@ const clearStyles = (styleSourceId: StyleSource["id"]) => {
   });
 };
 
-const componentStatesStore = computed(
-  [selectedInstanceStore, $registeredComponentMetas],
+const $componentStates = computed(
+  [$selectedInstance, $registeredComponentMetas],
   (selectedInstance, registeredComponentMetas) => {
     if (selectedInstance === undefined) {
       return;
@@ -443,11 +443,11 @@ const $availableStyleSources = computed(
 );
 
 export const StyleSourcesSection = () => {
-  const componentStates = useStore(componentStatesStore);
+  const componentStates = useStore($componentStates);
   const availableStyleSources = useStore($availableStyleSources);
   const selectedInstanceStyleSources = useStore(selectedInstance$styleSources);
   const selectedInstanceStatesByStyleSourceId = useStore(
-    selectedInstanceStatesByStyleSourceIdStore
+    $selectedInstanceStatesByStyleSourceId
   );
   const value = selectedInstanceStyleSources.map((styleSource) =>
     convertToInputItem(
@@ -456,7 +456,7 @@ export const StyleSourcesSection = () => {
     )
   );
   const selectedOrLastStyleSourceSelector = useStore(
-    selectedOrLastStyleSourceSelectorStore
+    $selectedOrLastStyleSourceSelector
   );
 
   const [editingItemId, setEditingItemId] = useState<

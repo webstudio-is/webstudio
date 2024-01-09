@@ -1,5 +1,5 @@
 import { idAttribute } from "@webstudio-is/react-sdk";
-import { hoveredInstanceSelectorStore, $instances } from "~/shared/nano-states";
+import { $hoveredInstanceSelector, $instances } from "~/shared/nano-states";
 import { hoveredInstanceOutlineStore } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
@@ -18,7 +18,7 @@ export const subscribeInstanceHovering = () => {
   const updateHoveredInstance = (element: Element) => {
     const instanceSelector = getInstanceSelectorFromElement(element);
     if (instanceSelector) {
-      hoveredInstanceSelectorStore.set(instanceSelector);
+      $hoveredInstanceSelector.set(instanceSelector);
     }
   };
 
@@ -39,12 +39,12 @@ export const subscribeInstanceHovering = () => {
   const handleMouseOut = () => {
     mouseOutTimeoutId = setTimeout(() => {
       hoveredElement = undefined;
-      hoveredInstanceSelectorStore.set(undefined);
+      $hoveredInstanceSelector.set(undefined);
       hoveredInstanceOutlineStore.set(undefined);
     }, 100);
 
     // Fixes the bug, that new hover occures during timeout
-    const unsubscribe = hoveredInstanceSelectorStore.listen(() => {
+    const unsubscribe = $hoveredInstanceSelector.listen(() => {
       clearTimeout(mouseOutTimeoutId);
       unsubscribe();
     });
@@ -103,7 +103,7 @@ export const subscribeInstanceHovering = () => {
   });
 
   // update rect whenever hovered instance is changed
-  const unsubscribeHoveredInstanceId = hoveredInstanceSelectorStore.subscribe(
+  const unsubscribeHoveredInstanceId = $hoveredInstanceSelector.subscribe(
     (instanceSelector) => {
       if (instanceSelector) {
         const elements = getElementsByInstanceSelector(instanceSelector);

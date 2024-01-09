@@ -34,7 +34,7 @@ type Props = {
 };
 
 export const SelectAsset = ({ prop, onChange, onDelete, accept }: Props) => {
-  const assetStore = useMemo(
+  const $asset = useMemo(
     () =>
       computed($assets, (assets) =>
         prop ? assets.get(prop.value) : undefined
@@ -42,7 +42,7 @@ export const SelectAsset = ({ prop, onChange, onDelete, accept }: Props) => {
     [prop]
   );
 
-  const asset = useStore(assetStore);
+  const asset = useStore($asset);
 
   if (isImageAccept(accept) === false) {
     return <Text color="destructive">Unsupported accept value: {accept}</Text>;

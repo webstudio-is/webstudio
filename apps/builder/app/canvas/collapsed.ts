@@ -10,9 +10,9 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedPage,
-  stylesIndexStore,
+  $stylesIndex,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import { $selectedBreakpoint } from "~/shared/nano-states";
 import { subscribe } from "~/shared/pubsub";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 
@@ -58,8 +58,8 @@ const isSelectorSupported = (selector: string) => {
 const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
   const metas = $registeredComponentMetas.get();
   const breakpoints = $breakpoints.get();
-  const selectedBreakpoint = selectedBreakpointStore.get();
-  const { stylesByInstanceId } = stylesIndexStore.get();
+  const selectedBreakpoint = $selectedBreakpoint.get();
+  const { stylesByInstanceId } = $stylesIndex.get();
   const instances = $instances.get();
   const selectedBreakpointId = selectedBreakpoint?.id;
 

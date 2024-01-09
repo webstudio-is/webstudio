@@ -13,7 +13,7 @@ export type TextToolbarState = {
   isSpan: boolean;
 };
 
-export const textToolbarStore = atom<undefined | TextToolbarState>(undefined);
+export const $textToolbar = atom<undefined | TextToolbarState>(undefined);
 
 type InstanceOutline = {
   instanceId: Instance["id"];
@@ -42,7 +42,7 @@ export const selectedInstanceOutlineStore = atom<undefined | InstanceOutline>(
   undefined
 );
 
-export const selectedInstanceOutlineAndInstanceStore = computed(
+export const $selectedInstanceOutlineAndInstance = computed(
   [$instances, selectedInstanceOutlineStore],
   getInstanceOutlineAndInstance
 );
@@ -51,7 +51,7 @@ export const hoveredInstanceOutlineStore = atom<undefined | InstanceOutline>(
   undefined
 );
 
-export const hoveredInstanceOutlineAndInstanceStore = computed(
+export const $hoveredInstanceOutlineAndInstance = computed(
   [$instances, hoveredInstanceOutlineStore],
   getInstanceOutlineAndInstance
 );
@@ -63,7 +63,7 @@ export const $collaborativeInstanceSelector = atom<
 export const $collaborativeInstanceRect = atom<undefined | DOMRect>(undefined);
 
 export const synchronizedCanvasStores = [
-  ["textToolbar", textToolbarStore],
+  ["textToolbar", $textToolbar],
   ["selectedInstanceOutline", selectedInstanceOutlineStore],
   ["hoveredInstanceOutline", hoveredInstanceOutlineStore],
   ["$collaborativeInstanceSelector", $collaborativeInstanceSelector],

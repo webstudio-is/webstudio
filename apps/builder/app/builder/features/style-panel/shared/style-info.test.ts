@@ -15,7 +15,7 @@ import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
-  selectedInstanceIntanceToTagStore,
+  $selectedInstanceIntanceToTag,
   $selectedInstanceSelector,
   $selectedStyleSourceSelector,
   $styleSourceSelections,
@@ -401,7 +401,7 @@ const resetStores = () => {
   $styleSourceSelections.set(new Map());
   $breakpoints.set(new Map());
   $selectedInstanceSelector.set(undefined);
-  selectedInstanceIntanceToTagStore.set(new Map());
+  $selectedInstanceIntanceToTag.set(new Map());
   $selectedStyleSourceSelector.set(undefined);
   $selectedInstanceStates.set(new Set());
 };
@@ -938,7 +938,7 @@ describe("active states", () => {
     $selectedInstanceSelector.set(["box"]);
     $selectedInstanceStates.set(new Set([":hover"]));
     $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
-    selectedInstanceIntanceToTagStore.set(new Map([["box", "div"]]));
+    $selectedInstanceIntanceToTag.set(new Map([["box", "div"]]));
 
     const { result } = renderHook(() => useStyleInfo());
     expect(getStyleSource(result.current.color)).toEqual("preset");

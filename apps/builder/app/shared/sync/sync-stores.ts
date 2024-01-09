@@ -18,11 +18,11 @@ import {
   $selectedPageId,
   $selectedPageHash,
   $selectedInstanceSelector,
-  selectedInstanceBrowserStyleStore,
-  selectedInstanceUnitSizesStore,
-  selectedInstanceIntanceToTagStore,
-  selectedInstanceRenderStateStore,
-  hoveredInstanceSelectorStore,
+  $selectedInstanceBrowserStyle,
+  $selectedInstanceUnitSizes,
+  $selectedInstanceIntanceToTag,
+  $selectedInstanceRenderState,
+  $hoveredInstanceSelector,
   $isPreviewMode,
   synchronizedCanvasStores,
   synchronized$instancess,
@@ -92,21 +92,18 @@ export const registerContainers = () => {
   clientStores.set("selectedInstanceSelector", $selectedInstanceSelector);
   clientStores.set(
     "selectedInstanceBrowserStyle",
-    selectedInstanceBrowserStyleStore
+    $selectedInstanceBrowserStyle
   );
   clientStores.set(
-    "selectedInstanceIntanceToTagStore",
-    selectedInstanceIntanceToTagStore
+    "$selectedInstanceIntanceToTag",
+    $selectedInstanceIntanceToTag
   );
+  clientStores.set("$selectedInstanceUnitSizes", $selectedInstanceUnitSizes);
   clientStores.set(
-    "selectedInstanceUnitSizesStore",
-    selectedInstanceUnitSizesStore
+    "$selectedInstanceRenderState",
+    $selectedInstanceRenderState
   );
-  clientStores.set(
-    "selectedInstanceRenderStateStore",
-    selectedInstanceRenderStateStore
-  );
-  clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
+  clientStores.set("hoveredInstanceSelector", $hoveredInstanceSelector);
   clientStores.set("isPreviewMode", $isPreviewMode);
   clientStores.set("selectedStyleSourceSelector", $selectedStyleSourceSelector);
   clientStores.set("dragAndDropState", $dragAndDropState);
@@ -221,12 +218,12 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
           clientContainer.set(value);
         }
         // apply state stores data
-        const stateStore = clientStores.get(namespace);
-        if (stateStore) {
+        const $state = clientStores.get(namespace);
+        if ($state) {
           // should be called before store set
           // to be accessible in listen callback
           latestData.set(namespace, value);
-          stateStore.set(value);
+          $state.set(value);
         }
       }
     }

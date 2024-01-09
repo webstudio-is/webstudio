@@ -6,7 +6,7 @@ import { action } from "@storybook/addon-actions";
 import { Box } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { textToolbarStore } from "~/shared/nano-states";
+import { $textToolbar } from "~/shared/nano-states";
 import { TextEditor } from "./text-editor";
 import { emitCommand, subscribeCommands } from "~/canvas/shared/commands";
 
@@ -47,7 +47,7 @@ const instances: Instances = new Map([
 ]);
 
 export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
-  const state = useStore(textToolbarStore);
+  const state = useStore($textToolbar);
   const ref = useRef<null | HTMLDivElement>(null);
 
   useEffect(subscribeCommands, []);

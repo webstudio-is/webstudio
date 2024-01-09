@@ -262,7 +262,7 @@ const instancesPerPageStore = computed(
     }))
 );
 
-const sectionsStore = computed(
+const $sections = computed(
   [instancesPerPageStore, $props],
   (instancesPerPage, props) => {
     const sections: Array<{
@@ -313,7 +313,7 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
         )
       : undefined;
 
-  const sections = useStore(sectionsStore);
+  const sections = useStore($sections);
 
   const sectionSelectOptions = pageSelectValue
     ? sections.filter(({ pageId }) => pageId === pageSelectValue.id)

@@ -263,7 +263,7 @@ const getOrCreateRule = ({
 };
 
 const useSelectedState = (instanceId: Instance["id"]) => {
-  const selectedStateStore = useMemo(() => {
+  const $selectedState = useMemo(() => {
     return computed(
       [$selectedInstanceSelector, $selectedStyleSourceSelector],
       (selectedInstanceSelector, selectedStyleSourceSelector) => {
@@ -274,7 +274,7 @@ const useSelectedState = (instanceId: Instance["id"]) => {
       }
     );
   }, [instanceId]);
-  const selectedState = useStore(selectedStateStore);
+  const selectedState = useStore($selectedState);
   return selectedState;
 };
 

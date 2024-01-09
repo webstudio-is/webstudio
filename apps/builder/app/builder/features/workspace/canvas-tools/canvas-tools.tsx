@@ -18,7 +18,7 @@ import { useSubscribeDragAndDropState } from "./use-subscribe-drag-drop-state";
 import { ResizeHandles } from "./resize-handles";
 import { MediaBadge } from "./media-badge";
 import { applyScale } from "./outline";
-import { scaleStore } from "~/builder/shared/nano-states";
+import { $scale } from "~/builder/shared/nano-states";
 
 const containerStyle = css({
   position: "absolute",
@@ -40,7 +40,7 @@ export const CanvasTools = () => {
   const isPreviewMode = useStore($isPreviewMode);
   const dragAndDropState = useStore($dragAndDropState);
   const instances = useStore($instances);
-  const scale = useStore(scaleStore);
+  const scale = useStore($scale);
   if (
     dragAndDropState.isDragging &&
     dragAndDropState.placementIndicator !== undefined

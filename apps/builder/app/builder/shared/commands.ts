@@ -2,7 +2,7 @@ import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $dataSources,
   $isPreviewMode,
-  editingItemIdStore,
+  $editingItemId,
   $instances,
   $selectedInstanceSelector,
   $selectedStyleSourceSelector,
@@ -221,7 +221,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           return;
         }
         const [targetInstanceId] = selectedInstanceSelector;
-        editingItemIdStore.set(targetInstanceId);
+        $editingItemId.set(targetInstanceId);
       },
     },
 

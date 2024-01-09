@@ -2,13 +2,13 @@ import { atom, computed } from "nanostores";
 import type { Instances } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 
-export const isResizingCanvasStore = atom(false);
+export const $isResizingCanvas = atom(false);
 
 export const $selectedInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const editingItemIdStore = atom<undefined | string>(undefined);
+export const $editingItemId = atom<undefined | string>(undefined);
 
 export const textEditingInstanceSelectorStore = atom<
   undefined | InstanceSelector
@@ -16,7 +16,7 @@ export const textEditingInstanceSelectorStore = atom<
 
 export const $instances = atom<Instances>(new Map());
 
-export const selectedInstanceStore = computed(
+export const $selectedInstance = computed(
   [$instances, $selectedInstanceSelector],
   (instances, selectedInstanceSelector) => {
     if (selectedInstanceSelector === undefined) {
@@ -29,5 +29,5 @@ export const selectedInstanceStore = computed(
 
 export const synchronized$instancess = [
   ["textEditingInstanceSelector", textEditingInstanceSelectorStore],
-  ["isResizingCanvas", isResizingCanvasStore],
+  ["isResizingCanvas", $isResizingCanvas],
 ] as const;

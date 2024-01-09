@@ -28,8 +28,8 @@ import { ConfirmationDialog } from "./confirmation-dialog";
 import {
   $breakpoints,
   $styles,
-  selectedBreakpointIdStore,
-  selectedBreakpointStore,
+  $selectedBreakpointId,
+  $selectedBreakpoint,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -37,7 +37,7 @@ import {
   isBaseBreakpoint,
   minCanvasWidth,
 } from "~/shared/breakpoints";
-import { scaleStore } from "~/builder/shared/nano-states";
+import { $scale } from "~/builder/shared/nano-states";
 import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
 import { serverSyncStore } from "~/shared/sync";
 
@@ -47,8 +47,8 @@ export const BreakpointsPopover = () => {
     Breakpoint | undefined
   >();
   const breakpoints = useStore($breakpoints);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const scale = useStore(scaleStore);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+  const scale = useStore($scale);
 
   if (selectedBreakpoint === undefined) {
     return null;
@@ -75,7 +75,7 @@ export const BreakpointsPopover = () => {
       const breakpointsArray = Array.from(breakpoints.values());
       const base =
         breakpointsArray.find(isBaseBreakpoint) ?? breakpointsArray[0];
-      selectedBreakpointIdStore.set(base.id);
+      $selectedBreakpointId.set(base.id);
       setInitialCanvasWidth(base.id);
     }
     setBreakpointToDelete(undefined);
@@ -148,7 +148,7 @@ export const BreakpointsPopover = () => {
                         <ListItem
                           asChild
                           onSelect={() => {
-                            selectedBreakpointIdStore.set(breakpoint.id);
+                            $selectedBreakpointId.set(breakpoint.id);
                             setInitialCanvasWidth(breakpoint.id);
                           }}
                           index={index}

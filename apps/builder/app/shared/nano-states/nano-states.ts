@@ -32,7 +32,7 @@ export const $project = atom<Project | undefined>();
 
 export const $domains = atom<string[]>([]);
 
-export const rootInstanceStore = computed(
+export const $rootInstance = computed(
   [$instances, $selectedPage],
   (instances, selectedPage) => {
     if (selectedPage === undefined) {
@@ -51,7 +51,7 @@ export const $resources = atom(new Map<Resource["id"], Resource>());
 export const $resourceValues = atom(new Map<Resource["id"], unknown>());
 
 export const $props = atom<Props>(new Map());
-export const propsIndexStore = computed($props, (props) => {
+export const $propsIndex = computed($props, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
   for (const prop of props.values()) {
     const { instanceId } = prop;
@@ -71,7 +71,7 @@ export const $styles = atom<Styles>(new Map());
 
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   const instance$styles = useMemo(() => {
-    return shallowComputed([stylesIndexStore], (stylesIndex) => {
+    return shallowComputed([$stylesIndex], (stylesIndex) => {
       if (instanceId === undefined) {
         return [];
       }
@@ -104,7 +104,7 @@ export const $selectedStyleSourceSelector = atom<
  * though will require to move away from running immer patches on array
  * of styles
  */
-export const stylesIndexStore = computed(
+export const $stylesIndex = computed(
   [$styles, $styleSourceSelections],
   (styles, styleSourceSelections) => {
     const stylesByStyleSourceId = new Map<StyleSource["id"], StyleDecl[]>();
@@ -139,10 +139,10 @@ export const stylesIndexStore = computed(
 
 export const $assets = atom<Assets>(new Map());
 
-export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
+export const $selectedInstanceBrowserStyle = atom<undefined | Style>();
 
 // Init with some defaults to avoid undefined
-export const selectedInstanceUnitSizesStore = atom<UnitSizes>({
+export const $selectedInstanceUnitSizes = atom<UnitSizes>({
   ch: 8,
   vw: 3.2,
   vh: 4.8,
@@ -154,7 +154,7 @@ export const selectedInstanceUnitSizesStore = atom<UnitSizes>({
 /**
  * instanceId => tagName store for selected instance and its ancestors
  */
-export const selectedInstanceIntanceToTagStore = atom<
+export const $selectedInstanceIntanceToTag = atom<
   undefined | Map<Instance["id"], HtmlTags>
 >();
 
@@ -162,11 +162,11 @@ export const selectedInstanceIntanceToTagStore = atom<
  * pending means: previous selected instance unmounted,
  * and we don't know yet whether a new one will mount
  **/
-export const selectedInstanceRenderStateStore = atom<
+export const $selectedInstanceRenderState = atom<
   "mounted" | "notMounted" | "pending"
 >("notMounted");
 
-export const selectedInstanceStatesByStyleSourceIdStore = computed(
+export const $selectedInstanceStatesByStyleSourceId = computed(
   [$styles, $styleSourceSelections, $selectedInstanceSelector],
   (styles, styleSourceSelections, selectedInstanceSelector) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
@@ -229,7 +229,7 @@ export const selectedInstance$styleSources = computed(
   }
 );
 
-export const selectedOrLastStyleSourceSelectorStore = computed(
+export const $selectedOrLastStyleSourceSelector = computed(
   [selectedInstance$styleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     if (selectedStyleSourceSelector !== undefined) {
@@ -247,7 +247,7 @@ export const selectedOrLastStyleSourceSelectorStore = computed(
  * Provide selected style source with fallback
  * to the last style source of selected instance
  */
-export const selectedStyleSourceStore = computed(
+export const $selectedStyleSource = computed(
   [selectedInstance$styleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     return (
@@ -257,7 +257,6 @@ export const selectedStyleSourceStore = computed(
     );
   }
 );
-export const $selectedStyleSource = selectedStyleSourceStore;
 
 /**
  * Store the list of active states inferred from dom element
@@ -265,7 +264,7 @@ export const $selectedStyleSource = selectedStyleSourceStore;
  */
 export const $selectedInstanceStates = atom(new Set<string>());
 
-export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
+export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 

@@ -11,7 +11,7 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  selectedInstanceStore,
+  $selectedInstance,
   $styleSourceSelections,
   $styleSources,
   $styles,
@@ -65,7 +65,7 @@ const insertTemplateByOp = (
       componentName.includes(operation.addTo)
     )
   ) {
-    const selectedInstance = selectedInstanceStore.get();
+    const selectedInstance = $selectedInstance.get();
     if (selectedInstance) {
       operation.addTo = selectedInstance.id;
     }

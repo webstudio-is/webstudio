@@ -13,7 +13,7 @@ import type { Instance } from "@webstudio-is/sdk";
 import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
-  editingItemIdStore,
+  $editingItemId,
   getIndexedInstanceId,
   $instances,
   $registeredComponentMetas,
@@ -32,7 +32,7 @@ export const InstanceTree = (
 ) => {
   const metas = useStore($registeredComponentMetas);
   const instances = useStore($instances);
-  const editingItemId = useStore(editingItemIdStore);
+  const editingItemId = useStore($editingItemId);
   const propValues = useStore($propValuesByInstanceSelector);
 
   const canLeaveParent = useCallback(
@@ -129,7 +129,7 @@ export const InstanceTree = (
               updateInstanceLabel(props.itemData.id, val);
             }}
             onChangeEditing={(isEditing) => {
-              editingItemIdStore.set(
+              $editingItemId.set(
                 isEditing === true ? props.itemData.id : undefined
               );
             }}

@@ -19,7 +19,7 @@ import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import {
-  selectedInstanceStore,
+  $selectedInstance,
   $registeredComponentMetas,
   $dragAndDropState,
 } from "~/shared/nano-states";
@@ -68,7 +68,7 @@ const contentStyle = {
 const $isDragging = computed([$dragAndDropState], (state) => state.isDragging);
 
 export const Inspector = ({ navigatorLayout }: InspectorProps) => {
-  const selectedInstance = useStore(selectedInstanceStore);
+  const selectedInstance = useStore($selectedInstance);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState("style");
   const isDragging = useStore($isDragging);

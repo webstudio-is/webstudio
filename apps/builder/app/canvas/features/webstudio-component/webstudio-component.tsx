@@ -32,7 +32,7 @@ import {
   getIndexedInstanceId,
   $instances,
   $registeredComponentMetas,
-  selectedInstanceRenderStateStore,
+  $selectedInstanceRenderState,
   $selectedInstanceSelector,
   $selectedPage,
   $selectedStyleSourceSelector,
@@ -157,7 +157,7 @@ const $indexesWithinAncestors = computed(
 const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const instanceSelectorKey = JSON.stringify(instanceSelector);
   const [instanceId] = instanceSelector;
-  const instancePropsObjectStore = useMemo(() => {
+  const $instancePropsObject = useMemo(() => {
     return computed(
       [$propValuesByInstanceSelector, $indexesWithinAncestors],
       (propValuesByInstanceSelector, indexesWithinAncestors) => {
@@ -177,7 +177,7 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
       }
     );
   }, [instanceSelectorKey, instanceId]);
-  const instancePropsObject = useStore(instancePropsObjectStore);
+  const instancePropsObject = useStore($instancePropsObject);
   return instancePropsObject;
 };
 
@@ -282,8 +282,8 @@ export const WebstudioComponentCanvas = forwardRef<
       // If by the time root is rendered,
       // no selected instance renders and sets state to "mounted",
       // then it's clear that selected instance will not render at all, so we set it to "notMounted"
-      if (selectedInstanceRenderStateStore.get() === "pending") {
-        selectedInstanceRenderStateStore.set("notMounted");
+      if ($selectedInstanceRenderState.get() === "pending") {
+        $selectedInstanceRenderState.set("notMounted");
       }
     }
   });

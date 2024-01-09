@@ -16,7 +16,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $propValuesByInstanceSelector,
-  propsIndexStore,
+  $propsIndex,
   $props,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
@@ -212,7 +212,7 @@ export const PropsSectionContainer = ({
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
   });
-  const { propsByInstanceId } = useStore(propsIndexStore);
+  const { propsByInstanceId } = useStore($propsIndex);
   const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
   const instanceSelector = useStore($selectedInstanceSelector);
   const propValues = propValuesByInstanceSelector.get(
@@ -224,7 +224,7 @@ export const PropsSectionContainer = ({
     props: propsByInstanceId.get(instance.id) ?? [],
 
     updateProp: (update) => {
-      const { propsByInstanceId } = propsIndexStore.get();
+      const { propsByInstanceId } = $propsIndex.get();
       const instanceProps = propsByInstanceId.get(instance.id) ?? [];
       // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
       // see for details https://github.com/webstudio-is/webstudio/pull/2170

@@ -24,9 +24,9 @@ import {
   $breakpoints,
   $instances,
   $registeredComponentMetas,
-  selectedBreakpointStore,
-  selectedInstanceStore,
-  selectedStyleSourceStore,
+  $selectedBreakpoint,
+  $selectedInstance,
+  $selectedStyleSource,
   $styleSources,
 } from "~/shared/nano-states";
 import {
@@ -141,12 +141,12 @@ const TooltipContent = ({
   onReset?: undefined | (() => void);
 }) => {
   const breakpoints = useStore($breakpoints);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
   const instances = useStore($instances);
   const styleSources = useStore($styleSources);
-  const instance = useStore(selectedInstanceStore);
+  const instance = useStore($selectedInstance);
   const metas = useStore($registeredComponentMetas);
-  const selectedStyleSource = useStore(selectedStyleSourceStore);
+  const selectedStyleSource = useStore($selectedStyleSource);
 
   const descriptionWithFallback = description ?? getDescription(properties);
 

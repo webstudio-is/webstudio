@@ -4,9 +4,9 @@ import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
 import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
-  hoveredInstanceSelectorStore,
+  $hoveredInstanceSelector,
   $instances,
-  rootInstanceStore,
+  $rootInstance,
   $selectedInstanceSelector,
   textEditingInstanceSelectorStore,
   $selectedStyleSourceSelector,
@@ -26,7 +26,7 @@ import { InstanceTree } from "./tree";
 
 export const NavigatorTree = () => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
-  const rootInstance = useStore(rootInstanceStore);
+  const rootInstance = useStore($rootInstance);
   const instances = useStore($instances);
   const metas = useStore($registeredComponentMetas);
   const state = useStore($dragAndDropState);
@@ -141,7 +141,7 @@ export const NavigatorTree = () => {
       isItemHidden={isItemHidden}
       findClosestDroppableIndex={findClosestDroppableIndex}
       onSelect={handleSelect}
-      onHover={hoveredInstanceSelectorStore.set}
+      onHover={$hoveredInstanceSelector.set}
       onDragItemChange={(dragInstanceSelector) => {
         if (isInstanceDetachable(dragInstanceSelector) === false) {
           toast.error(

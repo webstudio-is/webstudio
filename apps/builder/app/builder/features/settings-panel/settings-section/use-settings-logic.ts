@@ -4,7 +4,7 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { $instances, selectedInstanceStore } from "~/shared/nano-states";
+import { $instances, $selectedInstance } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 
 type Setting = "label";
@@ -46,7 +46,7 @@ export const useSettingsLogic = () => {
   };
 
   const updateLabel = useCallback(() => {
-    const selectedInstance = selectedInstanceStore.get();
+    const selectedInstance = $selectedInstance.get();
     if (selectedInstance === undefined) {
       return;
     }
