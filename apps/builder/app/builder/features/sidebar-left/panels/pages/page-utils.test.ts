@@ -35,7 +35,7 @@ test("home page always exists", () => {
   expect(root).toEqual({
     id: "root",
     name: "Root",
-    path: "",
+    slug: "",
     type: "folder",
     children: [
       {
@@ -72,7 +72,7 @@ test("with empty folder", () => {
   expect(toTreeData(folders, pages)).toEqual({
     id: "root",
     name: "Root",
-    path: "",
+    slug: "",
     type: "folder",
     children: [
       {
@@ -91,7 +91,7 @@ test("with empty folder", () => {
         type: "folder",
         id: "folderId",
         name: "Folder",
-        path: "/folder",
+        slug: "folder",
         children: [],
       },
     ],
@@ -126,7 +126,7 @@ test("with page inside a folder", () => {
   expect(tree).toEqual({
     id: "root",
     name: "Root",
-    path: "",
+    slug: "",
     type: "folder",
     children: [
       {
@@ -145,7 +145,7 @@ test("with page inside a folder", () => {
         type: "folder",
         id: "folderId",
         name: "Folder",
-        path: "/folder",
+        slug: "folder",
         children: [
           {
             type: "page",
