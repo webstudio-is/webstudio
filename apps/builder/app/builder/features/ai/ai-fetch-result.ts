@@ -21,7 +21,7 @@ import {
   $breakpoints,
   $dataSources,
   $instances,
-  $projects,
+  $project,
   $props,
   $registeredComponentMetas,
   $selectedInstanceSelector,
@@ -84,7 +84,7 @@ export const fetchResult = async (
     throw new Error(commandsResponse.data.message);
   }
 
-  const project = $projects.get();
+  const project = $project.get();
 
   const availableComponentsNames = $availableComponentsNames.get();
   const [styles, jsx] = $jsx.get() || ["", ""];

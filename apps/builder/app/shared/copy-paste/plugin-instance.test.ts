@@ -23,7 +23,7 @@ import {
   $selectedInstanceSelector,
   $dataSources,
   $pages,
-  $projects,
+  $project,
   $props,
   $registeredComponentMetas,
   $selectedPageId,
@@ -38,7 +38,7 @@ registerContainers();
 $registeredComponentMetas.set(
   new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
 );
-$projects.set({ id: "my-project" } as Project);
+$project.set({ id: "my-project" } as Project);
 $pages.set({
   meta: {},
   homePage: { id: "home-page", rootInstanceId: "body0" } as Page,

@@ -59,7 +59,7 @@ import {
   $domains,
   $instances,
   $pages,
-  $projects,
+  $project,
   $selectedInstanceSelector,
   $selectedPageId,
   $dataSources,
@@ -290,7 +290,7 @@ const FormFields = ({
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
-  const project = $projects.get();
+  const project = $project.get();
   const customDomain: string | undefined = $domains.get()[0];
   const projectDomain = `${project?.domain}.${
     env.PUBLISHER_HOST ?? "wstd.work"

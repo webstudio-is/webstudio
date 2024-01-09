@@ -28,8 +28,7 @@ import { $selectedPage } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
 
-export const $projects = atom<Project | undefined>();
-export const $project = $projects;
+export const $project = atom<Project | undefined>();
 
 export const $domains = atom<string[]>([]);
 

@@ -31,7 +31,7 @@ import {
   $instances,
   $isPreviewMode,
   $pages,
-  $projects,
+  $project,
   $props,
   $styleSourceSelections,
   $styleSources,
@@ -69,7 +69,7 @@ const useNavigatorLayout = () => {
 };
 
 const useSetWindowTitle = () => {
-  const project = useStore($projects);
+  const project = useStore($project);
   useEffect(() => {
     document.title = `${project?.title} | Webstudio`;
   }, [project?.title]);
@@ -242,7 +242,7 @@ export const Builder = ({
 }: BuilderProps) => {
   useMount(() => {
     // additional data stores
-    $projects.set(project);
+    $project.set(project);
     $domains.set(domains);
     $authPermit.set(authPermit);
     $authToken.set(authToken);

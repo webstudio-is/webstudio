@@ -3,7 +3,7 @@ import { PageSettings } from "./settings";
 
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
-import { $assets, $projects } from "~/shared/nano-states";
+import { $assets, $project } from "~/shared/nano-states";
 
 export default {
   component: PageSettings,
@@ -59,7 +59,7 @@ $pages.set({
   ],
 });
 
-$projects.set({
+$project.set({
   id: "projectId",
   title: "Project title",
   createdAt: `${new Date()}`,

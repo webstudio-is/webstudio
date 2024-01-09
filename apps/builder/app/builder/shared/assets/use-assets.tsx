@@ -12,7 +12,7 @@ import type {
   UploadingAssetContainer,
 } from "./types";
 import type { ActionData } from "~/builder/shared/assets";
-import { $assets, $authToken, $projects } from "~/shared/nano-states";
+import { $assets, $authToken, $project } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
 import { serverSyncStore } from "~/shared/sync";
 
@@ -169,7 +169,7 @@ export const useUploadAsset = () => {
   };
 
   const uploadAssets = (type: AssetType, files: File[]) => {
-    const projectId = $projects.get()?.id;
+    const projectId = $project.get()?.id;
     const authToken = $authToken.get();
     if (projectId === undefined) {
       return;

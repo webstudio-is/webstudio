@@ -5,7 +5,7 @@ import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
-  $projects,
+  $project,
   $pages,
   $instances,
   $props,
@@ -84,7 +84,7 @@ export const registerContainers = () => {
   serverSyncStore.register("resources", $resources);
   serverSyncStore.register("assets", $assets);
   // synchronize whole states
-  clientStores.set("project", $projects);
+  clientStores.set("project", $project);
   clientStores.set("dataSourceVariables", $dataSourceVariables);
   clientStores.set("resourceValues", $resourceValues);
   clientStores.set("selectedPageId", $selectedPageId);

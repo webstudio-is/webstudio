@@ -7,7 +7,7 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   $authToken,
   $pages,
-  $projects,
+  $project,
   $selectedPage,
   $selectedPageId,
   $selectedPageHash,
@@ -72,7 +72,7 @@ export const useSyncPageUrl = () => {
   }, []);
 
   useEffect(() => {
-    const project = $projects.get();
+    const project = $project.get();
     const pages = $pages.get();
 
     if (page === undefined || project === undefined || pages === undefined) {
