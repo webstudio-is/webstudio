@@ -38,21 +38,21 @@ const getInstanceOutlineAndInstance = (
   };
 };
 
-export const selectedInstanceOutlineStore = atom<undefined | InstanceOutline>(
+export const $selectedInstanceOutline = atom<undefined | InstanceOutline>(
   undefined
 );
 
 export const $selectedInstanceOutlineAndInstance = computed(
-  [$instances, selectedInstanceOutlineStore],
+  [$instances, $selectedInstanceOutline],
   getInstanceOutlineAndInstance
 );
 
-export const hoveredInstanceOutlineStore = atom<undefined | InstanceOutline>(
+export const $hoveredInstanceOutline = atom<undefined | InstanceOutline>(
   undefined
 );
 
 export const $hoveredInstanceOutlineAndInstance = computed(
-  [$instances, hoveredInstanceOutlineStore],
+  [$instances, $hoveredInstanceOutline],
   getInstanceOutlineAndInstance
 );
 
@@ -64,8 +64,8 @@ export const $collaborativeInstanceRect = atom<undefined | DOMRect>(undefined);
 
 export const synchronizedCanvasStores = [
   ["textToolbar", $textToolbar],
-  ["selectedInstanceOutline", selectedInstanceOutlineStore],
-  ["hoveredInstanceOutline", hoveredInstanceOutlineStore],
+  ["selectedInstanceOutline", $selectedInstanceOutline],
+  ["hoveredInstanceOutline", $hoveredInstanceOutline],
   ["$collaborativeInstanceSelector", $collaborativeInstanceSelector],
   ["$collaborativeInstanceRect", $collaborativeInstanceRect],
 ] as const;

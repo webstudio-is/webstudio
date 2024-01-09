@@ -21,7 +21,7 @@ import {
   getElementsByInstanceSelector,
 } from "~/shared/dom-utils";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
-import { selectedInstanceOutlineStore } from "~/shared/nano-states";
+import { $selectedInstanceOutline } from "~/shared/nano-states";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getBrowserStyle } from "./features/webstudio-component/get-browser-style";
@@ -31,14 +31,14 @@ const isHtmlTag = (tag: string): tag is HtmlTags =>
   htmlTags.includes(tag as HtmlTags);
 
 const setOutline = (instanceId: Instance["id"], elements: HTMLElement[]) => {
-  selectedInstanceOutlineStore.set({
+  $selectedInstanceOutline.set({
     instanceId,
     rect: getAllElementsBoundingBox(elements),
   });
 };
 
 const hideOutline = () => {
-  selectedInstanceOutlineStore.set(undefined);
+  $selectedInstanceOutline.set(undefined);
 };
 
 const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
@@ -254,7 +254,7 @@ const subscribeSelectedInstance = (
 
   const unsubscribeIsResizingCanvas = $isResizingCanvas.subscribe(
     (isResizing) => {
-      if (isResizing && selectedInstanceOutlineStore.get()) {
+      if (isResizing && $selectedInstanceOutline.get()) {
         return hideOutline();
       }
       showOutline();

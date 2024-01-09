@@ -1,6 +1,6 @@
 import { idAttribute } from "@webstudio-is/react-sdk";
 import { $hoveredInstanceSelector, $instances } from "~/shared/nano-states";
-import { hoveredInstanceOutlineStore } from "~/shared/nano-states";
+import { $hoveredInstanceOutline } from "~/shared/nano-states";
 import {
   getAllElementsBoundingBox,
   getElementsByInstanceSelector,
@@ -40,7 +40,7 @@ export const subscribeInstanceHovering = () => {
     mouseOutTimeoutId = setTimeout(() => {
       hoveredElement = undefined;
       $hoveredInstanceSelector.set(undefined);
-      hoveredInstanceOutlineStore.set(undefined);
+      $hoveredInstanceOutline.set(undefined);
     }, 100);
 
     // Fixes the bug, that new hover occures during timeout
@@ -74,7 +74,7 @@ export const subscribeInstanceHovering = () => {
     }
 
     if (!isScrolling) {
-      hoveredInstanceOutlineStore.set({
+      $hoveredInstanceOutline.set({
         instanceId: instance.id,
         rect: getAllElementsBoundingBox(elements),
       });
@@ -86,7 +86,7 @@ export const subscribeInstanceHovering = () => {
   const unsubscribeScrollState = subscribeScrollState({
     onScrollStart() {
       isScrolling = true;
-      hoveredInstanceOutlineStore.set(undefined);
+      $hoveredInstanceOutline.set(undefined);
     },
     onScrollEnd() {
       isScrolling = false;
@@ -109,7 +109,7 @@ export const subscribeInstanceHovering = () => {
         const elements = getElementsByInstanceSelector(instanceSelector);
         updateHoveredRect(elements, instanceSelector);
       } else {
-        hoveredInstanceOutlineStore.set(undefined);
+        $hoveredInstanceOutline.set(undefined);
       }
     }
   );
