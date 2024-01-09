@@ -27,6 +27,7 @@ import { parseInstances, serializeInstances } from "./__DEPRECATED__/instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Data } from "@webstudio-is/http-client";
 import { parsePages, serializePages } from "./__DEPRECATED__/pages";
+import { createRootFolder } from "../shared/folder-utils";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -153,13 +154,6 @@ export const createBuild = async (
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
 
-  const defaultFolder = Folder.parse({
-    id: nanoid(),
-    name: "Untitled",
-    slug: "",
-    children: [],
-  } satisfies Folder);
-
   const defaultPages = Pages.parse({
     meta: {},
     homePage: {
@@ -173,10 +167,12 @@ export const createBuild = async (
     pages: [],
   } satisfies Pages);
 
+  const rootFolder = createRootFolder([defaultPages.homePage.id]);
+
   await client.build.create({
     data: {
       projectId: props.projectId,
-      folders: serializeData(new Map([[defaultFolder.id, defaultFolder]])),
+      folders: serializeData(new Map([[rootFolder.id, rootFolder]])),
       pages: serializePages(defaultPages),
       breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
       instances: serializeInstances(new Map(newInstances)),

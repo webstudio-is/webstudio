@@ -25,10 +25,11 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
-import { $dataSources, $folders } from "~/shared/nano-states";
+import { $folders } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
+import { addFolderChild } from "./page-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -223,9 +224,8 @@ export const NewFolderSettings = ({
           slug: values.slug,
           children: [],
         });
+        addFolderChild(folders, folderId);
       });
-
-      updateFolder(folderId, values);
 
       onSuccess(folderId);
     }
@@ -314,8 +314,8 @@ const NewFolderSettingsView = ({
 };
 
 const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
-  serverSyncStore.createTransaction([$folders, $dataSources], (folders) => {
-    const folder = folders?.get(folderId);
+  serverSyncStore.createTransaction([$folders], (folders) => {
+    const folder = folders.get(folderId);
     if (folder === undefined) {
       return;
     }

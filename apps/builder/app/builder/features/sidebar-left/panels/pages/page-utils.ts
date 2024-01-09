@@ -1,3 +1,4 @@
+import { createRootFolder } from "@webstudio-is/project-build";
 import type { Page, Pages, Folder, Folders } from "@webstudio-is/sdk";
 
 type TreePage = {
@@ -22,6 +23,8 @@ export const toTreeData = (
   pages: Pages
 ): TreeData => {
   const pagesMap = new Map(pages.pages.map((page) => [page.id, page]));
+  pagesMap.set(pages.homePage.id, pages.homePage);
+
   const toTreePage = (page: Page) => {
     return {
       type: "page",
@@ -29,10 +32,12 @@ export const toTreeData = (
       data: page,
     } satisfies TreePage;
   };
+
   const folderToTree = (folder: Folder) => {
     const children: Array<TreeData> = [];
     for (const id of folder.children) {
       const folder = folders.get(id);
+      // It is a folder, not a page.
       if (folder) {
         children.push(folderToTree(folder));
         continue;
@@ -40,8 +45,6 @@ export const toTreeData = (
       const page = pagesMap.get(id);
       if (page) {
         children.push(toTreePage(page));
-        // Pages we add to folders don't need to be in the root.
-        pagesMap.delete(id);
         continue;
       }
     }
@@ -54,14 +57,26 @@ export const toTreeData = (
     } satisfies TreeFolder;
   };
 
-  const foldersArray = Array.from(folders.values()).map(folderToTree);
-  const pagesArray = Array.from(pagesMap.values()).map(toTreePage);
+  const root = folders.get("root");
 
-  return {
-    type: "folder",
-    id: "root",
-    name: "Root",
-    slug: "",
-    children: [toTreePage(pages.homePage), ...pagesArray, ...foldersArray],
-  } satisfies TreeFolder;
+  if (root === undefined) {
+    // This can only happen if migration didn't go through.
+    throw new Error("Root folder is missing");
+  }
+
+  return folderToTree(root);
+};
+
+export const addFolderChild = (
+  folders: Folders,
+  id: Page["id"] | Folder["id"]
+) => {
+  let rootFolder = folders.get("root");
+  // This should never happen as the root folder is created when the project is created.
+  // And we should have made a migration.
+  if (rootFolder === undefined) {
+    rootFolder = createRootFolder();
+    folders.set(rootFolder.id, rootFolder);
+  }
+  rootFolder.children.push(id);
 };

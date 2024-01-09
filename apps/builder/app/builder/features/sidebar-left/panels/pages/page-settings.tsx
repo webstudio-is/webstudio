@@ -58,6 +58,7 @@ import {
   $selectedPageId,
   $dataSources,
   $dataSourceVariables,
+  $folders,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { removeByMutable } from "~/shared/array-utils";
@@ -74,6 +75,7 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
+import { addFolderChild } from "./page-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -660,8 +662,8 @@ export const NewPageSettings = ({
       const pageId = nanoid();
 
       serverSyncStore.createTransaction(
-        [$pages, $instances],
-        (pages, instances) => {
+        [$pages, $instances, $folders],
+        (pages, instances, folders) => {
           if (pages === undefined) {
             return;
           }
@@ -681,6 +683,9 @@ export const NewPageSettings = ({
             component: "Body",
             children: [],
           });
+
+          addFolderChild(folders, pageId);
+
           $selectedInstanceSelector.set(undefined);
         }
       );
