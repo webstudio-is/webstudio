@@ -27,7 +27,7 @@ export const $selectedInstance = computed(
   }
 );
 
-export const synchronized$instancess = [
+export const $synchronizedInstances = [
   ["textEditingInstanceSelector", textEditingInstanceSelectorStore],
   ["isResizingCanvas", $isResizingCanvas],
 ] as const;

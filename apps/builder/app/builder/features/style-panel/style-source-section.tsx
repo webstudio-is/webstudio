@@ -29,7 +29,7 @@ import {
   $selectedInstanceSelector,
   $selectedInstanceStatesByStyleSourceId,
   $selectedInstance,
-  selectedInstance$styleSources,
+  $selectedInstanceStyleSources,
   $selectedOrLastStyleSourceSelector,
   $selectedStyleSourceSelector,
   $styleSourceSelections,
@@ -445,7 +445,7 @@ const $availableStyleSources = computed(
 export const StyleSourcesSection = () => {
   const componentStates = useStore($componentStates);
   const availableStyleSources = useStore($availableStyleSources);
-  const selectedInstanceStyleSources = useStore(selectedInstance$styleSources);
+  const selectedInstanceStyleSources = useStore($selectedInstanceStyleSources);
   const selectedInstanceStatesByStyleSourceId = useStore(
     $selectedInstanceStatesByStyleSourceId
   );

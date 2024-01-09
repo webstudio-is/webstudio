@@ -25,8 +25,8 @@ import {
   $hoveredInstanceSelector,
   $isPreviewMode,
   synchronizedCanvasStores,
-  synchronized$instancess,
-  synchronized$breakpointss,
+  $synchronizedInstances,
+  $synchronizedBreakpoints,
   $selectedStyleSourceSelector,
   synchronizedComponentsMetaStores,
   $dataSourceVariables,
@@ -110,10 +110,10 @@ export const registerContainers = () => {
   clientStores.set("ephemeralStyles", $ephemeralStyles);
   clientStores.set("selectedInstanceStates", $selectedInstanceStates);
 
-  for (const [name, store] of synchronized$breakpointss) {
+  for (const [name, store] of $synchronizedBreakpoints) {
     clientStores.set(name, store);
   }
-  for (const [name, store] of synchronized$instancess) {
+  for (const [name, store] of $synchronizedInstances) {
     clientStores.set(name, store);
   }
   for (const [name, store] of synchronizedCanvasStores) {

@@ -196,7 +196,7 @@ export const $selectedInstanceStatesByStyleSourceId = computed(
   }
 );
 
-export const selectedInstance$styleSources = computed(
+export const $selectedInstanceStyleSources = computed(
   [$styleSourceSelections, $styleSources, $selectedInstanceSelector],
   (styleSourceSelections, styleSources, selectedInstanceSelector) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
@@ -230,7 +230,7 @@ export const selectedInstance$styleSources = computed(
 );
 
 export const $selectedOrLastStyleSourceSelector = computed(
-  [selectedInstance$styleSources, $selectedStyleSourceSelector],
+  [$selectedInstanceStyleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     if (selectedStyleSourceSelector !== undefined) {
       return selectedStyleSourceSelector;
@@ -248,7 +248,7 @@ export const $selectedOrLastStyleSourceSelector = computed(
  * to the last style source of selected instance
  */
 export const $selectedStyleSource = computed(
-  [selectedInstance$styleSources, $selectedStyleSourceSelector],
+  [$selectedInstanceStyleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     return (
       styleSources.find(
