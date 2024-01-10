@@ -165,7 +165,6 @@ model Build {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
   pages             String
-  folders           String   @default("[]")
 
   project   Project @relation(fields: [projectId], references: [id])
   projectId String

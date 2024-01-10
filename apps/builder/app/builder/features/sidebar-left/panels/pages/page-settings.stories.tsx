@@ -4,6 +4,7 @@ import { PageSettings } from "./page-settings";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { $assets, $project } from "~/shared/nano-states";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 export default {
   component: PageSettings,
@@ -33,31 +34,23 @@ $assets.set(
   ])
 );
 
-$pages.set({
-  meta: {
-    siteName: "Project name",
-    faviconAssetId: "imageId",
-    code: "code",
-  },
-  homePage: {
-    id: "homePageId",
-    title: "Home page title",
-    path: "/home-page-path",
-    name: "home-page-name",
-    meta: {},
-    rootInstanceId: "root-instance-id",
-  },
-  pages: [
-    {
-      id: "pageId",
-      title: "Page title",
-      path: "/page-path",
-      name: "page-name",
-      meta: {},
-      rootInstanceId: "root-instance-id",
-    },
-  ],
+const pages = createDefaultPages({ rootInstanceId: "root-instance-id" });
+pages.meta = {
+  siteName: "Project name",
+  faviconAssetId: "imageId",
+  code: "code",
+};
+pages.pages.push({
+  id: "pageId",
+  title: "Page title",
+  path: "/page-path",
+  name: "page-name",
+  meta: {},
+  rootInstanceId: "root-instance-id",
 });
+pages.folders[0].children.push("pageId");
+
+$pages.set(pages);
 
 $project.set({
   id: "projectId",

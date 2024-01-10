@@ -25,7 +25,7 @@ import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
-import { $pages, $selectedPageId, $folders } from "~/shared/nano-states";
+import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import { toTreeData, type TreeData } from "./page-utils";
 import { FolderSettings, NewFolderSettings } from "./folder-settings";
@@ -110,11 +110,7 @@ const PagesPanel = ({
   editingPageId?: string;
 }) => {
   const pages = useStore($pages);
-  const folders = useStore($folders);
-  const treeData = useMemo(
-    () => pages && toTreeData(folders, pages),
-    [folders, pages]
-  );
+  const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
 
   const renderItem = useCallback(
     (props: TreeItemRenderProps<TreeData>) => {

@@ -11,7 +11,6 @@ import type {
   Asset,
   Instance,
   Instances,
-  Page,
   Prop,
   StyleDecl,
   StyleDeclKey,
@@ -45,6 +44,7 @@ import {
 } from "./nano-states";
 import { registerContainers } from "./sync";
 import type { Project } from "@webstudio-is/project";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 enableMapSet();
 registerContainers();
@@ -1071,7 +1071,7 @@ describe("insert instances slice copy", () => {
   };
 
   beforeEach(() => {
-    $pages.set({ homePage: { id: "" } as Page, pages: [] });
+    $pages.set(createDefaultPages({ rootInstanceId: "" }));
     $project.set({ id: "current_project" } as Project);
     $assets.set(new Map());
     $breakpoints.set(new Map());

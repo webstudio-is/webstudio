@@ -1,5 +1,4 @@
-import { createRootFolder } from "@webstudio-is/project-build";
-import type { Page, Pages, Folder, Folders } from "@webstudio-is/sdk";
+import type { Page, Pages, Folder } from "@webstudio-is/sdk";
 
 type TreePage = {
   type: "page";
@@ -18,25 +17,17 @@ type TreeFolder = {
 
 export type TreeData = TreeFolder | TreePage;
 
-export const toTreeData = (
-  folders: Folders = new Map(),
-  pages: Pages
-): TreeData => {
+export const toTreeData = (pages: Pages): TreeData => {
   const pagesMap = new Map(pages.pages.map((page) => [page.id, page]));
+  const foldersMap = new Map(
+    pages.folders.map((folder) => [folder.id, folder])
+  );
   pagesMap.set(pages.homePage.id, pages.homePage);
-
-  const toTreePage = (page: Page) => {
-    return {
-      type: "page",
-      id: page.id,
-      data: page,
-    } satisfies TreePage;
-  };
 
   const folderToTree = (folder: Folder) => {
     const children: Array<TreeData> = [];
     for (const id of folder.children) {
-      const folder = folders.get(id);
+      const folder = foldersMap.get(id);
       // It is a folder, not a page.
       if (folder) {
         children.push(folderToTree(folder));
@@ -44,7 +35,11 @@ export const toTreeData = (
       }
       const page = pagesMap.get(id);
       if (page) {
-        children.push(toTreePage(page));
+        children.push({
+          type: "page",
+          id: page.id,
+          data: page,
+        } satisfies TreePage);
         continue;
       }
     }
@@ -57,26 +52,5 @@ export const toTreeData = (
     } satisfies TreeFolder;
   };
 
-  const root = folders.get("root");
-
-  if (root === undefined) {
-    // This can only happen if migration didn't go through.
-    throw new Error("Root folder is missing");
-  }
-
-  return folderToTree(root);
-};
-
-export const addFolderChild = (
-  folders: Folders,
-  id: Page["id"] | Folder["id"]
-) => {
-  let rootFolder = folders.get("root");
-  // This should never happen as the root folder is created when the project is created.
-  // And we should have made a migration.
-  if (rootFolder === undefined) {
-    rootFolder = createRootFolder();
-    folders.set(rootFolder.id, rootFolder);
-  }
-  rootFolder.children.push(id);
+  return folderToTree(pages.rootFolder);
 };

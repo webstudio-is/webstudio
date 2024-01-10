@@ -36,7 +36,6 @@ import {
   $styleSourceSelections,
   $styleSources,
   $styles,
-  $folders,
   $domains,
   $resources,
   subscribeResources,
@@ -255,7 +254,6 @@ export const Builder = ({
     $resources.set(new Map(build.resources));
     // props should be after data sources to compute logic
     $props.set(new Map(build.props));
-    $folders.set(new Map(build.folders));
     $pages.set(build.pages);
     $styleSources.set(new Map(build.styleSources));
     $styleSourceSelections.set(new Map(build.styleSourceSelections));

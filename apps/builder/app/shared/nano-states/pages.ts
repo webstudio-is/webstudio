@@ -1,7 +1,5 @@
 import { atom, computed } from "nanostores";
-import type { Folders, Page, Pages } from "@webstudio-is/sdk";
-
-export const $folders = atom<Folders>(new Map());
+import type { Page, Pages } from "@webstudio-is/sdk";
 
 export const $pages = atom<undefined | Pages>(undefined);
 

@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import type { Page } from "@webstudio-is/sdk";
 import { Box } from "@webstudio-is/design-system";
 import { VariablesSection as VariablesSectionComponent } from "./variables-section";
 import {
@@ -9,6 +8,7 @@ import {
   $instances,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 export default {
   title: "Builder/Variables Section",
@@ -23,10 +23,7 @@ $instances.set(
   ])
 );
 $selectedPageId.set("home");
-$pages.set({
-  homePage: { id: "home", rootInstanceId: "root" } as Page,
-  pages: [],
-});
+$pages.set(createDefaultPages({ rootInstanceId: "root" }));
 
 export const VariablesSection: StoryObj = {
   render: () => (

@@ -34,7 +34,6 @@ import {
   $selectedInstanceStates,
   $resources,
   $resourceValues,
-  $folders,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -74,7 +73,6 @@ const initializedStores = new Set<string>();
 
 export const registerContainers = () => {
   // synchronize patches
-  serverSyncStore.register("folders", $folders);
   serverSyncStore.register("pages", $pages);
   serverSyncStore.register("breakpoints", $breakpoints);
   serverSyncStore.register("instances", $instances);

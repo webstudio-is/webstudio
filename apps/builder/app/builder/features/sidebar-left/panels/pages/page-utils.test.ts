@@ -1,37 +1,10 @@
 import { expect, test } from "@jest/globals";
 import { toTreeData } from "./page-utils";
-import type { Folder, Pages } from "@webstudio-is/sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
-const toFoldersMap = (folders: Array<Folder> = []) =>
-  new Map(folders.map((folder) => [folder.id, folder]));
-
-const homePage = {
-  id: "root",
-  name: "Home",
-  title: "Home",
-  meta: {},
-  rootInstanceId: "id",
-  path: "/",
-};
-
-test("root folder always exists", () => {
-  const folders = toFoldersMap();
-  const pages: Pages = {
-    homePage,
-    pages: [],
-  };
-  const root = toTreeData(folders, pages);
-  expect(root.id).toBe("root");
-  expect(root.type).toBe("folder");
-});
-
-test("home page always exists", () => {
-  const folders = toFoldersMap();
-  const pages: Pages = {
-    homePage,
-    pages: [],
-  };
-  const root = toTreeData(folders, pages);
+test("initial pages always has home pages and a root folder", () => {
+  const pages = createDefaultPages({ rootInstanceId: "id" });
+  const root = toTreeData(pages);
   expect(root).toEqual({
     id: "root",
     name: "Root",
@@ -54,22 +27,16 @@ test("home page always exists", () => {
   });
 });
 
-test("with empty folder", () => {
-  const folders = toFoldersMap([
-    {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: [],
-    },
-  ]);
+test("add empty folder", () => {
+  const pages = createDefaultPages({ rootInstanceId: "id" });
+  pages.folders.push({
+    id: "folderId",
+    name: "Folder",
+    slug: "folder",
+    children: [],
+  });
 
-  const pages: Pages = {
-    homePage,
-    pages: [],
-  };
-
-  expect(toTreeData(folders, pages)).toEqual({
+  expect(toTreeData(pages)).toEqual({
     id: "root",
     name: "Root",
     slug: "",
@@ -98,30 +65,23 @@ test("with empty folder", () => {
   });
 });
 
-test("with page inside a folder", () => {
-  const folders = toFoldersMap([
-    {
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: ["pageId"],
-    },
-  ]);
-
-  const pages: Pages = {
-    homePage,
-    pages: [
-      {
-        id: "pageId",
-        meta: {},
-        name: "Page",
-        path: "/page",
-        rootInstanceId: "id",
-        title: "Page",
-      },
-    ],
-  };
-  const tree = toTreeData(folders, pages);
+test("add a page inside a folder", () => {
+  const pages = createDefaultPages({ rootInstanceId: "id" });
+  pages.pages.push({
+    id: "pageId",
+    meta: {},
+    name: "Page",
+    path: "/page",
+    rootInstanceId: "id",
+    title: "Page",
+  });
+  pages.folders.push({
+    id: "folderId",
+    name: "Folder",
+    slug: "folder",
+    children: ["pageId"],
+  });
+  const tree = toTreeData(pages);
 
   expect(tree).toEqual({
     id: "root",

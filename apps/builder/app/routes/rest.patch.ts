@@ -12,8 +12,6 @@ import {
   StyleSources,
   Styles,
   Resources,
-  Folders,
-  Folder,
 } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import {
@@ -103,7 +101,6 @@ export const action = async ({ request }: ActionArgs) => {
 
     const buildData: {
       pages?: Pages;
-      folders?: Folders;
       breakpoints?: Breakpoints;
       instances?: Instances;
       props?: Props;
@@ -128,12 +125,6 @@ export const action = async ({ request }: ActionArgs) => {
           // lazily parse build data before patching
           const pages = buildData.pages ?? parsePages(build.pages);
           buildData.pages = applyPatches(pages, patches);
-          continue;
-        }
-
-        if (namespace === "folders") {
-          const folders = buildData.folders ?? parseData<Folder>(build.folders);
-          buildData.folders = applyPatches(folders, patches);
           continue;
         }
 
@@ -217,10 +208,6 @@ export const action = async ({ request }: ActionArgs) => {
       version: clientVersion + 1,
       lastTransactionId,
     };
-
-    if (buildData.folders) {
-      dbBuildData.folders = serializeData(Folders.parse(buildData.folders));
-    }
 
     if (buildData.pages) {
       // parse with zod before serialization to avoid saving invalid data

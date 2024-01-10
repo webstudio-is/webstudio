@@ -1,4 +1,5 @@
-import type { Pages, Page, Folder } from "@webstudio-is/sdk";
+import type { Pages, Page } from "@webstudio-is/sdk";
+import { nanoid } from "nanoid";
 
 export const findPageByIdOrPath = (
   pages: Pages,
@@ -12,12 +13,30 @@ export const findPageByIdOrPath = (
   );
 };
 
-// This is a root folder that nobody can delete or going to be able to see.
-export const createRootFolder = (children: Folder["children"] = []): Folder => {
+export const createDefaultPages = ({
+  rootInstanceId,
+}: {
+  rootInstanceId: string;
+}): Pages => {
+  const homePageId = nanoid();
   return {
-    id: "root",
-    name: "Root",
-    slug: "",
-    children,
+    meta: {},
+    homePage: {
+      id: homePageId,
+      name: "Home",
+      path: "",
+      title: "Home",
+      meta: {},
+      rootInstanceId,
+    },
+    // This is a root folder that nobody can delete or going to be able to see.
+    rootFolder: {
+      id: "root",
+      name: "Root",
+      slug: "",
+      children: [homePageId],
+    },
+    pages: [],
+    folders: [],
   };
 };

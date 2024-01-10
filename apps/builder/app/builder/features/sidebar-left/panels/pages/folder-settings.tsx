@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { Folder, FolderName, FolderSlug, Folders } from "@webstudio-is/sdk";
+import { Folder, FolderName, FolderSlug, Pages } from "@webstudio-is/sdk";
 import {
   theme,
   Button,
@@ -25,11 +25,11 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
-import { $folders } from "~/shared/nano-states";
+import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { addFolderChild } from "./page-utils";
+import { removeByMutable } from "~/shared/array-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -54,7 +54,7 @@ const FolderValues = z.object({
 });
 
 const isSlugUnique = (
-  folders: Folders,
+  folders: Array<Folder>,
   // undefined page id means new page
   folderId: undefined | Folder["id"],
   slug: string
@@ -75,7 +75,7 @@ const isSlugUnique = (
 };
 
 const validateValues = (
-  folders: undefined | Folders,
+  pages: undefined | Pages,
   // undefined folder id means new folder
   folderId: undefined | Folder["id"],
   values: Values
@@ -85,8 +85,8 @@ const validateValues = (
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;
   }
-  if (folders !== undefined && values.slug !== undefined) {
-    if (isSlugUnique(folders, folderId, values.slug) === false) {
+  if (pages !== undefined && values.slug !== undefined) {
+    if (isSlugUnique(pages.folders, folderId, values.slug) === false) {
       errors.slug = errors.slug ?? [];
       errors.slug.push("Slug needs to be unique within a folder");
     }
@@ -206,25 +206,29 @@ export const NewFolderSettings = ({
   onClose: () => void;
   onSuccess: (folderId: Folder["id"]) => void;
 }) => {
-  const folders = useStore($folders);
+  const pages = useStore($pages);
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
     slug: nameToSlug(fieldDefaultValues.name),
   });
-  const errors = validateValues(folders, undefined, values);
+  const errors = validateValues(pages, undefined, values);
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const folderId = nanoid();
 
-      serverSyncStore.createTransaction([$folders], (folders) => {
-        folders.set(folderId, {
+      serverSyncStore.createTransaction([$pages], (pages) => {
+        if (pages === undefined) {
+          return;
+        }
+        pages.folders.push({
           id: folderId,
           name: values.name,
           slug: values.slug,
           children: [],
-        });
-        addFolderChild(folders, folderId);
+        } satisfies Folder);
+        // @todo add parent folder selection
+        pages.rootFolder.children.push(folderId);
       });
 
       onSuccess(folderId);
@@ -314,8 +318,11 @@ const NewFolderSettingsView = ({
 };
 
 const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
-  serverSyncStore.createTransaction([$folders], (folders) => {
-    const folder = folders.get(folderId);
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    const folder = pages.folders.find((folder) => folder.id === folderId);
     if (folder === undefined) {
       return;
     }
@@ -330,8 +337,11 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
 
 const deleteFolder = (folderId: Folder["id"]) => {
   // @todo ask them if they want to delete all pages as well.
-  serverSyncStore.createTransaction([$folders], (folders) => {
-    folders?.delete(folderId);
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    removeByMutable(pages.folders, (folder) => folder.id === folderId);
   });
 };
 
@@ -344,8 +354,8 @@ export const FolderSettings = ({
   onDelete: () => void;
   folderId: string;
 }) => {
-  const folders = useStore($folders);
-  const folder = folders.get(folderId);
+  const pages = useStore($pages);
+  const folder = pages?.folders.find((folder) => folder.id === folderId);
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
@@ -353,7 +363,7 @@ export const FolderSettings = ({
     ...unsavedValues,
   };
 
-  const errors = validateValues(folders, folderId, values);
+  const errors = validateValues(pages, folderId, values);
 
   const debouncedFn = useEffectEvent(() => {
     if (

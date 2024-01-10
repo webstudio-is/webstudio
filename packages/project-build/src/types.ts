@@ -10,7 +10,6 @@ import type {
   Deployment,
   DataSource,
   Resource,
-  Folder,
 } from "@webstudio-is/sdk";
 
 export type Build = {
@@ -19,7 +18,6 @@ export type Build = {
   version: number;
   createdAt: string;
   updatedAt: string;
-  folders: [Folder["id"], Folder][];
   pages: Pages;
   breakpoints: [Breakpoint["id"], Breakpoint][];
   styles: [StyleDeclKey, StyleDecl][];

@@ -12,7 +12,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Build } from "../types";
-import { Pages, type Deployment, Resource, Folder } from "@webstudio-is/sdk";
+import { Pages, type Deployment, Resource } from "@webstudio-is/sdk";
 import {
   createInitialBreakpoints,
   parseBreakpoints,
@@ -27,7 +27,7 @@ import { parseInstances, serializeInstances } from "./__DEPRECATED__/instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Data } from "@webstudio-is/http-client";
 import { parsePages, serializePages } from "./__DEPRECATED__/pages";
-import { createRootFolder } from "../shared/pages-utils";
+import { createDefaultPages } from "../shared/pages-utils";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -47,7 +47,6 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
-    const folders = Array.from(parseData<Folder>(build.folders));
     const pages = parsePages(build.pages);
     const breakpoints = Array.from(parseBreakpoints(build.breakpoints));
     const styles = Array.from(parseStyles(build.styles));
@@ -67,7 +66,6 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       version: build.version,
       createdAt: build.createdAt.toISOString(),
       updatedAt: build.updatedAt.toISOString(),
-      folders,
       pages,
       breakpoints,
       styles,
@@ -154,25 +152,11 @@ export const createBuild = async (
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
 
-  const defaultPages = Pages.parse({
-    meta: {},
-    homePage: {
-      id: nanoid(),
-      name: "Home",
-      path: "",
-      title: "Home",
-      meta: {},
-      rootInstanceId,
-    },
-    pages: [],
-  } satisfies Pages);
-
-  const rootFolder = createRootFolder([defaultPages.homePage.id]);
+  const defaultPages = Pages.parse(createDefaultPages({ rootInstanceId }));
 
   await client.build.create({
     data: {
       projectId: props.projectId,
-      folders: serializeData(new Map([[rootFolder.id, rootFolder]])),
       pages: serializePages(defaultPages),
       breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
       instances: serializeInstances(new Map(newInstances)),
