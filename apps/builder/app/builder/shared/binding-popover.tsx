@@ -285,6 +285,7 @@ export const BindingPopoverProvider = BindingPopoverContext.Provider;
 export const BindingPopover = ({
   scope,
   aliases,
+  removable = true,
   validate,
   value,
   onChange,
@@ -292,6 +293,7 @@ export const BindingPopover = ({
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
+  removable?: boolean;
   validate?: (value: unknown) => undefined | string;
   value: string;
   onChange: (newValue: string) => void;
@@ -369,6 +371,7 @@ export const BindingPopover = ({
                   aria-label="Reset binding"
                   prefix={<TrashIcon />}
                   color="ghost"
+                  disabled={removable === false}
                   onClick={(event) => {
                     event.preventDefault();
                     // inline variables and close dialog

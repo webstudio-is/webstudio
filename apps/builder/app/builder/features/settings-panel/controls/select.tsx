@@ -80,6 +80,7 @@ export const SelectControl = ({
               return `${label} expects one of ${options}`;
             }
           }}
+          removable={prop?.type === "expression"}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

@@ -503,6 +503,7 @@ export const UrlControl = ({
               return `${label} expects a string value, page or file`;
             }
           }}
+          removable={prop?.type === "expression"}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

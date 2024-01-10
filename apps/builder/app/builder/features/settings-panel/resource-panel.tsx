@@ -125,6 +125,7 @@ const HeaderPair = ({
           <BindingPopover
             scope={editorScope}
             aliases={editorAliases}
+            removable={isLiteralExpression(value) === false}
             value={value}
             onChange={(newValue) => {
               valueField.onChange(newValue);
@@ -384,6 +385,7 @@ export const ResourceForm = forwardRef<
           <BindingPopover
             scope={scope}
             aliases={aliases}
+            removable={isLiteralExpression(urlField.value) === false}
             value={urlField.value}
             onChange={(value) => {
               urlField.onChange(value);
@@ -439,6 +441,7 @@ export const ResourceForm = forwardRef<
             <BindingPopover
               scope={scope}
               aliases={aliases}
+              removable={isLiteralExpression(bodyField.value) === false}
               value={bodyField.value}
               onChange={(value) => {
                 bodyField.onChange(value);

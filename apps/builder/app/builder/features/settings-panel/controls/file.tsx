@@ -98,6 +98,7 @@ export const FileControl = ({
                 return `${label} expects a string value or file`;
               }
             }}
+            removable={prop?.type === "expression"}
             value={expression}
             onChange={(newExpression) =>
               onChange({ type: "expression", value: newExpression })
