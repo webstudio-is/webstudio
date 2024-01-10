@@ -16,6 +16,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
+  FolderIcon,
   MenuIcon,
   NewFolderIcon,
   NewPageIcon,
@@ -134,11 +135,16 @@ const PagesPanel = ({
           alwaysShowSuffix={isEditing}
           forceFocus={isEditing}
         >
-          <TreeItemLabel prefix={<PageIcon />}>
-            {props.itemData.type === "folder"
-              ? props.itemData.name
-              : props.itemData.data.name}
-          </TreeItemLabel>
+          {props.itemData.type === "folder" && (
+            <TreeItemLabel prefix={<FolderIcon />}>
+              {props.itemData.name}
+            </TreeItemLabel>
+          )}
+          {props.itemData.type === "page" && (
+            <TreeItemLabel prefix={<PageIcon />}>
+              {props.itemData.data.name}
+            </TreeItemLabel>
+          )}
         </TreeItemBody>
       );
     },

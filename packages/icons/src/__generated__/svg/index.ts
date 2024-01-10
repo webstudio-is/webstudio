@@ -85,6 +85,7 @@ export { EmbedIcon } from "./embed";
 export { ExternalLinkIcon } from "./external-link";
 export { EyeconClosedIcon } from "./eyecon-closed";
 export { EyeconOpenIcon } from "./eyecon-open";
+export { FolderIcon } from "./folder";
 export { FooterIcon } from "./footer";
 export { FormTextAreaIcon } from "./form-text-area";
 export { FormTextFieldIcon } from "./form-text-field";
