@@ -37,6 +37,7 @@ import {
   $pages,
   $project,
   $props,
+  $resources,
   $styleSourceSelections,
   $styleSources,
   $styles,
@@ -605,6 +606,46 @@ describe("delete instance", () => {
         createInstancePair("list", collectionComponent, []),
       ])
     );
+  });
+
+  test("delete resource along with variable", () => {
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ])
+    );
+    $resources.set(
+      toMap([
+        {
+          id: "resourceId",
+          name: "My Resource",
+          url: `""`,
+          method: "get",
+          headers: [],
+        },
+      ])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "resourceVariableId",
+          scopeInstanceId: "box",
+          name: "My Resource Variable",
+          type: "resource",
+          resourceId: "resourceId",
+        },
+      ])
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+
+    deleteInstance(["box", "body"]);
+
+    expect($instances.get()).toEqual(
+      toMap([createInstance("body", "Body", [])])
+    );
+    expect($dataSources.get()).toEqual(new Map());
+    expect($resources.get()).toEqual(new Map());
   });
 });
 
