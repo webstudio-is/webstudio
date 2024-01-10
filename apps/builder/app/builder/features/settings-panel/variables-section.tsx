@@ -118,9 +118,19 @@ const $usedVariables = computed([$props, $resources], (props, resources) => {
 });
 
 const deleteVariable = (variableId: DataSource["id"]) => {
-  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-    dataSources.delete(variableId);
-  });
+  serverSyncStore.createTransaction(
+    [$dataSources, $resources],
+    (dataSources, resources) => {
+      const dataSource = dataSources.get(variableId);
+      if (dataSource === undefined) {
+        return;
+      }
+      dataSources.delete(variableId);
+      if (dataSource.type === "resource") {
+        resources.delete(dataSource.resourceId);
+      }
+    }
+  );
 };
 
 const EmptyVariables = () => {

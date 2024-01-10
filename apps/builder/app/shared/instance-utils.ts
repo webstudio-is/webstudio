@@ -44,6 +44,7 @@ import {
   $project,
   $breakpoints,
   $pages,
+  $resources,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -430,6 +431,7 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
       $styleSources,
       $styles,
       $dataSources,
+      $resources,
     ],
     (
       instances,
@@ -437,7 +439,8 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
       styleSourceSelections,
       styleSources,
       styles,
-      dataSources
+      dataSources,
+      resources
     ) => {
       let targetInstanceId = instanceSelector[0];
       const parentInstanceId = instanceSelector[1];
@@ -498,6 +501,9 @@ export const deleteInstance = (instanceSelector: InstanceSelector) => {
           instanceIds.has(dataSource.scopeInstanceId)
         ) {
           dataSources.delete(dataSource.id);
+          if (dataSource.type === "resource") {
+            resources.delete(dataSource.resourceId);
+          }
         }
       }
       for (const instanceId of instanceIds) {
