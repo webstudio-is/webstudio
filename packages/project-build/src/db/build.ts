@@ -27,7 +27,7 @@ import { parseInstances, serializeInstances } from "./__DEPRECATED__/instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Data } from "@webstudio-is/http-client";
 import { parsePages, serializePages } from "./__DEPRECATED__/pages";
-import { createRootFolder } from "../shared/folder-utils";
+import { createRootFolder } from "../shared/pages-utils";
 
 export const parseData = <Type extends { id: string }>(
   string: string

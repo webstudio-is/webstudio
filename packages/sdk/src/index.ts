@@ -1,6 +1,5 @@
 export * from "./schema/assets";
 export * from "./schema/pages";
-export * from "./schema/folders";
 export * from "./schema/instances";
 export * from "./schema/data-sources";
 export * from "./schema/resources";

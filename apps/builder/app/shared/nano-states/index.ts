@@ -3,6 +3,5 @@ export * from "./breakpoints";
 export * from "./instances";
 export * from "./props";
 export * from "./canvas";
-export * from "./folders";
 export * from "./pages";
 export * from "./components";

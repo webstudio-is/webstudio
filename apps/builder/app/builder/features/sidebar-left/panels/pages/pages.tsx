@@ -227,9 +227,7 @@ const PageEditor = ({
   setEditingPageId: (pageId?: string) => void;
 }) => {
   const currentPageId = useStore($selectedPageId);
-  if (editingPageId === undefined) {
-    return;
-  }
+
   if (editingPageId === newPageId) {
     return (
       <NewPageSettings
@@ -241,6 +239,7 @@ const PageEditor = ({
       />
     );
   }
+
   return (
     <PageSettings
       onClose={() => setEditingPageId(undefined)}
