@@ -100,7 +100,7 @@ const PagesPanel = ({
   onSelect,
   selectedPageId,
   onEdit,
-  editingPageId,
+  editingItemId,
 }: {
   onClose: () => void;
   onCreateNewFolder: () => void;
@@ -108,7 +108,7 @@ const PagesPanel = ({
   onSelect: (pageId: string) => void;
   selectedPageId: string;
   onEdit: (pageId: string | undefined) => void;
-  editingPageId?: string;
+  editingItemId?: string;
 }) => {
   const pages = useStore($pages);
   const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
@@ -119,7 +119,7 @@ const PagesPanel = ({
         return null;
       }
 
-      const isEditing = editingPageId === props.itemData.id;
+      const isEditing = editingItemId === props.itemData.id;
 
       return (
         <TreeItemBody
@@ -128,7 +128,7 @@ const PagesPanel = ({
             <ItemSuffix
               isParentSelected={props.isSelected ?? false}
               itemId={props.itemData.id}
-              editingItemId={editingPageId}
+              editingItemId={editingItemId}
               onEdit={onEdit}
             />
           }
@@ -148,7 +148,7 @@ const PagesPanel = ({
         </TreeItemBody>
       );
     },
-    [editingPageId, onEdit]
+    [editingItemId, onEdit]
   );
 
   const selectTreeNode = useCallback(
@@ -278,6 +278,7 @@ const FolderEditor = ({
       />
     );
   }
+
   return (
     <FolderSettings
       onClose={() => setEditingFolderId(undefined)}
@@ -292,48 +293,50 @@ const FolderEditor = ({
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const currentPageId = useStore($selectedPageId);
-  const [editingPageId, setEditingPageId] = useState<string>();
-  const [editingFolderId, setEditingFolderId] = useState<string>();
+  const [editingItemId, setEditingItemId] = useState<string>();
+  const pages = useStore($pages);
 
   if (currentPageId === undefined) {
     return null;
   }
+  const isEditingFolder = pages?.folders.some(
+    (folder) => folder.id === editingItemId
+  );
 
   return (
     <>
       <PagesPanel
         onClose={() => onSetActiveTab("none")}
         onCreateNewFolder={() => {
-          setEditingFolderId(
-            editingFolderId === newFolderId ? undefined : newFolderId
+          setEditingItemId(
+            editingItemId === newFolderId ? undefined : newFolderId
           );
         }}
         onCreateNewPage={() =>
-          setEditingPageId(editingPageId === newPageId ? undefined : newPageId)
+          setEditingItemId(editingItemId === newPageId ? undefined : newPageId)
         }
         onSelect={(pageId) => {
           switchPage(pageId);
           onSetActiveTab("none");
         }}
         selectedPageId={currentPageId}
-        onEdit={setEditingPageId}
-        editingPageId={editingPageId}
+        onEdit={setEditingItemId}
+        editingItemId={editingItemId}
       />
 
-      {editingPageId && (
+      {editingItemId && (
         <SettingsPanel isOpen>
-          <PageEditor
-            editingPageId={editingPageId}
-            setEditingPageId={setEditingPageId}
-          />
-        </SettingsPanel>
-      )}
-      {editingFolderId && (
-        <SettingsPanel isOpen>
-          <FolderEditor
-            editingFolderId={editingFolderId}
-            setEditingFolderId={setEditingFolderId}
-          />
+          {isEditingFolder ? (
+            <FolderEditor
+              editingFolderId={editingItemId}
+              setEditingFolderId={setEditingItemId}
+            />
+          ) : (
+            <PageEditor
+              editingPageId={editingItemId}
+              setEditingPageId={setEditingItemId}
+            />
+          )}
         </SettingsPanel>
       )}
     </>
