@@ -65,6 +65,7 @@ export const BooleanControl = ({
               return `${label} expects a boolean value`;
             }
           }}
+          removable={prop?.type === "expression"}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

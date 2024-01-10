@@ -72,6 +72,7 @@ export const CodeControl = ({
               return `${label} expects a string value`;
             }
           }}
+          removable={prop?.type === "expression"}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
