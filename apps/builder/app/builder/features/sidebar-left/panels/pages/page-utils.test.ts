@@ -17,7 +17,7 @@ describe("toTreeData", () => {
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
       id: "root",
-      name: "Root",
+      name: "",
       slug: "",
       type: "folder",
       children: [
@@ -52,7 +52,7 @@ describe("toTreeData", () => {
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
       id: "root",
-      name: "Root",
+      name: "",
       slug: "",
       type: "folder",
       children: [
@@ -103,7 +103,7 @@ describe("toTreeData", () => {
 
     expect(tree.root).toEqual({
       id: "root",
-      name: "Root",
+      name: "",
       slug: "",
       type: "folder",
       children: [
@@ -165,7 +165,7 @@ describe("toTreeData", () => {
     expect(tree.root).toEqual({
       type: "folder",
       id: "root",
-      name: "Root",
+      name: "",
       slug: "",
       children: [
         {
@@ -225,7 +225,7 @@ describe("reparentOrphansMutable", () => {
     reparentOrphansMutable(pages);
     expect(pages.rootFolder).toEqual({
       id: "root",
-      name: "Root",
+      name: "",
       slug: "",
       children: ["homePageId", "folderId", "pageId"],
     });
@@ -248,7 +248,7 @@ describe("cleanupChildRefsMutable", () => {
     cleanupChildRefsMutable("folderId", pages);
     expect(pages.rootFolder).toEqual({
       id: "root",
-      name: "Root",
+      name: "",
       slug: "",
       children: ["homePageId"],
     });
