@@ -412,6 +412,33 @@ test("generate jsx children with text", () => {
   );
 });
 
+test("generate jsx children with expression", () => {
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      children: [
+        { type: "expression", value: "'Hello ' + $ws$dataSource$var" },
+      ],
+      instances: new Map(),
+      props: new Map(),
+      dataSources: new Map([
+        createDataSourcePair({
+          id: "var",
+          scopeInstanceId: "body",
+          name: "my var",
+          type: "variable",
+          value: { type: "string", value: "world" },
+        }),
+      ]),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toEqual(
+    clear(`
+      {'Hello ' + myvar}
+    `)
+  );
+});
+
 test("generate jsx children with nested instances", () => {
   expect(
     generateJsxChildren({

@@ -1,26 +1,32 @@
 import { z } from "zod";
 
-export const Text = z.object({
+export const TextChild = z.object({
   type: z.literal("text"),
   value: z.string(),
 });
 
-export type Text = z.infer<typeof Text>;
+export type TextChild = z.infer<typeof TextChild>;
 
 const InstanceId = z.string();
 
-export const Id = z.object({
+export const IdChild = z.object({
   type: z.literal("id"),
   value: InstanceId,
 });
-export type Id = z.infer<typeof Id>;
+export type IdChild = z.infer<typeof IdChild>;
+
+export const ExpressionChild = z.object({
+  type: z.literal("expression"),
+  value: z.string(),
+});
+export type ExpressionChild = z.infer<typeof ExpressionChild>;
 
 export const Instance = z.object({
   type: z.literal("instance"),
   id: InstanceId,
   component: z.string(),
   label: z.string().optional(),
-  children: z.array(z.union([Id, Text])),
+  children: z.array(z.union([IdChild, TextChild, ExpressionChild])),
 });
 
 export type Instance = z.infer<typeof Instance>;
