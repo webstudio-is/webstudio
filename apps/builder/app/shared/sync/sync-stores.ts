@@ -22,7 +22,7 @@ import {
   selectedInstanceIntanceToTagStore,
   selectedInstanceRenderStateStore,
   hoveredInstanceSelectorStore,
-  isPreviewModeStore,
+  $isPreviewMode,
   synchronizedCanvasStores,
   synchronizedInstancesStores,
   synchronizedBreakpointsStores,
@@ -30,6 +30,7 @@ import {
   synchronizedComponentsMetaStores,
   dataSourceVariablesStore,
 } from "~/shared/nano-states";
+import { $commandMetas } from "~/shared/commands-emitter";
 
 enableMapSet();
 
@@ -71,6 +72,7 @@ export const registerContainers = () => {
   store.register("props", propsStore);
   store.register("dataSources", dataSourcesStore);
   store.register("assets", assetsStore);
+  store.register("commandMetas", $commandMetas);
   // synchronize whole states
   clientStores.set("project", projectStore);
   clientStores.set("dataSourceVariables", dataSourceVariablesStore);
@@ -94,7 +96,7 @@ export const registerContainers = () => {
     selectedInstanceRenderStateStore
   );
   clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
-  clientStores.set("isPreviewMode", isPreviewModeStore);
+  clientStores.set("isPreviewMode", $isPreviewMode);
   clientStores.set(
     "selectedStyleSourceSelector",
     selectedStyleSourceSelectorStore
@@ -241,7 +243,7 @@ const handshakeAndSyncStores = (
     if (destinationReady) {
       return publish(action);
     }
-    actions.push(action);
+    actions.push({ payload: undefined, ...action });
   };
 
   const unsubscribe = sync(publishAction);

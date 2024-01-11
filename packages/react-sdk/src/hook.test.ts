@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { getClosestInstance, type InstancePath } from ".";
+import { getClosestInstance, type InstancePath } from "./hook";
 
 test("get closest instance", () => {
   const instancePath: InstancePath = [

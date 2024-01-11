@@ -28,6 +28,7 @@ const useLabelPosition = (
       }
       const labelRect = element.getBoundingClientRect();
       let nextPosition: LabelPosition = "top";
+      // Label won't fit above the instance outline
       if (labelRect.height > instanceRect.top) {
         nextPosition = instanceRect.height < 250 ? "bottom" : "inside";
       }

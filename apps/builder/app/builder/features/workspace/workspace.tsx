@@ -24,7 +24,7 @@ const workspaceStyle = css({
 });
 
 const canvasContainerStyle = css({
-  position: "relative",
+  position: "absolute",
   transformStyle: "preserve-3d",
   transformOrigin: "0 0",
 });
@@ -85,6 +85,18 @@ const useCanvasStyle = () => {
   return getCanvasStyle(scale, workspaceRect, canvasWidth);
 };
 
+const useOutlineStyle = () => {
+  const scale = useStore(scaleStore);
+  const workspaceRect = useStore(workspaceRectStore);
+  const [canvasWidth] = useCanvasWidth();
+  const style = getCanvasStyle(100, workspaceRect, canvasWidth);
+  return {
+    ...style,
+    pointerEvents: "none",
+    width: (canvasWidth ?? 0) * (scale / 100),
+  } as const;
+};
+
 type WorkspaceProps = {
   children: JSX.Element;
   onTransitionEnd: () => void;
@@ -97,6 +109,7 @@ export const Workspace = ({
   publish,
 }: WorkspaceProps) => {
   const canvasStyle = useCanvasStyle();
+  const outlineStyle = useOutlineStyle();
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
@@ -117,6 +130,8 @@ export const Workspace = ({
         onTransitionEnd={onTransitionEnd}
       >
         {children}
+      </div>
+      <div className={canvasContainerStyle()} style={outlineStyle}>
         <CanvasTools publish={publish} />
       </div>
       <Toaster />

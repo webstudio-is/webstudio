@@ -1,24 +1,22 @@
 import { useSubscribe } from "~/shared/pubsub";
-import { useDragAndDropState } from "~/shared/nano-states";
+import { $dragAndDropState } from "~/shared/nano-states";
 
 export const useSubscribeDragAndDropState = () => {
-  const [, setState] = useDragAndDropState();
-
   useSubscribe("dragStart", (dragPayload) => {
     // It's possible that dropTargetChange comes before dragStart.
     // So it's important to spread the current ...state here.
-    setState((state) => ({ ...state, isDragging: true, dragPayload }));
+    $dragAndDropState.set({
+      ...$dragAndDropState.get(),
+      isDragging: true,
+      dragPayload,
+    });
   });
 
   useSubscribe("dropTargetChange", (dropTarget) => {
-    setState((state) => ({ ...state, dropTarget }));
-  });
-
-  useSubscribe("placementIndicatorChange", (placementIndicator) => {
-    setState((state) => ({ ...state, placementIndicator }));
+    $dragAndDropState.set({ ...$dragAndDropState.get(), dropTarget });
   });
 
   useSubscribe("dragEnd", () => {
-    setState({ isDragging: false });
+    $dragAndDropState.set({ isDragging: false });
   });
 };

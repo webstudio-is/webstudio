@@ -8,10 +8,10 @@ import {
   instancesStore,
   rootInstanceStore,
   selectedInstanceSelectorStore,
-  useDragAndDropState,
   textEditingInstanceSelectorStore,
   selectedStyleSourceSelectorStore,
   registeredComponentMetasStore,
+  $dragAndDropState,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import {
@@ -29,7 +29,7 @@ export const NavigatorTree = () => {
   const rootInstance = useStore(rootInstanceStore);
   const instances = useStore(instancesStore);
   const metas = useStore(registeredComponentMetasStore);
-  const [state, setState] = useDragAndDropState();
+  const state = useStore($dragAndDropState);
 
   const dragPayload = state.dragPayload;
 
@@ -102,9 +102,9 @@ export const NavigatorTree = () => {
         parentSelector: payload.dropTarget.itemSelector,
         position: payload.dropTarget.position,
       });
-      setState({ isDragging: false });
+      $dragAndDropState.set({ isDragging: false });
     },
-    [setState]
+    []
   );
 
   const handleSelect = useCallback((instanceSelector: InstanceSelector) => {
@@ -140,21 +140,21 @@ export const NavigatorTree = () => {
           );
           return;
         }
-        setState((state) => ({
-          ...state,
+        $dragAndDropState.set({
+          ...$dragAndDropState.get(),
           dragPayload: {
             origin: "panel",
             type: "reparent",
             dragInstanceSelector,
           },
-        }));
+        });
       }}
       onDropTargetChange={(dropTarget) => {
-        setState((state) => ({ ...state, dropTarget }));
+        $dragAndDropState.set({ ...$dragAndDropState.get(), dropTarget });
       }}
       onDragEnd={handleDragEnd}
       onCancel={() => {
-        setState({ isDragging: false });
+        $dragAndDropState.set({ isDragging: false });
       }}
     />
   );

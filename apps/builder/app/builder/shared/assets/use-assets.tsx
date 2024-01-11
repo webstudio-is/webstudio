@@ -13,11 +13,7 @@ import type {
   UploadingAssetContainer,
 } from "./types";
 import type { ActionData } from "~/builder/shared/assets";
-import {
-  assetsStore,
-  authTokenStore,
-  projectStore,
-} from "~/shared/nano-states";
+import { assetsStore, $authToken, projectStore } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
@@ -174,7 +170,7 @@ export const useUploadAsset = () => {
 
   const uploadAssets = (type: AssetType, files: File[]) => {
     const projectId = projectStore.get()?.id;
-    const authToken = authTokenStore.get();
+    const authToken = $authToken.get();
     if (projectId === undefined) {
       return;
     }

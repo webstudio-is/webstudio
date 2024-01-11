@@ -41,7 +41,7 @@ const EmbedTemplateDataSource = z.union([
 
 type EmbedTemplateDataSource = z.infer<typeof EmbedTemplateDataSource>;
 
-const EmbedTemplateProp = z.union([
+export const EmbedTemplateProp = z.union([
   z.object({
     type: z.literal("dataSource"),
     name: z.string(),
@@ -80,7 +80,7 @@ const EmbedTemplateProp = z.union([
   }),
 ]);
 
-type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
+export type EmbedTemplateProp = z.infer<typeof EmbedTemplateProp>;
 
 const EmbedTemplateStyleDeclRaw = z.object({
   // State selector, e.g. :hover

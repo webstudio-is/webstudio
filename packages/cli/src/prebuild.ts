@@ -13,14 +13,19 @@ import {
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { cwd } from "node:process";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import pLimit from "p-limit";
 import ora from "ora";
+import merge from "deepmerge";
 import {
   generateCssText,
   generateUtilsExport,
+  generatePageComponent,
+  getIndexesWithinAncestors,
   namespaceMeta,
   type Params,
   type WsComponentMeta,
+  normalizeProps,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -28,23 +33,28 @@ import type {
   Page,
   DataSource,
   Deployment,
+  Asset,
+  FontAsset,
 } from "@webstudio-is/sdk";
 import {
   createScope,
   findTreeInstanceIds,
   parseComponentName,
 } from "@webstudio-is/sdk";
-import type { Asset, FontAsset } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
+import { createImageLoader } from "@webstudio-is/image";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import { LOCAL_DATA_FILE } from "./config";
-import { ensureFileInPath, ensureFolderExists, loadJSONFile } from "./fs-utils";
-import merge from "deepmerge";
-import { createImageLoader } from "@webstudio-is/image";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  ensureFileInPath,
+  ensureFolderExists,
+  loadJSONFile,
+  isFileExists,
+} from "./fs-utils";
 import type * as sharedConstants from "~/constants.mjs";
+import type { PageData } from "../templates/route-template";
 
 const limit = pLimit(10);
 
@@ -166,10 +176,12 @@ const copyTemplates = async (template: string = "defaults") => {
     },
   });
 
-  await mergeJsonFiles(
-    join(templatesPath, "package.json"),
-    join(cwd(), "package.json")
-  );
+  if ((await isFileExists(join(templatesPath, "package.json"))) === true) {
+    await mergeJsonFiles(
+      join(templatesPath, "package.json"),
+      join(cwd(), "package.json")
+    );
+  }
 };
 
 export const prebuild = async (options: {
@@ -186,6 +198,16 @@ export const prebuild = async (options: {
    **/
   template?: string;
 }) => {
+  if (
+    options.template !== undefined &&
+    (await isCliTemplate(options.template)) === false &&
+    options.template.startsWith(".") === false
+  ) {
+    throw Error(
+      `\n Template ${options.template} is not available \n Please check webstudio-cli --help for more details`
+    );
+  }
+
   const spinner = ora("Scaffolding the project files");
   spinner.start();
 
@@ -222,6 +244,30 @@ export const prebuild = async (options: {
     routes: [],
   };
 
+  const radixComponentNamespacedMetas = Object.entries(
+    radixComponentMetas
+  ).reduce(
+    (r, [name, meta]) => {
+      const namespace = "@webstudio-is/sdk-components-react-radix";
+      r[`${namespace}:${name}`] = namespaceMeta(
+        meta,
+        namespace,
+        new Set(Object.keys(radixComponentMetas))
+      );
+      return r;
+    },
+    {} as Record<string, WsComponentMeta>
+  );
+
+  const metas = new Map(
+    Object.entries({
+      ...baseComponentMetas,
+      ...radixComponentNamespacedMetas,
+      ...remixComponentMetas,
+    })
+  );
+
+  const projectMetas = new Map<Instance["component"], WsComponentMeta>();
   const componentsByPage: ComponentsByPage = {};
   const siteDataByPage: SiteDataByPage = {};
 
@@ -245,8 +291,15 @@ export const prebuild = async (options: {
       siteData.build.instances.filter(([id]) => pageInstanceSet.has(id));
     const dataSources: [DataSource["id"], DataSource][] = [];
 
+    // use whole project props to access id props from other pages
+    const normalizedProps = normalizeProps({
+      props: siteData.build.props.map(([_id, prop]) => prop),
+      assetBaseUrl,
+      assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
+      pages: new Map(siteData.pages.map((page) => [page.id, page])),
+    });
     const props: [Prop["id"], Prop][] = [];
-    for (const [_propId, prop] of siteData.build.props) {
+    for (const prop of normalizedProps) {
       if (pageInstanceSet.has(prop.instanceId)) {
         props.push([prop.id, prop]);
       }
@@ -276,32 +329,13 @@ export const prebuild = async (options: {
     for (const [_instanceId, instance] of instances) {
       if (instance.component) {
         componentsByPage[path].add(instance.component);
+        const meta = metas.get(instance.component);
+        if (meta) {
+          projectMetas.set(instance.component, meta);
+        }
       }
     }
   }
-
-  const radixComponentNamespacedMetas = Object.entries(
-    radixComponentMetas
-  ).reduce(
-    (r, [name, meta]) => {
-      const namespace = "@webstudio-is/sdk-components-react-radix";
-      r[`${namespace}:${name}`] = namespaceMeta(
-        meta,
-        namespace,
-        new Set(Object.keys(radixComponentMetas))
-      );
-      return r;
-    },
-    {} as Record<string, WsComponentMeta>
-  );
-
-  const componentMetas = new Map(
-    Object.entries({
-      ...baseComponentMetas,
-      ...radixComponentNamespacedMetas,
-      ...remixComponentMetas,
-    })
-  );
 
   const assetsToDownload: Promise<void>[] = [];
   const fontAssets: FontAsset[] = [];
@@ -373,18 +407,17 @@ export const prebuild = async (options: {
   for (const [pathName, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
+      "useState",
+      "ReactNode",
       "PageData",
-      "Components",
       "Asset",
-      "components",
       "fontAssets",
       "pageData",
       "user",
       "projectId",
       "formsProperties",
-      "indexesWithinAncestors",
-      "getDataSourcesLogic",
-      "utils",
+      "Page",
+      "props",
     ]);
     const namespaces = new Map<
       string,
@@ -417,7 +450,6 @@ export const prebuild = async (options: {
     }
 
     let componentImports = "";
-    let componentEntries = "";
     for (const [namespace, componentsSet] of namespaces.entries()) {
       const specifiers = Array.from(componentsSet)
         .map(
@@ -426,39 +458,51 @@ export const prebuild = async (options: {
         )
         .join(", ");
       componentImports += `import { ${specifiers} } from "${namespace}";\n`;
-
-      const fields = Array.from(componentsSet)
-        .map(
-          ([shortName, component]) =>
-            `"${component}": ${scope.getName(component, shortName)}`
-        )
-        .join(",");
-      componentEntries += `${fields},\n`;
     }
 
     const pageData = siteDataByPage[pathName];
-
-    const utilsExport = generateUtilsExport({
+    // serialize data only used in runtime
+    const renderedPageData: PageData = {
       page: pageData.page,
-      metas: componentMetas,
-      instances: new Map(pageData.build.instances),
-      props: new Map(pageData.build.props),
-      dataSources: new Map(pageData.build.dataSources),
+    };
+
+    const rootInstanceId = pageData.page.rootInstanceId;
+    const instances = new Map(pageData.build.instances);
+    const props = new Map(pageData.build.props);
+    const dataSources = new Map(pageData.build.dataSources);
+    const utilsExport = generateUtilsExport({
+      pages: siteData.build.pages,
+      props,
+    });
+    const pageComponent = generatePageComponent({
+      scope,
+      rootInstanceId,
+      instances,
+      props,
+      dataSources,
+      indexesWithinAncestors: getIndexesWithinAncestors(
+        projectMetas,
+        instances,
+        [rootInstanceId]
+      ),
     });
 
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
+import { type ReactNode, useState } from "react";
 import type { PageData } from "~/routes/_index";
-import type { Components } from "@webstudio-is/react-sdk";
 import type { Asset } from "@webstudio-is/sdk";
 ${componentImports}
-export const components = new Map(Object.entries({ ${componentEntries} })) as Components;
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
-export const pageData: PageData = ${JSON.stringify(pageData)};
+export const pageData: PageData = ${JSON.stringify(renderedPageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
     )};
 export const projectId = "${siteData.build.projectId}";
+
+${pageComponent}
+
+export { Page }
 
 ${utilsExport}
 `;
@@ -499,7 +543,8 @@ ${utilsExport}
       breakpoints: siteData.build?.breakpoints,
       styles: siteData.build?.styles,
       styleSourceSelections: siteData.build?.styleSourceSelections,
-      componentMetas,
+      // pass only used metas to not generate unused preset styles
+      componentMetas: projectMetas,
     },
     {
       assetBaseUrl,

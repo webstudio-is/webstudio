@@ -1,15 +1,17 @@
 {
   "build": {
-    "id": "d1e8a55b-972b-46f9-bcfd-a8b67c4846f6",
+    "id": "de63ff61-f4b6-437e-bbc6-b2d085cd35bd",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 1,
-    "createdAt": "2023-09-17T07:56:30.814Z",
+    "version": 5,
+    "createdAt": "2023-09-21T09:44:06.958Z",
     "pages": {
       "homePage": {
         "id": "nfzls_SkTc9jKYyxcZ8Lw",
         "name": "Home",
         "title": "Home",
-        "meta": {},
+        "meta": {
+          "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
+        },
         "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
         "path": ""
       },
@@ -122,7 +124,9 @@
     "id": "nfzls_SkTc9jKYyxcZ8Lw",
     "name": "Home",
     "title": "Home",
-    "meta": {},
+    "meta": {
+      "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
+    },
     "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
     "path": ""
   },
@@ -131,7 +135,9 @@
       "id": "nfzls_SkTc9jKYyxcZ8Lw",
       "name": "Home",
       "title": "Home",
-      "meta": {},
+      "meta": {
+        "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
+      },
       "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
       "path": ""
     }

@@ -36,7 +36,6 @@ import {
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
-import { getElementByInstanceSelector } from "./dom-utils";
 import { humanizeString } from "./string-utils";
 
 const getLabelFromComponentName = (component: Instance["component"]) => {
@@ -504,45 +503,4 @@ export const deleteSelectedInstance = () => {
     return;
   }
   deleteInstance(selectedInstanceSelector);
-};
-
-export const enterEditingMode = (event?: KeyboardEvent) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  const editableInstanceSelector = findClosestEditableInstanceSelector(
-    selectedInstanceSelector,
-    instancesStore.get(),
-    registeredComponentMetasStore.get()
-  );
-  if (editableInstanceSelector === undefined) {
-    return;
-  }
-  const element = getElementByInstanceSelector(editableInstanceSelector);
-  if (element === undefined) {
-    return;
-  }
-  // When an event is triggered from the Builder,
-  // the canvas element may be unfocused, so it's important to focus the element on the canvas.
-  element.focus();
-  // Prevents inserting a newline when entering text-editing mode
-  event?.preventDefault();
-  selectedInstanceSelectorStore.set(editableInstanceSelector);
-  textEditingInstanceSelectorStore.set(editableInstanceSelector);
-};
-
-export const escapeSelection = () => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
-  if (selectedInstanceSelector === undefined) {
-    return;
-  }
-  // exit text editing mode first without unselecting instance
-  if (textEditingInstanceSelector) {
-    textEditingInstanceSelectorStore.set(undefined);
-    return;
-  }
-  selectedInstanceSelectorStore.set(undefined);
-  selectedStyleSourceSelectorStore.set(undefined);
 };

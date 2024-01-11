@@ -108,8 +108,9 @@ export const parseCss = function cssToWS(css: string) {
           try {
             StyleValue.parse(value);
             selectors.forEach((selector) => {
-              if (Array.isArray(styles[selector])) {
-                styles[selector].push({
+              const selectors = styles[selector];
+              if (Array.isArray(selectors)) {
+                selectors.push({
                   property,
                   value,
                 });

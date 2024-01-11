@@ -1,22 +1,23 @@
 import { Box } from "../../box";
-import { theme } from "../../../stitches.config";
+import { css, theme } from "../../../stitches.config";
 import {
   type ChildrenOrientation,
   type Placement,
   getPlacementBetween,
   getPlacementInside,
   getPlacementNextTo,
+  type Rect,
 } from "./geometry-utils";
 import { defaultGetValidChildren, type DropTarget } from "./use-drop";
 
-const placementStyle = {
+const placementStyle = css({
   boxSizing: "content-box",
   position: "absolute",
   background: theme.colors.blue10,
   pointerEvents: "none",
-};
+});
 
-const getStyle = (placement: Placement) => {
+const getRect = (placement: Placement) => {
   if (placement.direction === "horizontal") {
     return {
       top: placement.y - 1,
@@ -33,12 +34,29 @@ const getStyle = (placement: Placement) => {
   };
 };
 
-export const PlacementIndicator = ({ placement }: { placement: Placement }) => {
+const applyScale = (rect: Rect, scale: number) => {
+  // Calculate in the "scale" that is applied to the canvas
+  const scaleFactor = scale / 100;
+  return {
+    top: rect.top * scaleFactor,
+    left: rect.left * scaleFactor,
+    width: rect.width * scaleFactor,
+    height: rect.height,
+  };
+};
+
+export const PlacementIndicator = ({
+  placement,
+  scale = 1,
+}: {
+  placement: Placement;
+  scale?: number;
+}) => {
   return (
     <Box
       data-placement-indicator
-      style={getStyle(placement)}
-      css={placementStyle}
+      style={applyScale(getRect(placement), scale)}
+      className={placementStyle()}
     />
   );
 };

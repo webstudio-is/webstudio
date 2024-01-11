@@ -2,7 +2,6 @@ import { useLayoutEffect, useRef } from "react";
 import type { Instance } from "@webstudio-is/sdk";
 import {
   type Point,
-  type Placement,
   type ItemDropTarget,
   useAutoScroll,
   useDrag,
@@ -10,6 +9,7 @@ import {
   computeIndicatorPlacement,
 } from "@webstudio-is/design-system";
 import {
+  $dragAndDropState,
   instancesStore,
   registeredComponentMetasStore,
 } from "~/shared/nano-states";
@@ -39,7 +39,6 @@ declare module "~/shared/pubsub" {
     dragMove: DragMovePayload;
     dragStart: DragStartPayload;
     dropTargetChange: undefined | ItemDropTarget;
-    placementIndicatorChange: undefined | Placement;
   }
 }
 
@@ -296,9 +295,9 @@ export const useDragAndDrop = () => {
   useSubscribe("dropTargetChange", (dropTarget) => {
     state.current.dropTarget = dropTarget;
     if (dropTarget === undefined) {
-      publish({
-        type: "placementIndicatorChange",
-        payload: undefined,
+      $dragAndDropState.set({
+        ...$dragAndDropState.get(),
+        placementIndicator: undefined,
       });
       return;
     }
@@ -306,9 +305,9 @@ export const useDragAndDrop = () => {
     if (element === undefined) {
       return;
     }
-    publish({
-      type: "placementIndicatorChange",
-      payload: computeIndicatorPlacement({
+    $dragAndDropState.set({
+      ...$dragAndDropState.get(),
+      placementIndicator: computeIndicatorPlacement({
         ...sharedDropOptions,
         element,
         placement: dropTarget.placement,

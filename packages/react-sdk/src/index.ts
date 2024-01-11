@@ -14,9 +14,8 @@ export {
 } from "./components/component-meta";
 export * from "./embed-template";
 export {
-  useInstanceProps,
-  usePropUrl,
-  usePropAsset,
+  normalizeProps,
+  getPropsByInstanceId,
   getInstanceIdFromComponentProps,
   getIndexWithinAncestorFromComponentProps,
 } from "./props";

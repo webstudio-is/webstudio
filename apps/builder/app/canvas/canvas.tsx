@@ -7,7 +7,8 @@ import {
   type Params,
   type Components,
   createElementsTree,
-  getIndexesWithinAncestors,
+  normalizeProps,
+  getPropsByInstanceId,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -19,7 +20,7 @@ import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
-import { publish } from "~/shared/pubsub";
+import { $publisher, publish } from "~/shared/pubsub";
 import {
   handshakenStore,
   registerContainers,
@@ -30,20 +31,19 @@ import { useCanvasShortcuts } from "./canvas-shortcuts";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
+  WebstudioComponentContext,
   WebstudioComponentPreview,
 } from "./features/webstudio-component";
 import {
-  propsIndexStore,
   assetsStore,
   pagesStore,
   instancesStore,
-  useIsPreviewMode,
   selectedPageStore,
   registerComponentLibrary,
   registeredComponentsStore,
-  registeredComponentMetasStore,
   subscribeComponentHooks,
-  dataSourcesLogicStore,
+  propsStore,
+  $isPreviewMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
 import { useCopyPaste } from "~/shared/copy-paste";
@@ -56,13 +56,9 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import { useSelectedInstance } from "./instance-selected-react";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
+import { subscribeCommands } from "~/canvas/shared/commands";
 
 registerContainers();
-
-const propsByInstanceIdStore = computed(
-  propsIndexStore,
-  (propsIndex) => propsIndex.propsByInstanceId
-);
 
 const useElementsTree = (
   components: Components,
@@ -70,9 +66,8 @@ const useElementsTree = (
   params: Params,
   imageLoader: ImageLoader
 ) => {
-  const metas = useStore(registeredComponentMetasStore);
   const page = useStore(selectedPageStore);
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
 
   if (typeof window === "undefined") {
@@ -98,46 +93,56 @@ const useElementsTree = (
     []
   );
 
-  const indexesWithinAncestors = useMemo(() => {
-    return getIndexesWithinAncestors(
-      metas,
-      instances,
-      page ? [page.rootInstanceId] : []
+  const propsByInstanceIdStore = useMemo(() => {
+    return computed(
+      [propsStore, assetsStore, pagesMapStore],
+      (props, assets, pages) => {
+        if (pages === undefined) {
+          return new Map();
+        }
+        const normalizedProps = normalizeProps({
+          props: Array.from(props.values()),
+          assetBaseUrl: params.assetBaseUrl,
+          assets,
+          pages,
+        });
+        return getPropsByInstanceId(
+          new Map(normalizedProps.map((prop) => [prop.id, prop]))
+        );
+      }
     );
-  }, [metas, instances, page]);
+  }, [params.assetBaseUrl, pagesMapStore]);
 
   return useMemo(() => {
-    return createElementsTree({
-      renderer: isPreviewMode ? "preview" : "canvas",
-      imageBaseUrl: params.imageBaseUrl,
-      assetBaseUrl: params.assetBaseUrl,
-      imageLoader,
-      instances,
-      rootInstanceId,
-      indexesWithinAncestors,
-      propsByInstanceIdStore,
-      assetsStore,
-      pagesStore: pagesMapStore,
-      dataSourcesLogicStore,
-      Component: isPreviewMode
-        ? WebstudioComponentPreview
-        : WebstudioComponentCanvas,
-      components,
-      scripts: (
-        <>
-          <ScrollRestoration />
-          <Scripts />
-        </>
-      ),
-    });
+    return (
+      <WebstudioComponentContext.Provider value={{ propsByInstanceIdStore }}>
+        {createElementsTree({
+          renderer: isPreviewMode ? "preview" : "canvas",
+          imageBaseUrl: params.imageBaseUrl,
+          assetBaseUrl: params.assetBaseUrl,
+          imageLoader,
+          instances,
+          rootInstanceId,
+          Component: isPreviewMode
+            ? WebstudioComponentPreview
+            : WebstudioComponentCanvas,
+          components,
+          scripts: (
+            <>
+              <ScrollRestoration />
+              <Scripts />
+            </>
+          ),
+        })}
+      </WebstudioComponentContext.Provider>
+    );
   }, [
     params,
     instances,
     rootInstanceId,
     components,
-    pagesMapStore,
+    propsByInstanceIdStore,
     isPreviewMode,
-    indexesWithinAncestors,
     imageLoader,
   ]);
 };
@@ -169,7 +174,7 @@ export const Canvas = ({
 }: CanvasProps): JSX.Element | null => {
   const handshaken = useStore(handshakenStore);
   useCanvasStore(publish);
-  const [isPreviewMode] = useIsPreviewMode();
+  const isPreviewMode = useStore($isPreviewMode);
 
   useMount(() => {
     registerComponentLibrary({
@@ -192,6 +197,12 @@ export const Canvas = ({
   });
 
   useEffect(subscribeComponentHooks, []);
+
+  useEffect(subscribeCommands, []);
+
+  useEffect(() => {
+    $publisher.set({ publish });
+  }, []);
 
   // e.g. toggling preview is still needed in both modes
   useCanvasShortcuts();

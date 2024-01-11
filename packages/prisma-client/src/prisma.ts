@@ -16,13 +16,41 @@ declare global {
 
 const logPrisma = process.env.NODE_ENV === "production";
 
+/**
+ * All the code below like initialize prisma should be moved into the builder and apps if used.
+ * The issue that this project depends on env variables not available in some frameworks
+ * getPgBouncerUrl() can be moved as a default fallback for db url at apps/builder/app/env/env.server.ts
+ **/
+const getPgBouncerUrl = () => {
+  if (process.env.PGBOUNCER !== "true") {
+    return process.env.DATABASE_URL;
+  }
+
+  const databaseUrl = new URL(
+    process.env.DATABASE_URL ?? "postgresql://localhost:5432/postgres"
+  );
+
+  // https://supabase.com/docs/guides/database/connecting-to-postgres#connection-pooler
+  databaseUrl.port = "6543";
+  // https://www.prisma.io/docs/guides/performance-and-optimization/connection-management/configure-pg-bouncer
+  databaseUrl.searchParams.set("pgbouncer", "true");
+
+  return databaseUrl.href;
+};
+
 // this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
 // explanation here
 // https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
 export const prisma =
   global.prisma ||
-  new PrismaClient(
-    logPrisma
+  new PrismaClient({
+    datasources: {
+      db: {
+        url: getPgBouncerUrl(),
+      },
+    },
+
+    ...(logPrisma
       ? {
           log: [
             { emit: "event", level: "query" },
@@ -41,8 +69,8 @@ export const prisma =
             },
           ],
         }
-      : {}
-  );
+      : {}),
+  });
 
 prisma.$on("query", (e) => {
   // Try to minify the query as vercel/new relic log size is limited

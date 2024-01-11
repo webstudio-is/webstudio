@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Button,
   useId,
@@ -19,12 +20,15 @@ import {
   Box,
   rawTheme,
   styled,
+  Select,
+  theme,
+  TextArea,
 } from "@webstudio-is/design-system";
+import stripIndent from "strip-indent";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
-import { theme } from "@webstudio-is/design-system";
-import { useAuthPermit } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -43,6 +47,7 @@ import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
+import { humanizeString } from "~/shared/string-utils";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -483,9 +488,30 @@ const StyledLink = styled("a", {
   },
 });
 
+const deployTargets = {
+  vercel: {
+    command: "npx vercel",
+    docs: "https://vercel.com/docs/cli",
+  },
+  netlify: {
+    command: `
+npx netlify-cli login
+npx netlify-cli sites:create
+npx netlify-cli build
+npx netlify-cli deploy`,
+    docs: "https://docs.netlify.com/cli/get-started/",
+  },
+} as const;
+
+type DeployTargets = keyof typeof deployTargets;
+
+const isDeployTargets = (value: string): value is DeployTargets =>
+  Object.keys(deployTargets).includes(value);
+
 const ExportContent = () => {
   const npxCommand = "npx webstudio-cli";
-  const npxVercelCommand = "npx vercel";
+  const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
+
   return (
     <Grid
       columns={1}
@@ -553,24 +579,45 @@ const ExportContent = () => {
             Step 3
           </Text>
           <Text color="subtle">
-            Use the{" "}
+            Run this command to publish to{" "}
             <StyledLink
-              href="https://vercel.com/docs/cli"
+              href={deployTargets[deployTarget].docs}
               target="_blank"
               rel="noreferrer"
             >
-              Vercel CLI
+              {humanizeString(deployTarget)}
             </StyledLink>{" "}
-            to publish your project on Vercel.
           </Text>
         </Grid>
-        <Flex gap={2}>
-          <InputField css={{ flex: 1 }} readOnly value={npxVercelCommand} />
+
+        <Select
+          fullWidth
+          css={{ zIndex: theme.zIndices[2] }}
+          value={deployTarget}
+          options={Object.keys(deployTargets)}
+          getLabel={(value) => humanizeString(value)}
+          onChange={(value) => {
+            if (isDeployTargets(value)) {
+              setDeployTarget(value);
+            }
+          }}
+        />
+
+        <Flex gap={2} align="end">
+          <TextArea
+            css={{ flex: 1 }}
+            readOnly
+            value={stripIndent(deployTargets[deployTarget].command)
+              .trimStart()
+              .replace(/ +$/, "")}
+          />
           <Tooltip content={"Copy to clipboard"}>
             <Button
               color="neutral"
               onClick={() => {
-                navigator.clipboard.writeText(npxVercelCommand);
+                navigator.clipboard.writeText(
+                  deployTargets[deployTarget].command
+                );
               }}
               prefix={<CopyIcon />}
             >
@@ -601,7 +648,7 @@ type PublishProps = {
 
 export const PublishButton = ({ projectId }: PublishProps) => {
   const [isOpen, setIsOpen] = useIsPublishDialogOpen();
-  const [authPermit] = useAuthPermit();
+  const authPermit = useStore($authPermit);
   const [dialogContentType, setDialogContentType] = useState<
     "publish" | "export"
   >("publish");
