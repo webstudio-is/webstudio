@@ -31,17 +31,17 @@ import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { removeByMutable } from "~/shared/array-utils";
-import { rootFolder } from "@webstudio-is/project-build";
 import {
   findFolderById,
   findParentFolderByChildId,
   cleanupChildRefsMutable,
 } from "./page-utils";
+import { createRootFolder } from "@webstudio-is/project-build";
 
 const fieldDefaultValues = {
   name: "Untitled",
   slug: "untitled",
-  parentFolderId: rootFolder.id,
+  parentFolderId: createRootFolder().id,
 };
 
 const fieldNames = Object.keys(

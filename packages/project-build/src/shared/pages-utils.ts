@@ -13,12 +13,14 @@ export const findPageByIdOrPath = (
   );
 };
 
-export const rootFolder = {
+export const createRootFolder = (
+  children: Folder["children"] = []
+): Folder => ({
   id: "root",
   name: "Root",
   slug: "",
-  children: [],
-} satisfies Folder;
+  children,
+});
 
 export const createDefaultPages = ({
   rootInstanceId,
@@ -38,10 +40,7 @@ export const createDefaultPages = ({
       rootInstanceId,
     },
     // This is a root folder that nobody can delete or going to be able to see.
-    rootFolder: {
-      ...rootFolder,
-      children: [homePageId],
-    },
+    rootFolder: createRootFolder([homePageId]),
     pages: [],
     folders: [],
   };
