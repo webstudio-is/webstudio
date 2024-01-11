@@ -383,7 +383,7 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
       folder.slug = values.slug;
     }
 
-    const newParentFolder = findParentFolderByChildId(
+    const newParentFolder = findFolderById(
       values.parentFolderId ?? "root",
       pages
     );
