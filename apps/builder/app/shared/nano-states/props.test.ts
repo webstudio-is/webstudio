@@ -639,3 +639,72 @@ test("compute resource variable values", () => {
 
   cleanStores($variableValuesByInstanceSelector);
 });
+
+test("stop variables lookup outside of slots", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [{ type: "id", value: "slot" }],
+      },
+      {
+        id: "slot",
+        type: "instance",
+        component: "Slot",
+        children: [{ type: "id", value: "box" }],
+      },
+      { id: "box", type: "instance", component: "Box", children: [] },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "bodyVariable",
+        scopeInstanceId: "body",
+        type: "variable",
+        name: "",
+        value: { type: "string", value: "body" },
+      },
+      {
+        id: "slotVariable",
+        scopeInstanceId: "slot",
+        type: "variable",
+        name: "",
+        value: { type: "string", value: "slot" },
+      },
+      {
+        id: "boxVariable",
+        scopeInstanceId: "box",
+        type: "variable",
+        name: "",
+        value: { type: "string", value: "box" },
+      },
+    ])
+  );
+  $props.set(new Map());
+
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([["bodyVariable", "body"]]),
+      ],
+      [
+        JSON.stringify(["slot", "body"]),
+        new Map<string, unknown>([
+          ["bodyVariable", "body"],
+          ["slotVariable", "slot"],
+        ]),
+      ],
+      [
+        JSON.stringify(["box", "slot", "body"]),
+        new Map<string, unknown>([["boxVariable", "box"]]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
