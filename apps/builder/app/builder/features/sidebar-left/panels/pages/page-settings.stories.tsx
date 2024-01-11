@@ -48,7 +48,7 @@ pages.pages.push({
   meta: {},
   rootInstanceId: "root-instance-id",
 });
-pages.folders[0].children.push("pageId");
+pages.rootFolder.children.push("pageId");
 
 $pages.set(pages);
 
