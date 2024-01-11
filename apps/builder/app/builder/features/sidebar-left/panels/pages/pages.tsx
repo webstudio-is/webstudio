@@ -28,13 +28,19 @@ import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
-import { toTreeData, type TreeData } from "./page-utils";
+import {
+  reparentOrphansMutable,
+  toTreeData,
+  type TreeData,
+} from "./page-utils";
 import {
   FolderSettings,
   NewFolderSettings,
   newFolderId,
 } from "./folder-settings";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { serverSyncStore } from "~/shared/sync";
+import { useMount } from "~/shared/hook-utils/use-mount";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -97,6 +103,15 @@ const ItemSuffix = ({
   );
 };
 
+const reparentOrphans = () => {
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    reparentOrphansMutable(pages);
+  });
+};
+
 const PagesPanel = ({
   onClose,
   onCreateNewFolder,
@@ -116,6 +131,10 @@ const PagesPanel = ({
 }) => {
   const pages = useStore($pages);
   const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
+
+  useMount(() => {
+    reparentOrphans();
+  });
 
   const renderItem = useCallback(
     (props: TreeItemRenderProps<TreeData>) => {
