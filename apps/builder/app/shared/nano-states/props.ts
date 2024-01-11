@@ -12,6 +12,7 @@ import {
   encodeDataSourceVariable,
   generateDataSources,
   normalizeProps,
+  portalComponent,
 } from "@webstudio-is/react-sdk";
 import { $instances } from "./instances";
 import {
@@ -292,7 +293,7 @@ export const $variableValuesByInstanceSelector = computed(
         return;
       }
 
-      const variableValues = new Map<string, unknown>(parentVariableValues);
+      let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
         JSON.stringify(instanceSelector),
         variableValues
@@ -365,6 +366,10 @@ export const $variableValuesByInstanceSelector = computed(
           });
         }
         return;
+      }
+      // reset values for slot children to let slots behave as isolated components
+      if (instance.component === portalComponent) {
+        variableValues = new Map();
       }
       for (const child of instance.children) {
         if (child.type === "id") {
