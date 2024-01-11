@@ -10,13 +10,24 @@ const createPage = (path: string) => ({
   meta: {},
 });
 
+const pages = {
+  rootFolder: {
+    id: "root",
+    name: "",
+    slug: "",
+    children: [],
+  },
+  meta: {},
+  pages: [],
+  folders: [],
+};
+
 test("generates forms properties", () => {
   expect(
     generateUtilsExport({
       pages: {
-        meta: {},
+        ...pages,
         homePage: createPage("1"),
-        pages: [],
       },
       props: new Map([
         [
@@ -66,7 +77,7 @@ test("generates list of pages paths", () => {
   expect(
     generateUtilsExport({
       pages: {
-        meta: {},
+        ...pages,
         homePage: createPage("/path1"),
         pages: [createPage("/path2"), createPage("/path3")],
       },
