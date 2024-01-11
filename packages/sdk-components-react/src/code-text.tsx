@@ -1,17 +1,16 @@
-import {
-  type ElementRef,
-  type ComponentProps,
-  forwardRef,
-  createElement,
-} from "react";
+import { type ElementRef, type ComponentProps, forwardRef } from "react";
 
 export const defaultTag = "code";
 
 export const CodeText = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag>
->((props, ref) => {
-  return createElement(defaultTag, { ...props, ref });
+>(({ children, ...props }, ref) => {
+  return (
+    <code {...props} ref={ref}>
+      {children ?? "Code you can edit"}
+    </code>
+  );
 });
 
 CodeText.displayName = "CodeText";

@@ -19,10 +19,10 @@ import {
   ScrollArea,
   Box,
   rawTheme,
-  styled,
   Select,
   theme,
   TextArea,
+  Link,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
 import { useIsPublishDialogOpen } from "../../shared/nano-states";
@@ -187,6 +187,7 @@ const ChangeProjectDomain = ({
         <Grid gap={1}>
           <Label htmlFor={id}>Domain:</Label>
           <InputField
+            variant="mono"
             id={id}
             placeholder="Domain"
             value={domain}
@@ -477,17 +478,6 @@ const Content = (props: {
   );
 };
 
-/**
- * @todo change colors on theme colors when tokens will be ready
- * https://discord.com/channels/955905230107738152/1149380442315825212/1149408306671128666
- **/
-const StyledLink = styled("a", {
-  color: "#006ADC", // @todo theme.colors.foregroundLink,
-  "&:visited": {
-    color: "#793AAF", // @todo theme.colors.foregroundLinkVisited,
-  },
-});
-
 const deployTargets = {
   vercel: {
     command: "npx vercel",
@@ -509,7 +499,7 @@ const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
 const ExportContent = () => {
-  const npxCommand = "npx webstudio-cli";
+  const npxCommand = "npx webstudio";
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
 
   return (
@@ -527,21 +517,25 @@ const ExportContent = () => {
         </Text>
         <Text color="subtle">
           Download and install Node v18+ from{" "}
-          <StyledLink
+          <Link
+            variant="inherit"
+            color="inherit"
             href="https://nodejs.org/"
             target="_blank"
             rel="noreferrer"
           >
             nodejs.org
-          </StyledLink>{" "}
+          </Link>{" "}
           or with{" "}
-          <StyledLink
+          <Link
+            variant="inherit"
+            color="inherit"
             href="https://nodejs.org/en/download/package-manager"
             target="_blank"
             rel="noreferrer"
           >
             a package manager
-          </StyledLink>
+          </Link>
           .
         </Text>
       </Grid>
@@ -558,7 +552,12 @@ const ExportContent = () => {
         </Grid>
 
         <Flex gap={2}>
-          <InputField css={{ flex: 1 }} readOnly value={npxCommand} />
+          <InputField
+            css={{ flex: 1 }}
+            variant="mono"
+            readOnly
+            value={npxCommand}
+          />
 
           <Tooltip content={"Copy to clipboard"}>
             <Button
@@ -580,13 +579,15 @@ const ExportContent = () => {
           </Text>
           <Text color="subtle">
             Run this command to publish to{" "}
-            <StyledLink
+            <Link
+              variant="inherit"
+              color="inherit"
               href={deployTargets[deployTarget].docs}
               target="_blank"
               rel="noreferrer"
             >
               {humanizeString(deployTarget)}
-            </StyledLink>{" "}
+            </Link>{" "}
           </Text>
         </Grid>
 
@@ -606,6 +607,7 @@ const ExportContent = () => {
         <Flex gap={2} align="end">
           <TextArea
             css={{ flex: 1 }}
+            variant="mono"
             readOnly
             value={stripIndent(deployTargets[deployTarget].command)
               .trimStart()
@@ -613,6 +615,7 @@ const ExportContent = () => {
           />
           <Tooltip content={"Copy to clipboard"}>
             <Button
+              css={{ flexShrink: 0 }}
               color="neutral"
               onClick={() => {
                 navigator.clipboard.writeText(
@@ -629,13 +632,15 @@ const ExportContent = () => {
       <Grid columns={1} gap={1}>
         <Text color="subtle">
           Read the detailed documentation{" "}
-          <StyledLink
+          <Link
+            variant="inherit"
+            color="inherit"
             href="https://github.com/webstudio-is/webstudio/tree/main/packages/cli"
             target="_blank"
             rel="noreferrer"
           >
             here
-          </StyledLink>
+          </Link>
         </Text>
       </Grid>
     </Grid>

@@ -19,6 +19,7 @@ export * from "./components/dialog";
 export * from "./components/floating-panel-popover";
 export * from "./components/popover";
 export {
+  MenuList,
   MenuItemButton,
   MenuCheckedIcon,
   MenuItemIndicator,
@@ -39,6 +40,8 @@ export * from "./components/component-card";
 export * from "./components/input-field";
 export * from "./components/nested-input-button";
 export * from "./components/panel-tabs";
+export * from "./components/ai-command-bar";
+export * from "./components/link";
 
 // Not aligned
 

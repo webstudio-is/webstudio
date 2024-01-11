@@ -1,25 +1,45 @@
 {
   "build": {
-    "id": "edd62b7a-c819-42ea-920a-ded682f70ac2",
+    "id": "28fd3af0-111a-4afa-9ed3-1978744b7fe6",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 177,
-    "createdAt": "2023-09-22T17:58:05.654Z",
+    "version": 231,
+    "createdAt": "2024-01-08T07:22:37.579Z",
+    "updatedAt": "2024-01-08T07:22:37.579Z",
     "pages": {
+      "meta": {
+        "siteName": "KittyGuardedZone",
+        "faviconAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
+        "code": "<script>console.log('KittyGuardedZone')</script>\n"
+      },
+      "settings": {
+        "atomicStyles": true
+      },
       "homePage": {
         "id": "7Db64ZXgYiRqKSQNR-qTQ",
         "name": "Home",
-        "title": "Home",
-        "meta": {},
+        "title": "The Ultimate Cat Protection Zone",
+        "meta": {
+          "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+          "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+          "custom": [
+            {
+              "property": "fb:app_id",
+              "content": "app_id_app_id_app_id"
+            }
+          ]
+        },
         "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
         "path": ""
       },
       "pages": [
         {
           "id": "xfvB4UThQXmQ_OubPYrkg",
-          "name": "radix",
-          "title": "radix",
+          "name": "radix excluded from the search",
+          "title": "Radix Revelations: Unraveling the Feline Mystique",
           "meta": {
-            "description": ""
+            "description": "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
+            "excludePageFromSearch": true,
+            "socialImageAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10"
           },
           "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
           "path": "/radix"
@@ -53,6 +73,24 @@
           },
           "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
           "path": "/heading-with-id"
+        },
+        {
+          "id": "TS39WeBd0Qr3QgbSlzdf2",
+          "name": "resources",
+          "title": "resources",
+          "meta": {
+            "description": "",
+            "excludePageFromSearch": false,
+            "socialImageAssetId": "",
+            "custom": [
+              {
+                "property": "",
+                "content": ""
+              }
+            ]
+          },
+          "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
+          "path": "/resources"
         }
       ]
     },
@@ -1752,8 +1790,8 @@
           "id": "XDeoQFsXw3NhVjns6I5HM",
           "instanceId": "AM9fD6dv2Ftc3Xjcsd7Uc",
           "name": "value",
-          "type": "dataSource",
-          "value": "RR_FthRebEUcAKUJIXl0j"
+          "type": "expression",
+          "value": "$ws$dataSource$RR_FthRebEUcAKUJIXl0j"
         }
       ],
       [
@@ -1828,8 +1866,8 @@
           "id": "OER1GvKVEE4CdEX1yrNe3",
           "instanceId": "isNSM3wXcnHFikwNPlEOL",
           "name": "state",
-          "type": "dataSource",
-          "value": "KvfuNNCNslj7nAGsD69Fl"
+          "type": "expression",
+          "value": "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl"
         }
       ],
       [
@@ -1854,8 +1892,8 @@
           "id": "Nyxr4ohgm_MNVtGpsGUn3",
           "instanceId": "a5YPRc19IJyhTrjjasA_R",
           "name": "data-ws-show",
-          "type": "dataSource",
-          "value": "ezyBm7JGcDokMP8DZVzrD"
+          "type": "expression",
+          "value": "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'initial' || $ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'error'"
         }
       ],
       [
@@ -1884,8 +1922,8 @@
           "id": "mtOiOi1u0WbNI09rVIS6T",
           "instanceId": "Gw-ta0R4FNFAGBTVRWKep",
           "name": "data-ws-show",
-          "type": "dataSource",
-          "value": "_NmOL-v4PZhCcmj2vaDy_"
+          "type": "expression",
+          "value": "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'success'"
         }
       ],
       [
@@ -1894,8 +1932,8 @@
           "id": "FTd65V4oEibesTqvAjKp0",
           "instanceId": "ewk_WKpu4syHLPABMmvUz",
           "name": "data-ws-show",
-          "type": "dataSource",
-          "value": "VeQ-Tiya3whVhWHbJVHID"
+          "type": "expression",
+          "value": "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'error'"
         }
       ],
       [
@@ -1904,8 +1942,8 @@
           "id": "vtsKrdjJH3YT89prj2K5T",
           "instanceId": "-1RvizaBcVpHsjvnYxn1c",
           "name": "state",
-          "type": "dataSource",
-          "value": "Ip0FRY7L24QrIMdtuMN5j"
+          "type": "expression",
+          "value": "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j"
         }
       ],
       [
@@ -1930,8 +1968,8 @@
           "id": "K6DEgf4WkIDqdiuiwAS5E",
           "instanceId": "qhnVrmYGlyrMZi3UzqSQA",
           "name": "data-ws-show",
-          "type": "dataSource",
-          "value": "DUDDZM-QmYH_zBgbIODiu"
+          "type": "expression",
+          "value": "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'initial' || $ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'error'"
         }
       ],
       [
@@ -1960,8 +1998,8 @@
           "id": "JbdIh72OZ8RnHXvYTsLRd",
           "instanceId": "966cjxuqP_T99N27-mqWE",
           "name": "data-ws-show",
-          "type": "dataSource",
-          "value": "F72Gu_6DnbW9CGp_747xa"
+          "type": "expression",
+          "value": "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'success'"
         }
       ],
       [
@@ -1970,8 +2008,8 @@
           "id": "6UMH0WLK_fORElv3ffHCg",
           "instanceId": "SYG5hhOz31xFJUN_v9zq6",
           "name": "data-ws-show",
-          "type": "dataSource",
-          "value": "XhDObB85P8I_uDZ_CzGDt"
+          "type": "expression",
+          "value": "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'error'"
         }
       ],
       [
@@ -2056,6 +2094,36 @@
             "instanceId": "qmxnOlSxUGpuhuonVArWJ"
           }
         }
+      ],
+      [
+        "QlPyQWR-xy_0Lw2-akDvI",
+        {
+          "id": "QlPyQWR-xy_0Lw2-akDvI",
+          "instanceId": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "name": "data",
+          "type": "expression",
+          "value": "$ws$dataSource$PgXFOzhK1YDdnv2BuvlwR.data"
+        }
+      ],
+      [
+        "HRyG-UjWjdupsAVbyRc-H",
+        {
+          "id": "HRyG-UjWjdupsAVbyRc-H",
+          "instanceId": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "name": "item",
+          "type": "parameter",
+          "value": "MShox7Ngja3P8_t6XGMBw"
+        }
+      ],
+      [
+        "CHRYq1SSaV_uPOgkM6Cv1",
+        {
+          "id": "CHRYq1SSaV_uPOgkM6Cv1",
+          "instanceId": "05oK4Ks0ocFv3w8MJOcNR",
+          "name": "code",
+          "type": "expression",
+          "value": "$ws$dataSource$MShox7Ngja3P8_t6XGMBw.name"
+        }
       ]
     ],
     "dataSources": [
@@ -2086,36 +2154,6 @@
         }
       ],
       [
-        "ezyBm7JGcDokMP8DZVzrD",
-        {
-          "type": "expression",
-          "id": "ezyBm7JGcDokMP8DZVzrD",
-          "scopeInstanceId": "a5YPRc19IJyhTrjjasA_R",
-          "name": "formInitial",
-          "code": "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'initial' || $ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'error'"
-        }
-      ],
-      [
-        "_NmOL-v4PZhCcmj2vaDy_",
-        {
-          "type": "expression",
-          "id": "_NmOL-v4PZhCcmj2vaDy_",
-          "scopeInstanceId": "Gw-ta0R4FNFAGBTVRWKep",
-          "name": "formSuccess",
-          "code": "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'success'"
-        }
-      ],
-      [
-        "VeQ-Tiya3whVhWHbJVHID",
-        {
-          "type": "expression",
-          "id": "VeQ-Tiya3whVhWHbJVHID",
-          "scopeInstanceId": "ewk_WKpu4syHLPABMmvUz",
-          "name": "formError",
-          "code": "$ws$dataSource$KvfuNNCNslj7nAGsD69Fl === 'error'"
-        }
-      ],
-      [
         "Ip0FRY7L24QrIMdtuMN5j",
         {
           "type": "variable",
@@ -2129,33 +2167,35 @@
         }
       ],
       [
-        "DUDDZM-QmYH_zBgbIODiu",
+        "PgXFOzhK1YDdnv2BuvlwR",
         {
-          "type": "expression",
-          "id": "DUDDZM-QmYH_zBgbIODiu",
-          "scopeInstanceId": "qhnVrmYGlyrMZi3UzqSQA",
-          "name": "formInitial",
-          "code": "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'initial' || $ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'error'"
+          "type": "resource",
+          "id": "PgXFOzhK1YDdnv2BuvlwR",
+          "scopeInstanceId": "AWY2qZfpbykoiWELeJhse",
+          "name": "list",
+          "resourceId": "1vX6SQdaCjJN6MvJlG_cQ"
         }
       ],
       [
-        "F72Gu_6DnbW9CGp_747xa",
+        "MShox7Ngja3P8_t6XGMBw",
         {
-          "type": "expression",
-          "id": "F72Gu_6DnbW9CGp_747xa",
-          "scopeInstanceId": "966cjxuqP_T99N27-mqWE",
-          "name": "formSuccess",
-          "code": "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'success'"
+          "type": "parameter",
+          "id": "MShox7Ngja3P8_t6XGMBw",
+          "scopeInstanceId": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "name": "collectionItem"
         }
-      ],
+      ]
+    ],
+    "resources": [
       [
-        "XhDObB85P8I_uDZ_CzGDt",
+        "1vX6SQdaCjJN6MvJlG_cQ",
         {
-          "type": "expression",
-          "id": "XhDObB85P8I_uDZ_CzGDt",
-          "scopeInstanceId": "SYG5hhOz31xFJUN_v9zq6",
-          "name": "formError",
-          "code": "$ws$dataSource$Ip0FRY7L24QrIMdtuMN5j === 'error'"
+          "id": "1vX6SQdaCjJN6MvJlG_cQ",
+          "name": "list",
+          "method": "get",
+          "url": "\"https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json\"",
+          "headers": [],
+          "body": ""
         }
       ]
     ],
@@ -3120,6 +3160,57 @@
             }
           ]
         }
+      ],
+      [
+        "AWY2qZfpbykoiWELeJhse",
+        {
+          "type": "instance",
+          "id": "AWY2qZfpbykoiWELeJhse",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "WGSZGPAhyIuWhM1DJ7HbZ"
+            }
+          ]
+        }
+      ],
+      [
+        "WGSZGPAhyIuWhM1DJ7HbZ",
+        {
+          "type": "instance",
+          "id": "WGSZGPAhyIuWhM1DJ7HbZ",
+          "component": "ws:collection",
+          "children": [
+            {
+              "type": "id",
+              "value": "-F-b3eIEZ8WKW_F-Aw8nN"
+            }
+          ]
+        }
+      ],
+      [
+        "-F-b3eIEZ8WKW_F-Aw8nN",
+        {
+          "type": "instance",
+          "id": "-F-b3eIEZ8WKW_F-Aw8nN",
+          "component": "Box",
+          "children": [
+            {
+              "type": "id",
+              "value": "05oK4Ks0ocFv3w8MJOcNR"
+            }
+          ]
+        }
+      ],
+      [
+        "05oK4Ks0ocFv3w8MJOcNR",
+        {
+          "type": "instance",
+          "id": "05oK4Ks0ocFv3w8MJOcNR",
+          "component": "HtmlEmbed",
+          "children": []
+        }
       ]
     ],
     "deployment": {
@@ -3130,8 +3221,17 @@
   "page": {
     "id": "7Db64ZXgYiRqKSQNR-qTQ",
     "name": "Home",
-    "title": "Home",
-    "meta": {},
+    "title": "The Ultimate Cat Protection Zone",
+    "meta": {
+      "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+      "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+      "custom": [
+        {
+          "property": "fb:app_id",
+          "content": "app_id_app_id_app_id"
+        }
+      ]
+    },
     "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
     "path": ""
   },
@@ -3139,17 +3239,28 @@
     {
       "id": "7Db64ZXgYiRqKSQNR-qTQ",
       "name": "Home",
-      "title": "Home",
-      "meta": {},
+      "title": "The Ultimate Cat Protection Zone",
+      "meta": {
+        "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+        "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+        "custom": [
+          {
+            "property": "fb:app_id",
+            "content": "app_id_app_id_app_id"
+          }
+        ]
+      },
       "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
       "path": ""
     },
     {
       "id": "xfvB4UThQXmQ_OubPYrkg",
-      "name": "radix",
-      "title": "radix",
+      "name": "radix excluded from the search",
+      "title": "Radix Revelations: Unraveling the Feline Mystique",
       "meta": {
-        "description": ""
+        "description": "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
+        "excludePageFromSearch": true,
+        "socialImageAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10"
       },
       "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
       "path": "/radix"
@@ -3183,9 +3294,41 @@
       },
       "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
       "path": "/heading-with-id"
+    },
+    {
+      "id": "TS39WeBd0Qr3QgbSlzdf2",
+      "name": "resources",
+      "title": "resources",
+      "meta": {
+        "description": "",
+        "excludePageFromSearch": false,
+        "socialImageAssetId": "",
+        "custom": [
+          {
+            "property": "",
+            "content": ""
+          }
+        ]
+      },
+      "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
+      "path": "/resources"
     }
   ],
   "assets": [
+    {
+      "id": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
+      "name": "DALL_E_2023-10-30_12.39.46_-_Photo_logo_with_a_bold_cat_silhouette_centered_on_a_contrasting_background_designed_for_clarity_at_small_32x32_favicon_resolution_00h6cEA8u2pJRvVJv7hRe.png",
+      "description": null,
+      "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
+      "size": 268326,
+      "type": "image",
+      "format": "png",
+      "createdAt": "2023-10-30T13:51:08.416Z",
+      "meta": {
+        "width": 790,
+        "height": 786
+      }
+    },
     {
       "id": "9a8bc926-7804-4d3f-af81-69196b1d2ed8",
       "name": "small-avif-kitty_FnabJsioMWpBtXZSGf4DR.webp",

@@ -7,7 +7,7 @@ import { parse, definitionSyntax, type DSNode, type CssNode } from "css-tree";
 import properties from "mdn-data/css/properties.json";
 import syntaxes from "mdn-data/css/syntaxes.json";
 import data from "css-tree/dist/data";
-import camelCase from "camelcase";
+import { camelCase } from "change-case";
 import type {
   KeywordValue,
   StyleValue,
@@ -224,15 +224,52 @@ const walkSyntax = (
 
 type FilteredProperties = { [property in Property]: Value };
 
+const animatableProperties: string[] = [];
 const filteredProperties: FilteredProperties = (() => {
   // A list of properties we don't want to show
   const ignoreProperties = ["all", "-webkit-line-clamp", "--*"];
   let property: Property;
   const result = {} as FilteredProperties;
+
+  /*
+    A transition is a shorthand property that represents the combination of the other four properties.
+    Typically, we exclude shorthand properties when using the expanded ones.
+    However, in this case, the transition property in the designs allows users to set all transition values at once.
+    Therefore, we need to make this property available from the generated list.
+
+    The initial properties for transition is
+    config.initial = [
+      'transition-delay',
+      'transition-duration',
+      'transition-property',
+      'transition-timing-function'
+    ]
+
+    We replace it with the defaults of the rest of the four properties
+    "all 0s ease 0s"
+  */
+
+  const supportedComplexProperties: Record<string, string> = {
+    transition: "all 0s ease 0s",
+  };
+
   for (property in properties) {
     const config = properties[property];
     const isSupportedStatus =
       config.status === "standard" || config.status === "experimental";
+
+    if (property in supportedComplexProperties) {
+      config.initial = supportedComplexProperties[property];
+    }
+
+    if (
+      property.charAt(0) !== "-" &&
+      config.animationType !== "discrete" &&
+      config.animationType !== "notAnimatable"
+    ) {
+      animatableProperties.push(property);
+    }
+
     if (
       isSupportedStatus === false ||
       // Skipping the complex values, since we want to use the expanded once.
@@ -268,7 +305,6 @@ const patchAppliesTo = (property: Property, config: Value) => {
 };
 
 let property: Property;
-
 for (property in filteredProperties) {
   const config = filteredProperties[property];
   // collect node types to improve parsing of css values
@@ -369,6 +405,11 @@ const keywordValues = (() => {
 writeToFile("units.ts", "units", units);
 writeToFile("properties.ts", "properties", propertiesData);
 writeToFile("keyword-values.ts", "keywordValues", keywordValues);
+writeToFile(
+  "animatable-properties.ts",
+  "animatableProperties",
+  animatableProperties
+);
 
 let types = "";
 

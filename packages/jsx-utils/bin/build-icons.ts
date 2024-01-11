@@ -27,7 +27,7 @@ const icons = iconFiles.reduce(
       icons[type] = {};
     }
 
-    icons[type][name] = icon.replace("<svg", '<svg style="height: 1.1em;"');
+    icons[type][name] = icon.replace("<svg", '<svg style="height:1.1em"');
 
     return icons;
   },

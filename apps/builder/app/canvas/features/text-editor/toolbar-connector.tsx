@@ -2,20 +2,31 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   type RangeSelection,
   type TextNode,
+  type LexicalEditor,
   $getSelection,
   $isRangeSelection,
   $isTextNode,
-  FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
   COMMAND_PRIORITY_LOW,
+  type TextFormatType,
+  createCommand,
+  COMMAND_PRIORITY_EDITOR,
 } from "lexical";
 import { $getNearestNodeOfType } from "@lexical/utils";
 import { $patchStyleText } from "@lexical/selection";
-import { LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
+import { LinkNode } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useSubscribe } from "~/shared/pubsub";
-import { textToolbarStore } from "~/shared/nano-states";
+import { $textToolbar } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
+
+let activeEditor: undefined | LexicalEditor;
+
+export const getActiveEditor = () => {
+  return activeEditor;
+};
+
+export const TOGGLE_SPAN_COMMAND = createCommand<void>();
+export const CLEAR_FORMAT_COMMAND = createCommand<void>();
 
 const spanTriggerName = "--style-node-trigger";
 
@@ -82,6 +93,18 @@ const $isSelectedLink = (selection: RangeSelection) => {
   return $getNearestNodeOfType(selectedNode, LinkNode) != null;
 };
 
+export const hasSelectionFormat = (formatType: TextFormatType | "link") => {
+  return activeEditor?.getEditorState().read(() => {
+    const selection = $getSelection();
+    if ($isRangeSelection(selection)) {
+      if (formatType === "link") {
+        return $isSelectedLink(selection);
+      }
+      return selection.hasFormat(formatType);
+    }
+  });
+};
+
 const getSelectionClienRect = () => {
   const nativeSelection = window.getSelection();
   if (nativeSelection === null) {
@@ -114,7 +137,7 @@ const ToolbarConnectorPluginInternal = ({
       const isSubscript = selection.hasFormat("subscript");
       const isLink = $isSelectedLink(selection);
       const isSpan = $getSpanNodes(selection).length !== 0;
-      textToolbarStore.set({
+      $textToolbar.set({
         selectionRect,
         isBold,
         isItalic,
@@ -124,7 +147,7 @@ const ToolbarConnectorPluginInternal = ({
         isSpan,
       });
     } else {
-      textToolbarStore.set(undefined);
+      $textToolbar.set(undefined);
     }
   }, []);
 
@@ -132,9 +155,9 @@ const ToolbarConnectorPluginInternal = ({
     return subscribeScrollState({
       onScrollStart: () => {
         // hide toolbar on scroll start preserving all data
-        const textToolbar = textToolbarStore.get();
+        const textToolbar = $textToolbar.get();
         if (textToolbar) {
-          textToolbarStore.set({
+          $textToolbar.set({
             ...textToolbar,
             selectionRect: undefined,
           });
@@ -142,9 +165,9 @@ const ToolbarConnectorPluginInternal = ({
       },
       onScrollEnd: () => {
         // restore toolbar with new position
-        const textToolbar = textToolbarStore.get();
+        const textToolbar = $textToolbar.get();
         if (textToolbar) {
-          textToolbarStore.set({
+          $textToolbar.set({
             ...textToolbar,
             selectionRect: getSelectionClienRect(),
           });
@@ -176,7 +199,7 @@ const ToolbarConnectorPluginInternal = ({
   useEffect(() => {
     // hide toolbar when editor is unmounted
     return () => {
-      textToolbarStore.set(undefined);
+      $textToolbar.set(undefined);
     };
   }, []);
 
@@ -199,79 +222,48 @@ const ToolbarConnectorPluginInternal = ({
     });
   }, [editor, updateToolbar]);
 
-  // dispatch commands sent from toolbar
-  useSubscribe("formatTextToolbar", (type) => {
-    let isSuperscript = false;
-    let isSubscript = false;
-    editor.getEditorState().read(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        isSuperscript = selection.hasFormat("superscript");
-        isSubscript = selection.hasFormat("subscript");
-      }
-    });
-
-    if (type === "bold") {
-      editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
-    }
-    if (type === "italic") {
-      editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
-    }
-    if (type === "superscript") {
-      editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
-      // remove subscript if superscript is added
-      if (isSubscript) {
-        editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
-      }
-    }
-    if (type === "subscript") {
-      editor.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
-      // remove superscript if subscript is added
-      if (isSuperscript) {
-        editor.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
-      }
-    }
-    if (type === "link") {
-      const editorState = editor.getEditorState();
-      let isLink = false;
-      editorState.read(() => {
-        const selection = $getSelection();
-        isLink = $isRangeSelection(selection) && $isSelectedLink(selection);
-      });
-      if (isLink) {
-        editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
-      } else {
-        editor.dispatchCommand(TOGGLE_LINK_COMMAND, "https://");
-      }
-    }
-    if (type === "span") {
-      editor.update(
-        () => {
-          $toggleSpan();
-        },
-        {
-          onUpdate: () => {
-            const editorState = editor.getEditorState();
-            editorState.read(() => {
-              const selection = $getSelection();
-              if ($isRangeSelection(selection)) {
-                const spans = $getSpanNodes(selection);
-                if (spans.length !== 0) {
-                  const [node] = spans;
-                  onSelectNode(node.getKey());
-                }
-              }
-            });
+  useEffect(() => {
+    return editor.registerCommand(
+      TOGGLE_SPAN_COMMAND,
+      () => {
+        editor.update(
+          () => {
+            $toggleSpan();
           },
-        }
-      );
-    }
-    if (type === "clear") {
-      editor.update(() => {
-        $clearText();
-      });
-    }
-  });
+          {
+            onUpdate: () => {
+              const editorState = editor.getEditorState();
+              editorState.read(() => {
+                const selection = $getSelection();
+                if ($isRangeSelection(selection)) {
+                  const spans = $getSpanNodes(selection);
+                  if (spans.length !== 0) {
+                    const [node] = spans;
+                    onSelectNode(node.getKey());
+                  }
+                }
+              });
+            },
+          }
+        );
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor, onSelectNode]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      CLEAR_FORMAT_COMMAND,
+      () => {
+        editor.update(() => {
+          $clearText();
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_EDITOR
+    );
+  }, [editor]);
 
   return null;
 };
@@ -296,6 +288,8 @@ export const ToolbarConnectorPlugin = ({
     }
 
     setHasRootElement(true);
+
+    activeEditor = editor;
   }, [editor]);
 
   if (hasRootElement === false) {

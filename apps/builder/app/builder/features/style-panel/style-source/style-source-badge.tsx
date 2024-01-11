@@ -15,6 +15,9 @@ export const StyleSourceBadge = styled(Text, {
   textOverflow: "ellipsis",
   variants: {
     source: {
+      local: {
+        backgroundColor: theme.colors.backgroundStyleSourceLocal,
+      },
       token: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
       },

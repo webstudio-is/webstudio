@@ -2,16 +2,44 @@ import { expect, test } from "@jest/globals";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  computeExpressionsDependencies,
   validateExpression,
   generateDataSources,
 } from "./expression";
 import { createScope } from "@webstudio-is/sdk";
 
+const toMap = <T extends { id: string }>(list: T[]) =>
+  new Map(list.map((item) => [item.id, item]));
+
 test("allow literals and array expressions", () => {
   expect(
     validateExpression(`["", '', 0, true, false, null, undefined]`)
   ).toEqual(`["", '', 0, true, false, null, undefined]`);
+});
+
+test("allow object literals", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression(
+      `{param1: "", "param2": 0, ["param3"]: false, [a]: b }`,
+      {
+        transformIdentifier: (id) => {
+          ids.push(id);
+          return id;
+        },
+      }
+    )
+  ).toEqual(`{param1: "", "param2": 0, ["param3"]: false, [a]: b}`);
+  expect(ids).toEqual(["a", "b"]);
+});
+
+test("expand shorthand properties in objects", () => {
+  expect(validateExpression(`{a}`)).toEqual(`{a: a}`);
+});
+
+test("supports array of objects", () => {
+  expect(
+    validateExpression(`[{name: 'John'}, {name: 'Dave'}, {name: 'Oliver'}]`)
+  ).toEqual(`[{name: 'John'}, {name: 'Dave'}, {name: 'Oliver'}]`);
 });
 
 test("allow unary and binary expressions", () => {
@@ -25,10 +53,49 @@ test("optionally allow assignment expressions", () => {
   expect(validateExpression(`a = 2`, { effectful: true })).toEqual(`a = 2`);
 });
 
-test("forbid member expressions", () => {
-  expect(() => {
-    validateExpression("var1 + obj.param");
-  }).toThrowError(/Cannot access "param" of "obj"/);
+test("allow member expressions", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression("a.b.c", {
+      transformIdentifier: (id) => {
+        ids.push(id);
+        return id;
+      },
+    })
+  ).toEqual("a.b.c");
+  expect(ids).toEqual(["a"]);
+});
+
+test("allow indexed member expressions", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression(`a["b"][1]`, {
+      transformIdentifier: (id) => {
+        ids.push(id);
+        return id;
+      },
+    })
+  ).toEqual(`a["b"][1]`);
+  expect(ids).toEqual(["a"]);
+});
+
+test("allow indexed member expressions with identifiers", () => {
+  const ids: string[] = [];
+  expect(
+    validateExpression(`a[b]`, {
+      transformIdentifier: (id) => {
+        ids.push(id);
+        return id;
+      },
+    })
+  ).toEqual(`a[b]`);
+  expect(ids).toEqual(["a", "b"]);
+});
+
+test("optionally transpile all member expressions into optional chaining", () => {
+  expect(validateExpression(`a.b["c"][1]`, { optional: true })).toEqual(
+    `a?.b?.["c"]?.[1]`
+  );
 });
 
 test("forbid this expressions", () => {
@@ -95,36 +162,6 @@ test("encode/decode variable names", () => {
     "my--id"
   );
   expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
-});
-
-test("compute expressions dependencies", () => {
-  const expressions = new Map([
-    ["exp1", `var1`],
-    ["exp2", `exp1 + exp1`],
-    ["exp3", `exp1 + exp2`],
-    ["exp4", `var1 + exp1`],
-  ]);
-  expect(computeExpressionsDependencies(expressions)).toEqual(
-    new Map([
-      ["exp4", new Set(["var1", "exp1"])],
-      ["exp3", new Set(["var1", "exp1", "exp2"])],
-      ["exp2", new Set(["var1", "exp1"])],
-      ["exp1", new Set(["var1"])],
-    ])
-  );
-});
-
-test("handle cyclic dependencies", () => {
-  const expressions = new Map([
-    ["exp1", `exp2 + var1`],
-    ["exp2", `exp1 + var1`],
-  ]);
-  expect(computeExpressionsDependencies(expressions)).toEqual(
-    new Map([
-      ["exp2", new Set(["var1", "exp1", "exp2"])],
-      ["exp1", new Set(["var1", "exp1", "exp2"])],
-    ])
-  );
 });
 
 test("generate variables with actions", () => {
@@ -234,65 +271,54 @@ test("generate variables with actions", () => {
   );
 });
 
-test("generate variables with sorted expressions", () => {
+test("generate function for empty action", () => {
   const generated = generateDataSources({
     scope: createScope(),
-    dataSources: new Map([
+    dataSources: new Map(),
+    props: new Map([
       [
-        "dataSource1",
+        "prop1",
         {
-          id: "dataSource1",
-          scopeInstanceId: "instance1",
-          type: "variable",
-          name: "myVar",
-          value: { type: "string", value: "initial" },
-        },
-      ],
-      [
-        "dataSource2",
-        {
-          id: "dataSource2",
-          scopeInstanceId: "instance1",
-          type: "expression",
-          name: "myExp",
-          code: `$ws$dataSource$dataSource3 + "Name"`,
-        },
-      ],
-      [
-        "dataSource3",
-        {
-          id: "dataSource3",
-          scopeInstanceId: "instance1",
-          type: "expression",
-          name: "myExp",
-          code: `$ws$dataSource$dataSource1 + "Value"`,
+          id: "prop1",
+          instanceId: "instance1",
+          type: "action",
+          name: "onChange",
+          value: [],
         },
       ],
     ]),
-    props: new Map(),
   });
   expect(generated.body).toMatchInlineSnapshot(`
-"let myExp = (myVar + "Value");
-let myExp_1 = (myExp + "Name");
-"
-`);
-  expect(generated.variables).toEqual(
-    new Map([
-      [
-        "dataSource1",
-        {
-          initialValue: "initial",
-          setterName: "set$myVar",
-          valueName: "myVar",
-        },
-      ],
-    ])
-  );
-  expect(generated.output).toEqual(
-    new Map([
-      ["dataSource1", "myVar"],
-      ["dataSource2", "myExp_1"],
-      ["dataSource3", "myExp"],
-    ])
-  );
+    "let onChange = () => {
+    }
+    "
+  `);
+  expect(generated.variables).toEqual(new Map());
+  expect(generated.output).toEqual(new Map([["prop1", "onChange"]]));
+});
+
+test("prevent generating parameter variables", () => {
+  const generated = generateDataSources({
+    scope: createScope(),
+    dataSources: toMap([
+      {
+        id: "dataSourceid",
+        scopeInstanceId: "instanceId",
+        type: "parameter",
+        name: "myParameter",
+      },
+    ]),
+    props: toMap([
+      {
+        id: "propId",
+        instanceId: "instanceId",
+        type: "expression",
+        name: "value",
+        value: "$ws$dataSource$dataSourceId",
+      },
+    ]),
+  });
+  expect(generated.body).toEqual("");
+  expect(generated.variables).toEqual(new Map());
+  expect(generated.output).toEqual(new Map());
 });

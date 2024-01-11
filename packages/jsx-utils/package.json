@@ -19,14 +19,20 @@
     "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "fast-glob": "^3.2.12",
-    "jest": "^29.6.4",
     "type-fest": "^4.3.1",
     "typescript": "5.2.2"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    ".": {
+      "webstudio": "./src/index.ts",
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/index.js"
+    },
+    "./index.server": {
+      "webstudio": "./src/index.server.ts",
+      "types": "./lib/types/index.server.d.ts",
+      "import": "./lib/index.server.js"
+    }
   },
   "files": [
     "lib/*",

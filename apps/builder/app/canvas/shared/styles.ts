@@ -18,28 +18,28 @@ import {
   isValidStaticStyleValue,
 } from "@webstudio-is/css-engine";
 import {
-  assetsStore,
-  breakpointsStore,
+  $assets,
+  $breakpoints,
   $isPreviewMode,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
 import {
   type StyleRule,
   type PlaintextRule,
-  createCssEngine,
+  createRegularStyleSheet,
   toValue,
   compareMedia,
 } from "@webstudio-is/css-engine";
-import { useSubscribe } from "~/shared/pubsub";
+import { $ephemeralStyles } from "../stores";
 
-const userCssEngine = createCssEngine({ name: "user-styles" });
-const helpersCssEngine = createCssEngine({ name: "helpers" });
-const fontsAndDefaultsCssEngine = createCssEngine({
+const userSheet = createRegularStyleSheet({ name: "user-styles" });
+const helpersSheet = createRegularStyleSheet({ name: "helpers" });
+const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
-const presetStylesEngine = createCssEngine({ name: "preset-styles" });
+const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper
@@ -95,56 +95,103 @@ const subscribePreviewMode = () => {
   let isRendered = false;
 
   const unsubscribe = $isPreviewMode.subscribe((isPreviewMode) => {
-    helpersCssEngine.setAttribute("media", isPreviewMode ? "not all" : "all");
+    helpersSheet.setAttribute("media", isPreviewMode ? "not all" : "all");
     if (isRendered === false) {
       for (const style of helperStyles) {
-        helpersCssEngine.addPlaintextRule(style);
+        helpersSheet.addPlaintextRule(style);
       }
-      helpersCssEngine.render();
+      helpersSheet.render();
       isRendered = true;
     }
   });
 
   return () => {
-    helpersCssEngine.clear();
-    helpersCssEngine.render();
+    helpersSheet.clear();
+    helpersSheet.render();
     unsubscribe();
     isRendered = false;
   };
 };
 
+const subscribeEphemeralStyle = (params: Params) => {
+  // track custom properties added on previous ephemeral styles change
+  const addedCustomProperties = new Set<string>();
+  return $ephemeralStyles.subscribe((ephemeralStyles) => {
+    // track custom properties not set on this change
+    const deletedCustomProperties = new Set(addedCustomProperties);
+
+    const assets = $assets.get();
+    const transformer = createImageValueTransformer(assets, {
+      assetBaseUrl: params.assetBaseUrl,
+    });
+    for (const styleDecl of ephemeralStyles) {
+      const { instanceId, breakpointId, state, property, value } = styleDecl;
+      const customProperty = `--${toVarNamespace(instanceId, property)}`;
+      document.body.style.setProperty(
+        customProperty,
+        toValue(value, transformer)
+      );
+      addedCustomProperties.add(customProperty);
+      deletedCustomProperties.delete(customProperty);
+
+      const rule = getOrCreateRule({
+        instanceId,
+        breakpointId,
+        state,
+        assets,
+        params,
+      });
+      // this is possible on newly created instances,
+      // properties are not yet defined in the style.
+      if (rule.styleMap.has(property) === false) {
+        const varValue = toVarValue(instanceId, property, value);
+        if (varValue) {
+          rule.styleMap.set(property, varValue);
+        }
+      }
+    }
+
+    for (const property of deletedCustomProperties) {
+      document.body.style.removeProperty(property);
+      addedCustomProperties.delete(property);
+    }
+
+    // rerender style rules if new vars added
+    userSheet.render();
+  });
+};
+
 export const useManageDesignModeStyles = (params: Params) => {
-  useUpdateStyle(params);
-  usePreviewStyle(params);
+  useEffect(() => subscribeEphemeralStyle(params), [params]);
   useEffect(subscribePreviewMode, []);
 };
 
 export const GlobalStyles = ({ params }: { params: Params }) => {
-  const breakpoints = useStore(breakpointsStore);
-  const assets = useStore(assetsStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const breakpoints = useStore($breakpoints);
+  const assets = useStore($assets);
+  const metas = useStore($registeredComponentMetas);
 
   useIsomorphicLayoutEffect(() => {
     const sortedBreakpoints = Array.from(breakpoints.values()).sort(
       compareMedia
     );
     for (const breakpoint of sortedBreakpoints) {
-      userCssEngine.addMediaRule(breakpoint.id, breakpoint);
+      userSheet.addMediaRule(breakpoint.id, breakpoint);
     }
-    userCssEngine.render();
+    userSheet.render();
   }, [breakpoints]);
 
   useIsomorphicLayoutEffect(() => {
-    fontsAndDefaultsCssEngine.clear();
-    addGlobalRules(fontsAndDefaultsCssEngine, {
+    fontsAndDefaultsSheet.clear();
+    addGlobalRules(fontsAndDefaultsSheet, {
       assets,
       assetBaseUrl: params.assetBaseUrl,
     });
-    fontsAndDefaultsCssEngine.render();
+    fontsAndDefaultsSheet.render();
   }, [assets]);
 
   useIsomorphicLayoutEffect(() => {
-    presetStylesEngine.clear();
+    presetSheet.clear();
     for (const [component, meta] of metas) {
       const presetStyle = meta.presetStyle;
       if (presetStyle === undefined) {
@@ -152,10 +199,10 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
       }
       const rules = getPresetStyleRules(component, presetStyle);
       for (const [selector, style] of rules) {
-        presetStylesEngine.addStyleRule(selector, { style });
+        presetSheet.addStyleRule({ style }, selector);
       }
     }
-    presetStylesEngine.render();
+    presetSheet.render();
   }, [metas]);
 
   return null;
@@ -200,12 +247,12 @@ const getOrCreateRule = ({
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
   if (rule === undefined) {
-    rule = userCssEngine.addStyleRule(
-      `[${idAttribute}="${instanceId}"]${state}`,
+    rule = userSheet.addStyleRule(
       {
         breakpoint: breakpointId,
         style: {},
-      }
+      },
+      `[${idAttribute}="${instanceId}"]${state}`
     );
     wrappedRulesMap.set(key, rule);
   }
@@ -216,9 +263,9 @@ const getOrCreateRule = ({
 };
 
 const useSelectedState = (instanceId: Instance["id"]) => {
-  const selectedStateStore = useMemo(() => {
+  const $selectedState = useMemo(() => {
     return computed(
-      [selectedInstanceSelectorStore, selectedStyleSourceSelectorStore],
+      [$selectedInstanceSelector, $selectedStyleSourceSelector],
       (selectedInstanceSelector, selectedStyleSourceSelector) => {
         if (selectedInstanceSelector?.[0] !== instanceId) {
           return;
@@ -227,7 +274,7 @@ const useSelectedState = (instanceId: Instance["id"]) => {
       }
     );
   }, [instanceId]);
-  const selectedState = useStore(selectedStateStore);
+  const selectedState = useStore($selectedState);
   return selectedState;
 };
 
@@ -239,13 +286,13 @@ export const useCssRules = ({
   instanceStyles: StyleDecl[];
 }) => {
   const params = useContext(ReactSdkContext);
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const selectedState = useSelectedState(instanceId);
 
   useIsomorphicLayoutEffect(() => {
     // expect assets to be up to date by the time styles are changed
     // to avoid all styles rerendering when assets are changed
-    const assets = assetsStore.get();
+    const assets = $assets.get();
 
     // find all instance rules and collect rendered properties
     const deletedPropertiesByRule = new Map<
@@ -307,78 +354,10 @@ export const useCssRules = ({
       }
     }
 
-    userCssEngine.render();
+    userSheet.render();
   }, [instanceId, selectedState, instanceStyles, breakpoints]);
 };
 
 const toVarNamespace = (id: string, property: string) => {
   return `${property}-${id}`;
-};
-
-const setCssVar = (
-  params: Params,
-  id: string,
-  property: string,
-  value?: StyleValue
-) => {
-  const customProperty = `--${toVarNamespace(id, property)}`;
-  if (value === undefined) {
-    document.body.style.removeProperty(customProperty);
-    return;
-  }
-
-  const assets = assetsStore.get();
-  const transformer = createImageValueTransformer(assets, {
-    assetBaseUrl: params.assetBaseUrl,
-  });
-
-  document.body.style.setProperty(customProperty, toValue(value, transformer));
-};
-
-const useUpdateStyle = (params: Params) => {
-  useSubscribe("updateStyle", ({ id, updates }) => {
-    const selectedInstanceSelector = selectedInstanceSelectorStore.get();
-    const selectedInstanceId = selectedInstanceSelector?.[0];
-    // Only update styles if they match the selected instance
-    // It can potentially happen that we selected a difference instance right after we changed the style in style panel.
-    if (id !== selectedInstanceId) {
-      return;
-    }
-
-    for (const update of updates) {
-      setCssVar(params, id, update.property, undefined);
-    }
-  });
-};
-
-const usePreviewStyle = (params: Params) => {
-  useSubscribe("previewStyle", ({ id, updates, breakpoint, state }) => {
-    const rule = getOrCreateRule({
-      instanceId: id,
-      breakpointId: breakpoint.id,
-      state,
-      assets: assetsStore.get(),
-      params,
-    });
-
-    for (const update of updates) {
-      if (update.operation === "set") {
-        // This is possible on newly created instances, properties are not yet defined in the style.
-        if (rule.styleMap.has(update.property) === false) {
-          const varValue = toVarValue(id, update.property, update.value);
-          if (varValue) {
-            rule.styleMap.set(update.property, varValue);
-          }
-        }
-
-        setCssVar(params, id, update.property, update.value);
-      }
-
-      if (update.operation === "delete") {
-        setCssVar(params, id, update.property, undefined);
-      }
-    }
-
-    userCssEngine.render();
-  });
 };

@@ -1,14 +1,18 @@
-import { type ReactNode } from "react";
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Label as Label } from "../components";
 
-const Page = (props: { scripts?: ReactNode }) => {
+type Params = Record<string, string | undefined>;
+type Resources = Record<string, unknown>;
+const Page = (_props: { params: Params; resources: Resources }) => {
   return (
     <Box data-ws-id="root" data-ws-component="Box">
-      <Label data-ws-id="1" data-ws-component="Label">
+      <Label
+        data-ws-id="1"
+        data-ws-component="Label"
+        className="c1mfk609 cvjxq2s cwry1sa"
+      >
         {"Form Label"}
       </Label>
-      {props.scripts}
     </Box>
   );
 };
@@ -129,17 +133,20 @@ html {margin: 0; display: grid; min-height: 100%}
     border-left-width: 1px;
     outline-width: 1px
   }
-}
-@media all {
-  [data-ws-id="1"] {
-    font-size: 0.875rem;
-    line-height: 1;
+}@media all {
+  .c1mfk609 {
+    font-size: 0.875rem
+  }
+  .cvjxq2s {
+    line-height: 1
+  }
+  .cwry1sa {
     font-weight: 500
   }
 }
       `}
         </style>
-        <Page />
+        <Page params={{}} resources={{}} />
       </>
     );
   },

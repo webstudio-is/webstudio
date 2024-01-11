@@ -58,27 +58,18 @@ export const initFlow = async (
     }
     await link({ link: projectLink });
 
-    const { shouldSetupDeployTarget } = await prompt({
-      type: "confirm",
-      name: "shouldSetupDeployTarget",
-      message: "Would you like to setup a deploy target?",
-      initial: false,
+    const { deployTarget } = await prompt({
+      type: "select",
+      name: "deployTarget",
+      message: "Where would you like to deploy your project?",
+      choices: PROJECT_TEMPALTES.map((template) => {
+        return {
+          title: titleCase(template),
+          value: template,
+        };
+      }),
     });
-
-    if (shouldSetupDeployTarget === true) {
-      const { deployTarget } = await prompt({
-        type: "select",
-        name: "deployTarget",
-        message: "Where would you like to deploy your project?",
-        choices: PROJECT_TEMPALTES.map((template) => {
-          return {
-            title: titleCase(template),
-            value: template,
-          };
-        }),
-      });
-      projectTemplate = deployTarget;
-    }
+    projectTemplate = deployTarget;
 
     const { installDeps } = await prompt({
       type: "confirm",
@@ -90,6 +81,26 @@ export const initFlow = async (
   }
 
   await sync({ buildId: undefined, origin: undefined, authToken: undefined });
+
+  /*
+    If a project is already linked, we sync direclty without asking for deploy target.
+    We need to request for deploy target here as the current flow is running in a existing project.
+  */
+
+  if (projectTemplate === undefined) {
+    const { deployTarget } = await prompt({
+      type: "select",
+      name: "deployTarget",
+      message: "Where would you like to deploy your project?",
+      choices: PROJECT_TEMPALTES.map((template) => {
+        return {
+          title: titleCase(template),
+          value: template,
+        };
+      }),
+    });
+    projectTemplate = deployTarget;
+  }
 
   await build({
     ...options,
@@ -108,7 +119,7 @@ export const initFlow = async (
     [
       "Now you can:",
       folderName && `Go to your project: ${pc.dim(`cd ${folderName}`)}`,
-      `Run ${pc.dim("npm run dev")} to preview your site on a local server.`,
+      `Run ${pc.dim("npm run dev")} to preview your project on a local server.`,
       projectTemplate && getDeploymentInstructions(projectTemplate),
     ]
       .filter(Boolean)
@@ -127,8 +138,10 @@ const getDeploymentInstructions = (
       return [
         `To deploy to Netlify, run the following commands: `,
         `Run ${pc.dim("npx netlify-cli login")} to login to Netlify.`,
-        `Run ${pc.dim("npx netlify-cli sites:create")} to create a new site.`,
-        `Run ${pc.dim("npx netlify-cli build")} to build the site`,
+        `Run ${pc.dim(
+          "npx netlify-cli sites:create"
+        )} to create a new project.`,
+        `Run ${pc.dim("npx netlify-cli build")} to build the project`,
         `Run ${pc.dim("npx netlify-cli deploy")} to deploy on Netlify.`,
       ].join("\n");
   }

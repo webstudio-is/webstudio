@@ -1,14 +1,12 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { computed } from "nanostores";
-import { Scripts, ScrollRestoration } from "@remix-run/react";
-import type { Instances, Page } from "@webstudio-is/sdk";
+import type { Instances } from "@webstudio-is/sdk";
 import {
   type Params,
   type Components,
   createElementsTree,
-  normalizeProps,
-  getPropsByInstanceId,
+  coreMetas,
+  corePropsMetas,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
@@ -21,28 +19,20 @@ import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/m
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { $publisher, publish } from "~/shared/pubsub";
-import {
-  handshakenStore,
-  registerContainers,
-  useCanvasStore,
-} from "~/shared/sync";
-import { useSharedShortcuts } from "~/shared/shortcuts";
-import { useCanvasShortcuts } from "./canvas-shortcuts";
+import { registerContainers, useCanvasStore } from "~/shared/sync";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
-  WebstudioComponentContext,
   WebstudioComponentPreview,
 } from "./features/webstudio-component";
 import {
-  assetsStore,
-  pagesStore,
-  instancesStore,
-  selectedPageStore,
+  $assets,
+  $pages,
+  $instances,
+  $selectedPage,
   registerComponentLibrary,
-  registeredComponentsStore,
+  $registeredComponents,
   subscribeComponentHooks,
-  propsStore,
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { useDragAndDrop } from "./shared/use-drag-drop";
@@ -57,6 +47,8 @@ import { useSelectedInstance } from "./instance-selected-react";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
+import { updateCollaborativeInstanceRect } from "./collaborative-instance";
+import { $params } from "./stores";
 
 registerContainers();
 
@@ -66,7 +58,7 @@ const useElementsTree = (
   params: Params,
   imageLoader: ImageLoader
 ) => {
-  const page = useStore(selectedPageStore);
+  const page = useStore($selectedPage);
   const isPreviewMode = useStore($isPreviewMode);
   const rootInstanceId = page?.rootInstanceId ?? "";
 
@@ -74,74 +66,30 @@ const useElementsTree = (
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
     // eslint-disable-next-line no-console
     console.log({
-      assetsStore: assetsStore.get().size,
-      pagesStore: pagesStore.get()?.pages.length ?? 0,
-      instancesStore: instancesStore.get().size,
+      $assets: $assets.get().size,
+      $pages: $pages.get()?.pages.length ?? 0,
+      $instances: $instances.get().size,
     });
   }
 
-  const pagesMapStore = useMemo(
-    () =>
-      computed(pagesStore, (pages): Map<string, Page> => {
-        if (pages === undefined) {
-          return new Map();
-        }
-        return new Map(
-          [pages.homePage, ...pages.pages].map((page) => [page.id, page])
-        );
-      }),
-    []
-  );
-
-  const propsByInstanceIdStore = useMemo(() => {
-    return computed(
-      [propsStore, assetsStore, pagesMapStore],
-      (props, assets, pages) => {
-        if (pages === undefined) {
-          return new Map();
-        }
-        const normalizedProps = normalizeProps({
-          props: Array.from(props.values()),
-          assetBaseUrl: params.assetBaseUrl,
-          assets,
-          pages,
-        });
-        return getPropsByInstanceId(
-          new Map(normalizedProps.map((prop) => [prop.id, prop]))
-        );
-      }
-    );
-  }, [params.assetBaseUrl, pagesMapStore]);
-
   return useMemo(() => {
-    return (
-      <WebstudioComponentContext.Provider value={{ propsByInstanceIdStore }}>
-        {createElementsTree({
-          renderer: isPreviewMode ? "preview" : "canvas",
-          imageBaseUrl: params.imageBaseUrl,
-          assetBaseUrl: params.assetBaseUrl,
-          imageLoader,
-          instances,
-          rootInstanceId,
-          Component: isPreviewMode
-            ? WebstudioComponentPreview
-            : WebstudioComponentCanvas,
-          components,
-          scripts: (
-            <>
-              <ScrollRestoration />
-              <Scripts />
-            </>
-          ),
-        })}
-      </WebstudioComponentContext.Provider>
-    );
+    return createElementsTree({
+      renderer: isPreviewMode ? "preview" : "canvas",
+      imageBaseUrl: params.imageBaseUrl,
+      assetBaseUrl: params.assetBaseUrl,
+      imageLoader,
+      instances,
+      rootInstanceId,
+      Component: isPreviewMode
+        ? WebstudioComponentPreview
+        : WebstudioComponentCanvas,
+      components,
+    });
   }, [
     params,
     instances,
     rootInstanceId,
     components,
-    propsByInstanceIdStore,
     isPreviewMode,
     imageLoader,
   ]);
@@ -157,6 +105,7 @@ const DesignMode = ({ params }: { params: Params }) => {
   useCopyPaste();
 
   useSelectedInstance();
+  useEffect(updateCollaborativeInstanceRect, []);
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
 
@@ -172,11 +121,15 @@ export const Canvas = ({
   params,
   imageLoader,
 }: CanvasProps): JSX.Element | null => {
-  const handshaken = useStore(handshakenStore);
   useCanvasStore(publish);
   const isPreviewMode = useStore($isPreviewMode);
 
   useMount(() => {
+    registerComponentLibrary({
+      components: {},
+      metas: coreMetas,
+      propsMetas: corePropsMetas,
+    });
     registerComponentLibrary({
       components: baseComponents,
       metas: baseComponentMetas,
@@ -196,6 +149,11 @@ export const Canvas = ({
     });
   });
 
+  useMount(() => {
+    // required to compute asset and page props for rendering
+    $params.set(params);
+  });
+
   useEffect(subscribeComponentHooks, []);
 
   useEffect(subscribeCommands, []);
@@ -204,10 +162,7 @@ export const Canvas = ({
     $publisher.set({ publish });
   }, []);
 
-  // e.g. toggling preview is still needed in both modes
-  useCanvasShortcuts();
-  useSharedShortcuts({ source: "canvas" });
-  const selectedPage = useStore(selectedPageStore);
+  const selectedPage = useStore($selectedPage);
 
   useEffect(() => {
     const rootInstanceId = selectedPage?.rootInstanceId;
@@ -229,17 +184,17 @@ export const Canvas = ({
 
   useEffect(subscribeInterceptedEvents, []);
 
-  const components = useStore(registeredComponentsStore);
-  const instances = useStore(instancesStore);
+  const components = useStore($registeredComponents);
+  const instances = useStore($instances);
   const elements = useElementsTree(components, instances, params, imageLoader);
 
+  const [isInitialized, setInitialized] = useState(false);
+  useEffect(() => {
+    setInitialized(true);
+  }, []);
+
   if (components.size === 0 || instances.size === 0) {
-    return (
-      <body>
-        <ScrollRestoration />
-        <Scripts />
-      </body>
-    );
+    return <remixComponents.Body />;
   }
 
   return (
@@ -250,7 +205,7 @@ export const Canvas = ({
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && handshaken === true && (
+      {isPreviewMode === false && isInitialized && (
         <DesignMode params={params} />
       )}
     </>

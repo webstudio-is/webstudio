@@ -10,31 +10,41 @@ import type {
   Page,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
-import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
+import {
+  collectionComponent,
+  encodeDataSourceVariable,
+  coreMetas,
+  portalComponent,
+} from "@webstudio-is/react-sdk";
 import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
 import { registerContainers } from "../sync";
 import {
-  dataSourcesStore,
-  instancesStore,
-  pagesStore,
-  projectStore,
-  propsStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedPageIdStore,
+  $instances,
+  $selectedInstanceSelector,
+  $dataSources,
+  $pages,
+  $project,
+  $props,
+  $registeredComponentMetas,
+  $selectedPageId,
 } from "../nano-states";
 import { onCopy, onPaste } from "./plugin-instance";
+
+const expectString = expect.any(String) as unknown as string;
 
 enableMapSet();
 registerContainers();
 
-registeredComponentMetasStore.set(new Map(Object.entries(baseComponentMetas)));
-projectStore.set({ id: "my-project" } as Project);
-pagesStore.set({
+$registeredComponentMetas.set(
+  new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
+);
+$project.set({ id: "my-project" } as Project);
+$pages.set({
+  meta: {},
   homePage: { id: "home-page", rootInstanceId: "body0" } as Page,
   pages: [],
 });
-selectedPageIdStore.set("home-page");
+$selectedPageId.set("home-page");
 
 const createInstance = (
   id: Instance["id"],
@@ -84,18 +94,15 @@ describe("paste target", () => {
   ] satisfies Instance[]);
 
   test("is inside selected instance", () => {
-    instancesStore.set(instances);
-    selectedInstanceSelectorStore.set(["box1", "body0"]);
+    $instances.set(instances);
+    $selectedInstanceSelector.set(["box1", "body0"]);
     const clipboardData = onCopy() ?? "";
-    selectedInstanceSelectorStore.set(["box2", "body0"]);
+    $selectedInstanceSelector.set(["box2", "body0"]);
     onPaste(clipboardData);
 
-    const instancesDifference = getMapDifference(
-      instances,
-      instancesStore.get()
-    );
+    const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox1] = instancesDifference.keys();
-    expect(instancesStore.get().get("box2")).toEqual(
+    expect($instances.get().get("box2")).toEqual(
       createInstance("box2", "Box", [{ type: "id", value: newBox1 }])
     );
     expect(instancesDifference).toEqual(
@@ -104,16 +111,13 @@ describe("paste target", () => {
   });
 
   test("is after selected instance when same as copied", () => {
-    instancesStore.set(instances);
-    selectedInstanceSelectorStore.set(["box1", "body0"]);
+    $instances.set(instances);
+    $selectedInstanceSelector.set(["box1", "body0"]);
     onPaste(onCopy() ?? "");
 
-    const instancesDifference = getMapDifference(
-      instances,
-      instancesStore.get()
-    );
+    const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox1] = instancesDifference.keys();
-    expect(instancesStore.get().get("body0")).toEqual(
+    expect($instances.get().get("body0")).toEqual(
       createInstance("body0", "Body", [
         { type: "id", value: "box1" },
         { type: "id", value: newBox1 },
@@ -143,38 +147,31 @@ describe("data sources", () => {
       name: "state",
       value: { type: "string", value: "initial" },
     },
-    {
-      id: "box2$stateInitial",
-      scopeInstanceId: "box2",
-      type: "expression",
-      name: "stateInitial",
-      code: `$ws$dataSource$box1$state === 'initial'`,
-    },
   ] satisfies DataSource[]);
   const props: Props = toMap([
     {
-      id: "box1$state",
+      id: "box1$stateProp",
       instanceId: "box1",
-      type: "dataSource",
       name: "state",
-      value: "box1$state",
+      type: "expression",
+      value: "$ws$dataSource$box1$state",
     },
     {
-      id: "box2$state",
+      id: "box2$stateProp",
       instanceId: "box2",
-      type: "dataSource",
       name: "state",
-      value: "box1$state",
+      type: "expression",
+      value: "$ws$dataSource$box1$state",
     },
     {
-      id: "box2$show",
+      id: "box2$showProp",
       instanceId: "box2",
-      type: "dataSource",
       name: "show",
-      value: "box2$stateInitial",
+      type: "expression",
+      value: `$ws$dataSource$box1$state === 'initial'`,
     },
     {
-      id: "box2$onChange",
+      id: "box2$onChangeProp",
       instanceId: "box2",
       type: "action",
       name: "onChange",
@@ -189,25 +186,22 @@ describe("data sources", () => {
   ] satisfies Prop[]);
 
   test("are copy pasted when scoped to copied instances", () => {
-    instancesStore.set(instances);
-    propsStore.set(props);
-    dataSourcesStore.set(dataSources);
-    selectedInstanceSelectorStore.set(["box1", "body0"]);
+    $instances.set(instances);
+    $dataSources.set(dataSources);
+    $props.set(props);
+    $selectedInstanceSelector.set(["box1", "body0"]);
     const clipboardData = onCopy() ?? "";
-    selectedInstanceSelectorStore.set(["body0"]);
+    $selectedInstanceSelector.set(["body0"]);
     onPaste(clipboardData);
 
-    const instancesDifference = getMapDifference(
-      instances,
-      instancesStore.get()
-    );
+    const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox1, newBox2] = instancesDifference.keys();
 
     const dataSourcesDifference = getMapDifference(
       dataSources,
-      dataSourcesStore.get()
+      $dataSources.get()
     );
-    const [newDataSource1, newDataSource2] = dataSourcesDifference.keys();
+    const [newDataSource1] = dataSourcesDifference.keys();
     expect(dataSourcesDifference).toEqual(
       toMap([
         {
@@ -215,41 +209,39 @@ describe("data sources", () => {
           id: newDataSource1,
           scopeInstanceId: newBox1,
         },
-        {
-          ...dataSources.get("box2$stateInitial"),
-          id: newDataSource2,
-          scopeInstanceId: newBox2,
-          code: `${encodeDataSourceVariable(newDataSource1)} === 'initial'`,
-        },
       ])
     );
 
-    const propsDifference = getMapDifference(props, propsStore.get());
+    const propsDifference = getMapDifference(props, $props.get());
     const [newProp1, newProp2, newProp3, newProp4] = propsDifference.keys();
     expect(propsDifference).toEqual(
       toMap([
         {
-          ...props.get("box1$state"),
           id: newProp1,
           instanceId: newBox1,
-          value: newDataSource1,
+          name: "state",
+          type: "expression",
+          value: encodeDataSourceVariable(newDataSource1),
         },
         {
-          ...props.get("box2$state"),
           id: newProp2,
           instanceId: newBox2,
-          value: newDataSource1,
+          name: "state",
+          type: "expression",
+          value: encodeDataSourceVariable(newDataSource1),
         },
         {
-          ...props.get("box2$show"),
           id: newProp3,
           instanceId: newBox2,
-          value: newDataSource2,
+          name: "show",
+          type: "expression",
+          value: `${encodeDataSourceVariable(newDataSource1)} === 'initial'`,
         },
         {
-          ...props.get("box2$onChange"),
           id: newProp4,
           instanceId: newBox2,
+          name: "onChange",
+          type: "action",
           value: [
             {
               type: "execute",
@@ -263,43 +255,40 @@ describe("data sources", () => {
   });
 
   test("are inlined into props when not scoped to copied instances or depends on not scoped data source", () => {
-    instancesStore.set(instances);
-    propsStore.set(props);
-    dataSourcesStore.set(dataSources);
-    selectedInstanceSelectorStore.set(["box2", "box1", "body0"]);
+    $instances.set(instances);
+    $props.set(props);
+    $dataSources.set(dataSources);
+    $selectedInstanceSelector.set(["box2", "box1", "body0"]);
     const clipboardData = onCopy() ?? "";
-    selectedInstanceSelectorStore.set(["body0"]);
+    $selectedInstanceSelector.set(["body0"]);
     onPaste(clipboardData);
 
-    const instancesDifference = getMapDifference(
-      instances,
-      instancesStore.get()
-    );
+    const instancesDifference = getMapDifference(instances, $instances.get());
     const [newBox2] = instancesDifference.keys();
 
     const dataSourcesDifference = getMapDifference(
       dataSources,
-      dataSourcesStore.get()
+      $dataSources.get()
     );
     expect(dataSourcesDifference).toEqual(new Map());
 
-    const propsDifference = getMapDifference(props, propsStore.get());
+    const propsDifference = getMapDifference(props, $props.get());
     const [newProp1, newProp2, newProp3] = propsDifference.keys();
     expect(propsDifference).toEqual(
       toMap([
         {
           id: newProp1,
           instanceId: newBox2,
-          type: "string",
           name: "state",
-          value: "initial",
+          type: "expression",
+          value: `"initial"`,
         },
         {
           id: newProp2,
           instanceId: newBox2,
-          type: "boolean",
           name: "show",
-          value: true,
+          type: "expression",
+          value: `"initial" === 'initial'`,
         },
         {
           id: newProp3,
@@ -312,7 +301,333 @@ describe("data sources", () => {
     );
   });
 
-  test.todo(
-    "preserve data sources not scoped to new instances within same scope"
+  test("preserve data sources outside of scope when pasted within their scope", () => {
+    $instances.set(instances);
+    $props.set(props);
+    $dataSources.set(dataSources);
+    $selectedInstanceSelector.set(["box2", "box1", "body0"]);
+    const clipboardData = onCopy() ?? "";
+    $selectedInstanceSelector.set(["box1", "body0"]);
+    onPaste(clipboardData);
+
+    const instancesDifference = getMapDifference(instances, $instances.get());
+    const [newBox2] = instancesDifference.keys();
+
+    const dataSourcesDifference = getMapDifference(
+      dataSources,
+      $dataSources.get()
+    );
+    expect(dataSourcesDifference).toEqual(new Map());
+
+    const propsDifference = getMapDifference(props, $props.get());
+    const [newProp1, newProp2, newProp3] = propsDifference.keys();
+    expect(propsDifference).toEqual(
+      toMap([
+        {
+          id: newProp1,
+          instanceId: newBox2,
+          name: "state",
+          type: "expression",
+          value: `$ws$dataSource$box1$state`,
+        },
+        {
+          id: newProp2,
+          instanceId: newBox2,
+          name: "show",
+          type: "expression",
+          value: `$ws$dataSource$box1$state === 'initial'`,
+        },
+        {
+          id: newProp3,
+          instanceId: newBox2,
+          type: "action",
+          name: "onChange",
+          value: [
+            {
+              args: ["value"],
+              code: "$ws$dataSource$box1$state = value",
+              type: "execute",
+            },
+          ],
+        },
+      ])
+    );
+  });
+
+  test("copy parameter prop with new data source", () => {
+    const instances: Instances = toMap([
+      createInstance("body", "Body", [{ type: "id", value: "list" }]),
+      createInstance("list", collectionComponent, []),
+    ] satisfies Instance[]);
+    const dataSources: DataSources = toMap([
+      {
+        id: "itemDataSource",
+        scopeInstanceId: "list",
+        type: "parameter",
+        name: "item",
+      },
+    ] satisfies DataSource[]);
+    const props: Props = toMap([
+      {
+        id: "dataProp",
+        instanceId: "list",
+        name: "data",
+        type: "json",
+        value: [],
+      },
+      {
+        id: "itemProp",
+        instanceId: "list",
+        name: "item",
+        type: "parameter",
+        value: "itemDataSource",
+      },
+    ] satisfies Prop[]);
+    $instances.set(instances);
+    $props.set(props);
+    $dataSources.set(dataSources);
+    $selectedInstanceSelector.set(["list", "body"]);
+    const clipboardData = onCopy() ?? "";
+    $selectedInstanceSelector.set(["body"]);
+    onPaste(clipboardData);
+
+    const instancesDifference = getMapDifference(instances, $instances.get());
+    const [collectionId] = instancesDifference.keys();
+
+    const dataSourcesDifference = getMapDifference(
+      dataSources,
+      $dataSources.get()
+    );
+    const [itemDataSourceId] = dataSourcesDifference.keys();
+    expect(dataSourcesDifference).toEqual(
+      new Map([
+        [
+          itemDataSourceId,
+          {
+            id: itemDataSourceId,
+            scopeInstanceId: collectionId,
+            type: "parameter",
+            name: "item",
+          },
+        ],
+      ])
+    );
+
+    const propsDifference = getMapDifference(props, $props.get());
+    const [dataPropId, itemPropId] = propsDifference.keys();
+    expect(propsDifference).toEqual(
+      toMap([
+        {
+          id: dataPropId,
+          instanceId: collectionId,
+          name: "data",
+          type: "json",
+          value: [],
+        },
+        {
+          id: itemPropId,
+          instanceId: collectionId,
+          name: "item",
+          type: "parameter",
+          value: itemDataSourceId,
+        },
+      ])
+    );
+  });
+});
+
+test("when paste into copied instance insert after it", () => {
+  $instances.set(
+    toMap([
+      createInstance("body", "Body", [{ type: "id", value: "box" }]),
+      createInstance("box", "Box", []),
+    ])
+  );
+  $selectedInstanceSelector.set(["box", "body"]);
+  const clipboardData = onCopy() ?? "";
+  onPaste(clipboardData);
+
+  expect($instances.get()).toEqual(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "box" },
+        { type: "id", value: expectString },
+      ]),
+      createInstance("box", "Box", []),
+      createInstance(expectString, "Box", []),
+    ])
+  );
+});
+
+test("prevent pasting portal into own descendents", () => {
+  const instances = toMap([
+    createInstance("body", "Body", [{ type: "id", value: "portal" }]),
+    createInstance("portal", portalComponent, [
+      { type: "id", value: "fragment" },
+    ]),
+    createInstance("fragment", "Fragment", [{ type: "id", value: "box" }]),
+    createInstance("box", "Box", []),
+  ]);
+  $instances.set(instances);
+  $selectedInstanceSelector.set(["portal", "body"]);
+  const clipboardData = onCopy() ?? "";
+  $selectedInstanceSelector.set(["box", "fragment", "portal", "body"]);
+  onPaste(clipboardData);
+  expect($instances.get()).toEqual(instances);
+});
+
+test("prevent pasting portal into copy of it", () => {
+  const instances = toMap([
+    createInstance("body", "Body", [
+      { type: "id", value: "portal1" },
+      { type: "id", value: "portal2" },
+    ]),
+    createInstance("portal1", portalComponent, [
+      { type: "id", value: "fragment" },
+    ]),
+    createInstance("portal2", portalComponent, [
+      { type: "id", value: "fragment" },
+    ]),
+    createInstance("fragment", "Fragment", []),
+  ]);
+  $instances.set(instances);
+  $selectedInstanceSelector.set(["portal1", "body"]);
+  const clipboardData = onCopy() ?? "";
+  $selectedInstanceSelector.set(["portal2", "body"]);
+  onPaste(clipboardData);
+  expect($instances.get()).toEqual(instances);
+});
+
+test("insert portal into its sibling", () => {
+  $instances.set(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "portal" },
+        { type: "id", value: "sibling" },
+      ]),
+      createInstance("portal", portalComponent, [
+        { type: "id", value: "fragment" },
+      ]),
+      createInstance("fragment", "Fragment", []),
+      createInstance("sibling", "Box", []),
+    ])
+  );
+  $selectedInstanceSelector.set(["portal", "body"]);
+  const clipboardData = onCopy() ?? "";
+  $selectedInstanceSelector.set(["sibling", "body"]);
+  onPaste(clipboardData);
+
+  expect($instances.get()).toEqual(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "portal" },
+        { type: "id", value: "sibling" },
+      ]),
+      createInstance("portal", portalComponent, [
+        { type: "id", value: "fragment" },
+      ]),
+      createInstance("fragment", "Fragment", []),
+      createInstance("sibling", "Box", [{ type: "id", value: expectString }]),
+      createInstance(expectString, portalComponent, [
+        { type: "id", value: "fragment" },
+      ]),
+    ])
+  );
+});
+
+test("insert into portal fragment when portal is a target", () => {
+  $instances.set(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "portal" },
+        { type: "id", value: "box" },
+      ]),
+      createInstance("portal", portalComponent, []),
+      createInstance("box", "Box", []),
+    ])
+  );
+  $selectedInstanceSelector.set(["box", "body"]);
+  const clipboardData = onCopy() ?? "";
+  $selectedInstanceSelector.set(["portal", "body"]);
+
+  // fragment not exists
+  const prevInstances = $instances.get();
+  onPaste(clipboardData);
+  const [boxId, fragmentId] = getMapDifference(
+    prevInstances,
+    $instances.get()
+  ).keys();
+  expect($instances.get()).toEqual(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "portal" },
+        { type: "id", value: "box" },
+      ]),
+      createInstance("portal", portalComponent, [
+        { type: "id", value: fragmentId },
+      ]),
+      createInstance(fragmentId, "Fragment", [{ type: "id", value: boxId }]),
+      createInstance("box", "Box", []),
+      createInstance(boxId, "Box", []),
+    ])
+  );
+
+  // fragment already exists
+  onPaste(clipboardData);
+  expect($instances.get()).toEqual(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "portal" },
+        { type: "id", value: "box" },
+      ]),
+      createInstance("portal", portalComponent, [
+        { type: "id", value: fragmentId },
+      ]),
+      createInstance(fragmentId, "Fragment", [
+        { type: "id", value: boxId },
+        { type: "id", value: expectString },
+      ]),
+      createInstance("box", "Box", []),
+      createInstance(boxId, "Box", []),
+      createInstance(expectString, "Box", []),
+    ])
+  );
+});
+
+test("wrap siblings with span when instance is rich text container", () => {
+  $instances.set(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "text" },
+        { type: "id", value: "box" },
+      ]),
+      createInstance("text", "Text", [{ type: "text", value: "My Text" }]),
+      createInstance("box", "Box", []),
+    ])
+  );
+  $selectedInstanceSelector.set(["box", "body"]);
+  const clipboardData = onCopy() ?? "";
+  $selectedInstanceSelector.set(["text", "body"]);
+
+  const prevInstances = $instances.get();
+  onPaste(clipboardData);
+  const [boxId, spanId] = getMapDifference(
+    prevInstances,
+    $instances.get()
+  ).keys();
+  expect($instances.get()).toEqual(
+    toMap([
+      createInstance("body", "Body", [
+        { type: "id", value: "text" },
+        { type: "id", value: "box" },
+      ]),
+      createInstance("text", "Text", [
+        { type: "id", value: spanId },
+        { type: "id", value: boxId },
+      ]),
+      createInstance("box", "Box", []),
+      createInstance(boxId, "Box", []),
+      createInstance(spanId, "Text", [{ type: "text", value: "My Text" }]),
+    ])
   );
 });

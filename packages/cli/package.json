@@ -1,12 +1,13 @@
 {
-  "name": "webstudio-cli",
-  "version": "0.102.0",
+  "name": "webstudio",
+  "version": "0.124.0",
   "description": "Webstudio CLI",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "bin": {
-    "webstudio-cli": "./bin.js"
+    "webstudio-cli": "./bin.js",
+    "webstudio": "./bin.js"
   },
   "files": [
     "lib/*",
@@ -38,13 +39,13 @@
     "picocolors": "^1.0.0",
     "prompts": "^2.4.2",
     "strip-indent": "^4.0.0",
-    "title-case": "^3.0.3",
+    "title-case": "^4.1.0",
     "yargs": "^17.7.2",
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@types/node": "^18.13.0",
-    "@types/prompts": "^2.4.4",
+    "@types/node": "^18.17.1",
+    "@types/prompts": "^2.4.5",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "tsx": "^3.12.8",

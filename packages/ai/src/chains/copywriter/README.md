@@ -12,7 +12,7 @@ Server side:
 import {
   copywriter,
   createGptModel
-  type GPTModelMessageFormat
+  type GptModelMessageFormat
 } from "@webstudio-is/ai";
 
 export async function handler({ request }) {
@@ -25,42 +25,36 @@ export async function handler({ request }) {
     model: "gpt-3.5-turbo",
   });
 
-  const chain = copywriter.createChain<GPTModelMessageFormat>();
+  const chain = copywriter.createChain<GptModelMessageFormat>();
 
-  // Respond with a stream.
-  return chain({
+  const response = await chain({
     model,
     context: {
       prompt,
       textInstances
     }
-  })
+  });
+
+  if (response.success === false) {
+    return response;
+  }
+
+  // Respond with the text generation stream.
+  return response.stream;
 }
 ```
 
 Client side:
 
 ```tsx
-import { useCompletion } from "ai/react";
-import { copywriter, type ErrorResponse } from "@webstudio-is/ai";
+import {
+  copywriter,
+  handleAiRequest,
+  type RemixStreamingTextResponse
+} from "@webstudio-is/ai";
 
 function UiComponent() {
-  const [error, setError] = useState(null);
-  const { completion, complete, stop, isLoading } = useCompletion({
-    api: "/rest/ai/copy",
-    onResponse: (response) => {
-      if (response.headers.get("Content-Type")?.includes("application/json")) {
-        const json: ErrorResponse = await response.json();
-        if (json.success === false) {
-          setError(json.message);
-        }
-      }
-    },
-  });
-
-  useEffect(() => {
-    console.log(completion);
-  }, [completion]);
+  const [error, setError] = useState();
 
   return (
     <form
@@ -84,11 +78,35 @@ function UiComponent() {
           return;
         }
 
-        complete(prompt, {
-          body: {
-            projectId,
-            textInstances: JSON.parse(textInstances),
-          },
+        handleAiRequest<RemixStreamingTextResponse>(
+          fetch(
+            '/rest/ai/copy',
+            {
+              method: "POST",
+              body: JSON.stringify({
+                prompt,
+                projectId,
+                textInstances: JSON.parse(textInstances),
+              }),
+              signal: abort.current.signal,
+            },
+          ),
+          {
+            signal: abort.current.signal,
+            onChunk: (id, { completion, done }) => {
+              // Log the completion.
+              console.log(completion)
+              if (done) {
+                doSomething(completion);
+              }
+            },
+          }
+        ).then((result) => {
+          abort.current = null;
+          if (typeof result !== "string") {
+            alert("Error " + result.type);
+          }
+          setIsLoading(false);
         });
       }}
     >

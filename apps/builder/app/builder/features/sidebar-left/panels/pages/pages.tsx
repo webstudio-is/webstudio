@@ -21,17 +21,15 @@ import {
   PlusIcon,
 } from "@webstudio-is/icons";
 import type { Page, Pages } from "@webstudio-is/sdk";
-import type { Publish } from "~/shared/pubsub";
 import type { TabName } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./settings";
-import { pagesStore, selectedPageIdStore } from "~/shared/nano-states";
+import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
-  publish: Publish;
 };
 
 type PagesTreeNode =
@@ -131,7 +129,7 @@ const PagesPanel = ({
   onEdit?: (pageId: string | undefined) => void;
   editingPageId?: string;
 }) => {
-  const pages = useStore(pagesStore);
+  const pages = useStore($pages);
   const pagesTree = useMemo(() => pages && toTreeData(pages), [pages]);
 
   const renderItem = useCallback(
@@ -212,13 +210,13 @@ const PagesPanel = ({
           onSelect={selectTreeNode}
           itemData={pagesTree}
           renderItem={renderItem}
-          getItemChildren={(nodeId) => {
+          getItemChildren={([nodeId]) => {
             if (nodeId === pagesTree.id && pagesTree.type === "folder") {
               return pagesTree.children;
             }
             return [];
           }}
-          isItemHidden={(itemId) => itemId === pagesTree.id}
+          isItemHidden={([itemId]) => itemId === pagesTree.id}
           getIsExpanded={() => true}
         />
       </Box>
@@ -226,8 +224,8 @@ const PagesPanel = ({
   );
 };
 
-export const TabContent = (props: TabContentProps) => {
-  const currentPageId = useStore(selectedPageIdStore);
+export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
+  const currentPageId = useStore($selectedPageId);
   const newPageId = "new-page";
   const [editingPageId, setEditingPageId] = useState<string>();
 
@@ -238,13 +236,16 @@ export const TabContent = (props: TabContentProps) => {
   return (
     <>
       <PagesPanel
-        onClose={() => props.onSetActiveTab("none")}
+        onClose={() => onSetActiveTab("none")}
         onCreateNewPage={() =>
           setEditingPageId((current) =>
             current === newPageId ? undefined : newPageId
           )
         }
-        onSelect={switchPage}
+        onSelect={(pageId) => {
+          switchPage(pageId);
+          onSetActiveTab("none");
+        }}
         selectedPageId={currentPageId}
         onEdit={setEditingPageId}
         editingPageId={editingPageId}
@@ -267,6 +268,10 @@ export const TabContent = (props: TabContentProps) => {
               if (editingPageId === currentPageId) {
                 switchPage();
               }
+            }}
+            onDuplicate={(newPageId) => {
+              setEditingPageId(undefined);
+              switchPage(newPageId);
             }}
             pageId={editingPageId}
             key={editingPageId}

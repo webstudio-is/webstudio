@@ -1,8 +1,9 @@
 import { describe, test, expect } from "@jest/globals";
-import type { Page } from "@webstudio-is/sdk";
+import type { Page, Pages } from "@webstudio-is/sdk";
 import { findPageByIdOrPath } from "./pages-utils";
 
 const pages = {
+  meta: {},
   homePage: {
     id: "home",
     path: "/",
@@ -21,7 +22,7 @@ const pages = {
       meta: {},
     } satisfies Page,
   ],
-};
+} satisfies Pages;
 
 describe("Find by id or path", () => {
   test("home page by id", () => {

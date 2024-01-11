@@ -2,15 +2,24 @@ import type { Style, StyleProperty, StyleValue } from "../schema";
 import { toValue, type TransformValue } from "./to-value";
 import { toProperty } from "./to-property";
 
-class StylePropertyMap {
+export class StylePropertyMap {
   #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
-  #isDirty = false;
+  #isDirty = true;
   #string = "";
   #indent = 0;
   #transformValue?: TransformValue;
-  onChange?: () => void;
-  constructor(transformValue?: TransformValue) {
+  #onChange?: () => void;
+  constructor(
+    style: Style,
+    transformValue?: TransformValue,
+    onChange?: () => void
+  ) {
     this.#transformValue = transformValue;
+    this.#onChange = onChange;
+    let property: StyleProperty;
+    for (property in style) {
+      this.#styleMap.set(property, style[property]);
+    }
   }
   setTransformer(transformValue: TransformValue) {
     this.#transformValue = transformValue;
@@ -18,7 +27,10 @@ class StylePropertyMap {
   set(property: StyleProperty, value?: StyleValue) {
     this.#styleMap.set(property, value);
     this.#isDirty = true;
-    this.onChange?.();
+    this.#onChange?.();
+  }
+  get(property: StyleProperty) {
+    return this.#styleMap.get(property);
   }
   has(property: StyleProperty) {
     return this.#styleMap.has(property);
@@ -32,12 +44,12 @@ class StylePropertyMap {
   delete(property: StyleProperty) {
     this.#styleMap.delete(property);
     this.#isDirty = true;
-    this.onChange?.();
+    this.#onChange?.();
   }
   clear() {
     this.#styleMap.clear();
     this.#isDirty = true;
-    this.onChange?.();
+    this.#onChange?.();
   }
   toString({ indent = 0 } = {}) {
     if (this.#isDirty === false && indent === this.#indent) {
@@ -66,23 +78,18 @@ class StylePropertyMap {
 export class StyleRule {
   styleMap;
   selectorText;
-  onChange?: () => void;
   constructor(
     selectorText: string,
-    style: Style,
-    transformValue?: TransformValue
+    style: StylePropertyMap | Style,
+    transformValue?: TransformValue,
+    onChange?: () => void
   ) {
-    this.styleMap = new StylePropertyMap(transformValue);
     this.selectorText = selectorText;
-    let property: StyleProperty;
-    for (property in style) {
-      this.styleMap.set(property, style[property]);
-    }
-    this.styleMap.onChange = this.#onChange;
+    this.styleMap =
+      style instanceof StylePropertyMap
+        ? style
+        : new StylePropertyMap(style, transformValue, onChange);
   }
-  #onChange = () => {
-    this.onChange?.();
-  };
   get cssText() {
     return this.toString();
   }
@@ -102,25 +109,29 @@ export type MediaRuleOptions = {
 
 export class MediaRule {
   options: MediaRuleOptions;
-  rules: Array<StyleRule | PlaintextRule> = [];
+  rules: Map<string, StyleRule | PlaintextRule>;
   #mediaType;
   constructor(options: MediaRuleOptions = {}) {
     this.options = options;
+    this.rules = new Map();
     this.#mediaType = options.mediaType ?? "all";
   }
   insertRule(rule: StyleRule | PlaintextRule) {
-    this.rules.push(rule);
+    this.rules.set(
+      "selectorText" in rule ? rule.selectorText : rule.cssText,
+      rule
+    );
     return rule;
   }
   get cssText() {
     return this.toString();
   }
   toString() {
-    if (this.rules.length === 0) {
+    if (this.rules.size === 0) {
       return "";
     }
     const rules = [];
-    for (const rule of this.rules) {
+    for (const rule of this.rules.values()) {
       rules.push(rule.toString({ indent: 2 }));
     }
     let conditionText = "";
@@ -139,9 +150,10 @@ export class MediaRule {
 
 export class PlaintextRule {
   cssText;
-  styleMap = new StylePropertyMap();
+  styleMap: StylePropertyMap;
   constructor(cssText: string) {
     this.cssText = cssText;
+    this.styleMap = new StylePropertyMap({});
   }
   toString() {
     return this.cssText;

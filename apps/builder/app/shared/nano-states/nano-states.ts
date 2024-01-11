@@ -4,35 +4,36 @@ import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import type { ItemDropTarget, Placement } from "@webstudio-is/design-system";
-import {
-  createScope,
-  type Assets,
-  type DataSource,
-  type DataSources,
-  type Instance,
-  type Prop,
-  type Props,
-  type StyleDecl,
-  type Styles,
-  type StyleSource,
-  type StyleSources,
-  type StyleSourceSelections,
+import type {
+  Assets,
+  DataSource,
+  DataSources,
+  Instance,
+  Prop,
+  Props,
+  Resource,
+  StyleDecl,
+  Styles,
+  StyleSource,
+  StyleSources,
+  StyleSourceSelections,
 } from "@webstudio-is/sdk";
-import { generateDataSources } from "@webstudio-is/react-sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
 import type { htmlTags as HtmlTags } from "html-tags";
-import { instancesStore, selectedInstanceSelectorStore } from "./instances";
-import { selectedPageStore } from "./pages";
+import { $instances, $selectedInstanceSelector } from "./instances";
+import { $selectedPage } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
 
-export const projectStore = atom<Project | undefined>();
+export const $project = atom<Project | undefined>();
 
-export const rootInstanceStore = computed(
-  [instancesStore, selectedPageStore],
+export const $domains = atom<string[]>([]);
+
+export const $rootInstance = computed(
+  [$instances, $selectedPage],
   (instances, selectedPage) => {
     if (selectedPage === undefined) {
       return undefined;
@@ -41,13 +42,16 @@ export const rootInstanceStore = computed(
   }
 );
 
-export const dataSourcesStore = atom<DataSources>(new Map());
-export const dataSourceVariablesStore = atom<Map<DataSource["id"], unknown>>(
+export const $dataSources = atom<DataSources>(new Map());
+export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
 
-export const propsStore = atom<Props>(new Map());
-export const propsIndexStore = computed(propsStore, (props) => {
+export const $resources = atom(new Map<Resource["id"], Resource>());
+export const $resourceValues = atom(new Map<Resource["id"], unknown>());
+
+export const $props = atom<Props>(new Map());
+export const $propsIndex = computed($props, (props) => {
   const propsByInstanceId = new Map<Instance["id"], Prop[]>();
   for (const prop of props.values()) {
     const { instanceId } = prop;
@@ -63,80 +67,31 @@ export const propsIndexStore = computed(propsStore, (props) => {
   };
 });
 
-// result of executing generated code
-// includes variables, computed expressions and action callbacks
-export const dataSourcesLogicStore = computed(
-  [dataSourcesStore, dataSourceVariablesStore, propsStore],
-  (dataSources, dataSourceVariables, props) => {
-    const { variables, body, output } = generateDataSources({
-      scope: createScope(["_getVariable", "_setVariable", "_output"]),
-      dataSources,
-      props,
-    });
-    let generatedCode = "";
-    for (const [dataSourceId, variable] of variables) {
-      const { valueName, setterName } = variable;
-      const initialValue = JSON.stringify(variable.initialValue);
-      generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
-      generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
-    }
-    generatedCode += body;
-    generatedCode += `let _output = new Map();\n`;
-    for (const [dataSourceId, variableName] of output) {
-      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
-    }
-    generatedCode += `return _output\n`;
-
-    try {
-      const executeFn = new Function(
-        "_getVariable",
-        "_setVariable",
-        generatedCode
-      );
-      const getVariable = (id: string) => {
-        return dataSourceVariables.get(id);
-      };
-      const setVariable = (id: string, value: unknown) => {
-        const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-        dataSourceVariables.set(id, value);
-        dataSourceVariablesStore.set(dataSourceVariables);
-      };
-      return executeFn(getVariable, setVariable);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-    return new Map();
-  }
-);
-
-export const stylesStore = atom<Styles>(new Map());
+export const $styles = atom<Styles>(new Map());
 
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
-  const instanceStylesStore = useMemo(() => {
-    return shallowComputed([stylesIndexStore], (stylesIndex) => {
+  const instance$styles = useMemo(() => {
+    return shallowComputed([$stylesIndex], (stylesIndex) => {
       if (instanceId === undefined) {
         return [];
       }
       return stylesIndex.stylesByInstanceId.get(instanceId) ?? [];
     });
   }, [instanceId]);
-  const instanceStyles = useStore(instanceStylesStore);
+  const instanceStyles = useStore(instance$styles);
   return instanceStyles;
 };
 
-export const styleSourcesStore = atom<StyleSources>(new Map());
+export const $styleSources = atom<StyleSources>(new Map());
 
-export const styleSourceSelectionsStore = atom<StyleSourceSelections>(
-  new Map()
-);
+export const $styleSourceSelections = atom<StyleSourceSelections>(new Map());
 
 export type StyleSourceSelector = {
   styleSourceId: StyleSource["id"];
   state?: string;
 };
 
-export const selectedStyleSourceSelectorStore = atom<
+export const $selectedStyleSourceSelector = atom<
   undefined | StyleSourceSelector
 >(undefined);
 
@@ -149,8 +104,8 @@ export const selectedStyleSourceSelectorStore = atom<
  * though will require to move away from running immer patches on array
  * of styles
  */
-export const stylesIndexStore = computed(
-  [stylesStore, styleSourceSelectionsStore],
+export const $stylesIndex = computed(
+  [$styles, $styleSourceSelections],
   (styles, styleSourceSelections) => {
     const stylesByStyleSourceId = new Map<StyleSource["id"], StyleDecl[]>();
     for (const styleDecl of styles.values()) {
@@ -182,12 +137,12 @@ export const stylesIndexStore = computed(
   }
 );
 
-export const assetsStore = atom<Assets>(new Map());
+export const $assets = atom<Assets>(new Map());
 
-export const selectedInstanceBrowserStyleStore = atom<undefined | Style>();
+export const $selectedInstanceBrowserStyle = atom<undefined | Style>();
 
 // Init with some defaults to avoid undefined
-export const selectedInstanceUnitSizesStore = atom<UnitSizes>({
+export const $selectedInstanceUnitSizes = atom<UnitSizes>({
   ch: 8,
   vw: 3.2,
   vh: 4.8,
@@ -199,7 +154,7 @@ export const selectedInstanceUnitSizesStore = atom<UnitSizes>({
 /**
  * instanceId => tagName store for selected instance and its ancestors
  */
-export const selectedInstanceIntanceToTagStore = atom<
+export const $selectedInstanceIntanceToTag = atom<
   undefined | Map<Instance["id"], HtmlTags>
 >();
 
@@ -207,12 +162,12 @@ export const selectedInstanceIntanceToTagStore = atom<
  * pending means: previous selected instance unmounted,
  * and we don't know yet whether a new one will mount
  **/
-export const selectedInstanceRenderStateStore = atom<
+export const $selectedInstanceRenderState = atom<
   "mounted" | "notMounted" | "pending"
 >("notMounted");
 
-export const selectedInstanceStatesByStyleSourceIdStore = computed(
-  [stylesStore, styleSourceSelectionsStore, selectedInstanceSelectorStore],
+export const $selectedInstanceStatesByStyleSourceId = computed(
+  [$styles, $styleSourceSelections, $selectedInstanceSelector],
   (styles, styleSourceSelections, selectedInstanceSelector) => {
     const statesByStyleSourceId = new Map<StyleSource["id"], string[]>();
     if (selectedInstanceSelector === undefined) {
@@ -241,12 +196,8 @@ export const selectedInstanceStatesByStyleSourceIdStore = computed(
   }
 );
 
-export const selectedInstanceStyleSourcesStore = computed(
-  [
-    styleSourceSelectionsStore,
-    styleSourcesStore,
-    selectedInstanceSelectorStore,
-  ],
+export const $selectedInstanceStyleSources = computed(
+  [$styleSourceSelections, $styleSources, $selectedInstanceSelector],
   (styleSourceSelections, styleSources, selectedInstanceSelector) => {
     const selectedInstanceStyleSources: StyleSource[] = [];
     if (selectedInstanceSelector === undefined) {
@@ -278,8 +229,8 @@ export const selectedInstanceStyleSourcesStore = computed(
   }
 );
 
-export const selectedOrLastStyleSourceSelectorStore = computed(
-  [selectedInstanceStyleSourcesStore, selectedStyleSourceSelectorStore],
+export const $selectedOrLastStyleSourceSelector = computed(
+  [$selectedInstanceStyleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     if (selectedStyleSourceSelector !== undefined) {
       return selectedStyleSourceSelector;
@@ -296,8 +247,8 @@ export const selectedOrLastStyleSourceSelectorStore = computed(
  * Provide selected style source with fallback
  * to the last style source of selected instance
  */
-export const selectedStyleSourceStore = computed(
-  [selectedInstanceStyleSourcesStore, selectedStyleSourceSelectorStore],
+export const $selectedStyleSource = computed(
+  [$selectedInstanceStyleSources, $selectedStyleSourceSelector],
   (styleSources, selectedStyleSourceSelector) => {
     return (
       styleSources.find(
@@ -307,7 +258,13 @@ export const selectedStyleSourceStore = computed(
   }
 );
 
-export const hoveredInstanceSelectorStore = atom<undefined | InstanceSelector>(
+/**
+ * Store the list of active states inferred from dom element
+ * to display style values as remote
+ */
+export const $selectedInstanceStates = atom(new Set<string>());
+
+export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 

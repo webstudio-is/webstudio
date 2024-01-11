@@ -1,38 +1,45 @@
-import store, { type Change } from "immerhin";
+import { nanoid } from "nanoid";
+import { Store, type Change } from "immerhin";
 import { enableMapSet } from "immer";
-import { atom, type WritableAtom } from "nanostores";
+import type { WritableAtom } from "nanostores";
 import { useEffect } from "react";
 import { type Publish, subscribe } from "~/shared/pubsub";
 import {
-  projectStore,
-  pagesStore,
-  instancesStore,
-  propsStore,
-  dataSourcesStore,
-  breakpointsStore,
-  stylesStore,
-  styleSourcesStore,
-  styleSourceSelectionsStore,
-  assetsStore,
-  selectedPageIdStore,
-  selectedPageHashStore,
-  selectedInstanceSelectorStore,
-  selectedInstanceBrowserStyleStore,
-  selectedInstanceUnitSizesStore,
-  selectedInstanceIntanceToTagStore,
-  selectedInstanceRenderStateStore,
-  hoveredInstanceSelectorStore,
+  $project,
+  $pages,
+  $instances,
+  $props,
+  $dataSources,
+  $breakpoints,
+  $styles,
+  $styleSources,
+  $styleSourceSelections,
+  $assets,
+  $selectedPageId,
+  $selectedPageHash,
+  $selectedInstanceSelector,
+  $selectedInstanceBrowserStyle,
+  $selectedInstanceUnitSizes,
+  $selectedInstanceIntanceToTag,
+  $selectedInstanceRenderState,
+  $hoveredInstanceSelector,
   $isPreviewMode,
   synchronizedCanvasStores,
-  synchronizedInstancesStores,
-  synchronizedBreakpointsStores,
-  selectedStyleSourceSelectorStore,
+  $synchronizedInstances,
+  $synchronizedBreakpoints,
+  $selectedStyleSourceSelector,
   synchronizedComponentsMetaStores,
-  dataSourceVariablesStore,
+  $dataSourceVariables,
+  $dragAndDropState,
+  $selectedInstanceStates,
+  $resources,
+  $resourceValues,
 } from "~/shared/nano-states";
-import { $commandMetas } from "~/shared/commands-emitter";
+import { $ephemeralStyles } from "~/canvas/stores";
 
 enableMapSet();
+
+const appId = nanoid();
 
 type StoreData = {
   namespace: string;
@@ -43,8 +50,8 @@ type SyncEventSource = "canvas" | "builder";
 
 declare module "~/shared/pubsub" {
   export interface PubsubMap {
-    handshake: { source: SyncEventSource };
-
+    connect: { sourceAppId: string };
+    disconnect: { sourceAppId: string };
     sendStoreData: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
@@ -53,58 +60,60 @@ declare module "~/shared/pubsub" {
     sendStoreChanges: {
       // distinct source to avoid infinite loop
       source: SyncEventSource;
+      namespace: "client" | "server";
       changes: Change[];
     };
   }
 }
 
+export const clientSyncStore = new Store();
+export const serverSyncStore = new Store();
 const clientStores = new Map<string, WritableAtom<unknown>>();
 const initializedStores = new Set<string>();
 
 export const registerContainers = () => {
   // synchronize patches
-  store.register("pages", pagesStore);
-  store.register("breakpoints", breakpointsStore);
-  store.register("instances", instancesStore);
-  store.register("styles", stylesStore);
-  store.register("styleSources", styleSourcesStore);
-  store.register("styleSourceSelections", styleSourceSelectionsStore);
-  store.register("props", propsStore);
-  store.register("dataSources", dataSourcesStore);
-  store.register("assets", assetsStore);
-  store.register("commandMetas", $commandMetas);
+  serverSyncStore.register("pages", $pages);
+  serverSyncStore.register("breakpoints", $breakpoints);
+  serverSyncStore.register("instances", $instances);
+  serverSyncStore.register("styles", $styles);
+  serverSyncStore.register("styleSources", $styleSources);
+  serverSyncStore.register("styleSourceSelections", $styleSourceSelections);
+  serverSyncStore.register("props", $props);
+  serverSyncStore.register("dataSources", $dataSources);
+  serverSyncStore.register("resources", $resources);
+  serverSyncStore.register("assets", $assets);
   // synchronize whole states
-  clientStores.set("project", projectStore);
-  clientStores.set("dataSourceVariables", dataSourceVariablesStore);
-  clientStores.set("selectedPageId", selectedPageIdStore);
-  clientStores.set("selectedPageHash", selectedPageHashStore);
-  clientStores.set("selectedInstanceSelector", selectedInstanceSelectorStore);
+  clientStores.set("project", $project);
+  clientStores.set("dataSourceVariables", $dataSourceVariables);
+  clientStores.set("resourceValues", $resourceValues);
+  clientStores.set("selectedPageId", $selectedPageId);
+  clientStores.set("selectedPageHash", $selectedPageHash);
+  clientStores.set("selectedInstanceSelector", $selectedInstanceSelector);
   clientStores.set(
     "selectedInstanceBrowserStyle",
-    selectedInstanceBrowserStyleStore
+    $selectedInstanceBrowserStyle
   );
   clientStores.set(
-    "selectedInstanceIntanceToTagStore",
-    selectedInstanceIntanceToTagStore
+    "$selectedInstanceIntanceToTag",
+    $selectedInstanceIntanceToTag
   );
+  clientStores.set("$selectedInstanceUnitSizes", $selectedInstanceUnitSizes);
   clientStores.set(
-    "selectedInstanceUnitSizesStore",
-    selectedInstanceUnitSizesStore
+    "$selectedInstanceRenderState",
+    $selectedInstanceRenderState
   );
-  clientStores.set(
-    "selectedInstanceRenderStateStore",
-    selectedInstanceRenderStateStore
-  );
-  clientStores.set("hoveredInstanceSelector", hoveredInstanceSelectorStore);
+  clientStores.set("hoveredInstanceSelector", $hoveredInstanceSelector);
   clientStores.set("isPreviewMode", $isPreviewMode);
-  clientStores.set(
-    "selectedStyleSourceSelector",
-    selectedStyleSourceSelectorStore
-  );
-  for (const [name, store] of synchronizedBreakpointsStores) {
+  clientStores.set("selectedStyleSourceSelector", $selectedStyleSourceSelector);
+  clientStores.set("dragAndDropState", $dragAndDropState);
+  clientStores.set("ephemeralStyles", $ephemeralStyles);
+  clientStores.set("selectedInstanceStates", $selectedInstanceStates);
+
+  for (const [name, store] of $synchronizedBreakpoints) {
     clientStores.set(name, store);
   }
-  for (const [name, store] of synchronizedInstancesStores) {
+  for (const [name, store] of $synchronizedInstances) {
     clientStores.set(name, store);
   }
   for (const [name, store] of synchronizedCanvasStores) {
@@ -131,16 +140,21 @@ export const registerContainers = () => {
 const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   const unsubscribeRemoteChanges = subscribe(
     "sendStoreChanges",
-    ({ source, changes }) => {
+    ({ source, namespace, changes }) => {
       /// prevent reapplying own changes
       if (source === name) {
         return;
       }
-      store.createTransactionFromChanges(changes, "remote");
+      if (namespace === "server") {
+        serverSyncStore.createTransactionFromChanges(changes, "remote");
+      }
+      if (namespace === "client") {
+        clientSyncStore.createTransactionFromChanges(changes, "remote");
+      }
     }
   );
 
-  const unsubscribeStoreChanges = store.subscribe(
+  const unsubscribeStoreChanges = serverSyncStore.subscribe(
     (_transactionId, changes, source) => {
       // prevent sending remote patches back
       if (source === "remote") {
@@ -151,6 +165,25 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
         type: "sendStoreChanges",
         payload: {
           source: name,
+          namespace: "server",
+          changes,
+        },
+      });
+    }
+  );
+
+  const unsubscribeClientImmerhinStoreChanges = clientSyncStore.subscribe(
+    (_transactionId, changes, source) => {
+      // prevent sending remote patches back
+      if (source === "remote") {
+        return;
+      }
+
+      publish({
+        type: "sendStoreChanges",
+        payload: {
+          source: name,
+          namespace: "client",
           changes,
         },
       });
@@ -160,6 +193,7 @@ const syncStoresChanges = (name: SyncEventSource, publish: Publish) => {
   return () => {
     unsubscribeRemoteChanges();
     unsubscribeStoreChanges();
+    unsubscribeClientImmerhinStoreChanges();
   };
 };
 
@@ -175,17 +209,21 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
       }
       for (const { namespace, value } of data) {
         // apply immerhin stores data
-        const container = store.containers.get(namespace);
+        const container = serverSyncStore.containers.get(namespace);
         if (container) {
           container.set(value);
         }
+        const clientContainer = clientSyncStore.containers.get(namespace);
+        if (clientContainer) {
+          clientContainer.set(value);
+        }
         // apply state stores data
-        const stateStore = clientStores.get(namespace);
-        if (stateStore) {
+        const $state = clientStores.get(namespace);
+        if ($state) {
           // should be called before store set
           // to be accessible in listen callback
           latestData.set(namespace, value);
-          stateStore.set(value);
+          $state.set(value);
         }
       }
     }
@@ -228,109 +266,64 @@ const syncStoresState = (name: SyncEventSource, publish: Publish) => {
   };
 };
 
-export const handshakenStore = atom(false);
-
-const handshakeAndSyncStores = (
-  source: SyncEventSource,
-  publish: Publish,
-  sync: (publish: Publish) => () => void
-) => {
-  const actions: Parameters<typeof publish>[0][] = [];
-
-  // Until builder is ready store action in local cache
-  const publishAction: typeof publish = (action) => {
-    const destinationReady = handshakenStore.get();
-    if (destinationReady) {
-      return publish(action);
-    }
-    actions.push({ payload: undefined, ...action });
-  };
-
-  const unsubscribe = sync(publishAction);
-
-  const handshakeAction = {
-    type: "handshake",
-    payload: {
-      source,
-    },
-  } as const;
-
-  publish(handshakeAction);
-
-  const destinationStoreReady = subscribe("handshake", (payload) => {
-    if (source === payload.source) {
-      return;
-    }
-
-    const destinationReady = handshakenStore.get();
-    if (destinationReady) {
-      return;
-    }
-
-    // We need to publish it here last time
-    publish(handshakeAction);
-
-    for (const action of actions) {
-      publish(action);
-    }
-
-    // cleanup
-    actions.length = 0;
-
-    handshakenStore.set(true);
-
-    destinationStoreReady();
-  });
-
-  return () => {
-    destinationStoreReady();
-    unsubscribe();
-  };
-};
-
 export const useCanvasStore = (publish: Publish) => {
   useEffect(() => {
-    return handshakeAndSyncStores("canvas", publish, (publish) => {
-      const unsubscribeStoresState = syncStoresState("canvas", publish);
-      const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
-
-      // immerhin data is sent only initially so not part of syncStoresState
-      // expect data to be populated by the time effect is called
-      const data = [];
-      for (const [namespace, store] of clientStores) {
-        if (initializedStores.has(namespace)) {
-          data.push({
-            namespace,
-            value: store.get(),
-          });
-        }
-      }
-      publish({
-        type: "sendStoreData",
-        payload: {
-          source: "canvas",
-          data,
-        },
-      });
-
-      return () => {
-        unsubscribeStoresState();
-        unsubscribeStoresChanges();
-      };
+    // connect to builder to get latest changes
+    publish({
+      type: "connect",
+      payload: { sourceAppId: appId },
     });
+
+    // immerhin data is sent only initially so not part of syncStoresState
+    // expect data to be populated by the time effect is called
+    const data = [];
+    for (const [namespace, store] of clientStores) {
+      if (initializedStores.has(namespace)) {
+        data.push({
+          namespace,
+          value: store.get(),
+        });
+      }
+    }
+    publish({
+      type: "sendStoreData",
+      payload: {
+        source: "canvas",
+        data,
+      },
+    });
+
+    // subscribe stores after connect even so builder is ready to receive
+    // changes from immerhin queue
+    const unsubscribeStoresState = syncStoresState("canvas", publish);
+    const unsubscribeStoresChanges = syncStoresChanges("canvas", publish);
+
+    return () => {
+      publish({
+        type: "disconnect",
+        payload: { sourceAppId: appId },
+      });
+      unsubscribeStoresState();
+      unsubscribeStoresChanges();
+    };
   }, [publish]);
 };
 
 export const useBuilderStore = (publish: Publish) => {
   useEffect(() => {
-    return handshakeAndSyncStores("builder", publish, (publish) => {
-      const unsubscribeStoresState = syncStoresState("builder", publish);
-      const unsubscribeStoresChanges = syncStoresChanges("builder", publish);
-
+    let unsubscribeStoresState: undefined | (() => void);
+    let unsubscribeStoresChanges: undefined | (() => void);
+    const unsubscribeConnect = subscribe("connect", () => {
+      // subscribe stores after connection so canvas is ready to receive
+      // changes from immerhin queue
+      // @todo subscribe prematurely and compute initial changes
+      // from current state whenever new app is connected
+      unsubscribeStoresState = syncStoresState("builder", publish);
+      unsubscribeStoresChanges = syncStoresChanges("builder", publish);
       // immerhin data is sent only initially so not part of syncStoresState
       // expect data to be populated by the time effect is called
       const data = [];
-      for (const [namespace, container] of store.containers) {
+      for (const [namespace, container] of serverSyncStore.containers) {
         data.push({
           namespace,
           value: container.get(),
@@ -351,17 +344,18 @@ export const useBuilderStore = (publish: Publish) => {
           data,
         },
       });
-
-      return () => {
-        unsubscribeStoresState();
-        unsubscribeStoresChanges();
-      };
     });
-  }, [publish]);
 
-  useEffect(() => {
+    const unsubscribeDisconnect = subscribe("disconnect", () => {
+      unsubscribeStoresState?.();
+      unsubscribeStoresChanges?.();
+    });
+
     return () => {
-      handshakenStore.set(false);
+      unsubscribeConnect();
+      unsubscribeDisconnect();
+      unsubscribeStoresState?.();
+      unsubscribeStoresChanges?.();
     };
-  }, []);
+  }, [publish]);
 };

@@ -21,7 +21,7 @@ type ImageProps = React.ComponentProps<typeof ImagePrimitive>;
  **/
 const USE_CLOUDFLARE_IMAGE_TRANSFORM = false;
 
-// For cloudflare image transform testing, logo should be the most consistent image on the site
+// For cloudflare image transform testing, logo should be the most consistent image on the project
 const REMOTE_SELF_DOMAIN_IMAGE = "https://webstudio.is/logo.webp";
 
 const imageSrc = USE_CLOUDFLARE_IMAGE_TRANSFORM

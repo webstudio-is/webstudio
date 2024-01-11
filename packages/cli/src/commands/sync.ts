@@ -96,9 +96,7 @@ export const sync = async (
 
     if (projectConfig === undefined) {
       spinner.fail(
-        `Project config is not found, please run ${pc.dim(
-          "webstudio-cli link"
-        )}`
+        `Project config is not found, please run ${pc.dim("webstudio link")}`
       );
       return;
     }

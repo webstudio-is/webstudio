@@ -1,11 +1,11 @@
-import store from "immerhin";
 import {
   type KeyboardEventHandler,
   useRef,
   useEffect,
   useCallback,
 } from "react";
-import { instancesStore, selectedInstanceStore } from "~/shared/nano-states";
+import { $instances, $selectedInstance } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 
 type Setting = "label";
 type Value = string;
@@ -46,11 +46,11 @@ export const useSettingsLogic = () => {
   };
 
   const updateLabel = useCallback(() => {
-    const selectedInstance = selectedInstanceStore.get();
+    const selectedInstance = $selectedInstance.get();
     if (selectedInstance === undefined) {
       return;
     }
-    store.createTransaction([instancesStore], (instances) => {
+    serverSyncStore.createTransaction([$instances], (instances) => {
       const instance = instances.get(selectedInstance.id);
       if (instance === undefined) {
         return;

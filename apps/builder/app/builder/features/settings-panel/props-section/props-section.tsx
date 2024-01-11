@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import type { Instance } from "@webstudio-is/sdk";
 import {
   theme,
@@ -15,11 +14,11 @@ import {
   InputField,
   NestedInputButton,
 } from "@webstudio-is/design-system";
-import type { Publish } from "~/shared/pubsub";
 import {
-  dataSourceVariablesStore,
-  propsIndexStore,
-  propsStore,
+  $propValuesByInstanceSelector,
+  $propsIndex,
+  $props,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
@@ -33,6 +32,7 @@ import {
   type PropAndMeta,
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
+import { serverSyncStore } from "~/shared/sync";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -91,11 +91,12 @@ const PropsCombobox = ({
 const renderProperty = (
   {
     propsLogic: logic,
+    propValues,
     setCssProperty,
     component,
     instanceId,
   }: PropsSectionProps,
-  { prop, propName, meta }: PropAndMeta,
+  { prop, propName, meta, readOnly }: PropAndMeta,
   deletable?: boolean
 ) =>
   renderControl({
@@ -103,11 +104,15 @@ const renderProperty = (
     instanceId,
     meta,
     prop,
+    computedValue: propValues.get(propName),
     propName,
-    onDelete: deletable
-      ? () => logic.handleDelete({ prop, propName })
-      : undefined,
-    onSoftDelete: () => prop && logic.handleSoftDelete(prop),
+    readOnly,
+    deletable: deletable ?? false,
+    onDelete: () => {
+      if (prop) {
+        logic.handleDelete(prop);
+      }
+    },
     onChange: (propValue, asset) => {
       logic.handleChange({ prop, propName }, propValue);
 
@@ -119,10 +124,18 @@ const renderProperty = (
         "width" in asset.meta &&
         "height" in asset.meta
       ) {
-        setCssProperty("aspectRatio")({
-          type: "unit",
-          unit: "number",
-          value: asset.meta.width / asset.meta.height,
+        logic.handleChangeByPropName("width", {
+          value: asset.meta.width,
+          type: "number",
+        });
+        logic.handleChangeByPropName("height", {
+          value: asset.meta.height,
+          type: "number",
+        });
+
+        setCssProperty("height")({
+          type: "keyword",
+          value: "fit-content",
         });
       }
     },
@@ -145,6 +158,7 @@ const AddPropertyForm = ({
 
 type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
+  propValues: Map<string, unknown>;
   component: Instance["component"];
   instanceId: string;
   setCssProperty: SetCssProperty;
@@ -192,48 +206,41 @@ export const PropsSection = (props: PropsSectionProps) => {
 
 export const PropsSectionContainer = ({
   selectedInstance: instance,
-  publish,
 }: {
-  publish: Publish;
   selectedInstance: Instance;
 }) => {
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
-    publish,
   });
-  const { propsByInstanceId } = useStore(propsIndexStore);
+  const { propsByInstanceId } = useStore($propsIndex);
+  const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
+  const instanceSelector = useStore($selectedInstanceSelector);
+  const propValues = propValuesByInstanceSelector.get(
+    JSON.stringify(instanceSelector)
+  );
 
   const logic = usePropsLogic({
     instance,
     props: propsByInstanceId.get(instance.id) ?? [],
+
     updateProp: (update) => {
-      const props = propsStore.get();
-      const prop = props.get(update.id);
-      // update data source instead when real prop has data source type
-      if (prop?.type === "dataSource") {
-        const dataSourceId = prop.value;
-        const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-        dataSourceVariables.set(dataSourceId, update.value);
-        dataSourceVariablesStore.set(dataSourceVariables);
-      } else {
-        store.createTransaction([propsStore], (props) => {
-          const istanceProps = propsByInstanceId.get(instance.id) ?? [];
-          // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
-          // see for details https://github.com/webstudio-is/webstudio/pull/2170
-          const duplicateProps = istanceProps
-            .filter((prop) => prop.id !== update.id)
-            .filter((prop) => prop.name === update.name);
-
-          for (const prop of duplicateProps) {
-            props.delete(prop.id);
-          }
-
-          props.set(update.id, update);
-        });
-      }
+      const { propsByInstanceId } = $propsIndex.get();
+      const instanceProps = propsByInstanceId.get(instance.id) ?? [];
+      // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
+      // see for details https://github.com/webstudio-is/webstudio/pull/2170
+      const duplicateProps = instanceProps
+        .filter((prop) => prop.id !== update.id)
+        .filter((prop) => prop.name === update.name);
+      serverSyncStore.createTransaction([$props], (props) => {
+        for (const prop of duplicateProps) {
+          props.delete(prop.id);
+        }
+        props.set(update.id, update);
+      });
     },
+
     deleteProp: (propId) => {
-      store.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([$props], (props) => {
         props.delete(propId);
       });
     },
@@ -248,6 +255,7 @@ export const PropsSectionContainer = ({
   return (
     <PropsSection
       propsLogic={logic}
+      propValues={propValues ?? new Map()}
       component={instance.component}
       instanceId={instance.id}
       setCssProperty={setCssProperty}

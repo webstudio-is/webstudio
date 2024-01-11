@@ -83,7 +83,10 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, Props>((props, ref) => {
   const { code, executeScriptOnCanvas, clientOnly, ...rest } = props;
 
   // code can be actually undefined when prop is not provided
-  if (code === undefined || code.trim().length === 0) {
+  //
+  // cast code to string in case non-string value is computed
+  // from expression
+  if (code === undefined || String(code).trim().length === 0) {
     return <Placeholder innerRef={ref} {...rest} />;
   }
 

@@ -25,24 +25,20 @@ export const heroiconsToSvgEmbed = (
 
           const icon = name ? getIcon(name, type) : null;
 
-          if (icon === null) {
-            node.component = "Text";
-            node.children = [
-              { type: "text", value: name ? `Icon ${name}` : "Icon" },
-            ];
-          } else {
-            node.component = "HtmlEmbed";
+          node.component = "HtmlEmbed";
 
-            node.label = `${name} icon`;
+          node.label = name ? `${name} icon` : "Icon";
 
-            node.props = [
-              {
-                type: "string",
-                name: "code",
-                value: icon || "",
-              },
-            ];
-          }
+          node.props = [
+            {
+              type: "string",
+              name: "code",
+              value:
+                icon === null
+                  ? unknownIcon((name || "I")[0].toUpperCase())
+                  : icon,
+            },
+          ];
         } else {
           node.component = "Text";
           node.children = [{ type: "text", value: "Icon" }];
@@ -50,3 +46,6 @@ export const heroiconsToSvgEmbed = (
       }
     }
   });
+
+const unknownIcon = (text: string) =>
+  `<svg style="height: 1.1em;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="transparent" stroke="currentColor" stroke-width="2" /><text x="50%" y="50%" text-anchor="middle" dy=".3em" font-size="14">${text}</text></svg>`;

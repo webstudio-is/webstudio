@@ -87,6 +87,13 @@ export const loginPath = (params: {
 
 export const logoutPath = () => "/logout";
 
+export const userPlanSubscriptionPath = () => {
+  const urlSearchParams = new URLSearchParams();
+  urlSearchParams.set("return_url", window.location.href);
+
+  return `/n8n/billing_portal/sessions?${urlSearchParams.toString()}`;
+};
+
 export const authCallbackPath = ({
   provider,
 }: {
@@ -131,29 +138,18 @@ export const restPatchPath = (props: { authToken?: string }) => {
   }`;
 };
 
-export const getBuildUrl = ({
-  buildOrigin,
-  project,
-}: {
-  buildOrigin: string;
-  project: Project;
-}) => {
-  const url = new URL(buildOrigin);
+export const getBuildUrl = ({ project }: { project: Project }) => {
+  // const url = new URL(buildOrigin);
+  const searchParams = new URLSearchParams();
+  searchParams.set("projectId", project.id);
 
-  if (env.BUILD_REQUIRE_SUBDOMAIN) {
-    url.host = `${project.domain}.${url.host}`;
-  }
-
-  url.searchParams.set("projectId", project.id);
-
-  return url.toString();
+  return `/?${searchParams.toString()}`;
 };
 
 export const getPublishedUrl = (domain: string) => {
   const protocol = typeof location === "object" ? location.protocol : "https:";
 
-  const publisherHost =
-    env.PUBLISHER_ENDPOINT && env.PUBLISHER_HOST ? env.PUBLISHER_HOST : "";
+  const publisherHost = env.PUBLISHER_HOST ?? "";
 
   // We use location.host to get the hostname and port in development mode and to not break local testing.
   const localhost = typeof location === "object" ? location.host : "";
@@ -163,4 +159,7 @@ export const getPublishedUrl = (domain: string) => {
   return `${protocol}//${domain}.${host}`;
 };
 
-export const restAiCopy = () => `/rest/ai/copy`;
+export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>
+  typeof subEndpoint === "string" ? `/rest/ai/${subEndpoint}` : "/rest/ai";
+
+export const restResourcesLoader = () => `/rest/resources-loader`;

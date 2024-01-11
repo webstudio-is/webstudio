@@ -4,6 +4,7 @@ import { usePress } from "@react-aria/interactions";
 import {
   type WsComponentMeta,
   componentCategories,
+  collectionComponent,
 } from "@webstudio-is/react-sdk";
 import {
   theme,
@@ -24,9 +25,10 @@ import {
   useDraggable,
 } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import { registeredComponentMetasStore } from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -34,7 +36,7 @@ type TabContentProps = {
 };
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
-  const metaByComponentName = useStore(registeredComponentMetasStore);
+  const metaByComponentName = useStore($registeredComponentMetas);
   const { metaByCategory, componentNamesByMeta } = useMemo(
     () => getMetaMaps(metaByComponentName),
     [metaByComponentName]
@@ -82,7 +84,13 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                       (meta: WsComponentMeta, index) => {
                         const component = componentNamesByMeta.get(meta);
                         if (component === undefined) {
-                          return null;
+                          return;
+                        }
+                        if (
+                          component === collectionComponent &&
+                          isFeatureEnabled("bindings") === false
+                        ) {
+                          return;
                         }
                         return (
                           <Tooltip

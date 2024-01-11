@@ -7,8 +7,14 @@ type Props = Omit<ComponentProps<"a">, "target"> & {
   target?: "_self" | "_blank" | "_parent" | "_top";
 };
 
-export const Link = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
-  return <a {...props} href={props.href ?? "#"} ref={ref} />;
-});
+export const Link = forwardRef<HTMLAnchorElement, Props>(
+  ({ children, ...props }, ref) => {
+    return (
+      <a {...props} href={props.href ?? "#"} ref={ref}>
+        {children ?? "Link text you can edit"}
+      </a>
+    );
+  }
+);
 
 Link.displayName = "Link";

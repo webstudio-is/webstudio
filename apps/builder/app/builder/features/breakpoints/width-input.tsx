@@ -12,17 +12,12 @@ import {
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
-import { breakpointsStore, isResizingCanvasStore } from "~/shared/nano-states";
+import { $breakpoints, $isResizingCanvas } from "~/shared/nano-states";
 import {
-  selectedBreakpointIdStore,
-  selectedBreakpointStore,
+  $selectedBreakpointId,
+  $selectedBreakpoint,
 } from "~/shared/nano-states";
-import {
-  useState,
-  type ChangeEvent,
-  type KeyboardEvent,
-  useEffect,
-} from "react";
+import { useState, type KeyboardEvent, useEffect } from "react";
 
 const useEnhancedInput = ({
   onChange,
@@ -55,15 +50,23 @@ const useEnhancedInput = ({
     onChangeComplete: handleChangeComplete,
   });
 
+  const getValue = () => {
+    const value = inputRef.current?.valueAsNumber;
+    return typeof value === "number" && Number.isNaN(value) === false
+      ? value
+      : min;
+  };
+
   return {
     ref: scrubRef,
     inputRef,
-    onChange(event: ChangeEvent<HTMLInputElement>) {
-      setIntermediateValue(event.target.valueAsNumber);
+    onChange() {
+      setIntermediateValue(getValue());
     },
     onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
       if (event.key === "Enter") {
-        return handleChangeComplete(event.currentTarget.valueAsNumber);
+        handleChangeComplete(getValue());
+        return;
       }
       const nextValue = handleNumericInputArrowKeys(currentValue, event);
       if (nextValue !== currentValue) {
@@ -72,7 +75,7 @@ const useEnhancedInput = ({
       }
     },
     onBlur() {
-      handleChangeComplete(inputRef.current?.valueAsNumber ?? 0);
+      handleChangeComplete(getValue());
     },
     type: "number" as const,
     value: currentValue,
@@ -82,8 +85,8 @@ const useEnhancedInput = ({
 export const WidthInput = ({ min }: { min: number }) => {
   const id = useId();
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const breakpoints = useStore(breakpointsStore);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+  const breakpoints = useStore($breakpoints);
 
   const onChange = (value: number) => {
     setCanvasWidth(value);
@@ -92,24 +95,24 @@ export const WidthInput = ({ min }: { min: number }) => {
       value
     );
     if (applicableBreakpoint) {
-      selectedBreakpointIdStore.set(applicableBreakpoint.id);
+      $selectedBreakpointId.set(applicableBreakpoint.id);
     }
-    if (isResizingCanvasStore.get() === false) {
-      isResizingCanvasStore.set(true);
+    if ($isResizingCanvas.get() === false) {
+      $isResizingCanvas.set(true);
     }
   };
 
   const onChangeComplete = (value: number) => {
     onChange(value);
-    isResizingCanvasStore.set(false);
+    $isResizingCanvas.set(false);
   };
 
   useEffect(() => {
     return () => {
-      // Just in case we haven't received onChangeComplete, make sure we have set isResizingCanvasStore to false,
+      // Just in case we haven't received onChangeComplete, make sure we have set $isResizingCanvas to false,
       // otherwise the canvas will be stuck in a resizing state.
-      if (isResizingCanvasStore.get()) {
-        isResizingCanvasStore.set(false);
+      if ($isResizingCanvas.get()) {
+        $isResizingCanvas.set(false);
       }
     };
   }, []);

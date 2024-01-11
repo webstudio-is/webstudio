@@ -1,18 +1,18 @@
 import { useStore } from "@nanostores/react";
 import { useStyleInfoByInstanceId } from "./shared/style-info";
 import {
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 
 /**
  * Gets styleable parent style
  **/
 export const useParentStyle = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const instances = useStore(instancesStore);
-  const registeredComponentMetas = useStore(registeredComponentMetasStore);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const instances = useStore($instances);
+  const registeredComponentMetas = useStore($registeredComponentMetas);
 
   let parentInstanceSelector: string[] | undefined = undefined;
   for (let i = 1; i < (selectedInstanceSelector?.length ?? 0); ++i) {

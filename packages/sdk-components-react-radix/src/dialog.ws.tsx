@@ -109,14 +109,14 @@ export const metaDialog: WsComponentMeta = {
     {
       type: "instance",
       component: "Dialog",
-      dataSources: {
-        dialogOpen: { type: "variable", initialValue: false },
+      variables: {
+        dialogOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "open",
-          dataSourceName: "dialogOpen",
+          code: "dialogOpen",
         },
         {
           name: "onOpenChange",

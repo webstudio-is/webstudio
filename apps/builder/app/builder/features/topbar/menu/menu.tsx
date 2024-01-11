@@ -1,6 +1,5 @@
 import { useNavigate } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
@@ -29,9 +28,9 @@ import {
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit } from "~/shared/nano-states";
-import { deleteSelectedInstance } from "~/shared/instance-utils";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
+import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -126,13 +125,13 @@ export const Menu = () => {
             Dashboard
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => store.undo()}>
+          <DropdownMenuItem onSelect={() => emitCommand("undo")}>
             Undo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => store.redo()}>
+          <DropdownMenuItem onSelect={() => emitCommand("redo")}>
             Redo
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["shift", "cmd", "z"]} />
@@ -159,7 +158,7 @@ export const Menu = () => {
           </DropdownMenuItem>
 
           */}
-          <DropdownMenuItem onSelect={deleteSelectedInstance}>
+          <DropdownMenuItem onSelect={() => emitCommand("deleteInstance")}>
             Delete
             <DropdownMenuItemRightSlot>
               <ShortcutHint value={["backspace"]} />
@@ -201,6 +200,15 @@ export const Menu = () => {
               disabled={isPublishEnabled === false}
             >
               Publish
+            </DropdownMenuItem>
+          </Tooltip>
+          <Tooltip side="right" content={undefined}>
+            <DropdownMenuItem
+              onSelect={() => {
+                $isProjectSettingsOpen.set(true);
+              }}
+            >
+              Project Settings
             </DropdownMenuItem>
           </Tooltip>
         </DropdownMenuContent>

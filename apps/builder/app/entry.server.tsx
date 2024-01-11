@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/remix";
 import { prisma } from "@webstudio-is/prisma-client";
 import { initSentry } from "./shared/sentry";
 import { handleRequest as handleRequestBuilder } from "./shared/remix";
-import { getBuildParams } from "./shared/router-utils";
+import { isCanvas } from "./shared/router-utils";
 
 initSentry({
   integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
@@ -43,7 +43,7 @@ export default function handleRequest(
     remixContext.staticHandlerContext.matches.some(
       (match) => match.route.id === "routes/_index"
     ) &&
-    getBuildParams(request) !== undefined
+    isCanvas(request)
   ) {
     handle = handleRequestCanvas;
   }

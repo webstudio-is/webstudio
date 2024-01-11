@@ -1,13 +1,13 @@
 import { atom, computed } from "nanostores";
 import type { Page, Pages } from "@webstudio-is/sdk";
 
-export const pagesStore = atom<undefined | Pages>(undefined);
+export const $pages = atom<undefined | Pages>(undefined);
 
-export const selectedPageIdStore = atom<undefined | Page["id"]>(undefined);
-export const selectedPageHashStore = atom<string>("");
+export const $selectedPageId = atom<undefined | Page["id"]>(undefined);
+export const $selectedPageHash = atom<string>("");
 
-export const selectedPageStore = computed(
-  [pagesStore, selectedPageIdStore],
+export const $selectedPage = computed(
+  [$pages, $selectedPageId],
   (pages, selectedPageId) => {
     if (pages === undefined) {
       return undefined;

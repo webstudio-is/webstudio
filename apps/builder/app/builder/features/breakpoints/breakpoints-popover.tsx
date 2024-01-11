@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import store from "immerhin";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   theme,
@@ -22,16 +21,15 @@ import {
   PopoverMenuItemContainer,
   PopoverMenuItemRightSlot,
 } from "@webstudio-is/design-system";
-import { useSubscribe } from "~/shared/pubsub";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { BreakpointsPopoverToolbarButton } from "./breakpoints-popover-toolbar-button";
 import { WidthInput } from "./width-input";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import {
-  breakpointsStore,
-  stylesStore,
-  selectedBreakpointIdStore,
-  selectedBreakpointStore,
+  $breakpoints,
+  $styles,
+  $selectedBreakpointId,
+  $selectedBreakpoint,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
@@ -39,22 +37,18 @@ import {
   isBaseBreakpoint,
   minCanvasWidth,
 } from "~/shared/breakpoints";
-import { scaleStore } from "~/builder/shared/nano-states";
-import { useSetInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { $scale } from "~/builder/shared/nano-states";
+import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { serverSyncStore } from "~/shared/sync";
 
 export const BreakpointsPopover = () => {
   const view = useStore($breakpointsMenuView);
   const [breakpointToDelete, setBreakpointToDelete] = useState<
     Breakpoint | undefined
   >();
-  const breakpoints = useStore(breakpointsStore);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const scale = useStore(scaleStore);
-  const setInitialCanvasWidth = useSetInitialCanvasWidth();
-
-  useSubscribe("clickCanvas", () => {
-    $breakpointsMenuView.set(undefined);
-  });
+  const breakpoints = useStore($breakpoints);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+  const scale = useStore($scale);
 
   if (selectedBreakpoint === undefined) {
     return null;
@@ -64,8 +58,8 @@ export const BreakpointsPopover = () => {
     if (breakpointToDelete === undefined) {
       return;
     }
-    store.createTransaction(
-      [breakpointsStore, stylesStore],
+    serverSyncStore.createTransaction(
+      [$breakpoints, $styles],
       (breakpoints, styles) => {
         const breakpointId = breakpointToDelete.id;
         breakpoints.delete(breakpointId);
@@ -81,7 +75,7 @@ export const BreakpointsPopover = () => {
       const breakpointsArray = Array.from(breakpoints.values());
       const base =
         breakpointsArray.find(isBaseBreakpoint) ?? breakpointsArray[0];
-      selectedBreakpointIdStore.set(base.id);
+      $selectedBreakpointId.set(base.id);
       setInitialCanvasWidth(base.id);
     }
     setBreakpointToDelete(undefined);
@@ -154,7 +148,7 @@ export const BreakpointsPopover = () => {
                         <ListItem
                           asChild
                           onSelect={() => {
-                            selectedBreakpointIdStore.set(breakpoint.id);
+                            $selectedBreakpointId.set(breakpoint.id);
                             setInitialCanvasWidth(breakpoint.id);
                           }}
                           index={index}

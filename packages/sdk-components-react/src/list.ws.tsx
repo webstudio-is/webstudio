@@ -51,6 +51,29 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 3,
+  template: [
+    {
+      type: "instance",
+      component: "List",
+      children: [
+        {
+          type: "instance",
+          component: "ListItem",
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "ListItem",
+          children: [],
+        },
+        {
+          type: "instance",
+          component: "ListItem",
+          children: [],
+        },
+      ],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

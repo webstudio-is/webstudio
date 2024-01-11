@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
-import { paramCase } from "param-case";
+import { kebabCase } from "change-case";
 import {
   type Instances,
   type Instance,
@@ -8,10 +8,11 @@ import {
   createScope,
   parseComponentName,
   getStyleDeclKey,
+  type Page,
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
-  generateCssText,
+  generateCss,
   generateDataFromEmbedTemplate,
   generatePageComponent,
   getIndexesWithinAncestors,
@@ -69,9 +70,8 @@ const generateComponentImports = ({
   return componentImports;
 };
 
-const getStoriesImports = ({ hasState }: { hasState: boolean }) => `
-import { type ReactNode${hasState ? `, useState` : ""} } from "react";
-`;
+const getStoriesImports = ({ hasState }: { hasState: boolean }) =>
+  hasState ? `import { useState } from "react";\n` : "";
 
 const getStoriesExports = (name: string, css: string) => `
 export default {
@@ -86,7 +86,7 @@ const Story = {
 ${css}
       \`}
       </style>
-      <Page />
+      <Page params={{}} resources={{}} />
     </>
   }
 }
@@ -146,13 +146,22 @@ export const generateStories = async () => {
         usedMetas.set(instance.component, meta);
       }
     }
-    const scope = createScope([
-      "Page",
-      "Story",
-      "props",
-      "ReactNode",
-      "useState",
-    ]);
+    const { cssText, classesMap } = generateCss(
+      {
+        assets: [],
+        breakpoints: [
+          [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
+        ],
+        styles: data.styles.map((item) => [getStyleDeclKey(item), item]),
+        styleSourceSelections: data.styleSourceSelections.map((item) => [
+          item.instanceId,
+          item,
+        ]),
+        componentMetas: usedMetas,
+      },
+      { assetBaseUrl: "/", atomic: true }
+    );
+    const scope = createScope(["Page", "Story", "props", "useState"]);
     let content = "";
     content += getStoriesImports({
       hasState: data.dataSources.some(
@@ -166,8 +175,9 @@ export const generateStories = async () => {
     });
     content += `\n`;
     content += generatePageComponent({
+      classesMap,
       scope,
-      rootInstanceId,
+      page: { rootInstanceId } as Page,
       instances,
       props: new Map(data.props.map((prop) => [prop.id, prop])),
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),
@@ -175,24 +185,10 @@ export const generateStories = async () => {
         rootInstanceId,
       ]),
     });
-    const css = generateCssText(
-      {
-        assets: [],
-        breakpoints: [
-          [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
-        ],
-        styles: data.styles.map((item) => [getStyleDeclKey(item), item]),
-        styleSourceSelections: data.styleSourceSelections.map((item) => [
-          item.instanceId,
-          item,
-        ]),
-        componentMetas: usedMetas,
-      },
-      { assetBaseUrl: "/" }
-    );
-    content += getStoriesExports(name, css);
+
+    content += getStoriesExports(name, cssText);
     await writeFile(
-      join(storiesDir, paramCase(name) + ".stories.tsx"),
+      join(storiesDir, kebabCase(name) + ".stories.tsx"),
       content
     );
   }

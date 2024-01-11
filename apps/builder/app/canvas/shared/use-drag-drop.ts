@@ -10,8 +10,8 @@ import {
 } from "@webstudio-is/design-system";
 import {
   $dragAndDropState,
-  instancesStore,
-  registeredComponentMetasStore,
+  $instances,
+  $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { publish, useSubscribe } from "~/shared/pubsub";
 import {
@@ -39,6 +39,7 @@ declare module "~/shared/pubsub" {
     dragMove: DragMovePayload;
     dragStart: DragStartPayload;
     dropTargetChange: undefined | ItemDropTarget;
+    cancelCurrentDrag: undefined;
   }
 }
 
@@ -62,8 +63,8 @@ const findClosestDroppableInstanceSelector = (
   instanceSelector: InstanceSelector,
   dragPayload: DragStartPayload
 ) => {
-  const instances = instancesStore.get();
-  const metas = registeredComponentMetasStore.get();
+  const instances = $instances.get();
+  const metas = $registeredComponentMetas.get();
 
   let insertConstraints: undefined | InsertConstraints;
   if (dragPayload?.type === "insert") {
@@ -95,14 +96,17 @@ const findClosestDroppableInstanceSelector = (
   const componentSelector: string[] = [];
   for (const instanceId of instanceSelector) {
     const component = instances.get(instanceId)?.component;
+    // collection produce fake instances
+    // and fragment does not have constraints
     if (component === undefined) {
-      return;
+      componentSelector.push("Fragment");
+      continue;
     }
     componentSelector.push(component);
   }
 
   const droppableIndex = findClosestDroppableComponentIndex(
-    registeredComponentMetasStore.get(),
+    $registeredComponentMetas.get(),
     componentSelector,
     insertConstraints
   );
@@ -228,8 +232,8 @@ export const useDragAndDrop = () => {
       return (
         findClosestDetachableInstanceSelector(
           instanceSelector,
-          instancesStore.get(),
-          registeredComponentMetasStore.get()
+          $instances.get(),
+          $registeredComponentMetas.get()
         ) ?? false
       );
     },

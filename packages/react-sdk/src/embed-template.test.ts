@@ -1,6 +1,6 @@
 import { expect, test } from "@jest/globals";
 import { generateDataFromEmbedTemplate, namespaceMeta } from "./embed-template";
-import { showAttribute } from "./tree";
+import { showAttribute } from "./props";
 import type { WsComponentMeta } from "./components/component-meta";
 
 const expectString = expect.any(String);
@@ -224,14 +224,14 @@ test("generate data for embedding from props bound to data source variables", ()
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            showOtherBoxDataSource: { type: "variable", initialValue: false },
+          variables: {
+            showOtherBoxDataSource: { initialValue: false },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "showOtherBox",
-              dataSourceName: "showOtherBoxDataSource",
+              code: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -241,9 +241,9 @@ test("generate data for embedding from props bound to data source variables", ()
           component: "Box2",
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "showOtherBoxDataSource",
+              code: "showOtherBoxDataSource",
             },
           ],
           children: [],
@@ -265,16 +265,16 @@ test("generate data for embedding from props bound to data source variables", ()
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "showOtherBox",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: showAttribute,
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
     ],
     dataSources: [
@@ -295,25 +295,21 @@ test("generate data for embedding from props bound to data source variables", ()
   });
 });
 
-test("generate data for embedding from props bound to data source expressions", () => {
+test("generate data for embedding from props with complex expressions", () => {
   expect(
     generateDataFromEmbedTemplate(
       [
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            boxState: { type: "variable", initialValue: "initial" },
-            boxStateSuccess: {
-              type: "expression",
-              code: `boxState === 'success'`,
-            },
+          variables: {
+            boxState: { initialValue: "initial" },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "state",
-              dataSourceName: "boxState",
+              code: "boxState",
             },
           ],
           children: [],
@@ -323,9 +319,9 @@ test("generate data for embedding from props bound to data source expressions", 
           component: "Box2",
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: showAttribute,
-              dataSourceName: "boxStateSuccess",
+              code: "boxState === 'success'",
             },
           ],
           children: [],
@@ -347,16 +343,16 @@ test("generate data for embedding from props bound to data source expressions", 
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "state",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: showAttribute,
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
     dataSources: [
@@ -369,13 +365,6 @@ test("generate data for embedding from props bound to data source expressions", 
           type: "string",
           value: "initial",
         },
-      },
-      {
-        type: "expression",
-        id: expectString,
-        scopeInstanceId: expectString,
-        name: "boxStateSuccess",
-        code: expect.stringMatching(/\$ws\$dataSource\$\w+ === 'success'/),
       },
     ],
     styleSourceSelections: [],
@@ -391,14 +380,14 @@ test("generate data for embedding from action props", () => {
         {
           type: "instance",
           component: "Box1",
-          dataSources: {
-            boxState: { type: "variable", initialValue: "initial" },
+          variables: {
+            boxState: { initialValue: "initial" },
           },
           props: [
             {
-              type: "dataSource",
+              type: "expression",
               name: "state",
-              dataSourceName: "boxState",
+              code: "boxState",
             },
           ],
           children: [
@@ -446,9 +435,9 @@ test("generate data for embedding from action props", () => {
       {
         id: expectString,
         instanceId: expectString,
-        type: "dataSource",
+        type: "expression",
         name: "state",
-        value: expectString,
+        value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
       },
       {
         id: expectString,
@@ -487,6 +476,60 @@ test("generate data for embedding from action props", () => {
           type: "string",
           value: "initial",
         },
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+  });
+});
+
+test("generate data for embedding from parameter props", () => {
+  const data = generateDataFromEmbedTemplate(
+    [
+      {
+        type: "instance",
+        component: "Box",
+        props: [
+          {
+            type: "parameter",
+            name: "myParameter",
+            variableName: "parameterName",
+          },
+        ],
+        children: [],
+      },
+    ],
+    new Map(),
+    defaultBreakpointId
+  );
+  const instanceId = data.instances[0].id;
+  const variableId = data.dataSources[0].id;
+  expect(data).toEqual({
+    children: [{ type: "id", value: instanceId }],
+    instances: [
+      {
+        type: "instance",
+        id: instanceId,
+        component: "Box",
+        children: [],
+      },
+    ],
+    props: [
+      {
+        id: expectString,
+        instanceId,
+        name: "myParameter",
+        type: "parameter",
+        value: variableId,
+      },
+    ],
+    dataSources: [
+      {
+        type: "parameter",
+        id: variableId,
+        scopeInstanceId: instanceId,
+        name: "parameterName",
       },
     ],
     styleSourceSelections: [],

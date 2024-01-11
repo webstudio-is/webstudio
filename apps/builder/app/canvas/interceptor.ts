@@ -1,5 +1,5 @@
 import { findPageByIdOrPath } from "@webstudio-is/project-build";
-import { $isPreviewMode, pagesStore } from "~/shared/nano-states";
+import { $isPreviewMode, $pages } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
@@ -12,7 +12,7 @@ const isAbsoluteUrl = (href: string) => {
 };
 
 const handleLinkClick = (element: HTMLAnchorElement) => {
-  const pages = pagesStore.get();
+  const pages = $pages.get();
   const href = element.getAttribute("href");
   if (href === null || pages === undefined) {
     return;
@@ -33,7 +33,10 @@ const handleLinkClick = (element: HTMLAnchorElement) => {
 
 export const subscribeInterceptedEvents = () => {
   const handleClick = (event: MouseEvent) => {
-    if (event.target instanceof HTMLElement) {
+    if (
+      event.target instanceof HTMLElement ||
+      event.target instanceof SVGElement
+    ) {
       const a = event.target.closest("a");
       if (a) {
         event.preventDefault();

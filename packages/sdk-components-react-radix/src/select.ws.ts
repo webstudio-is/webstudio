@@ -114,15 +114,15 @@ export const metaSelect: WsComponentMeta = {
     {
       type: "instance",
       component: "Select",
-      dataSources: {
-        selectValue: { type: "variable", initialValue: "" },
-        selectOpen: { type: "variable", initialValue: false },
+      variables: {
+        selectValue: { initialValue: "" },
+        selectOpen: { initialValue: false },
       },
       props: [
         {
           name: "value",
-          type: "dataSource",
-          dataSourceName: "selectValue",
+          type: "expression",
+          code: "selectValue",
         },
         {
           name: "onValueChange",
@@ -133,8 +133,8 @@ export const metaSelect: WsComponentMeta = {
         },
         {
           name: "open",
-          type: "dataSource",
-          dataSourceName: "selectOpen",
+          type: "expression",
+          code: "selectOpen",
         },
         {
           name: "onOpenChange",

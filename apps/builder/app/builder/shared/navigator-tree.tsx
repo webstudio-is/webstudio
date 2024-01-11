@@ -2,15 +2,15 @@ import { useCallback, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { shallowEqual } from "shallow-equal";
 import { toast } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
+import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
-  hoveredInstanceSelectorStore,
-  instancesStore,
-  rootInstanceStore,
-  selectedInstanceSelectorStore,
-  textEditingInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
-  registeredComponentMetasStore,
+  $hoveredInstanceSelector,
+  $instances,
+  $rootInstance,
+  $selectedInstanceSelector,
+  $textEditingInstanceSelector,
+  $selectedStyleSourceSelector,
+  $registeredComponentMetas,
   $dragAndDropState,
 } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
@@ -25,10 +25,10 @@ import {
 import { InstanceTree } from "./tree";
 
 export const NavigatorTree = () => {
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const rootInstance = useStore(rootInstanceStore);
-  const instances = useStore(instancesStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const rootInstance = useStore($rootInstance);
+  const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
   const state = useStore($dragAndDropState);
 
   const dragPayload = state.dragPayload;
@@ -71,8 +71,11 @@ export const NavigatorTree = () => {
       const componentSelector: string[] = [];
       for (const instanceId of instanceSelector) {
         const component = instances.get(instanceId)?.component;
+        // collection produce fake instances
+        // and fragment does not have constraints
         if (component === undefined) {
-          return -1;
+          componentSelector.push("Fragment");
+          continue;
         }
         componentSelector.push(component);
       }
@@ -86,10 +89,16 @@ export const NavigatorTree = () => {
   );
 
   const isItemHidden = useCallback(
-    (instanceId: Instance["id"]) =>
-      // fragment is internal component to group other instances
-      // for example to support multiple children in slots
-      instances.get(instanceId)?.component === "Fragment",
+    (instanceSelector: InstanceSelector) => {
+      const [instanceId, parentInstanceId] = instanceSelector;
+      return (
+        // fragment is internal component to group other instances
+        // for example to support multiple children in slots
+        instances.get(instanceId)?.component === "Fragment" ||
+        // hide collection items which are temporary generated
+        instances.get(parentInstanceId)?.component === collectionComponent
+      );
+    },
     [instances]
   );
 
@@ -111,12 +120,12 @@ export const NavigatorTree = () => {
     // TreeNode is refocused during "delete" hot key here https://github.com/webstudio-is/webstudio/blob/5935d7818fba3739e4f16fe710ea468bf9d0ac78/packages/design-system/src/components/tree/tree.tsx#L435
     // and then focus cause handleSelect to be called with the same instanceSelector
     // This avoids additional rerender on node delete
-    if (shallowEqual(selectedInstanceSelectorStore.get(), instanceSelector)) {
+    if (shallowEqual($selectedInstanceSelector.get(), instanceSelector)) {
       return;
     }
-    selectedInstanceSelectorStore.set(instanceSelector);
-    textEditingInstanceSelectorStore.set(undefined);
-    selectedStyleSourceSelectorStore.set(undefined);
+    $selectedInstanceSelector.set(instanceSelector);
+    $textEditingInstanceSelector.set(undefined);
+    $selectedStyleSourceSelector.set(undefined);
   }, []);
 
   if (rootInstance === undefined) {
@@ -132,7 +141,7 @@ export const NavigatorTree = () => {
       isItemHidden={isItemHidden}
       findClosestDroppableIndex={findClosestDroppableIndex}
       onSelect={handleSelect}
-      onHover={hoveredInstanceSelectorStore.set}
+      onHover={$hoveredInstanceSelector.set}
       onDragItemChange={(dragInstanceSelector) => {
         if (isInstanceDetachable(dragInstanceSelector) === false) {
           toast.error(

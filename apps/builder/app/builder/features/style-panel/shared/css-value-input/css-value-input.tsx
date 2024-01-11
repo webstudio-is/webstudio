@@ -35,8 +35,8 @@ import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
 import { isValidDeclaration } from "@webstudio-is/css-data";
 import {
-  selectedInstanceBrowserStyleStore,
-  selectedInstanceUnitSizesStore,
+  $selectedInstanceBrowserStyle,
+  $selectedInstanceUnitSizes,
 } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
 
@@ -442,7 +442,7 @@ export const CssValueInput = ({
         return;
       }
 
-      const unitSizes = selectedInstanceUnitSizesStore.get();
+      const unitSizes = $selectedInstanceUnitSizes.get();
 
       // Value not edited by the user, we need to convert it to the new unit
       if (value.type === "unit") {
@@ -465,7 +465,7 @@ export const CssValueInput = ({
 
       // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        const browserStyle = selectedInstanceBrowserStyleStore.get();
+        const browserStyle = $selectedInstanceBrowserStyle.get();
         const browserPropertyValue = browserStyle?.[property];
         const propertyValue =
           browserPropertyValue?.type === "unit"

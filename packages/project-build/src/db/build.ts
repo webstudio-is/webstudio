@@ -12,7 +12,7 @@ import {
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
 import type { Build } from "../types";
-import { Pages, type Deployment } from "@webstudio-is/sdk";
+import { Pages, type Deployment, Resource } from "@webstudio-is/sdk";
 import {
   createInitialBreakpoints,
   parseBreakpoints,
@@ -25,6 +25,21 @@ import { parseProps } from "./props";
 import { parseDataSources } from "./data-sources";
 import { parseInstances, serializeInstances } from "./instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
+import type { Data } from "@webstudio-is/http-client";
+
+export const parseData = <Type extends { id: string }>(
+  string: string
+): Map<Type["id"], Type> => {
+  const list = JSON.parse(string) as Type[];
+  return new Map(list.map((item) => [item.id, item]));
+};
+
+export const serializeData = <Type extends { id: string }>(
+  data: Map<Type["id"], Type>
+) => {
+  const dataSourcesList: Type[] = Array.from(data.values());
+  return JSON.stringify(dataSourcesList);
+};
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
   // eslint-disable-next-line no-console
@@ -43,11 +58,12 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
 
     const deployment = parseDeployment(build.deployment);
 
-    return {
+    const result: Build = {
       id: build.id,
       projectId: build.projectId,
       version: build.version,
       createdAt: build.createdAt.toISOString(),
+      updatedAt: build.updatedAt.toISOString(),
       pages,
       breakpoints,
       styles,
@@ -55,9 +71,12 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       styleSourceSelections,
       props,
       dataSources,
+      resources: Array.from(parseData<Resource>(build.resources)),
       instances,
       deployment,
-    };
+    } satisfies Data["build"];
+
+    return result;
   } finally {
     // eslint-disable-next-line no-console
     console.timeEnd("parseBuild");
@@ -132,6 +151,7 @@ export const createBuild = async (
   const [rootInstanceId] = newInstances[0];
 
   const newPages = Pages.parse({
+    meta: {},
     homePage: {
       id: nanoid(),
       name: "Home",

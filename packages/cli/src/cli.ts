@@ -38,14 +38,24 @@ export const main = async () => {
         alias: "help",
         type: "boolean",
       })
-      .scriptName("webstudio-cli")
+      .scriptName("webstudio")
       .usage(
         `Webstudio CLI (${packageJson.version}) allows you to setup, sync, build and preview your project.`
       );
 
     cmd.version(packageJson.version).alias("v", "version");
 
-    cmd.command(["build"], "Build the project", buildOptions, build);
+    cmd.command(
+      ["build"],
+      "Build the project",
+      (yargs: CommonYargsArgv) => {
+        return buildOptions(yargs).demandOption(
+          "template",
+          "Please specify a template to use for the build"
+        );
+      },
+      build
+    );
     cmd.command(["link"], "Link the project with the cloud", linkOptions, link);
     cmd.command(["sync"], "Sync your project", syncOptions, sync);
     cmd.command(["$0", "init"], "Setup the project", buildOptions, initFlow);

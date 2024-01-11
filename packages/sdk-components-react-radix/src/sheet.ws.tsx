@@ -24,14 +24,14 @@ export const meta: WsComponentMeta = {
       type: "instance",
       component: "Dialog",
       label: "Sheet",
-      dataSources: {
-        sheetOpen: { type: "variable", initialValue: false },
+      variables: {
+        sheetOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "open",
-          dataSourceName: "sheetOpen",
+          code: "sheetOpen",
         },
         {
           name: "onOpenChange",

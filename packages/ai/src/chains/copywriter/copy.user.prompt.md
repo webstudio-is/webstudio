@@ -1,11 +1,11 @@
-Description:
-
-```
-{prompt}
-```
-
-List of copy to complete:
+List of all the copy snippets to edit:
 
 ```
 {text_nodes}
+```
+
+Edit request:
+
+```
+{prompt}
 ```

@@ -3500,6 +3500,35 @@ export const properties = {
     popularity: 0.11068509,
     appliesTo: "transformableElements",
   },
+  transition: {
+    unitGroups: ["time"],
+    inherited: false,
+    initial: {
+      type: "tuple",
+      value: [
+        {
+          type: "keyword",
+          value: "all",
+        },
+        {
+          type: "unit",
+          unit: "s",
+          value: 0,
+        },
+        {
+          type: "keyword",
+          value: "ease",
+        },
+        {
+          type: "unit",
+          unit: "s",
+          value: 0,
+        },
+      ],
+    },
+    popularity: 0.78355592,
+    appliesTo: "allElementsAndPseudos",
+  },
   transitionDelay: {
     unitGroups: ["time"],
     inherited: false,

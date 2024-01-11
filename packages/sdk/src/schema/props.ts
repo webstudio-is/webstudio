@@ -27,6 +27,11 @@ export const Prop = z.union([
   }),
   z.object({
     ...baseProp,
+    type: z.literal("json"),
+    value: z.unknown(),
+  }),
+  z.object({
+    ...baseProp,
     type: z.literal("asset"),
     value: z.string(), // asset id
   }),
@@ -48,8 +53,14 @@ export const Prop = z.union([
   }),
   z.object({
     ...baseProp,
-    type: z.literal("dataSource"),
+    type: z.literal("parameter"),
     // data source id
+    value: z.string(),
+  }),
+  z.object({
+    ...baseProp,
+    type: z.literal("expression"),
+    // expression code
     value: z.string(),
   }),
   z.object({

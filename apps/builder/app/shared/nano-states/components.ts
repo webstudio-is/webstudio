@@ -8,18 +8,19 @@ import {
   type HookContext,
   namespaceMeta,
   getIndexesWithinAncestors,
+  decodeDataSourceVariable,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
-import { dataSourceVariablesStore, propsStore } from "./nano-states";
-import { instancesStore, selectedInstanceSelectorStore } from "./instances";
-import { selectedPageStore } from "./pages";
+import { $dataSourceVariables, $dataSources, $props } from "./nano-states";
+import { $instances, $selectedInstanceSelector } from "./instances";
+import { $selectedPage } from "./pages";
 import { shallowEqual } from "shallow-equal";
 
 const createHookContext = (): HookContext => {
-  const metas = registeredComponentMetasStore.get();
-  const instances = instancesStore.get();
-  const page = selectedPageStore.get();
+  const metas = $registeredComponentMetas.get();
+  const instances = $instances.get();
+  const page = $selectedPage.get();
   const indexesWithinAncestors = getIndexesWithinAncestors(
     metas,
     instances,
@@ -30,7 +31,7 @@ const createHookContext = (): HookContext => {
     indexesWithinAncestors,
 
     getPropValue: (instanceId, propName) => {
-      const props = propsStore.get();
+      const props = $props.get();
       for (const prop of props.values()) {
         if (prop.instanceId === instanceId && prop.name === propName) {
           if (
@@ -46,19 +47,27 @@ const createHookContext = (): HookContext => {
     },
 
     setPropVariable: (instanceId, propName, value) => {
-      const dataSourceVariables = new Map(dataSourceVariablesStore.get());
-      const props = propsStore.get();
+      const dataSourceVariables = new Map($dataSourceVariables.get());
+      const dataSources = new Map($dataSources.get());
+      const props = $props.get();
       for (const prop of props.values()) {
         if (
           prop.instanceId === instanceId &&
           prop.name === propName &&
-          prop.type === "dataSource"
+          prop.type === "expression"
         ) {
-          const dataSourceId = prop.value;
-          dataSourceVariables.set(dataSourceId, value);
+          // extract id without parsing expression
+          const potentialVariableId = decodeDataSourceVariable(prop.value);
+          if (
+            potentialVariableId !== undefined &&
+            dataSources.has(potentialVariableId)
+          ) {
+            const dataSourceId = potentialVariableId;
+            dataSourceVariables.set(dataSourceId, value);
+          }
         }
       }
-      dataSourceVariablesStore.set(dataSourceVariables);
+      $dataSourceVariables.set(dataSourceVariables);
     },
   };
 };
@@ -67,13 +76,13 @@ const createHookContext = (): HookContext => {
 export const subscribeComponentHooks = () => {
   let lastSelectedInstanceSelector: undefined | InstanceSelector = undefined;
   const unsubscribeSelectedInstanceSelector =
-    selectedInstanceSelectorStore.subscribe((instanceSelector) => {
+    $selectedInstanceSelector.subscribe((instanceSelector) => {
       // prevent executing hooks when selected instance is not changed
       if (shallowEqual(lastSelectedInstanceSelector, instanceSelector)) {
         return;
       }
-      const hooks = registeredComponentHooksStore.get();
-      const instances = instancesStore.get();
+      const hooks = $registeredComponentHooks.get();
+      const instances = $instances.get();
       if (lastSelectedInstanceSelector) {
         for (const hook of hooks) {
           hook.onNavigatorUnselect?.(createHookContext(), {
@@ -105,15 +114,15 @@ export const subscribeComponentHooks = () => {
   };
 };
 
-export const registeredComponentsStore = atom(new Map<string, AnyComponent>());
+export const $registeredComponents = atom(new Map<string, AnyComponent>());
 
-export const registeredComponentHooksStore = atom<Hook[]>([]);
+export const $registeredComponentHooks = atom<Hook[]>([]);
 
-export const registeredComponentMetasStore = atom(
+export const $registeredComponentMetas = atom(
   new Map<string, WsComponentMeta>()
 );
 
-export const registeredComponentPropsMetasStore = atom(
+export const $registeredComponentPropsMetas = atom(
   new Map<string, WsComponentPropsMeta>()
 );
 
@@ -134,14 +143,14 @@ export const registerComponentLibrary = ({
 }) => {
   const prefix = namespace === undefined ? "" : `${namespace}:`;
 
-  const prevComponents = registeredComponentsStore.get();
+  const prevComponents = $registeredComponents.get();
   const nextComponents = new Map(prevComponents);
   for (const [componentName, component] of Object.entries(components)) {
     nextComponents.set(`${prefix}${componentName}`, component);
   }
-  registeredComponentsStore.set(nextComponents);
+  $registeredComponents.set(nextComponents);
 
-  const prevMetas = registeredComponentMetasStore.get();
+  const prevMetas = $registeredComponentMetas.get();
   const nextMetas = new Map(prevMetas);
   for (const [componentName, meta] of Object.entries(metas)) {
     nextMetas.set(
@@ -151,15 +160,15 @@ export const registerComponentLibrary = ({
         : namespaceMeta(meta, namespace, new Set(Object.keys(metas)))
     );
   }
-  registeredComponentMetasStore.set(nextMetas);
+  $registeredComponentMetas.set(nextMetas);
 
   if (hooks) {
-    const prevHooks = registeredComponentHooksStore.get();
+    const prevHooks = $registeredComponentHooks.get();
     const nextHooks = [...prevHooks, ...hooks];
-    registeredComponentHooksStore.set(nextHooks);
+    $registeredComponentHooks.set(nextHooks);
   }
 
-  const prevPropsMetas = registeredComponentPropsMetasStore.get();
+  const prevPropsMetas = $registeredComponentPropsMetas.get();
   const nextPropsMetas = new Map(prevPropsMetas);
   for (const [componentName, propsMeta] of Object.entries(propsMetas)) {
     const { initialProps = [], props } = propsMeta;
@@ -175,10 +184,10 @@ export const registerComponentLibrary = ({
       props,
     });
   }
-  registeredComponentPropsMetasStore.set(nextPropsMetas);
+  $registeredComponentPropsMetas.set(nextPropsMetas);
 };
 
 export const synchronizedComponentsMetaStores = [
-  ["registeredComponentMetas", registeredComponentMetasStore],
-  ["registeredComponentPropsMetas", registeredComponentPropsMetasStore],
+  ["registeredComponentMetas", $registeredComponentMetas],
+  ["registeredComponentPropsMetas", $registeredComponentPropsMetas],
 ] as const;

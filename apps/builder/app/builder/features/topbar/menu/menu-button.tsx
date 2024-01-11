@@ -1,4 +1,3 @@
-import { cssVars } from "@webstudio-is/css-vars";
 import {
   css,
   DropdownMenuTrigger,
@@ -9,7 +8,7 @@ import { HamburgerMenuIcon, WebstudioIcon } from "@webstudio-is/icons";
 
 const size = rawTheme.spacing[9];
 
-const containerTransformVar = cssVars.define("container-transform");
+const containerTransformVar = "--ws-menu-button-container-transform";
 
 const triggerStyle = css({
   position: "relative",
@@ -24,7 +23,7 @@ const innerContainerStyle = css({
   height: "100%",
   transformStyle: "preserve-3d",
   transition: "transform 200ms",
-  transform: cssVars.use(containerTransformVar),
+  transform: `var(${containerTransformVar})`,
 });
 
 const faceStyle = css({

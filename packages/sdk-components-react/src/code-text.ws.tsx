@@ -45,14 +45,7 @@ export const meta: WsComponentMeta = {
   invalidAncestors: ["CodeText"],
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "CodeText",
-      children: [{ type: "text", value: "Code you can edit" }],
-    },
-  ],
-  order: 8,
+  order: 9,
 };
 
 export const propsMeta: WsComponentPropsMeta = {

@@ -10,15 +10,19 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
-import store from "immerhin";
+import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
-  editingItemIdStore,
-  instancesStore,
-  registeredComponentMetasStore,
+  $propValuesByInstanceSelector,
+  $editingItemId,
+  getIndexedInstanceId,
+  $instances,
+  $registeredComponentMetas,
 } from "~/shared/nano-states";
 import { MetaIcon } from "../meta-icon";
 import { useContentEditable } from "~/shared/dom-hooks";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { serverSyncStore } from "~/shared/sync";
+import type { InstanceSelector } from "~/shared/tree-utils";
 
 export const InstanceTree = (
   props: Omit<
@@ -26,12 +30,13 @@ export const InstanceTree = (
     "renderItem" | "canLeaveParent" | "getItemChildren" | "editingItemId"
   >
 ) => {
-  const metas = useStore(registeredComponentMetasStore);
-  const instances = useStore(instancesStore);
-  const editingItemId = useStore(editingItemIdStore);
+  const metas = useStore($registeredComponentMetas);
+  const instances = useStore($instances);
+  const editingItemId = useStore($editingItemId);
+  const propValues = useStore($propValuesByInstanceSelector);
 
   const canLeaveParent = useCallback(
-    (instanceId: Instance["id"]) => {
+    ([instanceId]: InstanceSelector) => {
       const instance = instances.get(instanceId);
       if (instance === undefined) {
         return false;
@@ -43,9 +48,37 @@ export const InstanceTree = (
   );
 
   const getItemChildren = useCallback(
-    (instanceId: Instance["id"]) => {
-      const instance = instances.get(instanceId);
+    (instanceSelector: InstanceSelector) => {
+      const [instanceId, parentId] = instanceSelector;
+      let instance = instances.get(instanceId);
       const children: Instance[] = [];
+
+      // put fake collection item instances according to collection data
+      if (instance?.component === collectionComponent) {
+        const data = propValues
+          .get(JSON.stringify(instanceSelector))
+          ?.get("data");
+        // create items only when collection has content
+        if (Array.isArray(data) && instance.children.length > 0) {
+          data.forEach((_item, index) => {
+            children.push({
+              type: "instance",
+              id: getIndexedInstanceId(instanceId, index),
+              component: "ws:collection-item",
+              children: [],
+            });
+          });
+        }
+        return children;
+      }
+
+      // put parent children as own when parent is a collection
+      if (instance === undefined) {
+        const parentInstance = instances.get(parentId);
+        if (parentInstance?.component === collectionComponent) {
+          instance = parentInstance;
+        }
+      }
       if (instance === undefined) {
         return children;
       }
@@ -62,12 +95,12 @@ export const InstanceTree = (
       }
       return children;
     },
-    [instances]
+    [instances, propValues]
   );
 
   const updateInstanceLabel = useCallback(
     (instanceId: string, value: string) => {
-      store.createTransaction([instancesStore], (instances) => {
+      serverSyncStore.createTransaction([$instances], (instances) => {
         const instance = instances.get(instanceId);
         if (instance === undefined) {
           return;
@@ -96,7 +129,7 @@ export const InstanceTree = (
               updateInstanceLabel(props.itemData.id, val);
             }}
             onChangeEditing={(isEditing) => {
-              editingItemIdStore.set(
+              $editingItemId.set(
                 isEditing === true ? props.itemData.id : undefined
               );
             }}

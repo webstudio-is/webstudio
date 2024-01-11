@@ -121,11 +121,7 @@ type Props = {
   children: ReactNode;
 } & ComponentProps<typeof StyledLabel>;
 
-export const isLabelButton = (color: Props["color"]) =>
-  color === "preset" ||
-  color === "local" ||
-  color === "overwritten" ||
-  color === "remote";
+export const isLabelButton = (color: Props["color"]) => color !== undefined;
 
 export const Label = forwardRef((props: Props, ref: Ref<HTMLLabelElement>) => {
   const { disabled, children, ...rest } = props;

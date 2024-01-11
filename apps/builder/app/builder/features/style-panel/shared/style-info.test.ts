@@ -1,5 +1,5 @@
 import { test, expect, describe } from "@jest/globals";
-import { renderHook } from "@testing-library/react-hooks";
+import { act, renderHook } from "@testing-library/react-hooks";
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import {
   getStyleDeclKey,
@@ -7,17 +7,20 @@ import {
   type Instance,
   type Instances,
   type StyleDecl,
+  StyleSourceSelection,
 } from "@webstudio-is/sdk";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceIntanceToTagStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
+  $selectedBreakpointId,
+  $selectedInstanceStates,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceIntanceToTag,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
 } from "~/shared/nano-states";
 import {
   getCascadedBreakpointIds,
@@ -25,8 +28,18 @@ import {
   getInheritedInfo,
   getNextSourceInfo,
   getPreviousSourceInfo,
+  getStyleSource,
   useStyleInfo,
 } from "./style-info";
+
+const toMap = <T extends { id: string }>(list: T[]) =>
+  new Map(list.map((item) => [item.id, item]));
+
+const toStyleSourceSelectionsMap = (list: StyleSourceSelection[]) =>
+  new Map(list.map((item) => [item.instanceId, item]));
+
+const toStylesMap = (list: StyleDecl[]) =>
+  new Map(list.map((item) => [getStyleDeclKey(item), item]));
 
 const metas = new Map(Object.entries(defaultMetas));
 
@@ -150,7 +163,8 @@ test("compute cascaded styles", () => {
     getCascadedInfo(
       cascadingStylesByInstanceId,
       selectedInstanceSelector[0],
-      cascadedBreakpointIds
+      cascadedBreakpointIds,
+      new Set()
     )
   ).toMatchInlineSnapshot(`
     {
@@ -188,7 +202,8 @@ test("compute inherited styles", () => {
       ]),
 
       cascadedBreakpointIds,
-      selectedBreakpointId
+      selectedBreakpointId,
+      new Set()
     )
   ).toMatchInlineSnapshot(`
     {
@@ -293,7 +308,8 @@ test("compute styles from previous sources", () => {
       stylesByInstanceId,
       selectedInstanceSelector,
       selectedStyleSourceSelector,
-      "bp"
+      "bp",
+      new Set()
     )
   ).toMatchInlineSnapshot(`
     {
@@ -360,7 +376,8 @@ test("compute styles from next sources", () => {
       stylesByInstanceId,
       selectedInstanceSelector,
       selectedStyleSourceSelector,
-      "bp"
+      "bp",
+      new Set()
     )
   ).toMatchInlineSnapshot(`
     {
@@ -377,15 +394,16 @@ test("compute styles from next sources", () => {
 });
 
 const resetStores = () => {
-  registeredComponentMetasStore.set(new Map());
-  instancesStore.set(new Map());
-  stylesStore.set(new Map());
-  styleSourcesStore.set(new Map());
-  styleSourceSelectionsStore.set(new Map());
-  breakpointsStore.set(new Map());
-  selectedInstanceSelectorStore.set(undefined);
-  selectedInstanceIntanceToTagStore.set(new Map());
-  selectedStyleSourceSelectorStore.set(undefined);
+  $registeredComponentMetas.set(new Map());
+  $instances.set(new Map());
+  $styles.set(new Map());
+  $styleSources.set(new Map());
+  $styleSourceSelections.set(new Map());
+  $breakpoints.set(new Map());
+  $selectedInstanceSelector.set(undefined);
+  $selectedInstanceIntanceToTag.set(new Map());
+  $selectedStyleSourceSelector.set(undefined);
+  $selectedInstanceStates.set(new Set());
 };
 
 describe("color and currentColor", () => {
@@ -405,8 +423,8 @@ describe("color and currentColor", () => {
 
   test("initial color and currentColor is taken from properties", () => {
     resetStores();
-    instancesStore.set(bodyBoxInstances);
-    selectedInstanceSelectorStore.set(["box", "body"]);
+    $instances.set(bodyBoxInstances);
+    $selectedInstanceSelector.set(["box", "body"]);
     const { result } = renderHook(() => useStyleInfo());
     expect(result.current.color?.value).toEqual({
       type: "keyword",
@@ -420,12 +438,12 @@ describe("color and currentColor", () => {
 
   test("color and currentColor inherits from parent instance", () => {
     resetStores();
-    instancesStore.set(bodyBoxInstances);
-    breakpointsStore.set(baseBreakpoint);
-    styleSourcesStore.set(
+    $instances.set(bodyBoxInstances);
+    $breakpoints.set(baseBreakpoint);
+    $styleSources.set(
       new Map([["body.local", { id: "body.local", type: "local" }]])
     );
-    styleSourceSelectionsStore.set(
+    $styleSourceSelections.set(
       new Map([["body", { instanceId: "body", values: ["body.local"] }]])
     );
     const bodyColor: StyleDecl = {
@@ -434,8 +452,8 @@ describe("color and currentColor", () => {
       property: "color",
       value: { type: "keyword", value: "red" },
     };
-    stylesStore.set(new Map([[getStyleDeclKey(bodyColor), bodyColor]]));
-    selectedInstanceSelectorStore.set(["box", "body"]);
+    $styles.set(new Map([[getStyleDeclKey(bodyColor), bodyColor]]));
+    $selectedInstanceSelector.set(["box", "body"]);
     const { result } = renderHook(() => useStyleInfo());
     expect(result.current.color?.value).toEqual({
       type: "keyword",
@@ -449,15 +467,15 @@ describe("color and currentColor", () => {
 
   test("color: inherit inherits from parent instance", () => {
     resetStores();
-    instancesStore.set(bodyBoxInstances);
-    breakpointsStore.set(baseBreakpoint);
-    styleSourcesStore.set(
+    $instances.set(bodyBoxInstances);
+    $breakpoints.set(baseBreakpoint);
+    $styleSources.set(
       new Map([
         ["body.local", { id: "body.local", type: "local" }],
         ["box.local", { id: "box.local", type: "local" }],
       ])
     );
-    styleSourceSelectionsStore.set(
+    $styleSourceSelections.set(
       new Map([
         ["body", { instanceId: "body", values: ["body.local"] }],
         ["box", { instanceId: "box", values: ["box.local"] }],
@@ -475,13 +493,13 @@ describe("color and currentColor", () => {
       property: "color",
       value: { type: "keyword", value: "inherit" },
     };
-    stylesStore.set(
+    $styles.set(
       new Map([
         [getStyleDeclKey(bodyColor), bodyColor],
         [getStyleDeclKey(boxColor), boxColor],
       ])
     );
-    selectedInstanceSelectorStore.set(["box", "body"]);
+    $selectedInstanceSelector.set(["box", "body"]);
     const { result } = renderHook(() => useStyleInfo());
     expect(result.current.color?.value).toEqual({
       type: "keyword",
@@ -495,15 +513,15 @@ describe("color and currentColor", () => {
 
   test("color: currentColor inherits from parent instance", () => {
     resetStores();
-    instancesStore.set(bodyBoxInstances);
-    breakpointsStore.set(baseBreakpoint);
-    styleSourcesStore.set(
+    $instances.set(bodyBoxInstances);
+    $breakpoints.set(baseBreakpoint);
+    $styleSources.set(
       new Map([
         ["body.local", { id: "body.local", type: "local" }],
         ["box.local", { id: "box.local", type: "local" }],
       ])
     );
-    styleSourceSelectionsStore.set(
+    $styleSourceSelections.set(
       new Map([
         ["body", { instanceId: "body", values: ["body.local"] }],
         ["box", { instanceId: "box", values: ["box.local"] }],
@@ -521,13 +539,13 @@ describe("color and currentColor", () => {
       property: "color",
       value: { type: "keyword", value: "currentColor" },
     };
-    stylesStore.set(
+    $styles.set(
       new Map([
         [getStyleDeclKey(bodyColor), bodyColor],
         [getStyleDeclKey(boxColor), boxColor],
       ])
     );
-    selectedInstanceSelectorStore.set(["box", "body"]);
+    $selectedInstanceSelector.set(["box", "body"]);
     const { result } = renderHook(() => useStyleInfo());
     expect(result.current.color?.value).toEqual({
       type: "keyword",
@@ -541,12 +559,12 @@ describe("color and currentColor", () => {
 
   test("color and currentColor inherits default value", () => {
     resetStores();
-    instancesStore.set(bodyBoxInstances);
-    breakpointsStore.set(baseBreakpoint);
-    styleSourcesStore.set(
+    $instances.set(bodyBoxInstances);
+    $breakpoints.set(baseBreakpoint);
+    $styleSources.set(
       new Map([["body.local", { id: "body.local", type: "local" }]])
     );
-    styleSourceSelectionsStore.set(
+    $styleSourceSelections.set(
       new Map([["body", { instanceId: "body", values: ["body.local"] }]])
     );
     const bodyColor: StyleDecl = {
@@ -555,8 +573,8 @@ describe("color and currentColor", () => {
       property: "color",
       value: { type: "keyword", value: "inherit" },
     };
-    stylesStore.set(new Map([[getStyleDeclKey(bodyColor), bodyColor]]));
-    selectedInstanceSelectorStore.set(["box", "body"]);
+    $styles.set(new Map([[getStyleDeclKey(bodyColor), bodyColor]]));
+    $selectedInstanceSelector.set(["box", "body"]);
     const { result } = renderHook(() => useStyleInfo());
     expect(result.current.color?.value).toEqual({
       type: "keyword",
@@ -565,6 +583,368 @@ describe("color and currentColor", () => {
     expect(result.current.color?.currentColor).toEqual({
       type: "keyword",
       value: "black",
+    });
+  });
+});
+
+describe("active states", () => {
+  test("show stateless style as remote when state is selected", () => {
+    resetStores();
+    $instances.set(
+      toMap([{ type: "instance", id: "box", component: "Box", children: [] }])
+    );
+    $breakpoints.set(toMap([{ id: "base", label: "" }]));
+    $styleSources.set(toMap([{ id: "box.local", type: "local" }]));
+    $styleSourceSelections.set(
+      toStyleSourceSelectionsMap([{ instanceId: "box", values: ["box.local"] }])
+    );
+    $styles.set(
+      toStylesMap([
+        {
+          styleSourceId: "box.local",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+      ])
+    );
+    $selectedInstanceSelector.set(["box"]);
+    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+
+    const { result } = renderHook(() => useStyleInfo());
+    expect(getStyleSource(result.current.color)).toEqual("local");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+
+    act(() => {
+      $selectedStyleSourceSelector.set({
+        styleSourceId: "box.local",
+        state: ":hover",
+      });
+    });
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+  });
+
+  test("show active state style as local when selected", () => {
+    resetStores();
+    $instances.set(
+      toMap([{ type: "instance", id: "box", component: "Box", children: [] }])
+    );
+    $breakpoints.set(toMap([{ id: "base", label: "" }]));
+    $styleSources.set(toMap([{ id: "box.local", type: "local" }]));
+    $styleSourceSelections.set(
+      toStyleSourceSelectionsMap([{ instanceId: "box", values: ["box.local"] }])
+    );
+    $styles.set(
+      toStylesMap([
+        {
+          styleSourceId: "box.local",
+          breakpointId: "base",
+          state: ":hover",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+      ])
+    );
+    $selectedInstanceSelector.set(["box"]);
+    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedInstanceStates.set(new Set([":hover"]));
+
+    const { result } = renderHook(() => useStyleInfo());
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+
+    act(() => {
+      $selectedStyleSourceSelector.set({
+        styleSourceId: "box.local",
+        state: ":hover",
+      });
+    });
+    expect(getStyleSource(result.current.color)).toEqual("local");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+  });
+
+  test("show active state from another breakpoint as remote", () => {
+    resetStores();
+    $instances.set(
+      toMap([{ type: "instance", id: "box", component: "Box", children: [] }])
+    );
+    $breakpoints.set(
+      toMap([
+        { id: "base", label: "" },
+        { id: "small", label: "", minWidth: 768 },
+      ])
+    );
+    $styleSources.set(toMap([{ id: "box.local", type: "local" }]));
+    $styleSourceSelections.set(
+      toStyleSourceSelectionsMap([{ instanceId: "box", values: ["box.local"] }])
+    );
+    $styles.set(
+      toStylesMap([
+        {
+          styleSourceId: "box.local",
+          breakpointId: "base",
+          state: ":hover",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+        // check stateless declaration does not override state
+        {
+          styleSourceId: "box.local",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ])
+    );
+    $selectedInstanceSelector.set(["box"]);
+    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedBreakpointId.set("small");
+
+    const { result } = renderHook(() => useStyleInfo());
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "red",
+    });
+
+    act(() => {
+      $selectedInstanceStates.set(new Set([":hover"]));
+    });
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+  });
+
+  test("show active state inherited from parent as remote", () => {
+    resetStores();
+    $instances.set(
+      toMap([
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [{ type: "id", value: "box" }],
+        },
+        { type: "instance", id: "box", component: "Box", children: [] },
+      ])
+    );
+    $breakpoints.set(toMap([{ id: "base", label: "" }]));
+    $styleSources.set(toMap([{ id: "body.local", type: "local" }]));
+    $styleSourceSelections.set(
+      toStyleSourceSelectionsMap([
+        { instanceId: "body", values: ["body.local"] },
+      ])
+    );
+    $styles.set(
+      toStylesMap([
+        {
+          styleSourceId: "body.local",
+          breakpointId: "base",
+          state: ":hover",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+        // check stateless declaration does not override state
+        {
+          styleSourceId: "body.local",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ])
+    );
+    $selectedInstanceSelector.set(["box", "body"]);
+
+    const { result } = renderHook(() => useStyleInfo());
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "red",
+    });
+
+    act(() => {
+      $selectedInstanceStates.set(new Set([":hover"]));
+    });
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+  });
+
+  test("show active state from the previous token as remote", () => {
+    resetStores();
+    $instances.set(
+      toMap([{ type: "instance", id: "box", component: "Box", children: [] }])
+    );
+    $breakpoints.set(toMap([{ id: "base", label: "" }]));
+    $styleSources.set(
+      toMap([
+        { id: "box.token", type: "token", name: "" },
+        { id: "box.local", type: "local" },
+      ])
+    );
+    $styleSourceSelections.set(
+      toStyleSourceSelectionsMap([
+        { instanceId: "box", values: ["box.token", "box.local"] },
+      ])
+    );
+    $styles.set(
+      toStylesMap([
+        {
+          styleSourceId: "box.token",
+          breakpointId: "base",
+          state: ":hover",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+        // check stateless declaration does not override state
+        {
+          styleSourceId: "box.token",
+          breakpointId: "base",
+          property: "color",
+          value: { type: "keyword", value: "red" },
+        },
+      ])
+    );
+    $selectedInstanceSelector.set(["box"]);
+    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+
+    const { result } = renderHook(() => useStyleInfo());
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "red",
+    });
+
+    act(() => {
+      $selectedInstanceStates.set(new Set([":hover"]));
+    });
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+  });
+
+  test("show active state from the next token as overwritten", () => {
+    resetStores();
+    $instances.set(
+      toMap([{ type: "instance", id: "box", component: "Box", children: [] }])
+    );
+    $breakpoints.set(toMap([{ id: "base", label: "" }]));
+    $styleSources.set(
+      toMap([
+        { id: "box.first", type: "token", name: "" },
+        { id: "box.second", type: "token", name: "" },
+        { id: "box.third", type: "token", name: "" },
+      ])
+    );
+    $styleSourceSelections.set(
+      toStyleSourceSelectionsMap([
+        { instanceId: "box", values: ["box.first", "box.second", "box.third"] },
+      ])
+    );
+    $styles.set(
+      toStylesMap([
+        {
+          styleSourceId: "box.third",
+          breakpointId: "base",
+          state: ":hover",
+          property: "color",
+          value: { type: "keyword", value: "green" },
+        },
+        // check stateless declaration does not override state
+        {
+          styleSourceId: "box.second",
+          breakpointId: "base",
+          state: ":hover",
+          property: "color",
+          value: { type: "keyword", value: "blue" },
+        },
+      ])
+    );
+    $selectedInstanceSelector.set(["box"]);
+    $selectedStyleSourceSelector.set({ styleSourceId: "box.first" });
+    $selectedInstanceStates.set(new Set([":hover"]));
+
+    const { result } = renderHook(() => useStyleInfo());
+    expect(getStyleSource(result.current.color)).toEqual("remote");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
+    });
+
+    act(() => {
+      $selectedStyleSourceSelector.set({ styleSourceId: "box.second" });
+    });
+    expect(getStyleSource(result.current.color)).toEqual("overwritten");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "blue",
+    });
+  });
+
+  test("show active state from preset", () => {
+    resetStores();
+    $instances.set(
+      toMap([{ type: "instance", id: "box", component: "Box", children: [] }])
+    );
+    $breakpoints.set(toMap([{ id: "base", label: "" }]));
+    $styleSources.set(toMap([{ id: "box.local", type: "local" }]));
+    $styleSourceSelections.set(
+      toStyleSourceSelectionsMap([{ instanceId: "box", values: ["box.local"] }])
+    );
+    $styles.set(new Map());
+    $registeredComponentMetas.set(
+      new Map([
+        [
+          "Box",
+          {
+            type: "container",
+            icon: "",
+            presetStyle: {
+              div: [
+                {
+                  state: ":hover",
+                  property: "color",
+                  value: { type: "keyword", value: "green" },
+                },
+                {
+                  property: "color",
+                  value: { type: "keyword", value: "red" },
+                },
+              ],
+            },
+          },
+        ],
+      ])
+    );
+    $selectedInstanceSelector.set(["box"]);
+    $selectedInstanceStates.set(new Set([":hover"]));
+    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedInstanceIntanceToTag.set(new Map([["box", "div"]]));
+
+    const { result } = renderHook(() => useStyleInfo());
+    expect(getStyleSource(result.current.color)).toEqual("preset");
+    expect(result.current.color?.value).toEqual({
+      type: "keyword",
+      value: "green",
     });
   });
 });

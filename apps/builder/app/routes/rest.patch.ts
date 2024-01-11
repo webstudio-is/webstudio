@@ -11,6 +11,7 @@ import {
   StyleSourceSelections,
   StyleSources,
   Styles,
+  Resources,
 } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import {
@@ -30,6 +31,8 @@ import {
   serializeStyleSourceSelections,
   serializeStyles,
   serializeDataSources,
+  parseData,
+  serializeData,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -58,6 +61,12 @@ export const action = async ({ request }: ActionArgs) => {
       return { errors: "Project id required" };
     }
 
+    const lastTransactionId = transactions.at(-1)?.transactionId;
+
+    if (lastTransactionId === undefined) {
+      return { errors: "Transaction array must not be empty." };
+    }
+
     const context = await createContext(request);
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId, permit: "edit" },
@@ -78,6 +87,13 @@ export const action = async ({ request }: ActionArgs) => {
 
     const serverVersion = build.version;
     if (clientVersion !== serverVersion) {
+      // Check if a retry attempt is made with a previously successful transaction.
+      // This can occur if the connection was lost or an error occurred post-transaction completion,
+      // leaving the client in an erroneous state and prompting a retry.
+      if (lastTransactionId === build.lastTransactionId) {
+        return { status: "ok" };
+      }
+
       return {
         status: "version_mismatched",
       };
@@ -89,6 +105,7 @@ export const action = async ({ request }: ActionArgs) => {
       instances?: Instances;
       props?: Props;
       dataSources?: DataSources;
+      resources?: Resources;
       styleSources?: StyleSources;
       styleSourceSelections?: StyleSourceSelections;
       styles?: Styles;
@@ -160,6 +177,12 @@ export const action = async ({ request }: ActionArgs) => {
           continue;
         }
 
+        if (namespace === "resources") {
+          const resources = buildData.resources ?? parseData(build.resources);
+          buildData.resources = applyPatches(resources, patches);
+          continue;
+        }
+
         if (namespace === "breakpoints") {
           const breakpoints =
             buildData.breakpoints ?? parseBreakpoints(build.breakpoints);
@@ -183,6 +206,7 @@ export const action = async ({ request }: ActionArgs) => {
     // save build data when all patches applied
     const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {
       version: clientVersion + 1,
+      lastTransactionId,
     };
 
     if (buildData.pages) {
@@ -209,6 +233,12 @@ export const action = async ({ request }: ActionArgs) => {
     if (buildData.dataSources) {
       dbBuildData.dataSources = serializeDataSources(
         DataSources.parse(buildData.dataSources)
+      );
+    }
+
+    if (buildData.resources) {
+      dbBuildData.resources = serializeData(
+        Resources.parse(buildData.resources)
       );
     }
 
@@ -249,9 +279,12 @@ export const action = async ({ request }: ActionArgs) => {
         version: clientVersion,
       },
     });
+
     // ensure only build with client version is updated
     // to avoid race conditions
     if (count === 0) {
+      // We don't validate if lastTransactionId matches the user's transaction ID here, as we've already done so earlier.
+      // Given the sequential nature of messages from a single client, this situation is deemed improbable.
       return {
         status: "version_mismatched",
       };

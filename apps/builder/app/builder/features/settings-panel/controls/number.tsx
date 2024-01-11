@@ -1,54 +1,105 @@
-import { InputField, useId } from "@webstudio-is/design-system";
+import { useId, useState } from "react";
+import { useStore } from "@nanostores/react";
+import { InputField } from "@webstudio-is/design-system";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
   useLocalValue,
   ResponsiveLayout,
   Label,
+  updateExpressionValue,
+  $selectedInstanceScope,
 } from "../shared";
 
 export const NumberControl = ({
   meta,
   prop,
   propName,
+  computedValue,
   onChange,
+  deletable,
+  readOnly,
   onDelete,
-  onSoftDelete,
-}: ControlProps<"number", "number">) => {
+}: ControlProps<"number">) => {
   const id = useId();
 
-  const localValue = useLocalValue(prop ? prop.value : "", (value) => {
-    if (typeof value === "number") {
-      onChange({ type: "number", value });
+  const [isInvalid, setIsInvalid] = useState(false);
+  const number = Number(computedValue);
+  const localValue = useLocalValue(
+    Number.isNaN(number) ? "" : number,
+    (value) => {
+      if (typeof value === "number") {
+        if (prop?.type === "expression") {
+          updateExpressionValue(prop.value, value);
+        } else {
+          onChange({ type: "number", value });
+        }
+      }
+      if (value === "") {
+        setIsInvalid(true);
+      }
     }
-    if (value === "") {
-      onSoftDelete();
-    }
-  });
+  );
+
+  const label = getLabel(meta, propName);
+  const { scope, aliases } = useStore($selectedInstanceScope);
+  const expression =
+    prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
 
   return (
     <ResponsiveLayout
       label={
-        <Label htmlFor={id} description={meta.description}>
-          {getLabel(meta, propName)}
+        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+          {label}
         </Label>
       }
+      deletable={deletable}
       onDelete={onDelete}
     >
-      <InputField
-        id={id}
-        type="number"
-        value={localValue.value}
-        onChange={({ target: { valueAsNumber, value } }) =>
-          localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber)
-        }
-        onBlur={localValue.save}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            localValue.save();
+      <BindingControl>
+        <InputField
+          id={id}
+          disabled={readOnly}
+          type="number"
+          value={localValue.value}
+          color={isInvalid ? "error" : undefined}
+          onChange={({ target: { valueAsNumber, value } }) => {
+            localValue.set(Number.isNaN(valueAsNumber) ? value : valueAsNumber);
+            setIsInvalid(false);
+          }}
+          onBlur={localValue.save}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              localValue.save();
+            }
+          }}
+        />
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "number") {
+              return `${label} expects a number value`;
+            }
+          }}
+          removable={prop?.type === "expression"}
+          value={expression}
+          onChange={(newExpression) =>
+            onChange({ type: "expression", value: newExpression })
           }
-        }}
-      />
+          onRemove={(evaluatedValue) => {
+            const number = Number(evaluatedValue);
+            onChange({
+              type: "number",
+              value: Number.isNaN(number) ? 0 : number,
+            });
+          }}
+        />
+      </BindingControl>
     </ResponsiveLayout>
   );
 };

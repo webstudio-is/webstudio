@@ -22,13 +22,6 @@ export const meta: WsComponentMeta = {
   icon: ListItemIcon,
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "ListItem",
-      children: [{ type: "text", value: "List Item you can edit" }],
-    },
-  ],
   order: 4,
 };
 

@@ -1,19 +1,13 @@
 import { getInstanceSelectorFromElement } from "~/shared/dom-utils";
 import { findClosestEditableInstanceSelector } from "~/shared/instance-utils";
 import {
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
-import { publish } from "~/shared/pubsub";
-
-declare module "~/shared/pubsub" {
-  export interface PubsubMap {
-    clickCanvas: undefined;
-  }
-}
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
+import { emitCommand } from "./shared/commands";
 
 export const subscribeInstanceSelection = () => {
   let pointerDownElement: undefined | Element = undefined;
@@ -49,7 +43,7 @@ export const subscribeInstanceSelection = () => {
     if (clickCount === 1) {
       // notify whole app about click on document
       // e.g. to hide the side panel
-      publish({ type: "clickCanvas" });
+      emitCommand("clickCanvas");
     }
 
     // prevent selecting instances inside text editor while editing text
@@ -64,25 +58,25 @@ export const subscribeInstanceSelection = () => {
 
     // the first click in double click or the only one in regular click
     if (clickCount === 1) {
-      selectedInstanceSelectorStore.set(instanceSelector);
+      $selectedInstanceSelector.set(instanceSelector);
       // reset text editor when another instance is selected
-      textEditingInstanceSelectorStore.set(undefined);
-      selectedStyleSourceSelectorStore.set(undefined);
+      $textEditingInstanceSelector.set(undefined);
+      $selectedStyleSourceSelector.set(undefined);
     }
 
     // the second click in a double click.
     if (clickCount === 2) {
       const editableInstanceSelector = findClosestEditableInstanceSelector(
         instanceSelector,
-        instancesStore.get(),
-        registeredComponentMetasStore.get()
+        $instances.get(),
+        $registeredComponentMetas.get()
       );
 
       // enable text editor when double click on its instance or one of its descendants
       if (editableInstanceSelector) {
-        selectedInstanceSelectorStore.set(editableInstanceSelector);
-        textEditingInstanceSelectorStore.set(editableInstanceSelector);
-        selectedStyleSourceSelectorStore.set(undefined);
+        $selectedInstanceSelector.set(editableInstanceSelector);
+        $textEditingInstanceSelector.set(editableInstanceSelector);
+        $selectedStyleSourceSelector.set(undefined);
       }
     }
   };

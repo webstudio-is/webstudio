@@ -131,12 +131,12 @@ export const metaAccordion: WsComponentMeta = {
     {
       type: "instance",
       component: "Accordion",
-      dataSources: {
-        accordionValue: { type: "variable", initialValue: "0" },
+      variables: {
+        accordionValue: { initialValue: "0" },
       },
       props: [
         { type: "boolean", name: "collapsible", value: true },
-        { type: "dataSource", name: "value", dataSourceName: "accordionValue" },
+        { type: "expression", name: "value", code: "accordionValue" },
         {
           name: "onValueChange",
           type: "action",

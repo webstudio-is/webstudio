@@ -7,12 +7,13 @@ import {
   SmallIconButton,
   Text,
 } from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
+import { TrashIcon } from "@webstudio-is/icons";
+import type { Prop } from "@webstudio-is/sdk";
+import { $assets } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
 import { type ControlProps } from "../shared";
 import { acceptToMimeCategories } from "@webstudio-is/asset-uploader";
-import { TrashIcon } from "@webstudio-is/icons";
 
 // tests whether we can use ImageManager for the given "accept" value
 const isImageAccept = (accept?: string) => {
@@ -23,32 +24,25 @@ const isImageAccept = (accept?: string) => {
   );
 };
 
-type AssetControlProps = ControlProps<unknown, "asset">;
+type AssetControlProps = ControlProps<unknown>;
 
 type Props = {
   accept?: string;
-  disabled?: boolean;
-  prop: AssetControlProps["prop"];
+  prop?: Extract<Prop, { type: "asset" }>;
   onChange: AssetControlProps["onChange"];
-  onSoftDelete: AssetControlProps["onSoftDelete"];
+  onDelete: AssetControlProps["onDelete"];
 };
 
-export const SelectAsset = ({
-  prop,
-  onChange,
-  onSoftDelete,
-  accept,
-  disabled = false,
-}: Props) => {
-  const assetStore = useMemo(
+export const SelectAsset = ({ prop, onChange, onDelete, accept }: Props) => {
+  const $asset = useMemo(
     () =>
-      computed(assetsStore, (assets) =>
+      computed($assets, (assets) =>
         prop ? assets.get(prop.value) : undefined
       ),
     [prop]
   );
 
-  const asset = useStore(assetStore);
+  const asset = useStore($asset);
 
   if (isImageAccept(accept) === false) {
     return <Text color="destructive">Unsupported accept value: {accept}</Text>;
@@ -67,14 +61,14 @@ export const SelectAsset = ({
           />
         }
       >
-        <Button color="neutral" css={{ flex: 1 }} disabled={disabled}>
+        <Button color="neutral" css={{ flex: 1 }}>
           {asset?.name ?? "Choose source"}
         </Button>
       </FloatingPanel>
-      {prop && disabled === false ? (
+      {prop ? (
         <SmallIconButton
           icon={<TrashIcon />}
-          onClick={onSoftDelete}
+          onClick={onDelete}
           variant="destructive"
         />
       ) : null}

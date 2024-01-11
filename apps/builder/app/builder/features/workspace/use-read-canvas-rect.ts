@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
 import {
-  scaleStore,
-  canvasWidthStore,
+  $scale,
+  $canvasWidth,
   $canvasRect,
 } from "~/builder/shared/nano-states";
 import { useWindowResizeDebounced } from "~/shared/dom-hooks";
@@ -39,12 +39,12 @@ export const useReadCanvasRect = () => {
 
   useEffect(() => {
     updateRect();
-    const scaleStoreUnsubscribe = scaleStore.listen(updateRect);
-    const canvasWidthStoreUnsubscribe = canvasWidthStore.listen(updateRect);
+    const $scaleUnsubscribe = $scale.listen(updateRect);
+    const $canvasWidthUnsubscribe = $canvasWidth.listen(updateRect);
 
     return () => {
-      scaleStoreUnsubscribe();
-      canvasWidthStoreUnsubscribe();
+      $scaleUnsubscribe();
+      $canvasWidthUnsubscribe();
     };
   }, [updateRect]);
 

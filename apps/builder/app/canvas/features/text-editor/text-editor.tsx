@@ -18,12 +18,17 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
-import { createCssEngine } from "@webstudio-is/css-engine";
+import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import type { Instance, Instances } from "@webstudio-is/sdk";
 import { idAttribute } from "@webstudio-is/react-sdk";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { ToolbarConnectorPlugin } from "./toolbar-connector";
-import { type Refs, $convertToLexical, $convertToUpdates } from "./interop";
+import {
+  type Refs,
+  $convertToLexical,
+  $convertToUpdates,
+  $convertTextToLexical,
+} from "./interop";
 import { colord } from "colord";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
@@ -77,10 +82,10 @@ const CaretColorPlugin = () => {
     const color = colord(elementColor).toRgb();
     if (color.a < 0.1) {
       // Apply caret color with animated color
-      const engine = createCssEngine({ name: "text-editor-caret" });
+      const sheet = createRegularStyleSheet({ name: "text-editor-caret" });
 
       // Animation on cursor needed to make it visible on any background
-      engine.addPlaintextRule(`
+      sheet.addPlaintextRule(`
 
         @keyframes ${caretClassName}-keyframes {
           from {caret-color: #666;}
@@ -96,11 +101,11 @@ const CaretColorPlugin = () => {
       `);
 
       rootElement.classList.add(caretClassName);
-      engine.render();
+      sheet.render();
 
       return () => {
         rootElement.classList.remove(caretClassName);
-        engine.unmount();
+        sheet.unmount();
       };
     }
   }, [caretClassName, editor]);
@@ -172,6 +177,7 @@ const onError = (error: Error) => {
 };
 
 type TextEditorProps = {
+  rootRef: { current: null | HTMLDivElement };
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
   contentEditable: JSX.Element;
@@ -180,6 +186,7 @@ type TextEditorProps = {
 };
 
 export const TextEditor = ({
+  rootRef,
   rootInstanceSelector,
   instances,
   contentEditable,
@@ -191,19 +198,19 @@ export const TextEditor = ({
   const [italicClassName] = useState(() => `a${nanoid()}`);
 
   useLayoutEffect(() => {
-    const engine = createCssEngine({ name: "text-editor" });
+    const sheet = createRegularStyleSheet({ name: "text-editor" });
 
     // reset paragraph styles and make it work inside <a>
-    engine.addPlaintextRule(`
+    sheet.addPlaintextRule(`
       .${paragraphClassName} { display: inline-block; margin: 0; }
     `);
     /// set italic style for bold italic combination on the same element
-    engine.addPlaintextRule(`
+    sheet.addPlaintextRule(`
       .${italicClassName} { font-style: italic; }
     `);
-    engine.render();
+    sheet.render();
     return () => {
-      engine.unmount();
+      sheet.unmount();
     };
   }, [paragraphClassName, italicClassName]);
 
@@ -220,10 +227,19 @@ export const TextEditor = ({
       },
     },
     editorState: () => {
+      const textContent = (rootRef.current?.textContent ?? "").trim();
+      const [rootInstanceId] = rootInstanceSelector;
+      if (textContent.length !== 0) {
+        const rootInstance = instances.get(rootInstanceId);
+        if (rootInstance && rootInstance.children.length === 0) {
+          $convertTextToLexical(textContent);
+          return;
+        }
+      }
       // text editor is unmounted when change properties in side panel
       // so assume new nodes don't need to preserve instance id
       // and store only initial references
-      $convertToLexical(instances, rootInstanceSelector[0], refs);
+      $convertToLexical(instances, rootInstanceId, refs);
     },
     nodes: [LinkNode],
     onError,

@@ -15,12 +15,11 @@ import {
 } from "react";
 import { theme, css, styled, type CSS } from "../stitches.config";
 import { Button } from "./button";
-import { cssVars } from "@webstudio-is/css-vars";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { Label, isLabelButton } from "./label";
 
-const buttonContentColor = cssVars.define("button-content-color");
-const labelTextColor = cssVars.define("label-text-color");
+const buttonContentColor = "--ws-section-title-button-content-color";
+const labelTextColor = "--ws-section-title-label-content-color";
 
 const StyledButton = styled(Button, {});
 
@@ -191,7 +190,7 @@ export const SectionTitleLabel = forwardRef(
         {...props}
         color={color}
         css={{
-          color: state === "closed" ? cssVars.use(labelTextColor) : undefined,
+          color: state === "closed" ? `var(${labelTextColor})` : undefined,
           ...commonCss,
           ...css,
           // When we use a SectionTitle button, we can't directly render a label inside it.
@@ -218,7 +217,7 @@ export const SectionTitleButton = forwardRef(
       tabIndex={-1}
       color="ghost"
       {...props}
-      css={{ color: cssVars.use(buttonContentColor), ...css }}
+      css={{ color: `var(${buttonContentColor})`, ...css }}
       ref={ref}
     />
   )

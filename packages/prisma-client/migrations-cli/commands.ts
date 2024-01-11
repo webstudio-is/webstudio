@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FileLocker, MigrationMeta } from "umzug";
-import confirm from "@inquirer/confirm";
+import prompts from "prompts";
 import { inspect } from "node:util";
 import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
@@ -20,12 +20,14 @@ const ensureUserWantsToContinue = async (defaultResult = false) => {
     return;
   }
 
-  const result = await confirm({
+  const { shouldContinue } = await prompts({
+    type: "confirm",
+    name: "shouldContinue",
     message: "Continue?",
-    default: defaultResult,
+    initial: defaultResult,
   });
 
-  if (result === false) {
+  if (shouldContinue === false) {
     logger.info("Aborted.");
     process.exit(0);
   }

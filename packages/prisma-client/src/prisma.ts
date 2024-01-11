@@ -38,17 +38,15 @@ const getPgBouncerUrl = () => {
   return databaseUrl.href;
 };
 
+const pgUrl = getPgBouncerUrl();
+
 // this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
 // explanation here
 // https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices
 export const prisma =
   global.prisma ||
   new PrismaClient({
-    datasources: {
-      db: {
-        url: getPgBouncerUrl(),
-      },
-    },
+    datasources: pgUrl === undefined ? undefined : { db: { url: pgUrl } },
 
     ...(logPrisma
       ? {

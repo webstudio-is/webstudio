@@ -79,11 +79,11 @@ export const metaTabs: WsComponentMeta = {
     {
       type: "instance",
       component: "Tabs",
-      dataSources: {
-        tabsValue: { type: "variable", initialValue: "0" },
+      variables: {
+        tabsValue: { initialValue: "0" },
       },
       props: [
-        { type: "dataSource", name: "value", dataSourceName: "tabsValue" },
+        { type: "expression", name: "value", code: "tabsValue" },
         {
           name: "onValueChange",
           type: "action",

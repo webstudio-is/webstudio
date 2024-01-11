@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { titleCase } from "title-case";
-import { noCase } from "no-case";
+import { noCase } from "change-case";
 import type {
   Instance,
   Prop,
@@ -23,30 +23,13 @@ const EmbedTemplateText = z.object({
 
 type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;
 
-const EmbedTemplateDataSource = z.union([
-  z.object({
-    type: z.literal("variable"),
-    initialValue: z.union([
-      z.string(),
-      z.number(),
-      z.boolean(),
-      z.array(z.string()),
-    ]),
-  }),
-  z.object({
-    type: z.literal("expression"),
-    code: z.string(),
-  }),
-]);
+const EmbedTemplateVariable = z.object({
+  initialValue: z.unknown(),
+});
 
-type EmbedTemplateDataSource = z.infer<typeof EmbedTemplateDataSource>;
+type EmbedTemplateVariable = z.infer<typeof EmbedTemplateVariable>;
 
 export const EmbedTemplateProp = z.union([
-  z.object({
-    type: z.literal("dataSource"),
-    name: z.string(),
-    dataSourceName: z.string(),
-  }),
   z.object({
     type: z.literal("number"),
     name: z.string(),
@@ -66,6 +49,21 @@ export const EmbedTemplateProp = z.union([
     type: z.literal("string[]"),
     name: z.string(),
     value: z.array(z.string()),
+  }),
+  z.object({
+    type: z.literal("json"),
+    name: z.string(),
+    value: z.unknown(),
+  }),
+  z.object({
+    type: z.literal("expression"),
+    name: z.string(),
+    code: z.string(),
+  }),
+  z.object({
+    type: z.literal("parameter"),
+    name: z.string(),
+    variableName: z.string(),
   }),
   z.object({
     type: z.literal("action"),
@@ -102,7 +100,7 @@ export type EmbedTemplateInstance = {
   type: "instance";
   component: string;
   label?: string;
-  dataSources?: Record<string, EmbedTemplateDataSource>;
+  variables?: Record<string, EmbedTemplateVariable>;
   props?: EmbedTemplateProp[];
   tokens?: string[];
   styles?: EmbedTemplateStyleDecl[];
@@ -115,7 +113,7 @@ export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
       type: z.literal("instance"),
       component: z.string(),
       label: z.optional(z.string()),
-      dataSources: z.optional(z.record(z.string(), EmbedTemplateDataSource)),
+      variables: z.optional(z.record(z.string(), EmbedTemplateVariable)),
       props: z.optional(z.array(EmbedTemplateProp)),
       tokens: z.optional(z.array(z.string())),
       styles: z.optional(z.array(EmbedTemplateStyleDecl)),
@@ -129,8 +127,8 @@ export const WsEmbedTemplate = z.lazy(() =>
 
 export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
 
-const getDataSourceValue = (
-  value: Extract<EmbedTemplateDataSource, { type: "variable" }>["initialValue"]
+const getVariablValue = (
+  value: EmbedTemplateVariable["initialValue"]
 ): Extract<DataSource, { type: "variable" }>["value"] => {
   if (typeof value === "string") {
     return { type: "string", value };
@@ -144,8 +142,7 @@ const getDataSourceValue = (
   if (Array.isArray(value)) {
     return { type: "string[]", value };
   }
-  value satisfies never;
-  throw Error("Impossible case");
+  return { type: "json", value };
 };
 
 const createInstancesFromTemplate = (
@@ -165,35 +162,18 @@ const createInstancesFromTemplate = (
     if (item.type === "instance") {
       const instanceId = generateId();
 
-      if (item.dataSources) {
-        for (const [name, dataSource] of Object.entries(item.dataSources)) {
+      if (item.variables) {
+        for (const [name, variable] of Object.entries(item.variables)) {
           if (dataSourceByRef.has(name)) {
             throw Error(`${name} data source already defined`);
           }
-          if (dataSource.type === "variable") {
-            dataSourceByRef.set(name, {
-              type: "variable",
-              id: generateId(),
-              scopeInstanceId: instanceId,
-              name,
-              value: getDataSourceValue(dataSource.initialValue),
-            });
-          }
-          if (dataSource.type === "expression") {
-            dataSourceByRef.set(name, {
-              type: "expression",
-              id: generateId(),
-              scopeInstanceId: instanceId,
-              name,
-              // replace all references with variable names
-              code: validateExpression(dataSource.code, {
-                transformIdentifier: (ref) => {
-                  const id = dataSourceByRef.get(ref)?.id ?? ref;
-                  return encodeDataSourceVariable(id);
-                },
-              }),
-            });
-          }
+          dataSourceByRef.set(name, {
+            type: "variable",
+            id: generateId(),
+            scopeInstanceId: instanceId,
+            name,
+            value: getVariablValue(variable.initialValue),
+          });
         }
       }
 
@@ -201,6 +181,24 @@ const createInstancesFromTemplate = (
       if (item.props) {
         for (const prop of item.props) {
           const propId = generateId();
+
+          if (prop.type === "expression") {
+            props.push({
+              id: propId,
+              instanceId,
+              name: prop.name,
+              type: "expression",
+              // replace all references with variable names
+              value: validateExpression(prop.code, {
+                transformIdentifier: (ref) => {
+                  const id = dataSourceByRef.get(ref)?.id ?? ref;
+                  return encodeDataSourceVariable(id);
+                },
+              }),
+            });
+            continue;
+          }
+
           // action cannot be bound to data source
           if (prop.type === "action") {
             props.push({
@@ -230,20 +228,27 @@ const createInstancesFromTemplate = (
             });
             continue;
           }
-          if (prop.type === "dataSource") {
-            const dataSource = dataSourceByRef.get(prop.dataSourceName);
-            if (dataSource === undefined) {
-              throw Error(`${prop.dataSourceName} data source is not defined`);
-            }
+
+          if (prop.type === "parameter") {
+            const dataSourceId = generateId();
+            // generate data sources implicitly
+            dataSourceByRef.set(prop.variableName, {
+              type: "parameter",
+              id: dataSourceId,
+              scopeInstanceId: instanceId,
+              name: prop.variableName,
+            });
             props.push({
               id: propId,
               instanceId,
-              type: "dataSource",
               name: prop.name,
-              value: dataSource.id,
+              type: "parameter",
+              // replace variable reference with variable id
+              value: dataSourceId,
             });
             continue;
           }
+
           props.push({ id: propId, instanceId, ...prop });
         }
       }

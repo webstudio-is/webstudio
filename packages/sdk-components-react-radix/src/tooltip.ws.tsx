@@ -54,14 +54,14 @@ export const metaTooltip: WsComponentMeta = {
     {
       type: "instance",
       component: "Tooltip",
-      dataSources: {
-        tooltipOpen: { type: "variable", initialValue: false },
+      variables: {
+        tooltipOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "open",
-          dataSourceName: "tooltipOpen",
+          code: "tooltipOpen",
         },
         {
           name: "onOpenChange",

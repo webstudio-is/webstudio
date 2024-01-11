@@ -1,6 +1,8 @@
+export * from "./remix";
 export * from "./css/index";
 export * from "./tree/index";
 export * from "./app/index";
+export * from "./core-components";
 export * from "./components/components-utils";
 export { PropMeta } from "./prop-meta";
 export {
@@ -13,16 +15,10 @@ export {
   defaultStates,
 } from "./components/component-meta";
 export * from "./embed-template";
-export {
-  normalizeProps,
-  getPropsByInstanceId,
-  getInstanceIdFromComponentProps,
-  getIndexWithinAncestorFromComponentProps,
-} from "./props";
+export * from "./props";
 export { type Params, ReactSdkContext } from "./context";
 export {
   validateExpression,
-  computeExpressionsDependencies,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
   generateDataSources,
@@ -30,4 +26,9 @@ export {
 export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";
 export { generateUtilsExport } from "./generator";
-export { generatePageComponent } from "./component-generator";
+export {
+  generatePageComponent,
+  generateJsxElement,
+  generateJsxChildren,
+} from "./component-generator";
+export { generateResourcesLoader } from "./resources-generator";

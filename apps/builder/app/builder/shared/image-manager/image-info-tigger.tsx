@@ -8,12 +8,11 @@ import {
   DeprecatedPopoverHeader,
 } from "@webstudio-is/design-system";
 import { GearIcon, gearIconCssVars } from "@webstudio-is/icons";
-import { cssVars } from "@webstudio-is/css-vars";
 import type { Asset } from "@webstudio-is/sdk";
 import { theme } from "@webstudio-is/design-system";
 import { ImageInfo } from "./image-info";
 
-const triggerVisibilityVar = cssVars.define("trigger-visibility");
+const triggerVisibilityVar = `--ws-image-info-trigger-visibility`;
 
 export const imageInfoTriggerCssVars = ({ show }: { show: boolean }) => ({
   [triggerVisibilityVar]: show ? "visible" : "hidden",
@@ -35,7 +34,7 @@ export const ImageInfoTrigger = ({
           title="Options"
           onClick={() => setInfoOpen(true)}
           css={{
-            visibility: cssVars.use(triggerVisibilityVar, "hidden"),
+            visibility: `var(${triggerVisibilityVar}, hidden)`,
             position: "absolute",
             color: theme.colors.slate11,
             top: theme.spacing[3],

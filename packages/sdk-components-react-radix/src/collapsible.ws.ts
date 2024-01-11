@@ -32,14 +32,14 @@ export const metaCollapsible: WsComponentMeta = {
     {
       type: "instance",
       component: "Collapsible",
-      dataSources: {
-        collapsibleOpen: { type: "variable", initialValue: false },
+      variables: {
+        collapsibleOpen: { initialValue: false },
       },
       props: [
         {
-          type: "dataSource",
+          type: "expression",
           name: "open",
-          dataSourceName: "collapsibleOpen",
+          code: "collapsibleOpen",
         },
         {
           name: "onOpenChange",

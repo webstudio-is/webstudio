@@ -4,6 +4,8 @@ import type {
   Props,
   Scope,
   DataSources,
+  Prop,
+  Page,
 } from "@webstudio-is/sdk";
 import { parseComponentName } from "@webstudio-is/sdk";
 import {
@@ -11,9 +13,54 @@ import {
   idAttribute,
   indexAttribute,
   showAttribute,
-} from "./tree/webstudio-component";
-import { generateDataSources } from "./expression";
+} from "./props";
+import { collectionComponent } from "./core-components";
+import { generateExpression, generateDataSources } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
+
+const generatePropValue = ({
+  scope,
+  prop,
+  dataSources,
+}: {
+  scope: Scope;
+  prop: Prop;
+  dataSources: DataSources;
+}) => {
+  // ignore asset and page props which are handled by components internally
+  if (prop.type === "asset" || prop.type === "page") {
+    return;
+  }
+  if (
+    prop.type === "string" ||
+    prop.type === "number" ||
+    prop.type === "boolean" ||
+    prop.type === "string[]" ||
+    prop.type === "json"
+  ) {
+    return JSON.stringify(prop.value);
+  }
+  // generate variable name for parameter
+  if (prop.type === "parameter") {
+    const dataSource = dataSources.get(prop.value);
+    if (dataSource === undefined) {
+      return;
+    }
+    return scope.getName(dataSource.id, dataSource.name);
+  }
+  // inline expression to safely use collection item
+  if (prop.type === "expression") {
+    return generateExpression({
+      expression: prop.value,
+      dataSources,
+      scope,
+    });
+  }
+  if (prop.type === "action") {
+    return scope.getName(prop.id, prop.name);
+  }
+  prop satisfies never;
+};
 
 export const generateJsxElement = ({
   scope,
@@ -22,6 +69,7 @@ export const generateJsxElement = ({
   dataSources,
   indexesWithinAncestors,
   children,
+  classesMap,
 }: {
   scope: Scope;
   instance: Instance;
@@ -29,9 +77,8 @@ export const generateJsxElement = ({
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
+  classesMap?: Map<string, Array<string>>;
 }) => {
-  let conditionVariableName: undefined | string;
-
   let generatedProps = "";
 
   // id and component props are always defined for styles
@@ -44,86 +91,96 @@ export const generateJsxElement = ({
     generatedProps += `\n${indexAttribute}="${index}"`;
   }
 
+  let conditionValue: undefined | string;
+  let collectionDataValue: undefined | string;
+  let collectionItemValue: undefined | string;
+
+  const classes = Array.from(classesMap?.get(instance.id) ?? []);
   for (const prop of props.values()) {
     if (prop.instanceId !== instance.id) {
       continue;
     }
+    const propValue = generatePropValue({ scope, prop, dataSources });
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
-      // prevent instance rendering when hidden
-      if (prop.type === "boolean" && prop.value === false) {
-        return "";
-      }
-      if (prop.type === "dataSource") {
-        const dataSourceId = prop.value;
-        const dataSource = dataSources.get(dataSourceId);
-        if (dataSource === undefined) {
-          continue;
-        }
-        conditionVariableName = scope.getName(dataSource.id, dataSource.name);
-      }
-      // ignore any other values
-      continue;
-    }
-    if (
-      prop.type === "string" ||
-      prop.type === "number" ||
-      prop.type === "boolean" ||
-      prop.type === "string[]"
-    ) {
-      generatedProps += `\n${prop.name}={${JSON.stringify(prop.value)}}`;
-      continue;
-    }
-    // ignore asset and page props which are handled by components internally
-    if (prop.type === "asset" || prop.type === "page") {
-      continue;
-    }
-    if (prop.type === "dataSource") {
-      const dataSourceId = prop.value;
-      const dataSource = dataSources.get(dataSourceId);
-      if (dataSource === undefined) {
+      // prevent generating unnecessary condition
+      if (propValue === "true") {
         continue;
       }
-      const dataSourceVariable = scope.getName(dataSource.id, dataSource.name);
-      generatedProps += `\n${prop.name}={${dataSourceVariable}}`;
+      // prevent instance rendering when always hidden
+      if (propValue === "false") {
+        return "";
+      }
+      conditionValue = propValue;
+      // generate separately
       continue;
     }
-    if (prop.type === "action") {
-      const propVariable = scope.getName(prop.id, prop.name);
-      generatedProps += `\n${prop.name}={${propVariable}}`;
+    if (instance.component === collectionComponent) {
+      if (prop.name === "data") {
+        collectionDataValue = propValue;
+      }
+      if (prop.name === "item") {
+        collectionItemValue = propValue;
+      }
       continue;
     }
-    prop satisfies never;
+    // We need to merge atomic classes with user-defined className prop.
+    if (prop.name === "className") {
+      if (prop.type === "string") {
+        classes.push(prop.value);
+      }
+      continue;
+    }
+    if (propValue !== undefined) {
+      generatedProps += `\n${prop.name}={${propValue}}`;
+    }
+  }
+
+  if (classes.length !== 0) {
+    generatedProps += `\nclassName=${JSON.stringify(classes.join(" "))}`;
   }
 
   let generatedElement = "";
   // coditionally render instance when show prop is data source
   // {dataSourceVariable && <Instance>}
-  if (conditionVariableName) {
-    generatedElement += `{${conditionVariableName} &&\n`;
+  if (conditionValue) {
+    generatedElement += `{(${conditionValue}) &&\n`;
   }
 
-  const [_namespace, shortName] = parseComponentName(instance.component);
-  const componentVariable = scope.getName(instance.component, shortName);
-  if (instance.children.length === 0) {
-    generatedElement += `<${componentVariable}${generatedProps} />\n`;
-  } else {
-    generatedElement += `<${componentVariable}${generatedProps}>\n`;
+  if (instance.component === collectionComponent) {
+    // prevent generating invalid collection
+    if (
+      collectionDataValue === undefined ||
+      collectionItemValue === undefined
+    ) {
+      return "";
+    }
+    const indexVariable = scope.getName(`${instance.id}-index`, "index");
+    // fix implicit any error
+    generatedElement += `{${collectionDataValue}?.map((${collectionItemValue}: any, ${indexVariable}: number) =>\n`;
+    generatedElement += `<Fragment key={${indexVariable}}>\n`;
     generatedElement += children;
-    generatedElement += `</${componentVariable}>\n`;
+    generatedElement += `</Fragment>\n`;
+    generatedElement += `)}\n`;
+  } else {
+    const [_namespace, shortName] = parseComponentName(instance.component);
+    const componentVariable = scope.getName(instance.component, shortName);
+    if (instance.children.length === 0) {
+      generatedElement += `<${componentVariable}${generatedProps} />\n`;
+    } else {
+      generatedElement += `<${componentVariable}${generatedProps}>\n`;
+      generatedElement += children;
+      generatedElement += `</${componentVariable}>\n`;
+    }
   }
 
-  if (conditionVariableName) {
+  if (conditionValue) {
     generatedElement += `}\n`;
   }
 
   return generatedElement;
 };
 
-/**
- * Jsx element and children are generated separately to be able
- * to inject some scripts into Body if necessary
- */
 export const generateJsxChildren = ({
   scope,
   children,
@@ -131,6 +188,7 @@ export const generateJsxChildren = ({
   props,
   dataSources,
   indexesWithinAncestors,
+  classesMap,
 }: {
   scope: Scope;
   children: Instance["children"];
@@ -138,6 +196,7 @@ export const generateJsxChildren = ({
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
+  classesMap?: Map<string, Array<string>>;
 }) => {
   let generatedChildren = "";
   for (const child of children) {
@@ -162,7 +221,9 @@ export const generateJsxChildren = ({
         props,
         dataSources,
         indexesWithinAncestors,
+        classesMap,
         children: generateJsxChildren({
+          classesMap,
           scope,
           children: instance.children,
           instances,
@@ -180,34 +241,61 @@ export const generateJsxChildren = ({
 
 export const generatePageComponent = ({
   scope,
-  rootInstanceId,
+  page,
   instances,
   props,
   dataSources,
   indexesWithinAncestors,
+  classesMap,
 }: {
   scope: Scope;
-  rootInstanceId: Instance["id"];
+  page: Page;
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
+  classesMap: Map<string, Array<string>>;
 }) => {
-  const instance = instances.get(rootInstanceId);
+  const instance = instances.get(page.rootInstanceId);
   if (instance === undefined) {
     return "";
   }
-  const { variables, body: dataSourcesBody } = generateDataSources({
+  const { body: dataSourcesBody } = generateDataSources({
     typed: true,
     scope,
     dataSources,
     props,
   });
   let generatedDataSources = "";
-  for (const { valueName, setterName, initialValue } of variables.values()) {
-    const initialValueString = JSON.stringify(initialValue);
-    generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+  for (const dataSource of dataSources.values()) {
+    if (dataSource.type === "variable") {
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      const setterName = scope.getName(
+        `set$${dataSource.id}`,
+        `set$${dataSource.name}`
+      );
+      const initialValue = dataSource.value.value;
+      const initialValueString = JSON.stringify(initialValue);
+      generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+    }
+    if (dataSource.type === "parameter") {
+      if (dataSource.id === page.pathVariableId) {
+        const valueName = scope.getName(dataSource.id, dataSource.name);
+        generatedDataSources += `let ${valueName} = _props.params\n`;
+      }
+    }
+    if (dataSource.type === "resource") {
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      // call resource by bound variable name
+      const resourceName = scope.getName(
+        dataSource.resourceId,
+        dataSource.name
+      );
+      // cast to any to fix accessing fields from unknown error
+      generatedDataSources += `let ${valueName}: any = _props.resources["${resourceName}"]\n`;
+    }
   }
+
   generatedDataSources += dataSourcesBody;
 
   const generatedJsx = generateJsxElement({
@@ -216,19 +304,22 @@ export const generatePageComponent = ({
     props,
     dataSources,
     indexesWithinAncestors,
-    children:
-      generateJsxChildren({
-        scope,
-        children: instance.children,
-        instances,
-        props,
-        dataSources,
-        indexesWithinAncestors,
-      }) + "{props.scripts}\n",
+    classesMap,
+    children: generateJsxChildren({
+      scope,
+      children: instance.children,
+      instances,
+      props,
+      dataSources,
+      indexesWithinAncestors,
+      classesMap,
+    }),
   });
 
   let generatedComponent = "";
-  generatedComponent += `const Page = (props: { scripts?: ReactNode }) => {\n`;
+  generatedComponent += `type Params = Record<string, string | undefined>\n`;
+  generatedComponent += `type Resources = Record<string, unknown>\n`;
+  generatedComponent += `const Page = (_props: { params: Params, resources: Resources }) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

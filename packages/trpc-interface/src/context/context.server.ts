@@ -50,6 +50,13 @@ type DeploymentContext = {
   };
 };
 
+type UserPlanFeatures = {
+  allowShareAdminLinks: boolean;
+  maxDomainsAllowedPerUser: number;
+  hasSubscription: boolean;
+  hasProPlan: boolean;
+};
+
 /**
  * AppContext is a global context that is passed to all trpc/api queries/mutations
  * "authorization" is made inside the namespace because eventually there will be
@@ -60,4 +67,5 @@ export type AppContext = {
   domain: DomainContext;
   deployment: DeploymentContext;
   entri: EntriContext;
+  userPlanFeatures: UserPlanFeatures | undefined;
 };

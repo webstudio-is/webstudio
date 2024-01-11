@@ -1,3 +1,4 @@
+import { computed } from "nanostores";
 import {
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -6,9 +7,13 @@ import {
   useEffect,
 } from "react";
 import equal from "fast-deep-equal";
-import type { PropMeta } from "@webstudio-is/react-sdk";
+import {
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  type PropMeta,
+} from "@webstudio-is/react-sdk";
 import type { Prop, Asset } from "@webstudio-is/sdk";
-import { SubtractIcon } from "@webstudio-is/icons";
+import { HelpIcon, SubtractIcon } from "@webstudio-is/icons";
 import {
   SmallIconButton,
   Label as BaseLabel,
@@ -20,14 +25,26 @@ import {
   Text,
   theme,
   type CSS,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
+import {
+  $dataSourceVariables,
+  $dataSources,
+  $selectedInstanceSelector,
+  $variableValuesByInstanceSelector,
+} from "~/shared/nano-states";
 
-export type PropValue = Prop extends infer T
-  ? T extends { value: unknown; type: unknown }
-    ? { value: T["value"]; type: T["type"] }
-    : never
-  : never;
+export type PropValue =
+  | { type: "number"; value: number }
+  | { type: "string"; value: string }
+  | { type: "boolean"; value: boolean }
+  | { type: "json"; value: unknown }
+  | { type: "string[]"; value: string[] }
+  | { type: "expression"; value: string }
+  | { type: "asset"; value: Asset["id"] }
+  | { type: "page"; value: Extract<Prop, { type: "page" }>["value"] }
+  | { type: "action"; value: Extract<Prop, { type: "action" }>["value"] };
 
 // Weird code is to make type distributive
 // https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types
@@ -35,23 +52,18 @@ type PropMetaByControl<Control> = Control extends string
   ? Extract<PropMeta, { control: Control }>
   : never;
 
-type PropByType<Type> = Type extends string
-  ? Extract<Prop, { type: Type }>
-  : never;
-
-export type ControlProps<Control, PropType> = {
+export type ControlProps<Control> = {
   instanceId: string;
   meta: PropMetaByControl<Control>;
   // prop is optional because we don't have it when an intial prop is not set
   // and we don't want to show user something like a 0 for number when it's in fact not set to any value
-  prop: PropByType<PropType> | undefined;
+  prop: Prop | undefined;
   propName: string;
+  computedValue: unknown;
+  deletable: boolean;
+  readOnly: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
-  onDelete?: () => void;
-
-  // Should be called when we want to delete the prop,
-  // but want to keep it in the list until panel is closed
-  onSoftDelete: () => void;
+  onDelete: () => void;
 };
 
 export const getLabel = (meta: { label?: string }, fallback: string) =>
@@ -82,6 +94,7 @@ type LabelProps = ComponentPropsWithoutRef<typeof BaseLabel> & {
   children: string;
   description?: string;
   openOnClick?: boolean;
+  readOnly?: boolean;
 };
 
 export const Label = ({
@@ -89,29 +102,52 @@ export const Label = ({
   children,
   description,
   openOnClick = false,
+  readOnly,
   ...rest
 }: LabelProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  let label: ReactNode;
+
   if (description == null) {
-    return <SimpleLabel htmlFor={htmlFor}>{children}</SimpleLabel>;
+    label = <SimpleLabel htmlFor={htmlFor}>{children}</SimpleLabel>;
+  } else {
+    label = (
+      <Tooltip
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        content={
+          <Flex
+            direction="column"
+            gap="2"
+            css={{ maxWidth: theme.spacing[28] }}
+          >
+            <Text variant="titles">{children}</Text>
+            <Text>{description}</Text>
+          </Flex>
+        }
+      >
+        <BaseLabel truncate htmlFor={htmlFor} {...rest}>
+          {children}
+        </BaseLabel>
+      </Tooltip>
+    );
   }
 
   return (
-    <Tooltip
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      content={
-        <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
-          <Text variant="titles">{children}</Text>
-          <Text>{description}</Text>
-        </Flex>
-      }
-    >
-      <BaseLabel truncate htmlFor={htmlFor} {...rest}>
-        {children}
-      </BaseLabel>
-    </Tooltip>
+    <Flex align="center" css={{ gap: theme.spacing[3] }}>
+      {label}
+      {readOnly && (
+        <Tooltip
+          content={
+            "The value is controlled by an expression and cannot be changed."
+          }
+          variant="wrapped"
+        >
+          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
+        </Tooltip>
+      )}
+    </Flex>
   );
 };
 
@@ -119,6 +155,7 @@ export const useLocalValue = <Type,>(
   savedValue: Type,
   onSave: (value: Type) => void
 ) => {
+  const isEditingRef = useRef(false);
   const localValueRef = useRef(savedValue);
 
   const [_, setRefresh] = useState(0);
@@ -127,6 +164,7 @@ export const useLocalValue = <Type,>(
   onSaveRef.current = onSave;
 
   const save = () => {
+    isEditingRef.current = false;
     if (equal(localValueRef.current, savedValue) === false) {
       // To synchronize with setState immediately followed by save
       onSaveRef.current(localValueRef.current);
@@ -134,6 +172,7 @@ export const useLocalValue = <Type,>(
   };
 
   const setLocalValue = (value: Type) => {
+    isEditingRef.current = true;
     localValueRef.current = value;
     setRefresh((refresh) => refresh + 1);
   };
@@ -142,6 +181,17 @@ export const useLocalValue = <Type,>(
   // So we're saving at the unmount
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => save, []);
+
+  useEffect(() => {
+    // Update local value if saved value changes and control is not in edit mode.
+    if (
+      isEditingRef.current === false &&
+      localValueRef.current !== savedValue
+    ) {
+      localValueRef.current = savedValue;
+      setRefresh((refresh) => refresh + 1);
+    }
+  }, [savedValue]);
 
   return {
     /**
@@ -164,15 +214,21 @@ export const useLocalValue = <Type,>(
 
 type LayoutProps = {
   label: ReturnType<typeof Label>;
-  onDelete?: () => void;
+  deletable: boolean;
+  onDelete: () => void;
   children: ReactNode;
 };
 
-export const VerticalLayout = ({ label, onDelete, children }: LayoutProps) => (
+export const VerticalLayout = ({
+  label,
+  deletable,
+  onDelete,
+  children,
+}: LayoutProps) => (
   <Box>
     <Grid
       css={{
-        gridTemplateColumns: onDelete ? `1fr max-content` : `1fr`,
+        gridTemplateColumns: deletable ? `1fr max-content` : `1fr`,
         justifyItems: "start",
       }}
       align="center"
@@ -180,36 +236,37 @@ export const VerticalLayout = ({ label, onDelete, children }: LayoutProps) => (
       justify="between"
     >
       {label}
-      {onDelete && <RemovePropButton onClick={onDelete} />}
+      {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
-    {children}
+    <Box css={{ py: theme.spacing[2] }}>{children}</Box>
   </Box>
 );
 
 export const HorizontalLayout = ({
   label,
+  deletable,
   onDelete,
   children,
 }: LayoutProps) => (
   <Grid
     css={{
-      gridTemplateColumns: onDelete
+      gridTemplateColumns: deletable
         ? `${theme.spacing[19]} 1fr max-content`
         : `${theme.spacing[19]} 1fr`,
       minHeight: theme.spacing[13],
-      justifyItems: "start",
     }}
     align="center"
     gap="2"
   >
     {label}
     {children}
-    {onDelete && <RemovePropButton onClick={onDelete} />}
+    {deletable && <RemovePropButton onClick={onDelete} />}
   </Grid>
 );
 
 export const ResponsiveLayout = ({
   label,
+  deletable,
   onDelete,
   children,
 }: LayoutProps) => {
@@ -217,13 +274,13 @@ export const ResponsiveLayout = ({
   // might not cover all cases though
   if (label.props.children.length <= 8) {
     return (
-      <HorizontalLayout label={label} onDelete={onDelete}>
+      <HorizontalLayout label={label} deletable={deletable} onDelete={onDelete}>
         {children}
       </HorizontalLayout>
     );
   }
   return (
-    <VerticalLayout label={label} onDelete={onDelete}>
+    <VerticalLayout label={label} deletable={deletable} onDelete={onDelete}>
       {children}
     </VerticalLayout>
   );
@@ -234,3 +291,45 @@ export const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
     {children}
   </Flex>
 );
+
+export const $selectedInstanceScope = computed(
+  [$selectedInstanceSelector, $variableValuesByInstanceSelector, $dataSources],
+  (instanceSelector, variableValuesByInstanceSelector, dataSources) => {
+    const scope: Record<string, unknown> = {};
+    const aliases = new Map<string, string>();
+    if (instanceSelector === undefined) {
+      return { scope, aliases };
+    }
+    const values = variableValuesByInstanceSelector.get(
+      JSON.stringify(instanceSelector)
+    );
+    if (values) {
+      for (const [dataSourceId, value] of values) {
+        const dataSource = dataSources.get(dataSourceId);
+        if (dataSource === undefined) {
+          continue;
+        }
+        const name = encodeDataSourceVariable(dataSourceId);
+        scope[name] = value;
+        aliases.set(name, dataSource.name);
+      }
+    }
+    return { scope, aliases };
+  }
+);
+
+export const updateExpressionValue = (expression: string, value: unknown) => {
+  const dataSources = $dataSources.get();
+  // when expression contains only reference to variable update that variable
+  // extract id without parsing expression
+  const potentialVariableId = decodeDataSourceVariable(expression);
+  if (
+    potentialVariableId !== undefined &&
+    dataSources.has(potentialVariableId)
+  ) {
+    const dataSourceId = potentialVariableId;
+    const dataSourceVariables = new Map($dataSourceVariables.get());
+    dataSourceVariables.set(dataSourceId, value);
+    $dataSourceVariables.set(dataSourceVariables);
+  }
+};

@@ -1,4 +1,3 @@
-import { cssVars } from "@webstudio-is/css-vars";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +13,11 @@ import { ChevronDownIcon } from "@webstudio-is/icons";
 import { type ReactNode } from "react";
 import { useContentEditable } from "~/shared/dom-hooks";
 
-const menuTriggerVisibilityVar = cssVars.define("menu-trigger-visibility");
-const menuTriggerVisibilityOverrideVar = cssVars.define(
-  "menu-trigger-visibility-override"
-);
-const menuTriggerGradientVar = cssVars.define("menu-trigger-gradient");
+const menuTriggerVisibilityVar = "--ws-style-source-menu-trigger-visibility";
+const menuTriggerVisibilityOverrideVar =
+  "--ws-style-source-menu-trigger-visibility-override";
+const menuTriggerGradientVar = "--ws-style-source-menu-trigger-gradient";
+const visibility = `var(${menuTriggerVisibilityOverrideVar}, var(${menuTriggerVisibilityVar}))`;
 
 export const menuCssVars = ({
   show,
@@ -50,10 +49,7 @@ const MenuTrigger = styled("button", {
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   color: theme.colors.foregroundContrastMain,
-  visibility: cssVars.use(
-    menuTriggerVisibilityOverrideVar,
-    cssVars.use(menuTriggerVisibilityVar)
-  ),
+  visibility,
   "&:hover, &[data-state=open]": {
     ...menuCssVars({ show: true }),
     "&::after": {
@@ -64,10 +60,7 @@ const MenuTrigger = styled("button", {
       right: 0,
       width: "100%",
       height: "100%",
-      visibility: cssVars.use(
-        menuTriggerVisibilityOverrideVar,
-        cssVars.use(menuTriggerVisibilityVar)
-      ),
+      visibility,
       backgroundColor: theme.colors.backgroundButtonHover,
       borderTopRightRadius: theme.borderRadius[4],
       borderBottomRightRadius: theme.borderRadius[4],
@@ -82,11 +75,8 @@ const MenuTriggerGradient = styled(Box, {
   right: 0,
   width: theme.spacing[11],
   height: "100%",
-  visibility: cssVars.use(
-    menuTriggerVisibilityOverrideVar,
-    cssVars.use(menuTriggerVisibilityVar)
-  ),
-  background: cssVars.use(menuTriggerGradientVar),
+  visibility,
+  background: `var(${menuTriggerGradientVar})`,
   borderTopRightRadius: theme.borderRadius[4],
   borderBottomRightRadius: theme.borderRadius[4],
   pointerEvents: "none",
@@ -161,7 +151,7 @@ const EditableText = ({
 const StyleSourceContainer = styled(Box, {
   display: "inline-flex",
   borderRadius: theme.borderRadius[3],
-  minWidth: theme.spacing[13],
+  minWidth: theme.spacing[14],
   maxWidth: "100%",
   position: "relative",
   color: theme.colors.foregroundContrastMain,
@@ -170,9 +160,9 @@ const StyleSourceContainer = styled(Box, {
   variants: {
     source: {
       local: {
-        backgroundColor: theme.colors.backgroundStyleSourceToken,
+        backgroundColor: theme.colors.backgroundStyleSourceLocal,
         [menuTriggerGradientVar]:
-          theme.colors.backgroundStyleSourceGradientToken,
+          theme.colors.backgroundStyleSourceGradientLocal,
       },
       token: {
         backgroundColor: theme.colors.backgroundStyleSourceToken,
@@ -229,10 +219,25 @@ const StyleSourceButton = styled("button", {
 
 const StyleSourceState = styled(Text, {
   padding: theme.spacing[3],
-  backgroundColor: theme.colors.backgroundStyleSourceToken,
   borderTopRightRadius: theme.borderRadius[3],
   borderBottomRightRadius: theme.borderRadius[3],
   cursor: "default",
+  variants: {
+    source: {
+      local: {
+        backgroundColor: theme.colors.backgroundStyleSourceLocal,
+      },
+      token: {
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
+      },
+      componentToken: {
+        backgroundColor: theme.colors.backgroundStyleSourceToken,
+      },
+      tag: {
+        backgroundColor: theme.colors.backgroundStyleSourceTag,
+      },
+    },
+  },
 });
 
 type StyleSourceProps = {
@@ -293,7 +298,7 @@ export const StyleSource = ({
         </StyleSourceButton>
       </Flex>
       {stateLabel !== undefined && (
-        <StyleSourceState css={{ lineHeight: 1 }}>
+        <StyleSourceState source={source} css={{ lineHeight: 1 }}>
           {stateLabel}
         </StyleSourceState>
       )}

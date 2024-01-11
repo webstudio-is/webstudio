@@ -14,6 +14,7 @@ test("generates forms properties", () => {
   expect(
     generateUtilsExport({
       pages: {
+        meta: {},
         homePage: createPage("1"),
         pages: [],
       },
@@ -65,6 +66,7 @@ test("generates list of pages paths", () => {
   expect(
     generateUtilsExport({
       pages: {
+        meta: {},
         homePage: createPage("/path1"),
         pages: [createPage("/path2"), createPage("/path3")],
       },

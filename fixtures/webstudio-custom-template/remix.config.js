@@ -6,6 +6,8 @@ module.exports = {
     /@webstudio-is\//,
     "nanoid",
     "@jsep-plugin/assignment",
+    "change-case",
+    "title-case",
   ],
   future: {
     v2_errorBoundary: true,

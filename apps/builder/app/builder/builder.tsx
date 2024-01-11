@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
@@ -10,7 +10,6 @@ import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
-import { useSharedShortcuts } from "~/shared/shortcuts";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
@@ -23,21 +22,23 @@ import {
   useReadCanvasRect,
   Workspace,
 } from "./features/workspace";
-import { usePublishShortcuts } from "./shared/shortcuts";
 import {
-  assetsStore,
+  $assets,
   $authPermit,
   $authToken,
-  breakpointsStore,
-  dataSourcesStore,
-  instancesStore,
+  $breakpoints,
+  $dataSources,
+  $instances,
   $isPreviewMode,
-  pagesStore,
-  projectStore,
-  propsStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
+  $pages,
+  $project,
+  $props,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
+  $domains,
+  $resources,
+  subscribeResources,
 } from "~/shared/nano-states";
 import { type Settings, useClientSettings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -46,6 +47,9 @@ import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
+import { AiCommandBar } from "./features/ai/ai-command-bar";
+import { ProjectSettings } from "./features/seo/project-settings";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 registerContainers();
 
@@ -65,7 +69,7 @@ const useNavigatorLayout = () => {
 };
 
 const useSetWindowTitle = () => {
-  const project = useStore(projectStore);
+  const project = useStore($project);
   useEffect(() => {
     document.title = `${project?.title} | Webstudio`;
   }, [project?.title]);
@@ -108,13 +112,14 @@ const SidePanel = ({
   );
 };
 
-const Main = ({ children }: { children: JSX.Element | Array<JSX.Element> }) => (
+const Main = ({ children }: { children: ReactNode }) => (
   <Flex
     as="main"
     direction="column"
     css={{
       gridArea: "main",
       overflow: "hidden",
+      position: "relative",
     }}
   >
     {children}
@@ -218,44 +223,49 @@ const NavigatorPanel = ({
 
 export type BuilderProps = {
   project: Project;
+  domains: string[];
   build: Build;
   assets: [Asset["id"], Asset][];
-  buildOrigin: string;
   authToken?: string;
   authPermit: AuthPermit;
+  userPlanFeatures: UserPlanFeatures;
 };
 
 export const Builder = ({
   project,
+  domains,
   build,
   assets,
-  buildOrigin,
   authToken,
   authPermit,
+  userPlanFeatures,
 }: BuilderProps) => {
   useMount(() => {
     // additional data stores
-    projectStore.set(project);
+    $project.set(project);
+    $domains.set(domains);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
 
     // set initial containers value
-    assetsStore.set(new Map(assets));
-    instancesStore.set(new Map(build.instances));
-    dataSourcesStore.set(new Map(build.dataSources));
+    $assets.set(new Map(assets));
+    $instances.set(new Map(build.instances));
+    $dataSources.set(new Map(build.dataSources));
+    $resources.set(new Map(build.resources));
     // props should be after data sources to compute logic
-    propsStore.set(new Map(build.props));
-    pagesStore.set(build.pages);
-    styleSourcesStore.set(new Map(build.styleSources));
-    styleSourceSelectionsStore.set(new Map(build.styleSourceSelections));
-    breakpointsStore.set(new Map(build.breakpoints));
-    stylesStore.set(new Map(build.styles));
+    $props.set(new Map(build.props));
+    $pages.set(build.pages);
+    $styleSources.set(new Map(build.styleSources));
+    $styleSourceSelections.set(new Map(build.styleSourceSelections));
+    $breakpoints.set(new Map(build.breakpoints));
+    $styles.set(new Map(build.styles));
   });
 
   useEffect(subscribeCommands, []);
+  useEffect(subscribeResources, []);
 
   useUnmount(() => {
-    pagesStore.set(undefined);
+    $pages.set(undefined);
   });
 
   useSyncPageUrl();
@@ -273,10 +283,8 @@ export const Builder = ({
     authPermit,
     version: build.version,
   });
-  useSharedShortcuts({ source: "builder" });
 
   const isPreviewMode = useStore($isPreviewMode);
-  usePublishShortcuts(publish);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
   // because the events will fire in either one, depending on where the focus is
@@ -293,16 +301,23 @@ export const Builder = ({
   const navigatorLayout = useNavigatorLayout();
 
   const canvasUrl = getBuildUrl({
-    buildOrigin,
     project,
   });
 
   return (
     <TooltipProvider>
       <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <Topbar gridArea="header" project={project} />
+        <ProjectSettings />
+        <Topbar
+          gridArea="header"
+          project={project}
+          hasProPlan={userPlanFeatures.hasProPlan}
+        />
         <Main>
-          <Workspace onTransitionEnd={onTransitionEnd} publish={publish}>
+          <Workspace
+            onTransitionEnd={onTransitionEnd}
+            initialBreakpoints={build.breakpoints}
+          >
             <CanvasIframe
               ref={iframeRefCallback}
               src={canvasUrl}
@@ -314,6 +329,7 @@ export const Builder = ({
               }}
             />
           </Workspace>
+          <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
         <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
           <SidebarLeft publish={publish} />
@@ -327,7 +343,7 @@ export const Builder = ({
           isPreviewMode={isPreviewMode}
           css={{ overflow: "hidden" }}
         >
-          <Inspector publish={publish} navigatorLayout={navigatorLayout} />
+          <Inspector navigatorLayout={navigatorLayout} />
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />

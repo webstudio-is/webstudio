@@ -20,6 +20,10 @@ export const DataSourceVariableValue = z.union([
     type: z.literal("string[]"),
     value: z.array(z.string()),
   }),
+  z.object({
+    type: z.literal("json"),
+    value: z.unknown(),
+  }),
 ]);
 
 export const DataSource = z.union([
@@ -31,11 +35,17 @@ export const DataSource = z.union([
     value: DataSourceVariableValue,
   }),
   z.object({
-    type: z.literal("expression"),
+    type: z.literal("parameter"),
     id: DataSourceId,
     scopeInstanceId: z.optional(z.string()),
     name: z.string(),
-    code: z.string(),
+  }),
+  z.object({
+    type: z.literal("resource"),
+    id: DataSourceId,
+    scopeInstanceId: z.optional(z.string()),
+    name: z.string(),
+    resourceId: z.string(),
   }),
 ]);
 

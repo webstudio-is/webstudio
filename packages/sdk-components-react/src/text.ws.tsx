@@ -28,13 +28,6 @@ export const meta: WsComponentMeta = {
   icon: TextIcon,
   states: defaultStates,
   presetStyle,
-  template: [
-    {
-      type: "instance",
-      component: "Text",
-      children: [{ type: "text", value: "The text you can edit" }],
-    },
-  ],
   order: 0,
 };
 
