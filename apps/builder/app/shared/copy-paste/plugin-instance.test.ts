@@ -39,7 +39,9 @@ $registeredComponentMetas.set(
   new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
 );
 $project.set({ id: "my-project" } as Project);
-$pages.set(createDefaultPages({ rootInstanceId: "body0" }));
+$pages.set(
+  createDefaultPages({ homePageId: "home-page", rootInstanceId: "body0" })
+);
 $selectedPageId.set("home-page");
 
 const createInstance = (

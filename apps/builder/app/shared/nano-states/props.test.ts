@@ -35,7 +35,11 @@ const setBoxInstance = (id: Instance["id"]) => {
 };
 
 const selectPageRoot = (rootInstanceId: Instance["id"]) => {
-  const defaultPages = createDefaultPages({ rootInstanceId });
+  const defaultPages = createDefaultPages({
+    homePageId: "pageId",
+    homePagePath: "/my-page",
+    rootInstanceId,
+  });
   $pages.set(defaultPages);
   $selectedPageId.set(defaultPages.homePage.id);
 };

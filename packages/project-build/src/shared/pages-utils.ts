@@ -25,16 +25,18 @@ export const createRootFolder = (
 export const createDefaultPages = ({
   rootInstanceId,
   homePageId = nanoid(),
+  homePagePath = "",
 }: {
   rootInstanceId: string;
   homePageId?: string;
+  homePagePath?: string;
 }): Pages => {
   return {
     meta: {},
     homePage: {
       id: homePageId,
       name: "Home",
-      path: "",
+      path: homePagePath,
       title: "Home",
       meta: {},
       rootInstanceId,
