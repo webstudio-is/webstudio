@@ -17,6 +17,7 @@ import {
   ScrollArea,
   rawTheme,
   Flex,
+  Select,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -30,10 +31,17 @@ import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { removeByMutable } from "~/shared/array-utils";
+import { rootFolder } from "@webstudio-is/project-build";
+import {
+  findFolderById,
+  findParentFolderByChildId,
+  cleanupChildRefsMutable,
+} from "./page-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
   slug: "untitled",
+  parentFolderId: rootFolder.id,
 };
 
 const fieldNames = Object.keys(
@@ -94,10 +102,14 @@ const validateValues = (
   return errors;
 };
 
-const toForm = (folder: Folder): Values => {
+const toFormValues = (folderId: Folder["id"], pages: Pages): Values => {
+  const folder = findFolderById(folderId, pages);
+  const parentFolder = findParentFolderByChildId(folderId, pages);
+
   return {
     name: folder.name,
     slug: folder.slug,
+    parentFolderId: parentFolder.id,
   };
 };
 
@@ -109,12 +121,14 @@ const FormFields = ({
   autoSelect,
   errors,
   values,
+  folderId,
   onChange,
 }: {
   disabled?: boolean;
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
+  folderId: Folder["id"];
   onChange: (
     event: {
       [K in keyof Values]: {
@@ -125,7 +139,13 @@ const FormFields = ({
   ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
+  const pages = useStore($pages);
 
+  if (pages === undefined) {
+    return;
+  }
+
+  // @todo this is a hack to get the scroll area to work needs to be removed
   const TOPBAR_HEIGHT = 40;
   const HEADER_HEIGHT = 40;
   const FOOTER_HEIGHT = 24;
@@ -156,6 +176,29 @@ const FormFields = ({
           </Grid>
 
           <Grid gap={1}>
+            <Label htmlFor={fieldIds.name}>Parent Folder</Label>
+            <InputErrorsTooltip errors={errors.name}>
+              <Select
+                tabIndex={1}
+                css={{ zIndex: theme.zIndices[1] }}
+                options={[pages.rootFolder, ...pages.folders].filter(
+                  // Prevent selecting yourself as a parent
+                  ({ id }) => folderId !== id
+                )}
+                getValue={(folder) => folder.id}
+                getLabel={(folder) => folder.name}
+                value={findFolderById(values.parentFolderId, pages)}
+                onChange={(folder) => {
+                  onChange({
+                    field: "parentFolderId",
+                    value: folder.id,
+                  });
+                }}
+              />
+            </InputErrorsTooltip>
+          </Grid>
+
+          <Grid gap={1}>
             <Label htmlFor={fieldIds.slug}>
               <Flex align="center" css={{ gap: theme.spacing[3] }}>
                 Slug
@@ -180,7 +223,10 @@ const FormFields = ({
                 disabled={disabled}
                 value={values?.slug}
                 onChange={(event) => {
-                  onChange({ field: "slug", value: event.target.value });
+                  onChange({
+                    field: "slug",
+                    value: event.target.value,
+                  });
                 }}
               />
             </InputErrorsTooltip>
@@ -199,6 +245,8 @@ const nameToSlug = (name: string) => {
   return slugify(name, { lower: true, strict: true });
 };
 
+export const newFolderId = "new-folder";
+
 export const NewFolderSettings = ({
   onClose,
   onSuccess,
@@ -212,11 +260,12 @@ export const NewFolderSettings = ({
     ...fieldDefaultValues,
     slug: nameToSlug(fieldDefaultValues.name),
   });
+
   const errors = validateValues(pages, undefined, values);
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const folderId = nanoid();
-
+      // @todo move to a function
       serverSyncStore.createTransaction([$pages], (pages) => {
         if (pages === undefined) {
           return;
@@ -227,8 +276,8 @@ export const NewFolderSettings = ({
           slug: values.slug,
           children: [],
         } satisfies Folder);
-        // @todo add parent folder selection
-        pages.rootFolder.children.push(folderId);
+        const parentFolder = findFolderById(values.parentFolderId, pages);
+        parentFolder.children.push(folderId);
       });
 
       onSuccess(folderId);
@@ -246,6 +295,7 @@ export const NewFolderSettings = ({
         errors={errors}
         disabled={false}
         values={values}
+        folderId={newFolderId}
         onChange={(value) => {
           setValues((values) => {
             const changes = { [value.field]: value.value };
@@ -332,6 +382,13 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
     if (values.slug !== undefined) {
       folder.slug = values.slug;
     }
+
+    const newParentFolder = findParentFolderByChildId(
+      values.parentFolderId ?? "root",
+      pages
+    );
+    cleanupChildRefsMutable(folderId, pages);
+    newParentFolder.children.push(folderId);
   });
 };
 
@@ -341,6 +398,7 @@ const deleteFolder = (folderId: Folder["id"]) => {
     if (pages === undefined) {
       return;
     }
+    cleanupChildRefsMutable(folderId, pages);
     removeByMutable(pages.folders, (folder) => folder.id === folderId);
   });
 };
@@ -355,11 +413,11 @@ export const FolderSettings = ({
   folderId: string;
 }) => {
   const pages = useStore($pages);
-  const folder = pages?.folders.find((folder) => folder.id === folderId);
+  const folder = pages && findFolderById(folderId, pages);
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
-    ...(folder ? toForm(folder) : fieldDefaultValues),
+    ...(pages ? toFormValues(folderId, pages) : fieldDefaultValues),
     ...unsavedValues,
   };
 
@@ -412,7 +470,12 @@ export const FolderSettings = ({
 
   return (
     <FolderSettingsView onClose={onClose} onDelete={hanldeDelete}>
-      <FormFields errors={errors} values={values} onChange={handleChange} />
+      <FormFields
+        folderId={folderId}
+        errors={errors}
+        values={values}
+        onChange={handleChange}
+      />
     </FolderSettingsView>
   );
 };

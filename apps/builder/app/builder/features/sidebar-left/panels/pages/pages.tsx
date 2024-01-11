@@ -29,7 +29,11 @@ import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import { toTreeData, type TreeData } from "./page-utils";
-import { FolderSettings, NewFolderSettings } from "./folder-settings";
+import {
+  FolderSettings,
+  NewFolderSettings,
+  newFolderId,
+} from "./folder-settings";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type TabContentProps = {
@@ -156,7 +160,7 @@ const PagesPanel = ({
     [onSelect]
   );
 
-  if (treeData === undefined) {
+  if (treeData === undefined || pages === undefined) {
     return null;
   }
 
@@ -200,17 +204,25 @@ const PagesPanel = ({
       />
       <Box css={{ overflowY: "auto", flexBasis: 0, flexGrow: 1 }}>
         <TreeNode<TreeData>
-          selectedItemSelector={[selectedPageId, treeData.id]}
+          selectedItemSelector={[selectedPageId, treeData.root.id]}
           onSelect={selectTreeNode}
-          itemData={treeData}
+          itemData={treeData.root}
           renderItem={renderItem}
           getItemChildren={([nodeId]) => {
-            if (nodeId === treeData.id && treeData.type === "folder") {
-              return treeData.children;
+            // It's the root.
+            if (
+              nodeId === treeData.root.id &&
+              treeData.root.type === "folder"
+            ) {
+              return treeData.root.children;
+            }
+            const item = treeData.index.get(nodeId);
+            if (item?.type === "folder") {
+              return item.children;
             }
             return [];
           }}
-          isItemHidden={([itemId]) => itemId === treeData.id}
+          isItemHidden={([itemId]) => itemId === treeData.root.id}
           getIsExpanded={() => true}
         />
       </Box>
@@ -219,7 +231,6 @@ const PagesPanel = ({
 };
 
 const newPageId = "new-page";
-const newFolderId = "new-folder";
 
 const PageEditor = ({
   editingPageId,
@@ -268,6 +279,7 @@ const FolderEditor = ({
   editingFolderId: string;
   setEditingFolderId: (pageId?: string) => void;
 }) => {
+  console.log("folderEditor");
   if (editingFolderId === newFolderId) {
     return (
       <NewFolderSettings
@@ -275,6 +287,7 @@ const FolderEditor = ({
         onSuccess={() => {
           setEditingFolderId(undefined);
         }}
+        key={newFolderId}
       />
     );
   }
@@ -299,9 +312,9 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   if (currentPageId === undefined) {
     return null;
   }
-  const isEditingFolder = pages?.folders.some(
-    (folder) => folder.id === editingItemId
-  );
+  const isEditingFolder =
+    editingItemId === newFolderId ||
+    pages?.folders.some((folder) => folder.id === editingItemId);
 
   return (
     <>

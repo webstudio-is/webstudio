@@ -17,12 +17,18 @@ type TreeFolder = {
 
 export type TreeData = TreeFolder | TreePage;
 
-export const toTreeData = (pages: Pages): TreeData => {
+type Index = Map<string, TreeData>;
+
+export const toTreeData = (
+  pages: Pages
+): { root: TreeFolder; index: Index } => {
   const pagesMap = new Map(pages.pages.map((page) => [page.id, page]));
+  pagesMap.set(pages.homePage.id, pages.homePage);
   const foldersMap = new Map(
     pages.folders.map((folder) => [folder.id, folder])
   );
-  pagesMap.set(pages.homePage.id, pages.homePage);
+  foldersMap.set(pages.rootFolder.id, pages.rootFolder);
+  const index: Index = new Map();
 
   const folderToTree = (folder: Folder) => {
     const children: Array<TreeData> = [];
@@ -30,16 +36,20 @@ export const toTreeData = (pages: Pages): TreeData => {
       const folder = foldersMap.get(id);
       // It is a folder, not a page.
       if (folder) {
-        children.push(folderToTree(folder));
+        const treeFolder = folderToTree(folder);
+        children.push(treeFolder);
+        index.set(folder.id, treeFolder);
         continue;
       }
       const page = pagesMap.get(id);
       if (page) {
-        children.push({
+        const treePage = {
           type: "page",
           id: page.id,
           data: page,
-        } satisfies TreePage);
+        } satisfies TreePage;
+        children.push(treePage);
+        index.set(page.id, treePage);
         continue;
       }
     }
@@ -52,5 +62,44 @@ export const toTreeData = (pages: Pages): TreeData => {
     } satisfies TreeFolder;
   };
 
-  return folderToTree(pages.rootFolder);
+  return { root: folderToTree(pages.rootFolder), index };
+};
+
+export const findFolderById = (
+  folderId: Folder["id"],
+  pages: Pages
+): Folder => {
+  for (const folder of pages.folders) {
+    if (folder.id === folderId) {
+      return folder;
+    }
+  }
+  return pages.rootFolder;
+};
+
+export const findParentFolderByChildId = (
+  folderId: Folder["id"],
+  pages: Pages
+): Folder => {
+  for (const folder of pages.folders) {
+    if (folder.children.includes(folderId)) {
+      return folder;
+    }
+  }
+  return pages.rootFolder;
+};
+
+export const cleanupChildRefsMutable = (
+  id: Folder["id"] | Page["id"],
+  pages: Pages
+) => {
+  const allFolders = [pages.rootFolder, ...pages.folders];
+  for (const folder of allFolders) {
+    const index = folder.children.indexOf(id);
+    if (index !== -1) {
+      // Not exiting here just to be safe and check all folders even though it should be impossible
+      // to have the same id in multiple folders.
+      folder.children.splice(index, 1);
+    }
+  }
 };

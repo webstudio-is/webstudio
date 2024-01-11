@@ -103,6 +103,7 @@ type Errors = {
   [fieldName in FieldName]?: string[];
 };
 
+// @todo needs to be removed
 const LegacyPagePath = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
@@ -307,6 +308,7 @@ const FormFields = ({
     .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
 
+  // @todo this is a hack to get the scroll area to work needs to be removed
   const TOPBAR_HEIGHT = 40;
   const HEADER_HEIGHT = 40;
   const FOOTER_HEIGHT = 24;
