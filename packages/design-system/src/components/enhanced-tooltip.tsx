@@ -71,12 +71,6 @@ export const EnhancedTooltip = forwardRef(
      */
     const allowOpenRef = useRef(true);
 
-    const handleDisableOpen = () => {
-      allowOpenRef.current = false;
-      setOpen(false);
-      showTooltipDelayed.cancel();
-    };
-
     const showTooltipDelayed = useDebouncedCallback(
       () => {
         if (allowOpenRef.current) {
@@ -116,12 +110,6 @@ export const EnhancedTooltip = forwardRef(
       onBlur: (event: FocusEvent<HTMLElement>) => {
         handleFocusEventsDebounced("blur");
         event.preventDefault();
-      },
-      onPointerDown: () => {
-        handleDisableOpen();
-      },
-      onKeyDown: () => {
-        handleDisableOpen();
       },
     };
 
