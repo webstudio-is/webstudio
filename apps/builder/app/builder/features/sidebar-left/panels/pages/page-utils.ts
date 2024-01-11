@@ -19,6 +19,10 @@ export type TreeData = TreeFolder | TreePage;
 
 type Index = Map<string, TreeData>;
 
+/**
+ * Return a nested tree structure from flat pages and folders.
+ * To be used for rendering.
+ */
 export const toTreeData = (
   pages: Pages
 ): { root: TreeFolder; index: Index } => {
@@ -66,6 +70,9 @@ export const toTreeData = (
   return { root: folderToTree(pages.rootFolder), index };
 };
 
+/**
+ * Find a folder by folder id.
+ */
 export const findFolderById = (
   folderId: Folder["id"],
   pages: Pages
@@ -78,18 +85,27 @@ export const findFolderById = (
   return pages.rootFolder;
 };
 
+/**
+ * Find a folder that has has that id in the children.
+ */
 export const findParentFolderByChildId = (
-  folderId: Folder["id"],
+  id: Folder["id"] | Page["id"],
   pages: Pages
 ): Folder => {
   for (const folder of pages.folders) {
-    if (folder.children.includes(folderId)) {
+    if (folder.children.includes(id)) {
       return folder;
     }
   }
   return pages.rootFolder;
 };
 
+/**
+ * When page or folder needs to be deleted or moved to a different parent,
+ * we want to cleanup any existing reference to it in current folder.
+ * We could do this in just one folder, but I think its more robust to check all,
+ * just in case we got double referencing.
+ */
 export const cleanupChildRefsMutable = (
   id: Folder["id"] | Page["id"],
   pages: Pages
@@ -105,6 +121,10 @@ export const cleanupChildRefsMutable = (
   }
 };
 
+/**
+ * When page or folder is found and its not referenced in any other folder children,
+ * we consider it orphaned due to collaborative changes and we put it into the root folder.
+ */
 export const reparentOrphansMutable = (pages: Pages) => {
   const children = [];
   const allFolders = [pages.rootFolder, ...pages.folders];

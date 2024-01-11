@@ -1,5 +1,11 @@
 import { describe, expect, test } from "@jest/globals";
-import { reparentOrphansMutable, toTreeData } from "./page-utils";
+import {
+  cleanupChildRefsMutable,
+  findFolderById,
+  findParentFolderByChildId,
+  reparentOrphansMutable,
+  toTreeData,
+} from "./page-utils";
 import { createDefaultPages } from "@webstudio-is/project-build";
 
 describe("toTreeData", () => {
@@ -194,62 +200,121 @@ describe("toTreeData", () => {
   });
 });
 
-// @todo
-// We must deal with the fact there can be an orphaned folder or page in a collaborative mode,
-// because user A can add a page to a folder while user B deletes the folder without receiving the create page yet.
-test("reparent orphans", () => {
-  const pages = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    homePageId: "homePageId",
-  });
-  pages.pages.push({
-    id: "pageId",
-    meta: {},
-    name: "Page",
-    path: "/page",
-    rootInstanceId: "rootInstanceId",
-    title: "Page",
-  });
-  pages.folders.push({
-    id: "folderId",
-    name: "Folder",
-    slug: "folder",
-    children: [],
-  });
-  reparentOrphansMutable(pages);
-  expect(pages).toEqual({
-    meta: {},
-    homePage: {
-      id: "homePageId",
-      name: "Home",
-      path: "",
-      title: "Home",
-      meta: {},
+describe("reparentOrphansMutable", () => {
+  // We must deal with the fact there can be an orphaned folder or page in a collaborative mode,
+  // because user A can add a page to a folder while user B deletes the folder without receiving the create page yet.
+  test("reparent orphans to the root", () => {
+    const pages = createDefaultPages({
       rootInstanceId: "rootInstanceId",
-    },
-    rootFolder: {
+      homePageId: "homePageId",
+    });
+    pages.pages.push({
+      id: "pageId",
+      meta: {},
+      name: "Page",
+      path: "/page",
+      rootInstanceId: "rootInstanceId",
+      title: "Page",
+    });
+    pages.folders.push({
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    });
+    reparentOrphansMutable(pages);
+    expect(pages.rootFolder).toEqual({
       id: "root",
       name: "Root",
       slug: "",
       children: ["homePageId", "folderId", "pageId"],
-    },
-    pages: [
-      {
-        id: "pageId",
-        meta: {},
-        name: "Page",
-        path: "/page",
-        rootInstanceId: "rootInstanceId",
-        title: "Page",
-      },
-    ],
-    folders: [
-      {
-        id: "folderId",
-        name: "Folder",
-        slug: "folder",
-        children: [],
-      },
-    ],
+    });
+  });
+});
+
+describe("cleanupChildRefsMutable", () => {
+  test("cleanup refs", () => {
+    const pages = createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    });
+    pages.folders.push({
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    });
+    pages.rootFolder.children.push("folderId");
+    cleanupChildRefsMutable("folderId", pages);
+    expect(pages.rootFolder).toEqual({
+      id: "root",
+      name: "Root",
+      slug: "",
+      children: ["homePageId"],
+    });
+  });
+});
+
+describe("findParentFolderByChildId", () => {
+  const pages = createDefaultPages({
+    rootInstanceId: "rootInstanceId",
+    homePageId: "homePageId",
+  });
+  pages.folders.push({
+    id: "folderId",
+    name: "Folder 1",
+    slug: "folder",
+    children: ["folderId1"],
+  });
+  pages.rootFolder.children.push("folderId");
+  pages.folders.push({
+    id: "folderId1",
+    name: "Folder 2",
+    slug: "folder",
+    children: [],
+  });
+  pages.folders.push({
+    id: "folderId2",
+    name: "Folder 3",
+    slug: "folder",
+    children: [],
+  });
+
+  test("find in root folder", () => {
+    expect(findParentFolderByChildId("folderId", pages)).toEqual(
+      pages.rootFolder
+    );
+  });
+
+  test("orphan folder 3 - return root", () => {
+    expect(findParentFolderByChildId("folderId3", pages)).toEqual(
+      pages.rootFolder
+    );
+  });
+});
+
+describe("findFolderById", () => {
+  const pages = createDefaultPages({
+    rootInstanceId: "rootInstanceId",
+    homePageId: "homePageId",
+  });
+  pages.folders.push({
+    id: "folderId",
+    name: "Folder 1",
+    slug: "folder",
+    children: ["folderId1"],
+  });
+
+  test("find folder", () => {
+    expect(findFolderById("folderId", pages)).toEqual({
+      id: "folderId",
+      name: "Folder 1",
+      slug: "folder",
+      children: ["folderId1"],
+    });
+  });
+
+  test("folder not found - root returned", () => {
+    expect(findFolderById("unknown", pages)).toEqual(pages.rootFolder);
   });
 });
