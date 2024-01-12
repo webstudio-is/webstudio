@@ -4,11 +4,13 @@ import {
   type PropMeta,
   showAttribute,
   decodeDataSourceVariable,
+  textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
   $dataSources,
+  $registeredComponentMetas,
   $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 
@@ -132,9 +134,9 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
     meta: {
       label: "Show",
       required: false,
-      defaultValue: true,
       control: "boolean",
       type: "boolean",
+      defaultValue: true,
     },
   },
 ];
@@ -146,6 +148,9 @@ export const usePropsLogic = ({
   updateProp,
   deleteProp,
 }: UsePropsLogicInput) => {
+  const instanceMeta = useStore($registeredComponentMetas).get(
+    instance.component
+  );
   const meta = useStore($registeredComponentPropsMetas).get(instance.component);
   const dataSources = useStore($dataSources);
 
@@ -191,6 +196,23 @@ export const usePropsLogic = ({
       readOnly: isReadOnly(saved),
     };
   });
+  const canHaveTextContent = instanceMeta?.type === "container";
+  const hasNoChildren = instance.children.length === 0;
+  const hasOnlyTextChildren =
+    instance.children.length === 1 && instance.children[0].type === "text";
+  if (canHaveTextContent && (hasNoChildren || hasOnlyTextChildren)) {
+    systemProps.push({
+      propName: textContentAttribute,
+      meta: {
+        label: "Text Content",
+        required: false,
+        control: "textContent",
+        type: "string",
+        defaultValue: "",
+      },
+      readOnly: false,
+    });
+  }
 
   const initialProps: PropAndMeta[] = [];
   for (const name of initialPropsNames) {

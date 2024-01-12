@@ -1,7 +1,10 @@
-import { expect, test } from "@jest/globals";
+import { beforeEach, expect, test } from "@jest/globals";
 import { cleanStores } from "nanostores";
 import type { Instance, Page } from "@webstudio-is/sdk";
-import { collectionComponent } from "@webstudio-is/react-sdk";
+import {
+  collectionComponent,
+  textContentAttribute,
+} from "@webstudio-is/react-sdk";
 import { $instances } from "./instances";
 import {
   $propValuesByInstanceSelector,
@@ -14,6 +17,7 @@ import {
   $dataSources,
   $props,
   $resourceValues,
+  $resources,
 } from "./nano-states";
 import { $params } from "~/canvas/stores";
 
@@ -36,6 +40,13 @@ const selectPageRoot = (rootInstanceId: Instance["id"]) => {
   });
   $selectedPageId.set("pageId");
 };
+
+beforeEach(() => {
+  $instances.set(new Map());
+  $props.set(new Map());
+  $resources.set(new Map());
+  $dataSources.set(new Map());
+});
 
 test("collect prop values", () => {
   setBoxInstance("box");
@@ -411,6 +422,60 @@ test("compute props bound to resource variables", () => {
       [
         JSON.stringify(["body"]),
         new Map<string, unknown>([["resource", "my-value"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
+test("compute instance text content when plain text", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [
+          { type: "id", value: "plainBox" },
+          { type: "id", value: "richBox" },
+        ],
+      },
+      {
+        id: "plainBox",
+        type: "instance",
+        component: "Box",
+        children: [{ type: "text", value: "plain" }],
+      },
+      {
+        id: "richBox",
+        type: "instance",
+        component: "Box",
+        children: [
+          { type: "text", value: "plain" },
+          { type: "id", value: "bold" },
+        ],
+      },
+      {
+        id: "bold",
+        type: "instance",
+        component: "Bold",
+        children: [{ type: "text", value: "bold" }],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [JSON.stringify(["body"]), new Map<string, unknown>()],
+      [
+        JSON.stringify(["plainBox", "body"]),
+        new Map<string, unknown>([[textContentAttribute, "plain"]]),
+      ],
+      [JSON.stringify(["richBox", "body"]), new Map<string, unknown>()],
+      [
+        JSON.stringify(["bold", "richBox", "body"]),
+        new Map<string, unknown>([[textContentAttribute, "bold"]]),
       ],
     ])
   );

@@ -13,6 +13,7 @@ import {
   generateDataSources,
   normalizeProps,
   portalComponent,
+  textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import { $instances } from "./instances";
 import {
@@ -238,6 +239,10 @@ export const $propValuesByInstanceSelector = computed(
         return;
       }
       for (const child of instance.children) {
+        // plain text can be edited from props panel
+        if (child.type === "text" && instance.children.length === 1) {
+          propValues.set(textContentAttribute, child.value);
+        }
         if (child.type === "id") {
           traverseInstances([child.value, ...instanceSelector]);
         }
