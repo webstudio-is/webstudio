@@ -5,8 +5,6 @@ import {
   Flex,
   Label,
   theme,
-  Tooltip,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import {
@@ -24,39 +22,15 @@ import { useMemo } from "react";
 import { computed } from "nanostores";
 import { $instances } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { HelpIcon } from "@webstudio-is/icons";
 
-const useTextContent = (instanceId: Instance["id"]) => {
+const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
-    return computed(
-      $instances,
-      (
-        instances
-      ):
-        | undefined
-        | { type: "text"; value: string }
-        | { type: "expression"; value: string } => {
-        const instance = instances.get(instanceId);
-        if (instance === undefined) {
-          return;
-        }
-        if (instance.children.length > 1) {
-          return;
-        }
-        if (instance.children.length === 0) {
-          return { type: "text", value: "" };
-        }
-        const [child] = instance.children;
-        if (child.type === "text") {
-          return child;
-        }
-      }
-    );
+    return computed($instances, (instances) => instances.get(instanceId));
   }, [instanceId]);
   return useStore($store);
 };
 
-const updateTextContent = (
+const updateChildren = (
   instanceId: Instance["id"],
   type: "text",
   value: string
@@ -78,32 +52,26 @@ export const TextContent = ({
   propName,
   computedValue,
 }: ControlProps<"textContent">) => {
-  const textContent = useTextContent(instanceId);
+  const instance = useInstance(instanceId);
+  // text content control is rendered only when empty or single child are present
+  const child = instance?.children?.[0] ?? { type: "text", value: "" };
   const localValue = useLocalValue(String(computedValue ?? ""), (value) =>
-    updateTextContent(instanceId, "text", value)
+    updateChildren(instanceId, "text", value)
   );
   const id = useId();
   const label = getLabel(meta, propName);
 
   const { scope, aliases } = useStore($selectedInstanceScope);
-  const expression: undefined | string =
-    textContent?.type === "expression"
-      ? textContent.value
-      : JSON.stringify(computedValue);
+  let expression: undefined | string;
+  if (child?.type === "text") {
+    expression = JSON.stringify(child.value);
+  }
 
   return (
     <VerticalLayout
       label={
         <Flex align="center" css={{ gap: theme.spacing[3] }}>
           <Label truncate>{label}</Label>
-          {textContent === undefined && (
-            <Tooltip
-              content="Remove children to define text content"
-              variant="wrapped"
-            >
-              <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
-            </Tooltip>
-          )}
         </Flex>
       }
       deletable={false}
@@ -112,7 +80,6 @@ export const TextContent = ({
       <BindingControl>
         <TextArea
           id={id}
-          disabled={textContent === undefined}
           autoGrow
           value={localValue.value}
           rows={1}
@@ -129,11 +96,11 @@ export const TextContent = ({
                 return `${label} expects a string value`;
               }
             }}
-            removable={textContent?.type === "expression"}
+            removable={false}
             value={expression}
             onChange={(_newExpression) => {}}
             onRemove={(evaluatedValue) =>
-              updateTextContent(instanceId, "text", String(evaluatedValue))
+              updateChildren(instanceId, "text", String(evaluatedValue))
             }
           />
         )}

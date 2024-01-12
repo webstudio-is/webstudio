@@ -196,7 +196,11 @@ export const usePropsLogic = ({
       readOnly: isReadOnly(saved),
     };
   });
-  if (instanceMeta?.type === "container") {
+  const canHaveTextContent = instanceMeta?.type === "container";
+  const hasNoChildren = instance.children.length === 0;
+  const hasOnlyTextChildren =
+    instance.children.length === 1 && instance.children[0].type === "text";
+  if (canHaveTextContent && (hasNoChildren || hasOnlyTextChildren)) {
     systemProps.push({
       propName: textContentAttribute,
       meta: {
