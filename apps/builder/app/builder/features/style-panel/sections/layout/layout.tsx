@@ -33,6 +33,7 @@ import {
 } from "../../shared/css-value-input";
 import { theme } from "@webstudio-is/design-system";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { TooltipContent } from "../../../style-panel/shared/property-name";
 
 const GapLinked = ({
   isLinked,
@@ -59,6 +60,7 @@ const GapInput = ({
   onIntermediateChange,
   onPreviewChange,
   onChange,
+  onReset,
 }: {
   icon: JSX.Element;
   style: StyleInfo;
@@ -67,14 +69,29 @@ const GapInput = ({
   onIntermediateChange: (value?: StyleValue | IntermediateStyleValue) => void;
   onPreviewChange: (value?: StyleValue) => void;
   onChange: (value: StyleValue) => void;
+  onReset: () => void;
 }) => {
   const { label, items } = styleConfigByName(property);
+
   return (
     <Box>
       <CssValueInput
         styleSource={getStyleSource(style[property])}
-        icon={<EnhancedTooltip content={label}>{icon}</EnhancedTooltip>}
-        property="columnGap"
+        icon={
+          <EnhancedTooltip
+            content={
+              <TooltipContent
+                title={label}
+                style={style}
+                properties={[property]}
+                onReset={onReset}
+              />
+            }
+          >
+            {icon}
+          </EnhancedTooltip>
+        }
+        property={property}
         value={style[property]?.value}
         intermediateValue={intermediateValue}
         keywords={items.map((item) => ({
@@ -168,6 +185,13 @@ const FlexGap = ({
               setIntermediateRowGap(value);
             }
           }}
+          onReset={() => {
+            batchUpdate.deleteProperty("columnGap");
+            if (isLinked) {
+              batchUpdate.deleteProperty("rowGap");
+            }
+            batchUpdate.publish();
+          }}
           onPreviewChange={(value) => {
             if (value === undefined) {
               batchUpdate.deleteProperty("columnGap");
@@ -228,6 +252,13 @@ const FlexGap = ({
             if (isLinked) {
               setIntermediateColumnGap(value);
             }
+          }}
+          onReset={() => {
+            batchUpdate.deleteProperty("rowGap");
+            if (isLinked) {
+              batchUpdate.deleteProperty("columnGap");
+            }
+            batchUpdate.publish();
           }}
           onPreviewChange={(value) => {
             if (value === undefined) {

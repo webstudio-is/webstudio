@@ -125,7 +125,7 @@ const getDescription = (properties: StyleProperty[]) => {
   return propertyDescriptions[property as keyof typeof propertyDescriptions];
 };
 
-const TooltipContent = ({
+export const TooltipContent = ({
   title,
   description,
   scrollableContent,
