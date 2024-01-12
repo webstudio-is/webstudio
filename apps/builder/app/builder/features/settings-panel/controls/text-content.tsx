@@ -56,6 +56,22 @@ const useTextContent = (instanceId: Instance["id"]) => {
   return useStore($store);
 };
 
+const updateTextContent = (
+  instanceId: Instance["id"],
+  type: "text",
+  value: string
+) => {
+  serverSyncStore.createTransaction([$instances], (instances) => {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      return;
+    }
+    if (type === "text") {
+      instance.children = [{ type: "text", value }];
+    }
+  });
+};
+
 export const TextContent = ({
   instanceId,
   meta,
@@ -63,19 +79,8 @@ export const TextContent = ({
   computedValue,
 }: ControlProps<"textContent">) => {
   const textContent = useTextContent(instanceId);
-  const updateTextContent = (type: "text", value: string) => {
-    serverSyncStore.createTransaction([$instances], (instances) => {
-      const instance = instances.get(instanceId);
-      if (instance === undefined) {
-        return;
-      }
-      if (type === "text") {
-        instance.children = [{ type: "text", value }];
-      }
-    });
-  };
   const localValue = useLocalValue(String(computedValue ?? ""), (value) =>
-    updateTextContent("text", value)
+    updateTextContent(instanceId, "text", value)
   );
   const id = useId();
   const label = getLabel(meta, propName);
@@ -128,7 +133,7 @@ export const TextContent = ({
             value={expression}
             onChange={(_newExpression) => {}}
             onRemove={(evaluatedValue) =>
-              updateTextContent("text", String(evaluatedValue))
+              updateTextContent(instanceId, "text", String(evaluatedValue))
             }
           />
         )}
