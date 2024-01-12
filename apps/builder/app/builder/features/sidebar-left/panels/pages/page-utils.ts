@@ -115,10 +115,11 @@ export const cleanupChildRefsMutable = (
  * we consider it orphaned due to collaborative changes and we put it into the root folder.
  */
 export const reparentOrphansMutable = (pages: Pages) => {
-  const children = [];
+  const children = [ROOT_FOLDER_ID];
   for (const folder of pages.folders) {
     children.push(...folder.children);
   }
+
   let rootFolder = pages.folders.find(isRoot);
   // Should never happen, but just in case.
   if (rootFolder === undefined) {
@@ -128,7 +129,7 @@ export const reparentOrphansMutable = (pages: Pages) => {
 
   for (const folder of pages.folders) {
     // It's an orphan
-    if (isRoot(folder) === false && children.includes(folder.id) === false) {
+    if (children.includes(folder.id) === false) {
       rootFolder.children.push(folder.id);
     }
   }
