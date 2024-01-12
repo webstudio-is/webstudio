@@ -4,6 +4,7 @@ import {
   type PropMeta,
   showAttribute,
   decodeDataSourceVariable,
+  textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
@@ -132,9 +133,19 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
     meta: {
       label: "Show",
       required: false,
-      defaultValue: true,
       control: "boolean",
       type: "boolean",
+      defaultValue: true,
+    },
+  },
+  {
+    name: textContentAttribute,
+    meta: {
+      label: "Text Content",
+      required: false,
+      control: "text",
+      type: "string",
+      defaultValue: "",
     },
   },
 ];

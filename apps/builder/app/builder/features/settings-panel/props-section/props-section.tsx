@@ -19,6 +19,7 @@ import {
   $propsIndex,
   $props,
   $selectedInstanceSelector,
+  $instances,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import {
@@ -33,6 +34,7 @@ import {
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
+import { textContentAttribute } from "@webstudio-is/react-sdk";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
@@ -209,6 +211,7 @@ export const PropsSectionContainer = ({
 }: {
   selectedInstance: Instance;
 }) => {
+  const instanceId = instance.id;
   const { setProperty: setCssProperty } = useStyleData({
     selectedInstance: instance,
   });
@@ -221,11 +224,23 @@ export const PropsSectionContainer = ({
 
   const logic = usePropsLogic({
     instance,
-    props: propsByInstanceId.get(instance.id) ?? [],
+    props: propsByInstanceId.get(instanceId) ?? [],
 
     updateProp: (update) => {
+      if (update.name === textContentAttribute) {
+        serverSyncStore.createTransaction([$instances], (instances) => {
+          const instance = instances.get(instanceId);
+          if (instance === undefined) {
+            return;
+          }
+          if (update.type === "string") {
+            instance.children = [{ type: "text", value: update.value }];
+          }
+        });
+        return;
+      }
       const { propsByInstanceId } = $propsIndex.get();
-      const instanceProps = propsByInstanceId.get(instance.id) ?? [];
+      const instanceProps = propsByInstanceId.get(instanceId) ?? [];
       // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
       // see for details https://github.com/webstudio-is/webstudio/pull/2170
       const duplicateProps = instanceProps
@@ -257,7 +272,7 @@ export const PropsSectionContainer = ({
       propsLogic={logic}
       propValues={propValues ?? new Map()}
       component={instance.component}
-      instanceId={instance.id}
+      instanceId={instanceId}
       setCssProperty={setCssProperty}
     />
   );
