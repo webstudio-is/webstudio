@@ -104,7 +104,7 @@ const renderProperty = (
     instanceId,
     meta,
     prop,
-    computedValue: propValues.get(propName),
+    computedValue: propValues.get(propName) ?? meta.defaultValue,
     propName,
     readOnly,
     deletable: deletable ?? false,
