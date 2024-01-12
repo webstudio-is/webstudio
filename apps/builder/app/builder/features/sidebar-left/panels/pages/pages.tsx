@@ -103,12 +103,19 @@ const ItemSuffix = ({
   );
 };
 
-const reparentOrphans = () => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
+const useReparentOrphans = () => {
+  useMount(() => {
+    // Pages may not be loaded yet when switching betwen projects and the pages
+    // panel was already visible - it mounts faster than we load the pages.
+    if ($pages.get() === undefined) {
       return;
     }
-    reparentOrphansMutable(pages);
+    serverSyncStore.createTransaction([$pages], (pages) => {
+      if (pages === undefined) {
+        return;
+      }
+      reparentOrphansMutable(pages);
+    });
   });
 };
 
@@ -131,10 +138,7 @@ const PagesPanel = ({
 }) => {
   const pages = useStore($pages);
   const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
-
-  useMount(() => {
-    reparentOrphans();
-  });
+  useReparentOrphans();
 
   const renderItem = useCallback(
     (props: TreeItemRenderProps<TreeData>) => {
