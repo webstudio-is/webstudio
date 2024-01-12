@@ -95,7 +95,6 @@ type LabelProps = ComponentPropsWithoutRef<typeof BaseLabel> & {
   description?: string;
   openOnClick?: boolean;
   readOnly?: boolean;
-  isTextContentReadOnly?: boolean;
 };
 
 export const Label = ({
@@ -104,7 +103,6 @@ export const Label = ({
   description,
   openOnClick = false,
   readOnly,
-  isTextContentReadOnly = false,
   ...rest
 }: LabelProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -141,15 +139,9 @@ export const Label = ({
       {label}
       {readOnly && (
         <Tooltip
-          content="The value is controlled by an expression and cannot be changed."
-          variant="wrapped"
-        >
-          <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
-        </Tooltip>
-      )}
-      {isTextContentReadOnly && (
-        <Tooltip
-          content="Remove children to define text content"
+          content={
+            "The value is controlled by an expression and cannot be changed."
+          }
           variant="wrapped"
         >
           <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />

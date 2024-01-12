@@ -143,7 +143,7 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
     meta: {
       label: "Text Content",
       required: false,
-      control: "text",
+      control: "textContent",
       type: "string",
       defaultValue: "",
     },

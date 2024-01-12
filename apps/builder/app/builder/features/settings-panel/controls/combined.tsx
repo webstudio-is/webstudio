@@ -9,6 +9,7 @@ import { FileControl } from "./file";
 import { UrlControl } from "./url";
 import type { ControlProps } from "../shared";
 import { JsonControl } from "./json";
+import { TextContent } from "./text-content";
 
 export const renderControl = ({
   meta,
@@ -16,6 +17,10 @@ export const renderControl = ({
   ...rest
 }: ControlProps<string> & { key?: string }) => {
   const computed = rest.computedValue;
+
+  if (meta.control === "textContent") {
+    return <TextContent meta={meta} prop={prop} {...rest} />;
+  }
 
   // never render parameter props
   if (prop?.type === "parameter") {

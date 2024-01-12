@@ -157,6 +157,13 @@ const Action = z.object({
   defaultValue: z.undefined().optional(),
 });
 
+const TextContent = z.object({
+  ...common,
+  control: z.literal("textContent"),
+  type: z.literal("string"),
+  defaultValue: z.string().optional(),
+});
+
 export const PropMeta = z.union([
   Number,
   Range,
@@ -175,6 +182,7 @@ export const PropMeta = z.union([
   Json,
   Date,
   Action,
+  TextContent,
 ]);
 
 export type PropMeta = z.infer<typeof PropMeta>;
