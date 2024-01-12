@@ -34,6 +34,7 @@ import { removeByMutable } from "~/shared/array-utils";
 import {
   findParentFolderByChildId,
   cleanupChildRefsMutable,
+  isSlugUsed,
 } from "./page-utils";
 import { createRootFolder } from "@webstudio-is/project-build";
 
@@ -60,32 +61,10 @@ const FolderValues = z.object({
   slug: FolderSlug,
 });
 
-const isSlugUnique = (
-  folders: Array<Folder>,
-  // undefined page id means new page
-  folderId: undefined | Folder["id"],
-  slug: string
-) => {
-  // @todo we need to validate if this folder is unique within its parent
-  //const list = [];
-  //const set = new Set();
-  //list.push(path);
-  //set.add(path);
-  //for (const page of pages.pages) {
-  //  if (page.id !== folderId) {
-  //    list.push(page.path);
-  //    set.add(page.path);
-  //  }
-  //}
-  //return list.length === set.size;
-  return true;
-};
-
 const validateValues = (
   pages: undefined | Pages,
-  // undefined folder id means new folder
-  folderId: undefined | Folder["id"],
-  values: Values
+  values: Values,
+  folderId?: Folder["id"]
 ): Errors => {
   const parsedResult = FolderValues.safeParse(values);
   const errors: Errors = {};
@@ -93,18 +72,27 @@ const validateValues = (
     return parsedResult.error.formErrors.fieldErrors;
   }
   if (pages !== undefined && values.slug !== undefined) {
-    if (isSlugUnique(pages.folders, folderId, values.slug) === false) {
+    if (
+      isSlugUsed(
+        values.slug,
+        pages.folders,
+        values.parentFolderId,
+        folderId
+      ) === false
+    ) {
       errors.slug = errors.slug ?? [];
-      errors.slug.push("Slug needs to be unique within a folder");
+      errors.slug.push(`Slug "${values.slug}" is already in use`);
     }
   }
   return errors;
 };
 
-const toFormValues = (folderId: Folder["id"], pages: Pages): Values => {
-  const folder = pages.folders.find(({ id }) => id === folderId);
-  const parentFolder = findParentFolderByChildId(folderId, pages);
-
+const toFormValues = (
+  folderId: Folder["id"],
+  folders: Array<Folder>
+): Values => {
+  const folder = folders.find(({ id }) => id === folderId);
+  const parentFolder = findParentFolderByChildId(folderId, folders);
   return {
     name: folder?.name ?? "",
     slug: folder?.slug ?? "",
@@ -262,7 +250,7 @@ export const NewFolderSettings = ({
     slug: nameToSlug(fieldDefaultValues.name),
   });
 
-  const errors = validateValues(pages, undefined, values);
+  const errors = validateValues(pages, values);
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const folderId = nanoid();
@@ -385,13 +373,15 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
     if (values.slug !== undefined) {
       folder.slug = values.slug;
     }
-
-    const parentFolderId = values.parentFolderId ?? "root";
-    const newParentFolder = pages.folders.find(
-      ({ id }) => id === parentFolderId
-    );
-    cleanupChildRefsMutable(folderId, pages);
-    newParentFolder?.children.push(folderId);
+    if (values.parentFolderId !== undefined) {
+      const newParentFolder = pages.folders.find(
+        ({ id }) => id === values.parentFolderId
+      );
+      if (newParentFolder) {
+        cleanupChildRefsMutable(folderId, pages);
+        newParentFolder?.children.push(folderId);
+      }
+    }
   });
 };
 
@@ -420,11 +410,11 @@ export const FolderSettings = ({
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
-    ...(pages ? toFormValues(folderId, pages) : fieldDefaultValues),
+    ...(pages ? toFormValues(folderId, pages.folders) : fieldDefaultValues),
     ...unsavedValues,
   };
 
-  const errors = validateValues(pages, folderId, values);
+  const errors = validateValues(pages, values, folderId);
 
   const debouncedFn = useEffectEvent(() => {
     if (

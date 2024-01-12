@@ -3,6 +3,7 @@ import {
   cleanupChildRefsMutable,
   findParentFolderByChildId,
   isRoot,
+  isSlugUsed,
   reparentOrphansMutable,
   toTreeData,
 } from "./page-utils";
@@ -287,6 +288,52 @@ describe("findParentFolderByChildId", () => {
   });
 
   test("find in root folder", () => {
-    expect(findParentFolderByChildId("folderId", pages)).toEqual(rootFolder);
+    expect(findParentFolderByChildId("folderId", pages.folders)).toEqual(
+      rootFolder
+    );
+  });
+});
+
+describe("isSlugUsed", () => {
+  const { folders } = createDefaultPages({
+    rootInstanceId: "rootInstanceId",
+    homePageId: "homePageId",
+  });
+  folders.push({
+    id: "folderId1",
+    name: "Folder 1",
+    slug: "slug1",
+    children: ["folderId1-1"],
+  });
+  folders.push({
+    id: "folderId1-1",
+    name: "Folder 1-1",
+    slug: "slug1-1",
+    children: [],
+  });
+
+  const rootFolder = folders.find(isRoot)!;
+  rootFolder.children.push("folderId1");
+
+  test("available in the root", () => {
+    expect(isSlugUsed("slug", folders, rootFolder.id)).toBe(true);
+  });
+
+  test("not available in the root", () => {
+    expect(isSlugUsed("slug1", folders, rootFolder.id)).toBe(false);
+  });
+
+  test("available in Folder 1", () => {
+    expect(isSlugUsed("slug", folders, "folderId1")).toBe(true);
+  });
+
+  test("not available in Folder 1", () => {
+    expect(isSlugUsed("slug1-1", folders, "folderId1")).toBe(false);
+  });
+
+  test("existing folder can have a matching slug when its the same id/folder", () => {
+    expect(isSlugUsed("slug1-1", folders, "folderId1", "folderId1-1")).toBe(
+      true
+    );
   });
 });

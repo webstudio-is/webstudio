@@ -81,9 +81,9 @@ export const toTreeData = (
  */
 export const findParentFolderByChildId = (
   id: Folder["id"] | Page["id"],
-  pages: Pages
+  folders: Array<Folder>
 ): Folder | undefined => {
-  for (const folder of pages.folders) {
+  for (const folder of folders) {
     if (folder.children.includes(id)) {
       return folder;
     }
@@ -146,3 +146,28 @@ export const reparentOrphansMutable = (pages: Pages) => {
  * Returns true if folder is the root folder.
  */
 export const isRoot = (folder: Folder) => folder.id === ROOT_FOLDER_ID;
+
+/**
+ * Returns true if folder's slug is unique within it's future parent folder.
+ * Needed to verify if the folder can be nested under the parent folder without modifying slug.
+ */
+export const isSlugUsed = (
+  slug: string,
+  folders: Array<Folder>,
+  parentFolderId: Folder["id"],
+  // undefined folder id means new folder
+  folderId?: Folder["id"]
+) => {
+  const foldersMap = new Map(folders.map((folder) => [folder.id, folder]));
+  const parentFolder = foldersMap.get(parentFolderId);
+  // Should be impossible because at least root folder is always found.
+  if (parentFolder === undefined) {
+    return false;
+  }
+
+  return (
+    parentFolder.children.some(
+      (id) => foldersMap.get(id)?.slug === slug && id !== folderId
+    ) === false
+  );
+};
