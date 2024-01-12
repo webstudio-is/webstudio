@@ -32,7 +32,6 @@ import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { removeByMutable } from "~/shared/array-utils";
 import {
-  findFolderById,
   findParentFolderByChildId,
   cleanupChildRefsMutable,
 } from "./page-utils";
@@ -103,13 +102,13 @@ const validateValues = (
 };
 
 const toFormValues = (folderId: Folder["id"], pages: Pages): Values => {
-  const folder = findFolderById(folderId, pages);
+  const folder = pages.folders.find(({ id }) => id === folderId);
   const parentFolder = findParentFolderByChildId(folderId, pages);
 
   return {
-    name: folder.name,
-    slug: folder.slug,
-    parentFolderId: parentFolder.id,
+    name: folder?.name ?? "",
+    slug: folder?.slug ?? "",
+    parentFolderId: parentFolder?.id ?? "root",
   };
 };
 
@@ -181,13 +180,15 @@ const FormFields = ({
               <Select
                 tabIndex={1}
                 css={{ zIndex: theme.zIndices[1] }}
-                options={[pages.rootFolder, ...pages.folders].filter(
+                options={pages.folders.filter(
                   // Prevent selecting yourself as a parent
                   ({ id }) => folderId !== id
                 )}
                 getValue={(folder) => folder.id}
                 getLabel={(folder) => folder.name}
-                value={findFolderById(values.parentFolderId, pages)}
+                value={pages.folders.find(
+                  ({ id }) => id === values.parentFolderId
+                )}
                 onChange={(folder) => {
                   onChange({
                     field: "parentFolderId",
@@ -276,8 +277,10 @@ export const NewFolderSettings = ({
           slug: values.slug,
           children: [],
         } satisfies Folder);
-        const parentFolder = findFolderById(values.parentFolderId, pages);
-        parentFolder.children.push(folderId);
+        const parentFolder = pages.folders.find(
+          ({ id }) => id === values.parentFolderId
+        );
+        parentFolder?.children.push(folderId);
       });
 
       onSuccess(folderId);
@@ -383,12 +386,12 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
       folder.slug = values.slug;
     }
 
-    const newParentFolder = findFolderById(
-      values.parentFolderId ?? "root",
-      pages
+    const parentFolderId = values.parentFolderId ?? "root";
+    const newParentFolder = pages.folders.find(
+      ({ id }) => id === parentFolderId
     );
     cleanupChildRefsMutable(folderId, pages);
-    newParentFolder.children.push(folderId);
+    newParentFolder?.children.push(folderId);
   });
 };
 
@@ -413,7 +416,7 @@ export const FolderSettings = ({
   folderId: string;
 }) => {
   const pages = useStore($pages);
-  const folder = pages && findFolderById(folderId, pages);
+  const folder = pages?.folders.find(({ id }) => id === folderId);
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {

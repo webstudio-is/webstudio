@@ -5,6 +5,7 @@ import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { $assets, $project } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { isRoot } from "./page-utils";
 
 export default {
   component: PageSettings,
@@ -48,7 +49,8 @@ pages.pages.push({
   meta: {},
   rootInstanceId: "root-instance-id",
 });
-pages.rootFolder.children.push("pageId");
+const rootFolder = pages.folders.find(isRoot);
+rootFolder?.children.push("pageId");
 
 $pages.set(pages);
 

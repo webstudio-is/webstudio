@@ -1,3 +1,4 @@
+import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
 import { type Page, Pages, type Folder } from "@webstudio-is/sdk";
 
 type TreePage = {
@@ -31,7 +32,6 @@ export const toTreeData = (
   const foldersMap = new Map(
     pages.folders.map((folder) => [folder.id, folder])
   );
-  foldersMap.set(pages.rootFolder.id, pages.rootFolder);
   const index: Index = new Map();
 
   const folderToTree = (folder: Folder) => {
@@ -66,23 +66,14 @@ export const toTreeData = (
       children: Array.from(children.values()),
     } satisfies TreeFolder;
   };
-
-  return { root: folderToTree(pages.rootFolder), index };
-};
-
-/**
- * Find a folder by folder id.
- */
-export const findFolderById = (
-  folderId: Folder["id"],
-  pages: Pages
-): Folder => {
-  for (const folder of pages.folders) {
-    if (folder.id === folderId) {
-      return folder;
-    }
+  const rootFolder = foldersMap.get("root");
+  if (rootFolder === undefined) {
+    throw new Error("Root folder not found");
   }
-  return pages.rootFolder;
+  return {
+    root: folderToTree(rootFolder),
+    index,
+  };
 };
 
 /**
@@ -91,13 +82,12 @@ export const findFolderById = (
 export const findParentFolderByChildId = (
   id: Folder["id"] | Page["id"],
   pages: Pages
-): Folder => {
+): Folder | undefined => {
   for (const folder of pages.folders) {
     if (folder.children.includes(id)) {
       return folder;
     }
   }
-  return pages.rootFolder;
 };
 
 /**
@@ -110,8 +100,7 @@ export const cleanupChildRefsMutable = (
   id: Folder["id"] | Page["id"],
   pages: Pages
 ) => {
-  const allFolders = [pages.rootFolder, ...pages.folders];
-  for (const folder of allFolders) {
+  for (const folder of pages.folders) {
     const index = folder.children.indexOf(id);
     if (index !== -1) {
       // Not exiting here just to be safe and check all folders even though it should be impossible
@@ -127,22 +116,32 @@ export const cleanupChildRefsMutable = (
  */
 export const reparentOrphansMutable = (pages: Pages) => {
   const children = [];
-  const allFolders = [pages.rootFolder, ...pages.folders];
-  for (const folder of allFolders) {
+  for (const folder of pages.folders) {
     children.push(...folder.children);
+  }
+  let rootFolder = pages.folders.find(isRoot);
+  // Should never happen, but just in case.
+  if (rootFolder === undefined) {
+    rootFolder = createRootFolder();
+    pages.folders.push(rootFolder);
   }
 
   for (const folder of pages.folders) {
     // It's an orphan
-    if (children.includes(folder.id) === false) {
-      pages.rootFolder.children.push(folder.id);
+    if (isRoot(folder) === false && children.includes(folder.id) === false) {
+      rootFolder.children.push(folder.id);
     }
   }
 
   for (const page of pages.pages) {
     // It's an orphan
     if (children.includes(page.id) === false) {
-      pages.rootFolder.children.push(page.id);
+      rootFolder.children.push(page.id);
     }
   }
 };
+
+/**
+ * Returns true if folder is the root folder.
+ */
+export const isRoot = (folder: Folder) => folder.id === ROOT_FOLDER_ID;

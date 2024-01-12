@@ -45,7 +45,7 @@ export default async () => {
         for (const build of builds) {
           const pages = JSON.parse(build.pages);
           // Already migrated
-          if (pages.rootFolder) {
+          if (pages.folders) {
             continue;
           }
 
@@ -53,13 +53,15 @@ export default async () => {
             const pageIds = [pages.homePage, ...pages.pages].map(
               (page) => page.id
             );
-            pages.rootFolder = {
-              id: "root",
-              name: "",
-              slug: "",
-              children: pageIds,
-            };
-            pages.folders = [];
+
+            pages.folders = [
+              {
+                id: "root",
+                name: "Root",
+                slug: "",
+                children: pageIds,
+              },
+            ];
 
             build.pages = JSON.stringify(pages);
             changedBuilds.push(build);

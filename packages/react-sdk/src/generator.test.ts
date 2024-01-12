@@ -11,15 +11,16 @@ const createPage = (path: string) => ({
 });
 
 const pages = {
-  rootFolder: {
-    id: "root",
-    name: "",
-    slug: "",
-    children: [],
-  },
   meta: {},
   pages: [],
-  folders: [],
+  folders: [
+    {
+      id: "root",
+      name: "",
+      slug: "",
+      children: [],
+    },
+  ],
 };
 
 test("generates forms properties", () => {

@@ -4,12 +4,6 @@ import { findPageByIdOrPath } from "./pages-utils";
 
 const pages = {
   meta: {},
-  rootFolder: {
-    id: "root",
-    name: "",
-    slug: "",
-    children: [],
-  },
   homePage: {
     id: "home",
     path: "/",

@@ -117,14 +117,15 @@ export const Pages = z.object({
   meta: ProjectMeta.optional(),
   settings: ProjectSettings.optional(),
   homePage: HomePage,
-  rootFolder: Folder,
   pages: z
     .array(Page)
     .refine(
       (array) => new Set(array.map((page) => page.path)).size === array.length,
       "All paths must be unique"
     ),
-  folders: z.array(Folder),
+  folders: z
+    .array(Folder)
+    .refine((folders) => folders.length > 0, "Folders can't be empty"),
 });
 
 export type Pages = z.infer<typeof Pages>;

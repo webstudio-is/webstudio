@@ -1,8 +1,8 @@
 import { describe, expect, test } from "@jest/globals";
 import {
   cleanupChildRefsMutable,
-  findFolderById,
   findParentFolderByChildId,
+  isRoot,
   reparentOrphansMutable,
   toTreeData,
 } from "./page-utils";
@@ -48,7 +48,8 @@ describe("toTreeData", () => {
       slug: "folder",
       children: [],
     });
-    pages.rootFolder.children.push("folderId");
+    const rootFolder = pages.folders.find(isRoot);
+    rootFolder?.children.push("folderId");
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
       id: "root",
@@ -98,7 +99,8 @@ describe("toTreeData", () => {
       slug: "folder",
       children: ["pageId"],
     });
-    pages.rootFolder.children.push("folderId");
+    const rootFolder = pages.folders.find(isRoot);
+    rootFolder?.children.push("folderId");
     const tree = toTreeData(pages);
 
     expect(tree.root).toEqual({
@@ -148,7 +150,8 @@ describe("toTreeData", () => {
       rootInstanceId: "id",
       homePageId: "homePageId",
     });
-    pages.rootFolder.children.push("1");
+    const rootFolder = pages.folders.find(isRoot);
+    rootFolder?.children.push("1");
     pages.folders.push({
       id: "1",
       name: "Folder 1",
@@ -223,7 +226,8 @@ describe("reparentOrphansMutable", () => {
       children: [],
     });
     reparentOrphansMutable(pages);
-    expect(pages.rootFolder).toEqual({
+    const rootFolder = pages.folders.find(isRoot);
+    expect(rootFolder).toEqual({
       id: "root",
       name: "Root",
       slug: "",
@@ -244,9 +248,10 @@ describe("cleanupChildRefsMutable", () => {
       slug: "folder",
       children: [],
     });
-    pages.rootFolder.children.push("folderId");
+    const rootFolder = pages.folders.find(isRoot);
+    rootFolder?.children.push("folderId");
     cleanupChildRefsMutable("folderId", pages);
-    expect(pages.rootFolder).toEqual({
+    expect(rootFolder).toEqual({
       id: "root",
       name: "Root",
       slug: "",
@@ -266,7 +271,8 @@ describe("findParentFolderByChildId", () => {
     slug: "folder",
     children: ["folderId1"],
   });
-  pages.rootFolder.children.push("folderId");
+  const rootFolder = pages.folders.find(isRoot);
+  rootFolder?.children.push("folderId");
   pages.folders.push({
     id: "folderId1",
     name: "Folder 2",
@@ -281,40 +287,6 @@ describe("findParentFolderByChildId", () => {
   });
 
   test("find in root folder", () => {
-    expect(findParentFolderByChildId("folderId", pages)).toEqual(
-      pages.rootFolder
-    );
-  });
-
-  test("orphan folder 3 - return root", () => {
-    expect(findParentFolderByChildId("folderId3", pages)).toEqual(
-      pages.rootFolder
-    );
-  });
-});
-
-describe("findFolderById", () => {
-  const pages = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    homePageId: "homePageId",
-  });
-  pages.folders.push({
-    id: "folderId",
-    name: "Folder 1",
-    slug: "folder",
-    children: ["folderId1"],
-  });
-
-  test("find folder", () => {
-    expect(findFolderById("folderId", pages)).toEqual({
-      id: "folderId",
-      name: "Folder 1",
-      slug: "folder",
-      children: ["folderId1"],
-    });
-  });
-
-  test("folder not found - root returned", () => {
-    expect(findFolderById("unknown", pages)).toEqual(pages.rootFolder);
+    expect(findParentFolderByChildId("folderId", pages)).toEqual(rootFolder);
   });
 });

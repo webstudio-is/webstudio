@@ -74,6 +74,7 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
+import { isRoot } from "./page-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -685,7 +686,7 @@ export const NewPageSettings = ({
           });
 
           // @todo add parent folder selection
-          pages.rootFolder.children.push(pageId);
+          pages.folders.find(isRoot)?.children.push(pageId);
 
           $selectedInstanceSelector.set(undefined);
         }
