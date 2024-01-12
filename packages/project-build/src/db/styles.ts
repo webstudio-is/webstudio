@@ -1,4 +1,3 @@
-// DEPRECATED: use parseData and serializeData from build.ts
 import {
   type Styles,
   type StyleDecl,

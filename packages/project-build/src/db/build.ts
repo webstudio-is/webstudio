@@ -18,9 +18,9 @@ import {
   parseBreakpoints,
   serializeBreakpoints,
 } from "./__DEPRECATED__/breakpoints";
-import { parseStyles } from "./__DEPRECATED__/styles";
+import { parseStyles } from "./styles";
 import { parseStyleSources } from "./__DEPRECATED__/style-sources";
-import { parseStyleSourceSelections } from "./__DEPRECATED__/style-source-selections";
+import { parseStyleSourceSelections } from "./style-source-selections";
 import { parseProps } from "./__DEPRECATED__/props";
 import { parseDataSources } from "./__DEPRECATED__/data-sources";
 import { parseInstances, serializeInstances } from "./__DEPRECATED__/instances";
