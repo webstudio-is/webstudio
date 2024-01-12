@@ -1,5 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { useId, TextArea } from "@webstudio-is/design-system";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,
@@ -14,8 +15,41 @@ import {
   updateExpressionValue,
   $selectedInstanceScope,
 } from "../shared";
+import { useMemo } from "react";
+import { atom, computed } from "nanostores";
+import { $instances } from "~/shared/nano-states";
+import { textContentAttribute } from "@webstudio-is/react-sdk";
+
+const useIsTextContentReadOnly = (
+  instanceId: Instance["id"],
+  propName: string
+) => {
+  const $store = useMemo(() => {
+    if (propName !== textContentAttribute) {
+      return atom(false);
+    }
+    return computed($instances, (instances) => {
+      const instance = instances.get(instanceId);
+      if (instance === undefined) {
+        return false;
+      }
+      if (instance.children.length === 0) {
+        return false;
+      }
+      if (
+        instance.children.length === 1 &&
+        instance.children[0].type === "text"
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [instanceId, propName]);
+  return useStore($store);
+};
 
 export const TextControl = ({
+  instanceId,
   meta,
   prop,
   propName,
@@ -25,6 +59,7 @@ export const TextControl = ({
   onChange,
   onDelete,
 }: ControlProps<"text">) => {
+  const isTextContentReadOnly = useIsTextContentReadOnly(instanceId, propName);
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
     if (prop?.type === "expression") {
       updateExpressionValue(prop.value, value);
@@ -45,7 +80,7 @@ export const TextControl = ({
     <BindingControl>
       <TextArea
         id={id}
-        disabled={readOnly}
+        disabled={readOnly || isTextContentReadOnly}
         autoGrow
         value={localValue.value}
         rows={meta.rows ?? 1}
@@ -55,28 +90,35 @@ export const TextControl = ({
         onBlur={localValue.save}
         onSubmit={localValue.save}
       />
-      <BindingPopover
-        scope={scope}
-        aliases={aliases}
-        validate={(value) => {
-          if (value !== undefined && typeof value !== "string") {
-            return `${label} expects a string value`;
+      {isTextContentReadOnly === false && (
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "string") {
+              return `${label} expects a string value`;
+            }
+          }}
+          removable={prop?.type === "expression"}
+          value={expression}
+          onChange={(newExpression) =>
+            onChange({ type: "expression", value: newExpression })
           }
-        }}
-        removable={prop?.type === "expression"}
-        value={expression}
-        onChange={(newExpression) =>
-          onChange({ type: "expression", value: newExpression })
-        }
-        onRemove={(evaluatedValue) =>
-          onChange({ type: "string", value: String(evaluatedValue) })
-        }
-      />
+          onRemove={(evaluatedValue) =>
+            onChange({ type: "string", value: String(evaluatedValue) })
+          }
+        />
+      )}
     </BindingControl>
   );
 
   const labelElement = (
-    <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+    <Label
+      htmlFor={id}
+      description={meta.description}
+      readOnly={readOnly}
+      isTextContentReadOnly={isTextContentReadOnly}
+    >
       {label}
     </Label>
   );
