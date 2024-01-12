@@ -17,7 +17,7 @@ export const createRootFolder = (
   children: Folder["children"] = []
 ): Folder => ({
   id: "root",
-  name: "",
+  name: "Root",
   slug: "",
   children,
 });
