@@ -192,7 +192,9 @@ const FormFields = ({
               <Flex align="center" css={{ gap: theme.spacing[3] }}>
                 Slug
                 <Tooltip
-                  content={"@todo tooltip content for slug"}
+                  content={
+                    "This slug is used as a segment within the path of each page inside this folder."
+                  }
                   variant="wrapped"
                 >
                   <HelpIcon
