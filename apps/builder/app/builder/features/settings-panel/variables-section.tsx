@@ -23,6 +23,7 @@ import {
 } from "@webstudio-is/react-sdk";
 import {
   $dataSources,
+  $instances,
   $props,
   $resources,
   $selectedInstanceSelector,
@@ -70,52 +71,63 @@ const $instanceVariableValues = computed(
 /**
  * find variables used in
  *
+ * instance children
  * expression prop
  * action prop
  * url resource field
  * header resource field
  * body resource fiel
  */
-const $usedVariables = computed([$props, $resources], (props, resources) => {
-  const usedVariables = new Set<DataSource["id"]>();
-  const collectExpressionVariables = (expression: string) => {
-    try {
-      validateExpression(expression, {
-        // parse any expression
-        effectful: true,
-        transformIdentifier: (identifier) => {
-          const id = decodeDataSourceVariable(identifier);
-          if (id !== undefined) {
-            usedVariables.add(id);
-          }
-          return identifier;
-        },
-      });
-    } catch {
-      // empty block
-    }
-  };
-  for (const resource of resources.values()) {
-    collectExpressionVariables(resource.url);
-    for (const { value } of resource.headers) {
-      collectExpressionVariables(value);
-    }
-    if (resource.body) {
-      collectExpressionVariables(resource.body);
-    }
-  }
-  for (const prop of props.values()) {
-    if (prop.type === "expression") {
-      collectExpressionVariables(prop.value);
-    }
-    if (prop.type === "action") {
-      for (const value of prop.value) {
-        collectExpressionVariables(value.code);
+const $usedVariables = computed(
+  [$instances, $props, $resources],
+  (instances, props, resources) => {
+    const usedVariables = new Set<DataSource["id"]>();
+    const collectExpressionVariables = (expression: string) => {
+      try {
+        validateExpression(expression, {
+          // parse any expression
+          effectful: true,
+          transformIdentifier: (identifier) => {
+            const id = decodeDataSourceVariable(identifier);
+            if (id !== undefined) {
+              usedVariables.add(id);
+            }
+            return identifier;
+          },
+        });
+      } catch {
+        // empty block
+      }
+    };
+    for (const instance of instances.values()) {
+      for (const child of instance.children) {
+        if (child.type === "expression") {
+          collectExpressionVariables(child.value);
+        }
       }
     }
+    for (const resource of resources.values()) {
+      collectExpressionVariables(resource.url);
+      for (const { value } of resource.headers) {
+        collectExpressionVariables(value);
+      }
+      if (resource.body) {
+        collectExpressionVariables(resource.body);
+      }
+    }
+    for (const prop of props.values()) {
+      if (prop.type === "expression") {
+        collectExpressionVariables(prop.value);
+      }
+      if (prop.type === "action") {
+        for (const value of prop.value) {
+          collectExpressionVariables(value.code);
+        }
+      }
+    }
+    return usedVariables;
   }
-  return usedVariables;
-});
+);
 
 const deleteVariable = (variableId: DataSource["id"]) => {
   serverSyncStore.createTransaction(

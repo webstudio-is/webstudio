@@ -1,11 +1,5 @@
 import { useStore } from "@nanostores/react";
-import {
-  useId,
-  TextArea,
-  Flex,
-  Label,
-  theme,
-} from "@webstudio-is/design-system";
+import { useId, TextArea } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import {
   BindingControl,
@@ -17,6 +11,7 @@ import {
   useLocalValue,
   VerticalLayout,
   $selectedInstanceScope,
+  Label,
 } from "../shared";
 import { useMemo } from "react";
 import { computed } from "nanostores";
@@ -32,7 +27,7 @@ const useInstance = (instanceId: Instance["id"]) => {
 
 const updateChildren = (
   instanceId: Instance["id"],
-  type: "text",
+  type: "text" | "expression",
   value: string
 ) => {
   serverSyncStore.createTransaction([$instances], (instances) => {
@@ -40,9 +35,7 @@ const updateChildren = (
     if (instance === undefined) {
       return;
     }
-    if (type === "text") {
-      instance.children = [{ type: "text", value }];
-    }
+    instance.children = [{ type, value }];
   });
 };
 
@@ -63,16 +56,21 @@ export const TextContent = ({
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   let expression: undefined | string;
-  if (child?.type === "text") {
+  if (child.type === "text") {
     expression = JSON.stringify(child.value);
   }
+  if (child.type === "expression") {
+    expression = child.value;
+  }
+
+  const readOnly = child.type === "expression";
 
   return (
     <VerticalLayout
       label={
-        <Flex align="center" css={{ gap: theme.spacing[3] }}>
-          <Label truncate>{label}</Label>
-        </Flex>
+        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+          {label}
+        </Label>
       }
       deletable={false}
       onDelete={() => {}}
@@ -80,6 +78,7 @@ export const TextContent = ({
       <BindingControl>
         <TextArea
           id={id}
+          disabled={readOnly}
           autoGrow
           value={localValue.value}
           rows={1}
@@ -96,9 +95,11 @@ export const TextContent = ({
                 return `${label} expects a string value`;
               }
             }}
-            removable={false}
+            removable={child.type === "expression"}
             value={expression}
-            onChange={(_newExpression) => {}}
+            onChange={(newExpression) => {
+              updateChildren(instanceId, "expression", newExpression);
+            }}
             onRemove={(evaluatedValue) =>
               updateChildren(instanceId, "text", String(evaluatedValue))
             }
