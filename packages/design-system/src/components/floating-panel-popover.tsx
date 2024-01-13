@@ -8,6 +8,7 @@ import * as Primitive from "@radix-ui/react-popover";
 import { css, theme, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
 import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
+import { Flex } from "..";
 
 export const FloatingPanelPopover = Primitive.Root;
 
@@ -55,12 +56,12 @@ export const FloatingPanelPopoverTitle = ({
   <TitleSlot>
     <PanelTitle
       suffix={
-        <>
+        <Flex gap={1}>
           {actions}
           <Primitive.Close asChild>
             <CloseButton aria-label={closeLabel} />
           </Primitive.Close>
-        </>
+        </Flex>
       }
     >
       {children}

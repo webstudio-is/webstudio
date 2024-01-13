@@ -113,6 +113,7 @@ export { Link2UnlinkedIcon } from "./link-2-unlinked";
 export { Link2Icon } from "./link-2";
 export { LinkIcon } from "./link";
 export { ListItemIcon } from "./list-item";
+export { ListViewIcon } from "./list-view";
 export { ListIcon } from "./list";
 export { LoadingDotsIcon } from "./loading-dots";
 export { MenuEllipsesIcon } from "./menu-ellipses";

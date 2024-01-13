@@ -483,6 +483,50 @@ test("compute instance text content when plain text", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
+test("compute instance text content bound to expression", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [{ type: "id", value: "expressionBox" }],
+      },
+      {
+        id: "expressionBox",
+        type: "instance",
+        component: "Box",
+        children: [
+          { type: "expression", value: `"Hello " + $ws$dataSource$world` },
+        ],
+      },
+    ])
+  );
+  $dataSources.set(
+    toMap([
+      {
+        id: "world",
+        scopeInstanceId: "body",
+        name: "world",
+        type: "variable",
+        value: { type: "string", value: "world" },
+      },
+    ])
+  );
+  selectPageRoot("body");
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [JSON.stringify(["body"]), new Map<string, unknown>()],
+      [
+        JSON.stringify(["expressionBox", "body"]),
+        new Map<string, unknown>([[textContentAttribute, "Hello world"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
 test("compute variable values for root", () => {
   $instances.set(
     toMap([{ id: "body", type: "instance", component: "Body", children: [] }])

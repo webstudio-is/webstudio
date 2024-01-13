@@ -1,4 +1,4 @@
-import { ListIcon } from "@webstudio-is/icons/svg";
+import { ListViewIcon } from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -13,7 +13,7 @@ const collectionMeta: WsComponentMeta = {
   order: 7,
   type: "container",
   label: "Collection",
-  icon: ListIcon,
+  icon: ListViewIcon,
   stylable: false,
   template: [
     {

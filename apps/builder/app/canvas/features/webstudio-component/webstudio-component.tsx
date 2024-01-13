@@ -26,6 +26,7 @@ import {
   createInstanceChildrenElements,
   collectionComponent,
   type AnyComponent,
+  textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
@@ -256,13 +257,15 @@ export const WebstudioComponentCanvas = forwardRef<
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
 
-  const children = createInstanceChildrenElements({
-    instances,
-    instanceSelector,
-    children: instance.children,
-    Component: WebstudioComponentCanvas,
-    components,
-  });
+  const children =
+    (instanceProps[textContentAttribute] as undefined | string) ??
+    createInstanceChildrenElements({
+      instances,
+      instanceSelector,
+      children: instance.children,
+      Component: WebstudioComponentCanvas,
+      components,
+    });
   /**
    * Prevents edited element from having a size of 0 on the first render.
    * Directly using `children` in Text Edit
@@ -447,13 +450,14 @@ export const WebstudioComponentPreview = forwardRef<
   }
   return (
     <Component {...props} ref={ref}>
-      {createInstanceChildrenElements({
-        instances,
-        instanceSelector,
-        children: instance.children,
-        Component: WebstudioComponentPreview,
-        components,
-      })}
+      {(instanceProps[textContentAttribute] as undefined | string) ??
+        createInstanceChildrenElements({
+          instances,
+          instanceSelector,
+          children: instance.children,
+          Component: WebstudioComponentPreview,
+          components,
+        })}
     </Component>
   );
 });

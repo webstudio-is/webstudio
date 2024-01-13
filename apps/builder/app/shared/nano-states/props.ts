@@ -155,7 +155,7 @@ export const $propValuesByInstanceSelector = computed(
     $assets,
   ],
   (instances, props, page, dataSourcesLogic, params, pages, assets) => {
-    const values = new Map<string, unknown>(dataSourcesLogic);
+    const variableValues = new Map<string, unknown>(dataSourcesLogic);
 
     let propsList = Array.from(props.values());
     // ignore asset and page props when params is not provided
@@ -197,14 +197,14 @@ export const $propValuesByInstanceSelector = computed(
             continue;
           }
           if (prop.type === "expression") {
-            const value = computeExpression(prop.value, values);
+            const value = computeExpression(prop.value, variableValues);
             if (value !== undefined) {
               propValues.set(prop.name, value);
             }
             continue;
           }
           if (prop.type === "action") {
-            const action = values.get(prop.id);
+            const action = variableValues.get(prop.id);
             if (typeof action === "function") {
               propValues.set(prop.name, action);
             }
@@ -227,7 +227,7 @@ export const $propValuesByInstanceSelector = computed(
         const itemVariableId = parameters.get("item");
         if (Array.isArray(data) && itemVariableId !== undefined) {
           data.forEach((item, index) => {
-            values.set(itemVariableId, item);
+            variableValues.set(itemVariableId, item);
             for (const child of instance.children) {
               if (child.type === "id") {
                 const indexId = getIndexedInstanceId(instanceId, index);
@@ -242,6 +242,12 @@ export const $propValuesByInstanceSelector = computed(
         // plain text can be edited from props panel
         if (child.type === "text" && instance.children.length === 1) {
           propValues.set(textContentAttribute, child.value);
+        }
+        if (child.type === "expression") {
+          const value = computeExpression(child.value, variableValues);
+          if (value !== undefined) {
+            propValues.set(textContentAttribute, value);
+          }
         }
         if (child.type === "id") {
           traverseInstances([child.value, ...instanceSelector]);
