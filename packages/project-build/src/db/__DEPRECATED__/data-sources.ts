@@ -1,3 +1,4 @@
+// DEPRECATED: use parseData and serializeData from build.ts
 import type { DataSource, DataSources } from "@webstudio-is/sdk";
 
 export const parseDataSources = (dataSourcesString: string): DataSources => {

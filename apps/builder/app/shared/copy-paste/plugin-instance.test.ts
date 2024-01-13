@@ -7,7 +7,6 @@ import type {
   Props,
   DataSource,
   DataSources,
-  Page,
 } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import {
@@ -29,6 +28,7 @@ import {
   $selectedPageId,
 } from "../nano-states";
 import { onCopy, onPaste } from "./plugin-instance";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 const expectString = expect.any(String) as unknown as string;
 
@@ -39,11 +39,9 @@ $registeredComponentMetas.set(
   new Map(Object.entries({ ...baseComponentMetas, ...coreMetas }))
 );
 $project.set({ id: "my-project" } as Project);
-$pages.set({
-  meta: {},
-  homePage: { id: "home-page", rootInstanceId: "body0" } as Page,
-  pages: [],
-});
+$pages.set(
+  createDefaultPages({ homePageId: "home-page", rootInstanceId: "body0" })
+);
 $selectedPageId.set("home-page");
 
 const createInstance = (

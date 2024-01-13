@@ -1,11 +1,5 @@
 import { z } from "zod";
-import {
-  type ComponentProps,
-  type FocusEventHandler,
-  useState,
-  useCallback,
-  Fragment,
-} from "react";
+import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -80,6 +74,7 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
+import { isRoot } from "./page-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -109,6 +104,7 @@ type Errors = {
   [fieldName in FieldName]?: string[];
 };
 
+// @todo needs to be removed
 const LegacyPagePath = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
@@ -313,6 +309,7 @@ const FormFields = ({
     .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
 
+  // @todo this is a hack to get the scroll area to work needs to be removed
   const TOPBAR_HEIGHT = 40;
   const HEADER_HEIGHT = 40;
   const FOOTER_HEIGHT = 24;
@@ -687,6 +684,10 @@ export const NewPageSettings = ({
             component: "Body",
             children: [],
           });
+
+          // @todo add parent folder selection
+          pages.folders.find(isRoot)?.children.push(pageId);
+
           $selectedInstanceSelector.set(undefined);
         }
       );
@@ -702,25 +703,29 @@ export const NewPageSettings = ({
       onSubmit={handleSubmit}
       onClose={onClose}
       isSubmitting={false}
-      errors={errors}
-      disabled={false}
-      values={values}
-      onChange={(val) => {
-        setValues((values) => {
-          const changes = { [val.field]: val.value };
+    >
+      <FormFields
+        autoSelect
+        errors={errors}
+        disabled={false}
+        values={values}
+        onChange={(val) => {
+          setValues((values) => {
+            const changes = { [val.field]: val.value };
 
-          if (val.field === "name") {
-            if (values.path === nameToPath(pages, values.name)) {
-              changes.path = nameToPath(pages, val.value);
+            if (val.field === "name") {
+              if (values.path === nameToPath(pages, values.name)) {
+                changes.path = nameToPath(pages, val.value);
+              }
+              if (values.title === values.name) {
+                changes.title = val.value;
+              }
             }
-            if (values.title === values.name) {
-              changes.title = val.value;
-            }
-          }
-          return { ...values, ...changes };
-        });
-      }}
-    />
+            return { ...values, ...changes };
+          });
+        }}
+      />
+    </NewPageSettingsView>
   );
 };
 
@@ -728,31 +733,30 @@ const NewPageSettingsView = ({
   onSubmit,
   isSubmitting,
   onClose,
-  ...formFieldsProps
+  children,
 }: {
   onSubmit: () => void;
   isSubmitting: boolean;
   onClose: () => void;
-} & ComponentProps<typeof FormFields>) => {
+  children: JSX.Element;
+}) => {
   return (
     <>
       <Header
         title="New Page Settings"
         suffix={
           <>
-            {onClose && (
-              <Tooltip content="Cancel" side="bottom">
-                <Button
-                  onClick={onClose}
-                  aria-label="Cancel"
-                  prefix={<ChevronDoubleLeftIcon />}
-                  color="ghost"
-                  // Tab should go:
-                  //   trought form fields -> create button -> cancel button
-                  tabIndex={3}
-                />
-              </Tooltip>
-            )}
+            <Tooltip content="Cancel" side="bottom">
+              <Button
+                onClick={onClose}
+                aria-label="Cancel"
+                prefix={<ChevronDoubleLeftIcon />}
+                color="ghost"
+                // Tab should go:
+                //   trought form fields -> create button -> cancel button
+                tabIndex={3}
+              />
+            </Tooltip>
             <HeaderSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
@@ -764,18 +768,14 @@ const NewPageSettingsView = ({
           </>
         }
       />
-      <Box
-        css={{
-          overflow: "auto",
-        }}
-      >
+      <Box css={{ overflow: "auto" }}>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             onSubmit();
           }}
         >
-          <FormFields autoSelect {...formFieldsProps} />
+          {children}
           <input type="submit" hidden />
         </form>
       </Box>
@@ -990,19 +990,22 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
-      pathVariableId={page.pathVariableId}
       onClose={onClose}
-      onDelete={hanldeDelete}
+      onDelete={values.isHomePage === false ? hanldeDelete : undefined}
       onDuplicate={() => {
         const newPageId = duplicatePage(pageId);
         if (newPageId !== undefined) {
           onDuplicate(newPageId);
         }
       }}
-      errors={errors}
-      values={values}
-      onChange={handleChange}
-    />
+    >
+      <FormFields
+        pathVariableId={page.pathVariableId}
+        errors={errors}
+        values={values}
+        onChange={handleChange}
+      />
+    </PageSettingsView>
   );
 };
 
@@ -1010,19 +1013,20 @@ const PageSettingsView = ({
   onDelete,
   onDuplicate,
   onClose,
-  ...formFieldsProps
+  children,
 }: {
-  onDelete: () => void;
+  onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
-} & ComponentProps<typeof FormFields>) => {
+  children: JSX.Element;
+}) => {
   return (
     <>
       <Header
         title="Page Settings"
         suffix={
           <>
-            {formFieldsProps.values.isHomePage === false && (
+            {onDelete && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
                   color="ghost"
@@ -1042,32 +1046,26 @@ const PageSettingsView = ({
                 tabIndex={2}
               />
             </Tooltip>
-            {onClose && (
-              <Tooltip content="Close page settings" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<ChevronDoubleLeftIcon />}
-                  onClick={onClose}
-                  aria-label="Close page settings"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
+            <Tooltip content="Close page settings" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<ChevronDoubleLeftIcon />}
+                onClick={onClose}
+                aria-label="Close page settings"
+                tabIndex={2}
+              />
+            </Tooltip>
           </>
         }
       />
-      <Box
-        css={{
-          overflow: "auto",
-        }}
-      >
+      <Box css={{ overflow: "auto" }}>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             onClose?.();
           }}
         >
-          <FormFields {...formFieldsProps} />
+          {children}
           <input type="submit" hidden />
         </form>
       </Box>

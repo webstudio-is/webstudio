@@ -17,15 +17,17 @@ import {
   createInitialBreakpoints,
   parseBreakpoints,
   serializeBreakpoints,
-} from "./breakpoints";
+} from "./__DEPRECATED__/breakpoints";
 import { parseStyles } from "./styles";
-import { parseStyleSources } from "./style-sources";
+import { parseStyleSources } from "./__DEPRECATED__/style-sources";
 import { parseStyleSourceSelections } from "./style-source-selections";
-import { parseProps } from "./props";
-import { parseDataSources } from "./data-sources";
-import { parseInstances, serializeInstances } from "./instances";
+import { parseProps } from "./__DEPRECATED__/props";
+import { parseDataSources } from "./__DEPRECATED__/data-sources";
+import { parseInstances, serializeInstances } from "./__DEPRECATED__/instances";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import type { Data } from "@webstudio-is/http-client";
+import { parsePages, serializePages } from "./__DEPRECATED__/pages";
+import { createDefaultPages } from "../shared/pages-utils";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -45,7 +47,7 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
-    const pages = JSON.parse(build.pages) as Pages;
+    const pages = parsePages(build.pages);
     const breakpoints = Array.from(parseBreakpoints(build.breakpoints));
     const styles = Array.from(parseStyles(build.styles));
     const styleSources = Array.from(parseStyleSources(build.styleSources));
@@ -150,23 +152,12 @@ export const createBuild = async (
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
 
-  const newPages = Pages.parse({
-    meta: {},
-    homePage: {
-      id: nanoid(),
-      name: "Home",
-      path: "",
-      title: "Home",
-      meta: {},
-      rootInstanceId,
-    },
-    pages: [],
-  } satisfies Pages);
+  const defaultPages = Pages.parse(createDefaultPages({ rootInstanceId }));
 
   await client.build.create({
     data: {
       projectId: props.projectId,
-      pages: JSON.stringify(newPages),
+      pages: serializePages(defaultPages),
       breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
       instances: serializeInstances(new Map(newInstances)),
     },

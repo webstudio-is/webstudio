@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "@jest/globals";
 import { cleanStores } from "nanostores";
-import type { Instance, Page } from "@webstudio-is/sdk";
+import type { Instance } from "@webstudio-is/sdk";
 import {
   collectionComponent,
   textContentAttribute,
@@ -20,6 +20,7 @@ import {
   $resources,
 } from "./nano-states";
 import { $params } from "~/canvas/stores";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 const getIdValuePair = <T extends { id: string }>(item: T) =>
   [item.id, item] as const;
@@ -34,11 +35,13 @@ const setBoxInstance = (id: Instance["id"]) => {
 };
 
 const selectPageRoot = (rootInstanceId: Instance["id"]) => {
-  $pages.set({
-    homePage: { id: "pageId", rootInstanceId, path: "/my-page" } as Page,
-    pages: [],
+  const defaultPages = createDefaultPages({
+    homePageId: "pageId",
+    homePagePath: "/my-page",
+    rootInstanceId,
   });
-  $selectedPageId.set("pageId");
+  $pages.set(defaultPages);
+  $selectedPageId.set(defaultPages.homePage.id);
 };
 
 beforeEach(() => {

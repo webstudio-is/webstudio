@@ -15,6 +15,7 @@ import {
 import { setMockEnv } from "~/shared/env";
 // eslint-disable-next-line import/no-internal-modules
 import catPath from "./props-panel.stories.assets/cat.jpg";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 setMockEnv({ ASSET_BASE_URL: catPath.replace("cat.jpg", "") });
 
@@ -34,7 +35,7 @@ const page = (name: string, path: string) => ({
 });
 
 $pages.set({
-  meta: {},
+  ...createDefaultPages({ rootInstanceId: unique() }),
   homePage: page("Home", "/"),
   pages: [
     page("About", "/about"),
