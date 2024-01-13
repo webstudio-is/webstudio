@@ -1,6 +1,10 @@
+import { useId, useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import { useId, TextArea } from "@webstudio-is/design-system";
+import { computed } from "nanostores";
+import { TextArea } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
+import { $instances } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 import {
   BindingControl,
   BindingPopover,
@@ -13,10 +17,6 @@ import {
   $selectedInstanceScope,
   Label,
 } from "../shared";
-import { useMemo } from "react";
-import { computed } from "nanostores";
-import { $instances } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
