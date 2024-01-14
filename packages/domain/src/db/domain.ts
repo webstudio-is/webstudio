@@ -106,7 +106,8 @@ export const create = async (
   if (projectDomainsCount >= props.maxDomainsAllowedPerUser) {
     return {
       success: false,
-      error: "You have reached the maximum amount of domains allowed",
+      error:
+        "You have reached the maximum number of allowed domains. Please upgrade to the Pro plan or higher.",
     };
   }
 
