@@ -92,6 +92,21 @@
           "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
           "path": "/resources"
         }
+      ],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": [
+            "7Db64ZXgYiRqKSQNR-qTQ",
+            "xfvB4UThQXmQ_OubPYrkg",
+            "szYLvBduHPmbtqQKCDY0b",
+            "U1tRJl2ERr8_OFe0g9cN_",
+            "-J9I4Oo6mONfQlf_3-OqG",
+            "TS39WeBd0Qr3QgbSlzdf2"
+          ]
+        }
       ]
     },
     "breakpoints": [

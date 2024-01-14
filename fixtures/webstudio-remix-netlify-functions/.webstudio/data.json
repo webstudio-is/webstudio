@@ -22,7 +22,15 @@
         "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
         "path": ""
       },
-      "pages": []
+      "pages": [],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": ["9di_L14CzctvSruIoKVvE"]
+        }
+      ]
     },
     "breakpoints": [
       [

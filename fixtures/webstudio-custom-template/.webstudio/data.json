@@ -21,7 +21,15 @@
         "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
         "path": ""
       },
-      "pages": []
+      "pages": [],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": ["nfzls_SkTc9jKYyxcZ8Lw"]
+        }
+      ]
     },
     "breakpoints": [
       [
