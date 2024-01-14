@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { Folder, FolderName, FolderSlug, Pages } from "@webstudio-is/sdk";
+import { Folder, Pages } from "@webstudio-is/sdk";
 import {
   theme,
   Button,
@@ -39,35 +39,32 @@ import {
 } from "./page-utils";
 import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
 
-const fieldDefaultValues = {
-  name: "Untitled",
-  slug: "untitled",
-  parentFolderId: createRootFolder().id,
-};
+const Values = Folder.pick({ name: true, slug: true }).extend({
+  parentFolderId: z.string(),
+});
 
-const fieldNames = Object.keys(
-  fieldDefaultValues
-) as (keyof typeof fieldDefaultValues)[];
+type Values = z.infer<typeof Values>;
 
-type FieldName = (typeof fieldNames)[number];
-
-type Values = typeof fieldDefaultValues;
+type FieldName = keyof Values;
 
 type Errors = {
   [fieldName in FieldName]?: string[];
 };
 
-const FolderValues = z.object({
-  name: FolderName,
-  slug: FolderSlug,
-});
+const fieldDefaultValues = {
+  name: "Untitled",
+  slug: "untitled",
+  parentFolderId: createRootFolder().id,
+} satisfies Values;
+
+const fieldNames = Object.keys(fieldDefaultValues) as Array<FieldName>;
 
 const validateValues = (
   pages: undefined | Pages,
   values: Values,
   folderId?: Folder["id"]
 ): Errors => {
-  const parsedResult = FolderValues.safeParse(values);
+  const parsedResult = Values.safeParse(values);
   const errors: Errors = {};
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;

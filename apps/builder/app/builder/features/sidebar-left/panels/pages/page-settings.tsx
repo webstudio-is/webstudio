@@ -81,6 +81,7 @@ import {
   validatePathnamePattern,
 } from "./url-pattern";
 import {
+  compileSlugPath,
   findParentFolderByChildId,
   registerFolderChildMutable,
 } from "./page-utils";
@@ -297,8 +298,14 @@ const FormFields = ({
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
+  const dataSourceVariables = useStore($dataSourceVariables);
+
+  if (pages === undefined) {
+    return;
+  }
+
   const socialImageAsset = assets.get(values.socialImageAssetId);
-  const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
+  const faviconAsset = assets.get(pages.meta?.faviconAssetId ?? "");
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
@@ -312,14 +319,15 @@ const FormFields = ({
   const publishedUrl = new URL(`https://${domain}`);
 
   const pathParamNames = parsePathnamePattern(values.path);
-  const dataSourceVariables = useStore($dataSourceVariables);
   const params =
     pathVariableId !== undefined
       ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
       : undefined;
 
   const compiledPath = compilePathnamePattern(values.path ?? "", params ?? {});
-  const pageDomainAndPath = [publishedUrl.host, compiledPath]
+  const slug = compileSlugPath(pages.folders, values.parentFolderId);
+
+  const pageDomainAndPath = [publishedUrl.host, slug, compiledPath]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");
@@ -330,10 +338,6 @@ const FormFields = ({
   const HEADER_HEIGHT = 40;
   const FOOTER_HEIGHT = 24;
   const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
-
-  if (pages === undefined) {
-    return;
-  }
 
   return (
     <Grid>
