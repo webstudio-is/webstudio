@@ -297,11 +297,6 @@ const FormFields = ({
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
-
-  if (pages === undefined) {
-    return;
-  }
-
   const socialImageAsset = assets.get(values.socialImageAssetId);
   const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
 
@@ -335,6 +330,10 @@ const FormFields = ({
   const HEADER_HEIGHT = 40;
   const FOOTER_HEIGHT = 24;
   const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
+
+  if (pages === undefined) {
+    return;
+  }
 
   return (
     <Grid>
