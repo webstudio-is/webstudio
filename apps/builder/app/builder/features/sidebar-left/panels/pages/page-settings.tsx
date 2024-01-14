@@ -137,7 +137,7 @@ const HomePageValues = z.object({
 
 const PageValues = z.object({
   name: PageName,
-  path: isFeatureEnabled("bindings") ? PagePath : LegacyPagePath,
+  path: isFeatureEnabled("cms") ? PagePath : LegacyPagePath,
   title: PageTitle,
   description: z.string().optional(),
 });
