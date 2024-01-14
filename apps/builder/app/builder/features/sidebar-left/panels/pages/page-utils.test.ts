@@ -4,6 +4,7 @@ import {
   findParentFolderByChildId,
   isRoot,
   isSlugUsed,
+  registerFolderChildMutable,
   reparentOrphansMutable,
   toTreeData,
 } from "./page-utils";
@@ -239,19 +240,19 @@ describe("reparentOrphansMutable", () => {
 
 describe("cleanupChildRefsMutable", () => {
   test("cleanup refs", () => {
-    const pages = createDefaultPages({
+    const { folders } = createDefaultPages({
       rootInstanceId: "rootInstanceId",
       homePageId: "homePageId",
     });
-    pages.folders.push({
+    folders.push({
       id: "folderId",
       name: "Folder",
       slug: "folder",
       children: [],
     });
-    const rootFolder = pages.folders.find(isRoot);
+    const rootFolder = folders.find(isRoot);
     rootFolder?.children.push("folderId");
-    cleanupChildRefsMutable("folderId", pages);
+    cleanupChildRefsMutable("folderId", folders);
     expect(rootFolder).toEqual({
       id: "root",
       name: "Root",
@@ -335,5 +336,62 @@ describe("isSlugUsed", () => {
     expect(isSlugUsed("slug1-1", folders, "folderId1", "folderId1-1")).toBe(
       true
     );
+  });
+});
+
+describe("registerFolderChildMutable", () => {
+  test("register a folder child in the root via fallback", () => {
+    const { folders } = createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    });
+    registerFolderChildMutable(folders, "folderId");
+    const rootFolder = folders.find(isRoot);
+    expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
+  });
+
+  test("register a folder child in a provided folder", () => {
+    const { folders } = createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    });
+    const folder = {
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    };
+    folders.push(folder);
+    registerFolderChildMutable(folders, "folderId2", "folderId");
+    expect(folder.children).toEqual(["folderId2"]);
+  });
+
+  test("register in a provided folder & cleanup old refs", () => {
+    const { folders } = createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    });
+    const folder = {
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    };
+    folders.push(folder);
+    const rootFolder = folders.find(isRoot);
+    registerFolderChildMutable(folders, "folderId", "root");
+    registerFolderChildMutable(folders, "folderId2", "root");
+
+    expect(rootFolder?.children).toEqual([
+      "homePageId",
+      "folderId",
+      "folderId2",
+    ]);
+
+    // Moving folderId from root to folderId
+    registerFolderChildMutable(folders, "folderId2", "folderId");
+
+    expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
+    expect(folder.children).toEqual(["folderId2"]);
   });
 });
