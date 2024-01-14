@@ -107,7 +107,7 @@ export const create = async (
     return {
       success: false,
       error:
-        "You have reached the maximum amount of domains allowed, please upgrade to Pro plan or higher.",
+        "You have reached the maximum number of allowed domains. Please upgrade to the Pro plan or higher.",
     };
   }
 
