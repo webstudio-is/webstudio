@@ -340,6 +340,10 @@ const FormFields = ({
   const FOOTER_HEIGHT = 24;
   const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
 
+  if (pages === undefined) {
+    return;
+  }
+
   return (
     <Grid>
       <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
