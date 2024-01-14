@@ -71,6 +71,7 @@ export {
 } from "./components/enhanced-tooltip";
 export * from "./components/avatar";
 export * from "./components/tree";
+export * from "./components/pro-badge";
 
 // No need to align
 

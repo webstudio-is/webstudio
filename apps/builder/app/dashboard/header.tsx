@@ -16,8 +16,7 @@ import {
   rawTheme,
   theme,
   Button,
-  Text,
-  styled,
+  ProBadge,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -35,22 +34,6 @@ const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
-export const ProBadge = styled(Text, {
-  display: "inline-flex",
-  borderRadius: theme.borderRadius[2],
-  px: theme.spacing[3],
-  py: theme.spacing[1],
-  height: theme.spacing[9],
-  color: theme.colors.foregroundContrastMain,
-  alignItems: "center",
-  maxWidth: "100%",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  // @tood doesn't work in tooltips, needs a workaround
-  textOverflow: "ellipsis",
-  background: theme.colors.backgroundStyleSourceNeutral,
-});
-
 const Menu = ({
   user,
   userPlanFeatures,
@@ -67,7 +50,7 @@ const Menu = ({
           <Flex gap="1" align="center">
             {userPlanFeatures.hasProPlan && (
               <>
-                <ProBadge>Pro</ProBadge>
+                <ProBadge />
                 <div />
               </>
             )}

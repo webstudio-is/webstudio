@@ -13,6 +13,7 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import {
+  Box,
   Flex,
   FloatingPanelPopover,
   FloatingPanelPopoverContent,
@@ -21,8 +22,10 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
+  ProBadge,
   ScrollArea,
   Select,
+  SelectItem,
   Switch,
   theme,
 } from "@webstudio-is/design-system";
@@ -48,6 +51,8 @@ import {
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
 import { ResourceForm } from "./resource-panel";
+import { useStore } from "@nanostores/react";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 /**
  * convert value expression to js value
@@ -324,6 +329,9 @@ const VariablePanel = forwardRef<
     variable?: DataSource;
   }
 >(({ variable }, ref) => {
+  const userPlanFeatures = useStore($userPlanFeatures);
+  const { allowResourceVariables = false } = userPlanFeatures;
+
   const nameField = useField({
     initialValue: variable?.name ?? "",
     validate: (value) =>
@@ -360,17 +368,48 @@ const VariablePanel = forwardRef<
     }
     return "string";
   });
+  const typeOptions: VariableType[] = [
+    "string",
+    "number",
+    "boolean",
+    "json",
+    "resource",
+  ];
+  const getTypeLabel = (value: VariableType) =>
+    value === "json" ? "JSON" : humanizeString(value);
   const typeFieldElement = (
     <Flex direction="column" css={{ gap: theme.spacing[3] }}>
       <Label>Type</Label>
       <Select<VariableType>
-        options={["string", "number", "boolean", "json", "resource"]}
-        getLabel={(value: VariableType) =>
-          value === "json" ? "JSON" : humanizeString(value)
-        }
+        options={typeOptions}
+        getLabel={getTypeLabel}
         value={type}
         onChange={setType}
-      />
+      >
+        {typeOptions.map((option) =>
+          option === "resource" && allowResourceVariables === false ? (
+            <SelectItem
+              key={option}
+              value={option}
+              textValue={getTypeLabel(option)}
+              disabled={true}
+            >
+              {getTypeLabel(option)}
+              <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
+                <ProBadge />
+              </Box>
+            </SelectItem>
+          ) : (
+            <SelectItem
+              key={option}
+              value={option}
+              textValue={getTypeLabel(option)}
+            >
+              {getTypeLabel(option)}
+            </SelectItem>
+          )
+        )}
+      </Select>
     </Flex>
   );
 

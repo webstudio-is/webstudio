@@ -5,6 +5,7 @@ import { prisma } from "@webstudio-is/prisma-client";
  **/
 export type UserPlanFeatures = {
   allowShareAdminLinks: boolean;
+  allowResourceVariables: boolean;
   maxDomainsAllowedPerUser: number;
   hasSubscription: boolean;
   hasProPlan: boolean;
@@ -72,6 +73,7 @@ export const getUserPlanFeatures = async (
 
     return {
       allowShareAdminLinks: true,
+      allowResourceVariables: true,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription,
       hasProPlan: true,
@@ -80,6 +82,7 @@ export const getUserPlanFeatures = async (
 
   return {
     allowShareAdminLinks: false,
+    allowResourceVariables: false,
     maxDomainsAllowedPerUser: 5,
     hasSubscription: false,
     hasProPlan: false,

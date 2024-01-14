@@ -50,6 +50,7 @@ import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/seo/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $userPlanFeatures } from "./shared/nano-states";
 
 registerContainers();
 
@@ -246,6 +247,7 @@ export const Builder = ({
     $domains.set(domains);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
+    $userPlanFeatures.set(userPlanFeatures);
 
     // set initial containers value
     $assets.set(new Map(assets));
