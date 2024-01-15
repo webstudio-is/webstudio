@@ -1,6 +1,7 @@
 import type { ComponentStory } from "@storybook/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Dashboard } from "./dashboard";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 export default {
   title: "Dashboard / Projects",
@@ -25,10 +26,11 @@ const createRouter = (element: JSX.Element) =>
     },
   ]);
 
-const userPlanFeatures = {
+const userPlanFeatures: UserPlanFeatures = {
   hasProPlan: false,
   hasSubscription: false,
   allowShareAdminLinks: false,
+  allowResourceVariables: false,
   maxDomainsAllowedPerUser: 5,
 };
 
