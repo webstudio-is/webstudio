@@ -81,6 +81,7 @@ import {
   validatePathnamePattern,
 } from "./url-pattern";
 import {
+  cleanupChildRefsMutable,
   compileSlugPath,
   findParentFolderByChildId,
   registerFolderChildMutable,
@@ -933,6 +934,7 @@ const deletePage = (pageId: Page["id"]) => {
       return;
     }
     removeByMutable(pages.pages, (page) => page.id === pageId);
+    cleanupChildRefsMutable(pageId, pages.folders);
   });
 };
 
