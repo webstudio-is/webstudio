@@ -15,7 +15,7 @@ export const ProBadge = () => {
         maxWidth: "100%",
         whiteSpace: "nowrap",
         overflow: "hidden",
-        // @tood doesn't work in tooltips, needs a workaround
+        // @todo doesn't work in tooltips, needs a workaround
         textOverflow: "ellipsis",
         background: theme.colors.backgroundStyleSourceNeutral,
       }}
