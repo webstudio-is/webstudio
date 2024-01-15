@@ -385,29 +385,21 @@ const VariablePanel = forwardRef<
         value={type}
         onChange={setType}
       >
-        {typeOptions.map((option) =>
-          option === "resource" && allowResourceVariables === false ? (
-            <SelectItem
-              key={option}
-              value={option}
-              textValue={getTypeLabel(option)}
-              disabled={true}
-            >
-              {getTypeLabel(option)}
+        {typeOptions.map((option) => (
+          <SelectItem
+            key={option}
+            value={option}
+            textValue={getTypeLabel(option)}
+            disabled={option === "resource" && allowResourceVariables === false}
+          >
+            {getTypeLabel(option)}
+            {option === "resource" && allowResourceVariables === false && (
               <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
                 <ProBadge />
               </Box>
-            </SelectItem>
-          ) : (
-            <SelectItem
-              key={option}
-              value={option}
-              textValue={getTypeLabel(option)}
-            >
-              {getTypeLabel(option)}
-            </SelectItem>
-          )
-        )}
+            )}
+          </SelectItem>
+        ))}
       </Select>
     </Flex>
   );
