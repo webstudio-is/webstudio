@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { useStore } from "@nanostores/react";
 import {
   type ReactNode,
   type Ref,
@@ -48,11 +49,10 @@ import {
   composeFields,
   type ComposedFields,
 } from "~/shared/form-utils";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
 import { ResourceForm } from "./resource-panel";
-import { useStore } from "@nanostores/react";
-import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 /**
  * convert value expression to js value
@@ -329,8 +329,7 @@ const VariablePanel = forwardRef<
     variable?: DataSource;
   }
 >(({ variable }, ref) => {
-  const userPlanFeatures = useStore($userPlanFeatures);
-  const { allowResourceVariables = false } = userPlanFeatures;
+  const { allowResourceVariables } = useStore($userPlanFeatures);
 
   const nameField = useField({
     initialValue: variable?.name ?? "",

@@ -39,4 +39,11 @@ export const $scale = computed(
 
 export const $activeSidebarPanel = atom<TabName>("none");
 
-export const $userPlanFeatures = atom<Partial<UserPlanFeatures>>({});
+// keep in sync with user-plan-features.server
+export const $userPlanFeatures = atom<UserPlanFeatures>({
+  allowShareAdminLinks: false,
+  allowResourceVariables: false,
+  maxDomainsAllowedPerUser: 5,
+  hasSubscription: false,
+  hasProPlan: false,
+});
