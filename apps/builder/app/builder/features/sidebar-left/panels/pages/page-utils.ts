@@ -191,6 +191,9 @@ export const registerFolderChildMutable = (
   parentFolder?.children.push(id);
 };
 
+/**
+ * Get a path from all folder slugs from root to the current folder.
+ */
 export const compileSlugPath = (
   folders: Array<Folder>,
   folderId: Folder["id"]
