@@ -9,7 +9,7 @@ export const portalComponent = "Slot";
 export const collectionComponent = "ws:collection";
 
 const collectionMeta: WsComponentMeta = {
-  category: "general",
+  category: "data",
   order: 7,
   type: "container",
   label: "Collection",
@@ -23,24 +23,24 @@ const collectionMeta: WsComponentMeta = {
         {
           name: "data",
           type: "json",
-          value: ["apple", "orange", "banana"],
+          value: [
+            "Collection Item 1",
+            "Collection Item 2",
+            "Collection Item 3",
+          ],
         },
-        { name: "item", type: "parameter", variableName: "collectionItem" },
+        {
+          name: "item",
+          type: "parameter",
+          variableName: "collectionItem",
+          variableAlias: "Collection Item",
+        },
       ],
       children: [
         {
           type: "instance",
           component: "Box",
-          children: [
-            {
-              type: "instance",
-              component: "HtmlEmbed",
-              props: [
-                { name: "code", type: "expression", code: "collectionItem" },
-              ],
-              children: [],
-            },
-          ],
+          children: [{ type: "expression", value: "collectionItem" }],
         },
       ],
     },
