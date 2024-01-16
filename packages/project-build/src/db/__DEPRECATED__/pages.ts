@@ -1,3 +1,4 @@
+// DEPRECATED: use parseData and serializeData from build.ts
 import type { Pages } from "@webstudio-is/sdk";
 
 export const parsePages = (pagesString: string): Pages => {

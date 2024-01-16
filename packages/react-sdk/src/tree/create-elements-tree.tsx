@@ -94,18 +94,25 @@ export const createInstanceChildrenElements = ({
       elements.push(renderText(child.value));
       continue;
     }
-    const childInstance = instances.get(child.value);
-    if (childInstance === undefined) {
+    if (child.type === "expression") {
       continue;
     }
-    const childInstanceSelector = [child.value, ...instanceSelector];
-    const element = createInstanceElement({
-      instance: childInstance,
-      instanceSelector: childInstanceSelector,
-      Component,
-      components,
-    });
-    elements.push(element);
+    if (child.type === "id") {
+      const childInstance = instances.get(child.value);
+      if (childInstance === undefined) {
+        continue;
+      }
+      const childInstanceSelector = [child.value, ...instanceSelector];
+      const element = createInstanceElement({
+        instance: childInstance,
+        instanceSelector: childInstanceSelector,
+        Component,
+        components,
+      });
+      elements.push(element);
+      continue;
+    }
+    child satisfies never;
   }
   // let empty children be coalesced with fallback
   if (elements.length === 0) {

@@ -26,19 +26,20 @@ import {
   createInstanceChildrenElements,
   collectionComponent,
   type AnyComponent,
+  textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
   getIndexedInstanceId,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceRenderStateStore,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
-  selectedStyleSourceSelectorStore,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceRenderState,
+  $selectedInstanceSelector,
+  $selectedPage,
+  $selectedStyleSourceSelector,
   useInstanceStyles,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { useCssRules } from "~/canvas/shared/styles";
 import {
   type InstanceSelector,
@@ -144,7 +145,7 @@ const getInstanceSelector = (
 };
 
 const $indexesWithinAncestors = computed(
-  [registeredComponentMetasStore, instancesStore, selectedPageStore],
+  [$registeredComponentMetas, $instances, $selectedPage],
   (metas, instances, page) => {
     return getIndexesWithinAncestors(
       metas,
@@ -157,7 +158,7 @@ const $indexesWithinAncestors = computed(
 const useInstanceProps = (instanceSelector: InstanceSelector) => {
   const instanceSelectorKey = JSON.stringify(instanceSelector);
   const [instanceId] = instanceSelector;
-  const instancePropsObjectStore = useMemo(() => {
+  const $instancePropsObject = useMemo(() => {
     return computed(
       [$propValuesByInstanceSelector, $indexesWithinAncestors],
       (propValuesByInstanceSelector, indexesWithinAncestors) => {
@@ -177,7 +178,7 @@ const useInstanceProps = (instanceSelector: InstanceSelector) => {
       }
     );
   }, [instanceSelectorKey, instanceId]);
-  const instancePropsObject = useStore(instancePropsObjectStore);
+  const instancePropsObject = useStore($instancePropsObject);
   return instancePropsObject;
 };
 
@@ -240,6 +241,15 @@ const mergeProps = (
   return props;
 };
 
+const getTextContent = (instanceProps: Record<string, unknown>) => {
+  const value = instanceProps[textContentAttribute];
+  // serialize objects and let react render literal types
+  if (typeof value === "object" && value !== null) {
+    return String(value);
+  }
+  return value as ReactNode;
+};
+
 // eslint-disable-next-line react/display-name
 export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
@@ -249,22 +259,22 @@ export const WebstudioComponentCanvas = forwardRef<
   const instanceId = instance.id;
   const instanceStyles = useInstanceStyles(instanceId);
   useCssRules({ instanceId: instance.id, instanceStyles });
-  const instances = useStore(instancesStore);
+  const instances = useStore($instances);
 
-  const textEditingInstanceSelector = useStore(
-    textEditingInstanceSelectorStore
-  );
+  const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
 
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
 
-  const children = createInstanceChildrenElements({
-    instances,
-    instanceSelector,
-    children: instance.children,
-    Component: WebstudioComponentCanvas,
-    components,
-  });
+  const children =
+    getTextContent(instanceProps) ??
+    createInstanceChildrenElements({
+      instances,
+      instanceSelector,
+      children: instance.children,
+      Component: WebstudioComponentCanvas,
+      components,
+    });
   /**
    * Prevents edited element from having a size of 0 on the first render.
    * Directly using `children` in Text Edit
@@ -274,7 +284,7 @@ export const WebstudioComponentCanvas = forwardRef<
 
   useCollapsedOnNewElement(instanceId);
 
-  // this assumes presence of `useStore(selectedInstanceSelectorStore)` above
+  // this assumes presence of `useStore($selectedInstanceSelector)` above
   // we rely on root re-rendering after selected instance changes
   useEffect(() => {
     // 1 means root
@@ -282,8 +292,8 @@ export const WebstudioComponentCanvas = forwardRef<
       // If by the time root is rendered,
       // no selected instance renders and sets state to "mounted",
       // then it's clear that selected instance will not render at all, so we set it to "notMounted"
-      if (selectedInstanceRenderStateStore.get() === "pending") {
-        selectedInstanceRenderStateStore.set("notMounted");
+      if ($selectedInstanceRenderState.get() === "pending") {
+        $selectedInstanceRenderState.set("notMounted");
       }
     }
   });
@@ -368,7 +378,7 @@ export const WebstudioComponentCanvas = forwardRef<
           />
         }
         onChange={(instancesList) => {
-          serverSyncStore.createTransaction([instancesStore], (instances) => {
+          serverSyncStore.createTransaction([$instances], (instances) => {
             const deletedTreeIds = findTreeInstanceIds(instances, instance.id);
             for (const updatedInstance of instancesList) {
               instances.set(updatedInstance.id, updatedInstance);
@@ -381,15 +391,15 @@ export const WebstudioComponentCanvas = forwardRef<
           });
         }}
         onSelectInstance={(instanceId) => {
-          const instances = instancesStore.get();
+          const instances = $instances.get();
           const newSelectedSelector = getInstanceSelector(
             instances,
             instanceSelector,
             instanceId
           );
-          textEditingInstanceSelectorStore.set(undefined);
-          selectedInstanceSelectorStore.set(newSelectedSelector);
-          selectedStyleSourceSelectorStore.set(undefined);
+          $textEditingInstanceSelector.set(undefined);
+          $selectedInstanceSelector.set(newSelectedSelector);
+          $selectedStyleSourceSelector.set(undefined);
         }}
       />
     </Suspense>
@@ -401,7 +411,7 @@ export const WebstudioComponentPreview = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
-  const instances = useStore(instancesStore);
+  const instances = useStore($instances);
   const instanceStyles = useInstanceStyles(instance.id);
   useCssRules({ instanceId: instance.id, instanceStyles });
   const { [showAttribute]: show = true, ...instanceProps } =
@@ -449,13 +459,14 @@ export const WebstudioComponentPreview = forwardRef<
   }
   return (
     <Component {...props} ref={ref}>
-      {createInstanceChildrenElements({
-        instances,
-        instanceSelector,
-        children: instance.children,
-        Component: WebstudioComponentPreview,
-        components,
-      })}
+      {getTextContent(instanceProps) ??
+        createInstanceChildrenElements({
+          instances,
+          instanceSelector,
+          children: instance.children,
+          Component: WebstudioComponentPreview,
+          components,
+        })}
     </Component>
   );
 });

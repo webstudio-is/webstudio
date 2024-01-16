@@ -1,5 +1,9 @@
 import { useStore } from "@nanostores/react";
-import { Flex, theme, useId, TextArea } from "@webstudio-is/design-system";
+import { useId, TextArea } from "@webstudio-is/design-system";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -10,7 +14,6 @@ import {
   updateExpressionValue,
   $selectedInstanceScope,
 } from "../shared";
-import { BindingPopover } from "~/builder/shared/binding-popover";
 
 export const TextControl = ({
   meta,
@@ -39,7 +42,7 @@ export const TextControl = ({
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
 
   const input = (
-    <>
+    <BindingControl>
       <TextArea
         id={id}
         disabled={readOnly}
@@ -60,6 +63,7 @@ export const TextControl = ({
             return `${label} expects a string value`;
           }
         }}
+        removable={prop?.type === "expression"}
         value={expression}
         onChange={(newExpression) =>
           onChange({ type: "expression", value: newExpression })
@@ -68,7 +72,7 @@ export const TextControl = ({
           onChange({ type: "string", value: String(evaluatedValue) })
         }
       />
-    </>
+    </BindingControl>
   );
 
   const labelElement = (
@@ -84,7 +88,7 @@ export const TextControl = ({
         deletable={deletable}
         onDelete={onDelete}
       >
-        <Flex css={{ position: "relative" }}>{input}</Flex>
+        {input}
       </ResponsiveLayout>
     );
   }
@@ -95,7 +99,7 @@ export const TextControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Flex css={{ py: theme.spacing[2], position: "relative" }}>{input}</Flex>
+      {input}
     </VerticalLayout>
   );
 };

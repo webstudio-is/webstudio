@@ -1,5 +1,9 @@
 import { useStore } from "@nanostores/react";
-import { Box, theme } from "@webstudio-is/design-system";
+import { HtmlEditor } from "~/builder/shared/html-editor";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   useLocalValue,
   type ControlProps,
@@ -9,8 +13,6 @@ import {
   updateExpressionValue,
   $selectedInstanceScope,
 } from "../shared";
-import { HtmlEditor } from "~/builder/shared/html-editor";
-import { BindingPopover } from "~/builder/shared/binding-popover";
 
 export const CodeControl = ({
   meta,
@@ -55,7 +57,7 @@ export const CodeControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Box css={{ position: "relative", py: theme.spacing[2] }}>
+      <BindingControl>
         <HtmlEditor
           readOnly={readOnly}
           value={localValue.value}
@@ -70,6 +72,7 @@ export const CodeControl = ({
               return `${label} expects a string value`;
             }
           }}
+          removable={prop?.type === "expression"}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
@@ -78,7 +81,7 @@ export const CodeControl = ({
             onChange({ type: "string", value: String(evaluatedValue) })
           }
         />
-      </Box>
+      </BindingControl>
     </VerticalLayout>
   );
 };

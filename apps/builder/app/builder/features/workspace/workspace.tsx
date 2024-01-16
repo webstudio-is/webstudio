@@ -1,15 +1,15 @@
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
-  scaleStore,
+  $scale,
   useCanvasWidth,
-  workspaceRectStore,
+  $workspaceRect,
 } from "~/builder/shared/nano-states";
 import {
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
 import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";
@@ -39,7 +39,7 @@ const useMeasureWorkspace = () => {
       return;
     }
     const observer = new ResizeObserver((entries) => {
-      workspaceRectStore.set(entries[0].contentRect);
+      $workspaceRect.set(entries[0].contentRect);
     });
     observer.observe(element);
     return () => {
@@ -99,8 +99,8 @@ const getCanvasStyle = (
 const useCanvasStyle = (
   initialBreakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
-  const scale = useStore(scaleStore);
-  const workspaceRect = useStore(workspaceRectStore);
+  const scale = useStore($scale);
+  const workspaceRect = useStore($workspaceRect);
   const [canvasWidth] = useCanvasWidth();
 
   return getCanvasStyle(initialBreakpoints, scale, workspaceRect, canvasWidth);
@@ -109,8 +109,8 @@ const useCanvasStyle = (
 const useOutlineStyle = (
   initialBreakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
-  const scale = useStore(scaleStore);
-  const workspaceRect = useStore(workspaceRectStore);
+  const scale = useStore($scale);
+  const workspaceRect = useStore($workspaceRect);
   const [canvasWidth] = useCanvasWidth();
   const style = getCanvasStyle(
     initialBreakpoints,
@@ -143,9 +143,9 @@ export const Workspace = ({
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {
-    selectedInstanceSelectorStore.set(undefined);
-    textEditingInstanceSelectorStore.set(undefined);
-    selectedStyleSourceSelectorStore.set(undefined);
+    $selectedInstanceSelector.set(undefined);
+    $textEditingInstanceSelector.set(undefined);
+    $selectedStyleSourceSelector.set(undefined);
   };
 
   return (

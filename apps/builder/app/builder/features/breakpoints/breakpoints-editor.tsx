@@ -17,7 +17,7 @@ import {
 } from "@webstudio-is/design-system";
 import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
-import { breakpointsStore } from "~/shared/nano-states";
+import { $breakpoints } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { serverSyncStore } from "~/shared/sync";
 
@@ -163,7 +163,7 @@ type BreakpointsEditorProps = {
 };
 
 export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const [addedBreakpoints, setAddedBreakpoints] = useState<Breakpoint[]>([]);
   const initialBreakpointsRef = useRef(
     groupBreakpoints(Array.from(breakpoints.values()))
@@ -178,7 +178,7 @@ export const BreakpointsEditor = ({ onDelete }: BreakpointsEditorProps) => {
   ].filter((breakpoint) => isBaseBreakpoint(breakpoint) === false);
 
   const handleChangeComplete = (breakpoint: Breakpoint) => {
-    serverSyncStore.createTransaction([breakpointsStore], (breakpoints) => {
+    serverSyncStore.createTransaction([$breakpoints], (breakpoints) => {
       breakpoints.set(breakpoint.id, breakpoint);
     });
   };

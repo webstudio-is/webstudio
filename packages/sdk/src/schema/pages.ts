@@ -2,6 +2,29 @@ import { z } from "zod";
 
 const MIN_TITLE_LENGTH = 2;
 
+const PageId = z.string();
+const FolderId = z.string();
+
+export const FolderName = z
+  .string()
+  .refine((value) => value.trim() !== "", "Can't be empty");
+
+const Slug = z
+  .string()
+  .refine(
+    (path) => /^[-a-z0-9]*$/.test(path),
+    "Only a-z, 0-9 and - are allowed"
+  );
+
+export const Folder = z.object({
+  id: FolderId,
+  name: FolderName,
+  slug: Slug,
+  children: z.array(z.union([FolderId, PageId])),
+});
+
+export type Folder = z.infer<typeof Folder>;
+
 export const PageName = z
   .string()
   .refine((value) => value.trim() !== "", "Can't be empty");
@@ -14,7 +37,7 @@ export const PageTitle = z
   );
 
 const commonPageFields = {
-  id: z.string(),
+  id: PageId,
   name: PageName,
   title: PageTitle,
   meta: z.object({
@@ -98,6 +121,9 @@ export const Pages = z.object({
       (array) => new Set(array.map((page) => page.path)).size === array.length,
       "All paths must be unique"
     ),
+  folders: z
+    .array(Folder)
+    .refine((folders) => folders.length > 0, "Folders can't be empty"),
 });
 
 export type Pages = z.infer<typeof Pages>;

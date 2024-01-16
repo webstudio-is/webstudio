@@ -1,3 +1,4 @@
+// DEPRECATED: use parseData and serializeData from build.ts
 import { Props, Prop } from "@webstudio-is/sdk";
 
 export const parseProps = (propsString: string): Props => {

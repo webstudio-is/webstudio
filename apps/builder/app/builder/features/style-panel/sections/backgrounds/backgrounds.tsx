@@ -22,7 +22,7 @@ import {
   SubtractIcon,
   PlusIcon,
 } from "@webstudio-is/icons";
-import { assetsStore } from "~/shared/nano-states";
+import { $assets } from "~/shared/nano-states";
 import { PropertyName } from "../../shared/property-name";
 import type { StyleInfo } from "../../shared/style-info";
 import { ColorControl } from "../../controls/color/color-control";
@@ -60,7 +60,7 @@ const Layer = (props: {
   deleteLayer: () => void;
   setBackgroundColor: (color: RgbValue) => void;
 }) => {
-  const assets = useStore(assetsStore);
+  const assets = useStore($assets);
 
   const backgrounImageStyle = props.layerStyle.backgroundImage?.value;
   const isHidden =

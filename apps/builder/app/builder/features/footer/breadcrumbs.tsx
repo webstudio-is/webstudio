@@ -7,20 +7,20 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import {
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { Fragment } from "react";
 
 export const Breadcrumbs = () => {
-  const instances = useStore(instancesStore);
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const instances = useStore($instances);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const metas = useStore($registeredComponentMetas);
 
   return (
     <Flex
@@ -58,14 +58,14 @@ export const Breadcrumbs = () => {
                   }}
                   key={instance.id}
                   onClick={() => {
-                    selectedInstanceSelectorStore.set(
+                    $selectedInstanceSelector.set(
                       getAncestorInstanceSelector(
                         selectedInstanceSelector,
                         instance.id
                       )
                     );
-                    textEditingInstanceSelectorStore.set(undefined);
-                    selectedStyleSourceSelectorStore.set(undefined);
+                    $textEditingInstanceSelector.set(undefined);
+                    $selectedStyleSourceSelector.set(undefined);
                   }}
                 >
                   {getInstanceLabel(instance, meta)}

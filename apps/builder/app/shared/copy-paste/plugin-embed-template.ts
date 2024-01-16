@@ -4,11 +4,11 @@ import {
   generateDataFromEmbedTemplate,
 } from "@webstudio-is/react-sdk";
 import {
-  selectedInstanceSelectorStore,
-  instancesStore,
-  selectedPageStore,
-  registeredComponentMetasStore,
-  breakpointsStore,
+  $selectedInstanceSelector,
+  $instances,
+  $selectedPage,
+  $registeredComponentMetas,
+  $breakpoints,
 } from "../nano-states";
 import {
   computeInstancesConstraints,
@@ -35,23 +35,23 @@ export const mimeType = "text/plain";
 export const onPaste = (clipboardData: string): boolean => {
   const template = parse(clipboardData);
 
-  const selectedPage = selectedPageStore.get();
+  const selectedPage = $selectedPage.get();
 
   if (template === undefined || selectedPage === undefined) {
     return false;
   }
 
   // paste to the root if nothing is selected
-  const instanceSelector = selectedInstanceSelectorStore.get() ?? [
+  const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const breakpoints = breakpointsStore.get();
+  const breakpoints = $breakpoints.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   if (baseBreakpoint === undefined) {
     return false;
   }
-  const metas = registeredComponentMetasStore.get();
+  const metas = $registeredComponentMetas.get();
   const templateData = generateDataFromEmbedTemplate(
     template,
     metas,
@@ -65,7 +65,7 @@ export const onPaste = (clipboardData: string): boolean => {
     .map((child) => child.value);
   const dropTarget = findClosestDroppableTarget(
     metas,
-    instancesStore.get(),
+    $instances.get(),
     instanceSelector,
     computeInstancesConstraints(metas, newInstances, rootInstanceIds)
   );

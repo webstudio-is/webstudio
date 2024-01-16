@@ -6,38 +6,44 @@ import { findPageByIdOrPath } from "@webstudio-is/project-build";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   $authToken,
-  pagesStore,
-  projectStore,
-  selectedPageStore,
-  selectedPageIdStore,
-  selectedPageHashStore,
-  selectedInstanceSelectorStore,
+  $pages,
+  $project,
+  $selectedPage,
+  $selectedPageId,
+  $selectedPageHash,
+  $selectedInstanceSelector,
   $isPreviewMode,
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 
-export const switchPage = (pageId?: Page["id"], pageHash?: string) => {
-  const pages = pagesStore.get();
+export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
+  const pages = $pages.get();
 
   if (pages === undefined) {
     return;
   }
 
-  const page = findPageByIdOrPath(pages, pageId ?? "");
+  const page = findPageByIdOrPath(pages, pageId);
 
-  selectedPageHashStore.set(pageHash ?? "");
-  selectedPageIdStore.set(page?.id ?? pages.homePage.id);
-  selectedInstanceSelectorStore.set([
-    page?.rootInstanceId ?? pages.homePage.rootInstanceId,
+  if (page === undefined) {
+    return;
+  }
+
+  $selectedPageHash.set(pageHash);
+  $selectedPageId.set(page.id);
+  $selectedInstanceSelector.set([
+    page.rootInstanceId ?? pages.homePage.rootInstanceId,
   ]);
 };
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
-  const pages = pagesStore.get();
-
-  const pageId = searchParams.get("pageId") ?? pages?.homePage.id;
-  const pageHash = searchParams.get("pageHash") ?? "";
+  const pages = $pages.get();
+  if (pages === undefined) {
+    return;
+  }
+  const pageId = searchParams.get("pageId") ?? pages.homePage.id;
+  const pageHash = searchParams.get("pageHash") ?? undefined;
 
   $isPreviewMode.set(searchParams.get("mode") === "preview");
 
@@ -55,8 +61,8 @@ const setPageStateFromUrl = () => {
  */
 export const useSyncPageUrl = () => {
   const navigate = useNavigate();
-  const page = useStore(selectedPageStore);
-  const pageHash = useStore(selectedPageHashStore);
+  const page = useStore($selectedPage);
+  const pageHash = useStore($selectedPageHash);
   const isPreviewMode = useStore($isPreviewMode);
 
   // Get pageId and pageHash from URL
@@ -72,8 +78,8 @@ export const useSyncPageUrl = () => {
   }, []);
 
   useEffect(() => {
-    const project = projectStore.get();
-    const pages = pagesStore.get();
+    const project = $project.get();
+    const pages = $pages.get();
 
     if (page === undefined || project === undefined || pages === undefined) {
       return;
@@ -110,7 +116,7 @@ export const useSyncPageUrl = () => {
  * Synchronize pageHash with scrolling position
  */
 export const useHashLinkSync = () => {
-  const pageHash = useStore(selectedPageHashStore);
+  const pageHash = useStore($selectedPageHash);
 
   useEffect(() => {
     if (pageHash === "") {

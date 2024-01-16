@@ -4,12 +4,12 @@ import type { Breakpoint } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 import { registerContainers } from "~/shared/sync";
 import {
-  breakpointsStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
+  $breakpoints,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedStyleSourceSelector,
+  $styleSourceSelections,
+  $styleSources,
 } from "~/shared/nano-states";
 import {
   $presetTokens,
@@ -20,12 +20,12 @@ enableMapSet();
 registerContainers();
 
 test("generate Styles from preset tokens", () => {
-  breakpointsStore.set(
+  $breakpoints.set(
     new Map<Breakpoint["id"], Breakpoint>([
       ["base", { id: "base", label: "Base" }],
     ])
   );
-  registeredComponentMetasStore.set(
+  $registeredComponentMetas.set(
     new Map<string, WsComponentMeta>([
       [
         "Box",
@@ -108,30 +108,30 @@ test("generate Styles from preset tokens", () => {
 });
 
 test("add style source to instance", () => {
-  selectedInstanceSelectorStore.set(["root"]);
-  styleSourcesStore.set(new Map([["local1", { id: "local1", type: "local" }]]));
-  styleSourceSelectionsStore.set(new Map());
-  selectedStyleSourceSelectorStore.set(undefined);
+  $selectedInstanceSelector.set(["root"]);
+  $styleSources.set(new Map([["local1", { id: "local1", type: "local" }]]));
+  $styleSourceSelections.set(new Map());
+  $selectedStyleSourceSelector.set(undefined);
 
   addStyleSourceToInstance("token1");
-  expect(styleSourceSelectionsStore.get().get("root")).toEqual({
+  expect($styleSourceSelections.get().get("root")).toEqual({
     instanceId: "root",
     values: ["token1"],
   });
-  expect(selectedStyleSourceSelectorStore.get()).toEqual({
+  expect($selectedStyleSourceSelector.get()).toEqual({
     styleSourceId: "token1",
   });
 
   // put new style source last
   addStyleSourceToInstance("local1");
-  expect(styleSourceSelectionsStore.get().get("root")).toEqual({
+  expect($styleSourceSelections.get().get("root")).toEqual({
     instanceId: "root",
     values: ["token1", "local1"],
   });
 
   // put new token before local
   addStyleSourceToInstance("token2");
-  expect(styleSourceSelectionsStore.get().get("root")).toEqual({
+  expect($styleSourceSelections.get().get("root")).toEqual({
     instanceId: "root",
     values: ["token1", "token2", "local1"],
   });

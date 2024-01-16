@@ -10,7 +10,6 @@ import {
   ToggleGroupButton,
   Select,
   Tooltip,
-  Box,
 } from "@webstudio-is/design-system";
 import {
   AttachmentIcon,
@@ -21,8 +20,11 @@ import {
 } from "@webstudio-is/icons";
 import type { Instance, Page } from "@webstudio-is/sdk";
 import { findTreeInstanceIds } from "@webstudio-is/sdk";
-import { instancesStore, pagesStore, propsStore } from "~/shared/nano-states";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import { $instances, $pages, $props } from "~/shared/nano-states";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -254,7 +256,7 @@ const BaseEmail = ({
 };
 
 const instancesPerPageStore = computed(
-  [instancesStore, pagesStore],
+  [$instances, $pages],
   (instances, pages) =>
     (pages ? [pages.homePage, ...pages.pages] : []).map((page) => ({
       pageId: page.id,
@@ -262,8 +264,8 @@ const instancesPerPageStore = computed(
     }))
 );
 
-const sectionsStore = computed(
-  [instancesPerPageStore, propsStore],
+const $sections = computed(
+  [instancesPerPageStore, $props],
   (instancesPerPage, props) => {
     const sections: Array<{
       pageId: Page["id"];
@@ -299,7 +301,7 @@ const getHash = (data: { hash: string }) => data.hash;
 const getInstanceId = (data: { instanceId: string }) => data.instanceId;
 
 const BasePage = ({ prop, onChange }: BaseControlProps) => {
-  const pages = useStore(pagesStore);
+  const pages = useStore($pages);
 
   const pageSelectOptions =
     pages === undefined ? [] : [pages.homePage, ...pages.pages];
@@ -313,7 +315,7 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
         )
       : undefined;
 
-  const sections = useStore(sectionsStore);
+  const sections = useStore($sections);
 
   const sectionSelectOptions = pageSelectValue
     ? sections.filter(({ pageId }) => pageId === pageSelectValue.id)
@@ -483,7 +485,7 @@ export const UrlControl = ({
         </ToggleGroup>
       </Flex>
 
-      <Box css={{ position: "relative" }}>
+      <BindingControl>
         <BaseControl
           id={id}
           instanceId={instanceId}
@@ -501,6 +503,7 @@ export const UrlControl = ({
               return `${label} expects a string value, page or file`;
             }
           }}
+          removable={prop?.type === "expression"}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
@@ -509,7 +512,7 @@ export const UrlControl = ({
             onChange({ type: "string", value: String(evaluatedValue) })
           }
         />
-      </Box>
+      </BindingControl>
     </VerticalLayout>
   );
 };

@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/design-system";
 import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
-import { selectedBreakpointIdStore } from "~/shared/nano-states";
+import { $selectedBreakpointId } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
 
@@ -69,7 +69,7 @@ export const BreakpointsSelector = ({
           if (breakpoints.has(breakpointId) === false) {
             return;
           }
-          selectedBreakpointIdStore.set(breakpointId);
+          $selectedBreakpointId.set(breakpointId);
           setInitialCanvasWidth(breakpointId);
         }}
         css={{ position: "relative" }}

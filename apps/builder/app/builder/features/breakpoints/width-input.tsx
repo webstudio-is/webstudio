@@ -12,10 +12,10 @@ import {
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
 import { useCanvasWidth } from "~/builder/shared/nano-states";
-import { breakpointsStore, isResizingCanvasStore } from "~/shared/nano-states";
+import { $breakpoints, $isResizingCanvas } from "~/shared/nano-states";
 import {
-  selectedBreakpointIdStore,
-  selectedBreakpointStore,
+  $selectedBreakpointId,
+  $selectedBreakpoint,
 } from "~/shared/nano-states";
 import { useState, type KeyboardEvent, useEffect } from "react";
 
@@ -85,8 +85,8 @@ const useEnhancedInput = ({
 export const WidthInput = ({ min }: { min: number }) => {
   const id = useId();
   const [canvasWidth, setCanvasWidth] = useCanvasWidth();
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const breakpoints = useStore(breakpointsStore);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+  const breakpoints = useStore($breakpoints);
 
   const onChange = (value: number) => {
     setCanvasWidth(value);
@@ -95,24 +95,24 @@ export const WidthInput = ({ min }: { min: number }) => {
       value
     );
     if (applicableBreakpoint) {
-      selectedBreakpointIdStore.set(applicableBreakpoint.id);
+      $selectedBreakpointId.set(applicableBreakpoint.id);
     }
-    if (isResizingCanvasStore.get() === false) {
-      isResizingCanvasStore.set(true);
+    if ($isResizingCanvas.get() === false) {
+      $isResizingCanvas.set(true);
     }
   };
 
   const onChangeComplete = (value: number) => {
     onChange(value);
-    isResizingCanvasStore.set(false);
+    $isResizingCanvas.set(false);
   };
 
   useEffect(() => {
     return () => {
-      // Just in case we haven't received onChangeComplete, make sure we have set isResizingCanvasStore to false,
+      // Just in case we haven't received onChangeComplete, make sure we have set $isResizingCanvas to false,
       // otherwise the canvas will be stuck in a resizing state.
-      if (isResizingCanvasStore.get()) {
-        isResizingCanvasStore.set(false);
+      if ($isResizingCanvas.get()) {
+        $isResizingCanvas.set(false);
       }
     };
   }, []);

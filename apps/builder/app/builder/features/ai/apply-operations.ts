@@ -7,14 +7,14 @@ import {
   insertTemplateData,
 } from "~/shared/instance-utils";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedInstanceStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedInstance,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
 } from "~/shared/nano-states";
 import type { DroppableTarget, InstanceSelector } from "~/shared/tree-utils";
 import { getStyleDeclKey, Instance, type StyleSource } from "@webstudio-is/sdk";
@@ -44,13 +44,13 @@ export const applyOperations = (operations: operations.WsOperations) => {
 const insertTemplateByOp = (
   operation: operations.generateInsertTemplateWsOperation
 ) => {
-  const breakpoints = breakpointsStore.get();
+  const breakpoints = $breakpoints.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   if (baseBreakpoint === undefined) {
     return false;
   }
-  const metas = registeredComponentMetasStore.get();
+  const metas = $registeredComponentMetas.get();
   const templateData = generateDataFromEmbedTemplate(
     operation.template,
     metas,
@@ -65,7 +65,7 @@ const insertTemplateByOp = (
       componentName.includes(operation.addTo)
     )
   ) {
-    const selectedInstance = selectedInstanceStore.get();
+    const selectedInstance = $selectedInstance.get();
     if (selectedInstance) {
       operation.addTo = selectedInstance.id;
     }
@@ -77,7 +77,7 @@ const insertTemplateByOp = (
 
   const instanceSelector = computeSelectorForInstanceId(operation.addTo);
   if (instanceSelector) {
-    const currentInstance = instancesStore.get().get(instanceSelector[0]);
+    const currentInstance = $instances.get().get(instanceSelector[0]);
     // Only container components are allowed to have child elements.
     if (
       currentInstance &&
@@ -107,13 +107,7 @@ const deleteInstanceByOp = (
 
 const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
   serverSyncStore.createTransaction(
-    [
-      instancesStore,
-      styleSourceSelectionsStore,
-      styleSourcesStore,
-      stylesStore,
-      breakpointsStore,
-    ],
+    [$instances, $styleSourceSelections, $styleSources, $styles, $breakpoints],
     (instances, styleSourceSelections, styleSources, styles, breakpoints) => {
       const newStyles = [...operation.styles.values()];
 
@@ -166,7 +160,7 @@ const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
 };
 
 const computeSelectorForInstanceId = (instanceId: Instance["id"]) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
   if (selectedInstanceSelector === undefined) {
     return;
   }
@@ -180,7 +174,7 @@ const computeSelectorForInstanceId = (instanceId: Instance["id"]) => {
   // that instance and the selected instance (a parent).
   let subtreeSelector: InstanceSelector = [];
   const parentInstancesById = new Map<Instance["id"], Instance["id"]>();
-  for (const instance of instancesStore.get().values()) {
+  for (const instance of $instances.get().values()) {
     for (const child of instance.children) {
       if (child.type === "id") {
         parentInstancesById.set(child.value, instance.id);
@@ -210,16 +204,14 @@ const computeSelectorForInstanceId = (instanceId: Instance["id"]) => {
 };
 
 export const patchTextInstance = (textInstance: copywriter.TextInstance) => {
-  serverSyncStore.createTransaction([instancesStore], (instances) => {
+  serverSyncStore.createTransaction([$instances], (instances) => {
     const currentInstance = instances.get(textInstance.instanceId);
 
     if (currentInstance === undefined) {
       return;
     }
 
-    const meta = registeredComponentMetasStore
-      .get()
-      .get(currentInstance.component);
+    const meta = $registeredComponentMetas.get().get(currentInstance.component);
 
     // Only container components are allowed to have child elements.
     if (meta?.type !== "container") {

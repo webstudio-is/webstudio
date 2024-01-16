@@ -31,6 +31,9 @@ const gridStyle = css({
     borderColor: theme.colors.borderFocus,
     outline: `1px solid ${theme.colors.borderFocus}`,
   },
+  "&:has(textarea:disabled)": {
+    background: theme.colors.backgroundInputDisabled,
+  },
   variants: {
     autoGrow: {
       true: {
@@ -76,7 +79,6 @@ const commonStyle = css({
   },
   "&:disabled": {
     color: theme.colors.foregroundDisabled,
-    background: theme.colors.backgroundInputDisabled,
   },
   variants: {
     variant: {

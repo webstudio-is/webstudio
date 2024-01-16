@@ -22,6 +22,7 @@ const pages = {
       meta: {},
     } satisfies Page,
   ],
+  folders: [],
 } satisfies Pages;
 
 describe("Find by id or path", () => {

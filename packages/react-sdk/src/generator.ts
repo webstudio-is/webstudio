@@ -1,4 +1,4 @@
-import type { Pages, Props } from "@webstudio-is/sdk";
+import { getPagePath, type Pages, type Props } from "@webstudio-is/sdk";
 
 type PageData = {
   pages: Pages;
@@ -13,8 +13,10 @@ export const generateUtilsExport = (siteData: PageData) => {
   // for ui routes
   const pagesPaths: string[] = [siteData.pages.homePage.path];
   for (const page of siteData.pages.pages) {
-    pagesPaths.push(page.path);
+    const path = getPagePath(page.id, siteData.pages);
+    pagesPaths.push(path);
   }
+
   const generatedPagesPaths = `export const pagesPaths = new Set(${JSON.stringify(
     pagesPaths
   )})`;

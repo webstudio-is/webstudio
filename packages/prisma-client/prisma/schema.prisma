@@ -91,9 +91,9 @@ model Product {
 
 model TransactionLog {
   // Stripe event id (debug and idempotency purposes)
-  eventId String @id
-  userId  String
-  user    User   @relation(fields: [userId], references: [id])
+  eventId String  @id
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id])
 
   productId String?
   product   Product? @relation(fields: [productId], references: [id])

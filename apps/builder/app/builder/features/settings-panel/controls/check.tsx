@@ -1,13 +1,10 @@
 import { useStore } from "@nanostores/react";
-import {
-  Box,
-  Checkbox,
-  CheckboxAndLabel,
-  useId,
-  theme,
-} from "@webstudio-is/design-system";
+import { Checkbox, CheckboxAndLabel, useId } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
   getLabel,
@@ -68,7 +65,7 @@ export const CheckControl = ({
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Box css={{ position: "relative", paddingTop: theme.spacing[2] }}>
+      <BindingControl>
         {options.map((option) => (
           <CheckboxAndLabel key={option}>
             <Checkbox
@@ -100,6 +97,7 @@ export const CheckControl = ({
               return `${label} expects an array of strings`;
             }
           }}
+          removable={prop?.type === "expression"}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
@@ -113,7 +111,7 @@ export const CheckControl = ({
             })
           }
         />
-      </Box>
+      </BindingControl>
     </VerticalLayout>
   );
 };

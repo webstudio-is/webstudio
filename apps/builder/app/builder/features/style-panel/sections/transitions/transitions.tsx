@@ -16,7 +16,7 @@ import { addLayer } from "../../style-layer-utils";
 import { parseTransition } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
 import { Layer } from "./transition-layer";
-import { selectedOrLastStyleSourceSelectorStore } from "~/shared/nano-states";
+import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
 const property: StyleProperty = "transition";
@@ -29,7 +29,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
   const value = currentStyle[property]?.value;
 
   const selectedOrLastStyleSourceSelector = useStore(
-    selectedOrLastStyleSourceSelectorStore
+    $selectedOrLastStyleSourceSelector
   );
 
   const isStyleInLocalState =

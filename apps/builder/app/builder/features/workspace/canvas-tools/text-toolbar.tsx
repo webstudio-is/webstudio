@@ -13,11 +13,11 @@ import {
   PaintBrushIcon,
 } from "@webstudio-is/icons";
 import {
-  selectedInstanceIntanceToTagStore,
-  selectedInstanceSelectorStore,
+  $selectedInstanceIntanceToTag,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { type TextToolbarState, textToolbarStore } from "~/shared/nano-states";
-import { scaleStore } from "~/builder/shared/nano-states";
+import { type TextToolbarState, $textToolbar } from "~/shared/nano-states";
+import { $scale } from "~/builder/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 
 const getRectForRelativeRect = (
@@ -39,7 +39,7 @@ const getRectForRelativeRect = (
 };
 
 const $isWithinLink = computed(
-  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+  [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
   (selectedInstanceSelector, selectedInstanceIntanceToTag) => {
     if (
       selectedInstanceSelector === undefined ||
@@ -197,9 +197,9 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
 };
 
 export const TextToolbar = () => {
-  const textToolbar = useStore(textToolbarStore);
-  const scale = useStore(scaleStore);
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
+  const textToolbar = useStore($textToolbar);
+  const scale = useStore($scale);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
 
   if (
     textToolbar?.selectionRect === undefined ||

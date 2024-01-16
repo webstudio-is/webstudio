@@ -10,8 +10,8 @@ import type { SetProperty, CreateBatchUpdate } from "./shared/use-style-data";
 import type { StyleInfo } from "./shared/style-info";
 import { useStore } from "@nanostores/react";
 import {
-  selectedInstanceIntanceToTagStore,
-  selectedInstanceSelectorStore,
+  $selectedInstanceIntanceToTag,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { computed } from "nanostores";
 import { useParentStyle } from "./parent-style";
@@ -23,8 +23,8 @@ export type StyleSettingsProps = {
   createBatchUpdate: CreateBatchUpdate;
 };
 
-const selectedInstanceTagStore = computed(
-  [selectedInstanceSelectorStore, selectedInstanceIntanceToTagStore],
+const $selectedInstanceTag = computed(
+  [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
   (instanceSelector, instanceToTag) => {
     if (instanceSelector === undefined || instanceToTag === undefined) {
       return;
@@ -39,7 +39,7 @@ export const StyleSettings = ({
   createBatchUpdate,
   currentStyle,
 }: StyleSettingsProps) => {
-  const selectedInstanceTag = useStore(selectedInstanceTagStore);
+  const selectedInstanceTag = useStore($selectedInstanceTag);
   const all = [];
   const parentStyle = useParentStyle();
 

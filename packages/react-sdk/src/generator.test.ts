@@ -2,7 +2,7 @@ import { expect, test } from "@jest/globals";
 import { generateUtilsExport } from "./generator";
 
 const createPage = (path: string) => ({
-  id: "",
+  id: path,
   path,
   name: "",
   title: "",
@@ -10,13 +10,25 @@ const createPage = (path: string) => ({
   meta: {},
 });
 
+const pages = {
+  meta: {},
+  pages: [],
+  folders: [
+    {
+      id: "root",
+      name: "Root",
+      slug: "",
+      children: [],
+    },
+  ],
+};
+
 test("generates forms properties", () => {
   expect(
     generateUtilsExport({
       pages: {
-        meta: {},
+        ...pages,
         homePage: createPage("1"),
-        pages: [],
       },
       props: new Map([
         [
@@ -66,7 +78,7 @@ test("generates list of pages paths", () => {
   expect(
     generateUtilsExport({
       pages: {
-        meta: {},
+        ...pages,
         homePage: createPage("/path1"),
         pages: [createPage("/path2"), createPage("/path3")],
       },

@@ -1,11 +1,5 @@
 import { z } from "zod";
-import {
-  type ComponentProps,
-  type FocusEventHandler,
-  useState,
-  useCallback,
-  Fragment,
-} from "react";
+import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -19,8 +13,13 @@ import {
   PageTitle,
   PagePath,
   DataSource,
+  Folder,
+  getPagePath,
 } from "@webstudio-is/sdk";
-import { findPageByIdOrPath } from "@webstudio-is/project-build";
+import {
+  ROOT_FOLDER_ID,
+  findPageByIdOrPath,
+} from "@webstudio-is/project-build";
 import {
   theme,
   Button,
@@ -37,6 +36,7 @@ import {
   ScrollArea,
   rawTheme,
   Flex,
+  Select,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -55,13 +55,13 @@ import {
   insertInstancesSliceCopy,
 } from "~/shared/instance-utils";
 import {
-  assetsStore,
+  $assets,
   $domains,
-  instancesStore,
-  pagesStore,
-  projectStore,
-  selectedInstanceSelectorStore,
-  selectedPageIdStore,
+  $instances,
+  $pages,
+  $project,
+  $selectedInstanceSelector,
+  $selectedPageId,
   $dataSources,
   $dataSourceVariables,
 } from "~/shared/nano-states";
@@ -80,9 +80,15 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
+import {
+  cleanupChildRefsMutable,
+  findParentFolderByChildId,
+  registerFolderChildMutable,
+} from "./page-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
+  parentFolderId: ROOT_FOLDER_ID,
   path: "/untitled",
   title: "Untitled",
   description: "",
@@ -109,6 +115,7 @@ type Errors = {
   [fieldName in FieldName]?: string[];
 };
 
+// @todo needs to be removed
 const LegacyPagePath = z
   .string()
   .refine((path) => path !== "", "Can't be empty")
@@ -141,7 +148,7 @@ const HomePageValues = z.object({
 
 const PageValues = z.object({
   name: PageName,
-  path: isFeatureEnabled("bindings") ? PagePath : LegacyPagePath,
+  path: isFeatureEnabled("cms") ? PagePath : LegacyPagePath,
   title: PageTitle,
   description: z.string().optional(),
 });
@@ -192,9 +199,15 @@ const validateValues = (
   return errors;
 };
 
-const toFormPage = (page: Page, isHomePage: boolean): Values => {
+const toFormValues = (
+  page: Page,
+  pages: Pages,
+  isHomePage: boolean
+): Values => {
+  const parentFolder = findParentFolderByChildId(page.id, pages.folders);
   return {
     name: page.name,
+    parentFolderId: parentFolder?.id ?? ROOT_FOLDER_ID,
     path: page.path,
     title: page.title,
     description: page.meta.description ?? fieldDefaultValues.description,
@@ -283,14 +296,20 @@ const FormFields = ({
   ) => void;
 }) => {
   const fieldIds = useIds(fieldNames);
-  const assets = useStore(assetsStore);
-  const pages = useStore(pagesStore);
+  const assets = useStore($assets);
+  const pages = useStore($pages);
+  const dataSourceVariables = useStore($dataSourceVariables);
+
+  if (pages === undefined) {
+    return;
+  }
+
   const socialImageAsset = assets.get(values.socialImageAssetId);
-  const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
+  const faviconAsset = assets.get(pages.meta?.faviconAssetId ?? "");
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
-  const project = projectStore.get();
+  const project = $project.get();
   const customDomain: string | undefined = $domains.get()[0];
   const projectDomain = `${project?.domain}.${
     env.PUBLISHER_HOST ?? "wstd.work"
@@ -300,19 +319,21 @@ const FormFields = ({
   const publishedUrl = new URL(`https://${domain}`);
 
   const pathParamNames = parsePathnamePattern(values.path);
-  const dataSourceVariables = useStore($dataSourceVariables);
   const params =
     pathVariableId !== undefined
       ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
       : undefined;
 
-  const compiledPath = compilePathnamePattern(values.path ?? "", params ?? {});
-  const pageDomainAndPath = [publishedUrl.host, compiledPath]
+  const foldersPath = getPagePath(values.parentFolderId, pages);
+  const pagePath = compilePathnamePattern(values.path ?? "", params ?? {});
+
+  const pageDomainAndPath = [publishedUrl.host, foldersPath, pagePath]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
 
+  // @todo this is a hack to get the scroll area to work needs to be removed
   const TOPBAR_HEIGHT = 40;
   const HEADER_HEIGHT = 40;
   const FOOTER_HEIGHT = 24;
@@ -381,6 +402,27 @@ const FormFields = ({
               </>
             )}
           </Grid>
+          {isFeatureEnabled("folders") && values.isHomePage === false && (
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
+              <Select
+                tabIndex={1}
+                css={{ zIndex: theme.zIndices[1] }}
+                options={pages.folders}
+                getValue={(folder) => folder.id}
+                getLabel={(folder) => folder.name}
+                value={pages.folders.find(
+                  ({ id }) => id === values.parentFolderId
+                )}
+                onChange={(folder) => {
+                  onChange({
+                    field: "parentFolderId",
+                    value: folder.id,
+                  });
+                }}
+              />
+            </Grid>
+          )}
 
           {values.isHomePage === false && (
             <Grid gap={1}>
@@ -653,7 +695,7 @@ export const NewPageSettings = ({
   onClose: () => void;
   onSuccess: (pageId: Page["id"]) => void;
 }) => {
-  const pages = useStore(pagesStore);
+  const pages = useStore($pages);
 
   const [values, setValues] = useState<Values>({
     ...fieldDefaultValues,
@@ -664,35 +706,8 @@ export const NewPageSettings = ({
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
-
-      serverSyncStore.createTransaction(
-        [pagesStore, instancesStore],
-        (pages, instances) => {
-          if (pages === undefined) {
-            return;
-          }
-          const rootInstanceId = nanoid();
-          pages.pages.push({
-            id: pageId,
-            name: values.name,
-            path: values.path,
-            title: values.title,
-            rootInstanceId,
-            meta: {},
-          });
-
-          instances.set(rootInstanceId, {
-            type: "instance",
-            id: rootInstanceId,
-            component: "Body",
-            children: [],
-          });
-          selectedInstanceSelectorStore.set(undefined);
-        }
-      );
-
+      createPage(pageId, values);
       updatePage(pageId, values);
-
       onSuccess(pageId);
     }
   };
@@ -702,25 +717,29 @@ export const NewPageSettings = ({
       onSubmit={handleSubmit}
       onClose={onClose}
       isSubmitting={false}
-      errors={errors}
-      disabled={false}
-      values={values}
-      onChange={(val) => {
-        setValues((values) => {
-          const changes = { [val.field]: val.value };
+    >
+      <FormFields
+        autoSelect
+        errors={errors}
+        disabled={false}
+        values={values}
+        onChange={(val) => {
+          setValues((values) => {
+            const changes = { [val.field]: val.value };
 
-          if (val.field === "name") {
-            if (values.path === nameToPath(pages, values.name)) {
-              changes.path = nameToPath(pages, val.value);
+            if (val.field === "name") {
+              if (values.path === nameToPath(pages, values.name)) {
+                changes.path = nameToPath(pages, val.value);
+              }
+              if (values.title === values.name) {
+                changes.title = val.value;
+              }
             }
-            if (values.title === values.name) {
-              changes.title = val.value;
-            }
-          }
-          return { ...values, ...changes };
-        });
-      }}
-    />
+            return { ...values, ...changes };
+          });
+        }}
+      />
+    </NewPageSettingsView>
   );
 };
 
@@ -728,31 +747,30 @@ const NewPageSettingsView = ({
   onSubmit,
   isSubmitting,
   onClose,
-  ...formFieldsProps
+  children,
 }: {
   onSubmit: () => void;
   isSubmitting: boolean;
   onClose: () => void;
-} & ComponentProps<typeof FormFields>) => {
+  children: JSX.Element;
+}) => {
   return (
     <>
       <Header
         title="New Page Settings"
         suffix={
           <>
-            {onClose && (
-              <Tooltip content="Cancel" side="bottom">
-                <Button
-                  onClick={onClose}
-                  aria-label="Cancel"
-                  prefix={<ChevronDoubleLeftIcon />}
-                  color="ghost"
-                  // Tab should go:
-                  //   trought form fields -> create button -> cancel button
-                  tabIndex={3}
-                />
-              </Tooltip>
-            )}
+            <Tooltip content="Cancel" side="bottom">
+              <Button
+                onClick={onClose}
+                aria-label="Cancel"
+                prefix={<ChevronDoubleLeftIcon />}
+                color="ghost"
+                // Tab should go:
+                //   trought form fields -> create button -> cancel button
+                tabIndex={3}
+              />
+            </Tooltip>
             <HeaderSuffixSpacer />
             <Button
               state={isSubmitting ? "pending" : "auto"}
@@ -764,18 +782,14 @@ const NewPageSettingsView = ({
           </>
         }
       />
-      <Box
-        css={{
-          overflow: "auto",
-        }}
-      >
+      <Box css={{ overflow: "auto" }}>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             onSubmit();
           }}
         >
-          <FormFields autoSelect {...formFieldsProps} />
+          {children}
           <input type="submit" hidden />
         </form>
       </Box>
@@ -783,8 +797,42 @@ const NewPageSettingsView = ({
   );
 };
 
+const createPage = (pageId: Page["id"], values: Values) => {
+  serverSyncStore.createTransaction(
+    [$pages, $instances],
+    (pages, instances) => {
+      if (pages === undefined) {
+        return;
+      }
+      const rootInstanceId = nanoid();
+      pages.pages.push({
+        id: pageId,
+        name: values.name,
+        path: values.path,
+        title: values.title,
+        rootInstanceId,
+        meta: {},
+      });
+
+      instances.set(rootInstanceId, {
+        type: "instance",
+        id: rootInstanceId,
+        component: "Body",
+        children: [],
+      });
+
+      registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);
+      $selectedInstanceSelector.set(undefined);
+    }
+  );
+};
+
 const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
-  const updatePageMutable = (page: Page, values: Partial<Values>) => {
+  const updatePageMutable = (
+    page: Page,
+    values: Partial<Values>,
+    folders: Array<Folder>
+  ) => {
     if (values.name !== undefined) {
       page.name = values.name;
     }
@@ -810,10 +858,14 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     if (values.customMetas !== undefined) {
       page.meta.custom = values.customMetas;
     }
+
+    if (values.parentFolderId !== undefined) {
+      registerFolderChildMutable(folders, page.id, values.parentFolderId);
+    }
   };
 
   serverSyncStore.createTransaction(
-    [pagesStore, $dataSources],
+    [$pages, $dataSources],
     (pages, dataSources) => {
       if (pages === undefined) {
         return;
@@ -839,7 +891,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       }
 
       if (pages.homePage.id === pageId) {
-        updatePageMutable(pages.homePage, values);
+        updatePageMutable(pages.homePage, values, pages.folders);
       }
 
       for (const page of pages.pages) {
@@ -856,7 +908,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
               name: "Page params",
             });
           }
-          updatePageMutable(page, values);
+          updatePageMutable(page, values, pages.folders);
         }
       }
     }
@@ -864,11 +916,11 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 };
 
 const deletePage = (pageId: Page["id"]) => {
-  const pages = pagesStore.get();
+  const pages = $pages.get();
   // deselect page before deleting to avoid flash of content
-  if (selectedPageIdStore.get() === pageId) {
-    selectedPageIdStore.set(pages?.homePage.id);
-    selectedInstanceSelectorStore.set(undefined);
+  if ($selectedPageId.get() === pageId) {
+    $selectedPageId.set(pages?.homePage.id);
+    $selectedInstanceSelector.set(undefined);
   }
   const rootInstanceId = pages?.pages.find(
     (page) => page.id === pageId
@@ -876,16 +928,17 @@ const deletePage = (pageId: Page["id"]) => {
   if (rootInstanceId !== undefined) {
     deleteInstance([rootInstanceId]);
   }
-  serverSyncStore.createTransaction([pagesStore], (pages) => {
+  serverSyncStore.createTransaction([$pages], (pages) => {
     if (pages === undefined) {
       return;
     }
     removeByMutable(pages.pages, (page) => page.id === pageId);
+    cleanupChildRefsMutable(pageId, pages.folders);
   });
 };
 
 const duplicatePage = (pageId: Page["id"]) => {
-  const pages = pagesStore.get();
+  const pages = $pages.get();
   const page =
     pages?.homePage.id === pageId
       ? pages.homePage
@@ -905,14 +958,26 @@ const duplicatePage = (pageId: Page["id"]) => {
     slice,
     availableDataSources: new Set(),
     beforeTransactionEnd: (rootInstanceId, draft) => {
+      if (draft.pages === undefined) {
+        return;
+      }
       const newPage = {
         ...page,
         id: newPageId,
         rootInstanceId,
         name: newName,
         path: nameToPath(pages, newName),
-      };
-      draft.pages?.pages.push(newPage);
+      } satisfies Page;
+      draft.pages.pages.push(newPage);
+      const currentFolder = findParentFolderByChildId(
+        pageId,
+        draft.pages.folders
+      );
+      registerFolderChildMutable(
+        draft.pages.folders,
+        newPageId,
+        currentFolder?.id
+      );
     },
   });
   return newPageId;
@@ -929,7 +994,7 @@ export const PageSettings = ({
   onDelete: () => void;
   pageId: string;
 }) => {
-  const pages = useStore(pagesStore);
+  const pages = useStore($pages);
   const page = pages && findPageByIdOrPath(pages, pageId);
 
   const isHomePage = page?.id === pages?.homePage.id;
@@ -937,7 +1002,7 @@ export const PageSettings = ({
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
-    ...(page ? toFormPage(page, isHomePage) : fieldDefaultValues),
+    ...(page ? toFormValues(page, pages, isHomePage) : fieldDefaultValues),
     ...unsavedValues,
   };
 
@@ -990,19 +1055,22 @@ export const PageSettings = ({
 
   return (
     <PageSettingsView
-      pathVariableId={page.pathVariableId}
       onClose={onClose}
-      onDelete={hanldeDelete}
+      onDelete={values.isHomePage === false ? hanldeDelete : undefined}
       onDuplicate={() => {
         const newPageId = duplicatePage(pageId);
         if (newPageId !== undefined) {
           onDuplicate(newPageId);
         }
       }}
-      errors={errors}
-      values={values}
-      onChange={handleChange}
-    />
+    >
+      <FormFields
+        pathVariableId={page.pathVariableId}
+        errors={errors}
+        values={values}
+        onChange={handleChange}
+      />
+    </PageSettingsView>
   );
 };
 
@@ -1010,19 +1078,20 @@ const PageSettingsView = ({
   onDelete,
   onDuplicate,
   onClose,
-  ...formFieldsProps
+  children,
 }: {
-  onDelete: () => void;
+  onDelete?: () => void;
   onDuplicate: () => void;
   onClose: () => void;
-} & ComponentProps<typeof FormFields>) => {
+  children: JSX.Element;
+}) => {
   return (
     <>
       <Header
         title="Page Settings"
         suffix={
           <>
-            {formFieldsProps.values.isHomePage === false && (
+            {onDelete && (
               <Tooltip content="Delete page" side="bottom">
                 <Button
                   color="ghost"
@@ -1042,32 +1111,26 @@ const PageSettingsView = ({
                 tabIndex={2}
               />
             </Tooltip>
-            {onClose && (
-              <Tooltip content="Close page settings" side="bottom">
-                <Button
-                  color="ghost"
-                  prefix={<ChevronDoubleLeftIcon />}
-                  onClick={onClose}
-                  aria-label="Close page settings"
-                  tabIndex={2}
-                />
-              </Tooltip>
-            )}
+            <Tooltip content="Close page settings" side="bottom">
+              <Button
+                color="ghost"
+                prefix={<ChevronDoubleLeftIcon />}
+                onClick={onClose}
+                aria-label="Close page settings"
+                tabIndex={2}
+              />
+            </Tooltip>
           </>
         }
       />
-      <Box
-        css={{
-          overflow: "auto",
-        }}
-      >
+      <Box css={{ overflow: "auto" }}>
         <form
           onSubmit={(event) => {
             event.preventDefault();
             onClose?.();
           }}
         >
-          <FormFields {...formFieldsProps} />
+          {children}
           <input type="submit" hidden />
         </form>
       </Box>

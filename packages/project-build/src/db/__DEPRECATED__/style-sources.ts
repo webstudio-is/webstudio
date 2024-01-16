@@ -1,3 +1,4 @@
+// DEPRECATED: use parseData and serializeData from build.ts
 import type { StyleSource, StyleSources } from "@webstudio-is/sdk";
 
 export const parseStyleSources = (styleSourceString: string): StyleSources => {

@@ -209,6 +209,15 @@ export const generateJsxChildren = ({
         .join(`<br />\n`);
       continue;
     }
+    if (child.type === "expression") {
+      const expression = generateExpression({
+        expression: child.value,
+        dataSources,
+        scope,
+      });
+      generatedChildren = `{${expression}}\n`;
+      continue;
+    }
     if (child.type === "id") {
       const instanceId = child.value;
       const instance = instances.get(instanceId);
