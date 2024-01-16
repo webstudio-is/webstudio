@@ -177,9 +177,6 @@ const VariablesList = () => {
           value === undefined
             ? variable.name
             : `${variable.name}: ${formatValuePreview(value)}`;
-        // user should be able to create and delete
-        const deletable =
-          variable.type === "variable" || variable.type === "resource";
         return (
           <VariablePopoverTrigger key={variable.id} variable={variable}>
             <CssValueListItem
@@ -187,12 +184,22 @@ const VariablesList = () => {
               index={index}
               label={<Label truncate>{label}</Label>}
               buttons={
-                <Tooltip content="Delete variable" side="bottom">
+                <Tooltip
+                  content={
+                    variable.type === "parameter"
+                      ? "Variable is managed by the component and cannot be deleted"
+                      : usedVariables.has(variable.id)
+                      ? "Variable is used in bindings and cannot be deleted"
+                      : "Delete variable"
+                  }
+                  side="bottom"
+                >
                   <SmallIconButton
                     tabIndex={-1}
                     // allow to delete only unused variables
                     disabled={
-                      deletable === false || usedVariables.has(variable.id)
+                      variable.type === "parameter" ||
+                      usedVariables.has(variable.id)
                     }
                     aria-label="Delete variable"
                     variant="destructive"

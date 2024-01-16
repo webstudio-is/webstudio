@@ -241,6 +241,15 @@ const mergeProps = (
   return props;
 };
 
+const getTextContent = (instanceProps: Record<string, unknown>) => {
+  const value = instanceProps[textContentAttribute];
+  // serialize objects and let react render literal types
+  if (typeof value === "object" && value !== null) {
+    return String(value);
+  }
+  return value as ReactNode;
+};
+
 // eslint-disable-next-line react/display-name
 export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
@@ -258,7 +267,7 @@ export const WebstudioComponentCanvas = forwardRef<
     useInstanceProps(instanceSelector);
 
   const children =
-    (instanceProps[textContentAttribute] as undefined | string) ??
+    getTextContent(instanceProps) ??
     createInstanceChildrenElements({
       instances,
       instanceSelector,
@@ -450,7 +459,7 @@ export const WebstudioComponentPreview = forwardRef<
   }
   return (
     <Component {...props} ref={ref}>
-      {(instanceProps[textContentAttribute] as undefined | string) ??
+      {getTextContent(instanceProps) ??
         createInstanceChildrenElements({
           instances,
           instanceSelector,
