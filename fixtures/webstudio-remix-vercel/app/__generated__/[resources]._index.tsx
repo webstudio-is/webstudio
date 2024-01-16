@@ -105,6 +105,7 @@ export const pagesPaths = new Set([
   "/form",
   "/heading-with-id",
   "/resources",
+  "/nested/nested-page",
 ]);
 
 export const formsProperties = new Map<

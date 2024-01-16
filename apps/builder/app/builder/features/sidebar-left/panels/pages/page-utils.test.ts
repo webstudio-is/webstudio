@@ -1,7 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import {
   cleanupChildRefsMutable,
-  compileSlugPath,
   findParentFolderByChildId,
   isRoot,
   isSlugUsed,
@@ -394,52 +393,5 @@ describe("registerFolderChildMutable", () => {
 
     expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
     expect(folder.children).toEqual(["folderId2"]);
-  });
-});
-
-describe("compileSlugPath", () => {
-  const { folders } = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    homePageId: "homePageId",
-  });
-  folders.push({
-    id: "folderId-1",
-    name: "Folder 1",
-    slug: "folder-1",
-    children: ["folderId-1-1"],
-  });
-  const rootFolder = folders.find(isRoot);
-  rootFolder?.children.push("folderId-1");
-  folders.push({
-    id: "folderId-1-1",
-    name: "Folder 1-1",
-    slug: "folder-1-1",
-    children: ["folderId-1-1-1"],
-  });
-  folders.push({
-    id: "folderId-1-1-1",
-    name: "Folder 1-1-1",
-    slug: "folder-1-1-1",
-    children: [],
-  });
-
-  test("nesting level 0", () => {
-    expect(compileSlugPath(folders, "root")).toEqual("");
-  });
-
-  test("nesting level 1", () => {
-    expect(compileSlugPath(folders, "folderId-1")).toEqual("/folder-1");
-  });
-
-  test("nesting level 2", () => {
-    expect(compileSlugPath(folders, "folderId-1-1")).toEqual(
-      "/folder-1/folder-1-1"
-    );
-  });
-
-  test("nesting level 3", () => {
-    expect(compileSlugPath(folders, "folderId-1-1-1")).toEqual(
-      "/folder-1/folder-1-1/folder-1-1-1"
-    );
   });
 });

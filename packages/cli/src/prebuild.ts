@@ -43,6 +43,7 @@ import type {
 import {
   createScope,
   findTreeInstanceIds,
+  getPagePath,
   parseComponentName,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
@@ -63,11 +64,11 @@ import type { PageData } from "../templates/route-template";
 const limit = pLimit(10);
 
 type ComponentsByPage = {
-  [path: string]: Set<string>;
+  [id: Page["id"]]: Set<string>;
 };
 
 type SiteDataByPage = {
-  [path: string]: {
+  [id: Page["id"]]: {
     page: Page;
     build: {
       props: [Prop["id"], Prop][];
@@ -326,7 +327,7 @@ export const prebuild = async (options: {
       }
     }
 
-    siteDataByPage[page.path] = {
+    siteDataByPage[page.id] = {
       build: {
         props,
         instances,
@@ -338,12 +339,12 @@ export const prebuild = async (options: {
       assets: siteData.assets,
     };
 
-    componentsByPage[page.path] = new Set();
+    componentsByPage[page.id] = new Set();
     for (const [_instanceId, instance] of instances) {
       if (instance.component === collectionComponent) {
         continue;
       }
-      componentsByPage[page.path].add(instance.component);
+      componentsByPage[page.id].add(instance.component);
       const meta = metas.get(instance.component);
       if (meta) {
         projectMetas.set(instance.component, meta);
@@ -429,7 +430,7 @@ export const prebuild = async (options: {
     "utf8"
   );
 
-  for (const [pathname, pageComponents] of Object.entries(componentsByPage)) {
+  for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
@@ -485,7 +486,7 @@ export const prebuild = async (options: {
       componentImports += `import { ${specifiers} } from "${namespace}";\n`;
     }
 
-    const pageData = siteDataByPage[pathname];
+    const pageData = siteDataByPage[pageId];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       project: siteData.build.pages.meta,
@@ -533,7 +534,7 @@ ${pageComponent}
 
 export { Page }
 
-${generateRemixParams(pathname)}
+${generateRemixParams(pageData.page.path)}
 
 ${utilsExport}
 `;
@@ -550,7 +551,8 @@ ${utilsExport}
       https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
     */
 
-    const remixRoute = generateRemixRoute(pathname);
+    const path = getPagePath(pageData.page.id, siteData.build.pages);
+    const remixRoute = generateRemixRoute(path);
     const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = routeFileTemplate

@@ -282,7 +282,7 @@ const PageEditor = ({
       onDelete={() => {
         setEditingPageId(undefined);
         if (editingPageId === currentPageId) {
-          switchPage();
+          switchPage(currentPageId);
         }
       }}
       onDuplicate={(newPageId) => {

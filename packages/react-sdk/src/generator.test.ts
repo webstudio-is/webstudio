@@ -2,7 +2,7 @@ import { expect, test } from "@jest/globals";
 import { generateUtilsExport } from "./generator";
 
 const createPage = (path: string) => ({
-  id: "",
+  id: path,
   path,
   name: "",
   title: "",
@@ -16,7 +16,7 @@ const pages = {
   folders: [
     {
       id: "root",
-      name: "",
+      name: "Root",
       slug: "",
       children: [],
     },
