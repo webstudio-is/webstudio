@@ -50,12 +50,17 @@ export const pageData: PageData = {
     code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
   page: {
-    id: "-J9I4Oo6mONfQlf_3-OqG",
-    name: "heading-with-id",
-    title: "heading-with-id",
-    meta: { description: "" },
-    rootInstanceId: "O-ljaGZQ0iRNTlEshMkgE",
-    path: "/heading-with-id",
+    id: "Pnz-BxUm6XmvFygk_XdEy",
+    name: "Nested Page",
+    title: "Nested Page",
+    meta: {
+      description: "",
+      excludePageFromSearch: false,
+      socialImageAssetId: "",
+      custom: [{ property: "", content: "" }],
+    },
+    rootInstanceId: "L0ZXd5F9xk9Rsl9ORzIkJ",
+    path: "/nested-page",
   },
 };
 export const user: { email: string | null } | undefined = {
@@ -67,13 +72,9 @@ type Params = Record<string, string | undefined>;
 type Resources = Record<string, unknown>;
 const Page = (_props: { params: Params; resources: Resources }) => {
   return (
-    <Body data-ws-id="O-ljaGZQ0iRNTlEshMkgE" data-ws-component="Body">
-      <Heading
-        data-ws-id="qmxnOlSxUGpuhuonVArWJ"
-        data-ws-component="Heading"
-        id={"my-heading"}
-      >
-        {"Heading you can edit"}
+    <Body data-ws-id="L0ZXd5F9xk9Rsl9ORzIkJ" data-ws-component="Body">
+      <Heading data-ws-id="VFPjLwt6Caq4l9PPJSiyI" data-ws-component="Heading">
+        {"Nested page"}
       </Heading>
     </Body>
   );

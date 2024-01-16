@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "28fd3af0-111a-4afa-9ed3-1978744b7fe6",
+    "id": "8e12b4c3-7022-4c95-b671-ec8fd55d674f",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 231,
-    "createdAt": "2024-01-08T07:22:37.579Z",
-    "updatedAt": "2024-01-08T07:22:37.579Z",
+    "version": 236,
+    "createdAt": "2024-01-16T08:40:45.476Z",
+    "updatedAt": "2024-01-16T08:40:45.476Z",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -91,6 +91,24 @@
           },
           "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
           "path": "/resources"
+        },
+        {
+          "id": "Pnz-BxUm6XmvFygk_XdEy",
+          "name": "Nested Page",
+          "title": "Nested Page",
+          "meta": {
+            "description": "",
+            "excludePageFromSearch": false,
+            "socialImageAssetId": "",
+            "custom": [
+              {
+                "property": "",
+                "content": ""
+              }
+            ]
+          },
+          "rootInstanceId": "L0ZXd5F9xk9Rsl9ORzIkJ",
+          "path": "/nested-page"
         }
       ],
       "folders": [
@@ -104,8 +122,15 @@
             "szYLvBduHPmbtqQKCDY0b",
             "U1tRJl2ERr8_OFe0g9cN_",
             "-J9I4Oo6mONfQlf_3-OqG",
-            "TS39WeBd0Qr3QgbSlzdf2"
+            "TS39WeBd0Qr3QgbSlzdf2",
+            "42cWhASQ3tTtKDnsvzhUF"
           ]
+        },
+        {
+          "id": "42cWhASQ3tTtKDnsvzhUF",
+          "name": "Nested",
+          "slug": "nested",
+          "children": ["Pnz-BxUm6XmvFygk_XdEy"]
         }
       ]
     },
@@ -3226,6 +3251,34 @@
           "component": "HtmlEmbed",
           "children": []
         }
+      ],
+      [
+        "L0ZXd5F9xk9Rsl9ORzIkJ",
+        {
+          "type": "instance",
+          "id": "L0ZXd5F9xk9Rsl9ORzIkJ",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "VFPjLwt6Caq4l9PPJSiyI"
+            }
+          ]
+        }
+      ],
+      [
+        "VFPjLwt6Caq4l9PPJSiyI",
+        {
+          "type": "instance",
+          "id": "VFPjLwt6Caq4l9PPJSiyI",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Nested page"
+            }
+          ]
+        }
       ]
     ],
     "deployment": {
@@ -3327,6 +3380,24 @@
       },
       "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
       "path": "/resources"
+    },
+    {
+      "id": "Pnz-BxUm6XmvFygk_XdEy",
+      "name": "Nested Page",
+      "title": "Nested Page",
+      "meta": {
+        "description": "",
+        "excludePageFromSearch": false,
+        "socialImageAssetId": "",
+        "custom": [
+          {
+            "property": "",
+            "content": ""
+          }
+        ]
+      },
+      "rootInstanceId": "L0ZXd5F9xk9Rsl9ORzIkJ",
+      "path": "/nested-page"
     }
   ],
   "assets": [
