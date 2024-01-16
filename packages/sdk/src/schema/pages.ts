@@ -9,10 +9,8 @@ export const FolderName = z
   .string()
   .refine((value) => value.trim() !== "", "Can't be empty");
 
-export const FolderSlug = z
+const Slug = z
   .string()
-  .refine((slug) => slug !== "", "Can't be empty")
-  .refine((slug) => slug.includes("/") === false, "Can't contain a /")
   .refine(
     (path) => /^[-a-z0-9]*$/.test(path),
     "Only a-z, 0-9 and - are allowed"
@@ -21,7 +19,7 @@ export const FolderSlug = z
 export const Folder = z.object({
   id: FolderId,
   name: FolderName,
-  slug: z.string(),
+  slug: Slug,
   children: z.array(z.union([FolderId, PageId])),
 });
 

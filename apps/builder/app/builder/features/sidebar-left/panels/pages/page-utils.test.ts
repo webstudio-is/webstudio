@@ -1,9 +1,11 @@
 import { describe, expect, test } from "@jest/globals";
 import {
   cleanupChildRefsMutable,
+  compileSlugPath,
   findParentFolderByChildId,
   isRoot,
   isSlugUsed,
+  registerFolderChildMutable,
   reparentOrphansMutable,
   toTreeData,
 } from "./page-utils";
@@ -239,19 +241,19 @@ describe("reparentOrphansMutable", () => {
 
 describe("cleanupChildRefsMutable", () => {
   test("cleanup refs", () => {
-    const pages = createDefaultPages({
+    const { folders } = createDefaultPages({
       rootInstanceId: "rootInstanceId",
       homePageId: "homePageId",
     });
-    pages.folders.push({
+    folders.push({
       id: "folderId",
       name: "Folder",
       slug: "folder",
       children: [],
     });
-    const rootFolder = pages.folders.find(isRoot);
+    const rootFolder = folders.find(isRoot);
     rootFolder?.children.push("folderId");
-    cleanupChildRefsMutable("folderId", pages);
+    cleanupChildRefsMutable("folderId", folders);
     expect(rootFolder).toEqual({
       id: "root",
       name: "Root",
@@ -334,6 +336,110 @@ describe("isSlugUsed", () => {
   test("existing folder can have a matching slug when its the same id/folder", () => {
     expect(isSlugUsed("slug1-1", folders, "folderId1", "folderId1-1")).toBe(
       true
+    );
+  });
+});
+
+describe("registerFolderChildMutable", () => {
+  test("register a folder child in the root via fallback", () => {
+    const { folders } = createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    });
+    registerFolderChildMutable(folders, "folderId");
+    const rootFolder = folders.find(isRoot);
+    expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
+  });
+
+  test("register a folder child in a provided folder", () => {
+    const { folders } = createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    });
+    const folder = {
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    };
+    folders.push(folder);
+    registerFolderChildMutable(folders, "folderId2", "folderId");
+    expect(folder.children).toEqual(["folderId2"]);
+  });
+
+  test("register in a provided folder & cleanup old refs", () => {
+    const { folders } = createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    });
+    const folder = {
+      id: "folderId",
+      name: "Folder",
+      slug: "folder",
+      children: [],
+    };
+    folders.push(folder);
+    const rootFolder = folders.find(isRoot);
+    registerFolderChildMutable(folders, "folderId", "root");
+    registerFolderChildMutable(folders, "folderId2", "root");
+
+    expect(rootFolder?.children).toEqual([
+      "homePageId",
+      "folderId",
+      "folderId2",
+    ]);
+
+    // Moving folderId from root to folderId
+    registerFolderChildMutable(folders, "folderId2", "folderId");
+
+    expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
+    expect(folder.children).toEqual(["folderId2"]);
+  });
+});
+
+describe("compileSlugPath", () => {
+  const { folders } = createDefaultPages({
+    rootInstanceId: "rootInstanceId",
+    homePageId: "homePageId",
+  });
+  folders.push({
+    id: "folderId-1",
+    name: "Folder 1",
+    slug: "folder-1",
+    children: ["folderId-1-1"],
+  });
+  const rootFolder = folders.find(isRoot);
+  rootFolder?.children.push("folderId-1");
+  folders.push({
+    id: "folderId-1-1",
+    name: "Folder 1-1",
+    slug: "folder-1-1",
+    children: ["folderId-1-1-1"],
+  });
+  folders.push({
+    id: "folderId-1-1-1",
+    name: "Folder 1-1-1",
+    slug: "folder-1-1-1",
+    children: [],
+  });
+
+  test("nesting level 0", () => {
+    expect(compileSlugPath(folders, "root")).toEqual("");
+  });
+
+  test("nesting level 1", () => {
+    expect(compileSlugPath(folders, "folderId-1")).toEqual("/folder-1");
+  });
+
+  test("nesting level 2", () => {
+    expect(compileSlugPath(folders, "folderId-1-1")).toEqual(
+      "/folder-1/folder-1-1"
+    );
+  });
+
+  test("nesting level 3", () => {
+    expect(compileSlugPath(folders, "folderId-1-1-1")).toEqual(
+      "/folder-1/folder-1-1/folder-1-1-1"
     );
   });
 });

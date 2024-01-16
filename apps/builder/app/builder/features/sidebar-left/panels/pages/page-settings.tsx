@@ -13,8 +13,13 @@ import {
   PageTitle,
   PagePath,
   DataSource,
+  Folder,
 } from "@webstudio-is/sdk";
-import { findPageByIdOrPath } from "@webstudio-is/project-build";
+import {
+  ROOT_FOLDER_ID,
+  createRootFolder,
+  findPageByIdOrPath,
+} from "@webstudio-is/project-build";
 import {
   theme,
   Button,
@@ -31,6 +36,7 @@ import {
   ScrollArea,
   rawTheme,
   Flex,
+  Select,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -74,10 +80,16 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
-import { isRoot } from "./page-utils";
+import {
+  cleanupChildRefsMutable,
+  compileSlugPath,
+  findParentFolderByChildId,
+  registerFolderChildMutable,
+} from "./page-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",
+  parentFolderId: createRootFolder().id,
   path: "/untitled",
   title: "Untitled",
   description: "",
@@ -188,9 +200,15 @@ const validateValues = (
   return errors;
 };
 
-const toFormPage = (page: Page, isHomePage: boolean): Values => {
+const toFormValues = (
+  page: Page,
+  pages: Pages,
+  isHomePage: boolean
+): Values => {
+  const parentFolder = findParentFolderByChildId(page.id, pages.folders);
   return {
     name: page.name,
+    parentFolderId: parentFolder?.id ?? ROOT_FOLDER_ID,
     path: page.path,
     title: page.title,
     description: page.meta.description ?? fieldDefaultValues.description,
@@ -281,8 +299,14 @@ const FormFields = ({
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
+  const dataSourceVariables = useStore($dataSourceVariables);
+
+  if (pages === undefined) {
+    return;
+  }
+
   const socialImageAsset = assets.get(values.socialImageAssetId);
-  const faviconAsset = assets.get(pages?.meta?.faviconAssetId ?? "");
+  const faviconAsset = assets.get(pages.meta?.faviconAssetId ?? "");
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
@@ -296,14 +320,15 @@ const FormFields = ({
   const publishedUrl = new URL(`https://${domain}`);
 
   const pathParamNames = parsePathnamePattern(values.path);
-  const dataSourceVariables = useStore($dataSourceVariables);
   const params =
     pathVariableId !== undefined
       ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
       : undefined;
 
   const compiledPath = compilePathnamePattern(values.path ?? "", params ?? {});
-  const pageDomainAndPath = [publishedUrl.host, compiledPath]
+  const slug = compileSlugPath(pages.folders, values.parentFolderId);
+
+  const pageDomainAndPath = [publishedUrl.host, slug, compiledPath]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");
@@ -378,6 +403,27 @@ const FormFields = ({
               </>
             )}
           </Grid>
+          {isFeatureEnabled("folders") && values.isHomePage === false && (
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
+              <Select
+                tabIndex={1}
+                css={{ zIndex: theme.zIndices[1] }}
+                options={pages.folders}
+                getValue={(folder) => folder.id}
+                getLabel={(folder) => folder.name}
+                value={pages.folders.find(
+                  ({ id }) => id === values.parentFolderId
+                )}
+                onChange={(folder) => {
+                  onChange({
+                    field: "parentFolderId",
+                    value: folder.id,
+                  });
+                }}
+              />
+            </Grid>
+          )}
 
           {values.isHomePage === false && (
             <Grid gap={1}>
@@ -661,39 +707,8 @@ export const NewPageSettings = ({
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
-
-      serverSyncStore.createTransaction(
-        [$pages, $instances],
-        (pages, instances) => {
-          if (pages === undefined) {
-            return;
-          }
-          const rootInstanceId = nanoid();
-          pages.pages.push({
-            id: pageId,
-            name: values.name,
-            path: values.path,
-            title: values.title,
-            rootInstanceId,
-            meta: {},
-          });
-
-          instances.set(rootInstanceId, {
-            type: "instance",
-            id: rootInstanceId,
-            component: "Body",
-            children: [],
-          });
-
-          // @todo add parent folder selection
-          pages.folders.find(isRoot)?.children.push(pageId);
-
-          $selectedInstanceSelector.set(undefined);
-        }
-      );
-
+      createPage(pageId, values);
       updatePage(pageId, values);
-
       onSuccess(pageId);
     }
   };
@@ -783,8 +798,42 @@ const NewPageSettingsView = ({
   );
 };
 
+const createPage = (pageId: Page["id"], values: Values) => {
+  serverSyncStore.createTransaction(
+    [$pages, $instances],
+    (pages, instances) => {
+      if (pages === undefined) {
+        return;
+      }
+      const rootInstanceId = nanoid();
+      pages.pages.push({
+        id: pageId,
+        name: values.name,
+        path: values.path,
+        title: values.title,
+        rootInstanceId,
+        meta: {},
+      });
+
+      instances.set(rootInstanceId, {
+        type: "instance",
+        id: rootInstanceId,
+        component: "Body",
+        children: [],
+      });
+
+      registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);
+      $selectedInstanceSelector.set(undefined);
+    }
+  );
+};
+
 const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
-  const updatePageMutable = (page: Page, values: Partial<Values>) => {
+  const updatePageMutable = (
+    page: Page,
+    values: Partial<Values>,
+    folders: Array<Folder>
+  ) => {
     if (values.name !== undefined) {
       page.name = values.name;
     }
@@ -809,6 +858,10 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.customMetas !== undefined) {
       page.meta.custom = values.customMetas;
+    }
+
+    if (values.parentFolderId !== undefined) {
+      registerFolderChildMutable(folders, page.id, values.parentFolderId);
     }
   };
 
@@ -839,7 +892,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       }
 
       if (pages.homePage.id === pageId) {
-        updatePageMutable(pages.homePage, values);
+        updatePageMutable(pages.homePage, values, pages.folders);
       }
 
       for (const page of pages.pages) {
@@ -856,7 +909,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
               name: "Page params",
             });
           }
-          updatePageMutable(page, values);
+          updatePageMutable(page, values, pages.folders);
         }
       }
     }
@@ -881,6 +934,7 @@ const deletePage = (pageId: Page["id"]) => {
       return;
     }
     removeByMutable(pages.pages, (page) => page.id === pageId);
+    cleanupChildRefsMutable(pageId, pages.folders);
   });
 };
 
@@ -905,14 +959,26 @@ const duplicatePage = (pageId: Page["id"]) => {
     slice,
     availableDataSources: new Set(),
     beforeTransactionEnd: (rootInstanceId, draft) => {
+      if (draft.pages === undefined) {
+        return;
+      }
       const newPage = {
         ...page,
         id: newPageId,
         rootInstanceId,
         name: newName,
         path: nameToPath(pages, newName),
-      };
-      draft.pages?.pages.push(newPage);
+      } satisfies Page;
+      draft.pages.pages.push(newPage);
+      const currentFolder = findParentFolderByChildId(
+        pageId,
+        draft.pages.folders
+      );
+      registerFolderChildMutable(
+        draft.pages.folders,
+        newPageId,
+        currentFolder?.id
+      );
     },
   });
   return newPageId;
@@ -937,7 +1003,7 @@ export const PageSettings = ({
   const [unsavedValues, setUnsavedValues] = useState<Partial<Values>>({});
 
   const values: Values = {
-    ...(page ? toFormPage(page, isHomePage) : fieldDefaultValues),
+    ...(page ? toFormValues(page, pages, isHomePage) : fieldDefaultValues),
     ...unsavedValues,
   };
 

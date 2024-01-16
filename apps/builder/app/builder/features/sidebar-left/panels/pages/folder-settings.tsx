@@ -4,7 +4,7 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { Folder, FolderName, FolderSlug, Pages } from "@webstudio-is/sdk";
+import { Folder, Pages } from "@webstudio-is/sdk";
 import {
   theme,
   Button,
@@ -35,38 +35,36 @@ import {
   findParentFolderByChildId,
   cleanupChildRefsMutable,
   isSlugUsed,
+  registerFolderChildMutable,
 } from "./page-utils";
-import { createRootFolder } from "@webstudio-is/project-build";
+import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
 
-const fieldDefaultValues = {
-  name: "Untitled",
-  slug: "untitled",
-  parentFolderId: createRootFolder().id,
-};
+const Values = Folder.pick({ name: true, slug: true }).extend({
+  parentFolderId: z.string(),
+});
 
-const fieldNames = Object.keys(
-  fieldDefaultValues
-) as (keyof typeof fieldDefaultValues)[];
+type Values = z.infer<typeof Values>;
 
-type FieldName = (typeof fieldNames)[number];
-
-type Values = typeof fieldDefaultValues;
+type FieldName = keyof Values;
 
 type Errors = {
   [fieldName in FieldName]?: string[];
 };
 
-const FolderValues = z.object({
-  name: FolderName,
-  slug: FolderSlug,
-});
+const fieldDefaultValues = {
+  name: "Untitled",
+  slug: "untitled",
+  parentFolderId: createRootFolder().id,
+} satisfies Values;
+
+const fieldNames = Object.keys(fieldDefaultValues) as Array<FieldName>;
 
 const validateValues = (
   pages: undefined | Pages,
   values: Values,
   folderId?: Folder["id"]
 ): Errors => {
-  const parsedResult = FolderValues.safeParse(values);
+  const parsedResult = Values.safeParse(values);
   const errors: Errors = {};
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;
@@ -96,7 +94,7 @@ const toFormValues = (
   return {
     name: folder?.name ?? "",
     slug: folder?.slug ?? "",
-    parentFolderId: parentFolder?.id ?? "root",
+    parentFolderId: parentFolder?.id ?? ROOT_FOLDER_ID,
   };
 };
 
@@ -163,28 +161,26 @@ const FormFields = ({
           </Grid>
 
           <Grid gap={1}>
-            <Label htmlFor={fieldIds.name}>Parent Folder</Label>
-            <InputErrorsTooltip errors={errors.name}>
-              <Select
-                tabIndex={1}
-                css={{ zIndex: theme.zIndices[1] }}
-                options={pages.folders.filter(
-                  // Prevent selecting yourself as a parent
-                  ({ id }) => folderId !== id
-                )}
-                getValue={(folder) => folder.id}
-                getLabel={(folder) => folder.name}
-                value={pages.folders.find(
-                  ({ id }) => id === values.parentFolderId
-                )}
-                onChange={(folder) => {
-                  onChange({
-                    field: "parentFolderId",
-                    value: folder.id,
-                  });
-                }}
-              />
-            </InputErrorsTooltip>
+            <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
+            <Select
+              tabIndex={1}
+              css={{ zIndex: theme.zIndices[1] }}
+              options={pages.folders.filter(
+                // Prevent selecting yourself as a parent
+                ({ id }) => folderId !== id
+              )}
+              getValue={(folder) => folder.id}
+              getLabel={(folder) => folder.name}
+              value={pages.folders.find(
+                ({ id }) => id === values.parentFolderId
+              )}
+              onChange={(folder) => {
+                onChange({
+                  field: "parentFolderId",
+                  value: folder.id,
+                });
+              }}
+            />
           </Grid>
 
           <Grid gap={1}>
@@ -254,23 +250,7 @@ export const NewFolderSettings = ({
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const folderId = nanoid();
-      // @todo move to a function
-      serverSyncStore.createTransaction([$pages], (pages) => {
-        if (pages === undefined) {
-          return;
-        }
-        pages.folders.push({
-          id: folderId,
-          name: values.name,
-          slug: values.slug,
-          children: [],
-        } satisfies Folder);
-        const parentFolder = pages.folders.find(
-          ({ id }) => id === values.parentFolderId
-        );
-        parentFolder?.children.push(folderId);
-      });
-
+      createFolder(folderId, values);
       onSuccess(folderId);
     }
   };
@@ -358,6 +338,24 @@ const NewFolderSettingsView = ({
   );
 };
 
+const createFolder = (folderId: Folder["id"], values: Values) => {
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    pages.folders.push({
+      id: folderId,
+      name: values.name,
+      slug: values.slug,
+      children: [],
+    } satisfies Folder);
+    const parentFolder = pages.folders.find(
+      ({ id }) => id === values.parentFolderId
+    );
+    parentFolder?.children.push(folderId);
+  });
+};
+
 const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
   serverSyncStore.createTransaction([$pages], (pages) => {
     if (pages === undefined) {
@@ -374,13 +372,11 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
       folder.slug = values.slug;
     }
     if (values.parentFolderId !== undefined) {
-      const newParentFolder = pages.folders.find(
-        ({ id }) => id === values.parentFolderId
+      registerFolderChildMutable(
+        pages.folders,
+        folderId,
+        values.parentFolderId
       );
-      if (newParentFolder) {
-        cleanupChildRefsMutable(folderId, pages);
-        newParentFolder?.children.push(folderId);
-      }
     }
   });
 };
@@ -391,7 +387,7 @@ const deleteFolder = (folderId: Folder["id"]) => {
     if (pages === undefined) {
       return;
     }
-    cleanupChildRefsMutable(folderId, pages);
+    cleanupChildRefsMutable(folderId, pages.folders);
     removeByMutable(pages.folders, (folder) => folder.id === folderId);
   });
 };

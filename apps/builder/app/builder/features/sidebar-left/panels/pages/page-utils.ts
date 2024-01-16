@@ -98,9 +98,9 @@ export const findParentFolderByChildId = (
  */
 export const cleanupChildRefsMutable = (
   id: Folder["id"] | Page["id"],
-  pages: Pages
+  folders: Array<Folder>
 ) => {
-  for (const folder of pages.folders) {
+  for (const folder of folders) {
     const index = folder.children.indexOf(id);
     if (index !== -1) {
       // Not exiting here just to be safe and check all folders even though it should be impossible
@@ -170,4 +170,51 @@ export const isSlugUsed = (
       (id) => foldersMap.get(id)?.slug === slug && id !== folderId
     ) === false
   );
+};
+
+/**
+ * - Register a folder or a page inside children of a given parent folder.
+ * - Fallback to a root folder.
+ * - Cleanup any potential references in other folders.
+ */
+export const registerFolderChildMutable = (
+  folders: Array<Folder>,
+  id: Page["id"] | Folder["id"],
+  // In case we couldn't find the current folder during update for any reason,
+  // we will always fall back to the root folder.
+  parentFolderId?: Folder["id"]
+) => {
+  const parentFolder =
+    folders.find((folder) => folder.id === parentFolderId) ??
+    folders.find(isRoot);
+  cleanupChildRefsMutable(id, folders);
+  parentFolder?.children.push(id);
+};
+
+/**
+ * Get a path from all folder slugs from root to the current folder.
+ */
+export const compileSlugPath = (
+  folders: Array<Folder>,
+  folderId: Folder["id"]
+) => {
+  const foldersMap = new Map<Folder["id"], Folder>();
+  const childParentMap = new Map<Folder["id"], Folder["id"]>();
+  for (const folder of folders) {
+    foldersMap.set(folder.id, folder);
+    for (const childId of folder.children) {
+      childParentMap.set(childId, folder.id);
+    }
+  }
+  const slugs = [];
+  let currentFolderId: undefined | string = folderId;
+  while (currentFolderId) {
+    const folder = foldersMap.get(currentFolderId);
+    if (folder === undefined) {
+      break;
+    }
+    slugs.push(folder.slug);
+    currentFolderId = childParentMap.get(currentFolderId);
+  }
+  return slugs.reverse().join("/");
 };
