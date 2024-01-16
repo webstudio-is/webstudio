@@ -1,6 +1,7 @@
 import type { Pages, Page, Folder } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
 
+// @todo path needs to support folders now
 export const findPageByIdOrPath = (
   pages: Pages,
   idOrPath: string

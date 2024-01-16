@@ -190,31 +190,3 @@ export const registerFolderChildMutable = (
   cleanupChildRefsMutable(id, folders);
   parentFolder?.children.push(id);
 };
-
-/**
- * Get a path from all folder slugs from root to the current folder.
- */
-export const compileSlugPath = (
-  folders: Array<Folder>,
-  folderId: Folder["id"]
-) => {
-  const foldersMap = new Map<Folder["id"], Folder>();
-  const childParentMap = new Map<Folder["id"], Folder["id"]>();
-  for (const folder of folders) {
-    foldersMap.set(folder.id, folder);
-    for (const childId of folder.children) {
-      childParentMap.set(childId, folder.id);
-    }
-  }
-  const slugs = [];
-  let currentFolderId: undefined | string = folderId;
-  while (currentFolderId) {
-    const folder = foldersMap.get(currentFolderId);
-    if (folder === undefined) {
-      break;
-    }
-    slugs.push(folder.slug);
-    currentFolderId = childParentMap.get(currentFolderId);
-  }
-  return slugs.reverse().join("/");
-};

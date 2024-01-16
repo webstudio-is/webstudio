@@ -14,6 +14,7 @@ import {
   PagePath,
   DataSource,
   Folder,
+  getPagePath,
 } from "@webstudio-is/sdk";
 import {
   ROOT_FOLDER_ID,
@@ -82,7 +83,6 @@ import {
 } from "./url-pattern";
 import {
   cleanupChildRefsMutable,
-  compileSlugPath,
   findParentFolderByChildId,
   registerFolderChildMutable,
 } from "./page-utils";
@@ -325,10 +325,10 @@ const FormFields = ({
       ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
       : undefined;
 
-  const compiledPath = compilePathnamePattern(values.path ?? "", params ?? {});
-  const slug = compileSlugPath(pages.folders, values.parentFolderId);
+  const foldersPath = getPagePath(values.parentFolderId, pages);
+  const pagePath = compilePathnamePattern(values.path ?? "", params ?? {});
 
-  const pageDomainAndPath = [publishedUrl.host, slug, compiledPath]
+  const pageDomainAndPath = [publishedUrl.host, foldersPath, pagePath]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");

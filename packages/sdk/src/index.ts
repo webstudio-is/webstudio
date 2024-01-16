@@ -11,5 +11,6 @@ export * from "./schema/styles";
 export * from "./schema/deployment";
 
 export * from "./instances-utils";
+export * from "./page-utils";
 export * from "./scope";
 export * from "./resource-loader";
