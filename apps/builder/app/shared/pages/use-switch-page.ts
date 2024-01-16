@@ -16,28 +16,34 @@ import {
 } from "~/shared/nano-states";
 import { builderPath } from "~/shared/router-utils";
 
-export const switchPage = (pageId?: Page["id"], pageHash?: string) => {
+export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
   const pages = $pages.get();
 
   if (pages === undefined) {
     return;
   }
 
-  const page = findPageByIdOrPath(pages, pageId ?? "");
+  const page = findPageByIdOrPath(pages, pageId);
 
-  $selectedPageHash.set(pageHash ?? "");
-  $selectedPageId.set(page?.id ?? pages.homePage.id);
+  if (page === undefined) {
+    return;
+  }
+
+  $selectedPageHash.set(pageHash);
+  $selectedPageId.set(page.id);
   $selectedInstanceSelector.set([
-    page?.rootInstanceId ?? pages.homePage.rootInstanceId,
+    page.rootInstanceId ?? pages.homePage.rootInstanceId,
   ]);
 };
 
 const setPageStateFromUrl = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const pages = $pages.get();
-
-  const pageId = searchParams.get("pageId") ?? pages?.homePage.id;
-  const pageHash = searchParams.get("pageHash") ?? "";
+  if (pages === undefined) {
+    return;
+  }
+  const pageId = searchParams.get("pageId") ?? pages.homePage.id;
+  const pageHash = searchParams.get("pageHash") ?? undefined;
 
   $isPreviewMode.set(searchParams.get("mode") === "preview");
 

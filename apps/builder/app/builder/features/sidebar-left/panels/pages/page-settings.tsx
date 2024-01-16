@@ -18,7 +18,6 @@ import {
 } from "@webstudio-is/sdk";
 import {
   ROOT_FOLDER_ID,
-  createRootFolder,
   findPageByIdOrPath,
 } from "@webstudio-is/project-build";
 import {
@@ -89,7 +88,7 @@ import {
 
 const fieldDefaultValues = {
   name: "Untitled",
-  parentFolderId: createRootFolder().id,
+  parentFolderId: ROOT_FOLDER_ID,
   path: "/untitled",
   title: "Untitled",
   description: "",

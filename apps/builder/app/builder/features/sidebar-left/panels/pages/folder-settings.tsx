@@ -37,7 +37,7 @@ import {
   isSlugUsed,
   registerFolderChildMutable,
 } from "./page-utils";
-import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
+import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -54,7 +54,7 @@ type Errors = {
 const fieldDefaultValues = {
   name: "Untitled",
   slug: "untitled",
-  parentFolderId: createRootFolder().id,
+  parentFolderId: ROOT_FOLDER_ID,
 } satisfies Values;
 
 const fieldNames = Object.keys(fieldDefaultValues) as Array<FieldName>;
