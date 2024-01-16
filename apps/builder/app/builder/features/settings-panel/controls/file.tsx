@@ -13,6 +13,7 @@ import {
   Label,
   updateExpressionValue,
   $selectedInstanceScope,
+  useBindingState,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 
@@ -46,7 +47,6 @@ export const FileControl = ({
   prop,
   propName,
   computedValue,
-  readOnly,
   deletable,
   onChange,
   onDelete,
@@ -76,6 +76,9 @@ export const FileControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <VerticalLayout
@@ -89,7 +92,11 @@ export const FileControl = ({
     >
       <Flex css={{ gap: theme.spacing[3] }} direction="column" justify="center">
         <BindingControl>
-          <UrlInput id={id} readOnly={readOnly} localValue={localStringValue} />
+          <UrlInput
+            id={id}
+            readOnly={overwritable === false}
+            localValue={localStringValue}
+          />
           <BindingPopover
             scope={scope}
             aliases={aliases}
@@ -98,7 +105,7 @@ export const FileControl = ({
                 return `${label} expects a string value or file`;
               }
             }}
-            removable={prop?.type === "expression"}
+            variant={variant}
             value={expression}
             onChange={(newExpression) =>
               onChange({ type: "expression", value: newExpression })

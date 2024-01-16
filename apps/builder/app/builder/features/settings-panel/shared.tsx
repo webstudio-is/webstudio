@@ -1,10 +1,12 @@
-import { computed } from "nanostores";
+import { atom, computed, type ReadableAtom } from "nanostores";
+import { useStore } from "@nanostores/react";
 import {
   type ComponentPropsWithoutRef,
   type ReactNode,
   useRef,
   useState,
   useEffect,
+  useMemo,
 } from "react";
 import equal from "fast-deep-equal";
 import {
@@ -34,6 +36,7 @@ import {
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
+import type { BindingVariant } from "~/builder/shared/binding-popover";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -61,7 +64,6 @@ export type ControlProps<Control> = {
   propName: string;
   computedValue: unknown;
   deletable: boolean;
-  readOnly: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
   onDelete: () => void;
 };
@@ -332,4 +334,41 @@ export const updateExpressionValue = (expression: string, value: unknown) => {
     dataSourceVariables.set(dataSourceId, value);
     $dataSourceVariables.set(dataSourceVariables);
   }
+};
+
+export const useBindingState = (expression: undefined | string) => {
+  const $bindingState = useMemo((): ReadableAtom<{
+    overwritable: boolean;
+    variant: BindingVariant;
+  }> => {
+    if (expression === undefined) {
+      // value is not bound to expression and can be updated
+      return atom({ overwritable: true, variant: "default" });
+    }
+    // try to extract variable id from expression
+    const potentialVariableId = decodeDataSourceVariable(expression);
+    if (potentialVariableId === undefined) {
+      // expression is complex and cannot be updated
+      return atom({ overwritable: false, variant: "bound" });
+    }
+    return computed(
+      [$dataSources, $dataSourceVariables],
+      (dataSources, dataSourceVariables) => {
+        const dataSource = dataSources.get(potentialVariableId);
+        // resources and parameters cannot be updated
+        if (dataSource?.type !== "variable") {
+          return { overwritable: false, variant: "bound" };
+        }
+        const variableId = potentialVariableId;
+        return {
+          overwritable: true,
+          variant:
+            dataSourceVariables.get(variableId) === undefined
+              ? "bound"
+              : "overwritten",
+        };
+      }
+    );
+  }, [expression]);
+  return useStore($bindingState);
 };

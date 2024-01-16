@@ -13,6 +13,7 @@ import {
   Label,
   $selectedInstanceScope,
   updateExpressionValue,
+  useBindingState,
 } from "../shared";
 
 export const RadioControl = ({
@@ -21,7 +22,6 @@ export const RadioControl = ({
   propName,
   computedValue,
   deletable,
-  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"radio" | "inline-radio">) => {
@@ -37,11 +37,18 @@ export const RadioControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <VerticalLayout
       label={
-        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+        <Label
+          htmlFor={id}
+          description={meta.description}
+          readOnly={overwritable === false}
+        >
           {label}
         </Label>
       }
@@ -50,7 +57,7 @@ export const RadioControl = ({
     >
       <BindingControl>
         <RadioGroup
-          disabled={readOnly}
+          disabled={overwritable === false}
           name="value"
           value={value}
           onValueChange={(value) => {
@@ -83,7 +90,7 @@ export const RadioControl = ({
               return `${label} expects one of ${options}`;
             }
           }}
-          removable={prop?.type === "expression"}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

@@ -13,6 +13,7 @@ import {
   Label,
   updateExpressionValue,
   $selectedInstanceScope,
+  useBindingState,
 } from "../shared";
 
 export const TextControl = ({
@@ -21,7 +22,6 @@ export const TextControl = ({
   propName,
   deletable,
   computedValue,
-  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"text">) => {
@@ -40,12 +40,15 @@ export const TextControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   const input = (
     <BindingControl>
       <TextArea
         id={id}
-        disabled={readOnly}
+        disabled={overwritable === false}
         autoGrow
         value={localValue.value}
         rows={meta.rows ?? 1}
@@ -63,7 +66,7 @@ export const TextControl = ({
             return `${label} expects a string value`;
           }
         }}
-        removable={prop?.type === "expression"}
+        variant={variant}
         value={expression}
         onChange={(newExpression) =>
           onChange({ type: "expression", value: newExpression })
@@ -76,7 +79,11 @@ export const TextControl = ({
   );
 
   const labelElement = (
-    <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+    <Label
+      htmlFor={id}
+      description={meta.description}
+      readOnly={overwritable === false}
+    >
       {label}
     </Label>
   );

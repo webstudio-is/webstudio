@@ -13,6 +13,7 @@ import {
   Label,
   $selectedInstanceScope,
   updateExpressionValue,
+  useBindingState,
 } from "../shared";
 
 export const SelectControl = ({
@@ -21,7 +22,6 @@ export const SelectControl = ({
   propName,
   computedValue,
   deletable,
-  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"select">) => {
@@ -38,11 +38,18 @@ export const SelectControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <VerticalLayout
       label={
-        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+        <Label
+          htmlFor={id}
+          description={meta.description}
+          readOnly={overwritable === false}
+        >
           {label}
         </Label>
       }
@@ -53,7 +60,7 @@ export const SelectControl = ({
         <Select
           fullWidth
           id={id}
-          disabled={readOnly}
+          disabled={overwritable === false}
           value={value}
           options={options}
           getLabel={humanizeString}
@@ -80,7 +87,7 @@ export const SelectControl = ({
               return `${label} expects one of ${options}`;
             }
           }}
-          removable={prop?.type === "expression"}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

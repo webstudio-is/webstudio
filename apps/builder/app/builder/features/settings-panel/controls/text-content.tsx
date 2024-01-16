@@ -2,8 +2,8 @@ import { useId, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { TextArea } from "@webstudio-is/design-system";
-import type { DataSources, Instance } from "@webstudio-is/sdk";
-import { $dataSources, $instances } from "~/shared/nano-states";
+import type { Instance } from "@webstudio-is/sdk";
+import { $instances } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import {
   BindingControl,
@@ -17,8 +17,8 @@ import {
   $selectedInstanceScope,
   Label,
   updateExpressionValue,
+  useBindingState,
 } from "../shared";
-import { decodeDataSourceVariable } from "@webstudio-is/react-sdk";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -39,14 +39,6 @@ const updateChildren = (
     }
     instance.children = [{ type, value }];
   });
-};
-
-const isVariableIdentifier = (expression: string, dataSources: DataSources) => {
-  const potentialVariableId = decodeDataSourceVariable(expression);
-  return (
-    potentialVariableId !== undefined &&
-    dataSources.get(potentialVariableId)?.type === "variable"
-  );
 };
 
 export const TextContent = ({
@@ -77,16 +69,18 @@ export const TextContent = ({
     expression = child.value;
   }
 
-  const dataSources = useStore($dataSources);
-  // allow editiing single variable expression
-  const readOnly =
-    child.type === "expression" &&
-    isVariableIdentifier(child.value, dataSources) === false;
+  const { overwritable, variant } = useBindingState(
+    child.type === "expression" ? child.value : undefined
+  );
 
   return (
     <VerticalLayout
       label={
-        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+        <Label
+          htmlFor={id}
+          description={meta.description}
+          readOnly={overwritable === false}
+        >
           {label}
         </Label>
       }
@@ -96,7 +90,7 @@ export const TextContent = ({
       <BindingControl>
         <TextArea
           id={id}
-          disabled={readOnly}
+          disabled={overwritable === false}
           autoGrow
           value={localValue.value}
           rows={1}
@@ -113,7 +107,7 @@ export const TextContent = ({
                 return `${label} expects a string value`;
               }
             }}
-            removable={child.type === "expression"}
+            variant={variant}
             value={expression}
             onChange={(newExpression) => {
               updateChildren(instanceId, "expression", newExpression);

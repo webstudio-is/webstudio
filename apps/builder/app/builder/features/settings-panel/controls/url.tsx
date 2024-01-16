@@ -33,6 +33,7 @@ import {
   Label,
   updateExpressionValue,
   $selectedInstanceScope,
+  useBindingState,
 } from "../shared";
 import { SelectAsset } from "./select-asset";
 
@@ -428,7 +429,6 @@ export const UrlControl = ({
   prop,
   propName,
   computedValue,
-  readOnly,
   deletable,
   onChange,
   onDelete,
@@ -447,6 +447,9 @@ export const UrlControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <VerticalLayout
@@ -469,7 +472,7 @@ export const UrlControl = ({
       >
         <ToggleGroup
           type="single"
-          disabled={readOnly}
+          disabled={overwritable === false}
           value={mode}
           onValueChange={(value) => {
             // too tricky to prove to TS that value is a Mode
@@ -489,7 +492,7 @@ export const UrlControl = ({
         <BaseControl
           id={id}
           instanceId={instanceId}
-          readOnly={readOnly}
+          readOnly={overwritable === false}
           prop={prop}
           value={value}
           onChange={onChange}
@@ -503,7 +506,7 @@ export const UrlControl = ({
               return `${label} expects a string value, page or file`;
             }
           }}
-          removable={prop?.type === "expression"}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

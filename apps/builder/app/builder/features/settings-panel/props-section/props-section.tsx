@@ -96,7 +96,7 @@ const renderProperty = (
     component,
     instanceId,
   }: PropsSectionProps,
-  { prop, propName, meta, readOnly }: PropAndMeta,
+  { prop, propName, meta }: PropAndMeta,
   deletable?: boolean
 ) =>
   renderControl({
@@ -106,7 +106,6 @@ const renderProperty = (
     prop,
     computedValue: propValues.get(propName) ?? meta.defaultValue,
     propName,
-    readOnly,
     deletable: deletable ?? false,
     onDelete: () => {
       if (prop) {
