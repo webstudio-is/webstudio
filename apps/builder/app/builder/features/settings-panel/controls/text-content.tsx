@@ -2,8 +2,8 @@ import { useId, useMemo } from "react";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
 import { TextArea } from "@webstudio-is/design-system";
-import type { Instance } from "@webstudio-is/sdk";
-import { $instances } from "~/shared/nano-states";
+import type { DataSources, Instance } from "@webstudio-is/sdk";
+import { $dataSources, $instances } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import {
   BindingControl,
@@ -16,7 +16,9 @@ import {
   VerticalLayout,
   $selectedInstanceScope,
   Label,
+  updateExpressionValue,
 } from "../shared";
+import { decodeDataSourceVariable } from "@webstudio-is/react-sdk";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -39,6 +41,14 @@ const updateChildren = (
   });
 };
 
+const isVariableIdentifier = (expression: string, dataSources: DataSources) => {
+  const potentialVariableId = decodeDataSourceVariable(expression);
+  return (
+    potentialVariableId !== undefined &&
+    dataSources.get(potentialVariableId)?.type === "variable"
+  );
+};
+
 export const TextContent = ({
   instanceId,
   meta,
@@ -48,9 +58,13 @@ export const TextContent = ({
   const instance = useInstance(instanceId);
   // text content control is rendered only when empty or single child are present
   const child = instance?.children?.[0] ?? { type: "text", value: "" };
-  const localValue = useLocalValue(String(computedValue ?? ""), (value) =>
-    updateChildren(instanceId, "text", value)
-  );
+  const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
+    if (child.type === "expression") {
+      updateExpressionValue(child.value, value);
+    } else {
+      updateChildren(instanceId, "text", value);
+    }
+  });
   const id = useId();
   const label = getLabel(meta, propName);
 
@@ -63,7 +77,11 @@ export const TextContent = ({
     expression = child.value;
   }
 
-  const readOnly = child.type === "expression";
+  const dataSources = useStore($dataSources);
+  // allow editiing single variable expression
+  const readOnly =
+    child.type === "expression" &&
+    isVariableIdentifier(child.value, dataSources) === false;
 
   return (
     <VerticalLayout
