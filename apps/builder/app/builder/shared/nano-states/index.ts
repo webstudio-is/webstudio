@@ -1,6 +1,7 @@
 import { atom, computed, type WritableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { TabName } from "~/builder/features/sidebar-left/types";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 const useValue = <T>(atom: WritableAtom<T>) => {
   const value = useStore(atom);
@@ -37,3 +38,12 @@ export const $scale = computed(
 );
 
 export const $activeSidebarPanel = atom<TabName>("none");
+
+// keep in sync with user-plan-features.server
+export const $userPlanFeatures = atom<UserPlanFeatures>({
+  allowShareAdminLinks: false,
+  allowResourceVariables: false,
+  maxDomainsAllowedPerUser: 5,
+  hasSubscription: false,
+  hasProPlan: false,
+});
