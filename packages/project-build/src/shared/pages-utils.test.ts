@@ -1,49 +1,30 @@
-import { describe, test, expect } from "@jest/globals";
-import type { Page, Pages } from "@webstudio-is/sdk";
-import { findPageByIdOrPath } from "./pages-utils";
+import { test, expect } from "@jest/globals";
+import { createDefaultPages } from "./pages-utils";
 
-const pages = {
-  meta: {},
-  homePage: {
-    id: "home",
-    path: "/",
-    name: "Home",
-    title: "Home",
-    rootInstanceId: "instance-1",
+test("createDefaultPages", () => {
+  expect(
+    createDefaultPages({
+      rootInstanceId: "rootInstanceId",
+      homePageId: "homePageId",
+    })
+  ).toEqual({
     meta: {},
-  } satisfies Page,
-  pages: [
-    {
-      id: "page1",
-      path: "/page1",
-      name: "Page",
-      title: "Page",
-      rootInstanceId: "instance-1",
+    homePage: {
+      id: "homePageId",
+      name: "Home",
+      path: "",
+      title: "Home",
       meta: {},
-    } satisfies Page,
-  ],
-  folders: [],
-} satisfies Pages;
-
-describe("Find by id or path", () => {
-  test("home page by id", () => {
-    const page = findPageByIdOrPath(pages, "home");
-    expect(page).toEqual(pages.homePage);
-  });
-  test("home page by path /", () => {
-    const page = findPageByIdOrPath(pages, "/");
-    expect(page).toEqual(pages.homePage);
-  });
-  test("home page by empty path", () => {
-    const page = findPageByIdOrPath(pages, "");
-    expect(page).toEqual(pages.homePage);
-  });
-  test("find page by id", () => {
-    const page = findPageByIdOrPath(pages, "page1");
-    expect(page).toEqual(pages.pages[0]);
-  });
-  test("find page by path", () => {
-    const page = findPageByIdOrPath(pages, "/page1");
-    expect(page).toEqual(pages.pages[0]);
+      rootInstanceId: "rootInstanceId",
+    },
+    pages: [],
+    folders: [
+      {
+        id: "root",
+        name: "Root",
+        slug: "",
+        children: ["homePageId"],
+      },
+    ],
   });
 });

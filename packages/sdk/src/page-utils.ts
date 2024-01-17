@@ -1,5 +1,17 @@
 import type { Folder, Page, Pages } from "./schema/pages";
 
+export const findPageByIdOrPath = (
+  idOrPath: string,
+  pages: Pages
+): Page | undefined => {
+  if (idOrPath === "" || idOrPath === "/" || idOrPath === pages.homePage.id) {
+    return pages.homePage;
+  }
+  return pages.pages.find(
+    (page) => page.id === idOrPath || getPagePath(page.id, pages) === idOrPath
+  );
+};
+
 /**
  * Get a path from all folder slugs from root to the current folder or page.
  */
@@ -17,7 +29,8 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
   let currentId: undefined | string = id;
 
   // In case id is a page id
-  for (const page of pages.pages) {
+  const allPages = [pages.homePage, ...pages.pages];
+  for (const page of allPages) {
     if (page.id === id) {
       paths.push(page.path);
       currentId = childParentMap.get(page.id);

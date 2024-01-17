@@ -4,7 +4,6 @@ import {
   type Resource,
   type DataSource,
   type Instance,
-  type Page,
   type Prop,
 } from "@webstudio-is/sdk";
 import {
@@ -129,15 +128,6 @@ const computeExpression = (
   }
 };
 
-const $pagesMap = computed($pages, (pages): Map<string, Page> => {
-  if (pages === undefined) {
-    return new Map();
-  }
-  return new Map(
-    [pages.homePage, ...pages.pages].map((page) => [page.id, page])
-  );
-});
-
 /**
  * compute prop values within context of instance ancestors
  * like a dry-run of rendering and accessing react contexts deep in the tree
@@ -151,15 +141,16 @@ export const $propValuesByInstanceSelector = computed(
     $selectedPage,
     $dataSourcesLogic,
     $params,
-    $pagesMap,
+    $pages,
     $assets,
   ],
   (instances, props, page, dataSourcesLogic, params, pages, assets) => {
     const variableValues = new Map<string, unknown>(dataSourcesLogic);
 
     let propsList = Array.from(props.values());
+
     // ignore asset and page props when params is not provided
-    if (params) {
+    if (params && pages) {
       // use whole props list to let access hash props from other pages and instances
       propsList = normalizeProps({
         props: propsList,

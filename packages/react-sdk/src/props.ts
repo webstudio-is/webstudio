@@ -1,6 +1,10 @@
-import type { Page, Prop, Assets } from "@webstudio-is/sdk";
-
-export type Pages = Map<Page["id"], Page>;
+import {
+  type Prop,
+  type Assets,
+  type Pages,
+  getPagePath,
+  findPageByIdOrPath,
+} from "@webstudio-is/sdk";
 
 export const normalizeProps = ({
   props,
@@ -33,22 +37,23 @@ export const normalizeProps = ({
     }
 
     if (prop.type === "page") {
-      let page: undefined | Page;
       let idProp: undefined | Prop;
-      if (typeof prop.value === "string") {
-        const pageId = prop.value;
-        page = pages.get(pageId);
-      } else {
-        const { pageId, instanceId } = prop.value;
-        page = pages.get(pageId);
+      const pageId =
+        typeof prop.value === "string" ? prop.value : prop.value.pageId;
+      const page = findPageByIdOrPath(pageId, pages);
+
+      if (page === undefined) {
+        continue;
+      }
+      if (typeof prop.value !== "string") {
+        const { instanceId } = prop.value;
         idProp = props.find(
           (prop) => prop.instanceId === instanceId && prop.name === "id"
         );
       }
-      if (page === undefined) {
-        continue;
-      }
-      const url = new URL(page.path, "https://any-valid.url");
+
+      const path = getPagePath(page.id, pages);
+      const url = new URL(path, "https://any-valid.url");
       let value = url.pathname;
       if (idProp?.type === "string") {
         const hash = idProp.value;

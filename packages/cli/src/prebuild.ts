@@ -297,7 +297,7 @@ export const prebuild = async (options: {
       props: siteData.build.props.map(([_id, prop]) => prop),
       assetBaseUrl,
       assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
-      pages: new Map(siteData.pages.map((page) => [page.id, page])),
+      pages: siteData.build.pages,
     });
 
     const props: [Prop["id"], Prop][] = [];

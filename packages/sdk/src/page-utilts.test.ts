@@ -1,55 +1,59 @@
 import { describe, expect, test } from "@jest/globals";
 import type { Pages } from "./schema/pages";
-import { getPagePath } from "./page-utils";
+import { findPageByIdOrPath, getPagePath } from "./page-utils";
 
-describe("getPagePath", () => {
-  const pages = {
+const pages = {
+  meta: {},
+  homePage: {
+    id: "home",
+    path: "/",
+    name: "Home",
+    title: "Home",
+    rootInstanceId: "rootInstanceId",
     meta: {},
-    homePage: {
-      id: "home",
-      path: "/",
-      name: "Home",
-      title: "Home",
+  },
+  pages: [
+    {
+      id: "page-1",
+      path: "/page-1",
+      name: "Page",
+      title: "Page",
       rootInstanceId: "rootInstanceId",
       meta: {},
     },
-    pages: [
-      {
-        id: "page-1",
-        path: "/page-1",
-        name: "Page",
-        title: "Page",
-        rootInstanceId: "rootInstanceId",
-        meta: {},
-      },
-    ],
-    folders: [
-      {
-        id: "root",
-        name: "Root",
-        slug: "",
-        children: ["folderId-1"],
-      },
-      {
-        id: "folderId-1",
-        name: "Folder 1",
-        slug: "folder-1",
-        children: ["folderId-1-1"],
-      },
-      {
-        id: "folderId-1-1",
-        name: "Folder 1-1",
-        slug: "folder-1-1",
-        children: ["folderId-1-1-1"],
-      },
-      {
-        id: "folderId-1-1-1",
-        name: "Folder 1-1-1",
-        slug: "folder-1-1-1",
-        children: ["page-1"],
-      },
-    ],
-  } satisfies Pages;
+  ],
+  folders: [
+    {
+      id: "root",
+      name: "Root",
+      slug: "",
+      children: ["folderId-1"],
+    },
+    {
+      id: "folderId-1",
+      name: "Folder 1",
+      slug: "folder-1",
+      children: ["folderId-1-1"],
+    },
+    {
+      id: "folderId-1-1",
+      name: "Folder 1-1",
+      slug: "folder-1-1",
+      children: ["folderId-1-1-1"],
+    },
+    {
+      id: "folderId-1-1-1",
+      name: "Folder 1-1-1",
+      slug: "folder-1-1-1",
+      children: ["page-1"],
+    },
+  ],
+} satisfies Pages;
+
+describe("getPagePath", () => {
+  test("home page path", () => {
+    expect(getPagePath("home", pages)).toEqual("/");
+  });
 
   test("nesting level 0", () => {
     expect(getPagePath("root", pages)).toEqual("");
@@ -73,5 +77,31 @@ describe("getPagePath", () => {
     expect(getPagePath("page-1", pages)).toEqual(
       "/folder-1/folder-1-1/folder-1-1-1/page-1"
     );
+  });
+});
+
+describe("findPageByIdOrPath", () => {
+  test("home page by id", () => {
+    const page = findPageByIdOrPath("home", pages);
+    expect(page).toEqual(pages.homePage);
+  });
+  test("home page by path /", () => {
+    const page = findPageByIdOrPath("/", pages);
+    expect(page).toEqual(pages.homePage);
+  });
+  test("home page by empty path", () => {
+    const page = findPageByIdOrPath("", pages);
+    expect(page).toEqual(pages.homePage);
+  });
+  test("find page by id", () => {
+    const page = findPageByIdOrPath("page-1", pages);
+    expect(page).toEqual(pages.pages[0]);
+  });
+  test("find page by nested path", () => {
+    const page = findPageByIdOrPath(
+      "/folder-1/folder-1-1/folder-1-1-1/page-1",
+      pages
+    );
+    expect(page).toEqual(pages.pages[0]);
   });
 });
