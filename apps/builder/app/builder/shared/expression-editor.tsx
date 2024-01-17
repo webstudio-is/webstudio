@@ -169,6 +169,8 @@ const autocompletionStyle = css({
     ...textVariants.mono,
     border: "none",
     backgroundColor: "transparent",
+    // override none set on body by radix popover
+    pointerEvents: "auto",
     "& ul": {
       minWidth: 160,
       maxWidth: 260,
@@ -188,7 +190,7 @@ const autocompletionStyle = css({
         color: theme.colors.foregroundMain,
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[3],
-        "&[aria-selected]": {
+        "&[aria-selected], &:hover": {
           color: theme.colors.foregroundMain,
           backgroundColor: theme.colors.backgroundItemMenuItemHover,
         },
