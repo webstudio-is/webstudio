@@ -10,12 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { DotIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import { DotIcon, PlusIcon, ResetIcon, TrashIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
   CssValueListArrowFocus,
   CssValueListItem,
+  Flex,
   FloatingPanelPopover,
   FloatingPanelPopoverClose,
   FloatingPanelPopoverContent,
@@ -25,12 +26,17 @@ import {
   Label,
   ScrollArea,
   SmallIconButton,
+  Text,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { validateExpression } from "@webstudio-is/react-sdk";
+import {
+  decodeDataSourceVariable,
+  validateExpression,
+} from "@webstudio-is/react-sdk";
 import { ExpressionEditor, formatValuePreview } from "./expression-editor";
 import { useSideOffset } from "./floating-panel";
+import { $dataSourceVariables } from "~/shared/nano-states";
 
 export const evaluateExpressionWithinScope = (
   expression: string,
@@ -207,18 +213,47 @@ export const BindingControl = ({ children }: { children: ReactNode }) => {
   );
 };
 
+export type BindingVariant = "default" | "bound" | "overwritten";
+
 const BindingButton = forwardRef<
   HTMLButtonElement,
-  ButtonHTMLAttributes<HTMLButtonElement> & { error?: string }
->(({ error, ...props }, ref) => {
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant: BindingVariant;
+    error?: string;
+    value: string;
+  }
+>(({ variant, error, value, ...props }, ref) => {
   const expanded = props["aria-expanded"];
+  const overwrittenMessage =
+    variant === "overwritten" ? (
+      <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+        <Text>Bound variable is overwritten with temporary value</Text>
+        <Button
+          color="dark"
+          prefix={<ResetIcon />}
+          css={{ flexGrow: 1 }}
+          onClick={() => {
+            const potentialVariableId = decodeDataSourceVariable(value);
+            const dataSourceVariables = new Map($dataSourceVariables.get());
+            if (potentialVariableId !== undefined) {
+              dataSourceVariables.delete(potentialVariableId);
+              $dataSourceVariables.set(dataSourceVariables);
+            }
+          }}
+        >
+          Reset value
+        </Button>
+      </Flex>
+    ) : undefined;
+  const tooltipContent = error ?? overwrittenMessage;
   return (
     // prevent giving content to tooltip when popover is open
     // to avoid button remounting and popover flickering
     // when switch between valid and error value
-    <Tooltip content={expanded ? undefined : error} delayDuration={0}>
+    <Tooltip content={expanded ? undefined : tooltipContent} delayDuration={0}>
       <SmallIconButton
         ref={ref}
+        data-variant={variant}
         css={{
           // hide by default
           opacity: `var(${bindingOpacityProperty}, 0)`,
@@ -233,6 +268,9 @@ const BindingButton = forwardRef<
           transitionTimingFunction: "cubic-bezier(0.37, 0, 0.63, 1)",
           "--dot-display": "block",
           "--plus-display": "none",
+          "&[data-variant=bound], &[data-variant=overwritten]": {
+            opacity: 1,
+          },
           "&:hover, &:focus-visible, &[aria-expanded=true]": {
             // always show when interacted with
             opacity: 1,
@@ -248,15 +286,21 @@ const BindingButton = forwardRef<
               width: 12,
               height: 12,
               borderRadius: "50%",
-              backgroundColor: "#834DF4",
+              backgroundColor: theme.colors.backgroundStyleSourceToken,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
+              "&[data-variant=bound]": {
+                backgroundColor: theme.colors.backgroundStyleSourceLocal,
+              },
+              "&[data-variant=overwritten]": {
+                backgroundColor: theme.colors.borderOverwrittenMain,
+              },
               "&[data-variant=error]": {
                 backgroundColor: theme.colors.backgroundDestructiveMain,
               },
             }}
-            data-variant={error ? "error" : "default"}
+            data-variant={error ? "error" : variant}
           >
             <DotIcon
               size={14}
@@ -285,7 +329,7 @@ export const BindingPopoverProvider = BindingPopoverContext.Provider;
 export const BindingPopover = ({
   scope,
   aliases,
-  removable = true,
+  variant,
   validate,
   value,
   onChange,
@@ -293,7 +337,7 @@ export const BindingPopover = ({
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
-  removable?: boolean;
+  variant: BindingVariant;
   validate?: (value: unknown) => undefined | string;
   value: string;
   onChange: (newValue: string) => void;
@@ -328,7 +372,7 @@ export const BindingPopover = ({
       }}
     >
       <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
-        <BindingButton error={valueError} />
+        <BindingButton variant={variant} error={valueError} value={value} />
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent
         sideOffset={sideOffset}
@@ -371,7 +415,7 @@ export const BindingPopover = ({
                   aria-label="Reset binding"
                   prefix={<TrashIcon />}
                   color="ghost"
-                  disabled={removable === false}
+                  disabled={variant === "default"}
                   onClick={(event) => {
                     event.preventDefault();
                     // inline variables and close dialog

@@ -12,6 +12,7 @@ import {
   Label,
   updateExpressionValue,
   $selectedInstanceScope,
+  useBindingState,
 } from "../shared";
 
 export const CodeControl = ({
@@ -20,7 +21,6 @@ export const CodeControl = ({
   propName,
   computedValue,
   deletable,
-  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"code">) => {
@@ -46,11 +46,17 @@ export const CodeControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <VerticalLayout
       label={
-        <Label description={metaOverride.description} readOnly={readOnly}>
+        <Label
+          description={metaOverride.description}
+          readOnly={overwritable === false}
+        >
           {label}
         </Label>
       }
@@ -59,7 +65,7 @@ export const CodeControl = ({
     >
       <BindingControl>
         <HtmlEditor
-          readOnly={readOnly}
+          readOnly={overwritable === false}
           value={localValue.value}
           onChange={localValue.set}
           onBlur={localValue.save}
@@ -72,7 +78,7 @@ export const CodeControl = ({
               return `${label} expects a string value`;
             }
           }}
-          removable={prop?.type === "expression"}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
