@@ -390,7 +390,7 @@ const VariablePanel = forwardRef<
             key={option}
             value={option}
             textValue={getTypeLabel(option)}
-            disabled={option === "resource" && allowResourceVariables === false}
+            //disabled={option === "resource" && allowResourceVariables === false}
           >
             {getTypeLabel(option)}
             {option === "resource" && allowResourceVariables === false && (
