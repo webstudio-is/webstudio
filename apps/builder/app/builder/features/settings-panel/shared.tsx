@@ -181,8 +181,14 @@ export const useLocalValue = <Type,>(
 
   // onBlur will not trigger if control is unmounted when props panel is closed or similar.
   // So we're saving at the unmount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => save, []);
+  // store save in ref to access latest saved value from render
+  // instead of stale one
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    // access ref in the moment of unmount
+    return () => saveRef.current();
+  }, []);
 
   useEffect(() => {
     // Update local value if saved value changes and control is not in edit mode.
