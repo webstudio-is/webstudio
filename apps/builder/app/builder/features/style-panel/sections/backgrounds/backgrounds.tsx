@@ -99,6 +99,7 @@ const Layer = (props: {
     >
       <CssValueListItem
         id={props.id}
+        draggable={true}
         active={props.isHighlighted}
         index={props.index}
         label={
