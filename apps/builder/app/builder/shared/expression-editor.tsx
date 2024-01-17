@@ -169,7 +169,7 @@ const autocompletionStyle = css({
     ...textVariants.mono,
     border: "none",
     backgroundColor: "transparent",
-    // override none set on body
+    // override none set on body by radix popover
     pointerEvents: "auto",
     "& ul": {
       minWidth: 160,
