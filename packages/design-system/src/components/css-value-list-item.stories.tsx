@@ -67,6 +67,7 @@ const ListItem = (props: {
       }
       thumbnail={<Thumbnail />}
       hidden={props.hidden}
+      draggable={true}
       state={props.state}
       focused={props.focused}
       active={props.active}

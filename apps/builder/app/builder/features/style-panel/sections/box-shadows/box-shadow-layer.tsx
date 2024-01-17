@@ -67,6 +67,7 @@ export const Layer = (props: LayerProps) => {
     >
       <CssValueListItem
         id={id}
+        draggable={true}
         active={isHighlighted}
         index={index}
         label={<Label truncate>{name}</Label>}
