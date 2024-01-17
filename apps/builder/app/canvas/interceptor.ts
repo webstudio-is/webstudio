@@ -1,4 +1,4 @@
-import { findPageByIdOrPath } from "@webstudio-is/project-build";
+import { findPageByIdOrPath } from "@webstudio-is/sdk";
 import { $isPreviewMode, $pages } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
@@ -24,7 +24,7 @@ const handleLinkClick = (element: HTMLAnchorElement) => {
   }
 
   const pageHref = new URL(href, "https://any-valid.url");
-  const page = findPageByIdOrPath(pages, pageHref.pathname);
+  const page = findPageByIdOrPath(pageHref.pathname, pages);
   if (page) {
     switchPage(page.id, pageHref.hash);
     return;

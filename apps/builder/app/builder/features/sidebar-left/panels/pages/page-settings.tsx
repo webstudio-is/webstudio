@@ -15,11 +15,9 @@ import {
   DataSource,
   Folder,
   getPagePath,
-} from "@webstudio-is/sdk";
-import {
-  ROOT_FOLDER_ID,
   findPageByIdOrPath,
-} from "@webstudio-is/project-build";
+} from "@webstudio-is/sdk";
+import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
 import {
   theme,
   Button,
@@ -675,13 +673,13 @@ const nameToPath = (pages: Pages | undefined, name: string) => {
     return path;
   }
 
-  if (findPageByIdOrPath(pages, path) === undefined) {
+  if (findPageByIdOrPath(path, pages) === undefined) {
     return path;
   }
 
   let suffix = 1;
 
-  while (findPageByIdOrPath(pages, `${path}${suffix}`) !== undefined) {
+  while (findPageByIdOrPath(`${path}${suffix}`, pages) !== undefined) {
     suffix++;
   }
 
@@ -876,7 +874,6 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         const newHomePageIndex = pages.pages.findIndex(
           (page) => page.id === pageId
         );
-
         if (newHomePageIndex === -1) {
           throw new Error(`Page with id ${pageId} not found`);
         }
@@ -917,14 +914,15 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
 const deletePage = (pageId: Page["id"]) => {
   const pages = $pages.get();
+  if (pages === undefined) {
+    return;
+  }
   // deselect page before deleting to avoid flash of content
   if ($selectedPageId.get() === pageId) {
-    $selectedPageId.set(pages?.homePage.id);
+    $selectedPageId.set(pages.homePage.id);
     $selectedInstanceSelector.set(undefined);
   }
-  const rootInstanceId = pages?.pages.find(
-    (page) => page.id === pageId
-  )?.rootInstanceId;
+  const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
     deleteInstance([rootInstanceId]);
   }
@@ -939,10 +937,11 @@ const deletePage = (pageId: Page["id"]) => {
 
 const duplicatePage = (pageId: Page["id"]) => {
   const pages = $pages.get();
-  const page =
-    pages?.homePage.id === pageId
-      ? pages.homePage
-      : pages?.pages.find((page) => page.id === pageId);
+  if (pages === undefined) {
+    return;
+  }
+  const page = findPageByIdOrPath(pageId, pages);
+
   if (page === undefined) {
     return;
   }
@@ -995,7 +994,7 @@ export const PageSettings = ({
   pageId: string;
 }) => {
   const pages = useStore($pages);
-  const page = pages && findPageByIdOrPath(pages, pageId);
+  const page = pages && findPageByIdOrPath(pageId, pages);
 
   const isHomePage = page?.id === pages?.homePage.id;
 
