@@ -1,6 +1,5 @@
 import type { Folder, Page, Pages } from "./schema/pages";
 
-// @todo path needs to support folders now
 export const findPageByIdOrPath = (
   idOrPath: string,
   pages: Pages
@@ -9,7 +8,7 @@ export const findPageByIdOrPath = (
     return pages.homePage;
   }
   return pages.pages.find(
-    (page) => page.path === idOrPath || page.id === idOrPath
+    (page) => page.id === idOrPath || getPagePath(page.id, pages) === idOrPath
   );
 };
 

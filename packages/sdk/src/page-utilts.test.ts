@@ -97,8 +97,11 @@ describe("findPageByIdOrPath", () => {
     const page = findPageByIdOrPath("page-1", pages);
     expect(page).toEqual(pages.pages[0]);
   });
-  test("find page by path", () => {
-    const page = findPageByIdOrPath("/page-1", pages);
+  test("find page by nested path", () => {
+    const page = findPageByIdOrPath(
+      "/folder-1/folder-1-1/folder-1-1-1/page-1",
+      pages
+    );
     expect(page).toEqual(pages.pages[0]);
   });
 });
