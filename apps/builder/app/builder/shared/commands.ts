@@ -187,6 +187,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           slice,
           availableDataSources: findAvailableDataSources(
             $dataSources.get(),
+            $instances.get(),
             parentInstanceSelector
           ),
           beforeTransactionEnd: (rootInstanceId, draft) => {
