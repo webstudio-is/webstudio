@@ -189,12 +189,18 @@ const PagesPanel = ({
   );
 
   const selectTreeNode = useCallback(
-    ([itemId]: ItemSelector) => {
-      if (isFolder(itemId, pages?.folders ?? [])) {
+    ([itemId]: ItemSelector, all: boolean) => {
+      const folders = pages?.folders ?? [];
+      if (isFolder(itemId, folders)) {
+        const items = all
+          ? getAllChildFoldersAndSelf(itemId, folders)
+          : [itemId];
         const nextCollapsedItems = new Set(collapsedItems);
-        collapsedItems.has(itemId)
-          ? nextCollapsedItems.delete(itemId)
-          : nextCollapsedItems.add(itemId);
+        items.forEach((itemId) => {
+          collapsedItems.has(itemId)
+            ? nextCollapsedItems.delete(itemId)
+            : nextCollapsedItems.add(itemId);
+        });
         $collapsedItems.set(nextCollapsedItems);
         return;
       }
