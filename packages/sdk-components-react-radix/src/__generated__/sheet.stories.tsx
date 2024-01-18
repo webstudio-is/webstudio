@@ -16,8 +16,7 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [sheetOpen, set$sheetOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     sheetOpen = open;
@@ -35,7 +34,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <Button
             data-ws-id="6"
             data-ws-component="Button"
-            className="c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l c1v4k4ip c2iozhh c1j5pqo1 cmqevnc cvxnx00 c1mnuzt9 c4v7k5r cvzkkb6 cym38jd cqimob0 c2tr68t cjdtj3f c1mfk609 c121vm9z cwry1sa c1b8xvex c347ys1 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l c1srwcmr c1grhw0w c8xqq0k cjs8iie"
+            className="c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 cok6gp c1ebb32d c1ed2n1f c1an30v3 ca60kt0 c1oai8p0 clo3r8o cw9oyzl cuqxbts cg19ih8 c1479lj6 comq4ym c1qx3pju cut8gip c1qjvju3 c18kkil cq7yq91 co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1jirpm3 ce92j53 c1dr421o c14ytp9r"
           >
             <HtmlEmbed
               data-ws-id="8"
@@ -49,12 +48,12 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         <DialogOverlay
           data-ws-id="10"
           data-ws-component="DialogOverlay"
-          className="c1g0ebn8 c17k6ftv co2vb1i ci9y33x ckl9uqx c1wyidsg c15mffxy c1c159w3 c6gk6ar c13wsd00 c19jsld4"
+          className="c15h1j27 cboqcgi cs5y8q6 ccq2s6t c3iotp8 c173yyao c110hgy6 c1x0vq2l c11xgi9i cfd715b c1arpcws"
         >
           <DialogContent
             data-ws-id="12"
             data-ws-component="DialogContent"
-            className="c1i2mn37 c1wyidsg c6gk6ar c13wsd00 cb99ak4 ctl64vj c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l cgassre c1ndsw6v cjrlou9 c945vvj c15mffxy cm3zvb4 c174435h c1xpn2dk c3vgloq cbzcu1y cnhoj7b c1rj6y8a cgfujm0 cn4ngym"
+            className="c3elmho c173yyao c11xgi9i cfd715b ci4ea85 c13l7myj c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 ck2qarh c1nxbatd caktpzb c1bm526f c110hgy6 c1d23hgf cdv5i03 cog45sw c18egw0s c1ii9nza crmoyyg cmty91p c1t1rwz c1yubncr"
           >
             <Box
               data-ws-id="14"
@@ -65,19 +64,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               <Box
                 data-ws-id="17"
                 data-ws-component="Box"
-                className="c6gk6ar c13wsd00 cu0fd6l c8098d3"
+                className="c11xgi9i cfd715b csjyi15 c1xv9rff"
               >
                 <DialogTitle
                   data-ws-id="19"
                   data-ws-component="DialogTitle"
-                  className="c1u5xdcd cdf5ze5 c1ma6tz6 c1kjryeq cs0zr08"
+                  className="cvrokas crk8tjo cx5cc56 c1o7k99s cck9swn"
                 >
                   {"Sheet Title"}
                 </DialogTitle>
                 <DialogDescription
                   data-ws-id="21"
                   data-ws-component="DialogDescription"
-                  className="c1u5xdcd cdf5ze5 c1mfk609 c121vm9z caa8yt3"
+                  className="cvrokas crk8tjo c1qx3pju cut8gip c1pcz91e"
                 >
                   {"Sheet description text you can edit"}
                 </DialogDescription>
@@ -89,7 +88,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
             <DialogClose
               data-ws-id="24"
               data-ws-component="DialogClose"
-              className="c1kb88y7 caboyml c1y1em6x c1d9pxa5 cnjyf56 c1jpjw0a c1lxvq7u c1jcn3uk c6gk6ar c4v7k5r cvzkkb6 c18dp5gp clw3og8 c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l c1v4k4ip c2iozhh c1j5pqo1 cmqevnc cvxnx00 c601nqx c9i3lxo c1sz664l cm8bc7h c1m9udid c175y1wr"
+              className="ct2k8wg c1us255 c1hk37yi c12e8ong c13c161l chzvexg c1s51a6q c1qx8273 c11xgi9i clo3r8o cw9oyzl c1pmpq0f c1yafs04 c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 cok6gp c1ebb32d c1ed2n1f c1an30v3 ca60kt0 cxlxl0c c1gfzcg5 cohan28 c15roejc c1xy5yrr c192vyv4"
             >
               <HtmlEmbed
                 data-ws-id="26"
@@ -300,361 +299,265 @@ html {margin: 0; display: grid; min-height: 100%}
     text-transform: none
   }
 }@media all {
-  .c1inucbi {
+  .c17al2u0 {
     border-top-style: solid
   }
-  .c1dab7w1 {
+  .c1ufcra4 {
     border-right-style: solid
   }
-  .c1uf7v01 {
+  .c17gos5d {
     border-bottom-style: solid
   }
-  .czynn8e {
+  .cn4f13s {
     border-left-style: solid
   }
-  .c6z96ps {
+  .c1wic2il {
     border-top-color: rgba(226, 232, 240, 1)
   }
-  .c9t5qyz {
+  .cdem58j {
     border-right-color: rgba(226, 232, 240, 1)
   }
-  .c1x5uwe6 {
+  .c102tttv {
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  .csnt51l {
+  .cb204z1 {
     border-left-color: rgba(226, 232, 240, 1)
   }
-  .c1v4k4ip {
+  .cok6gp {
     border-top-width: 0px
   }
-  .c2iozhh {
+  .c1ebb32d {
     border-right-width: 0px
   }
-  .c1j5pqo1 {
+  .c1ed2n1f {
     border-bottom-width: 0px
   }
-  .cmqevnc {
+  .c1an30v3 {
     border-left-width: 0px
   }
-  .cvxnx00 {
+  .ca60kt0 {
     background-color: transparent
   }
-  .c1mnuzt9 {
+  .c1oai8p0 {
     display: inline-flex
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .cvzkkb6 {
+  .cw9oyzl {
     justify-content: center
   }
-  .cym38jd {
+  .cuqxbts {
     border-top-left-radius: 0.375rem
   }
-  .cqimob0 {
+  .cg19ih8 {
     border-top-right-radius: 0.375rem
   }
-  .c2tr68t {
+  .c1479lj6 {
     border-bottom-right-radius: 0.375rem
   }
-  .cjdtj3f {
+  .comq4ym {
     border-bottom-left-radius: 0.375rem
   }
-  .c1mfk609 {
+  .c1qx3pju {
     font-size: 0.875rem
   }
-  .c121vm9z {
+  .cut8gip {
     line-height: 1.25rem
   }
-  .cwry1sa {
+  .c1qjvju3 {
     font-weight: 500
   }
-  .c1b8xvex {
+  .c18kkil {
     height: 2.5rem
   }
-  .c347ys1 {
+  .cq7yq91 {
     width: 2.5rem
   }
-  .c1t6bql4:focus-visible {
+  .co0lfwl:focus-visible {
     outline-width: 2px
   }
-  .czph7hf:focus-visible {
+  .c1kn3u98:focus-visible {
     outline-style: solid
   }
-  .cncn1ro:focus-visible {
+  .c2odgnt:focus-visible {
     outline-color: transparent
   }
-  .cb270vo:focus-visible {
+  .chlvjga:focus-visible {
     outline-offset: 2px
   }
-  .c1rgsd1l:focus-visible {
+  .c1jx7vpr:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  .c1srwcmr:disabled {
+  .c1jirpm3:disabled {
     pointer-events: none
   }
-  .c1grhw0w:disabled {
+  .ce92j53:disabled {
     opacity: 0.5
   }
-  .c8xqq0k:hover {
+  .c1dr421o:hover {
     background-color: rgba(241, 245, 249, 0.9)
   }
-  .cjs8iie:hover {
+  .c14ytp9r:hover {
     color: rgba(15, 23, 42, 1)
   }
-  .c1g0ebn8 {
+  .c15h1j27 {
     position: fixed
   }
-  .c17k6ftv {
+  .cboqcgi {
     left: 0px
   }
-  .co2vb1i {
+  .cs5y8q6 {
     right: 0px
   }
-  .ci9y33x {
+  .ccq2s6t {
     top: 0px
   }
-  .ckl9uqx {
+  .c3iotp8 {
     bottom: 0px
   }
-  .c1wyidsg {
+  .c173yyao {
     z-index: 50
   }
-  .c15mffxy {
+  .c110hgy6 {
     background-color: rgba(255, 255, 255, 0.8)
   }
-  .c1c159w3 {
+  .c1x0vq2l {
     backdrop-filter: blur(0 1px 2px 0 rgb(0 0 0 / 0.05))
   }
-  .c6gk6ar {
+  .c11xgi9i {
     display: flex
   }
-  .c13wsd00 {
+  .cfd715b {
     flex-direction: column
   }
-  .c19jsld4 {
+  .c1arpcws {
     overflow: auto
   }
-  .c1i2mn37 {
+  .c3elmho {
     width: 100%
   }
-  .c1wyidsg {
-    z-index: 50
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .cb99ak4 {
+  .ci4ea85 {
     row-gap: 1rem
   }
-  .ctl64vj {
+  .c13l7myj {
     column-gap: 1rem
   }
-  .c1dab7w1 {
-    border-right-style: solid
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .czynn8e {
-    border-left-style: solid
-  }
-  .c6z96ps {
-    border-top-color: rgba(226, 232, 240, 1)
-  }
-  .c9t5qyz {
-    border-right-color: rgba(226, 232, 240, 1)
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .csnt51l {
-    border-left-color: rgba(226, 232, 240, 1)
-  }
-  .cgassre {
+  .ck2qarh {
     border-top-width: 1px
   }
-  .c1ndsw6v {
+  .c1nxbatd {
     border-right-width: 1px
   }
-  .cjrlou9 {
+  .caktpzb {
     border-bottom-width: 1px
   }
-  .c945vvj {
+  .c1bm526f {
     border-left-width: 1px
   }
-  .c15mffxy {
-    background-color: rgba(255, 255, 255, 0.8)
-  }
-  .cm3zvb4 {
+  .c1d23hgf {
     padding-left: 1.5rem
   }
-  .c174435h {
+  .cdv5i03 {
     padding-right: 1.5rem
   }
-  .c1xpn2dk {
+  .cog45sw {
     padding-top: 1.5rem
   }
-  .c3vgloq {
+  .c18egw0s {
     padding-bottom: 1.5rem
   }
-  .cbzcu1y {
+  .c1ii9nza {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)
   }
-  .cnhoj7b {
+  .crmoyyg {
     position: relative
   }
-  .c1rj6y8a {
+  .cmty91p {
     margin-right: auto
   }
-  .cgfujm0 {
+  .c1t1rwz {
     max-width: 24rem
   }
-  .cn4ngym {
+  .c1yubncr {
     flex-grow: 1
   }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .cu0fd6l {
+  .csjyi15 {
     row-gap: 0.25rem
   }
-  .c8098d3 {
+  .c1xv9rff {
     column-gap: 0.25rem
   }
-  .c1u5xdcd {
+  .cvrokas {
     margin-top: 0px
   }
-  .cdf5ze5 {
+  .crk8tjo {
     margin-bottom: 0px
   }
-  .c1ma6tz6 {
+  .cx5cc56 {
     line-height: 1.75rem
   }
-  .c1kjryeq {
+  .c1o7k99s {
     font-size: 1.125rem
   }
-  .cs0zr08 {
+  .cck9swn {
     letter-spacing: -0.025em
   }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .caa8yt3 {
+  .c1pcz91e {
     color: rgba(100, 116, 139, 1)
   }
-  .c1kb88y7 {
+  .ct2k8wg {
     position: absolute
   }
-  .caboyml {
+  .c1us255 {
     right: 1rem
   }
-  .c1y1em6x {
+  .c1hk37yi {
     top: 1rem
   }
-  .c1d9pxa5 {
+  .c12e8ong {
     border-top-left-radius: 0.125rem
   }
-  .cnjyf56 {
+  .c13c161l {
     border-top-right-radius: 0.125rem
   }
-  .c1jpjw0a {
+  .chzvexg {
     border-bottom-right-radius: 0.125rem
   }
-  .c1lxvq7u {
+  .c1s51a6q {
     border-bottom-left-radius: 0.125rem
   }
-  .c1jcn3uk {
+  .c1qx8273 {
     opacity: 0.7
   }
-  .c6gk6ar {
-    display: flex
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .c18dp5gp {
+  .c1pmpq0f {
     height: 1rem
   }
-  .clw3og8 {
+  .c1yafs04 {
     width: 1rem
   }
-  .c1dab7w1 {
-    border-right-style: solid
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .czynn8e {
-    border-left-style: solid
-  }
-  .c6z96ps {
-    border-top-color: rgba(226, 232, 240, 1)
-  }
-  .c9t5qyz {
-    border-right-color: rgba(226, 232, 240, 1)
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .csnt51l {
-    border-left-color: rgba(226, 232, 240, 1)
-  }
-  .c1v4k4ip {
-    border-top-width: 0px
-  }
-  .c2iozhh {
-    border-right-width: 0px
-  }
-  .c1j5pqo1 {
-    border-bottom-width: 0px
-  }
-  .cmqevnc {
-    border-left-width: 0px
-  }
-  .cvxnx00 {
-    background-color: transparent
-  }
-  .c601nqx {
+  .cxlxl0c {
     outline-width: 2px
   }
-  .c9i3lxo {
+  .c1gfzcg5 {
     outline-style: solid
   }
-  .c1sz664l {
+  .cohan28 {
     outline-color: transparent
   }
-  .cm8bc7h {
+  .c15roejc {
     outline-offset: 2px
   }
-  .c1m9udid:hover {
+  .c1xy5yrr:hover {
     opacity: 1
   }
-  .c175y1wr:focus {
+  .c192vyv4:focus {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

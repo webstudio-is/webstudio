@@ -629,8 +629,7 @@ test("generate page component with variables and actions", () => {
   ).toEqual(
     clear(`
       type Params = Record<string, string | undefined>
-      type Resources = Record<string, unknown>
-      const Page = (_props: { params: Params, resources: Resources }) => {
+      const Page = (_props: { params: Params }) => {
       let [variableName, set$variableName] = useState<any>("initial")
       let onChange = (value: any) => {
       variableName = value
@@ -673,8 +672,7 @@ test("add classes and merge classes", () => {
   ).toEqual(
     clear(`
     type Params = Record<string, string | undefined>
-    type Resources = Record<string, unknown>
-    const Page = (_props: { params: Params, resources: Resources }) => {
+    const Page = (_props: { params: Params }) => {
     return <Body
     data-ws-id="body"
     data-ws-component="Body"
@@ -730,8 +728,7 @@ test("avoid generating collection parameter variable as state", () => {
   ).toEqual(
     clear(`
     type Params = Record<string, string | undefined>
-    type Resources = Record<string, unknown>
-    const Page = (_props: { params: Params, resources: Resources }) => {
+    const Page = (_props: { params: Params }) => {
     let [data, set$data] = useState<any>(["apple","orange","mango"])
     return <Body
     data-ws-id="body"
@@ -775,8 +772,7 @@ test("generate params variable when present", () => {
   ).toEqual(
     clear(`
     type Params = Record<string, string | undefined>
-    type Resources = Record<string, unknown>
-    const Page = (_props: { params: Params, resources: Resources }) => {
+    const Page = (_props: { params: Params }) => {
     let params_1 = _props.params
     return <Body
     data-ws-id="body"
@@ -831,10 +827,9 @@ test("generate resources loading", () => {
   ).toEqual(
     clear(`
     type Params = Record<string, string | undefined>
-    type Resources = Record<string, unknown>
-    const Page = (_props: { params: Params, resources: Resources }) => {
+    const Page = (_props: { params: Params }) => {
     let [data, set$data] = useState<any>("data")
-    let data_1: any = _props.resources["data_2"]
+    let data_1 = useResource("data_2")
     return <Body
     data-ws-id="body"
     data-ws-component="Body"

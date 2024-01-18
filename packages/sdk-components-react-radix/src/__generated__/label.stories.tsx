@@ -2,14 +2,13 @@ import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Label as Label } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Label
         data-ws-id="1"
         data-ws-component="Label"
-        className="c1mfk609 cvjxq2s cwry1sa"
+        className="c1qx3pju crxf9g c1qjvju3"
       >
         {"Form Label"}
       </Label>
@@ -134,19 +133,19 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px
   }
 }@media all {
-  .c1mfk609 {
+  .c1qx3pju {
     font-size: 0.875rem
   }
-  .cvjxq2s {
+  .crxf9g {
     line-height: 1
   }
-  .cwry1sa {
+  .c1qjvju3 {
     font-weight: 500
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

@@ -2,14 +2,15 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import { useResource } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
 } from "@webstudio-is/sdk-components-react";
 
+import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
   {
@@ -72,9 +73,8 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
-  let list: any = _props.resources["list_1"];
+const Page = (_props: { params: Params }) => {
+  let list = useResource("list_1");
   return (
     <Body data-ws-id="AWY2qZfpbykoiWELeJhse" data-ws-component="Body">
       {list?.data?.map((collectionItem: any, index: number) => (
