@@ -40,6 +40,7 @@ import {
   registerFolderChildMutable,
   deleteFolderWithChildrenMutable,
   deletePage,
+  filterSelfAndChildren,
 } from "./page-utils";
 import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
 import { Form } from "./form";
@@ -164,10 +165,7 @@ const FormFields = ({
             <Select
               tabIndex={1}
               css={{ zIndex: theme.zIndices[1] }}
-              options={pages.folders.filter(
-                // Prevent selecting yourself as a parent
-                ({ id }) => folderId !== id
-              )}
+              options={filterSelfAndChildren(folderId, pages.folders)}
               getValue={(folder) => folder.id}
               getLabel={(folder) => folder.name}
               value={pages.folders.find(

@@ -9,6 +9,7 @@ import {
   registerFolderChildMutable,
   reparentOrphansMutable,
   toTreeData,
+  filterSelfAndChildren,
 } from "./page-utils";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import type { Folder } from "@webstudio-is/sdk";
@@ -465,5 +466,33 @@ describe("deleteFolderWithChildrenMutable", () => {
       folderIds: ["1", "2", "3"],
       pageIds: ["page1"],
     });
+  });
+});
+
+describe("filterSelfAndChildren", () => {
+  const folders = [
+    {
+      id: "1",
+      name: "1",
+      slug: "1",
+      children: ["2"],
+    },
+    {
+      id: "2",
+      name: "2",
+      slug: "2",
+      children: ["page1"],
+    },
+    {
+      id: "3",
+      name: "3",
+      slug: "3",
+      children: [],
+    },
+  ];
+
+  test("filter self and child folders", () => {
+    const result = filterSelfAndChildren("1", folders);
+    expect(result).toEqual([folders[2]]);
   });
 });

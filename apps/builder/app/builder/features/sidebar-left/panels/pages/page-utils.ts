@@ -275,3 +275,16 @@ export const deleteFolderWithChildrenMutable = (
     pageIds,
   };
 };
+
+/**
+ * Filter out folders that are children of the current folder or the current folder itself.
+ */
+export const filterSelfAndChildren = (
+  folderId: Folder["id"],
+  folders: Array<Folder>
+) => {
+  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
+  return folders.filter((folder) => {
+    return folderIds.includes(folder.id) === false;
+  });
+};
