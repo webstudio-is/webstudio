@@ -102,10 +102,15 @@ const ProjectMeta = z.object({
   code: z.string().optional(),
 });
 
+const ProjectRedirects = z.record(z.string());
+
 const ProjectSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
+  redirects: ProjectRedirects.optional(),
 });
+
+export type ProjectRedirects = z.infer<typeof ProjectRedirects>;
 
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 

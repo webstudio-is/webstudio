@@ -25,9 +25,11 @@ import { useIds } from "~/shared/form-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "../ai/hooks/effect-event";
 import type { Pages } from "@webstudio-is/sdk";
+import { ProjectRedirectionSettings } from "./project-redirects";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type ProjectMeta = NonNullable<Pages["meta"]>;
-type ProjectSettings = NonNullable<Pages["settings"]>;
+export type ProjectSettings = NonNullable<Pages["settings"]>;
 
 const imgStyle = css({
   width: 72,
@@ -228,11 +230,17 @@ const ProjectSettingsView = () => {
             my: theme.spacing[5],
           }}
         >
-          <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />
+          <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />\
           <ProjectAdvancedSettings
             settings={settings}
             onSettingsChange={setSettings}
           />
+          {isFeatureEnabled("redirects") ? (
+            <ProjectRedirectionSettings
+              settings={settings}
+              onSettingsChange={setSettings}
+            />
+          ) : null}
           <div />
         </Grid>
         {/* Title is at the end intentionally,
