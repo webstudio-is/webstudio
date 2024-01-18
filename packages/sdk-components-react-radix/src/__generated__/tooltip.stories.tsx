@@ -11,8 +11,7 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [tooltipOpen, set$tooltipOpen] = useState<any>(false);
   let onOpenChange = (open: any) => {
     tooltipOpen = open;
@@ -30,7 +29,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <Button
             data-ws-id="6"
             data-ws-component="Button"
-            className="c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l cgassre c1ndsw6v cjrlou9 c945vvj c15mffxy c1mnuzt9 c4v7k5r cvzkkb6 cym38jd cqimob0 c2tr68t cjdtj3f c1mfk609 c121vm9z cwry1sa c1b8xvex c1y5f9qa cjw7gx9 c1peybss chh2z1n c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l c1srwcmr c1grhw0w c8xqq0k cjs8iie"
+            className="c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 ck2qarh c1nxbatd caktpzb c1bm526f c110hgy6 c1oai8p0 clo3r8o cw9oyzl cuqxbts cg19ih8 c1479lj6 comq4ym c1qx3pju cut8gip c1qjvju3 c18kkil c1c2uk29 c1x1m3cj cey1d5i cbnv1sn co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1jirpm3 ce92j53 c1dr421o c14ytp9r"
           >
             {"Button"}
           </Button>
@@ -38,7 +37,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         <TooltipContent
           data-ws-id="8"
           data-ws-component="TooltipContent"
-          className="c1wyidsg c1e2gixt cym38jd cqimob0 c2tr68t cjdtj3f c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l cgassre c1ndsw6v cjrlou9 c945vvj c4mw8gp c1kc4g4w c1hi2fgx cs5tzic cl10cx8 c1mfk609 c121vm9z cj0w9yo ci3o5ma"
+          className="c173yyao c1p3lwwv cuqxbts cg19ih8 c1479lj6 comq4ym c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 ck2qarh c1nxbatd caktpzb c1bm526f c1rt44f4 c16g5416 c111au61 ck4c8na c1mbhour c1qx3pju cut8gip cwi0ez9 cpbhzvr"
         >
           <Text data-ws-id="10" data-ws-component="Text">
             {"The text you can edit"}
@@ -190,199 +189,148 @@ html {margin: 0; display: grid; min-height: 100%}
     min-height: 1em
   }
 }@media all {
-  .c1inucbi {
+  .c17al2u0 {
     border-top-style: solid
   }
-  .c1dab7w1 {
+  .c1ufcra4 {
     border-right-style: solid
   }
-  .c1uf7v01 {
+  .c17gos5d {
     border-bottom-style: solid
   }
-  .czynn8e {
+  .cn4f13s {
     border-left-style: solid
   }
-  .c6z96ps {
+  .c1wic2il {
     border-top-color: rgba(226, 232, 240, 1)
   }
-  .c9t5qyz {
+  .cdem58j {
     border-right-color: rgba(226, 232, 240, 1)
   }
-  .c1x5uwe6 {
+  .c102tttv {
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  .csnt51l {
+  .cb204z1 {
     border-left-color: rgba(226, 232, 240, 1)
   }
-  .cgassre {
+  .ck2qarh {
     border-top-width: 1px
   }
-  .c1ndsw6v {
+  .c1nxbatd {
     border-right-width: 1px
   }
-  .cjrlou9 {
+  .caktpzb {
     border-bottom-width: 1px
   }
-  .c945vvj {
+  .c1bm526f {
     border-left-width: 1px
   }
-  .c15mffxy {
+  .c110hgy6 {
     background-color: rgba(255, 255, 255, 0.8)
   }
-  .c1mnuzt9 {
+  .c1oai8p0 {
     display: inline-flex
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .cvzkkb6 {
+  .cw9oyzl {
     justify-content: center
   }
-  .cym38jd {
+  .cuqxbts {
     border-top-left-radius: 0.375rem
   }
-  .cqimob0 {
+  .cg19ih8 {
     border-top-right-radius: 0.375rem
   }
-  .c2tr68t {
+  .c1479lj6 {
     border-bottom-right-radius: 0.375rem
   }
-  .cjdtj3f {
+  .comq4ym {
     border-bottom-left-radius: 0.375rem
   }
-  .c1mfk609 {
+  .c1qx3pju {
     font-size: 0.875rem
   }
-  .c121vm9z {
+  .cut8gip {
     line-height: 1.25rem
   }
-  .cwry1sa {
+  .c1qjvju3 {
     font-weight: 500
   }
-  .c1b8xvex {
+  .c18kkil {
     height: 2.5rem
   }
-  .c1y5f9qa {
+  .c1c2uk29 {
     padding-left: 1rem
   }
-  .cjw7gx9 {
+  .c1x1m3cj {
     padding-right: 1rem
   }
-  .c1peybss {
+  .cey1d5i {
     padding-top: 0.5rem
   }
-  .chh2z1n {
+  .cbnv1sn {
     padding-bottom: 0.5rem
   }
-  .c1t6bql4:focus-visible {
+  .co0lfwl:focus-visible {
     outline-width: 2px
   }
-  .czph7hf:focus-visible {
+  .c1kn3u98:focus-visible {
     outline-style: solid
   }
-  .cncn1ro:focus-visible {
+  .c2odgnt:focus-visible {
     outline-color: transparent
   }
-  .cb270vo:focus-visible {
+  .chlvjga:focus-visible {
     outline-offset: 2px
   }
-  .c1rgsd1l:focus-visible {
+  .c1jx7vpr:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  .c1srwcmr:disabled {
+  .c1jirpm3:disabled {
     pointer-events: none
   }
-  .c1grhw0w:disabled {
+  .ce92j53:disabled {
     opacity: 0.5
   }
-  .c8xqq0k:hover {
+  .c1dr421o:hover {
     background-color: rgba(241, 245, 249, 0.9)
   }
-  .cjs8iie:hover {
+  .c14ytp9r:hover {
     color: rgba(15, 23, 42, 1)
   }
-  .c1wyidsg {
+  .c173yyao {
     z-index: 50
   }
-  .c1e2gixt {
+  .c1p3lwwv {
     overflow: hidden
   }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1dab7w1 {
-    border-right-style: solid
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .czynn8e {
-    border-left-style: solid
-  }
-  .c6z96ps {
-    border-top-color: rgba(226, 232, 240, 1)
-  }
-  .c9t5qyz {
-    border-right-color: rgba(226, 232, 240, 1)
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .csnt51l {
-    border-left-color: rgba(226, 232, 240, 1)
-  }
-  .cgassre {
-    border-top-width: 1px
-  }
-  .c1ndsw6v {
-    border-right-width: 1px
-  }
-  .cjrlou9 {
-    border-bottom-width: 1px
-  }
-  .c945vvj {
-    border-left-width: 1px
-  }
-  .c4mw8gp {
+  .c1rt44f4 {
     background-color: rgba(255, 255, 255, 1)
   }
-  .c1kc4g4w {
+  .c16g5416 {
     padding-left: 0.75rem
   }
-  .c1hi2fgx {
+  .c111au61 {
     padding-right: 0.75rem
   }
-  .cs5tzic {
+  .ck4c8na {
     padding-top: 0.375rem
   }
-  .cl10cx8 {
+  .c1mbhour {
     padding-bottom: 0.375rem
   }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .cj0w9yo {
+  .cwi0ez9 {
     color: rgba(2, 8, 23, 1)
   }
-  .ci3o5ma {
+  .cpbhzvr {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

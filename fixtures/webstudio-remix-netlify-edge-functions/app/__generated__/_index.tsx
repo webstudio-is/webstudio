@@ -2,14 +2,15 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import { useResource } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Heading as Heading,
   Text as Text,
 } from "@webstudio-is/sdk-components-react";
 
+import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
 export const pageData: PageData = {
@@ -29,8 +30,7 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   return (
     <Body data-ws-id="MMimeobf_zi4ZkRGXapju" data-ws-component="Body">
       <Heading data-ws-id="MYDt0guk1-vzc7yzqyN6A" data-ws-component="Heading">

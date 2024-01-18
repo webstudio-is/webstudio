@@ -301,7 +301,8 @@ export const generatePageComponent = ({
         dataSource.name
       );
       // cast to any to fix accessing fields from unknown error
-      generatedDataSources += `let ${valueName}: any = _props.resources["${resourceName}"]\n`;
+      const resourceNameString = JSON.stringify(resourceName);
+      generatedDataSources += `let ${valueName} = useResource(${resourceNameString})\n`;
     }
   }
 
@@ -327,8 +328,7 @@ export const generatePageComponent = ({
 
   let generatedComponent = "";
   generatedComponent += `type Params = Record<string, string | undefined>\n`;
-  generatedComponent += `type Resources = Record<string, unknown>\n`;
-  generatedComponent += `const Page = (_props: { params: Params, resources: Resources }) => {\n`;
+  generatedComponent += `const Page = (_props: { params: Params }) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

@@ -1,4 +1,4 @@
-import { createContext } from "react";
+import { createContext, useContext } from "react";
 import type { Page } from "@webstudio-is/sdk";
 import type { ImageLoader } from "@webstudio-is/image";
 
@@ -38,10 +38,17 @@ export const ReactSdkContext = createContext<
      * always empty for builder which handle anchor clicks globally
      */
     pagesPaths: Set<Page["path"]>;
+    resources: Record<string, any>;
   }
 >({
   assetBaseUrl: "/",
   imageBaseUrl: "/",
   imageLoader: ({ src }) => src,
   pagesPaths: new Set(),
+  resources: {},
 });
+
+export const useResource = (name: string) => {
+  const { resources } = useContext(ReactSdkContext);
+  return resources[name];
+};

@@ -29,8 +29,7 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "project-id";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   return <></>;
 };
 

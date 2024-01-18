@@ -16,7 +16,7 @@ export {
 } from "./components/component-meta";
 export * from "./embed-template";
 export * from "./props";
-export { type Params, ReactSdkContext } from "./context";
+export * from "./context";
 export {
   validateExpression,
   encodeDataSourceVariable,

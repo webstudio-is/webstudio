@@ -298,9 +298,10 @@ const Outlet = () => {
         assetBaseUrl,
         imageBaseUrl,
         pagesPaths,
+        resources,
       }}
     >
-      <Page params={params} resources={resources} />
+      <Page params={params} />
     </ReactSdkContext.Provider>
   );
 };
