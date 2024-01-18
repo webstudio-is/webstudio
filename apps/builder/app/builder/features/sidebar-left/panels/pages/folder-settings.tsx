@@ -8,7 +8,6 @@ import { Folder, Pages } from "@webstudio-is/sdk";
 import {
   theme,
   Button,
-  Box,
   Label,
   InputErrorsTooltip,
   Tooltip,
@@ -43,6 +42,7 @@ import {
   deletePage,
 } from "./page-utils";
 import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
+import { Form } from "./form";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -135,15 +135,9 @@ const FormFields = ({
     return;
   }
 
-  // @todo this is a hack to get the scroll area to work needs to be removed
-  const TOPBAR_HEIGHT = 40;
-  const HEADER_HEIGHT = 40;
-  const FOOTER_HEIGHT = 24;
-  const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
-
   return (
-    <Grid>
-      <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
+    <Grid css={{ height: "100%" }}>
+      <ScrollArea>
         <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Folder Name</Label>
@@ -328,17 +322,7 @@ const NewFolderSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
 };
@@ -538,17 +522,7 @@ const FolderSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onClose?.();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onClose}>{children}</Form>
     </>
   );
 };

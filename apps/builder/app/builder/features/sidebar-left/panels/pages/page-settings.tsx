@@ -84,6 +84,7 @@ import {
   registerFolderChildMutable,
 } from "./page-utils";
 import { removeByMutable } from "~/shared/array-utils";
+import { Form } from "./form";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -332,15 +333,9 @@ const FormFields = ({
     .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
 
-  // @todo this is a hack to get the scroll area to work needs to be removed
-  const TOPBAR_HEIGHT = 40;
-  const HEADER_HEIGHT = 40;
-  const FOOTER_HEIGHT = 24;
-  const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
-
   return (
-    <Grid>
-      <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
+    <Grid css={{ height: "100%" }}>
+      <ScrollArea>
         {/**
          * ----------------------========<<<Page props>>>>========----------------------
          */}
@@ -781,17 +776,7 @@ const NewPageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
 };
@@ -1122,17 +1107,7 @@ const PageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onClose?.();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onClose}>{children}</Form>
     </>
   );
 };
