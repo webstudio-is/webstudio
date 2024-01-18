@@ -2,6 +2,7 @@ import { describe, expect, test } from "@jest/globals";
 import {
   cleanupChildRefsMutable,
   findParentFolderByChildId,
+  getAllChildFoldersAndSelf,
   isRoot,
   isSlugUsed,
   registerFolderChildMutable,
@@ -9,6 +10,7 @@ import {
   toTreeData,
 } from "./page-utils";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import type { Folder } from "@webstudio-is/sdk";
 
 describe("toTreeData", () => {
   test("initial pages always has home pages and a root folder", () => {
@@ -393,5 +395,33 @@ describe("registerFolderChildMutable", () => {
 
     expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
     expect(folder.children).toEqual(["folderId2"]);
+  });
+});
+
+describe("getAllChildFoldersAndSelf", () => {
+  const folders: Array<Folder> = [
+    {
+      id: "1",
+      name: "1",
+      slug: "1",
+      children: ["2"],
+    },
+    {
+      id: "2",
+      name: "2",
+      slug: "2",
+      children: ["3"],
+    },
+    {
+      id: "3",
+      name: "3",
+      slug: "3",
+      children: [],
+    },
+  ];
+
+  test("get nested child folders ids", () => {
+    const result = getAllChildFoldersAndSelf("1", folders);
+    expect(result).toEqual(["1", "2", "3"]);
   });
 });

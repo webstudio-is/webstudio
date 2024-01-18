@@ -190,3 +190,22 @@ export const registerFolderChildMutable = (
   cleanupChildRefsMutable(id, folders);
   parentFolder?.children.push(id);
 };
+
+/**
+ * Get all child folder ids of the current folder including itself.
+ */
+export const getAllChildFoldersAndSelf = (
+  folderId: Folder["id"],
+  folders: Array<Folder>
+) => {
+  const folder = folders.find((folder) => folder.id === folderId);
+  const children: Array<Folder["id"]> = [];
+  if (folder === undefined) {
+    return children;
+  }
+  children.push(folder.id);
+  for (const child of folder.children) {
+    children.push(...getAllChildFoldersAndSelf(child, folders));
+  }
+  return children;
+};
