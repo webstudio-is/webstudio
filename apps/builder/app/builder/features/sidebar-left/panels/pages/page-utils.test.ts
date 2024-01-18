@@ -460,7 +460,6 @@ describe("deleteFolderWithChildrenMutable", () => {
   });
 
   test("delete folder with folders and pages", () => {
-    console.log(folders);
     const result = deleteFolderWithChildrenMutable("1", folders());
     expect(result).toEqual({
       folderIds: ["1", "2", "3"],
