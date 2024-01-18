@@ -13,7 +13,7 @@ import {
   IconButton,
 } from "@webstudio-is/design-system";
 import { DeleteIcon } from "@webstudio-is/icons";
-import { useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent, useEffect } from "react";
 import type { ProjectSettings } from "./project-settings";
 
 const redirectListStyle = css({
@@ -29,8 +29,36 @@ export const ProjectRedirectionSettings = (props: {
 }) => {
   const [oldPath, setOldPath] = useState<string | null>(null);
   const [newPath, setNewPath] = useState<string | null>(null);
+  const [isValidOldPath, setIsValidOldPath] = useState<boolean>(false);
+  const [isValidNewPath, setIsValidNewPath] = useState<boolean>(false);
+
   const redirects = props.settings?.redirects ?? {};
   const redirectKeys = Object.keys(redirects);
+  const isValidRedirects =
+    oldPath !== null && isValidOldPath && newPath !== null && isValidNewPath;
+
+  useEffect(() => {
+    if (oldPath === null) {
+      return setIsValidOldPath(true);
+    }
+    return setIsValidOldPath(oldPath.charAt(0) === "/");
+  }, [oldPath]);
+
+  useEffect(() => {
+    if (newPath === null) {
+      return setIsValidNewPath(true);
+    }
+
+    if (newPath.charAt(0) === "/") {
+      return setIsValidNewPath(true);
+    }
+
+    try {
+      return setIsValidNewPath(Boolean(new URL(newPath)));
+    } catch {
+      return setIsValidNewPath(false);
+    }
+  }, [newPath]);
 
   const handleOldPathChange = (event: ChangeEvent<HTMLInputElement>) => {
     setOldPath(event.target.value);
@@ -81,6 +109,7 @@ export const ProjectRedirectionSettings = (props: {
             type="text"
             placeholder="Old path"
             value={oldPath || ""}
+            color={isValidOldPath || oldPath === "" ? undefined : "error"}
             onChange={handleOldPathChange}
           />
           <InputField
@@ -88,9 +117,17 @@ export const ProjectRedirectionSettings = (props: {
             type="text"
             placeholder="New path/url"
             value={newPath || ""}
+            color={
+              isValidNewPath === true || newPath === "" ? undefined : "error"
+            }
             onChange={handleNewPathChange}
           />
-          <Button onClick={handleAddRedirect}>Add</Button>
+          <Button
+            disabled={isValidRedirects === false || oldPath === newPath}
+            onClick={handleAddRedirect}
+          >
+            Add
+          </Button>
         </Flex>
       </Grid>
 

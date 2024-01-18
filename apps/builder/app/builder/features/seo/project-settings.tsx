@@ -230,7 +230,7 @@ const ProjectSettingsView = () => {
             my: theme.spacing[5],
           }}
         >
-          <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />\
+          <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />
           <ProjectAdvancedSettings
             settings={settings}
             onSettingsChange={setSettings}
