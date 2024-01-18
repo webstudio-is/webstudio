@@ -1,8 +1,9 @@
 import { describe, expect, test } from "@jest/globals";
 import {
   cleanupChildRefsMutable,
+  deleteFolderWithChildrenMutable,
   findParentFolderByChildId,
-  getAllChildFoldersAndSelf,
+  getAllChildrenAndSelf,
   isRoot,
   isSlugUsed,
   registerFolderChildMutable,
@@ -398,7 +399,7 @@ describe("registerFolderChildMutable", () => {
   });
 });
 
-describe("getAllChildFoldersAndSelf", () => {
+describe("getAllChildrenAndSelf", () => {
   const folders: Array<Folder> = [
     {
       id: "1",
@@ -410,7 +411,40 @@ describe("getAllChildFoldersAndSelf", () => {
       id: "2",
       name: "2",
       slug: "2",
-      children: ["3"],
+      children: ["3", "page1"],
+    },
+    {
+      id: "3",
+      name: "3",
+      slug: "3",
+      children: ["page2"],
+    },
+  ];
+
+  test("get nested folders", () => {
+    const result = getAllChildrenAndSelf("1", folders, "folder");
+    expect(result).toEqual(["1", "2", "3"]);
+  });
+
+  test("get nested pages", () => {
+    const result = getAllChildrenAndSelf("1", folders, "page");
+    expect(result).toEqual(["page2", "page1"]);
+  });
+});
+
+describe("deleteFolderWithChildrenMutable", () => {
+  const folders = (): Array<Folder> => [
+    {
+      id: "1",
+      name: "1",
+      slug: "1",
+      children: ["2"],
+    },
+    {
+      id: "2",
+      name: "2",
+      slug: "2",
+      children: ["3", "page1"],
     },
     {
       id: "3",
@@ -420,8 +454,17 @@ describe("getAllChildFoldersAndSelf", () => {
     },
   ];
 
-  test("get nested child folders ids", () => {
-    const result = getAllChildFoldersAndSelf("1", folders);
-    expect(result).toEqual(["1", "2", "3"]);
+  test("delete empty folder", () => {
+    const result = deleteFolderWithChildrenMutable("3", folders());
+    expect(result).toEqual({ folderIds: ["3"], pageIds: [] });
+  });
+
+  test("delete folder with folders and pages", () => {
+    console.log(folders);
+    const result = deleteFolderWithChildrenMutable("1", folders());
+    expect(result).toEqual({
+      folderIds: ["1", "2", "3"],
+      pageIds: ["page1"],
+    });
   });
 });

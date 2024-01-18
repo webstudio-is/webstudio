@@ -1,5 +1,18 @@
 import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
-import { type Page, Pages, type Folder } from "@webstudio-is/sdk";
+import {
+  type Page,
+  Pages,
+  type Folder,
+  findPageByIdOrPath,
+} from "@webstudio-is/sdk";
+import { removeByMutable } from "~/shared/array-utils";
+import { deleteInstance } from "~/shared/instance-utils";
+import {
+  $pages,
+  $selectedInstanceSelector,
+  $selectedPageId,
+} from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 
 type TreePage = {
   type: "page";
@@ -194,18 +207,71 @@ export const registerFolderChildMutable = (
 /**
  * Get all child folder ids of the current folder including itself.
  */
-export const getAllChildFoldersAndSelf = (
+export const getAllChildrenAndSelf = (
+  id: Folder["id"] | Page["id"],
+  folders: Array<Folder>,
+  filter: "folder" | "page"
+) => {
+  const child = folders.find((folder) => folder.id === id);
+  const children: Array<Folder["id"]> = [];
+  const type = child === undefined ? "page" : "folder";
+
+  if (type === filter) {
+    children.push(id);
+  }
+
+  if (child) {
+    for (const childId of child.children) {
+      children.push(...getAllChildrenAndSelf(childId, folders, filter));
+    }
+  }
+  return children;
+};
+
+/**
+ * Deletes a page.
+ */
+export const deletePage = (pageId: Page["id"]) => {
+  const pages = $pages.get();
+  if (pages === undefined) {
+    return;
+  }
+  // deselect page before deleting to avoid flash of content
+  if ($selectedPageId.get() === pageId) {
+    $selectedPageId.set(pages.homePage.id);
+    $selectedInstanceSelector.set(undefined);
+  }
+  const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
+  if (rootInstanceId !== undefined) {
+    deleteInstance([rootInstanceId]);
+  }
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    removeByMutable(pages.pages, (page) => page.id === pageId);
+    cleanupChildRefsMutable(pageId, pages.folders);
+  });
+};
+
+/**
+ * Deletes folder and child folders.
+ * Doesn't delete pages, only returns pageIds.
+ */
+export const deleteFolderWithChildrenMutable = (
   folderId: Folder["id"],
   folders: Array<Folder>
 ) => {
-  const folder = folders.find((folder) => folder.id === folderId);
-  const children: Array<Folder["id"]> = [];
-  if (folder === undefined) {
-    return children;
-  }
-  children.push(folder.id);
-  for (const child of folder.children) {
-    children.push(...getAllChildFoldersAndSelf(child, folders));
-  }
-  return children;
+  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
+  const pageIds = getAllChildrenAndSelf(folderId, folders, "page");
+
+  folderIds.forEach((folderId) => {
+    cleanupChildRefsMutable(folderId, folders);
+    removeByMutable(folders, (folder) => folder.id === folderId);
+  });
+
+  return {
+    folderIds,
+    pageIds,
+  };
 };

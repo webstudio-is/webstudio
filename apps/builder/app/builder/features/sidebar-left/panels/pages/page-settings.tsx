@@ -60,12 +60,11 @@ import {
   $pages,
   $project,
   $selectedInstanceSelector,
-  $selectedPageId,
   $dataSources,
   $dataSourceVariables,
+  $selectedPageId,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
-import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
 import { ImageControl } from "~/builder/features/seo/image-control";
@@ -84,6 +83,7 @@ import {
   findParentFolderByChildId,
   registerFolderChildMutable,
 } from "./page-utils";
+import { removeByMutable } from "~/shared/array-utils";
 
 const fieldDefaultValues = {
   name: "Untitled",

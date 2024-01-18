@@ -29,7 +29,7 @@ import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import {
-  getAllChildFoldersAndSelf,
+  getAllChildrenAndSelf,
   reparentOrphansMutable,
   toTreeData,
   type TreeData,
@@ -189,11 +189,11 @@ const PagesPanel = ({
   );
 
   const selectTreeNode = useCallback(
-    ([itemId]: ItemSelector, all: boolean) => {
+    ([itemId]: ItemSelector, all?: boolean) => {
       const folders = pages?.folders ?? [];
       if (isFolder(itemId, folders)) {
         const items = all
-          ? getAllChildFoldersAndSelf(itemId, folders)
+          ? getAllChildrenAndSelf(itemId, folders, "folder")
           : [itemId];
         const nextCollapsedItems = new Set(collapsedItems);
         items.forEach((itemId) => {
@@ -282,7 +282,7 @@ const PagesPanel = ({
               return;
             }
             const items = all
-              ? getAllChildFoldersAndSelf(itemId, pages.folders)
+              ? getAllChildrenAndSelf(itemId, pages.folders, "folder")
               : [itemId];
             items.forEach((itemId) => {
               value

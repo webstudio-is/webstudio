@@ -18,6 +18,11 @@ import {
   rawTheme,
   Flex,
   Select,
+  Dialog,
+  DialogContent,
+  Text,
+  DialogClose,
+  DialogTitle,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -30,12 +35,12 @@ import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { removeByMutable } from "~/shared/array-utils";
 import {
   findParentFolderByChildId,
-  cleanupChildRefsMutable,
   isSlugUsed,
   registerFolderChildMutable,
+  deleteFolderWithChildrenMutable,
+  deletePage,
 } from "./page-utils";
 import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
 
@@ -188,7 +193,7 @@ const FormFields = ({
               <Flex align="center" css={{ gap: theme.spacing[3] }}>
                 Slug
                 <Tooltip
-                  content={"@todo tooltip content for slug"}
+                  content={"Slug will be used as part of the path to the page"}
                   variant="wrapped"
                 >
                   <HelpIcon
@@ -382,13 +387,15 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
 };
 
 const deleteFolder = (folderId: Folder["id"]) => {
-  // @todo ask them if they want to delete all pages as well.
   serverSyncStore.createTransaction([$pages], (pages) => {
     if (pages === undefined) {
       return;
     }
-    cleanupChildRefsMutable(folderId, pages.folders);
-    removeByMutable(pages.folders, (folder) => folder.id === folderId);
+    const { pageIds } = deleteFolderWithChildrenMutable(
+      folderId,
+      pages.folders
+    );
+    pageIds.forEach(deletePage);
   });
 };
 
@@ -448,17 +455,21 @@ export const FolderSettings = ({
     updateFolder(folderId, unsavedValues);
   });
 
-  const hanldeDelete = () => {
-    deleteFolder(folderId);
-    onDelete();
-  };
-
   if (folder === undefined) {
     return null;
   }
 
+  const handleDelete = () => {
+    deleteFolder(folderId);
+    onDelete();
+  };
+
   return (
-    <FolderSettingsView onClose={onClose} onDelete={hanldeDelete}>
+    <FolderSettingsView
+      folder={folder}
+      onClose={onClose}
+      onDelete={handleDelete}
+    >
       <FormFields
         folderId={folderId}
         errors={errors}
@@ -473,11 +484,24 @@ const FolderSettingsView = ({
   onDelete,
   onClose,
   children,
+  folder,
 }: {
   onDelete: () => void;
   onClose: () => void;
   children: JSX.Element;
+  folder: Folder;
 }) => {
+  const [showDeleteConfirmation, setShowDeleteConfirmation] =
+    useState<boolean>(false);
+
+  const hanldeRequestDelete = () => {
+    if (folder.children.length > 0) {
+      setShowDeleteConfirmation(true);
+      return;
+    }
+    onDelete();
+  };
+
   return (
     <>
       <Header
@@ -488,7 +512,7 @@ const FolderSettingsView = ({
               <Button
                 color="ghost"
                 prefix={<TrashIcon />}
-                onClick={onDelete}
+                onClick={hanldeRequestDelete}
                 aria-label="Delete folder"
                 tabIndex={2}
               />
@@ -502,6 +526,15 @@ const FolderSettingsView = ({
                 tabIndex={2}
               />
             </Tooltip>
+            {showDeleteConfirmation && (
+              <DeleteConfirmationDialog
+                folder={folder}
+                onClose={() => {
+                  setShowDeleteConfirmation(false);
+                }}
+                onConfirm={onDelete}
+              />
+            )}
           </>
         }
       />
@@ -517,5 +550,50 @@ const FolderSettingsView = ({
         </form>
       </Box>
     </>
+  );
+};
+
+type DeleteConfirmationDialogProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  folder: Folder;
+};
+
+const DeleteConfirmationDialog = ({
+  onClose,
+  onConfirm,
+  folder,
+}: DeleteConfirmationDialogProps) => {
+  return (
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent css={{ zIndex: theme.zIndices[1] }}>
+        <Flex gap="3" direction="column" css={{ padding: theme.spacing[9] }}>
+          <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
+          <Flex direction="rowReverse" gap="2">
+            <DialogClose asChild>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  onConfirm();
+                }}
+              >
+                Delete
+              </Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+        <DialogTitle>Delete confirmation</DialogTitle>
+      </DialogContent>
+    </Dialog>
   );
 };
