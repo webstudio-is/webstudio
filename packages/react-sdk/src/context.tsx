@@ -38,6 +38,8 @@ export const ReactSdkContext = createContext<
      * always empty for builder which handle anchor clicks globally
      */
     pagesPaths: Set<Page["path"]>;
+    // resources need to be any to support accessing unknown fields without extra checks
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resources: Record<string, any>;
   }
 >({
