@@ -471,6 +471,9 @@ test("insert template data with only new style sources", () => {
           value: { type: "keyword", value: "green" },
         },
       ],
+      assets: [],
+      resources: [],
+      breakpoints: [],
     },
     { parentSelector: ["body"], position: "end" }
   );
@@ -1053,6 +1056,7 @@ describe("get instances slice", () => {
 
 describe("insert instances slice copy", () => {
   const emptySlice = {
+    children: [],
     instances: [
       {
         id: "body",
@@ -1066,6 +1070,7 @@ describe("insert instances slice copy", () => {
     breakpoints: [],
     styles: [],
     dataSources: [],
+    resources: [],
     props: [],
     assets: [],
   };

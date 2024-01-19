@@ -15,15 +15,14 @@ import {
   DataSources,
   Props,
   DataSource,
-  Prop,
   Breakpoint,
   Pages,
+  type WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
-  type EmbedTemplateData,
   decodeDataSourceVariable,
   validateExpression,
   encodeDataSourceVariable,
@@ -301,7 +300,7 @@ export const findClosestDroppableTarget = (
 };
 
 export const insertTemplateData = (
-  templateData: EmbedTemplateData,
+  templateData: WebstudioFragment,
   dropTarget: DroppableTarget
 ) => {
   const {
@@ -554,18 +553,9 @@ const traverseStyleValue = (
   value satisfies never;
 };
 
-type InstancesSlice = {
-  instances: Instance[];
-  styleSourceSelections: StyleSourceSelection[];
-  styleSources: StyleSource[];
-  breakpoints: Breakpoint[];
-  styles: StyleDecl[];
-  dataSources: DataSource[];
-  props: Prop[];
-  assets: Asset[];
-};
-
-export const getInstancesSlice = (rootInstanceId: string) => {
+export const getInstancesSlice = (
+  rootInstanceId: string
+): WebstudioFragment => {
   const assets = $assets.get();
   const instances = $instances.get();
   const dataSources = $dataSources.get();
@@ -709,12 +699,14 @@ export const getInstancesSlice = (rootInstanceId: string) => {
   }
 
   return {
+    children: [{ type: "id", value: rootInstanceId }],
     instances: slicedInstances,
     styleSourceSelections: slicedStyleSourceSelections,
     styleSources: Array.from(slicedStyleSources.values()),
     breakpoints: Array.from(slicedBreapoints.values()),
     styles: slicedStyles,
     dataSources: Array.from(slicedDataSources.values()),
+    resources: [],
     props: Array.from(slicedProps.values()),
     assets: slicedAssets,
   };
@@ -801,7 +793,7 @@ export const insertInstancesSliceCopy = ({
   availableDataSources,
   beforeTransactionEnd,
 }: {
-  slice: InstancesSlice;
+  slice: WebstudioFragment;
   availableDataSources: Set<DataSource["id"]>;
   beforeTransactionEnd?: (
     rootInstanceId: Instance["id"],

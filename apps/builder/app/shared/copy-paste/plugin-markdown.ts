@@ -2,8 +2,11 @@ import { nanoid } from "nanoid";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import type { Breakpoint, Instance } from "@webstudio-is/sdk";
-import type { EmbedTemplateData } from "@webstudio-is/react-sdk";
+import type {
+  Breakpoint,
+  Instance,
+  WebstudioFragment,
+} from "@webstudio-is/sdk";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
@@ -49,7 +52,7 @@ type Options = { generateId?: typeof nanoid };
 type Root = ReturnType<typeof fromMarkdown>;
 
 const toInstanceData = (
-  data: EmbedTemplateData,
+  data: WebstudioFragment,
   breakpointId: Breakpoint["id"],
   ast: { children: Root["children"] },
   options: Options = {}
@@ -194,14 +197,17 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (baseBreakpoint === undefined) {
     return;
   }
-  const data: EmbedTemplateData = {
+  const data: WebstudioFragment = {
     children: [],
     instances: [],
     props: [],
+    breakpoints: [],
     styles: [],
     styleSources: [],
     styleSourceSelections: [],
     dataSources: [],
+    resources: [],
+    assets: [],
   };
   data.children = toInstanceData(data, baseBreakpoint.id, ast, options);
   return data;
