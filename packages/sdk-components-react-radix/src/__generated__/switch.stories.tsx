@@ -3,8 +3,7 @@ import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [switchChecked, set$switchChecked] = useState<any>(false);
   let onCheckedChange = (checked: any) => {
     switchChecked = checked;
@@ -17,12 +16,12 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         data-ws-component="Switch"
         checked={switchChecked}
         onCheckedChange={onCheckedChange}
-        className="c1mnuzt9 c1d1at8d c12hfef4 c1qmz361 c1c97wd6 c4v7k5r c17f8p6x c15ce0qo c1yisi8r cpvsov c1inucbi c1dab7w1 c1uf7v01 czynn8e cnwyako cthomhq c1rxblly c1chcr7b c1jdmvgd cro9q3k cunuc6r c1gtx6ev cu8n5i6 cqhjzs2 cxcp0y5 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l cegrmbm c1grhw0w ccop5vc c10u8nhz"
+        className="c1oai8p0 cnd1wdj cuh3w30 c11hichb c95zj28 clo3r8o c1o2cngd c1riwd65 ci2hmcl c1byz2lk c17al2u0 c1ufcra4 c17gos5d cn4f13s c1cofqbt c85ds3m c1e8k408 c1uosf6b chxhflr cc4jebi c4zy9sv c18xqxv1 cpr3ke2 c1wmnqxw c1b503n2 co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1oa7gr0 ce92j53 c1939zof c14mirta"
       >
         <SwitchThumb
           data-ws-id="6"
           data-ws-component="SwitchThumb"
-          className="c18myu9o c13oituv ckaw9ej c16fb3rt c17f8p6x c15ce0qo c1yisi8r cpvsov c15mffxy cbzcu1y c119ylpf cqhjzs2 cxcp0y5 c166bn31 cgmn562"
+          className="c1qxqj1w c1say2x3 c1aacs57 c1u42gcv c1o2cngd c1riwd65 ci2hmcl c1byz2lk c110hgy6 c1ii9nza c89l9bb c1wmnqxw c1b503n2 c8w8p8q ck4sd1p"
         />
       </Switch>
     </Box>
@@ -175,157 +174,139 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px
   }
 }@media all {
-  .c1mnuzt9 {
+  .c1oai8p0 {
     display: inline-flex
   }
-  .c1d1at8d {
+  .cnd1wdj {
     height: 24px
   }
-  .c12hfef4 {
+  .cuh3w30 {
     width: 44px
   }
-  .c1qmz361 {
+  .c11hichb {
     flex-grow: 0
   }
-  .c1c97wd6 {
+  .c95zj28 {
     cursor: pointer
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .c17f8p6x {
+  .c1o2cngd {
     border-top-left-radius: 9999px
   }
-  .c15ce0qo {
+  .c1riwd65 {
     border-top-right-radius: 9999px
   }
-  .c1yisi8r {
+  .ci2hmcl {
     border-bottom-right-radius: 9999px
   }
-  .cpvsov {
+  .c1byz2lk {
     border-bottom-left-radius: 9999px
   }
-  .c1inucbi {
+  .c17al2u0 {
     border-top-style: solid
   }
-  .c1dab7w1 {
+  .c1ufcra4 {
     border-right-style: solid
   }
-  .c1uf7v01 {
+  .c17gos5d {
     border-bottom-style: solid
   }
-  .czynn8e {
+  .cn4f13s {
     border-left-style: solid
   }
-  .cnwyako {
+  .c1cofqbt {
     border-top-color: transparent
   }
-  .cthomhq {
+  .c85ds3m {
     border-right-color: transparent
   }
-  .c1rxblly {
+  .c1e8k408 {
     border-bottom-color: transparent
   }
-  .c1chcr7b {
+  .c1uosf6b {
     border-left-color: transparent
   }
-  .c1jdmvgd {
+  .chxhflr {
     border-top-width: 2px
   }
-  .cro9q3k {
+  .cc4jebi {
     border-right-width: 2px
   }
-  .cunuc6r {
+  .c4zy9sv {
     border-bottom-width: 2px
   }
-  .c1gtx6ev {
+  .c18xqxv1 {
     border-left-width: 2px
   }
-  .cu8n5i6 {
+  .cpr3ke2 {
     transition-property: all
   }
-  .cqhjzs2 {
+  .c1wmnqxw {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
   }
-  .cxcp0y5 {
+  .c1b503n2 {
     transition-duration: 150ms
   }
-  .c1t6bql4:focus-visible {
+  .co0lfwl:focus-visible {
     outline-width: 2px
   }
-  .czph7hf:focus-visible {
+  .c1kn3u98:focus-visible {
     outline-style: solid
   }
-  .cncn1ro:focus-visible {
+  .c2odgnt:focus-visible {
     outline-color: transparent
   }
-  .cb270vo:focus-visible {
+  .chlvjga:focus-visible {
     outline-offset: 2px
   }
-  .c1rgsd1l:focus-visible {
+  .c1jx7vpr:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  .cegrmbm:disabled {
+  .c1oa7gr0:disabled {
     cursor: not-allowed
   }
-  .c1grhw0w:disabled {
+  .ce92j53:disabled {
     opacity: 0.5
   }
-  .ccop5vc[data-state=checked] {
+  .c1939zof[data-state=checked] {
     background-color: rgba(15, 23, 42, 1)
   }
-  .c10u8nhz[data-state=unchecked] {
+  .c14mirta[data-state=unchecked] {
     background-color: rgba(226, 232, 240, 1)
   }
-  .c18myu9o {
+  .c1qxqj1w {
     pointer-events: none
   }
-  .c13oituv {
+  .c1say2x3 {
     display: block
   }
-  .ckaw9ej {
+  .c1aacs57 {
     height: 1.25rem
   }
-  .c16fb3rt {
+  .c1u42gcv {
     width: 1.25rem
   }
-  .c17f8p6x {
-    border-top-left-radius: 9999px
-  }
-  .c15ce0qo {
-    border-top-right-radius: 9999px
-  }
-  .c1yisi8r {
-    border-bottom-right-radius: 9999px
-  }
-  .cpvsov {
-    border-bottom-left-radius: 9999px
-  }
-  .c15mffxy {
+  .c110hgy6 {
     background-color: rgba(255, 255, 255, 0.8)
   }
-  .cbzcu1y {
+  .c1ii9nza {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)
   }
-  .c119ylpf {
+  .c89l9bb {
     transition-property: transform
   }
-  .cqhjzs2 {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
-  }
-  .cxcp0y5 {
-    transition-duration: 150ms
-  }
-  .c166bn31[data-state=checked] {
+  .c8w8p8q[data-state=checked] {
     transform: translateX(20px)
   }
-  .cgmn562[data-state=unchecked] {
+  .ck4sd1p[data-state=unchecked] {
     transform: translateX(0px)
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

@@ -18,8 +18,7 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [menuValue, set$menuValue] = useState<any>("");
   let onValueChange = (value: any) => {
     menuValue = value;
@@ -32,12 +31,12 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         data-ws-component="NavigationMenu"
         value={menuValue}
         onValueChange={onValueChange}
-        className="cnhoj7b c1a0z5in"
+        className="crmoyyg cvxi4jc"
       >
         <NavigationMenuList
           data-ws-id="6"
           data-ws-component="NavigationMenuList"
-          className="c1hxtwzc c1j0bzjz cbjj14v c15sjadq c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c6gk6ar cn4ngym c1ee1pe1 c1xcrn9h csrd2h5 c4v7k5r cvzkkb6 cu0fd6l c8098d3"
+          className="c11ubft8 c19nnvu2 c6epq1b cniw9w8 cawkm6w clp87x0 cvrokas crk8tjo c11xgi9i c1yubncr c1iq6hwp cv7p8tf cq9q4za clo3r8o cw9oyzl csjyi15 c1xv9rff"
         >
           <NavigationMenuItem
             data-ws-id="8"
@@ -51,7 +50,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               <Button
                 data-ws-id="10"
                 data-ws-component="Button"
-                className="c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l c1v4k4ip c2iozhh c1j5pqo1 cmqevnc cvxnx00 c1mnuzt9 c4v7k5r cvzkkb6 cym38jd cqimob0 c2tr68t cjdtj3f c1mfk609 c121vm9z cwry1sa c1b8xvex c1kc4g4w c1hi2fgx c1jrmp29 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l c1srwcmr c1grhw0w c8xqq0k cjs8iie c157d2k6"
+                className="c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 cok6gp c1ebb32d c1ed2n1f c1an30v3 ca60kt0 c1oai8p0 clo3r8o cw9oyzl cuqxbts cg19ih8 c1479lj6 comq4ym c1qx3pju cut8gip c1qjvju3 c18kkil c16g5416 c111au61 c1uw27mb co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1jirpm3 ce92j53 c1dr421o c14ytp9r c1a713iq"
               >
                 <Text data-ws-id="12" data-ws-component="Text">
                   {"About"}
@@ -59,7 +58,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                 <Box
                   data-ws-id="13"
                   data-ws-component="Box"
-                  className="ck5mafm cm547tf c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+                  className="c9je87j cwfkqjc c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
                 >
                   <HtmlEmbed
                     data-ws-id="15"
@@ -75,24 +74,24 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               data-ws-id="17"
               data-ws-component="NavigationMenuContent"
               data-ws-index="0"
-              className="c17k6ftv ci9y33x c1kb88y7 cbgnvea c1y5f9qa cjw7gx9 c1mdun74 c1bfvzwl"
+              className="cboqcgi ccq2s6t ct2k8wg c12s9tcd c1c2uk29 c1x1m3cj c17g8s4n c657y94"
             >
               <Box
                 data-ws-id="19"
                 data-ws-component="Box"
-                className="c6gk6ar cb99ak4 ctl64vj cbxivag c18gyxfs c1peybss chh2z1n"
+                className="c11xgi9i ci4ea85 c13l7myj c1jmgbvo c1qmwsx9 cey1d5i cbnv1sn"
               >
                 <Box
                   data-ws-id="21"
                   data-ws-component="Box"
-                  className="c1af0hjb c1y5f9qa cjw7gx9 c1mdun74 c1bfvzwl c1187wgd cym38jd cqimob0 c2tr68t cjdtj3f"
+                  className="csvgwzp c1c2uk29 c1x1m3cj c17g8s4n c657y94 c1fd7x2o cuqxbts cg19ih8 c1479lj6 comq4ym"
                 >
                   {""}
                 </Box>
                 <Box
                   data-ws-id="23"
                   data-ws-component="Box"
-                  className="c88y2pm c6gk6ar cb99ak4 ctl64vj c13wsd00"
+                  className="c3e36dl c11xgi9i ci4ea85 c13l7myj cfd715b"
                 >
                   <NavigationMenuLink
                     data-ws-id="25"
@@ -102,19 +101,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="26"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/sheet"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="29"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Sheet"}
                       </Text>
                       <Paragraph
                         data-ws-id="31"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "Extends the Dialog component to display content that complements the main content of the screen."
@@ -132,19 +131,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       href={
                         "https://ui.shadcn.com/docs/components/navigation-menu"
                       }
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="37"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Navigation Menu"}
                       </Text>
                       <Paragraph
                         data-ws-id="39"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {"A collection of links for navigating websites."}
                       </Paragraph>
@@ -158,19 +157,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="42"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/tabs"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="45"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Tabs"}
                       </Text>
                       <Paragraph
                         data-ws-id="47"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "A set of layered sections of content—known as tab panels—that are displayed one at a time."
@@ -194,7 +193,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               <Button
                 data-ws-id="51"
                 data-ws-component="Button"
-                className="c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l c1v4k4ip c2iozhh c1j5pqo1 cmqevnc cvxnx00 c1mnuzt9 c4v7k5r cvzkkb6 cym38jd cqimob0 c2tr68t cjdtj3f c1mfk609 c121vm9z cwry1sa c1b8xvex c1kc4g4w c1hi2fgx c1jrmp29 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l c1srwcmr c1grhw0w c8xqq0k cjs8iie c157d2k6"
+                className="c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 cok6gp c1ebb32d c1ed2n1f c1an30v3 ca60kt0 c1oai8p0 clo3r8o cw9oyzl cuqxbts cg19ih8 c1479lj6 comq4ym c1qx3pju cut8gip c1qjvju3 c18kkil c16g5416 c111au61 c1uw27mb co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1jirpm3 ce92j53 c1dr421o c14ytp9r c1a713iq"
               >
                 <Text data-ws-id="53" data-ws-component="Text">
                   {"Components"}
@@ -202,7 +201,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                 <Box
                   data-ws-id="54"
                   data-ws-component="Box"
-                  className="ck5mafm cm547tf c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+                  className="c9je87j cwfkqjc c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
                 >
                   <HtmlEmbed
                     data-ws-id="56"
@@ -218,17 +217,17 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               data-ws-id="58"
               data-ws-component="NavigationMenuContent"
               data-ws-index="1"
-              className="c17k6ftv ci9y33x c1kb88y7 cbgnvea c1y5f9qa cjw7gx9 c1mdun74 c1bfvzwl"
+              className="cboqcgi ccq2s6t ct2k8wg c12s9tcd c1c2uk29 c1x1m3cj c17g8s4n c657y94"
             >
               <Box
                 data-ws-id="60"
                 data-ws-component="Box"
-                className="c6gk6ar cb99ak4 ctl64vj c1hxtwzc c1j0bzjz cbjj14v c15sjadq"
+                className="c11xgi9i ci4ea85 c13l7myj c11ubft8 c19nnvu2 c6epq1b cniw9w8"
               >
                 <Box
                   data-ws-id="62"
                   data-ws-component="Box"
-                  className="c88y2pm c6gk6ar cb99ak4 ctl64vj c13wsd00"
+                  className="c3e36dl c11xgi9i ci4ea85 c13l7myj cfd715b"
                 >
                   <NavigationMenuLink
                     data-ws-id="64"
@@ -238,19 +237,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="65"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/accordion"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="68"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Accordion"}
                       </Text>
                       <Paragraph
                         data-ws-id="70"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "A vertically stacked set of interactive headings that each reveal a section of content."
@@ -266,19 +265,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="73"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/dialog"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="76"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Dialog"}
                       </Text>
                       <Paragraph
                         data-ws-id="78"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "A window overlaid on either the primary window or another dialog window, rendering the content underneath inert."
@@ -294,19 +293,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="81"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/collapsible"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="84"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Collapsible"}
                       </Text>
                       <Paragraph
                         data-ws-id="86"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "An interactive component which expands/collapses a panel."
@@ -318,7 +317,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                 <Box
                   data-ws-id="88"
                   data-ws-component="Box"
-                  className="c88y2pm c6gk6ar cb99ak4 ctl64vj c13wsd00"
+                  className="c3e36dl c11xgi9i ci4ea85 c13l7myj cfd715b"
                 >
                   <NavigationMenuLink
                     data-ws-id="90"
@@ -328,19 +327,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="91"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/popover"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="94"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Popover"}
                       </Text>
                       <Paragraph
                         data-ws-id="96"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "Displays rich content in a portal, triggered by a button."
@@ -356,19 +355,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="99"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/tooltip"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="102"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Tooltip"}
                       </Text>
                       <Paragraph
                         data-ws-id="104"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it."
@@ -384,19 +383,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
                       data-ws-id="107"
                       data-ws-component="Link"
                       href={"https://ui.shadcn.com/docs/components/button"}
-                      className="c1wv658c c6gk6ar c13wsd00 c1hl4mbg cu0fd6l c8098d3 cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx c16a2e8i c1y90k37 cvjxq2s chhysup c601nqx c9i3lxo c1sz664l cm8bc7h c8xqq0k cjs8iie cbt1ziu c1ci4uzu"
+                      className="c1lp1p2a c11xgi9i cfd715b cekw1i5 csjyi15 c1xv9rff cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 c17g4cws ctolsm2 crxf9g c1gfew4a cxlxl0c c1gfzcg5 cohan28 c15roejc c1dr421o c14ytp9r c11eeprv c1rbq5ju"
                     >
                       <Text
                         data-ws-id="110"
                         data-ws-component="Text"
-                        className="c1mfk609 cvjxq2s cwry1sa"
+                        className="c1qx3pju crxf9g c1qjvju3"
                       >
                         {"Button"}
                       </Text>
                       <Paragraph
                         data-ws-id="112"
                         data-ws-component="Paragraph"
-                        className="c3rzppk c17ybgbw c1u5xdcd cdf5ze5 c1e2gixt c16sc1pt c78rgey c1mxykr c1mfk609 c18mq0f5 caa8yt3"
+                        className="cawkm6w clp87x0 cvrokas crk8tjo c1p3lwwv c1ldl5ci c1rc3t1c c69w97g c1qx3pju c1ls6yv2 c1pcz91e"
                       >
                         {
                           "Displays a button or a component that looks like a button."
@@ -420,7 +419,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               <Link
                 data-ws-id="116"
                 data-ws-component="Link"
-                className="c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l c1v4k4ip c2iozhh c1j5pqo1 cmqevnc cvxnx00 c1mnuzt9 c4v7k5r cvzkkb6 cym38jd cqimob0 c2tr68t cjdtj3f c1mfk609 c121vm9z cwry1sa c1b8xvex c1kc4g4w c1hi2fgx chhysup c2a7z25 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l c1srwcmr c1grhw0w c8xqq0k cjs8iie"
+                className="c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 cok6gp c1ebb32d c1ed2n1f c1an30v3 ca60kt0 c1oai8p0 clo3r8o cw9oyzl cuqxbts cg19ih8 c1479lj6 comq4ym c1qx3pju cut8gip c1qjvju3 c18kkil c16g5416 c111au61 c1gfew4a c1hdhil0 co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1jirpm3 ce92j53 c1dr421o c14ytp9r"
               >
                 {"Standalone"}
               </Link>
@@ -430,12 +429,12 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         <Box
           data-ws-id="118"
           data-ws-component="Box"
-          className="c1kb88y7 c17k6ftv cd2po1q c6gk6ar cvzkkb6"
+          className="ct2k8wg cboqcgi coe4ay6 c11xgi9i cw9oyzl"
         >
           <NavigationMenuViewport
             data-ws-id="120"
             data-ws-component="NavigationMenuViewport"
-            className="cnhoj7b c1t5p0zw c1e2gixt cym38jd cqimob0 c2tr68t cjdtj3f c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l cgassre c1ndsw6v cjrlou9 c945vvj c4mw8gp cj0w9yo cbzcu1y c1srbwx8 cr0e7oa"
+            className="crmoyyg cg2jhpq c1p3lwwv cuqxbts cg19ih8 c1479lj6 comq4ym c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 ck2qarh c1nxbatd caktpzb c1bm526f c1rt44f4 cwi0ez9 c1ii9nza c53wwee c1daganl"
           />
         </Box>
       </NavigationMenu>
@@ -650,1723 +649,340 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px
   }
 }@media all {
-  .cnhoj7b {
+  .crmoyyg {
     position: relative
   }
-  .c1a0z5in {
+  .cvxi4jc {
     max-width: max-content
   }
-  .c1hxtwzc {
+  .c11ubft8 {
     padding-left: 0px
   }
-  .c1j0bzjz {
+  .c19nnvu2 {
     padding-right: 0px
   }
-  .cbjj14v {
+  .c6epq1b {
     padding-top: 0px
   }
-  .c15sjadq {
+  .cniw9w8 {
     padding-bottom: 0px
   }
-  .c3rzppk {
+  .cawkm6w {
     margin-left: 0px
   }
-  .c17ybgbw {
+  .clp87x0 {
     margin-right: 0px
   }
-  .c1u5xdcd {
+  .cvrokas {
     margin-top: 0px
   }
-  .cdf5ze5 {
+  .crk8tjo {
     margin-bottom: 0px
   }
-  .c6gk6ar {
+  .c11xgi9i {
     display: flex
   }
-  .cn4ngym {
+  .c1yubncr {
     flex-grow: 1
   }
-  .c1ee1pe1 {
+  .c1iq6hwp {
     flex-shrink: 1
   }
-  .c1xcrn9h {
+  .cv7p8tf {
     flex-basis: 0%
   }
-  .csrd2h5 {
+  .cq9q4za {
     list-style-type: none
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .cvzkkb6 {
+  .cw9oyzl {
     justify-content: center
   }
-  .cu0fd6l {
+  .csjyi15 {
     row-gap: 0.25rem
   }
-  .c8098d3 {
+  .c1xv9rff {
     column-gap: 0.25rem
   }
-  .c1inucbi {
+  .c17al2u0 {
     border-top-style: solid
   }
-  .c1dab7w1 {
+  .c1ufcra4 {
     border-right-style: solid
   }
-  .c1uf7v01 {
+  .c17gos5d {
     border-bottom-style: solid
   }
-  .czynn8e {
+  .cn4f13s {
     border-left-style: solid
   }
-  .c6z96ps {
+  .c1wic2il {
     border-top-color: rgba(226, 232, 240, 1)
   }
-  .c9t5qyz {
+  .cdem58j {
     border-right-color: rgba(226, 232, 240, 1)
   }
-  .c1x5uwe6 {
+  .c102tttv {
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  .csnt51l {
+  .cb204z1 {
     border-left-color: rgba(226, 232, 240, 1)
   }
-  .c1v4k4ip {
+  .cok6gp {
     border-top-width: 0px
   }
-  .c2iozhh {
+  .c1ebb32d {
     border-right-width: 0px
   }
-  .c1j5pqo1 {
+  .c1ed2n1f {
     border-bottom-width: 0px
   }
-  .cmqevnc {
+  .c1an30v3 {
     border-left-width: 0px
   }
-  .cvxnx00 {
+  .ca60kt0 {
     background-color: transparent
   }
-  .c1mnuzt9 {
+  .c1oai8p0 {
     display: inline-flex
   }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .cym38jd {
+  .cuqxbts {
     border-top-left-radius: 0.375rem
   }
-  .cqimob0 {
+  .cg19ih8 {
     border-top-right-radius: 0.375rem
   }
-  .c2tr68t {
+  .c1479lj6 {
     border-bottom-right-radius: 0.375rem
   }
-  .cjdtj3f {
+  .comq4ym {
     border-bottom-left-radius: 0.375rem
   }
-  .c1mfk609 {
+  .c1qx3pju {
     font-size: 0.875rem
   }
-  .c121vm9z {
+  .cut8gip {
     line-height: 1.25rem
   }
-  .cwry1sa {
+  .c1qjvju3 {
     font-weight: 500
   }
-  .c1b8xvex {
+  .c18kkil {
     height: 2.5rem
   }
-  .c1kc4g4w {
+  .c16g5416 {
     padding-left: 0.75rem
   }
-  .c1hi2fgx {
+  .c111au61 {
     padding-right: 0.75rem
   }
-  .c1jrmp29 {
+  .c1uw27mb {
     --navigation-menu-trigger-icon-transform: 0deg
   }
-  .c1t6bql4:focus-visible {
+  .co0lfwl:focus-visible {
     outline-width: 2px
   }
-  .czph7hf:focus-visible {
+  .c1kn3u98:focus-visible {
     outline-style: solid
   }
-  .cncn1ro:focus-visible {
+  .c2odgnt:focus-visible {
     outline-color: transparent
   }
-  .cb270vo:focus-visible {
+  .chlvjga:focus-visible {
     outline-offset: 2px
   }
-  .c1rgsd1l:focus-visible {
+  .c1jx7vpr:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  .c1srwcmr:disabled {
+  .c1jirpm3:disabled {
     pointer-events: none
   }
-  .c1grhw0w:disabled {
+  .ce92j53:disabled {
     opacity: 0.5
   }
-  .c8xqq0k:hover {
+  .c1dr421o:hover {
     background-color: rgba(241, 245, 249, 0.9)
   }
-  .cjs8iie:hover {
+  .c14ytp9r:hover {
     color: rgba(15, 23, 42, 1)
   }
-  .c157d2k6[data-state=open] {
+  .c1a713iq[data-state=open] {
     --navigation-menu-trigger-icon-transform: 180deg
   }
-  .ck5mafm {
+  .c9je87j {
     margin-left: 0.25rem
   }
-  .cm547tf {
+  .cwfkqjc {
     rotate: var(--navigation-menu-trigger-icon-transform)
   }
-  .c18dp5gp {
+  .c1pmpq0f {
     height: 1rem
   }
-  .clw3og8 {
+  .c1yafs04 {
     width: 1rem
   }
-  .c1qmz361 {
+  .c11hichb {
     flex-grow: 0
   }
-  .cu8n5i6 {
+  .cpr3ke2 {
     transition-property: all
   }
-  .cqhjzs2 {
+  .c1wmnqxw {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
   }
-  .c1498b83 {
+  .c1aw50j7 {
     transition-duration: 200ms
   }
-  .c17k6ftv {
+  .cboqcgi {
     left: 0px
   }
-  .ci9y33x {
+  .ccq2s6t {
     top: 0px
   }
-  .c1kb88y7 {
+  .ct2k8wg {
     position: absolute
   }
-  .cbgnvea {
+  .c12s9tcd {
     width: max-content
   }
-  .c1y5f9qa {
+  .c1c2uk29 {
     padding-left: 1rem
   }
-  .cjw7gx9 {
+  .c1x1m3cj {
     padding-right: 1rem
   }
-  .c1mdun74 {
+  .c17g8s4n {
     padding-top: 1rem
   }
-  .c1bfvzwl {
+  .c657y94 {
     padding-bottom: 1rem
   }
-  .c6gk6ar {
-    display: flex
-  }
-  .cb99ak4 {
+  .ci4ea85 {
     row-gap: 1rem
   }
-  .ctl64vj {
+  .c13l7myj {
     column-gap: 1rem
   }
-  .cbxivag {
+  .c1jmgbvo {
     padding-left: 0.5rem
   }
-  .c18gyxfs {
+  .c1qmwsx9 {
     padding-right: 0.5rem
   }
-  .c1peybss {
+  .cey1d5i {
     padding-top: 0.5rem
   }
-  .chh2z1n {
+  .cbnv1sn {
     padding-bottom: 0.5rem
   }
-  .c1af0hjb {
+  .csvgwzp {
     background-color: rgba(226, 232, 240, 1)
   }
-  .c1y5f9qa {
-    padding-left: 1rem
-  }
-  .cjw7gx9 {
-    padding-right: 1rem
-  }
-  .c1mdun74 {
-    padding-top: 1rem
-  }
-  .c1bfvzwl {
-    padding-bottom: 1rem
-  }
-  .c1187wgd {
+  .c1fd7x2o {
     width: 12rem
   }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c88y2pm {
+  .c3e36dl {
     width: 16rem
   }
-  .c6gk6ar {
-    display: flex
-  }
-  .cb99ak4 {
-    row-gap: 1rem
-  }
-  .ctl64vj {
-    column-gap: 1rem
-  }
-  .c13wsd00 {
+  .cfd715b {
     flex-direction: column
   }
-  .c1wv658c {
+  .c1lp1p2a {
     color: inherit
   }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
+  .cekw1i5 {
     user-select: none
   }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
+  .c17g4cws {
     padding-top: 0.75rem
   }
-  .c1y90k37 {
+  .ctolsm2 {
     padding-bottom: 0.75rem
   }
-  .cvjxq2s {
+  .crxf9g {
     line-height: 1
   }
-  .chhysup {
+  .c1gfew4a {
     text-decoration-line: none
   }
-  .c601nqx {
+  .cxlxl0c {
     outline-width: 2px
   }
-  .c9i3lxo {
+  .c1gfzcg5 {
     outline-style: solid
   }
-  .c1sz664l {
+  .cohan28 {
     outline-color: transparent
   }
-  .cm8bc7h {
+  .c15roejc {
     outline-offset: 2px
   }
-  .c8xqq0k:hover {
+  .c11eeprv:focus {
     background-color: rgba(241, 245, 249, 0.9)
   }
-  .cjs8iie:hover {
+  .c1rbq5ju:focus {
     color: rgba(15, 23, 42, 1)
   }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
+  .c1p3lwwv {
     overflow: hidden
   }
-  .c16sc1pt {
+  .c1ldl5ci {
     display: -webkit-box
   }
-  .c78rgey {
+  .c1rc3t1c {
     -webkit-box-orient: vertical
   }
-  .c1mxykr {
+  .c69w97g {
     -webkit-line-clamp: 2
   }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
+  .c1ls6yv2 {
     line-height: 1.375
   }
-  .caa8yt3 {
+  .c1pcz91e {
     color: rgba(100, 116, 139, 1)
   }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c1inucbi {
-    border-top-style: solid
-  }
-  .c1dab7w1 {
-    border-right-style: solid
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .czynn8e {
-    border-left-style: solid
-  }
-  .c6z96ps {
-    border-top-color: rgba(226, 232, 240, 1)
-  }
-  .c9t5qyz {
-    border-right-color: rgba(226, 232, 240, 1)
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .csnt51l {
-    border-left-color: rgba(226, 232, 240, 1)
-  }
-  .c1v4k4ip {
-    border-top-width: 0px
-  }
-  .c2iozhh {
-    border-right-width: 0px
-  }
-  .c1j5pqo1 {
-    border-bottom-width: 0px
-  }
-  .cmqevnc {
-    border-left-width: 0px
-  }
-  .cvxnx00 {
-    background-color: transparent
-  }
-  .c1mnuzt9 {
-    display: inline-flex
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c1b8xvex {
-    height: 2.5rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c1jrmp29 {
-    --navigation-menu-trigger-icon-transform: 0deg
-  }
-  .c1t6bql4:focus-visible {
-    outline-width: 2px
-  }
-  .czph7hf:focus-visible {
-    outline-style: solid
-  }
-  .cncn1ro:focus-visible {
-    outline-color: transparent
-  }
-  .cb270vo:focus-visible {
-    outline-offset: 2px
-  }
-  .c1rgsd1l:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
-  }
-  .c1srwcmr:disabled {
-    pointer-events: none
-  }
-  .c1grhw0w:disabled {
-    opacity: 0.5
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c157d2k6[data-state=open] {
-    --navigation-menu-trigger-icon-transform: 180deg
-  }
-  .ck5mafm {
-    margin-left: 0.25rem
-  }
-  .cm547tf {
-    rotate: var(--navigation-menu-trigger-icon-transform)
-  }
-  .c18dp5gp {
-    height: 1rem
-  }
-  .clw3og8 {
-    width: 1rem
-  }
-  .c1qmz361 {
-    flex-grow: 0
-  }
-  .cu8n5i6 {
-    transition-property: all
-  }
-  .cqhjzs2 {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
-  }
-  .c1498b83 {
-    transition-duration: 200ms
-  }
-  .c17k6ftv {
-    left: 0px
-  }
-  .ci9y33x {
-    top: 0px
-  }
-  .c1kb88y7 {
-    position: absolute
-  }
-  .cbgnvea {
-    width: max-content
-  }
-  .c1y5f9qa {
-    padding-left: 1rem
-  }
-  .cjw7gx9 {
-    padding-right: 1rem
-  }
-  .c1mdun74 {
-    padding-top: 1rem
-  }
-  .c1bfvzwl {
-    padding-bottom: 1rem
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .cb99ak4 {
-    row-gap: 1rem
-  }
-  .ctl64vj {
-    column-gap: 1rem
-  }
-  .c1hxtwzc {
-    padding-left: 0px
-  }
-  .c1j0bzjz {
-    padding-right: 0px
-  }
-  .cbjj14v {
-    padding-top: 0px
-  }
-  .c15sjadq {
-    padding-bottom: 0px
-  }
-  .c88y2pm {
-    width: 16rem
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .cb99ak4 {
-    row-gap: 1rem
-  }
-  .ctl64vj {
-    column-gap: 1rem
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c88y2pm {
-    width: 16rem
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .cb99ak4 {
-    row-gap: 1rem
-  }
-  .ctl64vj {
-    column-gap: 1rem
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c1wv658c {
-    color: inherit
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c13wsd00 {
-    flex-direction: column
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .cu0fd6l {
-    row-gap: 0.25rem
-  }
-  .c8098d3 {
-    column-gap: 0.25rem
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .c16a2e8i {
-    padding-top: 0.75rem
-  }
-  .c1y90k37 {
-    padding-bottom: 0.75rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .cvjxq2s {
-    line-height: 1
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c3rzppk {
-    margin-left: 0px
-  }
-  .c17ybgbw {
-    margin-right: 0px
-  }
-  .c1u5xdcd {
-    margin-top: 0px
-  }
-  .cdf5ze5 {
-    margin-bottom: 0px
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c16sc1pt {
-    display: -webkit-box
-  }
-  .c78rgey {
-    -webkit-box-orient: vertical
-  }
-  .c1mxykr {
-    -webkit-line-clamp: 2
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c18mq0f5 {
-    line-height: 1.375
-  }
-  .caa8yt3 {
-    color: rgba(100, 116, 139, 1)
-  }
-  .c1inucbi {
-    border-top-style: solid
-  }
-  .c1dab7w1 {
-    border-right-style: solid
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .czynn8e {
-    border-left-style: solid
-  }
-  .c6z96ps {
-    border-top-color: rgba(226, 232, 240, 1)
-  }
-  .c9t5qyz {
-    border-right-color: rgba(226, 232, 240, 1)
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .csnt51l {
-    border-left-color: rgba(226, 232, 240, 1)
-  }
-  .c1v4k4ip {
-    border-top-width: 0px
-  }
-  .c2iozhh {
-    border-right-width: 0px
-  }
-  .c1j5pqo1 {
-    border-bottom-width: 0px
-  }
-  .cmqevnc {
-    border-left-width: 0px
-  }
-  .cvxnx00 {
-    background-color: transparent
-  }
-  .c1mnuzt9 {
-    display: inline-flex
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .c1b8xvex {
-    height: 2.5rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .chhysup {
-    text-decoration-line: none
-  }
-  .c2a7z25 {
+  .c1hdhil0 {
     color: currentColor
   }
-  .c1t6bql4:focus-visible {
-    outline-width: 2px
-  }
-  .czph7hf:focus-visible {
-    outline-style: solid
-  }
-  .cncn1ro:focus-visible {
-    outline-color: transparent
-  }
-  .cb270vo:focus-visible {
-    outline-offset: 2px
-  }
-  .c1rgsd1l:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
-  }
-  .c1srwcmr:disabled {
-    pointer-events: none
-  }
-  .c1grhw0w:disabled {
-    opacity: 0.5
-  }
-  .c8xqq0k:hover {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .cjs8iie:hover {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c1kb88y7 {
-    position: absolute
-  }
-  .c17k6ftv {
-    left: 0px
-  }
-  .cd2po1q {
+  .coe4ay6 {
     top: 100%
   }
-  .c6gk6ar {
-    display: flex
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .c1t5p0zw {
+  .cg2jhpq {
     margin-top: 0.375rem
   }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1inucbi {
-    border-top-style: solid
-  }
-  .c1dab7w1 {
-    border-right-style: solid
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .czynn8e {
-    border-left-style: solid
-  }
-  .c6z96ps {
-    border-top-color: rgba(226, 232, 240, 1)
-  }
-  .c9t5qyz {
-    border-right-color: rgba(226, 232, 240, 1)
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .csnt51l {
-    border-left-color: rgba(226, 232, 240, 1)
-  }
-  .cgassre {
+  .ck2qarh {
     border-top-width: 1px
   }
-  .c1ndsw6v {
+  .c1nxbatd {
     border-right-width: 1px
   }
-  .cjrlou9 {
+  .caktpzb {
     border-bottom-width: 1px
   }
-  .c945vvj {
+  .c1bm526f {
     border-left-width: 1px
   }
-  .c4mw8gp {
+  .c1rt44f4 {
     background-color: rgba(255, 255, 255, 1)
   }
-  .cj0w9yo {
+  .cwi0ez9 {
     color: rgba(2, 8, 23, 1)
   }
-  .cbzcu1y {
+  .c1ii9nza {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)
   }
-  .c1srbwx8 {
+  .c53wwee {
     height: var(--radix-navigation-menu-viewport-height)
   }
-  .cr0e7oa {
+  .c1daganl {
     width: var(--radix-navigation-menu-viewport-width)
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

@@ -11,8 +11,7 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
   let onCheckedChange = (checked: any) => {
     checkboxChecked = checked;
@@ -23,19 +22,19 @@ const Page = (_props: { params: Params; resources: Resources }) => {
       <Label
         data-ws-id="1"
         data-ws-component="Label"
-        className="c6gk6ar cgt00fz cydvc77 c4v7k5r"
+        className="c11xgi9i c8prkzu c1edvzo4 clo3r8o"
       >
         <Checkbox
           data-ws-id="3"
           data-ws-component="Checkbox"
           checked={checkboxChecked}
           onCheckedChange={onCheckedChange}
-          className="c18dp5gp clw3og8 c1qmz361 c1d9pxa5 cnjyf56 c1jpjw0a c1lxvq7u c1inucbi c1dab7w1 c1uf7v01 czynn8e cuelx18 c17v08sn c1czmfdb c8nta89 cgassre c1ndsw6v cjrlou9 c945vvj c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l cegrmbm c1grhw0w ccop5vc c19tq2u"
+          className="c1pmpq0f c1yafs04 c11hichb c12e8ong c13c161l chzvexg c1s51a6q c17al2u0 c1ufcra4 c17gos5d cn4f13s c9mvxkx cu0p3ww c11i8aye ca1f4zs ck2qarh c1nxbatd caktpzb c1bm526f co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1oa7gr0 ce92j53 c1939zof c4lzij8"
         >
           <CheckboxIndicator
             data-ws-id="8"
             data-ws-component="CheckboxIndicator"
-            className="c6gk6ar c4v7k5r cvzkkb6 c2a7z25"
+            className="c11xgi9i clo3r8o cw9oyzl c1hdhil0"
           >
             <HtmlEmbed
               data-ws-id="10"
@@ -217,115 +216,112 @@ html {margin: 0; display: grid; min-height: 100%}
     min-height: 1em
   }
 }@media all {
-  .c6gk6ar {
+  .c11xgi9i {
     display: flex
   }
-  .cgt00fz {
+  .c8prkzu {
     row-gap: 0.5rem
   }
-  .cydvc77 {
+  .c1edvzo4 {
     column-gap: 0.5rem
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .c18dp5gp {
+  .c1pmpq0f {
     height: 1rem
   }
-  .clw3og8 {
+  .c1yafs04 {
     width: 1rem
   }
-  .c1qmz361 {
+  .c11hichb {
     flex-grow: 0
   }
-  .c1d9pxa5 {
+  .c12e8ong {
     border-top-left-radius: 0.125rem
   }
-  .cnjyf56 {
+  .c13c161l {
     border-top-right-radius: 0.125rem
   }
-  .c1jpjw0a {
+  .chzvexg {
     border-bottom-right-radius: 0.125rem
   }
-  .c1lxvq7u {
+  .c1s51a6q {
     border-bottom-left-radius: 0.125rem
   }
-  .c1inucbi {
+  .c17al2u0 {
     border-top-style: solid
   }
-  .c1dab7w1 {
+  .c1ufcra4 {
     border-right-style: solid
   }
-  .c1uf7v01 {
+  .c17gos5d {
     border-bottom-style: solid
   }
-  .czynn8e {
+  .cn4f13s {
     border-left-style: solid
   }
-  .cuelx18 {
+  .c9mvxkx {
     border-top-color: rgba(15, 23, 42, 1)
   }
-  .c17v08sn {
+  .cu0p3ww {
     border-right-color: rgba(15, 23, 42, 1)
   }
-  .c1czmfdb {
+  .c11i8aye {
     border-bottom-color: rgba(15, 23, 42, 1)
   }
-  .c8nta89 {
+  .ca1f4zs {
     border-left-color: rgba(15, 23, 42, 1)
   }
-  .cgassre {
+  .ck2qarh {
     border-top-width: 1px
   }
-  .c1ndsw6v {
+  .c1nxbatd {
     border-right-width: 1px
   }
-  .cjrlou9 {
+  .caktpzb {
     border-bottom-width: 1px
   }
-  .c945vvj {
+  .c1bm526f {
     border-left-width: 1px
   }
-  .c1t6bql4:focus-visible {
+  .co0lfwl:focus-visible {
     outline-width: 2px
   }
-  .czph7hf:focus-visible {
+  .c1kn3u98:focus-visible {
     outline-style: solid
   }
-  .cncn1ro:focus-visible {
+  .c2odgnt:focus-visible {
     outline-color: transparent
   }
-  .cb270vo:focus-visible {
+  .chlvjga:focus-visible {
     outline-offset: 2px
   }
-  .c1rgsd1l:focus-visible {
+  .c1jx7vpr:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  .cegrmbm:disabled {
+  .c1oa7gr0:disabled {
     cursor: not-allowed
   }
-  .c1grhw0w:disabled {
+  .ce92j53:disabled {
     opacity: 0.5
   }
-  .ccop5vc[data-state=checked] {
+  .c1939zof[data-state=checked] {
     background-color: rgba(15, 23, 42, 1)
   }
-  .c19tq2u[data-state=checked] {
+  .c4lzij8[data-state=checked] {
     color: rgba(248, 250, 252, 1)
   }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
+  .cw9oyzl {
     justify-content: center
   }
-  .c2a7z25 {
+  .c1hdhil0 {
     color: currentColor
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },
