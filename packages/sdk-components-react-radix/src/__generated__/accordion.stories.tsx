@@ -13,8 +13,7 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     accordionValue = value;
@@ -33,17 +32,17 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="6"
           data-ws-component="AccordionItem"
           data-ws-index="0"
-          className="cjrlou9 c1uf7v01 c1x5uwe6"
+          className="caktpzb c17gos5d c102tttv"
         >
           <AccordionHeader
             data-ws-id="8"
             data-ws-component="AccordionHeader"
-            className="c6gk6ar"
+            className="c11xgi9i"
           >
             <AccordionTrigger
               data-ws-id="10"
               data-ws-component="AccordionTrigger"
-              className="c6gk6ar cn4ngym c1ee1pe1 c1xcrn9h c4v7k5r csg71e3 c1mdun74 c1bfvzwl cwry1sa cvfe049 clf46de c2xz4jt"
+              className="c11xgi9i c1yubncr c1iq6hwp cv7p8tf clo3r8o cqq29ax c17g8s4n c657y94 c1qjvju3 ceoyg4u cd7z43l c1f6k8wq"
             >
               <Text data-ws-id="12" data-ws-component="Text">
                 {"Is it accessible?"}
@@ -51,7 +50,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               <Box
                 data-ws-id="13"
                 data-ws-component="Box"
-                className="c1h3z08b c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+                className="c1tvigim c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
               >
                 <HtmlEmbed
                   data-ws-id="15"
@@ -66,7 +65,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <AccordionContent
             data-ws-id="17"
             data-ws-component="AccordionContent"
-            className="c1e2gixt c1mfk609 c121vm9z c1bfvzwl"
+            className="c1p3lwwv c1qx3pju cut8gip c657y94"
           >
             {"Yes. It adheres to the WAI-ARIA design pattern."}
           </AccordionContent>
@@ -75,17 +74,17 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="19"
           data-ws-component="AccordionItem"
           data-ws-index="1"
-          className="cjrlou9 c1uf7v01 c1x5uwe6"
+          className="caktpzb c17gos5d c102tttv"
         >
           <AccordionHeader
             data-ws-id="21"
             data-ws-component="AccordionHeader"
-            className="c6gk6ar"
+            className="c11xgi9i"
           >
             <AccordionTrigger
               data-ws-id="23"
               data-ws-component="AccordionTrigger"
-              className="c6gk6ar cn4ngym c1ee1pe1 c1xcrn9h c4v7k5r csg71e3 c1mdun74 c1bfvzwl cwry1sa cvfe049 clf46de c2xz4jt"
+              className="c11xgi9i c1yubncr c1iq6hwp cv7p8tf clo3r8o cqq29ax c17g8s4n c657y94 c1qjvju3 ceoyg4u cd7z43l c1f6k8wq"
             >
               <Text data-ws-id="25" data-ws-component="Text">
                 {"Is it styled?"}
@@ -93,7 +92,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               <Box
                 data-ws-id="26"
                 data-ws-component="Box"
-                className="c1h3z08b c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+                className="c1tvigim c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
               >
                 <HtmlEmbed
                   data-ws-id="28"
@@ -108,7 +107,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <AccordionContent
             data-ws-id="30"
             data-ws-component="AccordionContent"
-            className="c1e2gixt c1mfk609 c121vm9z c1bfvzwl"
+            className="c1p3lwwv c1qx3pju cut8gip c657y94"
           >
             {
               "Yes. It comes with default styles that matches the other components' aesthetic."
@@ -119,17 +118,17 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="32"
           data-ws-component="AccordionItem"
           data-ws-index="2"
-          className="cjrlou9 c1uf7v01 c1x5uwe6"
+          className="caktpzb c17gos5d c102tttv"
         >
           <AccordionHeader
             data-ws-id="34"
             data-ws-component="AccordionHeader"
-            className="c6gk6ar"
+            className="c11xgi9i"
           >
             <AccordionTrigger
               data-ws-id="36"
               data-ws-component="AccordionTrigger"
-              className="c6gk6ar cn4ngym c1ee1pe1 c1xcrn9h c4v7k5r csg71e3 c1mdun74 c1bfvzwl cwry1sa cvfe049 clf46de c2xz4jt"
+              className="c11xgi9i c1yubncr c1iq6hwp cv7p8tf clo3r8o cqq29ax c17g8s4n c657y94 c1qjvju3 ceoyg4u cd7z43l c1f6k8wq"
             >
               <Text data-ws-id="38" data-ws-component="Text">
                 {"Is it animated?"}
@@ -137,7 +136,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               <Box
                 data-ws-id="39"
                 data-ws-component="Box"
-                className="c1h3z08b c18dp5gp clw3og8 c1qmz361 cu8n5i6 cqhjzs2 c1498b83"
+                className="c1tvigim c1pmpq0f c1yafs04 c11hichb cpr3ke2 c1wmnqxw c1aw50j7"
               >
                 <HtmlEmbed
                   data-ws-id="41"
@@ -152,7 +151,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           <AccordionContent
             data-ws-id="43"
             data-ws-component="AccordionContent"
-            className="c1e2gixt c1mfk609 c121vm9z c1bfvzwl"
+            className="c1p3lwwv c1qx3pju cut8gip c657y94"
           >
             {
               "Yes. It's animated by default, but you can disable it if you prefer."
@@ -345,247 +344,85 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px
   }
 }@media all {
-  .cjrlou9 {
+  .caktpzb {
     border-bottom-width: 1px
   }
-  .c1uf7v01 {
+  .c17gos5d {
     border-bottom-style: solid
   }
-  .c1x5uwe6 {
+  .c102tttv {
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  .c6gk6ar {
+  .c11xgi9i {
     display: flex
   }
-  .c6gk6ar {
-    display: flex
-  }
-  .cn4ngym {
+  .c1yubncr {
     flex-grow: 1
   }
-  .c1ee1pe1 {
+  .c1iq6hwp {
     flex-shrink: 1
   }
-  .c1xcrn9h {
+  .cv7p8tf {
     flex-basis: 0%
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .csg71e3 {
+  .cqq29ax {
     justify-content: space-between
   }
-  .c1mdun74 {
+  .c17g8s4n {
     padding-top: 1rem
   }
-  .c1bfvzwl {
+  .c657y94 {
     padding-bottom: 1rem
   }
-  .cwry1sa {
+  .c1qjvju3 {
     font-weight: 500
   }
-  .cvfe049 {
+  .ceoyg4u {
     --accordion-trigger-icon-transform: 0deg
   }
-  .clf46de:hover {
+  .cd7z43l:hover {
     text-decoration-line: underline
   }
-  .c2xz4jt[data-state=open] {
+  .c1f6k8wq[data-state=open] {
     --accordion-trigger-icon-transform: 180deg
   }
-  .c1h3z08b {
+  .c1tvigim {
     rotate: var(--accordion-trigger-icon-transform)
   }
-  .c18dp5gp {
+  .c1pmpq0f {
     height: 1rem
   }
-  .clw3og8 {
+  .c1yafs04 {
     width: 1rem
   }
-  .c1qmz361 {
+  .c11hichb {
     flex-grow: 0
   }
-  .cu8n5i6 {
+  .cpr3ke2 {
     transition-property: all
   }
-  .cqhjzs2 {
+  .c1wmnqxw {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
   }
-  .c1498b83 {
+  .c1aw50j7 {
     transition-duration: 200ms
   }
-  .c1e2gixt {
+  .c1p3lwwv {
     overflow: hidden
   }
-  .c1mfk609 {
+  .c1qx3pju {
     font-size: 0.875rem
   }
-  .c121vm9z {
+  .cut8gip {
     line-height: 1.25rem
-  }
-  .c1bfvzwl {
-    padding-bottom: 1rem
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .cn4ngym {
-    flex-grow: 1
-  }
-  .c1ee1pe1 {
-    flex-shrink: 1
-  }
-  .c1xcrn9h {
-    flex-basis: 0%
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .csg71e3 {
-    justify-content: space-between
-  }
-  .c1mdun74 {
-    padding-top: 1rem
-  }
-  .c1bfvzwl {
-    padding-bottom: 1rem
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .cvfe049 {
-    --accordion-trigger-icon-transform: 0deg
-  }
-  .clf46de:hover {
-    text-decoration-line: underline
-  }
-  .c2xz4jt[data-state=open] {
-    --accordion-trigger-icon-transform: 180deg
-  }
-  .c1h3z08b {
-    rotate: var(--accordion-trigger-icon-transform)
-  }
-  .c18dp5gp {
-    height: 1rem
-  }
-  .clw3og8 {
-    width: 1rem
-  }
-  .c1qmz361 {
-    flex-grow: 0
-  }
-  .cu8n5i6 {
-    transition-property: all
-  }
-  .cqhjzs2 {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
-  }
-  .c1498b83 {
-    transition-duration: 200ms
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .c1bfvzwl {
-    padding-bottom: 1rem
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .c6gk6ar {
-    display: flex
-  }
-  .cn4ngym {
-    flex-grow: 1
-  }
-  .c1ee1pe1 {
-    flex-shrink: 1
-  }
-  .c1xcrn9h {
-    flex-basis: 0%
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .csg71e3 {
-    justify-content: space-between
-  }
-  .c1mdun74 {
-    padding-top: 1rem
-  }
-  .c1bfvzwl {
-    padding-bottom: 1rem
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .cvfe049 {
-    --accordion-trigger-icon-transform: 0deg
-  }
-  .clf46de:hover {
-    text-decoration-line: underline
-  }
-  .c2xz4jt[data-state=open] {
-    --accordion-trigger-icon-transform: 180deg
-  }
-  .c1h3z08b {
-    rotate: var(--accordion-trigger-icon-transform)
-  }
-  .c18dp5gp {
-    height: 1rem
-  }
-  .clw3og8 {
-    width: 1rem
-  }
-  .c1qmz361 {
-    flex-grow: 0
-  }
-  .cu8n5i6 {
-    transition-property: all
-  }
-  .cqhjzs2 {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
-  }
-  .c1498b83 {
-    transition-duration: 200ms
-  }
-  .c1e2gixt {
-    overflow: hidden
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .c1bfvzwl {
-    padding-bottom: 1rem
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

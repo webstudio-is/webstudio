@@ -8,8 +8,7 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [tabsValue, set$tabsValue] = useState<any>("0");
   let onValueChange = (value: any) => {
     tabsValue = value;
@@ -26,13 +25,13 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         <TabsList
           data-ws-id="5"
           data-ws-component="TabsList"
-          className="c1mnuzt9 c1b8xvex c4v7k5r cvzkkb6 cym38jd cqimob0 c2tr68t cjdtj3f cqcyl9r ckc6u2x cue5i4p c1wiz3di c1364qo7 caa8yt3"
+          className="c1oai8p0 c18kkil clo3r8o cw9oyzl cuqxbts cg19ih8 c1479lj6 comq4ym c1xf120q c1tn9z53 c164ur30 c1ukzx8x c1wau4tj c1pcz91e"
         >
           <TabsTrigger
             data-ws-id="7"
             data-ws-component="TabsTrigger"
             data-ws-index="0"
-            className="c1mnuzt9 c4v7k5r cvzkkb6 cwmcr0n cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx cs5tzic cl10cx8 c1mfk609 c121vm9z cwry1sa cu8n5i6 cqhjzs2 cxcp0y5 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l c1srwcmr c1grhw0w cz3we07 c18pp6i cww7dfg"
+            className="c1oai8p0 clo3r8o cw9oyzl c1kiukeb cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 ck4c8na c1mbhour c1qx3pju cut8gip c1qjvju3 cpr3ke2 c1wmnqxw c1b503n2 co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1jirpm3 ce92j53 cvo3yl7 cec8597 c5vtmxr"
           >
             {"Account"}
           </TabsTrigger>
@@ -40,7 +39,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
             data-ws-id="9"
             data-ws-component="TabsTrigger"
             data-ws-index="1"
-            className="c1mnuzt9 c4v7k5r cvzkkb6 cwmcr0n cym38jd cqimob0 c2tr68t cjdtj3f c1kc4g4w c1hi2fgx cs5tzic cl10cx8 c1mfk609 c121vm9z cwry1sa cu8n5i6 cqhjzs2 cxcp0y5 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l c1srwcmr c1grhw0w cz3we07 c18pp6i cww7dfg"
+            className="c1oai8p0 clo3r8o cw9oyzl c1kiukeb cuqxbts cg19ih8 c1479lj6 comq4ym c16g5416 c111au61 ck4c8na c1mbhour c1qx3pju cut8gip c1qjvju3 cpr3ke2 c1wmnqxw c1b503n2 co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1jirpm3 ce92j53 cvo3yl7 cec8597 c5vtmxr"
           >
             {"Password"}
           </TabsTrigger>
@@ -49,7 +48,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="11"
           data-ws-component="TabsContent"
           data-ws-index="0"
-          className="c1culj6 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l"
+          className="c1uybxzr co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr"
         >
           {"Make changes to your account here."}
         </TabsContent>
@@ -57,7 +56,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
           data-ws-id="13"
           data-ws-component="TabsContent"
           data-ws-index="1"
-          className="c1culj6 c1t6bql4 czph7hf cncn1ro cb270vo c1rgsd1l"
+          className="c1uybxzr co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr"
         >
           {"Change your password here."}
         </TabsContent>
@@ -228,250 +227,118 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px
   }
 }@media all {
-  .c1mnuzt9 {
+  .c1oai8p0 {
     display: inline-flex
   }
-  .c1b8xvex {
+  .c18kkil {
     height: 2.5rem
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .cvzkkb6 {
+  .cw9oyzl {
     justify-content: center
   }
-  .cym38jd {
+  .cuqxbts {
     border-top-left-radius: 0.375rem
   }
-  .cqimob0 {
+  .cg19ih8 {
     border-top-right-radius: 0.375rem
   }
-  .c2tr68t {
+  .c1479lj6 {
     border-bottom-right-radius: 0.375rem
   }
-  .cjdtj3f {
+  .comq4ym {
     border-bottom-left-radius: 0.375rem
   }
-  .cqcyl9r {
+  .c1xf120q {
     background-color: rgba(241, 245, 249, 1)
   }
-  .ckc6u2x {
+  .c1tn9z53 {
     padding-left: 0.25rem
   }
-  .cue5i4p {
+  .c164ur30 {
     padding-right: 0.25rem
   }
-  .c1wiz3di {
+  .c1ukzx8x {
     padding-top: 0.25rem
   }
-  .c1364qo7 {
+  .c1wau4tj {
     padding-bottom: 0.25rem
   }
-  .caa8yt3 {
+  .c1pcz91e {
     color: rgba(100, 116, 139, 1)
   }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .cwmcr0n {
+  .c1kiukeb {
     white-space: nowrap
   }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
+  .c16g5416 {
     padding-left: 0.75rem
   }
-  .c1hi2fgx {
+  .c111au61 {
     padding-right: 0.75rem
   }
-  .cs5tzic {
+  .ck4c8na {
     padding-top: 0.375rem
   }
-  .cl10cx8 {
+  .c1mbhour {
     padding-bottom: 0.375rem
   }
-  .c1mfk609 {
+  .c1qx3pju {
     font-size: 0.875rem
   }
-  .c121vm9z {
+  .cut8gip {
     line-height: 1.25rem
   }
-  .cwry1sa {
+  .c1qjvju3 {
     font-weight: 500
   }
-  .cu8n5i6 {
+  .cpr3ke2 {
     transition-property: all
   }
-  .cqhjzs2 {
+  .c1wmnqxw {
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
   }
-  .cxcp0y5 {
+  .c1b503n2 {
     transition-duration: 150ms
   }
-  .c1t6bql4:focus-visible {
+  .co0lfwl:focus-visible {
     outline-width: 2px
   }
-  .czph7hf:focus-visible {
+  .c1kn3u98:focus-visible {
     outline-style: solid
   }
-  .cncn1ro:focus-visible {
+  .c2odgnt:focus-visible {
     outline-color: transparent
   }
-  .cb270vo:focus-visible {
+  .chlvjga:focus-visible {
     outline-offset: 2px
   }
-  .c1rgsd1l:focus-visible {
+  .c1jx7vpr:focus-visible {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  .c1srwcmr:disabled {
+  .c1jirpm3:disabled {
     pointer-events: none
   }
-  .c1grhw0w:disabled {
+  .ce92j53:disabled {
     opacity: 0.5
   }
-  .cz3we07[data-state=active] {
+  .cvo3yl7[data-state=active] {
     background-color: rgba(255, 255, 255, 0.8)
   }
-  .c18pp6i[data-state=active] {
+  .cec8597[data-state=active] {
     color: rgba(2, 8, 23, 1)
   }
-  .cww7dfg[data-state=active] {
+  .c5vtmxr[data-state=active] {
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
   }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .cwmcr0n {
-    white-space: nowrap
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1kc4g4w {
-    padding-left: 0.75rem
-  }
-  .c1hi2fgx {
-    padding-right: 0.75rem
-  }
-  .cs5tzic {
-    padding-top: 0.375rem
-  }
-  .cl10cx8 {
-    padding-bottom: 0.375rem
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .cwry1sa {
-    font-weight: 500
-  }
-  .cu8n5i6 {
-    transition-property: all
-  }
-  .cqhjzs2 {
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1)
-  }
-  .cxcp0y5 {
-    transition-duration: 150ms
-  }
-  .c1t6bql4:focus-visible {
-    outline-width: 2px
-  }
-  .czph7hf:focus-visible {
-    outline-style: solid
-  }
-  .cncn1ro:focus-visible {
-    outline-color: transparent
-  }
-  .cb270vo:focus-visible {
-    outline-offset: 2px
-  }
-  .c1rgsd1l:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
-  }
-  .c1srwcmr:disabled {
-    pointer-events: none
-  }
-  .c1grhw0w:disabled {
-    opacity: 0.5
-  }
-  .cz3we07[data-state=active] {
-    background-color: rgba(255, 255, 255, 0.8)
-  }
-  .c18pp6i[data-state=active] {
-    color: rgba(2, 8, 23, 1)
-  }
-  .cww7dfg[data-state=active] {
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05)
-  }
-  .c1culj6 {
+  .c1uybxzr {
     margin-top: 0.5rem
-  }
-  .c1t6bql4:focus-visible {
-    outline-width: 2px
-  }
-  .czph7hf:focus-visible {
-    outline-style: solid
-  }
-  .cncn1ro:focus-visible {
-    outline-color: transparent
-  }
-  .cb270vo:focus-visible {
-    outline-offset: 2px
-  }
-  .c1rgsd1l:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
-  }
-  .c1culj6 {
-    margin-top: 0.5rem
-  }
-  .c1t6bql4:focus-visible {
-    outline-width: 2px
-  }
-  .czph7hf:focus-visible {
-    outline-style: solid
-  }
-  .cncn1ro:focus-visible {
-    outline-color: transparent
-  }
-  .cb270vo:focus-visible {
-    outline-offset: 2px
-  }
-  .c1rgsd1l:focus-visible {
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

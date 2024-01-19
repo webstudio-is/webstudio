@@ -435,6 +435,7 @@ export const prebuild = async (options: {
       // manually maintained list of occupied identifiers
       "useState",
       "Fragment",
+      "useResource",
       "PageData",
       "Asset",
       "fontAssets",
@@ -519,9 +520,10 @@ export const prebuild = async (options: {
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import { Fragment, useState } from "react";
-import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import { useResource } from "@webstudio-is/react-sdk";
 ${componentImports}
+import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
 export const pageData: PageData = ${JSON.stringify(renderedPageData)};

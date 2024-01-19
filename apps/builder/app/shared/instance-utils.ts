@@ -722,9 +722,18 @@ export const getInstancesSlice = (rootInstanceId: string) => {
 
 export const findAvailableDataSources = (
   dataSources: DataSources,
+  instances: Instances,
   instanceSelector: InstanceSelector
 ) => {
-  const instanceIds = new Set(instanceSelector);
+  // inline data sources not scoped to current portal
+  const instanceIds = new Set();
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance?.component === portalComponent) {
+      break;
+    }
+    instanceIds.add(instanceId);
+  }
   const availableDataSources = new Set<DataSource["id"]>();
   for (const { id, scopeInstanceId } of dataSources.values()) {
     if (scopeInstanceId && instanceIds.has(scopeInstanceId)) {

@@ -27,7 +27,7 @@ import {
   $registeredComponentMetas,
   $selectedPageId,
 } from "../nano-states";
-import { onCopy, onPaste } from "./plugin-instance";
+import { onCopy, onCut, onPaste } from "./plugin-instance";
 import { createDefaultPages } from "@webstudio-is/project-build";
 
 const expectString = expect.any(String) as unknown as string;
@@ -626,6 +626,69 @@ test("wrap siblings with span when instance is rich text container", () => {
       createInstance("box", "Box", []),
       createInstance(boxId, "Box", []),
       createInstance(spanId, "Text", [{ type: "text", value: "My Text" }]),
+    ])
+  );
+});
+
+test("inline data source not available in portal when copy paste inside the portal", () => {
+  const instances = toMap([
+    createInstance("body", "Body", [
+      { type: "id", value: "box" },
+      { type: "id", value: "portal" },
+    ]),
+    createInstance("box", "Box", []),
+    createInstance("portal", portalComponent, [
+      { type: "id", value: "fragment" },
+    ]),
+    createInstance("fragment", "Fragment", []),
+  ]);
+  $instances.set(instances);
+  const dataSources = toMap<DataSource>([
+    {
+      id: "variableId",
+      scopeInstanceId: "body",
+      name: "variableName",
+      type: "variable",
+      value: { type: "string", value: "value" },
+    },
+  ]);
+  $dataSources.set(dataSources);
+  const props = toMap<Prop>([
+    {
+      id: "propId",
+      instanceId: "box",
+      name: "data-value",
+      type: "expression",
+      value: "$ws$dataSource$variableId",
+    },
+  ]);
+  $props.set(props);
+  $selectedInstanceSelector.set(["box", "body"]);
+  const clipboardData = onCut() ?? "";
+  $selectedInstanceSelector.set(["fragment", "portal", "body"]);
+  onPaste(clipboardData);
+  expect($instances.get()).toEqual(
+    toMap([
+      createInstance("body", "Body", [{ type: "id", value: "portal" }]),
+      createInstance("portal", portalComponent, [
+        { type: "id", value: "fragment" },
+      ]),
+      createInstance("fragment", "Fragment", [
+        { type: "id", value: expectString },
+      ]),
+      createInstance(expectString, "Box", []),
+    ])
+  );
+  expect($dataSources.get()).toEqual(dataSources);
+  expect($props.get()).toEqual(
+    toMap<Prop>([
+      {
+        id: expectString,
+        instanceId: expectString,
+        name: "data-value",
+        type: "expression",
+        value: `"value"`,
+      },
     ])
   );
 });

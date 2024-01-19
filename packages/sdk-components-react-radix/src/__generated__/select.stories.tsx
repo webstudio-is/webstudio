@@ -15,8 +15,7 @@ import {
 } from "../components";
 
 type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+const Page = (_props: { params: Params }) => {
   let [selectValue, set$selectValue] = useState<any>("");
   let [selectOpen, set$selectOpen] = useState<any>(false);
   let onValueChange = (value: any) => {
@@ -40,7 +39,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         <SelectTrigger
           data-ws-id="8"
           data-ws-component="SelectTrigger"
-          className="c6gk6ar c1b8xvex c1i2mn37 c4v7k5r csg71e3 cym38jd cqimob0 c2tr68t cjdtj3f c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l cgassre c1ndsw6v cjrlou9 c945vvj c15mffxy c1kc4g4w c1hi2fgx c1peybss chh2z1n c1mfk609 c121vm9z c13c0q0m c3jm2m1 c1tqca1w chqc64d cjfm7wi c175y1wr cegrmbm c1grhw0w"
+          className="c11xgi9i c18kkil c3elmho clo3r8o cqq29ax cuqxbts cg19ih8 c1479lj6 comq4ym c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 ck2qarh c1nxbatd caktpzb c1bm526f c110hgy6 c16g5416 c111au61 cey1d5i cbnv1sn c1qx3pju cut8gip cllerde c19s8l4l cvjgjoo cjdxik5 c1uf353 c192vyv4 c1oa7gr0 ce92j53"
         >
           <SelectValue
             data-ws-id="10"
@@ -51,23 +50,23 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         <SelectContent
           data-ws-id="12"
           data-ws-component="SelectContent"
-          className="cnhoj7b c1wyidsg c82b0cd c1e2gixt cym38jd cqimob0 c2tr68t cjdtj3f c1inucbi c1dab7w1 c1uf7v01 czynn8e c6z96ps c9t5qyz c1x5uwe6 csnt51l cgassre c1ndsw6v cjrlou9 c945vvj c4mw8gp cj0w9yo ci3o5ma"
+          className="crmoyyg c173yyao c1ca5jk5 c1p3lwwv cuqxbts cg19ih8 c1479lj6 comq4ym c17al2u0 c1ufcra4 c17gos5d cn4f13s c1wic2il cdem58j c102tttv cb204z1 ck2qarh c1nxbatd caktpzb c1bm526f c1rt44f4 cwi0ez9 cpbhzvr"
         >
           <SelectViewport
             data-ws-id="14"
             data-ws-component="SelectViewport"
-            className="ckc6u2x cue5i4p c1wiz3di c1364qo7 cu1cnl4 c1i2mn37 c1lciyms"
+            className="c1tn9z53 c164ur30 c1ukzx8x c1wau4tj c1vx0yks c3elmho cav9kfy"
           >
             <SelectItem
               data-ws-id="16"
               data-ws-component="SelectItem"
               value={"light"}
-              className="cnhoj7b c6gk6ar c1i2mn37 ch0kuv9 c1hl4mbg c4v7k5r cym38jd cqimob0 c2tr68t cjdtj3f cs5tzic cl10cx8 c11bwakb c18gyxfs c1mfk609 c121vm9z c601nqx c9i3lxo c1sz664l cm8bc7h cbt1ziu c1ci4uzu c144pucd c4g4hty"
+              className="crmoyyg c11xgi9i c3elmho c17sljc0 cekw1i5 clo3r8o cuqxbts cg19ih8 c1479lj6 comq4ym ck4c8na c1mbhour c1dqbquh c1qmwsx9 c1qx3pju cut8gip cxlxl0c c1gfzcg5 cohan28 c15roejc c11eeprv c1rbq5ju cechooj c7yue4i"
             >
               <SelectItemIndicator
                 data-ws-id="19"
                 data-ws-component="SelectItemIndicator"
-                className="c1kb88y7 col5989 c6gk6ar cw8nk89 c192xk4i c4v7k5r cvzkkb6"
+                className="ct2k8wg cf4i3oe c11xgi9i c3jw7et c1kurney clo3r8o cw9oyzl"
               >
                 <HtmlEmbed
                   data-ws-id="21"
@@ -88,12 +87,12 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               data-ws-id="24"
               data-ws-component="SelectItem"
               value={"dark"}
-              className="cnhoj7b c6gk6ar c1i2mn37 ch0kuv9 c1hl4mbg c4v7k5r cym38jd cqimob0 c2tr68t cjdtj3f cs5tzic cl10cx8 c11bwakb c18gyxfs c1mfk609 c121vm9z c601nqx c9i3lxo c1sz664l cm8bc7h cbt1ziu c1ci4uzu c144pucd c4g4hty"
+              className="crmoyyg c11xgi9i c3elmho c17sljc0 cekw1i5 clo3r8o cuqxbts cg19ih8 c1479lj6 comq4ym ck4c8na c1mbhour c1dqbquh c1qmwsx9 c1qx3pju cut8gip cxlxl0c c1gfzcg5 cohan28 c15roejc c11eeprv c1rbq5ju cechooj c7yue4i"
             >
               <SelectItemIndicator
                 data-ws-id="27"
                 data-ws-component="SelectItemIndicator"
-                className="c1kb88y7 col5989 c6gk6ar cw8nk89 c192xk4i c4v7k5r cvzkkb6"
+                className="ct2k8wg cf4i3oe c11xgi9i c3jw7et c1kurney clo3r8o cw9oyzl"
               >
                 <HtmlEmbed
                   data-ws-id="29"
@@ -114,12 +113,12 @@ const Page = (_props: { params: Params; resources: Resources }) => {
               data-ws-id="32"
               data-ws-component="SelectItem"
               value={"system"}
-              className="cnhoj7b c6gk6ar c1i2mn37 ch0kuv9 c1hl4mbg c4v7k5r cym38jd cqimob0 c2tr68t cjdtj3f cs5tzic cl10cx8 c11bwakb c18gyxfs c1mfk609 c121vm9z c601nqx c9i3lxo c1sz664l cm8bc7h cbt1ziu c1ci4uzu c144pucd c4g4hty"
+              className="crmoyyg c11xgi9i c3elmho c17sljc0 cekw1i5 clo3r8o cuqxbts cg19ih8 c1479lj6 comq4ym ck4c8na c1mbhour c1dqbquh c1qmwsx9 c1qx3pju cut8gip cxlxl0c c1gfzcg5 cohan28 c15roejc c11eeprv c1rbq5ju cechooj c7yue4i"
             >
               <SelectItemIndicator
                 data-ws-id="35"
                 data-ws-component="SelectItemIndicator"
-                className="c1kb88y7 col5989 c6gk6ar cw8nk89 c192xk4i c4v7k5r cvzkkb6"
+                className="ct2k8wg cf4i3oe c11xgi9i c3jw7et c1kurney clo3r8o cw9oyzl"
               >
                 <HtmlEmbed
                   data-ws-id="37"
@@ -315,469 +314,214 @@ html {margin: 0; display: grid; min-height: 100%}
     outline-width: 1px
   }
 }@media all {
-  .c6gk6ar {
+  .c11xgi9i {
     display: flex
   }
-  .c1b8xvex {
+  .c18kkil {
     height: 2.5rem
   }
-  .c1i2mn37 {
+  .c3elmho {
     width: 100%
   }
-  .c4v7k5r {
+  .clo3r8o {
     align-items: center
   }
-  .csg71e3 {
+  .cqq29ax {
     justify-content: space-between
   }
-  .cym38jd {
+  .cuqxbts {
     border-top-left-radius: 0.375rem
   }
-  .cqimob0 {
+  .cg19ih8 {
     border-top-right-radius: 0.375rem
   }
-  .c2tr68t {
+  .c1479lj6 {
     border-bottom-right-radius: 0.375rem
   }
-  .cjdtj3f {
+  .comq4ym {
     border-bottom-left-radius: 0.375rem
   }
-  .c1inucbi {
+  .c17al2u0 {
     border-top-style: solid
   }
-  .c1dab7w1 {
+  .c1ufcra4 {
     border-right-style: solid
   }
-  .c1uf7v01 {
+  .c17gos5d {
     border-bottom-style: solid
   }
-  .czynn8e {
+  .cn4f13s {
     border-left-style: solid
   }
-  .c6z96ps {
+  .c1wic2il {
     border-top-color: rgba(226, 232, 240, 1)
   }
-  .c9t5qyz {
+  .cdem58j {
     border-right-color: rgba(226, 232, 240, 1)
   }
-  .c1x5uwe6 {
+  .c102tttv {
     border-bottom-color: rgba(226, 232, 240, 1)
   }
-  .csnt51l {
+  .cb204z1 {
     border-left-color: rgba(226, 232, 240, 1)
   }
-  .cgassre {
+  .ck2qarh {
     border-top-width: 1px
   }
-  .c1ndsw6v {
+  .c1nxbatd {
     border-right-width: 1px
   }
-  .cjrlou9 {
+  .caktpzb {
     border-bottom-width: 1px
   }
-  .c945vvj {
+  .c1bm526f {
     border-left-width: 1px
   }
-  .c15mffxy {
+  .c110hgy6 {
     background-color: rgba(255, 255, 255, 0.8)
   }
-  .c1kc4g4w {
+  .c16g5416 {
     padding-left: 0.75rem
   }
-  .c1hi2fgx {
+  .c111au61 {
     padding-right: 0.75rem
   }
-  .c1peybss {
+  .cey1d5i {
     padding-top: 0.5rem
   }
-  .chh2z1n {
+  .cbnv1sn {
     padding-bottom: 0.5rem
   }
-  .c1mfk609 {
+  .c1qx3pju {
     font-size: 0.875rem
   }
-  .c121vm9z {
+  .cut8gip {
     line-height: 1.25rem
   }
-  .c13c0q0m::placeholder {
+  .cllerde::placeholder {
     color: rgba(100, 116, 139, 1)
   }
-  .c3jm2m1:focus {
+  .c19s8l4l:focus {
     outline-width: 2px
   }
-  .c1tqca1w:focus {
+  .cvjgjoo:focus {
     outline-style: solid
   }
-  .chqc64d:focus {
+  .cjdxik5:focus {
     outline-color: transparent
   }
-  .cjfm7wi:focus {
+  .c1uf353:focus {
     outline-offset: 2px
   }
-  .c175y1wr:focus {
+  .c192vyv4:focus {
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8), 0 0 0 4px rgba(148, 163, 184, 1)
   }
-  .cegrmbm:disabled {
+  .c1oa7gr0:disabled {
     cursor: not-allowed
   }
-  .c1grhw0w:disabled {
+  .ce92j53:disabled {
     opacity: 0.5
   }
-  .cnhoj7b {
+  .crmoyyg {
     position: relative
   }
-  .c1wyidsg {
+  .c173yyao {
     z-index: 50
   }
-  .c82b0cd {
+  .c1ca5jk5 {
     min-width: 8rem
   }
-  .c1e2gixt {
+  .c1p3lwwv {
     overflow: hidden
   }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .c1inucbi {
-    border-top-style: solid
-  }
-  .c1dab7w1 {
-    border-right-style: solid
-  }
-  .c1uf7v01 {
-    border-bottom-style: solid
-  }
-  .czynn8e {
-    border-left-style: solid
-  }
-  .c6z96ps {
-    border-top-color: rgba(226, 232, 240, 1)
-  }
-  .c9t5qyz {
-    border-right-color: rgba(226, 232, 240, 1)
-  }
-  .c1x5uwe6 {
-    border-bottom-color: rgba(226, 232, 240, 1)
-  }
-  .csnt51l {
-    border-left-color: rgba(226, 232, 240, 1)
-  }
-  .cgassre {
-    border-top-width: 1px
-  }
-  .c1ndsw6v {
-    border-right-width: 1px
-  }
-  .cjrlou9 {
-    border-bottom-width: 1px
-  }
-  .c945vvj {
-    border-left-width: 1px
-  }
-  .c4mw8gp {
+  .c1rt44f4 {
     background-color: rgba(255, 255, 255, 1)
   }
-  .cj0w9yo {
+  .cwi0ez9 {
     color: rgba(2, 8, 23, 1)
   }
-  .ci3o5ma {
+  .cpbhzvr {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)
   }
-  .ckc6u2x {
+  .c1tn9z53 {
     padding-left: 0.25rem
   }
-  .cue5i4p {
+  .c164ur30 {
     padding-right: 0.25rem
   }
-  .c1wiz3di {
+  .c1ukzx8x {
     padding-top: 0.25rem
   }
-  .c1364qo7 {
+  .c1wau4tj {
     padding-bottom: 0.25rem
   }
-  .cu1cnl4 {
+  .c1vx0yks {
     height: var(--radix-select-trigger-height)
   }
-  .c1i2mn37 {
-    width: 100%
-  }
-  .c1lciyms {
+  .cav9kfy {
     min-width: var(--radix-select-trigger-width)
   }
-  .cnhoj7b {
-    position: relative
-  }
-  .c1i2mn37 {
-    width: 100%
-  }
-  .ch0kuv9 {
+  .c17sljc0 {
     cursor: default
   }
-  .c1hl4mbg {
+  .cekw1i5 {
     user-select: none
   }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .cs5tzic {
+  .ck4c8na {
     padding-top: 0.375rem
   }
-  .cl10cx8 {
+  .c1mbhour {
     padding-bottom: 0.375rem
   }
-  .c11bwakb {
+  .c1dqbquh {
     padding-left: 2rem
   }
-  .c18gyxfs {
+  .c1qmwsx9 {
     padding-right: 0.5rem
   }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .c601nqx {
+  .cxlxl0c {
     outline-width: 2px
   }
-  .c9i3lxo {
+  .c1gfzcg5 {
     outline-style: solid
   }
-  .c1sz664l {
+  .cohan28 {
     outline-color: transparent
   }
-  .cm8bc7h {
+  .c15roejc {
     outline-offset: 2px
   }
-  .cbt1ziu:focus {
+  .c11eeprv:focus {
     background-color: rgba(241, 245, 249, 0.9)
   }
-  .c1ci4uzu:focus {
+  .c1rbq5ju:focus {
     color: rgba(15, 23, 42, 1)
   }
-  .c144pucd[data-disabled] {
+  .cechooj[data-disabled] {
     pointer-events: none
   }
-  .c4g4hty[data-disabled] {
+  .c7yue4i[data-disabled] {
     opacity: 0.5
   }
-  .c1kb88y7 {
+  .ct2k8wg {
     position: absolute
   }
-  .col5989 {
+  .cf4i3oe {
     left: 0.5rem
   }
-  .cw8nk89 {
+  .c3jw7et {
     height: 0.875rem
   }
-  .c192xk4i {
+  .c1kurney {
     width: 0.875rem
   }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .cnhoj7b {
-    position: relative
-  }
-  .c1i2mn37 {
-    width: 100%
-  }
-  .ch0kuv9 {
-    cursor: default
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .cs5tzic {
-    padding-top: 0.375rem
-  }
-  .cl10cx8 {
-    padding-bottom: 0.375rem
-  }
-  .c11bwakb {
-    padding-left: 2rem
-  }
-  .c18gyxfs {
-    padding-right: 0.5rem
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c144pucd[data-disabled] {
-    pointer-events: none
-  }
-  .c4g4hty[data-disabled] {
-    opacity: 0.5
-  }
-  .c1kb88y7 {
-    position: absolute
-  }
-  .col5989 {
-    left: 0.5rem
-  }
-  .cw8nk89 {
-    height: 0.875rem
-  }
-  .c192xk4i {
-    width: 0.875rem
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
-    justify-content: center
-  }
-  .cnhoj7b {
-    position: relative
-  }
-  .c1i2mn37 {
-    width: 100%
-  }
-  .ch0kuv9 {
-    cursor: default
-  }
-  .c1hl4mbg {
-    user-select: none
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cym38jd {
-    border-top-left-radius: 0.375rem
-  }
-  .cqimob0 {
-    border-top-right-radius: 0.375rem
-  }
-  .c2tr68t {
-    border-bottom-right-radius: 0.375rem
-  }
-  .cjdtj3f {
-    border-bottom-left-radius: 0.375rem
-  }
-  .cs5tzic {
-    padding-top: 0.375rem
-  }
-  .cl10cx8 {
-    padding-bottom: 0.375rem
-  }
-  .c11bwakb {
-    padding-left: 2rem
-  }
-  .c18gyxfs {
-    padding-right: 0.5rem
-  }
-  .c1mfk609 {
-    font-size: 0.875rem
-  }
-  .c121vm9z {
-    line-height: 1.25rem
-  }
-  .c601nqx {
-    outline-width: 2px
-  }
-  .c9i3lxo {
-    outline-style: solid
-  }
-  .c1sz664l {
-    outline-color: transparent
-  }
-  .cm8bc7h {
-    outline-offset: 2px
-  }
-  .cbt1ziu:focus {
-    background-color: rgba(241, 245, 249, 0.9)
-  }
-  .c1ci4uzu:focus {
-    color: rgba(15, 23, 42, 1)
-  }
-  .c144pucd[data-disabled] {
-    pointer-events: none
-  }
-  .c4g4hty[data-disabled] {
-    opacity: 0.5
-  }
-  .c1kb88y7 {
-    position: absolute
-  }
-  .col5989 {
-    left: 0.5rem
-  }
-  .cw8nk89 {
-    height: 0.875rem
-  }
-  .c192xk4i {
-    width: 0.875rem
-  }
-  .c4v7k5r {
-    align-items: center
-  }
-  .cvzkkb6 {
+  .cw9oyzl {
     justify-content: center
   }
 }
       `}
         </style>
-        <Page params={{}} resources={{}} />
+        <Page params={{}} />
       </>
     );
   },

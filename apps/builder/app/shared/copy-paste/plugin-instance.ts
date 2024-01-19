@@ -206,6 +206,7 @@ export const onPaste = (clipboardData: string): boolean => {
     slice: data,
     availableDataSources: findAvailableDataSources(
       $dataSources.get(),
+      $instances.get(),
       instanceSelector
     ),
     beforeTransactionEnd: (rootInstanceId, draft) => {
