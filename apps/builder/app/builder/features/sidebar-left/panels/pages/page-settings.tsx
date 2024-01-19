@@ -49,7 +49,6 @@ import {
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import {
-  deleteInstanceMutable,
   getInstancesSlice,
   insertInstancesSliceCopy,
   updateWebstudioData,
@@ -63,7 +62,6 @@ import {
   $selectedInstanceSelector,
   $dataSources,
   $dataSourceVariables,
-  $selectedPageId,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
@@ -79,12 +77,7 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
-import {
-  cleanupChildRefsMutable,
-  registerFolderChildMutable,
-  deletePageMutable,
-} from "./page-utils";
-import { removeByMutable } from "~/shared/array-utils";
+import { registerFolderChildMutable, deletePageMutable } from "./page-utils";
 import { Form } from "./form";
 
 const fieldDefaultValues = {
@@ -899,28 +892,6 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   );
 };
 
-const deletePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
-  if (pages === undefined) {
-    return;
-  }
-  // deselect page before deleting to avoid flash of content
-  if ($selectedPageId.get() === pageId) {
-    $selectedPageId.set(pages.homePage.id);
-    $selectedInstanceSelector.set(undefined);
-  }
-  const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
-  if (rootInstanceId === undefined) {
-    return;
-  }
-  updateWebstudioData((data) => {
-    deleteInstanceMutable(data, [rootInstanceId]);
-    const { pages } = data;
-    removeByMutable(pages.pages, (page) => page.id === pageId);
-    cleanupChildRefsMutable(pageId, pages.folders);
-  });
-};
-
 const duplicatePage = (pageId: Page["id"]) => {
   const pages = $pages.get();
   if (pages === undefined) {
@@ -1030,11 +1001,8 @@ export const PageSettings = ({
   });
 
   const hanldeDelete = () => {
-    serverSyncStore.createTransaction([$pages], (pages) => {
-      if (pages === undefined) {
-        return;
-      }
-      deletePageMutable(pageId, pages);
+    updateWebstudioData((data) => {
+      deletePageMutable(pageId, data);
       onDelete();
     });
   };

@@ -47,6 +47,7 @@ import {
   filterSelfAndChildren,
 } from "./page-utils";
 import { Form } from "./form";
+import { updateWebstudioData } from "~/shared/instance-utils";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -371,21 +372,6 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
   });
 };
 
-const deleteFolder = (folderId: Folder["id"]) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    const { pageIds } = deleteFolderWithChildrenMutable(
-      folderId,
-      pages.folders
-    );
-    pageIds.forEach((pageId) => {
-      deletePageMutable(pageId, pages);
-    });
-  });
-};
-
 export const FolderSettings = ({
   onClose,
   onDelete,
@@ -447,7 +433,15 @@ export const FolderSettings = ({
   }
 
   const handleDelete = () => {
-    deleteFolder(folderId);
+    updateWebstudioData((data) => {
+      const { pageIds } = deleteFolderWithChildrenMutable(
+        folderId,
+        data.pages.folders
+      );
+      pageIds.forEach((pageId) => {
+        deletePageMutable(pageId, data);
+      });
+    });
     onDelete();
   };
 

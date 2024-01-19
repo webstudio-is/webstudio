@@ -6,15 +6,14 @@ import {
   findPageByIdOrPath,
   ROOT_FOLDER_ID,
   isRoot,
+  type WebstudioData,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
-import { deleteInstance } from "~/shared/instance-utils";
+import { deleteInstanceMutable } from "~/shared/instance-utils";
 import {
-  $pages,
   $selectedInstanceSelector,
   $selectedPageId,
 } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
 
 type TreePage = {
   type: "page";
@@ -214,7 +213,8 @@ export const getAllChildrenAndSelf = (
 /**
  * Deletes a page.
  */
-export const deletePageMutable = (pageId: Page["id"], pages: Pages) => {
+export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
+  const { pages } = data;
   // deselect page before deleting to avoid flash of content
   if ($selectedPageId.get() === pageId) {
     $selectedPageId.set(pages.homePage.id);
@@ -222,9 +222,7 @@ export const deletePageMutable = (pageId: Page["id"], pages: Pages) => {
   }
   const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
-    // @todo deleteInstance creates a transaction but its bad becuase
-    // this function is called from a transaction already.
-    deleteInstance([rootInstanceId]);
+    deleteInstanceMutable(data, [rootInstanceId]);
   }
   removeByMutable(pages.pages, (page) => page.id === pageId);
   cleanupChildRefsMutable(pageId, pages.folders);
