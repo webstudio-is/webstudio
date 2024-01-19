@@ -67,15 +67,24 @@ const ItemSuffix = ({
   itemId,
   editingItemId,
   onEdit,
+  type,
 }: {
   isParentSelected: boolean;
   itemId: string;
   editingItemId: string | undefined;
   onEdit: (itemId: string | undefined) => void;
+  type: "folder" | "page";
 }) => {
   const isEditing = editingItemId === itemId;
 
-  const menuLabel = isEditing ? "Close page settings" : "Open page settings";
+  const menuLabel =
+    type === "page"
+      ? isEditing
+        ? "Close page settings"
+        : "Open page settings"
+      : isEditing
+      ? "Close folder settings"
+      : "Open folder settings";
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -163,6 +172,7 @@ const PagesPanel = ({
           {...props}
           suffix={
             <ItemSuffix
+              type={props.itemData.type}
               isParentSelected={props.isSelected ?? false}
               itemId={props.itemData.id}
               editingItemId={editingItemId}
