@@ -10,9 +10,9 @@ import {
   List,
   ListItem,
   css,
-  IconButton,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
-import { DeleteIcon } from "@webstudio-is/icons";
+import { TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
 import type { ProjectSettings } from "./project-settings";
 
@@ -167,11 +167,11 @@ export const ProjectRedirectionSettings = (props: {
                     <Text variant={"regularLink"} truncate>
                       {redirects[redirect]}
                     </Text>
-                    <IconButton>
-                      <DeleteIcon
-                        onClick={() => handleDeleteRedirect(redirect)}
-                      />
-                    </IconButton>
+                    <SmallIconButton
+                      variant="destructive"
+                      icon={<TrashIcon />}
+                      onClick={() => handleDeleteRedirect(redirect)}
+                    />
                   </Grid>
                 </ListItem>
               );
