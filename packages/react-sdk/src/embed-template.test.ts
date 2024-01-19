@@ -51,6 +51,9 @@ test("generate data for embedding from instances and text", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -121,6 +124,9 @@ test("generate data for embedding from props", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -214,6 +220,9 @@ test("generate data for embedding from styles", () => {
         value: { type: "keyword", value: "black" },
       },
     ],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -292,6 +301,9 @@ test("generate data for embedding from props bound to data source variables", ()
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -332,6 +344,9 @@ test("generate variables with aliases instead of reference name", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -410,6 +425,9 @@ test("generate data for embedding from props with complex expressions", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -521,6 +539,9 @@ test("generate data for embedding from action props", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -595,6 +616,9 @@ test("generate data for embedding from parameter props", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -642,6 +666,9 @@ test("generate data for embedding from instance child bound to variables", () =>
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
