@@ -9,11 +9,14 @@ import {
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Asset,
+  DataSource,
   Instance,
   Instances,
   Prop,
+  Resource,
   StyleDecl,
   StyleDeclKey,
+  WebstudioData,
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
@@ -23,7 +26,7 @@ import {
   findClosestEditableInstanceSelector,
   insertTemplateData,
   type InsertConstraints,
-  deleteInstance,
+  deleteInstanceMutable,
   getInstancesSlice,
   insertInstancesSliceCopy,
   reparentInstance,
@@ -36,7 +39,6 @@ import {
   $pages,
   $project,
   $props,
-  $resources,
   $styleSourceSelections,
   $styleSources,
   $styles,
@@ -542,26 +544,39 @@ describe("reparent instance", () => {
   });
 });
 
+const getWebstudioData = (data: Partial<WebstudioData>): WebstudioData => ({
+  pages: createDefaultPages({ rootInstanceId: "" }),
+  assets: new Map(),
+  dataSources: new Map(),
+  resources: new Map(),
+  instances: new Map(),
+  props: new Map(),
+  breakpoints: new Map(),
+  styleSourceSelections: new Map(),
+  styleSources: new Map(),
+  styles: new Map(),
+  ...data,
+});
+
 describe("delete instance", () => {
   test("delete instance with its children", () => {
     // body
     //   box1
     //     box11
     //   box2
-    $instances.set(
-      new Map([
-        createInstancePair("body", "Body", [
-          { type: "id", value: "box1" },
-          { type: "id", value: "box2" },
-        ]),
-        createInstancePair("box1", "Box", [{ type: "id", value: "box11" }]),
-        createInstancePair("box11", "Box", []),
-        createInstancePair("box2", "Box", []),
-      ])
-    );
+    const instances = new Map([
+      createInstancePair("body", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("box1", "Box", [{ type: "id", value: "box11" }]),
+      createInstancePair("box11", "Box", []),
+      createInstancePair("box2", "Box", []),
+    ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    deleteInstance(["box1", "body"]);
-    expect($instances.get()).toEqual(
+    const data = getWebstudioData({ instances });
+    deleteInstanceMutable(data, ["box1", "body"]);
+    expect(data.instances).toEqual(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "box2" }]),
         createInstancePair("box2", "Box", []),
@@ -572,15 +587,14 @@ describe("delete instance", () => {
   test("prevent deleting root instance", () => {
     // body
     //   box1
-    $instances.set(
-      new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
-        createInstancePair("box1", "Box", []),
-      ])
-    );
+    const instances = new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
+      createInstancePair("box1", "Box", []),
+    ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    deleteInstance(["body"]);
-    expect($instances.get()).toEqual(
+    const data = getWebstudioData({ instances });
+    deleteInstanceMutable(data, ["body"]);
+    expect(data.instances).toEqual(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "box1" }]),
         createInstancePair("box1", "Box", []),
@@ -592,18 +606,17 @@ describe("delete instance", () => {
     // body
     //   list
     //     box
-    $instances.set(
-      new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
-        createInstancePair("list", collectionComponent, [
-          { type: "id", value: "box" },
-        ]),
-        createInstancePair("box", "Box", []),
-      ])
-    );
+    const instances = new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
+      createInstancePair("list", collectionComponent, [
+        { type: "id", value: "box" },
+      ]),
+      createInstancePair("box", "Box", []),
+    ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    deleteInstance(["box", "list[0]", "list", "body"]);
-    expect($instances.get()).toEqual(
+    const data = getWebstudioData({ instances });
+    deleteInstanceMutable(data, ["box", "list[0]", "list", "body"]);
+    expect(data.instances).toEqual(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
         createInstancePair("list", collectionComponent, []),
@@ -612,43 +625,36 @@ describe("delete instance", () => {
   });
 
   test("delete resource along with variable", () => {
-    $instances.set(
-      toMap([
-        createInstance("body", "Body", [{ type: "id", value: "box" }]),
-        createInstance("box", "Box", []),
-      ])
-    );
-    $resources.set(
-      toMap([
-        {
-          id: "resourceId",
-          name: "My Resource",
-          url: `""`,
-          method: "get",
-          headers: [],
-        },
-      ])
-    );
-    $dataSources.set(
-      toMap([
-        {
-          id: "resourceVariableId",
-          scopeInstanceId: "box",
-          name: "My Resource Variable",
-          type: "resource",
-          resourceId: "resourceId",
-        },
-      ])
-    );
+    const instances = toMap([
+      createInstance("body", "Body", [{ type: "id", value: "box" }]),
+      createInstance("box", "Box", []),
+    ]);
+    const resources = toMap<Resource>([
+      {
+        id: "resourceId",
+        name: "My Resource",
+        url: `""`,
+        method: "get",
+        headers: [],
+      },
+    ]);
+    const dataSources = toMap<DataSource>([
+      {
+        id: "resourceVariableId",
+        scopeInstanceId: "box",
+        name: "My Resource Variable",
+        type: "resource",
+        resourceId: "resourceId",
+      },
+    ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    deleteInstance(["box", "body"]);
+    const data = getWebstudioData({ instances, resources, dataSources });
+    deleteInstanceMutable(data, ["box", "body"]);
 
-    expect($instances.get()).toEqual(
-      toMap([createInstance("body", "Body", [])])
-    );
-    expect($dataSources.get()).toEqual(new Map());
-    expect($resources.get()).toEqual(new Map());
+    expect(data.instances).toEqual(toMap([createInstance("body", "Body", [])]));
+    expect(data.dataSources).toEqual(new Map());
+    expect(data.resources).toEqual(new Map());
   });
 });
 

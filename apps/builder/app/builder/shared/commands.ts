@@ -13,11 +13,12 @@ import {
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
 import {
-  deleteInstance,
+  deleteInstanceMutable,
   findAvailableDataSources,
   getInstancesSlice,
   insertInstancesSliceCopy,
   isInstanceDetachable,
+  updateWebstudioData,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -70,10 +71,12 @@ const deleteSelectedInstance = () => {
       newSelectedInstanceSelector = selectedInstanceSelector.slice(1);
     }
   }
-  if (deleteInstance(selectedInstanceSelector)) {
-    $selectedInstanceSelector.set(newSelectedInstanceSelector);
-    $selectedStyleSourceSelector.set(undefined);
-  }
+  updateWebstudioData((data) => {
+    if (deleteInstanceMutable(data, selectedInstanceSelector)) {
+      $selectedInstanceSelector.set(newSelectedInstanceSelector);
+      $selectedStyleSourceSelector.set(undefined);
+    }
+  });
 };
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
@@ -168,7 +171,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (instanceSelector === undefined) {
           return;
         }
-        if (isInstanceDetachable(instanceSelector) === false) {
+        const instances = $instances.get();
+        if (isInstanceDetachable(instances, instanceSelector) === false) {
           toast.error(
             "This instance can not be moved outside of its parent component."
           );
@@ -187,7 +191,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           slice,
           availableDataSources: findAvailableDataSources(
             $dataSources.get(),
-            $instances.get(),
+            instances,
             parentInstanceSelector
           ),
           beforeTransactionEnd: (rootInstanceId, draft) => {

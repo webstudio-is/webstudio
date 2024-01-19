@@ -3,8 +3,9 @@ import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
 import { copywriter, type operations } from "@webstudio-is/ai";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
-  deleteInstance as _deleteInstance,
+  deleteInstanceMutable,
   insertTemplateData,
+  updateWebstudioData,
 } from "~/shared/instance-utils";
 import {
   $breakpoints,
@@ -101,14 +102,16 @@ const deleteInstanceByOp = (
 ) => {
   const instanceSelector = computeSelectorForInstanceId(operation.wsId);
   if (instanceSelector) {
-    _deleteInstance(instanceSelector);
+    updateWebstudioData((data) => {
+      deleteInstanceMutable(data, instanceSelector);
+    });
   }
 };
 
 const applyStylesByOp = (operation: operations.editStylesWsOperation) => {
   serverSyncStore.createTransaction(
-    [$instances, $styleSourceSelections, $styleSources, $styles, $breakpoints],
-    (instances, styleSourceSelections, styleSources, styles, breakpoints) => {
+    [$styleSourceSelections, $styleSources, $styles, $breakpoints],
+    (styleSourceSelections, styleSources, styles, breakpoints) => {
       const newStyles = [...operation.styles.values()];
 
       const breakpointValues = Array.from(breakpoints.values());
