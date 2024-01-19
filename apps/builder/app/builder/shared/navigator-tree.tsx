@@ -143,7 +143,8 @@ export const NavigatorTree = () => {
       onSelect={handleSelect}
       onHover={$hoveredInstanceSelector.set}
       onDragItemChange={(dragInstanceSelector) => {
-        if (isInstanceDetachable(dragInstanceSelector) === false) {
+        const instances = $instances.get();
+        if (isInstanceDetachable(instances, dragInstanceSelector) === false) {
           toast.error(
             "This instance can not be moved outside of its parent component."
           );

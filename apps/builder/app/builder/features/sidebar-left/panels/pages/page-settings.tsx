@@ -48,9 +48,10 @@ import {
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import {
-  deleteInstance,
+  deleteInstanceMutable,
   getInstancesSlice,
   insertInstancesSliceCopy,
+  updateWebstudioData,
 } from "~/shared/instance-utils";
 import {
   $assets,
@@ -923,13 +924,12 @@ const deletePage = (pageId: Page["id"]) => {
     $selectedInstanceSelector.set(undefined);
   }
   const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
-  if (rootInstanceId !== undefined) {
-    deleteInstance([rootInstanceId]);
+  if (rootInstanceId === undefined) {
+    return;
   }
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
+  updateWebstudioData((data) => {
+    deleteInstanceMutable(data, [rootInstanceId]);
+    const { pages } = data;
     removeByMutable(pages.pages, (page) => page.id === pageId);
     cleanupChildRefsMutable(pageId, pages.folders);
   });
