@@ -214,11 +214,7 @@ export const getAllChildrenAndSelf = (
 /**
  * Deletes a page.
  */
-export const deletePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
-  if (pages === undefined) {
-    return;
-  }
+export const deletePageMutable = (pageId: Page["id"], pages: Pages) => {
   // deselect page before deleting to avoid flash of content
   if ($selectedPageId.get() === pageId) {
     $selectedPageId.set(pages.homePage.id);
@@ -226,15 +222,12 @@ export const deletePage = (pageId: Page["id"]) => {
   }
   const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
   if (rootInstanceId !== undefined) {
+    // @todo deleteInstance creates a transaction but its bad becuase
+    // this function is called from a transaction already.
     deleteInstance([rootInstanceId]);
   }
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    removeByMutable(pages.pages, (page) => page.id === pageId);
-    cleanupChildRefsMutable(pageId, pages.folders);
-  });
+  removeByMutable(pages.pages, (page) => page.id === pageId);
+  cleanupChildRefsMutable(pageId, pages.folders);
 };
 
 /**

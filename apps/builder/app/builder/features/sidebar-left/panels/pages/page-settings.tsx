@@ -82,6 +82,7 @@ import {
 import {
   cleanupChildRefsMutable,
   registerFolderChildMutable,
+  deletePageMutable,
 } from "./page-utils";
 import { removeByMutable } from "~/shared/array-utils";
 import { Form } from "./form";
@@ -1029,8 +1030,13 @@ export const PageSettings = ({
   });
 
   const hanldeDelete = () => {
-    deletePage(pageId);
-    onDelete();
+    serverSyncStore.createTransaction([$pages], (pages) => {
+      if (pages === undefined) {
+        return;
+      }
+      deletePageMutable(pageId, pages);
+      onDelete();
+    });
   };
 
   if (page === undefined) {

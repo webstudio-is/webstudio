@@ -43,7 +43,7 @@ import {
   isSlugUsed,
   registerFolderChildMutable,
   deleteFolderWithChildrenMutable,
-  deletePage,
+  deletePageMutable,
   filterSelfAndChildren,
 } from "./page-utils";
 import { Form } from "./form";
@@ -380,7 +380,9 @@ const deleteFolder = (folderId: Folder["id"]) => {
       folderId,
       pages.folders
     );
-    pageIds.forEach(deletePage);
+    pageIds.forEach((pageId) => {
+      deletePageMutable(pageId, pages);
+    });
   });
 };
 
