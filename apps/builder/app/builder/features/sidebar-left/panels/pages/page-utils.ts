@@ -1,9 +1,11 @@
-import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
+import { createRootFolder } from "@webstudio-is/project-build";
 import {
   type Page,
   Pages,
   type Folder,
   findPageByIdOrPath,
+  ROOT_FOLDER_ID,
+  isRoot,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import { deleteInstance } from "~/shared/instance-utils";
@@ -90,20 +92,6 @@ export const toTreeData = (
 };
 
 /**
- * Find a folder that has has that id in the children.
- */
-export const findParentFolderByChildId = (
-  id: Folder["id"] | Page["id"],
-  folders: Array<Folder>
-): Folder | undefined => {
-  for (const folder of folders) {
-    if (folder.children.includes(id)) {
-      return folder;
-    }
-  }
-};
-
-/**
  * When page or folder needs to be deleted or moved to a different parent,
  * we want to cleanup any existing reference to it in current folder.
  * We could do this in just one folder, but I think its more robust to check all,
@@ -154,11 +142,6 @@ export const reparentOrphansMutable = (pages: Pages) => {
     }
   }
 };
-
-/**
- * Returns true if folder is the root folder.
- */
-export const isRoot = (folder: Folder) => folder.id === ROOT_FOLDER_ID;
 
 /**
  * Returns true if folder's slug is unique within it's future parent folder.

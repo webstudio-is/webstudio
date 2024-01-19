@@ -4,7 +4,12 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { Folder, Pages } from "@webstudio-is/sdk";
+import {
+  Folder,
+  Pages,
+  ROOT_FOLDER_ID,
+  findParentFolderByChildId,
+} from "@webstudio-is/sdk";
 import {
   theme,
   Button,
@@ -35,14 +40,12 @@ import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import {
-  findParentFolderByChildId,
   isSlugUsed,
   registerFolderChildMutable,
   deleteFolderWithChildrenMutable,
   deletePage,
   filterSelfAndChildren,
 } from "./page-utils";
-import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
 import { Form } from "./form";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({

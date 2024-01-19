@@ -2,9 +2,7 @@ import { describe, expect, test } from "@jest/globals";
 import {
   cleanupChildRefsMutable,
   deleteFolderWithChildrenMutable,
-  findParentFolderByChildId,
   getAllChildrenAndSelf,
-  isRoot,
   isSlugUsed,
   registerFolderChildMutable,
   reparentOrphansMutable,
@@ -12,7 +10,7 @@ import {
   filterSelfAndChildren,
 } from "./page-utils";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import type { Folder } from "@webstudio-is/sdk";
+import { isRoot, type Folder } from "@webstudio-is/sdk";
 
 describe("toTreeData", () => {
   test("initial pages always has home pages and a root folder", () => {
@@ -263,39 +261,6 @@ describe("cleanupChildRefsMutable", () => {
       slug: "",
       children: ["homePageId"],
     });
-  });
-});
-
-describe("findParentFolderByChildId", () => {
-  const pages = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    homePageId: "homePageId",
-  });
-  pages.folders.push({
-    id: "folderId",
-    name: "Folder 1",
-    slug: "folder",
-    children: ["folderId1"],
-  });
-  const rootFolder = pages.folders.find(isRoot);
-  rootFolder?.children.push("folderId");
-  pages.folders.push({
-    id: "folderId1",
-    name: "Folder 2",
-    slug: "folder",
-    children: [],
-  });
-  pages.folders.push({
-    id: "folderId2",
-    name: "Folder 3",
-    slug: "folder",
-    children: [],
-  });
-
-  test("find in root folder", () => {
-    expect(findParentFolderByChildId("folderId", pages.folders)).toEqual(
-      rootFolder
-    );
   });
 });
 

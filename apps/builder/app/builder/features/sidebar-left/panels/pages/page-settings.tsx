@@ -16,8 +16,9 @@ import {
   Folder,
   getPagePath,
   findPageByIdOrPath,
+  ROOT_FOLDER_ID,
+  findParentFolderByChildId,
 } from "@webstudio-is/sdk";
-import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
 import {
   theme,
   Button,
@@ -80,7 +81,6 @@ import {
 } from "./url-pattern";
 import {
   cleanupChildRefsMutable,
-  findParentFolderByChildId,
   registerFolderChildMutable,
 } from "./page-utils";
 import { removeByMutable } from "~/shared/array-utils";
