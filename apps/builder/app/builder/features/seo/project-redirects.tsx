@@ -9,18 +9,12 @@ import {
   theme,
   List,
   ListItem,
-  css,
   SmallIconButton,
   ScrollArea,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
 import type { ProjectSettings } from "./project-settings";
-
-const redirectListStyle = css({
-  paddingLeft: 0,
-  listStyle: "none",
-});
 
 export const ProjectRedirectionSettings = (props: {
   settings: ProjectSettings;
