@@ -15,65 +15,45 @@ import {
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
 import type { ProjectSettings } from "./project-settings";
+import {
+  ProjectNewRedirectPathSchema,
+  ProjectOldRedirectPathSchema,
+} from "@webstudio-is/sdk";
 
 export const ProjectRedirectionSettings = (props: {
   settings: ProjectSettings;
   onSettingsChange: (settings: ProjectSettings) => void;
 }) => {
-  const [oldPath, setOldPath] = useState<string | undefined>(undefined);
-  const [newPath, setNewPath] = useState<string | undefined>(undefined);
+  const [oldPath, setOldPath] = useState<string>("");
+  const [newPath, setNewPath] = useState<string>("");
   const [isValidOldPath, setIsValidOldPath] = useState<boolean>(true);
   const [isValidNewPath, setIsValidNewPath] = useState<boolean>(true);
 
   const redirects = props.settings?.redirects ?? {};
   const redirectKeys = Object.keys(redirects);
-  const isValidRedirects =
-    oldPath !== undefined &&
-    isValidOldPath &&
-    newPath !== undefined &&
-    isValidNewPath;
-
-  const validateOldPath = () => {
-    if (oldPath === undefined) {
-      setIsValidOldPath(true);
-      return;
-    }
-    setIsValidOldPath(oldPath.charAt(0) === "/");
-  };
-
-  const validateNewPath = () => {
-    if (newPath === undefined) {
-      setIsValidNewPath(true);
-      return;
-    }
-
-    if (newPath.charAt(0) === "/") {
-      setIsValidNewPath(true);
-      return;
-    }
-
-    try {
-      setIsValidNewPath(Boolean(new URL(newPath)));
-    } catch {
-      setIsValidNewPath(false);
-    }
-  };
+  const isValidRedirects = isValidOldPath && isValidNewPath;
 
   const handleOldPathChange = (event: ChangeEvent<HTMLInputElement>) => {
     setOldPath(event.target.value);
-    validateOldPath();
+    const oldPathValidationResult = ProjectOldRedirectPathSchema.safeParse(
+      event.target.value
+    );
+    oldPathValidationResult.success
+      ? setIsValidOldPath(true)
+      : setIsValidOldPath(false);
   };
 
   const handleNewPathChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewPath(event.target.value);
-    validateNewPath();
+    const newPathValidationResult = ProjectNewRedirectPathSchema.safeParse(
+      event.target.value
+    );
+    newPathValidationResult.success
+      ? setIsValidNewPath(true)
+      : setIsValidNewPath(false);
   };
 
   const handleAddRedirect = () => {
-    if (oldPath === undefined || newPath === undefined) {
-      return;
-    }
-
     if (isValidOldPath === false || isValidNewPath === false) {
       return;
     }
@@ -85,8 +65,8 @@ export const ProjectRedirectionSettings = (props: {
         [oldPath]: newPath,
       },
     });
-    setOldPath(undefined);
-    setNewPath(undefined);
+    setOldPath("");
+    setNewPath("");
   };
 
   const handleDeleteRedirect = (redirect: string) => {
@@ -112,7 +92,7 @@ export const ProjectRedirectionSettings = (props: {
           <InputField
             type="text"
             placeholder="/old-path"
-            value={oldPath || ""}
+            value={oldPath}
             color={
               isValidOldPath === true || oldPath === "" ? undefined : "error"
             }
@@ -123,7 +103,7 @@ export const ProjectRedirectionSettings = (props: {
           <InputField
             type="text"
             placeholder="/new-path or URL"
-            value={newPath || ""}
+            value={newPath}
             color={
               isValidNewPath === true || newPath === "" ? undefined : "error"
             }
