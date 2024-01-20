@@ -13,7 +13,6 @@ import {
   $project,
   $registeredComponentMetas,
   $instances,
-  $dataSources,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -195,8 +194,8 @@ export const onPaste = (clipboardData: string): boolean => {
       data,
       slice: fragment,
       availableDataSources: findAvailableDataSources(
-        $dataSources.get(),
-        $instances.get(),
+        data.dataSources,
+        data.instances,
         instanceSelector
       ),
     });

@@ -1,6 +1,5 @@
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
-  $dataSources,
   $isPreviewMode,
   $editingItemId,
   $instances,
@@ -192,8 +191,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
             data,
             slice,
             availableDataSources: findAvailableDataSources(
-              $dataSources.get(),
-              instances,
+              data.dataSources,
+              data.instances,
               parentInstanceSelector
             ),
           });
