@@ -40,8 +40,8 @@ export const categories = [
   "backgrounds",
   "borders",
   "boxShadows",
-  "outline",
   "effects",
+  "outline",
   "transitions",
 ] as const;
 
