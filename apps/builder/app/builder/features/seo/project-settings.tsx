@@ -14,6 +14,7 @@ import {
   css,
   CheckboxAndLabel,
   Checkbox,
+  ScrollArea,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
@@ -68,7 +69,6 @@ const ProjectSettingsContentMeta = (props: {
       <Grid
         gap={1}
         css={{
-          width: theme.spacing[34],
           mx: theme.spacing[5],
           px: theme.spacing[5],
         }}
@@ -218,31 +218,34 @@ const ProjectSettingsView = () => {
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
+          width: theme.spacing[34],
           zIndex: theme.zIndices[1],
         }}
         overlayCss={{
           zIndex: theme.zIndices[1],
         }}
       >
-        <Grid
-          gap={2}
-          css={{
-            my: theme.spacing[5],
-          }}
-        >
-          <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />
-          <ProjectAdvancedSettings
-            settings={settings}
-            onSettingsChange={setSettings}
-          />
-          {isFeatureEnabled("redirects") ? (
-            <ProjectRedirectionSettings
+        <ScrollArea>
+          <Grid
+            gap={2}
+            css={{
+              my: theme.spacing[5],
+            }}
+          >
+            <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />
+            <ProjectAdvancedSettings
               settings={settings}
               onSettingsChange={setSettings}
             />
-          ) : null}
-          <div />
-        </Grid>
+            {isFeatureEnabled("redirects") ? (
+              <ProjectRedirectionSettings
+                settings={settings}
+                onSettingsChange={setSettings}
+              />
+            ) : null}
+            <div />
+          </Grid>
+        </ScrollArea>
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
          */}
