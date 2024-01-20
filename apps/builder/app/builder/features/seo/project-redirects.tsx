@@ -132,6 +132,7 @@ export const ProjectRedirectionSettings = (props: {
           <Button
             disabled={isValidRedirects === false || oldPath === newPath}
             onClick={handleAddRedirect}
+            css={{ flexShrink: 0 }}
           >
             Add
           </Button>
