@@ -187,33 +187,37 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         const [targetInstanceId, parentInstanceId] = instanceSelector;
         const parentInstanceSelector = instanceSelector.slice(1);
         const slice = getInstancesSlice(targetInstanceId);
-        insertInstancesSliceCopy({
-          slice,
-          availableDataSources: findAvailableDataSources(
-            $dataSources.get(),
-            instances,
-            parentInstanceSelector
-          ),
-          beforeTransactionEnd: (rootInstanceId, draft) => {
-            const parentInstance = draft.instances.get(parentInstanceId);
-            if (parentInstance === undefined) {
-              return;
-            }
-            // put after current instance
-            const indexWithinChildren = parentInstance.children.findIndex(
-              (child) => child.type === "id" && child.value === targetInstanceId
-            );
-            const position = indexWithinChildren + 1;
-            parentInstance.children.splice(position, 0, {
-              type: "id",
-              value: rootInstanceId,
-            });
-            // select new instance
-            $selectedInstanceSelector.set([
-              rootInstanceId,
-              ...parentInstanceSelector,
-            ]);
-          },
+        updateWebstudioData((data) => {
+          const rootInstanceId = insertInstancesSliceCopy({
+            data,
+            slice,
+            availableDataSources: findAvailableDataSources(
+              $dataSources.get(),
+              instances,
+              parentInstanceSelector
+            ),
+          });
+          if (rootInstanceId === undefined) {
+            return;
+          }
+          const parentInstance = data.instances.get(parentInstanceId);
+          if (parentInstance === undefined) {
+            return;
+          }
+          // put after current instance
+          const indexWithinChildren = parentInstance.children.findIndex(
+            (child) => child.type === "id" && child.value === targetInstanceId
+          );
+          const position = indexWithinChildren + 1;
+          parentInstance.children.splice(position, 0, {
+            type: "id",
+            value: rootInstanceId,
+          });
+          // select new instance
+          $selectedInstanceSelector.set([
+            rootInstanceId,
+            ...parentInstanceSelector,
+          ]);
         });
       },
     },
