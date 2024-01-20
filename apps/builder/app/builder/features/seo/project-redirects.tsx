@@ -142,7 +142,15 @@ export const ProjectRedirectionSettings = (props: {
         <Grid>
           <ScrollArea css={{ maxHeight: theme.spacing[22] }}>
             <List asChild>
-              <Flex direction="column" css={{ px: theme.spacing[5] }}>
+              <Flex
+                direction="column"
+                gap="1"
+                css={{
+                  px: theme.spacing[5],
+                  mx: theme.spacing[5],
+                  py: theme.spacing[5],
+                }}
+              >
                 {Object.keys(redirects).map((redirect, index) => {
                   return (
                     <ListItem asChild key={redirect} index={index}>
@@ -151,8 +159,8 @@ export const ProjectRedirectionSettings = (props: {
                         align="center"
                         gap="2"
                         css={{
-                          height: theme.spacing[11],
                           overflow: "hidden",
+                          p: theme.spacing[3],
                         }}
                       >
                         <Flex gap="2">
