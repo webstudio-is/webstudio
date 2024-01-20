@@ -10,6 +10,7 @@ import type {
   StyleDecl,
   Breakpoint,
   DataSource,
+  WebstudioFragment,
 } from "@webstudio-is/sdk";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { Simplify } from "type-fest";
@@ -379,7 +380,7 @@ export const generateDataFromEmbedTemplate = (
   metas: Map<Instance["component"], WsComponentMeta>,
   defaultBreakpointId: Breakpoint["id"],
   generateId: () => string = nanoid
-) => {
+): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
   const dataSourceByRef = new Map<string, DataSource>();
@@ -408,12 +409,11 @@ export const generateDataFromEmbedTemplate = (
     styleSourceSelections,
     styleSources,
     styles,
+    assets: [],
+    breakpoints: [],
+    resources: [],
   };
 };
-
-export type EmbedTemplateData = ReturnType<
-  typeof generateDataFromEmbedTemplate
->;
 
 const namespaceEmbedTemplateComponents = (
   template: WsEmbedTemplate,

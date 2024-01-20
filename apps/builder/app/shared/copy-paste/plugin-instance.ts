@@ -2,15 +2,9 @@ import { shallowEqual } from "shallow-equal";
 import { z } from "zod";
 import { toast } from "@webstudio-is/design-system";
 import {
-  Asset,
-  Breakpoint,
-  DataSource,
   Instance,
   Instances,
-  Prop,
-  StyleDecl,
-  StyleSource,
-  StyleSourceSelection,
+  WebstudioFragment,
   findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/sdk";
 import {
@@ -29,33 +23,27 @@ import {
 } from "../tree-utils";
 import {
   computeInstancesConstraints,
-  deleteInstance,
+  deleteInstanceMutable,
   findAvailableDataSources,
   findClosestDroppableTarget,
   getInstancesSlice,
   insertInstancesSliceCopy,
   isInstanceDetachable,
+  updateWebstudioData,
 } from "../instance-utils";
 import { portalComponent } from "@webstudio-is/react-sdk";
 
 const version = "@webstudio/instance/v0.1";
 
-const InstanceData = z.object({
+const InstanceData = WebstudioFragment.extend({
   instanceSelector: z.array(z.string()),
-  breakpoints: z.array(Breakpoint),
-  instances: z.array(Instance),
-  props: z.array(Prop),
-  dataSources: z.array(DataSource),
-  styleSourceSelections: z.array(StyleSourceSelection),
-  styleSources: z.array(StyleSource),
-  styles: z.array(StyleDecl),
-  assets: z.array(Asset),
 });
 
 type InstanceData = z.infer<typeof InstanceData>;
 
 const getTreeData = (targetInstanceSelector: InstanceSelector) => {
-  if (isInstanceDetachable(targetInstanceSelector) === false) {
+  const instances = $instances.get();
+  if (isInstanceDetachable(instances, targetInstanceSelector) === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
@@ -267,7 +255,9 @@ export const onCut = () => {
   if (data === undefined) {
     return;
   }
-  deleteInstance(selectedInstanceSelector);
+  updateWebstudioData((data) => {
+    deleteInstanceMutable(data, selectedInstanceSelector);
+  });
   if (data === undefined) {
     return;
   }

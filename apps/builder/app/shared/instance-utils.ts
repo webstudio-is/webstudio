@@ -15,15 +15,15 @@ import {
   DataSources,
   Props,
   DataSource,
-  Prop,
   Breakpoint,
   Pages,
+  type WebstudioFragment,
+  type WebstudioData,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
-  type EmbedTemplateData,
   decodeDataSourceVariable,
   validateExpression,
   encodeDataSourceVariable,
@@ -59,6 +59,53 @@ import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
+
+export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
+  serverSyncStore.createTransaction(
+    [
+      $pages,
+      $instances,
+      $props,
+      $breakpoints,
+      $styleSourceSelections,
+      $styleSources,
+      $styles,
+      $dataSources,
+      $resources,
+      $assets,
+    ],
+    (
+      pages,
+      instances,
+      props,
+      breakpoints,
+      styleSourceSelections,
+      styleSources,
+      styles,
+      dataSources,
+      resources,
+      assets
+    ) => {
+      // @todo normalize pages
+      if (pages === undefined) {
+        return;
+      }
+      mutate({
+        pages,
+        instances,
+        props,
+        dataSources,
+        resources,
+        breakpoints,
+        styleSourceSelections,
+        styleSources,
+        styles,
+        assets,
+      });
+      //
+    }
+  );
+};
 
 const getLabelFromComponentName = (component: Instance["component"]) => {
   if (component.includes(":")) {
@@ -136,8 +183,10 @@ export const findClosestDetachableInstanceSelector = (
   }
 };
 
-export const isInstanceDetachable = (instanceSelector: InstanceSelector) => {
-  const instances = $instances.get();
+export const isInstanceDetachable = (
+  instances: Instances,
+  instanceSelector: InstanceSelector
+) => {
   const metas = $registeredComponentMetas.get();
   const [instanceId] = instanceSelector;
   const instance = instances.get(instanceId);
@@ -301,7 +350,7 @@ export const findClosestDroppableTarget = (
 };
 
 export const insertTemplateData = (
-  templateData: EmbedTemplateData,
+  templateData: WebstudioFragment,
   dropTarget: DroppableTarget
 ) => {
   const {
@@ -412,113 +461,104 @@ export const reparentInstance = (
   $selectedStyleSourceSelector.set(undefined);
 };
 
-export const deleteInstance = (instanceSelector: InstanceSelector) => {
+export const deleteInstanceMutable = (
+  data: WebstudioData,
+  instanceSelector: InstanceSelector
+) => {
   // @todo tell user they can't delete root
   if (instanceSelector.length === 1) {
     return false;
   }
-  if (isInstanceDetachable(instanceSelector) === false) {
+  if (isInstanceDetachable(data.instances, instanceSelector) === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
     return false;
   }
-  serverSyncStore.createTransaction(
-    [
-      $instances,
-      $props,
-      $styleSourceSelections,
-      $styleSources,
-      $styles,
-      $dataSources,
-      $resources,
-    ],
-    (
-      instances,
-      props,
-      styleSourceSelections,
-      styleSources,
-      styles,
-      dataSources,
-      resources
-    ) => {
-      let targetInstanceId = instanceSelector[0];
-      const parentInstanceId = instanceSelector[1];
-      let parentInstance =
-        parentInstanceId === undefined
-          ? undefined
-          : instances.get(parentInstanceId);
-      const grandparentInstanceId = instanceSelector[2];
-      const grandparentInstance = instances.get(grandparentInstanceId);
+  const {
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+    dataSources,
+    resources,
+  } = data;
+  let targetInstanceId = instanceSelector[0];
+  const parentInstanceId = instanceSelector[1];
+  let parentInstance =
+    parentInstanceId === undefined
+      ? undefined
+      : instances.get(parentInstanceId);
+  const grandparentInstanceId = instanceSelector[2];
+  const grandparentInstance = instances.get(grandparentInstanceId);
 
-      // delete parent fragment too if its last child is going to be deleted
-      // use case for slots: slot became empty and remove display: contents
-      // to be displayed properly on canvas
-      if (
-        parentInstance?.component === "Fragment" &&
-        parentInstance.children.length === 1 &&
-        grandparentInstance
-      ) {
-        targetInstanceId = parentInstance.id;
-        parentInstance = grandparentInstance;
-      }
+  // delete parent fragment too if its last child is going to be deleted
+  // use case for slots: slot became empty and remove display: contents
+  // to be displayed properly on canvas
+  if (
+    parentInstance?.component === "Fragment" &&
+    parentInstance.children.length === 1 &&
+    grandparentInstance
+  ) {
+    targetInstanceId = parentInstance.id;
+    parentInstance = grandparentInstance;
+  }
 
-      // skip parent fake "item" instance and use grandparent collection as parent
-      if (grandparentInstance?.component === collectionComponent) {
-        parentInstance = grandparentInstance;
-      }
+  // skip parent fake "item" instance and use grandparent collection as parent
+  if (grandparentInstance?.component === collectionComponent) {
+    parentInstance = grandparentInstance;
+  }
 
-      const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-        instances,
-        targetInstanceId
-      );
-      const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
-        styleSources.values(),
-        styleSourceSelections.values(),
-        instanceIds
-      );
+  const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    instances,
+    targetInstanceId
+  );
+  const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
+    styleSources.values(),
+    styleSourceSelections.values(),
+    instanceIds
+  );
 
-      // may not exist when delete root
-      if (parentInstance) {
-        removeByMutable(
-          parentInstance.children,
-          (child) => child.type === "id" && child.value === targetInstanceId
-        );
-      }
+  // may not exist when delete root
+  if (parentInstance) {
+    removeByMutable(
+      parentInstance.children,
+      (child) => child.type === "id" && child.value === targetInstanceId
+    );
+  }
 
-      for (const instanceId of instanceIds) {
-        instances.delete(instanceId);
-      }
-      // delete props, data sources and styles of deleted instance and its descendants
-      for (const prop of props.values()) {
-        if (instanceIds.has(prop.instanceId)) {
-          props.delete(prop.id);
-        }
-      }
-      for (const dataSource of dataSources.values()) {
-        if (
-          dataSource.scopeInstanceId !== undefined &&
-          instanceIds.has(dataSource.scopeInstanceId)
-        ) {
-          dataSources.delete(dataSource.id);
-          if (dataSource.type === "resource") {
-            resources.delete(dataSource.resourceId);
-          }
-        }
-      }
-      for (const instanceId of instanceIds) {
-        styleSourceSelections.delete(instanceId);
-      }
-      for (const styleSourceId of localStyleSourceIds) {
-        styleSources.delete(styleSourceId);
-      }
-      for (const [styleDeclKey, styleDecl] of styles) {
-        if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
-          styles.delete(styleDeclKey);
-        }
+  for (const instanceId of instanceIds) {
+    instances.delete(instanceId);
+  }
+  // delete props, data sources and styles of deleted instance and its descendants
+  for (const prop of props.values()) {
+    if (instanceIds.has(prop.instanceId)) {
+      props.delete(prop.id);
+    }
+  }
+  for (const dataSource of dataSources.values()) {
+    if (
+      dataSource.scopeInstanceId !== undefined &&
+      instanceIds.has(dataSource.scopeInstanceId)
+    ) {
+      dataSources.delete(dataSource.id);
+      if (dataSource.type === "resource") {
+        resources.delete(dataSource.resourceId);
       }
     }
-  );
+  }
+  for (const instanceId of instanceIds) {
+    styleSourceSelections.delete(instanceId);
+  }
+  for (const styleSourceId of localStyleSourceIds) {
+    styleSources.delete(styleSourceId);
+  }
+  for (const [styleDeclKey, styleDecl] of styles) {
+    if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
+      styles.delete(styleDeclKey);
+    }
+  }
   return true;
 };
 
@@ -554,18 +594,9 @@ const traverseStyleValue = (
   value satisfies never;
 };
 
-type InstancesSlice = {
-  instances: Instance[];
-  styleSourceSelections: StyleSourceSelection[];
-  styleSources: StyleSource[];
-  breakpoints: Breakpoint[];
-  styles: StyleDecl[];
-  dataSources: DataSource[];
-  props: Prop[];
-  assets: Asset[];
-};
-
-export const getInstancesSlice = (rootInstanceId: string) => {
+export const getInstancesSlice = (
+  rootInstanceId: string
+): WebstudioFragment => {
   const assets = $assets.get();
   const instances = $instances.get();
   const dataSources = $dataSources.get();
@@ -709,12 +740,14 @@ export const getInstancesSlice = (rootInstanceId: string) => {
   }
 
   return {
+    children: [{ type: "id", value: rootInstanceId }],
     instances: slicedInstances,
     styleSourceSelections: slicedStyleSourceSelections,
     styleSources: Array.from(slicedStyleSources.values()),
     breakpoints: Array.from(slicedBreapoints.values()),
     styles: slicedStyles,
     dataSources: Array.from(slicedDataSources.values()),
+    resources: [],
     props: Array.from(slicedProps.values()),
     assets: slicedAssets,
   };
@@ -801,7 +834,7 @@ export const insertInstancesSliceCopy = ({
   availableDataSources,
   beforeTransactionEnd,
 }: {
-  slice: InstancesSlice;
+  slice: WebstudioFragment;
   availableDataSources: Set<DataSource["id"]>;
   beforeTransactionEnd?: (
     rootInstanceId: Instance["id"],
