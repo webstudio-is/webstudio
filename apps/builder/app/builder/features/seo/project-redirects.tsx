@@ -11,15 +11,14 @@ import {
   ListItem,
   css,
   SmallIconButton,
+  ScrollArea,
 } from "@webstudio-is/design-system";
-import { TrashIcon } from "@webstudio-is/icons";
+import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
 import type { ProjectSettings } from "./project-settings";
 
 const redirectListStyle = css({
-  maxHeight: theme.spacing[22],
   paddingLeft: 0,
-  overflowY: "scroll",
   listStyle: "none",
 });
 
@@ -115,21 +114,21 @@ export const ProjectRedirectionSettings = (props: {
           search engine rankings.
         </Text>
 
-        <Flex gap="2" css={{ alignItems: "end" }}>
+        <Flex gap="2" align="center">
           <InputField
-            id="old-url-path"
             type="text"
-            placeholder="Old path"
+            placeholder="/old-path"
             value={oldPath || ""}
             color={
               isValidOldPath === true || oldPath === "" ? undefined : "error"
             }
             onChange={handleOldPathChange}
+            css={{ flexGrow: 1 }}
           />
+          <ArrowRightIcon />
           <InputField
-            id="new-url-path"
             type="text"
-            placeholder="New path/url"
+            placeholder="/new-path or URL"
             value={newPath || ""}
             color={
               isValidNewPath === true || newPath === "" ? undefined : "error"
@@ -146,37 +145,43 @@ export const ProjectRedirectionSettings = (props: {
       </Grid>
 
       {redirectKeys.length > 0 ? (
-        <Grid
-          css={{
-            mx: theme.spacing[5],
-            px: theme.spacing[5],
-          }}
-        >
-          <Label sectionTitle>Existing Redirects</Label>
-          <List className={redirectListStyle()}>
-            {Object.keys(redirects).map((redirect) => {
-              return (
-                <ListItem key={redirect}>
-                  <Grid
-                    gap={2}
-                    css={{
-                      gridTemplateColumns: "2fr 6fr 0.5fr",
-                    }}
-                  >
-                    <Text truncate>{redirect}</Text>
-                    <Text variant={"regularLink"} truncate>
-                      {redirects[redirect]}
-                    </Text>
-                    <SmallIconButton
-                      variant="destructive"
-                      icon={<TrashIcon />}
-                      onClick={() => handleDeleteRedirect(redirect)}
-                    />
-                  </Grid>
-                </ListItem>
-              );
-            })}
-          </List>
+        <Grid>
+          <ScrollArea
+            css={{
+              maxHeight: theme.spacing[22],
+            }}
+          >
+            <List asChild>
+              <Flex direction="column" css={{ px: theme.spacing[5] }}>
+                {Object.keys(redirects).map((redirect, index) => {
+                  return (
+                    <ListItem asChild key={redirect} index={index}>
+                      <Flex
+                        justify="between"
+                        align="center"
+                        gap="2"
+                        css={{
+                          height: theme.spacing[11],
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Flex gap="2">
+                          <Text>{redirect}</Text>
+                          <ArrowRightIcon />
+                          <Text truncate>{redirects[redirect]}</Text>
+                        </Flex>
+                        <SmallIconButton
+                          variant="destructive"
+                          icon={<TrashIcon />}
+                          onClick={() => handleDeleteRedirect(redirect)}
+                        />
+                      </Flex>
+                    </ListItem>
+                  );
+                })}
+              </Flex>
+            </List>
+          </ScrollArea>
         </Grid>
       ) : null}
     </>
