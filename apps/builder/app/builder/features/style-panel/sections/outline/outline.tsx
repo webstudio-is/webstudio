@@ -19,6 +19,16 @@ const properties: StyleProperty[] = [
 export const OutlineSection = (props: RenderCategoryProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
 
+  const outlineStyleValue = currentStyle["outlineStyle"]?.value ?? {
+    type: "keyword",
+    value: "none",
+  };
+
+  // Render color, width, and offset properties only if outline style is not "none"
+  const renderAdditionalProperties =
+    outlineStyleValue &&
+    ("value" in outlineStyleValue ? outlineStyleValue.value !== "none" : false);
+
   return (
     <CollapsibleSection
       label="Outline"
@@ -31,45 +41,48 @@ export const OutlineSection = (props: RenderCategoryProps) => {
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
+        {renderAdditionalProperties && (
+          <>
+            <Grid
+              css={{
+                gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
+              }}
+              gapX={2}
+            >
+              <PropertyName
+                style={currentStyle}
+                properties={[property]}
+                label={"Color"}
+                onReset={() => deleteProperty(property)}
+              />
 
-        <Grid
-          css={{
-            gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
-          }}
-          gapX={2}
-        >
-          <PropertyName
-            style={currentStyle}
-            properties={[property]}
-            label={"Color"}
-            onReset={() => deleteProperty(property)}
-          />
+              <Box
+                css={{
+                  gridColumn: `span 2`,
+                }}
+              >
+                <ColorControl
+                  property={property}
+                  currentStyle={currentStyle}
+                  setProperty={setProperty}
+                  deleteProperty={deleteProperty}
+                />
+              </Box>
+            </Grid>
 
-          <Box
-            css={{
-              gridColumn: `span 2`,
-            }}
-          >
-            <ColorControl
-              property={property}
+            <OutlineWidth
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
-          </Box>
-        </Grid>
 
-        <OutlineWidth
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-
-        <OutlineOffset
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
+            <OutlineOffset
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
+          </>
+        )}
       </Flex>
     </CollapsibleSection>
   );
