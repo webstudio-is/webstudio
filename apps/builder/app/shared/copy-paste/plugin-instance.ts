@@ -13,7 +13,6 @@ import {
   $project,
   $registeredComponentMetas,
   $instances,
-  $dataSources,
 } from "../nano-states";
 import {
   type InstanceSelector,
@@ -167,14 +166,14 @@ const getPasteTarget = (
 };
 
 export const onPaste = (clipboardData: string): boolean => {
-  const data = parse(clipboardData);
+  const fragment = parse(clipboardData);
 
   const selectedPage = $selectedPage.get();
   const project = $project.get();
   const metas = $registeredComponentMetas.get();
 
   if (
-    data === undefined ||
+    fragment === undefined ||
     selectedPage === undefined ||
     project === undefined
   ) {
@@ -185,46 +184,50 @@ export const onPaste = (clipboardData: string): boolean => {
   const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
-  const pasteTarget = getPasteTarget(data, instanceSelector);
+  const pasteTarget = getPasteTarget(fragment, instanceSelector);
   if (pasteTarget === undefined) {
     return false;
   }
 
-  insertInstancesSliceCopy({
-    slice: data,
-    availableDataSources: findAvailableDataSources(
-      $dataSources.get(),
-      $instances.get(),
-      instanceSelector
-    ),
-    beforeTransactionEnd: (rootInstanceId, draft) => {
-      let dropTarget = pasteTarget;
-      dropTarget =
-        getInstanceOrCreateFragmentIfNecessary(draft.instances, dropTarget) ??
-        dropTarget;
-      dropTarget =
-        wrapEditableChildrenAroundDropTargetMutable(
-          draft.instances,
-          draft.props,
-          metas,
-          dropTarget
-        ) ?? dropTarget;
-      const [parentId] = dropTarget.parentSelector;
-      const parentInstance = draft.instances.get(parentId);
-      if (parentInstance === undefined) {
-        return;
-      }
-      const child: Instance["children"][number] = {
-        type: "id",
-        value: rootInstanceId,
-      };
-      const { position } = dropTarget;
-      if (position === "end") {
-        parentInstance.children.push(child);
-      } else {
-        parentInstance.children.splice(position, 0, child);
-      }
-    },
+  updateWebstudioData((data) => {
+    const rootInstanceId = insertInstancesSliceCopy({
+      data,
+      slice: fragment,
+      availableDataSources: findAvailableDataSources(
+        data.dataSources,
+        data.instances,
+        instanceSelector
+      ),
+    });
+    if (rootInstanceId === undefined) {
+      return;
+    }
+    let dropTarget = pasteTarget;
+    dropTarget =
+      getInstanceOrCreateFragmentIfNecessary(data.instances, dropTarget) ??
+      dropTarget;
+    dropTarget =
+      wrapEditableChildrenAroundDropTargetMutable(
+        data.instances,
+        data.props,
+        metas,
+        dropTarget
+      ) ?? dropTarget;
+    const [parentId] = dropTarget.parentSelector;
+    const parentInstance = data.instances.get(parentId);
+    if (parentInstance === undefined) {
+      return;
+    }
+    const child: Instance["children"][number] = {
+      type: "id",
+      value: rootInstanceId,
+    };
+    const { position } = dropTarget;
+    if (position === "end") {
+      parentInstance.children.push(child);
+    } else {
+      parentInstance.children.splice(position, 0, child);
+    }
   });
 
   return true;
