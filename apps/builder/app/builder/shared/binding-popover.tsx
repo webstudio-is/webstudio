@@ -188,7 +188,15 @@ const BindingPanel = ({
         <Tooltip
           variant="wrapped"
           content={
-            "Compose variables, do math, write conditionals. Example: VariableA + VariableB > 10 ? true : false"
+            <Text>
+              Compose variables, do math; the result of the expression will be
+              used as a value.
+              <br />
+              Example: VariableA || VariableB || 'DefaultValue'
+              <br />
+              Explanation: If VariableA is empty, use VariableB; otherwise use
+              'DefaultValue'.
+            </Text>
           }
         >
           <InfoCircleIcon tabIndex={0} />
