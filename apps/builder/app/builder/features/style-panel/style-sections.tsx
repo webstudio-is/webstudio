@@ -141,7 +141,7 @@ export const shouldRenderCategory = (
 
 export const sections: Record<
   Category,
-  (props: RenderCategoryProps) => JSX.Element | null
+  (props: RenderCategoryProps) => JSX.Element | null | undefined
 > = {
   layout: LayoutSection,
   flexChild: FlexChildSection,
