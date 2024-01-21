@@ -28,7 +28,6 @@ import { MetaIcon } from "~/builder/shared/meta-icon";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -86,10 +85,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                         if (component === undefined) {
                           return;
                         }
-                        if (
-                          component === collectionComponent &&
-                          isFeatureEnabled("bindings") === false
-                        ) {
+                        if (component === collectionComponent) {
                           return;
                         }
                         return (

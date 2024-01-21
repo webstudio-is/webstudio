@@ -390,7 +390,7 @@ const FormFields = ({
               </>
             )}
           </Grid>
-          {isFeatureEnabled("folders") && values.isHomePage === false && (
+          {values.isHomePage === false && (
             <Grid gap={1}>
               <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
               <Select
