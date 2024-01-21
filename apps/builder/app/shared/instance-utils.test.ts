@@ -53,6 +53,8 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 enableMapSet();
 registerContainers();
 
+$pages.set(createDefaultPages({ rootInstanceId: "" }));
+
 const defaultMetasMap = new Map(Object.entries(defaultMetas));
 
 const createFakeComponentMetas = (
@@ -515,32 +517,227 @@ test("insert template data with only new style sources", () => {
 });
 
 describe("reparent instance", () => {
-  test("from collectioo item", () => {
+  test("between instances", () => {
+    // body
+    //   box
+    //     text
+    //   button
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [
+          { type: "id", value: "box" },
+          { type: "id", value: "button" },
+        ]),
+        createInstance("box", "Box", [{ type: "id", value: "text" }]),
+        createInstance("button", "Button", []),
+        createInstance("text", "Text", []),
+      ])
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstance(["text", "box", "body"], {
+      parentSelector: ["body"],
+      position: 1,
+    });
+    const instances = $instances.get();
+    const newTextId = instances.get("body")?.children[1].value as string;
+    // body
+    //   box
+    //   text
+    //   button
+    expect(instances).toEqual(
+      toMap([
+        createInstance("body", "Body", [
+          { type: "id", value: "box" },
+          { type: "id", value: newTextId },
+          { type: "id", value: "button" },
+        ]),
+        createInstance("box", "Box", []),
+        createInstance("button", "Button", []),
+        createInstance(newTextId, "Text", []),
+      ])
+    );
+  });
+
+  test("to the end", () => {
+    // body
+    //   box
+    //     text
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", [{ type: "id", value: "text" }]),
+        createInstance("text", "Text", []),
+      ])
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstance(["text", "box", "body"], {
+      parentSelector: ["body"],
+      position: "end",
+    });
+    const instances = $instances.get();
+    const newTextId = instances.get("body")?.children[1].value as string;
+    // body
+    //   box
+    //   text
+    expect(instances).toEqual(
+      toMap([
+        createInstance("body", "Body", [
+          { type: "id", value: "box" },
+          { type: "id", value: newTextId },
+        ]),
+        createInstance("box", "Box", []),
+        createInstance(newTextId, "Text", []),
+      ])
+    );
+  });
+
+  test("wrap with fragment when reparent into empty portal", () => {
+    // body
+    //   portal
+    //   box
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [
+          { type: "id", value: "portal" },
+          { type: "id", value: "box" },
+        ]),
+        createInstance("portal", portalComponent, []),
+        createInstance("box", "Box", []),
+      ])
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstance(["box", "body"], {
+      parentSelector: ["portal", "body"],
+      position: "end",
+    });
+    const instances = $instances.get();
+    const newFragmentId = instances.get("portal")?.children[0].value as string;
+    const newBoxId = instances.get(newFragmentId)?.children[0].value as string;
+    // body
+    //   portal
+    //     fragment
+    //       box
+    expect(instances).toEqual(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
+        createInstance("portal", portalComponent, [
+          { type: "id", value: newFragmentId },
+        ]),
+        createInstance(newFragmentId, "Fragment", [
+          { type: "id", value: newBoxId },
+        ]),
+        createInstance(newBoxId, "Box", []),
+      ])
+    );
+  });
+
+  test("reuse existing fragment when reparent into portal", () => {
+    // body
+    //   portal
+    //     fragment
+    //   box
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [
+          { type: "id", value: "portal" },
+          { type: "id", value: "box" },
+        ]),
+        createInstance("portal", portalComponent, [
+          { type: "id", value: "fragment" },
+        ]),
+        createInstance("fragment", "Fragment", []),
+        createInstance("box", "Box", []),
+      ])
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstance(["box", "body"], {
+      parentSelector: ["portal", "body"],
+      position: "end",
+    });
+    const instances = $instances.get();
+    const newBoxId = instances.get("fragment")?.children[0].value as string;
+    // body
+    //   portal
+    //     fragment
+    //       box
+    expect(instances).toEqual(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
+        createInstance("portal", portalComponent, [
+          { type: "id", value: "fragment" },
+        ]),
+        createInstance("fragment", "Fragment", [
+          { type: "id", value: newBoxId },
+        ]),
+        createInstance(newBoxId, "Box", []),
+      ])
+    );
+  });
+
+  test("prevent portal reparenting into own children to avoid infinite loop", () => {
+    // body
+    //   portal
+    //     fragment
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
+        createInstance("portal", portalComponent, [
+          { type: "id", value: "fragment" },
+        ]),
+        createInstance("fragment", "Fragment", []),
+      ])
+    );
+    $registeredComponentMetas.set(createFakeComponentMetas({}));
+    reparentInstance(["portal", "body"], {
+      parentSelector: ["fragment", "portal", "body"],
+      position: "end",
+    });
+    const instances = $instances.get();
+    // body
+    //   portal
+    //     fragment
+    expect(instances).toEqual(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "portal" }]),
+        createInstance("portal", portalComponent, [
+          { type: "id", value: "fragment" },
+        ]),
+        createInstance("fragment", "Fragment", []),
+      ])
+    );
+  });
+
+  test("from collection item", () => {
     // body
     //   list
     //     box
     $instances.set(
-      new Map([
-        createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
-        createInstancePair("list", collectionComponent, [
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "list" }]),
+        createInstance("list", collectionComponent, [
           { type: "id", value: "box" },
         ]),
-        createInstancePair("box", "Box", []),
+        createInstance("box", "Box", []),
       ])
     );
     $registeredComponentMetas.set(createFakeComponentMetas({}));
     reparentInstance(["box", "list[0]", "list", "body"], {
       parentSelector: ["body"],
-      position: 1,
+      position: "end",
     });
-    expect($instances.get()).toEqual(
-      new Map([
-        createInstancePair("body", "Body", [
+    const instances = $instances.get();
+    const newBoxId = instances.get("body")?.children[1].value as string;
+    // body
+    //   list
+    //   box
+    expect(instances).toEqual(
+      toMap([
+        createInstance("body", "Body", [
           { type: "id", value: "list" },
-          { type: "id", value: "box" },
+          { type: "id", value: newBoxId },
         ]),
-        createInstancePair("list", collectionComponent, []),
-        createInstancePair("box", "Box", []),
+        createInstance("list", collectionComponent, []),
+        createInstance(newBoxId, "Box", []),
       ])
     );
   });
@@ -1145,7 +1342,6 @@ describe("insert instances slice copy", () => {
   $project.set({ id: "current_project" } as Project);
 
   beforeEach(() => {
-    $pages.set(createDefaultPages({ rootInstanceId: "" }));
     $assets.set(new Map());
     $breakpoints.set(new Map());
     $styleSourceSelections.set(new Map());
