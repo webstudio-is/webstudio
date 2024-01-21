@@ -192,10 +192,10 @@ const BindingPanel = ({
               Compose variables, do math; the result of the expression will be
               used as a value.
               <br />
-              Example: VariableA || VariableB || 'DefaultValue'
+              Example: VariableA || VariableB || &quot;DefaultValue&quot;
               <br />
               Explanation: If VariableA is empty, use VariableB; otherwise use
-              'DefaultValue'.
+              &quot;DefaultValue&quot;.
             </Text>
           }
         >
