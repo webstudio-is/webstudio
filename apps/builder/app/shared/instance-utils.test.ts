@@ -9,6 +9,7 @@ import {
 import * as defaultMetas from "@webstudio-is/sdk-components-react/metas";
 import type {
   Asset,
+  Breakpoint,
   DataSource,
   Instance,
   Instances,
@@ -16,6 +17,7 @@ import type {
   Resource,
   StyleDecl,
   StyleDeclKey,
+  StyleSource,
   WebstudioData,
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
@@ -544,7 +546,7 @@ describe("reparent instance", () => {
   });
 });
 
-const getWebstudioData = (data: Partial<WebstudioData>): WebstudioData => ({
+const getWebstudioData = (data?: Partial<WebstudioData>): WebstudioData => ({
   pages: createDefaultPages({ rootInstanceId: "" }),
   assets: new Map(),
   dataSources: new Map(),
@@ -862,7 +864,7 @@ describe("get instances slice", () => {
     ]);
   });
 
-  test("collect data sources used in expressions within instances", () => {
+  test("collect data sources used in expression props within instances", () => {
     // body
     //   box1
     //     box2
@@ -1058,6 +1060,65 @@ describe("get instances slice", () => {
       },
     ]);
   });
+
+  test("collect data sources used in expression children within instances", () => {
+    // body
+    //   box
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", [
+          {
+            type: "expression",
+            value: "$ws$dataSource$body + $ws$dataSource$box",
+          },
+        ]),
+      ])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "body",
+          scopeInstanceId: "body",
+          type: "variable",
+          name: "body",
+          value: { type: "string", value: "body" },
+        },
+        {
+          id: "bodyUnused",
+          scopeInstanceId: "body",
+          type: "variable",
+          name: "bodyUnused",
+          value: { type: "string", value: "bodyUnused" },
+        },
+        {
+          id: "box",
+          scopeInstanceId: "box",
+          type: "variable",
+          name: "box",
+          value: { type: "string", value: "box" },
+        },
+      ])
+    );
+    const { dataSources } = getInstancesSlice("box");
+
+    expect(dataSources).toEqual([
+      {
+        id: "body",
+        scopeInstanceId: "body",
+        type: "variable",
+        name: "body",
+        value: { type: "string", value: "body" },
+      },
+      {
+        id: "box",
+        scopeInstanceId: "box",
+        type: "variable",
+        name: "box",
+        value: { type: "string", value: "box" },
+      },
+    ]);
+  });
 });
 
 describe("insert instances slice copy", () => {
@@ -1081,9 +1142,10 @@ describe("insert instances slice copy", () => {
     assets: [],
   };
 
+  $project.set({ id: "current_project" } as Project);
+
   beforeEach(() => {
     $pages.set(createDefaultPages({ rootInstanceId: "" }));
-    $project.set({ id: "current_project" } as Project);
     $assets.set(new Map());
     $breakpoints.set(new Map());
     $styleSourceSelections.set(new Map());
@@ -1095,21 +1157,24 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert assets with same ids if missing", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         assets: [createImageAsset("asset1", "name", "another_project")],
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($assets.get().values())).toEqual([
+    expect(Array.from(data.assets.values())).toEqual([
       createImageAsset("asset1", "name", "current_project"),
     ]);
 
-    $assets.set(
-      toMap([createImageAsset("asset1", "changed_name", "current_project")])
-    );
+    data.assets = toMap([
+      createImageAsset("asset1", "changed_name", "current_project"),
+    ]);
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         assets: [
@@ -1119,7 +1184,7 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($assets.get().values())).toEqual([
+    expect(Array.from(data.assets.values())).toEqual([
       // preserve any user changes
       createImageAsset("asset1", "changed_name", "current_project"),
       // add new assets while preserving old ones
@@ -1128,13 +1193,13 @@ describe("insert instances slice copy", () => {
   });
 
   test("merge breakpoints with existing ones", () => {
-    $breakpoints.set(
-      toMap([
-        { id: "existing_base", label: "base" },
-        { id: "existing_small", label: "small", minWidth: 768 },
-      ])
-    );
+    const breakpoints = toMap<Breakpoint>([
+      { id: "existing_base", label: "base" },
+      { id: "existing_small", label: "small", minWidth: 768 },
+    ]);
+    const data = getWebstudioData({ breakpoints });
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         breakpoints: [
@@ -1153,7 +1218,7 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($breakpoints.get().values())).toEqual([
+    expect(Array.from(data.breakpoints.values())).toEqual([
       { id: "existing_base", label: "base" },
       { id: "existing_small", label: "small", minWidth: 768 },
       { id: "new_large", label: "Large", minWidth: 1200 },
@@ -1161,11 +1226,13 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert missing tokens and use merged breakpoint ids", () => {
-    $breakpoints.set(toMap([{ id: "base", label: "base" }]));
-    $styleSources.set(
-      toMap([{ id: "token1", type: "token", name: "oldLabel" }])
-    );
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const styleSources = toMap<StyleSource>([
+      { id: "token1", type: "token", name: "oldLabel" },
+    ]);
+    const data = getWebstudioData({ breakpoints, styleSources });
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         breakpoints: [{ id: "new_base", label: "Base" }],
@@ -1190,11 +1257,11 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($styleSources.get().values())).toEqual([
+    expect(Array.from(data.styleSources.values())).toEqual([
       { id: "token1", type: "token", name: "oldLabel" },
       { id: "token2", type: "token", name: "myToken" },
     ]);
-    expect(Array.from($styles.get().values())).toEqual([
+    expect(Array.from(data.styles.values())).toEqual([
       {
         styleSourceId: "token2",
         breakpointId: "base",
@@ -1205,7 +1272,9 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert instances", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         instances: [
@@ -1219,7 +1288,7 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($instances.get().keys())).toEqual([
+    expect(Array.from(data.instances.keys())).toEqual([
       expect.not.stringMatching("box"),
     ]);
   });
@@ -1248,8 +1317,10 @@ describe("insert instances slice copy", () => {
         children: [{ type: "text", value: "First" }],
       },
     ];
+    const data = getWebstudioData();
 
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         instances: instancesWithPortals,
@@ -1257,7 +1328,7 @@ describe("insert instances slice copy", () => {
       availableDataSources: new Set(),
     });
 
-    expect(Array.from($instances.get().values())).toEqual([
+    expect(Array.from(data.instances.values())).toEqual([
       {
         type: "instance",
         id: "fragment",
@@ -1280,16 +1351,15 @@ describe("insert instances slice copy", () => {
 
     // change portal content and make sure it does not break
     // when stale portal with same id is inserted
-    const instancesWithDeletedBoxes = new Map($instances.get());
-    instancesWithDeletedBoxes.delete("box");
-    instancesWithDeletedBoxes.set("fragment", {
+    data.instances.delete("box");
+    data.instances.set("fragment", {
       type: "instance",
       id: "fragment",
       component: "Fragment",
       children: [],
     });
-    $instances.set(instancesWithDeletedBoxes);
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         instances: instancesWithPortals,
@@ -1297,7 +1367,7 @@ describe("insert instances slice copy", () => {
       availableDataSources: new Set(),
     });
 
-    expect(Array.from($instances.get().values())).toEqual([
+    expect(Array.from(data.instances.values())).toEqual([
       {
         type: "instance",
         id: "fragment",
@@ -1320,7 +1390,9 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert props with new ids", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         props: [
@@ -1335,7 +1407,7 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($props.get().values())).toEqual([
+    expect(Array.from(data.props.values())).toEqual([
       {
         id: expect.not.stringMatching("prop1"),
         instanceId: expect.not.stringMatching("body"),
@@ -1347,7 +1419,9 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert props from portals with old ids", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         // portal
@@ -1378,7 +1452,7 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($props.get().values())).toEqual([
+    expect(Array.from(data.props.values())).toEqual([
       {
         id: "prop1",
         instanceId: "fragment",
@@ -1390,7 +1464,9 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert data sources with new ids", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         dataSources: [
@@ -1401,6 +1477,11 @@ describe("insert instances slice copy", () => {
             name: "myVariable",
             value: { type: "string", value: "" },
           },
+        ],
+        instances: [
+          createInstance("body", "Body", [
+            { type: "expression", value: "$ws$dataSource$variableId" },
+          ]),
         ],
         props: [
           {
@@ -1434,28 +1515,34 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    const [newVariableId] = $dataSources.get().keys();
+    const [newVariableId] = data.dataSources.keys();
+    const [newInstanceId] = data.instances.keys();
     expect(newVariableId).not.toEqual("variableId");
-    expect(Array.from($dataSources.get().values())).toEqual([
+    expect(Array.from(data.dataSources.values())).toEqual([
       {
         id: newVariableId,
-        scopeInstanceId: expect.not.stringMatching("body"),
+        scopeInstanceId: newInstanceId,
         type: "variable",
         name: "myVariable",
         value: { type: "string", value: "" },
       },
     ]);
-    expect(Array.from($props.get().values())).toEqual([
+    expect(Array.from(data.instances.values())).toEqual([
+      createInstance(newInstanceId, "Body", [
+        { type: "expression", value: encodeDataSourceVariable(newVariableId) },
+      ]),
+    ]);
+    expect(Array.from(data.props.values())).toEqual([
       {
         id: expect.not.stringMatching("expressionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp1",
         type: "expression",
         value: encodeDataSourceVariable(newVariableId),
       },
       {
         id: expect.not.stringMatching("actionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp2",
         type: "action",
         value: [
@@ -1468,7 +1555,7 @@ describe("insert instances slice copy", () => {
       },
       {
         id: expect.not.stringMatching("parameterId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp3",
         type: "parameter",
         value: newVariableId,
@@ -1477,7 +1564,9 @@ describe("insert instances slice copy", () => {
   });
 
   test("inline data sources when not available in scope", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         dataSources: [
@@ -1495,6 +1584,15 @@ describe("insert instances slice copy", () => {
             name: "myInsideVariable",
             value: { type: "string", value: "inside" },
           },
+        ],
+        instances: [
+          createInstance("body", "Body", [
+            {
+              type: "expression",
+              value:
+                "$ws$dataSource$outsideVariableId + $ws$dataSource$insideVariableId",
+            },
+          ]),
         ],
         props: [
           {
@@ -1527,18 +1625,27 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(["insideVariableId"]),
     });
-    expect($dataSources.get()).toEqual(new Map());
-    expect(Array.from($props.get().values())).toEqual([
+    const [newInstanceId] = data.instances.keys();
+    expect(data.dataSources).toEqual(new Map());
+    expect(Array.from(data.instances.values())).toEqual([
+      createInstance(newInstanceId, "Body", [
+        {
+          type: "expression",
+          value: `"outside" + $ws$dataSource$insideVariableId`,
+        },
+      ]),
+    ]);
+    expect(Array.from(data.props.values())).toEqual([
       {
         id: expect.not.stringMatching("expressionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp1",
         type: "expression",
         value: `"outside" + $ws$dataSource$insideVariableId`,
       },
       {
         id: expect.not.stringMatching("actionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp2",
         type: "action",
         value: [
@@ -1553,7 +1660,9 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert data sources from portals with old ids", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         // portal
@@ -1569,7 +1678,9 @@ describe("insert instances slice copy", () => {
             type: "instance",
             id: "fragment",
             component: "Fragment",
-            children: [{ type: "id", value: "box" }],
+            children: [
+              { type: "expression", value: "$ws$dataSource$variableId" },
+            ],
           },
         ],
         dataSources: [
@@ -1613,7 +1724,7 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($dataSources.get().values())).toEqual([
+    expect(Array.from(data.dataSources.values())).toEqual([
       {
         id: "variableId",
         scopeInstanceId: "fragment",
@@ -1622,7 +1733,13 @@ describe("insert instances slice copy", () => {
         value: { type: "string", value: "" },
       },
     ]);
-    expect(Array.from($props.get().values())).toEqual([
+    expect(data.instances.get("fragment")).toEqual({
+      type: "instance",
+      id: "fragment",
+      component: "Fragment",
+      children: [{ type: "expression", value: "$ws$dataSource$variableId" }],
+    });
+    expect(Array.from(data.props.values())).toEqual([
       {
         id: "expressionId",
         instanceId: "fragment",
@@ -1654,24 +1771,24 @@ describe("insert instances slice copy", () => {
   });
 
   test("inline data sources from portals when not available in scope", () => {
+    const data = getWebstudioData();
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         // portal
         //   fragment
         instances: [
-          {
-            type: "instance",
-            id: "portal",
-            component: portalComponent,
-            children: [{ type: "id", value: "fragment" }],
-          },
-          {
-            type: "instance",
-            id: "fragment",
-            component: "Fragment",
-            children: [{ type: "id", value: "box" }],
-          },
+          createInstance("portal", portalComponent, [
+            { type: "id", value: "fragment" },
+          ]),
+          createInstance("fragment", "Fragment", [
+            {
+              type: "expression",
+              value:
+                "$ws$dataSource$outsideVariableId + $ws$dataSource$insideVariableId",
+            },
+          ]),
         ],
         dataSources: [
           {
@@ -1720,8 +1837,16 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(["insideVariableId"]),
     });
-    expect($dataSources.get()).toEqual(new Map());
-    expect(Array.from($props.get().values())).toEqual([
+    expect(data.dataSources).toEqual(new Map());
+    expect(data.instances.get("fragment")).toEqual(
+      createInstance("fragment", "Fragment", [
+        {
+          type: "expression",
+          value: `"outside" + $ws$dataSource$insideVariableId`,
+        },
+      ])
+    );
+    expect(Array.from(data.props.values())).toEqual([
       {
         id: "expressionId",
         instanceId: "fragment",
@@ -1746,8 +1871,10 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert local styles with new ids and use merged breakpoint ids", () => {
-    $breakpoints.set(toMap([{ id: "base", label: "base" }]));
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const data = getWebstudioData({ breakpoints });
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         instances: [
@@ -1781,16 +1908,16 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($styleSourceSelections.get().values())).toEqual([
+    expect(Array.from(data.styleSourceSelections.values())).toEqual([
       {
         instanceId: expect.not.stringMatching("box"),
         values: [expect.not.stringMatching("localId"), "tokenId"],
       },
     ]);
-    expect(Array.from($styleSources.get().values())).toEqual([
+    expect(Array.from(data.styleSources.values())).toEqual([
       { id: expect.not.stringMatching("localId"), type: "local" },
     ]);
-    expect(Array.from($styles.get().values())).toEqual([
+    expect(Array.from(data.styles.values())).toEqual([
       {
         styleSourceId: expect.not.stringMatching("localId"),
         breakpointId: "base",
@@ -1801,8 +1928,10 @@ describe("insert instances slice copy", () => {
   });
 
   test("insert local styles from portal and use merged breakpoint ids", () => {
-    $breakpoints.set(toMap([{ id: "base", label: "base" }]));
+    const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
+    const data = getWebstudioData({ breakpoints });
     insertInstancesSliceCopy({
+      data,
       slice: {
         ...emptySlice,
         // portal
@@ -1844,13 +1973,13 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(),
     });
-    expect(Array.from($styleSourceSelections.get().values())).toEqual([
+    expect(Array.from(data.styleSourceSelections.values())).toEqual([
       { instanceId: "fragment", values: ["localId", "tokenId"] },
     ]);
-    expect(Array.from($styleSources.get().values())).toEqual([
+    expect(Array.from(data.styleSources.values())).toEqual([
       { id: "localId", type: "local" },
     ]);
-    expect(Array.from($styles.get().values())).toEqual([
+    expect(Array.from(data.styles.values())).toEqual([
       {
         styleSourceId: "localId",
         breakpointId: "base",
