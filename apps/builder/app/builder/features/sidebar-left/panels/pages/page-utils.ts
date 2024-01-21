@@ -238,11 +238,10 @@ export const deleteFolderWithChildrenMutable = (
 ) => {
   const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
   const pageIds = getAllChildrenAndSelf(folderId, folders, "page");
-
-  folderIds.forEach((folderId) => {
+  for (const folderId of folderIds) {
     cleanupChildRefsMutable(folderId, folders);
     removeByMutable(folders, (folder) => folder.id === folderId);
-  });
+  }
 
   return {
     folderIds,

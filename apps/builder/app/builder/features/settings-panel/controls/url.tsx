@@ -312,19 +312,21 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
   const { allPages, pageSelectOptions } = useMemo(() => {
     const allPages = pages ? [pages.homePage, ...pages.pages] : [];
     const rootFolder = createRootFolder();
-
-    const pageSelectOptions = allPages.reduce((acc, page) => {
+    const pageSelectOptions = new Map<
+      Folder["id"],
+      { name: Folder["name"]; pages: Array<Page> }
+    >();
+    for (const page of allPages) {
       const folder =
         findParentFolderByChildId(page.id, pages?.folders ?? []) ?? rootFolder;
-      let group = acc.get(folder.id);
+      let group = pageSelectOptions.get(folder.id);
       if (group === undefined) {
         group = { name: folder.name, pages: [] };
-        acc.set(folder.id, group);
+        pageSelectOptions.set(folder.id, group);
       }
       group.pages.push(page);
-      return acc;
-    }, new Map<Folder["id"], { name: Folder["name"]; pages: Array<Page> }>());
-    return { allPages, pageSelectOptions };
+    }
+    return { pageSelectOptions, allPages };
   }, [pages]);
 
   const selectedPageId =
