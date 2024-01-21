@@ -11,22 +11,23 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import type { Build } from "../types";
-import { Pages, type Deployment, Resource } from "@webstudio-is/sdk";
 import {
-  createInitialBreakpoints,
-  parseBreakpoints,
-  serializeBreakpoints,
-} from "./__DEPRECATED__/breakpoints";
-import { parseStyles } from "./styles";
-import { parseStyleSources } from "./__DEPRECATED__/style-sources";
-import { parseStyleSourceSelections } from "./style-source-selections";
-import { parseProps } from "./__DEPRECATED__/props";
-import { parseDataSources } from "./__DEPRECATED__/data-sources";
-import { parseInstances, serializeInstances } from "./__DEPRECATED__/instances";
-import { parseDeployment, serializeDeployment } from "./deployment";
+  type Deployment,
+  type Resource,
+  type StyleSource,
+  type Prop,
+  type DataSource,
+  type Instance,
+  type Breakpoint,
+  Pages,
+  initialBreakpoints,
+} from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
-import { parsePages, serializePages } from "./__DEPRECATED__/pages";
+import type { Build } from "../types";
+import { parseStyles } from "./styles";
+import { parseStyleSourceSelections } from "./style-source-selections";
+import { parseDeployment, serializeDeployment } from "./deployment";
+import { parsePages, serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 
 export const parseData = <Type extends { id: string }>(
@@ -48,16 +49,10 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
   console.time("parseBuild");
   try {
     const pages = parsePages(build.pages);
-    const breakpoints = Array.from(parseBreakpoints(build.breakpoints));
     const styles = Array.from(parseStyles(build.styles));
-    const styleSources = Array.from(parseStyleSources(build.styleSources));
     const styleSourceSelections = Array.from(
       parseStyleSourceSelections(build.styleSourceSelections)
     );
-    const props = Array.from(parseProps(build.props));
-    const dataSources = Array.from(parseDataSources(build.dataSources));
-    const instances = Array.from(parseInstances(build.instances));
-
     const deployment = parseDeployment(build.deployment);
 
     const result: Build = {
@@ -67,14 +62,14 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       createdAt: build.createdAt.toISOString(),
       updatedAt: build.updatedAt.toISOString(),
       pages,
-      breakpoints,
+      breakpoints: Array.from(parseData<Breakpoint>(build.breakpoints)),
       styles,
-      styleSources,
+      styleSources: Array.from(parseData<StyleSource>(build.styleSources)),
       styleSourceSelections,
-      props,
-      dataSources,
+      props: Array.from(parseData<Prop>(build.props)),
+      dataSources: Array.from(parseData<DataSource>(build.dataSources)),
       resources: Array.from(parseData<Resource>(build.resources)),
-      instances,
+      instances: Array.from(parseData<Instance>(build.instances)),
       deployment,
     } satisfies Data["build"];
 
@@ -128,6 +123,19 @@ const createNewPageInstances = (): Build["instances"] => {
   ];
 };
 
+const createInitialBreakpoints = (): [Breakpoint["id"], Breakpoint][] => {
+  return initialBreakpoints.map((breakpoint) => {
+    const id = nanoid();
+    return [
+      id,
+      {
+        ...breakpoint,
+        id,
+      },
+    ];
+  });
+};
+
 /*
  * We create "dev" build in two cases:
  *   1. when we create a new project
@@ -158,8 +166,10 @@ export const createBuild = async (
     data: {
       projectId: props.projectId,
       pages: serializePages(defaultPages),
-      breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
-      instances: serializeInstances(new Map(newInstances)),
+      breakpoints: serializeData<Breakpoint>(
+        new Map(createInitialBreakpoints())
+      ),
+      instances: serializeData<Instance>(new Map(newInstances)),
     },
   });
 };

@@ -4,33 +4,29 @@ import type { SyncItem } from "immerhin";
 import { prisma } from "@webstudio-is/prisma-client";
 import {
   Breakpoints,
+  Breakpoint,
   Instances,
+  Instance,
   Pages,
   Props,
+  Prop,
   DataSources,
+  DataSource,
   StyleSourceSelections,
   StyleSources,
+  StyleSource,
   Styles,
   Resources,
+  Resource,
 } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import {
   parsePages,
-  parseInstances,
   parseStyleSourceSelections,
-  parseStyleSources,
   parseStyles,
-  parseProps,
-  parseBreakpoints,
-  parseDataSources,
   serializePages,
-  serializeBreakpoints,
-  serializeInstances,
-  serializeProps,
-  serializeStyleSources,
   serializeStyleSourceSelections,
   serializeStyles,
-  serializeDataSources,
   parseData,
   serializeData,
 } from "@webstudio-is/project-build/index.server";
@@ -130,7 +126,7 @@ export const action = async ({ request }: ActionArgs) => {
 
         if (namespace === "instances") {
           const instances =
-            buildData.instances ?? parseInstances(build.instances);
+            buildData.instances ?? parseData<Instance>(build.instances);
           buildData.instances = applyPatches(instances, patches);
           continue;
         }
@@ -148,7 +144,8 @@ export const action = async ({ request }: ActionArgs) => {
 
         if (namespace === "styleSources") {
           const styleSources =
-            buildData.styleSources ?? parseStyleSources(build.styleSources);
+            buildData.styleSources ??
+            parseData<StyleSource>(build.styleSources);
           buildData.styleSources = applyPatches(styleSources, patches);
           continue;
         }
@@ -165,27 +162,28 @@ export const action = async ({ request }: ActionArgs) => {
         }
 
         if (namespace === "props") {
-          const props = buildData.props ?? parseProps(build.props);
+          const props = buildData.props ?? parseData<Prop>(build.props);
           buildData.props = applyPatches(props, patches);
           continue;
         }
 
         if (namespace === "dataSources") {
           const dataSources =
-            buildData.dataSources ?? parseDataSources(build.dataSources);
+            buildData.dataSources ?? parseData<DataSource>(build.dataSources);
           buildData.dataSources = applyPatches(dataSources, patches);
           continue;
         }
 
         if (namespace === "resources") {
-          const resources = buildData.resources ?? parseData(build.resources);
+          const resources =
+            buildData.resources ?? parseData<Resource>(build.resources);
           buildData.resources = applyPatches(resources, patches);
           continue;
         }
 
         if (namespace === "breakpoints") {
           const breakpoints =
-            buildData.breakpoints ?? parseBreakpoints(build.breakpoints);
+            buildData.breakpoints ?? parseData<Breakpoint>(build.breakpoints);
           buildData.breakpoints = applyPatches(breakpoints, patches);
           continue;
         }
@@ -215,35 +213,35 @@ export const action = async ({ request }: ActionArgs) => {
     }
 
     if (buildData.breakpoints) {
-      dbBuildData.breakpoints = serializeBreakpoints(
+      dbBuildData.breakpoints = serializeData<Breakpoint>(
         Breakpoints.parse(buildData.breakpoints)
       );
     }
 
     if (buildData.instances) {
-      dbBuildData.instances = serializeInstances(
+      dbBuildData.instances = serializeData<Instance>(
         Instances.parse(buildData.instances)
       );
     }
 
     if (buildData.props) {
-      dbBuildData.props = serializeProps(Props.parse(buildData.props));
+      dbBuildData.props = serializeData<Prop>(Props.parse(buildData.props));
     }
 
     if (buildData.dataSources) {
-      dbBuildData.dataSources = serializeDataSources(
+      dbBuildData.dataSources = serializeData<DataSource>(
         DataSources.parse(buildData.dataSources)
       );
     }
 
     if (buildData.resources) {
-      dbBuildData.resources = serializeData(
+      dbBuildData.resources = serializeData<Resource>(
         Resources.parse(buildData.resources)
       );
     }
 
     if (buildData.styleSources) {
-      dbBuildData.styleSources = serializeStyleSources(
+      dbBuildData.styleSources = serializeData<StyleSource>(
         StyleSources.parse(buildData.styleSources)
       );
     }
