@@ -48,9 +48,10 @@ import {
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import {
-  deleteInstance,
+  deleteInstanceMutable,
   getInstancesSlice,
   insertInstancesSliceCopy,
+  updateWebstudioData,
 } from "~/shared/instance-utils";
 import {
   $assets,
@@ -923,13 +924,12 @@ const deletePage = (pageId: Page["id"]) => {
     $selectedInstanceSelector.set(undefined);
   }
   const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
-  if (rootInstanceId !== undefined) {
-    deleteInstance([rootInstanceId]);
+  if (rootInstanceId === undefined) {
+    return;
   }
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
+  updateWebstudioData((data) => {
+    deleteInstanceMutable(data, [rootInstanceId]);
+    const { pages } = data;
     removeByMutable(pages.pages, (page) => page.id === pageId);
     cleanupChildRefsMutable(pageId, pages.folders);
   });
@@ -953,31 +953,29 @@ const duplicatePage = (pageId: Page["id"]) => {
   const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
 
   const slice = getInstancesSlice(page.rootInstanceId);
-  insertInstancesSliceCopy({
-    slice,
-    availableDataSources: new Set(),
-    beforeTransactionEnd: (rootInstanceId, draft) => {
-      if (draft.pages === undefined) {
-        return;
-      }
-      const newPage = {
-        ...page,
-        id: newPageId,
-        rootInstanceId,
-        name: newName,
-        path: nameToPath(pages, newName),
-      } satisfies Page;
-      draft.pages.pages.push(newPage);
-      const currentFolder = findParentFolderByChildId(
-        pageId,
-        draft.pages.folders
-      );
-      registerFolderChildMutable(
-        draft.pages.folders,
-        newPageId,
-        currentFolder?.id
-      );
-    },
+  updateWebstudioData((data) => {
+    const rootInstanceId = insertInstancesSliceCopy({
+      data,
+      slice,
+      availableDataSources: new Set(),
+    });
+    if (rootInstanceId === undefined) {
+      return;
+    }
+    const newPage = {
+      ...page,
+      id: newPageId,
+      rootInstanceId,
+      name: newName,
+      path: nameToPath(pages, newName),
+    } satisfies Page;
+    data.pages.pages.push(newPage);
+    const currentFolder = findParentFolderByChildId(pageId, data.pages.folders);
+    registerFolderChildMutable(
+      data.pages.folders,
+      newPageId,
+      currentFolder?.id
+    );
   });
   return newPageId;
 };

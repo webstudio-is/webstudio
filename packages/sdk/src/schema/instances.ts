@@ -21,12 +21,14 @@ export const ExpressionChild = z.object({
 });
 export type ExpressionChild = z.infer<typeof ExpressionChild>;
 
+export const InstanceChild = z.union([IdChild, TextChild, ExpressionChild]);
+
 export const Instance = z.object({
   type: z.literal("instance"),
   id: InstanceId,
   component: z.string(),
   label: z.string().optional(),
-  children: z.array(z.union([IdChild, TextChild, ExpressionChild])),
+  children: z.array(InstanceChild),
 });
 
 export type Instance = z.infer<typeof Instance>;

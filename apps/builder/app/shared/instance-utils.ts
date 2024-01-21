@@ -15,15 +15,14 @@ import {
   DataSources,
   Props,
   DataSource,
-  Prop,
   Breakpoint,
-  Pages,
+  type WebstudioFragment,
+  type WebstudioData,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
-  type EmbedTemplateData,
   decodeDataSourceVariable,
   validateExpression,
   encodeDataSourceVariable,
@@ -59,6 +58,53 @@ import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
 import { humanizeString } from "./string-utils";
 import { serverSyncStore } from "./sync";
+
+export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
+  serverSyncStore.createTransaction(
+    [
+      $pages,
+      $instances,
+      $props,
+      $breakpoints,
+      $styleSourceSelections,
+      $styleSources,
+      $styles,
+      $dataSources,
+      $resources,
+      $assets,
+    ],
+    (
+      pages,
+      instances,
+      props,
+      breakpoints,
+      styleSourceSelections,
+      styleSources,
+      styles,
+      dataSources,
+      resources,
+      assets
+    ) => {
+      // @todo normalize pages
+      if (pages === undefined) {
+        return;
+      }
+      mutate({
+        pages,
+        instances,
+        props,
+        dataSources,
+        resources,
+        breakpoints,
+        styleSourceSelections,
+        styleSources,
+        styles,
+        assets,
+      });
+      //
+    }
+  );
+};
 
 const getLabelFromComponentName = (component: Instance["component"]) => {
   if (component.includes(":")) {
@@ -136,8 +182,10 @@ export const findClosestDetachableInstanceSelector = (
   }
 };
 
-export const isInstanceDetachable = (instanceSelector: InstanceSelector) => {
-  const instances = $instances.get();
+export const isInstanceDetachable = (
+  instances: Instances,
+  instanceSelector: InstanceSelector
+) => {
   const metas = $registeredComponentMetas.get();
   const [instanceId] = instanceSelector;
   const instance = instances.get(instanceId);
@@ -301,7 +349,7 @@ export const findClosestDroppableTarget = (
 };
 
 export const insertTemplateData = (
-  templateData: EmbedTemplateData,
+  templateData: WebstudioFragment,
   dropTarget: DroppableTarget
 ) => {
   const {
@@ -412,113 +460,104 @@ export const reparentInstance = (
   $selectedStyleSourceSelector.set(undefined);
 };
 
-export const deleteInstance = (instanceSelector: InstanceSelector) => {
+export const deleteInstanceMutable = (
+  data: WebstudioData,
+  instanceSelector: InstanceSelector
+) => {
   // @todo tell user they can't delete root
   if (instanceSelector.length === 1) {
     return false;
   }
-  if (isInstanceDetachable(instanceSelector) === false) {
+  if (isInstanceDetachable(data.instances, instanceSelector) === false) {
     toast.error(
       "This instance can not be moved outside of its parent component."
     );
     return false;
   }
-  serverSyncStore.createTransaction(
-    [
-      $instances,
-      $props,
-      $styleSourceSelections,
-      $styleSources,
-      $styles,
-      $dataSources,
-      $resources,
-    ],
-    (
-      instances,
-      props,
-      styleSourceSelections,
-      styleSources,
-      styles,
-      dataSources,
-      resources
-    ) => {
-      let targetInstanceId = instanceSelector[0];
-      const parentInstanceId = instanceSelector[1];
-      let parentInstance =
-        parentInstanceId === undefined
-          ? undefined
-          : instances.get(parentInstanceId);
-      const grandparentInstanceId = instanceSelector[2];
-      const grandparentInstance = instances.get(grandparentInstanceId);
+  const {
+    instances,
+    props,
+    styleSourceSelections,
+    styleSources,
+    styles,
+    dataSources,
+    resources,
+  } = data;
+  let targetInstanceId = instanceSelector[0];
+  const parentInstanceId = instanceSelector[1];
+  let parentInstance =
+    parentInstanceId === undefined
+      ? undefined
+      : instances.get(parentInstanceId);
+  const grandparentInstanceId = instanceSelector[2];
+  const grandparentInstance = instances.get(grandparentInstanceId);
 
-      // delete parent fragment too if its last child is going to be deleted
-      // use case for slots: slot became empty and remove display: contents
-      // to be displayed properly on canvas
-      if (
-        parentInstance?.component === "Fragment" &&
-        parentInstance.children.length === 1 &&
-        grandparentInstance
-      ) {
-        targetInstanceId = parentInstance.id;
-        parentInstance = grandparentInstance;
-      }
+  // delete parent fragment too if its last child is going to be deleted
+  // use case for slots: slot became empty and remove display: contents
+  // to be displayed properly on canvas
+  if (
+    parentInstance?.component === "Fragment" &&
+    parentInstance.children.length === 1 &&
+    grandparentInstance
+  ) {
+    targetInstanceId = parentInstance.id;
+    parentInstance = grandparentInstance;
+  }
 
-      // skip parent fake "item" instance and use grandparent collection as parent
-      if (grandparentInstance?.component === collectionComponent) {
-        parentInstance = grandparentInstance;
-      }
+  // skip parent fake "item" instance and use grandparent collection as parent
+  if (grandparentInstance?.component === collectionComponent) {
+    parentInstance = grandparentInstance;
+  }
 
-      const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-        instances,
-        targetInstanceId
-      );
-      const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
-        styleSources.values(),
-        styleSourceSelections.values(),
-        instanceIds
-      );
+  const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    instances,
+    targetInstanceId
+  );
+  const localStyleSourceIds = findLocalStyleSourcesWithinInstances(
+    styleSources.values(),
+    styleSourceSelections.values(),
+    instanceIds
+  );
 
-      // may not exist when delete root
-      if (parentInstance) {
-        removeByMutable(
-          parentInstance.children,
-          (child) => child.type === "id" && child.value === targetInstanceId
-        );
-      }
+  // may not exist when delete root
+  if (parentInstance) {
+    removeByMutable(
+      parentInstance.children,
+      (child) => child.type === "id" && child.value === targetInstanceId
+    );
+  }
 
-      for (const instanceId of instanceIds) {
-        instances.delete(instanceId);
-      }
-      // delete props, data sources and styles of deleted instance and its descendants
-      for (const prop of props.values()) {
-        if (instanceIds.has(prop.instanceId)) {
-          props.delete(prop.id);
-        }
-      }
-      for (const dataSource of dataSources.values()) {
-        if (
-          dataSource.scopeInstanceId !== undefined &&
-          instanceIds.has(dataSource.scopeInstanceId)
-        ) {
-          dataSources.delete(dataSource.id);
-          if (dataSource.type === "resource") {
-            resources.delete(dataSource.resourceId);
-          }
-        }
-      }
-      for (const instanceId of instanceIds) {
-        styleSourceSelections.delete(instanceId);
-      }
-      for (const styleSourceId of localStyleSourceIds) {
-        styleSources.delete(styleSourceId);
-      }
-      for (const [styleDeclKey, styleDecl] of styles) {
-        if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
-          styles.delete(styleDeclKey);
-        }
+  for (const instanceId of instanceIds) {
+    instances.delete(instanceId);
+  }
+  // delete props, data sources and styles of deleted instance and its descendants
+  for (const prop of props.values()) {
+    if (instanceIds.has(prop.instanceId)) {
+      props.delete(prop.id);
+    }
+  }
+  for (const dataSource of dataSources.values()) {
+    if (
+      dataSource.scopeInstanceId !== undefined &&
+      instanceIds.has(dataSource.scopeInstanceId)
+    ) {
+      dataSources.delete(dataSource.id);
+      if (dataSource.type === "resource") {
+        resources.delete(dataSource.resourceId);
       }
     }
-  );
+  }
+  for (const instanceId of instanceIds) {
+    styleSourceSelections.delete(instanceId);
+  }
+  for (const styleSourceId of localStyleSourceIds) {
+    styleSources.delete(styleSourceId);
+  }
+  for (const [styleDeclKey, styleDecl] of styles) {
+    if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
+      styles.delete(styleDeclKey);
+    }
+  }
   return true;
 };
 
@@ -554,18 +593,9 @@ const traverseStyleValue = (
   value satisfies never;
 };
 
-type InstancesSlice = {
-  instances: Instance[];
-  styleSourceSelections: StyleSourceSelection[];
-  styleSources: StyleSource[];
-  breakpoints: Breakpoint[];
-  styles: StyleDecl[];
-  dataSources: DataSource[];
-  props: Prop[];
-  assets: Asset[];
-};
-
-export const getInstancesSlice = (rootInstanceId: string) => {
+export const getInstancesSlice = (
+  rootInstanceId: string
+): WebstudioFragment => {
   const assets = $assets.get();
   const instances = $instances.get();
   const dataSources = $dataSources.get();
@@ -709,12 +739,14 @@ export const getInstancesSlice = (rootInstanceId: string) => {
   }
 
   return {
+    children: [{ type: "id", value: rootInstanceId }],
     instances: slicedInstances,
     styleSourceSelections: slicedStyleSourceSelections,
     styleSources: Array.from(slicedStyleSources.values()),
     breakpoints: Array.from(slicedBreapoints.values()),
     styles: slicedStyles,
     dataSources: Array.from(slicedDataSources.values()),
+    resources: [],
     props: Array.from(slicedProps.values()),
     assets: slicedAssets,
   };
@@ -797,16 +829,13 @@ const replaceDataSources = (
 };
 
 export const insertInstancesSliceCopy = ({
+  data,
   slice,
   availableDataSources,
-  beforeTransactionEnd,
 }: {
-  slice: InstancesSlice;
+  data: WebstudioData;
+  slice: WebstudioFragment;
   availableDataSources: Set<DataSource["id"]>;
-  beforeTransactionEnd?: (
-    rootInstanceId: Instance["id"],
-    draft: { instances: Instances; props: Props; pages: undefined | Pages }
-  ) => void;
 }) => {
   const projectId = $project.get()?.id;
   if (projectId === undefined) {
@@ -831,356 +860,342 @@ export const insertInstancesSliceCopy = ({
     sliceDataSources.set(dataSource.id, dataSource);
   }
 
-  serverSyncStore.createTransaction(
-    [
-      $assets,
-      $instances,
-      $dataSources,
-      $props,
-      $breakpoints,
-      $styleSources,
-      $styles,
-      $styleSourceSelections,
-      $pages,
-    ],
-    (
-      assets,
-      instances,
-      dataSources,
-      props,
-      breakpoints,
-      styleSources,
-      styles,
-      styleSourceSelections,
-      pages
-    ) => {
-      /**
-       * insert reusables without changing their ids to not bloat data
-       * and catch up with user changes
-       * - assets
-       * - breakpoints
-       * - token styles
-       * - portals
-       *
-       * breakpoints behave slightly differently and merged with existing ones
-       * and those ids are used instead
-       */
+  const {
+    assets,
+    instances,
+    dataSources,
+    props,
+    breakpoints,
+    styleSources,
+    styles,
+    styleSourceSelections,
+  } = data;
 
-      // insert assets
+  /**
+   * insert reusables without changing their ids to not bloat data
+   * and catch up with user changes
+   * - assets
+   * - breakpoints
+   * - token styles
+   * - portals
+   *
+   * breakpoints behave slightly differently and merged with existing ones
+   * and those ids are used instead
+   */
 
-      for (const asset of slice.assets) {
-        // asset can be already present if pasting to the same project
-        if (assets.has(asset.id) === false) {
-          // we use the same asset.id so the references are preserved
-          assets.set(asset.id, { ...asset, projectId });
-        }
+  // insert assets
+
+  for (const asset of slice.assets) {
+    // asset can be already present if pasting to the same project
+    if (assets.has(asset.id) === false) {
+      // we use the same asset.id so the references are preserved
+      assets.set(asset.id, { ...asset, projectId });
+    }
+  }
+
+  // merge breakpoints
+
+  const mergedBreakpointIds = new Map<Breakpoint["id"], Breakpoint["id"]>();
+  for (const newBreakpoint of slice.breakpoints) {
+    let matched = false;
+    for (const breakpoint of breakpoints.values()) {
+      if (equalMedia(breakpoint, newBreakpoint)) {
+        matched = true;
+        mergedBreakpointIds.set(newBreakpoint.id, breakpoint.id);
+        break;
       }
+    }
+    if (matched === false) {
+      breakpoints.set(newBreakpoint.id, newBreakpoint);
+    }
+  }
 
-      // merge breakpoints
+  // insert tokens with their styles
 
-      const mergedBreakpointIds = new Map<Breakpoint["id"], Breakpoint["id"]>();
-      for (const newBreakpoint of slice.breakpoints) {
-        let matched = false;
-        for (const breakpoint of breakpoints.values()) {
-          if (equalMedia(breakpoint, newBreakpoint)) {
-            matched = true;
-            mergedBreakpointIds.set(newBreakpoint.id, breakpoint.id);
-            break;
-          }
-        }
-        if (matched === false) {
-          breakpoints.set(newBreakpoint.id, newBreakpoint);
-        }
+  const tokenStyleSourceIds = new Set<StyleSource["id"]>();
+  for (const styleSource of slice.styleSources) {
+    // prevent inserting styles when token is already present
+    if (styleSource.type === "local" || styleSources.has(styleSource.id)) {
+      continue;
+    }
+    styleSource.type satisfies "token";
+    tokenStyleSourceIds.add(styleSource.id);
+    styleSources.set(styleSource.id, styleSource);
+  }
+  for (const styleDecl of slice.styles) {
+    if (tokenStyleSourceIds.has(styleDecl.styleSourceId)) {
+      const { breakpointId } = styleDecl;
+      const newStyleDecl: StyleDecl = {
+        ...styleDecl,
+        breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
+      };
+      styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
+    }
+  }
+
+  // insert portal contents
+  // - instances
+  // - data sources
+  // - props
+  // - local styles
+  for (const rootInstanceId of portalContentIds) {
+    // prevent reinserting portals which could be already changed by user
+    if (instances.has(rootInstanceId)) {
+      continue;
+    }
+
+    const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+      sliceInstances,
+      rootInstanceId
+    );
+    for (const instance of slice.instances) {
+      if (instanceIds.has(instance.id)) {
+        instances.set(instance.id, instance);
       }
+    }
 
-      // insert tokens with their styles
-
-      const tokenStyleSourceIds = new Set<StyleSource["id"]>();
-      for (const styleSource of slice.styleSources) {
-        // prevent inserting styles when token is already present
-        if (styleSource.type === "local" || styleSources.has(styleSource.id)) {
-          continue;
-        }
-        styleSource.type satisfies "token";
-        tokenStyleSourceIds.add(styleSource.id);
-        styleSources.set(styleSource.id, styleSource);
+    const availablePortalDataSources = new Set(availableDataSources);
+    for (const dataSource of slice.dataSources) {
+      // insert only data sources within portal content
+      if (
+        dataSource.scopeInstanceId &&
+        instanceIds.has(dataSource.scopeInstanceId)
+      ) {
+        availablePortalDataSources.add(dataSource.id);
+        dataSources.set(dataSource.id, dataSource);
       }
-      for (const styleDecl of slice.styles) {
-        if (tokenStyleSourceIds.has(styleDecl.styleSourceId)) {
-          const { breakpointId } = styleDecl;
-          const newStyleDecl: StyleDecl = {
-            ...styleDecl,
-            breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
-          };
-          styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
-        }
+    }
+
+    for (let prop of slice.props) {
+      if (instanceIds.has(prop.instanceId) === false) {
+        continue;
       }
-
-      // insert portal contents
-      // - instances
-      // - data sources
-      // - props
-      // - local styles
-      for (const rootInstanceId of portalContentIds) {
-        // prevent reinserting portals which could be already changed by user
-        if (instances.has(rootInstanceId)) {
-          continue;
-        }
-
-        const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-          sliceInstances,
-          rootInstanceId
-        );
-        for (const instance of slice.instances) {
-          if (instanceIds.has(instance.id)) {
-            instances.set(instance.id, instance);
-          }
-        }
-
-        const availablePortalDataSources = new Set(availableDataSources);
-        for (const dataSource of slice.dataSources) {
-          // insert only data sources within portal content
-          if (
-            dataSource.scopeInstanceId &&
-            instanceIds.has(dataSource.scopeInstanceId)
-          ) {
-            availablePortalDataSources.add(dataSource.id);
-            dataSources.set(dataSource.id, dataSource);
-          }
-        }
-
-        for (let prop of slice.props) {
-          if (instanceIds.has(prop.instanceId) === false) {
-            continue;
-          }
-          // inline data sources not available in scope into expressions
-          if (prop.type === "expression") {
-            const { code } = inlineUnavailableDataSources({
-              code: prop.value,
+      // inline data sources not available in scope into expressions
+      if (prop.type === "expression") {
+        const { code } = inlineUnavailableDataSources({
+          code: prop.value,
+          availableDataSources: availablePortalDataSources,
+          dataSources: sliceDataSources,
+        });
+        prop = { ...prop, value: code };
+      }
+      if (prop.type === "action") {
+        prop = {
+          ...prop,
+          value: prop.value.flatMap((value) => {
+            if (value.type !== "execute") {
+              return [value];
+            }
+            const { code, isDiscarded } = inlineUnavailableDataSources({
+              code: value.code,
               availableDataSources: availablePortalDataSources,
               dataSources: sliceDataSources,
             });
-            prop = { ...prop, value: code };
-          }
-          if (prop.type === "action") {
-            prop = {
-              ...prop,
-              value: prop.value.flatMap((value) => {
-                if (value.type !== "execute") {
-                  return [value];
-                }
-                const { code, isDiscarded } = inlineUnavailableDataSources({
-                  code: value.code,
-                  availableDataSources: availablePortalDataSources,
-                  dataSources: sliceDataSources,
-                });
-                if (isDiscarded) {
-                  return [];
-                }
-                return [{ ...value, code }];
-              }),
+            if (isDiscarded) {
+              return [];
+            }
+            return [{ ...value, code }];
+          }),
+        };
+      }
+      props.set(prop.id, prop);
+    }
+
+    // insert local style sources with their styles
+
+    const instanceStyleSourceIds = new Set<StyleSource["id"]>();
+    for (const styleSourceSelection of slice.styleSourceSelections) {
+      const { instanceId } = styleSourceSelection;
+      if (instanceIds.has(instanceId) === false) {
+        continue;
+      }
+      styleSourceSelections.set(instanceId, styleSourceSelection);
+      for (const styleSourceId of styleSourceSelection.values) {
+        instanceStyleSourceIds.add(styleSourceId);
+      }
+    }
+    const localStyleSourceIds = new Set<StyleSource["id"]>();
+    for (const styleSource of slice.styleSources) {
+      if (
+        styleSource.type === "local" &&
+        instanceStyleSourceIds.has(styleSource.id)
+      ) {
+        localStyleSourceIds.add(styleSource.id);
+        styleSources.set(styleSource.id, styleSource);
+      }
+    }
+    for (const styleDecl of slice.styles) {
+      if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
+        const { breakpointId } = styleDecl;
+        const newStyleDecl: StyleDecl = {
+          ...styleDecl,
+          breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
+        };
+        styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
+      }
+    }
+  }
+
+  /**
+   * inserting unique content is structurally similar to inserting portal content
+   * but all ids are regenerated to support duplicating existing content
+   * - instances
+   * - data sources
+   * - props
+   * - local styles
+   */
+
+  // generate new ids only instances outside of portals
+  const sliceInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    sliceInstances,
+    slice.instances[0].id
+  );
+  const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
+  for (const instanceId of sliceInstanceIds) {
+    newInstanceIds.set(instanceId, nanoid());
+  }
+  for (const instance of slice.instances) {
+    if (sliceInstanceIds.has(instance.id)) {
+      const newId = newInstanceIds.get(instance.id) ?? instance.id;
+      instances.set(newId, {
+        ...instance,
+        id: newId,
+        children: instance.children.map((child) => {
+          if (child.type === "id") {
+            return {
+              type: "id",
+              value: newInstanceIds.get(child.value) ?? child.value,
             };
           }
-          props.set(prop.id, prop);
-        }
+          return child;
+        }),
+      });
+    }
+  }
 
-        // insert local style sources with their styles
+  const availablePortalDataSources = new Set(availableDataSources);
+  const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+  for (const dataSource of slice.dataSources) {
+    const { scopeInstanceId } = dataSource;
+    // insert only data sources within portal content
+    if (scopeInstanceId && sliceInstanceIds.has(scopeInstanceId)) {
+      availablePortalDataSources.add(dataSource.id);
+      const newId = nanoid();
+      newDataSourceIds.set(dataSource.id, newId);
+      dataSources.set(newId, {
+        ...dataSource,
+        id: newId,
+        scopeInstanceId: newInstanceIds.get(scopeInstanceId),
+      });
+    }
+  }
 
-        const instanceStyleSourceIds = new Set<StyleSource["id"]>();
-        for (const styleSourceSelection of slice.styleSourceSelections) {
-          const { instanceId } = styleSourceSelection;
-          if (instanceIds.has(instanceId) === false) {
-            continue;
+  for (let prop of slice.props) {
+    if (sliceInstanceIds.has(prop.instanceId) === false) {
+      continue;
+    }
+    // inline data sources not available in scope into expressions
+    if (prop.type === "expression") {
+      const { code } = inlineUnavailableDataSources({
+        code: prop.value,
+        availableDataSources: availablePortalDataSources,
+        dataSources: sliceDataSources,
+      });
+      prop = { ...prop, value: replaceDataSources(code, newDataSourceIds) };
+    }
+    if (prop.type === "action") {
+      prop = {
+        ...prop,
+        value: prop.value.flatMap((value) => {
+          if (value.type !== "execute") {
+            return [value];
           }
-          styleSourceSelections.set(instanceId, styleSourceSelection);
-          for (const styleSourceId of styleSourceSelection.values) {
-            instanceStyleSourceIds.add(styleSourceId);
-          }
-        }
-        const localStyleSourceIds = new Set<StyleSource["id"]>();
-        for (const styleSource of slice.styleSources) {
-          if (
-            styleSource.type === "local" &&
-            instanceStyleSourceIds.has(styleSource.id)
-          ) {
-            localStyleSourceIds.add(styleSource.id);
-            styleSources.set(styleSource.id, styleSource);
-          }
-        }
-        for (const styleDecl of slice.styles) {
-          if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
-            const { breakpointId } = styleDecl;
-            const newStyleDecl: StyleDecl = {
-              ...styleDecl,
-              breakpointId:
-                mergedBreakpointIds.get(breakpointId) ?? breakpointId,
-            };
-            styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
-          }
-        }
-      }
-
-      /**
-       * inserting unique content is structurally similar to inserting portal content
-       * but all ids are regenerated to support duplicating existing content
-       * - instances
-       * - data sources
-       * - props
-       * - local styles
-       */
-
-      // generate new ids only instances outside of portals
-      const sliceInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-        sliceInstances,
-        slice.instances[0].id
-      );
-      const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
-      for (const instanceId of sliceInstanceIds) {
-        newInstanceIds.set(instanceId, nanoid());
-      }
-      for (const instance of slice.instances) {
-        if (sliceInstanceIds.has(instance.id)) {
-          const newId = newInstanceIds.get(instance.id) ?? instance.id;
-          instances.set(newId, {
-            ...instance,
-            id: newId,
-            children: instance.children.map((child) => {
-              if (child.type === "id") {
-                return {
-                  type: "id",
-                  value: newInstanceIds.get(child.value) ?? child.value,
-                };
-              }
-              return child;
-            }),
-          });
-        }
-      }
-
-      const availablePortalDataSources = new Set(availableDataSources);
-      const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
-      for (const dataSource of slice.dataSources) {
-        const { scopeInstanceId } = dataSource;
-        // insert only data sources within portal content
-        if (scopeInstanceId && sliceInstanceIds.has(scopeInstanceId)) {
-          availablePortalDataSources.add(dataSource.id);
-          const newId = nanoid();
-          newDataSourceIds.set(dataSource.id, newId);
-          dataSources.set(newId, {
-            ...dataSource,
-            id: newId,
-            scopeInstanceId: newInstanceIds.get(scopeInstanceId),
-          });
-        }
-      }
-
-      for (let prop of slice.props) {
-        if (sliceInstanceIds.has(prop.instanceId) === false) {
-          continue;
-        }
-        // inline data sources not available in scope into expressions
-        if (prop.type === "expression") {
-          const { code } = inlineUnavailableDataSources({
-            code: prop.value,
+          const { code, isDiscarded } = inlineUnavailableDataSources({
+            code: value.code,
             availableDataSources: availablePortalDataSources,
             dataSources: sliceDataSources,
           });
-          prop = { ...prop, value: replaceDataSources(code, newDataSourceIds) };
-        }
-        if (prop.type === "action") {
-          prop = {
-            ...prop,
-            value: prop.value.flatMap((value) => {
-              if (value.type !== "execute") {
-                return [value];
-              }
-              const { code, isDiscarded } = inlineUnavailableDataSources({
-                code: value.code,
-                availableDataSources: availablePortalDataSources,
-                dataSources: sliceDataSources,
-              });
-              if (isDiscarded) {
-                return [];
-              }
-              return [
-                { ...value, code: replaceDataSources(code, newDataSourceIds) },
-              ];
-            }),
-          };
-        }
-        if (prop.type === "parameter") {
-          prop = {
-            ...prop,
-            value: newDataSourceIds.get(prop.value) ?? prop.value,
-          };
-        }
-        const newId = nanoid();
-        props.set(newId, {
-          ...prop,
-          id: newId,
-          instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
-        });
-      }
-
-      // insert local styles with new ids
-
-      const instanceStyleSourceIds = new Set<StyleSource["id"]>();
-      for (const styleSourceSelection of slice.styleSourceSelections) {
-        if (sliceInstanceIds.has(styleSourceSelection.instanceId) === false) {
-          continue;
-        }
-        for (const styleSourceId of styleSourceSelection.values) {
-          instanceStyleSourceIds.add(styleSourceId);
-        }
-      }
-      const newLocalStyleSourceIds = new Map<
-        StyleSource["id"],
-        StyleSource["id"]
-      >();
-      for (const styleSource of slice.styleSources) {
-        if (
-          styleSource.type === "local" &&
-          instanceStyleSourceIds.has(styleSource.id)
-        ) {
-          const newId = nanoid();
-          newLocalStyleSourceIds.set(styleSource.id, newId);
-          styleSources.set(newId, { ...styleSource, id: newId });
-        }
-      }
-      for (const styleSourceSelection of slice.styleSourceSelections) {
-        const { instanceId, values } = styleSourceSelection;
-        if (sliceInstanceIds.has(instanceId) === false) {
-          continue;
-        }
-        const newInstanceId = newInstanceIds.get(instanceId) ?? instanceId;
-        styleSourceSelections.set(newInstanceId, {
-          instanceId: newInstanceId,
-          values: values.map(
-            (styleSourceId) =>
-              newLocalStyleSourceIds.get(styleSourceId) ?? styleSourceId
-          ),
-        });
-        for (const styleSourceId of styleSourceSelection.values) {
-          instanceStyleSourceIds.add(styleSourceId);
-        }
-      }
-      for (const styleDecl of slice.styles) {
-        const { breakpointId, styleSourceId } = styleDecl;
-        if (newLocalStyleSourceIds.has(styleDecl.styleSourceId)) {
-          const newStyleDecl: StyleDecl = {
-            ...styleDecl,
-            styleSourceId:
-              newLocalStyleSourceIds.get(styleSourceId) ?? styleSourceId,
-            breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
-          };
-          styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
-        }
-      }
-
-      // invoke callback to allow additional changes within same transaction
-      const rootInstanceId =
-        newInstanceIds.get(slice.instances[0].id) ?? slice.instances[0].id;
-      beforeTransactionEnd?.(rootInstanceId, { instances, props, pages });
+          if (isDiscarded) {
+            return [];
+          }
+          return [
+            { ...value, code: replaceDataSources(code, newDataSourceIds) },
+          ];
+        }),
+      };
     }
-  );
+    if (prop.type === "parameter") {
+      prop = {
+        ...prop,
+        value: newDataSourceIds.get(prop.value) ?? prop.value,
+      };
+    }
+    const newId = nanoid();
+    props.set(newId, {
+      ...prop,
+      id: newId,
+      instanceId: newInstanceIds.get(prop.instanceId) ?? prop.instanceId,
+    });
+  }
+
+  // insert local styles with new ids
+
+  const instanceStyleSourceIds = new Set<StyleSource["id"]>();
+  for (const styleSourceSelection of slice.styleSourceSelections) {
+    if (sliceInstanceIds.has(styleSourceSelection.instanceId) === false) {
+      continue;
+    }
+    for (const styleSourceId of styleSourceSelection.values) {
+      instanceStyleSourceIds.add(styleSourceId);
+    }
+  }
+  const newLocalStyleSourceIds = new Map<
+    StyleSource["id"],
+    StyleSource["id"]
+  >();
+  for (const styleSource of slice.styleSources) {
+    if (
+      styleSource.type === "local" &&
+      instanceStyleSourceIds.has(styleSource.id)
+    ) {
+      const newId = nanoid();
+      newLocalStyleSourceIds.set(styleSource.id, newId);
+      styleSources.set(newId, { ...styleSource, id: newId });
+    }
+  }
+  for (const styleSourceSelection of slice.styleSourceSelections) {
+    const { instanceId, values } = styleSourceSelection;
+    if (sliceInstanceIds.has(instanceId) === false) {
+      continue;
+    }
+    const newInstanceId = newInstanceIds.get(instanceId) ?? instanceId;
+    styleSourceSelections.set(newInstanceId, {
+      instanceId: newInstanceId,
+      values: values.map(
+        (styleSourceId) =>
+          newLocalStyleSourceIds.get(styleSourceId) ?? styleSourceId
+      ),
+    });
+    for (const styleSourceId of styleSourceSelection.values) {
+      instanceStyleSourceIds.add(styleSourceId);
+    }
+  }
+  for (const styleDecl of slice.styles) {
+    const { breakpointId, styleSourceId } = styleDecl;
+    if (newLocalStyleSourceIds.has(styleDecl.styleSourceId)) {
+      const newStyleDecl: StyleDecl = {
+        ...styleDecl,
+        styleSourceId:
+          newLocalStyleSourceIds.get(styleSourceId) ?? styleSourceId,
+        breakpointId: mergedBreakpointIds.get(breakpointId) ?? breakpointId,
+      };
+      styles.set(getStyleDeclKey(newStyleDecl), newStyleDecl);
+    }
+  }
+
+  // invoke callback to allow additional changes within same transaction
+  const rootInstanceId =
+    newInstanceIds.get(slice.instances[0].id) ?? slice.instances[0].id;
+
+  return rootInstanceId;
 };
