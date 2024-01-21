@@ -50,9 +50,9 @@ import {
   type InstanceSelector,
   findLocalStyleSourcesWithinInstances,
   insertInstancesMutable,
-  reparentInstanceMutable,
   getAncestorInstanceSelector,
   insertPropsCopyMutable,
+  getReparentDropTargetMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
@@ -441,23 +441,52 @@ export const getComponentTemplateData = (component: string) => {
 };
 
 export const reparentInstance = (
-  targetInstanceSelector: InstanceSelector,
+  sourceInstanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
 ) => {
-  serverSyncStore.createTransaction(
-    [$instances, $props],
-    (instances, props) => {
-      reparentInstanceMutable(
-        instances,
-        props,
-        $registeredComponentMetas.get(),
-        targetInstanceSelector,
-        dropTarget
-      );
+  const [rootInstanceId] = sourceInstanceSelector;
+  const fragment = getInstancesSlice(rootInstanceId);
+  updateWebstudioData((data) => {
+    const reparentDropTarget = getReparentDropTargetMutable(
+      data.instances,
+      data.props,
+      $registeredComponentMetas.get(),
+      sourceInstanceSelector,
+      dropTarget
+    );
+    if (reparentDropTarget === undefined) {
+      return;
     }
-  );
-  $selectedInstanceSelector.set(targetInstanceSelector);
-  $selectedStyleSourceSelector.set(undefined);
+    deleteInstanceMutable(data, sourceInstanceSelector);
+    const rootInstanceId = insertInstancesSliceCopy({
+      data,
+      slice: fragment,
+      availableDataSources: findAvailableDataSources(
+        data.dataSources,
+        data.instances,
+        reparentDropTarget.parentSelector
+      ),
+    });
+    if (rootInstanceId === undefined) {
+      return;
+    }
+    const [newParentId] = reparentDropTarget.parentSelector;
+    const newParent = data.instances.get(newParentId);
+    if (newParent === undefined) {
+      return;
+    }
+    const newChild = { type: "id" as const, value: rootInstanceId };
+    if (reparentDropTarget.position === "end") {
+      newParent.children.push(newChild);
+    } else {
+      newParent.children.splice(reparentDropTarget.position, 0, newChild);
+    }
+    $selectedInstanceSelector.set([
+      rootInstanceId,
+      ...reparentDropTarget.parentSelector,
+    ]);
+    $selectedStyleSourceSelector.set(undefined);
+  });
 };
 
 export const deleteInstanceMutable = (
