@@ -10,7 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { DotIcon, PlusIcon, ResetIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  DotIcon,
+  InfoCircleIcon,
+  PlusIcon,
+  ResetIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
 import {
   Box,
   Button,
@@ -139,7 +145,19 @@ const BindingPanel = ({
         width: theme.spacing[30],
       }}
     >
-      <Box css={{ padding: `${theme.spacing[5]} 0` }}>
+      <Box css={{ paddingBottom: theme.spacing[5] }}>
+        <Flex gap="1" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+          <Text variant="labelsSentenceCase">Variables</Text>
+          <Tooltip
+            variant="wrapped"
+            content={
+              "Click on the available variables in this scope to insert them into the Expression Editor."
+            }
+          >
+            <InfoCircleIcon tabIndex={0} />
+          </Tooltip>
+        </Flex>
+
         <CssValueListArrowFocus>
           {Object.entries(scope).map(([identifier, value], index) => {
             const name = aliases.get(identifier);
@@ -165,6 +183,25 @@ const BindingPanel = ({
           })}
         </CssValueListArrowFocus>
       </Box>
+      <Flex gap="1" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+        <Text variant="labelsSentenceCase">Expression Editor</Text>
+        <Tooltip
+          variant="wrapped"
+          content={
+            <Text>
+              Compose variables, do math; the result of the expression will be
+              used as a value.
+              <br />
+              Example: VariableA || VariableB || &quot;DefaultValue&quot;
+              <br />
+              Explanation: If VariableA is empty, use VariableB; otherwise use
+              &quot;DefaultValue&quot;.
+            </Text>
+          }
+        >
+          <InfoCircleIcon tabIndex={0} />
+        </Tooltip>
+      </Flex>
       <Box css={{ padding: `0 ${theme.spacing[9]} ${theme.spacing[9]}` }}>
         <InputErrorsTooltip
           errors={

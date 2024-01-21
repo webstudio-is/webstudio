@@ -593,6 +593,26 @@ const traverseStyleValue = (
   value satisfies never;
 };
 
+const collectUsedDataSources = (
+  expression: string,
+  usedDataSourceIds: Set<DataSource["id"]>
+) => {
+  try {
+    validateExpression(expression, {
+      effectful: true,
+      transformIdentifier(identifier) {
+        const id = decodeDataSourceVariable(identifier);
+        if (id !== undefined) {
+          usedDataSourceIds.add(id);
+        }
+        return identifier;
+      },
+    });
+  } catch {
+    // empty block
+  }
+};
+
 export const getInstancesSlice = (
   rootInstanceId: string
 ): WebstudioFragment => {
@@ -610,10 +630,16 @@ export const getInstancesSlice = (
   const slicedInstances: Instance[] = [];
   const slicedStyleSourceSelections: StyleSourceSelection[] = [];
   const slicedStyleSources: StyleSources = new Map();
+  const usedDataSourceIds = new Set<DataSource["id"]>();
   for (const instanceId of slicedInstanceIds) {
     const instance = instances.get(instanceId);
     if (instance) {
       slicedInstances.push(instance);
+      for (const child of instance.children) {
+        if (child.type === "expression") {
+          collectUsedDataSources(child.value, usedDataSourceIds);
+        }
+      }
     }
 
     // collect all style sources bound to these instances
@@ -670,7 +696,6 @@ export const getInstancesSlice = (
 
   // collect props bound to these instances
   const slicedProps: Props = new Map();
-  const usedDataSourceIds = new Set<DataSource["id"]>();
   for (const prop of props.values()) {
     if (slicedInstanceIds.has(prop.instanceId) === false) {
       continue;
@@ -679,30 +704,13 @@ export const getInstancesSlice = (
     slicedProps.set(prop.id, prop);
 
     if (prop.type === "expression") {
-      validateExpression(prop.value, {
-        transformIdentifier(identifier) {
-          const id = decodeDataSourceVariable(identifier);
-          if (id !== undefined) {
-            usedDataSourceIds.add(id);
-          }
-          return identifier;
-        },
-      });
+      collectUsedDataSources(prop.value, usedDataSourceIds);
     }
 
     if (prop.type === "action") {
       for (const value of prop.value) {
         if (value.type === "execute") {
-          validateExpression(value.code, {
-            effectful: true,
-            transformIdentifier(identifier) {
-              const id = decodeDataSourceVariable(identifier);
-              if (id !== undefined) {
-                usedDataSourceIds.add(id);
-              }
-              return identifier;
-            },
-          });
+          collectUsedDataSources(value.code, usedDataSourceIds);
         }
       }
     }
@@ -948,11 +956,6 @@ export const insertInstancesSliceCopy = ({
       sliceInstances,
       rootInstanceId
     );
-    for (const instance of slice.instances) {
-      if (instanceIds.has(instance.id)) {
-        instances.set(instance.id, instance);
-      }
-    }
 
     const availablePortalDataSources = new Set(availableDataSources);
     for (const dataSource of slice.dataSources) {
@@ -963,6 +966,28 @@ export const insertInstancesSliceCopy = ({
       ) {
         availablePortalDataSources.add(dataSource.id);
         dataSources.set(dataSource.id, dataSource);
+      }
+    }
+
+    for (const instance of slice.instances) {
+      if (instanceIds.has(instance.id)) {
+        instances.set(instance.id, {
+          ...instance,
+          children: instance.children.map((child) => {
+            if (child.type === "expression") {
+              const { code } = inlineUnavailableDataSources({
+                code: child.value,
+                availableDataSources: availablePortalDataSources,
+                dataSources: sliceDataSources,
+              });
+              return {
+                type: "expression",
+                value: code,
+              };
+            }
+            return child;
+          }),
+        });
       }
     }
 
@@ -1054,6 +1079,24 @@ export const insertInstancesSliceCopy = ({
   for (const instanceId of sliceInstanceIds) {
     newInstanceIds.set(instanceId, nanoid());
   }
+
+  const availableFragmentDataSources = new Set(availableDataSources);
+  const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+  for (const dataSource of slice.dataSources) {
+    const { scopeInstanceId } = dataSource;
+    // insert only data sources within portal content
+    if (scopeInstanceId && sliceInstanceIds.has(scopeInstanceId)) {
+      availableFragmentDataSources.add(dataSource.id);
+      const newId = nanoid();
+      newDataSourceIds.set(dataSource.id, newId);
+      dataSources.set(newId, {
+        ...dataSource,
+        id: newId,
+        scopeInstanceId: newInstanceIds.get(scopeInstanceId),
+      });
+    }
+  }
+
   for (const instance of slice.instances) {
     if (sliceInstanceIds.has(instance.id)) {
       const newId = newInstanceIds.get(instance.id) ?? instance.id;
@@ -1067,25 +1110,19 @@ export const insertInstancesSliceCopy = ({
               value: newInstanceIds.get(child.value) ?? child.value,
             };
           }
+          if (child.type === "expression") {
+            const { code } = inlineUnavailableDataSources({
+              code: child.value,
+              availableDataSources: availableFragmentDataSources,
+              dataSources: sliceDataSources,
+            });
+            return {
+              type: "expression",
+              value: replaceDataSources(code, newDataSourceIds),
+            };
+          }
           return child;
         }),
-      });
-    }
-  }
-
-  const availablePortalDataSources = new Set(availableDataSources);
-  const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
-  for (const dataSource of slice.dataSources) {
-    const { scopeInstanceId } = dataSource;
-    // insert only data sources within portal content
-    if (scopeInstanceId && sliceInstanceIds.has(scopeInstanceId)) {
-      availablePortalDataSources.add(dataSource.id);
-      const newId = nanoid();
-      newDataSourceIds.set(dataSource.id, newId);
-      dataSources.set(newId, {
-        ...dataSource,
-        id: newId,
-        scopeInstanceId: newInstanceIds.get(scopeInstanceId),
       });
     }
   }
@@ -1098,7 +1135,7 @@ export const insertInstancesSliceCopy = ({
     if (prop.type === "expression") {
       const { code } = inlineUnavailableDataSources({
         code: prop.value,
-        availableDataSources: availablePortalDataSources,
+        availableDataSources: availableFragmentDataSources,
         dataSources: sliceDataSources,
       });
       prop = { ...prop, value: replaceDataSources(code, newDataSourceIds) };
@@ -1112,7 +1149,7 @@ export const insertInstancesSliceCopy = ({
           }
           const { code, isDiscarded } = inlineUnavailableDataSources({
             code: value.code,
-            availableDataSources: availablePortalDataSources,
+            availableDataSources: availableFragmentDataSources,
             dataSources: sliceDataSources,
           });
           if (isDiscarded) {
