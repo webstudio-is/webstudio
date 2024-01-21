@@ -29,6 +29,7 @@ import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import {
+  getAllChildrenAndSelf,
   reparentOrphansMutable,
   toTreeData,
   type TreeData,
@@ -41,6 +42,8 @@ import {
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
+import type { Folder } from "@webstudio-is/sdk";
+import { atom } from "nanostores";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -64,15 +67,24 @@ const ItemSuffix = ({
   itemId,
   editingItemId,
   onEdit,
+  type,
 }: {
   isParentSelected: boolean;
   itemId: string;
   editingItemId: string | undefined;
   onEdit: (itemId: string | undefined) => void;
+  type: "folder" | "page";
 }) => {
   const isEditing = editingItemId === itemId;
 
-  const menuLabel = isEditing ? "Close page settings" : "Open page settings";
+  const menuLabel =
+    type === "page"
+      ? isEditing
+        ? "Close page settings"
+        : "Open page settings"
+      : isEditing
+      ? "Close folder settings"
+      : "Open folder settings";
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -119,6 +131,13 @@ const useReparentOrphans = () => {
   });
 };
 
+const isFolder = (id: string, folders: Array<Folder>) => {
+  return id === newFolderId || folders.some((folder) => folder.id === id);
+};
+
+// We want to keep the state when panel is closed and opened again.
+const $collapsedItems = atom<Set<string>>(new Set());
+
 const PagesPanel = ({
   onClose,
   onCreateNewFolder,
@@ -138,8 +157,8 @@ const PagesPanel = ({
 }) => {
   const pages = useStore($pages);
   const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
+  const collapsedItems = useStore($collapsedItems);
   useReparentOrphans();
-
   const renderItem = useCallback(
     (props: TreeItemRenderProps<TreeData>) => {
       if (props.itemData.id === "root") {
@@ -153,6 +172,7 @@ const PagesPanel = ({
           {...props}
           suffix={
             <ItemSuffix
+              type={props.itemData.type}
               isParentSelected={props.isSelected ?? false}
               itemId={props.itemData.id}
               editingItemId={editingItemId}
@@ -179,8 +199,24 @@ const PagesPanel = ({
   );
 
   const selectTreeNode = useCallback(
-    ([pageId]: ItemSelector) => onSelect(pageId),
-    [onSelect]
+    ([itemId]: ItemSelector, all?: boolean) => {
+      const folders = pages?.folders ?? [];
+      if (isFolder(itemId, folders)) {
+        const items = all
+          ? getAllChildrenAndSelf(itemId, folders, "folder")
+          : [itemId];
+        const nextCollapsedItems = new Set(collapsedItems);
+        items.forEach((itemId) => {
+          collapsedItems.has(itemId)
+            ? nextCollapsedItems.delete(itemId)
+            : nextCollapsedItems.add(itemId);
+        });
+        $collapsedItems.set(nextCollapsedItems);
+        return;
+      }
+      onSelect(itemId);
+    },
+    [onSelect, pages?.folders, collapsedItems]
   );
 
   if (treeData === undefined || pages === undefined) {
@@ -232,7 +268,7 @@ const PagesPanel = ({
           itemData={treeData.root}
           renderItem={renderItem}
           getItemChildren={([nodeId]) => {
-            // It's the root.
+            // It's the root folder.
             if (
               nodeId === treeData.root.id &&
               treeData.root.type === "folder"
@@ -243,10 +279,28 @@ const PagesPanel = ({
             if (item?.type === "folder") {
               return item.children;
             }
+            // Page can't have children.
             return [];
           }}
           isItemHidden={([itemId]) => itemId === treeData.root.id}
-          getIsExpanded={() => true}
+          getIsExpanded={([itemId]) => {
+            return collapsedItems.has(itemId) === false;
+          }}
+          setIsExpanded={([itemId], value, all) => {
+            const nextCollapsedItems = new Set(collapsedItems);
+            if (itemId === undefined) {
+              return;
+            }
+            const items = all
+              ? getAllChildrenAndSelf(itemId, pages.folders, "folder")
+              : [itemId];
+            items.forEach((itemId) => {
+              value
+                ? nextCollapsedItems.delete(itemId)
+                : nextCollapsedItems.add(itemId);
+            });
+            $collapsedItems.set(nextCollapsedItems);
+          }}
         />
       </Box>
     </Flex>
@@ -331,12 +385,9 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [editingItemId, setEditingItemId] = useState<string>();
   const pages = useStore($pages);
 
-  if (currentPageId === undefined) {
+  if (currentPageId === undefined || pages === undefined) {
     return null;
   }
-  const isEditingFolder =
-    editingItemId === newFolderId ||
-    pages?.folders.some((folder) => folder.id === editingItemId);
 
   return (
     <>
@@ -350,8 +401,11 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         onCreateNewPage={() =>
           setEditingItemId(editingItemId === newPageId ? undefined : newPageId)
         }
-        onSelect={(pageId) => {
-          switchPage(pageId);
+        onSelect={(itemId) => {
+          if (isFolder(itemId, pages.folders)) {
+            return;
+          }
+          switchPage(itemId);
           onSetActiveTab("none");
         }}
         selectedPageId={currentPageId}
@@ -361,7 +415,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
       {editingItemId && (
         <SettingsPanel isOpen>
-          {isEditingFolder ? (
+          {isFolder(editingItemId, pages.folders) ? (
             <FolderEditor
               editingFolderId={editingItemId}
               setEditingFolderId={setEditingItemId}

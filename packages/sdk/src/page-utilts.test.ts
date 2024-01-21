@@ -1,6 +1,10 @@
 import { describe, expect, test } from "@jest/globals";
 import type { Pages } from "./schema/pages";
-import { findPageByIdOrPath, getPagePath } from "./page-utils";
+import {
+  findPageByIdOrPath,
+  findParentFolderByChildId,
+  getPagePath,
+} from "./page-utils";
 
 const pages = {
   meta: {},
@@ -103,5 +107,13 @@ describe("findPageByIdOrPath", () => {
       pages
     );
     expect(page).toEqual(pages.pages[0]);
+  });
+});
+
+describe("findParentFolderByChildId", () => {
+  test("find in root folder", () => {
+    expect(
+      findParentFolderByChildId("folderId-1-1-1", pages.folders)?.id
+    ).toEqual("folderId-1-1");
   });
 });

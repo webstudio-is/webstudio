@@ -1,14 +1,16 @@
 import { describe, expect, test } from "@jest/globals";
 import {
   cleanupChildRefsMutable,
-  findParentFolderByChildId,
-  isRoot,
+  deleteFolderWithChildrenMutable,
+  getAllChildrenAndSelf,
   isSlugUsed,
   registerFolderChildMutable,
   reparentOrphansMutable,
   toTreeData,
+  filterSelfAndChildren,
 } from "./page-utils";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { isRoot, type Folder } from "@webstudio-is/sdk";
 
 describe("toTreeData", () => {
   test("initial pages always has home pages and a root folder", () => {
@@ -262,39 +264,6 @@ describe("cleanupChildRefsMutable", () => {
   });
 });
 
-describe("findParentFolderByChildId", () => {
-  const pages = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    homePageId: "homePageId",
-  });
-  pages.folders.push({
-    id: "folderId",
-    name: "Folder 1",
-    slug: "folder",
-    children: ["folderId1"],
-  });
-  const rootFolder = pages.folders.find(isRoot);
-  rootFolder?.children.push("folderId");
-  pages.folders.push({
-    id: "folderId1",
-    name: "Folder 2",
-    slug: "folder",
-    children: [],
-  });
-  pages.folders.push({
-    id: "folderId2",
-    name: "Folder 3",
-    slug: "folder",
-    children: [],
-  });
-
-  test("find in root folder", () => {
-    expect(findParentFolderByChildId("folderId", pages.folders)).toEqual(
-      rootFolder
-    );
-  });
-});
-
 describe("isSlugUsed", () => {
   const { folders } = createDefaultPages({
     rootInstanceId: "rootInstanceId",
@@ -393,5 +362,102 @@ describe("registerFolderChildMutable", () => {
 
     expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
     expect(folder.children).toEqual(["folderId2"]);
+  });
+});
+
+describe("getAllChildrenAndSelf", () => {
+  const folders: Array<Folder> = [
+    {
+      id: "1",
+      name: "1",
+      slug: "1",
+      children: ["2"],
+    },
+    {
+      id: "2",
+      name: "2",
+      slug: "2",
+      children: ["3", "page1"],
+    },
+    {
+      id: "3",
+      name: "3",
+      slug: "3",
+      children: ["page2"],
+    },
+  ];
+
+  test("get nested folders", () => {
+    const result = getAllChildrenAndSelf("1", folders, "folder");
+    expect(result).toEqual(["1", "2", "3"]);
+  });
+
+  test("get nested pages", () => {
+    const result = getAllChildrenAndSelf("1", folders, "page");
+    expect(result).toEqual(["page2", "page1"]);
+  });
+});
+
+describe("deleteFolderWithChildrenMutable", () => {
+  const folders = (): Array<Folder> => [
+    {
+      id: "1",
+      name: "1",
+      slug: "1",
+      children: ["2"],
+    },
+    {
+      id: "2",
+      name: "2",
+      slug: "2",
+      children: ["3", "page1"],
+    },
+    {
+      id: "3",
+      name: "3",
+      slug: "3",
+      children: [],
+    },
+  ];
+
+  test("delete empty folder", () => {
+    const result = deleteFolderWithChildrenMutable("3", folders());
+    expect(result).toEqual({ folderIds: ["3"], pageIds: [] });
+  });
+
+  test("delete folder with folders and pages", () => {
+    const result = deleteFolderWithChildrenMutable("1", folders());
+    expect(result).toEqual({
+      folderIds: ["1", "2", "3"],
+      pageIds: ["page1"],
+    });
+  });
+});
+
+describe("filterSelfAndChildren", () => {
+  const folders = [
+    {
+      id: "1",
+      name: "1",
+      slug: "1",
+      children: ["2"],
+    },
+    {
+      id: "2",
+      name: "2",
+      slug: "2",
+      children: ["page1"],
+    },
+    {
+      id: "3",
+      name: "3",
+      slug: "3",
+      children: [],
+    },
+  ];
+
+  test("filter self and child folders", () => {
+    const result = filterSelfAndChildren("1", folders);
+    expect(result).toEqual([folders[2]]);
   });
 });

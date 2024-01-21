@@ -16,8 +16,9 @@ import {
   Folder,
   getPagePath,
   findPageByIdOrPath,
+  ROOT_FOLDER_ID,
+  findParentFolderByChildId,
 } from "@webstudio-is/sdk";
-import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
 import {
   theme,
   Button,
@@ -48,7 +49,6 @@ import {
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import {
-  deleteInstanceMutable,
   getInstancesSlice,
   insertInstancesSliceCopy,
   updateWebstudioData,
@@ -60,12 +60,10 @@ import {
   $pages,
   $project,
   $selectedInstanceSelector,
-  $selectedPageId,
   $dataSources,
   $dataSourceVariables,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
-import { removeByMutable } from "~/shared/array-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
 import { ImageControl } from "~/builder/features/seo/image-control";
@@ -79,11 +77,8 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
-import {
-  cleanupChildRefsMutable,
-  findParentFolderByChildId,
-  registerFolderChildMutable,
-} from "./page-utils";
+import { registerFolderChildMutable, deletePageMutable } from "./page-utils";
+import { Form } from "./form";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -332,15 +327,9 @@ const FormFields = ({
     .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
 
-  // @todo this is a hack to get the scroll area to work needs to be removed
-  const TOPBAR_HEIGHT = 40;
-  const HEADER_HEIGHT = 40;
-  const FOOTER_HEIGHT = 24;
-  const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
-
   return (
-    <Grid>
-      <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
+    <Grid css={{ height: "100%" }}>
+      <ScrollArea>
         {/**
          * ----------------------========<<<Page props>>>>========----------------------
          */}
@@ -781,17 +770,7 @@ const NewPageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
 };
@@ -913,28 +892,6 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   );
 };
 
-const deletePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
-  if (pages === undefined) {
-    return;
-  }
-  // deselect page before deleting to avoid flash of content
-  if ($selectedPageId.get() === pageId) {
-    $selectedPageId.set(pages.homePage.id);
-    $selectedInstanceSelector.set(undefined);
-  }
-  const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
-  if (rootInstanceId === undefined) {
-    return;
-  }
-  updateWebstudioData((data) => {
-    deleteInstanceMutable(data, [rootInstanceId]);
-    const { pages } = data;
-    removeByMutable(pages.pages, (page) => page.id === pageId);
-    cleanupChildRefsMutable(pageId, pages.folders);
-  });
-};
-
 const duplicatePage = (pageId: Page["id"]) => {
   const pages = $pages.get();
   if (pages === undefined) {
@@ -1042,8 +999,10 @@ export const PageSettings = ({
   });
 
   const hanldeDelete = () => {
-    deletePage(pageId);
-    onDelete();
+    updateWebstudioData((data) => {
+      deletePageMutable(pageId, data);
+      onDelete();
+    });
   };
 
   if (page === undefined) {
@@ -1120,17 +1079,7 @@ const PageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onClose?.();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onClose}>{children}</Form>
     </>
   );
 };
