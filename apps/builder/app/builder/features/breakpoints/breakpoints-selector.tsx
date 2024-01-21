@@ -16,32 +16,32 @@ import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
 const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {
     return (
-      <>
+      <Text>
         <Text variant="regularBold">Base</Text>
         <br />
         Styles on Base apply to all viewport sizes unless overwritten by another
         breakpoint. Start your styling here.
-      </>
+      </Text>
     );
   }
   if (breakpoint.maxWidth !== undefined) {
     return (
-      <>
+      <Text>
         <Text variant="regularBold">{breakpoint.maxWidth}px and down</Text>
         <br />
         Styles on this breakpoint apply to viewport widths {breakpoint.maxWidth}
         px and down, unless overwritten by a smaller breakpoint.
-      </>
+      </Text>
     );
   }
   if (breakpoint.minWidth !== undefined) {
     return (
-      <>
+      <Text>
         <Text variant="regularBold">{breakpoint.minWidth}px and up</Text>
         <br />
         Styles on this breakpoint apply to viewport widths {breakpoint.minWidth}
         px and up, unless overwritten by a larger breakpoint.
-      </>
+      </Text>
     );
   }
 };
