@@ -18,16 +18,11 @@ const properties: StyleProperty[] = [
 
 export const OutlineSection = (props: RenderCategoryProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
+  const { outlineStyle } = currentStyle;
 
-  const outlineStyleValue = currentStyle["outlineStyle"]?.value ?? {
-    type: "keyword",
-    value: "none",
-  };
-
-  // Render color, width, and offset properties only if outline style is not "none"
-  const renderAdditionalProperties =
-    outlineStyleValue &&
-    ("value" in outlineStyleValue ? outlineStyleValue.value !== "none" : false);
+  if (outlineStyle?.value.type !== "keyword") {
+    return;
+  }
 
   return (
     <CollapsibleSection
@@ -41,7 +36,7 @@ export const OutlineSection = (props: RenderCategoryProps) => {
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        {renderAdditionalProperties && (
+        {outlineStyle.value.value !== "none" && (
           <>
             <Grid
               css={{
