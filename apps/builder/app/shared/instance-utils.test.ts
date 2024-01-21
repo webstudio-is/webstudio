@@ -864,7 +864,7 @@ describe("get instances slice", () => {
     ]);
   });
 
-  test("collect data sources used in expressions within instances", () => {
+  test("collect data sources used in expression props within instances", () => {
     // body
     //   box1
     //     box2
@@ -1057,6 +1057,65 @@ describe("get instances slice", () => {
             code: `$ws$dataSource$box2$state = value`,
           },
         ],
+      },
+    ]);
+  });
+
+  test("collect data sources used in expression children within instances", () => {
+    // body
+    //   box
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", [
+          {
+            type: "expression",
+            value: "$ws$dataSource$body + $ws$dataSource$box",
+          },
+        ]),
+      ])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "body",
+          scopeInstanceId: "body",
+          type: "variable",
+          name: "body",
+          value: { type: "string", value: "body" },
+        },
+        {
+          id: "bodyUnused",
+          scopeInstanceId: "body",
+          type: "variable",
+          name: "bodyUnused",
+          value: { type: "string", value: "bodyUnused" },
+        },
+        {
+          id: "box",
+          scopeInstanceId: "box",
+          type: "variable",
+          name: "box",
+          value: { type: "string", value: "box" },
+        },
+      ])
+    );
+    const { dataSources } = getInstancesSlice("box");
+
+    expect(dataSources).toEqual([
+      {
+        id: "body",
+        scopeInstanceId: "body",
+        type: "variable",
+        name: "body",
+        value: { type: "string", value: "body" },
+      },
+      {
+        id: "box",
+        scopeInstanceId: "box",
+        type: "variable",
+        name: "box",
+        value: { type: "string", value: "box" },
       },
     ]);
   });
@@ -1419,6 +1478,11 @@ describe("insert instances slice copy", () => {
             value: { type: "string", value: "" },
           },
         ],
+        instances: [
+          createInstance("body", "Body", [
+            { type: "expression", value: "$ws$dataSource$variableId" },
+          ]),
+        ],
         props: [
           {
             id: "expressionId",
@@ -1452,27 +1516,33 @@ describe("insert instances slice copy", () => {
       availableDataSources: new Set(),
     });
     const [newVariableId] = data.dataSources.keys();
+    const [newInstanceId] = data.instances.keys();
     expect(newVariableId).not.toEqual("variableId");
     expect(Array.from(data.dataSources.values())).toEqual([
       {
         id: newVariableId,
-        scopeInstanceId: expect.not.stringMatching("body"),
+        scopeInstanceId: newInstanceId,
         type: "variable",
         name: "myVariable",
         value: { type: "string", value: "" },
       },
     ]);
+    expect(Array.from(data.instances.values())).toEqual([
+      createInstance(newInstanceId, "Body", [
+        { type: "expression", value: encodeDataSourceVariable(newVariableId) },
+      ]),
+    ]);
     expect(Array.from(data.props.values())).toEqual([
       {
         id: expect.not.stringMatching("expressionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp1",
         type: "expression",
         value: encodeDataSourceVariable(newVariableId),
       },
       {
         id: expect.not.stringMatching("actionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp2",
         type: "action",
         value: [
@@ -1485,7 +1555,7 @@ describe("insert instances slice copy", () => {
       },
       {
         id: expect.not.stringMatching("parameterId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp3",
         type: "parameter",
         value: newVariableId,
@@ -1514,6 +1584,15 @@ describe("insert instances slice copy", () => {
             name: "myInsideVariable",
             value: { type: "string", value: "inside" },
           },
+        ],
+        instances: [
+          createInstance("body", "Body", [
+            {
+              type: "expression",
+              value:
+                "$ws$dataSource$outsideVariableId + $ws$dataSource$insideVariableId",
+            },
+          ]),
         ],
         props: [
           {
@@ -1546,18 +1625,27 @@ describe("insert instances slice copy", () => {
       },
       availableDataSources: new Set(["insideVariableId"]),
     });
+    const [newInstanceId] = data.instances.keys();
     expect(data.dataSources).toEqual(new Map());
+    expect(Array.from(data.instances.values())).toEqual([
+      createInstance(newInstanceId, "Body", [
+        {
+          type: "expression",
+          value: `"outside" + $ws$dataSource$insideVariableId`,
+        },
+      ]),
+    ]);
     expect(Array.from(data.props.values())).toEqual([
       {
         id: expect.not.stringMatching("expressionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp1",
         type: "expression",
         value: `"outside" + $ws$dataSource$insideVariableId`,
       },
       {
         id: expect.not.stringMatching("actionId"),
-        instanceId: expect.not.stringMatching("body"),
+        instanceId: newInstanceId,
         name: "myProp2",
         type: "action",
         value: [
@@ -1590,7 +1678,9 @@ describe("insert instances slice copy", () => {
             type: "instance",
             id: "fragment",
             component: "Fragment",
-            children: [{ type: "id", value: "box" }],
+            children: [
+              { type: "expression", value: "$ws$dataSource$variableId" },
+            ],
           },
         ],
         dataSources: [
@@ -1643,6 +1733,12 @@ describe("insert instances slice copy", () => {
         value: { type: "string", value: "" },
       },
     ]);
+    expect(data.instances.get("fragment")).toEqual({
+      type: "instance",
+      id: "fragment",
+      component: "Fragment",
+      children: [{ type: "expression", value: "$ws$dataSource$variableId" }],
+    });
     expect(Array.from(data.props.values())).toEqual([
       {
         id: "expressionId",
@@ -1683,18 +1779,16 @@ describe("insert instances slice copy", () => {
         // portal
         //   fragment
         instances: [
-          {
-            type: "instance",
-            id: "portal",
-            component: portalComponent,
-            children: [{ type: "id", value: "fragment" }],
-          },
-          {
-            type: "instance",
-            id: "fragment",
-            component: "Fragment",
-            children: [{ type: "id", value: "box" }],
-          },
+          createInstance("portal", portalComponent, [
+            { type: "id", value: "fragment" },
+          ]),
+          createInstance("fragment", "Fragment", [
+            {
+              type: "expression",
+              value:
+                "$ws$dataSource$outsideVariableId + $ws$dataSource$insideVariableId",
+            },
+          ]),
         ],
         dataSources: [
           {
@@ -1744,6 +1838,14 @@ describe("insert instances slice copy", () => {
       availableDataSources: new Set(["insideVariableId"]),
     });
     expect(data.dataSources).toEqual(new Map());
+    expect(data.instances.get("fragment")).toEqual(
+      createInstance("fragment", "Fragment", [
+        {
+          type: "expression",
+          value: `"outside" + $ws$dataSource$insideVariableId`,
+        },
+      ])
+    );
     expect(Array.from(data.props.values())).toEqual([
       {
         id: "expressionId",
