@@ -1,6 +1,6 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
-import { Flex, rawTheme, Tooltip } from "@webstudio-is/design-system";
+import { Flex, rawTheme, Text, Tooltip } from "@webstudio-is/design-system";
 import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
 import { queueStatus } from "~/builder/shared/sync";
@@ -36,7 +36,7 @@ export const SyncStatus = () => {
         <Tooltip
           variant="wrapped"
           content={
-            <>
+            <Text>
               {isOnline ? (
                 <>
                   Experiencing connectivity issues. Your changes will be synced
@@ -50,7 +50,7 @@ export const SyncStatus = () => {
                   Please check your internet connection.
                 </>
               )}
-            </>
+            </Text>
           }
         >
           <OfflineIcon
