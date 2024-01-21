@@ -40,8 +40,8 @@ export const categories = [
   "backgrounds",
   "borders",
   "boxShadows",
-  "outline",
   "effects",
+  "outline",
   "transitions",
 ] as const;
 
@@ -141,7 +141,7 @@ export const shouldRenderCategory = (
 
 export const sections: Record<
   Category,
-  (props: RenderCategoryProps) => JSX.Element | null
+  (props: RenderCategoryProps) => JSX.Element | undefined
 > = {
   layout: LayoutSection,
   flexChild: FlexChildSection,
