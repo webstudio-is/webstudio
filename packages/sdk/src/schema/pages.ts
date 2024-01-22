@@ -102,24 +102,21 @@ const ProjectMeta = z.object({
   code: z.string().optional(),
 });
 
-export const ProjectOldRedirectPathSchema = z
-  .string()
-  .refine((data) => data.startsWith("/"));
-export const ProjectNewRedirectPathSchema = z.string().refine((data) => {
-  if (data.startsWith("/")) {
-    return true;
-  }
-  try {
-    return Boolean(new URL(data));
-  } catch {
-    return false;
-  }
-});
-
-export const ProjectRedirectsSchema = z.record(
-  ProjectOldRedirectPathSchema,
-  ProjectNewRedirectPathSchema
+export const ProjectNewRedirectPathSchema = PagePath.or(
+  z.string().refine((data) => {
+    try {
+      return Boolean(new URL(data));
+    } catch {
+      return false;
+    }
+  }, "Must be a valid URL")
 );
+
+export const PageRedirectSchema = z.object({
+  old: PagePath,
+  new: ProjectNewRedirectPathSchema,
+});
+export const ProjectRedirectsSchema = z.array(PageRedirectSchema);
 
 const ProjectSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
@@ -128,6 +125,7 @@ const ProjectSettings = z.object({
 });
 
 export type ProjectRedirects = z.infer<typeof ProjectRedirectsSchema>;
+export type PageRedirect = z.infer<typeof PageRedirectSchema>;
 
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 

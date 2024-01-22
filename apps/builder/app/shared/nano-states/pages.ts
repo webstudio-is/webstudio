@@ -1,5 +1,10 @@
 import { atom, computed } from "nanostores";
-import { findPageByIdOrPath, type Page, type Pages } from "@webstudio-is/sdk";
+import {
+  findPageByIdOrPath,
+  getPagePath,
+  type Page,
+  type Pages,
+} from "@webstudio-is/sdk";
 
 export const $pages = atom<undefined | Pages>(undefined);
 
@@ -15,3 +20,19 @@ export const $selectedPage = computed(
     return findPageByIdOrPath(selectedPageId, pages);
   }
 );
+
+export const $existingRoutePaths = computed([$pages], (pages) => {
+  if (pages === undefined) {
+    return;
+  }
+
+  const paths = [];
+  for (const page of pages.pages) {
+    const pagePath = getPagePath(page.id, pages);
+    if (pagePath === undefined) {
+      continue;
+    }
+    paths.push(pagePath);
+  }
+  return paths;
+});

@@ -11,14 +11,14 @@ import {
   ListItem,
   SmallIconButton,
   ScrollArea,
+  InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
 import type { ProjectSettings } from "./project-settings";
-import {
-  ProjectNewRedirectPathSchema,
-  ProjectOldRedirectPathSchema,
-} from "@webstudio-is/sdk";
+import { PagePath, ProjectNewRedirectPathSchema } from "@webstudio-is/sdk";
+import { useStore } from "@nanostores/react";
+import { $existingRoutePaths } from "~/shared/nano-states";
 
 export const ProjectRedirectionSettings = (props: {
   settings: ProjectSettings;
@@ -26,52 +26,95 @@ export const ProjectRedirectionSettings = (props: {
 }) => {
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
-  const [isValidOldPath, setIsValidOldPath] = useState<boolean>(true);
-  const [isValidNewPath, setIsValidNewPath] = useState<boolean>(true);
+  const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);
+  const [newPathErrors, setNewPathErrors] = useState<string[]>([]);
+  const existingPaths = useStore($existingRoutePaths);
 
-  const redirects = props.settings?.redirects ?? {};
+  const redirects = props.settings?.redirects ?? [];
   const redirectKeys = Object.keys(redirects);
-  const isValidRedirects = isValidOldPath && isValidNewPath;
+  const isValidRedirects =
+    oldPathErrors.length === 0 && newPathErrors.length === 0;
 
   const handleOldPathChange = (event: ChangeEvent<HTMLInputElement>) => {
     setOldPath(event.target.value);
-    const oldPathValidationResult = ProjectOldRedirectPathSchema.safeParse(
-      event.target.value
-    );
-    oldPathValidationResult.success
-      ? setIsValidOldPath(true)
-      : setIsValidOldPath(false);
+    setOldPathErrors(validateOldPath(event.target.value));
   };
 
   const handleNewPathChange = (event: ChangeEvent<HTMLInputElement>) => {
     setNewPath(event.target.value);
-    const newPathValidationResult = ProjectNewRedirectPathSchema.safeParse(
-      event.target.value
-    );
-    newPathValidationResult.success
-      ? setIsValidNewPath(true)
-      : setIsValidNewPath(false);
+    setNewPathErrors(validateNewPath(event.target.value));
+  };
+
+  const validateOldPath = (oldPath: string): string[] => {
+    const oldPathValidationResult = PagePath.safeParse(oldPath);
+
+    if (oldPathValidationResult.success === true) {
+      if (oldPath.startsWith("/") === true) {
+        /*
+          This is the path, that users want to redirect to.
+          If the path already exists in the project. Then we can't add a redirect
+        */
+        if (existingPaths?.includes(oldPath) === true) {
+          return ["This path already exists in the project"];
+        }
+
+        if (redirects.some((redirect) => redirect.old === oldPath)) {
+          return ["This path is already being redirected"];
+        }
+      }
+      return [];
+    }
+
+    return oldPathValidationResult.error.format()?._errors;
+  };
+
+  const validateNewPath = (newPath: string): string[] => {
+    const newPathValidationResult =
+      ProjectNewRedirectPathSchema.safeParse(newPath);
+
+    if (newPathValidationResult.success === true) {
+      /*
+        This is the new path, that users want to redirect to.
+        If the new path doesn't exist, it's not a valid redirect.
+      */
+
+      if (newPath.startsWith("/") === true) {
+        if (existingPaths?.includes(newPath) === false) {
+          return ["This path doesn't exist in the project"];
+        }
+      }
+
+      return [];
+    }
+
+    return newPathValidationResult.error.format()._errors;
+  };
+
+  const handleOnKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      handleAddRedirect();
+    }
   };
 
   const handleAddRedirect = () => {
-    if (isValidOldPath === false || isValidNewPath === false) {
+    const validOldPath = validateOldPath(oldPath);
+    const validNewPath = validateNewPath(newPath);
+
+    if (validOldPath.length > 0 || validNewPath.length > 0) {
       return;
     }
 
     props.onSettingsChange({
       ...props.settings,
-      redirects: {
-        ...redirects,
-        [oldPath]: newPath,
-      },
+      redirects: [{ old: oldPath, new: newPath }, ...redirects],
     });
     setOldPath("");
     setNewPath("");
   };
 
-  const handleDeleteRedirect = (redirect: string) => {
-    const newRedirects = { ...redirects };
-    delete newRedirects[redirect];
+  const handleDeleteRedirect = (index: number) => {
+    const newRedirects = [...redirects];
+    newRedirects.splice(index, 1);
     props.onSettingsChange({
       ...props.settings,
       redirects: newRedirects,
@@ -89,26 +132,38 @@ export const ProjectRedirectionSettings = (props: {
         </Text>
 
         <Flex gap="2" align="center">
-          <InputField
-            type="text"
-            placeholder="/old-path"
-            value={oldPath}
-            color={
-              isValidOldPath === true || oldPath === "" ? undefined : "error"
-            }
-            onChange={handleOldPathChange}
-            css={{ flexGrow: 1 }}
-          />
+          <InputErrorsTooltip
+            errors={oldPathErrors.length > 0 ? oldPathErrors : undefined}
+            side="bottom"
+            css={{ zIndex: theme.zIndices["1"] }}
+          >
+            <InputField
+              type="text"
+              placeholder="/old-path"
+              value={oldPath}
+              css={{ flexGrow: 1 }}
+              onKeyDown={handleOnKeyDown}
+              onChange={handleOldPathChange}
+              color={oldPathErrors.length === 0 ? undefined : "error"}
+            />
+          </InputErrorsTooltip>
           <ArrowRightIcon />
-          <InputField
-            type="text"
-            placeholder="/new-path or URL"
-            value={newPath}
-            color={
-              isValidNewPath === true || newPath === "" ? undefined : "error"
-            }
-            onChange={handleNewPathChange}
-          />
+
+          <InputErrorsTooltip
+            errors={newPathErrors.length > 0 ? newPathErrors : undefined}
+            side="bottom"
+            css={{ zIndex: theme.zIndices["2"] }}
+          >
+            <InputField
+              type="text"
+              placeholder="/new-path or URL"
+              value={newPath}
+              onKeyDown={handleOnKeyDown}
+              onChange={handleNewPathChange}
+              color={newPathErrors.length === 0 ? undefined : "error"}
+            />
+          </InputErrorsTooltip>
+
           <Button
             disabled={isValidRedirects === false || oldPath === newPath}
             onClick={handleAddRedirect}
@@ -131,9 +186,9 @@ export const ProjectRedirectionSettings = (props: {
                   py: theme.spacing[5],
                 }}
               >
-                {Object.keys(redirects).map((redirect, index) => {
+                {redirects.map((redirect, index) => {
                   return (
-                    <ListItem asChild key={redirect} index={index}>
+                    <ListItem asChild key={redirect.old} index={index}>
                       <Flex
                         justify="between"
                         align="center"
@@ -144,14 +199,14 @@ export const ProjectRedirectionSettings = (props: {
                         }}
                       >
                         <Flex gap="2">
-                          <Text>{redirect}</Text>
+                          <Text>{redirect.old}</Text>
                           <ArrowRightIcon />
-                          <Text truncate>{redirects[redirect]}</Text>
+                          <Text truncate>{redirect.new}</Text>
                         </Flex>
                         <SmallIconButton
                           variant="destructive"
                           icon={<TrashIcon />}
-                          onClick={() => handleDeleteRedirect(redirect)}
+                          onClick={() => handleDeleteRedirect(index)}
                         />
                       </Flex>
                     </ListItem>
