@@ -196,13 +196,11 @@ const BindingPanel = ({
           variant="wrapped"
           content={
             <Text>
-              Compose variables, do math; the result of the expression will be
-              used as a value.
+              Use JavaScript syntax to access variables along with comparison
+              and arithmetic operators.
               <br />
-              Example: VariableA || VariableB || &quot;DefaultValue&quot;
-              <br />
-              Explanation: If VariableA is empty, use VariableB; otherwise use
-              &quot;DefaultValue&quot;.
+              Use the dot notation to access nested object values:
+              <Text variant="mono">Variable.nested.value</Text>
             </Text>
           }
         >
