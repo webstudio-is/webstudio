@@ -149,7 +149,10 @@ const EmptyVariables = () => {
   return (
     <Flex direction="column" css={{ gap: theme.spacing[5] }}>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
-        <Text variant="labelsSentenceCase">No variables yet</Text>
+        <Text variant="labelsSentenceCase" align="center">
+          No variables created
+          <br /> on this instance
+        </Text>
       </Flex>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
         <VariablePopoverTrigger>

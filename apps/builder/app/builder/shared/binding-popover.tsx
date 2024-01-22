@@ -114,6 +114,7 @@ const BindingPanel = ({
   const usedIdentifiers = useMemo(() => getUsedIdentifiers(value), [value]);
   const [error, setError] = useState<undefined | string>();
   const [touched, setTouched] = useState(false);
+  const scopeEntries = Object.entries(scope);
 
   const updateExpression = (newExpression: string) => {
     setExpression(newExpression);
@@ -157,9 +158,15 @@ const BindingPanel = ({
             <InfoCircleIcon tabIndex={0} />
           </Tooltip>
         </Flex>
-
+        {scopeEntries.length === 0 && (
+          <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
+            <Text variant="labelsSentenceCase">
+              No variables available in this scope
+            </Text>
+          </Flex>
+        )}
         <CssValueListArrowFocus>
-          {Object.entries(scope).map(([identifier, value], index) => {
+          {scopeEntries.map(([identifier, value], index) => {
             const name = aliases.get(identifier);
             const label =
               value === undefined
