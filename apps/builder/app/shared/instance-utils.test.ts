@@ -45,6 +45,7 @@ import {
   $styleSources,
   $styles,
   $registeredComponentMetas,
+  $resources,
 } from "./nano-states";
 import { registerContainers } from "./sync";
 import type { Project } from "@webstudio-is/project";
@@ -1316,6 +1317,220 @@ describe("get instances slice", () => {
       },
     ]);
   });
+
+  test("collect resources within instances", () => {
+    // body
+    //   box1
+    //   box2
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [
+          { type: "id", value: "box1" },
+          { type: "id", value: "box2" },
+        ]),
+        createInstance("box1", "Box", []),
+        createInstance("box2", "Box", []),
+      ])
+    );
+    $resources.set(
+      toMap([
+        {
+          id: "resource1",
+          name: "resource1",
+          url: `""`,
+          method: "get",
+          headers: [],
+        },
+        {
+          id: "resource2",
+          name: "resource2",
+          url: `""`,
+          method: "get",
+          headers: [],
+        },
+        {
+          id: "resource3",
+          name: "resource3",
+          url: `""`,
+          method: "get",
+          headers: [],
+        },
+      ])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "body$state",
+          scopeInstanceId: "box1",
+          name: "data1",
+          type: "resource",
+          resourceId: "resource1",
+        },
+        {
+          id: "box1$state",
+          scopeInstanceId: "box1",
+          name: "data2",
+          type: "resource",
+          resourceId: "resource2",
+        },
+        {
+          id: "box2$state",
+          scopeInstanceId: "box2",
+          type: "resource",
+          name: "data3",
+          resourceId: "resource3",
+        },
+      ])
+    );
+    const { resources, dataSources } = getInstancesSlice("box1");
+
+    expect(resources).toEqual([
+      {
+        id: "resource1",
+        name: "resource1",
+        url: `""`,
+        method: "get",
+        headers: [],
+      },
+      {
+        id: "resource2",
+        name: "resource2",
+        url: `""`,
+        method: "get",
+        headers: [],
+      },
+    ]);
+    expect(dataSources).toEqual([
+      {
+        id: "body$state",
+        scopeInstanceId: "box1",
+        name: "data1",
+        type: "resource",
+        resourceId: "resource1",
+      },
+      {
+        id: "box1$state",
+        scopeInstanceId: "box1",
+        name: "data2",
+        type: "resource",
+        resourceId: "resource2",
+      },
+    ]);
+  });
+
+  test("collect data sources used in resources", () => {
+    // body
+    //   box
+    $instances.set(
+      toMap([
+        createInstance("body", "Body", [{ type: "id", value: "box" }]),
+        createInstance("box", "Box", []),
+      ])
+    );
+    $resources.set(
+      toMap([
+        {
+          id: "resourceId",
+          name: "resourceName",
+          url: `$ws$dataSource$bodyUrl`,
+          method: "post",
+          headers: [
+            {
+              name: "Authorization",
+              value: `"Token " + $ws$dataSource$bodyToken`,
+            },
+          ],
+          body: `$ws$dataSource$boxBody`,
+        },
+      ])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "boxData",
+          scopeInstanceId: "box",
+          name: "data",
+          type: "resource",
+          resourceId: "resourceId",
+        },
+        {
+          id: "boxBody",
+          scopeInstanceId: "box",
+          name: "token",
+          type: "variable",
+          value: { type: "string", value: "body" },
+        },
+        {
+          id: "bodyUrl",
+          scopeInstanceId: "body",
+          name: "url",
+          type: "variable",
+          value: { type: "string", value: "url" },
+        },
+        {
+          id: "bodyToken",
+          scopeInstanceId: "body",
+          name: "token",
+          type: "variable",
+          value: { type: "string", value: "token" },
+        },
+        {
+          id: "bodyAnotherUrl",
+          scopeInstanceId: "body",
+          name: "anotherUrl",
+          type: "variable",
+          value: { type: "string", value: "anotherUrl" },
+        },
+      ])
+    );
+    const { resources, dataSources } = getInstancesSlice("box");
+
+    expect(resources).toEqual([
+      {
+        id: "resourceId",
+        name: "resourceName",
+        url: `$ws$dataSource$bodyUrl`,
+        method: "post",
+        headers: [
+          {
+            name: "Authorization",
+            value: `"Token " + $ws$dataSource$bodyToken`,
+          },
+        ],
+        body: `$ws$dataSource$boxBody`,
+      },
+    ]);
+    expect(dataSources).toEqual([
+      {
+        id: "boxData",
+        scopeInstanceId: "box",
+        name: "data",
+        type: "resource",
+        resourceId: "resourceId",
+      },
+      {
+        id: "boxBody",
+        scopeInstanceId: "box",
+        name: "token",
+        type: "variable",
+        value: { type: "string", value: "body" },
+      },
+      {
+        id: "bodyUrl",
+        scopeInstanceId: "body",
+        name: "url",
+        type: "variable",
+        value: { type: "string", value: "url" },
+      },
+      {
+        id: "bodyToken",
+        scopeInstanceId: "body",
+        name: "token",
+        type: "variable",
+        value: { type: "string", value: "token" },
+      },
+    ]);
+  });
 });
 
 describe("insert instances slice copy", () => {
@@ -2181,6 +2396,288 @@ describe("insert instances slice copy", () => {
         breakpointId: "base",
         property: "color",
         value: { type: "keyword", value: "red" },
+      },
+    ]);
+  });
+
+  test("insert resources with new ids", () => {
+    const data = getWebstudioData();
+    insertInstancesSliceCopy({
+      data,
+      slice: {
+        ...emptySlice,
+        resources: [
+          {
+            id: "resourceId",
+            name: "",
+            url: `$ws$dataSource$paramVariableId`,
+            method: "post",
+            headers: [
+              { name: "auth", value: "$ws$dataSource$paramVariableId" },
+            ],
+            body: `$ws$dataSource$paramVariableId`,
+          },
+        ],
+        dataSources: [
+          {
+            id: "paramVariableId",
+            scopeInstanceId: "body",
+            name: "myParam",
+            type: "variable",
+            value: { type: "string", value: "myParam" },
+          },
+          {
+            id: "resourceVariableId",
+            scopeInstanceId: "body",
+            name: "myResource",
+            type: "resource",
+            resourceId: "resourceId",
+          },
+        ],
+      },
+      availableDataSources: new Set(),
+    });
+    const [newInstanceId] = data.instances.keys();
+    const [newParamId, newResourceVariableId] = data.dataSources.keys();
+    const [newResourceId] = data.resources.keys();
+    expect(newResourceId).not.toEqual("resourceId");
+    expect(Array.from(data.dataSources.values())).toEqual([
+      {
+        id: newParamId,
+        scopeInstanceId: newInstanceId,
+        name: "myParam",
+        type: "variable",
+        value: { type: "string", value: "myParam" },
+      },
+      {
+        id: newResourceVariableId,
+        scopeInstanceId: newInstanceId,
+        name: "myResource",
+        type: "resource",
+        resourceId: newResourceId,
+      },
+    ]);
+    expect(Array.from(data.resources.values())).toEqual([
+      {
+        id: newResourceId,
+        name: "",
+        url: encodeDataSourceVariable(newParamId),
+        method: "post",
+        headers: [
+          { name: "auth", value: encodeDataSourceVariable(newParamId) },
+        ],
+        body: encodeDataSourceVariable(newParamId),
+      },
+    ]);
+  });
+
+  test("inline data sources into resources when not available in the scope", () => {
+    const data = getWebstudioData();
+    insertInstancesSliceCopy({
+      data,
+      slice: {
+        ...emptySlice,
+        resources: [
+          {
+            id: "resourceId",
+            name: "",
+            url: `$ws$dataSource$paramVariableId`,
+            method: "post",
+            headers: [
+              { name: "auth", value: "$ws$dataSource$paramVariableId" },
+            ],
+            body: `$ws$dataSource$paramVariableId`,
+          },
+        ],
+        dataSources: [
+          {
+            id: "paramVariableId",
+            scopeInstanceId: "outside",
+            name: "myParam",
+            type: "variable",
+            value: { type: "string", value: "myParam" },
+          },
+          {
+            id: "variableId",
+            scopeInstanceId: "body",
+            name: "myResource",
+            type: "resource",
+            resourceId: "resourceId",
+          },
+        ],
+      },
+      availableDataSources: new Set(),
+    });
+    const [newResourceId] = data.resources.keys();
+    expect(Array.from(data.resources.values())).toEqual([
+      {
+        id: newResourceId,
+        name: "",
+        url: `"myParam"`,
+        method: "post",
+        headers: [{ name: "auth", value: `"myParam"` }],
+        body: `"myParam"`,
+      },
+    ]);
+  });
+
+  test("inline resource variables when not available in scope", () => {
+    const data = getWebstudioData();
+    insertInstancesSliceCopy({
+      data,
+      slice: {
+        ...emptySlice,
+        resources: [
+          {
+            id: "resourceId",
+            name: "",
+            url: `""`,
+            method: "get",
+            headers: [],
+          },
+        ],
+        dataSources: [
+          {
+            id: "variableId",
+            scopeInstanceId: "outside",
+            name: "myResource",
+            type: "resource",
+            resourceId: "resourceId",
+          },
+        ],
+        props: [
+          {
+            id: "expressionId",
+            instanceId: "body",
+            name: "myProp",
+            type: "expression",
+            value: "$ws$dataSource$variableId",
+          },
+        ],
+      },
+      availableDataSources: new Set(),
+    });
+    const [newInstanceId] = data.instances.keys();
+    expect(Array.from(data.props.values())).toEqual([
+      {
+        id: expect.not.stringMatching("expressionId"),
+        instanceId: newInstanceId,
+        name: "myProp",
+        type: "expression",
+        value: "{}",
+      },
+    ]);
+  });
+
+  test("insert resources from portals with old ids", () => {
+    const data = getWebstudioData();
+    insertInstancesSliceCopy({
+      data,
+      slice: {
+        ...emptySlice,
+        // portal
+        //   fragment
+        instances: [
+          createInstance("portal", portalComponent, [
+            { type: "id", value: "fragment" },
+          ]),
+          createInstance("fragment", "Fragment", []),
+        ],
+        resources: [
+          {
+            id: "resourceId",
+            name: "",
+            url: `""`,
+            method: "get",
+            headers: [],
+          },
+        ],
+        dataSources: [
+          {
+            id: "variableId",
+            scopeInstanceId: "fragment",
+            name: "myVariable",
+            type: "resource",
+            resourceId: "resourceId",
+          },
+        ],
+      },
+      availableDataSources: new Set(),
+    });
+    expect(Array.from(data.dataSources.values())).toEqual([
+      {
+        id: "variableId",
+        scopeInstanceId: "fragment",
+        name: "myVariable",
+        type: "resource",
+        resourceId: "resourceId",
+      },
+    ]);
+    expect(Array.from(data.resources.values())).toEqual([
+      {
+        id: "resourceId",
+        name: "",
+        url: `""`,
+        method: "get",
+        headers: [],
+      },
+    ]);
+  });
+
+  test("inline data sources into resources from portals when not available in scope", () => {
+    const data = getWebstudioData();
+    insertInstancesSliceCopy({
+      data,
+      slice: {
+        ...emptySlice,
+        // portal
+        //   fragment
+        instances: [
+          createInstance("portal", portalComponent, [
+            { type: "id", value: "fragment" },
+          ]),
+          createInstance("fragment", "Fragment", []),
+        ],
+        resources: [
+          {
+            id: "resourceId",
+            name: "",
+            url: `$ws$dataSource$paramVariableId`,
+            method: "post",
+            headers: [
+              { name: "auth", value: "$ws$dataSource$paramVariableId" },
+            ],
+            body: `$ws$dataSource$paramVariableId`,
+          },
+        ],
+        dataSources: [
+          {
+            id: "paramVariableId",
+            scopeInstanceId: "outside",
+            name: "myParam",
+            type: "variable",
+            value: { type: "string", value: "myParam" },
+          },
+          {
+            id: "variableId",
+            scopeInstanceId: "fragment",
+            name: "myResource",
+            type: "resource",
+            resourceId: "resourceId",
+          },
+        ],
+      },
+      availableDataSources: new Set(),
+    });
+    const [newResourceId] = data.resources.keys();
+    expect(Array.from(data.resources.values())).toEqual([
+      {
+        id: newResourceId,
+        name: "",
+        url: `"myParam"`,
+        method: "post",
+        headers: [{ name: "auth", value: `"myParam"` }],
+        body: `"myParam"`,
       },
     ]);
   });

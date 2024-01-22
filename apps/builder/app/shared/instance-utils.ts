@@ -18,6 +18,7 @@ import {
   Breakpoint,
   type WebstudioFragment,
   type WebstudioData,
+  type Resource,
 } from "@webstudio-is/sdk";
 import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
@@ -648,6 +649,7 @@ export const getInstancesSlice = (
   const assets = $assets.get();
   const instances = $instances.get();
   const dataSources = $dataSources.get();
+  const resources = $resources.get();
   const props = $props.get();
   const styleSourceSelections = $styleSourceSelections.get();
   const styleSources = $styleSources.get();
@@ -754,6 +756,7 @@ export const getInstancesSlice = (
   // or used by expressions or actions even outside of the tree
   // such variables can be bound to sliced root on paste
   const slicedDataSources: DataSources = new Map();
+  const slicedResourceIds = new Set<Resource["id"]>();
   for (const dataSource of dataSources.values()) {
     if (
       // check if data source itself can be copied
@@ -761,6 +764,36 @@ export const getInstancesSlice = (
         slicedInstanceIds.has(dataSource.scopeInstanceId)) ||
       usedDataSourceIds.has(dataSource.id)
     ) {
+      slicedDataSources.set(dataSource.id, dataSource);
+      if (dataSource.type === "resource") {
+        slicedResourceIds.add(dataSource.resourceId);
+      }
+    }
+  }
+
+  // collect resources bound to all sliced data sources
+  // and then collect data sources used in these resources
+  // it creates some recursive behavior but since resources
+  // cannot depend on other resources all left data sources
+  // can be collected just once
+  const slicedResources: Resource[] = [];
+  const dataSourceIdsUsedInResources = new Set<DataSource["id"]>();
+  for (const resourceId of slicedResourceIds) {
+    const resource = resources.get(resourceId);
+    if (resource === undefined) {
+      continue;
+    }
+    slicedResources.push(resource);
+    collectUsedDataSources(resource.url, dataSourceIdsUsedInResources);
+    for (const { value } of resource.headers) {
+      collectUsedDataSources(value, dataSourceIdsUsedInResources);
+    }
+    if (resource.body) {
+      collectUsedDataSources(resource.body, dataSourceIdsUsedInResources);
+    }
+  }
+  for (const dataSource of dataSources.values()) {
+    if (dataSourceIdsUsedInResources.has(dataSource.id)) {
       slicedDataSources.set(dataSource.id, dataSource);
     }
   }
@@ -783,7 +816,7 @@ export const getInstancesSlice = (
     breakpoints: Array.from(slicedBreapoints.values()),
     styles: slicedStyles,
     dataSources: Array.from(slicedDataSources.values()),
-    resources: [],
+    resources: slicedResources,
     props: Array.from(slicedProps.values()),
     assets: slicedAssets,
   };
@@ -841,7 +874,7 @@ const inlineUnavailableDataSources = ({
       if (dataSource?.type === "variable") {
         return JSON.stringify(dataSource.value.value);
       }
-      return "";
+      return "{}";
     },
   });
   return { code: newCode, isDiscarded };
@@ -900,6 +933,7 @@ export const insertInstancesSliceCopy = ({
   const {
     assets,
     instances,
+    resources,
     dataSources,
     props,
     breakpoints,
@@ -987,6 +1021,7 @@ export const insertInstancesSliceCopy = ({
     );
 
     const availablePortalDataSources = new Set(availableDataSources);
+    const usedResourceIds = new Set<Resource["id"]>();
     for (const dataSource of slice.dataSources) {
       // insert only data sources within portal content
       if (
@@ -995,7 +1030,43 @@ export const insertInstancesSliceCopy = ({
       ) {
         availablePortalDataSources.add(dataSource.id);
         dataSources.set(dataSource.id, dataSource);
+        if (dataSource.type === "resource") {
+          usedResourceIds.add(dataSource.resourceId);
+        }
       }
+    }
+
+    for (const resource of slice.resources) {
+      if (usedResourceIds.has(resource.id) === false) {
+        continue;
+      }
+      const newUrl = inlineUnavailableDataSources({
+        code: resource.url,
+        availableDataSources: availablePortalDataSources,
+        dataSources: sliceDataSources,
+      }).code;
+      const newHeaders = resource.headers.map((header) => ({
+        name: header.name,
+        value: inlineUnavailableDataSources({
+          code: header.value,
+          availableDataSources: availablePortalDataSources,
+          dataSources: sliceDataSources,
+        }).code,
+      }));
+      const newBody =
+        resource.body === undefined
+          ? undefined
+          : inlineUnavailableDataSources({
+              code: resource.body,
+              availableDataSources: availablePortalDataSources,
+              dataSources: sliceDataSources,
+            }).code;
+      resources.set(resource.id, {
+        ...resource,
+        url: newUrl,
+        headers: newHeaders,
+        body: newBody,
+      });
     }
 
     for (const instance of slice.instances) {
@@ -1111,19 +1182,78 @@ export const insertInstancesSliceCopy = ({
 
   const availableFragmentDataSources = new Set(availableDataSources);
   const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+  const newResourceIds = new Map<Resource["id"], Resource["id"]>();
+  const usedResourceIds = new Set<Resource["id"]>();
   for (const dataSource of slice.dataSources) {
     const { scopeInstanceId } = dataSource;
     // insert only data sources within portal content
     if (scopeInstanceId && sliceInstanceIds.has(scopeInstanceId)) {
       availableFragmentDataSources.add(dataSource.id);
-      const newId = nanoid();
-      newDataSourceIds.set(dataSource.id, newId);
-      dataSources.set(newId, {
-        ...dataSource,
-        id: newId,
-        scopeInstanceId: newInstanceIds.get(scopeInstanceId),
-      });
+      const newDataSourceId = nanoid();
+      newDataSourceIds.set(dataSource.id, newDataSourceId);
+      if (dataSource.type === "resource") {
+        const newResourceId = nanoid();
+        newResourceIds.set(dataSource.resourceId, newResourceId);
+        usedResourceIds.add(dataSource.resourceId);
+        dataSources.set(newDataSourceId, {
+          ...dataSource,
+          id: newDataSourceId,
+          scopeInstanceId: newInstanceIds.get(scopeInstanceId),
+          resourceId: newResourceId,
+        });
+      } else {
+        dataSources.set(newDataSourceId, {
+          ...dataSource,
+          id: newDataSourceId,
+          scopeInstanceId: newInstanceIds.get(scopeInstanceId),
+        });
+      }
     }
+  }
+
+  for (const resource of slice.resources) {
+    if (usedResourceIds.has(resource.id) === false) {
+      continue;
+    }
+    const newResourceId = newResourceIds.get(resource.id) ?? resource.id;
+
+    const newUrl = replaceDataSources(
+      inlineUnavailableDataSources({
+        code: resource.url,
+        availableDataSources: availableFragmentDataSources,
+        dataSources: sliceDataSources,
+      }).code,
+      newDataSourceIds
+    );
+    const newHeaders = resource.headers.map((header) => ({
+      name: header.name,
+      value: replaceDataSources(
+        inlineUnavailableDataSources({
+          code: header.value,
+          availableDataSources: availableFragmentDataSources,
+          dataSources: sliceDataSources,
+        }).code,
+        newDataSourceIds
+      ),
+    }));
+    const newBody =
+      resource.body === undefined
+        ? undefined
+        : replaceDataSources(
+            inlineUnavailableDataSources({
+              code: resource.body,
+              availableDataSources: availableFragmentDataSources,
+              dataSources: sliceDataSources,
+            }).code,
+            newDataSourceIds
+          );
+    resources.set(newResourceId, {
+      ...resource,
+      id: newResourceId,
+      url: newUrl,
+      headers: newHeaders,
+      body: newBody,
+    });
   }
 
   for (const instance of slice.instances) {
