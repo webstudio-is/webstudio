@@ -162,7 +162,6 @@ const BindingPanel = ({
           <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
             <Text variant="labelsSentenceCase" align="center">
               No variables available
-              <br /> in this scope
             </Text>
           </Flex>
         )}
