@@ -134,7 +134,7 @@ export const ProjectRedirectionSettings = (props: {
         <Flex gap="2" align="center">
           <InputErrorsTooltip
             errors={oldPathErrors.length > 0 ? oldPathErrors : undefined}
-            side="bottom"
+            side="top"
             css={{ zIndex: theme.zIndices["1"] }}
           >
             <InputField
@@ -151,7 +151,7 @@ export const ProjectRedirectionSettings = (props: {
 
           <InputErrorsTooltip
             errors={newPathErrors.length > 0 ? newPathErrors : undefined}
-            side="bottom"
+            side="top"
             css={{ zIndex: theme.zIndices["2"] }}
           >
             <InputField
