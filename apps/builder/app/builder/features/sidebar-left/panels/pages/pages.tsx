@@ -17,6 +17,7 @@ import {
 import {
   ChevronRightIcon,
   FolderIcon,
+  HomeIcon,
   MenuIcon,
   NewFolderIcon,
   NewPageIcon,
@@ -188,14 +189,22 @@ const PagesPanel = ({
             </TreeItemLabel>
           )}
           {props.itemData.type === "page" && (
-            <TreeItemLabel prefix={<PageIcon />}>
+            <TreeItemLabel
+              prefix={
+                props.itemData.id === pages?.homePage.id ? (
+                  <HomeIcon />
+                ) : (
+                  <PageIcon />
+                )
+              }
+            >
               {props.itemData.data.name}
             </TreeItemLabel>
           )}
         </TreeItemBody>
       );
     },
-    [editingItemId, onEdit]
+    [editingItemId, onEdit, pages]
   );
 
   const selectTreeNode = useCallback(
