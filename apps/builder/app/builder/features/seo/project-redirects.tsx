@@ -18,7 +18,8 @@ import { useState, type ChangeEvent } from "react";
 import type { ProjectSettings } from "./project-settings";
 import { PagePath, ProjectNewRedirectPathSchema } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
-import { $existingRoutePaths } from "~/shared/nano-states";
+import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
+import { $pages } from "~/shared/nano-states";
 
 export const ProjectRedirectionSettings = (props: {
   settings: ProjectSettings;
@@ -28,7 +29,8 @@ export const ProjectRedirectionSettings = (props: {
   const [newPath, setNewPath] = useState<string>("");
   const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);
   const [newPathErrors, setNewPathErrors] = useState<string[]>([]);
-  const existingPaths = useStore($existingRoutePaths);
+  const pages = useStore($pages);
+  const existingPaths = getExistingRoutePaths(pages);
 
   const redirects = props.settings?.redirects ?? [];
   const redirectKeys = Object.keys(redirects);
@@ -54,7 +56,7 @@ export const ProjectRedirectionSettings = (props: {
           This is the path, that users want to redirect to.
           If the path already exists in the project. Then we can't add a redirect
         */
-        if (existingPaths?.includes(oldPath) === true) {
+        if (existingPaths.has(oldPath) === true) {
           return ["This path already exists in the project"];
         }
 
@@ -79,7 +81,7 @@ export const ProjectRedirectionSettings = (props: {
       */
 
       if (newPath.startsWith("/") === true) {
-        if (existingPaths?.includes(newPath) === false) {
+        if (existingPaths.has(newPath) === false) {
           return ["This path doesn't exist in the project"];
         }
       }
