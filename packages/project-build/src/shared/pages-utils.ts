@@ -1,7 +1,5 @@
-import type { Pages, Folder } from "@webstudio-is/sdk";
+import { type Pages, type Folder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
-
-export const ROOT_FOLDER_ID = "root";
 
 export const createRootFolder = (
   children: Folder["children"] = []

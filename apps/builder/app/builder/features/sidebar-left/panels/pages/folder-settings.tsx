@@ -4,11 +4,15 @@ import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
 import slugify from "slugify";
-import { Folder, Pages } from "@webstudio-is/sdk";
+import {
+  Folder,
+  Pages,
+  ROOT_FOLDER_ID,
+  findParentFolderByChildId,
+} from "@webstudio-is/sdk";
 import {
   theme,
   Button,
-  Box,
   Label,
   InputErrorsTooltip,
   Tooltip,
@@ -18,6 +22,11 @@ import {
   rawTheme,
   Flex,
   Select,
+  Dialog,
+  DialogContent,
+  Text,
+  DialogClose,
+  DialogTitle,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -30,14 +39,15 @@ import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
-import { removeByMutable } from "~/shared/array-utils";
 import {
-  findParentFolderByChildId,
-  cleanupChildRefsMutable,
   isSlugUsed,
   registerFolderChildMutable,
+  deleteFolderWithChildrenMutable,
+  deletePageMutable,
+  filterSelfAndChildren,
 } from "./page-utils";
-import { ROOT_FOLDER_ID } from "@webstudio-is/project-build";
+import { Form } from "./form";
+import { updateWebstudioData } from "~/shared/instance-utils";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),
@@ -130,15 +140,9 @@ const FormFields = ({
     return;
   }
 
-  // @todo this is a hack to get the scroll area to work needs to be removed
-  const TOPBAR_HEIGHT = 40;
-  const HEADER_HEIGHT = 40;
-  const FOOTER_HEIGHT = 24;
-  const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
-
   return (
-    <Grid>
-      <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
+    <Grid css={{ height: "100%" }}>
+      <ScrollArea>
         <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Folder Name</Label>
@@ -165,10 +169,7 @@ const FormFields = ({
             <Select
               tabIndex={1}
               css={{ zIndex: theme.zIndices[1] }}
-              options={pages.folders.filter(
-                // Prevent selecting yourself as a parent
-                ({ id }) => folderId !== id
-              )}
+              options={filterSelfAndChildren(folderId, pages.folders)}
               getValue={(folder) => folder.id}
               getLabel={(folder) => folder.name}
               value={pages.folders.find(
@@ -188,7 +189,7 @@ const FormFields = ({
               <Flex align="center" css={{ gap: theme.spacing[3] }}>
                 Slug
                 <Tooltip
-                  content={"@todo tooltip content for slug"}
+                  content={"Slug will be used as part of the path to the page"}
                   variant="wrapped"
                 >
                   <HelpIcon
@@ -323,17 +324,7 @@ const NewFolderSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
 };
@@ -378,17 +369,6 @@ const updateFolder = (folderId: Folder["id"], values: Partial<Values>) => {
         values.parentFolderId
       );
     }
-  });
-};
-
-const deleteFolder = (folderId: Folder["id"]) => {
-  // @todo ask them if they want to delete all pages as well.
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    cleanupChildRefsMutable(folderId, pages.folders);
-    removeByMutable(pages.folders, (folder) => folder.id === folderId);
   });
 };
 
@@ -448,17 +428,29 @@ export const FolderSettings = ({
     updateFolder(folderId, unsavedValues);
   });
 
-  const hanldeDelete = () => {
-    deleteFolder(folderId);
-    onDelete();
-  };
-
   if (folder === undefined) {
     return null;
   }
 
+  const handleDelete = () => {
+    updateWebstudioData((data) => {
+      const { pageIds } = deleteFolderWithChildrenMutable(
+        folderId,
+        data.pages.folders
+      );
+      pageIds.forEach((pageId) => {
+        deletePageMutable(pageId, data);
+      });
+    });
+    onDelete();
+  };
+
   return (
-    <FolderSettingsView onClose={onClose} onDelete={hanldeDelete}>
+    <FolderSettingsView
+      folder={folder}
+      onClose={onClose}
+      onDelete={handleDelete}
+    >
       <FormFields
         folderId={folderId}
         errors={errors}
@@ -473,11 +465,24 @@ const FolderSettingsView = ({
   onDelete,
   onClose,
   children,
+  folder,
 }: {
   onDelete: () => void;
   onClose: () => void;
   children: JSX.Element;
+  folder: Folder;
 }) => {
+  const [showDeleteConfirmation, setShowDeleteConfirmation] =
+    useState<boolean>(false);
+
+  const hanldeRequestDelete = () => {
+    if (folder.children.length > 0) {
+      setShowDeleteConfirmation(true);
+      return;
+    }
+    onDelete();
+  };
+
   return (
     <>
       <Header
@@ -488,7 +493,7 @@ const FolderSettingsView = ({
               <Button
                 color="ghost"
                 prefix={<TrashIcon />}
-                onClick={onDelete}
+                onClick={hanldeRequestDelete}
                 aria-label="Delete folder"
                 tabIndex={2}
               />
@@ -502,20 +507,64 @@ const FolderSettingsView = ({
                 tabIndex={2}
               />
             </Tooltip>
+            {showDeleteConfirmation && (
+              <DeleteConfirmationDialog
+                folder={folder}
+                onClose={() => {
+                  setShowDeleteConfirmation(false);
+                }}
+                onConfirm={onDelete}
+              />
+            )}
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onClose?.();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onClose}>{children}</Form>
     </>
+  );
+};
+
+type DeleteConfirmationDialogProps = {
+  onClose: () => void;
+  onConfirm: () => void;
+  folder: Folder;
+};
+
+const DeleteConfirmationDialog = ({
+  onClose,
+  onConfirm,
+  folder,
+}: DeleteConfirmationDialogProps) => {
+  return (
+    <Dialog
+      open
+      onOpenChange={(isOpen) => {
+        if (isOpen === false) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent css={{ zIndex: theme.zIndices[1] }}>
+        <Flex gap="3" direction="column" css={{ padding: theme.spacing[9] }}>
+          <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
+          <Flex direction="rowReverse" gap="2">
+            <DialogClose asChild>
+              <Button
+                color="destructive"
+                onClick={() => {
+                  onConfirm();
+                }}
+              >
+                Delete
+              </Button>
+            </DialogClose>
+            <DialogClose asChild>
+              <Button color="ghost">Cancel</Button>
+            </DialogClose>
+          </Flex>
+        </Flex>
+        <DialogTitle>Delete confirmation</DialogTitle>
+      </DialogContent>
+    </Dialog>
   );
 };

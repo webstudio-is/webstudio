@@ -1,5 +1,15 @@
 import type { Folder, Page, Pages } from "./schema/pages";
 
+export const ROOT_FOLDER_ID = "root";
+
+/**
+ * Returns true if folder is the root folder.
+ */
+export const isRoot = (folder: Folder) => folder.id === ROOT_FOLDER_ID;
+
+/**
+ * Find a page by id or path.
+ */
 export const findPageByIdOrPath = (
   idOrPath: string,
   pages: Pages
@@ -10,6 +20,20 @@ export const findPageByIdOrPath = (
   return pages.pages.find(
     (page) => page.id === idOrPath || getPagePath(page.id, pages) === idOrPath
   );
+};
+
+/**
+ * Find a folder that has has that id in the children.
+ */
+export const findParentFolderByChildId = (
+  id: Folder["id"] | Page["id"],
+  folders: Array<Folder>
+): Folder | undefined => {
+  for (const folder of folders) {
+    if (folder.children.includes(id)) {
+      return folder;
+    }
+  }
 };
 
 /**

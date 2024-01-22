@@ -2,7 +2,7 @@ import {
   styled,
   keyframes,
   Collapsible,
-  Box,
+  Flex,
 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 
@@ -61,17 +61,19 @@ export const SettingsPanel = ({
   return (
     <CollapsibleRoot open={isOpen}>
       <CollapsibleContent>
-        <Box
+        <Flex
+          direction="column"
+          grow
           css={{
-            flexGrow: 1,
+            position: "relative",
+            height: "100%",
             width: theme.spacing[35],
             background: theme.colors.backgroundPanel,
             borderRight: `1px solid ${theme.colors.slate7}`,
-            position: "relative",
           }}
         >
           {children}
-        </Box>
+        </Flex>
       </CollapsibleContent>
     </CollapsibleRoot>
   );

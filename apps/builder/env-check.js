@@ -24,8 +24,9 @@ const S3_KEYS = [
 const errors = [];
 
 REQUIRED_ENVS.map((env) => {
-  if (!process.env[env])
+  if (!process.env[env]) {
     errors.push(`👉 The ${env} environment variable is required`);
+  }
 });
 
 if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {

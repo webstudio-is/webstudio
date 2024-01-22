@@ -1,5 +1,19 @@
-import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
-import { type Page, Pages, type Folder } from "@webstudio-is/sdk";
+import { createRootFolder } from "@webstudio-is/project-build";
+import {
+  type Page,
+  Pages,
+  type Folder,
+  findPageByIdOrPath,
+  ROOT_FOLDER_ID,
+  isRoot,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
+import { removeByMutable } from "~/shared/array-utils";
+import { deleteInstanceMutable } from "~/shared/instance-utils";
+import {
+  $selectedInstanceSelector,
+  $selectedPageId,
+} from "~/shared/nano-states";
 
 type TreePage = {
   type: "page";
@@ -77,20 +91,6 @@ export const toTreeData = (
 };
 
 /**
- * Find a folder that has has that id in the children.
- */
-export const findParentFolderByChildId = (
-  id: Folder["id"] | Page["id"],
-  folders: Array<Folder>
-): Folder | undefined => {
-  for (const folder of folders) {
-    if (folder.children.includes(id)) {
-      return folder;
-    }
-  }
-};
-
-/**
  * When page or folder needs to be deleted or moved to a different parent,
  * we want to cleanup any existing reference to it in current folder.
  * We could do this in just one folder, but I think its more robust to check all,
@@ -143,11 +143,6 @@ export const reparentOrphansMutable = (pages: Pages) => {
 };
 
 /**
- * Returns true if folder is the root folder.
- */
-export const isRoot = (folder: Folder) => folder.id === ROOT_FOLDER_ID;
-
-/**
  * Returns true if folder's slug is unique within it's future parent folder.
  * Needed to verify if the folder can be nested under the parent folder without modifying slug.
  */
@@ -189,4 +184,80 @@ export const registerFolderChildMutable = (
     folders.find(isRoot);
   cleanupChildRefsMutable(id, folders);
   parentFolder?.children.push(id);
+};
+
+/**
+ * Get all child folder ids of the current folder including itself.
+ */
+export const getAllChildrenAndSelf = (
+  id: Folder["id"] | Page["id"],
+  folders: Array<Folder>,
+  filter: "folder" | "page"
+) => {
+  const child = folders.find((folder) => folder.id === id);
+  const children: Array<Folder["id"]> = [];
+  const type = child === undefined ? "page" : "folder";
+
+  if (type === filter) {
+    children.push(id);
+  }
+
+  if (child) {
+    for (const childId of child.children) {
+      children.push(...getAllChildrenAndSelf(childId, folders, filter));
+    }
+  }
+  return children;
+};
+
+/**
+ * Deletes a page.
+ */
+export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
+  const { pages } = data;
+  // deselect page before deleting to avoid flash of content
+  if ($selectedPageId.get() === pageId) {
+    $selectedPageId.set(pages.homePage.id);
+    $selectedInstanceSelector.set(undefined);
+  }
+  const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
+  if (rootInstanceId !== undefined) {
+    deleteInstanceMutable(data, [rootInstanceId]);
+  }
+  removeByMutable(pages.pages, (page) => page.id === pageId);
+  cleanupChildRefsMutable(pageId, pages.folders);
+};
+
+/**
+ * Deletes folder and child folders.
+ * Doesn't delete pages, only returns pageIds.
+ */
+export const deleteFolderWithChildrenMutable = (
+  folderId: Folder["id"],
+  folders: Array<Folder>
+) => {
+  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
+  const pageIds = getAllChildrenAndSelf(folderId, folders, "page");
+  for (const folderId of folderIds) {
+    cleanupChildRefsMutable(folderId, folders);
+    removeByMutable(folders, (folder) => folder.id === folderId);
+  }
+
+  return {
+    folderIds,
+    pageIds,
+  };
+};
+
+/**
+ * Filter out folders that are children of the current folder or the current folder itself.
+ */
+export const filterSelfAndChildren = (
+  folderId: Folder["id"],
+  folders: Array<Folder>
+) => {
+  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
+  return folders.filter((folder) => {
+    return folderIds.includes(folder.id) === false;
+  });
 };
