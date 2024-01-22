@@ -144,7 +144,7 @@ const ProjectAdvancedSettings = (props: {
 }) => {
   const ids = useIds(["atomicStyles"]);
 
-  const handleAtomicStylesChange =
+  const handleChange =
     <T extends keyof ProjectSettings>(name: T) =>
     (val: ProjectSettings[T]) => {
       props.onSettingsChange({
@@ -164,7 +164,7 @@ const ProjectAdvancedSettings = (props: {
             id={ids.atomicStyles}
             onCheckedChange={(checked) => {
               if (typeof checked === "boolean") {
-                handleAtomicStylesChange("atomicStyles")(checked);
+                handleChange("atomicStyles")(checked);
               }
             }}
           />
