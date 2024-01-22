@@ -417,17 +417,19 @@ const FormFields = ({
               <Label htmlFor={fieldIds.path}>
                 <Flex align="center" css={{ gap: theme.spacing[3] }}>
                   Path
-                  <Tooltip
-                    content={
-                      "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-                    }
-                    variant="wrapped"
-                  >
-                    <HelpIcon
-                      color={rawTheme.colors.foregroundSubtle}
-                      tabIndex={0}
-                    />
-                  </Tooltip>
+                  {isFeatureEnabled("cms") && (
+                    <Tooltip
+                      content={
+                        "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
+                      }
+                      variant="wrapped"
+                    >
+                      <HelpIcon
+                        color={rawTheme.colors.foregroundSubtle}
+                        tabIndex={0}
+                      />
+                    </Tooltip>
+                  )}
                 </Flex>
               </Label>
               <InputErrorsTooltip errors={errors.path}>
