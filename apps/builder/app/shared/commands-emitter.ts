@@ -40,7 +40,7 @@ export type Command<CommandName extends string> = CommandMeta<CommandName> & {
 /*
  * expose command metas to synchronize between builder, canvas and plugins
  */
-export const $commandMetas = atom(new Map<string, CommandMeta<string>>());
+const $commandMetas = atom(new Map<string, CommandMeta<string>>());
 clientSyncStore.register("commandMetas", $commandMetas);
 
 const findCommandsMatchingHotkeys = (event: KeyboardEvent) => {
@@ -93,14 +93,6 @@ export const createCommandsEmitter = <CommandName extends string>({
     commandHandlers.set(meta.name, handler);
   }
 
-  if (commands.length > 0) {
-    clientSyncStore.createTransaction([$commandMetas], (commandMetas) => {
-      for (const { handler, ...meta } of commands) {
-        commandMetas.set(meta.name, meta);
-      }
-    });
-  }
-
   const emitCommand = (name: CommandName) => {
     const { publish } = $publisher.get();
     // continue to work without emitter
@@ -123,6 +115,16 @@ export const createCommandsEmitter = <CommandName extends string>({
    * actual handlers are executed in app where defined
    */
   const subscribeCommands = () => {
+    // synchronize commands with other apps
+    // whenever current app is initialized
+    if (commands.length > 0) {
+      clientSyncStore.createTransaction([$commandMetas], (commandMetas) => {
+        for (const { handler, ...meta } of commands) {
+          commandMetas.set(meta.name, meta);
+        }
+      });
+    }
+
     const unsubscribePubsub = subscribe("command", ({ name }) => {
       commandHandlers.get(name)?.();
     });
