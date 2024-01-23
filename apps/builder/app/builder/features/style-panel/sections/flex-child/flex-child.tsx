@@ -121,15 +121,17 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
   const onReset = () => {
     setSizing.deleteProperty("flexGrow");
     setSizing.deleteProperty("flexShrink");
+    setSizing.deleteProperty("flexBasis");
     setSizing.publish();
   };
+
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
         style={currentStyle}
-        properties={["flexGrow", "flexShrink"]}
+        properties={["flexGrow", "flexShrink", "flexBasis"]}
         label="Sizing"
-        description="Specifies the ability of a flex item to grow or shrink"
+        description="Specifies the ability of a flex item to grow, shrink, or set its initial size within a flex container."
         onReset={onReset}
       />
       <ToggleGroupControl
