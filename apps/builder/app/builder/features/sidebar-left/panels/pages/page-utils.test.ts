@@ -489,7 +489,6 @@ describe("getExistingRoutePaths", () => {
     });
 
     const result = getExistingRoutePaths(pages);
-    expect(result.size).toBe(2);
     expect(Array.from(result)).toEqual(["/page", "/blog/:id"]);
   });
 });
