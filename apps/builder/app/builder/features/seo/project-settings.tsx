@@ -85,9 +85,7 @@ const ProjectSettingsContentMeta = (props: {
       <Separator />
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label htmlFor={ids.favicon} sectionTitle>
-          Favicon
-        </Label>
+        <Text variant="titles">Favicon</Text>
         <Grid flow="column" gap={3}>
           <Image
             width={72}
@@ -116,9 +114,7 @@ const ProjectSettingsContentMeta = (props: {
       <Separator />
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label htmlFor={ids.code} sectionTitle>
-          Custom Code
-        </Label>
+        <Text variant="titles">Custom Code</Text>
         <Text color="subtle">
           Custom code and scripts will be added at the end of the &lt;head&gt;
           tag to every page across the published project.
@@ -155,7 +151,7 @@ const ProjectAdvancedSettings = (props: {
     <>
       <Separator />
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label sectionTitle>Publish Settings</Label>
+        <Text variant="titles">Publish Settings</Text>
         <CheckboxAndLabel>
           <Checkbox
             checked={props.settings.atomicStyles ?? true}
