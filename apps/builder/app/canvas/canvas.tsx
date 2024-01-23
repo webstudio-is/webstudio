@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import type { Instances } from "@webstudio-is/sdk";
 import {
@@ -18,8 +19,13 @@ import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
 import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
 import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
+import { ErrorMessage } from "~/shared/error";
 import { $publisher, publish } from "~/shared/pubsub";
-import { registerContainers, useCanvasStore } from "~/shared/sync";
+import {
+  registerContainers,
+  serverSyncStore,
+  useCanvasStore,
+} from "~/shared/sync";
 import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
@@ -51,6 +57,19 @@ import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
 
 registerContainers();
+
+const FallbackComponent = ({ error, resetErrorBoundary }: FallbackProps) => {
+  // try to recover from error when webstudio data is changed again
+  useEffect(() => {
+    return serverSyncStore.subscribe(resetErrorBoundary);
+  }, [resetErrorBoundary]);
+  return (
+    // body is required to prevent breaking collapsed instances logic
+    <body>
+      <ErrorMessage message={error.message} />
+    </body>
+  );
+};
 
 const useElementsTree = (
   components: Components,
@@ -200,7 +219,10 @@ export const Canvas = ({
   return (
     <>
       <GlobalStyles params={params} />
-      {elements}
+      {/* catch all errors in rendered components */}
+      <ErrorBoundary FallbackComponent={FallbackComponent}>
+        {elements}
+      </ErrorBoundary>
       {
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
