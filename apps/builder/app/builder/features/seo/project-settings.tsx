@@ -85,9 +85,7 @@ const ProjectSettingsContentMeta = (props: {
       <Separator />
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label htmlFor={ids.favicon} sectionTitle>
-          Favicon
-        </Label>
+        <Label sectionTitle>Favicon</Label>
         <Grid flow="column" gap={3}>
           <Image
             width={72}
