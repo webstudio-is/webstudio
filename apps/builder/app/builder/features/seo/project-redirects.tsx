@@ -1,7 +1,6 @@
 import {
   Grid,
   Separator,
-  Label,
   Flex,
   InputField,
   Button,
@@ -126,7 +125,7 @@ export const ProjectRedirectionSettings = (props: {
     <>
       <Separator />
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Label sectionTitle>301 Redirects</Label>
+        <Text variant="titles">301 Redirects</Text>
         <Text color="subtle">
           Redirects old URLs to new ones so that you don’t lose any traffic or
           search engine rankings.
@@ -178,9 +177,8 @@ export const ProjectRedirectionSettings = (props: {
       {redirectKeys.length > 0 ? (
         <Grid
           css={{
-            px: theme.spacing[5],
+            p: theme.spacing[5],
             mx: theme.spacing[5],
-            py: theme.spacing[5],
           }}
         >
           <List asChild>
