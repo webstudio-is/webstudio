@@ -28,6 +28,7 @@ import {
   getInheritedInfo,
   getNextSourceInfo,
   getPreviousSourceInfo,
+  getPriorityStyleSource,
   getStyleSource,
   useStyleInfo,
 } from "./style-info";
@@ -946,5 +947,20 @@ describe("active states", () => {
       type: "keyword",
       value: "green",
     });
+  });
+
+  test("get the style source from ['local', 'default', 'preset']", () => {
+    const result = getPriorityStyleSource(["local", "default", "preset"]);
+    expect(result).toBe("local");
+  });
+
+  test("get the style source from ['local', 'overwritten', 'preset']", () => {
+    const result = getPriorityStyleSource(["local", "overwritten", "preset"]);
+    expect(result).toBe("overwritten");
+  });
+
+  test("get the style source from ['default', 'default', 'preset']", () => {
+    const result = getPriorityStyleSource(["default", "default", "preset"]);
+    expect(result).toBe("preset");
   });
 });

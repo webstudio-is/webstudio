@@ -114,6 +114,7 @@ const BindingPanel = ({
   const usedIdentifiers = useMemo(() => getUsedIdentifiers(value), [value]);
   const [error, setError] = useState<undefined | string>();
   const [touched, setTouched] = useState(false);
+  const scopeEntries = Object.entries(scope);
 
   const updateExpression = (newExpression: string) => {
     setExpression(newExpression);
@@ -157,9 +158,15 @@ const BindingPanel = ({
             <InfoCircleIcon tabIndex={0} />
           </Tooltip>
         </Flex>
-
+        {scopeEntries.length === 0 && (
+          <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
+            <Text variant="labelsSentenceCase" align="center">
+              No variables available
+            </Text>
+          </Flex>
+        )}
         <CssValueListArrowFocus>
-          {Object.entries(scope).map(([identifier, value], index) => {
+          {scopeEntries.map(([identifier, value], index) => {
             const name = aliases.get(identifier);
             const label =
               value === undefined
@@ -189,13 +196,11 @@ const BindingPanel = ({
           variant="wrapped"
           content={
             <Text>
-              Compose variables, do math; the result of the expression will be
-              used as a value.
+              Use JavaScript syntax to access variables along with comparison
+              and arithmetic operators.
               <br />
-              Example: VariableA || VariableB || &quot;DefaultValue&quot;
-              <br />
-              Explanation: If VariableA is empty, use VariableB; otherwise use
-              &quot;DefaultValue&quot;.
+              Use the dot notation to access nested object values:
+              <Text variant="mono">Variable.nested.value</Text>
             </Text>
           }
         >
