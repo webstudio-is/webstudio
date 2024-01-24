@@ -10,7 +10,6 @@ import {
   List,
   ListItem,
   SmallIconButton,
-  ScrollArea,
   InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
@@ -177,46 +176,42 @@ export const ProjectRedirectionSettings = (props: {
       </Grid>
 
       {redirectKeys.length > 0 ? (
-        <Grid css={{ px: theme.spacing[5] }}>
-          <ScrollArea css={{ maxHeight: theme.spacing[22] }}>
-            <List asChild>
-              <Flex
-                direction="column"
-                gap="1"
-                css={{
-                  mx: theme.spacing[5],
-                  py: theme.spacing[5],
-                }}
-              >
-                {redirects.map((redirect, index) => {
-                  return (
-                    <ListItem asChild key={redirect.old} index={index}>
-                      <Flex
-                        justify="between"
-                        align="center"
-                        gap="2"
-                        css={{
-                          overflow: "hidden",
-                          p: theme.spacing[3],
-                        }}
-                      >
-                        <Flex gap="2">
-                          <Text>{redirect.old}</Text>
-                          <ArrowRightIcon />
-                          <Text truncate>{redirect.new}</Text>
-                        </Flex>
-                        <SmallIconButton
-                          variant="destructive"
-                          icon={<TrashIcon />}
-                          onClick={() => handleDeleteRedirect(index)}
-                        />
+        <Grid
+          css={{
+            px: theme.spacing[5],
+            mx: theme.spacing[5],
+            py: theme.spacing[5],
+          }}
+        >
+          <List asChild>
+            <Flex direction="column" gap="1">
+              {redirects.map((redirect, index) => {
+                return (
+                  <ListItem asChild key={redirect.old} index={index}>
+                    <Flex
+                      justify="between"
+                      align="center"
+                      gap="2"
+                      css={{
+                        p: theme.spacing[3],
+                      }}
+                    >
+                      <Flex gap="2">
+                        <Text>{redirect.old}</Text>
+                        <ArrowRightIcon />
+                        <Text truncate>{redirect.new}</Text>
                       </Flex>
-                    </ListItem>
-                  );
-                })}
-              </Flex>
-            </List>
-          </ScrollArea>
+                      <SmallIconButton
+                        variant="destructive"
+                        icon={<TrashIcon />}
+                        onClick={() => handleDeleteRedirect(index)}
+                      />
+                    </Flex>
+                  </ListItem>
+                );
+              })}
+            </Flex>
+          </List>
         </Grid>
       ) : null}
     </>
