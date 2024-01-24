@@ -77,21 +77,16 @@ type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
-  let onStateChange = (state: any) => {
-    formState = state;
-    set$formState(formState);
-  };
-  let onStateChange_1 = (state: any) => {
-    formState_1 = state;
-    set$formState_1(formState_1);
-  };
   return (
     <Body data-ws-id="a-4nDFkaWy4px1fn38XWJ" data-ws-component="Body">
       <Form
         data-ws-id="-1RvizaBcVpHsjvnYxn1c"
         data-ws-component="Form"
         state={formState_1}
-        onStateChange={onStateChange_1}
+        onStateChange={(state: any) => {
+          formState_1 = state;
+          set$formState_1(formState_1);
+        }}
       >
         {(formState_1 === "initial" || formState_1 === "error") && (
           <Box data-ws-id="qhnVrmYGlyrMZi3UzqSQA" data-ws-component="Box">
@@ -141,7 +136,10 @@ const Page = (_props: { params: Params }) => {
         data-ws-id="isNSM3wXcnHFikwNPlEOL"
         data-ws-component="Form"
         state={formState}
-        onStateChange={onStateChange}
+        onStateChange={(state: any) => {
+          formState = state;
+          set$formState(formState);
+        }}
         method={"get"}
         action={"/custom"}
       >
