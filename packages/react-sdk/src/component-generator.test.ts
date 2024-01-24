@@ -253,17 +253,18 @@ test("generate jsx element with data sources and action", () => {
           id: "3",
           instanceId: "box",
           type: "action",
-          name: "onClick",
-          value: [{ type: "execute", args: [], code: `variableName = 1` }],
-        }),
-        createPropPair({
-          id: "4",
-          instanceId: "box",
-          type: "action",
           name: "onChange",
           value: [
-            { type: "execute", args: ["value"], code: `variableName = value` },
-            { type: "execute", args: ["value"], code: `variableName = value` },
+            {
+              type: "execute",
+              args: ["value"],
+              code: `$ws$dataSource$variableId = 1`,
+            },
+            {
+              type: "execute",
+              args: ["value"],
+              code: `$ws$dataSource$variableId = value`,
+            },
           ],
         }),
       ]),
@@ -285,8 +286,11 @@ test("generate jsx element with data sources and action", () => {
       data-ws-component="Box"
       variable={variableName}
       expression={variableName + 1}
-      onClick={onClick}
-      onChange={onChange} />
+      onChange={(value: any) => {
+      variableName = 1
+      variableName = value
+      set$variableName(variableName)
+      }} />
     `)
   );
 });
@@ -631,10 +635,6 @@ test("generate page component with variables and actions", () => {
       type Params = Record<string, string | undefined>
       const Page = (_props: { params: Params }) => {
       let [variableName, set$variableName] = useState<any>("initial")
-      let onChange = (value: any) => {
-      variableName = value
-      set$variableName(variableName)
-      }
       return <Body
       data-ws-id="body"
       data-ws-component="Body">
@@ -643,7 +643,10 @@ test("generate page component with variables and actions", () => {
       data-ws-component="Input"
       data-ws-index="0"
       value={variableName}
-      onChange={onChange} />
+      onChange={(value: any) => {
+      variableName = value
+      set$variableName(variableName)
+      }} />
       </Body>
       }
     `)
