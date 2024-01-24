@@ -6,15 +6,19 @@ import type {
   DataSources,
   Prop,
   Page,
+  DataSource,
 } from "@webstudio-is/sdk";
-import { parseComponentName } from "@webstudio-is/sdk";
+import {
+  findTreeInstanceIdsExcludingSlotDescendants,
+  parseComponentName,
+} from "@webstudio-is/sdk";
 import {
   componentAttribute,
   idAttribute,
   indexAttribute,
   showAttribute,
 } from "./props";
-import { collectionComponent } from "./core-components";
+import { collectionComponent, portalComponent } from "./core-components";
 import { generateExpression, generateDataSources } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
@@ -162,6 +166,13 @@ export const generateJsxElement = ({
     generatedElement += children;
     generatedElement += `</Fragment>\n`;
     generatedElement += `)}\n`;
+  } else if (instance.component === portalComponent) {
+    // ignore slot component
+    generatedElement += children;
+  } else if (instance.component === "Fragment") {
+    // move fragment component children into separate react component
+    const componentVariable = scope.getName(instance.id, instance.component);
+    generatedElement += `<${componentVariable} />\n`;
   } else {
     const [_namespace, shortName] = parseComponentName(instance.component);
     const componentVariable = scope.getName(instance.component, shortName);
@@ -248,7 +259,7 @@ export const generateJsxChildren = ({
   return generatedChildren;
 };
 
-export const generatePageComponent = ({
+export const generateSlotComponent = ({
   scope,
   page,
   instances,
@@ -288,10 +299,7 @@ export const generatePageComponent = ({
       generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
     }
     if (dataSource.type === "parameter") {
-      if (dataSource.id === page.pathVariableId) {
-        const valueName = scope.getName(dataSource.id, dataSource.name);
-        generatedDataSources += `let ${valueName} = _props.params\n`;
-      }
+      continue;
     }
     if (dataSource.type === "resource") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
@@ -301,8 +309,132 @@ export const generatePageComponent = ({
         dataSource.name
       );
       // cast to any to fix accessing fields from unknown error
-      const resourceNameString = JSON.stringify(resourceName);
-      generatedDataSources += `let ${valueName} = useResource(${resourceNameString})\n`;
+      generatedDataSources += `let ${valueName}: any = _props.resources["${resourceName}"]\n`;
+    }
+  }
+
+  generatedDataSources += dataSourcesBody;
+
+  const generatedJsx = generateJsxElement({
+    scope,
+    instance,
+    props,
+    dataSources,
+    indexesWithinAncestors,
+    classesMap,
+    children: generateJsxChildren({
+      scope,
+      children: instance.children,
+      instances,
+      props,
+      dataSources,
+      indexesWithinAncestors,
+      classesMap,
+    }),
+  });
+
+  let generatedComponent = "";
+  generatedComponent += `const Page = () => {\n`;
+  generatedComponent += `${generatedDataSources}`;
+  generatedComponent += `return ${generatedJsx}`;
+  generatedComponent += `}\n`;
+  return generatedComponent;
+};
+
+const generateVariableDataSource = (
+  scope: Scope,
+  dataSource: Extract<DataSource, { type: "variable" }>
+) => {
+  const valueName = scope.getName(dataSource.id, dataSource.name);
+  const setterName = scope.getName(
+    `set$${dataSource.id}`,
+    `set$${dataSource.name}`
+  );
+  const initialValue = dataSource.value.value;
+  const initialValueString = JSON.stringify(initialValue);
+  return `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
+};
+
+const generateResourceDataSource = (
+  scope: Scope,
+  dataSource: Extract<DataSource, { type: "resource" }>
+) => {
+  const valueName = scope.getName(dataSource.id, dataSource.name);
+  // call resource by bound variable name
+  const resourceName = scope.getName(dataSource.resourceId, dataSource.name);
+  // cast to any to fix accessing fields from unknown error
+  const resourceNameString = JSON.stringify(resourceName);
+  return `let ${valueName} = useResource(${resourceNameString})\n`;
+};
+
+const excludeSlotDataSources = (
+  dataSources: DataSources,
+  instances: Instances,
+  rootInstanceId: Instance["id"]
+) => {
+  const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    instances,
+    rootInstanceId
+  );
+  const filteredDataSources: DataSources = new Map();
+  for (const dataSource of dataSources.values()) {
+    // ignore data sources from slots content
+    if (
+      dataSource.scopeInstanceId === undefined ||
+      instanceIds.has(dataSource.scopeInstanceId) === false
+    ) {
+      continue;
+    }
+    filteredDataSources.set(dataSource.id, dataSource);
+  }
+  return filteredDataSources;
+};
+
+export const generatePageComponent = ({
+  scope,
+  page,
+  instances,
+  props,
+  dataSources,
+  indexesWithinAncestors,
+  classesMap,
+}: {
+  scope: Scope;
+  page: Page;
+  instances: Instances;
+  props: Props;
+  dataSources: DataSources;
+  indexesWithinAncestors: IndexesWithinAncestors;
+  classesMap: Map<string, Array<string>>;
+}) => {
+  const instance = instances.get(page.rootInstanceId);
+  if (instance === undefined) {
+    return "";
+  }
+  const componentDataSources = excludeSlotDataSources(
+    dataSources,
+    instances,
+    page.rootInstanceId
+  );
+  const { body: dataSourcesBody } = generateDataSources({
+    typed: true,
+    scope,
+    dataSources: componentDataSources,
+    props,
+  });
+  let generatedDataSources = "";
+  for (const dataSource of componentDataSources.values()) {
+    if (dataSource.type === "variable") {
+      generatedDataSources += generateVariableDataSource(scope, dataSource);
+    }
+    if (dataSource.type === "parameter") {
+      if (dataSource.id === page.pathVariableId) {
+        const valueName = scope.getName(dataSource.id, dataSource.name);
+        generatedDataSources += `let ${valueName} = _props.params\n`;
+      }
+    }
+    if (dataSource.type === "resource") {
+      generatedDataSources += generateResourceDataSource(scope, dataSource);
     }
   }
 
