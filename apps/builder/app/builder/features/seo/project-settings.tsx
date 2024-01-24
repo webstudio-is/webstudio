@@ -25,6 +25,7 @@ import { useIds } from "~/shared/form-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "../ai/hooks/effect-event";
 import type { Pages } from "@webstudio-is/sdk";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 type ProjectMeta = NonNullable<Pages["meta"]>;
 type ProjectSettings = NonNullable<Pages["settings"]>;
@@ -42,7 +43,7 @@ const ProjectSettingsContentMeta = (props: {
   meta: ProjectMeta;
   onMetaChange: (value: ProjectMeta) => void;
 }) => {
-  const ids = useIds(["siteName", "favicon", "code"]);
+  const ids = useIds(["siteName", "favicon", "code", "scripts"]);
   const handleChange =
     <T extends keyof ProjectMeta>(name: T) =>
     (value: ProjectMeta[T]) => {
@@ -128,6 +129,29 @@ const ProjectSettingsContentMeta = (props: {
           onChange={handleChange("code")}
         />
       </Grid>
+
+      {isFeatureEnabled("scripts") && (
+        <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+          <Label htmlFor={ids.scripts} sectionTitle>
+            Scripts
+          </Label>
+          <Text color="subtle">
+            Custom code and scripts to load after the page is loaded.
+          </Text>
+          <TextArea
+            id={ids.code}
+            rows={5}
+            autoGrow
+            maxRows={10}
+            value={props.meta.code?.[0] ?? ""}
+            onChange={(html) => {
+              const scripts = props.meta.scripts ?? [];
+              scripts[0] = { html, options: {} };
+              handleChange("scripts")(scripts);
+            }}
+          />
+        </Grid>
+      )}
     </>
   );
 };

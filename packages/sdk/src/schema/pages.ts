@@ -100,6 +100,14 @@ const ProjectMeta = z.object({
   siteName: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
+  scripts: z
+    .array(
+      z.object({
+        html: z.string(),
+        options: z.object({}),
+      })
+    )
+    .optional(),
 });
 
 const ProjectSettings = z.object({
