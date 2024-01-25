@@ -22,21 +22,19 @@ export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
   outline: "none",
   alignItems: "center",
   justifyContent: "center",
-  color: theme.colors.slate11,
-  border: "1px solid transparent",
-  backgroundColor: "transparent",
+  color: theme.colors.foregroundSubtle,
+  border: "none",
 
   "@hover": {
     "&:hover": {
-      backgroundColor: theme.colors.slateA3,
-      color: theme.colors.hiContrast,
+      color: theme.colors.foregroundMain,
+      backgroundColor: theme.colors.backgroundHover,
     },
   },
 
   '&[data-state="active"]': {
-    color: theme.colors.hiContrast,
-    backgroundColor: theme.colors.slateA4,
-    borderColor: theme.colors.slate6,
+    color: theme.colors.foregroundMain,
+    backgroundColor: theme.colors.backgroundHover,
   },
 });
 
