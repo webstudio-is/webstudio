@@ -14,10 +14,8 @@ export const PanelTabs = styled(Primitive.Root, {
 
 export const PanelTabsList = styled(Primitive.List, {
   display: "flex",
-  paddingRight: theme.spacing[5],
-  paddingLeft: theme.spacing[5],
-  paddingTop: theme.spacing[3],
-  paddingBottom: theme.spacing[3],
+  px: theme.spacing[5],
+  py: theme.spacing[3],
 });
 
 export const PanelTabsTrigger = styled(Primitive.Trigger, {
