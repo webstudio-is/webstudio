@@ -5,4 +5,5 @@ html {
 body {
   overflow: hidden;
   overscroll-behavior: contain;
+  -webkit-font-smoothing: antialiased;
 }
