@@ -18,7 +18,7 @@ import merge from "deepmerge";
 import {
   generateCss,
   generateUtilsExport,
-  generatePageComponent,
+  generateWebstudioComponent,
   getIndexesWithinAncestors,
   namespaceMeta,
   type Params,
@@ -503,9 +503,29 @@ export const prebuild = async (options: {
       pages: siteData.build.pages,
       props,
     });
-    const pageComponent = generatePageComponent({
+    // generate new Page Params variable if does not exist
+    // to allow always passing it from route template
+    const pathVariableId = pageData.page.pathVariableId ?? "pathVariableId";
+    if (pageData.page.pathVariableId === undefined) {
+      dataSources.set(pathVariableId, {
+        id: pathVariableId,
+        name: "Page Params",
+        type: "parameter",
+      });
+    }
+    const pageComponent = generateWebstudioComponent({
       scope,
-      page: pageData.page,
+      name: "Page",
+      rootInstanceId: pageData.page.rootInstanceId,
+      parameters: [
+        {
+          id: `params`,
+          instanceId: "",
+          name: "params",
+          type: "parameter",
+          value: pathVariableId,
+        },
+      ],
       instances,
       props,
       dataSources,

@@ -7,8 +7,7 @@ import {
   TabsContent as TabsContent,
 } from "../components";
 
-type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+const Component = () => {
   let [tabsValue, set$tabsValue] = useState<any>("0");
   return (
     <Box data-ws-id="root" data-ws-component="Box">
@@ -337,7 +336,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page params={{}} />
+        <Component />
       </>
     );
   },

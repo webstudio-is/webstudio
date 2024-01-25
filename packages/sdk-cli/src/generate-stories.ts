@@ -8,13 +8,12 @@ import {
   createScope,
   parseComponentName,
   getStyleDeclKey,
-  type Page,
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateCss,
   generateDataFromEmbedTemplate,
-  generatePageComponent,
+  generateWebstudioComponent,
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import * as baseMetasExports from "@webstudio-is/sdk-components-react/metas";
@@ -86,7 +85,7 @@ const Story = {
 ${css}
       \`}
       </style>
-      <Page params={{}} />
+      <Component />
     </>
   }
 }
@@ -161,7 +160,7 @@ export const generateStories = async () => {
       },
       { assetBaseUrl: "/", atomic: true }
     );
-    const scope = createScope(["Page", "Story", "props", "useState"]);
+    const scope = createScope(["Component", "Story", "props", "useState"]);
     let content = "";
     content += getStoriesImports({
       hasState: data.dataSources.some(
@@ -174,10 +173,12 @@ export const generateStories = async () => {
       components,
     });
     content += `\n`;
-    content += generatePageComponent({
+    content += generateWebstudioComponent({
       classesMap,
       scope,
-      page: { rootInstanceId } as Page,
+      name: `Component`,
+      rootInstanceId,
+      parameters: [],
       instances,
       props: new Map(data.props.map((prop) => [prop.id, prop])),
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),
