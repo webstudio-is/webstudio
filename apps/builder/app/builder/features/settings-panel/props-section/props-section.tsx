@@ -174,7 +174,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   return (
     <>
-      <Row css={{ py: theme.spacing[5] }}>
+      <Row css={{ py: theme.spacing[3] }}>
         {logic.systemProps.map((item) => renderProperty(props, item))}
       </Row>
 
@@ -185,7 +185,7 @@ export const PropsSection = (props: PropsSectionProps) => {
         onAdd={() => setAddingProp(true)}
         hasItems={hasItems}
       >
-        <Flex gap="2" direction="column">
+        <Flex gap="1" direction="column">
           {addingProp && (
             <AddPropertyForm
               availableProps={logic.availableProps}

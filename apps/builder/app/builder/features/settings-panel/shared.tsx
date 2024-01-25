@@ -7,6 +7,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  type ComponentProps,
 } from "react";
 import equal from "fast-deep-equal";
 import {
@@ -294,8 +295,11 @@ export const ResponsiveLayout = ({
   );
 };
 
-export const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
-  <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
+export const Row = ({
+  children,
+  css,
+}: Pick<ComponentProps<typeof Flex>, "css" | "children">) => (
+  <Flex css={{ px: theme.spacing[9], ...css }} direction="column">
     {children}
   </Flex>
 );
