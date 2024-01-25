@@ -32,14 +32,17 @@ export const pageData: PageData = {
     code: '<script>console.log(\'HELLO\')</script>\n<meta property="saas:test" content="test">',
   },
   page: {
-    id: "nfzls_SkTc9jKYyxcZ8Lw",
-    name: "Home",
-    title: "Site Title",
+    id: "xT46WZKzCBTvUCIObMELW",
+    name: "Script Test",
+    title: "Script Test",
     meta: {
-      description: "Page description f511c297-b44f-4e4b-96bd-d013da06bada",
+      description: "",
+      excludePageFromSearch: false,
+      socialImageAssetId: "",
+      custom: [{ property: "", content: "" }],
     },
-    rootInstanceId: "ibXgMoi9_ipHx1gVrvii0",
-    path: "",
+    rootInstanceId: "LW98_-srDnnagkR10lsk4",
+    path: "/script-test",
   },
 };
 export const user: { email: string | null } | undefined = {
@@ -51,23 +54,19 @@ type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   return (
     <Body
-      data-ws-id="ibXgMoi9_ipHx1gVrvii0"
+      data-ws-id="LW98_-srDnnagkR10lsk4"
       data-ws-component="Body"
-      className="c1vynykc c15qd3jj c122cnm9 c1jp5sfs"
+      className="c1vynykc c122cnm9 c15qd3jj c1jp5sfs"
     >
-      <Heading
-        data-ws-id="7pwqBSgrfuuOfk1JblWcL"
-        data-ws-component="Heading"
-        className="c11x2bo2"
-      >
-        {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
+      <Heading data-ws-id="SHXddDLFWST_sy44UfGQO" data-ws-component="Heading">
+        {"Script Test"}
       </Heading>
       <Link
-        data-ws-id="QzTSoZnbGD6luZ5xcv893"
+        data-ws-id="8MXByradrqVRiGSyHI0aH"
         data-ws-component="Link"
-        href={"/script-test"}
+        href={"/"}
       >
-        {"Goto Script Test"}
+        {"Go Home"}
       </Link>
     </Body>
   );
