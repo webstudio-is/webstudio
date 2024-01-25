@@ -28,8 +28,9 @@ export const CollapsibleSection = (props: {
   children: ReactNode;
   currentStyle: StyleInfo;
   properties: ReadonlyArray<StyleProperty>;
+  fullWidth?: boolean;
 }) => {
-  const { label, children, currentStyle, properties } = props;
+  const { label, children, currentStyle, properties, fullWidth } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
 
   return (
@@ -42,6 +43,7 @@ export const CollapsibleSection = (props: {
           <SectionTitleLabel>{label}</SectionTitleLabel>
         </SectionTitle>
       }
+      fullWidth={fullWidth}
     >
       {children}
     </CollapsibleSectionBase>
