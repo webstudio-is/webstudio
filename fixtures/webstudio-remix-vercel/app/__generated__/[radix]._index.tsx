@@ -83,10 +83,6 @@ export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
-  let onValueChange = (value: any) => {
-    accordionValue = value;
-    set$accordionValue(accordionValue);
-  };
   return (
     <Body data-ws-id="uKWGyE9JY3cPwY-xI9vk6" data-ws-component="Body">
       <Accordion
@@ -94,7 +90,10 @@ const Page = (_props: { params: Params }) => {
         data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"
         collapsible={true}
         value={accordionValue}
-        onValueChange={onValueChange}
+        onValueChange={(value: any) => {
+          accordionValue = value;
+          set$accordionValue(accordionValue);
+        }}
       >
         <AccordionItem
           data-ws-id="zJ927zk9txwUbYycKB7QA"

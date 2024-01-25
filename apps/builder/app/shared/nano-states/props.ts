@@ -1,18 +1,13 @@
 import { computed } from "nanostores";
-import {
-  createScope,
-  type Resource,
-  type DataSource,
-  type Instance,
-  type Prop,
-} from "@webstudio-is/sdk";
+import type { Resource, DataSource, Instance, Prop } from "@webstudio-is/sdk";
 import {
   collectionComponent,
+  decodeDataSourceVariable,
   encodeDataSourceVariable,
-  generateDataSources,
   normalizeProps,
   portalComponent,
   textContentAttribute,
+  validateExpression,
 } from "@webstudio-is/react-sdk";
 import { $instances } from "./instances";
 import {
@@ -34,74 +29,106 @@ export const getIndexedInstanceId = (
   index: number
 ) => `${instanceId}[${index}]`;
 
+/**
+ * (arg1) => {
+ * let $ws$dataSource$id = _getVariable('id')
+ * $ws$dataSource$id = $ws$dataSource$id + arg1
+ * _setVariable('id', $ws$dataSource$id)
+ * }
+ */
+const generateAction = (prop: Extract<Prop, { type: "action" }>) => {
+  const getters = new Set<DataSource["id"]>();
+  const setters = new Set<DataSource["id"]>();
+  // important to fallback to empty argumets to render empty function
+  let args: string[] = [];
+  let assignersCode = "";
+  for (const value of prop.value) {
+    args = value.args;
+    assignersCode += validateExpression(value.code, {
+      optional: true,
+      effectful: true,
+      transformIdentifier: (identifier, assignee) => {
+        if (args?.includes(identifier)) {
+          return identifier;
+        }
+        const depId = decodeDataSourceVariable(identifier);
+        if (depId) {
+          getters.add(depId);
+          if (assignee) {
+            setters.add(depId);
+          }
+        }
+        return identifier;
+      },
+    });
+    assignersCode += `\n`;
+  }
+  let gettersCode = "";
+  for (const dataSourceId of getters) {
+    const valueName = encodeDataSourceVariable(dataSourceId);
+    gettersCode += `let ${valueName} = _getVariable("${dataSourceId}")\n`;
+  }
+  let settersCode = "";
+  for (const dataSourceId of setters) {
+    const valueName = encodeDataSourceVariable(dataSourceId);
+    settersCode += `_setVariable("${dataSourceId}", ${valueName})\n`;
+  }
+  let generated = "";
+  generated += `return (${args.join(", ")}) => {\n`;
+  generated += gettersCode;
+  generated += assignersCode;
+  generated += settersCode;
+  generated += `}`;
+  return generated;
+};
+
+const getAction = (
+  prop: Extract<Prop, { type: "action" }>,
+  values: Map<string, unknown>
+) => {
+  const generatedAction = generateAction(prop);
+  try {
+    const executeFn = new Function(
+      "_getVariable",
+      "_setVariable",
+      generatedAction
+    );
+    const getVariable = (id: string) => {
+      return values.get(id);
+    };
+    const setVariable = (id: string, value: unknown) => {
+      const dataSourceVariables = new Map($dataSourceVariables.get());
+      dataSourceVariables.set(id, value);
+      $dataSourceVariables.set(dataSourceVariables);
+    };
+    return executeFn(getVariable, setVariable);
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }
+};
+
 // result of executing generated code
 // includes variables, computed expressions and action callbacks
 const $dataSourcesLogic = computed(
-  [$dataSources, $dataSourceVariables, $resourceValues, $props],
-  (dataSources, dataSourceVariables, resourceValues, props) => {
-    const scope = createScope(["_getVariable", "_setVariable", "_output"]);
-    const { body, output } = generateDataSources({
-      scope,
-      dataSources,
-      props,
-    });
-    let generatedCode = "";
+  [$dataSources, $dataSourceVariables, $resourceValues],
+  (dataSources, dataSourceVariables, resourceValues) => {
+    const values = new Map<string, unknown>();
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
-        const initialValue = JSON.stringify(dataSource.value.value);
-        // save variables to generate header and footer depending on environment
-        const valueName = scope.getName(dataSourceId, dataSource.name);
-        const setterName = scope.getName(
-          `set$${dataSourceId}`,
-          `set$${dataSource.name}`
+        values.set(
+          dataSourceId,
+          dataSourceVariables.get(dataSourceId) ?? dataSource.value.value
         );
-        generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
-        generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
       }
       if (dataSource.type === "parameter") {
-        const variableName = scope.getName(dataSourceId, dataSource.name);
-        generatedCode += `let ${variableName} = _getVariable("${dataSourceId}");\n`;
+        values.set(dataSourceId, dataSourceVariables.get(dataSourceId));
       }
       if (dataSource.type === "resource") {
-        const variableName = scope.getName(dataSourceId, dataSource.name);
-        generatedCode += `let ${variableName} = _getResource("${dataSource.resourceId}");\n`;
+        values.set(dataSourceId, resourceValues.get(dataSource.resourceId));
       }
     }
-    generatedCode += body;
-    generatedCode += `let _output = new Map();\n`;
-    for (const [dataSourceId, variableName] of output) {
-      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
-    }
-    for (const [dataSourceId, dataSource] of dataSources) {
-      const variableName = scope.getName(dataSourceId, dataSource.name);
-      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
-    }
-    generatedCode += `return _output\n`;
-
-    try {
-      const executeFn = new Function(
-        "_getVariable",
-        "_getResource",
-        "_setVariable",
-        generatedCode
-      );
-      const getVariable = (id: string) => {
-        return dataSourceVariables.get(id);
-      };
-      const getResource = (id: string) => {
-        return resourceValues.get(id);
-      };
-      const setVariable = (id: string, value: unknown) => {
-        const dataSourceVariables = new Map($dataSourceVariables.get());
-        dataSourceVariables.set(id, value);
-        $dataSourceVariables.set(dataSourceVariables);
-      };
-      return executeFn(getVariable, getResource, setVariable);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-    return new Map();
+    return values;
   }
 );
 
@@ -111,11 +138,6 @@ const computeExpression = (
 ) => {
   let code = "";
   for (const [id, value] of variables) {
-    // @todo pass dedicated map of variables without actions
-    // skip actions
-    if (typeof value === "function") {
-      continue;
-    }
     const identifier = encodeDataSourceVariable(id);
     code += `const ${identifier} = ${JSON.stringify(value)};\n`;
   }
@@ -195,7 +217,7 @@ export const $propValuesByInstanceSelector = computed(
             continue;
           }
           if (prop.type === "action") {
-            const action = variableValues.get(prop.id);
+            const action = getAction(prop, variableValues);
             if (typeof action === "function") {
               propValues.set(prop.name, action);
             }

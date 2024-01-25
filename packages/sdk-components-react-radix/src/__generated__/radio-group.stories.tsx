@@ -14,17 +14,16 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [radioGroupValue, set$radioGroupValue] = useState<any>("");
-  let onValueChange = (value: any) => {
-    radioGroupValue = value;
-    set$radioGroupValue(radioGroupValue);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <RadioGroup
         data-ws-id="1"
         data-ws-component="RadioGroup"
         value={radioGroupValue}
-        onValueChange={onValueChange}
+        onValueChange={(value: any) => {
+          radioGroupValue = value;
+          set$radioGroupValue(radioGroupValue);
+        }}
         className="c11xgi9i cfd715b c8prkzu c1edvzo4"
       >
         <Label

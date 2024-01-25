@@ -20,17 +20,16 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [menuValue, set$menuValue] = useState<any>("");
-  let onValueChange = (value: any) => {
-    menuValue = value;
-    set$menuValue(menuValue);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <NavigationMenu
         data-ws-id="1"
         data-ws-component="NavigationMenu"
         value={menuValue}
-        onValueChange={onValueChange}
+        onValueChange={(value: any) => {
+          menuValue = value;
+          set$menuValue(menuValue);
+        }}
         className="crmoyyg cvxi4jc"
       >
         <NavigationMenuList

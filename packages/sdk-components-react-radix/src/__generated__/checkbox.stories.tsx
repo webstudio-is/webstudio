@@ -13,10 +13,6 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [checkboxChecked, set$checkboxChecked] = useState<any>(false);
-  let onCheckedChange = (checked: any) => {
-    checkboxChecked = checked;
-    set$checkboxChecked(checkboxChecked);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Label
@@ -28,7 +24,10 @@ const Page = (_props: { params: Params }) => {
           data-ws-id="3"
           data-ws-component="Checkbox"
           checked={checkboxChecked}
-          onCheckedChange={onCheckedChange}
+          onCheckedChange={(checked: any) => {
+            checkboxChecked = checked;
+            set$checkboxChecked(checkboxChecked);
+          }}
           className="c1pmpq0f c1yafs04 c11hichb c12e8ong c13c161l chzvexg c1s51a6q c17al2u0 c1ufcra4 c17gos5d cn4f13s c9mvxkx cu0p3ww c11i8aye ca1f4zs ck2qarh c1nxbatd caktpzb c1bm526f co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1oa7gr0 ce92j53 c1939zof c4lzij8"
         >
           <CheckboxIndicator

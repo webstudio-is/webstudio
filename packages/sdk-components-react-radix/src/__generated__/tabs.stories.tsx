@@ -10,17 +10,16 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [tabsValue, set$tabsValue] = useState<any>("0");
-  let onValueChange = (value: any) => {
-    tabsValue = value;
-    set$tabsValue(tabsValue);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Tabs
         data-ws-id="1"
         data-ws-component="Tabs"
         value={tabsValue}
-        onValueChange={onValueChange}
+        onValueChange={(value: any) => {
+          tabsValue = value;
+          set$tabsValue(tabsValue);
+        }}
       >
         <TabsList
           data-ws-id="5"

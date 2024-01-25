@@ -6,6 +6,7 @@ import type {
   DataSources,
   Prop,
   Page,
+  DataSource,
 } from "@webstudio-is/sdk";
 import { parseComponentName } from "@webstudio-is/sdk";
 import {
@@ -15,8 +16,74 @@ import {
   showAttribute,
 } from "./props";
 import { collectionComponent } from "./core-components";
-import { generateExpression, generateDataSources } from "./expression";
+import {
+  generateExpression,
+  validateExpression,
+  decodeDataSourceVariable,
+} from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
+
+/**
+ * (arg1) => {
+ * myVar = myVar + arg1
+ * set$myVar(myVar)
+ * }
+ */
+const generateAction = ({
+  scope,
+  prop,
+  dataSources,
+}: {
+  scope: Scope;
+  prop: Extract<Prop, { type: "action" }>;
+  dataSources: DataSources;
+}) => {
+  const setters = new Set<DataSource>();
+  // important to fallback to empty argumets to render empty function
+  let args: string[] = [];
+  let assignersCode = "";
+  for (const value of prop.value) {
+    args = value.args;
+    assignersCode += validateExpression(value.code, {
+      optional: true,
+      effectful: true,
+      transformIdentifier: (identifier, assignee) => {
+        if (args?.includes(identifier)) {
+          return identifier;
+        }
+        const depId = decodeDataSourceVariable(identifier);
+        const dep = depId ? dataSources.get(depId) : undefined;
+        if (dep) {
+          if (assignee) {
+            setters.add(dep);
+          }
+          const valueName = scope.getName(dep.id, dep.name);
+          return valueName;
+        }
+        // eslint-disable-next-line no-console
+        console.error(`Unknown dependency "${identifier}"`);
+        return identifier;
+      },
+    });
+    assignersCode += `\n`;
+  }
+  let settersCode = "";
+  for (const dataSource of setters) {
+    const valueName = scope.getName(dataSource.id, dataSource.name);
+    const setterName = scope.getName(
+      `set$${dataSource.id}`,
+      `set$${dataSource.name}`
+    );
+    settersCode += `${setterName}(${valueName})\n`;
+  }
+  const argsList = args.map((arg) => `${arg}: any`).join(", ");
+  let generated = "";
+  generated += `(${argsList}) => {\n`;
+  generated += assignersCode;
+  generated += settersCode;
+  generated += `}`;
+  return generated;
+};
 
 const generatePropValue = ({
   scope,
@@ -57,7 +124,7 @@ const generatePropValue = ({
     });
   }
   if (prop.type === "action") {
-    return scope.getName(prop.id, prop.name);
+    return generateAction({ scope, prop, dataSources });
   }
   prop satisfies never;
 };
@@ -269,12 +336,6 @@ export const generatePageComponent = ({
   if (instance === undefined) {
     return "";
   }
-  const { body: dataSourcesBody } = generateDataSources({
-    typed: true,
-    scope,
-    dataSources,
-    props,
-  });
   let generatedDataSources = "";
   for (const dataSource of dataSources.values()) {
     if (dataSource.type === "variable") {
@@ -305,8 +366,6 @@ export const generatePageComponent = ({
       generatedDataSources += `let ${valueName} = useResource(${resourceNameString})\n`;
     }
   }
-
-  generatedDataSources += dataSourcesBody;
 
   const generatedJsx = generateJsxElement({
     scope,

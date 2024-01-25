@@ -5,17 +5,16 @@ import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [switchChecked, set$switchChecked] = useState<any>(false);
-  let onCheckedChange = (checked: any) => {
-    switchChecked = checked;
-    set$switchChecked(switchChecked);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Switch
         data-ws-id="1"
         data-ws-component="Switch"
         checked={switchChecked}
-        onCheckedChange={onCheckedChange}
+        onCheckedChange={(checked: any) => {
+          switchChecked = checked;
+          set$switchChecked(switchChecked);
+        }}
         className="c1oai8p0 cnd1wdj cuh3w30 c11hichb c95zj28 clo3r8o c1o2cngd c1riwd65 ci2hmcl c1byz2lk c17al2u0 c1ufcra4 c17gos5d cn4f13s c1cofqbt c85ds3m c1e8k408 c1uosf6b chxhflr cc4jebi c4zy9sv c18xqxv1 cpr3ke2 c1wmnqxw c1b503n2 co0lfwl c1kn3u98 c2odgnt chlvjga c1jx7vpr c1oa7gr0 ce92j53 c1939zof c14mirta"
       >
         <SwitchThumb
