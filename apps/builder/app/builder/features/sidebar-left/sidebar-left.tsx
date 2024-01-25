@@ -36,21 +36,11 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
     $activeSidebarPanel.set("none");
   });
 
-  const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
-    (panel) => {
-      switch (panel) {
-        case "navigator":
-          return clientSettings.navigatorLayout === "docked";
-      }
-      return true;
-    }
-  );
-
   return (
     <Flex grow>
       <SidebarTabs activationMode="manual" value={activeTab}>
         <SidebarTabsList>
-          {enabledPanels.map((tabName: TabName) => (
+          {(Object.keys(panels) as Array<TabName>).map((tabName: TabName) => (
             <SidebarTabsTrigger
               aria-label={tabName}
               key={tabName}

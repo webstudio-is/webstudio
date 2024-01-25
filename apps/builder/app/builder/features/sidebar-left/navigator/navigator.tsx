@@ -4,6 +4,14 @@ import { Header, CloseButton } from "../header";
 import { CssPreview } from "./css-preview";
 import { useHotkeys } from "react-hotkeys-hook";
 import { emitCommand } from "~/builder/shared/commands";
+import { useClientSettings } from "~/builder/shared/client-settings";
+
+export const useNavigatorLayout = () => {
+  // We need to render the detached state only once the setting was actually loaded from local storage.
+  // Otherwise we may show the detached state because its the default and then hide it immediately.
+  const [clientSettings, _, isLoaded] = useClientSettings();
+  return isLoaded ? clientSettings.navigatorLayout : "undocked";
+};
 
 type NavigatorProps = {
   isClosable?: boolean;
