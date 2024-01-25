@@ -506,7 +506,7 @@ export const prebuild = async (options: {
     // generate new Page Params variable if does not exist
     // to allow always passing it from route template
     const pathVariableId = pageData.page.pathVariableId ?? "pathVariableId";
-    if (pageData.page.pathVariableId == undefined) {
+    if (pageData.page.pathVariableId === undefined) {
       dataSources.set(pathVariableId, {
         id: pathVariableId,
         name: "Page Params",
