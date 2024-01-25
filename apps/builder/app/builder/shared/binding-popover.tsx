@@ -244,14 +244,14 @@ const bindingOpacityProperty = "--ws-binding-opacity";
 
 export const BindingControl = ({ children }: { children: ReactNode }) => {
   return (
-    <Box
+    <Flex
       css={{
         position: "relative",
         "&:hover": { [bindingOpacityProperty]: 1 },
       }}
     >
       {children}
-    </Box>
+    </Flex>
   );
 };
 
