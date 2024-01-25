@@ -15,7 +15,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
     if (navigatorLayout === "undocked") {
       onSetActiveTab("none");
     }
-  }, [navigatorLayout]);
+  }, [navigatorLayout, onSetActiveTab]);
 
   return (
     <Navigator
