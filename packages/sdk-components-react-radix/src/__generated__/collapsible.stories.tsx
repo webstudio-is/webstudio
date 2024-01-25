@@ -13,17 +13,16 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [collapsibleOpen, set$collapsibleOpen] = useState<any>(false);
-  let onOpenChange = (open: any) => {
-    collapsibleOpen = open;
-    set$collapsibleOpen(collapsibleOpen);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Collapsible
         data-ws-id="1"
         data-ws-component="Collapsible"
         open={collapsibleOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={(open: any) => {
+          collapsibleOpen = open;
+          set$collapsibleOpen(collapsibleOpen);
+        }}
       >
         <CollapsibleTrigger
           data-ws-id="5"

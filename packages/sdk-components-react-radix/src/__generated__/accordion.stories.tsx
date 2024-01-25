@@ -15,10 +15,6 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
-  let onValueChange = (value: any) => {
-    accordionValue = value;
-    set$accordionValue(accordionValue);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Accordion
@@ -26,7 +22,10 @@ const Page = (_props: { params: Params }) => {
         data-ws-component="Accordion"
         collapsible={true}
         value={accordionValue}
-        onValueChange={onValueChange}
+        onValueChange={(value: any) => {
+          accordionValue = value;
+          set$accordionValue(accordionValue);
+        }}
       >
         <AccordionItem
           data-ws-id="6"

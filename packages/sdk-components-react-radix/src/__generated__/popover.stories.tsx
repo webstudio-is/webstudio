@@ -13,17 +13,16 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [popoverOpen, set$popoverOpen] = useState<any>(false);
-  let onOpenChange = (open: any) => {
-    popoverOpen = open;
-    set$popoverOpen(popoverOpen);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Popover
         data-ws-id="1"
         data-ws-component="Popover"
         open={popoverOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={(open: any) => {
+          popoverOpen = open;
+          set$popoverOpen(popoverOpen);
+        }}
       >
         <PopoverTrigger data-ws-id="5" data-ws-component="PopoverTrigger">
           <Button

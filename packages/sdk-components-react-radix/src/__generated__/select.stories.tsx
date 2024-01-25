@@ -18,23 +18,21 @@ type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [selectValue, set$selectValue] = useState<any>("");
   let [selectOpen, set$selectOpen] = useState<any>(false);
-  let onValueChange = (value: any) => {
-    selectValue = value;
-    set$selectValue(selectValue);
-  };
-  let onOpenChange = (open: any) => {
-    selectOpen = open;
-    set$selectOpen(selectOpen);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Select
         data-ws-id="1"
         data-ws-component="Select"
         value={selectValue}
-        onValueChange={onValueChange}
+        onValueChange={(value: any) => {
+          selectValue = value;
+          set$selectValue(selectValue);
+        }}
         open={selectOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={(open: any) => {
+          selectOpen = open;
+          set$selectOpen(selectOpen);
+        }}
       >
         <SelectTrigger
           data-ws-id="8"
