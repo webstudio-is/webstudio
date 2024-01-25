@@ -23,6 +23,7 @@ export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
   alignItems: "center",
   justifyContent: "center",
   color: theme.colors.foregroundSubtle,
+  backgroundColor: theme.colors.backgroundPanel,
   border: "none",
 
   "@hover": {
@@ -47,6 +48,7 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   outline: "none",
   borderRight: `1px solid  ${theme.colors.borderMain}`,
   flexGrow: 1,
+  backgroundColor: theme.colors.backgroundPanel,
 });
 
 type TabsListPrimitiveProps = ComponentProps<typeof TabsPrimitive.List>;
