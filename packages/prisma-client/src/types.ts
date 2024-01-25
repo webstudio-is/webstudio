@@ -13,4 +13,5 @@ export type {
   LatestBuildPerProjectDomain,
   LatestBuildPerProject,
   PublishStatus,
+  Product,
 } from "./__generated__";

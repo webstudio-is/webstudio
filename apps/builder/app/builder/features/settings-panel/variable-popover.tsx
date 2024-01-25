@@ -395,7 +395,7 @@ const VariablePanel = forwardRef<
             {getTypeLabel(option)}
             {option === "resource" && allowResourceVariables === false && (
               <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
-                <ProBadge />
+                <ProBadge>Pro</ProBadge>
               </Box>
             )}
           </SelectItem>

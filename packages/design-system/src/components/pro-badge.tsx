@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 import { theme } from "../stitches.config";
 import { Text } from "./text";
 
-export const ProBadge = () => {
+export const ProBadge = (props: { children: ReactNode }) => {
   return (
     <Text
       css={{
@@ -20,7 +21,7 @@ export const ProBadge = () => {
         background: theme.colors.backgroundStyleSourceNeutral,
       }}
     >
-      Pro
+      {props.children}
     </Text>
   );
 };
