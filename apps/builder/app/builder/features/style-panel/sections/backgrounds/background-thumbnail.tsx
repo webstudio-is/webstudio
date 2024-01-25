@@ -15,6 +15,7 @@ import { toPascalCase } from "../../shared/keyword-utils";
 
 const Thumbnail = styled("div", {
   borderRadius: 2,
+  borderWidth: 0,
   width: theme.spacing[10],
   height: theme.spacing[10],
 });
