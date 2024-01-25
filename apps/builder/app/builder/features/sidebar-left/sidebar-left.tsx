@@ -37,7 +37,11 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
 
   return (
     <Flex grow>
-      <SidebarTabs activationMode="manual" value={activeTab}>
+      <SidebarTabs
+        activationMode="manual"
+        value={activeTab}
+        orientation="vertical"
+      >
         <SidebarTabsList>
           {(Object.keys(panels) as Array<TabName>).map((tabName: TabName) => (
             <SidebarTabsTrigger

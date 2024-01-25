@@ -15,7 +15,20 @@ export const SidebarTabs = styled(Tabs, {
   boxSizing: "border-box",
 });
 
+const triggerFocusRing = {
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    inset: 4,
+    outlineWidth: 2,
+    outlineStyle: "solid",
+    outlineColor: theme.colors.borderFocus,
+    borderRadius: theme.borderRadius[3],
+  },
+};
+
 export const SidebarTabsTrigger = styled(TabsTrigger, {
+  position: "relative",
   boxSizing: "border-box",
   flexShrink: 0,
   display: "flex",
@@ -28,7 +41,7 @@ export const SidebarTabsTrigger = styled(TabsTrigger, {
   color: theme.colors.foregroundSubtle,
   backgroundColor: theme.colors.backgroundPanel,
   border: "none",
-
+  "&:focus-visible": triggerFocusRing,
   "@hover": {
     "&:hover": {
       color: theme.colors.foregroundMain,
