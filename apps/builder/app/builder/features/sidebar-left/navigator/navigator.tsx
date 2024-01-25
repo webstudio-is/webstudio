@@ -10,7 +10,7 @@ type NavigatorProps = {
   onClose?: () => void;
 };
 
-export const Navigator = ({ isClosable, onClose }: NavigatorProps) => {
+export const Navigator = ({ isClosable = true, onClose }: NavigatorProps) => {
   const shortcutRef = useHotkeys<HTMLDivElement>(
     "enter",
     () => emitCommand("editInstanceText"),
