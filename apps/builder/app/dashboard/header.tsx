@@ -50,7 +50,7 @@ const Menu = ({
           <Flex gap="1" align="center">
             {userPlanFeatures.hasProPlan && (
               <>
-                <ProBadge />
+                <ProBadge>{userPlanFeatures.planName}</ProBadge>
                 <div />
               </>
             )}
