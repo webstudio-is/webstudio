@@ -596,6 +596,33 @@ ${utilsExport}
     `
   );
 
+  const redirects = siteData.build.pages.settings?.redirects;
+  if (redirects !== undefined && redirects.length > 0) {
+    spinner.text = "Generating redirects";
+
+    for (const redirect of redirects) {
+      const redirectPagePath = generateRemixRoute(redirect.old);
+      const redirectFileName = `${redirectPagePath}.ts`;
+
+      const content = `import { type LoaderArgs } from "@remix-run/server-runtime";
+import { redirect } from "@remix-run/server-runtime";
+import { matchPathFromRedirects } from "~/redirects";
+
+export const loader = (arg: LoaderArgs) => {
+  const redirectPath = matchPathFromRedirects(arg.request.url, ${JSON.stringify(
+    redirects
+  )});
+  if (redirectPath === undefined) {
+    return redirect("/404");
+  }
+  return redirect(redirectPath, 301);
+};
+`;
+
+      await ensureFileInPath(join(routesDir, redirectFileName), content);
+    }
+  }
+
   spinner.text = "Downloading fonts and images";
   await Promise.all(assetsToDownload);
 
