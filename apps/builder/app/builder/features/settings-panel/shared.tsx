@@ -27,7 +27,6 @@ import {
   Grid,
   Text,
   theme,
-  type CSS,
   rawTheme,
 } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
