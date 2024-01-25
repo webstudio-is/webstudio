@@ -95,7 +95,7 @@ export const Layer = (props: LayerProps) => {
             />
           </>
         }
-      ></CssValueListItem>
+      />
     </FloatingPanel>
   );
 };

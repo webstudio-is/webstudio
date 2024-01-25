@@ -230,7 +230,7 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
     >
       <Flex gap={1} direction="column">
         <CssValueListArrowFocus dragItemId={dragItemId}>
-          <Flex gap={1} direction="column" ref={sortableRefCallback}>
+          <Flex direction="column" ref={sortableRefCallback}>
             {sortableItems.map((layer, index) => (
               <Layer
                 id={layer.id}
