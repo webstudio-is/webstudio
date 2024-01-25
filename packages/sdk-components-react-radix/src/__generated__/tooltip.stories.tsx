@@ -13,17 +13,16 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [tooltipOpen, set$tooltipOpen] = useState<any>(false);
-  let onOpenChange = (open: any) => {
-    tooltipOpen = open;
-    set$tooltipOpen(tooltipOpen);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Tooltip
         data-ws-id="1"
         data-ws-component="Tooltip"
         open={tooltipOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={(open: any) => {
+          tooltipOpen = open;
+          set$tooltipOpen(tooltipOpen);
+        }}
       >
         <TooltipTrigger data-ws-id="5" data-ws-component="TooltipTrigger">
           <Button

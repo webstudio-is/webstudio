@@ -18,17 +18,16 @@ import {
 type Params = Record<string, string | undefined>;
 const Page = (_props: { params: Params }) => {
   let [sheetOpen, set$sheetOpen] = useState<any>(false);
-  let onOpenChange = (open: any) => {
-    sheetOpen = open;
-    set$sheetOpen(sheetOpen);
-  };
   return (
     <Box data-ws-id="root" data-ws-component="Box">
       <Dialog
         data-ws-id="1"
         data-ws-component="Dialog"
         open={sheetOpen}
-        onOpenChange={onOpenChange}
+        onOpenChange={(open: any) => {
+          sheetOpen = open;
+          set$sheetOpen(sheetOpen);
+        }}
       >
         <DialogTrigger data-ws-id="5" data-ws-component="DialogTrigger">
           <Button
