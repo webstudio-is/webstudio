@@ -68,9 +68,31 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
+  a:where([data-ws-component="Link"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+    display: inline-block;
+  }
 }
 @media all {
   .c11x2bo2 {
     font-size: 4em;
+  }
+  .c1vynykc {
+    margin-top: 15px;
+  }
+  .c122cnm9 {
+    margin-bottom: 15px;
+  }
+  .c15qd3jj {
+    margin-right: 15px;
+  }
+  .c1jp5sfs {
+    margin-left: 15px;
   }
 }

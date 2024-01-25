@@ -1,15 +1,18 @@
 {
   "build": {
-    "id": "33b9a2ff-ce2f-499d-8e9d-121dc35dab8f",
+    "id": "b1ec8e54-bf8c-4b76-80cc-df31eb4fd2db",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 22,
-    "createdAt": "2023-11-05T17:42:09.984Z",
-    "updatedAt": "2023-11-05T17:42:09.984Z",
+    "version": 44,
+    "createdAt": "2024-01-23T14:21:27.697Z",
+    "updatedAt": "2024-01-23T14:21:27.697Z",
     "pages": {
       "meta": {
         "siteName": "Fixture Site",
         "faviconAssetId": "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
         "code": "<script>console.log('HELLO')</script>\n<meta property=\"saas:test\" content=\"test\">"
+      },
+      "settings": {
+        "atomicStyles": true
       },
       "homePage": {
         "id": "nfzls_SkTc9jKYyxcZ8Lw",
@@ -21,13 +24,32 @@
         "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
         "path": ""
       },
-      "pages": [],
+      "pages": [
+        {
+          "id": "xT46WZKzCBTvUCIObMELW",
+          "name": "Script Test",
+          "title": "Script Test",
+          "meta": {
+            "description": "",
+            "excludePageFromSearch": false,
+            "socialImageAssetId": "",
+            "custom": [
+              {
+                "property": "",
+                "content": ""
+              }
+            ]
+          },
+          "rootInstanceId": "LW98_-srDnnagkR10lsk4",
+          "path": "/script-test"
+        }
+      ],
       "folders": [
         {
           "id": "root",
           "name": "Root",
           "slug": "",
-          "children": ["nfzls_SkTc9jKYyxcZ8Lw"]
+          "children": ["nfzls_SkTc9jKYyxcZ8Lw", "xT46WZKzCBTvUCIObMELW"]
         }
       ]
     },
@@ -77,6 +99,110 @@
             "value": 4
           }
         }
+      ],
+      [
+        "3h7-JvfKemCCCAoHL0Y5s:mIDIDBHsdlix3RVZAVmv7:marginTop:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "3h7-JvfKemCCCAoHL0Y5s",
+          "property": "marginTop",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
+      ],
+      [
+        "3h7-JvfKemCCCAoHL0Y5s:mIDIDBHsdlix3RVZAVmv7:marginBottom:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "3h7-JvfKemCCCAoHL0Y5s",
+          "property": "marginBottom",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
+      ],
+      [
+        "3h7-JvfKemCCCAoHL0Y5s:mIDIDBHsdlix3RVZAVmv7:marginRight:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "3h7-JvfKemCCCAoHL0Y5s",
+          "property": "marginRight",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
+      ],
+      [
+        "3h7-JvfKemCCCAoHL0Y5s:mIDIDBHsdlix3RVZAVmv7:marginLeft:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "3h7-JvfKemCCCAoHL0Y5s",
+          "property": "marginLeft",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
+      ],
+      [
+        "mOA5iiy4M-QrmmO22O02y:mIDIDBHsdlix3RVZAVmv7:marginTop:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "mOA5iiy4M-QrmmO22O02y",
+          "property": "marginTop",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
+      ],
+      [
+        "mOA5iiy4M-QrmmO22O02y:mIDIDBHsdlix3RVZAVmv7:marginRight:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "mOA5iiy4M-QrmmO22O02y",
+          "property": "marginRight",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
+      ],
+      [
+        "mOA5iiy4M-QrmmO22O02y:mIDIDBHsdlix3RVZAVmv7:marginBottom:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "mOA5iiy4M-QrmmO22O02y",
+          "property": "marginBottom",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
+      ],
+      [
+        "mOA5iiy4M-QrmmO22O02y:mIDIDBHsdlix3RVZAVmv7:marginLeft:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "mOA5iiy4M-QrmmO22O02y",
+          "property": "marginLeft",
+          "value": {
+            "type": "unit",
+            "unit": "px",
+            "value": 15
+          }
+        }
       ]
     ],
     "styleSources": [
@@ -85,6 +211,20 @@
         {
           "type": "local",
           "id": "NfeivFkbA_acBLVg7dn9P"
+        }
+      ],
+      [
+        "3h7-JvfKemCCCAoHL0Y5s",
+        {
+          "type": "local",
+          "id": "3h7-JvfKemCCCAoHL0Y5s"
+        }
+      ],
+      [
+        "mOA5iiy4M-QrmmO22O02y",
+        {
+          "type": "local",
+          "id": "mOA5iiy4M-QrmmO22O02y"
         }
       ]
     ],
@@ -95,9 +235,44 @@
           "instanceId": "7pwqBSgrfuuOfk1JblWcL",
           "values": ["NfeivFkbA_acBLVg7dn9P"]
         }
+      ],
+      [
+        "LW98_-srDnnagkR10lsk4",
+        {
+          "instanceId": "LW98_-srDnnagkR10lsk4",
+          "values": ["3h7-JvfKemCCCAoHL0Y5s"]
+        }
+      ],
+      [
+        "ibXgMoi9_ipHx1gVrvii0",
+        {
+          "instanceId": "ibXgMoi9_ipHx1gVrvii0",
+          "values": ["mOA5iiy4M-QrmmO22O02y"]
+        }
       ]
     ],
-    "props": [],
+    "props": [
+      [
+        "FbOz0nU4WCUd8WVU-Zit_",
+        {
+          "id": "FbOz0nU4WCUd8WVU-Zit_",
+          "instanceId": "QzTSoZnbGD6luZ5xcv893",
+          "name": "href",
+          "type": "page",
+          "value": "xT46WZKzCBTvUCIObMELW"
+        }
+      ],
+      [
+        "9gSir7lU2Gr0wxmjoUH5F",
+        {
+          "id": "9gSir7lU2Gr0wxmjoUH5F",
+          "instanceId": "8MXByradrqVRiGSyHI0aH",
+          "name": "href",
+          "type": "page",
+          "value": "nfzls_SkTc9jKYyxcZ8Lw"
+        }
+      ]
+    ],
     "dataSources": [],
     "resources": [],
     "instances": [
@@ -111,6 +286,10 @@
             {
               "type": "id",
               "value": "7pwqBSgrfuuOfk1JblWcL"
+            },
+            {
+              "type": "id",
+              "value": "QzTSoZnbGD6luZ5xcv893"
             }
           ]
         }
@@ -125,6 +304,66 @@
             {
               "type": "text",
               "value": "DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"
+            }
+          ]
+        }
+      ],
+      [
+        "LW98_-srDnnagkR10lsk4",
+        {
+          "type": "instance",
+          "id": "LW98_-srDnnagkR10lsk4",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "SHXddDLFWST_sy44UfGQO"
+            },
+            {
+              "type": "id",
+              "value": "8MXByradrqVRiGSyHI0aH"
+            }
+          ]
+        }
+      ],
+      [
+        "SHXddDLFWST_sy44UfGQO",
+        {
+          "type": "instance",
+          "id": "SHXddDLFWST_sy44UfGQO",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Script Test"
+            }
+          ]
+        }
+      ],
+      [
+        "QzTSoZnbGD6luZ5xcv893",
+        {
+          "type": "instance",
+          "id": "QzTSoZnbGD6luZ5xcv893",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Goto Script Test"
+            }
+          ]
+        }
+      ],
+      [
+        "8MXByradrqVRiGSyHI0aH",
+        {
+          "type": "instance",
+          "id": "8MXByradrqVRiGSyHI0aH",
+          "component": "Link",
+          "children": [
+            {
+              "type": "text",
+              "value": "Go Home"
             }
           ]
         }
@@ -155,6 +394,24 @@
       },
       "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
       "path": ""
+    },
+    {
+      "id": "xT46WZKzCBTvUCIObMELW",
+      "name": "Script Test",
+      "title": "Script Test",
+      "meta": {
+        "description": "",
+        "excludePageFromSearch": false,
+        "socialImageAssetId": "",
+        "custom": [
+          {
+            "property": "",
+            "content": ""
+          }
+        ]
+      },
+      "rootInstanceId": "LW98_-srDnnagkR10lsk4",
+      "path": "/script-test"
     }
   ],
   "assets": [
