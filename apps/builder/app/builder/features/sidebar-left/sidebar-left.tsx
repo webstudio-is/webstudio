@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  SidebarTabs,
-  SidebarTabsContent,
-  SidebarTabsList,
-  SidebarTabsTrigger,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Box, Tooltip } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
@@ -18,6 +11,12 @@ import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
+import {
+  SidebarTabs,
+  SidebarTabsContent,
+  SidebarTabsList,
+  SidebarTabsTrigger,
+} from "./sidebar-tabs";
 
 const none = { TabContent: () => null };
 

@@ -1,10 +1,13 @@
-// @todo this should be a local customization in sidebar left, not a reusable component
-import { type ComponentProps, type ElementRef, forwardRef } from "react";
-import { type CSS, styled } from "../stitches.config";
-import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { theme } from "../stitches.config";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  styled,
+  theme,
+} from "@webstudio-is/design-system";
 
-export const SidebarTabs = styled(TabsPrimitive.Root, {
+export const SidebarTabs = styled(Tabs, {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -12,7 +15,7 @@ export const SidebarTabs = styled(TabsPrimitive.Root, {
   boxSizing: "border-box",
 });
 
-export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
+export const SidebarTabsTrigger = styled(TabsTrigger, {
   boxSizing: "border-box",
   flexShrink: 0,
   display: "flex",
@@ -39,7 +42,7 @@ export const SidebarTabsTrigger = styled(TabsPrimitive.Trigger, {
   },
 });
 
-const StyledTabsList = styled(TabsPrimitive.List, {
+export const SidebarTabsList = styled(TabsList, {
   boxSizing: "border-box",
   flexShrink: 0,
   display: "flex",
@@ -51,21 +54,7 @@ const StyledTabsList = styled(TabsPrimitive.List, {
   backgroundColor: theme.colors.backgroundPanel,
 });
 
-type TabsListPrimitiveProps = ComponentProps<typeof TabsPrimitive.List>;
-type TabsListProps = TabsListPrimitiveProps & { css?: CSS };
-
-export const SidebarTabsList = forwardRef<
-  ElementRef<typeof StyledTabsList>,
-  TabsListProps
->((props, forwardedRef) => (
-  <>
-    <StyledTabsList {...props} ref={forwardedRef} />
-  </>
-));
-
-SidebarTabsList.displayName = "SidebarTabsList";
-
-export const SidebarTabsContent = styled(TabsPrimitive.Content, {
+export const SidebarTabsContent = styled(TabsContent, {
   flexGrow: 1,
   position: "absolute",
   top: 0,
