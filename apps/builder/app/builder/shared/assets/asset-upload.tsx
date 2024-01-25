@@ -5,6 +5,7 @@ import { UploadIcon } from "@webstudio-is/icons";
 import {
   type AssetType,
   MAX_UPLOAD_SIZE,
+  IMAGE_MIME_TYPES,
   toBytes,
 } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
@@ -45,19 +46,8 @@ const useUpload = (type: AssetType) => {
   return { inputRef, onChange };
 };
 
-// https://developers.cloudflare.com/images/image-resizing/format-limitations/
-const imageMimeTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-  "image/x-icon",
-  "image/ico",
-];
-
 const acceptMap = {
-  image: imageMimeTypes.join(", "),
+  image: IMAGE_MIME_TYPES.join(", "),
   font: FONT_MIME_TYPES,
 };
 

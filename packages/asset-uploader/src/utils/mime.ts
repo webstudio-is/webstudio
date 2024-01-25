@@ -17,11 +17,11 @@ const mimeCategories = [
 
 type MimeCategory = (typeof mimeCategories)[number];
 
-const extensionToMime = new Map([
-  [".avif" as string, "image/avif"],
-  [".bmp", "image/bmp"],
+// https://developers.cloudflare.com/images/image-resizing/format-limitations/
+const imageExtensionsToMime = new Map([
+  [".avif", "image/avif"],
   [".gif", "image/gif"],
-  [".ico", "image/vnd.microsoft.icon"],
+  [".ico", "image/x-icon"],
   [".jpeg", "image/jpeg"],
   [".jpg", "image/jpeg"],
   [".png", "image/png"],
@@ -29,11 +29,25 @@ const extensionToMime = new Map([
   [".tif", "image/tiff"],
   [".tiff", "image/tiff"],
   [".webp", "image/webp"],
+] as const);
+
+const fontsExtensionsToMime = new Map([
   [".woff", "font/woff"],
   [".woff2", "font/woff2"],
   [".ttf", "font/ttf"],
   [".otf", "font/otf"],
 ] as const);
+
+const extensionToMime = new Map([
+  ...imageExtensionsToMime,
+  ...fontsExtensionsToMime,
+]);
+
+export const IMAGE_MIME_TYPES = Array.from(
+  new Set(imageExtensionsToMime.values()).values()
+);
+
+const extensions = Array.from(extensionToMime.keys());
 
 const mimeTypes = new Set(extensionToMime.values());
 type Mime = SetType<typeof mimeTypes>;
@@ -43,7 +57,7 @@ const mimePatterns = new Set([
   ...mimeTypes.values(),
   ...mimeCategories.map((category): `${MimeCategory}/*` => `${category}/*`),
 ]);
-type MimePattern = SetType<typeof mimePatterns>;
+export type MimePattern = SetType<typeof mimePatterns>;
 const isMimePattern = (value: string): value is MimePattern =>
   mimePatterns.has(value as MimePattern);
 
@@ -77,7 +91,7 @@ export const acceptToMimePatterns = (
       result.add(trimmed);
       continue;
     }
-    const mime = extensionToMime.get(trimmed);
+    const mime = extensionToMime.get(trimmed as (typeof extensions)[number]);
 
     if (mime === undefined) {
       warnOnce(
