@@ -26,7 +26,7 @@ export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";
 export { generateUtilsExport } from "./generator";
 export {
-  generatePageComponent,
+  generateWebstudioComponent,
   generateJsxElement,
   generateJsxChildren,
 } from "./component-generator";

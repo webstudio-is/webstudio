@@ -10,8 +10,7 @@ import {
   TooltipContent as TooltipContent,
 } from "../components";
 
-type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+const Component = () => {
   let [tooltipOpen, set$tooltipOpen] = useState<any>(false);
   return (
     <Box data-ws-id="root" data-ws-component="Box">
@@ -329,7 +328,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page params={{}} />
+        <Component />
       </>
     );
   },
