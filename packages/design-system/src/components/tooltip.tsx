@@ -125,10 +125,13 @@ Tooltip.displayName = "Tooltip";
 export const InputErrorsTooltip = ({
   errors,
   children,
+  side,
+  css,
   ...rest
 }: Omit<TooltipProps, "content"> & {
   errors?: string[];
   children: ComponentProps<typeof Tooltip>["children"];
+  side?: ComponentProps<typeof Tooltip>["side"];
 }) => {
   const content = errors?.map((error, index) => (
     <Fragment key={index}>
@@ -145,7 +148,8 @@ export const InputErrorsTooltip = ({
       {...rest}
       content={content ?? " "}
       open={errors !== undefined && errors.length !== 0}
-      side="right"
+      side={side ?? "right"}
+      css={css}
     >
       {children}
     </Tooltip>

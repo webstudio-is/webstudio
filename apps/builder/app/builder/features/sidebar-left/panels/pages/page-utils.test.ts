@@ -8,6 +8,7 @@ import {
   reparentOrphansMutable,
   toTreeData,
   filterSelfAndChildren,
+  getExistingRoutePaths,
 } from "./page-utils";
 import { createDefaultPages } from "@webstudio-is/project-build";
 import { isRoot, type Folder } from "@webstudio-is/sdk";
@@ -459,5 +460,35 @@ describe("filterSelfAndChildren", () => {
   test("filter self and child folders", () => {
     const result = filterSelfAndChildren("1", folders);
     expect(result).toEqual([folders[2]]);
+  });
+});
+
+describe("getExistingRoutePaths", () => {
+  const pages = createDefaultPages({
+    rootInstanceId: "rootInstanceId",
+    homePageId: "homePageId",
+  });
+
+  test("gets all the route paths that exists in the project", () => {
+    pages.pages.push({
+      id: "pageId",
+      meta: {},
+      name: "Page",
+      path: "/page",
+      rootInstanceId: "rootInstanceId",
+      title: "Page",
+    });
+
+    pages.pages.push({
+      id: "blogId",
+      meta: {},
+      name: "Blog",
+      path: "/blog/:id",
+      rootInstanceId: "rootInstanceId",
+      title: "Blog",
+    });
+
+    const result = getExistingRoutePaths(pages);
+    expect(Array.from(result)).toEqual(["/page", "/blog/:id"]);
   });
 });

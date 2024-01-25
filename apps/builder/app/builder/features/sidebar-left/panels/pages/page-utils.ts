@@ -7,6 +7,7 @@ import {
   ROOT_FOLDER_ID,
   isRoot,
   type WebstudioData,
+  getPagePath,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import { deleteInstanceMutable } from "~/shared/instance-utils";
@@ -260,4 +261,20 @@ export const filterSelfAndChildren = (
   return folders.filter((folder) => {
     return folderIds.includes(folder.id) === false;
   });
+};
+
+export const getExistingRoutePaths = (pages?: Pages): Set<string> => {
+  const paths: Set<string> = new Set();
+  if (pages === undefined) {
+    return paths;
+  }
+
+  for (const page of pages.pages) {
+    const pagePath = getPagePath(page.id, pages);
+    if (pagePath === undefined) {
+      continue;
+    }
+    paths.add(pagePath);
+  }
+  return paths;
 };

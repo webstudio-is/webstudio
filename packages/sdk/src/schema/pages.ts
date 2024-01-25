@@ -102,10 +102,29 @@ const ProjectMeta = z.object({
   code: z.string().optional(),
 });
 
+export const ProjectNewRedirectPathSchema = PagePath.or(
+  z.string().refine((data) => {
+    try {
+      new URL(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Must be a valid URL")
+);
+
+export const PageRedirectSchema = z.object({
+  old: PagePath,
+  new: ProjectNewRedirectPathSchema,
+});
+
 const ProjectSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
+  redirects: z.array(PageRedirectSchema).optional(),
 });
+
+export type PageRedirect = z.infer<typeof PageRedirectSchema>;
 
 export type ProjectMeta = z.infer<typeof ProjectMeta>;
 
