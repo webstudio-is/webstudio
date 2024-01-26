@@ -5,7 +5,6 @@ export type {
   Asset,
   File,
   DashboardProject,
-  AuthorizationRelation,
   AuthorizationToken,
   DomainStatus,
   Domain,
@@ -14,4 +13,5 @@ export type {
   LatestBuildPerProject,
   PublishStatus,
   Product,
+  $Enums,
 } from "./__generated__";

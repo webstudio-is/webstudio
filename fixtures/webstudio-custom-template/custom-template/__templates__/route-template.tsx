@@ -21,8 +21,8 @@ import {
   Page,
   imageAssets,
   getRemixParams,
-} from "../__generated__/index";
-import { loadResources } from "../__generated__/index.server";
+} from "../../app/__generated__/_index";
+import { loadResources } from "../../app/__generated__/_index.server";
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
@@ -67,91 +67,6 @@ export const headers = () => {
   };
 };
 
-export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
-  const { page, project } = pageData;
-
-  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [];
-
-  if (data?.url) {
-    metas.push({
-      property: "og:url",
-      content: data.url,
-    });
-  }
-
-  if (page.title) {
-    metas.push({ title: page.title });
-
-    metas.push({
-      property: "og:title",
-      content: page.title,
-    });
-  }
-
-  metas.push({ property: "og:type", content: "website" });
-
-  const origin = `https://${data?.host}`;
-
-  if (project?.siteName) {
-    metas.push({
-      property: "og:site_name",
-      content: project.siteName,
-    });
-    metas.push({
-      "script:ld+json": {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        name: project.siteName,
-        url: origin,
-      },
-    });
-  }
-
-  if (page.meta.excludePageFromSearch || data?.excludeFromSearch) {
-    metas.push({
-      name: "robots",
-      content: "noindex, nofollow",
-    });
-  }
-
-  if (page.meta.description) {
-    metas.push({
-      name: "description",
-      content: page.meta.description,
-    });
-    metas.push({
-      property: "og:description",
-      content: page.meta.description,
-    });
-  }
-
-  if (page.meta.socialImageAssetId) {
-    const imageAsset = imageAssets.find(
-      (asset) => asset.id === page.meta.socialImageAssetId
-    );
-
-    if (imageAsset) {
-      metas.push({
-        property: "og:image",
-        content: `https://${data?.host}${imageLoader({
-          src: imageAsset.name,
-          // Do not transform social image (not enough information do we need to do this)
-          format: "raw",
-        })}`,
-      });
-    }
-  }
-
-  for (const customMeta of page.meta.custom ?? []) {
-    if (customMeta.property.trim().length === 0) {
-      continue;
-    }
-    metas.push(customMeta);
-  }
-
-  return metas;
-};
-
 export const links: LinksFunction = () => {
   const result: LinkDescriptor[] = [];
 
@@ -159,53 +74,6 @@ export const links: LinksFunction = () => {
     rel: "stylesheet",
     href: css,
   });
-
-  const { project } = pageData;
-
-  if (project?.faviconAssetId) {
-    const imageAsset = imageAssets.find(
-      (asset) => asset.id === project.faviconAssetId
-    );
-
-    if (imageAsset) {
-      result.push({
-        rel: "icon",
-        href: imageLoader({
-          src: imageAsset.name,
-          width: 128,
-          quality: 100,
-          format: "auto",
-        }),
-        type: undefined,
-      });
-    }
-  } else {
-    result.push({
-      rel: "icon",
-      href: "/favicon.ico",
-      type: "image/x-icon",
-    });
-
-    result.push({
-      rel: "shortcut icon",
-      href: "/favicon.ico",
-      type: "image/x-icon",
-    });
-  }
-
-  for (const asset of fontAssets) {
-    if (asset.type === "font") {
-      result.push({
-        rel: "preload",
-        href: assetBaseUrl + asset.name,
-        as: "font",
-        crossOrigin: "anonymous",
-        // @todo add mimeType
-        // type: asset.mimeType,
-      });
-    }
-  }
-
   return result;
 };
 

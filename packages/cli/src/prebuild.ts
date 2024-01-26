@@ -59,7 +59,7 @@ import {
   isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "~/constants.mjs";
-import type { PageData } from "../templates/route-template";
+import type { PageData } from "../templates/defaults/__templates__/route-template";
 
 const limit = pLimit(10);
 
@@ -146,6 +146,9 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
   await writeFile(destinationPath, content, "utf8");
 };
 
+/**
+ * Check if template is internal cli template or external path
+ */
 const isCliTemplate = async (template: string) => {
   const currentPath = fileURLToPath(new URL(import.meta.url));
 
@@ -163,23 +166,32 @@ const isCliTemplate = async (template: string) => {
   return false;
 };
 
-const copyTemplates = async (template: string = "defaults") => {
+/**
+ * template can be internal cli template or external path
+ */
+const getTemplatePath = async (template: string) => {
   const currentPath = fileURLToPath(new URL(import.meta.url));
 
-  const templatesPath = (await isCliTemplate(template))
+  const templatePath = (await isCliTemplate(template))
     ? normalize(join(dirname(currentPath), "..", "templates", template))
     : template;
 
-  await cp(templatesPath, cwd(), {
+  return templatePath;
+};
+
+const copyTemplates = async (template: string = "defaults") => {
+  const templatePath = await getTemplatePath(template);
+
+  await cp(templatePath, cwd(), {
     recursive: true,
     filter: (source) => {
       return basename(source) !== "package.json";
     },
   });
 
-  if ((await isFileExists(join(templatesPath, "package.json"))) === true) {
+  if ((await isFileExists(join(templatePath, "package.json"))) === true) {
     await mergeJsonFiles(
-      join(templatesPath, "package.json"),
+      join(templatePath, "package.json"),
       join(cwd(), "package.json")
     );
   }
@@ -418,17 +430,13 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating routes and pages";
 
-  const routeFileTemplate = await readFile(
-    normalize(
-      join(
-        dirname(fileURLToPath(new URL(import.meta.url))),
-        "..",
-        "templates",
-        "route-template.tsx"
-      )
-    ),
-    "utf8"
+  const routeTemplatePath = normalize(
+    join(cwd(), "__templates__", "route-template.tsx")
   );
+
+  const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
+
+  await rm(dirname(routeTemplatePath), { recursive: true });
 
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
@@ -578,10 +586,13 @@ ${utilsExport}
     const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = routeFileTemplate
-      .replace('../__generated__/index"', `../__generated__/${remixRoute}"`)
       .replace(
-        '../__generated__/index.server"',
-        `../__generated__/${remixRoute}.server"`
+        /".*\/__generated__\/_index"/,
+        `"../__generated__/${remixRoute}"`
+      )
+      .replace(
+        /".*\/__generated__\/_index.server"/,
+        `"../__generated__/${remixRoute}.server"`
       );
 
     await ensureFileInPath(join(routesDir, fileName), routeFileContent);
