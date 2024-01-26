@@ -28,6 +28,10 @@ const rootStyle = css({
   "& .cm-focused": {
     outline: "none",
   },
+  // fix scrolls appear on mount
+  "& .cm-scroller": {
+    overflowX: "hidden",
+  },
   "& .cm-content": {
     padding: 0,
   },
@@ -90,6 +94,7 @@ export const CodeEditor = ({
     view.dispatch({
       effects: StateEffect.reconfigure.of([
         ...extensions,
+        EditorView.lineWrapping,
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
         // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L57-L70

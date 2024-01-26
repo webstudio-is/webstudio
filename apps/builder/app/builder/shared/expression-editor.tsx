@@ -211,6 +211,14 @@ const autocompletionStyle = css({
 const emptyScope: Scope = {};
 const emptyAliases: Aliases = new Map();
 
+const wrapperStyle = css({
+  "& .cm-content": {
+    // 1 line is 16px
+    // set and max 20 lines
+    maxHeight: 320,
+  },
+});
+
 const errorStyle = css({
   borderColor: theme.colors.borderDestructiveMain,
 });
@@ -247,7 +255,6 @@ export const ExpressionEditor = ({
       dropCursor(),
       bracketMatching(),
       closeBrackets(),
-      EditorView.lineWrapping,
       syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       javascript({}),
       VariablesData.of({ scope, aliases }),
@@ -278,14 +285,16 @@ export const ExpressionEditor = ({
   );
 
   return (
-    <CodeEditor
-      extensions={extensions}
-      className={color === "error" ? errorStyle.toString() : undefined}
-      readOnly={readOnly}
-      autoFocus={autoFocus}
-      value={value}
-      onChange={onChange}
-      onBlur={onBlur}
-    />
+    <div className={wrapperStyle.toString()}>
+      <CodeEditor
+        extensions={extensions}
+        className={color === "error" ? errorStyle.toString() : undefined}
+        readOnly={readOnly}
+        autoFocus={autoFocus}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+      />
+    </div>
   );
 };
