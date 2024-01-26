@@ -5,7 +5,6 @@ export type {
   Asset,
   File,
   DashboardProject,
-  // AuthorizationRelation,
   AuthorizationToken,
   DomainStatus,
   Domain,
