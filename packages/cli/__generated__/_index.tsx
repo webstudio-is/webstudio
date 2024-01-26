@@ -2,7 +2,7 @@
  * The only intent of this file is to support typings inside ../templates/route-template for easier development.
  **/
 import type { Asset, ImageAsset } from "@webstudio-is/sdk";
-import type { PageData } from "../templates/route-template";
+import type { PageData } from "../templates/defaults/__templates__/route-template";
 
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
