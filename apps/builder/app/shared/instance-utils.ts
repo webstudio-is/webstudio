@@ -137,6 +137,12 @@ export const findClosestEditableInstanceSelector = (
     if (instance === undefined) {
       return;
     }
+    // when start editing empty body all text content
+    // including style and scripts appear in editor
+    // assume body is root and stop checking further
+    if (instance.component === "Body") {
+      return;
+    }
     const meta = metas.get(instance.component);
     if (meta === undefined) {
       return;
