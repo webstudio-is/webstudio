@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["views", "clientExtensions", "jsonProtocol"]
+  previewFeatures = ["views"]
   // see commands.ts
   // <output-placeholder-for-migrations>
   output          = "../src/__generated__"
@@ -11,8 +11,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgres"
-  url      = env("DATABASE_URL")
+  provider  = "postgres"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Team {
