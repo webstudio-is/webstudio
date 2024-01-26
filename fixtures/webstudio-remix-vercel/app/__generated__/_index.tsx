@@ -78,8 +78,7 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+const Page = ({ params: PageParams }: { params: any }) => {
   return (
     <Body
       data-ws-id="On9cvWCxr5rdZtY9O1Bv0"
@@ -177,6 +176,7 @@ const Page = (_props: { params: Params }) => {
 
 export { Page };
 
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
