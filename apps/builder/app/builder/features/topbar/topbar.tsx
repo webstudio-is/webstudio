@@ -19,6 +19,7 @@ import {
   BreakpointsPopover,
 } from "../breakpoints";
 import { ViewMode } from "./view-mode";
+import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 
 const topbarContainerStyle = css({
   display: "flex",
@@ -53,7 +54,11 @@ export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
             maxWidth: theme.spacing[24],
           }}
           aria-label="Toggle Pages"
-          onClick={() => {}}
+          onClick={() => {
+            $activeSidebarPanel.set(
+              $activeSidebarPanel.get() === "pages" ? "none" : "pages"
+            );
+          }}
           tabIndex={0}
         >
           {page.name}
