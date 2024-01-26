@@ -8,7 +8,6 @@ import {
   readFile,
   writeFile,
   readdir,
-  rmdir,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
 import { cwd } from "node:process";
@@ -437,7 +436,7 @@ export const prebuild = async (options: {
 
   const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
 
-  await rmdir(dirname(routeTemplatePath), { recursive: true });
+  await rm(dirname(routeTemplatePath), { recursive: true });
 
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
