@@ -73,7 +73,8 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-const Page = ({ params: PageParams }: { params: any }) => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
   return (
@@ -192,7 +193,6 @@ const Page = ({ params: PageParams }: { params: any }) => {
 
 export { Page };
 
-type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };

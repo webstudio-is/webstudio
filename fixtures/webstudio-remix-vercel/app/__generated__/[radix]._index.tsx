@@ -80,7 +80,8 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-const Page = ({ params: PageParams }: { params: any }) => {
+type Params = Record<string, string | undefined>;
+const Page = (_props: { params: Params }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
   return (
     <Body data-ws-id="uKWGyE9JY3cPwY-xI9vk6" data-ws-component="Body">
@@ -231,7 +232,6 @@ const Page = ({ params: PageParams }: { params: any }) => {
 
 export { Page };
 
-type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
