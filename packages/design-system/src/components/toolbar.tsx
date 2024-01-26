@@ -3,9 +3,11 @@
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=1512%3A7422&t=BOWCrlme5NepfLUm-4
  */
 import * as ToolbarPrimitive from "@radix-ui/react-toolbar";
+import { Slot, type SlotProps } from "@radix-ui/react-slot";
 import { css, styled, theme } from "../stitches.config";
 import { separatorStyle } from "./separator";
 import { textVariants } from "./text";
+import { forwardRef, type Ref } from "react";
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",
@@ -34,7 +36,7 @@ const toolbarItemFocusRing = {
   },
 };
 
-export const toggleItemStyle = css(textVariants.labelsTitleCase, {
+const toggleItemStyle = css(textVariants.labelsTitleCase, {
   // reset styles
   boxSizing: "border-box",
   position: "relative",
@@ -86,6 +88,20 @@ export const ToolbarToggleItem = styled(
   ToolbarPrimitive.ToggleItem,
   toggleItemStyle
 );
+
+type ToolbarButtonProps = SlotProps & {
+  asChild?: boolean;
+};
+
+const ToolbarButtonBase = forwardRef(
+  ({ asChild, ...props }: ToolbarButtonProps, ref: Ref<HTMLButtonElement>) => {
+    const Component = asChild ? Slot : "button";
+    return <Component {...props} ref={ref} />;
+  }
+);
+ToolbarButtonBase.displayName = "ToolbarButton";
+
+export const ToolbarButton = styled(ToolbarButtonBase, toggleItemStyle);
 
 export const ToolbarSeparator = styled(
   ToolbarPrimitive.Separator,

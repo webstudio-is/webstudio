@@ -2,7 +2,7 @@ import {
   css,
   DropdownMenuTrigger,
   rawTheme,
-  toggleItemStyle,
+  ToolbarButton,
 } from "@webstudio-is/design-system";
 import { HamburgerMenuIcon, WebstudioIcon } from "@webstudio-is/icons";
 
@@ -49,18 +49,17 @@ const faceStyle = css({
 
 export const MenuButton = () => {
   return (
-    <DropdownMenuTrigger
-      className={toggleItemStyle({ className: triggerStyle() })}
-      aria-label="Menu Button"
-    >
-      <span className={innerContainerStyle()}>
-        <span className={faceStyle({ front: true })}>
-          <WebstudioIcon width="22" height="22" />
+    <ToolbarButton asChild className={triggerStyle()} aria-label="Menu Button">
+      <DropdownMenuTrigger>
+        <span className={innerContainerStyle()}>
+          <span className={faceStyle({ front: true })}>
+            <WebstudioIcon width="22" height="22" />
+          </span>
+          <span className={faceStyle({ back: true })}>
+            <HamburgerMenuIcon size={22} />
+          </span>
         </span>
-        <span className={faceStyle({ back: true })}>
-          <HamburgerMenuIcon size={22} />
-        </span>
-      </span>
-    </DropdownMenuTrigger>
+      </DropdownMenuTrigger>
+    </ToolbarButton>
   );
 };

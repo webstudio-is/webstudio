@@ -1,6 +1,6 @@
 import { forwardRef, type ComponentProps } from "react";
 import { useStore } from "@nanostores/react";
-import { Flex, theme } from "@webstudio-is/design-system";
+import { Flex, theme, ToolbarButton } from "@webstudio-is/design-system";
 import { $scale, useCanvasWidth } from "~/builder/shared/nano-states";
 import { $selectedBreakpoint } from "~/shared/nano-states";
 
@@ -25,7 +25,7 @@ const Value = ({
 
 export const BreakpointsPopoverToolbarButton = forwardRef<
   HTMLButtonElement,
-  ComponentProps<"button">
+  ComponentProps<typeof ToolbarButton>
 >((props, ref) => {
   const scale = useStore($scale);
   const breakpoint = useStore($selectedBreakpoint);
@@ -35,7 +35,7 @@ export const BreakpointsPopoverToolbarButton = forwardRef<
   }
   const roundedScale = Math.round(scale);
   return (
-    <button ref={ref} {...props}>
+    <ToolbarButton ref={ref} {...props}>
       <Value unit="PX" minWidth={55}>
         {Math.round(canvasWidth)}
       </Value>
@@ -44,7 +44,7 @@ export const BreakpointsPopoverToolbarButton = forwardRef<
           {roundedScale}
         </Value>
       )}
-    </button>
+    </ToolbarButton>
   );
 });
 

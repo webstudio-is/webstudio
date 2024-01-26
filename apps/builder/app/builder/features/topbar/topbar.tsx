@@ -3,9 +3,9 @@ import {
   theme,
   css,
   Flex,
-  Text,
   Toolbar,
   ToolbarToggleGroup,
+  ToolbarButton,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $selectedPage } from "~/shared/nano-states";
@@ -37,19 +37,27 @@ type TopbarProps = {
 
 export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
   const page = useStore($selectedPage);
+  if (page === undefined) {
+    return;
+  }
 
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
         <Menu />
       </Flex>
-      <Flex
-        css={{ px: theme.spacing[9], maxWidth: theme.spacing[24] }}
-        align="center"
-      >
-        <Text variant="labelsTitleCase" color="contrast" truncate>
-          {page?.name ?? ""}
-        </Text>
+      <Flex align="center">
+        <ToolbarButton
+          css={{
+            px: theme.spacing[9],
+            maxWidth: theme.spacing[24],
+          }}
+          aria-label="Toggle Pages"
+          onClick={() => {}}
+          tabIndex={0}
+        >
+          {page.name}
+        </ToolbarButton>
       </Flex>
       <Flex css={{ minWidth: theme.spacing[23] }}>
         <BreakpointsPopover />
