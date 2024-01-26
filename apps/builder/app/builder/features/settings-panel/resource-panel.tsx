@@ -309,6 +309,11 @@ export const ResourceForm = forwardRef<
       if (evaluatedValue.length === 0) {
         return "URL is required";
       }
+      try {
+        new URL(evaluatedValue);
+      } catch {
+        return "URL is invalid";
+      }
     },
   });
   const [method, setMethod] = useState<Resource["method"]>(
