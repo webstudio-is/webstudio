@@ -5,15 +5,15 @@ import { sentryMessage } from "~/shared/sentry";
 
 import { z } from "zod";
 
-export const zSettings = z.object({
+const Settings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
   isAiMenuOpen: z.boolean().default(true),
   isAiCommandBarVisible: z.boolean().default(true),
 });
 
-export type Settings = z.infer<typeof zSettings>;
+export type Settings = z.infer<typeof Settings>;
 
-const defaultSettings = zSettings.parse({});
+const defaultSettings = Settings.parse({});
 
 const namespace = "__webstudio_user_settings__";
 
@@ -30,7 +30,7 @@ const read = (): Settings => {
   }
 
   try {
-    return zSettings.parse(JSON.parse(settingsString));
+    return Settings.parse(JSON.parse(settingsString));
   } catch (error) {
     if (error instanceof Error) {
       sentryMessage({

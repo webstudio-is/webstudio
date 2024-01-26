@@ -20,16 +20,28 @@ import {
 
 const none = { TabContent: () => null };
 
+const useActiveTab = () => {
+  const activeTab = useStore($activeSidebarPanel);
+  const [clientSettings] = useClientSettings();
+  if (
+    activeTab === "navigator" &&
+    clientSettings.navigatorLayout === "undocked"
+  ) {
+    return "none";
+  }
+  return activeTab;
+};
+
 type SidebarLeftProps = {
   publish: Publish;
 };
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
+  const activeTab = useActiveTab();
   const dragAndDropState = useStore($dragAndDropState);
-  const activeTab = useStore($activeSidebarPanel);
-  const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [helpIsOpen, setHelpIsOpen] = useState(false);
   const [clientSettings, setClientSetting] = useClientSettings();
+  const { TabContent } = activeTab === "none" ? none : panels[activeTab];
 
   useSubscribe("dragEnd", () => {
     $activeSidebarPanel.set("none");
