@@ -23,13 +23,14 @@ const none = { TabContent: () => null };
 const useActiveTab = () => {
   const activeTab = useStore($activeSidebarPanel);
   const [clientSettings] = useClientSettings();
+  let nextTab = activeTab;
   if (
-    activeTab === "navigator" &&
+    nextTab === "navigator" &&
     clientSettings.navigatorLayout === "undocked"
   ) {
-    return "none";
+    nextTab = "none";
   }
-  return activeTab;
+  return [nextTab, $activeSidebarPanel.set] as const;
 };
 
 type SidebarLeftProps = {
@@ -37,14 +38,14 @@ type SidebarLeftProps = {
 };
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
-  const activeTab = useActiveTab();
+  const [activeTab, setActiveTab] = useActiveTab();
   const dragAndDropState = useStore($dragAndDropState);
   const [helpIsOpen, setHelpIsOpen] = useState(false);
   const [clientSettings, setClientSetting] = useClientSettings();
   const { TabContent } = activeTab === "none" ? none : panels[activeTab];
 
   useSubscribe("dragEnd", () => {
-    $activeSidebarPanel.set("none");
+    setActiveTab("none");
   });
 
   return (
@@ -61,9 +62,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               key={tabName}
               value={tabName}
               onClick={() => {
-                $activeSidebarPanel.set(
-                  activeTab !== tabName ? tabName : "none"
-                );
+                setActiveTab(activeTab !== tabName ? tabName : "none");
               }}
             >
               {tabName === "none" ? null : panels[tabName].icon}
@@ -136,10 +135,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 : "visible",
           }}
         >
-          <TabContent
-            publish={publish}
-            onSetActiveTab={$activeSidebarPanel.set}
-          />
+          <TabContent publish={publish} onSetActiveTab={setActiveTab} />
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>
