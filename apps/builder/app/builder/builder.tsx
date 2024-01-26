@@ -40,7 +40,7 @@ import {
   $resources,
   subscribeResources,
 } from "~/shared/nano-states";
-import { type Settings, useClientSettings } from "./shared/client-settings";
+import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
@@ -51,6 +51,7 @@ import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/seo/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { $userPlanFeatures } from "./shared/nano-states";
+import { useNavigatorLayout } from "./features/sidebar-left/navigator";
 
 registerContainers();
 
@@ -60,13 +61,6 @@ export const links = () => {
     { rel: "stylesheet", href: builderStyles },
     { rel: "stylesheet", href: prismStyles },
   ];
-};
-
-const useNavigatorLayout = () => {
-  // We need to render the detached state only once the setting was actually loaded from local storage.
-  // Otherwise we may show the detached state because its the default and then hide it immediately.
-  const [clientSettings, _, isLoaded] = useClientSettings();
-  return isLoaded ? clientSettings.navigatorLayout : "undocked";
 };
 
 const useSetWindowTitle = () => {
@@ -204,7 +198,7 @@ const NavigatorPanel = ({
   navigatorLayout,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
-    return null;
+    return;
   }
 
   return (

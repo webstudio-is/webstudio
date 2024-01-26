@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Box,
-  SidebarTabs,
-  SidebarTabsContent,
-  SidebarTabsList,
-  SidebarTabsTrigger,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Box, Tooltip } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState } from "~/shared/nano-states";
 import { panels } from "./panels";
@@ -18,47 +11,58 @@ import { AiIcon, BugIcon, HelpIcon } from "@webstudio-is/icons";
 import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
+import {
+  SidebarTabs,
+  SidebarTabsContent,
+  SidebarTabsList,
+  SidebarTabsTrigger,
+} from "./sidebar-tabs";
 
 const none = { TabContent: () => null };
+
+const useActiveTab = () => {
+  const activeTab = useStore($activeSidebarPanel);
+  const [clientSettings] = useClientSettings();
+  let nextTab = activeTab;
+  if (
+    nextTab === "navigator" &&
+    clientSettings.navigatorLayout === "undocked"
+  ) {
+    nextTab = "none";
+  }
+  return [nextTab, $activeSidebarPanel.set] as const;
+};
 
 type SidebarLeftProps = {
   publish: Publish;
 };
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
+  const [activeTab, setActiveTab] = useActiveTab();
   const dragAndDropState = useStore($dragAndDropState);
-  const activeTab = useStore($activeSidebarPanel);
-  const { TabContent } = activeTab === "none" ? none : panels[activeTab];
   const [helpIsOpen, setHelpIsOpen] = useState(false);
   const [clientSettings, setClientSetting] = useClientSettings();
+  const { TabContent } = activeTab === "none" ? none : panels[activeTab];
 
   useSubscribe("dragEnd", () => {
-    $activeSidebarPanel.set("none");
+    setActiveTab("none");
   });
-
-  const enabledPanels = (Object.keys(panels) as Array<TabName>).filter(
-    (panel) => {
-      switch (panel) {
-        case "navigator":
-          return clientSettings.navigatorLayout === "docked";
-      }
-      return true;
-    }
-  );
 
   return (
     <Flex grow>
-      <SidebarTabs activationMode="manual" value={activeTab}>
+      <SidebarTabs
+        activationMode="manual"
+        value={activeTab}
+        orientation="vertical"
+      >
         <SidebarTabsList>
-          {enabledPanels.map((tabName: TabName) => (
+          {(Object.keys(panels) as Array<TabName>).map((tabName: TabName) => (
             <SidebarTabsTrigger
               aria-label={tabName}
               key={tabName}
               value={tabName}
               onClick={() => {
-                $activeSidebarPanel.set(
-                  activeTab !== tabName ? tabName : "none"
-                );
+                setActiveTab(activeTab !== tabName ? tabName : "none");
               }}
             >
               {tabName === "none" ? null : panels[tabName].icon}
@@ -131,10 +135,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
                 : "visible",
           }}
         >
-          <TabContent
-            publish={publish}
-            onSetActiveTab={$activeSidebarPanel.set}
-          />
+          <TabContent publish={publish} onSetActiveTab={setActiveTab} />
         </SidebarTabsContent>
       </SidebarTabs>
     </Flex>
