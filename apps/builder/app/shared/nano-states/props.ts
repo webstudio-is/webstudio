@@ -141,7 +141,11 @@ const computeExpression = (
     const identifier = encodeDataSourceVariable(id);
     code += `const ${identifier} = ${JSON.stringify(value)};\n`;
   }
-  code += `return (${expression})`;
+  const transpiled = validateExpression(expression, {
+    effectful: true,
+    optional: true,
+  });
+  code += `return (${transpiled})`;
   try {
     const result = new Function(code)();
     return result;
