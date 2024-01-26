@@ -13,7 +13,9 @@ export const loadResource = async (resourceData: Resource) => {
     requestInit.body = body;
   }
   try {
-    const response = await fetch(url, requestInit);
+    // cloudflare workers fail when fetching url contains spaces
+    // even though new URL suppose to trim them on parsing by spec
+    const response = await fetch(url.trim(), requestInit);
     let data;
     if (
       response.ok &&
