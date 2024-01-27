@@ -42,6 +42,7 @@ import {
 import {
   $dataSources,
   $resources,
+  $resourcesLoading,
   $selectedInstanceSelector,
   invalidateResource,
 } from "~/shared/nano-states";
@@ -474,6 +475,7 @@ export const VariablePopoverTrigger = forwardRef<
   HTMLButtonElement,
   { variable?: DataSource; children: ReactNode }
 >(({ variable, children }, ref) => {
+  const resourcesLoading = useStore($resourcesLoading);
   const [isOpen, setOpen] = useState(false);
   const { containerRef } = useContext(VariablePopoverContext);
   const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
@@ -560,6 +562,7 @@ export const VariablePopoverTrigger = forwardRef<
                     aria-label="Refresh resource data"
                     prefix={<RefreshIcon />}
                     color="ghost"
+                    disabled={resourcesLoading}
                     onClick={() => invalidateResource(variable.resourceId)}
                   />
                 </Tooltip>
