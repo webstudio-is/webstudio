@@ -38,9 +38,6 @@ type TopbarProps = {
 
 export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
   const page = useStore($selectedPage);
-  if (page === undefined) {
-    return;
-  }
 
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>
@@ -61,7 +58,7 @@ export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
           }}
           tabIndex={0}
         >
-          {page.name}
+          {page?.name}
         </ToolbarButton>
       </Flex>
       <Flex css={{ minWidth: theme.spacing[23] }}>
