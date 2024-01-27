@@ -1,4 +1,4 @@
-import { computed } from "nanostores";
+import { atom, computed } from "nanostores";
 import type { Resource, DataSource, Instance, Prop } from "@webstudio-is/sdk";
 import {
   collectionComponent,
@@ -472,18 +472,40 @@ const loadResources = async (resourceRequests: Resource[]) => {
 
 const cacheByKeys = new Map<string, unknown>();
 
+const $resourceInvalidators = atom(new Map<Resource["id"], number>());
+
+// bump index of resource to invaldate cache entry
+export const invalidateResource = (resourceId: Resource["id"]) => {
+  const resourceInvalidators = new Map($resourceInvalidators.get());
+  const invalidator = resourceInvalidators.get(resourceId) ?? 0;
+  resourceInvalidators.set(resourceId, invalidator + 1);
+  $resourceInvalidators.set(resourceInvalidators);
+};
+
+const getCacheKey = (
+  resourceInvalidators: Map<Resource["id"], number>,
+  request: Resource
+) => {
+  const invalidator = resourceInvalidators.get(request.id) ?? 0;
+  return `${invalidator}:${JSON.stringify(request)}`;
+};
+
 /**
  * subscribe to all resources changes
  * load them with currently available variable values
  * and store in cache
  */
 export const subscribeResources = () => {
-  return $computedResources.subscribe((computedResources) => {
-    const matched = new Map<Resource["id"], unknown>();
+  return computed(
+    [$computedResources, $resourceInvalidators],
+    (computedResources, resourceInvalidators) =>
+      [computedResources, resourceInvalidators] as const
+  ).subscribe(([computedResources, resourceInvalidators]) => {
+    const matched = new Map<Resource["id"], Resource>();
     const missing = new Map<Resource["id"], Resource>();
     for (const request of computedResources) {
-      const key = JSON.stringify(request);
-      if (cacheByKeys.has(key)) {
+      const cacheKey = getCacheKey(resourceInvalidators, request);
+      if (cacheByKeys.has(cacheKey)) {
         matched.set(request.id, request);
       } else {
         missing.set(request.id, request);
@@ -494,7 +516,8 @@ export const subscribeResources = () => {
     if (matched.size !== 0) {
       const newResourceValues = new Map();
       for (const [id, request] of matched) {
-        const response = cacheByKeys.get(JSON.stringify(request));
+        const cacheKey = getCacheKey(resourceInvalidators, request);
+        const response = cacheByKeys.get(cacheKey);
         newResourceValues.set(id, response);
       }
       $resourceValues.set(newResourceValues);
@@ -508,7 +531,8 @@ export const subscribeResources = () => {
     scheduleLoading(async () => {
       // preset undefined to prevent loading already requested data
       for (const request of missing.values()) {
-        cacheByKeys.set(JSON.stringify(request), undefined);
+        const cacheKey = getCacheKey(resourceInvalidators, request);
+        cacheByKeys.set(cacheKey, undefined);
       }
       const result = await loadResources(Array.from(missing.values()));
       if (result === undefined) {
@@ -519,7 +543,10 @@ export const subscribeResources = () => {
         newResourceValues.set(id, response);
         // save in cache
         const request = missing.get(id);
-        cacheByKeys.set(JSON.stringify(request), response);
+        if (request) {
+          const cacheKey = getCacheKey(resourceInvalidators, request);
+          cacheByKeys.set(cacheKey, response);
+        }
       }
       $resourceValues.set(newResourceValues);
     });
