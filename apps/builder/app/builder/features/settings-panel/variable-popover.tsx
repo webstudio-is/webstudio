@@ -13,8 +13,10 @@ import {
   useContext,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
+import { RefreshIcon } from "@webstudio-is/icons";
 import {
   Box,
+  Button,
   Flex,
   FloatingPanelPopover,
   FloatingPanelPopoverContent,
@@ -28,6 +30,7 @@ import {
   Select,
   SelectItem,
   Switch,
+  Tooltip,
   theme,
 } from "@webstudio-is/design-system";
 import { validateExpression } from "@webstudio-is/react-sdk";
@@ -39,7 +42,9 @@ import {
 import {
   $dataSources,
   $resources,
+  $areResourcesLoading,
   $selectedInstanceSelector,
+  invalidateResource,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { humanizeString } from "~/shared/string-utils";
@@ -470,6 +475,7 @@ export const VariablePopoverTrigger = forwardRef<
   HTMLButtonElement,
   { variable?: DataSource; children: ReactNode }
 >(({ variable, children }, ref) => {
+  const areResourcesLoading = useStore($areResourcesLoading);
   const [isOpen, setOpen] = useState(false);
   const { containerRef } = useContext(VariablePopoverContext);
   const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
@@ -548,7 +554,23 @@ export const VariablePopoverTrigger = forwardRef<
         {variable === undefined ? (
           <FloatingPanelPopoverTitle>New Variable</FloatingPanelPopoverTitle>
         ) : (
-          <FloatingPanelPopoverTitle>Edit Variable</FloatingPanelPopoverTitle>
+          <FloatingPanelPopoverTitle
+            actions={
+              variable.type === "resource" && (
+                <Tooltip content="Refresh resource data" side="bottom">
+                  <Button
+                    aria-label="Refresh resource data"
+                    prefix={<RefreshIcon />}
+                    color="ghost"
+                    disabled={areResourcesLoading}
+                    onClick={() => invalidateResource(variable.resourceId)}
+                  />
+                </Tooltip>
+              )
+            }
+          >
+            Edit Variable
+          </FloatingPanelPopoverTitle>
         )}
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>

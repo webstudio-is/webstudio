@@ -1,4 +1,4 @@
-import { computed } from "nanostores";
+import { atom, computed } from "nanostores";
 import type { Resource, DataSource, Instance, Prop } from "@webstudio-is/sdk";
 import {
   collectionComponent,
@@ -429,48 +429,74 @@ const $loaderVariableValues = computed(
   }
 );
 
+const computeResource = (
+  resource: Resource,
+  values: Map<DataSource["id"], unknown>
+): Resource => {
+  const request: Resource = {
+    id: resource.id,
+    name: resource.name,
+    url: computeExpression(resource.url, values),
+    method: resource.method,
+    headers: resource.headers.map(({ name, value }) => ({
+      name,
+      value: computeExpression(value, values),
+    })),
+  };
+  if (resource.body !== undefined) {
+    request.body = computeExpression(resource.body, values);
+  }
+  return request;
+};
+
 const $computedResources = computed(
   [$resources, $loaderVariableValues],
   (resources, values) => {
     const computedResources: Resource[] = [];
     for (const resource of resources.values()) {
-      const data: Resource = {
-        id: resource.id,
-        name: resource.name,
-        url: computeExpression(resource.url, values),
-        method: resource.method,
-        headers: resource.headers.map(({ name, value }) => ({
-          name,
-          value: computeExpression(value, values),
-        })),
-      };
-      if (resource.body !== undefined) {
-        data.body = computeExpression(resource.body, values);
-      }
-      computedResources.push(data);
+      computedResources.push(computeResource(resource, values));
     }
     return computedResources;
   }
 );
 
-let timeoutId: undefined | NodeJS.Timeout;
-const scheduleLoading = (callback: () => Promise<void>) => {
-  clearTimeout(timeoutId);
-  timeoutId = setTimeout(callback, 1000);
-};
+const $resourcesLoadingCount = atom(0);
+export const $areResourcesLoading = computed(
+  $resourcesLoadingCount,
+  (resourcesLoadingCount) => resourcesLoadingCount > 0
+);
+
 const loadResources = async (resourceRequests: Resource[]) => {
+  $resourcesLoadingCount.set($resourcesLoadingCount.get() + 1);
   const response = await fetch(restResourcesLoader(), {
     method: "POST",
     body: JSON.stringify(resourceRequests),
   });
+  $resourcesLoadingCount.set($resourcesLoadingCount.get() - 1);
   if (response.ok === false) {
-    return;
+    return new Map<Resource["id"], unknown>();
   }
-  const result: [Resource["id"], unknown][] = await response.json();
-  return result;
+  return new Map<Resource["id"], unknown>(await response.json());
 };
 
 const cacheByKeys = new Map<string, unknown>();
+
+const $invalidator = atom(0);
+
+// bump index of resource to invaldate cache entry
+export const invalidateResource = (resourceId: Resource["id"]) => {
+  const resources = $resources.get();
+  const resource = resources.get(resourceId);
+  if (resource === undefined) {
+    return;
+  }
+  const values = $loaderVariableValues.get();
+  const request = computeResource(resource, values);
+  const cacheKey = JSON.stringify(request);
+  cacheByKeys.delete(cacheKey);
+  // trigger invalidation
+  $invalidator.set($invalidator.get() + 1);
+};
 
 /**
  * subscribe to all resources changes
@@ -478,50 +504,43 @@ const cacheByKeys = new Map<string, unknown>();
  * and store in cache
  */
 export const subscribeResources = () => {
-  return $computedResources.subscribe((computedResources) => {
-    const matched = new Map<Resource["id"], unknown>();
+  // subscribe changing resources or global invalidation
+  return computed(
+    [$computedResources, $invalidator],
+    (computedResources, invalidator) =>
+      [computedResources, invalidator] as const
+  ).subscribe(async ([computedResources]) => {
+    const matched = new Map<Resource["id"], Resource>();
     const missing = new Map<Resource["id"], Resource>();
     for (const request of computedResources) {
-      const key = JSON.stringify(request);
-      if (cacheByKeys.has(key)) {
+      const cacheKey = JSON.stringify(request);
+      if (cacheByKeys.has(cacheKey)) {
         matched.set(request.id, request);
       } else {
         missing.set(request.id, request);
       }
     }
 
-    // update cached resource values
-    if (matched.size !== 0) {
-      const newResourceValues = new Map();
-      for (const [id, request] of matched) {
-        const response = cacheByKeys.get(JSON.stringify(request));
-        newResourceValues.set(id, response);
-      }
-      $resourceValues.set(newResourceValues);
-    }
-
     if (missing.size === 0) {
       return;
     }
 
-    // load missing resource values
-    scheduleLoading(async () => {
-      // preset undefined to prevent loading already requested data
-      for (const request of missing.values()) {
-        cacheByKeys.set(JSON.stringify(request), undefined);
-      }
-      const result = await loadResources(Array.from(missing.values()));
-      if (result === undefined) {
-        return;
-      }
-      const newResourceValues = new Map($resourceValues.get());
-      for (const [id, response] of result) {
-        newResourceValues.set(id, response);
-        // save in cache
-        const request = missing.get(id);
-        cacheByKeys.set(JSON.stringify(request), response);
-      }
-      $resourceValues.set(newResourceValues);
-    });
+    // preset undefined to prevent loading already requested data
+    for (const request of missing.values()) {
+      const cacheKey = JSON.stringify(request);
+      cacheByKeys.set(cacheKey, undefined);
+    }
+
+    const result = await loadResources(Array.from(missing.values()));
+    const newResourceValues = new Map();
+    for (const request of computedResources) {
+      const cacheKey = JSON.stringify(request);
+      // read from cache or store in cache
+      const response = result.get(request.id) ?? cacheByKeys.get(cacheKey);
+      cacheByKeys.set(cacheKey, response);
+      newResourceValues.set(request.id, response);
+    }
+    // update resource values only when new resources are loaded
+    $resourceValues.set(newResourceValues);
   });
 };
