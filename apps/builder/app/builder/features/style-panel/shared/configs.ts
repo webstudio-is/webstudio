@@ -28,6 +28,8 @@ import {
   JCSpaceAroundIcon,
   GapHorizontalIcon,
   GapVerticalIcon,
+  ArrowLeftIcon,
+  ArrowUpIcon,
 } from "@webstudio-is/icons";
 import type { AppliesTo } from "./dependencies";
 import type * as Controls from "../controls";
@@ -116,7 +118,9 @@ export const iconConfigs: IconRecords = {
   },
   flexDirection: {
     row: ArrowRightIcon,
+    "row-reverse": ArrowLeftIcon,
     column: ArrowDownIcon,
+    "column-reverse": ArrowUpIcon,
   },
   flexWrap: {
     nowrap: NoWrapIcon,
