@@ -461,7 +461,7 @@ const $computedResources = computed(
 );
 
 const $resourcesLoadingCount = atom(0);
-export const $resourcesLoading = computed(
+export const $areResourcesLoading = computed(
   $resourcesLoadingCount,
   (resourcesLoadingCount) => resourcesLoadingCount > 0
 );
