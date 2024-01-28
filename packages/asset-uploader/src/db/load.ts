@@ -59,8 +59,5 @@ export const loadAssetNamesByAssetIds = async (
         in: assetIds,
       },
     },
-    orderBy: {
-      file: { createdAt: "desc" },
-    },
   });
 };
