@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const DashboardProject = Project.extend({
   isPublished: z.boolean(),
+  previewImageName: z.string().optional(),
 });
 export type DashboardProject = z.infer<typeof DashboardProject>;
 

@@ -10,6 +10,7 @@ import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
+import { loadAssetNamesByAssetIds } from "@webstudio-is/asset-uploader/index.server";
 
 export const loader = async ({
   request,
@@ -32,13 +33,23 @@ export const loader = async ({
     .createCaller(context)
     .findMany({ userId: user.id });
 
-  const projectIds = env.PROJECT_TEMPLATES;
-
   const projectTemplates = await dashboardProjectRouter
     .createCaller(context)
-    .findManyByIds({
-      projectIds,
-    });
+    .findManyByIds({ projectIds: env.PROJECT_TEMPLATES });
+
+  const allProjects = [...projects, ...projectTemplates];
+
+  const assetNames = await loadAssetNamesByAssetIds(
+    allProjects.map((project) => project.previewImageAssetId).filter(Boolean)
+  );
+  const assetNamesMap = new Map(
+    assetNames.map((asset) => [asset.id, asset.name])
+  );
+
+  allProjects.forEach((project) => {
+    // Enrich the projects with preview image names, local mutation is fine
+    project.previewImageName = assetNamesMap.get(project.previewImageAssetId);
+  });
 
   const { userPlanFeatures } = context;
 

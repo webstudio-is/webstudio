@@ -45,3 +45,22 @@ export const loadAssetsByProject = async (
     })
   );
 };
+
+export const loadAssetNamesByAssetIds = async (
+  assetIds: Array<Asset["id"]>
+): Promise<Array<{ id: Asset["id"]; name: Asset["name"] }>> => {
+  return await prisma.asset.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    where: {
+      id: {
+        in: assetIds,
+      },
+    },
+    orderBy: {
+      file: { createdAt: "desc" },
+    },
+  });
+};

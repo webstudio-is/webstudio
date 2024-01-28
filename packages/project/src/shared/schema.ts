@@ -9,6 +9,8 @@ export const Title = z
     `Minimum ${MIN_TITLE_LENGTH} characters required`
   );
 
+export const PreviewImageAssetId = z.string();
+
 export const Project = z.object({
   id: z.string(),
   title: Title,
@@ -16,6 +18,7 @@ export const Project = z.object({
   userId: z.string().nullable(),
   isDeleted: z.boolean(),
   domain: z.string(),
+  previewImageAssetId: PreviewImageAssetId,
   latestBuild: z.optional(
     z
       .object({
