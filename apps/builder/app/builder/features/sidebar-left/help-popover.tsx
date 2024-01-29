@@ -59,7 +59,7 @@ export const HelpPopover = ({
               prefix={<Webstudio1cIcon />}
               color="gradient"
             >
-              Learn from or docs
+              Learn from docs
             </Button>
             <Button
               formAction="https://discord.gg/UNdyrDkq5r"
