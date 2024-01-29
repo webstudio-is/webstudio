@@ -57,10 +57,7 @@ export const WithProjects: ComponentStory<typeof Dashboard> = () => {
       isDeleted: false,
       isPublished: false,
       latestBuild: null,
-      previewImageAsset: {
-        id: "0",
-        name: "0",
-      },
+      previewImageAsset: null,
     },
   ];
   const router = createRouter(
