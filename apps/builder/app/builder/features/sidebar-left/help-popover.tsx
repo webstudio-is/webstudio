@@ -11,8 +11,8 @@ import {
 import {
   DiscordIcon,
   GithubIcon,
-  TwitterIcon,
   Webstudio1cIcon,
+  XIcon,
   Youtube1cIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
@@ -76,11 +76,11 @@ export const HelpPopover = ({
               Join Github discussions
             </Button>
             <Button
-              formAction="https://twitter.com/getwebstudio"
-              prefix={<TwitterIcon />}
+              formAction="https://x.com/getwebstudio"
+              prefix={<XIcon />}
               color="dark"
             >
-              Follow us on Twitter
+              Follow us on X
             </Button>
           </Flex>
         </PopoverContent>
