@@ -66,14 +66,14 @@ export const HelpPopover = ({
               prefix={<DiscordIcon />}
               color="primary"
             >
-              Chat with us on Discord
+              Chat on Discord
             </Button>
             <Button
               formAction="https://github.com/webstudio-is/webstudio-community/discussions"
               prefix={<GithubIcon />}
               color="dark"
             >
-              Join Github discussions
+              Discuss on GitHub
             </Button>
             <Button
               formAction="https://x.com/getwebstudio"
