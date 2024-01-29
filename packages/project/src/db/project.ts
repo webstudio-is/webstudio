@@ -63,7 +63,6 @@ export const create = async (
         userId,
         title,
         domain: generateDomain(title),
-        previewImageAssetId: "",
       },
     });
 
@@ -177,6 +176,9 @@ const clone = async (
         title: title ?? project.title,
         domain: generateDomain(project.title),
         previewImageAssetId: project.previewImageAsset?.id,
+      },
+      include: {
+        previewImageAsset: true,
       },
     });
 
