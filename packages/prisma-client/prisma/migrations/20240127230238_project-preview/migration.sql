@@ -11,9 +11,11 @@ ADD
 SET
   NULL;
 
+-- Drop DashboardProject View
+DROP VIEW IF EXISTS "DashboardProject";
+
 -- Update DashboardProject View
-CREATE
-OR REPLACE VIEW "DashboardProject" AS
+CREATE VIEW "DashboardProject" AS
 SELECT
   *,
   EXISTS (
