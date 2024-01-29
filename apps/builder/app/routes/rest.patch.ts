@@ -108,7 +108,7 @@ export const action = async ({ request }: ActionArgs) => {
       styles?: Styles;
     } = {};
 
-    let previewImageAssetId: string | undefined;
+    let previewImageAssetId: string | null | undefined = undefined;
 
     // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
     const patchedStyleDeclKeysSet = new Set<string>();
@@ -129,7 +129,7 @@ export const action = async ({ request }: ActionArgs) => {
           const newSocialImageAssetId =
             buildData.pages.homePage.meta.socialImageAssetId;
           if (currentSocialImageAssetId !== newSocialImageAssetId) {
-            previewImageAssetId = newSocialImageAssetId;
+            previewImageAssetId = newSocialImageAssetId || null;
           }
           continue;
         }

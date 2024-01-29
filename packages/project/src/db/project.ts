@@ -133,7 +133,7 @@ export const updatePreviewImage = async (
     assetId,
   }: {
     projectId: Project["id"];
-    assetId: string;
+    assetId: string | null;
   },
   context: AppContext
 ) => {
