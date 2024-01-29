@@ -10,7 +10,7 @@ import {
   createBuild,
   cloneBuild,
 } from "@webstudio-is/project-build/index.server";
-import { PreviewImageAssetId, Project, Title } from "../shared/schema";
+import { Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 
 export const loadById = async (
@@ -30,6 +30,7 @@ export const loadById = async (
     where: { id_isDeleted: { id: projectId, isDeleted: false } },
     include: {
       latestBuild: true,
+      previewImageAsset: true,
     },
   });
 
@@ -136,8 +137,6 @@ export const updatePreviewImage = async (
   },
   context: AppContext
 ) => {
-  PreviewImageAssetId.parse(assetId);
-
   await assertEditPermission(projectId, context);
 
   return await prisma.project.update({
@@ -177,7 +176,7 @@ const clone = async (
         userId: userId,
         title: title ?? project.title,
         domain: generateDomain(project.title),
-        previewImageAssetId: project.previewImageAssetId,
+        previewImageAssetId: project.previewImageAsset?.id,
       },
     });
 

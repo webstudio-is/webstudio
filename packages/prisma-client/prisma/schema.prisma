@@ -11,8 +11,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgres"
-  url      = env("DATABASE_URL")
+  provider  = "postgres"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -42,10 +42,12 @@ model File {
 }
 
 model Asset {
-  id        String @default(uuid()) // not unique!
-  projectId String
-  file      File   @relation(fields: [name], references: [name])
-  name      String
+  id               String             @default(uuid()) // not unique!
+  projectId        String
+  file             File               @relation(fields: [name], references: [name])
+  name             String
+  Project          Project[]
+  DashboardProject DashboardProject[]
 
   @@id([id, projectId])
 }
@@ -147,7 +149,8 @@ model Project {
   projectDomain       ProjectDomain[]
   latestBuild         LatestBuildPerProject?
   authorizationToken  AuthorizationToken[]
-  previewImageAssetId String
+  previewImageAsset   Asset?                 @relation(fields: [previewImageAssetId, id], references: [id, projectId])
+  previewImageAssetId String?
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -304,7 +307,8 @@ view DashboardProject {
   title               String
   domain              String
   userId              String?
-  previewImageAssetId String
+  previewImageAsset   Asset?   @relation(fields: [previewImageAssetId, id], references: [id, projectId])
+  previewImageAssetId String?
   isDeleted           Boolean  @default(false)
   isPublished         Boolean
 }

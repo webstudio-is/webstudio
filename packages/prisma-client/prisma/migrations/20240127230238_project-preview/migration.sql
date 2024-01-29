@@ -1,16 +1,19 @@
--- AlterTable
+ALTER TABLE
+  "public"."Project"
+ADD
+  COLUMN "previewImageAssetId" text;
+
+-- AddForeignKey
 ALTER TABLE
   "Project"
-ALTER COLUMN
-  "previewImageAssetId"
+ADD
+  CONSTRAINT "Project_previewImageAssetId_id_fkey" FOREIGN KEY ("previewImageAssetId", "id") REFERENCES "Asset"("id", "projectId") ON DELETE
 SET
-  NOT NULL;
-
--- Drop DashboardProject View
-DROP VIEW IF EXISTS "DashboardProject";
+  NULL;
 
 -- Update DashboardProject View
-CREATE VIEW "DashboardProject" AS
+CREATE
+OR REPLACE VIEW "DashboardProject" AS
 SELECT
   *,
   EXISTS (

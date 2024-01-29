@@ -203,7 +203,7 @@ export const ProjectCard = ({
   hasProPlan,
   createdAt,
   latestBuild,
-  previewImageName,
+  previewImageAsset,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -226,10 +226,10 @@ export const ProjectCard = ({
         onKeyDown={handleKeyDown}
       >
         <Grid className={thumbnailStyle()}>
-          {previewImageName ? (
+          {previewImageAsset ? (
             <ThumbnailLinkWithImage
               to={linkPath}
-              name={previewImageName}
+              name={previewImageAsset.name}
               ref={thumbnailRef}
             />
           ) : (
@@ -323,7 +323,7 @@ export const ProjectTemplateCard = ({
   id,
   title,
   domain,
-  previewImageName,
+  previewImageAsset,
   isPublished,
 }: Omit<ProjectCardProps, "hasProPlan">) => {
   const { thumbnailRef, handleKeyDown } = useProjectCard();
@@ -340,9 +340,9 @@ export const ProjectTemplateCard = ({
         onKeyDown={handleKeyDown}
       >
         <Grid className={thumbnailStyle()}>
-          {previewImageName ? (
+          {previewImageAsset ? (
             <ThumbnailWithImage
-              name={previewImageName}
+              name={previewImageAsset.name}
               ref={thumbnailRef}
               onClick={() => {
                 setIsDuplicateDialogOpen(true);
