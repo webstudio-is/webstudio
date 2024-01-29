@@ -42,10 +42,12 @@ model File {
 }
 
 model Asset {
-  id        String @default(uuid()) // not unique!
-  projectId String
-  file      File   @relation(fields: [name], references: [name])
-  name      String
+  id               String             @default(uuid()) // not unique!
+  projectId        String
+  file             File               @relation(fields: [name], references: [name])
+  name             String
+  Project          Project[]
+  DashboardProject DashboardProject[]
 
   @@id([id, projectId])
 }
@@ -135,18 +137,20 @@ view UserProduct {
 }
 
 model Project {
-  id                 String                 @id @default(uuid())
-  createdAt          DateTime               @default(now())
-  title              String
-  domain             String                 @unique
-  user               User?                  @relation(fields: [userId], references: [id])
-  userId             String?
-  build              Build[]
-  isDeleted          Boolean                @default(false)
-  files              File[]
-  projectDomain      ProjectDomain[]
-  latestBuild        LatestBuildPerProject?
-  authorizationToken AuthorizationToken[]
+  id                  String                 @id @default(uuid())
+  createdAt           DateTime               @default(now())
+  title               String
+  domain              String                 @unique
+  user                User?                  @relation(fields: [userId], references: [id])
+  userId              String?
+  build               Build[]
+  isDeleted           Boolean                @default(false)
+  files               File[]
+  projectDomain       ProjectDomain[]
+  latestBuild         LatestBuildPerProject?
+  authorizationToken  AuthorizationToken[]
+  previewImageAsset   Asset?                 @relation(fields: [previewImageAssetId, id], references: [id, projectId])
+  previewImageAssetId String?
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -298,11 +302,13 @@ view LatestBuildPerProject {
 
 // Dashboard
 view DashboardProject {
-  id          String   @id @default(uuid())
-  createdAt   DateTime @default(now())
-  title       String
-  domain      String
-  userId      String?
-  isDeleted   Boolean  @default(false)
-  isPublished Boolean
+  id                  String   @id @default(uuid())
+  createdAt           DateTime @default(now())
+  title               String
+  domain              String
+  userId              String?
+  previewImageAsset   Asset?   @relation(fields: [previewImageAssetId, id], references: [id, projectId])
+  previewImageAssetId String?
+  isDeleted           Boolean  @default(false)
+  isPublished         Boolean
 }

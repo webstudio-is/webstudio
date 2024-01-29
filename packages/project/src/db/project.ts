@@ -30,6 +30,7 @@ export const loadById = async (
     where: { id_isDeleted: { id: projectId, isDeleted: false } },
     include: {
       latestBuild: true,
+      previewImageAsset: true,
     },
   });
 
@@ -62,6 +63,7 @@ export const create = async (
         userId,
         title,
         domain: generateDomain(title),
+        previewImageAssetId: "",
       },
     });
 
@@ -92,6 +94,19 @@ export const markAsDeleted = async (
   });
 };
 
+const assertEditPermission = async (projectId: string, context: AppContext) => {
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error(
+      "Only a token or user with edit permission can edit the project."
+    );
+  }
+};
+
 export const rename = async (
   {
     projectId,
@@ -104,20 +119,29 @@ export const rename = async (
 ) => {
   Title.parse(title);
 
-  const canEdit = await authorizeProject.hasProjectPermit(
-    { projectId, permit: "edit" },
-    context
-  );
-
-  if (canEdit === false) {
-    throw new Error(
-      "Only a token or user with edit permission can edit the project."
-    );
-  }
+  await assertEditPermission(projectId, context);
 
   return await prisma.project.update({
     where: { id: projectId },
     data: { title },
+  });
+};
+
+export const updatePreviewImage = async (
+  {
+    projectId,
+    assetId,
+  }: {
+    projectId: Project["id"];
+    assetId: string | null;
+  },
+  context: AppContext
+) => {
+  await assertEditPermission(projectId, context);
+
+  return await prisma.project.update({
+    where: { id: projectId },
+    data: { previewImageAssetId: assetId },
   });
 };
 
@@ -152,6 +176,7 @@ const clone = async (
         userId: userId,
         title: title ?? project.title,
         domain: generateDomain(project.title),
+        previewImageAssetId: project.previewImageAsset?.id,
       },
     });
 
@@ -221,16 +246,7 @@ export const updateDomain = async (
 
   const { domain } = domainValidation;
 
-  const canEdit = await authorizeProject.hasProjectPermit(
-    { projectId: input.id, permit: "edit" },
-    context
-  );
-
-  if (canEdit === false) {
-    throw new Error(
-      "Only a token or user with edit permission can edit the project."
-    );
-  }
+  await assertEditPermission(input.id, context);
 
   try {
     const project = await prisma.project.update({

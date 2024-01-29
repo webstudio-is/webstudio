@@ -34,6 +34,7 @@ import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
+import { db } from "@webstudio-is/project/index.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -107,6 +108,8 @@ export const action = async ({ request }: ActionArgs) => {
       styles?: Styles;
     } = {};
 
+    let previewImageAssetId: string | null | undefined = undefined;
+
     // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
     const patchedStyleDeclKeysSet = new Set<string>();
 
@@ -120,7 +123,14 @@ export const action = async ({ request }: ActionArgs) => {
         if (namespace === "pages") {
           // lazily parse build data before patching
           const pages = buildData.pages ?? parsePages(build.pages);
+          const currentSocialImageAssetId =
+            pages.homePage.meta.socialImageAssetId;
           buildData.pages = applyPatches(pages, patches);
+          const newSocialImageAssetId =
+            buildData.pages.homePage.meta.socialImageAssetId;
+          if (currentSocialImageAssetId !== newSocialImageAssetId) {
+            previewImageAssetId = newSocialImageAssetId || null;
+          }
           continue;
         }
 
@@ -286,6 +296,13 @@ export const action = async ({ request }: ActionArgs) => {
       return {
         status: "version_mismatched",
       };
+    }
+
+    if (previewImageAssetId !== undefined) {
+      await db.project.updatePreviewImage(
+        { assetId: previewImageAssetId, projectId },
+        context
+      );
     }
 
     return { status: "ok" };

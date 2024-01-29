@@ -26,7 +26,12 @@ import {
   ShareProjectDialog,
   DuplicateProjectDialog,
 } from "./project-dialogs";
-import { Thumbnail, ThumbnailLink } from "./thumbnail-link";
+import {
+  ThumbnailLinkWithAbbr,
+  ThumbnailLinkWithImage,
+  ThumbnailWithAbbr,
+  ThumbnailWithImage,
+} from "./thumbnail";
 import { useNavigation } from "@remix-run/react";
 import { Spinner } from "../spinner";
 import type { DashboardProject } from "@webstudio-is/dashboard";
@@ -51,6 +56,7 @@ const thumbnailStyle = css({
   position: "relative",
   overflow: "hidden",
   minWidth: "100%",
+  height: "100%",
 });
 
 const footerStyle = css({
@@ -197,6 +203,7 @@ export const ProjectCard = ({
   hasProPlan,
   createdAt,
   latestBuild,
+  previewImageAsset,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -219,7 +226,19 @@ export const ProjectCard = ({
         onKeyDown={handleKeyDown}
       >
         <Grid className={thumbnailStyle()}>
-          <ThumbnailLink title={title} to={linkPath} ref={thumbnailRef} />
+          {previewImageAsset ? (
+            <ThumbnailLinkWithImage
+              to={linkPath}
+              name={previewImageAsset.name}
+              ref={thumbnailRef}
+            />
+          ) : (
+            <ThumbnailLinkWithAbbr
+              title={title}
+              to={linkPath}
+              ref={thumbnailRef}
+            />
+          )}
           {isTransitioning && <Spinner delay={0} />}
         </Grid>
 
@@ -304,6 +323,7 @@ export const ProjectTemplateCard = ({
   id,
   title,
   domain,
+  previewImageAsset,
   isPublished,
 }: Omit<ProjectCardProps, "hasProPlan">) => {
   const { thumbnailRef, handleKeyDown } = useProjectCard();
@@ -320,13 +340,23 @@ export const ProjectTemplateCard = ({
         onKeyDown={handleKeyDown}
       >
         <Grid className={thumbnailStyle()}>
-          <Thumbnail
-            title={title}
-            ref={thumbnailRef}
-            onClick={() => {
-              setIsDuplicateDialogOpen(true);
-            }}
-          />
+          {previewImageAsset ? (
+            <ThumbnailWithImage
+              name={previewImageAsset.name}
+              ref={thumbnailRef}
+              onClick={() => {
+                setIsDuplicateDialogOpen(true);
+              }}
+            />
+          ) : (
+            <ThumbnailWithAbbr
+              title={title}
+              ref={thumbnailRef}
+              onClick={() => {
+                setIsDuplicateDialogOpen(true);
+              }}
+            />
+          )}
         </Grid>
 
         <Flex

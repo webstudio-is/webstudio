@@ -10,7 +10,6 @@ import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
-
 export const loader = async ({
   request,
 }: LoaderArgs): Promise<ComponentProps<typeof Dashboard>> => {
@@ -32,13 +31,9 @@ export const loader = async ({
     .createCaller(context)
     .findMany({ userId: user.id });
 
-  const projectIds = env.PROJECT_TEMPLATES;
-
   const projectTemplates = await dashboardProjectRouter
     .createCaller(context)
-    .findManyByIds({
-      projectIds,
-    });
+    .findManyByIds({ projectIds: env.PROJECT_TEMPLATES });
 
   const { userPlanFeatures } = context;
 

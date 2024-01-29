@@ -61,6 +61,10 @@ $project.set({
   isDeleted: false,
   userId: "userId",
   domain: "new-2x9tcd",
+  previewImageAsset: {
+    id: "0",
+    name: "0",
+  },
 });
 
 export const PageSettingsEdit = () => {
