@@ -55,11 +55,11 @@ export const HelpPopover = ({
               Learn with videos
             </Button>
             <Button
-              formAction="https://webstudio.is/blog"
+              formAction="https://docs.webstudio.is/"
               prefix={<Webstudio1cIcon />}
               color="gradient"
             >
-              Learn on our blog
+              Learn from or docs
             </Button>
             <Button
               formAction="https://discord.gg/UNdyrDkq5r"
