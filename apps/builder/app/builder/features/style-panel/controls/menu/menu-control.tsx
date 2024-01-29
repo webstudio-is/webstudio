@@ -1,4 +1,5 @@
 import { toValue } from "@webstudio-is/css-engine";
+import type { IconRecord } from "@webstudio-is/icons";
 import {
   DropdownMenu,
   DropdownMenuArrow,
@@ -19,13 +20,14 @@ import { PropertyTooltip } from "../../shared/property-name";
 export const MenuControl = ({
   currentStyle,
   property,
+  icons,
   items: passedItems,
   setProperty,
   deleteProperty,
 }: Pick<
   ControlProps,
   "currentStyle" | "property" | "items" | "setProperty" | "deleteProperty"
->) => {
+> & { icons?: IconRecord }) => {
   const { label, items: defaultItems } = styleConfigByName(property);
   const styleValue = currentStyle[property];
   const value = styleValue?.value;
@@ -42,7 +44,7 @@ export const MenuControl = ({
 
   const items = (passedItems ?? defaultItems)
     .map((item) => {
-      const ItemIcon = iconProps[item.name];
+      const ItemIcon = icons?.[item.name] ?? iconProps?.[item.name];
       return { ...item, icon: ItemIcon && <ItemIcon /> };
     })
     .filter((item) => item.icon);

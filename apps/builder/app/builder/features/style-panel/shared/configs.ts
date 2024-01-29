@@ -17,8 +17,6 @@ import {
   AICenterIcon,
   AIBaselineIcon,
   AIStretchIcon,
-  ArrowRightIcon,
-  ArrowDownIcon,
   NoWrapIcon,
   WrapIcon,
   JCStartIcon,
@@ -113,10 +111,6 @@ export const iconConfigs: IconRecords = {
     center: AICenterIcon,
     baseline: AIBaselineIcon,
     stretch: AIStretchIcon,
-  },
-  flexDirection: {
-    row: ArrowRightIcon,
-    column: ArrowDownIcon,
   },
   flexWrap: {
     nowrap: NoWrapIcon,
