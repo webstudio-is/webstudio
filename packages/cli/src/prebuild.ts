@@ -28,6 +28,7 @@ import {
   generateRemixParams,
   generateResourcesLoader,
   collectionComponent,
+  generatePageMeta,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -444,6 +445,8 @@ export const prebuild = async (options: {
       "useState",
       "Fragment",
       "useResource",
+      "PageMeta",
+      "createPageMeta",
       "PageData",
       "Asset",
       "fontAssets",
@@ -499,7 +502,6 @@ export const prebuild = async (options: {
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       project: siteData.build.pages.meta,
-      page: pageData.page,
     };
 
     const rootInstanceId = pageData.page.rootInstanceId;
@@ -550,6 +552,7 @@ export const prebuild = async (options: {
 import { Fragment, useState } from "react";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}
 import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
@@ -559,6 +562,8 @@ export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
     )};
 export const projectId = "${siteData.build.projectId}";
+
+${generatePageMeta({ page: pageData.page, dataSources })}
 
 ${pageComponent}
 
