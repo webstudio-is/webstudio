@@ -66,6 +66,7 @@ export const getPageMeta = ({}: {
     description: "",
     excludePageFromSearch: false,
     socialImageAssetId: "",
+    socialImageUrl: undefined,
     custom: [],
   };
 };

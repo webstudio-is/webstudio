@@ -1,11 +1,10 @@
 import { Box, Grid, Label, css, theme } from "@webstudio-is/design-system";
 import { Image, createImageLoader } from "@webstudio-is/image";
-import type { ImageAsset } from "@webstudio-is/sdk";
 import env from "~/shared/env";
 import { truncateByWords, truncate } from "./social-utils";
 
 type SocialPreviewProps = {
-  asset?: ImageAsset;
+  ogImageUrl?: string;
   ogUrl: string;
   ogTitle: string;
   ogDescription: string;
@@ -28,7 +27,7 @@ const imgStyle = css({
 });
 
 export const SocialPreview = ({
-  asset,
+  ogImageUrl,
   ogDescription,
   ogTitle,
   ogUrl,
@@ -50,10 +49,10 @@ export const SocialPreview = ({
         }}
       >
         <Image
-          src={asset?.type === "image" ? asset.name : undefined}
+          src={ogImageUrl}
           loader={imageLoader}
           className={imgStyle({
-            hasImage: asset?.type === "image" ? true : undefined,
+            hasImage: ogImageUrl !== undefined ? true : undefined,
           })}
         />
 

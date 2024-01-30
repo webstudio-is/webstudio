@@ -5,6 +5,7 @@ export type PageMeta = {
   description?: string;
   excludePageFromSearch?: boolean;
   socialImageAssetId?: Asset["id"];
+  socialImageUrl?: string;
   custom: Array<{ property: string; content: string }>;
 };
 
@@ -22,6 +23,7 @@ export const generatePageMeta = ({
   const socialImageAssetIdExpression = JSON.stringify(
     page.meta.socialImageAssetId
   );
+  const socialImageUrlExpression = JSON.stringify(page.meta.socialImageUrl);
   let generated = "";
   generated += `export const getPageMeta = ({}: {\n`;
   generated += `  params: Record<string, undefined | string>;\n`;
@@ -32,6 +34,7 @@ export const generatePageMeta = ({
   generated += `    description: ${descriptionExpression},\n`;
   generated += `    excludePageFromSearch: ${excludePageFromSearchExpression},\n`;
   generated += `    socialImageAssetId: ${socialImageAssetIdExpression},\n`;
+  generated += `    socialImageUrl: ${socialImageUrlExpression},\n`;
   generated += `    custom: [\n`;
   if (page.meta.custom) {
     for (const customMeta of page.meta.custom) {
