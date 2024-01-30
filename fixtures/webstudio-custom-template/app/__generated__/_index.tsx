@@ -39,7 +39,7 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "0d856812-61d8-4014-a20a-82e01c0eb8ee";
 
 export const getPageMeta = ({}: {
-  params: Record<string, any>;
+  params: Record<string, undefined | string>;
   resources: Record<string, any>;
 }): PageMeta => {
   return {

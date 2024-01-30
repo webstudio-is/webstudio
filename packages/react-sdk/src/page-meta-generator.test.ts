@@ -16,7 +16,7 @@ test("generate minimal static page meta factory", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({}: {
-  params: Record<string, any>;
+  params: Record<string, undefined | string>;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -55,7 +55,7 @@ test("generate complete static page meta factory", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({}: {
-  params: Record<string, any>;
+  params: Record<string, undefined | string>;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -99,7 +99,7 @@ test("generate custom meta ignoring empty property name", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({}: {
-  params: Record<string, any>;
+  params: Record<string, undefined | string>;
   resources: Record<string, any>;
 }): PageMeta => {
   return {

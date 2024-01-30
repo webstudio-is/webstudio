@@ -24,7 +24,7 @@ export const generatePageMeta = ({
   );
   let generated = "";
   generated += `export const getPageMeta = ({}: {\n`;
-  generated += `  params: Record<string, any>;\n`;
+  generated += `  params: Record<string, undefined | string>;\n`;
   generated += `  resources: Record<string, any>;\n`;
   generated += `}): PageMeta => {\n`;
   generated += `  return {\n`;
