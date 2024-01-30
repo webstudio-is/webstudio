@@ -598,7 +598,7 @@ const FormFields = ({
           </Text>
           {isFeatureEnabled("cms") && (
             <InputField
-              placeholder="http://www.url.com"
+              placeholder="https://www.url.com"
               value={values.socialImageUrl}
               onChange={(event) => {
                 onChange({
