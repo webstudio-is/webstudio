@@ -10,7 +10,6 @@ import {
   CommandBarContentSection,
   CommandBarContentSeparator,
   CommandBarTrigger,
-  Flex,
   Grid,
   ScrollArea,
   Text,
