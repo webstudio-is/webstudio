@@ -4,6 +4,7 @@
 import { Fragment, useState } from "react";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Image as Image } from "@webstudio-is/sdk-components-react";
 
@@ -50,19 +51,24 @@ export const pageData: PageData = {
     faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
-  page: {
-    id: "szYLvBduHPmbtqQKCDY0b",
-    name: "RouteWithSymbols",
-    title: "RouteWithSymbols",
-    meta: { description: "" },
-    rootInstanceId: "EDEfpMPRqDejthtwkH7ws",
-    path: "/_route_with_symbols_",
-  },
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
+
+export const getPageMeta = ({}: {
+  params: Record<string, undefined | string>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "RouteWithSymbols",
+    description: "",
+    excludePageFromSearch: undefined,
+    socialImageAssetId: undefined,
+    custom: [],
+  };
+};
 
 const Page = ({ params: PageParams }: { params: any }) => {
   return (

@@ -8,7 +8,7 @@ import {
   json,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import type { Page as PageType, ProjectMeta } from "@webstudio-is/sdk";
+import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
@@ -21,6 +21,7 @@ import {
   Page,
   imageAssets,
   getRemixParams,
+  getPageMeta,
 } from "../__generated__/[nested].[nested-page]._index";
 import { loadResources } from "../__generated__/[nested].[nested-page]._index.server";
 import css from "../__generated__/index.css";
@@ -28,12 +29,12 @@ import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
 export type PageData = {
   project?: ProjectMeta;
-  page: PageType;
 };
 
 export const loader = async (arg: LoaderArgs) => {
   const params = getRemixParams(arg.params);
   const resources = await loadResources({ params });
+  const pageMeta = getPageMeta({ params, resources });
 
   const host =
     arg.request.headers.get("x-forwarded-host") ||
@@ -54,6 +55,7 @@ export const loader = async (arg: LoaderArgs) => {
       excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
       params,
       resources,
+      pageMeta,
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
@@ -68,29 +70,32 @@ export const headers = () => {
 };
 
 export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
-  const { page, project } = pageData;
-
   const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [];
+  if (data === undefined) {
+    return metas;
+  }
+  const { pageMeta } = data;
+  const { project } = pageData;
 
-  if (data?.url) {
+  if (data.url) {
     metas.push({
       property: "og:url",
       content: data.url,
     });
   }
 
-  if (page.title) {
-    metas.push({ title: page.title });
+  if (pageMeta.title) {
+    metas.push({ title: pageMeta.title });
 
     metas.push({
       property: "og:title",
-      content: page.title,
+      content: pageMeta.title,
     });
   }
 
   metas.push({ property: "og:type", content: "website" });
 
-  const origin = `https://${data?.host}`;
+  const origin = `https://${data.host}`;
 
   if (project?.siteName) {
     metas.push({
@@ -107,33 +112,33 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     });
   }
 
-  if (page.meta.excludePageFromSearch || data?.excludeFromSearch) {
+  if (pageMeta.excludePageFromSearch || data.excludeFromSearch) {
     metas.push({
       name: "robots",
       content: "noindex, nofollow",
     });
   }
 
-  if (page.meta.description) {
+  if (pageMeta.description) {
     metas.push({
       name: "description",
-      content: page.meta.description,
+      content: pageMeta.description,
     });
     metas.push({
       property: "og:description",
-      content: page.meta.description,
+      content: pageMeta.description,
     });
   }
 
-  if (page.meta.socialImageAssetId) {
+  if (pageMeta.socialImageAssetId) {
     const imageAsset = imageAssets.find(
-      (asset) => asset.id === page.meta.socialImageAssetId
+      (asset) => asset.id === pageMeta.socialImageAssetId
     );
 
     if (imageAsset) {
       metas.push({
         property: "og:image",
-        content: `https://${data?.host}${imageLoader({
+        content: `https://${data.host}${imageLoader({
           src: imageAsset.name,
           // Do not transform social image (not enough information do we need to do this)
           format: "raw",
@@ -142,12 +147,7 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     }
   }
 
-  for (const customMeta of page.meta.custom ?? []) {
-    if (customMeta.property.trim().length === 0) {
-      continue;
-    }
-    metas.push(customMeta);
-  }
+  metas.push(...pageMeta.custom);
 
   return metas;
 };

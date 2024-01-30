@@ -28,7 +28,6 @@ import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
 export type PageData = {
   project?: ProjectMeta;
-  page: PageType;
 };
 
 export const loader = async (arg: LoaderArgs) => {

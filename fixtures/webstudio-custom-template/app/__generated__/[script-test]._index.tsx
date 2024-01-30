@@ -4,6 +4,7 @@
 import { Fragment, useState } from "react";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 import {
   Body as Body,
   Link as Link,
@@ -31,24 +32,24 @@ export const pageData: PageData = {
     faviconAssetId: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
     code: '<script>console.log(\'HELLO\')</script>\n<meta property="saas:test" content="test">',
   },
-  page: {
-    id: "xT46WZKzCBTvUCIObMELW",
-    name: "Script Test",
-    title: "Script Test",
-    meta: {
-      description: "",
-      excludePageFromSearch: false,
-      socialImageAssetId: "",
-      custom: [{ property: "", content: "" }],
-    },
-    rootInstanceId: "LW98_-srDnnagkR10lsk4",
-    path: "/script-test",
-  },
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "0d856812-61d8-4014-a20a-82e01c0eb8ee";
+
+export const getPageMeta = ({}: {
+  params: Record<string, undefined | string>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "Script Test",
+    description: "",
+    excludePageFromSearch: false,
+    socialImageAssetId: "",
+    custom: [],
+  };
+};
 
 const Page = ({ params: PageParams }: { params: any }) => {
   return (

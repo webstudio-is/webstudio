@@ -3,6 +3,7 @@
  **/
 import type { Asset, ImageAsset } from "@webstudio-is/sdk";
 import type { PageData } from "../templates/defaults/__templates__/route-template";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
@@ -13,14 +14,6 @@ export const pageData: PageData = {
     faviconAssetId: "",
     code: "",
   },
-  page: {
-    id: "",
-    name: "",
-    title: "",
-    meta: {},
-    rootInstanceId: "",
-    path: "",
-  },
 };
 
 export const user: { email: string | null } | undefined = {
@@ -28,13 +21,23 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "project-id";
 
-type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+export const getPageMeta = ({}: {
+  params: Record<string, any>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "Page title",
+    custom: [],
+  };
+};
+
+const Page = (_props: { params: any }) => {
   return <></>;
 };
 
 export { Page };
 
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
