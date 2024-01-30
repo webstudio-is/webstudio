@@ -31,11 +31,8 @@ export const Projects = ({
           <Flex gap="2">
             <HelpPopover open={isOpen} onOpenChange={setIsOpen} side="bottom">
               <HelpPopover.Trigger asChild>
-                <Button
-                  color="gradient"
-                  prefix={<HelpIcon size={16} color="#fff" />}
-                >
-                  Learn Webstudio or ask for help
+                <Button color="neutral" prefix={<HelpIcon size={16} />}>
+                  Learn More
                 </Button>
               </HelpPopover.Trigger>
             </HelpPopover>
