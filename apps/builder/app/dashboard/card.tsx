@@ -19,7 +19,6 @@ export const Card = styled(Box, {
   "&:focus-visible": {
     outline: `2px solid ${theme.colors.borderFocus}`,
   },
-  cursor: "pointer",
 });
 
 export const CardContent = styled(Grid, {
