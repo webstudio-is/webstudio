@@ -8,7 +8,7 @@ import { z } from "zod";
 const Settings = z.object({
   navigatorLayout: z.enum(["docked", "undocked"]).default("undocked"),
   isAiMenuOpen: z.boolean().default(true),
-  isAiCommandBarVisible: z.boolean().default(true),
+  isAiCommandBarVisible: z.boolean().default(false),
 });
 
 export type Settings = z.infer<typeof Settings>;
