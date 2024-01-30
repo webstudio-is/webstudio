@@ -3,13 +3,11 @@ import {
   css,
   Dialog,
   DialogContent,
-  DialogTitle,
   DialogTrigger,
   Flex,
   Text,
   theme,
 } from "@webstudio-is/design-system";
-import type { ComponentProps } from "react";
 import { Youtube1cIcon } from "@webstudio-is/icons";
 
 const containerStyle = css({
@@ -18,43 +16,43 @@ const containerStyle = css({
   minWidth: 600,
 });
 
-const EmptyStateContainer = (props: ComponentProps<typeof Flex>) => (
+const contentStyle = css({
+  maxWidth: "none",
+  width: "80vw",
+  aspectRatio: "16/9",
+});
+
+const iframeStyle = css({
+  width: "100%",
+  height: "100%",
+  border: 0,
+});
+
+export const EmptyState = () => (
   <Flex
     align="center"
     justify="center"
     direction="column"
     gap="6"
     className={containerStyle()}
-    {...props}
-  />
-);
-
-export const EmptyState = () => (
-  <EmptyStateContainer>
+  >
     <Text variant="brandMediumTitle" as="h1">
       What will you create?
     </Text>
-
     <Dialog>
       <DialogTrigger asChild>
         <Button color="gradient" prefix={<Youtube1cIcon size={16} />}>
           Watch The Intro
         </Button>
       </DialogTrigger>
-      <DialogContent
-        css={{ maxWidth: "none", width: "80vw", aspectRatio: "16/9" }}
-      >
+      <DialogContent className={contentStyle()}>
         <iframe
-          width="100%"
-          height="100%"
+          className={iframeStyle()}
           src="https://www.youtube-nocookie.com/embed/aL2sBSb3ghg?si=siExeIRt-YI_ypuA&autoplay=true"
-          title="YouTube video player"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
-        ></iframe>
-        <DialogTitle>Intro</DialogTitle>
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        />
       </DialogContent>
     </Dialog>
-  </EmptyStateContainer>
+  </Flex>
 );
