@@ -10,7 +10,6 @@ import {
   CommandBarContentSection,
   CommandBarContentSeparator,
   CommandBarTrigger,
-  Flex,
   Grid,
   ScrollArea,
   Text,
@@ -456,38 +455,9 @@ const CommandBarContent = (props: {
   return (
     <>
       <CommandBarContentSection>
-        <Flex justify={"between"}>
-          <Text
-            variant={"labelsSentenceCase"}
-            color={"subtle"}
-            css={{ visibility: "hidden" }}
-          >
-            {/* shortcutText */}
-          </Text>
-          <Text variant={"labelsSentenceCase"} align={"center"}>
-            Welcome to Webstudio AI alpha!
-          </Text>
-          <Text variant={"labelsSentenceCase"} color={"subtle"}>
-            {/* shortcutText */}
-          </Text>
-        </Flex>
-        <div />
-        <Text variant={"labelsSentenceCase"}>
-          Ask me to generate or edit sections, text, or images.
-          <br />
-          For example you can say: ”Make a new contact section”
+        <Text variant="labelsSentenceCase" align="center">
+          Welcome to Webstudio AI alpha!
         </Text>
-
-        {/* @todo: change color on theme when available */}
-        <Text variant={"labelsSentenceCase"} css={{ color: "#828486" }}>
-          This is an experimental (alpha) feature so results may vary in
-          quality. Consider sharing your feedback to help us improve.
-        </Text>
-        <Text variant={"labelsSentenceCase"} css={{ color: "#828486" }}>
-          By using Webstudio AI, you consent to OpenAI storing interactions
-          without personal data.
-        </Text>
-        <div />
         <Grid columns={2} gap={2}>
           <Button
             onClick={(event) => {
@@ -519,11 +489,6 @@ const CommandBarContent = (props: {
           <CommandBarContentSeparator />
 
           <CommandBarContentSection>
-            <Text variant={"labelsSentenceCase"} align={"center"}>
-              Previous prompts
-            </Text>
-            <div />
-
             {/* negative then positive margin is used to preserve focus outline on command prompts */}
             <ScrollArea
               css={{
