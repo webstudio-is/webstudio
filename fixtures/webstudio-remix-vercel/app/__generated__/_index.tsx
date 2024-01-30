@@ -4,6 +4,7 @@
 import { Fragment, useState } from "react";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 import {
   Body as Body,
   Link as Link,
@@ -59,24 +60,30 @@ export const pageData: PageData = {
     faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
-  page: {
-    id: "7Db64ZXgYiRqKSQNR-qTQ",
-    name: "Home",
-    title: "The Ultimate Cat Protection Zone",
-    meta: {
-      description:
-        "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
-      socialImageAssetId: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
-      custom: [{ property: "fb:app_id", content: "app_id_app_id_app_id" }],
-    },
-    rootInstanceId: "On9cvWCxr5rdZtY9O1Bv0",
-    path: "",
-  },
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
+
+export const getPageMeta = ({}: {
+  params: Record<string, undefined | string>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "The Ultimate Cat Protection Zone",
+    description:
+      "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+    excludePageFromSearch: undefined,
+    socialImageAssetId: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+    custom: [
+      {
+        property: "fb:app_id",
+        content: "app_id_app_id_app_id",
+      },
+    ],
+  };
+};
 
 const Page = ({ params: PageParams }: { params: any }) => {
   return (

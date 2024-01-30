@@ -4,6 +4,7 @@
 import { Fragment, useState } from "react";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Heading as Heading,
@@ -15,19 +16,24 @@ export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
 export const pageData: PageData = {
   project: { siteName: "", faviconAssetId: "", code: "" },
-  page: {
-    id: "9di_L14CzctvSruIoKVvE",
-    name: "Home",
-    title: "Home",
-    meta: {},
-    rootInstanceId: "MMimeobf_zi4ZkRGXapju",
-    path: "",
-  },
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
+
+export const getPageMeta = ({}: {
+  params: Record<string, undefined | string>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "Home",
+    description: undefined,
+    excludePageFromSearch: undefined,
+    socialImageAssetId: undefined,
+    custom: [],
+  };
+};
 
 const Page = ({ params: PageParams }: { params: any }) => {
   return (

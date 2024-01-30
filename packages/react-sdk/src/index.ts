@@ -31,3 +31,4 @@ export {
   generateJsxChildren,
 } from "./component-generator";
 export { generateResourcesLoader } from "./resources-generator";
+export * from "./page-meta-generator";
