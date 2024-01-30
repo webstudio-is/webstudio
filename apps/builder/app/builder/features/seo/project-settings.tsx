@@ -101,10 +101,7 @@ const ProjectSettingsContentMeta = (props: {
             <Text color="subtle">
               Upload a 32 x 32 px image to display in browser tabs.
             </Text>
-            <ImageControl
-              assetId={props.meta.faviconAssetId ?? ""}
-              onAssetIdChange={handleChange("faviconAssetId")}
-            >
+            <ImageControl onAssetIdChange={handleChange("faviconAssetId")}>
               <Button id={ids.favicon} css={{ justifySelf: "start" }}>
                 Upload
               </Button>

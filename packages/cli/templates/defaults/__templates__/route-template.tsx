@@ -145,6 +145,11 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
         })}`,
       });
     }
+  } else if (pageMeta.socialImageUrl) {
+    metas.push({
+      property: "og:image",
+      content: pageMeta.socialImageUrl,
+    });
   }
 
   metas.push(...pageMeta.custom);

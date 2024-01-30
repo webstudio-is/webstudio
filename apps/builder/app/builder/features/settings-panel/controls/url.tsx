@@ -113,7 +113,7 @@ const BaseUrl = ({ readOnly, prop, value, onChange, id }: BaseControlProps) => {
         disabled={readOnly}
         id={id}
         value={localValue.value}
-        placeholder="http://www.url.com"
+        placeholder="https://www.url.com"
         onChange={(event) => localValue.set(event.target.value)}
         onBlur={() => {
           localValue.set(addHttpsIfMissing(localValue.value));

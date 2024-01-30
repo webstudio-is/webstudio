@@ -88,6 +88,7 @@ const fieldDefaultValues = {
   description: "",
   isHomePage: false,
   excludePageFromSearch: false,
+  socialImageUrl: "",
   socialImageAssetId: "",
   customMetas: [
     {
@@ -205,6 +206,8 @@ const toFormValues = (
     path: page.path,
     title: page.title,
     description: page.meta.description ?? fieldDefaultValues.description,
+    socialImageUrl:
+      page.meta.socialImageUrl ?? fieldDefaultValues.socialImageUrl,
     socialImageAssetId:
       page.meta.socialImageAssetId ?? fieldDefaultValues.socialImageAssetId,
     excludePageFromSearch:
@@ -593,15 +596,28 @@ const FormFields = ({
             Project Settings will be used. The optimal dimensions for the image
             are 1200x630 px or larger with a 1.91:1 aspect ratio.
           </Text>
+          {isFeatureEnabled("cms") && (
+            <InputField
+              placeholder="https://www.url.com"
+              value={values.socialImageUrl}
+              onChange={(event) => {
+                onChange({
+                  field: "socialImageUrl",
+                  value: event.target.value,
+                });
+                onChange({ field: "socialImageAssetId", value: "" });
+              }}
+            />
+          )}
           <Grid gap={1} flow={"column"}>
             <ImageControl
-              assetId={values.socialImageAssetId}
-              onAssetIdChange={(socialImageAssetId) =>
+              onAssetIdChange={(socialImageAssetId) => {
                 onChange({
                   field: "socialImageAssetId",
                   value: socialImageAssetId,
-                })
-              }
+                });
+                onChange({ field: "socialImageUrl", value: "" });
+              }}
             >
               <Button
                 id={fieldIds.socialImageAssetId}
@@ -626,8 +642,10 @@ const FormFields = ({
           )}
           <div />
           <SocialPreview
-            asset={
-              socialImageAsset?.type === "image" ? socialImageAsset : undefined
+            ogImageUrl={
+              socialImageAsset?.type === "image"
+                ? socialImageAsset.name
+                : values.socialImageUrl
             }
             ogUrl={pageUrl}
             ogTitle={values.title}
@@ -832,7 +850,14 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     }
 
     if (values.socialImageAssetId !== undefined) {
-      page.meta.socialImageAssetId = values.socialImageAssetId;
+      page.meta.socialImageAssetId =
+        values.socialImageAssetId.length > 0
+          ? values.socialImageAssetId
+          : undefined;
+    }
+    if (values.socialImageUrl !== undefined) {
+      page.meta.socialImageUrl =
+        values.socialImageUrl.length > 0 ? values.socialImageUrl : undefined;
     }
 
     if (values.customMetas !== undefined) {
