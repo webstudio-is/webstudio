@@ -86,7 +86,7 @@ const Menu = ({
           {userPlanFeatures.hasProPlan === false && (
             <DropdownMenuItem
               onSelect={() => {
-                window.location.assign("https://webstudio.is/pricing");
+                window.open("https://webstudio.is/pricing");
               }}
               css={{
                 gap: theme.spacing[3],
