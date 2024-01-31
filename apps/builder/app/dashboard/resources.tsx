@@ -83,7 +83,7 @@ export const Resources = () => {
           />
           <Resource
             href="https://discord.gg/UNdyrDkq5r"
-            title="Chat on Discord"
+            title="Join the Community"
             Icon={DiscordIcon}
           />
           <Resource

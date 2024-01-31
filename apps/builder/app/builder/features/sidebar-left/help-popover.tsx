@@ -66,7 +66,7 @@ export const HelpPopover = ({
               prefix={<DiscordIcon />}
               color="primary"
             >
-              Chat on Discord
+              Join the Community
             </Button>
             <Button
               formAction="https://github.com/webstudio-is/webstudio-community/discussions"
