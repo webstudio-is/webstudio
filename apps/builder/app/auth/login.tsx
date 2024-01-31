@@ -67,7 +67,7 @@ export const Login = ({
       >
         <a href="https://webstudio.is" aria-label="Go to webstudio.is">
           <AccessibleIcon label="Logo">
-            <WebstudioIcon width="112" height="84" />
+            <WebstudioIcon size="100" />
           </AccessibleIcon>
         </a>
       </Flex>
@@ -84,7 +84,7 @@ export const Login = ({
         }}
       >
         <Text variant="brandMediumTitle" color="main" as="h1">
-          Sign in
+          Sign In
         </Text>
         <Flex direction="column" gap="4">
           <TooltipProvider>

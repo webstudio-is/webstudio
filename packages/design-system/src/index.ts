@@ -1,7 +1,7 @@
 export * from "./stitches.config";
 export * from "./components/storybook";
 export * from "./utilities";
-export { Slot } from "@radix-ui/react-slot";
+export * from "@radix-ui/react-slot";
 // Aligned with Figma
 
 export * from "./components/text";
@@ -53,11 +53,7 @@ export * from "./components/progress-radial";
 export { SearchField } from "./components/search-field";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 export { Card } from "./components/card";
-export {
-  Tooltip,
-  InputErrorsTooltip,
-  type TooltipProps,
-} from "./components/tooltip";
+export * from "./components/tooltip";
 export {
   EnhancedTooltip,
   EnhancedTooltipProvider,

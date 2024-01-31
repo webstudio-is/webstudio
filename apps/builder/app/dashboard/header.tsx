@@ -117,7 +117,7 @@ export const Header = ({
       justify="between"
       className={containerStyle()}
     >
-      <WebstudioIcon width={30} height={23} />
+      <WebstudioIcon size={22} />
 
       <Menu user={user} userPlanFeatures={userPlanFeatures} />
     </Flex>

@@ -1,7 +1,18 @@
-import { Flex, theme, Box, Grid, styled } from "@webstudio-is/design-system";
+import {
+  Flex,
+  theme,
+  Box,
+  Grid,
+  styled,
+  css,
+  Slot,
+  type SlotProps,
+} from "@webstudio-is/design-system";
+import type { ComponentProps } from "react";
 
-export const Card = styled(Box, {
+const cardStyle = css({
   display: "flex",
+  padding: 0,
   height: "100%",
   flexDirection: "column",
   alignItems: "center",
@@ -18,8 +29,18 @@ export const Card = styled(Box, {
   },
   "&:focus-visible": {
     outline: `2px solid ${theme.colors.borderFocus}`,
+    outlineOffset: 1,
   },
 });
+
+type CardProps = ComponentProps<typeof Box> & {
+  asChild?: boolean;
+} & SlotProps;
+
+export const Card = ({ asChild, ...props }: CardProps) => {
+  const Component = asChild ? Slot : Box;
+  return <Component {...props} className={cardStyle()} />;
+};
 
 export const CardContent = styled(Grid, {
   position: "relative",

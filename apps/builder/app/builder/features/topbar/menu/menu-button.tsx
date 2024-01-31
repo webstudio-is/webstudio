@@ -53,7 +53,7 @@ export const MenuButton = () => {
       <DropdownMenuTrigger>
         <span className={innerContainerStyle()}>
           <span className={faceStyle({ front: true })}>
-            <WebstudioIcon width="22" height="22" />
+            <WebstudioIcon size={22} />
           </span>
           <span className={faceStyle({ back: true })}>
             <HamburgerMenuIcon size={22} />

@@ -9,6 +9,8 @@ import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { disableCanvasPointerEvents } from "../utilities";
 
+export const TooltipProvider = TooltipPrimitive.TooltipProvider;
+
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   Omit<ComponentProps<typeof Content>, "content"> & {
     children: ReactElement;

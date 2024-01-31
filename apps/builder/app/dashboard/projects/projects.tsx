@@ -1,6 +1,6 @@
 import { Flex, Grid, Text, rawTheme } from "@webstudio-is/design-system";
 import { EmptyState } from "./empty-state";
-import { Panel } from "../panel";
+import { Panel } from "../shared/panel";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { ProjectCard, ProjectTemplateCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
@@ -23,9 +23,7 @@ export const Projects = ({
           <Text variant="brandSectionTitle" as="h2">
             Projects
           </Text>
-          <Flex gap="2">
-            <CreateProject />
-          </Flex>
+          <Flex gap="2">{projects.length !== 0 && <CreateProject />}</Flex>
         </Flex>
         {projects.length === 0 && <EmptyState />}
         <Grid

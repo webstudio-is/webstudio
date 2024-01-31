@@ -126,13 +126,17 @@ const useCreateProject = () => {
   };
 };
 
-export const CreateProject = () => {
+export const CreateProject = ({
+  buttonText = "New Project",
+}: {
+  buttonText?: string;
+}) => {
   const { handleSubmit, handleOpenChange, state, errors } = useCreateProject();
 
   return (
     <Dialog
       title="New Project"
-      trigger={<Button prefix={<PlusIcon />}>New Project</Button>}
+      trigger={<Button prefix={<PlusIcon />}>{buttonText}</Button>}
       onOpenChange={handleOpenChange}
     >
       <DialogContent

@@ -31,9 +31,9 @@ import {
   ThumbnailWithImage,
 } from "./thumbnail";
 import { useNavigation } from "@remix-run/react";
-import { Spinner } from "../spinner";
+import { Spinner } from "../shared/spinner";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-import { Card, CardContent, CardFooter } from "../card";
+import { Card, CardContent, CardFooter } from "../shared/card";
 
 const titleStyle = css({
   userSelect: "auto",
