@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { textVariants } from "./text";
-import { styled, theme } from "../stitches.config";
+import { css, styled, theme, type CSS } from "../stitches.config";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
 import { Flex } from "./flex";
 
@@ -106,7 +106,7 @@ const perColorStyle = (variant: ButtonColor) => ({
   },
 });
 
-const StyledButton = styled("button", {
+export const buttonStyle = css({
   all: "unset",
   boxSizing: "border-box",
   minWidth: 0,
@@ -160,7 +160,7 @@ type ButtonProps = {
 
   // We don't want all the noise from StyledButton,
   // so we're cherry-picking just the props we need
-  css?: ComponentProps<typeof StyledButton>["css"];
+  css?: CSS;
 
   // prefix/suffix are primarily for Icons
   // this is a replacement for icon/icon-left/icon-right in Figma
@@ -180,6 +180,9 @@ export const Button = forwardRef(
       suffix,
       children,
       "data-state": dataState,
+      className,
+      css,
+      color,
       ...restProps
     }: ButtonProps,
     ref: Ref<HTMLButtonElement>
@@ -199,11 +202,12 @@ export const Button = forwardRef(
     }
 
     return (
-      <StyledButton
+      <button
         {...restProps}
         disabled={disabled || state === "pending"}
         data-state={finalState ?? "auto"}
         ref={ref}
+        className={buttonStyle({ color, className, css })}
       >
         {prefix}
         {children && (
@@ -227,7 +231,7 @@ export const Button = forwardRef(
         )}
 
         {suffix}
-      </StyledButton>
+      </button>
     );
   }
 );

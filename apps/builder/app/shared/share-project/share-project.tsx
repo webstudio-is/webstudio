@@ -18,9 +18,11 @@ import {
   Text,
   InputField,
   PopoverPortal,
+  Link,
+  buttonStyle,
 } from "@webstudio-is/design-system";
 import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
-import { Fragment, useState, type ComponentProps } from "react";
+import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -33,14 +35,16 @@ const Item = (props: ComponentProps<typeof Flex>) => (
 
 type PermissionProps = {
   title: string;
-  info: string;
+  info: ReactNode;
   checked: boolean;
+  disabled?: boolean;
   onCheckedChange: (checked: boolean) => void;
 };
 const Permission = ({
   title,
   info,
   checked,
+  disabled = false,
   onCheckedChange,
 }: PermissionProps) => {
   const id = useId();
@@ -54,8 +58,15 @@ const Permission = ({
 
   return (
     <Flex align="center" gap="1">
-      <Switch checked={checked} id={id} onCheckedChange={onCheckedChange} />
-      <Label htmlFor={id}>{title}</Label>
+      <Switch
+        disabled={disabled}
+        checked={checked}
+        id={id}
+        onCheckedChange={onCheckedChange}
+      />
+      <Label disabled={disabled} htmlFor={id}>
+        {title}
+      </Label>
       <Tooltip content={tooltipContent} variant="wrapped">
         <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
@@ -157,14 +168,35 @@ const Menu = ({
               info="Recipients can make any changes but can not publish the project."
             />
 
-            {hasProPlan && (
-              <Permission
-                onCheckedChange={handleCheckedChange("administrators")}
-                checked={relation === "administrators"}
-                title="Admin"
-                info="Recipients can make any changes and can also publish the project."
-              />
-            )}
+            <Permission
+              disabled={hasProPlan !== true}
+              onCheckedChange={handleCheckedChange("administrators")}
+              checked={relation === "administrators"}
+              title="Admin"
+              info={
+                <Flex direction="column">
+                  Recipients can make any changes and can also publish the
+                  project.
+                  {hasProPlan !== true && (
+                    <>
+                      <br />
+                      <br />
+                      Upgrade to a Pro account to share with Admin permissions.
+                      <br /> <br />
+                      <Link
+                        className={buttonStyle({ color: "gradient" })}
+                        color="contrast"
+                        underline="none"
+                        href="https://webstudio.is/pricing"
+                        target="_blank"
+                      >
+                        Upgrade
+                      </Link>
+                    </>
+                  )}
+                </Flex>
+              }
+            />
           </Item>
           <Separator />
           <Item>
