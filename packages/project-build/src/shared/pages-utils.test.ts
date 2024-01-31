@@ -13,7 +13,7 @@ test("createDefaultPages", () => {
       id: "homePageId",
       name: "Home",
       path: "",
-      title: "Home",
+      title: `"Home"`,
       meta: {},
       rootInstanceId: "rootInstanceId",
     },
