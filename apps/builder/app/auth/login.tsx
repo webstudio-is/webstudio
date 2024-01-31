@@ -84,7 +84,7 @@ export const Login = ({
         }}
       >
         <Text variant="brandMediumTitle" color="main" as="h1">
-          Sign in
+          Sign In
         </Text>
         <Flex direction="column" gap="4">
           <TooltipProvider>
