@@ -7,7 +7,6 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { Card, CardContent, CardFooter } from "../shared/card";
 import {
   DiscordIcon,
   GithubIcon,
@@ -17,6 +16,7 @@ import {
   type IconComponent,
   WebstudioIcon,
 } from "@webstudio-is/icons";
+import { Card, CardContent, CardFooter } from "../shared/card";
 import { Panel } from "../shared/panel";
 import { IntroVideoDialog } from "./intro-video";
 import introThumb from "./intro-thumb.jpg";
@@ -28,16 +28,11 @@ const introThumbStyle = css({
   objectPosition: "center",
 });
 
-const introTriggerStyle = css({
-  padding: 0,
-  border: 0,
-});
-
 const IntroVideoCard = () => {
   return (
     <IntroVideoDialog asChild>
-      <button className={introTriggerStyle()}>
-        <Card>
+      <Card asChild>
+        <button>
           <CardContent>
             <Flex align="center" justify="center">
               <img src={introThumb} className={introThumbStyle()} />
@@ -50,8 +45,8 @@ const IntroVideoCard = () => {
               </Text>
             </Flex>
           </CardFooter>
-        </Card>
-      </button>
+        </button>
+      </Card>
     </IntroVideoDialog>
   );
 };
@@ -85,20 +80,20 @@ const Resource = ({
 }) => {
   SelectedIcon || (SelectedIcon = Icon);
   return (
-    <Link
-      href={href}
-      target="_blank"
-      underline="none"
-      color="subtle"
-      css={{
-        "&:hover, &:focus-visible": {
-          "--ws-resource-icon-selected-color": selectedColor,
-          "--ws-resource-icon-selected-display": "block",
-          "--ws-resource-icon-default-display": "none",
-        },
-      }}
-    >
-      <Card>
+    <Card asChild>
+      <Link
+        href={href}
+        target="_blank"
+        underline="none"
+        color="subtle"
+        css={{
+          "&:hover, &:focus-visible": {
+            "--ws-resource-icon-selected-color": selectedColor,
+            "--ws-resource-icon-selected-display": "block",
+            "--ws-resource-icon-default-display": "none",
+          },
+        }}
+      >
         <CardContent>
           <Flex align="center" justify="center">
             <Icon className={resourceIconSyle()} />
@@ -114,8 +109,8 @@ const Resource = ({
             </Text>
           </Flex>
         </CardFooter>
-      </Card>
-    </Link>
+      </Link>
+    </Card>
   );
 };
 
