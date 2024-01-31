@@ -67,7 +67,7 @@ export const Login = ({
       >
         <a href="https://webstudio.is" aria-label="Go to webstudio.is">
           <AccessibleIcon label="Logo">
-            <WebstudioIcon width="112" height="84" />
+            <WebstudioIcon size="100" />
           </AccessibleIcon>
         </a>
       </Flex>
