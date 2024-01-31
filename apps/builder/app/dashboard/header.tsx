@@ -17,6 +17,7 @@ import {
   theme,
   Button,
   ProBadge,
+  DropdownMenuSeparator,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -72,10 +73,6 @@ const Menu = ({
       <DropdownMenuPortal>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{title}</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-            Logout
-          </DropdownMenuItem>
-
           {userPlanFeatures.hasSubscription && (
             <DropdownMenuItem
               onSelect={() => navigate(userPlanSubscriptionPath())}
@@ -96,6 +93,10 @@ const Menu = ({
               <div>Upgrade to Pro</div>
             </DropdownMenuItem>
           )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
+            Sign Out
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
