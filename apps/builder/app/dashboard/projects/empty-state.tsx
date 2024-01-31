@@ -6,15 +6,8 @@ import {
   DialogTrigger,
   Flex,
   Text,
-  theme,
 } from "@webstudio-is/design-system";
 import { Youtube1cIcon } from "@webstudio-is/icons";
-
-const containerStyle = css({
-  borderRadius: theme.borderRadius[4],
-  height: theme.spacing[29],
-  minWidth: 600,
-});
 
 const contentStyle = css({
   maxWidth: "none",
@@ -29,14 +22,8 @@ const iframeStyle = css({
 });
 
 export const EmptyState = () => (
-  <Flex
-    align="center"
-    justify="center"
-    direction="column"
-    gap="6"
-    className={containerStyle()}
-  >
-    <Text variant="brandMediumTitle" as="h1">
+  <Flex align="center" justify="center" direction="column" gap="6">
+    <Text variant="brandMediumTitle" as="h1" align="center">
       What will you create?
     </Text>
     <Dialog>

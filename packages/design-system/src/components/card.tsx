@@ -16,7 +16,7 @@ export const Card = styled("div", {
   textDecoration: "none",
   color: "inherit",
   flexShrink: 0,
-  borderRadius: theme.borderRadius[7],
+  borderRadius: theme.borderRadius[5],
   position: "relative",
 
   "&::before": {

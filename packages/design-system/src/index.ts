@@ -1,7 +1,7 @@
 export * from "./stitches.config";
 export * from "./components/storybook";
 export * from "./utilities";
-
+export { Slot } from "@radix-ui/react-slot";
 // Aligned with Figma
 
 export * from "./components/text";
