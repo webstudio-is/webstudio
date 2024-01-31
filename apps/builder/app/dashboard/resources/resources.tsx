@@ -3,10 +3,11 @@ import {
   Grid,
   Link,
   Text,
+  css,
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { Card, CardContent, CardFooter } from "./card";
+import { Card, CardContent, CardFooter } from "../shared/card";
 import {
   DiscordIcon,
   GithubIcon,
@@ -14,18 +15,75 @@ import {
   XIcon,
   Youtube1cIcon,
   type IconComponent,
+  WebstudioIcon,
 } from "@webstudio-is/icons";
-import { Panel } from "./panel";
+import { Panel } from "../shared/panel";
+import { IntroVideoDialog } from "./intro-video";
+import introThumb from "./intro-thumb.jpg";
+
+const introThumbStyle = css({
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  objectPosition: "center",
+});
+
+const introTriggerStyle = css({
+  padding: 0,
+  border: 0,
+});
+
+const IntroVideoCard = () => {
+  return (
+    <IntroVideoDialog asChild>
+      <button className={introTriggerStyle()}>
+        <Card>
+          <CardContent>
+            <Flex align="center" justify="center">
+              <img src={introThumb} className={introThumbStyle()} />
+            </Flex>
+          </CardContent>
+          <CardFooter>
+            <Flex justify="center" align="center" direction="column" grow>
+              <Text variant="titles" align="center" color="main">
+                Watch the Intro!
+              </Text>
+            </Flex>
+          </CardFooter>
+        </Card>
+      </button>
+    </IntroVideoDialog>
+  );
+};
+
+const resourceIconSyle = css({
+  display: "var(--ws-resource-icon-default-display, block)",
+  color: `var(--ws-resource-icon-selected-color, ${theme.colors.foregroundSubtle})`,
+  width: "35%",
+  height: "auto",
+  variants: {
+    variant: {
+      selected: {
+        display: "var(--ws-resource-icon-selected-display, none)",
+      },
+    },
+  },
+});
 
 const Resource = ({
   href,
   Icon,
+  SelectedIcon,
   title,
+  selectedColor = theme.colors.foregroundMain,
 }: {
   href: string;
   Icon: IconComponent;
+  SelectedIcon?: IconComponent;
   title: string;
+  selectedColor?: string;
 }) => {
+  SelectedIcon || (SelectedIcon = Icon);
   return (
     <Link
       href={href}
@@ -34,14 +92,19 @@ const Resource = ({
       color="subtle"
       css={{
         "&:hover, &:focus-visible": {
-          color: theme.colors.foregroundMain,
+          "--ws-resource-icon-selected-color": selectedColor,
+          "--ws-resource-icon-selected-display": "block",
+          "--ws-resource-icon-default-display": "none",
         },
       }}
     >
       <Card>
         <CardContent>
           <Flex align="center" justify="center">
-            <Icon size="50%" />
+            <Icon className={resourceIconSyle()} />
+            <SelectedIcon
+              className={resourceIconSyle({ variant: "selected" })}
+            />
           </Flex>
         </CardContent>
         <CardFooter>
@@ -71,19 +134,23 @@ export const Resources = () => {
             gridTemplateColumns: `repeat(auto-fill, minmax(${rawTheme.spacing[23]}, 1fr))`,
           }}
         >
+          <IntroVideoCard />
           <Resource
             href="https://www.youtube.com/playlist?list=PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
             title="Learn with Videos"
             Icon={Youtube1cIcon}
+            selectedColor="#FF0000"
           />
           <Resource
             href="https://docs.webstudio.is/"
             title="Read the Docs"
             Icon={Webstudio1cIcon}
+            SelectedIcon={WebstudioIcon}
           />
           <Resource
             href="https://discord.gg/UNdyrDkq5r"
             title="Join the Community"
+            selectedColor="#5865F2"
             Icon={DiscordIcon}
           />
           <Resource

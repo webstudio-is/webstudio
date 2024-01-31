@@ -1,12 +1,16 @@
-import { Flex, globalCss, theme } from "@webstudio-is/design-system";
+import type { ComponentProps } from "react";
+import {
+  Flex,
+  TooltipProvider,
+  globalCss,
+  theme,
+} from "@webstudio-is/design-system";
+import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Header } from "./header";
 import { Projects } from "./projects";
 import type { User } from "~/shared/db/user.server";
-import type { DashboardProject } from "@webstudio-is/dashboard";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { Resources } from "./resources";
-import type { ComponentProps } from "react";
 
 const globalStyles = globalCss({
   body: {

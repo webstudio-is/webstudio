@@ -53,11 +53,7 @@ export * from "./components/progress-radial";
 export { SearchField } from "./components/search-field";
 export { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 export { Card } from "./components/card";
-export {
-  Tooltip,
-  InputErrorsTooltip,
-  type TooltipProps,
-} from "./components/tooltip";
+export * from "./components/tooltip";
 export {
   EnhancedTooltip,
   EnhancedTooltipProvider,

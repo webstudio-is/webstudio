@@ -1,13 +1,13 @@
 import {
-  Button,
   css,
   Dialog,
   DialogContent,
   DialogTrigger,
   Flex,
   Text,
+  theme,
 } from "@webstudio-is/design-system";
-import { Youtube1cIcon } from "@webstudio-is/icons";
+import { CreateProject } from "./project-dialogs";
 
 const contentStyle = css({
   maxWidth: "none",
@@ -22,15 +22,19 @@ const iframeStyle = css({
 });
 
 export const EmptyState = () => (
-  <Flex align="center" justify="center" direction="column" gap="6">
+  <Flex
+    align="center"
+    justify="center"
+    direction="column"
+    gap="6"
+    css={{ height: theme.spacing[27] }}
+  >
     <Text variant="brandMediumTitle" as="h1" align="center">
       What will you create?
     </Text>
     <Dialog>
       <DialogTrigger asChild>
-        <Button color="gradient" prefix={<Youtube1cIcon size={16} />}>
-          Watch The Intro
-        </Button>
+        <CreateProject buttonText="Create First Project" />
       </DialogTrigger>
       <DialogContent className={contentStyle()}>
         <iframe
