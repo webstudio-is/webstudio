@@ -1,4 +1,5 @@
-import type { Asset, DataSources, Page } from "@webstudio-is/sdk";
+import type { Asset, DataSources, Page, Scope } from "@webstudio-is/sdk";
+import { generateExpression } from "./expression";
 
 export type PageMeta = {
   title: string;
@@ -10,20 +11,37 @@ export type PageMeta = {
 };
 
 export const generatePageMeta = ({
+  scope,
   page,
+  dataSources,
 }: {
+  scope: Scope;
   page: Page;
   dataSources: DataSources;
 }) => {
-  const titleExpression = JSON.stringify(page.title);
-  const descriptionExpression = JSON.stringify(page.meta.description);
-  const excludePageFromSearchExpression = JSON.stringify(
-    page.meta.excludePageFromSearch
-  );
+  const titleExpression = generateExpression({
+    expression: page.title,
+    dataSources,
+    scope,
+  });
+  const descriptionExpression = generateExpression({
+    expression: page.meta.description ?? "undefined",
+    dataSources,
+    scope,
+  });
+  const excludePageFromSearchExpression = generateExpression({
+    expression: page.meta.excludePageFromSearch ?? "undefined",
+    dataSources,
+    scope,
+  });
   const socialImageAssetIdExpression = JSON.stringify(
     page.meta.socialImageAssetId
   );
-  const socialImageUrlExpression = JSON.stringify(page.meta.socialImageUrl);
+  const socialImageUrlExpression = generateExpression({
+    expression: page.meta.socialImageUrl ?? "undefined",
+    dataSources,
+    scope,
+  });
   let generated = "";
   generated += `export const getPageMeta = ({}: {\n`;
   generated += `  params: Record<string, undefined | string>;\n`;
@@ -42,7 +60,11 @@ export const generatePageMeta = ({
         continue;
       }
       const propertyExpression = JSON.stringify(customMeta.property);
-      const contentExpression = JSON.stringify(customMeta.content);
+      const contentExpression = generateExpression({
+        scope,
+        dataSources,
+        expression: customMeta.content,
+      });
       generated += `      {\n`;
       generated += `        property: ${propertyExpression},\n`;
       generated += `        content: ${contentExpression},\n`;

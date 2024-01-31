@@ -33,7 +33,7 @@ describe("toTreeData", () => {
             name: "Home",
             path: "",
             rootInstanceId: "id",
-            title: "Home",
+            title: `"Home"`,
           },
           id: "homePageId",
           type: "page",
@@ -69,7 +69,7 @@ describe("toTreeData", () => {
             name: "Home",
             path: "",
             rootInstanceId: "id",
-            title: "Home",
+            title: `"Home"`,
           },
           id: "homePageId",
           type: "page",
@@ -96,7 +96,7 @@ describe("toTreeData", () => {
       name: "Page",
       path: "/page",
       rootInstanceId: "id",
-      title: "Page",
+      title: `"Page"`,
     });
     pages.folders.push({
       id: "folderId",
@@ -121,7 +121,7 @@ describe("toTreeData", () => {
             name: "Home",
             path: "",
             rootInstanceId: "id",
-            title: "Home",
+            title: `"Home"`,
           },
           id: "homePageId",
           type: "page",
@@ -141,7 +141,7 @@ describe("toTreeData", () => {
                 name: "Page",
                 path: "/page",
                 rootInstanceId: "id",
-                title: "Page",
+                title: `"Page"`,
               },
             },
           ],
@@ -183,7 +183,7 @@ describe("toTreeData", () => {
             id: "homePageId",
             name: "Home",
             path: "",
-            title: "Home",
+            title: `"Home"`,
             meta: {},
             rootInstanceId: "id",
           },
@@ -222,7 +222,7 @@ describe("reparentOrphansMutable", () => {
       name: "Page",
       path: "/page",
       rootInstanceId: "rootInstanceId",
-      title: "Page",
+      title: `"Page"`,
     });
     pages.folders.push({
       id: "folderId",
@@ -476,7 +476,7 @@ describe("getExistingRoutePaths", () => {
       name: "Page",
       path: "/page",
       rootInstanceId: "rootInstanceId",
-      title: "Page",
+      title: `"Page"`,
     });
 
     pages.pages.push({
@@ -485,7 +485,7 @@ describe("getExistingRoutePaths", () => {
       name: "Blog",
       path: "/blog/:id",
       rootInstanceId: "rootInstanceId",
-      title: "Blog",
+      title: `"Blog"`,
     });
 
     const result = getExistingRoutePaths(pages);

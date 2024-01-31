@@ -43,7 +43,7 @@ const commonPageFields = {
   meta: z.object({
     description: z.string().optional(),
     title: z.string().optional(),
-    excludePageFromSearch: z.boolean().optional(),
+    excludePageFromSearch: z.string().optional(),
     socialImageAssetId: z.string().optional(),
     socialImageUrl: z.string().optional(),
     custom: z

@@ -29,6 +29,7 @@ import {
   generateResourcesLoader,
   collectionComponent,
   generatePageMeta,
+  executeExpression,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -563,7 +564,7 @@ export const user: { email: string | null } | undefined = ${JSON.stringify(
     )};
 export const projectId = "${siteData.build.projectId}";
 
-${generatePageMeta({ page: pageData.page, dataSources })}
+${generatePageMeta({ scope, page: pageData.page, dataSources })}
 
 ${pageComponent}
 
@@ -620,7 +621,12 @@ ${utilsExport}
       export const sitemap = ${JSON.stringify(
         {
           pages: siteData.pages
-            .filter((page) => page.meta.excludePageFromSearch !== true)
+            // ignore pages with excludePageFromSearch bound to variables
+            // because there is no data from cms available at build time
+            .filter(
+              (page) =>
+                executeExpression(page.meta.excludePageFromSearch) !== true
+            )
             .map((page) => ({
               path: page.path,
               lastModified: siteData.build.updatedAt,
