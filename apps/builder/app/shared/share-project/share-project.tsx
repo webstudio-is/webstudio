@@ -181,7 +181,7 @@ const Menu = ({
                     <>
                       <br />
                       <br />
-                      Admin permission is available on the Pro plan.
+                      Upgrade to a Pro account to share with Admin permissions.
                       <br /> <br />
                       <Link
                         className={buttonStyle({ color: "gradient" })}
