@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "8e12b4c3-7022-4c95-b671-ec8fd55d674f",
+    "id": "ef8d4686-96a0-4f84-84e7-3e9e63cd593f",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 236,
-    "createdAt": "2024-01-16T08:40:45.476Z",
-    "updatedAt": "2024-01-16T08:40:45.476Z",
+    "version": 247,
+    "createdAt": "2024-02-01T08:34:52.398Z",
+    "updatedAt": "2024-02-01T08:34:52.398Z",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
@@ -17,14 +17,14 @@
       "homePage": {
         "id": "7Db64ZXgYiRqKSQNR-qTQ",
         "name": "Home",
-        "title": "The Ultimate Cat Protection Zone",
+        "title": "\"The Ultimate Cat Protection Zone\"",
         "meta": {
-          "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+          "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
           "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
           "custom": [
             {
               "property": "fb:app_id",
-              "content": "app_id_app_id_app_id"
+              "content": "\"app_id_app_id_app_id\""
             }
           ]
         },
@@ -35,10 +35,10 @@
         {
           "id": "xfvB4UThQXmQ_OubPYrkg",
           "name": "radix excluded from the search",
-          "title": "Radix Revelations: Unraveling the Feline Mystique",
+          "title": "\"Radix Revelations: Unraveling the Feline Mystique\"",
           "meta": {
-            "description": "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
-            "excludePageFromSearch": true,
+            "description": "\"Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.\"",
+            "excludePageFromSearch": "true",
             "socialImageAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10"
           },
           "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
@@ -47,9 +47,9 @@
         {
           "id": "szYLvBduHPmbtqQKCDY0b",
           "name": "RouteWithSymbols",
-          "title": "RouteWithSymbols",
+          "title": "\"RouteWithSymbols\"",
           "meta": {
-            "description": ""
+            "description": "\"\""
           },
           "rootInstanceId": "EDEfpMPRqDejthtwkH7ws",
           "path": "/_route_with_symbols_"
@@ -57,9 +57,9 @@
         {
           "id": "U1tRJl2ERr8_OFe0g9cN_",
           "name": "form",
-          "title": "form",
+          "title": "\"form\"",
           "meta": {
-            "description": ""
+            "description": "\"\""
           },
           "rootInstanceId": "a-4nDFkaWy4px1fn38XWJ",
           "path": "/form"
@@ -67,9 +67,9 @@
         {
           "id": "-J9I4Oo6mONfQlf_3-OqG",
           "name": "heading-with-id",
-          "title": "heading-with-id",
+          "title": "\"heading-with-id\"",
           "meta": {
-            "description": ""
+            "description": "\"\""
           },
           "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
           "path": "/heading-with-id"
@@ -77,15 +77,15 @@
         {
           "id": "TS39WeBd0Qr3QgbSlzdf2",
           "name": "resources",
-          "title": "resources",
+          "title": "\"resources\"",
           "meta": {
-            "description": "",
-            "excludePageFromSearch": false,
+            "description": "\"\"",
+            "excludePageFromSearch": "false",
             "socialImageAssetId": "",
             "custom": [
               {
                 "property": "",
-                "content": ""
+                "content": "\"\""
               }
             ]
           },
@@ -95,15 +95,15 @@
         {
           "id": "Pnz-BxUm6XmvFygk_XdEy",
           "name": "Nested Page",
-          "title": "Nested Page",
+          "title": "\"Nested Page\"",
           "meta": {
-            "description": "",
-            "excludePageFromSearch": false,
+            "description": "\"\"",
+            "excludePageFromSearch": "false",
             "socialImageAssetId": "",
             "custom": [
               {
                 "property": "",
-                "content": ""
+                "content": "\"\""
               }
             ]
           },
@@ -3289,14 +3289,14 @@
   "page": {
     "id": "7Db64ZXgYiRqKSQNR-qTQ",
     "name": "Home",
-    "title": "The Ultimate Cat Protection Zone",
+    "title": "\"The Ultimate Cat Protection Zone\"",
     "meta": {
-      "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+      "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
       "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
       "custom": [
         {
           "property": "fb:app_id",
-          "content": "app_id_app_id_app_id"
+          "content": "\"app_id_app_id_app_id\""
         }
       ]
     },
@@ -3307,14 +3307,14 @@
     {
       "id": "7Db64ZXgYiRqKSQNR-qTQ",
       "name": "Home",
-      "title": "The Ultimate Cat Protection Zone",
+      "title": "\"The Ultimate Cat Protection Zone\"",
       "meta": {
-        "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+        "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
         "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
         "custom": [
           {
             "property": "fb:app_id",
-            "content": "app_id_app_id_app_id"
+            "content": "\"app_id_app_id_app_id\""
           }
         ]
       },
@@ -3324,10 +3324,10 @@
     {
       "id": "xfvB4UThQXmQ_OubPYrkg",
       "name": "radix excluded from the search",
-      "title": "Radix Revelations: Unraveling the Feline Mystique",
+      "title": "\"Radix Revelations: Unraveling the Feline Mystique\"",
       "meta": {
-        "description": "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
-        "excludePageFromSearch": true,
+        "description": "\"Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.\"",
+        "excludePageFromSearch": "true",
         "socialImageAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10"
       },
       "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
@@ -3336,9 +3336,9 @@
     {
       "id": "szYLvBduHPmbtqQKCDY0b",
       "name": "RouteWithSymbols",
-      "title": "RouteWithSymbols",
+      "title": "\"RouteWithSymbols\"",
       "meta": {
-        "description": ""
+        "description": "\"\""
       },
       "rootInstanceId": "EDEfpMPRqDejthtwkH7ws",
       "path": "/_route_with_symbols_"
@@ -3346,9 +3346,9 @@
     {
       "id": "U1tRJl2ERr8_OFe0g9cN_",
       "name": "form",
-      "title": "form",
+      "title": "\"form\"",
       "meta": {
-        "description": ""
+        "description": "\"\""
       },
       "rootInstanceId": "a-4nDFkaWy4px1fn38XWJ",
       "path": "/form"
@@ -3356,9 +3356,9 @@
     {
       "id": "-J9I4Oo6mONfQlf_3-OqG",
       "name": "heading-with-id",
-      "title": "heading-with-id",
+      "title": "\"heading-with-id\"",
       "meta": {
-        "description": ""
+        "description": "\"\""
       },
       "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
       "path": "/heading-with-id"
@@ -3366,15 +3366,15 @@
     {
       "id": "TS39WeBd0Qr3QgbSlzdf2",
       "name": "resources",
-      "title": "resources",
+      "title": "\"resources\"",
       "meta": {
-        "description": "",
-        "excludePageFromSearch": false,
+        "description": "\"\"",
+        "excludePageFromSearch": "false",
         "socialImageAssetId": "",
         "custom": [
           {
             "property": "",
-            "content": ""
+            "content": "\"\""
           }
         ]
       },
@@ -3384,15 +3384,15 @@
     {
       "id": "Pnz-BxUm6XmvFygk_XdEy",
       "name": "Nested Page",
-      "title": "Nested Page",
+      "title": "\"Nested Page\"",
       "meta": {
-        "description": "",
-        "excludePageFromSearch": false,
+        "description": "\"\"",
+        "excludePageFromSearch": "false",
         "socialImageAssetId": "",
         "custom": [
           {
             "property": "",
-            "content": ""
+            "content": "\"\""
           }
         ]
       },

@@ -71,7 +71,7 @@ const Page = ({ params: PageParams }: { params: any }) => {
         data-ws-component="Link"
         href={"/script-test"}
       >
-        {"Goto Script Test"}
+        {"Goto Scr"}
       </Link>
     </Body>
   );

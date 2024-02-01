@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "b1ec8e54-bf8c-4b76-80cc-df31eb4fd2db",
+    "id": "004b90b4-7038-4c4e-bd6c-d29f6f68fe94",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 44,
-    "createdAt": "2024-01-23T14:21:27.697Z",
-    "updatedAt": "2024-01-23T14:21:27.697Z",
+    "version": 113,
+    "createdAt": "2024-02-01T08:22:38.726Z",
+    "updatedAt": "2024-02-01T08:22:38.726Z",
     "pages": {
       "meta": {
         "siteName": "Fixture Site",
@@ -17,9 +17,9 @@
       "homePage": {
         "id": "nfzls_SkTc9jKYyxcZ8Lw",
         "name": "Home",
-        "title": "Site Title",
+        "title": "\"Site Title\"",
         "meta": {
-          "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
+          "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
         },
         "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
         "path": ""
@@ -28,15 +28,15 @@
         {
           "id": "xT46WZKzCBTvUCIObMELW",
           "name": "Script Test",
-          "title": "Script Test",
+          "title": "\"Script Test\"",
           "meta": {
-            "description": "",
-            "excludePageFromSearch": false,
+            "description": "\"\"",
+            "excludePageFromSearch": "false",
             "socialImageAssetId": "",
             "custom": [
               {
                 "property": "",
-                "content": ""
+                "content": "\"\""
               }
             ]
           },
@@ -349,7 +349,7 @@
           "children": [
             {
               "type": "text",
-              "value": "Goto Script Test"
+              "value": "Goto Scr"
             }
           ]
         }
@@ -377,9 +377,9 @@
   "page": {
     "id": "nfzls_SkTc9jKYyxcZ8Lw",
     "name": "Home",
-    "title": "Site Title",
+    "title": "\"Site Title\"",
     "meta": {
-      "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
+      "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
     },
     "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
     "path": ""
@@ -388,9 +388,9 @@
     {
       "id": "nfzls_SkTc9jKYyxcZ8Lw",
       "name": "Home",
-      "title": "Site Title",
+      "title": "\"Site Title\"",
       "meta": {
-        "description": "Page description f511c297-b44f-4e4b-96bd-d013da06bada"
+        "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
       },
       "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
       "path": ""
@@ -398,15 +398,15 @@
     {
       "id": "xT46WZKzCBTvUCIObMELW",
       "name": "Script Test",
-      "title": "Script Test",
+      "title": "\"Script Test\"",
       "meta": {
-        "description": "",
-        "excludePageFromSearch": false,
+        "description": "\"\"",
+        "excludePageFromSearch": "false",
         "socialImageAssetId": "",
         "custom": [
           {
             "property": "",
-            "content": ""
+            "content": "\"\""
           }
         ]
       },
