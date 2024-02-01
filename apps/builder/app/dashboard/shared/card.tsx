@@ -8,7 +8,7 @@ import {
   Slot,
   type SlotProps,
 } from "@webstudio-is/design-system";
-import type { ComponentProps } from "react";
+import { forwardRef, type ComponentProps } from "react";
 
 const cardStyle = css({
   display: "flex",
@@ -33,14 +33,17 @@ const cardStyle = css({
   },
 });
 
-type CardProps = ComponentProps<typeof Box> & {
+type CardProps = ComponentProps<"div"> & {
   asChild?: boolean;
 } & SlotProps;
 
-export const Card = ({ asChild, ...props }: CardProps) => {
-  const Component = asChild ? Slot : Box;
-  return <Component {...props} className={cardStyle()} />;
-};
+export const Card = forwardRef<HTMLDivElement, CardProps>(
+  ({ asChild, ...props }, ref) => {
+    const Component = asChild ? Slot : Box;
+    return <Component {...props} className={cardStyle()} ref={ref} />;
+  }
+);
+Card.displayName = "Card";
 
 export const CardContent = styled(Grid, {
   position: "relative",
