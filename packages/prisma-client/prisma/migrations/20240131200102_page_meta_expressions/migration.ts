@@ -65,7 +65,6 @@ const mutatePageMeta = (page: Page) => {
     page.meta.excludePageFromSearch
   );
   page.meta.socialImageUrl = JSON.stringify(page.meta.socialImageUrl);
-  page.meta.description = JSON.stringify(page.meta.description);
   if (page.meta.custom) {
     for (const item of page.meta.custom) {
       item.content = JSON.stringify(item.content);
