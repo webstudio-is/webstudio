@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "d194ee5e-772b-4455-bf5a-8d1b7d846518",
+    "id": "6ee09eba-d953-48c0-8ca7-77b5d8f0dff1",
     "projectId": "d845c167-ea07-4875-b08d-83e97c09dcce",
     "version": 21,
-    "createdAt": "2024-01-08T07:32:44.126Z",
-    "updatedAt": "2024-01-08T07:32:44.126Z",
+    "createdAt": "2024-02-01T08:34:11.957Z",
+    "updatedAt": "2024-02-01T08:34:11.957Z",
     "pages": {
       "meta": {
         "siteName": "",
@@ -17,7 +17,7 @@
       "homePage": {
         "id": "9di_L14CzctvSruIoKVvE",
         "name": "Home",
-        "title": "Home",
+        "title": "\"Home\"",
         "meta": {},
         "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
         "path": ""
@@ -192,7 +192,7 @@
   "page": {
     "id": "9di_L14CzctvSruIoKVvE",
     "name": "Home",
-    "title": "Home",
+    "title": "\"Home\"",
     "meta": {},
     "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
     "path": ""
@@ -201,7 +201,7 @@
     {
       "id": "9di_L14CzctvSruIoKVvE",
       "name": "Home",
-      "title": "Home",
+      "title": "\"Home\"",
       "meta": {},
       "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
       "path": ""
