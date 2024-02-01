@@ -17,6 +17,7 @@ import {
   theme,
   Button,
   ProBadge,
+  DropdownMenuSeparator,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -50,7 +51,7 @@ const Menu = ({
           <Flex gap="1" align="center">
             {userPlanFeatures.hasProPlan && (
               <>
-                <ProBadge />
+                <ProBadge>{userPlanFeatures.planName}</ProBadge>
                 <div />
               </>
             )}
@@ -72,10 +73,6 @@ const Menu = ({
       <DropdownMenuPortal>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{title}</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-            Logout
-          </DropdownMenuItem>
-
           {userPlanFeatures.hasSubscription && (
             <DropdownMenuItem
               onSelect={() => navigate(userPlanSubscriptionPath())}
@@ -86,7 +83,7 @@ const Menu = ({
           {userPlanFeatures.hasProPlan === false && (
             <DropdownMenuItem
               onSelect={() => {
-                window.location.assign("https://webstudio.is/pricing");
+                window.open("https://webstudio.is/pricing");
               }}
               css={{
                 gap: theme.spacing[3],
@@ -96,6 +93,10 @@ const Menu = ({
               <div>Upgrade to Pro</div>
             </DropdownMenuItem>
           )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
+            Sign Out
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
@@ -116,7 +117,7 @@ export const Header = ({
       justify="between"
       className={containerStyle()}
     >
-      <WebstudioIcon width={30} height={23} />
+      <WebstudioIcon size={22} />
 
       <Menu user={user} userPlanFeatures={userPlanFeatures} />
     </Flex>

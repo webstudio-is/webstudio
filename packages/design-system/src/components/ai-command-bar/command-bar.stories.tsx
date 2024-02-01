@@ -5,16 +5,10 @@ import {
   CommandBarButton,
   CommandBarContentPrompt,
   CommandBarContentSection,
-  CommandBarContentSeparator,
   CommandBarTrigger,
 } from "./index";
-import { Button, Flex, ScrollArea, Box, Grid, Text, theme } from "../..";
-import {
-  AiIcon,
-  MicIcon,
-  ChevronUpIcon,
-  ExternalLinkIcon,
-} from "@webstudio-is/icons";
+import { ScrollArea, Box, Grid, Text, theme } from "../..";
+import { AiIcon, MicIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
 export default {
   title: "Library/AI Command Bar",
@@ -23,38 +17,6 @@ export default {
 const CommandBarContent = () => {
   return (
     <>
-      <CommandBarContentSection>
-        <Text variant={"labelsSentenceCase"} align={"center"}>
-          Welcome to Webstudio AI alpha!
-        </Text>
-        <div />
-        <Text variant={"labelsSentenceCase"}>
-          Ask me to generate or edit sections, text, or images.
-          <br /> For example you can say: ”Make a new contact section”
-        </Text>
-        <Flex align={"end"}>
-          <Button
-            color="dark"
-            css={{
-              width: theme.spacing[30],
-            }}
-            suffix={<ExternalLinkIcon />}
-          >
-            Learn more
-          </Button>
-          <Text
-            variant={"labelsSentenceCase"}
-            color={"subtle"}
-            css={{ flex: 1 }}
-            align={"center"}
-          >
-            shortcut ⌘⇧Q
-          </Text>
-        </Flex>
-      </CommandBarContentSection>
-
-      <CommandBarContentSeparator />
-
       <CommandBarContentSection>
         <Text variant={"labelsSentenceCase"} align={"center"}>
           Previous propmts

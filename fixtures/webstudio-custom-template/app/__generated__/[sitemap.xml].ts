@@ -2,7 +2,11 @@ export const sitemap = {
   pages: [
     {
       path: "",
-      lastModified: "2023-11-05T17:42:09.984Z",
+      lastModified: "2024-02-01T08:22:38.726Z",
+    },
+    {
+      path: "/script-test",
+      lastModified: "2024-02-01T08:22:38.726Z",
     },
   ],
 };

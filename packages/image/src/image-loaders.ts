@@ -16,6 +16,14 @@ export const createImageLoader =
     const quality = props.format === "raw" ? 100 : props.quality;
     const { format, src } = props;
 
+    // load absolute images without changes
+    try {
+      new URL(src);
+      return src;
+    } catch {
+      // empty block
+    }
+
     if (process.env.NODE_ENV !== "production") {
       warnOnce(
         allSizes.includes(width) === false,

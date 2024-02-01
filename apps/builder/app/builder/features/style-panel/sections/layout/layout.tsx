@@ -14,10 +14,12 @@ import {
   Link2UnlinkedIcon,
   GapHorizontalIcon,
   GapVerticalIcon,
-  ArrowRightIcon,
-  ArrowDownIcon,
   WrapIcon,
   NoWrapIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
+  ArrowDownIcon,
+  ArrowUpIcon,
 } from "@webstudio-is/icons";
 import type { RenderCategoryProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
@@ -379,12 +381,14 @@ const LayoutSectionFlex = ({
         <FlexGrid currentStyle={currentStyle} batchUpdate={batchUpdate} />
         <Flex direction="column" justify="between">
           <Flex css={{ gap: theme.spacing[7] }}>
-            <Toggle
+            <MenuControl
               property="flexDirection"
-              iconOn={<ArrowDownIcon />}
-              iconOff={<ArrowRightIcon />}
-              valueOn="column"
-              valueOff="row"
+              icons={{
+                row: ArrowRightIcon,
+                "row-reverse": ArrowLeftIcon,
+                column: ArrowDownIcon,
+                "column-reverse": ArrowUpIcon,
+              }}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}

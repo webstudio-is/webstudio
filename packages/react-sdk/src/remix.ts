@@ -54,6 +54,7 @@ export const generateRemixRoute = (pathname: string) => {
 export const generateRemixParams = (pathname: string) => {
   const name = pathname.match(/:(?<name>\w+)\*$/)?.groups?.name;
   let generated = "";
+  generated += `type Params = Record<string, string | undefined>;\n`;
   generated += `export const getRemixParams = ({ ...params }: Params): Params => {\n`;
   if (name) {
     generated += `  params["${name}"] = params["*"]\n`;

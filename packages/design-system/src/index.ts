@@ -1,7 +1,7 @@
 export * from "./stitches.config";
 export * from "./components/storybook";
 export * from "./utilities";
-
+export * from "@radix-ui/react-slot";
 // Aligned with Figma
 
 export * from "./components/text";
@@ -51,19 +51,9 @@ export { AccessibleIcon } from "@radix-ui/react-accessible-icon";
 export * from "./components/toggle-group";
 export * from "./components/progress-radial";
 export { SearchField } from "./components/search-field";
-export { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/tabs";
-export {
-  SidebarTabs,
-  SidebarTabsContent,
-  SidebarTabsList,
-  SidebarTabsTrigger,
-} from "./components/sidebar-tabs";
+export { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 export { Card } from "./components/card";
-export {
-  Tooltip,
-  InputErrorsTooltip,
-  type TooltipProps,
-} from "./components/tooltip";
+export * from "./components/tooltip";
 export {
   EnhancedTooltip,
   EnhancedTooltipProvider,

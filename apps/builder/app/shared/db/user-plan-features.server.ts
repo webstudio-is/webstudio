@@ -1,18 +1,7 @@
 import { prisma } from "@webstudio-is/prisma-client";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 
-/**
- * Plan features are available on the client, do not use any secrets, 3rd party ids etc
- **/
-export type UserPlanFeatures = {
-  allowShareAdminLinks: boolean;
-  allowResourceVariables: boolean;
-  maxDomainsAllowedPerUser: number;
-  hasSubscription: boolean;
-  hasProPlan: boolean;
-};
-
-// No strings - no secrets
-({}) as UserPlanFeatures satisfies Record<string, boolean | number>;
+export type UserPlanFeatures = NonNullable<AppContext["userPlanFeatures"]>;
 
 export const getTokenPlanFeatures = async (token: string) => {
   const projectOwnerIdByToken = await prisma.authorizationToken.findUnique({
@@ -77,6 +66,7 @@ export const getUserPlanFeatures = async (
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription,
       hasProPlan: true,
+      planName: userProducts[0].product.name,
     };
   }
 

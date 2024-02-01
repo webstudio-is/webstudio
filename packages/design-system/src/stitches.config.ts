@@ -276,17 +276,6 @@ const {
       9: "59px",
     },
 
-    /**
-     * Use instead: textVariants / textStyles / <Text />
-     */
-    deprecatedLineHeight: {
-      1: "8px",
-      2: "12px",
-      3: "16px",
-      // Legacy - don't use unless specified in Figma
-      4: "20px",
-    },
-
     borderRadius: {
       1: "1px",
       2: "2px",

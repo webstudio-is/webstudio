@@ -30,7 +30,7 @@ const UrlInput = ({
     id={id}
     disabled={readOnly}
     value={localValue.value ?? ""}
-    placeholder="http://www.url.com"
+    placeholder="https://www.url.com"
     onChange={(event) => localValue.set(event.target.value)}
     onBlur={localValue.save}
     onKeyDown={(event) => {

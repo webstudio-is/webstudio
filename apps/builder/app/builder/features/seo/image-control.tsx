@@ -3,7 +3,6 @@ import { ImageManager } from "~/builder/shared/image-manager";
 import type { ReactElement } from "react";
 
 export const ImageControl = (props: {
-  assetId: string;
   onAssetIdChange: (assetId: string) => void;
   children: ReactElement;
 }) => {

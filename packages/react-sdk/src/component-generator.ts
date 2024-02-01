@@ -5,7 +5,6 @@ import type {
   Scope,
   DataSources,
   Prop,
-  Page,
   DataSource,
 } from "@webstudio-is/sdk";
 import { parseComponentName } from "@webstudio-is/sdk";
@@ -315,9 +314,11 @@ export const generateJsxChildren = ({
   return generatedChildren;
 };
 
-export const generatePageComponent = ({
+export const generateWebstudioComponent = ({
   scope,
-  page,
+  name,
+  rootInstanceId,
+  parameters,
   instances,
   props,
   dataSources,
@@ -325,17 +326,37 @@ export const generatePageComponent = ({
   classesMap,
 }: {
   scope: Scope;
-  page: Page;
+  name: string;
+  rootInstanceId: Instance["id"];
+  parameters: Extract<Prop, { type: "parameter" }>[];
   instances: Instances;
   props: Props;
   dataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap: Map<string, Array<string>>;
 }) => {
-  const instance = instances.get(page.rootInstanceId);
+  const instance = instances.get(rootInstanceId);
   if (instance === undefined) {
     return "";
   }
+  let generatedProps = "";
+  if (parameters.length > 0) {
+    let generatedPropsValue = "{ ";
+    let generatedPropsType = "{ ";
+    for (const parameter of parameters) {
+      const dataSource = dataSources.get(parameter.value);
+      if (dataSource === undefined) {
+        continue;
+      }
+      const valueName = scope.getName(dataSource.id, dataSource.name);
+      generatedPropsValue += `${parameter.name}: ${valueName}, `;
+      generatedPropsType += `${parameter.name}: any; `;
+    }
+    generatedPropsValue += `}`;
+    generatedPropsType += `}`;
+    generatedProps = `${generatedPropsValue}: ${generatedPropsType}`;
+  }
+
   let generatedDataSources = "";
   for (const dataSource of dataSources.values()) {
     if (dataSource.type === "variable") {
@@ -347,12 +368,6 @@ export const generatePageComponent = ({
       const initialValue = dataSource.value.value;
       const initialValueString = JSON.stringify(initialValue);
       generatedDataSources += `let [${valueName}, ${setterName}] = useState<any>(${initialValueString})\n`;
-    }
-    if (dataSource.type === "parameter") {
-      if (dataSource.id === page.pathVariableId) {
-        const valueName = scope.getName(dataSource.id, dataSource.name);
-        generatedDataSources += `let ${valueName} = _props.params\n`;
-      }
     }
     if (dataSource.type === "resource") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
@@ -386,8 +401,7 @@ export const generatePageComponent = ({
   });
 
   let generatedComponent = "";
-  generatedComponent += `type Params = Record<string, string | undefined>\n`;
-  generatedComponent += `const Page = (_props: { params: Params }) => {\n`;
+  generatedComponent += `const ${name} = (${generatedProps}) => {\n`;
   generatedComponent += `${generatedDataSources}`;
   generatedComponent += `return ${generatedJsx}`;
   generatedComponent += `}\n`;

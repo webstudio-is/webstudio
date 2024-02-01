@@ -16,6 +16,12 @@ export const Project = z.object({
   userId: z.string().nullable(),
   isDeleted: z.boolean(),
   domain: z.string(),
+  previewImageAsset: z
+    .object({
+      id: z.string(),
+      name: z.string(),
+    })
+    .nullable(),
   latestBuild: z.optional(
     z
       .object({

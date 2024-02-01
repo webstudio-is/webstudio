@@ -387,6 +387,7 @@ const DomainItem = (props: {
           <Tooltip content={`Proceed to ${props.projectDomain.domain.domain}`}>
             <IconButton
               tabIndex={-1}
+              disabled={status !== "VERIFIED_ACTIVE"}
               onClick={(event) => {
                 const url = new URL(
                   `https://${props.projectDomain.domain.domain}`

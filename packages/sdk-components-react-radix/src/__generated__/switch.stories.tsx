@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Box as Box } from "@webstudio-is/sdk-components-react";
 import { Switch as Switch, SwitchThumb as SwitchThumb } from "../components";
 
-type Params = Record<string, string | undefined>;
-const Page = (_props: { params: Params }) => {
+const Component = () => {
   let [switchChecked, set$switchChecked] = useState<any>(false);
   return (
     <Box data-ws-id="root" data-ws-component="Box">
@@ -305,7 +304,7 @@ html {margin: 0; display: grid; min-height: 100%}
 }
       `}
         </style>
-        <Page params={{}} />
+        <Component />
       </>
     );
   },

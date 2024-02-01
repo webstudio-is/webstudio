@@ -166,15 +166,13 @@ const emptyInsertConstraints: InsertConstraints = {
 
 describe("find closest editable instance selector", () => {
   test("searches closest container", () => {
-    const instances: Instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [
+    const instances: Instances = toMap([
+      createInstance("body", "Body", [{ type: "id", value: "box" }]),
+      createInstance("box", "Box", [
         { type: "text", value: "some text" },
         { type: "id", value: "bold" },
       ]),
-      createInstancePair("bold", "Bold", [
-        { type: "text", value: "some-bold" },
-      ]),
+      createInstance("bold", "Bold", [{ type: "text", value: "some-bold" }]),
     ]);
     expect(
       findClosestEditableInstanceSelector(
@@ -193,17 +191,15 @@ describe("find closest editable instance selector", () => {
   });
 
   test("skips when container has anything except rich-text-child or text", () => {
-    const instances: Instances = new Map([
-      createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
-      createInstancePair("box", "Box", [
+    const instances: Instances = toMap([
+      createInstance("body", "Body", [{ type: "id", value: "box" }]),
+      createInstance("box", "Box", [
         { type: "text", value: "some text" },
         { type: "id", value: "bold" },
         { type: "id", value: "child-box" },
       ]),
-      createInstancePair("bold", "Bold", [
-        { type: "text", value: "some-bold" },
-      ]),
-      createInstancePair("child-box", "Box", [
+      createInstance("bold", "Bold", [{ type: "text", value: "some-bold" }]),
+      createInstance("child-box", "Box", [
         { type: "text", value: "child-box" },
       ]),
     ]);
@@ -217,16 +213,28 @@ describe("find closest editable instance selector", () => {
   });
 
   test("considers empty container as editable", () => {
-    const instances: Instances = new Map([
-      createInstancePair("body", "Body", []),
+    const instances: Instances = toMap([
+      createInstance("body", "Body", [{ type: "id", value: "body" }]),
+      createInstance("box", "Box", []),
     ]);
+    expect(
+      findClosestEditableInstanceSelector(
+        ["box", "body"],
+        instances,
+        createFakeComponentMetas({})
+      )
+    ).toEqual(["box", "body"]);
+  });
+
+  test("prevent editing Body instance", () => {
+    const instances: Instances = toMap([createInstance("body", "Body", [])]);
     expect(
       findClosestEditableInstanceSelector(
         ["body"],
         instances,
         createFakeComponentMetas({})
       )
-    ).toEqual(["body"]);
+    ).toEqual(undefined);
   });
 });
 

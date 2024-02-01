@@ -27,7 +27,7 @@ export const createDefaultPages = ({
       id: homePageId,
       name: "Home",
       path: homePagePath,
-      title: "Home",
+      title: `"Home"`,
       meta: {},
       rootInstanceId,
     },

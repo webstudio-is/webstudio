@@ -139,7 +139,7 @@ const ChangeProjectDomain = ({
       ? getPublishStatusAndText(project.latestBuild)
       : {
           statusText: "Not published",
-          status: "PENDING",
+          status: "PENDING" as const,
         };
 
   return (
@@ -168,10 +168,10 @@ const ChangeProjectDomain = ({
               )}
             </Flex>
           </Tooltip>
-
           <Tooltip content={`Proceed to ${publishedUrl.href}`}>
             <IconButton
               tabIndex={-1}
+              disabled={error !== undefined || status !== "PUBLISHED"}
               onClick={(event) => {
                 window.open(publishedUrl.href, "_blank");
                 event.preventDefault();

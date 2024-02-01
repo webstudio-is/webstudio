@@ -21,7 +21,10 @@ export const Spinner = ({
   size?: number;
 }) => {
   const [isVisible, setIsVisible] = useDebounce(false, delay);
-  setIsVisible(true);
+
+  if (delay !== 0) {
+    setIsVisible(true);
+  }
 
   if (isVisible === false) {
     return null;

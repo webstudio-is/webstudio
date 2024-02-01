@@ -21,13 +21,15 @@ export {
   validateExpression,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
+  executeExpression,
 } from "./expression";
 export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";
 export { generateUtilsExport } from "./generator";
 export {
-  generatePageComponent,
+  generateWebstudioComponent,
   generateJsxElement,
   generateJsxChildren,
 } from "./component-generator";
 export { generateResourcesLoader } from "./resources-generator";
+export * from "./page-meta-generator";

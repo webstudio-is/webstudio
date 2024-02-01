@@ -14,7 +14,11 @@ export const Basic = () => {
 
   return (
     <Box css={{ width: 448, margin: 20 }}>
-      <CustomMetadata customMetas={customMetas} onChange={setCustomMetas} />
+      <CustomMetadata
+        variableValues={new Map()}
+        customMetas={customMetas}
+        onChange={setCustomMetas}
+      />
     </Box>
   );
 };

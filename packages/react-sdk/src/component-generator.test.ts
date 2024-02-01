@@ -4,7 +4,6 @@ import {
   createScope,
   type DataSource,
   type Instance,
-  type Page,
   type Prop,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "./props";
@@ -12,7 +11,7 @@ import { collectionComponent } from "./core-components";
 import {
   generateJsxChildren,
   generateJsxElement,
-  generatePageComponent,
+  generateWebstudioComponent,
 } from "./component-generator";
 
 const clear = (input: string) =>
@@ -588,12 +587,14 @@ test("generate collection component as map", () => {
   );
 });
 
-test("generate page component with variables and actions", () => {
+test("generate component with variables and actions", () => {
   expect(
-    generatePageComponent({
+    generateWebstudioComponent({
       classesMap: new Map(),
       scope: createScope(),
-      page: { rootInstanceId: "body" } as Page,
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
       instances: new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "input" }]),
         createInstancePair("input", "Input", []),
@@ -632,8 +633,7 @@ test("generate page component with variables and actions", () => {
     })
   ).toEqual(
     clear(`
-      type Params = Record<string, string | undefined>
-      const Page = (_props: { params: Params }) => {
+      const Page = () => {
       let [variableName, set$variableName] = useState<any>("initial")
       return <Body
       data-ws-id="body"
@@ -655,10 +655,12 @@ test("generate page component with variables and actions", () => {
 
 test("add classes and merge classes", () => {
   expect(
-    generatePageComponent({
+    generateWebstudioComponent({
       classesMap: new Map([["body", ["cls1"]]]),
       scope: createScope(),
-      page: { rootInstanceId: "body" } as Page,
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
       instances: new Map([createInstancePair("body", "Body", [])]),
       dataSources: new Map(),
       props: new Map([
@@ -674,8 +676,7 @@ test("add classes and merge classes", () => {
     })
   ).toEqual(
     clear(`
-    type Params = Record<string, string | undefined>
-    const Page = (_props: { params: Params }) => {
+    const Page = () => {
     return <Body
     data-ws-id="body"
     data-ws-component="Body"
@@ -687,10 +688,12 @@ test("add classes and merge classes", () => {
 
 test("avoid generating collection parameter variable as state", () => {
   expect(
-    generatePageComponent({
+    generateWebstudioComponent({
       classesMap: new Map(),
       scope: createScope(),
-      page: { rootInstanceId: "body" } as Page,
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
       instances: new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "list" }]),
         createInstancePair("list", collectionComponent, []),
@@ -730,8 +733,7 @@ test("avoid generating collection parameter variable as state", () => {
     })
   ).toEqual(
     clear(`
-    type Params = Record<string, string | undefined>
-    const Page = (_props: { params: Params }) => {
+    const Page = () => {
     let [data, set$data] = useState<any>(["apple","orange","mango"])
     return <Body
     data-ws-id="body"
@@ -748,10 +750,20 @@ test("avoid generating collection parameter variable as state", () => {
 
 test("generate params variable when present", () => {
   expect(
-    generatePageComponent({
+    generateWebstudioComponent({
       classesMap: new Map(),
       scope: createScope(["params"]),
-      page: { rootInstanceId: "body", pathVariableId: "pathParamsId" } as Page,
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [
+        {
+          id: "pathParamsPropId",
+          type: "parameter",
+          instanceId: "",
+          name: "params",
+          value: "pathParamsId",
+        },
+      ],
       instances: new Map([createInstancePair("body", "Body", [])]),
       dataSources: new Map([
         createDataSourcePair({
@@ -774,9 +786,7 @@ test("generate params variable when present", () => {
     })
   ).toEqual(
     clear(`
-    type Params = Record<string, string | undefined>
-    const Page = (_props: { params: Params }) => {
-    let params_1 = _props.params
+    const Page = ({ params: params_1, }: { params: any; }) => {
     return <Body
     data-ws-id="body"
     data-ws-component="Body"
@@ -788,10 +798,12 @@ test("generate params variable when present", () => {
 
 test("generate resources loading", () => {
   expect(
-    generatePageComponent({
+    generateWebstudioComponent({
       classesMap: new Map(),
       scope: createScope(),
-      page: { rootInstanceId: "body" } as Page,
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
       instances: new Map([createInstancePair("body", "Body", [])]),
       dataSources: new Map([
         createDataSourcePair({
@@ -829,8 +841,7 @@ test("generate resources loading", () => {
     })
   ).toEqual(
     clear(`
-    type Params = Record<string, string | undefined>
-    const Page = (_props: { params: Params }) => {
+    const Page = () => {
     let [data, set$data] = useState<any>("data")
     let data_1 = useResource("data_2")
     return <Body
