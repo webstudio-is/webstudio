@@ -66,6 +66,11 @@ export const textStyle = css({
         userSelect: "none",
       },
     },
+    inline: {
+      true: {
+        display: "inline",
+      },
+    },
   },
   defaultVariants: { variant: "regular" },
 });

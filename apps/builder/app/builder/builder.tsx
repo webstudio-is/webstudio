@@ -39,6 +39,7 @@ import {
   $domains,
   $resources,
   subscribeResources,
+  $totalUserDomains,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -224,6 +225,7 @@ export type BuilderProps = {
   authToken?: string;
   authPermit: AuthPermit;
   userPlanFeatures: UserPlanFeatures;
+  totalUserDomains: number;
 };
 
 export const Builder = ({
@@ -234,8 +236,10 @@ export const Builder = ({
   authToken,
   authPermit,
   userPlanFeatures,
+  totalUserDomains,
 }: BuilderProps) => {
   useMount(() => {
+    $totalUserDomains.set(totalUserDomains);
     // additional data stores
     $project.set(project);
     $domains.set(domains);

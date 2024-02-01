@@ -32,6 +32,8 @@ export const $project = atom<Project | undefined>();
 
 export const $domains = atom<string[]>([]);
 
+export const $totalUserDomains = atom<number>(0);
+
 export const $rootInstance = computed(
   [$instances, $selectedPage],
   (instances, selectedPage) => {

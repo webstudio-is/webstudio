@@ -23,12 +23,17 @@ import {
   theme,
   TextArea,
   Link,
+  PanelBanner,
+  buttonStyle,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
-import { useIsPublishDialogOpen } from "../../shared/nano-states";
+import {
+  $userPlanFeatures,
+  useIsPublishDialogOpen,
+} from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $totalUserDomains } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -48,6 +53,7 @@ import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
+import { getUserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -408,9 +414,36 @@ const Content = (props: {
     setIsPublishing(hasPendingState);
   }, [hasPendingState, setIsPublishing]);
 
+  const { maxDomainsAllowedPerUser, hasProPlan } = useStore($userPlanFeatures);
+  const totalUserDomains = useStore($totalUserDomains);
+  const canAddDomain =
+    hasProPlan || totalUserDomains < maxDomainsAllowedPerUser;
+
   return (
     <>
       <ScrollArea>
+        {canAddDomain === false && (
+          <PanelBanner>
+            <Text variant="regularBold">Free domains limit reached</Text>
+            <Text variant="regular">
+              You have reached the limit of {maxDomainsAllowedPerUser} custom
+              domains on your account.{" "}
+              <Text variant="regularBold" inline>
+                Upgrade to a Pro account
+              </Text>{" "}
+              to add unlimited domains.
+            </Text>
+            <Link
+              className={buttonStyle({ color: "gradient" })}
+              color="contrast"
+              underline="none"
+              href="https://webstudio.is/pricing"
+              target="_blank"
+            >
+              Upgrade
+            </Link>
+          </PanelBanner>
+        )}
         {projectSystemError !== undefined && (
           <ErrorText>{projectSystemError}</ErrorText>
         )}
