@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/design-system";
 import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
 import { useId } from "react";
+import { computeExpression } from "~/shared/nano-states";
 
 type Meta = {
   property: string;
@@ -17,11 +18,13 @@ type Meta = {
 };
 
 type CustomMetadataProps = {
+  variableValues: Map<string, unknown>;
   customMetas: Meta[];
   onChange: (value: Meta[]) => void;
 };
 
 const PropertyContent = (props: {
+  variableValues: Map<string, unknown>;
   property: string;
   content: string;
   onDelete: () => void;
@@ -29,6 +32,8 @@ const PropertyContent = (props: {
 }) => {
   const propertyId = useId();
   const contentId = useId();
+
+  const content = computeExpression(props.content, props.variableValues);
 
   return (
     <Grid
@@ -68,9 +73,9 @@ const PropertyContent = (props: {
           tabIndex={1}
           id={contentId}
           property="path"
-          value={props.content}
+          value={content}
           onChange={(event) => {
-            props.onChange(props.property, event.target.value);
+            props.onChange(props.property, JSON.stringify(event.target.value));
           }}
         />
       </InputErrorsTooltip>
@@ -137,6 +142,7 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
         {props.customMetas.map((meta, index) => (
           <PropertyContent
             key={index}
+            variableValues={props.variableValues}
             property={meta.property}
             content={meta.content}
             onChange={(property, content) => {

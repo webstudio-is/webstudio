@@ -132,7 +132,7 @@ const $dataSourcesLogic = computed(
   }
 );
 
-const computeExpression = (
+export const computeExpression = (
   expression: string,
   variables: Map<DataSource["id"], unknown>
 ) => {
@@ -141,12 +141,12 @@ const computeExpression = (
     const identifier = encodeDataSourceVariable(id);
     code += `const ${identifier} = ${JSON.stringify(value)};\n`;
   }
-  const transpiled = validateExpression(expression, {
-    effectful: true,
-    optional: true,
-  });
-  code += `return (${transpiled})`;
   try {
+    const transpiled = validateExpression(expression, {
+      effectful: true,
+      optional: true,
+    });
+    code += `return (${transpiled})`;
     const result = new Function(code)();
     return result;
   } catch {

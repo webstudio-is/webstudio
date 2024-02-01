@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
+import {
+  type FocusEventHandler,
+  useState,
+  useCallback,
+  Fragment,
+  useMemo,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -62,6 +68,7 @@ import {
   $selectedInstanceSelector,
   $dataSources,
   $dataSourceVariables,
+  computeExpression,
 } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
@@ -84,16 +91,16 @@ const fieldDefaultValues = {
   name: "Untitled",
   parentFolderId: ROOT_FOLDER_ID,
   path: "/untitled",
-  title: "Untitled",
-  description: "",
   isHomePage: false,
-  excludePageFromSearch: false,
-  socialImageUrl: "",
+  title: `"Untitled"`,
+  description: `""`,
+  excludePageFromSearch: `false`,
+  socialImageUrl: `""`,
   socialImageAssetId: "",
   customMetas: [
     {
       property: "",
-      content: "",
+      content: `""`,
     },
   ],
 };
@@ -296,6 +303,7 @@ const FormFields = ({
   const assets = useStore($assets);
   const pages = useStore($pages);
   const dataSourceVariables = useStore($dataSourceVariables);
+  const variableValues = useMemo(() => new Map(), []);
 
   if (pages === undefined) {
     return;
@@ -329,6 +337,17 @@ const FormFields = ({
     .join("/")
     .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
+
+  const title = String(computeExpression(values.title, variableValues));
+  const description = String(
+    computeExpression(values.description, variableValues)
+  );
+  const socialImageUrl = String(
+    computeExpression(values.socialImageUrl, variableValues)
+  );
+  const excludePageFromSearch = Boolean(
+    computeExpression(values.excludePageFromSearch, variableValues)
+  );
 
   return (
     <Grid css={{ height: "100%" }}>
@@ -519,8 +538,8 @@ const FormFields = ({
                     siteName={pages?.meta?.siteName ?? ""}
                     faviconUrl={faviconUrl}
                     pageUrl={pageUrl}
-                    titleLink={values.title}
-                    snippet={values.description}
+                    titleLink={title}
+                    snippet={description}
                   />
                 </Box>
               </Box>
@@ -537,9 +556,12 @@ const FormFields = ({
                 name="title"
                 placeholder="My awesome project - About"
                 disabled={disabled}
-                value={values.title}
+                value={title}
                 onChange={(event) => {
-                  onChange({ field: "title", value: event.target.value });
+                  onChange({
+                    field: "title",
+                    value: JSON.stringify(event.target.value),
+                  });
                 }}
               />
             </InputErrorsTooltip>
@@ -554,9 +576,12 @@ const FormFields = ({
                 id={fieldIds.description}
                 name="description"
                 disabled={disabled}
-                value={values.description}
+                value={description}
                 onChange={(value) => {
-                  onChange({ field: "description", value });
+                  onChange({
+                    field: "description",
+                    value: JSON.stringify(value),
+                  });
                 }}
                 autoGrow
                 maxRows={10}
@@ -565,11 +590,12 @@ const FormFields = ({
             <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
               <Checkbox
                 id={fieldIds.excludePageFromSearch}
-                checked={values.excludePageFromSearch}
+                checked={excludePageFromSearch}
                 onCheckedChange={() => {
+                  const newValue = !excludePageFromSearch;
                   onChange({
                     field: "excludePageFromSearch",
-                    value: !values.excludePageFromSearch,
+                    value: newValue.toString(),
                   });
                 }}
               />
@@ -599,11 +625,11 @@ const FormFields = ({
           {isFeatureEnabled("cms") && (
             <InputField
               placeholder="https://www.url.com"
-              value={values.socialImageUrl}
+              value={socialImageUrl}
               onChange={(event) => {
                 onChange({
                   field: "socialImageUrl",
-                  value: event.target.value,
+                  value: JSON.stringify(event.target.value),
                 });
                 onChange({ field: "socialImageAssetId", value: "" });
               }}
@@ -645,17 +671,18 @@ const FormFields = ({
             ogImageUrl={
               socialImageAsset?.type === "image"
                 ? socialImageAsset.name
-                : values.socialImageUrl
+                : socialImageUrl
             }
             ogUrl={pageUrl}
-            ogTitle={values.title}
-            ogDescription={values.description}
+            ogTitle={title}
+            ogDescription={description}
           />
         </Grid>
 
         <Separator />
 
         <CustomMetadata
+          variableValues={variableValues}
           customMetas={values.customMetas}
           onChange={(customMetas) => {
             onChange({

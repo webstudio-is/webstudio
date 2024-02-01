@@ -9,6 +9,7 @@ import { $instances } from "./instances";
 import {
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
+  computeExpression,
 } from "./props";
 import { $pages, $selectedPageId } from "./pages";
 import {
@@ -829,4 +830,8 @@ test("stop variables lookup outside of slots", () => {
   );
 
   cleanStores($variableValuesByInstanceSelector);
+});
+
+test("compute expression when invalid syntax", () => {
+  expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
 });

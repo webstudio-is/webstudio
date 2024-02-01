@@ -2,6 +2,7 @@ import { expect, test } from "@jest/globals";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
+  executeExpression,
   validateExpression,
 } from "./expression";
 
@@ -157,4 +158,10 @@ test("encode/decode variable names", () => {
     "my--id"
   );
   expect(decodeDataSourceVariable("myVarName")).toEqual(undefined);
+});
+
+test("execute expression", () => {
+  expect(executeExpression(undefined)).toEqual(undefined);
+  expect(executeExpression("1 + 1")).toEqual(2);
+  expect(executeExpression("someVariable + 1")).toEqual(undefined);
 });

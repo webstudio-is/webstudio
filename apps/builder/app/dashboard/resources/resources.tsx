@@ -10,7 +10,6 @@ import {
 import {
   DiscordIcon,
   GithubIcon,
-  Webstudio1cIcon,
   XIcon,
   Youtube1cIcon,
   type IconComponent,
@@ -21,18 +20,25 @@ import { Panel } from "../shared/panel";
 import { IntroVideoDialog } from "./intro-video";
 import introThumb from "./intro-thumb.jpg";
 
+const introButtonStyle = css({
+  "&:hover, &:focus-visible": {
+    "--ws-resource-intro-video-filter": "none",
+  },
+});
+
 const introThumbStyle = css({
   width: "100%",
   height: "100%",
   objectFit: "cover",
   objectPosition: "center",
+  filter: "var(--ws-resource-intro-video-filter, brightness(80%))",
 });
 
 const IntroVideoCard = () => {
   return (
     <IntroVideoDialog asChild>
       <Card asChild>
-        <button>
+        <button className={introButtonStyle()}>
           <CardContent>
             <Flex align="center" justify="center">
               <img src={introThumb} className={introThumbStyle()} />
@@ -52,54 +58,37 @@ const IntroVideoCard = () => {
 };
 
 const resourceIconSyle = css({
-  display: "var(--ws-resource-icon-default-display, block)",
-  color: `var(--ws-resource-icon-selected-color, ${theme.colors.foregroundSubtle})`,
   width: "35%",
   height: "auto",
-  variants: {
-    variant: {
-      selected: {
-        display: "var(--ws-resource-icon-selected-display, none)",
-      },
-    },
-  },
+  filter: "var(--ws-resource-icon-filter, opacity(0.8) brightness(80%))",
 });
 
 const Resource = ({
   href,
   Icon,
-  SelectedIcon,
   title,
-  selectedColor = theme.colors.foregroundMain,
+  color,
 }: {
   href: string;
   Icon: IconComponent;
-  SelectedIcon?: IconComponent;
   title: string;
-  selectedColor?: string;
+  color?: string;
 }) => {
-  SelectedIcon || (SelectedIcon = Icon);
   return (
     <Card asChild>
       <Link
         href={href}
         target="_blank"
         underline="none"
-        color="subtle"
         css={{
           "&:hover, &:focus-visible": {
-            "--ws-resource-icon-selected-color": selectedColor,
-            "--ws-resource-icon-selected-display": "block",
-            "--ws-resource-icon-default-display": "none",
+            "--ws-resource-icon-filter": "none",
           },
         }}
       >
         <CardContent>
           <Flex align="center" justify="center">
-            <Icon className={resourceIconSyle()} />
-            <SelectedIcon
-              className={resourceIconSyle({ variant: "selected" })}
-            />
+            <Icon className={resourceIconSyle({ css: { color } })} />
           </Flex>
         </CardContent>
         <CardFooter>
@@ -134,29 +123,30 @@ export const Resources = () => {
             href="https://www.youtube.com/playlist?list=PL4vVqpngzeT4sDlanyPe99dYl8BgUYCac"
             title="Learn with Videos"
             Icon={Youtube1cIcon}
-            selectedColor="#FF0000"
+            color="#FF0000"
           />
           <Resource
             href="https://docs.webstudio.is/"
             title="Read the Docs"
-            Icon={Webstudio1cIcon}
-            SelectedIcon={WebstudioIcon}
+            Icon={WebstudioIcon}
           />
           <Resource
             href="https://discord.gg/UNdyrDkq5r"
             title="Join the Community"
-            selectedColor="#5865F2"
             Icon={DiscordIcon}
+            color="#5865F2"
           />
           <Resource
             href="https://x.com/getwebstudio"
             title="Follow on X"
             Icon={XIcon}
+            color={theme.colors.foregroundMain}
           />
           <Resource
             href="https://github.com/webstudio-is/webstudio-community/discussions"
             title="Discuss on GitHub"
             Icon={GithubIcon}
+            color={theme.colors.foregroundMain}
           />
         </Grid>
       </Flex>
