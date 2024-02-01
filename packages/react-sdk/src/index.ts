@@ -21,6 +21,7 @@ export {
   validateExpression,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
+  executeExpression,
 } from "./expression";
 export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";

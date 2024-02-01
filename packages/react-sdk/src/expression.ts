@@ -209,3 +209,12 @@ export const generateExpression = ({
     },
   });
 };
+
+export const executeExpression = (expression: undefined | string) => {
+  try {
+    const fn = new Function(`return (${expression})`);
+    return fn();
+  } catch {
+    // empty block
+  }
+};
