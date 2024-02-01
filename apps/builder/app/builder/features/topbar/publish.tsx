@@ -357,11 +357,10 @@ const useCanAddDomain = () => {
   useEffect(() => {
     load();
   }, [load]);
-  const canAddDomain =
-    hasProPlan ||
-    (data !== undefined &&
-      data.success &&
-      data.data < maxDomainsAllowedPerUser);
+  const withinFreeLimit = data
+    ? data.success && data.data < maxDomainsAllowedPerUser
+    : true;
+  const canAddDomain = hasProPlan || withinFreeLimit;
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
