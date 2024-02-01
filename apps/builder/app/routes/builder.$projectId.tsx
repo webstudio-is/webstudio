@@ -87,8 +87,6 @@ export const loader = async ({
       throw new AuthorizationError("Project must have project userId defined");
     }
 
-    const totalUserDomains = await domainDb.countTotalDomains(project.userId);
-
     return {
       project,
       domains,
@@ -97,7 +95,6 @@ export const loader = async ({
       authToken,
       authPermit,
       userPlanFeatures,
-      totalUserDomains,
     };
   } catch (error) {
     if (error instanceof AuthorizationError) {

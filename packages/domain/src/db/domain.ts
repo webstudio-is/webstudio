@@ -96,9 +96,9 @@ export const create = async (
     throw new AuthorizationError("Project must have project userId defined");
   }
 
-  const projectDomainsCount = await countTotalDomains(ownerId);
+  const totalDomainsCount = await countTotalDomains(ownerId);
 
-  if (projectDomainsCount >= props.maxDomainsAllowedPerUser) {
+  if (totalDomainsCount >= props.maxDomainsAllowedPerUser) {
     return {
       success: false,
       error:

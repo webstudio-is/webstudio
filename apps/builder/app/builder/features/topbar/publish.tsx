@@ -33,7 +33,7 @@ import {
 } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { getPublishedUrl } from "~/shared/router-utils";
-import { $authPermit, $totalUserDomains } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -53,7 +53,6 @@ import { builderDomainsPath } from "~/shared/router-utils";
 import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
-import { getUserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
 
@@ -352,6 +351,18 @@ const ErrorText = ({ children }: { children: string }) => (
   </Flex>
 );
 
+const useCanAddDomain = () => {
+  const { load, data } = trpc.countTotalDomains.useQuery();
+  const { maxDomainsAllowedPerUser, hasProPlan } = useStore($userPlanFeatures);
+  useEffect(() => {
+    load();
+  }, [load]);
+  const canAddDomain =
+    hasProPlan ||
+    (data && data.success === true && data.data < maxDomainsAllowedPerUser);
+  return { canAddDomain, maxDomainsAllowedPerUser };
+};
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
@@ -414,10 +425,7 @@ const Content = (props: {
     setIsPublishing(hasPendingState);
   }, [hasPendingState, setIsPublishing]);
 
-  const { maxDomainsAllowedPerUser, hasProPlan } = useStore($userPlanFeatures);
-  const totalUserDomains = useStore($totalUserDomains);
-  const canAddDomain =
-    hasProPlan || totalUserDomains < maxDomainsAllowedPerUser;
+  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
 
   return (
     <>
