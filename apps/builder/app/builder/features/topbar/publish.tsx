@@ -359,7 +359,9 @@ const useCanAddDomain = () => {
   }, [load]);
   const canAddDomain =
     hasProPlan ||
-    (data && data.success === true && data.data < maxDomainsAllowedPerUser);
+    (data !== undefined &&
+      data.success &&
+      data.data < maxDomainsAllowedPerUser);
   return { canAddDomain, maxDomainsAllowedPerUser };
 };
 
