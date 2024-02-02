@@ -42,6 +42,7 @@ export * from "./components/nested-input-button";
 export * from "./components/panel-tabs";
 export * from "./components/ai-command-bar";
 export * from "./components/link";
+export * from "./components/panel-banner";
 
 // Not aligned
 

@@ -364,6 +364,7 @@ BindingButton.displayName = "BindingButton";
 
 const BindingPopoverContext = createContext<{
   containerRef?: RefObject<HTMLElement>;
+  side?: "left" | "right";
 }>({});
 
 export const BindingPopoverProvider = BindingPopoverContext.Provider;
@@ -385,9 +386,13 @@ export const BindingPopover = ({
   onChange: (newValue: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
 }) => {
-  const { containerRef } = useContext(BindingPopoverContext);
+  const { side = "left", containerRef } = useContext(BindingPopoverContext);
   const [isOpen, onOpenChange] = useState(false);
-  const [triggerRef, sideOffset] = useSideOffset({ isOpen, containerRef });
+  const [triggerRef, sideOffset] = useSideOffset({
+    side,
+    isOpen,
+    containerRef,
+  });
   const hasUnsavedChange = useRef<boolean>(false);
   const preventedClosing = useRef<boolean>(false);
 
@@ -418,7 +423,7 @@ export const BindingPopover = ({
       </FloatingPanelPopoverTrigger>
       <FloatingPanelPopoverContent
         sideOffset={sideOffset}
-        side="left"
+        side={side}
         align="start"
       >
         <BindingPanel

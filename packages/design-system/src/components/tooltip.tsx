@@ -138,7 +138,7 @@ export const InputErrorsTooltip = ({
   const content = errors?.map((error, index) => (
     <Fragment key={index}>
       {index > 0 && <br />}
-      {error}
+      <Text>{error}</Text>
     </Fragment>
   ));
   return (
