@@ -17,9 +17,11 @@ import {
 } from "@webstudio-is/design-system";
 
 export const useSideOffset = ({
+  side = "left",
   isOpen,
   containerRef,
 }: {
+  side?: "left" | "right";
   isOpen: boolean;
   containerRef?: RefObject<HTMLElement>;
 }): [MutableRefObject<HTMLButtonElement | null>, number] => {
@@ -39,8 +41,15 @@ export const useSideOffset = ({
     }
     const containerRect = containerRef.current.getBoundingClientRect();
     const triggerRect = triggerRef.current.getBoundingClientRect();
-    setSideOffset(triggerRect.left - containerRect.left);
-  }, [isOpen, containerRef]);
+    if (side === "left") {
+      setSideOffset(triggerRect.left - containerRect.left);
+    }
+    if (side === "right") {
+      const containerRight = containerRect.left + containerRect.width;
+      const triggerRight = triggerRect.left + triggerRect.width;
+      setSideOffset(containerRight - triggerRight);
+    }
+  }, [side, isOpen, containerRef]);
 
   return [triggerRef, sideOffset];
 };

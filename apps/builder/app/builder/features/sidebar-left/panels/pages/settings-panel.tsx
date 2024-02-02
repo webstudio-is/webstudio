@@ -5,6 +5,8 @@ import {
   Flex,
 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
+import { useRef } from "react";
+import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 
 const CollapsibleRoot = styled(Collapsible.Root, {
   position: "absolute",
@@ -58,8 +60,9 @@ export const SettingsPanel = ({
   children: React.ReactNode;
   isOpen: boolean;
 }) => {
+  const settingsRef = useRef<HTMLDivElement>(null);
   return (
-    <CollapsibleRoot open={isOpen}>
+    <CollapsibleRoot ref={settingsRef} open={isOpen}>
       <CollapsibleContent>
         <Flex
           direction="column"
@@ -72,7 +75,11 @@ export const SettingsPanel = ({
             borderRight: `1px solid ${theme.colors.slate7}`,
           }}
         >
-          {children}
+          <BindingPopoverProvider
+            value={{ containerRef: settingsRef, side: "right" }}
+          >
+            {children}
+          </BindingPopoverProvider>
         </Flex>
       </CollapsibleContent>
     </CollapsibleRoot>

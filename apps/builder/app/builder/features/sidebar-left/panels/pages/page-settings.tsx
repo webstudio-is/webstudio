@@ -1,11 +1,6 @@
+import { nanoid } from "nanoid";
 import { z } from "zod";
-import {
-  type FocusEventHandler,
-  useState,
-  useCallback,
-  Fragment,
-  useMemo,
-} from "react";
+import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -70,7 +65,11 @@ import {
   $dataSourceVariables,
   computeExpression,
 } from "~/shared/nano-states";
-import { nanoid } from "nanoid";
+import {
+  BindingControl,
+  BindingPopover,
+  isLiteralExpression,
+} from "~/builder/shared/binding-popover";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
 import { ImageControl } from "~/builder/features/seo/image-control";
@@ -84,7 +83,11 @@ import {
   parsePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
-import { registerFolderChildMutable, deletePageMutable } from "./page-utils";
+import {
+  registerFolderChildMutable,
+  deletePageMutable,
+  $pageRootScope,
+} from "./page-utils";
 import { Form } from "./form";
 
 const fieldDefaultValues = {
@@ -141,18 +144,28 @@ const LegacyPagePath = z
     "/build prefix is reserved for the system"
   );
 
-const HomePageValues = z.object({
+const SharedPageValues = z.object({
   name: PageName,
-  path: HomePagePath,
   title: PageTitle,
   description: z.string().optional(),
+  excludePageFromSearch: z.boolean().optional(),
+  socialImageUrl: z.string().optional(),
+  customMetas: z
+    .array(
+      z.object({
+        property: z.string(),
+        content: z.string(),
+      })
+    )
+    .optional(),
 });
 
-const PageValues = z.object({
-  name: PageName,
+const HomePageValues = SharedPageValues.extend({
+  path: HomePagePath,
+});
+
+const PageValues = SharedPageValues.extend({
   path: isFeatureEnabled("cms") ? PagePath : LegacyPagePath,
-  title: PageTitle,
-  description: z.string().optional(),
 });
 
 const isPathUnique = (
@@ -179,10 +192,26 @@ const validateValues = (
   // undefined page id means new page
   pageId: undefined | Page["id"],
   values: Values,
-  isHomePage: boolean
+  isHomePage: boolean,
+  variableValues: Map<string, unknown>
 ): Errors => {
+  const computedValues = {
+    name: values.name,
+    path: values.path,
+    title: computeExpression(values.title, variableValues),
+    description: computeExpression(values.description, variableValues),
+    excludePageFromSearch: computeExpression(
+      values.excludePageFromSearch,
+      variableValues
+    ),
+    socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
+    customMetas: values.customMetas.map((item) => ({
+      property: item.property,
+      content: computeExpression(item.content, variableValues),
+    })),
+  };
   const Validator = isHomePage ? HomePageValues : PageValues;
-  const parsedResult = Validator.safeParse(values);
+  const parsedResult = Validator.safeParse(computedValues);
   const errors: Errors = {};
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;
@@ -303,7 +332,7 @@ const FormFields = ({
   const assets = useStore($assets);
   const pages = useStore($pages);
   const dataSourceVariables = useStore($dataSourceVariables);
-  const variableValues = useMemo(() => new Map(), []);
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
 
   if (pages === undefined) {
     return;
@@ -548,62 +577,155 @@ const FormFields = ({
 
           <Grid gap={1}>
             <Label htmlFor={fieldIds.title}>Title</Label>
-            <InputErrorsTooltip errors={errors.title}>
-              <InputField
-                tabIndex={1}
-                color={errors.title && "error"}
-                id={fieldIds.title}
-                name="title"
-                placeholder="My awesome project - About"
-                disabled={disabled}
-                value={title}
-                onChange={(event) => {
-                  onChange({
-                    field: "title",
-                    value: JSON.stringify(event.target.value),
-                  });
-                }}
-              />
-            </InputErrorsTooltip>
+            <BindingControl>
+              {isFeatureEnabled("cms") && (
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.title) ? "default" : "bound"
+                  }
+                  value={values.title}
+                  onChange={(value) => {
+                    onChange({
+                      field: "title",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "title",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+              )}
+              <InputErrorsTooltip errors={errors.title}>
+                <InputField
+                  tabIndex={1}
+                  color={errors.title && "error"}
+                  id={fieldIds.title}
+                  name="title"
+                  placeholder="My awesome project - About"
+                  disabled={
+                    disabled || isLiteralExpression(values.title) === false
+                  }
+                  value={title}
+                  onChange={(event) => {
+                    onChange({
+                      field: "title",
+                      value: JSON.stringify(event.target.value),
+                    });
+                  }}
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
           </Grid>
 
           <Grid gap={1}>
             <Label htmlFor={fieldIds.description}>Description</Label>
-            <InputErrorsTooltip errors={errors.description}>
-              <TextArea
-                tabIndex={1}
-                state={errors.description && "invalid"}
-                id={fieldIds.description}
-                name="description"
-                disabled={disabled}
-                value={description}
-                onChange={(value) => {
-                  onChange({
-                    field: "description",
-                    value: JSON.stringify(value),
-                  });
-                }}
-                autoGrow
-                maxRows={10}
-              />
-            </InputErrorsTooltip>
-            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-              <Checkbox
-                id={fieldIds.excludePageFromSearch}
-                checked={excludePageFromSearch}
-                onCheckedChange={() => {
-                  const newValue = !excludePageFromSearch;
-                  onChange({
-                    field: "excludePageFromSearch",
-                    value: newValue.toString(),
-                  });
-                }}
-              />
+            <BindingControl>
+              {isFeatureEnabled("cms") && (
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.description)
+                      ? "default"
+                      : "bound"
+                  }
+                  value={values.description}
+                  onChange={(value) => {
+                    onChange({
+                      field: "description",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "description",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+              )}
+              <InputErrorsTooltip errors={errors.description}>
+                <TextArea
+                  tabIndex={1}
+                  state={errors.description && "invalid"}
+                  id={fieldIds.description}
+                  name="description"
+                  disabled={
+                    disabled ||
+                    isLiteralExpression(values.description) === false
+                  }
+                  value={description}
+                  onChange={(value) => {
+                    onChange({
+                      field: "description",
+                      value: JSON.stringify(value),
+                    });
+                  }}
+                  autoGrow
+                  maxRows={10}
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
+            <BindingControl>
+              <Grid
+                flow={"column"}
+                gap={1}
+                justify={"start"}
+                align={"center"}
+                css={{ py: theme.spacing[2] }}
+              >
+                {isFeatureEnabled("cms") && (
+                  <BindingPopover
+                    scope={scope}
+                    aliases={aliases}
+                    variant={
+                      isLiteralExpression(values.excludePageFromSearch)
+                        ? "default"
+                        : "bound"
+                    }
+                    value={values.excludePageFromSearch}
+                    onChange={(value) => {
+                      onChange({
+                        field: "excludePageFromSearch",
+                        value,
+                      });
+                    }}
+                    onRemove={(evaluatedValue) => {
+                      onChange({
+                        field: "excludePageFromSearch",
+                        value: JSON.stringify(evaluatedValue),
+                      });
+                    }}
+                  />
+                )}
+                <Checkbox
+                  id={fieldIds.excludePageFromSearch}
+                  disabled={
+                    disabled ||
+                    isLiteralExpression(values.excludePageFromSearch) === false
+                  }
+                  checked={excludePageFromSearch}
+                  onCheckedChange={() => {
+                    const newValue = !excludePageFromSearch;
+                    onChange({
+                      field: "excludePageFromSearch",
+                      value: newValue.toString(),
+                    });
+                  }}
+                />
 
-              <Label htmlFor={fieldIds.excludePageFromSearch}>
-                Exclude this page from search results
-              </Label>
-            </Grid>
+                <InputErrorsTooltip errors={errors.excludePageFromSearch}>
+                  <Label htmlFor={fieldIds.excludePageFromSearch}>
+                    Exclude this page from search results
+                  </Label>
+                </InputErrorsTooltip>
+              </Grid>
+            </BindingControl>
           </Grid>
         </Grid>
 
@@ -623,17 +745,48 @@ const FormFields = ({
             are 1200x630 px or larger with a 1.91:1 aspect ratio.
           </Text>
           {isFeatureEnabled("cms") && (
-            <InputField
-              placeholder="https://www.url.com"
-              value={socialImageUrl}
-              onChange={(event) => {
-                onChange({
-                  field: "socialImageUrl",
-                  value: JSON.stringify(event.target.value),
-                });
-                onChange({ field: "socialImageAssetId", value: "" });
-              }}
-            />
+            <BindingControl>
+              <BindingPopover
+                scope={scope}
+                aliases={aliases}
+                variant={
+                  isLiteralExpression(values.socialImageUrl)
+                    ? "default"
+                    : "bound"
+                }
+                value={values.socialImageUrl}
+                onChange={(value) => {
+                  onChange({
+                    field: "socialImageUrl",
+                    value,
+                  });
+                }}
+                onRemove={(evaluatedValue) => {
+                  onChange({
+                    field: "socialImageUrl",
+                    value: JSON.stringify(evaluatedValue),
+                  });
+                }}
+              />
+              <InputErrorsTooltip errors={errors.socialImageUrl}>
+                <InputField
+                  placeholder="https://www.url.com"
+                  disabled={
+                    disabled ||
+                    isLiteralExpression(values.socialImageUrl) === false
+                  }
+                  color={errors.socialImageUrl && "error"}
+                  value={socialImageUrl}
+                  onChange={(event) => {
+                    onChange({
+                      field: "socialImageUrl",
+                      value: JSON.stringify(event.target.value),
+                    });
+                    onChange({ field: "socialImageAssetId", value: "" });
+                  }}
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
           )}
           <Grid gap={1} flow={"column"}>
             <ImageControl
@@ -681,16 +834,19 @@ const FormFields = ({
 
         <Separator />
 
-        <CustomMetadata
-          variableValues={variableValues}
-          customMetas={values.customMetas}
-          onChange={(customMetas) => {
-            onChange({
-              field: "customMetas",
-              value: customMetas,
-            });
-          }}
-        />
+        <InputErrorsTooltip errors={errors.customMetas}>
+          <div>
+            <CustomMetadata
+              customMetas={values.customMetas}
+              onChange={(customMetas) => {
+                onChange({
+                  field: "customMetas",
+                  value: customMetas,
+                });
+              }}
+            />
+          </div>
+        </InputErrorsTooltip>
         <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
     </Grid>
@@ -736,7 +892,14 @@ export const NewPageSettings = ({
     ...fieldDefaultValues,
     path: nameToPath(pages, fieldDefaultValues.name),
   });
-  const errors = validateValues(pages, undefined, values, false);
+  const { variableValues } = useStore($pageRootScope);
+  const errors = validateValues(
+    pages,
+    undefined,
+    values,
+    false,
+    variableValues
+  );
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
@@ -1014,7 +1177,14 @@ export const PageSettings = ({
     ...unsavedValues,
   };
 
-  const errors = validateValues(pages, pageId, values, values.isHomePage);
+  const { variableValues } = useStore($pageRootScope);
+  const errors = validateValues(
+    pages,
+    pageId,
+    values,
+    values.isHomePage,
+    variableValues
+  );
 
   const debouncedFn = useEffectEvent(() => {
     if (

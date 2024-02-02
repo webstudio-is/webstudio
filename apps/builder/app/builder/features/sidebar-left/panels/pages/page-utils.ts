@@ -1,4 +1,6 @@
+import { computed } from "nanostores";
 import { createRootFolder } from "@webstudio-is/project-build";
+import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
 import {
   type Page,
   Pages,
@@ -12,8 +14,11 @@ import {
 import { removeByMutable } from "~/shared/array-utils";
 import { deleteInstanceMutable } from "~/shared/instance-utils";
 import {
+  $dataSources,
   $selectedInstanceSelector,
+  $selectedPage,
   $selectedPageId,
+  $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 
 type TreePage = {
@@ -278,3 +283,30 @@ export const getExistingRoutePaths = (pages?: Pages): Set<string> => {
   }
   return paths;
 };
+
+export const $pageRootScope = computed(
+  [$selectedPage, $variableValuesByInstanceSelector, $dataSources],
+  (selectedPage, variableValuesByInstanceSelector, dataSources) => {
+    const scope: Record<string, unknown> = {};
+    const aliases = new Map<string, string>();
+    const variableValues = new Map<string, unknown>();
+    if (selectedPage === undefined) {
+      return { variableValues, scope, aliases };
+    }
+    const values = variableValuesByInstanceSelector.get(
+      JSON.stringify([selectedPage.rootInstanceId])
+    );
+    if (values) {
+      for (const [dataSourceId, value] of values) {
+        const dataSource = dataSources.get(dataSourceId);
+        if (dataSource === undefined) {
+          continue;
+        }
+        const name = encodeDataSourceVariable(dataSourceId);
+        scope[name] = value;
+        aliases.set(name, dataSource.name);
+      }
+    }
+    return { variableValues: values ?? variableValues, scope, aliases };
+  }
+);
