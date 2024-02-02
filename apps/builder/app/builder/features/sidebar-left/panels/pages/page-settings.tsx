@@ -671,8 +671,14 @@ const FormFields = ({
                 />
               </InputErrorsTooltip>
             </BindingControl>
-            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-              <BindingControl>
+            <BindingControl>
+              <Grid
+                flow={"column"}
+                gap={1}
+                justify={"start"}
+                align={"center"}
+                css={{ py: theme.spacing[2] }}
+              >
                 {isFeatureEnabled("cms") && (
                   <BindingPopover
                     scope={scope}
@@ -712,14 +718,14 @@ const FormFields = ({
                     });
                   }}
                 />
-              </BindingControl>
 
-              <InputErrorsTooltip errors={errors.excludePageFromSearch}>
-                <Label htmlFor={fieldIds.excludePageFromSearch}>
-                  Exclude this page from search results
-                </Label>
-              </InputErrorsTooltip>
-            </Grid>
+                <InputErrorsTooltip errors={errors.excludePageFromSearch}>
+                  <Label htmlFor={fieldIds.excludePageFromSearch}>
+                    Exclude this page from search results
+                  </Label>
+                </InputErrorsTooltip>
+              </Grid>
+            </BindingControl>
           </Grid>
         </Grid>
 
