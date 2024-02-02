@@ -26,4 +26,5 @@ export const addGlobalRules = (
   for (const fontFace of fontFaces) {
     sheet.addFontFaceRule(fontFace);
   }
+  console.log(sheet.cssText);
 };
