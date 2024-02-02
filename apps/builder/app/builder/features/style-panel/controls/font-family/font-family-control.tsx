@@ -29,7 +29,8 @@ export const FontFamilyControl = ({
       onOpenChange={setIsOpen}
     >
       <DeprecatedTextField
-        defaultValue={toValue(value)}
+        // Replacing the quotes just to make it look cleaner in the UI
+        defaultValue={toValue(value).replace(/"/, "")}
         state={isOpen ? "active" : undefined}
       />
     </FloatingPanel>
