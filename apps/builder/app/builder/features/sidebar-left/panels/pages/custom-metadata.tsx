@@ -1,3 +1,5 @@
+import { useId } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Button,
   Grid,
@@ -9,8 +11,14 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
-import { useId } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import {
+  BindingControl,
+  BindingPopover,
+  isLiteralExpression,
+} from "~/builder/shared/binding-popover";
 import { computeExpression } from "~/shared/nano-states";
+import { $pageRootScope } from "./page-utils";
 
 type Meta = {
   property: string;
@@ -18,13 +26,11 @@ type Meta = {
 };
 
 type CustomMetadataProps = {
-  variableValues: Map<string, unknown>;
   customMetas: Meta[];
   onChange: (value: Meta[]) => void;
 };
 
-const PropertyContent = (props: {
-  variableValues: Map<string, unknown>;
+const MetadataItem = (props: {
   property: string;
   content: string;
   onDelete: () => void;
@@ -32,8 +38,9 @@ const PropertyContent = (props: {
 }) => {
   const propertyId = useId();
   const contentId = useId();
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
 
-  const content = computeExpression(props.content, props.variableValues);
+  const content = computeExpression(props.content, variableValues);
 
   return (
     <Grid
@@ -65,20 +72,41 @@ const PropertyContent = (props: {
       <Label htmlFor={contentId} css={{ gridArea: "content" }}>
         Content
       </Label>
-      <InputErrorsTooltip errors={undefined}>
-        <InputField
-          css={{
-            gridArea: "content-input",
-          }}
-          tabIndex={1}
-          id={contentId}
-          property="path"
-          value={content}
-          onChange={(event) => {
-            props.onChange(props.property, JSON.stringify(event.target.value));
-          }}
-        />
-      </InputErrorsTooltip>
+      <BindingControl>
+        {isFeatureEnabled("cms") && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(props.content) ? "default" : "bound"}
+            value={props.content}
+            onChange={(value) => {
+              props.onChange(props.property, value);
+            }}
+            onRemove={(evaluatedValue) => {
+              props.onChange(props.property, JSON.stringify(evaluatedValue));
+            }}
+          />
+        )}
+        <InputErrorsTooltip errors={undefined}>
+          <InputField
+            css={{
+              gridArea: "content-input",
+            }}
+            disabled={isLiteralExpression(props.content) === false}
+            color={typeof content !== "string" ? "error" : undefined}
+            tabIndex={1}
+            id={contentId}
+            property="path"
+            value={content}
+            onChange={(event) => {
+              props.onChange(
+                props.property,
+                JSON.stringify(event.target.value)
+              );
+            }}
+          />
+        </InputErrorsTooltip>
+      </BindingControl>
       <Grid
         css={{
           gridArea: "button",
@@ -140,9 +168,8 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
       <div />
       <Grid gap={3}>
         {props.customMetas.map((meta, index) => (
-          <PropertyContent
+          <MetadataItem
             key={index}
-            variableValues={props.variableValues}
             property={meta.property}
             content={meta.content}
             onChange={(property, content) => {
