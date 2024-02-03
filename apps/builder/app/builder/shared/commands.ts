@@ -32,6 +32,7 @@ const makeBreakpointCommand = <CommandName extends string>(
   name,
   defaultHotkeys: [`${number}`],
   disableHotkeyOnFormTags: true,
+  disableHotkeyOnContentEditable: true,
   handler: () => {
     selectBreakpointByOrder(number);
   },
