@@ -13,7 +13,7 @@ export const ClonableSection = (props: {
   settings: ProjectSettings;
   onSettingsChange: (settings: ProjectSettings) => void;
 }) => {
-  const ids = useIds(["clonable"]);
+  const ids = useIds(["clonable", "directory"]);
 
   const handleChange =
     <Name extends keyof ProjectSettings>(name: Name) =>
@@ -38,6 +38,18 @@ export const ClonableSection = (props: {
           }}
         />
         <Label htmlFor={ids.clonable}>Allow cloning the project</Label>
+      </CheckboxAndLabel>
+      <CheckboxAndLabel>
+        <Checkbox
+          checked={props.settings.directory ?? false}
+          id={ids.directory}
+          onCheckedChange={(checked) => {
+            if (typeof checked === "boolean") {
+              handleChange("directory")(checked);
+            }
+          }}
+        />
+        <Label htmlFor={ids.directory}>Allow directory listing</Label>
       </CheckboxAndLabel>
     </Grid>
   );

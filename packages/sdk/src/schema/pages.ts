@@ -123,6 +123,7 @@ const ProjectSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
   clonable: z.boolean().optional(),
+  directory: z.boolean().optional(),
   redirects: z.array(PageRedirectSchema).optional(),
 });
 
