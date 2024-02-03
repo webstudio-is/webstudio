@@ -72,9 +72,11 @@ import {
 } from "~/builder/shared/binding-popover";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
-import { ImageControl } from "~/builder/features/seo/image-control";
+// @todo should be moved to shared because features should not depend on features
+import { ImageControl } from "~/builder/features/project-settings";
 import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
+// @todo should be moved to shared because features should not depend on features
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
 import env from "~/shared/env";

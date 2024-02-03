@@ -12,8 +12,6 @@ import {
   Separator,
   Button,
   css,
-  CheckboxAndLabel,
-  Checkbox,
   ScrollArea,
 } from "@webstudio-is/design-system";
 import { useEffect, useState } from "react";
@@ -26,8 +24,9 @@ import { useIds } from "~/shared/form-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "../ai/hooks/effect-event";
 import type { Pages } from "@webstudio-is/sdk";
-import { ProjectRedirectionSettings } from "./project-redirects";
+import { RedirectSettings } from "./redirect-settings";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { PublishSettings } from "./publish-settings";
 
 type ProjectMeta = NonNullable<Pages["meta"]>;
 export type ProjectSettings = NonNullable<Pages["settings"]>;
@@ -47,8 +46,8 @@ const ProjectSettingsContentMeta = (props: {
 }) => {
   const ids = useIds(["siteName", "favicon", "code"]);
   const handleChange =
-    <T extends keyof ProjectMeta>(name: T) =>
-    (value: ProjectMeta[T]) => {
+    <Name extends keyof ProjectMeta>(name: Name) =>
+    (value: ProjectMeta[Name]) => {
       props.onMetaChange({
         ...props.meta,
         [name]: value,
@@ -131,45 +130,6 @@ const ProjectSettingsContentMeta = (props: {
   );
 };
 
-const ProjectAdvancedSettings = (props: {
-  settings: ProjectSettings;
-  onSettingsChange: (settings: ProjectSettings) => void;
-}) => {
-  const ids = useIds(["atomicStyles"]);
-
-  const handleChange =
-    <T extends keyof ProjectSettings>(name: T) =>
-    (val: ProjectSettings[T]) => {
-      props.onSettingsChange({
-        ...props.settings,
-        [name]: val,
-      });
-    };
-
-  return (
-    <>
-      <Separator />
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Text variant="titles">Publish Settings</Text>
-        <CheckboxAndLabel>
-          <Checkbox
-            checked={props.settings.atomicStyles ?? true}
-            id={ids.atomicStyles}
-            onCheckedChange={(checked) => {
-              if (typeof checked === "boolean") {
-                handleChange("atomicStyles")(checked);
-              }
-            }}
-          />
-          <Label htmlFor={ids.atomicStyles}>
-            Generate atomic CSS when publishing
-          </Label>
-        </CheckboxAndLabel>
-      </Grid>
-    </>
-  );
-};
-
 const ProjectSettingsView = () => {
   const [meta, setMeta] = useState(
     $pages.get()?.meta ?? {
@@ -219,19 +179,15 @@ const ProjectSettingsView = () => {
         }}
       >
         <ScrollArea>
-          <Grid
-            gap={2}
-            css={{
-              my: theme.spacing[5],
-            }}
-          >
+          <Grid gap={2} css={{ my: theme.spacing[5] }}>
             <ProjectSettingsContentMeta meta={meta} onMetaChange={setMeta} />
-            <ProjectAdvancedSettings
+            <Separator />
+            <PublishSettings
               settings={settings}
               onSettingsChange={setSettings}
             />
             {isFeatureEnabled("redirects") ? (
-              <ProjectRedirectionSettings
+              <RedirectSettings
                 settings={settings}
                 onSettingsChange={setSettings}
               />
