@@ -1,9 +1,9 @@
 import {
   Flex,
   Grid,
-  DeprecatedIconButton,
-  Tooltip,
+  EnhancedTooltip,
   theme,
+  IconButton,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
@@ -38,6 +38,7 @@ import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource } from "../../shared/style-info";
 import { CollapsibleSection } from "../../shared/collapsible-section";
+import { forwardRef, type ComponentProps } from "react";
 
 const properties: StyleProperty[] = [
   "fontFamily",
@@ -360,6 +361,22 @@ export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
   );
 };
 
+const AdvancedOptionsButton = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<typeof IconButton>
+>((props, ref) => {
+  return (
+    <Flex>
+      <EnhancedTooltip content="More typography options">
+        <IconButton {...props} ref={ref}>
+          <EllipsesIcon />
+        </IconButton>
+      </EnhancedTooltip>
+    </Flex>
+  );
+});
+AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
+
 export const TypographySectionAdvancedPopover = (
   props: RenderCategoryProps
 ) => {
@@ -492,13 +509,7 @@ export const TypographySectionAdvancedPopover = (
         </Grid>
       }
     >
-      <Flex>
-        <Tooltip content="More typography options" delayDuration={0}>
-          <DeprecatedIconButton>
-            <EllipsesIcon />
-          </DeprecatedIconButton>
-        </Tooltip>
-      </Flex>
+      <AdvancedOptionsButton />
     </FloatingPanel>
   );
 };
