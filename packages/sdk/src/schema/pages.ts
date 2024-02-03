@@ -122,6 +122,7 @@ export const PageRedirectSchema = z.object({
 const ProjectSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
+  clonable: z.boolean().optional(),
   redirects: z.array(PageRedirectSchema).optional(),
 });
 

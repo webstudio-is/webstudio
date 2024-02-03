@@ -18,22 +18,26 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { MetaSection } from "./meta-section";
 import { PublishSection } from "./publish-section";
 import { RedirectSection } from "./redirect-settings";
+import { ClonableSection } from "./clonable-section";
 
 export type ProjectSettings = NonNullable<Pages["settings"]>;
 
+const defaultMetaSettings = {
+  siteName: "",
+  faviconAssetId: "",
+  code: "",
+};
+
+const defaultProjectSettings: ProjectSettings = {
+  atomicStyles: true,
+  clonable: false,
+};
+
 const ProjectSettingsView = () => {
-  const [meta, setMeta] = useState(
-    $pages.get()?.meta ?? {
-      siteName: "",
-      faviconAssetId: "",
-      code: "",
-    }
-  );
+  const [meta, setMeta] = useState($pages.get()?.meta ?? defaultMetaSettings);
 
   const [settings, setSettings] = useState(
-    $pages.get()?.settings ?? {
-      atomicStyles: true,
-    }
+    $pages.get()?.settings ?? defaultProjectSettings
   );
 
   const isOpen = useStore($isProjectSettingsOpen);
@@ -77,6 +81,11 @@ const ProjectSettingsView = () => {
               settings={settings}
               onSettingsChange={setSettings}
             />
+            <Separator />
+            <ClonableSection
+              settings={settings}
+              onSettingsChange={setSettings}
+            />{" "}
             {isFeatureEnabled("redirects") ? (
               <RedirectSection
                 settings={settings}
