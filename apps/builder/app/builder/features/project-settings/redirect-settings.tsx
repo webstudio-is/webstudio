@@ -19,7 +19,7 @@ import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
 import { $pages } from "~/shared/nano-states";
 
-export const ProjectRedirectionSettings = (props: {
+export const RedirectSection = (props: {
   settings: ProjectSettings;
   onSettingsChange: (settings: ProjectSettings) => void;
 }) => {
