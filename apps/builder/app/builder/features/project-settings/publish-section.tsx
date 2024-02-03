@@ -9,7 +9,7 @@ import {
 import { useIds } from "~/shared/form-utils";
 import type { ProjectSettings } from "./project-settings";
 
-export const PublishSettings = (props: {
+export const PublishSection = (props: {
   settings: ProjectSettings;
   onSettingsChange: (settings: ProjectSettings) => void;
 }) => {
