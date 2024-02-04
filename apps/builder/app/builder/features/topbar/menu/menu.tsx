@@ -20,6 +20,7 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
   $userPlanFeatures,
+  $isCloneDialogOpen,
 } from "~/builder/shared/nano-states";
 import {
   getThemeSetting,
@@ -28,7 +29,7 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $pages } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
@@ -97,18 +98,29 @@ export const Menu = () => {
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
+  const pages = useStore($pages);
+
+  if (pages === undefined) {
+    return;
+  }
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
-  const isShareDisabled = authPermit !== "own";
+  const isShareEnabled = authPermit === "own";
 
   const disabledPublishTooltipContent = isPublishEnabled
     ? undefined
     : "Only owner or admin can publish projects";
 
-  const disabledShareTooltipContent = isShareDisabled
-    ? "Only owner can share projects"
-    : undefined;
+  const disabledShareTooltipContent = isShareEnabled
+    ? undefined
+    : "Only owner can share projects";
+
+  const isClonable = pages.settings?.clonable || authPermit === "own";
+
+  const disabledCloneTooltipContent = isClonable
+    ? undefined
+    : "Project admin didn't enable cloning in the project settings";
 
   return (
     <DropdownMenu>
@@ -196,7 +208,7 @@ export const Menu = () => {
               onSelect={() => {
                 setIsShareOpen(true);
               }}
-              disabled={isShareDisabled}
+              disabled={isShareEnabled === false}
             >
               Share
             </DropdownMenuItem>
@@ -210,6 +222,16 @@ export const Menu = () => {
               disabled={isPublishEnabled === false}
             >
               Publish
+            </DropdownMenuItem>
+          </Tooltip>
+          <Tooltip side="right" content={disabledCloneTooltipContent}>
+            <DropdownMenuItem
+              onSelect={() => {
+                $isCloneDialogOpen.set(true);
+              }}
+              disabled={isClonable !== true}
+            >
+              Clone
             </DropdownMenuItem>
           </Tooltip>
           <DropdownMenuSeparator />

@@ -31,6 +31,7 @@ const defaultMetaSettings = {
 const defaultProjectSettings: ProjectSettings = {
   atomicStyles: true,
   clonable: false,
+  directory: false,
 };
 
 const ProjectSettingsView = () => {
@@ -69,9 +70,7 @@ const ProjectSettingsView = () => {
           width: theme.spacing[34],
           zIndex: theme.zIndices[1],
         }}
-        overlayCss={{
-          zIndex: theme.zIndices[1],
-        }}
+        overlayCss={{ zIndex: theme.zIndices[1] }}
       >
         <ScrollArea>
           <Grid gap={2} css={{ my: theme.spacing[5] }}>
@@ -116,7 +115,7 @@ export const ProjectSettings = () => {
   }, []);
 
   if (settingDialogLazyOpen === false) {
-    return null;
+    return;
   }
 
   return <ProjectSettingsView />;

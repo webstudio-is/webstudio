@@ -49,7 +49,9 @@ export const ClonableSection = (props: {
             }
           }}
         />
-        <Label htmlFor={ids.directory}>Allow directory listing</Label>
+        <Label htmlFor={ids.directory}>
+          Allow listing in the public directory
+        </Label>
       </CheckboxAndLabel>
     </Grid>
   );

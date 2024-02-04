@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "@remix-run/react";
 import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import {
   Box,
@@ -6,22 +8,47 @@ import {
   Label,
   Text,
   DeprecatedTextField,
+  DialogActions,
+  Dialog as BaseDialog,
+  DialogTrigger,
+  DialogContent as DialogContentBase,
+  DialogTitle,
+  DialogClose,
+  DialogDescription,
   theme,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import { useEffect, useState } from "react";
-import { useNavigate } from "@remix-run/react";
+import type { DashboardProject } from "@webstudio-is/prisma-client";
+import { Title } from "@webstudio-is/project";
 import { dashboardProjectPath, builderPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import {
-  DialogActions,
-  DialogClose,
-  Dialog,
-  DialogDescription,
-} from "./dialog";
-import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
-import { Title } from "@webstudio-is/project";
+
+type DialogProps = {
+  title: string;
+  children: JSX.Element | Array<JSX.Element>;
+  trigger?: JSX.Element;
+  onOpenChange?: (open: boolean) => void;
+  isOpen?: boolean;
+};
+
+const Dialog = ({
+  title,
+  children,
+  trigger,
+  onOpenChange,
+  isOpen,
+}: DialogProps) => {
+  return (
+    <BaseDialog open={isOpen} onOpenChange={onOpenChange}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      <DialogContentBase>
+        {children}
+        <DialogTitle>{title}</DialogTitle>
+      </DialogContentBase>
+    </BaseDialog>
+  );
+};
 
 const DialogContent = ({
   onSubmit,
@@ -215,79 +242,6 @@ export const RenameProjectDialog = ({
             state={state === "idle" ? undefined : "pending"}
           >
             Rename Project
-          </Button>
-        }
-      />
-    </Dialog>
-  );
-};
-
-const useDuplicateProject = ({
-  projectId,
-  onOpenChange,
-}: {
-  projectId: DashboardProject["id"];
-  onOpenChange: (isOpen: boolean) => void;
-}) => {
-  const navigate = useNavigate();
-  const { send, state } = trpc.duplicate.useMutation();
-
-  const [errors, setErrors] = useState<string>();
-
-  const handleSubmit = ({ title }: { title: string }) => {
-    const parsed = Title.safeParse(title);
-    const errors =
-      "error" in parsed
-        ? parsed.error.issues.map((issue) => issue.message).join("\n")
-        : undefined;
-
-    setErrors(errors);
-
-    if (parsed.success) {
-      send({ projectId, title }, (data) => {
-        if (data?.id) {
-          navigate(builderPath({ projectId: data.id }));
-          onOpenChange(false);
-        }
-      });
-    }
-  };
-
-  return {
-    handleSubmit,
-    errors,
-    state,
-  };
-};
-
-export const DuplicateProjectDialog = ({
-  isOpen,
-  title,
-  projectId,
-  onOpenChange,
-}: {
-  isOpen: boolean;
-  title: string;
-  projectId: DashboardProject["id"];
-  onOpenChange: (isOpen: boolean) => void;
-}) => {
-  const { handleSubmit, errors, state } = useDuplicateProject({
-    projectId,
-    onOpenChange,
-  });
-  return (
-    <Dialog title="Create" isOpen={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent
-        onSubmit={handleSubmit}
-        errors={errors}
-        title={title}
-        label="Project Title"
-        primaryButton={
-          <Button
-            type="submit"
-            state={state === "idle" ? undefined : "pending"}
-          >
-            Create Project
           </Button>
         }
       />

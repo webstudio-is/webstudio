@@ -58,13 +58,12 @@ export const MetaSection = (props: {
           px: theme.spacing[5],
         }}
       >
-        <Label htmlFor={ids.siteName}>Project Name</Label>
+        <Label htmlFor={ids.siteName}>Site Name</Label>
         <InputField
           id={ids.siteName}
           value={props.meta.siteName ?? ""}
           onChange={(event) => handleChange("siteName")(event.target.value)}
-          placeholder="Current Project Name"
-          name="Name"
+          placeholder="Current Site Name"
           autoFocus
         />
       </Grid>

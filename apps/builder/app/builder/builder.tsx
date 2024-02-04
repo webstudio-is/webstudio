@@ -50,8 +50,9 @@ import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
-import { $userPlanFeatures } from "./shared/nano-states";
+import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
 import { useNavigatorLayout } from "./features/sidebar-left/navigator";
+import { CloneProjectDialog } from "~/shared/clone-project";
 
 registerContainers();
 
@@ -279,7 +280,7 @@ export const Builder = ({
     authPermit,
     version: build.version,
   });
-
+  const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
@@ -343,6 +344,11 @@ export const Builder = ({
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />
+        <CloneProjectDialog
+          isOpen={isCloneDialogOpen}
+          onOpenChange={$isCloneDialogOpen.set}
+          project={project}
+        />
       </ChromeWrapper>
     </TooltipProvider>
   );

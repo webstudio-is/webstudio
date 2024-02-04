@@ -17,6 +17,8 @@ export const useIsPublishDialogOpen = () => useValue($isPublishDialogOpen);
 export const $canvasWidth = atom<number | undefined>();
 export const useCanvasWidth = () => useValue($canvasWidth);
 
+export const $isCloneDialogOpen = atom<boolean>(false);
+
 export const $canvasRect = atom<DOMRect | undefined>();
 
 export const $workspaceRect = atom<DOMRect | undefined>();
