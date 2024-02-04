@@ -95,7 +95,7 @@ const pathFor = (
   const path: string[] = [];
   // traverse from current node to the root variable
   for (;;) {
-    let object = member.firstChild;
+    const object = member.firstChild;
     if (object?.name === "VariableName") {
       path.push(read(object));
       return { path: path.reverse(), name };
