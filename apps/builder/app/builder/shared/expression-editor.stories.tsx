@@ -16,7 +16,21 @@ const scope = {
     object: { param: "value" },
   },
   $ws$dataSource$321: { my: "god" },
-  $ws$dataSource$computed: [{ "with space": 0 }, { "0_numeric": 0 }],
+  $ws$dataSource$computed: [
+    // 0-11 keys
+    { "with space": 0 },
+    { "0_numeric": 0 },
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+  ],
 };
 const aliases = new Map<string, string>([
   ["$ws$dataSource$123", "Hello world"],

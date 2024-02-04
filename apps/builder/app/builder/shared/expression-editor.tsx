@@ -218,6 +218,18 @@ const scopeCompletionSource: CompletionSource = (context) => {
     }));
     options = matchSorter(options, path.name, {
       keys: [(option) => option.displayLabel ?? option.label],
+      baseSort: (left, right) => {
+        const leftName = left.item.label;
+        const rightName = right.item.label;
+        const leftIndex = Number(leftName);
+        const rightIndex = Number(rightName);
+        // sort string fields
+        if (Number.isNaN(leftIndex) || Number.isNaN(rightIndex)) {
+          return leftName.localeCompare(rightName);
+        }
+        // sort indexes if both numbers
+        return leftIndex - rightIndex;
+      },
     });
   }
   return {
