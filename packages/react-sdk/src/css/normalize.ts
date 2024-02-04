@@ -16,32 +16,27 @@
  */
 
 // webstudio custom opinionated presets
-import {
-  borderStyleNone,
-  borderStyleSolid,
-  borderWidth,
-  outline,
-} from "./presets";
+import { borderStyle, borderWidth, outline } from "./presets";
 import type { EmbedTemplateStyleDecl } from "../embed-template";
 
 export type Styles = EmbedTemplateStyleDecl[];
 
 /**
-Use a better box model (opinionated).
-*/
+ * Use a better box model (opinionated).
+ */
 const boxSizing = {
   property: "boxSizing",
   value: { type: "keyword", value: "border-box" },
 } satisfies EmbedTemplateStyleDecl;
 
 /**
- *  We dont support rules like this now, implement boxSizing for each used element
- *  *,
+ * We dont support rules like this now, implement boxSizing for each used element
+ * *,
  * ::before,
  * ::after {
  *   box-sizing: border-box;
-  }
-*/
+ * }
+ */
 const baseStyle = [boxSizing, ...borderWidth, ...outline] satisfies Styles;
 
 export const div = baseStyle;
@@ -78,10 +73,10 @@ export const span = baseStyle;
 
 // @todo for now not applied to html, as we don't have html element
 /**
-1. Correct the line height in all browsers.
-2. Prevent adjustments of font size after orientation changes in iOS.
-3. Use a more readable tab size (opinionated).
-*/
+ * 1. Correct the line height in all browsers.
+ * 2. Prevent adjustments of font size after orientation changes in iOS.
+ * 3. Use a more readable tab size (opinionated).
+ */
 export const html = [
   /* 1 */
   {
@@ -103,9 +98,9 @@ export const html = [
 ] satisfies Styles;
 
 /**
-1. Remove the margin in all browsers.
-2. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
-*/
+ * 1. Remove the margin in all browsers.
+ * 2. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
+ */
 export const body = [
   /* 1 */
   {
@@ -145,9 +140,9 @@ export const body = [
 ] satisfies Styles;
 
 /**
-1. Add the correct height in Firefox.
-2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
-*/
+ * 1. Add the correct height in Firefox.
+ * 2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+ */
 export const hr = [
   /* 1 */
   {
@@ -174,8 +169,8 @@ abbr[title] {
 */
 
 /**
-Add the correct font weight in Edge and Safari.
-*/
+ * Add the correct font weight in Edge and Safari.
+ */
 export const b = [
   {
     property: "fontWeight",
@@ -184,12 +179,13 @@ export const b = [
   boxSizing,
   ...borderWidth,
 ] satisfies Styles;
+
 export const strong = b;
 
 /**
-1. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
-2. Correct the odd 'em' font sizing in all browsers.
-*/
+ * 1. Improve consistency of default fonts in all browsers. (https://github.com/sindresorhus/modern-normalize/issues/3)
+ * 2. Correct the odd 'em' font sizing in all browsers.
+ */
 export const code = [
   /* 1 */
   {
@@ -213,9 +209,8 @@ export const samp = code;
 export const pre = code;
 
 /**
-Add the correct font size in all browsers.
-*/
-
+ * Add the correct font size in all browsers.
+ */
 export const small = [
   {
     property: "fontSize",
@@ -226,9 +221,8 @@ export const small = [
 ] satisfies Styles;
 
 /**
-Prevent 'sub' and 'sup' elements from affecting the line height in all browsers.
-*/
-
+ * Prevent 'sub' and 'sup' elements from affecting the line height in all browsers.
+ */
 const subSupBase = [
   {
     property: "fontSize",
@@ -272,10 +266,9 @@ Tabular data
 */
 
 /**
-1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
-2. Correct table border color inheritance in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
-*/
-
+ * 1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+ * 2. Correct table border color inheritance in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+ */
 export const table = [
   /* 1 */
   {
@@ -309,10 +302,9 @@ Forms
 */
 
 /**
-1. Change the font styles in all browsers.
-2. Remove the margin in Firefox and Safari.
-*/
-
+ * 1. Change the font styles in all browsers.
+ * 2. Remove the margin in Firefox and Safari.
+ */
 const buttonBase = [
   /* 1 */
   {
@@ -345,21 +337,25 @@ const buttonBase = [
     value: { type: "unit", value: 0, unit: "number" },
   },
   boxSizing,
-  ...borderStyleSolid,
   ...borderWidth,
 ] satisfies Styles;
 
-export const input = buttonBase;
+// Input and Textarea uses border style inset by default, wich we don't support in style panel.
+export const input = [...buttonBase, ...borderStyle("solid")];
+export const textarea = input;
 export const optgroup = buttonBase;
-export const textarea = buttonBase;
-export const checkbox = [...input, ...borderStyleNone] satisfies Styles;
-export const radio = [...input, ...borderStyleNone] satisfies Styles;
+
+// Radio and checkbox have by default border style "none", we are setting it here to reflect in the style panel.
+export const radio = [...buttonBase, ...borderStyle("none")];
+export const checkbox = [...buttonBase, ...borderStyle("none")];
 
 /**
-Remove the inheritance of text transform in Edge and Firefox.
-*/
+ * Remove the inheritance of text transform in Edge and Firefox.
+ */
 export const button = [
   ...buttonBase,
+  // Button uses border style outset by default, wich we don't support in style panel.
+  ...borderStyle("solid"),
   {
     property: "textTransform",
     value: { type: "keyword", value: "none" },
@@ -414,9 +410,8 @@ See: https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d4
 */
 
 /**
-Remove the padding so developers are not caught out when they zero out 'fieldset' elements in all browsers.
-*/
-
+ * Remove the padding so developers are not caught out when they zero out 'fieldset' elements in all browsers.
+ */
 export const legend = [
   {
     property: "paddingTop",
@@ -439,9 +434,8 @@ export const legend = [
 ] satisfies Styles;
 
 /**
-Add the correct vertical alignment in Chrome and Firefox.
-*/
-
+ * Add the correct vertical alignment in Chrome and Firefox.
+ */
 export const progress = [
   {
     property: "verticalAlign",
@@ -501,10 +495,9 @@ Interactive
 ===========
 */
 
-/*
-Add the correct display in Chrome and Safari.
-*/
-
+/**
+ * Add the correct display in Chrome and Safari.
+ */
 export const summary = [
   {
     property: "display",

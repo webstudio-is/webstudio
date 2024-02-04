@@ -26,40 +26,21 @@ export const outline: Styles = [
   },
 ];
 
-export const borderStyleSolid: Styles = [
+export const borderStyle = (value: string): Styles => [
   {
     property: "borderTopStyle",
-    value: { type: "keyword", value: "solid" },
+    value: { type: "keyword", value },
   },
   {
     property: "borderRightStyle",
-    value: { type: "keyword", value: "solid" },
+    value: { type: "keyword", value },
   },
   {
     property: "borderBottomStyle",
-    value: { type: "keyword", value: "solid" },
+    value: { type: "keyword", value },
   },
   {
     property: "borderLeftStyle",
-    value: { type: "keyword", value: "solid" },
-  },
-];
-
-export const borderStyleNone: Styles = [
-  {
-    property: "borderTopStyle",
-    value: { type: "keyword", value: "none" },
-  },
-  {
-    property: "borderRightStyle",
-    value: { type: "keyword", value: "none" },
-  },
-  {
-    property: "borderBottomStyle",
-    value: { type: "keyword", value: "none" },
-  },
-  {
-    property: "borderLeftStyle",
-    value: { type: "keyword", value: "none" },
+    value: { type: "keyword", value },
   },
 ];
