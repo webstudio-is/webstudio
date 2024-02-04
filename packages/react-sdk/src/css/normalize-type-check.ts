@@ -7,7 +7,8 @@ import type { Style } from "@webstudio-is/css-engine";
 const normalizeWithKeyof = { ...normalize };
 
 type ExportedTags = keyof typeof normalizeWithKeyof;
+type ExpectedTags = HtmlTags | "checkbox" | "radio";
 
-type ValidTags = ExportedTags extends HtmlTags ? ExportedTags : false;
+type ValidTags = ExportedTags extends ExpectedTags ? ExportedTags : false;
 
 normalizeWithKeyof satisfies Record<ValidTags, Style>;
