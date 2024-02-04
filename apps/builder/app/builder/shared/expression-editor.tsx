@@ -96,13 +96,13 @@ const pathFor = (
   // traverse from current node to the root variable
   for (;;) {
     let object = member.firstChild;
-    if (object?.name == "VariableName") {
+    if (object?.name === "VariableName") {
       path.push(read(object));
       return { path: path.reverse(), name };
     }
-    if (object?.name == "MemberExpression") {
+    if (object?.name === "MemberExpression") {
       // MemberExpression(SyntaxNode PropertyName)
-      if (object.lastChild?.name == "PropertyName") {
+      if (object.lastChild?.name === "PropertyName") {
         path.push(read(object.lastChild!));
         member = object;
         continue;
@@ -154,12 +154,12 @@ const completionPath = (
     return { path: [], name: read(inner) };
   }
   // suggest property name when enter `object.`
-  if (inner.name == "." && inner.parent?.name === "MemberExpression") {
+  if (inner.name === "." && inner.parent?.name === "MemberExpression") {
     return pathFor(read, inner.parent, "");
   }
   // complete property when enter "object.prope"
   if (
-    inner.name == "PropertyName" &&
+    inner.name === "PropertyName" &&
     inner.parent?.name === "MemberExpression"
   ) {
     return pathFor(read, inner.parent, read(inner));
