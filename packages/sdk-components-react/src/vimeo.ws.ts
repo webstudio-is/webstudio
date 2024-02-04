@@ -314,6 +314,7 @@ export const meta: WsComponentMeta = {
 
 const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "id",
+  "className",
   "url",
   "quality",
   "showPreview",
