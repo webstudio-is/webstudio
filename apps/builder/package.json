@@ -36,6 +36,7 @@
     "@lexical/react": "^0.12.2",
     "@lexical/selection": "^0.12.2",
     "@lexical/utils": "^0.12.2",
+    "@lezer/common": "^1.2.1",
     "@nanostores/react": "^0.7.1",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-tooltip": "^1.0.7",
