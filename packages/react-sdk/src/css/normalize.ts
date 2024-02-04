@@ -16,7 +16,12 @@
  */
 
 // webstudio custom opinionated presets
-import { borders, outline } from "./presets";
+import {
+  borderStyleNone,
+  borderStyleSolid,
+  borderWidth,
+  outline,
+} from "./presets";
 import type { EmbedTemplateStyleDecl } from "../embed-template";
 
 export type Styles = EmbedTemplateStyleDecl[];
@@ -37,7 +42,7 @@ const boxSizing = {
  *   box-sizing: border-box;
   }
 */
-const baseStyle = [boxSizing, ...borders, ...outline] satisfies Styles;
+const baseStyle = [boxSizing, ...borderWidth, ...outline] satisfies Styles;
 
 export const div = baseStyle;
 export const address = baseStyle;
@@ -94,7 +99,7 @@ export const html = [
     value: { type: "unit", value: 4, unit: "number" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 /**
@@ -136,7 +141,7 @@ export const body = [
     value: { type: "unit", unit: "number", value: 1.2 },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 /**
@@ -155,7 +160,7 @@ export const hr = [
     value: { type: "keyword", value: "inherit" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 /**
@@ -177,7 +182,7 @@ export const b = [
     value: { type: "keyword", value: "700" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 export const strong = b;
 
@@ -200,7 +205,7 @@ export const code = [
     value: { type: "unit", value: 1, unit: "em" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 export const kbd = code;
@@ -217,7 +222,7 @@ export const small = [
     value: { type: "unit", value: 80, unit: "%" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 /**
@@ -242,7 +247,7 @@ const subSupBase = [
     value: { type: "keyword", value: "baseline" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 export const sub = [
@@ -277,7 +282,7 @@ export const table = [
     property: "textIndent",
     value: { type: "unit", value: 0, unit: "number" },
   },
-  ...borders,
+  ...borderWidth,
   /* 2 */
   {
     property: "borderTopColor",
@@ -340,12 +345,15 @@ const buttonBase = [
     value: { type: "unit", value: 0, unit: "number" },
   },
   boxSizing,
-  ...borders,
+  ...borderStyleSolid,
+  ...borderWidth,
 ] satisfies Styles;
 
 export const input = buttonBase;
 export const optgroup = buttonBase;
 export const textarea = buttonBase;
+export const checkbox = [...input, ...borderStyleNone] satisfies Styles;
+export const radio = [...input, ...borderStyleNone] satisfies Styles;
 
 /**
 Remove the inheritance of text transform in Edge and Firefox.
@@ -427,7 +435,7 @@ export const legend = [
     value: { type: "unit", value: 0, unit: "number" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 /**
@@ -440,7 +448,7 @@ export const progress = [
     value: { type: "keyword", value: "baseline" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;
 
 /**
@@ -503,5 +511,5 @@ export const summary = [
     value: { type: "keyword", value: "list-item" },
   },
   boxSizing,
-  ...borders,
+  ...borderWidth,
 ] satisfies Styles;

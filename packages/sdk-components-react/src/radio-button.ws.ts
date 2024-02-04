@@ -6,12 +6,12 @@ import {
   defaultStates,
 } from "@webstudio-is/react-sdk";
 import type { defaultTag } from "./radio-button";
-import { input } from "@webstudio-is/react-sdk/css-normalize";
+import { radio } from "@webstudio-is/react-sdk/css-normalize";
 import { props } from "./__generated__/radio-button.props";
 
 const presetStyle = {
   input: [
-    ...input,
+    ...radio,
     {
       property: "marginRight",
       value: { type: "unit", unit: "em", value: 0.5 },
