@@ -12,5 +12,5 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: ["id", "href", "target", "prefetch"],
+  initialProps: ["id", "className", "href", "target", "prefetch"],
 };

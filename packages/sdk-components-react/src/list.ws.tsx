@@ -78,5 +78,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "ordered", "start", "reversed"],
+  initialProps: ["id", "className", "ordered", "start", "reversed"],
 };

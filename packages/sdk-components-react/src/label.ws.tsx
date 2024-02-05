@@ -42,5 +42,5 @@ export const propsMeta: WsComponentPropsMeta = {
       label: "For",
     },
   },
-  initialProps: ["id", "htmlFor"],
+  initialProps: ["id", "className", "htmlFor"],
 };
