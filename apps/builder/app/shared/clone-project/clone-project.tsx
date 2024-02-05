@@ -115,7 +115,7 @@ const CloneProjectView = ({
             </DialogClose>
           </DialogActions>
         </form>
-        <DialogTitle>{title}</DialogTitle>
+        <DialogTitle>Clone Project</DialogTitle>
       </DialogContent>
     </Dialog>
   );
