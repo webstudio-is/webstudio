@@ -43,7 +43,7 @@ import {
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
-import type { Folder } from "@webstudio-is/sdk";
+import { ROOT_FOLDER_ID, type Folder } from "@webstudio-is/sdk";
 import { atom } from "nanostores";
 
 type TabContentProps = {
@@ -137,7 +137,7 @@ const isFolder = (id: string, folders: Array<Folder>) => {
 };
 
 // We want to keep the state when panel is closed and opened again.
-const $collapsedItems = atom<Set<string>>(new Set());
+const $expandedItems = atom<Set<string>>(new Set());
 
 const PagesPanel = ({
   onClose,
@@ -158,15 +158,15 @@ const PagesPanel = ({
 }) => {
   const pages = useStore($pages);
   const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
-  const collapsedItems = useStore($collapsedItems);
+  const expandedItems = useStore($expandedItems);
   useReparentOrphans();
   const renderItem = useCallback(
     (props: TreeItemRenderProps<TreeData>) => {
-      if (props.itemData.id === "root") {
+      const isEditing = editingItemId === props.itemData.id;
+
+      if (props.itemData.id === ROOT_FOLDER_ID) {
         return null;
       }
-
-      const isEditing = editingItemId === props.itemData.id;
 
       return (
         <TreeItemBody
@@ -214,18 +214,18 @@ const PagesPanel = ({
         const items = all
           ? getAllChildrenAndSelf(itemId, folders, "folder")
           : [itemId];
-        const nextCollapsedItems = new Set(collapsedItems);
+        const nextExpandedItems = new Set(expandedItems);
         items.forEach((itemId) => {
-          collapsedItems.has(itemId)
-            ? nextCollapsedItems.delete(itemId)
-            : nextCollapsedItems.add(itemId);
+          nextExpandedItems.has(itemId)
+            ? nextExpandedItems.delete(itemId)
+            : nextExpandedItems.add(itemId);
         });
-        $collapsedItems.set(nextCollapsedItems);
+        $expandedItems.set(nextExpandedItems);
         return;
       }
       onSelect(itemId);
     },
-    [onSelect, pages?.folders, collapsedItems]
+    [onSelect, pages?.folders, expandedItems]
   );
 
   if (treeData === undefined || pages === undefined) {
@@ -277,11 +277,7 @@ const PagesPanel = ({
           itemData={treeData.root}
           renderItem={renderItem}
           getItemChildren={([nodeId]) => {
-            // It's the root folder.
-            if (
-              nodeId === treeData.root.id &&
-              treeData.root.type === "folder"
-            ) {
+            if (nodeId === ROOT_FOLDER_ID) {
               return treeData.root.children;
             }
             const item = treeData.index.get(nodeId);
@@ -291,12 +287,12 @@ const PagesPanel = ({
             // Page can't have children.
             return [];
           }}
-          isItemHidden={([itemId]) => itemId === treeData.root.id}
+          isItemHidden={() => false}
           getIsExpanded={([itemId]) => {
-            return collapsedItems.has(itemId) === false;
+            return expandedItems.has(itemId);
           }}
-          setIsExpanded={([itemId], value, all) => {
-            const nextCollapsedItems = new Set(collapsedItems);
+          setIsExpanded={([itemId], isExpanded, all) => {
+            const nextExpandedItems = new Set(expandedItems);
             if (itemId === undefined) {
               return;
             }
@@ -304,11 +300,13 @@ const PagesPanel = ({
               ? getAllChildrenAndSelf(itemId, pages.folders, "folder")
               : [itemId];
             items.forEach((itemId) => {
-              value
-                ? nextCollapsedItems.delete(itemId)
-                : nextCollapsedItems.add(itemId);
+              if (isExpanded) {
+                nextExpandedItems.add(itemId);
+                return;
+              }
+              nextExpandedItems.delete(itemId);
             });
-            $collapsedItems.set(nextCollapsedItems);
+            $expandedItems.set(nextExpandedItems);
           }}
         />
       </Box>
