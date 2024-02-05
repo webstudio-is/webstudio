@@ -5,13 +5,13 @@ import {
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/react-sdk";
-import { input } from "@webstudio-is/react-sdk/css-normalize";
+import { checkbox } from "@webstudio-is/react-sdk/css-normalize";
 import type { defaultTag } from "./checkbox";
 import { props } from "./__generated__/checkbox.props";
 
 const presetStyle = {
   input: [
-    ...input,
+    ...checkbox,
     {
       property: "marginRight",
       value: { type: "unit", unit: "em", value: 0.5 },
