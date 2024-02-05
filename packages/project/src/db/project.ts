@@ -144,19 +144,23 @@ export const updatePreviewImage = async (
   });
 };
 
-const clone = async (
+export const clone = async (
   {
-    project,
+    projectId,
     title,
-    env = "dev",
   }: {
-    project: Project;
-    title?: string;
-    env?: "dev" | "prod";
+    projectId: string;
+    title?: string | undefined;
   },
   context: AppContext
 ) => {
-  const userId = context.authorization.userId;
+  const project = await loadById(projectId, context);
+  if (project === null) {
+    throw new Error(`Not found project "${projectId}"`);
+  }
+
+  title ?? (title = `${project.title} (copy)`);
+  const { userId } = context.authorization;
 
   if (userId === undefined) {
     throw new Error("The user must be authenticated to clone the project");
@@ -208,29 +212,6 @@ const clone = async (
   });
 
   return Project.parse(clonedProject);
-};
-
-export const duplicate = async (
-  {
-    projectId,
-    title,
-  }: {
-    projectId: string;
-    title?: string | undefined;
-  },
-  context: AppContext
-) => {
-  const project = await loadById(projectId, context);
-  if (project === null) {
-    throw new Error(`Not found project "${projectId}"`);
-  }
-  return await clone(
-    {
-      project,
-      title: title ?? `${project.title} (copy)`,
-    },
-    context
-  );
 };
 
 export const updateDomain = async (

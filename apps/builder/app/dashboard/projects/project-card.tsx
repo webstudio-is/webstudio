@@ -20,7 +20,7 @@ import { builderPath, getPublishedUrl } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
-  useDuplicate,
+  useCloneProject,
   ShareProjectDialog,
 } from "./project-dialogs";
 import {
@@ -181,7 +181,7 @@ export const ProjectCard = ({
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
-  const handleDuplicate = useDuplicate(id);
+  const handleCloneProject = useCloneProject(id);
   const { state, location } = useNavigation();
   const linkPath = builderPath({ projectId: id });
   // Transition to the project has started, we may need to show a spinner
@@ -250,7 +250,7 @@ export const ProjectCard = ({
           onShare={() => {
             setIsShareDialogOpen(true);
           }}
-          onDuplicate={handleDuplicate}
+          onDuplicate={handleCloneProject}
         />
       </CardFooter>
       <RenameProjectDialog

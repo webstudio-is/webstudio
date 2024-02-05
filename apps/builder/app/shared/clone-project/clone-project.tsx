@@ -28,7 +28,7 @@ const useCloneProject = ({
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const navigate = useNavigate();
-  const { send, state } = trpc.duplicate.useMutation();
+  const { send, state } = trpc.clone.useMutation();
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = ({ title }: { title: string }) => {

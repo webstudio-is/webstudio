@@ -351,8 +351,8 @@ export const DeleteProjectDialog = ({
   );
 };
 
-export const useDuplicate = (projectId: DashboardProject["id"]) => {
-  const { send } = trpc.duplicate.useMutation();
+export const useCloneProject = (projectId: DashboardProject["id"]) => {
+  const { send } = trpc.clone.useMutation();
   return () => {
     send({ projectId });
   };
