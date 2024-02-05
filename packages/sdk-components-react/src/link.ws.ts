@@ -30,7 +30,7 @@ export const meta: WsComponentMeta = {
   description:
     "Use a link to send your users to another page, section, or resource. Configure links in the Settings panel.",
   icon: LinkIcon,
-  invalidAncestors: ["Link"],
+  invalidAncestors: ["Link", "Button"],
   presetStyle,
   order: 1,
   states: [
@@ -56,5 +56,5 @@ export const propsMeta: WsComponentPropsMeta = {
       required: false,
     },
   },
-  initialProps: ["id", "href", "target"],
+  initialProps: ["id", "className", "href", "target"],
 };

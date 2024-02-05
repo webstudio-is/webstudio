@@ -19,7 +19,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
-  invalidAncestors: ["Form"],
+  invalidAncestors: ["Form", "Button", "Link"],
   label: "Form",
   description: "Collect information from your users using validation rules.",
   icon: FormIcon,
@@ -65,5 +65,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "action"],
+  initialProps: ["id", "className", "action"],
 };

@@ -1,27 +1,27 @@
-import { SubscriptIcon } from "@webstudio-is/icons/svg";
+import { SuperscriptIcon } from "@webstudio-is/icons/svg";
 import {
   defaultStates,
   type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { sub } from "@webstudio-is/react-sdk/css-normalize";
-import type { defaultTag } from "./subscript";
-import { props } from "./__generated__/subscript.props";
+import { sup } from "@webstudio-is/react-sdk/css-normalize";
+import type { defaultTag } from "./superscript";
+import { props } from "./__generated__/superscript.props";
 
 const presetStyle = {
-  sub,
+  sup,
 } satisfies PresetStyle<typeof defaultTag>;
 
 export const meta: WsComponentMeta = {
   type: "rich-text-child",
-  label: "Subscript Text",
-  icon: SubscriptIcon,
+  label: "Superscript Text",
+  icon: SuperscriptIcon,
   states: defaultStates,
   presetStyle,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id"],
+  initialProps: ["id", "className"],
 };

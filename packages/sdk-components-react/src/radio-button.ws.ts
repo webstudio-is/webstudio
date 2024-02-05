@@ -21,7 +21,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  invalidAncestors: ["Button"],
+  invalidAncestors: ["Button", "Link"],
   type: "control",
   label: "Radio",
   description:
@@ -61,5 +61,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "name"],
+  initialProps: ["id", "className", "name"],
 };

@@ -18,7 +18,6 @@ export const meta: WsComponentMeta = {
 export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
-
     executeScriptOnCanvas: {
       ...props.executeScriptOnCanvas,
       label: "Run script on canvas",

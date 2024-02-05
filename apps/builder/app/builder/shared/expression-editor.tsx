@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { matchSorter } from "match-sorter";
+import type { SyntaxNode } from "@lezer/common";
 import { Facet } from "@codemirror/state";
 import {
   type DecorationSet,
@@ -19,6 +20,7 @@ import {
   bracketMatching,
   defaultHighlightStyle,
   syntaxHighlighting,
+  syntaxTree,
 } from "@codemirror/language";
 import {
   type Completion,
@@ -28,8 +30,11 @@ import {
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
+  CompletionContext,
+  insertCompletionText,
+  pickedCompletion,
 } from "@codemirror/autocomplete";
-import { completionPath, javascript } from "@codemirror/lang-javascript";
+import { javascript } from "@codemirror/lang-javascript";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
 import { CodeEditor } from "./code-editor";
 
@@ -80,13 +85,95 @@ const VariablesData = Facet.define<{
 // completion based on
 // https://github.com/codemirror/lang-javascript/blob/4dcee95aee9386fd2c8ad55f93e587b39d968489/src/complete.ts
 
+const Identifier = /^[\p{L}$][\p{L}\p{N}$]*$/u;
+
+const pathFor = (
+  read: (node: SyntaxNode) => string,
+  member: SyntaxNode,
+  name: string
+) => {
+  const path: string[] = [];
+  // traverse from current node to the root variable
+  for (;;) {
+    const object = member.firstChild;
+    if (object?.name === "VariableName") {
+      path.push(read(object));
+      return { path: path.reverse(), name };
+    }
+    if (object?.name === "MemberExpression") {
+      // MemberExpression(SyntaxNode PropertyName)
+      if (object.lastChild?.name === "PropertyName") {
+        path.push(read(object.lastChild!));
+        member = object;
+        continue;
+      }
+      // MemberExpression(SyntaxNode [ SyntaxNode ])
+      if (object.lastChild?.name === "]") {
+        const computed = object.lastChild.prevSibling;
+        if (computed?.name === "Number") {
+          path.push(read(computed));
+          member = object;
+          continue;
+        }
+        if (computed?.name === "String") {
+          // trim quotes from string literal
+          path.push(read(computed).slice(1, -1));
+          member = object;
+          continue;
+        }
+      }
+    }
+    // unexpected case
+    break;
+  }
+};
+
+/// Helper function for defining JavaScript completion sources. It
+/// returns the completable name and object path for a completion
+/// context, or undefined if no name/property completion should happen at
+/// that position. For example, when completing after `a.b.c` it will
+/// return `{path: ["a", "b"], name: "c"}`. When completing after `x`
+/// it will return `{path: [], name: "x"}`. When not in a property or
+/// name, it will return undefined if `context.explicit` is false, and
+/// `{path: [], name: ""}` otherwise.
+const completionPath = (
+  context: CompletionContext
+): { path: string[]; name: string } | undefined => {
+  const read = (node: SyntaxNode) =>
+    context.state.doc.sliceString(node.from, node.to);
+  const inner = syntaxTree(context.state).resolveInner(context.pos, -1);
+  // suggest global variable name when user start completion explicitly
+  if (inner.name === "Script") {
+    if (context.explicit) {
+      return { path: [], name: "" };
+    }
+    return;
+  }
+  // complete variable name when start entering
+  if (inner.name === "VariableName") {
+    return { path: [], name: read(inner) };
+  }
+  // suggest property name when enter `object.`
+  if (inner.name === "." && inner.parent?.name === "MemberExpression") {
+    return pathFor(read, inner.parent, "");
+  }
+  // complete property when enter "object.prope"
+  if (
+    inner.name === "PropertyName" &&
+    inner.parent?.name === "MemberExpression"
+  ) {
+    return pathFor(read, inner.parent, read(inner));
+  }
+  return;
+};
+
 // Defines a completion source that completes from the given scope
 // object (for example `globalThis`). Will enter properties
 // of the object when completing properties on a directly-named path.
 const scopeCompletionSource: CompletionSource = (context) => {
   const [{ scope, aliases }] = context.state.facet(VariablesData);
   const path = completionPath(context);
-  if (path === null) {
+  if (path === undefined) {
     return null;
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -103,9 +190,46 @@ const scopeCompletionSource: CompletionSource = (context) => {
       label: name,
       displayLabel: aliases.get(name),
       detail: formatValuePreview(value),
+      apply: (view, completion, from, to) => {
+        if (Identifier.test(name)) {
+          // complete with dot
+          view.dispatch({
+            ...insertCompletionText(view.state, name, from, to),
+            annotations: pickedCompletion.of(completion),
+          });
+        } else {
+          // complete with computed member expression
+          view.dispatch({
+            ...insertCompletionText(
+              view.state,
+              // `param with spaces` -> ["param with spaces"]
+              // `0` -> [0]
+              `[${/^\d+$/.test(name) ? name : JSON.stringify(name)}]`,
+              // remove dot when autocomplete computed member expression
+              // variable.
+              // variable["name"]
+              from - 1,
+              to
+            ),
+            annotations: pickedCompletion.of(completion),
+          });
+        }
+      },
     }));
     options = matchSorter(options, path.name, {
       keys: [(option) => option.displayLabel ?? option.label],
+      baseSort: (left, right) => {
+        const leftName = left.item.label;
+        const rightName = right.item.label;
+        const leftIndex = Number(leftName);
+        const rightIndex = Number(rightName);
+        // sort string fields
+        if (Number.isNaN(leftIndex) || Number.isNaN(rightIndex)) {
+          return leftName.localeCompare(rightName);
+        }
+        // sort indexes if both numbers
+        return leftIndex - rightIndex;
+      },
     });
   }
   return {
