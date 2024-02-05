@@ -300,9 +300,11 @@ const PagesPanel = ({
               ? getAllChildrenAndSelf(itemId, pages.folders, "folder")
               : [itemId];
             items.forEach((itemId) => {
-              isExpanded
-                ? nextExpandedItems.add(itemId)
-                : nextExpandedItems.delete(itemId);
+              if (isExpanded) {
+                nextExpandedItems.add(itemId);
+                return;
+              }
+              nextExpandedItems.delete(itemId);
             });
             $expandedItems.set(nextExpandedItems);
           }}
