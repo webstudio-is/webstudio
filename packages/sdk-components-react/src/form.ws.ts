@@ -19,7 +19,7 @@ const presetStyle = {
 export const meta: WsComponentMeta = {
   category: "forms",
   type: "container",
-  invalidAncestors: ["Form", "Heading"],
+  invalidAncestors: ["Form", "Button", "Heading", "Link"],
   label: "Form",
   description: "Collect information from your users using validation rules.",
   icon: FormIcon,

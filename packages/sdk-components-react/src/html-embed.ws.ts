@@ -13,12 +13,12 @@ export const meta: WsComponentMeta = {
   icon: EmbedIcon,
   stylable: false,
   order: 8,
+  invalidAncestors: ["Button", "Heading", "Link"],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
-
     executeScriptOnCanvas: {
       ...props.executeScriptOnCanvas,
       label: "Run script on canvas",
