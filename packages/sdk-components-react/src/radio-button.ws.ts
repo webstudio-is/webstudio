@@ -1,13 +1,13 @@
-import { CheckboxCheckedIcon } from "@webstudio-is/icons/svg";
+import { RadioCheckedIcon } from "@webstudio-is/icons/svg";
 import {
   type WsComponentMeta,
   type WsComponentPropsMeta,
   type PresetStyle,
   defaultStates,
 } from "@webstudio-is/react-sdk";
+import type { defaultTag } from "./radio-button";
 import { input } from "@webstudio-is/react-sdk/css-normalize";
-import type { defaultTag } from "./checkbox";
-import { props } from "./__generated__/checkbox.props";
+import { props } from "./__generated__/radio-button.props";
 
 const presetStyle = {
   input: [
@@ -21,37 +21,38 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
-  invalidAncestors: ["Button"],
+  invalidAncestors: ["Button", "Heading"],
   type: "control",
-  label: "Checkbox",
+  label: "Radio",
   description:
-    "Use within a form to allow your users to toggle between checked and not checked. Group checkboxes by matching their “Name” properties. Unlike radios, any number of checkboxes in a group can be checked.",
-  icon: CheckboxCheckedIcon,
+    "Use within a form to allow your users to select a single option from a set of mutually exclusive choices. Group multiple radios by matching their “Name” properties.",
+  icon: RadioCheckedIcon,
   presetStyle,
-  order: 6,
+  order: 5,
   states: [
     ...defaultStates,
     { selector: ":checked", label: "Checked" },
     { selector: ":required", label: "Required" },
     { selector: ":optional", label: "Optional" },
-    { selector: ":disabled", label: "Disabled" },
-    { selector: ":enabled", label: "Enabled" },
-    { selector: ":read-only", label: "Read Only" },
-    { selector: ":read-write", label: "Read Write" },
+    // Additional states will go into submenu
+    //{ selector: ":disabled", label: "Disabled" },
+    //{ selector: ":enabled", label: "Enabled" },
+    //{ selector: ":read-only", label: "Read Only" },
+    //{ selector: ":read-write", label: "Read Write" },
   ],
   template: [
     {
       type: "instance",
       component: "Label",
-      label: "Checkbox Field",
+      label: "Radio Field",
       children: [
-        { type: "instance", component: "Checkbox", children: [] },
+        { type: "instance", component: "RadioButton", props: [], children: [] },
         {
           type: "instance",
           component: "Text",
-          label: "Checkbox Label",
+          label: "Radio Label",
           props: [{ type: "string", name: "tag", value: "span" }],
-          children: [{ type: "text", value: "Checkbox" }],
+          children: [{ type: "text", value: "Radio" }],
         },
       ],
     },
