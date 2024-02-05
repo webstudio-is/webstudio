@@ -30,7 +30,7 @@ export const meta: WsComponentMeta = {
   icon: FormTextAreaIcon,
   presetStyle,
   order: 4,
-  invalidAncestors: ["Button", "Heading", "Link"],
+  invalidAncestors: ["Button", "Link"],
   states: [
     ...defaultStates,
     { selector: "::placeholder", label: "Placeholder" },
