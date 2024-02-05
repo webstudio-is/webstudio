@@ -232,13 +232,13 @@ html {
     border-right-width: 0px;
     border-bottom-width: 0px;
     border-left-width: 0px;
-    text-transform: none;
-    background-color: transparent;
-    background-image: none;
     border-top-style: solid;
     border-right-style: solid;
     border-bottom-style: solid;
     border-left-style: solid;
+    text-transform: none;
+    background-color: transparent;
+    background-image: none;
     border-top-color: rgba(226, 232, 240, 1);
     border-right-color: rgba(226, 232, 240, 1);
     border-bottom-color: rgba(226, 232, 240, 1);
@@ -289,6 +289,10 @@ html {
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
     display: block;
   }
   button:where([data-ws-component="Button"]) {
@@ -304,6 +308,10 @@ html {
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
     text-transform: none;
   }
 }
