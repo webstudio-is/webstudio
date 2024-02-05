@@ -24,6 +24,7 @@ export const meta: WsComponentMeta = {
   icon: VimeoIcon,
   states: defaultStates,
   presetStyle,
+  invalidAncestors: ["Button", "Heading", "Link"],
   template: [
     {
       type: "instance",

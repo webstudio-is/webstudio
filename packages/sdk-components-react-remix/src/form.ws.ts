@@ -1,30 +1,13 @@
-import { FormIcon } from "@webstudio-is/icons/svg";
-import { form } from "@webstudio-is/react-sdk/css-normalize";
+import { Form as baseMeta } from "@webstudio-is/sdk-components-react/metas";
 import {
-  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
   showAttribute,
 } from "@webstudio-is/react-sdk";
-import type { defaultTag } from "./form";
 import { props } from "./__generated__/form.props";
 
-const presetStyle = {
-  form: [
-    ...form,
-    { property: "minHeight", value: { type: "unit", unit: "px", value: 20 } },
-  ],
-} satisfies PresetStyle<typeof defaultTag>;
-
 export const meta: WsComponentMeta = {
-  category: "forms",
-  type: "container",
-  invalidAncestors: ["Form"],
-  label: "Form",
-  description: "Collect information from your users using validation rules.",
-  icon: FormIcon,
-  presetStyle,
-  order: 0,
+  ...baseMeta,
   states: [
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },

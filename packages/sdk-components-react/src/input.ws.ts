@@ -1,19 +1,17 @@
-import { FormTextAreaIcon } from "@webstudio-is/icons/svg";
+import { FormTextFieldIcon } from "@webstudio-is/icons/svg";
 import {
+  defaultStates,
+  type PresetStyle,
   type WsComponentMeta,
   type WsComponentPropsMeta,
-  type PresetStyle,
-  defaultStates,
 } from "@webstudio-is/react-sdk";
-import { textarea } from "@webstudio-is/react-sdk/css-normalize";
-import type { defaultTag } from "./textarea";
-import { props } from "./__generated__/textarea.props";
+import { input } from "@webstudio-is/react-sdk/css-normalize";
+import type { defaultTag } from "./input";
+import { props } from "./__generated__/input.props";
 
 const presetStyle = {
-  textarea: [
-    ...textarea,
-    // resize doesn't work well while on canvas
-    { property: "resize", value: { type: "keyword", value: "none" } },
+  input: [
+    ...input,
     {
       property: "display",
       value: { type: "keyword", value: "block" },
@@ -23,13 +21,14 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "forms",
+  invalidAncestors: ["Button", "Link"],
   type: "control",
-  label: "Text Area",
+  label: "Text Input",
   description:
-    "A multi-line text input for collecting longer string data from your users.",
-  icon: FormTextAreaIcon,
+    "A single-line text input for collecting string data from your users.",
+  icon: FormTextFieldIcon,
   presetStyle,
-  order: 4,
+  order: 3,
   states: [
     ...defaultStates,
     { selector: "::placeholder", label: "Placeholder" },
@@ -51,6 +50,7 @@ export const propsMeta: WsComponentPropsMeta = {
     "id",
     "className",
     "name",
+    "type",
     "placeholder",
     "required",
     "autoFocus",
