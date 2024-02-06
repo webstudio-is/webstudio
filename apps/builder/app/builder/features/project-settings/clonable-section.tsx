@@ -6,53 +6,51 @@ import {
   CheckboxAndLabel,
   Checkbox,
 } from "@webstudio-is/design-system";
+import type { ClonableSettings, ProjectRouter } from "@webstudio-is/project";
+import { useState } from "react";
 import { useIds } from "~/shared/form-utils";
-import type { ProjectSettings } from "./project-settings";
+import { $project } from "~/shared/nano-states";
+import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
+import { projectPath } from "~/shared/router-utils";
 
-export const ClonableSection = (props: {
-  settings: ProjectSettings;
-  onSettingsChange: (settings: ProjectSettings) => void;
-}) => {
-  const ids = useIds(["clonable", "directory"]);
+const trpc = createTrpcRemixProxy<ProjectRouter>(projectPath);
 
-  const handleChange =
-    <Name extends keyof ProjectSettings>(name: Name) =>
-    (value: ProjectSettings[Name]) => {
-      props.onSettingsChange({
-        ...props.settings,
-        [name]: value,
+export const ClonableSection = () => {
+  const ids = useIds(["isClonable"]);
+  const [clonableSettings, setClonableSettings] = useState<ClonableSettings>({
+    isClonable: $project.get()?.isClonable,
+  });
+
+  const { send: updateClonableSettings } =
+    trpc.updateClonableSettings.useMutation();
+
+  const handleSave = (settings: ClonableSettings) => {
+    const project = $project.get();
+    if (project) {
+      updateClonableSettings({
+        projectId: project.id,
+        ...settings,
       });
-    };
+    }
+  };
 
   return (
     <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
       <Text variant="titles">Clonable</Text>
       <CheckboxAndLabel>
         <Checkbox
-          checked={props.settings.clonable ?? false}
-          id={ids.clonable}
-          onCheckedChange={(checked) => {
-            if (typeof checked === "boolean") {
-              handleChange("clonable")(checked);
+          checked={clonableSettings.isClonable ?? false}
+          id={ids.isClonable}
+          onCheckedChange={(isClonable) => {
+            if (typeof isClonable === "boolean") {
+              const nextSettings = { ...clonableSettings, isClonable };
+              setClonableSettings(nextSettings);
+              handleSave(nextSettings);
             }
           }}
         />
-        <Label htmlFor={ids.clonable}>
+        <Label htmlFor={ids.isClonable}>
           Allow cloning the project with View permission
-        </Label>
-      </CheckboxAndLabel>
-      <CheckboxAndLabel>
-        <Checkbox
-          checked={props.settings.directory ?? false}
-          id={ids.directory}
-          onCheckedChange={(checked) => {
-            if (typeof checked === "boolean") {
-              handleChange("directory")(checked);
-            }
-          }}
-        />
-        <Label htmlFor={ids.directory}>
-          Allow listing in the public directory
         </Label>
       </CheckboxAndLabel>
     </Grid>

@@ -28,13 +28,13 @@ const imgStyle = css({
 
 export const MetaSection = (props: {
   meta: ProjectMeta;
-  onMetaChange: (value: ProjectMeta) => void;
+  onChange: (value: ProjectMeta) => void;
 }) => {
   const ids = useIds(["siteName", "favicon", "code"]);
   const handleChange =
     <Name extends keyof ProjectMeta>(name: Name) =>
     (value: ProjectMeta[Name]) => {
-      props.onMetaChange({
+      props.onChange({
         ...props.meta,
         [name]: value,
       });

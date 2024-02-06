@@ -10,7 +10,7 @@ import {
   createBuild,
   cloneBuild,
 } from "@webstudio-is/project-build/index.server";
-import { Project, Title } from "../shared/schema";
+import { ClonableSettings, Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 
 export const loadById = async (
@@ -159,7 +159,6 @@ export const clone = async (
     throw new Error(`Not found project "${projectId}"`);
   }
 
-  title ?? (title = `${project.title} (copy)`);
   const { userId } = context.authorization;
 
   if (userId === undefined) {
@@ -177,7 +176,7 @@ export const clone = async (
       data: {
         id: newProjectId,
         userId: userId,
-        title: title ?? project.title,
+        title: title ?? `${project.title} (copy)`,
         domain: generateDomain(project.title),
         previewImageAssetId: project.previewImageAsset?.id,
       },
@@ -246,4 +245,18 @@ export const updateDomain = async (
     }
     throw error;
   }
+};
+
+export const updateClonableSettings = async (
+  { projectId, ...settings }: ClonableSettings & { projectId: string },
+  context: AppContext
+) => {
+  ClonableSettings.parse(settings);
+
+  await assertEditPermission(projectId, context);
+
+  return await prisma.project.update({
+    where: { id: projectId },
+    data: settings,
+  });
 };

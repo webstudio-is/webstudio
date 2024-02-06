@@ -15,10 +15,10 @@ import {
   DialogActions,
 } from "@webstudio-is/design-system";
 import { Title, type ProjectRouter, Project } from "@webstudio-is/project";
-import { dashboardProjectPath, builderPath } from "~/shared/router-utils";
+import { projectPath, builderPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 
-const trpc = createTrpcRemixProxy<ProjectRouter>(dashboardProjectPath);
+const trpc = createTrpcRemixProxy<ProjectRouter>(projectPath);
 
 const useCloneProject = ({
   projectId,

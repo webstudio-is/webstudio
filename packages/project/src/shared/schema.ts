@@ -9,7 +9,12 @@ export const Title = z
     `Minimum ${MIN_TITLE_LENGTH} characters required`
   );
 
-export const Project = z.object({
+export const ClonableSettings = z.object({
+  isClonable: z.boolean().optional(),
+});
+export type ClonableSettings = z.infer<typeof ClonableSettings>;
+
+export const Project = ClonableSettings.extend({
   id: z.string(),
   title: Title,
   createdAt: z.date().transform((date) => date.toISOString()),
@@ -33,6 +38,7 @@ export const Project = z.object({
       .nullable()
   ),
 });
+
 export type Project = z.infer<typeof Project>;
 
 export const Projects = z.array(Project);

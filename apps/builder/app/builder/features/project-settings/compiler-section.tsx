@@ -7,18 +7,18 @@ import {
   Checkbox,
 } from "@webstudio-is/design-system";
 import { useIds } from "~/shared/form-utils";
-import type { ProjectSettings } from "./project-settings";
+import type { CompilerSettings } from "@webstudio-is/sdk";
 
-export const PublishSection = (props: {
-  settings: ProjectSettings;
-  onSettingsChange: (settings: ProjectSettings) => void;
+export const CompilerSection = (props: {
+  settings: CompilerSettings;
+  onChange: (settings: CompilerSettings) => void;
 }) => {
   const ids = useIds(["atomicStyles"]);
 
   const handleChange =
-    <Name extends keyof ProjectSettings>(name: Name) =>
-    (value: ProjectSettings[Name]) => {
-      props.onSettingsChange({
+    <Name extends keyof CompilerSettings>(name: Name) =>
+    (value: CompilerSettings[Name]) => {
+      props.onChange({
         ...props.settings,
         [name]: value,
       });
@@ -26,7 +26,7 @@ export const PublishSection = (props: {
 
   return (
     <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-      <Text variant="titles">Publish</Text>
+      <Text variant="titles">Compiler</Text>
       <CheckboxAndLabel>
         <Checkbox
           checked={props.settings.atomicStyles ?? true}

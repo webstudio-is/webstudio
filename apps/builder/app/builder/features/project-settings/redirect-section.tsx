@@ -13,15 +13,18 @@ import {
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
-import type { ProjectSettings } from "./project-settings";
-import { PagePath, ProjectNewRedirectPathSchema } from "@webstudio-is/sdk";
+import {
+  PagePath,
+  PageRedirect,
+  ProjectNewRedirectPath,
+} from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
 import { $pages } from "~/shared/nano-states";
 
 export const RedirectSection = (props: {
-  settings: ProjectSettings;
-  onSettingsChange: (settings: ProjectSettings) => void;
+  redirects: Array<PageRedirect>;
+  onChange: (redirects: Array<PageRedirect>) => void;
 }) => {
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
@@ -30,7 +33,7 @@ export const RedirectSection = (props: {
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
 
-  const redirects = props.settings?.redirects ?? [];
+  const redirects = props.redirects ?? [];
   const redirectKeys = Object.keys(redirects);
   const isValidRedirects =
     oldPathErrors.length === 0 && newPathErrors.length === 0;
@@ -69,8 +72,7 @@ export const RedirectSection = (props: {
   };
 
   const validateNewPath = (newPath: string): string[] => {
-    const newPathValidationResult =
-      ProjectNewRedirectPathSchema.safeParse(newPath);
+    const newPathValidationResult = ProjectNewRedirectPath.safeParse(newPath);
 
     if (newPathValidationResult.success === true) {
       /*
@@ -104,10 +106,7 @@ export const RedirectSection = (props: {
       return;
     }
 
-    props.onSettingsChange({
-      ...props.settings,
-      redirects: [{ old: oldPath, new: newPath }, ...redirects],
-    });
+    props.onChange([{ old: oldPath, new: newPath }, ...redirects]);
     setOldPath("");
     setNewPath("");
   };
@@ -115,10 +114,7 @@ export const RedirectSection = (props: {
   const handleDeleteRedirect = (index: number) => {
     const newRedirects = [...redirects];
     newRedirects.splice(index, 1);
-    props.onSettingsChange({
-      ...props.settings,
-      redirects: newRedirects,
-    });
+    props.onChange(newRedirects);
   };
 
   return (

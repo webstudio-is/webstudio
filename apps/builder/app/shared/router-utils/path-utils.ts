@@ -73,6 +73,8 @@ export const builderDomainsPath = (method: string) => {
   }`;
 };
 
+export const projectPath = (method: string) => `/project/${method}`;
+
 export const dashboardProjectPath = (method: string) =>
   `/dashboard/projects/${method}`;
 
