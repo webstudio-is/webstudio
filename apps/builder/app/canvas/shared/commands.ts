@@ -7,7 +7,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedStyleSourceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -69,7 +68,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         }
         // unselect both instance and style source
         $selectedInstanceSelector.set(undefined);
-        $selectedStyleSourceSelector.set(undefined);
       },
     },
 

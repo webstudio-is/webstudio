@@ -7,7 +7,7 @@ import {
   $breakpoints,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedStyleSourceSelector,
+  $selectedStyleSources,
   $styleSourceSelections,
   $styleSources,
 } from "~/shared/nano-states";
@@ -19,7 +19,7 @@ import {
 enableMapSet();
 registerContainers();
 
-test("generate Styles from preset tokens", () => {
+test("generate styles from preset tokens", () => {
   $breakpoints.set(
     new Map<Breakpoint["id"], Breakpoint>([
       ["base", { id: "base", label: "Base" }],
@@ -111,16 +111,14 @@ test("add style source to instance", () => {
   $selectedInstanceSelector.set(["root"]);
   $styleSources.set(new Map([["local1", { id: "local1", type: "local" }]]));
   $styleSourceSelections.set(new Map());
-  $selectedStyleSourceSelector.set(undefined);
+  $selectedStyleSources.set(new Map());
 
   addStyleSourceToInstance("token1");
   expect($styleSourceSelections.get().get("root")).toEqual({
     instanceId: "root",
     values: ["token1"],
   });
-  expect($selectedStyleSourceSelector.get()).toEqual({
-    styleSourceId: "token1",
-  });
+  expect($selectedStyleSources.get().get("root")).toEqual("token1");
 
   // put new style source last
   addStyleSourceToInstance("local1");

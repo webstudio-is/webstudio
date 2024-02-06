@@ -10,7 +10,6 @@ import {
   $instances,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedStyleSourceSelector,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
@@ -65,7 +64,6 @@ export const Breadcrumbs = () => {
                       )
                     );
                     $textEditingInstanceSelector.set(undefined);
-                    $selectedStyleSourceSelector.set(undefined);
                   }}
                 >
                   {getInstanceLabel(instance, meta)}
