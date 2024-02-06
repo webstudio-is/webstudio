@@ -165,6 +165,21 @@ export const clone = async (
     throw new Error("The user must be authenticated to clone the project");
   }
 
+  // A clonable project can be cloned with view permissions, but otherwise
+  // one needs at least admin permission.
+  if (project.isClonable !== true) {
+    const canAdmin = await authorizeProject.hasProjectPermit(
+      { projectId, permit: "admin" },
+      context
+    );
+
+    if (canAdmin === false) {
+      throw new AuthorizationError(
+        "Admin permission is required to clone the project, or alternatively, make it clonable."
+      );
+    }
+  }
+
   const newProjectId = uuid();
   await authorizeProject.registerProjectOwner(
     { projectId: newProjectId },
