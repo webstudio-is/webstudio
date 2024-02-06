@@ -88,7 +88,7 @@ export const TransitionProperty = ({
       We are splitting the items into two lists.
       But when users pass a input, the list is filtered and mixed together.
       The UI is still showing the lists as separated. But the items are mixed together in background.
-      Since, first we show the common-proeprties followed by filtered-properties. We can use matchSorter to sort the items.
+      Since, first we show the common-properties followed by filtered-properties. We can use matchSorter to sort the items.
     */
     match: (search, itemsToFilter, itemToString) => {
       if (search === "") {
