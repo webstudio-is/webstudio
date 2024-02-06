@@ -40,7 +40,7 @@ const ProjectSettingsView = ({
             <CompilerSection />
             <Separator />
             <ClonableSection />
-            {isFeatureEnabled("redirects") ? <RedirectSection /> : null}
+            {isFeatureEnabled("redirects") && <RedirectSection />}
             <div />
           </Grid>
         </ScrollArea>
