@@ -8,32 +8,41 @@ import {
 } from "@webstudio-is/design-system";
 import { useIds } from "~/shared/form-utils";
 import type { CompilerSettings } from "@webstudio-is/sdk";
+import { serverSyncStore } from "~/shared/sync";
+import { $pages } from "~/shared/nano-states";
+import { useState } from "react";
 
-export const CompilerSection = (props: {
-  settings: CompilerSettings;
-  onChange: (settings: CompilerSettings) => void;
-}) => {
+const defaultSettings: CompilerSettings = {
+  atomicStyles: true,
+};
+
+export const CompilerSection = () => {
   const ids = useIds(["atomicStyles"]);
+  const [settings, setSettings] = useState(
+    $pages.get()?.compiler ?? defaultSettings
+  );
 
-  const handleChange =
-    <Name extends keyof CompilerSettings>(name: Name) =>
-    (value: CompilerSettings[Name]) => {
-      props.onChange({
-        ...props.settings,
-        [name]: value,
-      });
-    };
+  const handleSave = (settings: CompilerSettings) => {
+    serverSyncStore.createTransaction([$pages], (pages) => {
+      if (pages === undefined) {
+        return;
+      }
+      pages.compiler = settings;
+    });
+  };
 
   return (
     <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
       <Text variant="titles">Compiler</Text>
       <CheckboxAndLabel>
         <Checkbox
-          checked={props.settings.atomicStyles ?? true}
+          checked={settings.atomicStyles ?? true}
           id={ids.atomicStyles}
-          onCheckedChange={(checked) => {
-            if (typeof checked === "boolean") {
-              handleChange("atomicStyles")(checked);
+          onCheckedChange={(atomicStyles) => {
+            if (typeof atomicStyles === "boolean") {
+              const nextSettings = { ...settings, atomicStyles };
+              setSettings(nextSettings);
+              handleSave(nextSettings);
             }
           }}
         />

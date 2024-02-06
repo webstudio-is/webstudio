@@ -21,11 +21,10 @@ import {
 import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
 import { $pages } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 
-export const RedirectSection = (props: {
-  redirects: Array<PageRedirect>;
-  onChange: (redirects: Array<PageRedirect>) => void;
-}) => {
+export const RedirectSection = () => {
+  const [redirects, setRedirects] = useState($pages.get()?.redirects ?? []);
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
   const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);
@@ -33,7 +32,6 @@ export const RedirectSection = (props: {
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
 
-  const redirects = props.redirects ?? [];
   const redirectKeys = Object.keys(redirects);
   const isValidRedirects =
     oldPathErrors.length === 0 && newPathErrors.length === 0;
@@ -98,6 +96,16 @@ export const RedirectSection = (props: {
     }
   };
 
+  const handleSave = (redirects: Array<PageRedirect>) => {
+    setRedirects(redirects);
+    serverSyncStore.createTransaction([$pages], (pages) => {
+      if (pages === undefined) {
+        return;
+      }
+      pages.redirects = redirects;
+    });
+  };
+
   const handleAddRedirect = () => {
     const validOldPath = validateOldPath(oldPath);
     const validNewPath = validateNewPath(newPath);
@@ -106,7 +114,7 @@ export const RedirectSection = (props: {
       return;
     }
 
-    props.onChange([{ old: oldPath, new: newPath }, ...redirects]);
+    handleSave([{ old: oldPath, new: newPath }, ...redirects]);
     setOldPath("");
     setNewPath("");
   };
@@ -114,7 +122,7 @@ export const RedirectSection = (props: {
   const handleDeleteRedirect = (index: number) => {
     const newRedirects = [...redirects];
     newRedirects.splice(index, 1);
-    props.onChange(newRedirects);
+    handleSave(newRedirects);
   };
 
   return (
@@ -188,6 +196,7 @@ export const RedirectSection = (props: {
                       gap="2"
                       css={{
                         p: theme.spacing[3],
+                        overflow: "hidden",
                       }}
                     >
                       <Flex gap="2">

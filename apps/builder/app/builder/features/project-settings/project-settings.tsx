@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Dialog,
@@ -9,57 +8,22 @@ import {
   Separator,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import type { CompilerSettings, ProjectMeta } from "@webstudio-is/sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
-import { $pages } from "~/shared/nano-states";
-import { serverSyncStore } from "~/shared/sync";
-import { useEffectEvent } from "../ai/hooks/effect-event";
 import { MetaSection } from "./meta-section";
 import { CompilerSection } from "./compiler-section";
 import { RedirectSection } from "./redirect-section";
 import { ClonableSection } from "./clonable-section";
 
-const defaultMetaSettings: ProjectMeta = {
-  siteName: "",
-  faviconAssetId: "",
-  code: "",
-};
-
-const defaultCompilerSettings: CompilerSettings = {
-  atomicStyles: true,
-};
-
-const ProjectSettingsView = () => {
-  const [meta, setMeta] = useState($pages.get()?.meta ?? defaultMetaSettings);
-  const [compilerSettings, setCompilerSettings] = useState(
-    $pages.get()?.compiler ?? defaultCompilerSettings
-  );
-  const [redirects, setRedirects] = useState($pages.get()?.redirects ?? []);
-
-  const isOpen = useStore($isProjectSettingsOpen);
-
-  const handleSave = useEffectEvent(() => {
-    serverSyncStore.createTransaction([$pages], (pages) => {
-      if (pages === undefined) {
-        return;
-      }
-
-      pages.meta = meta;
-      pages.compiler = compilerSettings;
-    });
-  });
-
+const ProjectSettingsView = ({
+  isOpen,
+  onOpenChange,
+}: {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+}) => {
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(isOpen) => {
-        if (isOpen === false) {
-          handleSave();
-        }
-        $isProjectSettingsOpen.set(isOpen);
-      }}
-    >
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
@@ -71,17 +35,12 @@ const ProjectSettingsView = () => {
       >
         <ScrollArea>
           <Grid gap={2} css={{ my: theme.spacing[5] }}>
-            <MetaSection meta={meta} onChange={setMeta} />
+            <MetaSection />
             <Separator />
-            <CompilerSection
-              settings={compilerSettings}
-              onChange={setCompilerSettings}
-            />
+            <CompilerSection />
             <Separator />
             <ClonableSection />
-            {isFeatureEnabled("redirects") ? (
-              <RedirectSection redirects={redirects} onChange={setRedirects} />
-            ) : null}
+            {isFeatureEnabled("redirects") ? <RedirectSection /> : null}
             <div />
           </Grid>
         </ScrollArea>
@@ -95,19 +54,12 @@ const ProjectSettingsView = () => {
 };
 
 export const ProjectSettings = () => {
-  const [settingDialogLazyOpen, setSettingDialogLazyOpen] = useState(false);
+  const isOpen = useStore($isProjectSettingsOpen);
 
-  useEffect(() => {
-    return $isProjectSettingsOpen.subscribe((isOpen) => {
-      if (isOpen) {
-        setSettingDialogLazyOpen(true);
-      }
-    });
-  }, []);
-
-  if (settingDialogLazyOpen === false) {
-    return;
-  }
-
-  return <ProjectSettingsView />;
+  return (
+    <ProjectSettingsView
+      isOpen={isOpen}
+      onOpenChange={$isProjectSettingsOpen.set}
+    />
+  );
 };
