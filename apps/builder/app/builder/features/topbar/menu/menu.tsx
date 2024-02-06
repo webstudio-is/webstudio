@@ -29,7 +29,7 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { $authPermit, $pages } from "~/shared/nano-states";
+import { $authPermit, $pages, $project } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
@@ -99,6 +99,7 @@ export const Menu = () => {
   const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
   const pages = useStore($pages);
+  const project = useStore($project);
 
   if (pages === undefined) {
     return;
@@ -116,7 +117,7 @@ export const Menu = () => {
     ? undefined
     : "Only owner can share projects";
 
-  const isClonable = pages.settings?.clonable || authPermit === "own";
+  const isClonable = project?.isClonable || authPermit === "own";
 
   const disabledCloneTooltipContent = isClonable
     ? undefined

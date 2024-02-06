@@ -424,7 +424,7 @@ export const prebuild = async (options: {
     },
     {
       assetBaseUrl,
-      atomic: siteData.build.pages.settings?.atomicStyles ?? true,
+      atomic: siteData.build.pages.compiler?.atomicStyles ?? true,
     }
   );
 
