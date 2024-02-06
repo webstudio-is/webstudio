@@ -9,7 +9,6 @@ import {
   $rootInstance,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
-  $selectedStyleSourceSelector,
   $registeredComponentMetas,
   $dragAndDropState,
 } from "~/shared/nano-states";
@@ -125,7 +124,6 @@ export const NavigatorTree = () => {
     }
     $selectedInstanceSelector.set(instanceSelector);
     $textEditingInstanceSelector.set(undefined);
-    $selectedStyleSourceSelector.set(undefined);
   }, []);
 
   if (rootInstance === undefined) {
