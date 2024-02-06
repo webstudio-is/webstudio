@@ -37,7 +37,9 @@ export const ClonableSection = (props: {
             }
           }}
         />
-        <Label htmlFor={ids.clonable}>Allow cloning the project</Label>
+        <Label htmlFor={ids.clonable}>
+          Allow cloning the project with View permission
+        </Label>
       </CheckboxAndLabel>
       <CheckboxAndLabel>
         <Checkbox
