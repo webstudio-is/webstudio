@@ -26,7 +26,7 @@ module.exports = {
     },
   },
   rules: {
-    "no-console": 2,
+    "no-console": ["error", { allow: ["info", "error"] }],
     // It's too dumb to understand properly what's defined in ts
     "react/prop-types": 0,
     "no-unused-vars": "off",
