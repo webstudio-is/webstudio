@@ -37,7 +37,6 @@ import {
   $styleSourceSelections,
   $styleSources,
   $instances,
-  $selectedStyleSourceSelector,
   $registeredComponentMetas,
   $dataSources,
   $assets,
@@ -424,7 +423,6 @@ export const insertTemplateData = (
   );
 
   $selectedInstanceSelector.set([rootInstanceId, ...dropTarget.parentSelector]);
-  $selectedStyleSourceSelector.set(undefined);
 };
 
 export const getComponentTemplateData = (component: string) => {
@@ -492,7 +490,6 @@ export const reparentInstance = (
       rootInstanceId,
       ...reparentDropTarget.parentSelector,
     ]);
-    $selectedStyleSourceSelector.set(undefined);
   });
 };
 

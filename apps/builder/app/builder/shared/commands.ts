@@ -4,7 +4,6 @@ import {
   $editingItemId,
   $instances,
   $selectedInstanceSelector,
-  $selectedStyleSourceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -75,7 +74,6 @@ const deleteSelectedInstance = () => {
   updateWebstudioData((data) => {
     if (deleteInstanceMutable(data, selectedInstanceSelector)) {
       $selectedInstanceSelector.set(newSelectedInstanceSelector);
-      $selectedStyleSourceSelector.set(undefined);
     }
   });
 };

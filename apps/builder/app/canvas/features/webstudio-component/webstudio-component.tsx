@@ -36,7 +36,6 @@ import {
   $selectedInstanceRenderState,
   $selectedInstanceSelector,
   $selectedPage,
-  $selectedStyleSourceSelector,
   useInstanceStyles,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
@@ -399,7 +398,6 @@ export const WebstudioComponentCanvas = forwardRef<
           );
           $textEditingInstanceSelector.set(undefined);
           $selectedInstanceSelector.set(newSelectedSelector);
-          $selectedStyleSourceSelector.set(undefined);
         }}
       />
     </Suspense>

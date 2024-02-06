@@ -31,7 +31,8 @@ import {
   $selectedInstance,
   $selectedInstanceStyleSources,
   $selectedOrLastStyleSourceSelector,
-  $selectedStyleSourceSelector,
+  $selectedStyleSources,
+  $selectedStyleState,
   $styleSourceSelections,
   $styleSources,
   $styles,
@@ -42,6 +43,35 @@ import { humanizeString } from "~/shared/string-utils";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import { shallowComputed } from "~/shared/store-utils";
 import { serverSyncStore } from "~/shared/sync";
+
+const selectStyleSource = (
+  styleSourceId: StyleSource["id"],
+  state?: StyleDecl["state"]
+) => {
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  const [instanceId] = selectedInstanceSelector;
+  const selectedStyleSources = new Map($selectedStyleSources.get());
+  selectedStyleSources.set(instanceId, styleSourceId);
+  $selectedStyleSources.set(selectedStyleSources);
+  $selectedStyleState.set(state);
+};
+
+const deselectMatchingStyleSource = (styleSourceId: StyleSource["id"]) => {
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
+  if (selectedInstanceSelector === undefined) {
+    return;
+  }
+  const [instanceId] = selectedInstanceSelector;
+  const selectedStyleSources = new Map($selectedStyleSources.get());
+  if (selectedStyleSources.get(instanceId) === styleSourceId) {
+    selectedStyleSources.delete(instanceId);
+    $selectedStyleSources.set(selectedStyleSources);
+    $selectedStyleState.set(undefined);
+  }
+};
 
 const getOrCreateStyleSourceSelectionMutable = (
   styleSourceSelections: StyleSourceSelections,
@@ -167,7 +197,7 @@ const createStyleSource = (id: StyleSource["id"], name: string) => {
       }
     }
   );
-  $selectedStyleSourceSelector.set({ styleSourceId: newStyleSource.id });
+  selectStyleSource(newStyleSource.id);
 };
 
 export const addStyleSourceToInstance = (
@@ -189,7 +219,7 @@ export const addStyleSourceToInstance = (
       );
     }
   );
-  $selectedStyleSourceSelector.set({ styleSourceId: newStyleSourceId });
+  selectStyleSource(newStyleSourceId);
 };
 
 const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
@@ -213,11 +243,7 @@ const removeStyleSourceFromInstance = (styleSourceId: StyleSource["id"]) => {
     }
   );
   // reset selected style source if necessary
-  const selectedStyleSourceId =
-    $selectedStyleSourceSelector.get()?.styleSourceId;
-  if (selectedStyleSourceId === styleSourceId) {
-    $selectedStyleSourceSelector.set(undefined);
-  }
+  deselectMatchingStyleSource(styleSourceId);
 };
 
 const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
@@ -241,11 +267,7 @@ const deleteStyleSource = (styleSourceId: StyleSource["id"]) => {
     }
   );
   // reset selected style source if necessary
-  const selectedStyleSourceId =
-    $selectedStyleSourceSelector.get()?.styleSourceId;
-  if (selectedStyleSourceId === styleSourceId) {
-    $selectedStyleSourceSelector.set(undefined);
-  }
+  deselectMatchingStyleSource(styleSourceId);
 };
 
 const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
@@ -289,7 +311,7 @@ const duplicateStyleSource = (styleSourceId: StyleSource["id"]) => {
     }
   );
 
-  $selectedStyleSourceSelector.set({ styleSourceId: newStyleSource.id });
+  selectStyleSource(newStyleSource.id);
 
   return newStyleSource.id;
 };
@@ -319,7 +341,7 @@ const convertLocalStyleSourceToToken = (styleSourceId: StyleSource["id"]) => {
       styleSources.set(newStyleSource.id, newStyleSource);
     }
   );
-  $selectedStyleSourceSelector.set({ styleSourceId: newStyleSource.id });
+  selectStyleSource(newStyleSource.id);
 };
 
 const reorderStyleSources = (styleSourceIds: StyleSource["id"][]) => {
@@ -501,7 +523,10 @@ export const StyleSourcesSection = () => {
           reorderStyleSources(items.map((item) => item.id));
         }}
         onSelectItem={(styleSourceSelector) => {
-          $selectedStyleSourceSelector.set(styleSourceSelector);
+          selectStyleSource(
+            styleSourceSelector.styleSourceId,
+            styleSourceSelector.state
+          );
         }}
         // style source renaming
         editingItemId={editingItemId}
@@ -509,9 +534,7 @@ export const StyleSourcesSection = () => {
           setEditingItemId(id);
           // prevent deselect after renaming
           if (id !== undefined) {
-            $selectedStyleSourceSelector.set({
-              styleSourceId: id,
-            });
+            selectStyleSource(id);
           }
         }}
         onChangeItem={(item) => {

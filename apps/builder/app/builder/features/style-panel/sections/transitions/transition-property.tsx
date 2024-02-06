@@ -23,6 +23,7 @@ import {
 } from "@webstudio-is/design-system";
 import type { KeywordValue } from "@webstudio-is/css-engine";
 import { humanizeString } from "~/shared/string-utils";
+import { matchSorter } from "match-sorter";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
 type NameAndLabel = { name: AnimatableProperties; label?: string };
@@ -83,6 +84,27 @@ export const TransitionProperty = ({
       onPropertySelection({ property: { type: "keyword", value: prop.name } });
     },
     onInputChange: (value) => setInputValue(value ?? ""),
+    /*
+      We are splitting the items into two lists.
+      But when users pass a input, the list is filtered and mixed together.
+      The UI is still showing the lists as separated. But the items are mixed together in background.
+      Since, first we show the common-properties followed by filtered-properties. We can use matchSorter to sort the items.
+    */
+    match: (search, itemsToFilter, itemToString) => {
+      if (search === "") {
+        return itemsToFilter;
+      }
+
+      const sortedItems = matchSorter(itemsToFilter, search, {
+        keys: [itemToString],
+        sorter: (rankedItems) =>
+          rankedItems.sort((a) =>
+            commonPropertiesSet.has(a.item.name) ? -1 : 1
+          ),
+      });
+
+      return sortedItems;
+    },
   });
 
   const commonProperties = items.filter(
