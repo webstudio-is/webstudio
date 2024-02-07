@@ -20,7 +20,7 @@ import {
 import { PlusIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { Title } from "@webstudio-is/project";
-import { dashboardProjectPath, builderPath } from "~/shared/router-utils";
+import { dashboardProjectsPath, builderPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import { ShareProjectContainer } from "~/shared/share-project";
 
@@ -118,7 +118,9 @@ const DialogContent = ({
   );
 };
 
-const trpc = createTrpcRemixProxy<DashboardProjectRouter>(dashboardProjectPath);
+const trpc = createTrpcRemixProxy<DashboardProjectRouter>(
+  dashboardProjectsPath
+);
 
 const useCreateProject = () => {
   const navigate = useNavigate();

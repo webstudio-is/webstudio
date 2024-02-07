@@ -11,9 +11,9 @@ import { useState } from "react";
 import { useIds } from "~/shared/form-utils";
 import { $project } from "~/shared/nano-states";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { projectPath } from "~/shared/router-utils";
+import { projectsPath } from "~/shared/router-utils";
 
-const trpc = createTrpcRemixProxy<ProjectRouter>(projectPath);
+const trpc = createTrpcRemixProxy<ProjectRouter>(projectsPath);
 
 export const ClonableSection = () => {
   const ids = useIds(["isClonable"]);
