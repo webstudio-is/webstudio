@@ -35,7 +35,9 @@ const defaultMetaSettings: ProjectMeta = {
 };
 
 export const MetaSection = () => {
-  const [meta, setMeta] = useState($pages.get()?.meta ?? defaultMetaSettings);
+  const [meta, setMeta] = useState(
+    () => $pages.get()?.meta ?? defaultMetaSettings
+  );
   const ids = useIds(["siteName", "favicon", "code"]);
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");

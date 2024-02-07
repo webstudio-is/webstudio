@@ -24,7 +24,9 @@ import { $pages } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 
 export const RedirectSection = () => {
-  const [redirects, setRedirects] = useState($pages.get()?.redirects ?? []);
+  const [redirects, setRedirects] = useState(
+    () => $pages.get()?.redirects ?? []
+  );
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
   const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);

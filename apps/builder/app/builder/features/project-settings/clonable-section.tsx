@@ -17,9 +17,11 @@ const trpc = createTrpcRemixProxy<ProjectRouter>(projectPath);
 
 export const ClonableSection = () => {
   const ids = useIds(["isClonable"]);
-  const [clonableSettings, setClonableSettings] = useState<ClonableSettings>({
-    isClonable: $project.get()?.isClonable,
-  });
+  const [clonableSettings, setClonableSettings] = useState<ClonableSettings>(
+    () => ({
+      isClonable: $project.get()?.isClonable,
+    })
+  );
 
   const { send: updateClonableSettings } =
     trpc.updateClonableSettings.useMutation();

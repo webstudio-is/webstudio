@@ -19,7 +19,7 @@ const defaultSettings: CompilerSettings = {
 export const CompilerSection = () => {
   const ids = useIds(["atomicStyles"]);
   const [settings, setSettings] = useState(
-    $pages.get()?.compiler ?? defaultSettings
+    () => $pages.get()?.compiler ?? defaultSettings
   );
 
   const handleSave = (settings: CompilerSettings) => {
