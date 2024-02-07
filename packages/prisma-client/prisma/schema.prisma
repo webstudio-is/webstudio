@@ -151,7 +151,9 @@ model Project {
   authorizationToken  AuthorizationToken[]
   previewImageAsset   Asset?                 @relation(fields: [previewImageAssetId, id], references: [id, projectId])
   previewImageAssetId String?
+  // Enable cloning project with view permission
   isClonable          Boolean?               @default(false)
+  // Enable listing in a public directory
   isPublic            Boolean?               @default(false)
 
   @@unique([id, isDeleted])
