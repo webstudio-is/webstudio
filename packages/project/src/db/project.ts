@@ -172,6 +172,18 @@ export const clone = async (
   );
 
   const clonedProject = await prisma.$transaction(async (client) => {
+    await cloneAssets(
+      {
+        fromProjectId: project.id,
+        toProjectId: newProjectId,
+
+        // Permission check on newProjectId will fail until this transaction is committed.
+        // We have to skip it, but it's ok because registerProjectOwner is right above
+        dontCheckEditPermission: true,
+      },
+      context
+    );
+
     const clonedProject = await client.project.create({
       data: {
         id: newProjectId,
@@ -193,18 +205,6 @@ export const clone = async (
       },
       context,
       client
-    );
-
-    await cloneAssets(
-      {
-        fromProjectId: project.id,
-        toProjectId: newProjectId,
-
-        // Permission check on newProjectId will fail until this transaction is committed.
-        // We have to skip it, but it's ok because registerProjectOwner is right above
-        dontCheckEditPermission: true,
-      },
-      context
     );
 
     return clonedProject;
