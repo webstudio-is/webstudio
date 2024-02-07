@@ -16,10 +16,11 @@ import { projectsPath } from "~/shared/router-utils";
 const trpc = createTrpcRemixProxy<ProjectRouter>(projectsPath);
 
 export const ClonableSection = () => {
-  const ids = useIds(["isClonable"]);
+  const ids = useIds(["isClonable", "isPublic"]);
   const [clonableSettings, setClonableSettings] = useState<ClonableSettings>(
     () => ({
       isClonable: $project.get()?.isClonable,
+      isPublic: $project.get()?.isPublic,
     })
   );
 
@@ -52,8 +53,22 @@ export const ClonableSection = () => {
           }}
         />
         <Label htmlFor={ids.isClonable}>
-          Allow cloning the project with View permission
+          Enable cloning the project with View permission
         </Label>
+      </CheckboxAndLabel>
+      <CheckboxAndLabel>
+        <Checkbox
+          checked={clonableSettings.isPublic ?? false}
+          id={ids.isPublic}
+          onCheckedChange={(isPublic) => {
+            if (typeof isPublic === "boolean") {
+              const nextSettings = { ...clonableSettings, isPublic };
+              setClonableSettings(nextSettings);
+              handleSave(nextSettings);
+            }
+          }}
+        />
+        <Label htmlFor={ids.isPublic}>Enable listing in the marketplace</Label>
       </CheckboxAndLabel>
     </Grid>
   );

@@ -11,6 +11,7 @@ export const Title = z
 
 export const ClonableSettings = z.object({
   isClonable: z.boolean().optional(),
+  isPublic: z.boolean().optional(),
 });
 export type ClonableSettings = z.infer<typeof ClonableSettings>;
 
