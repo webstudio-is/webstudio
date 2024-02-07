@@ -11,11 +11,13 @@ import {
   css,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
-import { $assets } from "~/shared/nano-states";
+import { $assets, $pages } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
 import type { ProjectMeta } from "@webstudio-is/sdk";
+import { useState } from "react";
+import { serverSyncStore } from "~/shared/sync";
 
 const imgStyle = css({
   width: 72,
@@ -26,28 +28,42 @@ const imgStyle = css({
   borderColor: theme.colors.borderMain,
 });
 
-export const MetaSection = (props: {
-  meta: ProjectMeta;
-  onMetaChange: (value: ProjectMeta) => void;
-}) => {
+const defaultMetaSettings: ProjectMeta = {
+  siteName: "",
+  faviconAssetId: "",
+  code: "",
+};
+
+export const MetaSection = () => {
+  const [meta, setMeta] = useState(
+    () => $pages.get()?.meta ?? defaultMetaSettings
+  );
   const ids = useIds(["siteName", "favicon", "code"]);
-  const handleChange =
-    <Name extends keyof ProjectMeta>(name: Name) =>
-    (value: ProjectMeta[Name]) => {
-      props.onMetaChange({
-        ...props.meta,
-        [name]: value,
-      });
-    };
-
   const assets = useStore($assets);
-  const asset = assets.get(props.meta.faviconAssetId ?? "");
-
+  const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
 
   const imageLoader = createImageLoader({
     imageBaseUrl: env.IMAGE_BASE_URL,
   });
+
+  const handleSave = <Setting extends keyof ProjectMeta>(setting: Setting) => {
+    return (value: ProjectMeta[Setting]) => {
+      setMeta({
+        ...meta,
+        [setting]: value,
+      });
+      serverSyncStore.createTransaction([$pages], (pages) => {
+        if (pages === undefined) {
+          return;
+        }
+        if (pages.meta === undefined) {
+          pages.meta = {};
+        }
+        pages.meta[setting] = value;
+      });
+    };
+  };
 
   return (
     <>
@@ -58,13 +74,14 @@ export const MetaSection = (props: {
           px: theme.spacing[5],
         }}
       >
-        <Label htmlFor={ids.siteName}>Project Name</Label>
+        <Label htmlFor={ids.siteName}>Site Name</Label>
         <InputField
           id={ids.siteName}
-          value={props.meta.siteName ?? ""}
-          onChange={(event) => handleChange("siteName")(event.target.value)}
-          placeholder="Current Project Name"
-          name="Name"
+          value={meta.siteName ?? ""}
+          onChange={(event) => {
+            handleSave("siteName")(event.target.value);
+          }}
+          placeholder="Current Site Name"
           autoFocus
         />
       </Grid>
@@ -86,7 +103,7 @@ export const MetaSection = (props: {
             <Text color="subtle">
               Upload a 32 x 32 px image to display in browser tabs.
             </Text>
-            <ImageControl onAssetIdChange={handleChange("faviconAssetId")}>
+            <ImageControl onAssetIdChange={handleSave("faviconAssetId")}>
               <Button id={ids.favicon} css={{ justifySelf: "start" }}>
                 Upload
               </Button>
@@ -108,8 +125,8 @@ export const MetaSection = (props: {
           rows={5}
           autoGrow
           maxRows={10}
-          value={props.meta.code ?? ""}
-          onChange={handleChange("code")}
+          value={meta.code ?? ""}
+          onChange={handleSave("code")}
         />
       </Grid>
     </>

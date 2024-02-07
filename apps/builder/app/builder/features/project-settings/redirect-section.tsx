@@ -13,16 +13,20 @@ import {
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
-import type { ProjectSettings } from "./project-settings";
-import { PagePath, ProjectNewRedirectPathSchema } from "@webstudio-is/sdk";
+import {
+  PagePath,
+  PageRedirect,
+  ProjectNewRedirectPath,
+} from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
 import { $pages } from "~/shared/nano-states";
+import { serverSyncStore } from "~/shared/sync";
 
-export const RedirectSection = (props: {
-  settings: ProjectSettings;
-  onSettingsChange: (settings: ProjectSettings) => void;
-}) => {
+export const RedirectSection = () => {
+  const [redirects, setRedirects] = useState(
+    () => $pages.get()?.redirects ?? []
+  );
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
   const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);
@@ -30,7 +34,6 @@ export const RedirectSection = (props: {
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
 
-  const redirects = props.settings?.redirects ?? [];
   const redirectKeys = Object.keys(redirects);
   const isValidRedirects =
     oldPathErrors.length === 0 && newPathErrors.length === 0;
@@ -69,8 +72,7 @@ export const RedirectSection = (props: {
   };
 
   const validateNewPath = (newPath: string): string[] => {
-    const newPathValidationResult =
-      ProjectNewRedirectPathSchema.safeParse(newPath);
+    const newPathValidationResult = ProjectNewRedirectPath.safeParse(newPath);
 
     if (newPathValidationResult.success === true) {
       /*
@@ -96,6 +98,16 @@ export const RedirectSection = (props: {
     }
   };
 
+  const handleSave = (redirects: Array<PageRedirect>) => {
+    setRedirects(redirects);
+    serverSyncStore.createTransaction([$pages], (pages) => {
+      if (pages === undefined) {
+        return;
+      }
+      pages.redirects = redirects;
+    });
+  };
+
   const handleAddRedirect = () => {
     const validOldPath = validateOldPath(oldPath);
     const validNewPath = validateNewPath(newPath);
@@ -104,10 +116,7 @@ export const RedirectSection = (props: {
       return;
     }
 
-    props.onSettingsChange({
-      ...props.settings,
-      redirects: [{ old: oldPath, new: newPath }, ...redirects],
-    });
+    handleSave([{ old: oldPath, new: newPath }, ...redirects]);
     setOldPath("");
     setNewPath("");
   };
@@ -115,10 +124,7 @@ export const RedirectSection = (props: {
   const handleDeleteRedirect = (index: number) => {
     const newRedirects = [...redirects];
     newRedirects.splice(index, 1);
-    props.onSettingsChange({
-      ...props.settings,
-      redirects: newRedirects,
-    });
+    handleSave(newRedirects);
   };
 
   return (
@@ -192,6 +198,7 @@ export const RedirectSection = (props: {
                       gap="2"
                       css={{
                         p: theme.spacing[3],
+                        overflow: "hidden",
                       }}
                     >
                       <Flex gap="2">

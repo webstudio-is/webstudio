@@ -73,8 +73,10 @@ export const builderDomainsPath = (method: string) => {
   }`;
 };
 
-export const dashboardProjectPath = (method: string) =>
-  `/dashboard/projects/${method}`;
+export const projectsPath = (method: string) => `/rest/projects/${method}`;
+
+export const dashboardProjectsPath = (method: string) =>
+  `${dashboardPath()}/projects/${method}`;
 
 export const authorizationTokenPath = (method: string) =>
   `/rest/authorization-token/${method}`;

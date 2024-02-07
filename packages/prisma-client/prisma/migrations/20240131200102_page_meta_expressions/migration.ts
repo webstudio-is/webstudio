@@ -34,14 +34,14 @@ type ProjectMeta = {
   code?: string;
 };
 
-type PageRedirectSchema = {
+type PageRedirect = {
   old: string;
   new: string;
 };
 
 type ProjectSettings = {
   atomicStyles?: boolean;
-  redirects?: PageRedirectSchema[];
+  redirects?: PageRedirect[];
 };
 
 type Pages = {

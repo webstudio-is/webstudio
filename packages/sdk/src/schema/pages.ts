@@ -102,8 +102,9 @@ const ProjectMeta = z.object({
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
 });
+export type ProjectMeta = z.infer<typeof ProjectMeta>;
 
-export const ProjectNewRedirectPathSchema = PagePath.or(
+export const ProjectNewRedirectPath = PagePath.or(
   z.string().refine((data) => {
     try {
       new URL(data);
@@ -114,26 +115,24 @@ export const ProjectNewRedirectPathSchema = PagePath.or(
   }, "Must be a valid URL")
 );
 
-export const PageRedirectSchema = z.object({
+export const PageRedirect = z.object({
   old: PagePath,
-  new: ProjectNewRedirectPathSchema,
+  new: ProjectNewRedirectPath,
 });
+export type PageRedirect = z.infer<typeof PageRedirect>;
 
-const ProjectSettings = z.object({
+export const CompilerSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
-  redirects: z.array(PageRedirectSchema).optional(),
 });
-
-export type PageRedirect = z.infer<typeof PageRedirectSchema>;
-
-export type ProjectMeta = z.infer<typeof ProjectMeta>;
+export type CompilerSettings = z.infer<typeof CompilerSettings>;
 
 export type Page = z.infer<typeof Page>;
 
 export const Pages = z.object({
   meta: ProjectMeta.optional(),
-  settings: ProjectSettings.optional(),
+  compiler: CompilerSettings.optional(),
+  redirects: z.array(PageRedirect).optional(),
   homePage: HomePage,
   pages: z
     .array(Page)
