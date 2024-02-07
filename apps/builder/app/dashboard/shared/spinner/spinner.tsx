@@ -1,6 +1,7 @@
 import { css } from "@webstudio-is/design-system";
 import { useDebounce } from "use-debounce";
 import { SpinnerIcon } from "@webstudio-is/icons";
+import { useEffect } from "react";
 
 const containerStyle = css({
   position: "absolute",
@@ -22,12 +23,12 @@ export const Spinner = ({
 }) => {
   const [isVisible, setIsVisible] = useDebounce(false, delay);
 
-  if (delay !== 0) {
+  useEffect(() => {
     setIsVisible(true);
-  }
+  }, [setIsVisible]);
 
   if (isVisible === false) {
-    return null;
+    return;
   }
 
   return (
