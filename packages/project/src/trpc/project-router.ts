@@ -1,7 +1,7 @@
 import * as db from "../db";
 import { z } from "zod";
 import { router, procedure } from "./trpc";
-import { ClonableSettings, Title } from "../shared/schema";
+import { Title } from "../shared/schema";
 
 export const projectRouter = router({
   rename: procedure
@@ -36,11 +36,6 @@ export const projectRouter = router({
     .input(z.object({ title: Title }))
     .mutation(async ({ input, ctx }) => {
       return await db.project.create(input, ctx);
-    }),
-  updateClonableSettings: procedure
-    .input(ClonableSettings.extend({ projectId: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      return await db.project.updateClonableSettings(input, ctx);
     }),
 });
 

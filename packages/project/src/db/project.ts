@@ -10,7 +10,7 @@ import {
   createBuild,
   cloneBuild,
 } from "@webstudio-is/project-build/index.server";
-import { ClonableSettings, Project, Title } from "../shared/schema";
+import { Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 
 export const loadById = async (
@@ -165,21 +165,6 @@ export const clone = async (
     throw new Error("The user must be authenticated to clone the project");
   }
 
-  // A clonable project can be cloned with view permissions, but otherwise
-  // one needs at least admin permission.
-  if (project.isClonable !== true) {
-    const canAdmin = await authorizeProject.hasProjectPermit(
-      { projectId, permit: "admin" },
-      context
-    );
-
-    if (canAdmin === false) {
-      throw new AuthorizationError(
-        "Admin permission is required to clone the project, or alternatively, make it clonable."
-      );
-    }
-  }
-
   const newProjectId = uuid();
   await authorizeProject.registerProjectOwner(
     { projectId: newProjectId },
@@ -260,18 +245,4 @@ export const updateDomain = async (
     }
     throw error;
   }
-};
-
-export const updateClonableSettings = async (
-  { projectId, ...settings }: ClonableSettings & { projectId: string },
-  context: AppContext
-) => {
-  ClonableSettings.parse(settings);
-
-  await assertEditPermission(projectId, context);
-
-  return await prisma.project.update({
-    where: { id: projectId },
-    data: settings,
-  });
 };

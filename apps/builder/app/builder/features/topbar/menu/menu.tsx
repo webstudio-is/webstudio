@@ -29,7 +29,7 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { $authPermit, $pages, $project } from "~/shared/nano-states";
+import { $authPermit } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
@@ -98,12 +98,6 @@ export const Menu = () => {
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
-  const pages = useStore($pages);
-  const project = useStore($project);
-
-  if (pages === undefined) {
-    return;
-  }
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
@@ -116,12 +110,6 @@ export const Menu = () => {
   const disabledShareTooltipContent = isShareEnabled
     ? undefined
     : "Only owner can share projects";
-
-  const isClonable = project?.isClonable || authPermit === "own";
-
-  const disabledCloneTooltipContent = isClonable
-    ? undefined
-    : "Project admin didn't enable cloning in the project settings";
 
   return (
     <DropdownMenu>
@@ -225,16 +213,13 @@ export const Menu = () => {
               Publish
             </DropdownMenuItem>
           </Tooltip>
-          <Tooltip side="right" content={disabledCloneTooltipContent}>
-            <DropdownMenuItem
-              onSelect={() => {
-                $isCloneDialogOpen.set(true);
-              }}
-              disabled={isClonable !== true}
-            >
-              Clone
-            </DropdownMenuItem>
-          </Tooltip>
+          <DropdownMenuItem
+            onSelect={() => {
+              $isCloneDialogOpen.set(true);
+            }}
+          >
+            Clone
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {

@@ -13,7 +13,6 @@ import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { MetaSection } from "./meta-section";
 import { CompilerSection } from "./compiler-section";
 import { RedirectSection } from "./redirect-section";
-import { ClonableSection } from "./clonable-section";
 
 const ProjectSettingsView = ({
   isOpen,
@@ -39,7 +38,6 @@ const ProjectSettingsView = ({
             <Separator />
             <CompilerSection />
             <Separator />
-            <ClonableSection />
             {isFeatureEnabled("redirects") && <RedirectSection />}
             <div />
           </Grid>
