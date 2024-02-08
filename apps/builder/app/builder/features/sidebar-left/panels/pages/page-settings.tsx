@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
+import { type FocusEventHandler, useState, useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -13,7 +13,6 @@ import {
   HomePagePath,
   PageTitle,
   PagePath,
-  DataSource,
   Folder,
   getPagePath,
   findPageByIdOrPath,
@@ -62,7 +61,6 @@ import {
   $project,
   $selectedInstanceSelector,
   $dataSources,
-  $dataSourceVariables,
   computeExpression,
 } from "~/shared/nano-states";
 import {
@@ -80,17 +78,14 @@ import { SocialPreview } from "./social-preview";
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
 import env from "~/shared/env";
-import {
-  compilePathnamePattern,
-  parsePathnamePattern,
-  validatePathnamePattern,
-} from "./url-pattern";
+import { parsePathnamePattern, validatePathnamePattern } from "./url-pattern";
 import {
   registerFolderChildMutable,
   deletePageMutable,
   $pageRootScope,
 } from "./page-utils";
 import { Form } from "./form";
+import { AddressBar, useAddressBar, type AddressBarApi } from "./address-bar";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -309,16 +304,16 @@ const CopyPageDomainAndPathButton = ({
 };
 
 const FormFields = ({
+  addressBar,
   disabled,
   autoSelect,
-  pathVariableId,
   errors,
   values,
   onChange,
 }: {
+  addressBar: AddressBarApi;
   disabled?: boolean;
   autoSelect?: boolean;
-  pathVariableId?: DataSource["id"];
   errors: Errors;
   values: Values;
   onChange: (
@@ -333,7 +328,6 @@ const FormFields = ({
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
-  const dataSourceVariables = useStore($dataSourceVariables);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
 
   if (pages === undefined) {
@@ -354,16 +348,13 @@ const FormFields = ({
 
   const publishedUrl = new URL(`https://${domain}`);
 
-  const pathParamNames = parsePathnamePattern(values.path);
-  const params =
-    pathVariableId !== undefined
-      ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
-      : undefined;
-
   const foldersPath = getPagePath(values.parentFolderId, pages);
-  const pagePath = compilePathnamePattern(values.path ?? "", params ?? {});
 
-  const pageDomainAndPath = [publishedUrl.host, foldersPath, pagePath]
+  const pageDomainAndPath = [
+    publishedUrl.host,
+    foldersPath,
+    addressBar.compiledPath,
+  ]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");
@@ -386,7 +377,7 @@ const FormFields = ({
         {/**
          * ----------------------========<<<Page props>>>>========----------------------
          */}
-        <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Page Name</Label>
             <InputErrorsTooltip errors={errors.name}>
@@ -434,15 +425,8 @@ const FormFields = ({
                   : `Make “${values.name}” the home page`}
               </Label>
             </Grid>
-            {values.isHomePage === true && (
-              <>
-                <div />
-                <CopyPageDomainAndPathButton
-                  pageDomainAndPath={pageDomainAndPath}
-                />
-              </>
-            )}
           </Grid>
+
           {isFeatureEnabled("folders") && values.isHomePage === false && (
             <Grid gap={1}>
               <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
@@ -499,41 +483,10 @@ const FormFields = ({
                   }}
                 />
               </InputErrorsTooltip>
-              {pathVariableId !== undefined &&
-                pathParamNames.map((name) => (
-                  <Fragment key={name}>
-                    <Label htmlFor={`${fieldIds.path}-${name}`}>{name}</Label>
-                    <InputField
-                      tabIndex={1}
-                      id={`${fieldIds.path}-${name}`}
-                      name="path"
-                      value={params?.[name] ?? ""}
-                      onChange={(event) => {
-                        if (pathVariableId === undefined) {
-                          return;
-                        }
-                        const dataSourceVariables = new Map(
-                          $dataSourceVariables.get()
-                        );
-                        // delete stale fields
-                        const newParams: Record<string, string> = {};
-                        for (const name of pathParamNames) {
-                          if (params?.[name]) {
-                            newParams[name] = params[name];
-                          }
-                        }
-                        newParams[name] = event.target.value;
-                        dataSourceVariables.set(pathVariableId, newParams);
-                        $dataSourceVariables.set(dataSourceVariables);
-                      }}
-                    />
-                  </Fragment>
-                ))}
-              <CopyPageDomainAndPathButton
-                pageDomainAndPath={pageDomainAndPath}
-              />
             </Grid>
           )}
+          <AddressBar addressBar={addressBar} />
+          <CopyPageDomainAndPathButton pageDomainAndPath={pageDomainAndPath} />
         </Grid>
 
         <Separator />
@@ -902,12 +855,15 @@ export const NewPageSettings = ({
     false,
     variableValues
   );
+  const addressBar = useAddressBar({
+    path: values.path,
+  });
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
       createPage(pageId, values);
-      updatePage(pageId, values);
+      updatePage(pageId, values, addressBar);
       onSuccess(pageId);
     }
   };
@@ -920,6 +876,7 @@ export const NewPageSettings = ({
     >
       <FormFields
         autoSelect
+        addressBar={addressBar}
         errors={errors}
         disabled={false}
         values={values}
@@ -1017,7 +974,11 @@ const createPage = (pageId: Page["id"], values: Values) => {
   );
 };
 
-const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
+const updatePage = (
+  pageId: Page["id"],
+  values: Partial<Values>,
+  addressBar: AddressBarApi
+) => {
   const updatePageMutable = (
     page: Page,
     values: Partial<Values>,
@@ -1092,23 +1053,26 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
       for (const page of pages.pages) {
         if (page.id === pageId) {
-          // create "Page params" variable when pattern is specified in path
+          // mutate page before working with path params
+          updatePageMutable(page, values, pages.folders);
+          // create "Path Params" variable when pattern is specified in path
           const paramNames = parsePathnamePattern(page.path);
+
           if (paramNames.length > 0 && page.pathVariableId === undefined) {
             page.pathVariableId = nanoid();
             dataSources.set(page.pathVariableId, {
               id: page.pathVariableId,
-              // scope new variable to body
+              // scope new variable to page root
               scopeInstanceId: page.rootInstanceId,
               type: "parameter",
-              name: "Page params",
+              name: "Path Params",
             });
           }
-          updatePageMutable(page, values, pages.folders);
         }
       }
     }
   );
+  addressBar.savePathParams();
 };
 
 const duplicatePage = (pageId: Page["id"]) => {
@@ -1187,6 +1151,10 @@ export const PageSettings = ({
     values.isHomePage,
     variableValues
   );
+  const addressBar = useAddressBar({
+    path: values.path,
+    dataSourceId: page?.pathVariableId,
+  });
 
   const debouncedFn = useEffectEvent(() => {
     if (
@@ -1196,7 +1164,7 @@ export const PageSettings = ({
       return;
     }
 
-    updatePage(pageId, unsavedValues);
+    updatePage(pageId, unsavedValues, addressBar);
 
     setUnsavedValues({});
   });
@@ -1221,7 +1189,7 @@ export const PageSettings = ({
     ) {
       return;
     }
-    updatePage(pageId, unsavedValues);
+    updatePage(pageId, unsavedValues, addressBar);
   });
 
   const hanldeDelete = () => {
@@ -1247,7 +1215,7 @@ export const PageSettings = ({
       }}
     >
       <FormFields
-        pathVariableId={page.pathVariableId}
+        addressBar={addressBar}
         errors={errors}
         values={values}
         onChange={handleChange}

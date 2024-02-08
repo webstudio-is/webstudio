@@ -50,6 +50,8 @@ beforeEach(() => {
   $props.set(new Map());
   $resources.set(new Map());
   $dataSources.set(new Map());
+  $dataSourceVariables.set(new Map());
+  $resourceValues.set(new Map());
 });
 
 test("collect prop values", () => {
@@ -825,6 +827,52 @@ test("stop variables lookup outside of slots", () => {
       [
         JSON.stringify(["box", "slot", "body"]),
         new Map<string, unknown>([["boxVariable", "box"]]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
+
+test("compute parameter and resource variables without values to make it available in scope", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "parameterVariableId",
+        scopeInstanceId: "body",
+        name: "parameterName",
+        type: "parameter",
+      },
+      {
+        id: "resourceVariableId",
+        scopeInstanceId: "body",
+        name: "resourceName",
+        type: "resource",
+        resourceId: "resourceId",
+      },
+    ])
+  );
+  $props.set(new Map());
+
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([
+          ["parameterVariableId", undefined],
+          ["resourceVariableId", undefined],
+        ]),
       ],
     ])
   );

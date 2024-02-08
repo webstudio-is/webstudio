@@ -335,15 +335,11 @@ export const $variableValuesByInstanceSelector = computed(
           }
           if (variable.type === "parameter") {
             const value = dataSourceVariables.get(variable.id);
-            if (value !== undefined) {
-              variableValues.set(variable.id, value);
-            }
+            variableValues.set(variable.id, value);
           }
           if (variable.type === "resource") {
             const value = resourceValues.get(variable.resourceId);
-            if (value !== undefined) {
-              variableValues.set(variable.id, value);
-            }
+            variableValues.set(variable.id, value);
           }
         }
       }
@@ -378,7 +374,12 @@ export const $variableValuesByInstanceSelector = computed(
       if (instance.component === collectionComponent) {
         const data = propValues.get("data");
         const itemVariableId = parameters.get("item");
-        if (Array.isArray(data) && itemVariableId !== undefined) {
+        if (itemVariableId === undefined) {
+          return;
+        }
+        // prevent accessing item from collection
+        variableValues.delete(itemVariableId);
+        if (Array.isArray(data)) {
           data.forEach((item, index) => {
             const itemVariableValues = new Map(variableValues);
             itemVariableValues.set(itemVariableId, item);
