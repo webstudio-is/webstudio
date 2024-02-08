@@ -638,7 +638,7 @@ ${utilsExport}
     `
   );
 
-  const redirects = siteData.build.pages.settings?.redirects;
+  const redirects = siteData.build.pages?.redirects;
   if (redirects !== undefined && redirects.length > 0) {
     spinner.text = "Generating redirects";
 
