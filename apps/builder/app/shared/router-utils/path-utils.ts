@@ -73,7 +73,18 @@ export const builderDomainsPath = (method: string) => {
   }`;
 };
 
-export const projectsPath = (method: string) => `/rest/projects/${method}`;
+export const projectsPath = (
+  method: string,
+  { authToken }: { authToken?: string } = {}
+) => {
+  const path = `/rest/projects/${method}`;
+  if (authToken === undefined) {
+    return path;
+  }
+  const urlSearchParams = new URLSearchParams();
+  urlSearchParams.set("authToken", authToken);
+  return path + `?${urlSearchParams.toString()}`;
+};
 
 export const dashboardProjectsPath = (method: string) =>
   `${dashboardPath()}/projects/${method}`;
