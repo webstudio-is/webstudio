@@ -33,6 +33,7 @@ export const Project = z.object({
       .nullable()
   ),
 });
+
 export type Project = z.infer<typeof Project>;
 
 export const Projects = z.array(Project);

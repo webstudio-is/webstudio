@@ -4,7 +4,6 @@ import {
   $editingItemId,
   $instances,
   $selectedInstanceSelector,
-  $selectedStyleSourceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -30,7 +29,9 @@ const makeBreakpointCommand = <CommandName extends string>(
   number: number
 ): Command<CommandName> => ({
   name,
-  defaultHotkeys: [`meta+${number}`, `ctrl+${number}`],
+  defaultHotkeys: [`${number}`],
+  disableHotkeyOnFormTags: true,
+  disableHotkeyOnContentEditable: true,
   handler: () => {
     selectBreakpointByOrder(number);
   },
@@ -73,7 +74,6 @@ const deleteSelectedInstance = () => {
   updateWebstudioData((data) => {
     if (deleteInstanceMutable(data, selectedInstanceSelector)) {
       $selectedInstanceSelector.set(newSelectedInstanceSelector);
-      $selectedStyleSourceSelector.set(undefined);
     }
   });
 };

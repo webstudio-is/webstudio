@@ -39,7 +39,11 @@ export const toValue = (
     return value.value + (value.unit === "number" ? "" : value.unit);
   }
   if (value.type === "fontFamily") {
-    return value.value.join(", ");
+    const families = [];
+    for (const family of value.value) {
+      families.push(family.includes(" ") ? `"${family}"` : family);
+    }
+    return families.join(", ");
   }
   if (value.type === "var") {
     const fallbacks = [];

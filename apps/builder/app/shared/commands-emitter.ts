@@ -57,7 +57,7 @@ const findCommandsMatchingHotkeys = (event: KeyboardEvent) => {
     pressedKeys.add("shift");
   }
   if (altKey) {
-    pressedKeys.add("altKey");
+    pressedKeys.add("alt");
   }
 
   const commandMetas = $commandMetas.get();

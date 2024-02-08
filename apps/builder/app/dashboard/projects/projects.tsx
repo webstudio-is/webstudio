@@ -35,7 +35,7 @@ export const Projects = ({
           {projects.map((project) => {
             return (
               <ProjectCard
-                {...project}
+                project={project}
                 key={project.id}
                 hasProPlan={hasProPlan}
               />
@@ -58,7 +58,7 @@ export const Projects = ({
             }}
           >
             {projectTemplates.map((project) => {
-              return <ProjectTemplateCard {...project} key={project.id} />;
+              return <ProjectTemplateCard project={project} key={project.id} />;
             })}
           </Grid>
         </Flex>

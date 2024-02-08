@@ -38,7 +38,11 @@ export const getPageMeta = ({}: {
 
 const Page = ({ params: PageParams }: { params: any }) => {
   return (
-    <Body data-ws-id="MMimeobf_zi4ZkRGXapju" data-ws-component="Body">
+    <Body
+      data-ws-id="MMimeobf_zi4ZkRGXapju"
+      data-ws-component="Body"
+      className="c9ryj1f c1e3go07 cmhckny cr0vgwe"
+    >
       <Heading data-ws-id="MYDt0guk1-vzc7yzqyN6A" data-ws-component="Heading">
         {"Simple Project to test CLI"}
       </Heading>

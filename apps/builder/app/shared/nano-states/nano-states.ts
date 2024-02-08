@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { atom, computed } from "nanostores";
+import { atom, computed, onSet } from "nanostores";
 import { useStore } from "@nanostores/react";
 import { nanoid } from "nanoid";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
@@ -91,9 +91,14 @@ export type StyleSourceSelector = {
   state?: string;
 };
 
-export const $selectedStyleSourceSelector = atom<
-  undefined | StyleSourceSelector
->(undefined);
+export const $selectedStyleSources = atom(
+  new Map<Instance["id"], StyleSource["id"]>()
+);
+export const $selectedStyleState = atom<StyleDecl["state"]>();
+// reset style state whenever selected instance change
+onSet($selectedInstanceSelector, () => {
+  $selectedStyleState.set(undefined);
+});
 
 /**
  * Indexed styles data is recomputed on every styles update
@@ -230,16 +235,32 @@ export const $selectedInstanceStyleSources = computed(
 );
 
 export const $selectedOrLastStyleSourceSelector = computed(
-  [$selectedInstanceStyleSources, $selectedStyleSourceSelector],
-  (styleSources, selectedStyleSourceSelector) => {
-    if (selectedStyleSourceSelector !== undefined) {
-      return selectedStyleSourceSelector;
+  [
+    $selectedInstanceStyleSources,
+    $selectedStyleSources,
+    $selectedInstanceSelector,
+    $selectedStyleState,
+  ],
+  (
+    styleSources,
+    selectedStyleSources,
+    selectedInstanceSelector,
+    selectedStyleState
+  ) => {
+    if (selectedInstanceSelector === undefined) {
+      return;
     }
+    const [instanceId] = selectedInstanceSelector;
+    const styleSourceId = selectedStyleSources.get(instanceId);
+    // always fallback to local (the last one) style source
     const lastStyleSource = styleSources.at(-1);
-    if (lastStyleSource !== undefined) {
-      return { styleSourceId: lastStyleSource.id };
+    const matchedStyleSource = styleSources.find(
+      (styleSource) => styleSource.id === styleSourceId
+    );
+    const styleSource = matchedStyleSource ?? lastStyleSource;
+    if (styleSource) {
+      return { styleSourceId: styleSource.id, state: selectedStyleState };
     }
-    return;
   }
 );
 
@@ -248,12 +269,20 @@ export const $selectedOrLastStyleSourceSelector = computed(
  * to the last style source of selected instance
  */
 export const $selectedStyleSource = computed(
-  [$selectedInstanceStyleSources, $selectedStyleSourceSelector],
-  (styleSources, selectedStyleSourceSelector) => {
+  [
+    $selectedInstanceStyleSources,
+    $selectedStyleSources,
+    $selectedInstanceSelector,
+  ],
+  (styleSources, selectedStyleSources, selectedInstanceSelector) => {
+    if (selectedInstanceSelector === undefined) {
+      return;
+    }
+    const [instanceId] = selectedInstanceSelector;
+    const selectedStyleSourceId = selectedStyleSources.get(instanceId);
     return (
-      styleSources.find(
-        (item) => item.id === selectedStyleSourceSelector?.styleSourceId
-      ) ?? styleSources.at(-1)
+      styleSources.find((item) => item.id === selectedStyleSourceId) ??
+      styleSources.at(-1)
     );
   }
 );

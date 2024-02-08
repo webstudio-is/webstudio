@@ -7,7 +7,11 @@ import type { Style } from "@webstudio-is/css-engine";
 const normalizeWithKeyof = { ...normalize };
 
 type ExportedTags = keyof typeof normalizeWithKeyof;
+// Custom tags are needed because we need to be able to address
+// elements like input `type="checkbox"` and HTML has historically terrible naming.
+type CustomTags = "checkbox" | "radio";
+type ExpectedTags = HtmlTags | CustomTags;
 
-type ValidTags = ExportedTags extends HtmlTags ? ExportedTags : false;
+type ValidTags = ExportedTags extends ExpectedTags ? ExportedTags : false;
 
 normalizeWithKeyof satisfies Record<ValidTags, Style>;

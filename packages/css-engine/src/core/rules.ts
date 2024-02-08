@@ -180,9 +180,12 @@ export class FontFaceRule {
     const decls = [];
     const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
       this.options;
-    decls.push(
-      `font-family: ${/\s/.test(fontFamily) ? `"${fontFamily}"` : fontFamily}`
+    const value = toValue(
+      { type: "fontFamily", value: [fontFamily] },
+      // Avoids adding a fallback automatically which needs to happen for font family in general but not for font face.
+      (value) => value
     );
+    decls.push(`font-family: ${value}`);
     decls.push(`font-style: ${fontStyle}`);
     decls.push(`font-weight: ${fontWeight}`);
     decls.push(`font-display: ${fontDisplay}`);

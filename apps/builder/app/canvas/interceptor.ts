@@ -44,6 +44,11 @@ export const subscribeInterceptedEvents = () => {
           handleLinkClick(a);
         }
       }
+      // prevent invoking submit with buttons in canvas mode
+      // because form with prevented submit still invokes validation
+      if (event.target.closest("button") && $isPreviewMode.get() === false) {
+        event.preventDefault();
+      }
     }
   };
   const handleSubmit = (event: SubmitEvent) => {

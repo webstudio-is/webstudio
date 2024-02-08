@@ -451,19 +451,19 @@ describe("Style Sheet Regular", () => {
     `);
   });
 
-  test("font family rule", () => {
+  test("font family rule with space in the name", () => {
     sheet.addFontFaceRule({
-      fontFamily: "Roboto",
+      fontFamily: "Some Font",
       fontStyle: "normal",
       fontWeight: 400,
       fontDisplay: "swap",
       src: "url(/src)",
     });
     expect(sheet.cssText).toMatchInlineSnapshot(`
-      "@font-face {
-        font-family: Roboto; font-style: normal; font-weight: 400; font-display: swap; src: url(/src);
-      }"
-    `);
+"@font-face {
+  font-family: "Some Font"; font-style: normal; font-weight: 400; font-display: swap; src: url(/src);
+}"
+`);
   });
 
   test("clear", () => {

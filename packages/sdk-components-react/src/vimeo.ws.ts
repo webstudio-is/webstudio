@@ -24,6 +24,7 @@ export const meta: WsComponentMeta = {
   icon: VimeoIcon,
   states: defaultStates,
   presetStyle,
+  invalidAncestors: ["Button", "Heading", "Link"],
   template: [
     {
       type: "instance",
@@ -314,6 +315,7 @@ export const meta: WsComponentMeta = {
 
 const initialProps: Array<keyof ComponentProps<typeof Vimeo>> = [
   "id",
+  "className",
   "url",
   "quality",
   "showPreview",

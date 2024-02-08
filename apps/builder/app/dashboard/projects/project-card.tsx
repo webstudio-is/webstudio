@@ -20,9 +20,8 @@ import { builderPath, getPublishedUrl } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
-  useDuplicate,
+  useCloneProject,
   ShareProjectDialog,
-  DuplicateProjectDialog,
 } from "./project-dialogs";
 import {
   ThumbnailLinkWithAbbr,
@@ -34,6 +33,7 @@ import { useNavigation } from "@remix-run/react";
 import { Spinner } from "../shared/spinner";
 import type { DashboardProject } from "@webstudio-is/dashboard";
 import { Card, CardContent, CardFooter } from "../shared/card";
+import { CloneProjectDialog } from "~/shared/clone-project";
 
 const titleStyle = css({
   userSelect: "auto",
@@ -162,24 +162,26 @@ const formatDate = (date: string) => {
   });
 };
 
-type ProjectCardProps = DashboardProject & { hasProPlan: boolean };
+type ProjectCardProps = { project: DashboardProject; hasProPlan: boolean };
 
 export const ProjectCard = ({
-  id,
-  title,
-  domain,
-  isPublished,
+  project: {
+    id,
+    title,
+    domain,
+    isPublished,
+    createdAt,
+    latestBuild,
+    previewImageAsset,
+  },
   hasProPlan,
-  createdAt,
-  latestBuild,
-  previewImageAsset,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
-  const handleDuplicate = useDuplicate(id);
+  const handleCloneProject = useCloneProject(id);
   const { state, location } = useNavigation();
   const linkPath = builderPath({ projectId: id });
   // Transition to the project has started, we may need to show a spinner
@@ -248,7 +250,7 @@ export const ProjectCard = ({
           onShare={() => {
             setIsShareDialogOpen(true);
           }}
-          onDuplicate={handleDuplicate}
+          onDuplicate={handleCloneProject}
         />
       </CardFooter>
       <RenameProjectDialog
@@ -275,15 +277,11 @@ export const ProjectCard = ({
 };
 
 export const ProjectTemplateCard = ({
-  id,
-  title,
-  domain,
-  previewImageAsset,
-  isPublished,
+  project,
 }: Omit<ProjectCardProps, "hasProPlan">) => {
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
-
+  const { title, domain, previewImageAsset, isPublished } = project;
   return (
     <Card tabIndex={0} onKeyDown={handleKeyDown}>
       <CardContent
@@ -319,11 +317,10 @@ export const ProjectTemplateCard = ({
           )}
         </Flex>
       </CardFooter>
-      <DuplicateProjectDialog
+      <CloneProjectDialog
         isOpen={isDuplicateDialogOpen}
         onOpenChange={setIsDuplicateDialogOpen}
-        title={title}
-        projectId={id}
+        project={project}
       />
     </Card>
   );

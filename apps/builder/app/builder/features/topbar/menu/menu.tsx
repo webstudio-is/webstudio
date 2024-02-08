@@ -20,6 +20,7 @@ import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
   $userPlanFeatures,
+  $isCloneDialogOpen,
 } from "~/builder/shared/nano-states";
 import {
   getThemeSetting,
@@ -100,15 +101,15 @@ export const Menu = () => {
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
-  const isShareDisabled = authPermit !== "own";
+  const isShareEnabled = authPermit === "own";
 
   const disabledPublishTooltipContent = isPublishEnabled
     ? undefined
     : "Only owner or admin can publish projects";
 
-  const disabledShareTooltipContent = isShareDisabled
-    ? "Only owner can share projects"
-    : undefined;
+  const disabledShareTooltipContent = isShareEnabled
+    ? undefined
+    : "Only owner can share projects";
 
   return (
     <DropdownMenu>
@@ -196,7 +197,7 @@ export const Menu = () => {
               onSelect={() => {
                 setIsShareOpen(true);
               }}
-              disabled={isShareDisabled}
+              disabled={isShareEnabled === false}
             >
               Share
             </DropdownMenuItem>
@@ -212,6 +213,13 @@ export const Menu = () => {
               Publish
             </DropdownMenuItem>
           </Tooltip>
+          <DropdownMenuItem
+            onSelect={() => {
+              $isCloneDialogOpen.set(true);
+            }}
+          >
+            Clone
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {
