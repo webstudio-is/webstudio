@@ -21,6 +21,31 @@ import {
 import { ViewMode } from "./view-mode";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 
+const PagesButton = () => {
+  const page = useStore($selectedPage);
+  if (page === undefined) {
+    return;
+  }
+
+  return (
+    <ToolbarButton
+      css={{
+        px: theme.spacing[9],
+        maxWidth: theme.spacing[24],
+      }}
+      aria-label="Toggle Pages"
+      onClick={() => {
+        $activeSidebarPanel.set(
+          $activeSidebarPanel.get() === "pages" ? "none" : "pages"
+        );
+      }}
+      tabIndex={0}
+    >
+      {page.name}
+    </ToolbarButton>
+  );
+};
+
 const topbarContainerStyle = css({
   display: "flex",
   background: theme.colors.backgroundTopbar,
@@ -37,29 +62,13 @@ type TopbarProps = {
 };
 
 export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
-  const page = useStore($selectedPage);
-
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
         <Menu />
       </Flex>
       <Flex align="center">
-        <ToolbarButton
-          css={{
-            px: theme.spacing[9],
-            maxWidth: theme.spacing[24],
-          }}
-          aria-label="Toggle Pages"
-          onClick={() => {
-            $activeSidebarPanel.set(
-              $activeSidebarPanel.get() === "pages" ? "none" : "pages"
-            );
-          }}
-          tabIndex={0}
-        >
-          {page?.name}
-        </ToolbarButton>
+        <PagesButton />
       </Flex>
       <Flex css={{ minWidth: theme.spacing[23] }}>
         <BreakpointsPopover />
