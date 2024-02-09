@@ -33,6 +33,7 @@ import {
   type StyleInfo,
   getStyleSource,
   type StyleValueInfo,
+  getPriorityStyleSource,
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { getInstanceLabel } from "~/shared/instance-utils";
@@ -371,8 +372,17 @@ const PropertyNameInternal = ({
   onReset,
   disabled,
 }: PropertyNameInternalProps) => {
-  // When we have multiple properties, they must be originating from the same source, so we can just use one.
   const property = properties[0];
+
+  // When there are multiple properties. We need to make a consolidated choice.
+  // As we can't show multiple badges in the property name.
+  // Eg: flex-grow, flex-shrink, flex-basis
+  // All three managed by single section. If flex-basis is set, but if we pick only flex-grow from the three.
+  // The section does't show the badge. So, we need to pick the one which is being used.
+
+  const styleSourcesList = properties.map((property) =>
+    getStyleSource(style[property])
+  );
 
   return (
     <Flex align="center">
@@ -390,7 +400,9 @@ const PropertyNameInternal = ({
               color={
                 onReset === undefined
                   ? "default"
-                  : getStyleSource(style[property])
+                  : styleSourcesList.length === 0
+                  ? "default"
+                  : getPriorityStyleSource(styleSourcesList)
               }
               truncate
               disabled={disabled}

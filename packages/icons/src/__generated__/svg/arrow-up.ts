@@ -1,0 +1,1 @@
+export const ArrowUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path fill-rule="evenodd" d="M12.566 7.566a.8.8 0 0 1-1.132 0L8.8 4.93V13a.8.8 0 0 1-1.6 0V4.931L4.566 7.566a.8.8 0 1 1-1.132-1.132l4-4a.8.8 0 0 1 1.132 0l4 4a.8.8 0 0 1 0 1.132Z" clip-rule="evenodd"/></svg>`;

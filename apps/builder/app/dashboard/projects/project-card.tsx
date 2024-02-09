@@ -7,11 +7,9 @@ import {
   IconButton,
   css,
   Flex,
-  Grid,
   Text,
   truncate,
   theme,
-  Box,
   Tooltip,
   rawTheme,
   Link,
@@ -22,43 +20,20 @@ import { builderPath, getPublishedUrl } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
-  useDuplicate,
+  useCloneProject,
   ShareProjectDialog,
-  DuplicateProjectDialog,
 } from "./project-dialogs";
-import { Thumbnail, ThumbnailLink } from "./thumbnail-link";
+import {
+  ThumbnailLinkWithAbbr,
+  ThumbnailLinkWithImage,
+  ThumbnailWithAbbr,
+  ThumbnailWithImage,
+} from "./thumbnail";
 import { useNavigation } from "@remix-run/react";
-import { Spinner } from "../spinner";
+import { Spinner } from "../shared/spinner";
 import type { DashboardProject } from "@webstudio-is/dashboard";
-
-const containerStyle = css({
-  overflow: "hidden",
-  aspectRatio: "8 / 7",
-  borderWidth: 1,
-  borderStyle: "solid",
-  borderColor: theme.colors.borderMain,
-  borderRadius: theme.borderRadius[4],
-  background: theme.colors.brandBackgroundProjectCardBack,
-  "&:hover, &:focus-within": {
-    boxShadow: theme.shadows.brandElevationBig,
-  },
-  "&:focus-visible": {
-    outline: `2px solid ${theme.colors.borderFocus}`,
-  },
-});
-
-const thumbnailStyle = css({
-  position: "relative",
-  overflow: "hidden",
-  minWidth: "100%",
-});
-
-const footerStyle = css({
-  background: theme.colors.brandBackgroundProjectCardTextArea,
-  height: theme.spacing[17],
-  py: theme.spacing[5],
-  px: theme.spacing[7],
-});
+import { Card, CardContent, CardFooter } from "../shared/card";
+import { CloneProjectDialog } from "~/shared/clone-project";
 
 const titleStyle = css({
   userSelect: "auto",
@@ -187,96 +162,97 @@ const formatDate = (date: string) => {
   });
 };
 
-type ProjectCardProps = DashboardProject & { hasProPlan: boolean };
+type ProjectCardProps = { project: DashboardProject; hasProPlan: boolean };
 
 export const ProjectCard = ({
-  id,
-  title,
-  domain,
-  isPublished,
+  project: {
+    id,
+    title,
+    domain,
+    isPublished,
+    createdAt,
+    latestBuild,
+    previewImageAsset,
+  },
   hasProPlan,
-  createdAt,
-  latestBuild,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const { thumbnailRef, handleKeyDown } = useProjectCard();
-  const handleDuplicate = useDuplicate(id);
+  const handleCloneProject = useCloneProject(id);
   const { state, location } = useNavigation();
   const linkPath = builderPath({ projectId: id });
   // Transition to the project has started, we may need to show a spinner
   const isTransitioning = state !== "idle" && linkPath === location.pathname;
   return (
-    <Box as="article" hidden={isHidden}>
-      <Flex
-        direction="column"
-        align="center"
-        shrink={false}
-        className={containerStyle()}
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
+    <Card hidden={isHidden} tabIndex={0} onKeyDown={handleKeyDown}>
+      <CardContent
+        css={{ background: theme.colors.brandBackgroundProjectCardBack }}
       >
-        <Grid className={thumbnailStyle()}>
-          <ThumbnailLink title={title} to={linkPath} ref={thumbnailRef} />
-          {isTransitioning && <Spinner delay={0} />}
-        </Grid>
-
-        <Flex
-          justify="between"
-          shrink={false}
-          alignSelf="stretch"
-          gap="1"
-          className={footerStyle()}
-        >
-          <Flex direction="column" justify="around">
-            <Flex gap="1">
-              <Text variant="titles" className={titleStyle()}>
-                {title}
-              </Text>
-              <Tooltip
-                variant="wrapped"
-                content={
-                  <Text variant="small">
-                    Created on {formatDate(createdAt)}
-                    {latestBuild?.publishStatus === "PUBLISHED" && (
-                      <>
-                        <br />
-                        Published on {formatDate(latestBuild.updatedAt)}
-                      </>
-                    )}
-                  </Text>
-                }
-              >
-                <InfoCircleIcon
-                  color={rawTheme.colors.foregroundSubtle}
-                  tabIndex={-1}
-                  className={infoIconStyle()}
-                />
-              </Tooltip>
-            </Flex>
-            {isPublished ? (
-              <PublishedLink domain={domain} tabIndex={-1} />
-            ) : (
-              <Text color="subtle">Not Published</Text>
-            )}
-          </Flex>
-          <Menu
-            tabIndex={-1}
-            onDelete={() => {
-              setIsDeleteDialogOpen(true);
-            }}
-            onRename={() => {
-              setIsRenameDialogOpen(true);
-            }}
-            onShare={() => {
-              setIsShareDialogOpen(true);
-            }}
-            onDuplicate={handleDuplicate}
+        {previewImageAsset ? (
+          <ThumbnailLinkWithImage
+            to={linkPath}
+            name={previewImageAsset.name}
+            ref={thumbnailRef}
           />
+        ) : (
+          <ThumbnailLinkWithAbbr
+            title={title}
+            to={linkPath}
+            ref={thumbnailRef}
+          />
+        )}
+        {isTransitioning && <Spinner delay={0} />}
+      </CardContent>
+      <CardFooter>
+        <Flex direction="column" justify="around" grow>
+          <Flex gap="1">
+            <Text variant="titles" className={titleStyle()}>
+              {title}
+            </Text>
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Text variant="small">
+                  Created on {formatDate(createdAt)}
+                  {latestBuild?.publishStatus === "PUBLISHED" && (
+                    <>
+                      <br />
+                      Published on {formatDate(latestBuild.updatedAt)}
+                    </>
+                  )}
+                </Text>
+              }
+            >
+              <InfoCircleIcon
+                color={rawTheme.colors.foregroundSubtle}
+                tabIndex={-1}
+                className={infoIconStyle()}
+              />
+            </Tooltip>
+          </Flex>
+          {isPublished ? (
+            <PublishedLink domain={domain} tabIndex={-1} />
+          ) : (
+            <Text color="subtle">Not Published</Text>
+          )}
         </Flex>
-      </Flex>
+        <Menu
+          tabIndex={-1}
+          onDelete={() => {
+            setIsDeleteDialogOpen(true);
+          }}
+          onRename={() => {
+            setIsRenameDialogOpen(true);
+          }}
+          onShare={() => {
+            setIsShareDialogOpen(true);
+          }}
+          onDuplicate={handleCloneProject}
+        />
+      </CardFooter>
       <RenameProjectDialog
         isOpen={isRenameDialogOpen}
         onOpenChange={setIsRenameDialogOpen}
@@ -296,64 +272,56 @@ export const ProjectCard = ({
         projectId={id}
         hasProPlan={hasProPlan}
       />
-    </Box>
+    </Card>
   );
 };
 
 export const ProjectTemplateCard = ({
-  id,
-  title,
-  domain,
-  isPublished,
+  project,
 }: Omit<ProjectCardProps, "hasProPlan">) => {
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
-
+  const { title, domain, previewImageAsset, isPublished } = project;
   return (
-    <Box as="article">
-      <Flex
-        direction="column"
-        align="center"
-        shrink={false}
-        className={containerStyle()}
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
+    <Card tabIndex={0} onKeyDown={handleKeyDown}>
+      <CardContent
+        css={{ background: theme.colors.brandBackgroundProjectCardBack }}
       >
-        <Grid className={thumbnailStyle()}>
-          <Thumbnail
+        {previewImageAsset ? (
+          <ThumbnailWithImage
+            name={previewImageAsset.name}
+            ref={thumbnailRef}
+            onClick={() => {
+              setIsDuplicateDialogOpen(true);
+            }}
+          />
+        ) : (
+          <ThumbnailWithAbbr
             title={title}
             ref={thumbnailRef}
             onClick={() => {
               setIsDuplicateDialogOpen(true);
             }}
           />
-        </Grid>
-
-        <Flex
-          justify="between"
-          shrink={false}
-          alignSelf="stretch"
-          gap="1"
-          className={footerStyle()}
-        >
-          <Flex direction="column" justify="around">
-            <Text variant="titles" truncate css={{ userSelect: "auto" }}>
-              {title}
-            </Text>
-            {isPublished ? (
-              <PublishedLink domain={domain} tabIndex={-1} />
-            ) : (
-              <Text color="subtle">Not Published</Text>
-            )}
-          </Flex>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Flex direction="column" justify="around">
+          <Text variant="titles" truncate css={{ userSelect: "auto" }}>
+            {title}
+          </Text>
+          {isPublished ? (
+            <PublishedLink domain={domain} tabIndex={-1} />
+          ) : (
+            <Text color="subtle">Not Published</Text>
+          )}
         </Flex>
-      </Flex>
-      <DuplicateProjectDialog
+      </CardFooter>
+      <CloneProjectDialog
         isOpen={isDuplicateDialogOpen}
         onOpenChange={setIsDuplicateDialogOpen}
-        title={title}
-        projectId={id}
+        project={project}
       />
-    </Box>
+    </Card>
   );
 };

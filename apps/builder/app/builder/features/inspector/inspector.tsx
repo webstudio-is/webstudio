@@ -14,6 +14,7 @@ import {
   EnhancedTooltipProvider,
   Flex,
   ScrollArea,
+  Separator,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
@@ -43,6 +44,7 @@ const InstanceInfo = ({ instance }: { instance: Instance }) => {
       align="center"
       css={{
         px: theme.spacing[9],
+        my: theme.spacing[3],
         height: theme.spacing[13],
         color: theme.colors.foregroundSubtle,
       }}
@@ -120,6 +122,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
                 )}
                 <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
               </PanelTabsList>
+              <Separator />
               <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
                 <InstanceInfo instance={selectedInstance} />
                 <StylePanel selectedInstance={selectedInstance} />

@@ -1,4 +1,5 @@
 import { nanoid } from "nanoid";
+import { useStore } from "@nanostores/react";
 import {
   type ReactNode,
   type Ref,
@@ -12,7 +13,10 @@ import {
   useContext,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
+import { RefreshIcon } from "@webstudio-is/icons";
 import {
+  Box,
+  Button,
   Flex,
   FloatingPanelPopover,
   FloatingPanelPopoverContent,
@@ -21,9 +25,12 @@ import {
   InputErrorsTooltip,
   InputField,
   Label,
+  ProBadge,
   ScrollArea,
   Select,
+  SelectItem,
   Switch,
+  Tooltip,
   theme,
 } from "@webstudio-is/design-system";
 import { validateExpression } from "@webstudio-is/react-sdk";
@@ -35,7 +42,9 @@ import {
 import {
   $dataSources,
   $resources,
+  $areResourcesLoading,
   $selectedInstanceSelector,
+  invalidateResource,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { humanizeString } from "~/shared/string-utils";
@@ -45,6 +54,7 @@ import {
   composeFields,
   type ComposedFields,
 } from "~/shared/form-utils";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
 import { ResourceForm } from "./resource-panel";
@@ -324,6 +334,8 @@ const VariablePanel = forwardRef<
     variable?: DataSource;
   }
 >(({ variable }, ref) => {
+  const { allowResourceVariables } = useStore($userPlanFeatures);
+
   const nameField = useField({
     initialValue: variable?.name ?? "",
     validate: (value) =>
@@ -360,17 +372,40 @@ const VariablePanel = forwardRef<
     }
     return "string";
   });
+  const typeOptions: VariableType[] = [
+    "string",
+    "number",
+    "boolean",
+    "json",
+    "resource",
+  ];
+  const getTypeLabel = (value: VariableType) =>
+    value === "json" ? "JSON" : humanizeString(value);
   const typeFieldElement = (
     <Flex direction="column" css={{ gap: theme.spacing[3] }}>
       <Label>Type</Label>
       <Select<VariableType>
-        options={["string", "number", "boolean", "json", "resource"]}
-        getLabel={(value: VariableType) =>
-          value === "json" ? "JSON" : humanizeString(value)
-        }
+        options={typeOptions}
+        getLabel={getTypeLabel}
         value={type}
         onChange={setType}
-      />
+      >
+        {typeOptions.map((option) => (
+          <SelectItem
+            key={option}
+            value={option}
+            textValue={getTypeLabel(option)}
+            disabled={option === "resource" && allowResourceVariables === false}
+          >
+            {getTypeLabel(option)}
+            {option === "resource" && allowResourceVariables === false && (
+              <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
+                <ProBadge>Pro</ProBadge>
+              </Box>
+            )}
+          </SelectItem>
+        ))}
+      </Select>
     </Flex>
   );
 
@@ -440,6 +475,7 @@ export const VariablePopoverTrigger = forwardRef<
   HTMLButtonElement,
   { variable?: DataSource; children: ReactNode }
 >(({ variable, children }, ref) => {
+  const areResourcesLoading = useStore($areResourcesLoading);
   const [isOpen, setOpen] = useState(false);
   const { containerRef } = useContext(VariablePopoverContext);
   const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
@@ -518,7 +554,23 @@ export const VariablePopoverTrigger = forwardRef<
         {variable === undefined ? (
           <FloatingPanelPopoverTitle>New Variable</FloatingPanelPopoverTitle>
         ) : (
-          <FloatingPanelPopoverTitle>Edit Variable</FloatingPanelPopoverTitle>
+          <FloatingPanelPopoverTitle
+            actions={
+              variable.type === "resource" && (
+                <Tooltip content="Refresh resource data" side="bottom">
+                  <Button
+                    aria-label="Refresh resource data"
+                    prefix={<RefreshIcon />}
+                    color="ghost"
+                    disabled={areResourcesLoading}
+                    onClick={() => invalidateResource(variable.resourceId)}
+                  />
+                </Tooltip>
+              )
+            }
+          >
+            Edit Variable
+          </FloatingPanelPopoverTitle>
         )}
       </FloatingPanelPopoverContent>
     </FloatingPanelPopover>

@@ -17,6 +17,7 @@ import {
 import {
   ChevronRightIcon,
   FolderIcon,
+  HomeIcon,
   MenuIcon,
   NewFolderIcon,
   NewPageIcon,
@@ -29,6 +30,7 @@ import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import {
+  getAllChildrenAndSelf,
   reparentOrphansMutable,
   toTreeData,
   type TreeData,
@@ -41,6 +43,8 @@ import {
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
+import { ROOT_FOLDER_ID, type Folder } from "@webstudio-is/sdk";
+import { atom } from "nanostores";
 
 type TabContentProps = {
   onSetActiveTab: (tabName: TabName) => void;
@@ -64,15 +68,24 @@ const ItemSuffix = ({
   itemId,
   editingItemId,
   onEdit,
+  type,
 }: {
   isParentSelected: boolean;
   itemId: string;
   editingItemId: string | undefined;
   onEdit: (itemId: string | undefined) => void;
+  type: "folder" | "page";
 }) => {
   const isEditing = editingItemId === itemId;
 
-  const menuLabel = isEditing ? "Close page settings" : "Open page settings";
+  const menuLabel =
+    type === "page"
+      ? isEditing
+        ? "Close page settings"
+        : "Open page settings"
+      : isEditing
+      ? "Close folder settings"
+      : "Open folder settings";
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -119,6 +132,13 @@ const useReparentOrphans = () => {
   });
 };
 
+const isFolder = (id: string, folders: Array<Folder>) => {
+  return id === newFolderId || folders.some((folder) => folder.id === id);
+};
+
+// We want to keep the state when panel is closed and opened again.
+const $expandedItems = atom<Set<string>>(new Set());
+
 const PagesPanel = ({
   onClose,
   onCreateNewFolder,
@@ -138,21 +158,22 @@ const PagesPanel = ({
 }) => {
   const pages = useStore($pages);
   const treeData = useMemo(() => pages && toTreeData(pages), [pages]);
+  const expandedItems = useStore($expandedItems);
   useReparentOrphans();
-
   const renderItem = useCallback(
     (props: TreeItemRenderProps<TreeData>) => {
-      if (props.itemData.id === "root") {
+      const isEditing = editingItemId === props.itemData.id;
+
+      if (props.itemData.id === ROOT_FOLDER_ID) {
         return null;
       }
-
-      const isEditing = editingItemId === props.itemData.id;
 
       return (
         <TreeItemBody
           {...props}
           suffix={
             <ItemSuffix
+              type={props.itemData.type}
               isParentSelected={props.isSelected ?? false}
               itemId={props.itemData.id}
               editingItemId={editingItemId}
@@ -168,19 +189,43 @@ const PagesPanel = ({
             </TreeItemLabel>
           )}
           {props.itemData.type === "page" && (
-            <TreeItemLabel prefix={<PageIcon />}>
+            <TreeItemLabel
+              prefix={
+                props.itemData.id === pages?.homePage.id ? (
+                  <HomeIcon />
+                ) : (
+                  <PageIcon />
+                )
+              }
+            >
               {props.itemData.data.name}
             </TreeItemLabel>
           )}
         </TreeItemBody>
       );
     },
-    [editingItemId, onEdit]
+    [editingItemId, onEdit, pages]
   );
 
   const selectTreeNode = useCallback(
-    ([pageId]: ItemSelector) => onSelect(pageId),
-    [onSelect]
+    ([itemId]: ItemSelector, all?: boolean) => {
+      const folders = pages?.folders ?? [];
+      if (isFolder(itemId, folders)) {
+        const items = all
+          ? getAllChildrenAndSelf(itemId, folders, "folder")
+          : [itemId];
+        const nextExpandedItems = new Set(expandedItems);
+        items.forEach((itemId) => {
+          nextExpandedItems.has(itemId)
+            ? nextExpandedItems.delete(itemId)
+            : nextExpandedItems.add(itemId);
+        });
+        $expandedItems.set(nextExpandedItems);
+        return;
+      }
+      onSelect(itemId);
+    },
+    [onSelect, pages?.folders, expandedItems]
   );
 
   if (treeData === undefined || pages === undefined) {
@@ -232,21 +277,37 @@ const PagesPanel = ({
           itemData={treeData.root}
           renderItem={renderItem}
           getItemChildren={([nodeId]) => {
-            // It's the root.
-            if (
-              nodeId === treeData.root.id &&
-              treeData.root.type === "folder"
-            ) {
+            if (nodeId === ROOT_FOLDER_ID) {
               return treeData.root.children;
             }
             const item = treeData.index.get(nodeId);
             if (item?.type === "folder") {
               return item.children;
             }
+            // Page can't have children.
             return [];
           }}
-          isItemHidden={([itemId]) => itemId === treeData.root.id}
-          getIsExpanded={() => true}
+          isItemHidden={() => false}
+          getIsExpanded={([itemId]) => {
+            return expandedItems.has(itemId);
+          }}
+          setIsExpanded={([itemId], isExpanded, all) => {
+            const nextExpandedItems = new Set(expandedItems);
+            if (itemId === undefined) {
+              return;
+            }
+            const items = all
+              ? getAllChildrenAndSelf(itemId, pages.folders, "folder")
+              : [itemId];
+            items.forEach((itemId) => {
+              if (isExpanded) {
+                nextExpandedItems.add(itemId);
+                return;
+              }
+              nextExpandedItems.delete(itemId);
+            });
+            $expandedItems.set(nextExpandedItems);
+          }}
         />
       </Box>
     </Flex>
@@ -331,12 +392,9 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [editingItemId, setEditingItemId] = useState<string>();
   const pages = useStore($pages);
 
-  if (currentPageId === undefined) {
+  if (currentPageId === undefined || pages === undefined) {
     return null;
   }
-  const isEditingFolder =
-    editingItemId === newFolderId ||
-    pages?.folders.some((folder) => folder.id === editingItemId);
 
   return (
     <>
@@ -350,8 +408,11 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         onCreateNewPage={() =>
           setEditingItemId(editingItemId === newPageId ? undefined : newPageId)
         }
-        onSelect={(pageId) => {
-          switchPage(pageId);
+        onSelect={(itemId) => {
+          if (isFolder(itemId, pages.folders)) {
+            return;
+          }
+          switchPage(itemId);
           onSetActiveTab("none");
         }}
         selectedPageId={currentPageId}
@@ -361,7 +422,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
       {editingItemId && (
         <SettingsPanel isOpen>
-          {isEditingFolder ? (
+          {isFolder(editingItemId, pages.folders) ? (
             <FolderEditor
               editingFolderId={editingItemId}
               setEditingFolderId={setEditingItemId}

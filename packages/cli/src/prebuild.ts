@@ -18,7 +18,7 @@ import merge from "deepmerge";
 import {
   generateCss,
   generateUtilsExport,
-  generatePageComponent,
+  generateWebstudioComponent,
   getIndexesWithinAncestors,
   namespaceMeta,
   type Params,
@@ -28,6 +28,8 @@ import {
   generateRemixParams,
   generateResourcesLoader,
   collectionComponent,
+  generatePageMeta,
+  executeExpression,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -59,7 +61,7 @@ import {
   isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "~/constants.mjs";
-import type { PageData } from "../templates/route-template";
+import type { PageData } from "../templates/defaults/__templates__/route-template";
 
 const limit = pLimit(10);
 
@@ -146,6 +148,9 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
   await writeFile(destinationPath, content, "utf8");
 };
 
+/**
+ * Check if template is internal cli template or external path
+ */
 const isCliTemplate = async (template: string) => {
   const currentPath = fileURLToPath(new URL(import.meta.url));
 
@@ -163,23 +168,32 @@ const isCliTemplate = async (template: string) => {
   return false;
 };
 
-const copyTemplates = async (template: string = "defaults") => {
+/**
+ * template can be internal cli template or external path
+ */
+const getTemplatePath = async (template: string) => {
   const currentPath = fileURLToPath(new URL(import.meta.url));
 
-  const templatesPath = (await isCliTemplate(template))
+  const templatePath = (await isCliTemplate(template))
     ? normalize(join(dirname(currentPath), "..", "templates", template))
     : template;
 
-  await cp(templatesPath, cwd(), {
+  return templatePath;
+};
+
+const copyTemplates = async (template: string = "defaults") => {
+  const templatePath = await getTemplatePath(template);
+
+  await cp(templatePath, cwd(), {
     recursive: true,
     filter: (source) => {
       return basename(source) !== "package.json";
     },
   });
 
-  if ((await isFileExists(join(templatesPath, "package.json"))) === true) {
+  if ((await isFileExists(join(templatePath, "package.json"))) === true) {
     await mergeJsonFiles(
-      join(templatesPath, "package.json"),
+      join(templatePath, "package.json"),
       join(cwd(), "package.json")
     );
   }
@@ -297,7 +311,7 @@ export const prebuild = async (options: {
       props: siteData.build.props.map(([_id, prop]) => prop),
       assetBaseUrl,
       assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
-      pages: new Map(siteData.pages.map((page) => [page.id, page])),
+      pages: siteData.build.pages,
     });
 
     const props: [Prop["id"], Prop][] = [];
@@ -410,7 +424,7 @@ export const prebuild = async (options: {
     },
     {
       assetBaseUrl,
-      atomic: siteData.build.pages.settings?.atomicStyles ?? true,
+      atomic: siteData.build.pages.compiler?.atomicStyles ?? true,
     }
   );
 
@@ -418,23 +432,22 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating routes and pages";
 
-  const routeFileTemplate = await readFile(
-    normalize(
-      join(
-        dirname(fileURLToPath(new URL(import.meta.url))),
-        "..",
-        "templates",
-        "route-template.tsx"
-      )
-    ),
-    "utf8"
+  const routeTemplatePath = normalize(
+    join(cwd(), "__templates__", "route-template.tsx")
   );
+
+  const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
+
+  await rm(dirname(routeTemplatePath), { recursive: true });
 
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([
       // manually maintained list of occupied identifiers
       "useState",
       "Fragment",
+      "useResource",
+      "PageMeta",
+      "createPageMeta",
       "PageData",
       "Asset",
       "fontAssets",
@@ -490,7 +503,6 @@ export const prebuild = async (options: {
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       project: siteData.build.pages.meta,
-      page: pageData.page,
     };
 
     const rootInstanceId = pageData.page.rootInstanceId;
@@ -502,9 +514,29 @@ export const prebuild = async (options: {
       pages: siteData.build.pages,
       props,
     });
-    const pageComponent = generatePageComponent({
+    // generate new Page Params variable if does not exist
+    // to allow always passing it from route template
+    const pathVariableId = pageData.page.pathVariableId ?? "pathVariableId";
+    if (pageData.page.pathVariableId === undefined) {
+      dataSources.set(pathVariableId, {
+        id: pathVariableId,
+        name: "Page Params",
+        type: "parameter",
+      });
+    }
+    const pageComponent = generateWebstudioComponent({
       scope,
-      page: pageData.page,
+      name: "Page",
+      rootInstanceId: pageData.page.rootInstanceId,
+      parameters: [
+        {
+          id: `params`,
+          instanceId: "",
+          name: "params",
+          type: "parameter",
+          value: pathVariableId,
+        },
+      ],
       instances,
       props,
       dataSources,
@@ -519,9 +551,11 @@ export const prebuild = async (options: {
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import { Fragment, useState } from "react";
-import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}
+import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
 export const pageData: PageData = ${JSON.stringify(renderedPageData)};
@@ -529,6 +563,8 @@ export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
     )};
 export const projectId = "${siteData.build.projectId}";
+
+${generatePageMeta({ scope, page: pageData.page, dataSources })}
 
 ${pageComponent}
 
@@ -556,10 +592,13 @@ ${utilsExport}
     const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = routeFileTemplate
-      .replace('../__generated__/index"', `../__generated__/${remixRoute}"`)
       .replace(
-        '../__generated__/index.server"',
-        `../__generated__/${remixRoute}.server"`
+        /".*\/__generated__\/_index"/,
+        `"../__generated__/${remixRoute}"`
+      )
+      .replace(
+        /".*\/__generated__\/_index.server"/,
+        `"../__generated__/${remixRoute}.server"`
       );
 
     await ensureFileInPath(join(routesDir, fileName), routeFileContent);
@@ -582,7 +621,12 @@ ${utilsExport}
       export const sitemap = ${JSON.stringify(
         {
           pages: siteData.pages
-            .filter((page) => page.meta.excludePageFromSearch !== true)
+            // ignore pages with excludePageFromSearch bound to variables
+            // because there is no data from cms available at build time
+            .filter(
+              (page) =>
+                executeExpression(page.meta.excludePageFromSearch) !== true
+            )
             .map((page) => ({
               path: page.path,
               lastModified: siteData.build.updatedAt,

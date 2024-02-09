@@ -4,33 +4,29 @@ import type { SyncItem } from "immerhin";
 import { prisma } from "@webstudio-is/prisma-client";
 import {
   Breakpoints,
+  Breakpoint,
   Instances,
+  Instance,
   Pages,
   Props,
+  Prop,
   DataSources,
+  DataSource,
   StyleSourceSelections,
   StyleSources,
+  StyleSource,
   Styles,
   Resources,
+  Resource,
 } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import {
   parsePages,
-  parseInstances,
   parseStyleSourceSelections,
-  parseStyleSources,
   parseStyles,
-  parseProps,
-  parseBreakpoints,
-  parseDataSources,
   serializePages,
-  serializeBreakpoints,
-  serializeInstances,
-  serializeProps,
-  serializeStyleSources,
   serializeStyleSourceSelections,
   serializeStyles,
-  serializeDataSources,
   parseData,
   serializeData,
 } from "@webstudio-is/project-build/index.server";
@@ -38,6 +34,7 @@ import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
+import { db } from "@webstudio-is/project/index.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -111,6 +108,8 @@ export const action = async ({ request }: ActionArgs) => {
       styles?: Styles;
     } = {};
 
+    let previewImageAssetId: string | null | undefined = undefined;
+
     // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
     const patchedStyleDeclKeysSet = new Set<string>();
 
@@ -124,13 +123,20 @@ export const action = async ({ request }: ActionArgs) => {
         if (namespace === "pages") {
           // lazily parse build data before patching
           const pages = buildData.pages ?? parsePages(build.pages);
+          const currentSocialImageAssetId =
+            pages.homePage.meta.socialImageAssetId;
           buildData.pages = applyPatches(pages, patches);
+          const newSocialImageAssetId =
+            buildData.pages.homePage.meta.socialImageAssetId;
+          if (currentSocialImageAssetId !== newSocialImageAssetId) {
+            previewImageAssetId = newSocialImageAssetId || null;
+          }
           continue;
         }
 
         if (namespace === "instances") {
           const instances =
-            buildData.instances ?? parseInstances(build.instances);
+            buildData.instances ?? parseData<Instance>(build.instances);
           buildData.instances = applyPatches(instances, patches);
           continue;
         }
@@ -148,7 +154,8 @@ export const action = async ({ request }: ActionArgs) => {
 
         if (namespace === "styleSources") {
           const styleSources =
-            buildData.styleSources ?? parseStyleSources(build.styleSources);
+            buildData.styleSources ??
+            parseData<StyleSource>(build.styleSources);
           buildData.styleSources = applyPatches(styleSources, patches);
           continue;
         }
@@ -165,27 +172,28 @@ export const action = async ({ request }: ActionArgs) => {
         }
 
         if (namespace === "props") {
-          const props = buildData.props ?? parseProps(build.props);
+          const props = buildData.props ?? parseData<Prop>(build.props);
           buildData.props = applyPatches(props, patches);
           continue;
         }
 
         if (namespace === "dataSources") {
           const dataSources =
-            buildData.dataSources ?? parseDataSources(build.dataSources);
+            buildData.dataSources ?? parseData<DataSource>(build.dataSources);
           buildData.dataSources = applyPatches(dataSources, patches);
           continue;
         }
 
         if (namespace === "resources") {
-          const resources = buildData.resources ?? parseData(build.resources);
+          const resources =
+            buildData.resources ?? parseData<Resource>(build.resources);
           buildData.resources = applyPatches(resources, patches);
           continue;
         }
 
         if (namespace === "breakpoints") {
           const breakpoints =
-            buildData.breakpoints ?? parseBreakpoints(build.breakpoints);
+            buildData.breakpoints ?? parseData<Breakpoint>(build.breakpoints);
           buildData.breakpoints = applyPatches(breakpoints, patches);
           continue;
         }
@@ -215,35 +223,35 @@ export const action = async ({ request }: ActionArgs) => {
     }
 
     if (buildData.breakpoints) {
-      dbBuildData.breakpoints = serializeBreakpoints(
+      dbBuildData.breakpoints = serializeData<Breakpoint>(
         Breakpoints.parse(buildData.breakpoints)
       );
     }
 
     if (buildData.instances) {
-      dbBuildData.instances = serializeInstances(
+      dbBuildData.instances = serializeData<Instance>(
         Instances.parse(buildData.instances)
       );
     }
 
     if (buildData.props) {
-      dbBuildData.props = serializeProps(Props.parse(buildData.props));
+      dbBuildData.props = serializeData<Prop>(Props.parse(buildData.props));
     }
 
     if (buildData.dataSources) {
-      dbBuildData.dataSources = serializeDataSources(
+      dbBuildData.dataSources = serializeData<DataSource>(
         DataSources.parse(buildData.dataSources)
       );
     }
 
     if (buildData.resources) {
-      dbBuildData.resources = serializeData(
+      dbBuildData.resources = serializeData<Resource>(
         Resources.parse(buildData.resources)
       );
     }
 
     if (buildData.styleSources) {
-      dbBuildData.styleSources = serializeStyleSources(
+      dbBuildData.styleSources = serializeData<StyleSource>(
         StyleSources.parse(buildData.styleSources)
       );
     }
@@ -288,6 +296,13 @@ export const action = async ({ request }: ActionArgs) => {
       return {
         status: "version_mismatched",
       };
+    }
+
+    if (previewImageAssetId !== undefined) {
+      await db.project.updatePreviewImage(
+        { assetId: previewImageAssetId, projectId },
+        context
+      );
     }
 
     return { status: "ok" };

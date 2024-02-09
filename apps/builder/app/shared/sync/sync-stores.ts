@@ -27,7 +27,8 @@ import {
   synchronizedCanvasStores,
   $synchronizedInstances,
   $synchronizedBreakpoints,
-  $selectedStyleSourceSelector,
+  $selectedStyleSources,
+  $selectedStyleState,
   synchronizedComponentsMetaStores,
   $dataSourceVariables,
   $dragAndDropState,
@@ -105,7 +106,8 @@ export const registerContainers = () => {
   );
   clientStores.set("hoveredInstanceSelector", $hoveredInstanceSelector);
   clientStores.set("isPreviewMode", $isPreviewMode);
-  clientStores.set("selectedStyleSourceSelector", $selectedStyleSourceSelector);
+  clientStores.set("selectedStyleSources", $selectedStyleSources);
+  clientStores.set("selectedStyleState", $selectedStyleState);
   clientStores.set("dragAndDropState", $dragAndDropState);
   clientStores.set("ephemeralStyles", $ephemeralStyles);
   clientStores.set("selectedInstanceStates", $selectedInstanceStates);

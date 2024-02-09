@@ -4,7 +4,6 @@ import { typography } from "../__generated__/figma-design-tokens";
 
 const normalize = {
   userSelect: "none",
-  cursor: "default",
 } as const;
 
 type Variant = keyof typeof typography;
@@ -65,6 +64,11 @@ export const textStyle = css({
       },
       none: {
         userSelect: "none",
+      },
+    },
+    inline: {
+      true: {
+        display: "inline",
       },
     },
   },

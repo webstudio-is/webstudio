@@ -1,20 +1,5 @@
-import type { Pages, Page, Folder } from "@webstudio-is/sdk";
+import { type Pages, type Folder, ROOT_FOLDER_ID } from "@webstudio-is/sdk";
 import { nanoid } from "nanoid";
-
-// @todo path needs to support folders now
-export const findPageByIdOrPath = (
-  pages: Pages,
-  idOrPath: string
-): Page | undefined => {
-  if (idOrPath === "" || idOrPath === "/" || idOrPath === pages.homePage.id) {
-    return pages.homePage;
-  }
-  return pages.pages.find(
-    (page) => page.path === idOrPath || page.id === idOrPath
-  );
-};
-
-export const ROOT_FOLDER_ID = "root";
 
 export const createRootFolder = (
   children: Folder["children"] = []
@@ -42,7 +27,7 @@ export const createDefaultPages = ({
       id: homePageId,
       name: "Home",
       path: homePagePath,
-      title: "Home",
+      title: `"Home"`,
       meta: {},
       rootInstanceId,
     },

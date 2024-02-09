@@ -842,3 +842,23 @@ export const useStyleInfoByInstanceId = (
     lastStyleSource
   );
 };
+
+export const getPriorityStyleSource = (
+  styleSources: StyleSource[]
+): StyleSource => {
+  const customOrder: StyleSource[] = [
+    "overwritten",
+    "local",
+    "remote",
+    "preset",
+    "default",
+  ];
+
+  for (const style of customOrder) {
+    if (styleSources.includes(style)) {
+      return style;
+    }
+  }
+
+  return "default";
+};

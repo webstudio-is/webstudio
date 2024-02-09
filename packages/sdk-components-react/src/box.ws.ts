@@ -50,5 +50,5 @@ export const meta: WsComponentMeta = {
 
 export const propsMeta: WsComponentPropsMeta = {
   props,
-  initialProps: ["id", "tag"],
+  initialProps: ["id", "className", "tag"],
 };

@@ -16,19 +16,20 @@ export {
 } from "./components/component-meta";
 export * from "./embed-template";
 export * from "./props";
-export { type Params, ReactSdkContext } from "./context";
+export * from "./context";
 export {
   validateExpression,
   encodeDataSourceVariable,
   decodeDataSourceVariable,
-  generateDataSources,
+  executeExpression,
 } from "./expression";
 export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";
 export { generateUtilsExport } from "./generator";
 export {
-  generatePageComponent,
+  generateWebstudioComponent,
   generateJsxElement,
   generateJsxChildren,
 } from "./component-generator";
 export { generateResourcesLoader } from "./resources-generator";
+export * from "./page-meta-generator";

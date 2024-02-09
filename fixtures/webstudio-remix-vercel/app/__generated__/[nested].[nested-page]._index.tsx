@@ -2,11 +2,13 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
+import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
   {
@@ -49,28 +51,27 @@ export const pageData: PageData = {
     faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
-  page: {
-    id: "Pnz-BxUm6XmvFygk_XdEy",
-    name: "Nested Page",
-    title: "Nested Page",
-    meta: {
-      description: "",
-      excludePageFromSearch: false,
-      socialImageAssetId: "",
-      custom: [{ property: "", content: "" }],
-    },
-    rootInstanceId: "L0ZXd5F9xk9Rsl9ORzIkJ",
-    path: "/nested-page",
-  },
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+export const getPageMeta = ({}: {
+  params: Record<string, undefined | string>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "Nested Page",
+    description: "",
+    excludePageFromSearch: false,
+    socialImageAssetId: "",
+    socialImageUrl: undefined,
+    custom: [],
+  };
+};
+
+const Page = ({ params: PageParams }: { params: any }) => {
   return (
     <Body data-ws-id="L0ZXd5F9xk9Rsl9ORzIkJ" data-ws-component="Body">
       <Heading data-ws-id="VFPjLwt6Caq4l9PPJSiyI" data-ws-component="Heading">
@@ -82,6 +83,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
 
 export { Page };
 
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };

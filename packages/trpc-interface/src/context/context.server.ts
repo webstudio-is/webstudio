@@ -52,10 +52,22 @@ type DeploymentContext = {
 
 type UserPlanFeatures = {
   allowShareAdminLinks: boolean;
+  allowResourceVariables: boolean;
   maxDomainsAllowedPerUser: number;
   hasSubscription: boolean;
-  hasProPlan: boolean;
-};
+} & (
+  | {
+      hasProPlan: true;
+      planName: string;
+    }
+  | { hasProPlan: false }
+);
+
+// No strings except planName - no secrets
+({}) as Omit<UserPlanFeatures, "planName"> satisfies Record<
+  string,
+  boolean | number
+>;
 
 /**
  * AppContext is a global context that is passed to all trpc/api queries/mutations

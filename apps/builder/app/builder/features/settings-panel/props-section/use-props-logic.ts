@@ -3,14 +3,12 @@ import type { Instance, Prop } from "@webstudio-is/sdk";
 import {
   type PropMeta,
   showAttribute,
-  decodeDataSourceVariable,
   textContentAttribute,
   collectionComponent,
 } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
-  $dataSources,
   $registeredComponentMetas,
   $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
@@ -20,7 +18,6 @@ export type PropAndMeta = {
   prop?: Prop;
   propName: string;
   meta: PropMeta;
-  readOnly: boolean;
 };
 export type NameAndLabel = { name: string; label?: string };
 
@@ -153,7 +150,6 @@ export const usePropsLogic = ({
     instance.component
   );
   const meta = useStore($registeredComponentPropsMetas).get(instance.component);
-  const dataSources = useStore($dataSources);
 
   if (meta === undefined) {
     throw new Error(`Could not get meta for component "${instance.component}"`);
@@ -169,20 +165,6 @@ export const usePropsLogic = ({
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
-  /**
-   * make sure expression can be edited if consists only of single variable
-   */
-  const isReadOnly = (prop?: Prop) => {
-    if (prop?.type !== "expression") {
-      return false;
-    }
-    const potentialVariableId = decodeDataSourceVariable(prop.value);
-    return (
-      potentialVariableId === undefined ||
-      dataSources.get(potentialVariableId)?.type !== "variable"
-    );
-  };
-
   const systemProps: PropAndMeta[] = systemPropsMeta.map(({ name, meta }) => {
     let saved = getAndDelete<Prop>(unprocessedSaved, name);
     if (saved === undefined && meta.defaultValue !== undefined) {
@@ -194,7 +176,6 @@ export const usePropsLogic = ({
       prop: saved,
       propName: name,
       meta,
-      readOnly: isReadOnly(saved),
     };
   });
   const canHaveTextContent =
@@ -219,7 +200,6 @@ export const usePropsLogic = ({
         type: "string",
         defaultValue: "",
       },
-      readOnly: false,
     });
   }
 
@@ -255,7 +235,6 @@ export const usePropsLogic = ({
       prop,
       propName: name,
       meta: known,
-      readOnly: isReadOnly(prop),
     });
   }
 
@@ -280,7 +259,6 @@ export const usePropsLogic = ({
       prop,
       propName: prop.name,
       meta: known,
-      readOnly: isReadOnly(prop),
     });
   }
 

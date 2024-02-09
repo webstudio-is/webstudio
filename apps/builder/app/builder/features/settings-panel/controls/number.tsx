@@ -13,6 +13,7 @@ import {
   Label,
   updateExpressionValue,
   $selectedInstanceScope,
+  useBindingState,
 } from "../shared";
 
 export const NumberControl = ({
@@ -22,7 +23,6 @@ export const NumberControl = ({
   computedValue,
   onChange,
   deletable,
-  readOnly,
   onDelete,
 }: ControlProps<"number">) => {
   const id = useId();
@@ -49,11 +49,18 @@ export const NumberControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <ResponsiveLayout
       label={
-        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+        <Label
+          htmlFor={id}
+          description={meta.description}
+          readOnly={overwritable === false}
+        >
           {label}
         </Label>
       }
@@ -63,7 +70,7 @@ export const NumberControl = ({
       <BindingControl>
         <InputField
           id={id}
-          disabled={readOnly}
+          disabled={overwritable === false}
           type="number"
           value={localValue.value}
           color={isInvalid ? "error" : undefined}
@@ -86,7 +93,7 @@ export const NumberControl = ({
               return `${label} expects a number value`;
             }
           }}
-          removable={prop?.type === "expression"}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

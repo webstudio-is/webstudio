@@ -40,7 +40,7 @@ import {
   $resources,
   subscribeResources,
 } from "~/shared/nano-states";
-import { type Settings, useClientSettings } from "./shared/client-settings";
+import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
@@ -48,8 +48,11 @@ import { useSyncPageUrl } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
-import { ProjectSettings } from "./features/seo/project-settings";
+import { ProjectSettings } from "./features/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
+import { useNavigatorLayout } from "./features/sidebar-left/navigator";
+import { CloneProjectDialog } from "~/shared/clone-project";
 
 registerContainers();
 
@@ -61,13 +64,6 @@ export const links = () => {
   ];
 };
 
-const useNavigatorLayout = () => {
-  // We need to render the detached state only once the setting was actually loaded from local storage.
-  // Otherwise we may show the detached state because its the default and then hide it immediately.
-  const [clientSettings, _, isLoaded] = useClientSettings();
-  return isLoaded ? clientSettings.navigatorLayout : "undocked";
-};
-
 const useSetWindowTitle = () => {
   const project = useStore($project);
   useEffect(() => {
@@ -77,14 +73,14 @@ const useSetWindowTitle = () => {
 
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
-  isPreviewMode: boolean;
+  isPreviewMode?: boolean;
   css?: CSS;
   gridArea: "inspector" | "sidebar" | "navigator";
 };
 
 const SidePanel = ({
   children,
-  isPreviewMode,
+  isPreviewMode = false,
   gridArea,
   css,
 }: SidePanelProps) => {
@@ -203,7 +199,7 @@ const NavigatorPanel = ({
   navigatorLayout,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
-    return null;
+    return;
   }
 
   return (
@@ -246,6 +242,7 @@ export const Builder = ({
     $domains.set(domains);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
+    $userPlanFeatures.set(userPlanFeatures);
 
     // set initial containers value
     $assets.set(new Map(assets));
@@ -283,7 +280,7 @@ export const Builder = ({
     authPermit,
     version: build.version,
   });
-
+  const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
@@ -331,7 +328,7 @@ export const Builder = ({
           </Workspace>
           <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+        <SidePanel gridArea="sidebar">
           <SidebarLeft publish={publish} />
         </SidePanel>
         <NavigatorPanel
@@ -347,6 +344,11 @@ export const Builder = ({
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />
+        <CloneProjectDialog
+          isOpen={isCloneDialogOpen}
+          onOpenChange={$isCloneDialogOpen.set}
+          project={project}
+        />
       </ChromeWrapper>
     </TooltipProvider>
   );

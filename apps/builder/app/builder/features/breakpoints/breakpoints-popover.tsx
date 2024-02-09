@@ -11,7 +11,6 @@ import {
   PopoverPortal,
   PopoverContent,
   PopoverTrigger,
-  toggleItemStyle,
   MenuCheckedIcon,
   MenuItemIndicator,
   List,
@@ -90,11 +89,7 @@ export const BreakpointsPopover = () => {
       }}
     >
       <PopoverTrigger aria-label="Show breakpoints" asChild>
-        <BreakpointsPopoverToolbarButton
-          className={toggleItemStyle({
-            css: { gap: theme.spacing[5] },
-          })}
-        />
+        <BreakpointsPopoverToolbarButton css={{ gap: theme.spacing[5] }} />
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent

@@ -38,7 +38,7 @@ const style = css({
   height: theme.spacing[10],
   backgroundBlendMode: "difference",
   borderRadius: 2,
-  borderStyle: "solid",
+  borderWidth: 0,
 });
 
 export const ColorThumb = forwardRef<

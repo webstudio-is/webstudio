@@ -56,6 +56,7 @@ export const createElementsTree = ({
         pagesPaths: new Set(),
         assetBaseUrl,
         imageBaseUrl,
+        resources: {},
       }}
     >
       {root}

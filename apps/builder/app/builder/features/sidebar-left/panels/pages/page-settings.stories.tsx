@@ -5,7 +5,7 @@ import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { $assets, $project } from "~/shared/nano-states";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { isRoot } from "./page-utils";
+import { isRoot } from "@webstudio-is/sdk";
 
 export default {
   component: PageSettings,
@@ -61,6 +61,10 @@ $project.set({
   isDeleted: false,
   userId: "userId",
   domain: "new-2x9tcd",
+  previewImageAsset: {
+    id: "0",
+    name: "0",
+  },
 });
 
 export const PageSettingsEdit = () => {

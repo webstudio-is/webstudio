@@ -2,9 +2,11 @@ import {
   styled,
   keyframes,
   Collapsible,
-  Box,
+  Flex,
 } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
+import { useRef } from "react";
+import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 
 const CollapsibleRoot = styled(Collapsible.Root, {
   position: "absolute",
@@ -58,20 +60,27 @@ export const SettingsPanel = ({
   children: React.ReactNode;
   isOpen: boolean;
 }) => {
+  const settingsRef = useRef<HTMLDivElement>(null);
   return (
-    <CollapsibleRoot open={isOpen}>
+    <CollapsibleRoot ref={settingsRef} open={isOpen}>
       <CollapsibleContent>
-        <Box
+        <Flex
+          direction="column"
+          grow
           css={{
-            flexGrow: 1,
+            position: "relative",
+            height: "100%",
             width: theme.spacing[35],
             background: theme.colors.backgroundPanel,
             borderRight: `1px solid ${theme.colors.slate7}`,
-            position: "relative",
           }}
         >
-          {children}
-        </Box>
+          <BindingPopoverProvider
+            value={{ containerRef: settingsRef, side: "right" }}
+          >
+            {children}
+          </BindingPopoverProvider>
+        </Flex>
       </CollapsibleContent>
     </CollapsibleRoot>
   );

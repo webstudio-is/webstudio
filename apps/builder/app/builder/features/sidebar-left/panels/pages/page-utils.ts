@@ -1,5 +1,38 @@
-import { ROOT_FOLDER_ID, createRootFolder } from "@webstudio-is/project-build";
-import { type Page, Pages, type Folder } from "@webstudio-is/sdk";
+import { nanoid } from "nanoid";
+import { computed } from "nanostores";
+import { createRootFolder } from "@webstudio-is/project-build";
+import {
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  validateExpression,
+} from "@webstudio-is/react-sdk";
+import {
+  type Page,
+  Pages,
+  type Folder,
+  findPageByIdOrPath,
+  ROOT_FOLDER_ID,
+  isRoot,
+  type WebstudioData,
+  getPagePath,
+  findParentFolderByChildId,
+  DataSource,
+} from "@webstudio-is/sdk";
+import { removeByMutable } from "~/shared/array-utils";
+import {
+  deleteInstanceMutable,
+  getInstancesSlice,
+  insertInstancesSliceCopy,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
+import {
+  $dataSources,
+  $pages,
+  $selectedInstanceSelector,
+  $selectedPage,
+  $selectedPageId,
+  $variableValuesByInstanceSelector,
+} from "~/shared/nano-states";
 
 type TreePage = {
   type: "page";
@@ -77,20 +110,6 @@ export const toTreeData = (
 };
 
 /**
- * Find a folder that has has that id in the children.
- */
-export const findParentFolderByChildId = (
-  id: Folder["id"] | Page["id"],
-  folders: Array<Folder>
-): Folder | undefined => {
-  for (const folder of folders) {
-    if (folder.children.includes(id)) {
-      return folder;
-    }
-  }
-};
-
-/**
  * When page or folder needs to be deleted or moved to a different parent,
  * we want to cleanup any existing reference to it in current folder.
  * We could do this in just one folder, but I think its more robust to check all,
@@ -143,11 +162,6 @@ export const reparentOrphansMutable = (pages: Pages) => {
 };
 
 /**
- * Returns true if folder is the root folder.
- */
-export const isRoot = (folder: Folder) => folder.id === ROOT_FOLDER_ID;
-
-/**
  * Returns true if folder's slug is unique within it's future parent folder.
  * Needed to verify if the folder can be nested under the parent folder without modifying slug.
  */
@@ -189,4 +203,233 @@ export const registerFolderChildMutable = (
     folders.find(isRoot);
   cleanupChildRefsMutable(id, folders);
   parentFolder?.children.push(id);
+};
+
+/**
+ * Get all child folder ids of the current folder including itself.
+ */
+export const getAllChildrenAndSelf = (
+  id: Folder["id"] | Page["id"],
+  folders: Array<Folder>,
+  filter: "folder" | "page"
+) => {
+  const child = folders.find((folder) => folder.id === id);
+  const children: Array<Folder["id"]> = [];
+  const type = child === undefined ? "page" : "folder";
+
+  if (type === filter) {
+    children.push(id);
+  }
+
+  if (child) {
+    for (const childId of child.children) {
+      children.push(...getAllChildrenAndSelf(childId, folders, filter));
+    }
+  }
+  return children;
+};
+
+/**
+ * Deletes a page.
+ */
+export const deletePageMutable = (pageId: Page["id"], data: WebstudioData) => {
+  const { pages } = data;
+  // deselect page before deleting to avoid flash of content
+  if ($selectedPageId.get() === pageId) {
+    $selectedPageId.set(pages.homePage.id);
+    $selectedInstanceSelector.set(undefined);
+  }
+  const rootInstanceId = findPageByIdOrPath(pageId, pages)?.rootInstanceId;
+  if (rootInstanceId !== undefined) {
+    deleteInstanceMutable(data, [rootInstanceId]);
+  }
+  removeByMutable(pages.pages, (page) => page.id === pageId);
+  cleanupChildRefsMutable(pageId, pages.folders);
+};
+
+/**
+ * Deletes folder and child folders.
+ * Doesn't delete pages, only returns pageIds.
+ */
+export const deleteFolderWithChildrenMutable = (
+  folderId: Folder["id"],
+  folders: Array<Folder>
+) => {
+  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
+  const pageIds = getAllChildrenAndSelf(folderId, folders, "page");
+  for (const folderId of folderIds) {
+    cleanupChildRefsMutable(folderId, folders);
+    removeByMutable(folders, (folder) => folder.id === folderId);
+  }
+
+  return {
+    folderIds,
+    pageIds,
+  };
+};
+
+/**
+ * Filter out folders that are children of the current folder or the current folder itself.
+ */
+export const filterSelfAndChildren = (
+  folderId: Folder["id"],
+  folders: Array<Folder>
+) => {
+  const folderIds = getAllChildrenAndSelf(folderId, folders, "folder");
+  return folders.filter((folder) => {
+    return folderIds.includes(folder.id) === false;
+  });
+};
+
+export const getExistingRoutePaths = (pages?: Pages): Set<string> => {
+  const paths: Set<string> = new Set();
+  if (pages === undefined) {
+    return paths;
+  }
+
+  for (const page of pages.pages) {
+    const pagePath = getPagePath(page.id, pages);
+    if (pagePath === undefined) {
+      continue;
+    }
+    paths.add(pagePath);
+  }
+  return paths;
+};
+
+export const $pageRootScope = computed(
+  [$selectedPage, $variableValuesByInstanceSelector, $dataSources],
+  (selectedPage, variableValuesByInstanceSelector, dataSources) => {
+    const scope: Record<string, unknown> = {};
+    const aliases = new Map<string, string>();
+    const variableValues = new Map<string, unknown>();
+    if (selectedPage === undefined) {
+      return { variableValues, scope, aliases };
+    }
+    const values = variableValuesByInstanceSelector.get(
+      JSON.stringify([selectedPage.rootInstanceId])
+    );
+    if (values) {
+      for (const [dataSourceId, value] of values) {
+        const dataSource = dataSources.get(dataSourceId);
+        if (dataSource === undefined) {
+          continue;
+        }
+        const name = encodeDataSourceVariable(dataSourceId);
+        scope[name] = value;
+        aliases.set(name, dataSource.name);
+      }
+    }
+    return { variableValues: values ?? variableValues, scope, aliases };
+  }
+);
+
+const deduplicatePath = (pages: undefined | Pages, path: string) => {
+  if (pages === undefined) {
+    return path;
+  }
+  const matchedPage = findPageByIdOrPath(path, pages);
+  if (matchedPage === undefined) {
+    return path;
+  }
+  if (path === "/") {
+    path = "";
+  }
+  let counter = 1;
+  while (findPageByIdOrPath(`/copy-${counter}${path}`, pages) !== undefined) {
+    counter += 1;
+  }
+  return `/copy-${counter}${path}`;
+};
+
+const replaceDataSources = (
+  expression: string,
+  replacements: Map<DataSource["id"], DataSource["id"]>
+) => {
+  return validateExpression(expression, {
+    effectful: true,
+    transformIdentifier: (identifier) => {
+      const dataSourceId = decodeDataSourceVariable(identifier);
+      if (dataSourceId === undefined) {
+        return identifier;
+      }
+      return encodeDataSourceVariable(
+        replacements.get(dataSourceId) ?? dataSourceId
+      );
+    },
+  });
+};
+
+export const duplicatePage = (pageId: Page["id"]) => {
+  const pages = $pages.get();
+  if (pages === undefined) {
+    return;
+  }
+  const page = findPageByIdOrPath(pageId, pages);
+
+  if (page === undefined) {
+    return;
+  }
+
+  const newPageId = nanoid();
+  const { name = page.name, copyNumber } =
+    // extract a number from "name (copyNumber)"
+    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
+
+  const slice = getInstancesSlice(page.rootInstanceId);
+  updateWebstudioData((data) => {
+    const { newInstanceIds, newDataSourceIds } = insertInstancesSliceCopy({
+      data,
+      slice,
+      availableDataSources: new Set(),
+    });
+    const newRootInstanceId = newInstanceIds.get(page.rootInstanceId);
+    const newPathVariableId =
+      page.pathVariableId === undefined
+        ? undefined
+        : newDataSourceIds.get(page.pathVariableId);
+    if (newRootInstanceId === undefined) {
+      return;
+    }
+    const newPage = {
+      ...page,
+      id: newPageId,
+      rootInstanceId: newRootInstanceId,
+      pathVariableId: newPathVariableId,
+      name: newName,
+      path: deduplicatePath(pages, page.path),
+      title: replaceDataSources(page.title, newDataSourceIds),
+      meta: {
+        ...page.meta,
+        description:
+          page.meta.description === undefined
+            ? undefined
+            : replaceDataSources(page.meta.description, newDataSourceIds),
+        excludePageFromSearch:
+          page.meta.excludePageFromSearch === undefined
+            ? undefined
+            : replaceDataSources(
+                page.meta.excludePageFromSearch,
+                newDataSourceIds
+              ),
+        socialImageUrl:
+          page.meta.socialImageUrl === undefined
+            ? undefined
+            : replaceDataSources(page.meta.socialImageUrl, newDataSourceIds),
+        custom: page.meta.custom?.map(({ property, content }) => ({
+          property,
+          content: replaceDataSources(content, newDataSourceIds),
+        })),
+      },
+    } satisfies Page;
+    data.pages.pages.push(newPage);
+    const currentFolder = findParentFolderByChildId(pageId, data.pages.folders);
+    registerFolderChildMutable(
+      data.pages.folders,
+      newPageId,
+      currentFolder?.id
+    );
+  });
+  return newPageId;
 };

@@ -9,6 +9,8 @@ import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { disableCanvasPointerEvents } from "../utilities";
 
+export const TooltipProvider = TooltipPrimitive.TooltipProvider;
+
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   Omit<ComponentProps<typeof Content>, "content"> & {
     children: ReactElement;
@@ -125,15 +127,18 @@ Tooltip.displayName = "Tooltip";
 export const InputErrorsTooltip = ({
   errors,
   children,
+  side,
+  css,
   ...rest
 }: Omit<TooltipProps, "content"> & {
   errors?: string[];
   children: ComponentProps<typeof Tooltip>["children"];
+  side?: ComponentProps<typeof Tooltip>["side"];
 }) => {
   const content = errors?.map((error, index) => (
     <Fragment key={index}>
       {index > 0 && <br />}
-      {error}
+      <Text>{error}</Text>
     </Fragment>
   ));
   return (
@@ -145,7 +150,8 @@ export const InputErrorsTooltip = ({
       {...rest}
       content={content ?? " "}
       open={errors !== undefined && errors.length !== 0}
-      side="right"
+      side={side ?? "right"}
+      css={css}
     >
       {children}
     </Tooltip>

@@ -11,6 +11,7 @@ import {
   RemovePropButton,
   $selectedInstanceScope,
   updateExpressionValue,
+  useBindingState,
 } from "../shared";
 
 export const BooleanControl = ({
@@ -19,7 +20,6 @@ export const BooleanControl = ({
   propName,
   computedValue,
   deletable,
-  readOnly,
   onChange,
   onDelete,
 }: ControlProps<"boolean">) => {
@@ -28,6 +28,9 @@ export const BooleanControl = ({
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <Grid
@@ -41,13 +44,17 @@ export const BooleanControl = ({
       align="center"
       gap="2"
     >
-      <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
+      <Label
+        htmlFor={id}
+        description={meta.description}
+        readOnly={overwritable === false}
+      >
         {label}
       </Label>
       <BindingControl>
         <Switch
           id={id}
-          disabled={readOnly}
+          disabled={overwritable === false}
           checked={Boolean(computedValue ?? false)}
           onCheckedChange={(value) => {
             if (prop?.type === "expression") {
@@ -65,7 +72,7 @@ export const BooleanControl = ({
               return `${label} expects a boolean value`;
             }
           }}
-          removable={prop?.type === "expression"}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })

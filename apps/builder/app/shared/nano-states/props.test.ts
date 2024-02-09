@@ -9,6 +9,7 @@ import { $instances } from "./instances";
 import {
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
+  computeExpression,
 } from "./props";
 import { $pages, $selectedPageId } from "./pages";
 import {
@@ -49,6 +50,8 @@ beforeEach(() => {
   $props.set(new Map());
   $resources.set(new Map());
   $dataSources.set(new Map());
+  $dataSourceVariables.set(new Map());
+  $resourceValues.set(new Map());
 });
 
 test("collect prop values", () => {
@@ -120,6 +123,14 @@ test("compute expression prop values", () => {
         type: "expression",
         value: `$ws$dataSource$var2 + ' World!'`,
       },
+      {
+        id: "prop3",
+        name: "third",
+        instanceId: "box",
+        type: "expression",
+        // do not fail when access fields of undefined
+        value: `$ws$dataSource$var1.second.third || "something"`,
+      },
     ])
   );
   expect(
@@ -128,6 +139,7 @@ test("compute expression prop values", () => {
     new Map<string, unknown>([
       ["first", 3],
       ["second", "Hello World!"],
+      ["third", "something"],
     ])
   );
 
@@ -138,6 +150,7 @@ test("compute expression prop values", () => {
     new Map<string, unknown>([
       ["first", 6],
       ["second", "Hello World!"],
+      ["third", "something"],
     ])
   );
 
@@ -819,4 +832,54 @@ test("stop variables lookup outside of slots", () => {
   );
 
   cleanStores($variableValuesByInstanceSelector);
+});
+
+test("compute parameter and resource variables without values to make it available in scope", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "parameterVariableId",
+        scopeInstanceId: "body",
+        name: "parameterName",
+        type: "parameter",
+      },
+      {
+        id: "resourceVariableId",
+        scopeInstanceId: "body",
+        name: "resourceName",
+        type: "resource",
+        resourceId: "resourceId",
+      },
+    ])
+  );
+  $props.set(new Map());
+
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([
+          ["parameterVariableId", undefined],
+          ["resourceVariableId", undefined],
+        ]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
+
+test("compute expression when invalid syntax", () => {
+  expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
 });

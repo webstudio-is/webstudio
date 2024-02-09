@@ -21,10 +21,10 @@ export const projectRouter = router({
       // @todo pass ctx for authorization
       return await db.project.markAsDeleted(input.projectId, ctx);
     }),
-  duplicate: procedure
+  clone: procedure
     .input(z.object({ projectId: z.string(), title: z.optional(z.string()) }))
     .mutation(async ({ input, ctx }) => {
-      return await db.project.duplicate(
+      return await db.project.clone(
         {
           projectId: input.projectId,
           title: input.title,

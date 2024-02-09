@@ -1,5 +1,6 @@
+import { nanoid } from "nanoid";
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback, Fragment } from "react";
+import { type FocusEventHandler, useState, useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -12,14 +13,12 @@ import {
   HomePagePath,
   PageTitle,
   PagePath,
-  DataSource,
   Folder,
   getPagePath,
-} from "@webstudio-is/sdk";
-import {
-  ROOT_FOLDER_ID,
   findPageByIdOrPath,
-} from "@webstudio-is/project-build";
+  ROOT_FOLDER_ID,
+  findParentFolderByChildId,
+} from "@webstudio-is/sdk";
 import {
   theme,
   Button,
@@ -49,11 +48,7 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
-import {
-  deleteInstance,
-  getInstancesSlice,
-  insertInstancesSliceCopy,
-} from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   $assets,
   $domains,
@@ -61,44 +56,48 @@ import {
   $pages,
   $project,
   $selectedInstanceSelector,
-  $selectedPageId,
   $dataSources,
-  $dataSourceVariables,
+  computeExpression,
 } from "~/shared/nano-states";
-import { nanoid } from "nanoid";
-import { removeByMutable } from "~/shared/array-utils";
+import {
+  BindingControl,
+  BindingPopover,
+  isLiteralExpression,
+} from "~/builder/shared/binding-popover";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";
-import { ImageControl } from "~/builder/features/seo/image-control";
+// @todo should be moved to shared because features should not depend on features
+import { ImageControl } from "~/builder/features/project-settings";
 import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
+// @todo should be moved to shared because features should not depend on features
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
 import env from "~/shared/env";
+import { parsePathnamePattern, validatePathnamePattern } from "./url-pattern";
 import {
-  compilePathnamePattern,
-  parsePathnamePattern,
-  validatePathnamePattern,
-} from "./url-pattern";
-import {
-  cleanupChildRefsMutable,
-  findParentFolderByChildId,
   registerFolderChildMutable,
+  deletePageMutable,
+  $pageRootScope,
+  duplicatePage,
 } from "./page-utils";
+import { Form } from "./form";
+import { AddressBar, useAddressBar, type AddressBarApi } from "./address-bar";
 
 const fieldDefaultValues = {
   name: "Untitled",
   parentFolderId: ROOT_FOLDER_ID,
   path: "/untitled",
-  title: "Untitled",
-  description: "",
   isHomePage: false,
-  excludePageFromSearch: false,
+  title: `"Untitled"`,
+  description: `""`,
+  excludePageFromSearch: `false`,
+  socialImageUrl: `""`,
   socialImageAssetId: "",
   customMetas: [
     {
       property: "",
-      content: "",
+      content: `""`,
     },
   ],
 };
@@ -139,18 +138,28 @@ const LegacyPagePath = z
     "/build prefix is reserved for the system"
   );
 
-const HomePageValues = z.object({
+const SharedPageValues = z.object({
   name: PageName,
-  path: HomePagePath,
   title: PageTitle,
   description: z.string().optional(),
+  excludePageFromSearch: z.boolean().optional(),
+  socialImageUrl: z.string().optional(),
+  customMetas: z
+    .array(
+      z.object({
+        property: z.string(),
+        content: z.string(),
+      })
+    )
+    .optional(),
 });
 
-const PageValues = z.object({
-  name: PageName,
+const HomePageValues = SharedPageValues.extend({
+  path: HomePagePath,
+});
+
+const PageValues = SharedPageValues.extend({
   path: isFeatureEnabled("cms") ? PagePath : LegacyPagePath,
-  title: PageTitle,
-  description: z.string().optional(),
 });
 
 const isPathUnique = (
@@ -177,10 +186,26 @@ const validateValues = (
   // undefined page id means new page
   pageId: undefined | Page["id"],
   values: Values,
-  isHomePage: boolean
+  isHomePage: boolean,
+  variableValues: Map<string, unknown>
 ): Errors => {
+  const computedValues = {
+    name: values.name,
+    path: values.path,
+    title: computeExpression(values.title, variableValues),
+    description: computeExpression(values.description, variableValues),
+    excludePageFromSearch: computeExpression(
+      values.excludePageFromSearch,
+      variableValues
+    ),
+    socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
+    customMetas: values.customMetas.map((item) => ({
+      property: item.property,
+      content: computeExpression(item.content, variableValues),
+    })),
+  };
   const Validator = isHomePage ? HomePageValues : PageValues;
-  const parsedResult = Validator.safeParse(values);
+  const parsedResult = Validator.safeParse(computedValues);
   const errors: Errors = {};
   if (parsedResult.success === false) {
     return parsedResult.error.formErrors.fieldErrors;
@@ -211,6 +236,8 @@ const toFormValues = (
     path: page.path,
     title: page.title,
     description: page.meta.description ?? fieldDefaultValues.description,
+    socialImageUrl:
+      page.meta.socialImageUrl ?? fieldDefaultValues.socialImageUrl,
     socialImageAssetId:
       page.meta.socialImageAssetId ?? fieldDefaultValues.socialImageAssetId,
     excludePageFromSearch:
@@ -274,16 +301,16 @@ const CopyPageDomainAndPathButton = ({
 };
 
 const FormFields = ({
+  addressBar,
   disabled,
   autoSelect,
-  pathVariableId,
   errors,
   values,
   onChange,
 }: {
+  addressBar: AddressBarApi;
   disabled?: boolean;
   autoSelect?: boolean;
-  pathVariableId?: DataSource["id"];
   errors: Errors;
   values: Values;
   onChange: (
@@ -298,7 +325,7 @@ const FormFields = ({
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
-  const dataSourceVariables = useStore($dataSourceVariables);
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
 
   if (pages === undefined) {
     return;
@@ -318,34 +345,36 @@ const FormFields = ({
 
   const publishedUrl = new URL(`https://${domain}`);
 
-  const pathParamNames = parsePathnamePattern(values.path);
-  const params =
-    pathVariableId !== undefined
-      ? (dataSourceVariables.get(pathVariableId) as Record<string, string>)
-      : undefined;
-
   const foldersPath = getPagePath(values.parentFolderId, pages);
-  const pagePath = compilePathnamePattern(values.path ?? "", params ?? {});
 
-  const pageDomainAndPath = [publishedUrl.host, foldersPath, pagePath]
+  const pageDomainAndPath = [
+    publishedUrl.host,
+    foldersPath,
+    addressBar.compiledPath,
+  ]
     .filter(Boolean)
     .join("/")
     .replace(/\/+/g, "/");
   const pageUrl = `https://${pageDomainAndPath}`;
 
-  // @todo this is a hack to get the scroll area to work needs to be removed
-  const TOPBAR_HEIGHT = 40;
-  const HEADER_HEIGHT = 40;
-  const FOOTER_HEIGHT = 24;
-  const SCROLL_AREA_DELTA = TOPBAR_HEIGHT + HEADER_HEIGHT + FOOTER_HEIGHT;
+  const title = String(computeExpression(values.title, variableValues));
+  const description = String(
+    computeExpression(values.description, variableValues)
+  );
+  const socialImageUrl = String(
+    computeExpression(values.socialImageUrl, variableValues)
+  );
+  const excludePageFromSearch = Boolean(
+    computeExpression(values.excludePageFromSearch, variableValues)
+  );
 
   return (
-    <Grid>
-      <ScrollArea css={{ maxHeight: `calc(100vh - ${SCROLL_AREA_DELTA}px)` }}>
+    <Grid css={{ height: "100%" }}>
+      <ScrollArea>
         {/**
          * ----------------------========<<<Page props>>>>========----------------------
          */}
-        <Grid gap={3} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Grid gap={1}>
             <Label htmlFor={fieldIds.name}>Page Name</Label>
             <InputErrorsTooltip errors={errors.name}>
@@ -393,15 +422,8 @@ const FormFields = ({
                   : `Make “${values.name}” the home page`}
               </Label>
             </Grid>
-            {values.isHomePage === true && (
-              <>
-                <div />
-                <CopyPageDomainAndPathButton
-                  pageDomainAndPath={pageDomainAndPath}
-                />
-              </>
-            )}
           </Grid>
+
           {isFeatureEnabled("folders") && values.isHomePage === false && (
             <Grid gap={1}>
               <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
@@ -429,17 +451,19 @@ const FormFields = ({
               <Label htmlFor={fieldIds.path}>
                 <Flex align="center" css={{ gap: theme.spacing[3] }}>
                   Path
-                  <Tooltip
-                    content={
-                      "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-                    }
-                    variant="wrapped"
-                  >
-                    <HelpIcon
-                      color={rawTheme.colors.foregroundSubtle}
-                      tabIndex={0}
-                    />
-                  </Tooltip>
+                  {isFeatureEnabled("cms") && (
+                    <Tooltip
+                      content={
+                        "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
+                      }
+                      variant="wrapped"
+                    >
+                      <HelpIcon
+                        color={rawTheme.colors.foregroundSubtle}
+                        tabIndex={0}
+                      />
+                    </Tooltip>
+                  )}
                 </Flex>
               </Label>
               <InputErrorsTooltip errors={errors.path}>
@@ -456,41 +480,10 @@ const FormFields = ({
                   }}
                 />
               </InputErrorsTooltip>
-              {pathVariableId !== undefined &&
-                pathParamNames.map((name) => (
-                  <Fragment key={name}>
-                    <Label htmlFor={`${fieldIds.path}-${name}`}>{name}</Label>
-                    <InputField
-                      tabIndex={1}
-                      id={`${fieldIds.path}-${name}`}
-                      name="path"
-                      value={params?.[name] ?? ""}
-                      onChange={(event) => {
-                        if (pathVariableId === undefined) {
-                          return;
-                        }
-                        const dataSourceVariables = new Map(
-                          $dataSourceVariables.get()
-                        );
-                        // delete stale fields
-                        const newParams: Record<string, string> = {};
-                        for (const name of pathParamNames) {
-                          if (params?.[name]) {
-                            newParams[name] = params[name];
-                          }
-                        }
-                        newParams[name] = event.target.value;
-                        dataSourceVariables.set(pathVariableId, newParams);
-                        $dataSourceVariables.set(dataSourceVariables);
-                      }}
-                    />
-                  </Fragment>
-                ))}
-              <CopyPageDomainAndPathButton
-                pageDomainAndPath={pageDomainAndPath}
-              />
             </Grid>
           )}
+          <AddressBar addressBar={addressBar} />
+          <CopyPageDomainAndPathButton pageDomainAndPath={pageDomainAndPath} />
         </Grid>
 
         <Separator />
@@ -526,8 +519,8 @@ const FormFields = ({
                     siteName={pages?.meta?.siteName ?? ""}
                     faviconUrl={faviconUrl}
                     pageUrl={pageUrl}
-                    titleLink={values.title}
-                    snippet={values.description}
+                    titleLink={title}
+                    snippet={description}
                   />
                 </Box>
               </Box>
@@ -536,55 +529,155 @@ const FormFields = ({
 
           <Grid gap={1}>
             <Label htmlFor={fieldIds.title}>Title</Label>
-            <InputErrorsTooltip errors={errors.title}>
-              <InputField
-                tabIndex={1}
-                color={errors.title && "error"}
-                id={fieldIds.title}
-                name="title"
-                placeholder="My awesome project - About"
-                disabled={disabled}
-                value={values.title}
-                onChange={(event) => {
-                  onChange({ field: "title", value: event.target.value });
-                }}
-              />
-            </InputErrorsTooltip>
+            <BindingControl>
+              {isFeatureEnabled("cms") && (
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.title) ? "default" : "bound"
+                  }
+                  value={values.title}
+                  onChange={(value) => {
+                    onChange({
+                      field: "title",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "title",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+              )}
+              <InputErrorsTooltip errors={errors.title}>
+                <InputField
+                  tabIndex={1}
+                  color={errors.title && "error"}
+                  id={fieldIds.title}
+                  name="title"
+                  placeholder="My awesome project - About"
+                  disabled={
+                    disabled || isLiteralExpression(values.title) === false
+                  }
+                  value={title}
+                  onChange={(event) => {
+                    onChange({
+                      field: "title",
+                      value: JSON.stringify(event.target.value),
+                    });
+                  }}
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
           </Grid>
 
           <Grid gap={1}>
             <Label htmlFor={fieldIds.description}>Description</Label>
-            <InputErrorsTooltip errors={errors.description}>
-              <TextArea
-                tabIndex={1}
-                state={errors.description && "invalid"}
-                id={fieldIds.description}
-                name="description"
-                disabled={disabled}
-                value={values.description}
-                onChange={(value) => {
-                  onChange({ field: "description", value });
-                }}
-                autoGrow
-                maxRows={10}
-              />
-            </InputErrorsTooltip>
-            <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
-              <Checkbox
-                id={fieldIds.excludePageFromSearch}
-                checked={values.excludePageFromSearch}
-                onCheckedChange={() => {
-                  onChange({
-                    field: "excludePageFromSearch",
-                    value: !values.excludePageFromSearch,
-                  });
-                }}
-              />
+            <BindingControl>
+              {isFeatureEnabled("cms") && (
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.description)
+                      ? "default"
+                      : "bound"
+                  }
+                  value={values.description}
+                  onChange={(value) => {
+                    onChange({
+                      field: "description",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "description",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+              )}
+              <InputErrorsTooltip errors={errors.description}>
+                <TextArea
+                  tabIndex={1}
+                  state={errors.description && "invalid"}
+                  id={fieldIds.description}
+                  name="description"
+                  disabled={
+                    disabled ||
+                    isLiteralExpression(values.description) === false
+                  }
+                  value={description}
+                  onChange={(value) => {
+                    onChange({
+                      field: "description",
+                      value: JSON.stringify(value),
+                    });
+                  }}
+                  autoGrow
+                  maxRows={10}
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
+            <BindingControl>
+              <Grid
+                flow={"column"}
+                gap={1}
+                justify={"start"}
+                align={"center"}
+                css={{ py: theme.spacing[2] }}
+              >
+                {isFeatureEnabled("cms") && (
+                  <BindingPopover
+                    scope={scope}
+                    aliases={aliases}
+                    variant={
+                      isLiteralExpression(values.excludePageFromSearch)
+                        ? "default"
+                        : "bound"
+                    }
+                    value={values.excludePageFromSearch}
+                    onChange={(value) => {
+                      onChange({
+                        field: "excludePageFromSearch",
+                        value,
+                      });
+                    }}
+                    onRemove={(evaluatedValue) => {
+                      onChange({
+                        field: "excludePageFromSearch",
+                        value: JSON.stringify(evaluatedValue),
+                      });
+                    }}
+                  />
+                )}
+                <Checkbox
+                  id={fieldIds.excludePageFromSearch}
+                  disabled={
+                    disabled ||
+                    isLiteralExpression(values.excludePageFromSearch) === false
+                  }
+                  checked={excludePageFromSearch}
+                  onCheckedChange={() => {
+                    const newValue = !excludePageFromSearch;
+                    onChange({
+                      field: "excludePageFromSearch",
+                      value: newValue.toString(),
+                    });
+                  }}
+                />
 
-              <Label htmlFor={fieldIds.excludePageFromSearch}>
-                Exclude this page from search results
-              </Label>
-            </Grid>
+                <InputErrorsTooltip errors={errors.excludePageFromSearch}>
+                  <Label htmlFor={fieldIds.excludePageFromSearch}>
+                    Exclude this page from search results
+                  </Label>
+                </InputErrorsTooltip>
+              </Grid>
+            </BindingControl>
           </Grid>
         </Grid>
 
@@ -603,15 +696,59 @@ const FormFields = ({
             Project Settings will be used. The optimal dimensions for the image
             are 1200x630 px or larger with a 1.91:1 aspect ratio.
           </Text>
+          {isFeatureEnabled("cms") && (
+            <BindingControl>
+              <BindingPopover
+                scope={scope}
+                aliases={aliases}
+                variant={
+                  isLiteralExpression(values.socialImageUrl)
+                    ? "default"
+                    : "bound"
+                }
+                value={values.socialImageUrl}
+                onChange={(value) => {
+                  onChange({
+                    field: "socialImageUrl",
+                    value,
+                  });
+                }}
+                onRemove={(evaluatedValue) => {
+                  onChange({
+                    field: "socialImageUrl",
+                    value: JSON.stringify(evaluatedValue),
+                  });
+                }}
+              />
+              <InputErrorsTooltip errors={errors.socialImageUrl}>
+                <InputField
+                  placeholder="https://www.url.com"
+                  disabled={
+                    disabled ||
+                    isLiteralExpression(values.socialImageUrl) === false
+                  }
+                  color={errors.socialImageUrl && "error"}
+                  value={socialImageUrl}
+                  onChange={(event) => {
+                    onChange({
+                      field: "socialImageUrl",
+                      value: JSON.stringify(event.target.value),
+                    });
+                    onChange({ field: "socialImageAssetId", value: "" });
+                  }}
+                />
+              </InputErrorsTooltip>
+            </BindingControl>
+          )}
           <Grid gap={1} flow={"column"}>
             <ImageControl
-              assetId={values.socialImageAssetId}
-              onAssetIdChange={(socialImageAssetId) =>
+              onAssetIdChange={(socialImageAssetId) => {
                 onChange({
                   field: "socialImageAssetId",
                   value: socialImageAssetId,
-                })
-              }
+                });
+                onChange({ field: "socialImageUrl", value: "" });
+              }}
             >
               <Button
                 id={fieldIds.socialImageAssetId}
@@ -636,26 +773,32 @@ const FormFields = ({
           )}
           <div />
           <SocialPreview
-            asset={
-              socialImageAsset?.type === "image" ? socialImageAsset : undefined
+            ogImageUrl={
+              socialImageAsset?.type === "image"
+                ? socialImageAsset.name
+                : socialImageUrl
             }
             ogUrl={pageUrl}
-            ogTitle={values.title}
-            ogDescription={values.description}
+            ogTitle={title}
+            ogDescription={description}
           />
         </Grid>
 
         <Separator />
 
-        <CustomMetadata
-          customMetas={values.customMetas}
-          onChange={(customMetas) => {
-            onChange({
-              field: "customMetas",
-              value: customMetas,
-            });
-          }}
-        />
+        <InputErrorsTooltip errors={errors.customMetas}>
+          <div>
+            <CustomMetadata
+              customMetas={values.customMetas}
+              onChange={(customMetas) => {
+                onChange({
+                  field: "customMetas",
+                  value: customMetas,
+                });
+              }}
+            />
+          </div>
+        </InputErrorsTooltip>
         <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
     </Grid>
@@ -675,13 +818,13 @@ const nameToPath = (pages: Pages | undefined, name: string) => {
     return path;
   }
 
-  if (findPageByIdOrPath(pages, path) === undefined) {
+  if (findPageByIdOrPath(path, pages) === undefined) {
     return path;
   }
 
   let suffix = 1;
 
-  while (findPageByIdOrPath(pages, `${path}${suffix}`) !== undefined) {
+  while (findPageByIdOrPath(`${path}${suffix}`, pages) !== undefined) {
     suffix++;
   }
 
@@ -701,13 +844,23 @@ export const NewPageSettings = ({
     ...fieldDefaultValues,
     path: nameToPath(pages, fieldDefaultValues.name),
   });
-  const errors = validateValues(pages, undefined, values, false);
+  const { variableValues } = useStore($pageRootScope);
+  const errors = validateValues(
+    pages,
+    undefined,
+    values,
+    false,
+    variableValues
+  );
+  const addressBar = useAddressBar({
+    path: values.path,
+  });
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
       createPage(pageId, values);
-      updatePage(pageId, values);
+      updatePage(pageId, values, addressBar);
       onSuccess(pageId);
     }
   };
@@ -720,6 +873,7 @@ export const NewPageSettings = ({
     >
       <FormFields
         autoSelect
+        addressBar={addressBar}
         errors={errors}
         disabled={false}
         values={values}
@@ -782,17 +936,7 @@ const NewPageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onSubmit}>{children}</Form>
     </>
   );
 };
@@ -827,7 +971,11 @@ const createPage = (pageId: Page["id"], values: Values) => {
   );
 };
 
-const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
+const updatePage = (
+  pageId: Page["id"],
+  values: Partial<Values>,
+  addressBar: AddressBarApi
+) => {
   const updatePageMutable = (
     page: Page,
     values: Partial<Values>,
@@ -852,7 +1000,14 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     }
 
     if (values.socialImageAssetId !== undefined) {
-      page.meta.socialImageAssetId = values.socialImageAssetId;
+      page.meta.socialImageAssetId =
+        values.socialImageAssetId.length > 0
+          ? values.socialImageAssetId
+          : undefined;
+    }
+    if (values.socialImageUrl !== undefined) {
+      page.meta.socialImageUrl =
+        values.socialImageUrl.length > 0 ? values.socialImageUrl : undefined;
     }
 
     if (values.customMetas !== undefined) {
@@ -876,7 +1031,6 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         const newHomePageIndex = pages.pages.findIndex(
           (page) => page.id === pageId
         );
-
         if (newHomePageIndex === -1) {
           throw new Error(`Page with id ${pageId} not found`);
         }
@@ -896,91 +1050,26 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
       for (const page of pages.pages) {
         if (page.id === pageId) {
-          // create "Page params" variable when pattern is specified in path
+          // mutate page before working with path params
+          updatePageMutable(page, values, pages.folders);
+          // create "Path Params" variable when pattern is specified in path
           const paramNames = parsePathnamePattern(page.path);
+
           if (paramNames.length > 0 && page.pathVariableId === undefined) {
             page.pathVariableId = nanoid();
             dataSources.set(page.pathVariableId, {
               id: page.pathVariableId,
-              // scope new variable to body
+              // scope new variable to page root
               scopeInstanceId: page.rootInstanceId,
               type: "parameter",
-              name: "Page params",
+              name: "Path Params",
             });
           }
-          updatePageMutable(page, values, pages.folders);
         }
       }
     }
   );
-};
-
-const deletePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
-  // deselect page before deleting to avoid flash of content
-  if ($selectedPageId.get() === pageId) {
-    $selectedPageId.set(pages?.homePage.id);
-    $selectedInstanceSelector.set(undefined);
-  }
-  const rootInstanceId = pages?.pages.find(
-    (page) => page.id === pageId
-  )?.rootInstanceId;
-  if (rootInstanceId !== undefined) {
-    deleteInstance([rootInstanceId]);
-  }
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    removeByMutable(pages.pages, (page) => page.id === pageId);
-    cleanupChildRefsMutable(pageId, pages.folders);
-  });
-};
-
-const duplicatePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
-  const page =
-    pages?.homePage.id === pageId
-      ? pages.homePage
-      : pages?.pages.find((page) => page.id === pageId);
-  if (page === undefined) {
-    return;
-  }
-
-  const newPageId = nanoid();
-  const { name = page.name, copyNumber } =
-    // extract a number from "name (copyNumber)"
-    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
-  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
-
-  const slice = getInstancesSlice(page.rootInstanceId);
-  insertInstancesSliceCopy({
-    slice,
-    availableDataSources: new Set(),
-    beforeTransactionEnd: (rootInstanceId, draft) => {
-      if (draft.pages === undefined) {
-        return;
-      }
-      const newPage = {
-        ...page,
-        id: newPageId,
-        rootInstanceId,
-        name: newName,
-        path: nameToPath(pages, newName),
-      } satisfies Page;
-      draft.pages.pages.push(newPage);
-      const currentFolder = findParentFolderByChildId(
-        pageId,
-        draft.pages.folders
-      );
-      registerFolderChildMutable(
-        draft.pages.folders,
-        newPageId,
-        currentFolder?.id
-      );
-    },
-  });
-  return newPageId;
+  addressBar.savePathParams();
 };
 
 export const PageSettings = ({
@@ -995,7 +1084,7 @@ export const PageSettings = ({
   pageId: string;
 }) => {
   const pages = useStore($pages);
-  const page = pages && findPageByIdOrPath(pages, pageId);
+  const page = pages && findPageByIdOrPath(pageId, pages);
 
   const isHomePage = page?.id === pages?.homePage.id;
 
@@ -1006,7 +1095,18 @@ export const PageSettings = ({
     ...unsavedValues,
   };
 
-  const errors = validateValues(pages, pageId, values, values.isHomePage);
+  const { variableValues } = useStore($pageRootScope);
+  const errors = validateValues(
+    pages,
+    pageId,
+    values,
+    values.isHomePage,
+    variableValues
+  );
+  const addressBar = useAddressBar({
+    path: values.path,
+    dataSourceId: page?.pathVariableId,
+  });
 
   const debouncedFn = useEffectEvent(() => {
     if (
@@ -1016,7 +1116,7 @@ export const PageSettings = ({
       return;
     }
 
-    updatePage(pageId, unsavedValues);
+    updatePage(pageId, unsavedValues, addressBar);
 
     setUnsavedValues({});
   });
@@ -1041,12 +1141,14 @@ export const PageSettings = ({
     ) {
       return;
     }
-    updatePage(pageId, unsavedValues);
+    updatePage(pageId, unsavedValues, addressBar);
   });
 
   const hanldeDelete = () => {
-    deletePage(pageId);
-    onDelete();
+    updateWebstudioData((data) => {
+      deletePageMutable(pageId, data);
+      onDelete();
+    });
   };
 
   if (page === undefined) {
@@ -1065,7 +1167,7 @@ export const PageSettings = ({
       }}
     >
       <FormFields
-        pathVariableId={page.pathVariableId}
+        addressBar={addressBar}
         errors={errors}
         values={values}
         onChange={handleChange}
@@ -1123,17 +1225,7 @@ const PageSettingsView = ({
           </>
         }
       />
-      <Box css={{ overflow: "auto" }}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            onClose?.();
-          }}
-        >
-          {children}
-          <input type="submit" hidden />
-        </form>
-      </Box>
+      <Form onSubmit={onClose}>{children}</Form>
     </>
   );
 };

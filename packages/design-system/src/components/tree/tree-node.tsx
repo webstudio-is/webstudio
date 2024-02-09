@@ -5,6 +5,7 @@ import {
   useState,
   forwardRef,
   type ForwardRefRenderFunction,
+  type MouseEvent,
 } from "react";
 import {
   ChevronFilledDownIcon,
@@ -235,7 +236,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   dropTargetItemSelector?: ItemSelector;
   parentIsSelected?: boolean;
   isSelected?: boolean;
-  onSelect?: (itemSelector: ItemSelector) => void;
+  onSelect?: (itemSelector: ItemSelector, all?: boolean) => void;
   level: number;
   isAlwaysExpanded: boolean;
   shouldRenderExpandButton: boolean;
@@ -296,7 +297,10 @@ export const TreeItemBody = <Data extends { id: string }>({
       return {};
     }
     return selectionEvent === "click"
-      ? { handleClick: () => onSelect(itemSelector) }
+      ? {
+          handleClick: (event: MouseEvent) =>
+            onSelect(itemSelector, event.altKey),
+        }
       : { handleFocus: () => onSelect(itemSelector) };
   }, [selectionEvent, onSelect, itemSelector]);
 

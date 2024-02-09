@@ -43,8 +43,9 @@ const commonPageFields = {
   meta: z.object({
     description: z.string().optional(),
     title: z.string().optional(),
-    excludePageFromSearch: z.boolean().optional(),
+    excludePageFromSearch: z.string().optional(),
     socialImageAssetId: z.string().optional(),
+    socialImageUrl: z.string().optional(),
     custom: z
       .array(
         z.object({
@@ -101,19 +102,37 @@ const ProjectMeta = z.object({
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
 });
+export type ProjectMeta = z.infer<typeof ProjectMeta>;
 
-const ProjectSettings = z.object({
+export const ProjectNewRedirectPath = PagePath.or(
+  z.string().refine((data) => {
+    try {
+      new URL(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Must be a valid URL")
+);
+
+export const PageRedirect = z.object({
+  old: PagePath,
+  new: ProjectNewRedirectPath,
+});
+export type PageRedirect = z.infer<typeof PageRedirect>;
+
+export const CompilerSettings = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   atomicStyles: z.boolean().optional(),
 });
-
-export type ProjectMeta = z.infer<typeof ProjectMeta>;
+export type CompilerSettings = z.infer<typeof CompilerSettings>;
 
 export type Page = z.infer<typeof Page>;
 
 export const Pages = z.object({
   meta: ProjectMeta.optional(),
-  settings: ProjectSettings.optional(),
+  compiler: CompilerSettings.optional(),
+  redirects: z.array(PageRedirect).optional(),
   homePage: HomePage,
   pages: z
     .array(Page)

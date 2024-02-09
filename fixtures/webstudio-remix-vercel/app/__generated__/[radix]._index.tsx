@@ -2,8 +2,9 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Accordion as Accordion,
@@ -18,6 +19,7 @@ import {
   HtmlEmbed as HtmlEmbed,
 } from "@webstudio-is/sdk-components-react";
 
+import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
   {
@@ -60,33 +62,29 @@ export const pageData: PageData = {
     faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
-  page: {
-    id: "xfvB4UThQXmQ_OubPYrkg",
-    name: "radix excluded from the search",
-    title: "Radix Revelations: Unraveling the Feline Mystique",
-    meta: {
-      description:
-        "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
-      excludePageFromSearch: true,
-      socialImageAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
-    },
-    rootInstanceId: "uKWGyE9JY3cPwY-xI9vk6",
-    path: "/radix",
-  },
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
-  let [accordionValue, set$accordionValue] = useState<any>("0");
-  let onValueChange = (value: any) => {
-    accordionValue = value;
-    set$accordionValue(accordionValue);
+export const getPageMeta = ({}: {
+  params: Record<string, undefined | string>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "Radix Revelations: Unraveling the Feline Mystique",
+    description:
+      "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
+    excludePageFromSearch: true,
+    socialImageAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
+    socialImageUrl: undefined,
+    custom: [],
   };
+};
+
+const Page = ({ params: PageParams }: { params: any }) => {
+  let [accordionValue, set$accordionValue] = useState<any>("0");
   return (
     <Body data-ws-id="uKWGyE9JY3cPwY-xI9vk6" data-ws-component="Body">
       <Accordion
@@ -94,7 +92,10 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"
         collapsible={true}
         value={accordionValue}
-        onValueChange={onValueChange}
+        onValueChange={(value: any) => {
+          accordionValue = value;
+          set$accordionValue(accordionValue);
+        }}
       >
         <AccordionItem
           data-ws-id="zJ927zk9txwUbYycKB7QA"
@@ -233,6 +234,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
 
 export { Page };
 
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };

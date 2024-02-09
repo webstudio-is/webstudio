@@ -21,7 +21,8 @@ export const useParentStyle = () => {
     const meta = component
       ? registeredComponentMetas.get(component)
       : undefined;
-    if (meta?.stylable !== false) {
+    // ignore instances without meta and unstylable components
+    if (meta !== undefined && meta.stylable !== false) {
       break;
     }
   }

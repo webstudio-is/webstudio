@@ -17,10 +17,11 @@ import {
   $registeredComponentMetas,
   $selectedInstanceIntanceToTag,
   $selectedInstanceSelector,
-  $selectedStyleSourceSelector,
+  $selectedStyleSources,
   $styleSourceSelections,
   $styleSources,
   $styles,
+  $selectedStyleState,
 } from "~/shared/nano-states";
 import {
   getCascadedBreakpointIds,
@@ -28,6 +29,7 @@ import {
   getInheritedInfo,
   getNextSourceInfo,
   getPreviousSourceInfo,
+  getPriorityStyleSource,
   getStyleSource,
   useStyleInfo,
 } from "./style-info";
@@ -402,7 +404,7 @@ const resetStores = () => {
   $breakpoints.set(new Map());
   $selectedInstanceSelector.set(undefined);
   $selectedInstanceIntanceToTag.set(new Map());
-  $selectedStyleSourceSelector.set(undefined);
+  $selectedStyleSources.set(new Map());
   $selectedInstanceStates.set(new Set());
 };
 
@@ -609,7 +611,7 @@ describe("active states", () => {
       ])
     );
     $selectedInstanceSelector.set(["box"]);
-    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedStyleSources.set(new Map([["box", "box.local"]]));
 
     const { result } = renderHook(() => useStyleInfo());
     expect(getStyleSource(result.current.color)).toEqual("local");
@@ -619,10 +621,8 @@ describe("active states", () => {
     });
 
     act(() => {
-      $selectedStyleSourceSelector.set({
-        styleSourceId: "box.local",
-        state: ":hover",
-      });
+      $selectedStyleSources.set(new Map([["box", "box.local"]]));
+      $selectedStyleState.set(":hover");
     });
     expect(getStyleSource(result.current.color)).toEqual("remote");
     expect(result.current.color?.value).toEqual({
@@ -653,7 +653,7 @@ describe("active states", () => {
       ])
     );
     $selectedInstanceSelector.set(["box"]);
-    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedStyleSources.set(new Map([["box", "box.local"]]));
     $selectedInstanceStates.set(new Set([":hover"]));
 
     const { result } = renderHook(() => useStyleInfo());
@@ -664,10 +664,8 @@ describe("active states", () => {
     });
 
     act(() => {
-      $selectedStyleSourceSelector.set({
-        styleSourceId: "box.local",
-        state: ":hover",
-      });
+      $selectedStyleSources.set(new Map([["box", "box.local"]]));
+      $selectedStyleState.set(":hover");
     });
     expect(getStyleSource(result.current.color)).toEqual("local");
     expect(result.current.color?.value).toEqual({
@@ -710,7 +708,7 @@ describe("active states", () => {
       ])
     );
     $selectedInstanceSelector.set(["box"]);
-    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedStyleSources.set(new Map([["box", "box.local"]]));
     $selectedBreakpointId.set("small");
 
     const { result } = renderHook(() => useStyleInfo());
@@ -823,7 +821,7 @@ describe("active states", () => {
       ])
     );
     $selectedInstanceSelector.set(["box"]);
-    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedStyleSources.set(new Map([["box", "box.local"]]));
 
     const { result } = renderHook(() => useStyleInfo());
     expect(getStyleSource(result.current.color)).toEqual("remote");
@@ -880,7 +878,7 @@ describe("active states", () => {
       ])
     );
     $selectedInstanceSelector.set(["box"]);
-    $selectedStyleSourceSelector.set({ styleSourceId: "box.first" });
+    $selectedStyleSources.set(new Map([["box", "box.first"]]));
     $selectedInstanceStates.set(new Set([":hover"]));
 
     const { result } = renderHook(() => useStyleInfo());
@@ -891,7 +889,7 @@ describe("active states", () => {
     });
 
     act(() => {
-      $selectedStyleSourceSelector.set({ styleSourceId: "box.second" });
+      $selectedStyleSources.set(new Map([["box", "box.second"]]));
     });
     expect(getStyleSource(result.current.color)).toEqual("overwritten");
     expect(result.current.color?.value).toEqual({
@@ -937,7 +935,7 @@ describe("active states", () => {
     );
     $selectedInstanceSelector.set(["box"]);
     $selectedInstanceStates.set(new Set([":hover"]));
-    $selectedStyleSourceSelector.set({ styleSourceId: "box.local" });
+    $selectedStyleSources.set(new Map([["box", "box.local"]]));
     $selectedInstanceIntanceToTag.set(new Map([["box", "div"]]));
 
     const { result } = renderHook(() => useStyleInfo());
@@ -946,5 +944,20 @@ describe("active states", () => {
       type: "keyword",
       value: "green",
     });
+  });
+
+  test("get the style source from ['local', 'default', 'preset']", () => {
+    const result = getPriorityStyleSource(["local", "default", "preset"]);
+    expect(result).toBe("local");
+  });
+
+  test("get the style source from ['local', 'overwritten', 'preset']", () => {
+    const result = getPriorityStyleSource(["local", "overwritten", "preset"]);
+    expect(result).toBe("overwritten");
+  });
+
+  test("get the style source from ['default', 'default', 'preset']", () => {
+    const result = getPriorityStyleSource(["default", "default", "preset"]);
+    expect(result).toBe("preset");
   });
 });

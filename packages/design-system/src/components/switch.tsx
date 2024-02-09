@@ -17,10 +17,11 @@ const switchStyle = css({
   height: theme.spacing[8],
   borderRadius: theme.borderRadius.pill,
   position: "relative",
+  verticalAlign: "middle",
 
   // in Figma there's an extra container with a padding
   // so we need a pseudo element
-  padding: padding,
+  padding,
   "&:before": {
     content: "''",
     position: "absolute",

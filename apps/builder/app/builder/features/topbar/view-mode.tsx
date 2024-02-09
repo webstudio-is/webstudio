@@ -4,6 +4,7 @@ import {
   AccessibleIcon,
   rawTheme,
   Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
 import { CloudIcon } from "@webstudio-is/icons";
 import { $authPermit } from "~/shared/nano-states";
@@ -20,7 +21,7 @@ export const ViewMode = () => {
       <AccessibleIcon label={`View mode`}>
         <Tooltip
           variant="wrapped"
-          content={<>View mode. Your changes will not be saved</>}
+          content={<Text>View mode. Your changes will not be saved</Text>}
         >
           {/* @todo replace the icon, waiting for figma */}
           <CloudIcon width={20} height={20} color={rawTheme.colors.yellow10} />

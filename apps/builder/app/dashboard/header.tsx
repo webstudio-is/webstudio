@@ -16,8 +16,8 @@ import {
   rawTheme,
   theme,
   Button,
-  Text,
-  styled,
+  ProBadge,
+  DropdownMenuSeparator,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -35,22 +35,6 @@ const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
-export const ProBadge = styled(Text, {
-  display: "inline-flex",
-  borderRadius: theme.borderRadius[2],
-  px: theme.spacing[3],
-  py: theme.spacing[1],
-  height: theme.spacing[9],
-  color: theme.colors.foregroundContrastMain,
-  alignItems: "center",
-  maxWidth: "100%",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  // @tood doesn't work in tooltips, needs a workaround
-  textOverflow: "ellipsis",
-  background: theme.colors.backgroundStyleSourceNeutral,
-});
-
 const Menu = ({
   user,
   userPlanFeatures,
@@ -67,7 +51,7 @@ const Menu = ({
           <Flex gap="1" align="center">
             {userPlanFeatures.hasProPlan && (
               <>
-                <ProBadge>Pro</ProBadge>
+                <ProBadge>{userPlanFeatures.planName}</ProBadge>
                 <div />
               </>
             )}
@@ -89,10 +73,6 @@ const Menu = ({
       <DropdownMenuPortal>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{title}</DropdownMenuLabel>
-          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
-            Logout
-          </DropdownMenuItem>
-
           {userPlanFeatures.hasSubscription && (
             <DropdownMenuItem
               onSelect={() => navigate(userPlanSubscriptionPath())}
@@ -103,7 +83,7 @@ const Menu = ({
           {userPlanFeatures.hasProPlan === false && (
             <DropdownMenuItem
               onSelect={() => {
-                window.location.assign("https://webstudio.is/pricing");
+                window.open("https://webstudio.is/pricing");
               }}
               css={{
                 gap: theme.spacing[3],
@@ -113,6 +93,10 @@ const Menu = ({
               <div>Upgrade to Pro</div>
             </DropdownMenuItem>
           )}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => navigate(logoutPath())}>
+            Sign Out
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
@@ -133,7 +117,7 @@ export const Header = ({
       justify="between"
       className={containerStyle()}
     >
-      <WebstudioIcon width={30} height={23} />
+      <WebstudioIcon size={22} />
 
       <Menu user={user} userPlanFeatures={userPlanFeatures} />
     </Flex>

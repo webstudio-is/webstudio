@@ -83,6 +83,10 @@ export const loader = async ({
       throw new Error("User plan features are not defined");
     }
 
+    if (project.userId === null) {
+      throw new AuthorizationError("Project must have project userId defined");
+    }
+
     return {
       project,
       domains,

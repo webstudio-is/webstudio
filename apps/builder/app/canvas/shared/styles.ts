@@ -23,7 +23,7 @@ import {
   $isPreviewMode,
   $registeredComponentMetas,
   $selectedInstanceSelector,
-  $selectedStyleSourceSelector,
+  $selectedStyleState,
 } from "~/shared/nano-states";
 import {
   type StyleRule,
@@ -265,12 +265,12 @@ const getOrCreateRule = ({
 const useSelectedState = (instanceId: Instance["id"]) => {
   const $selectedState = useMemo(() => {
     return computed(
-      [$selectedInstanceSelector, $selectedStyleSourceSelector],
-      (selectedInstanceSelector, selectedStyleSourceSelector) => {
+      [$selectedInstanceSelector, $selectedStyleState],
+      (selectedInstanceSelector, selectedStyleState) => {
         if (selectedInstanceSelector?.[0] !== instanceId) {
           return;
         }
-        return selectedStyleSourceSelector?.state;
+        return selectedStyleState;
       }
     );
   }, [instanceId]);

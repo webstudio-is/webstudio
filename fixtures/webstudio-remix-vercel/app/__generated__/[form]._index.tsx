@@ -2,8 +2,9 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { PageData } from "~/routes/_index";
 import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import { useResource } from "@webstudio-is/react-sdk";
+import type { PageMeta } from "@webstudio-is/react-sdk";
 import {
   Body as Body,
   Form as Form,
@@ -16,6 +17,7 @@ import {
   Heading as Heading,
 } from "@webstudio-is/sdk-components-react";
 
+import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
   {
@@ -58,40 +60,39 @@ export const pageData: PageData = {
     faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     code: "<script>console.log('KittyGuardedZone')</script>\n",
   },
-  page: {
-    id: "U1tRJl2ERr8_OFe0g9cN_",
-    name: "form",
-    title: "form",
-    meta: { description: "" },
-    rootInstanceId: "a-4nDFkaWy4px1fn38XWJ",
-    path: "/form",
-  },
 };
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-type Params = Record<string, string | undefined>;
-type Resources = Record<string, unknown>;
-const Page = (_props: { params: Params; resources: Resources }) => {
+export const getPageMeta = ({}: {
+  params: Record<string, undefined | string>;
+  resources: Record<string, any>;
+}): PageMeta => {
+  return {
+    title: "form",
+    description: "",
+    excludePageFromSearch: undefined,
+    socialImageAssetId: undefined,
+    socialImageUrl: undefined,
+    custom: [],
+  };
+};
+
+const Page = ({ params: PageParams }: { params: any }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
-  let onStateChange = (state: any) => {
-    formState = state;
-    set$formState(formState);
-  };
-  let onStateChange_1 = (state: any) => {
-    formState_1 = state;
-    set$formState_1(formState_1);
-  };
   return (
     <Body data-ws-id="a-4nDFkaWy4px1fn38XWJ" data-ws-component="Body">
       <Form
         data-ws-id="-1RvizaBcVpHsjvnYxn1c"
         data-ws-component="Form"
         state={formState_1}
-        onStateChange={onStateChange_1}
+        onStateChange={(state: any) => {
+          formState_1 = state;
+          set$formState_1(formState_1);
+        }}
       >
         {(formState_1 === "initial" || formState_1 === "error") && (
           <Box data-ws-id="qhnVrmYGlyrMZi3UzqSQA" data-ws-component="Box">
@@ -141,7 +142,10 @@ const Page = (_props: { params: Params; resources: Resources }) => {
         data-ws-id="isNSM3wXcnHFikwNPlEOL"
         data-ws-component="Form"
         state={formState}
-        onStateChange={onStateChange}
+        onStateChange={(state: any) => {
+          formState = state;
+          set$formState(formState);
+        }}
         method={"get"}
         action={"/custom"}
       >
@@ -195,6 +199,7 @@ const Page = (_props: { params: Params; resources: Resources }) => {
 
 export { Page };
 
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };

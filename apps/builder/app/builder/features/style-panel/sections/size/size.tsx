@@ -1,6 +1,6 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import { Flex, Grid } from "@webstudio-is/design-system";
+import { Grid, Separator, styled } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { RenderCategoryProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";
@@ -62,6 +62,12 @@ const properties: StyleProperty[] = [
   "aspectRatio",
 ];
 
+const Section = styled(Grid, {
+  columnGap: theme.spacing[5],
+  rowGap: theme.spacing[5],
+  px: theme.spacing[9],
+});
+
 export const SizeSection = ({
   currentStyle: style,
   setProperty,
@@ -72,11 +78,9 @@ export const SizeSection = ({
       label="Size"
       currentStyle={style}
       properties={properties}
+      fullWidth
     >
-      <Grid
-        columns={2}
-        css={{ columnGap: theme.spacing[5], rowGap: theme.spacing[7] }}
-      >
+      <Section columns={2}>
         <SizeField
           property="width"
           style={style}
@@ -125,6 +129,9 @@ export const SizeSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
+      </Section>
+      <Separator />
+      <Section columns={2}>
         <PropertyName
           label={styleConfigByName("overflow").label}
           properties={["overflow"]}
@@ -184,8 +191,6 @@ export const SizeSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-      </Grid>
-      <Flex justify="between">
         <PropertyName
           label={styleConfigByName("objectPosition").label}
           properties={["objectPosition"]}
@@ -198,7 +203,7 @@ export const SizeSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-      </Flex>
+      </Section>
     </CollapsibleSection>
   );
 };

@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
-import type { Page } from "@webstudio-is/sdk";
-import { findPageByIdOrPath } from "@webstudio-is/project-build";
+import { findPageByIdOrPath, type Page } from "@webstudio-is/sdk";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   $authToken,
@@ -23,7 +22,7 @@ export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
     return;
   }
 
-  const page = findPageByIdOrPath(pages, pageId);
+  const page = findPageByIdOrPath(pageId, pages);
 
   if (page === undefined) {
     return;

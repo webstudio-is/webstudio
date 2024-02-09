@@ -30,6 +30,7 @@ export const loadById = async (
     where: { id_isDeleted: { id: projectId, isDeleted: false } },
     include: {
       latestBuild: true,
+      previewImageAsset: true,
     },
   });
 
@@ -92,6 +93,19 @@ export const markAsDeleted = async (
   });
 };
 
+const assertEditPermission = async (projectId: string, context: AppContext) => {
+  const canEdit = await authorizeProject.hasProjectPermit(
+    { projectId, permit: "edit" },
+    context
+  );
+
+  if (canEdit === false) {
+    throw new Error(
+      "Only a token or user with edit permission can edit the project."
+    );
+  }
+};
+
 export const rename = async (
   {
     projectId,
@@ -104,16 +118,7 @@ export const rename = async (
 ) => {
   Title.parse(title);
 
-  const canEdit = await authorizeProject.hasProjectPermit(
-    { projectId, permit: "edit" },
-    context
-  );
-
-  if (canEdit === false) {
-    throw new Error(
-      "Only a token or user with edit permission can edit the project."
-    );
-  }
+  await assertEditPermission(projectId, context);
 
   return await prisma.project.update({
     where: { id: projectId },
@@ -121,69 +126,25 @@ export const rename = async (
   });
 };
 
-const clone = async (
+export const updatePreviewImage = async (
   {
-    project,
-    title,
-    env = "dev",
+    projectId,
+    assetId,
   }: {
-    project: Project;
-    title?: string;
-    env?: "dev" | "prod";
+    projectId: Project["id"];
+    assetId: string | null;
   },
   context: AppContext
 ) => {
-  const userId = context.authorization.userId;
+  await assertEditPermission(projectId, context);
 
-  if (userId === undefined) {
-    throw new Error("The user must be authenticated to clone the project");
-  }
-
-  const newProjectId = uuid();
-  await authorizeProject.registerProjectOwner(
-    { projectId: newProjectId },
-    context
-  );
-
-  const clonedProject = await prisma.$transaction(async (client) => {
-    const clonedProject = await client.project.create({
-      data: {
-        id: newProjectId,
-        userId: userId,
-        title: title ?? project.title,
-        domain: generateDomain(project.title),
-      },
-    });
-
-    await cloneBuild(
-      {
-        fromProjectId: project.id,
-        toProjectId: newProjectId,
-        deployment: undefined,
-      },
-      context,
-      client
-    );
-
-    await cloneAssets(
-      {
-        fromProjectId: project.id,
-        toProjectId: newProjectId,
-
-        // Permission check on newProjectId will fail until this transaction is committed.
-        // We have to skip it, but it's ok because registerProjectOwner is right above
-        dontCheckEditPermission: true,
-      },
-      context
-    );
-
-    return clonedProject;
+  return await prisma.project.update({
+    where: { id: projectId },
+    data: { previewImageAssetId: assetId },
   });
-
-  return Project.parse(clonedProject);
 };
 
-export const duplicate = async (
+export const clone = async (
   {
     projectId,
     title,
@@ -197,13 +158,59 @@ export const duplicate = async (
   if (project === null) {
     throw new Error(`Not found project "${projectId}"`);
   }
-  return await clone(
-    {
-      project,
-      title: title ?? `${project.title} (copy)`,
-    },
+
+  const { userId } = context.authorization;
+
+  if (userId === undefined) {
+    throw new Error("The user must be authenticated to clone the project");
+  }
+
+  const newProjectId = uuid();
+  await authorizeProject.registerProjectOwner(
+    { projectId: newProjectId },
     context
   );
+
+  const clonedProject = await prisma.$transaction(async (client) => {
+    await cloneAssets(
+      {
+        fromProjectId: project.id,
+        toProjectId: newProjectId,
+
+        // Permission check on newProjectId will fail until this transaction is committed.
+        // We have to skip it, but it's ok because registerProjectOwner is right above
+        dontCheckEditPermission: true,
+      },
+      context
+    );
+
+    const clonedProject = await client.project.create({
+      data: {
+        id: newProjectId,
+        userId: userId,
+        title: title ?? `${project.title} (copy)`,
+        domain: generateDomain(project.title),
+        previewImageAssetId: project.previewImageAsset?.id,
+      },
+      include: {
+        previewImageAsset: true,
+      },
+    });
+
+    await cloneBuild(
+      {
+        fromProjectId: project.id,
+        toProjectId: newProjectId,
+        deployment: undefined,
+      },
+      context,
+      client
+    );
+
+    return clonedProject;
+  });
+
+  return Project.parse(clonedProject);
 };
 
 export const updateDomain = async (
@@ -221,16 +228,7 @@ export const updateDomain = async (
 
   const { domain } = domainValidation;
 
-  const canEdit = await authorizeProject.hasProjectPermit(
-    { projectId: input.id, permit: "edit" },
-    context
-  );
-
-  if (canEdit === false) {
-    throw new Error(
-      "Only a token or user with edit permission can edit the project."
-    );
-  }
+  await assertEditPermission(input.id, context);
 
   try {
     const project = await prisma.project.update({

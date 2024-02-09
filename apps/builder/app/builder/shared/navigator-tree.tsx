@@ -9,7 +9,6 @@ import {
   $rootInstance,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
-  $selectedStyleSourceSelector,
   $registeredComponentMetas,
   $dragAndDropState,
 } from "~/shared/nano-states";
@@ -125,7 +124,6 @@ export const NavigatorTree = () => {
     }
     $selectedInstanceSelector.set(instanceSelector);
     $textEditingInstanceSelector.set(undefined);
-    $selectedStyleSourceSelector.set(undefined);
   }, []);
 
   if (rootInstance === undefined) {
@@ -143,7 +141,8 @@ export const NavigatorTree = () => {
       onSelect={handleSelect}
       onHover={$hoveredInstanceSelector.set}
       onDragItemChange={(dragInstanceSelector) => {
-        if (isInstanceDetachable(dragInstanceSelector) === false) {
+        const instances = $instances.get();
+        if (isInstanceDetachable(instances, dragInstanceSelector) === false) {
           toast.error(
             "This instance can not be moved outside of its parent component."
           );

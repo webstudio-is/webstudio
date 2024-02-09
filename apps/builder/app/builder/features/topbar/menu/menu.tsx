@@ -19,6 +19,8 @@ import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
+  $userPlanFeatures,
+  $isCloneDialogOpen,
 } from "~/builder/shared/nano-states";
 import {
   getThemeSetting,
@@ -31,6 +33,7 @@ import { $authPermit } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
+import { UploadIcon } from "@webstudio-is/icons";
 
 const ThemeMenuItem = () => {
   if (isFeatureEnabled("dark") === false) {
@@ -93,19 +96,20 @@ export const Menu = () => {
   const navigate = useNavigate();
   const [, setIsShareOpen] = useIsShareDialogOpen();
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
+  const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
-  const isShareDisabled = authPermit !== "own";
+  const isShareEnabled = authPermit === "own";
 
   const disabledPublishTooltipContent = isPublishEnabled
     ? undefined
     : "Only owner or admin can publish projects";
 
-  const disabledShareTooltipContent = isShareDisabled
-    ? "Only owner can share projects"
-    : undefined;
+  const disabledShareTooltipContent = isShareEnabled
+    ? undefined
+    : "Only owner can share projects";
 
   return (
     <DropdownMenu>
@@ -124,6 +128,22 @@ export const Menu = () => {
           >
             Dashboard
           </DropdownMenuItem>
+          <Tooltip side="right" content={undefined}>
+            <DropdownMenuItem
+              onSelect={() => {
+                $isProjectSettingsOpen.set(true);
+              }}
+            >
+              Project Settings
+            </DropdownMenuItem>
+          </Tooltip>
+          <DropdownMenuItem onSelect={() => emitCommand("openBreakpointsMenu")}>
+            Breakpoints
+            <DropdownMenuItemRightSlot>
+              <ShortcutHint value={["cmd", "b"]} />
+            </DropdownMenuItemRightSlot>
+          </DropdownMenuItem>
+          <ViewMenuItem />
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => emitCommand("undo")}>
             Undo
@@ -137,7 +157,6 @@ export const Menu = () => {
               <ShortcutHint value={["shift", "cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
           {/* https://github.com/webstudio-is/webstudio/issues/499
 
           <DropdownMenuItem
@@ -165,15 +184,7 @@ export const Menu = () => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => emitCommand("openBreakpointsMenu")}>
-            Breakpoints
-            <DropdownMenuItemRightSlot>
-              <ShortcutHint value={["cmd", "b"]} />
-            </DropdownMenuItemRightSlot>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
           <ThemeMenuItem />
-          <ViewMenuItem />
           <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
             Preview
             <DropdownMenuItemRightSlot>
@@ -186,7 +197,7 @@ export const Menu = () => {
               onSelect={() => {
                 setIsShareOpen(true);
               }}
-              disabled={isShareDisabled}
+              disabled={isShareEnabled === false}
             >
               Share
             </DropdownMenuItem>
@@ -202,15 +213,35 @@ export const Menu = () => {
               Publish
             </DropdownMenuItem>
           </Tooltip>
-          <Tooltip side="right" content={undefined}>
-            <DropdownMenuItem
-              onSelect={() => {
-                $isProjectSettingsOpen.set(true);
-              }}
-            >
-              Project Settings
-            </DropdownMenuItem>
-          </Tooltip>
+          <DropdownMenuItem
+            onSelect={() => {
+              $isCloneDialogOpen.set(true);
+            }}
+          >
+            Clone
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
+              window.open("https://docs.webstudio.is");
+            }}
+          >
+            Learn Webstudio
+          </DropdownMenuItem>
+          {hasProPlan === false && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => {
+                  window.open("https://webstudio.is/pricing");
+                }}
+                css={{ gap: theme.spacing[3] }}
+              >
+                <UploadIcon />
+                <div>Upgrade to Pro</div>
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenuPortal>
     </DropdownMenu>
