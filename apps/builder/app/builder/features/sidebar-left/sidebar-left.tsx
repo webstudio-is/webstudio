@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
