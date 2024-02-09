@@ -172,9 +172,12 @@ export const ColorPicker = ({
     if (open) {
       // Dragging over canvas iframe with CORS policies will lead to loosing events and getting stuck in mousedown state.
       disableCanvasPointerEvents();
+      // User may drag outside of the color picker and that will select everything.
+      document.body.style.userSelect = "none";
       return;
     }
 
+    document.body.style.removeProperty("user-select");
     enableCanvasPointerEvents();
   };
 
@@ -192,10 +195,6 @@ export const ColorPicker = ({
         <SketchPicker
           color={rgbValue}
           onChange={(color: ColorResult, event) => {
-            // Prevents selection of text during drag.
-            if (event.type === "mousedown") {
-              event.preventDefault();
-            }
             const newColor = fixColor(color);
             onChange(newColor);
           }}
