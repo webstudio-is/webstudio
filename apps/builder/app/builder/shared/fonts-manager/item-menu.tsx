@@ -10,7 +10,7 @@ import {
   styled,
   Tooltip,
 } from "@webstudio-is/design-system";
-import { MenuIcon } from "@webstudio-is/icons";
+import { EllipsesIcon } from "@webstudio-is/icons";
 import { type FocusEventHandler, useState, useRef, useEffect } from "react";
 import { theme } from "@webstudio-is/design-system";
 import { $authPermit } from "~/shared/nano-states";
@@ -75,7 +75,7 @@ const ItemMenu = ({
             event.stopPropagation();
           }}
         >
-          <MenuIcon />
+          <EllipsesIcon />
         </MenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>

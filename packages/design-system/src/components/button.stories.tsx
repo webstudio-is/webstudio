@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
-import { MenuIcon, CrossIcon, TrashIcon } from "@webstudio-is/icons";
+import { EllipsesIcon, CrossIcon, TrashIcon } from "@webstudio-is/icons";
 import { Button as ButtonComponent } from "./button";
 import {
   Popover,
@@ -16,7 +16,7 @@ export default {
 
 const iconsMap = {
   undefined: undefined,
-  "<MenuIcon>": <MenuIcon />,
+  "<EllipsesIcon>": <EllipsesIcon />,
   "<CrossIcon>": <CrossIcon />,
   "<TrashIcon>": <TrashIcon />,
 } as const;

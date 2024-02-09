@@ -39,7 +39,7 @@ import { Button } from "./button";
 import {
   ChevronDownIcon,
   TrashIcon,
-  MenuIcon,
+  EllipsesIcon,
   DotIcon,
 } from "@webstudio-is/icons";
 import { useState } from "react";
@@ -55,7 +55,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   return (
     <DropdownMenu defaultOpen>
       <DropdownMenuTrigger asChild>
-        <Button prefix={<MenuIcon />} />
+        <Button prefix={<EllipsesIcon />} />
       </DropdownMenuTrigger>
       <DropdownMenuContent width="regular">
         <DropdownMenuLabel>Not choosable</DropdownMenuLabel>
