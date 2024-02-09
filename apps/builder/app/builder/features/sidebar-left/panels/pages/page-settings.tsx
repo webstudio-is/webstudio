@@ -48,11 +48,7 @@ import {
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
-import {
-  getInstancesSlice,
-  insertInstancesSliceCopy,
-  updateWebstudioData,
-} from "~/shared/instance-utils";
+import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   $assets,
   $domains,
@@ -83,6 +79,7 @@ import {
   registerFolderChildMutable,
   deletePageMutable,
   $pageRootScope,
+  duplicatePage,
 } from "./page-utils";
 import { Form } from "./form";
 import { AddressBar, useAddressBar, type AddressBarApi } from "./address-bar";
@@ -1073,51 +1070,6 @@ const updatePage = (
     }
   );
   addressBar.savePathParams();
-};
-
-const duplicatePage = (pageId: Page["id"]) => {
-  const pages = $pages.get();
-  if (pages === undefined) {
-    return;
-  }
-  const page = findPageByIdOrPath(pageId, pages);
-
-  if (page === undefined) {
-    return;
-  }
-
-  const newPageId = nanoid();
-  const { name = page.name, copyNumber } =
-    // extract a number from "name (copyNumber)"
-    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
-  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
-
-  const slice = getInstancesSlice(page.rootInstanceId);
-  updateWebstudioData((data) => {
-    const rootInstanceId = insertInstancesSliceCopy({
-      data,
-      slice,
-      availableDataSources: new Set(),
-    });
-    if (rootInstanceId === undefined) {
-      return;
-    }
-    const newPage = {
-      ...page,
-      id: newPageId,
-      rootInstanceId,
-      name: newName,
-      path: nameToPath(pages, newName),
-    } satisfies Page;
-    data.pages.pages.push(newPage);
-    const currentFolder = findParentFolderByChildId(pageId, data.pages.folders);
-    registerFolderChildMutable(
-      data.pages.folders,
-      newPageId,
-      currentFolder?.id
-    );
-  });
-  return newPageId;
 };
 
 export const PageSettings = ({

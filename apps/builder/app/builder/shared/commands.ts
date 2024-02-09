@@ -187,7 +187,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         const parentInstanceSelector = instanceSelector.slice(1);
         const slice = getInstancesSlice(targetInstanceId);
         updateWebstudioData((data) => {
-          const rootInstanceId = insertInstancesSliceCopy({
+          const { newInstanceIds } = insertInstancesSliceCopy({
             data,
             slice,
             availableDataSources: findAvailableDataSources(
@@ -196,7 +196,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
               parentInstanceSelector
             ),
           });
-          if (rootInstanceId === undefined) {
+          const newRootInstanceId = newInstanceIds.get(targetInstanceId);
+          if (newRootInstanceId === undefined) {
             return;
           }
           const parentInstance = data.instances.get(parentInstanceId);
@@ -210,11 +211,11 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
           const position = indexWithinChildren + 1;
           parentInstance.children.splice(position, 0, {
             type: "id",
-            value: rootInstanceId,
+            value: newRootInstanceId,
           });
           // select new instance
           $selectedInstanceSelector.set([
-            rootInstanceId,
+            newRootInstanceId,
             ...parentInstanceSelector,
           ]);
         });

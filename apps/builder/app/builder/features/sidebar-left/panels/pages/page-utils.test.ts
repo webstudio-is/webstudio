@@ -1,4 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
+import type { Project } from "@webstudio-is/project";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { isRoot, type Folder, Instance } from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
   deleteFolderWithChildrenMutable,
@@ -9,9 +12,21 @@ import {
   toTreeData,
   filterSelfAndChildren,
   getExistingRoutePaths,
+  duplicatePage,
 } from "./page-utils";
-import { createDefaultPages } from "@webstudio-is/project-build";
-import { isRoot, type Folder } from "@webstudio-is/sdk";
+import {
+  $dataSources,
+  $instances,
+  $pages,
+  $project,
+} from "~/shared/nano-states";
+import { registerContainers } from "~/shared/sync";
+import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
+
+registerContainers();
+
+const toMap = <T extends { id: string }>(list: T[]) =>
+  new Map(list.map((item) => [item.id, item]));
 
 describe("toTreeData", () => {
   test("initial pages always has home pages and a root folder", () => {
@@ -490,5 +505,190 @@ describe("getExistingRoutePaths", () => {
 
     const result = getExistingRoutePaths(pages);
     expect(Array.from(result)).toEqual(["/page", "/blog/:id"]);
+  });
+});
+
+describe("duplicate page", () => {
+  $project.set({ id: "projectId" } as Project);
+
+  test("home page with new root instance", () => {
+    $instances.set(
+      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+    );
+    $pages.set({
+      homePage: {
+        id: "pageId",
+        name: "My Name",
+        path: "/",
+        title: `"My Title"`,
+        meta: {},
+        rootInstanceId: "body",
+      },
+      pages: [],
+      folders: [],
+    });
+    duplicatePage("pageId");
+    expect($pages.get()?.pages[0]).toEqual({
+      id: expect.not.stringMatching("pageId"),
+      name: "My Name (1)",
+      path: "/copy-1",
+      title: `"My Title"`,
+      meta: {},
+      rootInstanceId: expect.not.stringMatching("body"),
+    });
+    expect($instances.get()).toEqual(
+      toMap<Instance>([
+        {
+          type: "instance",
+          id: "body",
+          component: "Body",
+          children: [],
+        },
+        {
+          type: "instance",
+          id: expect.not.stringMatching("body") as unknown as string,
+          component: "Body",
+          children: [],
+        },
+      ])
+    );
+  });
+
+  test("non-home page preserving old path with prefix", () => {
+    $instances.set(
+      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+    );
+    $pages.set({
+      homePage: {
+        id: "homeId",
+        name: "Home",
+        path: "/",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "home",
+      },
+      pages: [
+        {
+          id: "pageId",
+          name: "My Name",
+          path: "/my-path",
+          title: `"My Title"`,
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+      folders: [],
+    });
+    duplicatePage("pageId");
+    expect($pages.get()?.pages[1]).toEqual({
+      id: expect.not.stringMatching("pageId"),
+      name: "My Name (1)",
+      path: "/copy-1/my-path",
+      title: `"My Title"`,
+      meta: {},
+      rootInstanceId: expect.not.stringMatching("body"),
+    });
+  });
+
+  test("replace variables in page meta", () => {
+    $instances.set(
+      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "variableId",
+          scopeInstanceId: "body",
+          name: "My Variable",
+          type: "variable",
+          value: { type: "string", value: "value" },
+        },
+      ])
+    );
+    $pages.set({
+      homePage: {
+        id: "pageId",
+        name: "My Name",
+        path: "/",
+        title: `"Title: " + $ws$dataSource$variableId`,
+        meta: {
+          description: `"Description: " + $ws$dataSource$variableId`,
+          excludePageFromSearch: `"Exclude: " + $ws$dataSource$variableId`,
+          socialImageUrl: `"Image: " + $ws$dataSource$variableId`,
+          custom: [
+            {
+              property: "Name",
+              content: `"Name: " + $ws$dataSource$variableId`,
+            },
+          ],
+        },
+        rootInstanceId: "body",
+      },
+      pages: [],
+      folders: [],
+    });
+    duplicatePage("pageId");
+    const [_oldDataSource, newDataSource] = $dataSources.get().values();
+    const newVariableName = encodeDataSourceVariable(newDataSource.id);
+    expect(newVariableName).not.toEqual("$ws$dataSource$variableId");
+    expect($pages.get()?.pages[0]).toEqual({
+      id: expect.not.stringMatching("pageId"),
+      name: "My Name (1)",
+      path: "/copy-1",
+      title: `"Title: " + ${newVariableName}`,
+      meta: {
+        description: `"Description: " + ${newVariableName}`,
+        excludePageFromSearch: `"Exclude: " + ${newVariableName}`,
+        socialImageUrl: `"Image: " + ${newVariableName}`,
+        custom: [
+          {
+            property: "Name",
+            content: `"Name: " + ${newVariableName}`,
+          },
+        ],
+      },
+      rootInstanceId: expect.not.stringMatching("body"),
+    });
+  });
+
+  test("replace path params variable", () => {
+    $instances.set(
+      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+    );
+    $dataSources.set(
+      toMap([
+        {
+          id: "pathParamsId",
+          scopeInstanceId: "body",
+          name: "Path Params",
+          type: "parameter",
+        },
+      ])
+    );
+    $pages.set({
+      homePage: {
+        id: "pageId",
+        name: "My Name",
+        path: "/",
+        title: `"My Title"`,
+        meta: {},
+        rootInstanceId: "body",
+        pathVariableId: "pathParamsId",
+      },
+      pages: [],
+      folders: [],
+    });
+    duplicatePage("pageId");
+    const [_oldDataSource, newDataSource] = $dataSources.get().values();
+    expect(newDataSource.id).not.toEqual("pathParamsId");
+    expect($pages.get()?.pages[0]).toEqual({
+      id: expect.not.stringMatching("pageId"),
+      name: "My Name (1)",
+      path: "/copy-1",
+      title: `"My Title"`,
+      meta: {},
+      rootInstanceId: expect.not.stringMatching("body"),
+      pathVariableId: newDataSource.id,
+    });
   });
 });
