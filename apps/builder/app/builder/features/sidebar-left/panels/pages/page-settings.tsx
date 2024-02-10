@@ -41,8 +41,6 @@ import {
   ChevronDoubleLeftIcon,
   CopyIcon,
   TrashIcon,
-  CheckMarkIcon,
-  LinkIcon,
   HomeIcon,
   HelpIcon,
 } from "@webstudio-is/icons";
@@ -51,10 +49,8 @@ import { Header, HeaderSuffixSpacer } from "../../header";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   $assets,
-  $domains,
   $instances,
   $pages,
-  $project,
   $selectedInstanceSelector,
   $dataSources,
   computeExpression,
@@ -73,7 +69,6 @@ import { SocialPreview } from "./social-preview";
 // @todo should be moved to shared because features should not depend on features
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
-import env from "~/shared/env";
 import { parsePathnamePattern, validatePathnamePattern } from "./url-pattern";
 import {
   registerFolderChildMutable,
@@ -251,55 +246,6 @@ const toFormValues = (
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
 
-const CopyPageDomainAndPathButton = ({
-  pageDomainAndPath,
-}: {
-  pageDomainAndPath: string;
-}) => {
-  const [pathIconState, setPathIconState] = useState<
-    "link" | "copy" | "checkmark"
-  >("link");
-
-  let pathIcon = <CopyIcon />;
-  if (pathIconState === "checkmark") {
-    pathIcon = <CheckMarkIcon />;
-  } else if (pathIconState === "link") {
-    pathIcon = <LinkIcon />;
-  }
-
-  return (
-    <Tooltip
-      content={pathIconState === "checkmark" ? "Copied" : "Click to copy"}
-    >
-      <Button
-        color="ghost"
-        type="button"
-        onPointerDown={(event) => {
-          navigator.clipboard.writeText(`https://${pageDomainAndPath}`);
-          setPathIconState("checkmark");
-          // Prevent tooltip to be closed
-          event.stopPropagation();
-        }}
-        // Recreating Icon without pointer-events: none cause mouse leave/enter event to be fired again
-        prefix={
-          <Grid align="center" css={{ pointerEvents: "none" }}>
-            {pathIcon}
-          </Grid>
-        }
-        css={{ justifySelf: "start" }}
-        onMouseEnter={() => {
-          setPathIconState("copy");
-        }}
-        onMouseLeave={() => {
-          setPathIconState("link");
-        }}
-      >
-        {pageDomainAndPath}
-      </Button>
-    </Tooltip>
-  );
-};
-
 const FormFields = ({
   addressBar,
   disabled,
@@ -336,27 +282,6 @@ const FormFields = ({
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
-  const project = $project.get();
-  const customDomain: string | undefined = $domains.get()[0];
-  const projectDomain = `${project?.domain}.${
-    env.PUBLISHER_HOST ?? "wstd.work"
-  }`;
-  const domain = customDomain ?? projectDomain;
-
-  const publishedUrl = new URL(`https://${domain}`);
-
-  const foldersPath = getPagePath(values.parentFolderId, pages);
-
-  const pageDomainAndPath = [
-    publishedUrl.host,
-    foldersPath,
-    addressBar.compiledPath,
-  ]
-    .filter(Boolean)
-    .join("/")
-    .replace(/\/+/g, "/");
-  const pageUrl = `https://${pageDomainAndPath}`;
-
   const title = String(computeExpression(values.title, variableValues));
   const description = String(
     computeExpression(values.description, variableValues)
@@ -379,7 +304,6 @@ const FormFields = ({
             <Label htmlFor={fieldIds.name}>Page Name</Label>
             <InputErrorsTooltip errors={errors.name}>
               <InputField
-                tabIndex={1}
                 color={errors.name && "error"}
                 id={fieldIds.name}
                 autoFocus
@@ -428,7 +352,6 @@ const FormFields = ({
             <Grid gap={1}>
               <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
               <Select
-                tabIndex={1}
                 css={{ zIndex: theme.zIndices[1] }}
                 options={pages.folders}
                 getValue={(folder) => folder.id}
@@ -460,7 +383,7 @@ const FormFields = ({
                     >
                       <HelpIcon
                         color={rawTheme.colors.foregroundSubtle}
-                        tabIndex={0}
+                        tabIndex={-1}
                       />
                     </Tooltip>
                   )}
@@ -468,7 +391,6 @@ const FormFields = ({
               </Label>
               <InputErrorsTooltip errors={errors.path}>
                 <InputField
-                  tabIndex={1}
                   color={errors.path && "error"}
                   id={fieldIds.path}
                   name="path"
@@ -483,7 +405,6 @@ const FormFields = ({
             </Grid>
           )}
           <AddressBar addressBar={addressBar} />
-          <CopyPageDomainAndPathButton pageDomainAndPath={pageDomainAndPath} />
         </Grid>
 
         <Separator />
@@ -518,7 +439,7 @@ const FormFields = ({
                   <SearchPreview
                     siteName={pages?.meta?.siteName ?? ""}
                     faviconUrl={faviconUrl}
-                    pageUrl={pageUrl}
+                    pageUrl={addressBar.pageUrl}
                     titleLink={title}
                     snippet={description}
                   />
@@ -554,7 +475,6 @@ const FormFields = ({
               )}
               <InputErrorsTooltip errors={errors.title}>
                 <InputField
-                  tabIndex={1}
                   color={errors.title && "error"}
                   id={fieldIds.title}
                   name="title"
@@ -603,7 +523,6 @@ const FormFields = ({
               )}
               <InputErrorsTooltip errors={errors.description}>
                 <TextArea
-                  tabIndex={1}
                   state={errors.description && "invalid"}
                   id={fieldIds.description}
                   name="description"
@@ -778,7 +697,7 @@ const FormFields = ({
                 ? socialImageAsset.name
                 : socialImageUrl
             }
-            ogUrl={pageUrl}
+            ogUrl={addressBar.pageUrl}
             ogTitle={title}
             ogDescription={description}
           />
@@ -852,8 +771,13 @@ export const NewPageSettings = ({
     false,
     variableValues
   );
+  const foldersPath =
+    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
   const addressBar = useAddressBar({
-    path: values.path,
+    path: [foldersPath, values.path]
+      .filter(Boolean)
+      .join("/")
+      .replace(/\/+/g, "/"),
   });
 
   const handleSubmit = () => {
@@ -1103,8 +1027,13 @@ export const PageSettings = ({
     values.isHomePage,
     variableValues
   );
+  const foldersPath =
+    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
   const addressBar = useAddressBar({
-    path: values.path,
+    path: [foldersPath, values.path]
+      .filter(Boolean)
+      .join("/")
+      .replace(/\/+/g, "/"),
     dataSourceId: page?.pathVariableId,
   });
 
