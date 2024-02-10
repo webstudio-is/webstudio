@@ -18,7 +18,7 @@ import {
   ChevronRightIcon,
   FolderIcon,
   HomeIcon,
-  MenuIcon,
+  EllipsesIcon,
   NewFolderIcon,
   NewPageIcon,
   PageIcon,
@@ -110,7 +110,7 @@ const ItemSuffix = ({
         onClick={() => onEdit(isEditing ? undefined : itemId)}
         ref={buttonRef}
       >
-        {isEditing ? <ChevronRightIcon /> : <MenuIcon />}
+        {isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
       </MenuButton>
     </Tooltip>
   );

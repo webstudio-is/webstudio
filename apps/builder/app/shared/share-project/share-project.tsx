@@ -21,7 +21,12 @@ import {
   Link,
   buttonStyle,
 } from "@webstudio-is/design-system";
-import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
+import {
+  CopyIcon,
+  EllipsesIcon,
+  PlusIcon,
+  HelpIcon,
+} from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
@@ -112,7 +117,7 @@ const Menu = ({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          prefix={<MenuIcon />}
+          prefix={<EllipsesIcon />}
           color="ghost"
           aria-label="Menu Button for options"
         ></Button>
