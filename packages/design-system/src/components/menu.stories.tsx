@@ -145,6 +145,7 @@ const ComboboxDemo = () => {
   const [selectedItem, onItemSelect] = useState<Fruit>();
 
   const {
+    isOpen,
     items,
     getInputProps,
     getComboboxProps,
@@ -175,7 +176,7 @@ const ComboboxDemo = () => {
   const longItems = items.filter((item) => item === "Banana");
 
   return (
-    <Combobox>
+    <Combobox open={isOpen}>
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
           <DeprecatedTextField
