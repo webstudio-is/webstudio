@@ -149,7 +149,7 @@ const Menu = ({
               checked={relation === "viewers"}
               onCheckedChange={handleCheckedChange("viewers")}
               title="View"
-              info="Recipients can only view the project"
+              info="Recipients can view, copy instances and clone the project"
             />
             {/*
            Hide temporarily until we have a way to allow edit content but not edit tree, etc.
