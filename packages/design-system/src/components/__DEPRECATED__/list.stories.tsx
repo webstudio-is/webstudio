@@ -1,5 +1,5 @@
 import type { ComponentStory } from "@storybook/react";
-import { CheckMarkIcon, MenuIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { DeprecatedList, DeprecatedListItem, useDeprecatedList } from "./list";
 
@@ -13,12 +13,12 @@ export const Declarative: ComponentStory<typeof DeprecatedList> = () => {
       <DeprecatedListItem>Apple</DeprecatedListItem>
       <DeprecatedListItem state="disabled">Banana</DeprecatedListItem>
       <DeprecatedListItem state="selected">Orange</DeprecatedListItem>
-      <DeprecatedListItem prefix={<CheckMarkIcon />} suffix={<MenuIcon />}>
+      <DeprecatedListItem prefix={<CheckMarkIcon />} suffix={<EllipsesIcon />}>
         Strawberry
       </DeprecatedListItem>
       <DeprecatedListItem
         prefix={<CheckMarkIcon />}
-        suffix={<MenuIcon />}
+        suffix={<EllipsesIcon />}
         current
         state="selected"
       >

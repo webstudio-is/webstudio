@@ -1,8 +1,12 @@
 import * as React from "react";
 import type { IconProps } from "./types";
 
-export const EllipsesIcon = React.forwardRef<SVGSVGElement, IconProps>(
-  ({ color = "currentColor", ...props }, forwardedRef) => {
+type EllipsesIconProps = IconProps & {
+  colors?: Array<string>;
+};
+
+export const EllipsesIcon = React.forwardRef<SVGSVGElement, EllipsesIconProps>(
+  ({ color = "currentColor", colors = [], ...props }, forwardedRef) => {
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -13,9 +17,9 @@ export const EllipsesIcon = React.forwardRef<SVGSVGElement, IconProps>(
         {...props}
         ref={forwardedRef}
       >
-        <circle cx="2.5" cy="8" r="1.5" fill={color} />
-        <circle cx="8" cy="8" r="1.5" fill={color} />
-        <circle cx="13.5" cy="8" r="1.5" fill={color} />
+        <circle cx="2.3" cy="8" r="1.8" fill={colors[0] ?? color} />
+        <circle cx="8" cy="8" r="1.8" fill={colors[1] ?? color} />
+        <circle cx="14" cy="8" r="1.8" fill={colors[2] ?? color} />
       </svg>
     );
   }
