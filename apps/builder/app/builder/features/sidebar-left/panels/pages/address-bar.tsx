@@ -1,16 +1,35 @@
-import { Fragment, useId, useState } from "react";
-import { compilePathnamePattern, parsePathnamePattern } from "./url-pattern";
-import { Grid, InputField, Label } from "@webstudio-is/design-system";
+import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { $dataSourceVariables } from "~/shared/nano-states";
+import { Fragment, useEffect, useId, useState } from "react";
+import {
+  Button,
+  Grid,
+  InputField,
+  Label,
+  Tooltip,
+} from "@webstudio-is/design-system";
+import { CheckMarkIcon, CopyIcon, LinkIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
+import { $dataSourceVariables, $domains, $project } from "~/shared/nano-states";
+import env from "~/shared/env";
+import { compilePathnamePattern, parsePathnamePattern } from "./url-pattern";
+
+const $publishedOrigin = computed([$project, $domains], (project, domains) => {
+  const customDomain: string | undefined = domains[0];
+  const projectDomain = `${project?.domain}.${
+    env.PUBLISHER_HOST ?? "wstd.work"
+  }`;
+  const domain = customDomain ?? projectDomain;
+  const publishedUrl = new URL(`https://${domain}`);
+  return publishedUrl.origin;
+});
 
 type PathParams = Record<string, string>;
 
 export type AddressBarApi = {
   pathParamNames: string[];
   pathParams: PathParams;
-  compiledPath: string;
+  pageUrl: string;
   updatePathParam: (name: string, value: string) => void;
   savePathParams: () => void;
 };
@@ -40,7 +59,9 @@ export const useAddressBar = ({
       : (dataSourceVariables.get(dataSourceId) as Record<string, string>);
   const pathParams = storedParams ?? localParams;
 
+  const publishedOrigin = useStore($publishedOrigin);
   const compiledPath = compilePathnamePattern(path, pathParams);
+  const pageUrl = `${publishedOrigin}${compiledPath}`;
 
   const updatePathParam: AddressBarApi["updatePathParam"] = (name, value) => {
     // delete stale fields
@@ -70,14 +91,74 @@ export const useAddressBar = ({
   return {
     pathParamNames,
     pathParams,
-    compiledPath,
+    pageUrl,
     updatePathParam,
     savePathParams,
   };
 };
 
+const CopyPageUrl = ({ pageUrl }: { pageUrl: string }) => {
+  const [copyState, setCopyState] = useState<"copy" | "copied">("copy");
+
+  // reset copied state after 2 seconds
+  useEffect(() => {
+    if (copyState === "copied") {
+      const timeoutId = setTimeout(() => {
+        setCopyState("copy");
+      }, 2000);
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [copyState]);
+
+  let copyIcon = (
+    <>
+      <LinkIcon
+        style={{ display: "var(--ws-address-bar-link-icon-display, block)" }}
+      />
+      <CopyIcon
+        style={{ display: "var(--ws-address-bar-copy-icon-display, none)" }}
+      />
+    </>
+  );
+  if (copyState === "copied") {
+    copyIcon = <CheckMarkIcon />;
+  }
+
+  const parsed = new URL(pageUrl);
+  const pageDomainAndPath = `${parsed.host}${parsed.pathname}`;
+
+  return (
+    <Tooltip
+      // keep tooltip open when user just copied
+      open={copyState === "copied" ? true : undefined}
+      content={copyState === "copied" ? "Copied" : "Click to copy"}
+    >
+      <Button
+        color="ghost"
+        type="button"
+        onClick={() => {
+          navigator.clipboard.writeText(pageUrl);
+          setCopyState("copied");
+        }}
+        prefix={copyIcon}
+        css={{
+          justifySelf: "start",
+          "&:hover": {
+            "--ws-address-bar-link-icon-display": "none",
+            "--ws-address-bar-copy-icon-display": "block",
+          },
+        }}
+      >
+        {pageDomainAndPath}
+      </Button>
+    </Tooltip>
+  );
+};
+
 export const AddressBar = ({ addressBar }: { addressBar: AddressBarApi }) => {
-  const { pathParamNames, pathParams, updatePathParam } = addressBar;
+  const { pathParamNames, pathParams, pageUrl, updatePathParam } = addressBar;
   const id = useId();
 
   return (
@@ -93,6 +174,7 @@ export const AddressBar = ({ addressBar }: { addressBar: AddressBarApi }) => {
           />
         </Fragment>
       ))}
+      <CopyPageUrl pageUrl={pageUrl} />
     </Grid>
   );
 };

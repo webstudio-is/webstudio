@@ -60,7 +60,6 @@ const MetadataItem = (props: {
       <InputErrorsTooltip errors={undefined}>
         <InputField
           css={{ gridArea: "property-input" }}
-          tabIndex={1}
           id={propertyId}
           property="path"
           value={props.property}
@@ -94,7 +93,6 @@ const MetadataItem = (props: {
             }}
             disabled={isLiteralExpression(props.content) === false}
             color={typeof content !== "string" ? "error" : undefined}
-            tabIndex={1}
             id={contentId}
             property="path"
             value={content}
