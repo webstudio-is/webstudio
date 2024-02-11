@@ -9,7 +9,6 @@
  * - Click to toggle select/unselect
  * - Double click to edit name
  * - Local source can only be disabled, nothing else should be possible
- * - Hit Backspace to delete the last Source item when you are in the input
  */
 
 import { nanoid } from "nanoid";
@@ -438,7 +437,7 @@ export const StyleSourceInput = (
   const states = props.componentStates ?? [];
 
   return (
-    <Combobox>
+    <Combobox open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <TextField

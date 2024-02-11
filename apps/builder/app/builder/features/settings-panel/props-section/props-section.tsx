@@ -59,7 +59,7 @@ const PropsCombobox = ({
   });
 
   return (
-    <Combobox>
+    <Combobox open={combobox.isOpen}>
       <div {...combobox.getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
