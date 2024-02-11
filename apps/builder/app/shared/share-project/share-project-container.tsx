@@ -2,7 +2,7 @@ import { ShareProject, type LinkOptions } from "./share-project";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import type { AuthorizationTokensRouter } from "@webstudio-is/authorization-token";
 import { authorizationTokenPath, builderUrl } from "~/shared/router-utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import type { Project } from "@webstudio-is/prisma-client";
 
@@ -16,6 +16,7 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
   const { send: removeToken, state: removeState } = trpc.remove.useMutation();
   const { send: updateToken, state: updateState } = trpc.update.useMutation();
   const [links, setLinks] = useState(data ?? []);
+  const deletingLinks = useRef(new Set<string>());
 
   useEffect(() => {
     load({ projectId }, (data) => {
@@ -24,7 +25,8 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
   }, [load, projectId]);
 
   const handleChangeDebounced = useDebouncedCallback((link: LinkOptions) => {
-    if (projectId === undefined) {
+    // Link is about to get deleted, no need to update.
+    if (deletingLinks.current.has(link.token)) {
       return;
     }
     const updatedLink = {
@@ -45,9 +47,8 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
   }, 100);
 
   const handleDelete = (link: LinkOptions) => {
-    if (projectId === undefined) {
-      return;
-    }
+    deletingLinks.current.add(link.token);
+
     const updatedLinks = links.filter((currentLink) => {
       return currentLink.token !== link.token;
     });
@@ -58,10 +59,6 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
   };
 
   const handleCreate = () => {
-    if (projectId === undefined) {
-      return;
-    }
-
     createToken({
       projectId: projectId,
       relation: "viewers",
