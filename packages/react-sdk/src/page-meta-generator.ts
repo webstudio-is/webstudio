@@ -17,36 +17,34 @@ export type PageMeta = {
 };
 
 export const generatePageMeta = ({
-  scope: resourcesScope,
+  globalScope,
   page,
   dataSources,
 }: {
-  scope: Scope;
+  globalScope: Scope;
   page: Page;
   dataSources: DataSources;
 }) => {
-  // use global scope only to retrieve resource names
-  // create new scope for local variables to avoid bloating names
-  // reserve passed parameter names
-  const scope = createScope(["params", "resources"]);
+  // reserve parameter names passed to generated function
+  const localScope = createScope(["params", "resources"]);
   const usedDataSources: DataSources = new Map();
   const titleExpression = generateExpression({
     expression: page.title,
     dataSources,
     usedDataSources,
-    scope,
+    scope: localScope,
   });
   const descriptionExpression = generateExpression({
     expression: page.meta.description ?? "undefined",
     dataSources,
     usedDataSources,
-    scope,
+    scope: localScope,
   });
   const excludePageFromSearchExpression = generateExpression({
     expression: page.meta.excludePageFromSearch ?? "undefined",
     dataSources,
     usedDataSources,
-    scope,
+    scope: localScope,
   });
   const socialImageAssetIdExpression = JSON.stringify(
     page.meta.socialImageAssetId
@@ -55,7 +53,7 @@ export const generatePageMeta = ({
     expression: page.meta.socialImageUrl ?? "undefined",
     dataSources,
     usedDataSources,
-    scope,
+    scope: localScope,
   });
   let customExpression = "";
   customExpression += `[\n`;
@@ -65,10 +63,10 @@ export const generatePageMeta = ({
     }
     const propertyExpression = JSON.stringify(customMeta.property);
     const contentExpression = generateExpression({
-      scope,
+      expression: customMeta.content,
       dataSources,
       usedDataSources,
-      expression: customMeta.content,
+      scope: localScope,
     });
     customExpression += `      {\n`;
     customExpression += `        property: ${propertyExpression},\n`;
@@ -86,21 +84,22 @@ export const generatePageMeta = ({
   generated += `}): PageMeta => {\n`;
   for (const dataSource of usedDataSources.values()) {
     if (dataSource.type === "variable") {
-      const valueName = scope.getName(dataSource.id, dataSource.name);
+      const valueName = localScope.getName(dataSource.id, dataSource.name);
       const initialValueString = JSON.stringify(dataSource.value.value);
       generated += `  let ${valueName} = ${initialValueString}\n`;
       continue;
     }
     if (dataSource.type === "parameter") {
       if (dataSource.id === page.pathVariableId) {
-        const valueName = scope.getName(dataSource.id, dataSource.name);
+        const valueName = localScope.getName(dataSource.id, dataSource.name);
         generated += `  let ${valueName} = params\n`;
       }
       continue;
     }
     if (dataSource.type === "resource") {
-      const valueName = scope.getName(dataSource.id, dataSource.name);
-      const resourceName = resourcesScope.getName(
+      const valueName = localScope.getName(dataSource.id, dataSource.name);
+      // use global scope only to retrieve resource names
+      const resourceName = globalScope.getName(
         dataSource.resourceId,
         dataSource.name
       );

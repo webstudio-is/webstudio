@@ -8,7 +8,7 @@ const toMap = <T extends { id: string }>(list: T[]) =>
 test("generate minimal static page meta factory", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
@@ -44,7 +44,7 @@ test("generate minimal static page meta factory", () => {
 test("generate complete static page meta factory", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
@@ -96,7 +96,7 @@ test("generate complete static page meta factory", () => {
 test("generate asset url instead of id", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
@@ -134,7 +134,7 @@ test("generate asset url instead of id", () => {
 test("generate custom meta ignoring empty property name", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
@@ -179,7 +179,7 @@ test("generate custom meta ignoring empty property name", () => {
 test("generate page meta factory with variables", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
@@ -224,7 +224,7 @@ test("generate page meta factory with variables", () => {
 test("generate page meta factory with path params", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
@@ -269,7 +269,7 @@ test("generate page meta factory with path params", () => {
 test("generate page meta factory with resources", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
@@ -314,7 +314,7 @@ test("generate page meta factory with resources", () => {
 test("generate page meta factory without unused variables", () => {
   expect(
     generatePageMeta({
-      scope: createScope(),
+      globalScope: createScope(),
       page: {
         id: "",
         name: "",
