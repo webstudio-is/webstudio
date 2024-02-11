@@ -114,8 +114,12 @@ const CopyPageUrl = ({ pageUrl }: { pageUrl: string }) => {
 
   let copyIcon = (
     <>
-      <LinkIcon style={{ display: "var(--link-icon-display, block)" }} />
-      <CopyIcon style={{ display: "var(--copy-icon-display, none)" }} />
+      <LinkIcon
+        style={{ display: "var(--ws-address-bar-link-icon-display, block)" }}
+      />
+      <CopyIcon
+        style={{ display: "var(--ws-address-bar-copy-icon-display, none)" }}
+      />
     </>
   );
   if (copyState === "copied") {
@@ -142,8 +146,8 @@ const CopyPageUrl = ({ pageUrl }: { pageUrl: string }) => {
         css={{
           justifySelf: "start",
           "&:hover": {
-            "--link-icon-display": "none",
-            "--copy-icon-display": "block",
+            "--ws-address-bar-link-icon-display": "none",
+            "--ws-address-bar-copy-icon-display": "block",
           },
         }}
       >
