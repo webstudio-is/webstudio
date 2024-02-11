@@ -25,7 +25,9 @@ export const generatePageMeta = ({
   page: Page;
   dataSources: DataSources;
 }) => {
-  // reserve initial parameters
+  // use global scope only to retrieve resource names
+  // create new scope for local variables to avoid bloating names
+  // reserve passed parameter names
   const scope = createScope(["params", "resources"]);
   const usedDataSources: DataSources = new Map();
   const titleExpression = generateExpression({
