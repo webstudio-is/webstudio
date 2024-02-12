@@ -13,6 +13,7 @@ export type PageMeta = {
   excludePageFromSearch?: boolean;
   socialImageAssetId?: Asset["id"];
   socialImageUrl?: string;
+  redirect?: string;
   custom: Array<{ property: string; content: string }>;
 };
 
@@ -51,6 +52,12 @@ export const generatePageMeta = ({
   );
   const socialImageUrlExpression = generateExpression({
     expression: page.meta.socialImageUrl ?? "undefined",
+    dataSources,
+    usedDataSources,
+    scope: localScope,
+  });
+  const redirectExpression = generateExpression({
+    expression: page.meta.redirect ?? "undefined",
     dataSources,
     usedDataSources,
     scope: localScope,
@@ -113,6 +120,7 @@ export const generatePageMeta = ({
   generated += `    excludePageFromSearch: ${excludePageFromSearchExpression},\n`;
   generated += `    socialImageAssetId: ${socialImageAssetIdExpression},\n`;
   generated += `    socialImageUrl: ${socialImageUrlExpression},\n`;
+  generated += `    redirect: ${redirectExpression},\n`;
   generated += `    custom: ${customExpression},\n`;
   generated += `  };\n`;
   generated += `};\n`;

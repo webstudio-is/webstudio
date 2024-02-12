@@ -18,6 +18,7 @@ import {
   findPageByIdOrPath,
   ROOT_FOLDER_ID,
   findParentFolderByChildId,
+  ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -89,6 +90,7 @@ const fieldDefaultValues = {
   excludePageFromSearch: `false`,
   socialImageUrl: `""`,
   socialImageAssetId: "",
+  redirect: `""`,
   customMetas: [
     {
       property: "",
@@ -133,12 +135,15 @@ const LegacyPagePath = z
     "/build prefix is reserved for the system"
   );
 
+const EmptyString = z.string().refine((string) => string === "");
+
 const SharedPageValues = z.object({
   name: PageName,
   title: PageTitle,
   description: z.string().optional(),
   excludePageFromSearch: z.boolean().optional(),
   socialImageUrl: z.string().optional(),
+  redirect: z.optional(ProjectNewRedirectPath.or(EmptyString)),
   customMetas: z
     .array(
       z.object({
@@ -194,6 +199,7 @@ const validateValues = (
       variableValues
     ),
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
+    redirect: computeExpression(values.redirect, variableValues),
     customMetas: values.customMetas.map((item) => ({
       property: item.property,
       content: computeExpression(item.content, variableValues),
@@ -238,6 +244,7 @@ const toFormValues = (
     excludePageFromSearch:
       page.meta.excludePageFromSearch ??
       fieldDefaultValues.excludePageFromSearch,
+    redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
   };
@@ -292,6 +299,7 @@ const FormFields = ({
   const excludePageFromSearch = Boolean(
     computeExpression(values.excludePageFromSearch, variableValues)
   );
+  const redirect = String(computeExpression(values.redirect, variableValues));
 
   return (
     <Grid css={{ height: "100%" }}>
@@ -598,6 +606,52 @@ const FormFields = ({
               </Grid>
             </BindingControl>
           </Grid>
+
+          {isFeatureEnabled("cms") && (
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.redirect}>Redirect</Label>
+              <BindingControl>
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.redirect) ? "default" : "bound"
+                  }
+                  value={values.redirect}
+                  onChange={(value) => {
+                    onChange({
+                      field: "redirect",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "redirect",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+                <InputErrorsTooltip errors={errors.redirect}>
+                  <InputField
+                    color={errors.redirect && "error"}
+                    id={fieldIds.redirect}
+                    name="redirect"
+                    placeholder="/another-path"
+                    disabled={
+                      disabled || isLiteralExpression(values.redirect) === false
+                    }
+                    value={redirect}
+                    onChange={(event) => {
+                      onChange({
+                        field: "redirect",
+                        value: JSON.stringify(event.target.value),
+                      });
+                    }}
+                  />
+                </InputErrorsTooltip>
+              </BindingControl>
+            </Grid>
+          )}
         </Grid>
 
         <Separator />
@@ -921,6 +975,11 @@ const updatePage = (
 
     if (values.excludePageFromSearch !== undefined) {
       page.meta.excludePageFromSearch = values.excludePageFromSearch;
+    }
+
+    if (values.redirect !== undefined) {
+      page.meta.redirect =
+        values.redirect.length > 0 ? values.redirect : undefined;
     }
 
     if (values.socialImageAssetId !== undefined) {

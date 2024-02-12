@@ -46,6 +46,7 @@ const commonPageFields = {
     excludePageFromSearch: z.string().optional(),
     socialImageAssetId: z.string().optional(),
     socialImageUrl: z.string().optional(),
+    redirect: z.string().optional(),
     custom: z
       .array(
         z.object({
