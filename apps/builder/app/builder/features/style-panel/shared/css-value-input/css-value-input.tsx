@@ -167,7 +167,7 @@ const useScrub = ({
         inputRef.current?.focus();
         inputRef.current?.select();
       },
-      shouldHandleEvent: shouldHandleEvent,
+      shouldHandleEvent,
     });
   }, [shouldHandleEvent, property]);
 
