@@ -191,7 +191,8 @@ const scopeCompletionSource: CompletionSource = (context) => {
       displayLabel: aliases.get(name),
       detail: formatValuePreview(value),
       apply: (view, completion, from, to) => {
-        if (Identifier.test(name)) {
+        // complete valid js identifier or top level variable without quotes
+        if (Identifier.test(name) || path.path.length === 0) {
           // complete with dot
           view.dispatch({
             ...insertCompletionText(view.state, name, from, to),
