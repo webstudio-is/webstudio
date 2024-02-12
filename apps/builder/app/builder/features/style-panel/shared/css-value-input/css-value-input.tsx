@@ -138,18 +138,12 @@ const useScrub = ({
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
-
-        if (valueRef.current.type === "keyword") {
-          return 0;
-        }
+        return 0;
       },
       onStart() {
-        // for TS
-        if (valueRef.current.type !== "unit") {
-          return;
+        if (valueRef.current.type === "unit") {
+          unit = valueRef.current.unit;
         }
-
-        unit = valueRef.current.unit;
       },
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
