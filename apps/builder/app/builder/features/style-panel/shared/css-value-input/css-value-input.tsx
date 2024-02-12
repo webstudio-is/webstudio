@@ -76,15 +76,8 @@ const useScrub = ({
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
 
-    const { current } = valueRef;
-
     // Support only auto keyword to be scrubbable
-    if (
-      (current.type !== "unit" &&
-        !(current.type === "keyword" && current.value === "auto")) ||
-      inputRefCurrent === null ||
-      scrubRefCurrent === null
-    ) {
+    if (inputRefCurrent === null || scrubRefCurrent === null) {
       return;
     }
 
@@ -146,10 +139,7 @@ const useScrub = ({
           return valueRef.current.value;
         }
 
-        if (
-          valueRef.current.type === "keyword" &&
-          valueRef.current.value === "auto"
-        ) {
+        if (valueRef.current.type === "keyword") {
           return 0;
         }
       },
