@@ -1,9 +1,4 @@
-import {
-  forwardRef,
-  type ElementRef,
-  type ComponentProps,
-  type HTMLInputTypeAttribute,
-} from "react";
+import { forwardRef, type ElementRef, type ComponentProps } from "react";
 
 export const defaultTag = "input";
 
