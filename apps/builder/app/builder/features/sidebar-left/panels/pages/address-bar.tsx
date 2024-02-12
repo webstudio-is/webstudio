@@ -81,11 +81,9 @@ export const useAddressBar = ({
     for (const name of pathParamNames) {
       newParams[name] = pathParams[name] ?? "";
     }
-    if (dataSourceId === undefined) {
-      console.error("Cannot save path params because variable is not created");
-      return;
+    if (dataSourceId) {
+      setPathParams(dataSourceId, newParams);
     }
-    setPathParams(dataSourceId, newParams);
   };
 
   return {
