@@ -11,7 +11,6 @@ export const Input = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     type?:
-      | "button"
       | "color"
       | "date"
       | "datetime-local"
@@ -21,9 +20,7 @@ export const Input = forwardRef<
       | "number"
       | "password"
       | "range"
-      | "reset"
       | "search"
-      | "submit"
       | "tel"
       | "text"
       | "time"

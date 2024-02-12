@@ -738,7 +738,6 @@ export const props: Record<string, PropMeta> = {
     defaultValue: "text",
     options: [
       "number",
-      "button",
       "search",
       "time",
       "text",
@@ -750,8 +749,6 @@ export const props: Record<string, PropMeta> = {
       "month",
       "password",
       "range",
-      "reset",
-      "submit",
       "tel",
       "url",
       "week",
