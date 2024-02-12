@@ -70,6 +70,7 @@ export const getPageMeta = ({
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
+    redirect: undefined,
     custom: [],
   };
 };

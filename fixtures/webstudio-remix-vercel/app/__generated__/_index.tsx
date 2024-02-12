@@ -80,6 +80,7 @@ export const getPageMeta = ({
     excludePageFromSearch: undefined,
     socialImageAssetId: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
     socialImageUrl: undefined,
+    redirect: undefined,
     custom: [
       {
         property: "fb:app_id",

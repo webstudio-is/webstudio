@@ -6,6 +6,7 @@ import {
   type ActionArgs,
   type LoaderArgs,
   json,
+  redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
 import type { ProjectMeta } from "@webstudio-is/sdk";
@@ -35,6 +36,10 @@ export const loader = async (arg: LoaderArgs) => {
   const params = getRemixParams(arg.params);
   const resources = await loadResources({ params });
   const pageMeta = getPageMeta({ params, resources });
+
+  if (pageMeta.redirect) {
+    return redirect(pageMeta.redirect, 302);
+  }
 
   const host =
     arg.request.headers.get("x-forwarded-host") ||
