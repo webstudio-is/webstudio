@@ -90,6 +90,7 @@ const fieldDefaultValues = {
   excludePageFromSearch: `false`,
   socialImageUrl: `""`,
   socialImageAssetId: "",
+  status: `200`,
   redirect: `""`,
   customMetas: [
     {
@@ -137,12 +138,22 @@ const LegacyPagePath = z
 
 const EmptyString = z.string().refine((string) => string === "");
 
+// 2xx, 3xx, 4xx, 5xx
+const statusRegex = /^[2345]\d\d$/;
+const Status = z
+  .number()
+  .refine(
+    (value) => statusRegex.test(String(value)),
+    "Status code expects 2xx, 3xx, 4xx or 5xx"
+  );
+
 const SharedPageValues = z.object({
   name: PageName,
   title: PageTitle,
   description: z.string().optional(),
   excludePageFromSearch: z.boolean().optional(),
   socialImageUrl: z.string().optional(),
+  status: Status.optional(),
   redirect: z.optional(ProjectNewRedirectPath.or(EmptyString)),
   customMetas: z
     .array(
@@ -199,6 +210,7 @@ const validateValues = (
       variableValues
     ),
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
+    status: computeExpression(values.status, variableValues),
     redirect: computeExpression(values.redirect, variableValues),
     customMetas: values.customMetas.map((item) => ({
       property: item.property,
@@ -244,6 +256,7 @@ const toFormValues = (
     excludePageFromSearch:
       page.meta.excludePageFromSearch ??
       fieldDefaultValues.excludePageFromSearch,
+    status: page.meta.status ?? fieldDefaultValues.status,
     redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
@@ -299,7 +312,6 @@ const FormFields = ({
   const excludePageFromSearch = Boolean(
     computeExpression(values.excludePageFromSearch, variableValues)
   );
-  const redirect = String(computeExpression(values.redirect, variableValues));
 
   return (
     <Grid css={{ height: "100%" }}>
@@ -609,6 +621,59 @@ const FormFields = ({
 
           {isFeatureEnabled("cms") && (
             <Grid gap={1}>
+              <Label htmlFor={fieldIds.status}>Status</Label>
+              <BindingControl>
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.status) ? "default" : "bound"
+                  }
+                  value={values.status}
+                  onChange={(value) => {
+                    onChange({
+                      field: "status",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "status",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+                <InputErrorsTooltip errors={errors.status}>
+                  <InputField
+                    inputMode="numeric"
+                    color={errors.status && "error"}
+                    id={fieldIds.status}
+                    name="status"
+                    placeholder="/another-path"
+                    disabled={
+                      disabled || isLiteralExpression(values.status) === false
+                    }
+                    value={String(
+                      computeExpression(values.status, variableValues)
+                    )}
+                    onChange={(event) => {
+                      const number = Number(event.target.value);
+                      const status = Number.isNaN(number)
+                        ? event.target.value
+                        : number;
+                      onChange({
+                        field: "status",
+                        value: JSON.stringify(status),
+                      });
+                    }}
+                  />
+                </InputErrorsTooltip>
+              </BindingControl>
+            </Grid>
+          )}
+
+          {isFeatureEnabled("cms") && (
+            <Grid gap={1}>
               <Label htmlFor={fieldIds.redirect}>Redirect</Label>
               <BindingControl>
                 <BindingPopover
@@ -640,7 +705,9 @@ const FormFields = ({
                     disabled={
                       disabled || isLiteralExpression(values.redirect) === false
                     }
-                    value={redirect}
+                    value={String(
+                      computeExpression(values.redirect, variableValues)
+                    )}
                     onChange={(event) => {
                       onChange({
                         field: "redirect",
@@ -975,6 +1042,10 @@ const updatePage = (
 
     if (values.excludePageFromSearch !== undefined) {
       page.meta.excludePageFromSearch = values.excludePageFromSearch;
+    }
+
+    if (values.status !== undefined) {
+      page.meta.status = values.status;
     }
 
     if (values.redirect !== undefined) {
