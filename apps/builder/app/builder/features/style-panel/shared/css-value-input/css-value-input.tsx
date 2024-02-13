@@ -33,12 +33,30 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { isValidDeclaration } from "@webstudio-is/css-data";
+import { isValidDeclaration, properties } from "@webstudio-is/css-data";
 import {
   $selectedInstanceBrowserStyle,
   $selectedInstanceUnitSizes,
 } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
+
+// We need to enable scrub on properties that can have numeric value.
+const canBeNumber = (property: StyleProperty) => {
+  const { unitGroups } = properties[property as keyof typeof properties];
+  return unitGroups.length !== 0;
+};
+
+// Subjective adjust ment based on how it feels on macbook/trackpad.
+// It won't be ideal for everyone with different input devices and preferences.
+// Ideally we also need some kind of acceleration setting with 1 value.
+const scrubUnitAcceleration = new Map<Unit, number>([
+  ["rem", 1 / 16],
+  ["em", 1 / 16],
+  ["%", 1 / 10],
+  ["dvw", 1 / 10],
+  ["dvh", 1 / 10],
+  ["number", 1 / 20],
+]);
 
 const useScrub = ({
   value,
@@ -76,14 +94,11 @@ const useScrub = ({
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
 
-    const { current } = valueRef;
-
     // Support only auto keyword to be scrubbable
     if (
-      (current.type !== "unit" &&
-        !(current.type === "keyword" && current.value === "auto")) ||
       inputRefCurrent === null ||
-      scrubRefCurrent === null
+      scrubRefCurrent === null ||
+      canBeNumber(property) === false
     ) {
       return;
     }
@@ -132,6 +147,11 @@ const useScrub = ({
     };
 
     return numericScrubControl(scrubRefCurrent, {
+      getAcceleration() {
+        if (valueRef.current.type === "unit") {
+          return scrubUnitAcceleration.get(valueRef.current.unit);
+        }
+      },
       // @todo: after this https://github.com/webstudio-is/webstudio/issues/564
       // we can switch back on using just initial value
       //
@@ -145,28 +165,18 @@ const useScrub = ({
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
-
-        if (
-          valueRef.current.type === "keyword" &&
-          valueRef.current.value === "auto"
-        ) {
-          return 0;
-        }
+        return 0;
       },
       onStart() {
-        // for TS
-        if (valueRef.current.type !== "unit") {
-          return;
+        if (valueRef.current.type === "unit") {
+          unit = valueRef.current.unit;
         }
-
-        unit = valueRef.current.unit;
       },
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
         // (it makes text harder to read and may jump around as you scrub)
         scrubRef.current?.setAttribute("tabindex", "-1");
         scrubRef.current?.focus();
-
         const value = validateValue(event.value);
 
         onChangeRef.current(value);
@@ -183,7 +193,7 @@ const useScrub = ({
         inputRef.current?.focus();
         inputRef.current?.select();
       },
-      shouldHandleEvent: shouldHandleEvent,
+      shouldHandleEvent,
     });
   }, [shouldHandleEvent, property]);
 

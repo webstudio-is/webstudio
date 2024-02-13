@@ -1,9 +1,17 @@
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { popularityIndex } from "./popularity-index";
 
+export type UnitGroup =
+  | "number"
+  | "percentage"
+  | "length"
+  | "time"
+  | "angle"
+  | "resolution";
+
 // Data type used before we generate a the constants.
-type RawPropertyData = {
-  unitGroups: string[];
+export type RawPropertyData = {
+  unitGroups: Array<UnitGroup>;
   inherited: boolean;
   initial: StyleValue;
   popularity: number;
