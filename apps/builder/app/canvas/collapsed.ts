@@ -184,6 +184,7 @@ const recalculate = () => {
     if (element.tagName === "HTML") {
       continue;
     }
+
     // All children are absolute or fixed
     if (value === 0) {
       elementsToRecalculate.push(element);
@@ -208,7 +209,8 @@ const recalculate = () => {
     const elementInstanceId = element.getAttribute(idAttribute);
 
     if (elementInstanceId === null) {
-      throw new Error(`Element ${idAttribute} has no instance id`);
+      // Not a webstudio controlled element, like popover portal
+      continue;
     }
 
     const tagName = element.tagName.toLowerCase();
