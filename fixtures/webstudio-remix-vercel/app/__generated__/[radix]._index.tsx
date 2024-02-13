@@ -82,6 +82,7 @@ export const getPageMeta = ({
     excludePageFromSearch: true,
     socialImageAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     socialImageUrl: undefined,
+    status: undefined,
     redirect: undefined,
     custom: [],
   };

@@ -33,6 +33,7 @@ test("generate minimal static page meta factory", () => {
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
+    status: undefined,
     redirect: undefined,
     custom: [
     ],
@@ -56,6 +57,7 @@ test("generate complete static page meta factory", () => {
           description: `"Page description"`,
           excludePageFromSearch: "true",
           socialImageAssetId: "social-image-name",
+          status: `302`,
           redirect: `"/new-path"`,
           custom: [
             { property: "custom-property-1", content: `"custom content 1"` },
@@ -79,6 +81,7 @@ test("generate complete static page meta factory", () => {
     excludePageFromSearch: true,
     socialImageAssetId: "social-image-name",
     socialImageUrl: undefined,
+    status: 302,
     redirect: "/new-path",
     custom: [
       {
@@ -126,6 +129,7 @@ test("generate asset url instead of id", () => {
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: "https://my-image",
+    status: undefined,
     redirect: undefined,
     custom: [
     ],
@@ -168,6 +172,7 @@ test("generate custom meta ignoring empty property name", () => {
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
+    status: undefined,
     redirect: undefined,
     custom: [
       {
@@ -218,6 +223,7 @@ test("generate page meta factory with variables", () => {
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
+    status: undefined,
     redirect: undefined,
     custom: [
     ],
@@ -264,6 +270,7 @@ test("generate page meta factory with path params", () => {
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
+    status: undefined,
     redirect: undefined,
     custom: [
     ],
@@ -310,6 +317,7 @@ test("generate page meta factory with resources", () => {
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
+    status: undefined,
     redirect: undefined,
     custom: [
     ],
@@ -377,6 +385,7 @@ test("generate page meta factory without unused variables", () => {
     excludePageFromSearch: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
+    status: undefined,
     redirect: undefined,
     custom: [
     ],
