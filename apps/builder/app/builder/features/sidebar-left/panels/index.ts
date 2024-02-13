@@ -5,7 +5,7 @@ import * as pages from "./pages";
 
 export const panels = {
   components,
+  pages,
   navigator,
   assets,
-  pages,
 } as const;
