@@ -9,7 +9,9 @@ type Props = ComponentProps<typeof defaultTag> & {
 };
 
 export const Text = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  ({ tag: Tag = defaultTag, children, ...props }, ref) => {
+  ({ tag = defaultTag, children, ...props }, ref) => {
+    // Can't map it in the destricturing, default type won't be generated correctly
+    const Tag = tag;
     return (
       <Tag {...props} ref={ref}>
         {children ?? "The text you can edit"}

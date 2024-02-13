@@ -18,6 +18,7 @@ import {
   findPageByIdOrPath,
   ROOT_FOLDER_ID,
   findParentFolderByChildId,
+  ProjectNewRedirectPath,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -41,8 +42,6 @@ import {
   ChevronDoubleLeftIcon,
   CopyIcon,
   TrashIcon,
-  CheckMarkIcon,
-  LinkIcon,
   HomeIcon,
   HelpIcon,
 } from "@webstudio-is/icons";
@@ -51,10 +50,8 @@ import { Header, HeaderSuffixSpacer } from "../../header";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   $assets,
-  $domains,
   $instances,
   $pages,
-  $project,
   $selectedInstanceSelector,
   $dataSources,
   computeExpression,
@@ -73,7 +70,6 @@ import { SocialPreview } from "./social-preview";
 // @todo should be moved to shared because features should not depend on features
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
-import env from "~/shared/env";
 import { parsePathnamePattern, validatePathnamePattern } from "./url-pattern";
 import {
   registerFolderChildMutable,
@@ -94,6 +90,8 @@ const fieldDefaultValues = {
   excludePageFromSearch: `false`,
   socialImageUrl: `""`,
   socialImageAssetId: "",
+  status: `200`,
+  redirect: `""`,
   customMetas: [
     {
       property: "",
@@ -138,12 +136,25 @@ const LegacyPagePath = z
     "/build prefix is reserved for the system"
   );
 
+const EmptyString = z.string().refine((string) => string === "");
+
+// 2xx, 3xx, 4xx, 5xx
+const statusRegex = /^[2345]\d\d$/;
+const Status = z
+  .number()
+  .refine(
+    (value) => statusRegex.test(String(value)),
+    "Status code expects 2xx, 3xx, 4xx or 5xx"
+  );
+
 const SharedPageValues = z.object({
   name: PageName,
   title: PageTitle,
   description: z.string().optional(),
   excludePageFromSearch: z.boolean().optional(),
   socialImageUrl: z.string().optional(),
+  status: Status.optional(),
+  redirect: z.optional(ProjectNewRedirectPath.or(EmptyString)),
   customMetas: z
     .array(
       z.object({
@@ -199,6 +210,8 @@ const validateValues = (
       variableValues
     ),
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
+    status: computeExpression(values.status, variableValues),
+    redirect: computeExpression(values.redirect, variableValues),
     customMetas: values.customMetas.map((item) => ({
       property: item.property,
       content: computeExpression(item.content, variableValues),
@@ -243,6 +256,8 @@ const toFormValues = (
     excludePageFromSearch:
       page.meta.excludePageFromSearch ??
       fieldDefaultValues.excludePageFromSearch,
+    status: page.meta.status ?? fieldDefaultValues.status,
+    redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
   };
@@ -250,55 +265,6 @@ const toFormValues = (
 
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
-
-const CopyPageDomainAndPathButton = ({
-  pageDomainAndPath,
-}: {
-  pageDomainAndPath: string;
-}) => {
-  const [pathIconState, setPathIconState] = useState<
-    "link" | "copy" | "checkmark"
-  >("link");
-
-  let pathIcon = <CopyIcon />;
-  if (pathIconState === "checkmark") {
-    pathIcon = <CheckMarkIcon />;
-  } else if (pathIconState === "link") {
-    pathIcon = <LinkIcon />;
-  }
-
-  return (
-    <Tooltip
-      content={pathIconState === "checkmark" ? "Copied" : "Click to copy"}
-    >
-      <Button
-        color="ghost"
-        type="button"
-        onPointerDown={(event) => {
-          navigator.clipboard.writeText(`https://${pageDomainAndPath}`);
-          setPathIconState("checkmark");
-          // Prevent tooltip to be closed
-          event.stopPropagation();
-        }}
-        // Recreating Icon without pointer-events: none cause mouse leave/enter event to be fired again
-        prefix={
-          <Grid align="center" css={{ pointerEvents: "none" }}>
-            {pathIcon}
-          </Grid>
-        }
-        css={{ justifySelf: "start" }}
-        onMouseEnter={() => {
-          setPathIconState("copy");
-        }}
-        onMouseLeave={() => {
-          setPathIconState("link");
-        }}
-      >
-        {pageDomainAndPath}
-      </Button>
-    </Tooltip>
-  );
-};
 
 const FormFields = ({
   addressBar,
@@ -336,27 +302,6 @@ const FormFields = ({
 
   const faviconUrl = faviconAsset?.type === "image" ? faviconAsset.name : "";
 
-  const project = $project.get();
-  const customDomain: string | undefined = $domains.get()[0];
-  const projectDomain = `${project?.domain}.${
-    env.PUBLISHER_HOST ?? "wstd.work"
-  }`;
-  const domain = customDomain ?? projectDomain;
-
-  const publishedUrl = new URL(`https://${domain}`);
-
-  const foldersPath = getPagePath(values.parentFolderId, pages);
-
-  const pageDomainAndPath = [
-    publishedUrl.host,
-    foldersPath,
-    addressBar.compiledPath,
-  ]
-    .filter(Boolean)
-    .join("/")
-    .replace(/\/+/g, "/");
-  const pageUrl = `https://${pageDomainAndPath}`;
-
   const title = String(computeExpression(values.title, variableValues));
   const description = String(
     computeExpression(values.description, variableValues)
@@ -379,7 +324,6 @@ const FormFields = ({
             <Label htmlFor={fieldIds.name}>Page Name</Label>
             <InputErrorsTooltip errors={errors.name}>
               <InputField
-                tabIndex={1}
                 color={errors.name && "error"}
                 id={fieldIds.name}
                 autoFocus
@@ -428,7 +372,6 @@ const FormFields = ({
             <Grid gap={1}>
               <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
               <Select
-                tabIndex={1}
                 css={{ zIndex: theme.zIndices[1] }}
                 options={pages.folders}
                 getValue={(folder) => folder.id}
@@ -460,7 +403,7 @@ const FormFields = ({
                     >
                       <HelpIcon
                         color={rawTheme.colors.foregroundSubtle}
-                        tabIndex={0}
+                        tabIndex={-1}
                       />
                     </Tooltip>
                   )}
@@ -468,7 +411,6 @@ const FormFields = ({
               </Label>
               <InputErrorsTooltip errors={errors.path}>
                 <InputField
-                  tabIndex={1}
                   color={errors.path && "error"}
                   id={fieldIds.path}
                   name="path"
@@ -483,7 +425,6 @@ const FormFields = ({
             </Grid>
           )}
           <AddressBar addressBar={addressBar} />
-          <CopyPageDomainAndPathButton pageDomainAndPath={pageDomainAndPath} />
         </Grid>
 
         <Separator />
@@ -518,7 +459,7 @@ const FormFields = ({
                   <SearchPreview
                     siteName={pages?.meta?.siteName ?? ""}
                     faviconUrl={faviconUrl}
-                    pageUrl={pageUrl}
+                    pageUrl={addressBar.pageUrl}
                     titleLink={title}
                     snippet={description}
                   />
@@ -554,7 +495,6 @@ const FormFields = ({
               )}
               <InputErrorsTooltip errors={errors.title}>
                 <InputField
-                  tabIndex={1}
                   color={errors.title && "error"}
                   id={fieldIds.title}
                   name="title"
@@ -603,7 +543,6 @@ const FormFields = ({
               )}
               <InputErrorsTooltip errors={errors.description}>
                 <TextArea
-                  tabIndex={1}
                   state={errors.description && "invalid"}
                   id={fieldIds.description}
                   name="description"
@@ -679,6 +618,107 @@ const FormFields = ({
               </Grid>
             </BindingControl>
           </Grid>
+
+          {isFeatureEnabled("cms") && (
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.status}>Status</Label>
+              <BindingControl>
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.status) ? "default" : "bound"
+                  }
+                  value={values.status}
+                  onChange={(value) => {
+                    onChange({
+                      field: "status",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "status",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+                <InputErrorsTooltip errors={errors.status}>
+                  <InputField
+                    inputMode="numeric"
+                    color={errors.status && "error"}
+                    id={fieldIds.status}
+                    name="status"
+                    placeholder="/another-path"
+                    disabled={
+                      disabled || isLiteralExpression(values.status) === false
+                    }
+                    value={String(
+                      computeExpression(values.status, variableValues)
+                    )}
+                    onChange={(event) => {
+                      const number = Number(event.target.value);
+                      const status = Number.isNaN(number)
+                        ? event.target.value
+                        : number;
+                      onChange({
+                        field: "status",
+                        value: JSON.stringify(status),
+                      });
+                    }}
+                  />
+                </InputErrorsTooltip>
+              </BindingControl>
+            </Grid>
+          )}
+
+          {isFeatureEnabled("cms") && (
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.redirect}>Redirect</Label>
+              <BindingControl>
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.redirect) ? "default" : "bound"
+                  }
+                  value={values.redirect}
+                  onChange={(value) => {
+                    onChange({
+                      field: "redirect",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "redirect",
+                      value: JSON.stringify(evaluatedValue),
+                    });
+                  }}
+                />
+                <InputErrorsTooltip errors={errors.redirect}>
+                  <InputField
+                    color={errors.redirect && "error"}
+                    id={fieldIds.redirect}
+                    name="redirect"
+                    placeholder="/another-path"
+                    disabled={
+                      disabled || isLiteralExpression(values.redirect) === false
+                    }
+                    value={String(
+                      computeExpression(values.redirect, variableValues)
+                    )}
+                    onChange={(event) => {
+                      onChange({
+                        field: "redirect",
+                        value: JSON.stringify(event.target.value),
+                      });
+                    }}
+                  />
+                </InputErrorsTooltip>
+              </BindingControl>
+            </Grid>
+          )}
         </Grid>
 
         <Separator />
@@ -778,7 +818,7 @@ const FormFields = ({
                 ? socialImageAsset.name
                 : socialImageUrl
             }
-            ogUrl={pageUrl}
+            ogUrl={addressBar.pageUrl}
             ogTitle={title}
             ogDescription={description}
           />
@@ -852,8 +892,13 @@ export const NewPageSettings = ({
     false,
     variableValues
   );
+  const foldersPath =
+    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
   const addressBar = useAddressBar({
-    path: values.path,
+    path: [foldersPath, values.path]
+      .filter(Boolean)
+      .join("/")
+      .replace(/\/+/g, "/"),
   });
 
   const handleSubmit = () => {
@@ -999,6 +1044,15 @@ const updatePage = (
       page.meta.excludePageFromSearch = values.excludePageFromSearch;
     }
 
+    if (values.status !== undefined) {
+      page.meta.status = values.status;
+    }
+
+    if (values.redirect !== undefined) {
+      page.meta.redirect =
+        values.redirect.length > 0 ? values.redirect : undefined;
+    }
+
     if (values.socialImageAssetId !== undefined) {
       page.meta.socialImageAssetId =
         values.socialImageAssetId.length > 0
@@ -1103,8 +1157,13 @@ export const PageSettings = ({
     values.isHomePage,
     variableValues
   );
+  const foldersPath =
+    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
   const addressBar = useAddressBar({
-    path: values.path,
+    path: [foldersPath, values.path]
+      .filter(Boolean)
+      .join("/")
+      .replace(/\/+/g, "/"),
     dataSourceId: page?.pathVariableId,
   });
 

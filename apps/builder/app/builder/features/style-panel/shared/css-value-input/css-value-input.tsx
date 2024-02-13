@@ -609,7 +609,7 @@ export const CssValueInput = ({
     );
 
   return (
-    <Combobox>
+    <Combobox open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField

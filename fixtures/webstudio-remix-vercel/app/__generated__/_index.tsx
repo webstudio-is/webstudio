@@ -66,7 +66,10 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const getPageMeta = ({}: {
+export const getPageMeta = ({
+  params,
+  resources,
+}: {
   params: Record<string, undefined | string>;
   resources: Record<string, any>;
 }): PageMeta => {
@@ -77,6 +80,8 @@ export const getPageMeta = ({}: {
     excludePageFromSearch: undefined,
     socialImageAssetId: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
     socialImageUrl: undefined,
+    status: undefined,
+    redirect: undefined,
     custom: [
       {
         property: "fb:app_id",
