@@ -174,7 +174,6 @@ const useScrub = ({
         // (it makes text harder to read and may jump around as you scrub)
         scrubRef.current?.setAttribute("tabindex", "-1");
         scrubRef.current?.focus();
-        console.log(valueRef.current);
         const value = validateValue(event.value);
 
         onChangeRef.current(value);
