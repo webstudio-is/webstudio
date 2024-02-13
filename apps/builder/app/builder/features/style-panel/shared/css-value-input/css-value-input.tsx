@@ -33,12 +33,18 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { isValidDeclaration } from "@webstudio-is/css-data";
+import { isValidDeclaration, properties } from "@webstudio-is/css-data";
 import {
   $selectedInstanceBrowserStyle,
   $selectedInstanceUnitSizes,
 } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
+
+// We need to enable scrub on properties that can have numeric value.
+const canBeNumber = (property: StyleProperty) => {
+  const { unitGroups } = properties[property as keyof typeof properties];
+  return unitGroups.length !== 0;
+};
 
 const useScrub = ({
   value,
@@ -77,7 +83,11 @@ const useScrub = ({
     const scrubRefCurrent = scrubRef.current;
 
     // Support only auto keyword to be scrubbable
-    if (inputRefCurrent === null || scrubRefCurrent === null) {
+    if (
+      inputRefCurrent === null ||
+      scrubRefCurrent === null ||
+      canBeNumber(property) === false
+    ) {
       return;
     }
 
