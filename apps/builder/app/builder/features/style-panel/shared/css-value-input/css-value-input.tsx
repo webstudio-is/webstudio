@@ -46,6 +46,15 @@ const canBeNumber = (property: StyleProperty) => {
   return unitGroups.length !== 0;
 };
 
+const scrubUnitAcceleration = new Map<Unit, number>([
+  ["rem", 1 / 16],
+  ["em", 1 / 16],
+  ["%", 1 / 10],
+  ["dvw", 1 / 10],
+  ["dvh", 1 / 10],
+  ["number", 1 / 20],
+]);
+
 const useScrub = ({
   value,
   property,
@@ -135,6 +144,11 @@ const useScrub = ({
     };
 
     return numericScrubControl(scrubRefCurrent, {
+      getAcceleration() {
+        if (valueRef.current.type === "unit") {
+          return scrubUnitAcceleration.get(valueRef.current.unit);
+        }
+      },
       // @todo: after this https://github.com/webstudio-is/webstudio/issues/564
       // we can switch back on using just initial value
       //
@@ -160,7 +174,7 @@ const useScrub = ({
         // (it makes text harder to read and may jump around as you scrub)
         scrubRef.current?.setAttribute("tabindex", "-1");
         scrubRef.current?.focus();
-
+        console.log(valueRef.current);
         const value = validateValue(event.value);
 
         onChangeRef.current(value);

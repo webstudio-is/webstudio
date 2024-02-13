@@ -9,10 +9,12 @@ const useNumericScrubControl = ({
   ref,
   value,
   direction,
+  acceleration,
 }: {
   ref: RefObject<HTMLInputElement>;
   value: NumericScrubValue;
   direction: NumericScrubDirection;
+  acceleration: number;
 }) => {
   useEffect(() => {
     if (ref.current === null) {
@@ -21,7 +23,13 @@ const useNumericScrubControl = ({
     ref.current.value = String(value);
     return numericScrubControl(ref.current, {
       getInitialValue: () => value,
-      direction: direction,
+      direction,
+      getAcceleration() {
+        return acceleration;
+      },
+      onValueInput: (event) => {
+        (event.target as HTMLInputElement).value = String(event.value);
+      },
       onValueChange: (event) => {
         event.preventDefault();
         (event.target as HTMLInputElement).value = String(event.value);
@@ -34,17 +42,19 @@ const useNumericScrubControl = ({
 const Input = ({
   value,
   direction,
+  acceleration,
 }: {
   value: NumericScrubValue;
   direction: NumericScrubDirection;
+  acceleration: number;
 }) => {
   const ref = useRef<HTMLInputElement | null>(null);
-  useNumericScrubControl({ ref, value, direction });
+  useNumericScrubControl({ ref, value, direction, acceleration });
   return <input defaultValue={value} ref={ref} />;
 };
 
 export const NumericInput = Object.assign(Input.bind({}), {
-  args: { value: 0, direction: "horizontal" },
+  args: { value: 0, direction: "horizontal", acceleration: 1 },
 });
 
 export default {
