@@ -194,8 +194,6 @@ const subscribeEphemeralStyle = (params: Params) => {
 
     // rerender style rules if new vars added
     userSheet.render();
-
-    // document.body.removeAttribute("inert");
   });
 };
 
