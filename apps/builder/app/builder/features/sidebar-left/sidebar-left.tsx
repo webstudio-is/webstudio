@@ -3,7 +3,6 @@ import { Box, Tooltip } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
 import { panels } from "./panels";
-import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
@@ -101,7 +100,7 @@ type SidebarLeftProps = {
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [activeTab, setActiveTab] = useActiveTab();
   const dragAndDropState = useStore($dragAndDropState);
-  const { TabContent } = activeTab === "none" ? none : panels[activeTab];
+  const { TabContent } = panels.get(activeTab) ?? none;
   const isPreviewMode = useStore($isPreviewMode);
 
   useSubscribe("dragEnd", () => {
@@ -122,20 +121,18 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         {isPreviewMode === false && (
           <>
             <SidebarTabsList>
-              {(Object.keys(panels) as Array<TabName>).map(
-                (tabName: TabName) => (
-                  <SidebarTabsTrigger
-                    key={tabName}
-                    aria-label={tabName}
-                    value={tabName}
-                    onClick={() => {
-                      setActiveTab(activeTab === tabName ? "none" : tabName);
-                    }}
-                  >
-                    {tabName !== "none" && panels[tabName].icon}
-                  </SidebarTabsTrigger>
-                )
-              )}
+              {Array.from(panels.keys()).map((tabName) => (
+                <SidebarTabsTrigger
+                  key={tabName}
+                  aria-label={tabName}
+                  value={tabName}
+                  onClick={() => {
+                    setActiveTab(activeTab === tabName ? "none" : tabName);
+                  }}
+                >
+                  {tabName !== "none" && panels.get(tabName)?.icon}
+                </SidebarTabsTrigger>
+              ))}
               <AiTabTrigger />
             </SidebarTabsList>
             <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
