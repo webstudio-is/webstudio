@@ -46,6 +46,9 @@ const canBeNumber = (property: StyleProperty) => {
   return unitGroups.length !== 0;
 };
 
+// Subjective adjust ment based on how it feels on macbook/trackpad.
+// It won't be ideal for everyone with different input devices and preferences.
+// Ideally we also need some kind of acceleration setting with 1 value.
 const scrubUnitAcceleration = new Map<Unit, number>([
   ["rem", 1 / 16],
   ["em", 1 / 16],
