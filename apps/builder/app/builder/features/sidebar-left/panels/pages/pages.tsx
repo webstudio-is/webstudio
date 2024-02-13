@@ -23,7 +23,7 @@ import {
   NewPageIcon,
   PageIcon,
 } from "@webstudio-is/icons";
-import type { TabName } from "../../types";
+import type { TabContentProps } from "../../types";
 import { CloseButton, Header } from "../../header";
 import { SettingsPanel } from "./settings-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
@@ -45,10 +45,6 @@ import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { ROOT_FOLDER_ID, type Folder } from "@webstudio-is/sdk";
 import { atom } from "nanostores";
-
-type TabContentProps = {
-  onSetActiveTab: (tabName: TabName) => void;
-};
 
 const MenuButton = styled(DeprecatedIconButton, {
   color: theme.colors.hint,
@@ -393,7 +389,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const pages = useStore($pages);
 
   if (currentPageId === undefined || pages === undefined) {
-    return null;
+    return;
   }
 
   return (
