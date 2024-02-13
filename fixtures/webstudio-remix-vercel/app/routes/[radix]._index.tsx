@@ -38,7 +38,11 @@ export const loader = async (arg: LoaderArgs) => {
   const pageMeta = getPageMeta({ params, resources });
 
   if (pageMeta.redirect) {
-    return redirect(pageMeta.redirect, 302);
+    const status =
+      pageMeta.status === 301 || pageMeta.status === 302
+        ? pageMeta.status
+        : 302;
+    return redirect(pageMeta.redirect, status);
   }
 
   const host =
@@ -64,7 +68,10 @@ export const loader = async (arg: LoaderArgs) => {
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
-    { headers: { "Cache-Control": "public, max-age=600" } }
+    {
+      status: pageMeta.status,
+      headers: { "Cache-Control": "public, max-age=600" },
+    }
   );
 };
 
