@@ -36,7 +36,7 @@ const useNumericScrubControl = ({
         (event.target as HTMLInputElement).select();
       },
     });
-  }, [direction, value, ref]);
+  }, [direction, value, direction, ref]);
 };
 
 const Input = ({
