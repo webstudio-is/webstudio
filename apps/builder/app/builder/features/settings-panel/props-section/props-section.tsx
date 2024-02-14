@@ -54,7 +54,6 @@ const matchOrSuggestToCreate = (
   ) {
     matched.unshift({ name: search.trim() });
   }
-
   return matched;
 };
 
@@ -118,9 +117,10 @@ const renderProperty = (
     instanceId,
   }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
-  deletable?: boolean
+  { deletable, autoFocus }: { deletable?: boolean; autoFocus?: boolean } = {}
 ) =>
   renderControl({
+    autoFocus,
     key: propName,
     instanceId,
     meta,
@@ -216,7 +216,12 @@ export const PropsSection = (props: PropsSectionProps) => {
               }}
             />
           )}
-          {logic.addedProps.map((item) => renderProperty(props, item, true))}
+          {logic.addedProps.map((item, index) =>
+            renderProperty(props, item, {
+              deletable: true,
+              autoFocus: index === 0,
+            })
+          )}
           {logic.initialProps.map((item) => renderProperty(props, item))}
         </Flex>
       </CollapsibleSectionWithAddButton>

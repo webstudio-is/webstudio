@@ -67,6 +67,7 @@ export type ControlProps<Control> = {
   deletable: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
   onDelete: () => void;
+  autoFocus?: boolean;
 };
 
 export const getLabel = (meta: { label?: string }, fallback: string) =>
