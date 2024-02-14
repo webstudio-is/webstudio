@@ -265,12 +265,16 @@ export const useCombobox = <Item,>({
   useEffect(() => {
     if (isOpen === false) {
       resetFilter();
-      if (selectedItemRef.current) {
-        onItemSelect?.(selectedItemRef.current);
-        selectedItemRef.current = undefined;
-      }
     }
   }, [isOpen, resetFilter]);
+
+  useEffect(() => {
+    // Selecting the item when the popover is closed.
+    if (isOpen === false && selectedItemRef.current) {
+      onItemSelect?.(selectedItemRef.current);
+      selectedItemRef.current = undefined;
+    }
+  }, [isOpen, onItemSelect]);
 
   const enhancedGetInputProps = useCallback(
     (options?: UseComboboxGetInputPropsOptions) => {
