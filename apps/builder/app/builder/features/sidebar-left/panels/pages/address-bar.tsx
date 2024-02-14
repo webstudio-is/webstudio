@@ -13,6 +13,7 @@ import type { DataSource } from "@webstudio-is/sdk";
 import { $dataSourceVariables, $domains, $project } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { compilePathnamePattern, parsePathnamePattern } from "./url-pattern";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 const $publishedOrigin = computed([$project, $domains], (project, domains) => {
   const customDomain: string | undefined = domains[0];
@@ -95,7 +96,13 @@ export const useAddressBar = ({
   };
 };
 
-const CopyPageUrl = ({ pageUrl }: { pageUrl: string }) => {
+const CopyPageUrl = ({
+  pageUrl,
+  disabled,
+}: {
+  pageUrl: string;
+  disabled: boolean;
+}) => {
   const [copyState, setCopyState] = useState<"copy" | "copied">("copy");
 
   // reset copied state after 2 seconds
@@ -136,6 +143,7 @@ const CopyPageUrl = ({ pageUrl }: { pageUrl: string }) => {
       <Button
         color="ghost"
         type="button"
+        disabled={disabled}
         onClick={() => {
           navigator.clipboard.writeText(pageUrl);
           setCopyState("copied");
@@ -158,21 +166,26 @@ const CopyPageUrl = ({ pageUrl }: { pageUrl: string }) => {
 export const AddressBar = ({ addressBar }: { addressBar: AddressBarApi }) => {
   const { pathParamNames, pathParams, pageUrl, updatePathParam } = addressBar;
   const id = useId();
+  const { allowDynamicData } = useStore($userPlanFeatures);
 
   return (
     <Grid gap={1}>
-      {pathParamNames.map((name) => (
-        <Fragment key={name}>
-          <Label htmlFor={`${id}-${name}`}>{name}</Label>
-          <InputField
-            tabIndex={1}
-            id={`${id}-${name}`}
-            value={pathParams[name] ?? ""}
-            onChange={(event) => updatePathParam(name, event.target.value)}
-          />
-        </Fragment>
-      ))}
-      <CopyPageUrl pageUrl={pageUrl} />
+      {allowDynamicData &&
+        pathParamNames.map((name) => (
+          <Fragment key={name}>
+            <Label htmlFor={`${id}-${name}`}>{name}</Label>
+            <InputField
+              tabIndex={1}
+              id={`${id}-${name}`}
+              value={pathParams[name] ?? ""}
+              onChange={(event) => updatePathParam(name, event.target.value)}
+            />
+          </Fragment>
+        ))}
+      <CopyPageUrl
+        pageUrl={pageUrl}
+        disabled={allowDynamicData === false && pathParamNames.length > 0}
+      />
     </Grid>
   );
 };

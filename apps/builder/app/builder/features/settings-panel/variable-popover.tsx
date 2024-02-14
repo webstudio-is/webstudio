@@ -334,7 +334,7 @@ const VariablePanel = forwardRef<
     variable?: DataSource;
   }
 >(({ variable }, ref) => {
-  const { allowResourceVariables } = useStore($userPlanFeatures);
+  const { allowDynamicData } = useStore($userPlanFeatures);
 
   const nameField = useField({
     initialValue: variable?.name ?? "",
@@ -395,10 +395,10 @@ const VariablePanel = forwardRef<
             key={option}
             value={option}
             textValue={getTypeLabel(option)}
-            disabled={option === "resource" && allowResourceVariables === false}
+            disabled={option === "resource" && allowDynamicData === false}
           >
             {getTypeLabel(option)}
-            {option === "resource" && allowResourceVariables === false && (
+            {option === "resource" && allowDynamicData === false && (
               <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
                 <ProBadge>Pro</ProBadge>
               </Box>

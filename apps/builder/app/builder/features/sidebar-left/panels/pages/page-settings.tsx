@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback } from "react";
+import { type FocusEventHandler, useState, useCallback, useId } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -79,6 +79,8 @@ import {
 } from "./page-utils";
 import { Form } from "./form";
 import { AddressBar, useAddressBar, type AddressBarApi } from "./address-bar";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -198,7 +200,8 @@ const validateValues = (
   pageId: undefined | Page["id"],
   values: Values,
   isHomePage: boolean,
-  variableValues: Map<string, unknown>
+  variableValues: Map<string, unknown>,
+  userPlanFeatures: UserPlanFeatures
 ): Errors => {
   const computedValues = {
     name: values.name,
@@ -233,6 +236,14 @@ const validateValues = (
       errors.path = errors.path ?? [];
       errors.path.push(...messages);
     }
+    const pathParamNames = parsePathnamePattern(values.path);
+    if (
+      userPlanFeatures.allowDynamicData === false &&
+      pathParamNames.length > 0
+    ) {
+      errors.path = errors.path ?? [];
+      errors.path.push("Dynamic path is supported only for paid users");
+    }
   }
   return errors;
 };
@@ -266,16 +277,60 @@ const toFormValues = (
 const autoSelectHandler: FocusEventHandler<HTMLInputElement> = (event) =>
   event.target.select();
 
+const PathField = ({
+  errors,
+  value,
+  onChange,
+}: {
+  errors?: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const { allowDynamicData } = useStore($userPlanFeatures);
+  const id = useId();
+  return (
+    <Grid gap={1}>
+      <Label htmlFor={id}>
+        {allowDynamicData && isFeatureEnabled("cms") ? (
+          <Flex align="center" css={{ gap: theme.spacing[3] }}>
+            Dynamic Path
+            <Tooltip
+              content={
+                "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
+              }
+              variant="wrapped"
+            >
+              <HelpIcon
+                color={rawTheme.colors.foregroundSubtle}
+                tabIndex={-1}
+              />
+            </Tooltip>
+          </Flex>
+        ) : (
+          "Path"
+        )}
+      </Label>
+      <InputErrorsTooltip errors={errors}>
+        <InputField
+          color={errors && "error"}
+          id={id}
+          placeholder="/about"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </InputErrorsTooltip>
+    </Grid>
+  );
+};
+
 const FormFields = ({
   addressBar,
-  disabled,
   autoSelect,
   errors,
   values,
   onChange,
 }: {
   addressBar: AddressBarApi;
-  disabled?: boolean;
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
@@ -330,7 +385,6 @@ const FormFields = ({
                 onFocus={autoSelect ? autoSelectHandler : undefined}
                 name="name"
                 placeholder="About"
-                disabled={disabled}
                 value={values.name}
                 onChange={(event) => {
                   onChange({ field: "name", value: event.target.value });
@@ -390,39 +444,11 @@ const FormFields = ({
           )}
 
           {values.isHomePage === false && (
-            <Grid gap={1}>
-              <Label htmlFor={fieldIds.path}>
-                <Flex align="center" css={{ gap: theme.spacing[3] }}>
-                  Path
-                  {isFeatureEnabled("cms") && (
-                    <Tooltip
-                      content={
-                        "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-                      }
-                      variant="wrapped"
-                    >
-                      <HelpIcon
-                        color={rawTheme.colors.foregroundSubtle}
-                        tabIndex={-1}
-                      />
-                    </Tooltip>
-                  )}
-                </Flex>
-              </Label>
-              <InputErrorsTooltip errors={errors.path}>
-                <InputField
-                  color={errors.path && "error"}
-                  id={fieldIds.path}
-                  name="path"
-                  placeholder="/about"
-                  disabled={disabled}
-                  value={values?.path}
-                  onChange={(event) => {
-                    onChange({ field: "path", value: event.target.value });
-                  }}
-                />
-              </InputErrorsTooltip>
-            </Grid>
+            <PathField
+              errors={errors.path}
+              value={values.path}
+              onChange={(value) => onChange({ field: "path", value })}
+            />
           )}
           <AddressBar addressBar={addressBar} />
         </Grid>
@@ -499,9 +525,7 @@ const FormFields = ({
                   id={fieldIds.title}
                   name="title"
                   placeholder="My awesome project - About"
-                  disabled={
-                    disabled || isLiteralExpression(values.title) === false
-                  }
+                  disabled={isLiteralExpression(values.title) === false}
                   value={title}
                   onChange={(event) => {
                     onChange({
@@ -546,10 +570,7 @@ const FormFields = ({
                   state={errors.description && "invalid"}
                   id={fieldIds.description}
                   name="description"
-                  disabled={
-                    disabled ||
-                    isLiteralExpression(values.description) === false
-                  }
+                  disabled={isLiteralExpression(values.description) === false}
                   value={description}
                   onChange={(value) => {
                     onChange({
@@ -597,7 +618,6 @@ const FormFields = ({
                 <Checkbox
                   id={fieldIds.excludePageFromSearch}
                   disabled={
-                    disabled ||
                     isLiteralExpression(values.excludePageFromSearch) === false
                   }
                   checked={excludePageFromSearch}
@@ -650,9 +670,7 @@ const FormFields = ({
                     id={fieldIds.status}
                     name="status"
                     placeholder="/another-path"
-                    disabled={
-                      disabled || isLiteralExpression(values.status) === false
-                    }
+                    disabled={isLiteralExpression(values.status) === false}
                     value={String(
                       computeExpression(values.status, variableValues)
                     )}
@@ -702,9 +720,7 @@ const FormFields = ({
                     id={fieldIds.redirect}
                     name="redirect"
                     placeholder="/another-path"
-                    disabled={
-                      disabled || isLiteralExpression(values.redirect) === false
-                    }
+                    disabled={isLiteralExpression(values.redirect) === false}
                     value={String(
                       computeExpression(values.redirect, variableValues)
                     )}
@@ -764,7 +780,6 @@ const FormFields = ({
                 <InputField
                   placeholder="https://www.url.com"
                   disabled={
-                    disabled ||
                     isLiteralExpression(values.socialImageUrl) === false
                   }
                   color={errors.socialImageUrl && "error"}
@@ -884,13 +899,15 @@ export const NewPageSettings = ({
     ...fieldDefaultValues,
     path: nameToPath(pages, fieldDefaultValues.name),
   });
+  const userPlanFeatures = useStore($userPlanFeatures);
   const { variableValues } = useStore($pageRootScope);
   const errors = validateValues(
     pages,
     undefined,
     values,
     false,
-    variableValues
+    variableValues,
+    userPlanFeatures
   );
   const foldersPath =
     pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
@@ -920,7 +937,6 @@ export const NewPageSettings = ({
         autoSelect
         addressBar={addressBar}
         errors={errors}
-        disabled={false}
         values={values}
         onChange={(val) => {
           setValues((values) => {
@@ -1150,12 +1166,14 @@ export const PageSettings = ({
   };
 
   const { variableValues } = useStore($pageRootScope);
+  const userPlanFeatures = useStore($userPlanFeatures);
   const errors = validateValues(
     pages,
     pageId,
     values,
     values.isHomePage,
-    variableValues
+    variableValues,
+    userPlanFeatures
   );
   const foldersPath =
     pages === undefined ? "" : getPagePath(values.parentFolderId, pages);

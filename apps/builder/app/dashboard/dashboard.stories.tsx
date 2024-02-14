@@ -30,7 +30,7 @@ const userPlanFeatures: UserPlanFeatures = {
   hasProPlan: false,
   hasSubscription: false,
   allowShareAdminLinks: false,
-  allowResourceVariables: false,
+  allowDynamicData: false,
   maxDomainsAllowedPerUser: 5,
 };
 
