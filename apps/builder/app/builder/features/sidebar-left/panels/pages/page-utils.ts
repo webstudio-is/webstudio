@@ -1,6 +1,11 @@
+import { nanoid } from "nanoid";
 import { computed } from "nanostores";
 import { createRootFolder } from "@webstudio-is/project-build";
-import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
+import {
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  validateExpression,
+} from "@webstudio-is/react-sdk";
 import {
   type Page,
   Pages,
@@ -10,11 +15,19 @@ import {
   isRoot,
   type WebstudioData,
   getPagePath,
+  findParentFolderByChildId,
+  DataSource,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
-import { deleteInstanceMutable } from "~/shared/instance-utils";
+import {
+  deleteInstanceMutable,
+  getInstancesSlice,
+  insertInstancesSliceCopy,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
 import {
   $dataSources,
+  $pages,
   $selectedInstanceSelector,
   $selectedPage,
   $selectedPageId,
@@ -310,3 +323,113 @@ export const $pageRootScope = computed(
     return { variableValues: values ?? variableValues, scope, aliases };
   }
 );
+
+const deduplicatePath = (pages: undefined | Pages, path: string) => {
+  if (pages === undefined) {
+    return path;
+  }
+  const matchedPage = findPageByIdOrPath(path, pages);
+  if (matchedPage === undefined) {
+    return path;
+  }
+  if (path === "/") {
+    path = "";
+  }
+  let counter = 1;
+  while (findPageByIdOrPath(`/copy-${counter}${path}`, pages) !== undefined) {
+    counter += 1;
+  }
+  return `/copy-${counter}${path}`;
+};
+
+const replaceDataSources = (
+  expression: string,
+  replacements: Map<DataSource["id"], DataSource["id"]>
+) => {
+  return validateExpression(expression, {
+    effectful: true,
+    transformIdentifier: (identifier) => {
+      const dataSourceId = decodeDataSourceVariable(identifier);
+      if (dataSourceId === undefined) {
+        return identifier;
+      }
+      return encodeDataSourceVariable(
+        replacements.get(dataSourceId) ?? dataSourceId
+      );
+    },
+  });
+};
+
+export const duplicatePage = (pageId: Page["id"]) => {
+  const pages = $pages.get();
+  if (pages === undefined) {
+    return;
+  }
+  const page = findPageByIdOrPath(pageId, pages);
+
+  if (page === undefined) {
+    return;
+  }
+
+  const newPageId = nanoid();
+  const { name = page.name, copyNumber } =
+    // extract a number from "name (copyNumber)"
+    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
+
+  const slice = getInstancesSlice(page.rootInstanceId);
+  updateWebstudioData((data) => {
+    const { newInstanceIds, newDataSourceIds } = insertInstancesSliceCopy({
+      data,
+      slice,
+      availableDataSources: new Set(),
+    });
+    const newRootInstanceId = newInstanceIds.get(page.rootInstanceId);
+    const newPathVariableId =
+      page.pathVariableId === undefined
+        ? undefined
+        : newDataSourceIds.get(page.pathVariableId);
+    if (newRootInstanceId === undefined) {
+      return;
+    }
+    const newPage = {
+      ...page,
+      id: newPageId,
+      rootInstanceId: newRootInstanceId,
+      pathVariableId: newPathVariableId,
+      name: newName,
+      path: deduplicatePath(pages, page.path),
+      title: replaceDataSources(page.title, newDataSourceIds),
+      meta: {
+        ...page.meta,
+        description:
+          page.meta.description === undefined
+            ? undefined
+            : replaceDataSources(page.meta.description, newDataSourceIds),
+        excludePageFromSearch:
+          page.meta.excludePageFromSearch === undefined
+            ? undefined
+            : replaceDataSources(
+                page.meta.excludePageFromSearch,
+                newDataSourceIds
+              ),
+        socialImageUrl:
+          page.meta.socialImageUrl === undefined
+            ? undefined
+            : replaceDataSources(page.meta.socialImageUrl, newDataSourceIds),
+        custom: page.meta.custom?.map(({ property, content }) => ({
+          property,
+          content: replaceDataSources(content, newDataSourceIds),
+        })),
+      },
+    } satisfies Page;
+    data.pages.pages.push(newPage);
+    const currentFolder = findParentFolderByChildId(pageId, data.pages.folders);
+    registerFolderChildMutable(
+      data.pages.folders,
+      newPageId,
+      currentFolder?.id
+    );
+  });
+  return newPageId;
+};

@@ -22,7 +22,6 @@ export * from "./chevron-double-right";
 export * from "./cross-circled-filled";
 export * from "./cross";
 export * from "./magnifying-glass";
-export * from "./menu";
 export * from "./cross-small";
 export * from "./cross-large";
 export * from "./ellipses";

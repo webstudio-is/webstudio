@@ -149,7 +149,7 @@ export const TransitionProperty = ({
           <Label css={{ display: "inline" }}> Property </Label>
         </Tooltip>
       </Flex>
-      <Combobox>
+      <Combobox open={isOpen}>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>
             <InputField

@@ -17,8 +17,11 @@ import {
 import { Title, type ProjectRouter, Project } from "@webstudio-is/project";
 import { projectsPath, builderPath } from "~/shared/router-utils";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
+import { $authToken } from "./nano-states";
 
-const trpc = createTrpcRemixProxy<ProjectRouter>(projectsPath);
+const trpc = createTrpcRemixProxy<ProjectRouter>((method) =>
+  projectsPath(method, { authToken: $authToken.get() })
+);
 
 const useCloneProject = ({
   projectId,

@@ -9,6 +9,12 @@ import { isRoot } from "@webstudio-is/sdk";
 
 export default {
   component: PageSettings,
+  parameters: {
+    lostpixel: {
+      // this is to fix cutting off the after scroll area in the screenshot
+      waitBeforeScreenshot: 3000,
+    },
+  },
 };
 
 $isProjectSettingsOpen.set(true);

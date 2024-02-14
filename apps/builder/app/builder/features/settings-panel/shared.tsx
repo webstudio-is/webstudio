@@ -37,6 +37,7 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
+import { useDebouncedCallback } from "use-debounce";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -155,7 +156,8 @@ export const Label = ({
 
 export const useLocalValue = <Type,>(
   savedValue: Type,
-  onSave: (value: Type) => void
+  onSave: (value: Type) => void,
+  { autoSave = true } = {}
 ) => {
   const isEditingRef = useRef(false);
   const localValueRef = useRef(savedValue);
@@ -173,10 +175,15 @@ export const useLocalValue = <Type,>(
     }
   };
 
+  const saveDebounced = useDebouncedCallback(save, 500);
+
   const setLocalValue = (value: Type) => {
     isEditingRef.current = true;
     localValueRef.current = value;
     setRefresh((refresh) => refresh + 1);
+    if (autoSave) {
+      saveDebounced();
+    }
   };
 
   // onBlur will not trigger if control is unmounted when props panel is closed or similar.

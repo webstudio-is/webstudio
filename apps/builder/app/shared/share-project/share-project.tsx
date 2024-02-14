@@ -21,7 +21,12 @@ import {
   Link,
   buttonStyle,
 } from "@webstudio-is/design-system";
-import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
+import {
+  CopyIcon,
+  EllipsesIcon,
+  PlusIcon,
+  HelpIcon,
+} from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
@@ -112,7 +117,7 @@ const Menu = ({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          prefix={<MenuIcon />}
+          prefix={<EllipsesIcon />}
           color="ghost"
           aria-label="Menu Button for options"
         ></Button>
@@ -149,7 +154,7 @@ const Menu = ({
               checked={relation === "viewers"}
               onCheckedChange={handleCheckedChange("viewers")}
               title="View"
-              info="Recipients can only view the project"
+              info="Recipients can view, copy instances and clone the project"
             />
             {/*
            Hide temporarily until we have a way to allow edit content but not edit tree, etc.

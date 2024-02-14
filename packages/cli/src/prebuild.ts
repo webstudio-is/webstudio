@@ -564,7 +564,7 @@ export const user: { email: string | null } | undefined = ${JSON.stringify(
     )};
 export const projectId = "${siteData.build.projectId}";
 
-${generatePageMeta({ scope, page: pageData.page, dataSources })}
+${generatePageMeta({ globalScope: scope, page: pageData.page, dataSources })}
 
 ${pageComponent}
 

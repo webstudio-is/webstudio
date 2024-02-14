@@ -1,6 +1,7 @@
 import { rawTheme, Box, theme, css } from "@webstudio-is/design-system";
 import { colord, type RgbaColor } from "colord";
 import { forwardRef, type ElementRef, type ComponentProps } from "react";
+import { clamp } from "~/shared/math-utils";
 
 const whiteColor = { r: 255, g: 255, b: 255, a: 1 };
 const borderColorSwatch = colord(rawTheme.colors.borderColorSwatch).toRgb();
@@ -27,10 +28,6 @@ const lerpColor = (a: RgbaColor, b: RgbaColor, t: number) => {
     b: lerp(a.b, b.b, t),
     a: lerp(a.a, b.a, t),
   };
-};
-
-const clamp = (value: number, min: number, max: number) => {
-  return Math.min(Math.max(value, min), max);
 };
 
 const style = css({

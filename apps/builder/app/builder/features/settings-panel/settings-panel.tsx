@@ -1,5 +1,5 @@
 import type { Instance } from "@webstudio-is/sdk";
-import { SettingsSection } from "./settings-section/settings-section";
+import { SettingsSection } from "./settings-section";
 import { PropsSectionContainer } from "./props-section/props-section";
 import { VariablesSection } from "./variables-section";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";

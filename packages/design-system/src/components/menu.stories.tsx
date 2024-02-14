@@ -39,7 +39,7 @@ import { Button } from "./button";
 import {
   ChevronDownIcon,
   TrashIcon,
-  MenuIcon,
+  EllipsesIcon,
   DotIcon,
 } from "@webstudio-is/icons";
 import { useState } from "react";
@@ -55,7 +55,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   return (
     <DropdownMenu defaultOpen>
       <DropdownMenuTrigger asChild>
-        <Button prefix={<MenuIcon />} />
+        <Button prefix={<EllipsesIcon />} />
       </DropdownMenuTrigger>
       <DropdownMenuContent width="regular">
         <DropdownMenuLabel>Not choosable</DropdownMenuLabel>
@@ -145,6 +145,7 @@ const ComboboxDemo = () => {
   const [selectedItem, onItemSelect] = useState<Fruit>();
 
   const {
+    isOpen,
     items,
     getInputProps,
     getComboboxProps,
@@ -175,7 +176,7 @@ const ComboboxDemo = () => {
   const longItems = items.filter((item) => item === "Banana");
 
   return (
-    <Combobox>
+    <Combobox open={isOpen}>
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
           <DeprecatedTextField

@@ -68,7 +68,10 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const getPageMeta = ({}: {
+export const getPageMeta = ({
+  params,
+  resources,
+}: {
   params: Record<string, undefined | string>;
   resources: Record<string, any>;
 }): PageMeta => {
@@ -79,6 +82,8 @@ export const getPageMeta = ({}: {
     excludePageFromSearch: true,
     socialImageAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
     socialImageUrl: undefined,
+    status: undefined,
+    redirect: undefined,
     custom: [],
   };
 };

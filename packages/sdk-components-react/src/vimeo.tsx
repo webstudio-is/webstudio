@@ -318,7 +318,7 @@ export const Vimeo = forwardRef<Ref, Props>(
   (
     {
       url,
-      loading,
+      loading = "lazy",
       autoplay = false,
       autopause = true,
       backgroundMode = false,

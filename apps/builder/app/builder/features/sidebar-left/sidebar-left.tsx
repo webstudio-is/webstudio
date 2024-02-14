@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Box, Tooltip } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
-import { $dragAndDropState } from "~/shared/nano-states";
+import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
 import { panels } from "./panels";
-import type { TabName } from "./types";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
@@ -33,6 +32,67 @@ const useActiveTab = () => {
   return [nextTab, $activeSidebarPanel.set] as const;
 };
 
+const AiTabTrigger = () => {
+  const [clientSettings, setClientSetting] = useClientSettings();
+  return (
+    <SidebarTabsTrigger
+      aria-label="ai"
+      value={
+        "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
+      }
+      onClick={() => {
+        setClientSetting(
+          "isAiCommandBarVisible",
+          clientSettings.isAiCommandBarVisible === true ? false : true
+        );
+      }}
+    >
+      <AiIcon />
+    </SidebarTabsTrigger>
+  );
+};
+
+const HelpTabTrigger = () => {
+  const [helpIsOpen, setHelpIsOpen] = useState(false);
+  return (
+    <HelpPopover onOpenChange={setHelpIsOpen}>
+      <Tooltip
+        side="right"
+        content="Learn Webstudio or ask for help"
+        delayDuration={0}
+      >
+        <HelpPopover.Trigger asChild>
+          <SidebarTabsTrigger
+            as="button"
+            aria-label="Ask for help"
+            data-state={helpIsOpen ? "active" : undefined}
+          >
+            <HelpIcon size={22} />
+          </SidebarTabsTrigger>
+        </HelpPopover.Trigger>
+      </Tooltip>
+    </HelpPopover>
+  );
+};
+
+const GithubTabTrigger = () => {
+  return (
+    <Tooltip side="right" content="Report a bug on Github" delayDuration={0}>
+      <SidebarTabsTrigger
+        as="button"
+        aria-label="Report bug"
+        onClick={() => {
+          window.open(
+            "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
+          );
+        }}
+      >
+        <BugIcon size={22} />
+      </SidebarTabsTrigger>
+    </Tooltip>
+  );
+};
+
 type SidebarLeftProps = {
   publish: Publish;
 };
@@ -40,9 +100,8 @@ type SidebarLeftProps = {
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [activeTab, setActiveTab] = useActiveTab();
   const dragAndDropState = useStore($dragAndDropState);
-  const [helpIsOpen, setHelpIsOpen] = useState(false);
-  const [clientSettings, setClientSetting] = useClientSettings();
-  const { TabContent } = activeTab === "none" ? none : panels[activeTab];
+  const { TabContent } = panels.get(activeTab) ?? none;
+  const isPreviewMode = useStore($isPreviewMode);
 
   useSubscribe("dragEnd", () => {
     setActiveTab("none");
@@ -55,71 +114,33 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         value={activeTab}
         orientation="vertical"
       >
-        <SidebarTabsList>
-          {(Object.keys(panels) as Array<TabName>).map((tabName: TabName) => (
-            <SidebarTabsTrigger
-              aria-label={tabName}
-              key={tabName}
-              value={tabName}
-              onClick={() => {
-                setActiveTab(activeTab !== tabName ? tabName : "none");
-              }}
-            >
-              {tabName === "none" ? null : panels[tabName].icon}
-            </SidebarTabsTrigger>
-          ))}
-          <SidebarTabsTrigger
-            aria-label="ai"
-            value={
-              "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
-            }
-            onClick={() => {
-              setClientSetting(
-                "isAiCommandBarVisible",
-                clientSettings.isAiCommandBarVisible === true ? false : true
-              );
-            }}
-          >
-            <AiIcon />
-          </SidebarTabsTrigger>
-        </SidebarTabsList>
-        <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
-          <HelpPopover onOpenChange={setHelpIsOpen}>
-            <Tooltip
-              side="right"
-              content="Learn Webstudio or ask for help"
-              delayDuration={0}
-            >
-              <HelpPopover.Trigger asChild>
+        {
+          // In preview mode, we don't show left sidebar, but we want to allow pages panel to be open in the preview mode.
+          // This way user can switch pages without exiting preview mode.
+        }
+        {isPreviewMode === false && (
+          <>
+            <SidebarTabsList>
+              {Array.from(panels.keys()).map((tabName) => (
                 <SidebarTabsTrigger
-                  as="button"
-                  aria-label="Ask for help"
-                  data-state={helpIsOpen ? "active" : undefined}
+                  key={tabName}
+                  aria-label={tabName}
+                  value={tabName}
+                  onClick={() => {
+                    setActiveTab(activeTab === tabName ? "none" : tabName);
+                  }}
                 >
-                  <HelpIcon size={22} />
+                  {tabName !== "none" && panels.get(tabName)?.icon}
                 </SidebarTabsTrigger>
-              </HelpPopover.Trigger>
-            </Tooltip>
-          </HelpPopover>
-
-          <Tooltip
-            side="right"
-            content="Report a bug on Github"
-            delayDuration={0}
-          >
-            <SidebarTabsTrigger
-              as="button"
-              aria-label="Report bug"
-              onClick={() => {
-                window.open(
-                  "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
-                );
-              }}
-            >
-              <BugIcon size={22} />
-            </SidebarTabsTrigger>
-          </Tooltip>
-        </Box>
+              ))}
+              <AiTabTrigger />
+            </SidebarTabsList>
+            <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
+              <HelpTabTrigger />
+              <GithubTabTrigger />
+            </Box>
+          </>
+        )}
 
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}

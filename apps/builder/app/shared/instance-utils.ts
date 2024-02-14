@@ -463,7 +463,7 @@ export const reparentInstance = (
       return;
     }
     deleteInstanceMutable(data, sourceInstanceSelector);
-    const rootInstanceId = insertInstancesSliceCopy({
+    const { newInstanceIds } = insertInstancesSliceCopy({
       data,
       slice: fragment,
       availableDataSources: findAvailableDataSources(
@@ -472,7 +472,8 @@ export const reparentInstance = (
         reparentDropTarget.parentSelector
       ),
     });
-    if (rootInstanceId === undefined) {
+    const newRootInstanceId = newInstanceIds.get(rootInstanceId);
+    if (newRootInstanceId === undefined) {
       return;
     }
     const [newParentId] = reparentDropTarget.parentSelector;
@@ -480,14 +481,14 @@ export const reparentInstance = (
     if (newParent === undefined) {
       return;
     }
-    const newChild = { type: "id" as const, value: rootInstanceId };
+    const newChild = { type: "id" as const, value: newRootInstanceId };
     if (reparentDropTarget.position === "end") {
       newParent.children.push(newChild);
     } else {
       newParent.children.splice(reparentDropTarget.position, 0, newChild);
     }
     $selectedInstanceSelector.set([
-      rootInstanceId,
+      newRootInstanceId,
       ...reparentDropTarget.parentSelector,
     ]);
   });
@@ -910,9 +911,15 @@ export const insertInstancesSliceCopy = ({
   slice: WebstudioFragment;
   availableDataSources: Set<DataSource["id"]>;
 }) => {
+  const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
+  const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
+  const newDataIds = {
+    newInstanceIds,
+    newDataSourceIds,
+  };
   const projectId = $project.get()?.id;
   if (projectId === undefined) {
-    return;
+    return newDataIds;
   }
 
   const sliceInstances: Instances = new Map();
@@ -1178,13 +1185,11 @@ export const insertInstancesSliceCopy = ({
     sliceInstances,
     slice.instances[0].id
   );
-  const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
   for (const instanceId of sliceInstanceIds) {
     newInstanceIds.set(instanceId, nanoid());
   }
 
   const availableFragmentDataSources = new Set(availableDataSources);
-  const newDataSourceIds = new Map<DataSource["id"], DataSource["id"]>();
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
   const usedResourceIds = new Set<Resource["id"]>();
   for (const dataSource of slice.dataSources) {
@@ -1392,9 +1397,5 @@ export const insertInstancesSliceCopy = ({
     }
   }
 
-  // invoke callback to allow additional changes within same transaction
-  const rootInstanceId =
-    newInstanceIds.get(slice.instances[0].id) ?? slice.instances[0].id;
-
-  return rootInstanceId;
+  return newDataIds;
 };

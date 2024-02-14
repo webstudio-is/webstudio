@@ -14,7 +14,7 @@ import {
   rawTheme,
   Link,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon, MenuIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { builderPath, getPublishedUrl } from "~/shared/router-utils";
 import {
@@ -99,7 +99,7 @@ const Menu = ({
           tabIndex={tabIndex}
           css={{ alignSelf: "center" }}
         >
-          <MenuIcon width={15} height={15} />
+          <EllipsesIcon width={15} height={15} />
         </IconButton>
       </DropdownMenuTrigger>
       <DropdownMenuPortal>

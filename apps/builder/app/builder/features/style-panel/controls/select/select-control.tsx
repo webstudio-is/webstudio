@@ -9,6 +9,7 @@ export const SelectControl = ({
   property,
   currentStyle,
   setProperty,
+  deleteProperty,
   items,
 }: ControlProps) => {
   const { items: defaultItems } = styleConfigByName(property);
@@ -48,7 +49,7 @@ export const SelectControl = ({
       onOpenChange={(isOpen) => {
         // Remove ephemeral changes when closing the menu.
         if (isOpen === false && styleValue !== undefined) {
-          setValue(styleValue, { isEphemeral: true });
+          deleteProperty(property, { isEphemeral: true });
         }
       }}
     />

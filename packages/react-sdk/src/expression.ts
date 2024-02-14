@@ -188,10 +188,12 @@ export const decodeDataSourceVariable = (name: string) => {
 export const generateExpression = ({
   expression,
   dataSources,
+  usedDataSources,
   scope,
 }: {
   expression: string;
   dataSources: DataSources;
+  usedDataSources?: DataSources;
   scope: Scope;
 }) => {
   return validateExpression(expression, {
@@ -203,6 +205,7 @@ export const generateExpression = ({
       const depId = decodeDataSourceVariable(identifier);
       const dep = depId ? dataSources.get(depId) : undefined;
       if (dep) {
+        usedDataSources?.set(dep.id, dep);
         return scope.getName(dep.id, dep.name);
       }
       return identifier;

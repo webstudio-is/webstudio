@@ -14,6 +14,8 @@
  * });
  */
 
+import { clamp } from "@react-aria/utils";
+
 export type NumericScrubDirection = "horizontal" | "vertical";
 
 export type NumericScrubValue = number;
@@ -26,6 +28,7 @@ export type NumericScrubCallback = (event: {
 
 export type NumericScrubOptions = {
   inverse?: boolean;
+  getAcceleration?: () => number | undefined;
   minValue?: NumericScrubValue;
   maxValue?: NumericScrubValue;
   getInitialValue: () => number | undefined;
@@ -45,7 +48,7 @@ export type NumericScrubOptions = {
 type NumericScrubState = {
   value: number;
   cursor?: SVGElement;
-  direction: string;
+  direction: NumericScrubDirection;
   timerId?: ReturnType<typeof window.setTimeout>;
   status: "idle" | "scrubbing";
 };
@@ -56,17 +59,13 @@ const getValueDefault = (
   {
     minValue = Number.MIN_SAFE_INTEGER,
     maxValue = Number.MAX_SAFE_INTEGER,
+    getAcceleration = () => 1,
   }: NumericScrubOptions
 ) => {
   // toFixed is needed to fix `1.3 - 1 = 0.30000000000000004`
-  const value = Number((state.value + movement).toFixed(2));
-  if (value < minValue) {
-    return minValue;
-  }
-  if (state.value > maxValue) {
-    return maxValue;
-  }
-  return value;
+  const acceleration = getAcceleration() ?? 1;
+  const value = Number((state.value + movement * acceleration).toFixed(2));
+  return clamp(value, minValue, maxValue);
 };
 
 export const numericScrubControl = (

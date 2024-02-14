@@ -73,14 +73,14 @@ const useSetWindowTitle = () => {
 
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
-  isPreviewMode: boolean;
+  isPreviewMode?: boolean;
   css?: CSS;
   gridArea: "inspector" | "sidebar" | "navigator";
 };
 
 const SidePanel = ({
   children,
-  isPreviewMode,
+  isPreviewMode = false,
   gridArea,
   css,
 }: SidePanelProps) => {
@@ -328,7 +328,7 @@ export const Builder = ({
           </Workspace>
           <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+        <SidePanel gridArea="sidebar">
           <SidebarLeft publish={publish} />
         </SidePanel>
         <NavigatorPanel

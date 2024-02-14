@@ -6,6 +6,7 @@ import {
   type ActionArgs,
   type LoaderArgs,
   json,
+  redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
 import type { ProjectMeta } from "@webstudio-is/sdk";
@@ -36,6 +37,14 @@ export const loader = async (arg: LoaderArgs) => {
   const resources = await loadResources({ params });
   const pageMeta = getPageMeta({ params, resources });
 
+  if (pageMeta.redirect) {
+    const status =
+      pageMeta.status === 301 || pageMeta.status === 302
+        ? pageMeta.status
+        : 302;
+    return redirect(pageMeta.redirect, status);
+  }
+
   const host =
     arg.request.headers.get("x-forwarded-host") ||
     arg.request.headers.get("host") ||
@@ -59,7 +68,10 @@ export const loader = async (arg: LoaderArgs) => {
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
-    { headers: { "Cache-Control": "public, max-age=600" } }
+    {
+      status: pageMeta.status,
+      headers: { "Cache-Control": "public, max-age=600" },
+    }
   );
 };
 

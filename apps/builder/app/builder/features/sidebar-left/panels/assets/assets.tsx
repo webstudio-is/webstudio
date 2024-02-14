@@ -1,14 +1,10 @@
 import { ImageIcon } from "@webstudio-is/icons";
 import { Flex } from "@webstudio-is/design-system";
 import { ImageManager } from "~/builder/shared/image-manager";
-import type { TabName } from "../../types";
+import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
 
-export const TabContent = ({
-  onSetActiveTab,
-}: {
-  onSetActiveTab: (tabName: TabName) => void;
-}) => {
+export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   return (
     <Flex direction="column" css={{ height: "100%" }}>
       <Header

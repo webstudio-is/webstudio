@@ -190,7 +190,7 @@ export const onPaste = (clipboardData: string): boolean => {
   }
 
   updateWebstudioData((data) => {
-    const rootInstanceId = insertInstancesSliceCopy({
+    const { newInstanceIds } = insertInstancesSliceCopy({
       data,
       slice: fragment,
       availableDataSources: findAvailableDataSources(
@@ -199,7 +199,8 @@ export const onPaste = (clipboardData: string): boolean => {
         instanceSelector
       ),
     });
-    if (rootInstanceId === undefined) {
+    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+    if (newRootInstanceId === undefined) {
       return;
     }
     let dropTarget = pasteTarget;
@@ -220,7 +221,7 @@ export const onPaste = (clipboardData: string): boolean => {
     }
     const child: Instance["children"][number] = {
       type: "id",
-      value: rootInstanceId,
+      value: newRootInstanceId,
     };
     const { position } = dropTarget;
     if (position === "end") {
