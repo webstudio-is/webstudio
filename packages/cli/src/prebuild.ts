@@ -646,14 +646,10 @@ ${utilsExport}
       const redirectPagePath = generateRemixRoute(redirect.old);
       const redirectFileName = `${redirectPagePath}.ts`;
 
-      const redirectPath = redirects.find((item) => redirect.old === item.old);
-      const content = `import { type LoaderArgs } from "@remix-run/server-runtime";
-import { redirect } from "@remix-run/server-runtime";
+      const content = `import { type LoaderArgs, redirect } from "@remix-run/server-runtime";
 
 export const loader = (arg: LoaderArgs) => {
-  return redirect(${
-    redirectPath === undefined ? "/404" : `"${redirectPath.new}"`
-  }, 301);
+  return redirect("${redirect.new}", 301);
 };
 `;
 
