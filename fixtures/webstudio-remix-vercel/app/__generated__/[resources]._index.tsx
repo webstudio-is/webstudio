@@ -79,7 +79,7 @@ export const getPageMeta = ({
   };
 };
 
-const Page = ({ params: PageParams }: { params: any }) => {
+const Page = ({}: { params: any }) => {
   let list = useResource("list_1");
   return (
     <Body data-ws-id="AWY2qZfpbykoiWELeJhse" data-ws-component="Body">

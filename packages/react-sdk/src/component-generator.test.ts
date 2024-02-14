@@ -17,6 +17,9 @@ import {
 const clear = (input: string) =>
   stripIndent(input).trimStart().replace(/ +$/, "");
 
+const toMap = <T extends { id: string }>(list: T[]) =>
+  new Map(list.map((item) => [item.id, item] as const));
+
 const createInstance = (
   id: Instance["id"],
   component: string,
@@ -852,4 +855,74 @@ test("generate resources loading", () => {
     }
     `)
   );
+});
+
+test("avoid generating unused variables", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [
+        {
+          id: "pathParamsPropId",
+          type: "parameter",
+          instanceId: "",
+          name: "params",
+          value: "unusedParameterId",
+        },
+      ],
+
+      instances: new Map([createInstancePair("body", "Body", [])]),
+      dataSources: toMap([
+        {
+          id: "usedVariableId",
+          scopeInstanceId: "body",
+          name: "Used Variable Name",
+          type: "variable",
+          value: { type: "string", value: "initial" },
+        },
+        {
+          id: "unusedVariableId",
+          scopeInstanceId: "body",
+          name: "Unused Variable Name",
+          type: "variable",
+          value: { type: "string", value: "initial" },
+        },
+        {
+          id: "unusedParameterId",
+          scopeInstanceId: "body",
+          name: "Unused Parameter Name",
+          type: "parameter",
+        },
+        {
+          id: "unusedResourceVariableId",
+          scopeInstanceId: "body",
+          name: "Unused Resource Name",
+          type: "resource",
+          resourceId: "resourceId",
+        },
+      ]),
+      props: toMap([
+        {
+          id: "propId",
+          instanceId: "body",
+          name: "data-data",
+          type: "expression",
+          value: "$ws$dataSource$usedVariableId",
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+"const Page = ({ }: { params: any; }) => {
+let [UsedVariableName, set$UsedVariableName] = useState<any>("initial")
+return <Body
+data-ws-id="body"
+data-ws-component="Body"
+data-data={UsedVariableName} />
+}
+"
+`);
 });

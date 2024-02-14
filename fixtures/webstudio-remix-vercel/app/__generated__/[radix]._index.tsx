@@ -88,7 +88,7 @@ export const getPageMeta = ({
   };
 };
 
-const Page = ({ params: PageParams }: { params: any }) => {
+const Page = ({}: { params: any }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
   return (
     <Body data-ws-id="uKWGyE9JY3cPwY-xI9vk6" data-ws-component="Body">

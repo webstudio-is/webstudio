@@ -85,7 +85,7 @@ export const getPageMeta = ({
   };
 };
 
-const Page = ({ params: PageParams }: { params: any }) => {
+const Page = ({}: { params: any }) => {
   let [formState, set$formState] = useState<any>("initial");
   let [formState_1, set$formState_1] = useState<any>("initial");
   return (
@@ -93,13 +93,13 @@ const Page = ({ params: PageParams }: { params: any }) => {
       <Form
         data-ws-id="-1RvizaBcVpHsjvnYxn1c"
         data-ws-component="Form"
-        state={formState_1}
+        state={formState}
         onStateChange={(state: any) => {
-          formState_1 = state;
-          set$formState_1(formState_1);
+          formState = state;
+          set$formState(formState);
         }}
       >
-        {(formState_1 === "initial" || formState_1 === "error") && (
+        {(formState === "initial" || formState === "error") && (
           <Box data-ws-id="qhnVrmYGlyrMZi3UzqSQA" data-ws-component="Box">
             <Heading
               data-ws-id="YdHHf4u3jrdbRIWpB_VfH"
@@ -132,12 +132,12 @@ const Page = ({ params: PageParams }: { params: any }) => {
             </Button>
           </Box>
         )}
-        {formState_1 === "success" && (
+        {formState === "success" && (
           <Box data-ws-id="966cjxuqP_T99N27-mqWE" data-ws-component="Box">
             {"Thank you for getting in touch!"}
           </Box>
         )}
-        {formState_1 === "error" && (
+        {formState === "error" && (
           <Box data-ws-id="SYG5hhOz31xFJUN_v9zq6" data-ws-component="Box">
             {"Sorry, something went wrong."}
           </Box>
@@ -146,15 +146,15 @@ const Page = ({ params: PageParams }: { params: any }) => {
       <Form
         data-ws-id="isNSM3wXcnHFikwNPlEOL"
         data-ws-component="Form"
-        state={formState}
+        state={formState_1}
         onStateChange={(state: any) => {
-          formState = state;
-          set$formState(formState);
+          formState_1 = state;
+          set$formState_1(formState_1);
         }}
         method={"get"}
         action={"/custom"}
       >
-        {(formState === "initial" || formState === "error") && (
+        {(formState_1 === "initial" || formState_1 === "error") && (
           <Box data-ws-id="a5YPRc19IJyhTrjjasA_R" data-ws-component="Box">
             <Heading
               data-ws-id="y4pceTmziuBRIDgUBQNLD"
@@ -187,12 +187,12 @@ const Page = ({ params: PageParams }: { params: any }) => {
             </Button>
           </Box>
         )}
-        {formState === "success" && (
+        {formState_1 === "success" && (
           <Box data-ws-id="Gw-ta0R4FNFAGBTVRWKep" data-ws-component="Box">
             {"Thank you for getting in touch!"}
           </Box>
         )}
-        {formState === "error" && (
+        {formState_1 === "error" && (
           <Box data-ws-id="ewk_WKpu4syHLPABMmvUz" data-ws-component="Box">
             {"Sorry, something went wrong."}
           </Box>
