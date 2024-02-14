@@ -283,7 +283,7 @@ const PathField = ({
   onChange,
 }: {
   errors?: string[];
-  value?: string;
+  value: string;
   onChange: (value: string) => void;
 }) => {
   const { allowDynamicPath } = useStore($userPlanFeatures);
