@@ -92,7 +92,7 @@ const PropsCombobox = ({
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="end" sideOffset={5}>
+        <ComboboxContent align="start" sideOffset={2}>
           <ComboboxListbox {...combobox.getMenuProps()}>
             {combobox.isOpen &&
               combobox.items.map((item, index) => (
