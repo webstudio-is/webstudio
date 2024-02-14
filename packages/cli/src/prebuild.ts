@@ -528,7 +528,7 @@ export const prebuild = async (options: {
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
-      rootInstanceId: pageData.page.rootInstanceId,
+      rootInstanceId,
       parameters: [
         {
           id: `params`,

@@ -32,10 +32,12 @@ const generateAction = ({
   scope,
   prop,
   dataSources,
+  usedDataSources,
 }: {
   scope: Scope;
   prop: Extract<Prop, { type: "action" }>;
   dataSources: DataSources;
+  usedDataSources?: DataSources;
 }) => {
   const setters = new Set<DataSource>();
   // important to fallback to empty argumets to render empty function
@@ -53,6 +55,7 @@ const generateAction = ({
         const depId = decodeDataSourceVariable(identifier);
         const dep = depId ? dataSources.get(depId) : undefined;
         if (dep) {
+          usedDataSources?.set(dep.id, dep);
           if (assignee) {
             setters.add(dep);
           }
@@ -88,10 +91,12 @@ const generatePropValue = ({
   scope,
   prop,
   dataSources,
+  usedDataSources,
 }: {
   scope: Scope;
   prop: Prop;
   dataSources: DataSources;
+  usedDataSources?: DataSources;
 }) => {
   // ignore asset and page props which are handled by components internally
   if (prop.type === "asset" || prop.type === "page") {
@@ -112,6 +117,7 @@ const generatePropValue = ({
     if (dataSource === undefined) {
       return;
     }
+    usedDataSources?.set(dataSource.id, dataSource);
     return scope.getName(dataSource.id, dataSource.name);
   }
   // inline expression to safely use collection item
@@ -119,11 +125,12 @@ const generatePropValue = ({
     return generateExpression({
       expression: prop.value,
       dataSources,
+      usedDataSources,
       scope,
     });
   }
   if (prop.type === "action") {
-    return generateAction({ scope, prop, dataSources });
+    return generateAction({ scope, prop, dataSources, usedDataSources });
   }
   prop satisfies never;
 };
@@ -133,6 +140,7 @@ export const generateJsxElement = ({
   instance,
   props,
   dataSources,
+  usedDataSources,
   indexesWithinAncestors,
   children,
   classesMap,
@@ -141,6 +149,7 @@ export const generateJsxElement = ({
   instance: Instance;
   props: Props;
   dataSources: DataSources;
+  usedDataSources?: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
   classesMap?: Map<string, Array<string>>;
@@ -166,7 +175,12 @@ export const generateJsxElement = ({
     if (prop.instanceId !== instance.id) {
       continue;
     }
-    const propValue = generatePropValue({ scope, prop, dataSources });
+    const propValue = generatePropValue({
+      scope,
+      prop,
+      dataSources,
+      usedDataSources,
+    });
     // show prop controls conditional rendering and need to be handled separately
     if (prop.name === showAttribute) {
       // prevent generating unnecessary condition
@@ -253,6 +267,7 @@ export const generateJsxChildren = ({
   instances,
   props,
   dataSources,
+  usedDataSources,
   indexesWithinAncestors,
   classesMap,
 }: {
@@ -261,6 +276,7 @@ export const generateJsxChildren = ({
   instances: Instances;
   props: Props;
   dataSources: DataSources;
+  usedDataSources?: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap?: Map<string, Array<string>>;
 }) => {
@@ -295,6 +311,7 @@ export const generateJsxChildren = ({
         instance,
         props,
         dataSources,
+        usedDataSources,
         indexesWithinAncestors,
         classesMap,
         children: generateJsxChildren({
@@ -304,6 +321,7 @@ export const generateJsxChildren = ({
           instances,
           props,
           dataSources,
+          usedDataSources,
           indexesWithinAncestors,
         }),
       });
@@ -339,17 +357,39 @@ export const generateWebstudioComponent = ({
   if (instance === undefined) {
     return "";
   }
+
+  const usedDataSources: DataSources = new Map();
+  const generatedJsx = generateJsxElement({
+    scope,
+    instance,
+    props,
+    dataSources,
+    usedDataSources,
+    indexesWithinAncestors,
+    classesMap,
+    children: generateJsxChildren({
+      scope,
+      children: instance.children,
+      instances,
+      props,
+      dataSources,
+      usedDataSources,
+      indexesWithinAncestors,
+      classesMap,
+    }),
+  });
+
   let generatedProps = "";
   if (parameters.length > 0) {
     let generatedPropsValue = "{ ";
     let generatedPropsType = "{ ";
     for (const parameter of parameters) {
-      const dataSource = dataSources.get(parameter.value);
-      if (dataSource === undefined) {
-        continue;
+      const dataSource = usedDataSources.get(parameter.value);
+      // always generate type and avoid generating value when unused
+      if (dataSource) {
+        const valueName = scope.getName(dataSource.id, dataSource.name);
+        generatedPropsValue += `${parameter.name}: ${valueName}, `;
       }
-      const valueName = scope.getName(dataSource.id, dataSource.name);
-      generatedPropsValue += `${parameter.name}: ${valueName}, `;
       generatedPropsType += `${parameter.name}: any; `;
     }
     generatedPropsValue += `}`;
@@ -358,7 +398,7 @@ export const generateWebstudioComponent = ({
   }
 
   let generatedDataSources = "";
-  for (const dataSource of dataSources.values()) {
+  for (const dataSource of usedDataSources.values()) {
     if (dataSource.type === "variable") {
       const valueName = scope.getName(dataSource.id, dataSource.name);
       const setterName = scope.getName(
@@ -381,24 +421,6 @@ export const generateWebstudioComponent = ({
       generatedDataSources += `let ${valueName} = useResource(${resourceNameString})\n`;
     }
   }
-
-  const generatedJsx = generateJsxElement({
-    scope,
-    instance,
-    props,
-    dataSources,
-    indexesWithinAncestors,
-    classesMap,
-    children: generateJsxChildren({
-      scope,
-      children: instance.children,
-      instances,
-      props,
-      dataSources,
-      indexesWithinAncestors,
-      classesMap,
-    }),
-  });
 
   let generatedComponent = "";
   generatedComponent += `const ${name} = (${generatedProps}) => {\n`;
