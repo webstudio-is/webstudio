@@ -139,7 +139,7 @@ export const Label = ({
   }
 
   return (
-    <Flex align="center" css={{ gap: theme.spacing[3] }}>
+    <Flex align="center" css={{ gap: theme.spacing[3], width: "100%" }}>
       {label}
       {readOnly && (
         <Tooltip
