@@ -1696,6 +1696,9 @@ importers:
 
   packages/sdk:
     dependencies:
+      '@remix-run/router':
+        specifier: ^1.15.0
+        version: 1.15.0
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -6672,6 +6675,11 @@ packages:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       react-router-dom: 6.14.2(react-dom@18.2.0)(react@18.2.0)
+
+  /@remix-run/router@1.15.0:
+    resolution: {integrity: sha512-HOil5aFtme37dVQTB6M34G95kPM3MMuqSmIRVCC52eKV+Y/tGSqw9P3rWhlAx6A+mz+MoX+XxsGsNJbaI5qCgQ==}
+    engines: {node: '>=14.0.0'}
+    dev: false
 
   /@remix-run/router@1.7.2:
     resolution: {integrity: sha512-7Lcn7IqGMV+vizMPoEl5F0XDshcdDYtMI6uJLQdQz5CfZAwy3vvGKYSUk789qndt5dEC4HfSjviSYlSoHGL2+A==}

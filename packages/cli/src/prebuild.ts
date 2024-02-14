@@ -47,6 +47,7 @@ import {
   findTreeInstanceIds,
   getPagePath,
   parseComponentName,
+  matchPathFromRedirects,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -587,8 +588,8 @@ ${utilsExport}
       https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
     */
 
-    const path = getPagePath(pageData.page.id, siteData.build.pages);
-    const remixRoute = generateRemixRoute(path);
+    const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
+    const remixRoute = generateRemixRoute(pagePath);
     const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = routeFileTemplate
@@ -646,18 +647,14 @@ ${utilsExport}
       const redirectPagePath = generateRemixRoute(redirect.old);
       const redirectFileName = `${redirectPagePath}.ts`;
 
+      const redirectPath = matchPathFromRedirects(redirect.old, redirects);
       const content = `import { type LoaderArgs } from "@remix-run/server-runtime";
 import { redirect } from "@remix-run/server-runtime";
-import { matchPathFromRedirects } from "~/redirects";
 
 export const loader = (arg: LoaderArgs) => {
-  const redirectPath = matchPathFromRedirects(arg.request.url, ${JSON.stringify(
-    redirects
-  )});
-  if (redirectPath === undefined) {
-    return redirect("/404");
-  }
-  return redirect(redirectPath, 301);
+  return redirect(${
+    redirectPath === undefined ? "/404" : `"${redirectPath}"`
+  }, 301);
 };
 `;
 
