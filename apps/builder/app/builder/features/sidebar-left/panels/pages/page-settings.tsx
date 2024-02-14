@@ -238,7 +238,7 @@ const validateValues = (
     }
     const pathParamNames = parsePathnamePattern(values.path);
     if (
-      userPlanFeatures.allowCmsFeatures === false &&
+      userPlanFeatures.allowDynamicData === false &&
       pathParamNames.length > 0
     ) {
       errors.path = errors.path ?? [];
@@ -286,12 +286,12 @@ const PathField = ({
   value: string;
   onChange: (value: string) => void;
 }) => {
-  const { allowCmsFeatures } = useStore($userPlanFeatures);
+  const { allowDynamicData } = useStore($userPlanFeatures);
   const id = useId();
   return (
     <Grid gap={1}>
       <Label htmlFor={id}>
-        {allowCmsFeatures && isFeatureEnabled("cms") ? (
+        {allowDynamicData && isFeatureEnabled("cms") ? (
           <Flex align="center" css={{ gap: theme.spacing[3] }}>
             Dynamic Path
             <Tooltip

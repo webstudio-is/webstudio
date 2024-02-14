@@ -166,11 +166,11 @@ const CopyPageUrl = ({
 export const AddressBar = ({ addressBar }: { addressBar: AddressBarApi }) => {
   const { pathParamNames, pathParams, pageUrl, updatePathParam } = addressBar;
   const id = useId();
-  const { allowCmsFeatures } = useStore($userPlanFeatures);
+  const { allowDynamicData } = useStore($userPlanFeatures);
 
   return (
     <Grid gap={1}>
-      {allowCmsFeatures &&
+      {allowDynamicData &&
         pathParamNames.map((name) => (
           <Fragment key={name}>
             <Label htmlFor={`${id}-${name}`}>{name}</Label>
@@ -184,7 +184,7 @@ export const AddressBar = ({ addressBar }: { addressBar: AddressBarApi }) => {
         ))}
       <CopyPageUrl
         pageUrl={pageUrl}
-        disabled={allowCmsFeatures === false && pathParamNames.length > 0}
+        disabled={allowDynamicData === false && pathParamNames.length > 0}
       />
     </Grid>
   );
