@@ -364,7 +364,7 @@ const StatusField = ({
             inputMode="numeric"
             color={errors && "error"}
             id={id}
-            placeholder="/another-path"
+            placeholder="200"
             disabled={
               allowDynamicData === false || isLiteralExpression(value) === false
             }
