@@ -31,7 +31,7 @@ const userPlanFeatures: UserPlanFeatures = {
   hasSubscription: false,
   allowShareAdminLinks: false,
   allowResourceVariables: false,
-  allowDynamicPath: false,
+  allowCmsFeatures: false,
   maxDomainsAllowedPerUser: 5,
 };
 
