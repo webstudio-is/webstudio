@@ -1,5 +1,4 @@
-import { matchRoutes } from "@remix-run/router";
-import type { Folder, Page, PageRedirect, Pages } from "./schema/pages";
+import type { Folder, Page, Pages } from "./schema/pages";
 
 export const ROOT_FOLDER_ID = "root";
 
@@ -73,30 +72,4 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
   }
 
   return paths.reverse().join("/").replace(/\/+/g, "/");
-};
-
-export const matchPathFromRedirects = (
-  currentPath: string,
-  redirects: Array<PageRedirect>
-) => {
-  const redirectMap: Record<string, string> = {};
-  const routePaths: Array<{ path: string }> = [];
-
-  for (const redirect of redirects) {
-    redirectMap[redirect.old] = redirect.new;
-    routePaths.push({ path: redirect.old });
-  }
-
-  const matchedRoutes = matchRoutes(routePaths, currentPath);
-
-  if (matchedRoutes === null) {
-    return;
-  }
-
-  const redirectPath = matchedRoutes[0].route.path;
-  if (redirectPath === undefined) {
-    return;
-  }
-
-  return redirectMap[redirectPath];
 };

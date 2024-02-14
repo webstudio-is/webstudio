@@ -47,7 +47,6 @@ import {
   findTreeInstanceIds,
   getPagePath,
   parseComponentName,
-  matchPathFromRedirects,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -647,13 +646,13 @@ ${utilsExport}
       const redirectPagePath = generateRemixRoute(redirect.old);
       const redirectFileName = `${redirectPagePath}.ts`;
 
-      const redirectPath = matchPathFromRedirects(redirect.old, redirects);
+      const redirectPath = redirects.find((item) => redirect.old === item.old);
       const content = `import { type LoaderArgs } from "@remix-run/server-runtime";
 import { redirect } from "@remix-run/server-runtime";
 
 export const loader = (arg: LoaderArgs) => {
   return redirect(${
-    redirectPath === undefined ? "/404" : `"${redirectPath}"`
+    redirectPath === undefined ? "/404" : `"${redirectPath.new}"`
   }, 301);
 };
 `;
