@@ -57,7 +57,7 @@ export const getPageMeta = ({
   };
 };
 
-const Page = ({ params: PageParams }: { params: any }) => {
+const Page = ({}: { params: any }) => {
   return (
     <Body
       data-ws-id="ibXgMoi9_ipHx1gVrvii0"

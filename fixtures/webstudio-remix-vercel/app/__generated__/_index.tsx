@@ -91,7 +91,7 @@ export const getPageMeta = ({
   };
 };
 
-const Page = ({ params: PageParams }: { params: any }) => {
+const Page = ({}: { params: any }) => {
   return (
     <Body
       data-ws-id="On9cvWCxr5rdZtY9O1Bv0"

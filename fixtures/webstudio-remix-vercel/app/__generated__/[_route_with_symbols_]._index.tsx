@@ -76,7 +76,7 @@ export const getPageMeta = ({
   };
 };
 
-const Page = ({ params: PageParams }: { params: any }) => {
+const Page = ({}: { params: any }) => {
   return (
     <Body data-ws-id="EDEfpMPRqDejthtwkH7ws" data-ws-component="Body">
       <Image
