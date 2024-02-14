@@ -52,7 +52,10 @@ const matchOrSuggestToCreate = (
     itemToString(matched[0]).toLocaleLowerCase() !==
       search.toLocaleLowerCase().trim()
   ) {
-    matched.unshift({ name: search.trim() });
+    matched.unshift({
+      name: search.trim(),
+      label: `Create "${search.trim()}"`,
+    });
   }
   return matched;
 };
