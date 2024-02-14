@@ -48,8 +48,8 @@ export const TextControl = ({
   );
 
   useEffect(() => {
-    if (autoFocus && textAreaRef.current) {
-      textAreaRef.current.focus();
+    if (autoFocus) {
+      textAreaRef.current?.focus();
     }
   }, [autoFocus]);
 
