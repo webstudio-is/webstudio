@@ -33,9 +33,30 @@ import {
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
+import { matchSorter } from "match-sorter";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
+
+const matchOrSuggestToCreate = (
+  search: string,
+  items: Array<NameAndLabel>,
+  itemToString: (item: NameAndLabel) => string
+): Array<NameAndLabel> => {
+  const matched = matchSorter(items, search, {
+    keys: [itemToString],
+  });
+
+  if (
+    search.trim() !== "" &&
+    itemToString(matched[0]).toLocaleLowerCase() !==
+      search.toLocaleLowerCase().trim()
+  ) {
+    matched.unshift({ name: search.trim() });
+  }
+
+  return matched;
+};
 
 const PropsCombobox = ({
   items,
@@ -51,7 +72,7 @@ const PropsCombobox = ({
     itemToString,
     onItemSelect,
     selectedItem: undefined,
-
+    match: matchOrSuggestToCreate,
     // this weird handling of value is needed to work around a limitation in useCombobox
     // where it doesn't allow to leave both `value` and `selectedItem` empty/uncontrolled
     value: { name: "", label: inputValue },

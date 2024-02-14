@@ -263,10 +263,10 @@ export const usePropsLogic = ({
   }
 
   const handleAdd = (propName: string) => {
-    const propMeta = unprocessedKnown.get(propName);
-    if (propMeta === undefined) {
-      throw new Error(`Attempting to add a prop not lised in availableProps`);
-    }
+    const propMeta =
+      unprocessedKnown.get(propName) ??
+      // In case of custom property/attribute we get a string.
+      getDefaultMetaForType("string");
     const prop = getStartingProp(instance.id, propMeta, propName);
     if (prop) {
       updateProp(prop);
