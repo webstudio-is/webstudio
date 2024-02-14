@@ -63,6 +63,7 @@ export const getUserPlanFeatures = async (
     return {
       allowShareAdminLinks: true,
       allowResourceVariables: true,
+      allowDynamicPath: true,
       maxDomainsAllowedPerUser: Number.MAX_SAFE_INTEGER,
       hasSubscription,
       hasProPlan: true,
@@ -73,6 +74,7 @@ export const getUserPlanFeatures = async (
   return {
     allowShareAdminLinks: false,
     allowResourceVariables: false,
+    allowDynamicPath: false,
     maxDomainsAllowedPerUser: 5,
     hasSubscription: false,
     hasProPlan: false,

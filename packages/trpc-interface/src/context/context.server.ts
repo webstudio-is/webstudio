@@ -53,6 +53,7 @@ type DeploymentContext = {
 type UserPlanFeatures = {
   allowShareAdminLinks: boolean;
   allowResourceVariables: boolean;
+  allowDynamicPath: boolean;
   maxDomainsAllowedPerUser: number;
   hasSubscription: boolean;
 } & (
