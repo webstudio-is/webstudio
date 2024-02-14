@@ -245,20 +245,14 @@ export const usePropsLogic = ({
       continue;
     }
 
-    let known = getAndDelete(unprocessedKnown, prop.name);
-
-    // @todo:
-    //   if meta is undefined, this means it's a "custom attribute"
-    //   but because custom attributes not implemented yet,
-    //   we'll show it as a regular optional prop for now
-    if (known === undefined) {
-      known = getDefaultMetaForType(prop.type);
-    }
+    const meta =
+      getAndDelete(unprocessedKnown, prop.name) ??
+      getDefaultMetaForType("string");
 
     addedProps.push({
       prop,
       propName: prop.name,
-      meta: known,
+      meta,
     });
   }
 
