@@ -244,7 +244,7 @@ test("generate page meta factory with path params", () => {
         rootInstanceId: "",
         title: `$ws$dataSource$pathParamsId.slug`,
         meta: {},
-        pathVariableId: "pathParamsId",
+        pathParamsDataSourceId: "pathParamsId",
       },
       dataSources: toMap([
         {
@@ -336,7 +336,7 @@ test("generate page meta factory without unused variables", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        pathVariableId: "unusedPathParamsId",
+        pathParamsDataSourceId: "unusedPathParamsId",
         title: `$ws$dataSource$usedVariableId`,
         meta: {},
       },

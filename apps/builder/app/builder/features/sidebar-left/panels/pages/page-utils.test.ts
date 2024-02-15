@@ -673,7 +673,7 @@ describe("duplicate page", () => {
         title: `"My Title"`,
         meta: {},
         rootInstanceId: "body",
-        pathVariableId: "pathParamsId",
+        pathParamsDataSourceId: "pathParamsId",
       },
       pages: [],
       folders: [],
@@ -688,7 +688,7 @@ describe("duplicate page", () => {
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
-      pathVariableId: newDataSource.id,
+      pathParamsDataSourceId: newDataSource.id,
     });
   });
 });

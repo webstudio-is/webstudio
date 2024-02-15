@@ -1174,10 +1174,13 @@ const updatePage = (
           // create "Path Params" variable when pattern is specified in path
           const paramNames = parsePathnamePattern(page.path);
 
-          if (paramNames.length > 0 && page.pathVariableId === undefined) {
-            page.pathVariableId = nanoid();
-            dataSources.set(page.pathVariableId, {
-              id: page.pathVariableId,
+          if (
+            paramNames.length > 0 &&
+            page.pathParamsDataSourceId === undefined
+          ) {
+            page.pathParamsDataSourceId = nanoid();
+            dataSources.set(page.pathParamsDataSourceId, {
+              id: page.pathParamsDataSourceId,
               // scope new variable to page root
               scopeInstanceId: page.rootInstanceId,
               type: "parameter",
@@ -1231,7 +1234,7 @@ export const PageSettings = ({
       .filter(Boolean)
       .join("/")
       .replace(/\/+/g, "/"),
-    dataSourceId: page?.pathVariableId,
+    dataSourceId: page?.pathParamsDataSourceId,
   });
 
   const debouncedFn = useEffectEvent(() => {

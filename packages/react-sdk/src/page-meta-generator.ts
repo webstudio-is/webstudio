@@ -104,7 +104,7 @@ export const generatePageMeta = ({
       continue;
     }
     if (dataSource.type === "parameter") {
-      if (dataSource.id === page.pathVariableId) {
+      if (dataSource.id === page.pathParamsDataSourceId) {
         const valueName = localScope.getName(dataSource.id, dataSource.name);
         generated += `  let ${valueName} = params\n`;
       }

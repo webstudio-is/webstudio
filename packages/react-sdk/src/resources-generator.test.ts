@@ -67,7 +67,7 @@ test("generate variable and use in resources loader", () => {
       scope: createScope(),
       page: {
         rootInstanceId: "body",
-        pathVariableId: "variableParamsId",
+        pathParamsDataSourceId: "variableParamsId",
       } as Page,
       dataSources: toMap([
         {
@@ -135,7 +135,7 @@ test("generate page params variable and use in resources loader", () => {
       scope: createScope(),
       page: {
         rootInstanceId: "body",
-        pathVariableId: "variableParamsId",
+        pathParamsDataSourceId: "variableParamsId",
       } as Page,
       dataSources: toMap([
         {
