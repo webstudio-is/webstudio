@@ -37,7 +37,7 @@ import {
   rawTheme,
   Flex,
   Select,
-  ProBadge,
+  Link,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -293,12 +293,10 @@ const PathField = ({
     <Grid gap={1}>
       <Label htmlFor={id}>
         {allowDynamicData && isFeatureEnabled("cms") ? (
-          <Flex align="center" css={{ gap: theme.spacing[3] }}>
+          <Flex align="center" gap={1}>
             Dynamic Path
             <Tooltip
-              content={
-                "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-              }
+              content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
               variant="wrapped"
             >
               <HelpIcon
@@ -339,12 +337,25 @@ const StatusField = ({
   return (
     <Grid gap={1}>
       <Label htmlFor={id}>
-        Status Code
-        {allowDynamicData === false && (
-          <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
-            <ProBadge>Pro</ProBadge>
-          </Box>
-        )}
+        <Flex align="center" gap={1}>
+          Status Code
+          <Tooltip
+            content={
+              <Text>
+                {"Status code value can a "}
+                <Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status">
+                  HTTP Status
+                </Link>
+                {
+                  " number or an expression that returns the status code dynamic response handling."
+                }
+              </Text>
+            }
+            variant="wrapped"
+          >
+            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          </Tooltip>
+        </Flex>
       </Label>
       <BindingControl>
         {allowDynamicData && (
@@ -399,12 +410,15 @@ const RedirectField = ({
   return (
     <Grid gap={1}>
       <Label htmlFor={id}>
-        Redirect
-        {allowDynamicData === false && (
-          <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
-            <ProBadge>Pro</ProBadge>
-          </Box>
-        )}
+        <Flex align="center" gap={1}>
+          Redirect
+          <Tooltip
+            content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
+            variant="wrapped"
+          >
+            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          </Tooltip>
+        </Flex>
       </Label>
       <BindingControl>
         {allowDynamicData && (
