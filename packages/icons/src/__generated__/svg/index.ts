@@ -27,6 +27,7 @@ export { ArrowUpIcon } from "./arrow-up";
 export { AspectRatioIcon } from "./aspect-ratio";
 export { AttachmentIcon } from "./attachment";
 export { AutoScrollIcon } from "./auto-scroll";
+export { BagIcon } from "./bag";
 export { BlockquoteIcon } from "./blockquote";
 export { BodyIcon } from "./body";
 export { BoldIcon } from "./bold";

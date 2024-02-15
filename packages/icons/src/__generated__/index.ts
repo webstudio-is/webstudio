@@ -27,6 +27,7 @@ export * from "./arrow-up";
 export * from "./aspect-ratio";
 export * from "./attachment";
 export * from "./auto-scroll";
+export * from "./bag";
 export * from "./blockquote";
 export * from "./body";
 export * from "./bold";
