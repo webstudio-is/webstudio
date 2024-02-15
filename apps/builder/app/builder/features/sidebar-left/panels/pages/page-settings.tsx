@@ -37,6 +37,7 @@ import {
   rawTheme,
   Flex,
   Select,
+  Link,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -292,12 +293,10 @@ const PathField = ({
     <Grid gap={1}>
       <Label htmlFor={id}>
         {allowDynamicData && isFeatureEnabled("cms") ? (
-          <Flex align="center" css={{ gap: theme.spacing[3] }}>
+          <Flex align="center" gap={1}>
             Dynamic Path
             <Tooltip
-              content={
-                "The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
-              }
+              content="The path can include dynamic parameters like :name, which could be made optional using :name?, or have a wildcard such as /* or /:name* to store whole remaining part at the end of the URL."
               variant="wrapped"
             >
               <HelpIcon
@@ -319,6 +318,137 @@ const PathField = ({
           onChange={(event) => onChange(event.target.value)}
         />
       </InputErrorsTooltip>
+    </Grid>
+  );
+};
+
+const StatusField = ({
+  errors,
+  value,
+  onChange,
+}: {
+  errors?: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const id = useId();
+  const { allowDynamicData } = useStore($userPlanFeatures);
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
+  return (
+    <Grid gap={1}>
+      <Label htmlFor={id}>
+        <Flex align="center" gap={1}>
+          Status Code
+          <Tooltip
+            content={
+              <Text>
+                {"Status code value can be a "}
+                <Link
+                  color="inherit"
+                  href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
+                >
+                  HTTP Status
+                </Link>
+                {
+                  " number or an expression that returns the status code dynamic response handling."
+                }
+              </Text>
+            }
+            variant="wrapped"
+          >
+            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          </Tooltip>
+        </Flex>
+      </Label>
+      <BindingControl>
+        {allowDynamicData && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={onChange}
+            onRemove={(evaluatedValue) =>
+              onChange(JSON.stringify(evaluatedValue))
+            }
+          />
+        )}
+        <InputErrorsTooltip errors={errors}>
+          <InputField
+            inputMode="numeric"
+            color={errors && "error"}
+            id={id}
+            placeholder="200"
+            disabled={
+              allowDynamicData === false || isLiteralExpression(value) === false
+            }
+            value={String(computeExpression(value, variableValues))}
+            onChange={(event) => {
+              const number = Number(event.target.value);
+              const status =
+                Number.isNaN(number) || String(number) !== event.target.value
+                  ? event.target.value
+                  : number;
+              onChange(JSON.stringify(status));
+            }}
+          />
+        </InputErrorsTooltip>
+      </BindingControl>
+    </Grid>
+  );
+};
+
+const RedirectField = ({
+  errors,
+  value,
+  onChange,
+}: {
+  errors?: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const id = useId();
+  const { allowDynamicData } = useStore($userPlanFeatures);
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
+  return (
+    <Grid gap={1}>
+      <Label htmlFor={id}>
+        <Flex align="center" gap={1}>
+          Redirect
+          <Tooltip
+            content="Redirect value can be a path or an expression that returns a path for dynamic response handling."
+            variant="wrapped"
+          >
+            <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={-1} />
+          </Tooltip>
+        </Flex>
+      </Label>
+      <BindingControl>
+        {allowDynamicData && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={(value) => onChange(value)}
+            onRemove={(evaluatedValue) =>
+              onChange(JSON.stringify(evaluatedValue))
+            }
+          />
+        )}
+        <InputErrorsTooltip errors={errors}>
+          <InputField
+            color={errors && "error"}
+            id={id}
+            placeholder="/another-path"
+            disabled={
+              allowDynamicData === false || isLiteralExpression(value) === false
+            }
+            value={String(computeExpression(value, variableValues))}
+            onChange={(event) => onChange(JSON.stringify(event.target.value))}
+          />
+        </InputErrorsTooltip>
+      </BindingControl>
     </Grid>
   );
 };
@@ -451,6 +581,22 @@ const FormFields = ({
             />
           )}
           <AddressBar addressBar={addressBar} />
+
+          {isFeatureEnabled("cms") && (
+            <StatusField
+              errors={errors.status}
+              value={values.status}
+              onChange={(value) => onChange({ field: "status", value })}
+            />
+          )}
+
+          {isFeatureEnabled("cms") && (
+            <RedirectField
+              errors={errors.redirect}
+              value={values.redirect}
+              onChange={(value) => onChange({ field: "redirect", value })}
+            />
+          )}
         </Grid>
 
         <Separator />
@@ -638,103 +784,6 @@ const FormFields = ({
               </Grid>
             </BindingControl>
           </Grid>
-
-          {isFeatureEnabled("cms") && (
-            <Grid gap={1}>
-              <Label htmlFor={fieldIds.status}>Status</Label>
-              <BindingControl>
-                <BindingPopover
-                  scope={scope}
-                  aliases={aliases}
-                  variant={
-                    isLiteralExpression(values.status) ? "default" : "bound"
-                  }
-                  value={values.status}
-                  onChange={(value) => {
-                    onChange({
-                      field: "status",
-                      value,
-                    });
-                  }}
-                  onRemove={(evaluatedValue) => {
-                    onChange({
-                      field: "status",
-                      value: JSON.stringify(evaluatedValue),
-                    });
-                  }}
-                />
-                <InputErrorsTooltip errors={errors.status}>
-                  <InputField
-                    inputMode="numeric"
-                    color={errors.status && "error"}
-                    id={fieldIds.status}
-                    name="status"
-                    placeholder="/another-path"
-                    disabled={isLiteralExpression(values.status) === false}
-                    value={String(
-                      computeExpression(values.status, variableValues)
-                    )}
-                    onChange={(event) => {
-                      const number = Number(event.target.value);
-                      const status = Number.isNaN(number)
-                        ? event.target.value
-                        : number;
-                      onChange({
-                        field: "status",
-                        value: JSON.stringify(status),
-                      });
-                    }}
-                  />
-                </InputErrorsTooltip>
-              </BindingControl>
-            </Grid>
-          )}
-
-          {isFeatureEnabled("cms") && (
-            <Grid gap={1}>
-              <Label htmlFor={fieldIds.redirect}>Redirect</Label>
-              <BindingControl>
-                <BindingPopover
-                  scope={scope}
-                  aliases={aliases}
-                  variant={
-                    isLiteralExpression(values.redirect) ? "default" : "bound"
-                  }
-                  value={values.redirect}
-                  onChange={(value) => {
-                    onChange({
-                      field: "redirect",
-                      value,
-                    });
-                  }}
-                  onRemove={(evaluatedValue) => {
-                    onChange({
-                      field: "redirect",
-                      value: JSON.stringify(evaluatedValue),
-                    });
-                  }}
-                />
-                <InputErrorsTooltip errors={errors.redirect}>
-                  <InputField
-                    color={errors.redirect && "error"}
-                    id={fieldIds.redirect}
-                    name="redirect"
-                    placeholder="/another-path"
-                    disabled={isLiteralExpression(values.redirect) === false}
-                    value={String(
-                      computeExpression(values.redirect, variableValues)
-                    )}
-                    onChange={(event) => {
-                      onChange({
-                        field: "redirect",
-                        value: JSON.stringify(event.target.value),
-                      });
-                    }}
-                  />
-                </InputErrorsTooltip>
-              </BindingControl>
-            </Grid>
-          )}
         </Grid>
 
         <Separator />
