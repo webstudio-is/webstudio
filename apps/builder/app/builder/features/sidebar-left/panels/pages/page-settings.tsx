@@ -342,7 +342,7 @@ const StatusField = ({
           <Tooltip
             content={
               <Text>
-                {"Status code value can a "}
+                {"Status code value can be a "}
                 <Link href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status">
                   HTTP Status
                 </Link>
