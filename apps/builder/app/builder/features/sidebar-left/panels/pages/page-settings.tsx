@@ -315,7 +315,10 @@ const PathField = ({
               content={
                 <>
                   <Text>
-                    The path can include dynamic parameters like :name in Pro.
+                    Path is a subset of the URL that looks like this: "/blog".
+                    To make the path dynamic and use it with CMS, you can use
+                    parameters and other features. CMS features are part of the
+                    Pro plan.
                   </Text>
                   <Link
                     className={buttonStyle({ color: "gradient" })}
