@@ -315,10 +315,10 @@ const PathField = ({
               content={
                 <>
                   <Text>
-                    Path is a subset of the URL that looks like this: "/blog".
-                    To make the path dynamic and use it with CMS, you can use
-                    parameters and other features. CMS features are part of the
-                    Pro plan.
+                    Path is a subset of the URL that looks like this:
+                    &quot;/blog&quot;. To make the path dynamic and use it with
+                    CMS, you can use parameters and other features. CMS features
+                    are part of the Pro plan.
                   </Text>
                   <Link
                     className={buttonStyle({ color: "gradient" })}
