@@ -26,7 +26,7 @@ export const generateResourcesLoader = ({
 
     if (dataSource.type === "parameter") {
       // support only page path params parameter
-      if (dataSource.id !== page.pathVariableId) {
+      if (dataSource.id !== page.pathParamsDataSourceId) {
         continue;
       }
       const name = scope.getName(dataSource.id, dataSource.name);

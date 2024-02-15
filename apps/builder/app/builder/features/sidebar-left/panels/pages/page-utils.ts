@@ -385,10 +385,10 @@ export const duplicatePage = (pageId: Page["id"]) => {
       availableDataSources: new Set(),
     });
     const newRootInstanceId = newInstanceIds.get(page.rootInstanceId);
-    const newPathVariableId =
-      page.pathVariableId === undefined
+    const newPathParamsDataSourceId =
+      page.pathParamsDataSourceId === undefined
         ? undefined
-        : newDataSourceIds.get(page.pathVariableId);
+        : newDataSourceIds.get(page.pathParamsDataSourceId);
     if (newRootInstanceId === undefined) {
       return;
     }
@@ -396,7 +396,7 @@ export const duplicatePage = (pageId: Page["id"]) => {
       ...page,
       id: newPageId,
       rootInstanceId: newRootInstanceId,
-      pathVariableId: newPathVariableId,
+      pathParamsDataSourceId: newPathParamsDataSourceId,
       name: newName,
       path: deduplicatePath(pages, page.path),
       title: replaceDataSources(page.title, newDataSourceIds),
