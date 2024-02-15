@@ -38,6 +38,8 @@ import {
   Flex,
   Select,
   Link,
+  buttonStyle,
+  PanelBanner,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -45,6 +47,7 @@ import {
   TrashIcon,
   HomeIcon,
   HelpIcon,
+  UploadIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
@@ -243,7 +246,7 @@ const validateValues = (
       pathParamNames.length > 0
     ) {
       errors.path = errors.path ?? [];
-      errors.path.push("Dynamic path is supported only for paid users");
+      errors.path.push("Dynamic path is supported only in Pro");
     }
   }
   return errors;
@@ -306,7 +309,37 @@ const PathField = ({
             </Tooltip>
           </Flex>
         ) : (
-          "Path"
+          <Flex align="center" gap={1}>
+            Path
+            <Tooltip
+              content={
+                <>
+                  <Text>
+                    Path is a subset of the URL that looks like this:
+                    &quot;/blog&quot;. To make the path dynamic and use it with
+                    CMS, you can use parameters and other features. CMS features
+                    are part of the Pro plan.
+                  </Text>
+                  <Link
+                    className={buttonStyle({ color: "gradient" })}
+                    css={{ marginTop: theme.spacing[5], width: "100%" }}
+                    color="contrast"
+                    underline="none"
+                    target="_blank"
+                    href="https://webstudio.is/pricing"
+                  >
+                    Upgrade
+                  </Link>
+                </>
+              }
+              variant="wrapped"
+            >
+              <HelpIcon
+                color={rawTheme.colors.foregroundSubtle}
+                tabIndex={-1}
+              />
+            </Tooltip>
+          </Flex>
         )}
       </Label>
       <InputErrorsTooltip errors={errors}>
@@ -342,16 +375,16 @@ const StatusField = ({
           <Tooltip
             content={
               <Text>
-                {"Status code value can be a "}
+                Status code value can be a{" "}
                 <Link
                   color="inherit"
+                  target="_blank"
                   href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status"
                 >
                   HTTP Status
-                </Link>
-                {
-                  " number or an expression that returns the status code dynamic response handling."
-                }
+                </Link>{" "}
+                number or an expression that returns the status code dynamic
+                response handling.
               </Text>
             }
             variant="wrapped"
@@ -597,6 +630,23 @@ const FormFields = ({
               onChange={(value) => onChange({ field: "redirect", value })}
             />
           )}
+
+          <PanelBanner>
+            <Text>
+              Dynamic routing, redirect and status code are a part of the CMS
+              functionality.
+            </Text>
+            <Flex align="center" gap={1}>
+              <UploadIcon />
+              <Link
+                color="inherit"
+                target="_blank"
+                href="https://webstudio.is/pricing"
+              >
+                Upgrade to Pro
+              </Link>
+            </Flex>
+          </PanelBanner>
         </Grid>
 
         <Separator />
