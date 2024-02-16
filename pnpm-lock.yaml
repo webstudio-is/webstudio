@@ -1147,6 +1147,9 @@ importers:
       match-sorter:
         specifier: ^6.3.1
         version: 6.3.1
+      react-field-sizing-content:
+        specifier: ^1.0.0
+        version: 1.0.0(react@18.2.0)
       react-hot-toast:
         specifier: ^2.4.1
         version: 2.4.1(csstype@3.1.1)(react-dom@18.2.0)(react@18.2.0)
@@ -15242,6 +15245,14 @@ packages:
       react: '>=16.13.1'
     dependencies:
       '@babel/runtime': 7.22.3
+      react: 18.2.0
+    dev: false
+
+  /react-field-sizing-content@1.0.0(react@18.2.0):
+    resolution: {integrity: sha512-Wu9kaurnMn4AZ4kVxcR0rmbLKdCetqOSszB8KuauwU91cAKv1YPjhOLsbUyBB+11+yYpdFPoDSuasuQ5ruz0pg==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0
+    dependencies:
       react: 18.2.0
     dev: false
 

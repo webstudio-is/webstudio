@@ -1,18 +1,26 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { Fragment, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import {
   Button,
+  Flex,
   Grid,
   InputField,
   Label,
   Tooltip,
+  theme,
+  textVariants,
+  InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, CopyIcon, LinkIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
 import { $dataSourceVariables, $domains, $project } from "~/shared/nano-states";
 import env from "~/shared/env";
-import { compilePathnamePattern, parsePathnamePattern } from "./url-pattern";
+import {
+  compilePathnamePattern,
+  parsePathnamePattern,
+  tokenizePathnamePattern,
+} from "./url-pattern";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 const $publishedOrigin = computed([$project, $domains], (project, domains) => {
@@ -28,7 +36,7 @@ const $publishedOrigin = computed([$project, $domains], (project, domains) => {
 type PathParams = Record<string, string>;
 
 export type AddressBarApi = {
-  pathParamNames: string[];
+  path: string;
   pathParams: PathParams;
   pageUrl: string;
   updatePathParam: (name: string, value: string) => void;
@@ -61,7 +69,8 @@ export const useAddressBar = ({
   const pathParams = storedParams ?? localParams;
 
   const publishedOrigin = useStore($publishedOrigin);
-  const compiledPath = compilePathnamePattern(path, pathParams);
+  const tokens = tokenizePathnamePattern(path);
+  const compiledPath = compilePathnamePattern(tokens, pathParams);
   const pageUrl = `${publishedOrigin}${compiledPath}`;
 
   const updatePathParam: AddressBarApi["updatePathParam"] = (name, value) => {
@@ -88,7 +97,7 @@ export const useAddressBar = ({
   };
 
   return {
-    pathParamNames,
+    path,
     pathParams,
     pageUrl,
     updatePathParam,
@@ -164,27 +173,78 @@ const CopyPageUrl = ({
 };
 
 export const AddressBar = ({ addressBar }: { addressBar: AddressBarApi }) => {
-  const { pathParamNames, pathParams, pageUrl, updatePathParam } = addressBar;
+  const { path, pathParams, pageUrl, updatePathParam } = addressBar;
   const id = useId();
   const { allowDynamicData } = useStore($userPlanFeatures);
 
+  const tokens = tokenizePathnamePattern(path);
+  const hasParams = tokens.length > 1;
+
+  const errors = new Map<string, string>();
+  for (const token of tokens) {
+    if (token.type === "param") {
+      const value = (pathParams[token.name] ?? "").trim();
+      if (value === "" && token.optional === false) {
+        errors.set(token.name, `"${token.name}" is required`);
+      }
+      if (value.includes("/") && token.splat === false) {
+        errors.set(
+          token.name,
+          `"${token.name}" should be splat parameter to contain slashes`
+        );
+      }
+    }
+  }
+
   return (
     <Grid gap={1}>
-      {allowDynamicData &&
-        pathParamNames.map((name) => (
-          <Fragment key={name}>
-            <Label htmlFor={`${id}-${name}`}>{name}</Label>
-            <InputField
-              tabIndex={1}
-              id={`${id}-${name}`}
-              value={pathParams[name] ?? ""}
-              onChange={(event) => updatePathParam(name, event.target.value)}
-            />
-          </Fragment>
-        ))}
+      {allowDynamicData && hasParams && (
+        <>
+          <Label htmlFor={id}>Address Bar</Label>
+          <InputErrorsTooltip errors={Array.from(errors.values())}>
+            <Flex
+              align="center"
+              css={{
+                padding: theme.spacing[5],
+                // background: theme.colors.white,
+                borderRadius: theme.borderRadius[4],
+                border: `1px solid ${theme.colors.borderMain}`,
+                ...textVariants.mono,
+              }}
+            >
+              {tokens.map((token, index) => {
+                if (token.type === "fragment") {
+                  return token.value;
+                }
+                if (token.type === "param") {
+                  return (
+                    <InputField
+                      key={index}
+                      fieldSizing="content"
+                      css={{
+                        margin: `0 ${theme.spacing[3]}`,
+                        minWidth: theme.spacing[15],
+                      }}
+                      color={errors.has(token.name) ? "error" : undefined}
+                      id={`${id}-${token.name}`}
+                      placeholder={token.name}
+                      value={pathParams[token.name] ?? ""}
+                      onChange={(event) =>
+                        updatePathParam(token.name, event.target.value)
+                      }
+                    />
+                  );
+                }
+                token satisfies never;
+              })}
+            </Flex>
+          </InputErrorsTooltip>
+        </>
+      )}
+
       <CopyPageUrl
         pageUrl={pageUrl}
-        disabled={allowDynamicData === false && pathParamNames.length > 0}
+        disabled={errors.size > 0 || (allowDynamicData === false && hasParams)}
       />
     </Grid>
   );
