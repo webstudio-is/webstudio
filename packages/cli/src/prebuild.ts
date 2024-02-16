@@ -588,8 +588,8 @@ ${utilsExport}
       https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
     */
 
-    const path = getPagePath(pageData.page.id, siteData.build.pages);
-    const remixRoute = generateRemixRoute(path);
+    const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
+    const remixRoute = generateRemixRoute(pagePath);
     const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = routeFileTemplate
@@ -638,6 +638,25 @@ ${utilsExport}
       )};
     `
   );
+
+  const redirects = siteData.build.pages?.redirects;
+  if (redirects !== undefined && redirects.length > 0) {
+    spinner.text = "Generating redirects";
+
+    for (const redirect of redirects) {
+      const redirectPagePath = generateRemixRoute(redirect.old);
+      const redirectFileName = `${redirectPagePath}.ts`;
+
+      const content = `import { type LoaderArgs, redirect } from "@remix-run/server-runtime";
+
+export const loader = (arg: LoaderArgs) => {
+  return redirect("${redirect.new}", 301);
+};
+`;
+
+      await ensureFileInPath(join(routesDir, redirectFileName), content);
+    }
+  }
 
   spinner.text = "Downloading fonts and images";
   await Promise.all(assetsToDownload);
