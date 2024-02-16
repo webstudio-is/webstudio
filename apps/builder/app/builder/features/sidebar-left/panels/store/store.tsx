@@ -47,7 +47,7 @@ export const Store = () => {
                         {...pressProps}
                         tabIndex={index === 0 ? 0 : -1}
                         gap="1"
-                        key={meta.url}
+                        key={meta.id}
                         data-id={meta.id}
                       >
                         <BoxIcon />

@@ -7,7 +7,19 @@ export const items: Array<StoreItem> = [
     category: "sectionTemplates",
     label: "Basic Sections",
     url: "https://webstudio.is",
-    width: 600,
-    height: 400,
+    ui: {
+      component: "panel",
+    },
+  },
+  {
+    id: nanoid(),
+    category: "apps",
+    label: "My App",
+    url: "https://webstudio.is",
+    ui: {
+      component: "dialog",
+      width: 600,
+      height: 400,
+    },
   },
 ];
