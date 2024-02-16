@@ -276,6 +276,7 @@ const SharedLinkItem = ({
         }}
       >
         <IconButton
+          aria-label="Copy link"
           onClick={() => {
             navigator.clipboard.writeText(
               builderUrl({
@@ -286,7 +287,7 @@ const SharedLinkItem = ({
             setIsCopied(true);
           }}
         >
-          <CopyIcon />
+          <CopyIcon aria-hidden />
         </IconButton>
       </Tooltip>
       <Menu
