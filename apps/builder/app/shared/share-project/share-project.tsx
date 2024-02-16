@@ -208,7 +208,7 @@ const Menu = ({
           <Item>
             {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
             <Button
-              color="destructive"
+              color="neutral-destructive"
               onClick={() => {
                 onDelete();
               }}
