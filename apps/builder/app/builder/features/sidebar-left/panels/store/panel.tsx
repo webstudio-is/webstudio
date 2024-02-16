@@ -5,18 +5,15 @@ import { Header, CloseButton } from "../../header";
 import { Store } from "./store";
 import { ItemDialog } from "./item-dialog";
 import { ItemPanel } from "./item-panel";
-import { useStore } from "@nanostores/react";
-import { $activeStoreItemId } from "~/shared/nano-states";
-import { items } from "./items";
+import { useActiveItem } from "./utils";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
-  const activeStoreItemId = useStore($activeStoreItemId);
-  const item = activeStoreItemId
-    ? items.find((item) => item.id === activeStoreItemId)
-    : undefined;
+  const [activeItem, setActiveItem] = useActiveItem();
+  const component = activeItem?.ui?.component ?? "panel";
+
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
-      $activeStoreItemId.set(undefined);
+      setActiveItem(undefined);
     }
   };
 
@@ -26,11 +23,11 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         title="Store"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      {item?.ui.component === "dialog" && (
-        <ItemDialog item={item} onOpenChange={handleOpenChange} />
+      {component === "dialog" && activeItem && (
+        <ItemDialog item={activeItem} onOpenChange={handleOpenChange} />
       )}
-      {item?.ui.component === "panel" ? (
-        <ItemPanel item={item} onOpenChange={handleOpenChange} />
+      {component === "panel" && activeItem ? (
+        <ItemPanel item={activeItem} onOpenChange={handleOpenChange} />
       ) : (
         <Store />
       )}

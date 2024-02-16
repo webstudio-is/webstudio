@@ -1,11 +1,7 @@
 import { Button, Flex, theme } from "@webstudio-is/design-system";
 import { Iframe } from "./iframe";
 import type { StoreItem } from "./types";
-import {
-  ArrowLeftIcon,
-  ChevronBigLeftIcon,
-  ChevronLeftIcon,
-} from "@webstudio-is/icons";
+import { ChevronLeftIcon } from "@webstudio-is/icons";
 
 export const ItemPanel = ({
   item,

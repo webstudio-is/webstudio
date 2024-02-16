@@ -8,23 +8,19 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { usePress } from "@react-aria/interactions";
-import { $activeStoreItemId } from "~/shared/nano-states";
 import type { Category, StoreItem } from "./types";
-import { items } from "./items";
+import { getItemsByCategory, categories, useActiveItem, items } from "./utils";
 
-const categories: Array<{ category: Category; label: string }> = [
-  { category: "sectionTemplates", label: "Section Templates" },
-];
-
-const itemsByCategory = new Map<Category, Array<StoreItem>>([
-  ["sectionTemplates", items],
-]);
+const itemsByCategory = new Map<Category, Array<StoreItem>>(
+  getItemsByCategory(items)
+);
 
 export const Store = () => {
+  const [, setActiveItem] = useActiveItem();
   const { pressProps } = usePress({
     onPress(event) {
       const target = event.target as HTMLElement;
-      $activeStoreItemId.set(target.dataset.id);
+      setActiveItem(target.dataset.id);
     },
   });
 

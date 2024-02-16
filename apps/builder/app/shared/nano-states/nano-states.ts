@@ -313,5 +313,3 @@ export type DragAndDropState = {
 export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
-
-export const $activeStoreItemId = atom<string | undefined>();

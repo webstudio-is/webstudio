@@ -5,7 +5,7 @@ export type StoreItem = {
   category: Category;
   label: string;
   url: string;
-  ui:
+  ui?:
     | {
         component: "panel";
       }
