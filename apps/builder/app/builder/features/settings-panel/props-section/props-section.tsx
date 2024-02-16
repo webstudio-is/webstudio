@@ -33,9 +33,32 @@ import {
 } from "./use-props-logic";
 import { Row, getLabel } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
+import { matchSorter } from "match-sorter";
 
 const itemToString = (item: NameAndLabel | null) =>
   item ? getLabel(item, item.name) : "";
+
+const matchOrSuggestToCreate = (
+  search: string,
+  items: Array<NameAndLabel>,
+  itemToString: (item: NameAndLabel) => string
+): Array<NameAndLabel> => {
+  const matched = matchSorter(items, search, {
+    keys: [itemToString],
+  });
+
+  if (
+    search.trim() !== "" &&
+    itemToString(matched[0]).toLocaleLowerCase() !==
+      search.toLocaleLowerCase().trim()
+  ) {
+    matched.unshift({
+      name: search.trim(),
+      label: `Create "${search.trim()}"`,
+    });
+  }
+  return matched;
+};
 
 const PropsCombobox = ({
   items,
@@ -51,7 +74,7 @@ const PropsCombobox = ({
     itemToString,
     onItemSelect,
     selectedItem: undefined,
-
+    match: matchOrSuggestToCreate,
     // this weird handling of value is needed to work around a limitation in useCombobox
     // where it doesn't allow to leave both `value` and `selectedItem` empty/uncontrolled
     value: { name: "", label: inputValue },
@@ -65,11 +88,11 @@ const PropsCombobox = ({
           <InputField
             autoFocus
             {...combobox.getInputProps()}
-            placeholder="New Property"
+            placeholder="Find or create a property"
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="end" sideOffset={5}>
+        <ComboboxContent align="start" sideOffset={2}>
           <ComboboxListbox {...combobox.getMenuProps()}>
             {combobox.isOpen &&
               combobox.items.map((item, index) => (
@@ -97,9 +120,10 @@ const renderProperty = (
     instanceId,
   }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
-  deletable?: boolean
+  { deletable, autoFocus }: { deletable?: boolean; autoFocus?: boolean } = {}
 ) =>
   renderControl({
+    autoFocus,
     key: propName,
     instanceId,
     meta,
@@ -195,7 +219,12 @@ export const PropsSection = (props: PropsSectionProps) => {
               }}
             />
           )}
-          {logic.addedProps.map((item) => renderProperty(props, item, true))}
+          {logic.addedProps.map((item, index) =>
+            renderProperty(props, item, {
+              deletable: true,
+              autoFocus: index === 0,
+            })
+          )}
           {logic.initialProps.map((item) => renderProperty(props, item))}
         </Flex>
       </CollapsibleSectionWithAddButton>

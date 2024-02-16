@@ -197,6 +197,7 @@ export const useCombobox = <Item,>({
   ...rest
 }: UseComboboxProps<Item>) => {
   const [isOpen, setIsOpen] = useState(false);
+  const selectedItemRef = useRef<Item>();
 
   const { filteredItems, filter, resetFilter } = useFilter<Item>({
     items,
@@ -246,7 +247,9 @@ export const useCombobox = <Item,>({
       }
 
       if (selectedItem != null) {
-        onItemSelect?.(selectedItem);
+        // We are using a ref because we need to call onItemSelect after the component is closed
+        // otherwise popover will take focus from on click and you can't focus something else after onItemSelect imediately
+        selectedItemRef.current = selectedItem;
       }
     },
     onHighlightedIndexChange({ highlightedIndex }) {
@@ -264,6 +267,14 @@ export const useCombobox = <Item,>({
       resetFilter();
     }
   }, [isOpen, resetFilter]);
+
+  useEffect(() => {
+    // Selecting the item when the popover is closed.
+    if (isOpen === false && selectedItemRef.current) {
+      onItemSelect?.(selectedItemRef.current);
+      selectedItemRef.current = undefined;
+    }
+  }, [isOpen, onItemSelect]);
 
   const enhancedGetInputProps = useCallback(
     (options?: UseComboboxGetInputPropsOptions) => {

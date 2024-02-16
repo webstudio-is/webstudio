@@ -67,6 +67,7 @@ export type ControlProps<Control> = {
   deletable: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
   onDelete: () => void;
+  autoFocus?: boolean;
 };
 
 export const getLabel = (meta: { label?: string }, fallback: string) =>
@@ -138,7 +139,7 @@ export const Label = ({
   }
 
   return (
-    <Flex align="center" css={{ gap: theme.spacing[3] }}>
+    <Flex align="center" css={{ gap: theme.spacing[3], width: "100%" }}>
       {label}
       {readOnly && (
         <Tooltip
