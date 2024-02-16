@@ -135,6 +135,7 @@ export { PageIcon } from "./page";
 export { PaintBrushIcon } from "./paint-brush";
 export { PhoneIcon } from "./phone";
 export { PlayIcon } from "./play";
+export { PluginIcon } from "./plugin";
 export { PlusIcon } from "./plus";
 export { PopoverIcon } from "./popover";
 export { RadioCheckedIcon } from "./radio-checked";

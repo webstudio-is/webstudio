@@ -135,6 +135,7 @@ export * from "./page";
 export * from "./paint-brush";
 export * from "./phone";
 export * from "./play";
+export * from "./plugin";
 export * from "./plus";
 export * from "./popover";
 export * from "./radio-checked";

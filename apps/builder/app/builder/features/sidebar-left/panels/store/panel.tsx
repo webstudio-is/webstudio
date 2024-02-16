@@ -1,4 +1,4 @@
-import { BagIcon } from "@webstudio-is/icons";
+import { PluginIcon } from "@webstudio-is/icons";
 import { Flex } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
@@ -18,4 +18,4 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   );
 };
 
-export const icon = <BagIcon />;
+export const icon = <PluginIcon />;
