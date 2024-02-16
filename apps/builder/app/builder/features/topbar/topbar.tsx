@@ -6,6 +6,7 @@ import {
   Toolbar,
   ToolbarToggleGroup,
   ToolbarButton,
+  Text,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
 import { $selectedPage } from "~/shared/nano-states";
@@ -41,7 +42,7 @@ const PagesButton = () => {
       }}
       tabIndex={0}
     >
-      {page.name}
+      <Text truncate>{page.name}</Text>
     </ToolbarButton>
   );
 };

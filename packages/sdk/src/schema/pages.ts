@@ -58,7 +58,7 @@ const commonPageFields = {
       .optional(),
   }),
   rootInstanceId: z.string(),
-  pathVariableId: z.optional(z.string()),
+  pathParamsDataSourceId: z.optional(z.string()),
 } as const;
 
 export const HomePagePath = z
