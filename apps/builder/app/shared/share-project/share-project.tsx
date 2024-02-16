@@ -20,6 +20,7 @@ import {
   PopoverPortal,
   Link,
   buttonStyle,
+  IconButton,
 } from "@webstudio-is/design-system";
 import {
   CopyIcon,
@@ -207,7 +208,7 @@ const Menu = ({
           <Item>
             {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
             <Button
-              color="destructive"
+              color="neutral-destructive"
               onClick={() => {
                 onDelete();
               }}
@@ -260,23 +261,35 @@ const SharedLinkItem = ({
   hasProPlan,
 }: SharedLinkItemType) => {
   const [currentName, setCurrentName] = useState(name);
+  const [isCopied, setIsCopied] = useState(false);
 
   return (
     <Box className={itemStyle()}>
       <Label css={{ flexGrow: 1 }}>{currentName}</Label>
-      <Button
-        prefix={<CopyIcon />}
-        onClick={() => {
-          navigator.clipboard.writeText(
-            builderUrl({
-              authToken: token,
-              mode: relation === "viewers" ? "preview" : "edit",
-            })
-          );
+      <Tooltip
+        content={isCopied ? "Copied" : "Copy link"}
+        open={isCopied === true ? true : undefined}
+        onOpenChange={(isOpen) => {
+          if (isOpen === false) {
+            setIsCopied(false);
+          }
         }}
       >
-        Copy link
-      </Button>
+        <IconButton
+          aria-label="Copy link"
+          onClick={() => {
+            navigator.clipboard.writeText(
+              builderUrl({
+                authToken: token,
+                mode: relation === "viewers" ? "preview" : "edit",
+              })
+            );
+            setIsCopied(true);
+          }}
+        >
+          <CopyIcon aria-hidden />
+        </IconButton>
+      </Tooltip>
       <Menu
         name={currentName}
         relation={relation}
