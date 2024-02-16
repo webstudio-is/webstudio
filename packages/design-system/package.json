@@ -70,6 +70,7 @@
     "downshift": "^6.1.7",
     "immer": "^10.0.3",
     "match-sorter": "^6.3.1",
+    "react-field-sizing-content": "^1.0.0",
     "react-hot-toast": "^2.4.1",
     "token-transformer": "^0.0.28",
     "use-debounce": "^9.0.4",

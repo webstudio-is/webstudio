@@ -1,5 +1,5 @@
 import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
-import { Fragment, forwardRef, useEffect } from "react";
+import { forwardRef, useEffect } from "react";
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
@@ -136,10 +136,7 @@ export const InputErrorsTooltip = ({
   side?: ComponentProps<typeof Tooltip>["side"];
 }) => {
   const content = errors?.map((error, index) => (
-    <Fragment key={index}>
-      {index > 0 && <br />}
-      <Text>{error}</Text>
-    </Fragment>
+    <Text key={index}>{error}</Text>
   ));
   return (
     // We intentionally always pass non empty content to avoid optimization inside Tooltip

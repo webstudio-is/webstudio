@@ -1,5 +1,11 @@
 import { URLPattern } from "urlpattern-polyfill";
 
+// allowed syntax
+// :name - group without modifiers
+// :name? - group with optional modifier
+// :name* - group with zero or more modifier in the end
+// * - wildcard group in the end
+
 const baseUrl = "http://url";
 
 export const parsePathnamePattern = (pathname: string) => {
@@ -13,29 +19,74 @@ export const parsePathnamePattern = (pathname: string) => {
   }
 };
 
-const indexRegex = /^\d+$/;
+type Token =
+  | { type: "fragment"; value: string }
+  | { type: "param"; name: string; optional: boolean; splat: boolean };
 
-export const compilePathnamePattern = (
-  pathname: string,
-  values: Record<string, string>
-) => {
-  const entries = Object.entries(values)
-    .sort(
-      // sort only indexes, names order is not important
-      ([leftName], [rightName]) => Number(leftName) - Number(rightName)
-    )
-    .filter(([_name, value]) => value.length > 0);
-  for (const [name, value] of entries) {
-    pathname = pathname.replaceAll(`:${name}*`, value);
-    pathname = pathname.replaceAll(`:${name}`, value);
-  }
-  for (const [name, value] of entries) {
-    if (indexRegex.test(name)) {
-      // replace only first occurence
-      pathname = pathname.replace(`*`, value);
+// /:slug -> { name: "slug", modifier: "" }
+// /:slug* -> { name: "slug", modifier: "*" }
+// /:slug? -> { name: "slug", modifier: "?" }
+// /* -> { wildcard: "*" }
+const tokenRegex = /:(?<name>\w+)(?<modifier>[?*]?)|(?<wildcard>(?<!:\w+)\*)/g;
+
+export const tokenizePathnamePattern = (pathname: string) => {
+  const tokens: Token[] = [];
+  let lastCursor = 0;
+  let lastWildcard = -1;
+
+  for (const match of pathname.matchAll(tokenRegex)) {
+    const cursor = match.index ?? 0;
+    if (lastCursor < cursor) {
+      tokens.push({
+        type: "fragment",
+        value: pathname.slice(lastCursor, cursor),
+      });
+    }
+    lastCursor = cursor + match[0].length;
+    if (match.groups?.name) {
+      const optional = match.groups.modifier === "?";
+      const splat = match.groups.modifier === "*";
+
+      tokens.push({ type: "param", name: match.groups.name, optional, splat });
+    }
+    if (match.groups?.wildcard) {
+      lastWildcard += 1;
+      tokens.push({
+        type: "param",
+        name: lastWildcard.toString(),
+        splat: true,
+        optional: false,
+      });
     }
   }
-  return pathname;
+  if (lastCursor < pathname.length) {
+    tokens.push({
+      type: "fragment",
+      value: pathname.slice(lastCursor),
+    });
+  }
+  return tokens;
+};
+
+export const compilePathnamePattern = (
+  tokens: Token[],
+  values: Record<string, string>
+) => {
+  let compiledPathname = "";
+  for (const token of tokens) {
+    if (token.type === "fragment") {
+      compiledPathname += token.value;
+    }
+    if (token.type === "param") {
+      const value = values[token.name] ?? "";
+      // remove preceding slash
+      if (token.optional && value.length === 0) {
+        compiledPathname = compiledPathname.slice(0, -1);
+      }
+      compiledPathname += value;
+    }
+  }
+  return compiledPathname;
 };
 
 export const validatePathnamePattern = (pathname: string) => {
@@ -46,12 +97,6 @@ export const validatePathnamePattern = (pathname: string) => {
   }
 
   const messages: string[] = [];
-
-  // allowed syntax
-  // :name - group without modifiers
-  // :name? - group with optional modifier
-  // :name* - group with zero or more modifier in the end
-  // * - wildcard group in the end
 
   // fobid :name+ everywhere
   const namedGroupsWithPlus = Array.from(pathname.matchAll(/:\w+\+/g)).flat();

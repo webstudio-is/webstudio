@@ -38,6 +38,7 @@ module.exports = {
     "strip-indent",
     "change-case",
     "title-case",
+    "react-field-sizing-content",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",

@@ -15,6 +15,10 @@ import { css, theme, type CSS } from "../stitches.config";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { mergeRefs } from "@react-aria/utils";
 import { useFocusWithin } from "@react-aria/interactions";
+import {
+  type InputProps as InputWithFieldSizingProps,
+  Input as InputWithFieldSizing,
+} from "react-field-sizing-content";
 
 // we only support types that behave more or less like a regular text input
 export const inputFieldTypes = [
@@ -163,7 +167,7 @@ type InputProps = {
   color?: (typeof inputFieldColors)[number];
   css?: CSS;
   variant?: "regular" | "mono";
-} & Omit<ComponentProps<"input">, "prefix" | "onFocus" | "onBlur">;
+} & Omit<InputWithFieldSizingProps, "prefix" | "onFocus" | "onBlur">;
 
 const Input = forwardRef(
   (
@@ -171,7 +175,7 @@ const Input = forwardRef(
     ref: Ref<HTMLInputElement>
   ) => {
     return (
-      <input
+      <InputWithFieldSizing
         {...props}
         spellCheck={false}
         data-input-field-input // to distinguish from potential other inputs in prefix/suffix
