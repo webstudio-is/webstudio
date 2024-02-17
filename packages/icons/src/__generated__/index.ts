@@ -86,6 +86,7 @@ export * from "./drag-handle";
 export * from "./dynamic-page";
 export * from "./email";
 export * from "./embed";
+export * from "./extension";
 export * from "./external-link";
 export * from "./eyecon-closed";
 export * from "./eyecon-open";

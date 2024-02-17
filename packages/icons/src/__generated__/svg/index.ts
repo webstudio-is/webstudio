@@ -86,6 +86,7 @@ export { DragHandleIcon } from "./drag-handle";
 export { DynamicPageIcon } from "./dynamic-page";
 export { EmailIcon } from "./email";
 export { EmbedIcon } from "./embed";
+export { ExtensionIcon } from "./extension";
 export { ExternalLinkIcon } from "./external-link";
 export { EyeconClosedIcon } from "./eyecon-closed";
 export { EyeconOpenIcon } from "./eyecon-open";
