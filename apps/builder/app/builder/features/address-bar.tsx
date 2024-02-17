@@ -183,7 +183,7 @@ const AddressBar = () => {
   return (
     <InputErrorsTooltip errors={Array.from(errors.values())}>
       <Flex gap={1} css={{ padding: theme.spacing[5] }}>
-        <Flex align="center" css={textVariants.mono}>
+        <Flex align="center" gap={1} css={textVariants.mono}>
           {publishedOrigin}
           {tokens.map((token, index) => {
             if (token.type === "fragment") {
@@ -194,10 +194,7 @@ const AddressBar = () => {
                 <InputField
                   key={index}
                   fieldSizing="content"
-                  css={{
-                    margin: `0 ${theme.spacing[3]}`,
-                    minWidth: theme.spacing[15],
-                  }}
+                  css={{ minWidth: theme.spacing[15] }}
                   color={errors.has(token.name) ? "error" : undefined}
                   id={`${id}-${token.name}`}
                   placeholder={token.name}
