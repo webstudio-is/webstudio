@@ -1,13 +1,13 @@
 import { Button, Flex, theme } from "@webstudio-is/design-system";
 import { Iframe } from "./iframe";
-import type { StoreItem } from "./types";
+import type { MarketplaceItem } from "./types";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
 
 export const ItemPanel = ({
   item,
   onOpenChange,
 }: {
-  item: StoreItem;
+  item: MarketplaceItem;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   return (
