@@ -21,6 +21,7 @@ import {
 } from "../breakpoints";
 import { ViewMode } from "./view-mode";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
+import { AddressBarPopover } from "../address-bar";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -70,6 +71,7 @@ export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
       </Flex>
       <Flex align="center">
         <PagesButton />
+        <AddressBarPopover />
       </Flex>
       <Flex css={{ minWidth: theme.spacing[23] }}>
         <BreakpointsPopover />
