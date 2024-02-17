@@ -8,14 +8,14 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { usePress } from "@react-aria/interactions";
-import type { Category, MarketplaceItem } from "./types";
+import type { Category, StoreItem } from "./types";
 import { getItemsByCategory, categories, useActiveItem, items } from "./utils";
 
-const itemsByCategory = new Map<Category, Array<MarketplaceItem>>(
+const itemsByCategory = new Map<Category, Array<StoreItem>>(
   getItemsByCategory(items)
 );
 
-export const Marketplace = () => {
+export const Store = () => {
   const [, setActiveItem] = useActiveItem();
   const { pressProps } = usePress({
     onPress(event) {
@@ -37,7 +37,7 @@ export const Marketplace = () => {
                 css={{ px: theme.spacing[9], overflow: "auto" }}
               >
                 {(itemsByCategory.get(category) ?? []).map(
-                  (meta: MarketplaceItem, index) => {
+                  (meta: StoreItem, index) => {
                     return (
                       <Flex
                         {...pressProps}

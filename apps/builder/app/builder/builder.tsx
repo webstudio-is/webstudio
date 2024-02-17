@@ -3,12 +3,19 @@ import { useStore } from "@nanostores/react";
 import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
+import type { Asset } from "@webstudio-is/sdk";
+import type { Build } from "@webstudio-is/project-build";
+import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
-import { useBuilderStore } from "~/shared/sync";
+import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
 import { SidebarLeft, Navigator } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
+import builderStyles from "./builder.css";
+// eslint-disable-next-line import/no-internal-modules
+import prismStyles from "prismjs/themes/prism-solarizedlight.min.css";
 import { Footer } from "./features/footer";
 import {
   CanvasIframe,
@@ -16,9 +23,21 @@ import {
   Workspace,
 } from "./features/workspace";
 import {
+  $assets,
+  $authPermit,
+  $authToken,
+  $breakpoints,
+  $dataSources,
+  $instances,
   $isPreviewMode,
   $pages,
   $project,
+  $props,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
+  $domains,
+  $resources,
   subscribeResources,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
@@ -26,19 +45,24 @@ import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
+import { useMount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/project-settings";
-import { $isCloneDialogOpen } from "./shared/nano-states";
+import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
 import { useNavigatorLayout } from "./features/sidebar-left/navigator";
 import { CloneProjectDialog } from "~/shared/clone-project";
-import {
-  links,
-  useInitializeStores,
-  type BuilderProps,
-} from "./builder-shared";
 
-export { links, type BuilderProps };
+registerContainers();
+
+// Can cause FOUC because of remix-island, be very accurate adding anything here
+export const links = () => {
+  return [
+    { rel: "stylesheet", href: builderStyles },
+    { rel: "stylesheet", href: prismStyles },
+  ];
+};
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
@@ -99,7 +123,7 @@ const Main = ({ children }: { children: ReactNode }) => (
 );
 
 type ChromeWrapperProps = {
-  children: ReactNode;
+  children: Array<JSX.Element | null | false>;
   isPreviewMode: boolean;
 };
 
@@ -193,9 +217,47 @@ const NavigatorPanel = ({
   );
 };
 
-export const Builder = (props: BuilderProps) => {
-  const { project, build, authToken, authPermit, userPlanFeatures } = props;
-  useInitializeStores(props);
+export type BuilderProps = {
+  project: Project;
+  domains: string[];
+  build: Build;
+  assets: [Asset["id"], Asset][];
+  authToken?: string;
+  authPermit: AuthPermit;
+  userPlanFeatures: UserPlanFeatures;
+};
+
+export const Builder = ({
+  project,
+  domains,
+  build,
+  assets,
+  authToken,
+  authPermit,
+  userPlanFeatures,
+}: BuilderProps) => {
+  useMount(() => {
+    // additional data stores
+    $project.set(project);
+    $domains.set(domains);
+    $authPermit.set(authPermit);
+    $authToken.set(authToken);
+    $userPlanFeatures.set(userPlanFeatures);
+
+    // set initial containers value
+    $assets.set(new Map(assets));
+    $instances.set(new Map(build.instances));
+    $dataSources.set(new Map(build.dataSources));
+    $resources.set(new Map(build.resources));
+    // props should be after data sources to compute logic
+    $props.set(new Map(build.props));
+    $pages.set(build.pages);
+    $styleSources.set(new Map(build.styleSources));
+    $styleSourceSelections.set(new Map(build.styleSourceSelections));
+    $breakpoints.set(new Map(build.breakpoints));
+    $styles.set(new Map(build.styles));
+  });
+
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
 
