@@ -1,8 +1,8 @@
-import { PluginIcon } from "@webstudio-is/icons";
+import { ExtensionIcon } from "@webstudio-is/icons";
 import { Flex } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
-import { Store } from "./store";
+import { Marketplace } from "./marketplace";
 import { ItemDialog } from "./item-dialog";
 import { ItemPanel } from "./item-panel";
 import { useActiveItem } from "./utils";
@@ -20,7 +20,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   return (
     <Flex direction="column" css={{ height: "100%" }}>
       <Header
-        title="Store"
+        title="Marketplace"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
       {component === "dialog" && activeItem && (
@@ -29,10 +29,10 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
       {component === "panel" && activeItem ? (
         <ItemPanel item={activeItem} onOpenChange={handleOpenChange} />
       ) : (
-        <Store />
+        <Marketplace />
       )}
     </Flex>
   );
 };
 
-export const icon = <PluginIcon />;
+export const icon = <ExtensionIcon />;

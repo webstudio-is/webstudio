@@ -2,7 +2,7 @@ import * as components from "./components";
 import * as navigator from "./navigator";
 import * as assets from "./assets";
 import * as pages from "./pages";
-import * as store from "./store";
+import * as store from "./marketplace";
 import type { TabContentProps, TabName } from "../types";
 import type { ReactNode } from "react";
 

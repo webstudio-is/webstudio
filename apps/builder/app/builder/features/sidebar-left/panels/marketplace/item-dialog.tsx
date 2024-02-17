@@ -4,17 +4,17 @@ import {
   DialogTitle,
   theme,
 } from "@webstudio-is/design-system";
-import type { StoreItem } from "./types";
+import type { MarketplaceItem } from "./types";
 import { Iframe } from "./iframe";
 
 export const ItemDialog = ({
   item,
   onOpenChange,
 }: {
-  item: StoreItem;
+  item: MarketplaceItem;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  if (item.ui.component !== "dialog") {
+  if (item.ui?.component !== "dialog") {
     return;
   }
   return (

@@ -1,11 +1,11 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
 import { nanoid } from "nanoid";
-import type { Category, StoreItem } from "./types";
+import type { Category, MarketplaceItem } from "./types";
 
-const $activeStoreItemId = atom<StoreItem["id"] | undefined>();
+const $activeMarketplaceItemId = atom<MarketplaceItem["id"] | undefined>();
 
-export const items: Array<StoreItem> = [
+export const items: Array<MarketplaceItem> = [
   {
     id: nanoid(),
     category: "sectionTemplates",
@@ -36,8 +36,8 @@ export const categories: Array<{ category: Category; label: string }> = [
   { category: "apps", label: "Apps" },
 ];
 
-export const getItemsByCategory = (items: Array<StoreItem>) => {
-  const itemsByCategory = new Map<Category, Array<StoreItem>>();
+export const getItemsByCategory = (items: Array<MarketplaceItem>) => {
+  const itemsByCategory = new Map<Category, Array<MarketplaceItem>>();
 
   for (const item of items) {
     if (
@@ -57,9 +57,9 @@ export const getItemsByCategory = (items: Array<StoreItem>) => {
 };
 
 export const useActiveItem = () => {
-  const activeStoreItemId = useStore($activeStoreItemId);
-  const item = activeStoreItemId
-    ? items.find((item) => item.id === activeStoreItemId)
+  const activeMarketplaceItemId = useStore($activeMarketplaceItemId);
+  const item = activeMarketplaceItemId
+    ? items.find((item) => item.id === activeMarketplaceItemId)
     : undefined;
-  return [item, $activeStoreItemId.set] as const;
+  return [item, $activeMarketplaceItemId.set] as const;
 };
