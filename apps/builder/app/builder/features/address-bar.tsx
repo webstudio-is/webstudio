@@ -169,7 +169,6 @@ const AddressBar = () => {
     <InputErrorsTooltip errors={Array.from(errors.values())}>
       <Flex gap={1} css={{ padding: theme.spacing[5] }}>
         <Flex align="center" gap={1} css={textVariants.mono}>
-          {publishedOrigin}
           {tokens.map((token, index) => {
             if (token.type === "fragment") {
               return token.value;
