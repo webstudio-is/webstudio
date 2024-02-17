@@ -16,7 +16,7 @@ import {
   PopoverContent,
   IconButton,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, CopyIcon, LinkIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, CopyIcon } from "@webstudio-is/icons";
 import {
   findParentFolderByChildId,
   ROOT_FOLDER_ID,
@@ -117,16 +117,7 @@ const CopyPageUrl = ({
     }
   }, [copyState]);
 
-  let copyIcon = (
-    <>
-      <LinkIcon
-        style={{ display: "var(--ws-address-bar-link-icon-display, block)" }}
-      />
-      <CopyIcon
-        style={{ display: "var(--ws-address-bar-copy-icon-display, none)" }}
-      />
-    </>
-  );
+  let copyIcon = <CopyIcon />;
   if (copyState === "copied") {
     copyIcon = <CheckMarkIcon />;
   }
@@ -135,19 +126,13 @@ const CopyPageUrl = ({
     <Tooltip
       // keep tooltip open when user just copied
       open={copyState === "copied" ? true : undefined}
-      content={copyState === "copied" ? "Copied" : "Click to copy"}
+      content={copyState === "copied" ? "Copied" : "Click to copy page URL"}
     >
       <IconButton
         disabled={disabled}
         onClick={() => {
           navigator.clipboard.writeText(pageUrl);
           setCopyState("copied");
-        }}
-        css={{
-          "&:hover": {
-            "--ws-address-bar-link-icon-display": "none",
-            "--ws-address-bar-copy-icon-display": "block",
-          },
         }}
       >
         {copyIcon}
