@@ -1,6 +1,5 @@
 import {
   Grid,
-  Separator,
   Flex,
   InputField,
   Button,
@@ -129,7 +128,6 @@ export const RedirectSection = () => {
 
   return (
     <>
-      <Separator />
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
         <Text variant="titles">301 Redirects</Text>
         <Text color="subtle">

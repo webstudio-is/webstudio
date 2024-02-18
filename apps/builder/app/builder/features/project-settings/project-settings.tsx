@@ -37,8 +37,12 @@ const ProjectSettingsView = ({
             <MetaSection />
             <Separator />
             <CompilerSection />
-            <Separator />
-            {isFeatureEnabled("redirects") && <RedirectSection />}
+            {isFeatureEnabled("redirects") && (
+              <>
+                <Separator />
+                <RedirectSection />
+              </>
+            )}
             <div />
           </Grid>
         </ScrollArea>
