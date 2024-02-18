@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
   DeprecatedIconButton,
@@ -30,6 +30,7 @@ import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 import {
+  $editingPagesItemId,
   getAllChildrenAndSelf,
   reparentOrphansMutable,
   toTreeData,
@@ -385,7 +386,7 @@ const FolderEditor = ({
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const currentPageId = useStore($selectedPageId);
-  const [editingItemId, setEditingItemId] = useState<string>();
+  const editingItemId = useStore($editingPagesItemId);
   const pages = useStore($pages);
 
   if (currentPageId === undefined || pages === undefined) {
@@ -397,12 +398,14 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
       <PagesPanel
         onClose={() => onSetActiveTab("none")}
         onCreateNewFolder={() => {
-          setEditingItemId(
+          $editingPagesItemId.set(
             editingItemId === newFolderId ? undefined : newFolderId
           );
         }}
         onCreateNewPage={() =>
-          setEditingItemId(editingItemId === newPageId ? undefined : newPageId)
+          $editingPagesItemId.set(
+            editingItemId === newPageId ? undefined : newPageId
+          )
         }
         onSelect={(itemId) => {
           if (isFolder(itemId, pages.folders)) {
@@ -412,7 +415,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           onSetActiveTab("none");
         }}
         selectedPageId={currentPageId}
-        onEdit={setEditingItemId}
+        onEdit={$editingPagesItemId.set}
         editingItemId={editingItemId}
       />
 
@@ -421,12 +424,12 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           {isFolder(editingItemId, pages.folders) ? (
             <FolderEditor
               editingFolderId={editingItemId}
-              setEditingFolderId={setEditingItemId}
+              setEditingFolderId={$editingPagesItemId.set}
             />
           ) : (
             <PageEditor
               editingPageId={editingItemId}
-              setEditingPageId={setEditingItemId}
+              setEditingPageId={$editingPagesItemId.set}
             />
           )}
         </SettingsPanel>
