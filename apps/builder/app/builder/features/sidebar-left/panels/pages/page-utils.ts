@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { computed } from "nanostores";
+import { atom, computed } from "nanostores";
 import { createRootFolder } from "@webstudio-is/project-build";
 import {
   decodeDataSourceVariable,
@@ -29,7 +29,6 @@ import {
   $dataSources,
   $pages,
   $selectedInstanceSelector,
-  $selectedPage,
   $selectedPageId,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
@@ -297,17 +296,29 @@ export const getExistingRoutePaths = (pages?: Pages): Set<string> => {
   return paths;
 };
 
+export const $editingPagesItemId = atom<undefined | Page["id"]>();
+
+const $editingPage = computed(
+  [$editingPagesItemId, $pages],
+  (editingPagesItemId, pages) => {
+    if (editingPagesItemId === undefined || pages === undefined) {
+      return;
+    }
+    return findPageByIdOrPath(editingPagesItemId, pages);
+  }
+);
+
 export const $pageRootScope = computed(
-  [$selectedPage, $variableValuesByInstanceSelector, $dataSources],
-  (selectedPage, variableValuesByInstanceSelector, dataSources) => {
+  [$editingPage, $variableValuesByInstanceSelector, $dataSources],
+  (editingPage, variableValuesByInstanceSelector, dataSources) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
     const variableValues = new Map<string, unknown>();
-    if (selectedPage === undefined) {
+    if (editingPage === undefined) {
       return { variableValues, scope, aliases };
     }
     const values = variableValuesByInstanceSelector.get(
-      JSON.stringify([selectedPage.rootInstanceId])
+      JSON.stringify([editingPage.rootInstanceId])
     );
     if (values) {
       for (const [dataSourceId, value] of values) {
