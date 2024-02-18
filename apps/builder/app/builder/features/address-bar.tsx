@@ -1,6 +1,6 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type ComponentProps } from "react";
 import {
   Flex,
   InputField,
@@ -96,15 +96,8 @@ const updatePathParam = (name: string, value: string) => {
   }
 };
 
-const CopyPageUrl = ({
-  pageUrl,
-  disabled,
-}: {
-  pageUrl: string;
-  disabled: boolean;
-}) => {
+const useCopyUrl = (pageUrl: string) => {
   const [copyState, setCopyState] = useState<"copy" | "copied">("copy");
-
   // reset copied state after 2 seconds
   useEffect(() => {
     if (copyState === "copied") {
@@ -116,29 +109,25 @@ const CopyPageUrl = ({
       };
     }
   }, [copyState]);
-
   let copyIcon = <CopyIcon />;
   if (copyState === "copied") {
     copyIcon = <CheckMarkIcon />;
   }
-
-  return (
-    <Tooltip
+  const onClick = () => {
+    navigator.clipboard.writeText(pageUrl);
+    setCopyState("copied");
+  };
+  return {
+    tooltipProps: {
       // keep tooltip open when user just copied
-      open={copyState === "copied" ? true : undefined}
-      content={copyState === "copied" ? "Copied" : "Click to copy page URL"}
-    >
-      <IconButton
-        disabled={disabled}
-        onClick={() => {
-          navigator.clipboard.writeText(pageUrl);
-          setCopyState("copied");
-        }}
-      >
-        {copyIcon}
-      </IconButton>
-    </Tooltip>
-  );
+      open: copyState === "copied" ? true : undefined,
+      content: copyState === "copied" ? "Copied" : `Copy ${pageUrl}`,
+    } satisfies Partial<ComponentProps<typeof Tooltip>>,
+    buttonProps: {
+      onClick,
+      children: copyIcon,
+    } satisfies Partial<ComponentProps<"button">>,
+  };
 };
 
 const AddressBar = () => {
@@ -148,6 +137,9 @@ const AddressBar = () => {
   const pathParams = useStore($selectedPagePathParams);
   const tokens = tokenizePathnamePattern(path);
   const compiledPath = compilePathnamePattern(tokens, pathParams ?? {});
+  const { tooltipProps, buttonProps } = useCopyUrl(
+    `${publishedOrigin}${compiledPath}`
+  );
 
   const errors = new Map<string, string>();
   for (const token of tokens) {
@@ -193,10 +185,9 @@ const AddressBar = () => {
           })}
         </Flex>
 
-        <CopyPageUrl
-          pageUrl={`${publishedOrigin}${compiledPath}`}
-          disabled={errors.size > 0}
-        />
+        <Tooltip {...tooltipProps}>
+          <IconButton {...buttonProps} disabled={errors.size > 0} />
+        </Tooltip>
       </Flex>
     </InputErrorsTooltip>
   );
@@ -204,6 +195,21 @@ const AddressBar = () => {
 
 export const AddressBarPopover = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const path = useStore($selectedPagePath);
+  const tokens = tokenizePathnamePattern(path);
+  const publishedOrigin = useStore($publishedOrigin);
+  const { tooltipProps, buttonProps } = useCopyUrl(`${publishedOrigin}${path}`);
+  if (tokens.length === 1) {
+    return (
+      <Tooltip {...tooltipProps}>
+        <ToolbarButton
+          {...buttonProps}
+          aria-label="Copy page URL"
+          tabIndex={0}
+        />
+      </Tooltip>
+    );
+  }
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>

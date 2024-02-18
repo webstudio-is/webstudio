@@ -70,6 +70,7 @@ export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
       <Flex grow={false} shrink={false}>
         <Menu />
       </Flex>
+
       {/* prevent rendering when data is not loaded */}
       {pages && (
         <>
@@ -80,11 +81,13 @@ export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
           <Flex css={{ minWidth: theme.spacing[23] }}>
             <BreakpointsPopover />
           </Flex>
-          <Flex grow align="center" justify="center">
+          <Flex grow></Flex>
+          <Flex align="center" justify="center">
             <BreakpointsSelectorContainer />
           </Flex>
         </>
       )}
+      <Flex grow></Flex>
       <Toolbar>
         <ToolbarToggleGroup
           type="single"
