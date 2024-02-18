@@ -25,8 +25,8 @@ import {
   deleteInstanceMutable,
   findAvailableDataSources,
   findClosestDroppableTarget,
-  getInstancesSlice,
-  insertInstancesSliceCopy,
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
   isInstanceDetachable,
   updateWebstudioData,
 } from "../instance-utils";
@@ -58,7 +58,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
 
   return {
     instanceSelector: targetInstanceSelector,
-    ...getInstancesSlice(targetInstanceId),
+    ...extractWebstudioFragment(targetInstanceId),
   };
 };
 
@@ -190,9 +190,9 @@ export const onPaste = (clipboardData: string): boolean => {
   }
 
   updateWebstudioData((data) => {
-    const { newInstanceIds } = insertInstancesSliceCopy({
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
-      slice: fragment,
+      fragment,
       availableDataSources: findAvailableDataSources(
         data.dataSources,
         data.instances,
