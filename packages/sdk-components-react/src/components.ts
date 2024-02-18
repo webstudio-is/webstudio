@@ -30,3 +30,4 @@ export { Vimeo } from "./vimeo";
 export { VimeoPreviewImage } from "./vimeo-preview-image";
 export { VimeoPlayButton } from "./vimeo-play-button";
 export { VimeoSpinner } from "./vimeo-spinner";
+export { MarketplaceItem } from "./marketplace-item";

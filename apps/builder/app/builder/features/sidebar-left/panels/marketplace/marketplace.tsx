@@ -12,6 +12,7 @@ import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { usePress } from "@react-aria/interactions";
 import type { Category, MarketplaceItem } from "./types";
 import { getItemsByCategory, categories, useActiveItem, items } from "./utils";
+import { useEffect } from "react";
 
 const itemsByCategory = new Map<Category, Array<MarketplaceItem>>(
   getItemsByCategory(items)
@@ -25,6 +26,22 @@ export const Marketplace = () => {
       setActiveItem(target.dataset.id);
     },
   });
+
+  useEffect(() => {
+    if (typeof window !== "object") {
+      return;
+    }
+    window.addEventListener(
+      "message",
+      (event: MessageEvent) => {
+        const action = event.data ?? {};
+        if (action.type === "requestCopy") {
+          console.log(action);
+        }
+      },
+      false
+    );
+  }, []);
 
   return (
     <ScrollArea>
