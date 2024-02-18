@@ -13,8 +13,8 @@ import {
 import {
   deleteInstanceMutable,
   findAvailableDataSources,
-  getInstancesSlice,
-  insertInstancesSliceCopy,
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
   isInstanceDetachable,
   updateWebstudioData,
 } from "~/shared/instance-utils";
@@ -185,11 +185,11 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // so clipboard always have at least two level instance selector
         const [targetInstanceId, parentInstanceId] = instanceSelector;
         const parentInstanceSelector = instanceSelector.slice(1);
-        const slice = getInstancesSlice(targetInstanceId);
+        const fragment = extractWebstudioFragment(targetInstanceId);
         updateWebstudioData((data) => {
-          const { newInstanceIds } = insertInstancesSliceCopy({
+          const { newInstanceIds } = insertWebstudioFragmentCopy({
             data,
-            slice,
+            fragment,
             availableDataSources: findAvailableDataSources(
               data.dataSources,
               data.instances,

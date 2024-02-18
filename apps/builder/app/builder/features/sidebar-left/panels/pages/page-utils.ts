@@ -21,8 +21,8 @@ import {
 import { removeByMutable } from "~/shared/array-utils";
 import {
   deleteInstanceMutable,
-  getInstancesSlice,
-  insertInstancesSliceCopy,
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import {
@@ -377,11 +377,11 @@ export const duplicatePage = (pageId: Page["id"]) => {
     page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
   const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
 
-  const slice = getInstancesSlice(page.rootInstanceId);
+  const fragment = extractWebstudioFragment(page.rootInstanceId);
   updateWebstudioData((data) => {
-    const { newInstanceIds, newDataSourceIds } = insertInstancesSliceCopy({
+    const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
       data,
-      slice,
+      fragment,
       availableDataSources: new Set(),
     });
     const newRootInstanceId = newInstanceIds.get(page.rootInstanceId);

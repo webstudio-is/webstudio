@@ -450,7 +450,7 @@ export const reparentInstance = (
   dropTarget: DroppableTarget
 ) => {
   const [rootInstanceId] = sourceInstanceSelector;
-  const fragment = getInstancesSlice(rootInstanceId);
+  const fragment = extractWebstudioFragment(rootInstanceId);
   updateWebstudioData((data) => {
     const reparentDropTarget = getReparentDropTargetMutable(
       data.instances,
@@ -463,9 +463,9 @@ export const reparentInstance = (
       return;
     }
     deleteInstanceMutable(data, sourceInstanceSelector);
-    const { newInstanceIds } = insertInstancesSliceCopy({
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
       data,
-      slice: fragment,
+      fragment,
       availableDataSources: findAvailableDataSources(
         data.dataSources,
         data.instances,
@@ -647,7 +647,7 @@ const collectUsedDataSources = (
   }
 };
 
-export const getInstancesSlice = (
+export const extractWebstudioFragment = (
   rootInstanceId: string
 ): WebstudioFragment => {
   const assets = $assets.get();
@@ -661,15 +661,15 @@ export const getInstancesSlice = (
   const styles = $styles.get();
 
   // collect the instance by id and all its descendants including portal instances
-  const slicedInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
-  const slicedInstances: Instance[] = [];
-  const slicedStyleSourceSelections: StyleSourceSelection[] = [];
-  const slicedStyleSources: StyleSources = new Map();
+  const fragmentInstanceIds = findTreeInstanceIds(instances, rootInstanceId);
+  const fragmentInstances: Instance[] = [];
+  const fragmentStyleSourceSelections: StyleSourceSelection[] = [];
+  const fragmentStyleSources: StyleSources = new Map();
   const usedDataSourceIds = new Set<DataSource["id"]>();
-  for (const instanceId of slicedInstanceIds) {
+  for (const instanceId of fragmentInstanceIds) {
     const instance = instances.get(instanceId);
     if (instance) {
-      slicedInstances.push(instance);
+      fragmentInstances.push(instance);
       for (const child of instance.children) {
         if (child.type === "expression") {
           collectUsedDataSources(child.value, usedDataSourceIds);
@@ -680,37 +680,37 @@ export const getInstancesSlice = (
     // collect all style sources bound to these instances
     const styleSourceSelection = styleSourceSelections.get(instanceId);
     if (styleSourceSelection) {
-      slicedStyleSourceSelections.push(styleSourceSelection);
+      fragmentStyleSourceSelections.push(styleSourceSelection);
       for (const styleSourceId of styleSourceSelection.values) {
-        if (slicedStyleSources.has(styleSourceId)) {
+        if (fragmentStyleSources.has(styleSourceId)) {
           continue;
         }
         const styleSource = styleSources.get(styleSourceId);
         if (styleSource === undefined) {
           continue;
         }
-        slicedStyleSources.set(styleSourceId, styleSource);
+        fragmentStyleSources.set(styleSourceId, styleSource);
       }
     }
   }
 
-  const slicedAssetIds = new Set<Asset["id"]>();
-  const slicedFontFamilies = new Set<string>();
+  const fragmentAssetIds = new Set<Asset["id"]>();
+  const fragmentFontFamilies = new Set<string>();
 
   // collect styles bound to these style sources
-  const slicedStyles: StyleDecl[] = [];
-  const slicedBreapoints: Breakpoints = new Map();
+  const fragmentStyles: StyleDecl[] = [];
+  const fragmentBreapoints: Breakpoints = new Map();
   for (const styleDecl of styles.values()) {
-    if (slicedStyleSources.has(styleDecl.styleSourceId) === false) {
+    if (fragmentStyleSources.has(styleDecl.styleSourceId) === false) {
       continue;
     }
-    slicedStyles.push(styleDecl);
+    fragmentStyles.push(styleDecl);
 
     // collect breakpoints
-    if (slicedBreapoints.has(styleDecl.breakpointId) === false) {
+    if (fragmentBreapoints.has(styleDecl.breakpointId) === false) {
       const breakpoint = breakpoints.get(styleDecl.breakpointId);
       if (breakpoint) {
-        slicedBreapoints.set(styleDecl.breakpointId, breakpoint);
+        fragmentBreapoints.set(styleDecl.breakpointId, breakpoint);
       }
     }
 
@@ -718,25 +718,25 @@ export const getInstancesSlice = (
     traverseStyleValue(styleDecl.value, (value) => {
       if (value.type === "fontFamily") {
         for (const fontFamily of value.value) {
-          slicedFontFamilies.add(fontFamily);
+          fragmentFontFamilies.add(fontFamily);
         }
       }
       if (value.type === "image") {
         if (value.value.type === "asset") {
-          slicedAssetIds.add(value.value.value);
+          fragmentAssetIds.add(value.value.value);
         }
       }
     });
   }
 
   // collect props bound to these instances
-  const slicedProps: Props = new Map();
+  const fragmentProps: Props = new Map();
   for (const prop of props.values()) {
-    if (slicedInstanceIds.has(prop.instanceId) === false) {
+    if (fragmentInstanceIds.has(prop.instanceId) === false) {
       continue;
     }
 
-    slicedProps.set(prop.id, prop);
+    fragmentProps.set(prop.id, prop);
 
     if (prop.type === "expression") {
       collectUsedDataSources(prop.value, usedDataSourceIds);
@@ -752,42 +752,42 @@ export const getInstancesSlice = (
 
     // collect assets
     if (prop.type === "asset") {
-      slicedAssetIds.add(prop.value);
+      fragmentAssetIds.add(prop.value);
     }
   }
 
-  // collect variables scoped to instances slice
+  // collect variables scoped to fragment instances
   // or used by expressions or actions even outside of the tree
-  // such variables can be bound to sliced root on paste
-  const slicedDataSources: DataSources = new Map();
-  const slicedResourceIds = new Set<Resource["id"]>();
+  // such variables can be bound to fragment root on paste
+  const fragmentDataSources: DataSources = new Map();
+  const fragmentResourceIds = new Set<Resource["id"]>();
   for (const dataSource of dataSources.values()) {
     if (
       // check if data source itself can be copied
       (dataSource.scopeInstanceId !== undefined &&
-        slicedInstanceIds.has(dataSource.scopeInstanceId)) ||
+        fragmentInstanceIds.has(dataSource.scopeInstanceId)) ||
       usedDataSourceIds.has(dataSource.id)
     ) {
-      slicedDataSources.set(dataSource.id, dataSource);
+      fragmentDataSources.set(dataSource.id, dataSource);
       if (dataSource.type === "resource") {
-        slicedResourceIds.add(dataSource.resourceId);
+        fragmentResourceIds.add(dataSource.resourceId);
       }
     }
   }
 
-  // collect resources bound to all sliced data sources
+  // collect resources bound to all fragment data sources
   // and then collect data sources used in these resources
   // it creates some recursive behavior but since resources
   // cannot depend on other resources all left data sources
   // can be collected just once
-  const slicedResources: Resource[] = [];
+  const fragmentResources: Resource[] = [];
   const dataSourceIdsUsedInResources = new Set<DataSource["id"]>();
-  for (const resourceId of slicedResourceIds) {
+  for (const resourceId of fragmentResourceIds) {
     const resource = resources.get(resourceId);
     if (resource === undefined) {
       continue;
     }
-    slicedResources.push(resource);
+    fragmentResources.push(resource);
     collectUsedDataSources(resource.url, dataSourceIdsUsedInResources);
     for (const { value } of resource.headers) {
       collectUsedDataSources(value, dataSourceIdsUsedInResources);
@@ -798,31 +798,31 @@ export const getInstancesSlice = (
   }
   for (const dataSource of dataSources.values()) {
     if (dataSourceIdsUsedInResources.has(dataSource.id)) {
-      slicedDataSources.set(dataSource.id, dataSource);
+      fragmentDataSources.set(dataSource.id, dataSource);
     }
   }
 
-  const slicedAssets: Asset[] = [];
+  const fragmentAssets: Asset[] = [];
   for (const asset of assets.values()) {
     if (
-      slicedAssetIds.has(asset.id) ||
-      (asset.type === "font" && slicedFontFamilies.has(asset.meta.family))
+      fragmentAssetIds.has(asset.id) ||
+      (asset.type === "font" && fragmentFontFamilies.has(asset.meta.family))
     ) {
-      slicedAssets.push(asset);
+      fragmentAssets.push(asset);
     }
   }
 
   return {
     children: [{ type: "id", value: rootInstanceId }],
-    instances: slicedInstances,
-    styleSourceSelections: slicedStyleSourceSelections,
-    styleSources: Array.from(slicedStyleSources.values()),
-    breakpoints: Array.from(slicedBreapoints.values()),
-    styles: slicedStyles,
-    dataSources: Array.from(slicedDataSources.values()),
-    resources: slicedResources,
-    props: Array.from(slicedProps.values()),
-    assets: slicedAssets,
+    instances: fragmentInstances,
+    styleSourceSelections: fragmentStyleSourceSelections,
+    styleSources: Array.from(fragmentStyleSources.values()),
+    breakpoints: Array.from(fragmentBreapoints.values()),
+    styles: fragmentStyles,
+    dataSources: Array.from(fragmentDataSources.values()),
+    resources: fragmentResources,
+    props: Array.from(fragmentProps.values()),
+    assets: fragmentAssets,
   };
 };
 
@@ -902,13 +902,13 @@ const replaceDataSources = (
   });
 };
 
-export const insertInstancesSliceCopy = ({
+export const insertWebstudioFragmentCopy = ({
   data,
-  slice,
+  fragment,
   availableDataSources,
 }: {
   data: WebstudioData;
-  slice: WebstudioFragment;
+  fragment: WebstudioFragment;
   availableDataSources: Set<DataSource["id"]>;
 }) => {
   const newInstanceIds = new Map<Instance["id"], Instance["id"]>();
@@ -922,10 +922,10 @@ export const insertInstancesSliceCopy = ({
     return newDataIds;
   }
 
-  const sliceInstances: Instances = new Map();
+  const fragmentInstances: Instances = new Map();
   const portalContentIds = new Set<Instance["id"]>();
-  for (const instance of slice.instances) {
-    sliceInstances.set(instance.id, instance);
+  for (const instance of fragment.instances) {
+    fragmentInstances.set(instance.id, instance);
     if (instance.component === portalComponent) {
       for (const child of instance.children) {
         if (child.type === "id") {
@@ -935,9 +935,9 @@ export const insertInstancesSliceCopy = ({
     }
   }
 
-  const sliceDataSources: DataSources = new Map();
-  for (const dataSource of slice.dataSources) {
-    sliceDataSources.set(dataSource.id, dataSource);
+  const fragmentDataSources: DataSources = new Map();
+  for (const dataSource of fragment.dataSources) {
+    fragmentDataSources.set(dataSource.id, dataSource);
   }
 
   const {
@@ -966,7 +966,7 @@ export const insertInstancesSliceCopy = ({
 
   // insert assets
 
-  for (const asset of slice.assets) {
+  for (const asset of fragment.assets) {
     // asset can be already present if pasting to the same project
     if (assets.has(asset.id) === false) {
       // we use the same asset.id so the references are preserved
@@ -977,7 +977,7 @@ export const insertInstancesSliceCopy = ({
   // merge breakpoints
 
   const mergedBreakpointIds = new Map<Breakpoint["id"], Breakpoint["id"]>();
-  for (const newBreakpoint of slice.breakpoints) {
+  for (const newBreakpoint of fragment.breakpoints) {
     let matched = false;
     for (const breakpoint of breakpoints.values()) {
       if (equalMedia(breakpoint, newBreakpoint)) {
@@ -994,7 +994,7 @@ export const insertInstancesSliceCopy = ({
   // insert tokens with their styles
 
   const tokenStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const styleSource of slice.styleSources) {
+  for (const styleSource of fragment.styleSources) {
     // prevent inserting styles when token is already present
     if (styleSource.type === "local" || styleSources.has(styleSource.id)) {
       continue;
@@ -1003,7 +1003,7 @@ export const insertInstancesSliceCopy = ({
     tokenStyleSourceIds.add(styleSource.id);
     styleSources.set(styleSource.id, styleSource);
   }
-  for (const styleDecl of slice.styles) {
+  for (const styleDecl of fragment.styles) {
     if (tokenStyleSourceIds.has(styleDecl.styleSourceId)) {
       const { breakpointId } = styleDecl;
       const newStyleDecl: StyleDecl = {
@@ -1026,13 +1026,13 @@ export const insertInstancesSliceCopy = ({
     }
 
     const instanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-      sliceInstances,
+      fragmentInstances,
       rootInstanceId
     );
 
     const availablePortalDataSources = new Set(availableDataSources);
     const usedResourceIds = new Set<Resource["id"]>();
-    for (const dataSource of slice.dataSources) {
+    for (const dataSource of fragment.dataSources) {
       // insert only data sources within portal content
       if (
         dataSource.scopeInstanceId &&
@@ -1046,21 +1046,21 @@ export const insertInstancesSliceCopy = ({
       }
     }
 
-    for (const resource of slice.resources) {
+    for (const resource of fragment.resources) {
       if (usedResourceIds.has(resource.id) === false) {
         continue;
       }
       const newUrl = inlineUnavailableDataSources({
         code: resource.url,
         availableDataSources: availablePortalDataSources,
-        dataSources: sliceDataSources,
+        dataSources: fragmentDataSources,
       }).code;
       const newHeaders = resource.headers.map((header) => ({
         name: header.name,
         value: inlineUnavailableDataSources({
           code: header.value,
           availableDataSources: availablePortalDataSources,
-          dataSources: sliceDataSources,
+          dataSources: fragmentDataSources,
         }).code,
       }));
       const newBody =
@@ -1069,7 +1069,7 @@ export const insertInstancesSliceCopy = ({
           : inlineUnavailableDataSources({
               code: resource.body,
               availableDataSources: availablePortalDataSources,
-              dataSources: sliceDataSources,
+              dataSources: fragmentDataSources,
             }).code;
       resources.set(resource.id, {
         ...resource,
@@ -1079,7 +1079,7 @@ export const insertInstancesSliceCopy = ({
       });
     }
 
-    for (const instance of slice.instances) {
+    for (const instance of fragment.instances) {
       if (instanceIds.has(instance.id)) {
         instances.set(instance.id, {
           ...instance,
@@ -1088,7 +1088,7 @@ export const insertInstancesSliceCopy = ({
               const { code } = inlineUnavailableDataSources({
                 code: child.value,
                 availableDataSources: availablePortalDataSources,
-                dataSources: sliceDataSources,
+                dataSources: fragmentDataSources,
               });
               return {
                 type: "expression",
@@ -1101,7 +1101,7 @@ export const insertInstancesSliceCopy = ({
       }
     }
 
-    for (let prop of slice.props) {
+    for (let prop of fragment.props) {
       if (instanceIds.has(prop.instanceId) === false) {
         continue;
       }
@@ -1110,7 +1110,7 @@ export const insertInstancesSliceCopy = ({
         const { code } = inlineUnavailableDataSources({
           code: prop.value,
           availableDataSources: availablePortalDataSources,
-          dataSources: sliceDataSources,
+          dataSources: fragmentDataSources,
         });
         prop = { ...prop, value: code };
       }
@@ -1124,7 +1124,7 @@ export const insertInstancesSliceCopy = ({
             const { code, isDiscarded } = inlineUnavailableDataSources({
               code: value.code,
               availableDataSources: availablePortalDataSources,
-              dataSources: sliceDataSources,
+              dataSources: fragmentDataSources,
             });
             if (isDiscarded) {
               return [];
@@ -1139,7 +1139,7 @@ export const insertInstancesSliceCopy = ({
     // insert local style sources with their styles
 
     const instanceStyleSourceIds = new Set<StyleSource["id"]>();
-    for (const styleSourceSelection of slice.styleSourceSelections) {
+    for (const styleSourceSelection of fragment.styleSourceSelections) {
       const { instanceId } = styleSourceSelection;
       if (instanceIds.has(instanceId) === false) {
         continue;
@@ -1150,7 +1150,7 @@ export const insertInstancesSliceCopy = ({
       }
     }
     const localStyleSourceIds = new Set<StyleSource["id"]>();
-    for (const styleSource of slice.styleSources) {
+    for (const styleSource of fragment.styleSources) {
       if (
         styleSource.type === "local" &&
         instanceStyleSourceIds.has(styleSource.id)
@@ -1159,7 +1159,7 @@ export const insertInstancesSliceCopy = ({
         styleSources.set(styleSource.id, styleSource);
       }
     }
-    for (const styleDecl of slice.styles) {
+    for (const styleDecl of fragment.styles) {
       if (localStyleSourceIds.has(styleDecl.styleSourceId)) {
         const { breakpointId } = styleDecl;
         const newStyleDecl: StyleDecl = {
@@ -1181,21 +1181,21 @@ export const insertInstancesSliceCopy = ({
    */
 
   // generate new ids only instances outside of portals
-  const sliceInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
-    sliceInstances,
-    slice.instances[0].id
+  const fragmentInstanceIds = findTreeInstanceIdsExcludingSlotDescendants(
+    fragmentInstances,
+    fragment.instances[0].id
   );
-  for (const instanceId of sliceInstanceIds) {
+  for (const instanceId of fragmentInstanceIds) {
     newInstanceIds.set(instanceId, nanoid());
   }
 
   const availableFragmentDataSources = new Set(availableDataSources);
   const newResourceIds = new Map<Resource["id"], Resource["id"]>();
   const usedResourceIds = new Set<Resource["id"]>();
-  for (const dataSource of slice.dataSources) {
+  for (const dataSource of fragment.dataSources) {
     const { scopeInstanceId } = dataSource;
     // insert only data sources within portal content
-    if (scopeInstanceId && sliceInstanceIds.has(scopeInstanceId)) {
+    if (scopeInstanceId && fragmentInstanceIds.has(scopeInstanceId)) {
       availableFragmentDataSources.add(dataSource.id);
       const newDataSourceId = nanoid();
       newDataSourceIds.set(dataSource.id, newDataSourceId);
@@ -1219,7 +1219,7 @@ export const insertInstancesSliceCopy = ({
     }
   }
 
-  for (const resource of slice.resources) {
+  for (const resource of fragment.resources) {
     if (usedResourceIds.has(resource.id) === false) {
       continue;
     }
@@ -1229,7 +1229,7 @@ export const insertInstancesSliceCopy = ({
       inlineUnavailableDataSources({
         code: resource.url,
         availableDataSources: availableFragmentDataSources,
-        dataSources: sliceDataSources,
+        dataSources: fragmentDataSources,
       }).code,
       newDataSourceIds
     );
@@ -1239,7 +1239,7 @@ export const insertInstancesSliceCopy = ({
         inlineUnavailableDataSources({
           code: header.value,
           availableDataSources: availableFragmentDataSources,
-          dataSources: sliceDataSources,
+          dataSources: fragmentDataSources,
         }).code,
         newDataSourceIds
       ),
@@ -1251,7 +1251,7 @@ export const insertInstancesSliceCopy = ({
             inlineUnavailableDataSources({
               code: resource.body,
               availableDataSources: availableFragmentDataSources,
-              dataSources: sliceDataSources,
+              dataSources: fragmentDataSources,
             }).code,
             newDataSourceIds
           );
@@ -1264,8 +1264,8 @@ export const insertInstancesSliceCopy = ({
     });
   }
 
-  for (const instance of slice.instances) {
-    if (sliceInstanceIds.has(instance.id)) {
+  for (const instance of fragment.instances) {
+    if (fragmentInstanceIds.has(instance.id)) {
       const newId = newInstanceIds.get(instance.id) ?? instance.id;
       instances.set(newId, {
         ...instance,
@@ -1281,7 +1281,7 @@ export const insertInstancesSliceCopy = ({
             const { code } = inlineUnavailableDataSources({
               code: child.value,
               availableDataSources: availableFragmentDataSources,
-              dataSources: sliceDataSources,
+              dataSources: fragmentDataSources,
             });
             return {
               type: "expression",
@@ -1294,8 +1294,8 @@ export const insertInstancesSliceCopy = ({
     }
   }
 
-  for (let prop of slice.props) {
-    if (sliceInstanceIds.has(prop.instanceId) === false) {
+  for (let prop of fragment.props) {
+    if (fragmentInstanceIds.has(prop.instanceId) === false) {
       continue;
     }
     // inline data sources not available in scope into expressions
@@ -1303,7 +1303,7 @@ export const insertInstancesSliceCopy = ({
       const { code } = inlineUnavailableDataSources({
         code: prop.value,
         availableDataSources: availableFragmentDataSources,
-        dataSources: sliceDataSources,
+        dataSources: fragmentDataSources,
       });
       prop = { ...prop, value: replaceDataSources(code, newDataSourceIds) };
     }
@@ -1317,7 +1317,7 @@ export const insertInstancesSliceCopy = ({
           const { code, isDiscarded } = inlineUnavailableDataSources({
             code: value.code,
             availableDataSources: availableFragmentDataSources,
-            dataSources: sliceDataSources,
+            dataSources: fragmentDataSources,
           });
           if (isDiscarded) {
             return [];
@@ -1345,8 +1345,8 @@ export const insertInstancesSliceCopy = ({
   // insert local styles with new ids
 
   const instanceStyleSourceIds = new Set<StyleSource["id"]>();
-  for (const styleSourceSelection of slice.styleSourceSelections) {
-    if (sliceInstanceIds.has(styleSourceSelection.instanceId) === false) {
+  for (const styleSourceSelection of fragment.styleSourceSelections) {
+    if (fragmentInstanceIds.has(styleSourceSelection.instanceId) === false) {
       continue;
     }
     for (const styleSourceId of styleSourceSelection.values) {
@@ -1357,7 +1357,7 @@ export const insertInstancesSliceCopy = ({
     StyleSource["id"],
     StyleSource["id"]
   >();
-  for (const styleSource of slice.styleSources) {
+  for (const styleSource of fragment.styleSources) {
     if (
       styleSource.type === "local" &&
       instanceStyleSourceIds.has(styleSource.id)
@@ -1367,9 +1367,9 @@ export const insertInstancesSliceCopy = ({
       styleSources.set(newId, { ...styleSource, id: newId });
     }
   }
-  for (const styleSourceSelection of slice.styleSourceSelections) {
+  for (const styleSourceSelection of fragment.styleSourceSelections) {
     const { instanceId, values } = styleSourceSelection;
-    if (sliceInstanceIds.has(instanceId) === false) {
+    if (fragmentInstanceIds.has(instanceId) === false) {
       continue;
     }
     const newInstanceId = newInstanceIds.get(instanceId) ?? instanceId;
@@ -1384,7 +1384,7 @@ export const insertInstancesSliceCopy = ({
       instanceStyleSourceIds.add(styleSourceId);
     }
   }
-  for (const styleDecl of slice.styles) {
+  for (const styleDecl of fragment.styles) {
     const { breakpointId, styleSourceId } = styleDecl;
     if (newLocalStyleSourceIds.has(styleDecl.styleSourceId)) {
       const newStyleDecl: StyleDecl = {
