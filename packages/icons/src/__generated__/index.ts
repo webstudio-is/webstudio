@@ -82,6 +82,7 @@ export * from "./div";
 export * from "./dot";
 export * from "./dotted-border";
 export * from "./drag-handle";
+export * from "./dynamic-page";
 export * from "./email";
 export * from "./embed";
 export * from "./external-link";

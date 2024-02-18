@@ -9,14 +9,13 @@ import {
   textVariants,
   InputErrorsTooltip,
   ToolbarButton,
-  Text,
   Popover,
   PopoverTrigger,
   PopoverPortal,
   PopoverContent,
   IconButton,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, CopyIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, CopyIcon, DynamicPageIcon } from "@webstudio-is/icons";
 import {
   findParentFolderByChildId,
   ROOT_FOLDER_ID,
@@ -213,8 +212,8 @@ export const AddressBarPopover = () => {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <ToolbarButton aria-label="Toggle Test Address Bar" tabIndex={0}>
-          <Text truncate>Test Address</Text>
+        <ToolbarButton aria-label="Toggle dynamic page address" tabIndex={0}>
+          <DynamicPageIcon />
         </ToolbarButton>
       </PopoverTrigger>
       <PopoverPortal>
