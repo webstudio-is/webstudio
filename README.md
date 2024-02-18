@@ -9,23 +9,19 @@
 ## Learning Resources
 
 - [Blog](https://webstudio.is/blog)
-- [Community Documentation](https://github.com/webstudio-is/webstudio-community/tree/main/docs)
-- [Brand and Product Design](https://github.com/webstudio-is/webstudio-design/)
+- [Documentation](https://docs.webstudio.is/)
+- [Brand and Product Design](https://docs.webstudio.is/contributing/contributing-for-designers)
+- [Contributing Guide for Devs](https://docs.webstudio.is/contributing/contributing-for-developers)
+- [Github Discussions](https://github.com/webstudio-is/webstudio-community/discussions)
+- [Wishlist](https://github.com/webstudio-is/webstudio-community/discussions/categories/wishlist)
+- [Builder Issues Tracker](https://github.com/webstudio-is/webstudio/issues)
+- [Roadmap](https://github.com/orgs/webstudio-is/projects/11)
 
 ## Social Media
 
 - [Twitter](https://twitter.com/getwebstudio)
 - [Youtube](https://www.youtube.com/@getwebstudio)
 - [Discord](https://discord.gg/UNdyrDkq5r)
-
-## Contributing
-
-- [Contributing Guide](https://github.com/webstudio-is/webstudio-community/tree/main/docs/contributing)
-- [Github Discussions](https://github.com/webstudio-is/webstudio-community/discussions)
-- [Wishlist](https://github.com/webstudio-is/webstudio-community/discussions/categories/wishlist)
-- [Builder Issues Tracker](https://github.com/webstudio-is/webstudio/issues)
-- [Roadmap](https://github.com/orgs/webstudio-is/projects)
-- [Design Assets and Docs](https://github.com/webstudio-is/webstudio-design)
 
 ## Thanks
 
