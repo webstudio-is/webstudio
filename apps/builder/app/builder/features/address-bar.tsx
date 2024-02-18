@@ -31,6 +31,7 @@ import {
 import env from "~/shared/env";
 import {
   compilePathnamePattern,
+  isPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
 
@@ -195,10 +196,11 @@ const AddressBar = () => {
 export const AddressBarPopover = () => {
   const [isOpen, setIsOpen] = useState(false);
   const path = useStore($selectedPagePath);
-  const tokens = tokenizePathnamePattern(path);
   const publishedOrigin = useStore($publishedOrigin);
   const { tooltipProps, buttonProps } = useCopyUrl(`${publishedOrigin}${path}`);
-  if (tokens.length === 1) {
+
+  // show only copy button when path is static
+  if (isPathnamePattern(path) === false) {
     return (
       <Tooltip {...tooltipProps}>
         <ToolbarButton
@@ -209,6 +211,7 @@ export const AddressBarPopover = () => {
       </Tooltip>
     );
   }
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>

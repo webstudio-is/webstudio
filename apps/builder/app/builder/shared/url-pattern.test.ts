@@ -1,17 +1,21 @@
 import { expect, test } from "@jest/globals";
 import {
   compilePathnamePattern,
-  parsePathnamePattern,
+  isPathnamePattern,
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "./url-pattern";
 
-test("parse keys from pathname pattern", () => {
-  expect(parsePathnamePattern("/blog/:id/:date")).toEqual(["id", "date"]);
-});
+test("check pathname is pattern", () => {
+  expect(isPathnamePattern("/:name")).toEqual(true);
+  expect(isPathnamePattern("/:slug*")).toEqual(true);
+  expect(isPathnamePattern("/:id?")).toEqual(true);
+  expect(isPathnamePattern("/*")).toEqual(true);
 
-test("parse wildcard and named wildcard from pathname pattern", () => {
-  expect(parsePathnamePattern("/blog/*/:slug*/*")).toEqual(["0", "1", "slug"]);
+  expect(isPathnamePattern("")).toEqual(false);
+  expect(isPathnamePattern("/")).toEqual(false);
+  expect(isPathnamePattern("/blog")).toEqual(false);
+  expect(isPathnamePattern("/blog/post-name")).toEqual(false);
 });
 
 test("tokenize named params in pathname pattern", () => {

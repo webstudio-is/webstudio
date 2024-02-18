@@ -6,19 +6,6 @@ import { URLPattern } from "urlpattern-polyfill";
 // :name* - group with zero or more modifier in the end
 // * - wildcard group in the end
 
-const baseUrl = "http://url";
-
-export const parsePathnamePattern = (pathname: string) => {
-  try {
-    const pattern = new URLPattern(pathname, baseUrl);
-    // match path with itself to figure out if some parameters are specified
-    const fakeParams = pattern.exec(pathname, baseUrl)?.pathname.groups;
-    return Object.keys(fakeParams ?? {});
-  } catch {
-    return [];
-  }
-};
-
 type Token =
   | { type: "fragment"; value: string }
   | { type: "param"; name: string; optional: boolean; splat: boolean };
@@ -27,14 +14,19 @@ type Token =
 // /:slug* -> { name: "slug", modifier: "*" }
 // /:slug? -> { name: "slug", modifier: "?" }
 // /* -> { wildcard: "*" }
-const tokenRegex = /:(?<name>\w+)(?<modifier>[?*]?)|(?<wildcard>(?<!:\w+)\*)/g;
+const tokenRegex = /:(?<name>\w+)(?<modifier>[?*]?)|(?<wildcard>(?<!:\w+)\*)/;
+// use separate regex from matchAll because regex.test is stateful when used with g flag
+const tokenRegexGlobal = new RegExp(tokenRegex.source, "g");
+
+export const isPathnamePattern = (pathname: string) =>
+  tokenRegex.test(pathname);
 
 export const tokenizePathnamePattern = (pathname: string) => {
   const tokens: Token[] = [];
   let lastCursor = 0;
   let lastWildcard = -1;
 
-  for (const match of pathname.matchAll(tokenRegex)) {
+  for (const match of pathname.matchAll(tokenRegexGlobal)) {
     const cursor = match.index ?? 0;
     if (lastCursor < cursor) {
       tokens.push({
@@ -88,6 +80,8 @@ export const compilePathnamePattern = (
   }
   return compiledPathname;
 };
+
+const baseUrl = "http://url";
 
 export const validatePathnamePattern = (pathname: string) => {
   try {

@@ -22,6 +22,7 @@ import {
   NewFolderIcon,
   NewPageIcon,
   PageIcon,
+  DynamicPageIcon,
 } from "@webstudio-is/icons";
 import type { TabContentProps } from "../../types";
 import { CloseButton, Header } from "../../header";
@@ -46,6 +47,7 @@ import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { ROOT_FOLDER_ID, type Folder } from "@webstudio-is/sdk";
 import { atom } from "nanostores";
+import { isPathnamePattern } from "~/builder/shared/url-pattern";
 
 const MenuButton = styled(DeprecatedIconButton, {
   color: theme.colors.hint,
@@ -190,6 +192,8 @@ const PagesPanel = ({
               prefix={
                 props.itemData.id === pages?.homePage.id ? (
                   <HomeIcon />
+                ) : isPathnamePattern(props.itemData.data.path) ? (
+                  <DynamicPageIcon />
                 ) : (
                   <PageIcon />
                 )
