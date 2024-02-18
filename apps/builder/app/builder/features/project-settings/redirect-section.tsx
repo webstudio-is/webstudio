@@ -1,6 +1,5 @@
 import {
   Grid,
-  Separator,
   Flex,
   InputField,
   Button,
