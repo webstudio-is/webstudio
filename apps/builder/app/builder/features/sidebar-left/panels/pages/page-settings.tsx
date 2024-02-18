@@ -19,6 +19,7 @@ import {
   ROOT_FOLDER_ID,
   findParentFolderByChildId,
   ProjectNewRedirectPath,
+  DataSource,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -59,6 +60,7 @@ import {
   $selectedInstanceSelector,
   $dataSources,
   computeExpression,
+  $dataSourceVariables,
 } from "~/shared/nano-states";
 import {
   BindingControl,
@@ -74,7 +76,12 @@ import { SocialPreview } from "./social-preview";
 // @todo should be moved to shared because features should not depend on features
 import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
-import { parsePathnamePattern, validatePathnamePattern } from "./url-pattern";
+import {
+  compilePathnamePattern,
+  parsePathnamePattern,
+  tokenizePathnamePattern,
+  validatePathnamePattern,
+} from "~/builder/shared/url-pattern";
 import {
   registerFolderChildMutable,
   deletePageMutable,
@@ -82,7 +89,7 @@ import {
   duplicatePage,
 } from "./page-utils";
 import { Form } from "./form";
-import { AddressBar, useAddressBar, type AddressBarApi } from "./address-bar";
+import { $publishedOrigin } from "~/builder/features/address-bar";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
@@ -486,14 +493,42 @@ const RedirectField = ({
   );
 };
 
+const usePageUrl = (
+  values: Values,
+  pathParamsDataSourceId?: DataSource["id"]
+) => {
+  const pages = useStore($pages);
+  const foldersPath =
+    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
+  const path = [foldersPath, values.path]
+    .filter(Boolean)
+    .join("/")
+    .replace(/\/+/g, "/");
+
+  const dataSourceVariables = useStore($dataSourceVariables);
+  const storedParams =
+    pathParamsDataSourceId === undefined
+      ? undefined
+      : (dataSourceVariables.get(pathParamsDataSourceId) as Record<
+          string,
+          string
+        >);
+  const pathParams = storedParams ?? {};
+
+  const publishedOrigin = useStore($publishedOrigin);
+  const tokens = tokenizePathnamePattern(path);
+  const compiledPath = compilePathnamePattern(tokens, pathParams);
+  return `${publishedOrigin}${compiledPath}`;
+};
+
 const FormFields = ({
-  addressBar,
+  pathParamsDataSourceId,
   autoSelect,
   errors,
   values,
   onChange,
 }: {
-  addressBar: AddressBarApi;
+  pathParamsDataSourceId?: DataSource["id"];
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
@@ -510,6 +545,8 @@ const FormFields = ({
   const assets = useStore($assets);
   const pages = useStore($pages);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
+
+  const pageUrl = usePageUrl(values, pathParamsDataSourceId);
 
   if (pages === undefined) {
     return;
@@ -613,7 +650,6 @@ const FormFields = ({
               onChange={(value) => onChange({ field: "path", value })}
             />
           )}
-          <AddressBar addressBar={addressBar} />
 
           {isFeatureEnabled("cms") && (
             <StatusField
@@ -681,7 +717,7 @@ const FormFields = ({
                   <SearchPreview
                     siteName={pages?.meta?.siteName ?? ""}
                     faviconUrl={faviconUrl}
-                    pageUrl={addressBar.pageUrl}
+                    pageUrl={pageUrl}
                     titleLink={title}
                     snippet={description}
                   />
@@ -932,7 +968,7 @@ const FormFields = ({
                 ? socialImageAsset.name
                 : socialImageUrl
             }
-            ogUrl={addressBar.pageUrl}
+            ogUrl={pageUrl}
             ogTitle={title}
             ogDescription={description}
           />
@@ -1008,20 +1044,12 @@ export const NewPageSettings = ({
     variableValues,
     userPlanFeatures
   );
-  const foldersPath =
-    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
-  const addressBar = useAddressBar({
-    path: [foldersPath, values.path]
-      .filter(Boolean)
-      .join("/")
-      .replace(/\/+/g, "/"),
-  });
 
   const handleSubmit = () => {
     if (Object.keys(errors).length === 0) {
       const pageId = nanoid();
       createPage(pageId, values);
-      updatePage(pageId, values, addressBar);
+      updatePage(pageId, values);
       onSuccess(pageId);
     }
   };
@@ -1034,7 +1062,6 @@ export const NewPageSettings = ({
     >
       <FormFields
         autoSelect
-        addressBar={addressBar}
         errors={errors}
         values={values}
         onChange={(val) => {
@@ -1131,11 +1158,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
   );
 };
 
-const updatePage = (
-  pageId: Page["id"],
-  values: Partial<Values>,
-  addressBar: AddressBarApi
-) => {
+const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
   const updatePageMutable = (
     page: Page,
     values: Partial<Values>,
@@ -1241,7 +1264,6 @@ const updatePage = (
       }
     }
   );
-  addressBar.savePathParams();
 };
 
 export const PageSettings = ({
@@ -1277,15 +1299,6 @@ export const PageSettings = ({
     variableValues,
     userPlanFeatures
   );
-  const foldersPath =
-    pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
-  const addressBar = useAddressBar({
-    path: [foldersPath, values.path]
-      .filter(Boolean)
-      .join("/")
-      .replace(/\/+/g, "/"),
-    dataSourceId: page?.pathParamsDataSourceId,
-  });
 
   const debouncedFn = useEffectEvent(() => {
     if (
@@ -1295,7 +1308,7 @@ export const PageSettings = ({
       return;
     }
 
-    updatePage(pageId, unsavedValues, addressBar);
+    updatePage(pageId, unsavedValues);
 
     setUnsavedValues({});
   });
@@ -1320,7 +1333,7 @@ export const PageSettings = ({
     ) {
       return;
     }
-    updatePage(pageId, unsavedValues, addressBar);
+    updatePage(pageId, unsavedValues);
   });
 
   const hanldeDelete = () => {
@@ -1346,7 +1359,7 @@ export const PageSettings = ({
       }}
     >
       <FormFields
-        addressBar={addressBar}
+        pathParamsDataSourceId={page.pathParamsDataSourceId}
         errors={errors}
         values={values}
         onChange={handleChange}

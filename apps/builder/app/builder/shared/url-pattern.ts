@@ -59,7 +59,7 @@ export const tokenizePathnamePattern = (pathname: string) => {
       });
     }
   }
-  if (lastCursor < pathname.length) {
+  if (lastCursor < pathname.length || tokens.length === 0) {
     tokens.push({
       type: "fragment",
       value: pathname.slice(lastCursor),

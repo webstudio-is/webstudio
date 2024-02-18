@@ -9,7 +9,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { $selectedPage } from "~/shared/nano-states";
+import { $pages, $selectedPage } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -21,6 +21,7 @@ import {
 } from "../breakpoints";
 import { ViewMode } from "./view-mode";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
+import { AddressBarPopover } from "../address-bar";
 
 const PagesButton = () => {
   const page = useStore($selectedPage);
@@ -63,20 +64,30 @@ type TopbarProps = {
 };
 
 export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
+  const pages = useStore($pages);
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
         <Menu />
       </Flex>
-      <Flex align="center">
-        <PagesButton />
-      </Flex>
-      <Flex css={{ minWidth: theme.spacing[23] }}>
-        <BreakpointsPopover />
-      </Flex>
-      <Flex grow align="center" justify="center">
-        <BreakpointsSelectorContainer />
-      </Flex>
+
+      {/* prevent rendering when data is not loaded */}
+      {pages && (
+        <>
+          <Flex align="center">
+            <PagesButton />
+            <AddressBarPopover />
+          </Flex>
+          <Flex css={{ minWidth: theme.spacing[23] }}>
+            <BreakpointsPopover />
+          </Flex>
+          <Flex grow></Flex>
+          <Flex align="center" justify="center">
+            <BreakpointsSelectorContainer />
+          </Flex>
+        </>
+      )}
+      <Flex grow></Flex>
       <Toolbar>
         <ToolbarToggleGroup
           type="single"

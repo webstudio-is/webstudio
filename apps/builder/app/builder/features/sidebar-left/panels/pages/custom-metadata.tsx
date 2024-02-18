@@ -193,7 +193,7 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
           onClick={() => {
             const newCustomMetas = [
               ...props.customMetas,
-              { property: "", content: "" },
+              { property: "", content: `""` },
             ];
             props.onChange(newCustomMetas);
           }}

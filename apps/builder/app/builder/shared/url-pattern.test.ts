@@ -56,6 +56,21 @@ test("tokenize pathname without params", () => {
   ]);
 });
 
+test("tokenize empty pathname", () => {
+  expect(tokenizePathnamePattern("")).toEqual([
+    { type: "fragment", value: "" },
+  ]);
+});
+
+test("compile pathname pattern with named values", () => {
+  expect(
+    compilePathnamePattern(tokenizePathnamePattern("/blog/:id/:date"), {
+      id: "my-id",
+      date: "my-date",
+    })
+  ).toEqual("/blog/my-id/my-date");
+});
+
 test("compile pathname pattern with named values", () => {
   expect(
     compilePathnamePattern(tokenizePathnamePattern("/blog/:id/:date"), {

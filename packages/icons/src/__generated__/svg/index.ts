@@ -82,6 +82,7 @@ export { DivIcon } from "./div";
 export { DotIcon } from "./dot";
 export { DottedBorderIcon } from "./dotted-border";
 export { DragHandleIcon } from "./drag-handle";
+export { DynamicPageIcon } from "./dynamic-page";
 export { EmailIcon } from "./email";
 export { EmbedIcon } from "./embed";
 export { ExternalLinkIcon } from "./external-link";
