@@ -1,7 +1,7 @@
 import { forwardRef, type ElementRef, type ReactNode } from "react";
 
 const requestCopy = (selector: string) => {
-  postMessage({ type: "requestCopy", payload: selector });
+  window.parent.postMessage({ type: "requestCopy", payload: selector });
 };
 
 type Props = {
