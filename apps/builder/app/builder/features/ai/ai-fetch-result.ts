@@ -18,7 +18,6 @@ import { Instance, createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
 import { getMapValuesByKeysSet } from "~/shared/array-utils";
 import {
-  $breakpoints,
   $dataSources,
   $instances,
   $project,
@@ -249,7 +248,6 @@ const $jsx = computed(
     $props,
     $dataSources,
     $registeredComponentMetas,
-    $breakpoints,
     $styles,
     $styleSourceSelections,
   ],
@@ -259,7 +257,6 @@ const $jsx = computed(
     props,
     dataSources,
     metas,
-    breakpoints,
     styles,
     styleSourceSelections
   ) => {
@@ -282,6 +279,7 @@ const $jsx = computed(
       instance,
       props,
       dataSources,
+      usedDataSources: new Map(),
       indexesWithinAncestors,
       children: generateJsxChildren({
         scope,
@@ -289,6 +287,7 @@ const $jsx = computed(
         instances,
         props,
         dataSources,
+        usedDataSources: new Map(),
         indexesWithinAncestors,
       }),
     });
