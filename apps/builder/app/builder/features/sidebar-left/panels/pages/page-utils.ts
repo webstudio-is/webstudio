@@ -388,8 +388,8 @@ export const duplicatePage = (pageId: Page["id"]) => {
     page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
   const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
 
-  const fragment = extractWebstudioFragment(page.rootInstanceId);
   updateWebstudioData((data) => {
+    const fragment = extractWebstudioFragment(data, page.rootInstanceId);
     const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
       data,
       fragment,

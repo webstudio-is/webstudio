@@ -32,6 +32,7 @@ import {
   extractWebstudioFragment,
   insertWebstudioFragmentCopy,
   reparentInstance,
+  getWebstudioData,
 } from "./instance-utils";
 import {
   $assets,
@@ -752,7 +753,9 @@ describe("reparent instance", () => {
   });
 });
 
-const getWebstudioData = (data?: Partial<WebstudioData>): WebstudioData => ({
+const getWebstudioDataStub = (
+  data?: Partial<WebstudioData>
+): WebstudioData => ({
   pages: createDefaultPages({ rootInstanceId: "" }),
   assets: new Map(),
   dataSources: new Map(),
@@ -782,7 +785,7 @@ describe("delete instance", () => {
       createInstancePair("box2", "Box", []),
     ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    const data = getWebstudioData({ instances });
+    const data = getWebstudioDataStub({ instances });
     deleteInstanceMutable(data, ["box1", "body"]);
     expect(data.instances).toEqual(
       new Map([
@@ -800,7 +803,7 @@ describe("delete instance", () => {
       createInstancePair("box1", "Box", []),
     ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    const data = getWebstudioData({ instances });
+    const data = getWebstudioDataStub({ instances });
     deleteInstanceMutable(data, ["body"]);
     expect(data.instances).toEqual(
       new Map([
@@ -822,7 +825,7 @@ describe("delete instance", () => {
       createInstancePair("box", "Box", []),
     ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
-    const data = getWebstudioData({ instances });
+    const data = getWebstudioDataStub({ instances });
     deleteInstanceMutable(data, ["box", "list[0]", "list", "body"]);
     expect(data.instances).toEqual(
       new Map([
@@ -857,7 +860,7 @@ describe("delete instance", () => {
     ]);
     $registeredComponentMetas.set(createFakeComponentMetas({}));
 
-    const data = getWebstudioData({ instances, resources, dataSources });
+    const data = getWebstudioDataStub({ instances, resources, dataSources });
     deleteInstanceMutable(data, ["box", "body"]);
 
     expect(data.instances).toEqual(toMap([createInstance("body", "Body", [])]));
@@ -885,7 +888,10 @@ describe("extract webstudio fragment", () => {
         createInstance("bodyChild2", "Box", []),
       ])
     );
-    const { instances } = extractWebstudioFragment("bodyChild1");
+    const { instances } = extractWebstudioFragment(
+      getWebstudioData(),
+      "bodyChild1"
+    );
 
     expect(instances).toEqual([
       createInstance("bodyChild1", "Box", [{ type: "id", value: "slot" }]),
@@ -937,7 +943,7 @@ describe("extract webstudio fragment", () => {
       ])
     );
     const { styleSources, styleSourceSelections, styles, breakpoints } =
-      extractWebstudioFragment("box1");
+      extractWebstudioFragment(getWebstudioData(), "box1");
 
     // exclude localBody and token1 bound to body
     expect(styleSources).toEqual([
@@ -975,7 +981,7 @@ describe("extract webstudio fragment", () => {
         createProp("box2", "box2Prop", "data-box2"),
       ])
     );
-    const { props } = extractWebstudioFragment("box1");
+    const { props } = extractWebstudioFragment(getWebstudioData(), "box1");
 
     expect(props).toEqual([
       createProp("box1", "box1Prop", "data-box1"),
@@ -1061,7 +1067,7 @@ describe("extract webstudio fragment", () => {
         createFontAsset("asset6", "font2"),
       ])
     );
-    const { assets } = extractWebstudioFragment("box1");
+    const { assets } = extractWebstudioFragment(getWebstudioData(), "box1");
 
     expect(assets).toEqual([
       createImageAsset("asset2"),
@@ -1124,7 +1130,10 @@ describe("extract webstudio fragment", () => {
         },
       ])
     );
-    const { props, dataSources } = extractWebstudioFragment("box2");
+    const { props, dataSources } = extractWebstudioFragment(
+      getWebstudioData(),
+      "box2"
+    );
 
     expect(dataSources).toEqual([
       {
@@ -1219,7 +1228,10 @@ describe("extract webstudio fragment", () => {
         },
       ])
     );
-    const { props, dataSources } = extractWebstudioFragment("box2");
+    const { props, dataSources } = extractWebstudioFragment(
+      getWebstudioData(),
+      "box2"
+    );
 
     expect(dataSources).toEqual([
       {
@@ -1306,7 +1318,7 @@ describe("extract webstudio fragment", () => {
         },
       ])
     );
-    const { dataSources } = extractWebstudioFragment("box");
+    const { dataSources } = extractWebstudioFragment(getWebstudioData(), "box");
 
     expect(dataSources).toEqual([
       {
@@ -1390,7 +1402,10 @@ describe("extract webstudio fragment", () => {
         },
       ])
     );
-    const { resources, dataSources } = extractWebstudioFragment("box1");
+    const { resources, dataSources } = extractWebstudioFragment(
+      getWebstudioData(),
+      "box1"
+    );
 
     expect(resources).toEqual([
       {
@@ -1491,7 +1506,10 @@ describe("extract webstudio fragment", () => {
         },
       ])
     );
-    const { resources, dataSources } = extractWebstudioFragment("box");
+    const { resources, dataSources } = extractWebstudioFragment(
+      getWebstudioData(),
+      "box"
+    );
 
     expect(resources).toEqual([
       {
@@ -1576,7 +1594,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert assets with same ids if missing", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -1616,7 +1634,7 @@ describe("insert webstudio fragment copy", () => {
       { id: "existing_base", label: "base" },
       { id: "existing_small", label: "small", minWidth: 768 },
     ]);
-    const data = getWebstudioData({ breakpoints });
+    const data = getWebstudioDataStub({ breakpoints });
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -1649,7 +1667,7 @@ describe("insert webstudio fragment copy", () => {
     const styleSources = toMap<StyleSource>([
       { id: "token1", type: "token", name: "oldLabel" },
     ]);
-    const data = getWebstudioData({ breakpoints, styleSources });
+    const data = getWebstudioDataStub({ breakpoints, styleSources });
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -1691,7 +1709,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert instances", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -1736,7 +1754,7 @@ describe("insert webstudio fragment copy", () => {
         children: [{ type: "text", value: "First" }],
       },
     ];
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
 
     insertWebstudioFragmentCopy({
       data,
@@ -1809,7 +1827,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert props with new ids", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -1838,7 +1856,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert props from portals with old ids", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -1883,7 +1901,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert data sources with new ids", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -1983,7 +2001,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("inline data sources when not available in scope", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2079,7 +2097,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert data sources from portals with old ids", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2190,7 +2208,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("inline data sources from portals when not available in scope", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2291,7 +2309,7 @@ describe("insert webstudio fragment copy", () => {
 
   test("insert local styles with new ids and use merged breakpoint ids", () => {
     const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const data = getWebstudioData({ breakpoints });
+    const data = getWebstudioDataStub({ breakpoints });
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2348,7 +2366,7 @@ describe("insert webstudio fragment copy", () => {
 
   test("insert local styles from portal and use merged breakpoint ids", () => {
     const breakpoints = toMap<Breakpoint>([{ id: "base", label: "base" }]);
-    const data = getWebstudioData({ breakpoints });
+    const data = getWebstudioDataStub({ breakpoints });
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2409,7 +2427,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert resources with new ids", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2480,7 +2498,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("inline data sources into resources when not available in the scope", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2530,7 +2548,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("inline resource variables when not available in scope", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2578,7 +2596,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("insert resources from portals with old ids", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
@@ -2633,7 +2651,7 @@ describe("insert webstudio fragment copy", () => {
   });
 
   test("inline data sources into resources from portals when not available in scope", () => {
-    const data = getWebstudioData();
+    const data = getWebstudioDataStub();
     insertWebstudioFragmentCopy({
       data,
       fragment: {
