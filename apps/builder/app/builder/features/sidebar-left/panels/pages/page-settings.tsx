@@ -78,7 +78,7 @@ import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
 import { CustomMetadata } from "./custom-metadata";
 import {
   compilePathnamePattern,
-  parsePathnamePattern,
+  isPathnamePattern,
   tokenizePathnamePattern,
   validatePathnamePattern,
 } from "~/builder/shared/url-pattern";
@@ -247,10 +247,10 @@ const validateValues = (
       errors.path = errors.path ?? [];
       errors.path.push(...messages);
     }
-    const pathParamNames = parsePathnamePattern(values.path);
+
     if (
       userPlanFeatures.allowDynamicData === false &&
-      pathParamNames.length > 0
+      isPathnamePattern(values.path)
     ) {
       errors.path = errors.path ?? [];
       errors.path.push("Dynamic path is supported only in Pro");
@@ -1245,10 +1245,9 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
           // mutate page before working with path params
           updatePageMutable(page, values, pages.folders);
           // create "Path Params" variable when pattern is specified in path
-          const paramNames = parsePathnamePattern(page.path);
 
           if (
-            paramNames.length > 0 &&
+            isPathnamePattern(page.path) &&
             page.pathParamsDataSourceId === undefined
           ) {
             page.pathParamsDataSourceId = nanoid();
