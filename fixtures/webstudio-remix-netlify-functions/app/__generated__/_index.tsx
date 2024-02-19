@@ -43,6 +43,7 @@ export const getPageMeta = ({
     title: "Home",
     description: undefined,
     excludePageFromSearch: undefined,
+    language: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
     status: undefined,

@@ -78,6 +78,7 @@ export const getPageMeta = ({
     title: "RouteWithSymbols",
     description: "",
     excludePageFromSearch: undefined,
+    language: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
     status: undefined,

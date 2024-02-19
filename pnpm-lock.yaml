@@ -232,6 +232,9 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../../packages/trpc-interface
+      bcp-47:
+        specifier: ^2.1.0
+        version: 2.1.0
       change-case:
         specifier: ^5.0.2
         version: 5.0.2
@@ -9190,6 +9193,14 @@ packages:
     engines: {node: '>=10.0.0'}
     dev: true
 
+  /bcp-47@2.1.0:
+    resolution: {integrity: sha512-9IIS3UPrvIa1Ej+lVDdDwO7zLehjqsaByECw0bu2RRGP73jALm6FYbzI5gWbgHLvNdkvfXB5YrSbocZdOS0c0w==}
+    dependencies:
+      is-alphabetical: 2.0.1
+      is-alphanumerical: 2.0.1
+      is-decimal: 2.0.1
+    dev: false
+
   /better-opn@3.0.2:
     resolution: {integrity: sha512-aVNobHnJqLiUelTaHat9DZ1qM2w0C0Eym4LPI/3JxOnSokGVdsl1T1kN7TFvsEAD8G47A6VKQ0TVHqbBnYMJlQ==}
     engines: {node: '>=12.0.0'}
@@ -11938,14 +11949,12 @@ packages:
 
   /is-alphabetical@2.0.1:
     resolution: {integrity: sha512-FWyyY60MeTNyeSRpkM2Iry0G9hpr7/9kD40mD/cGQEuilcZYS4okz8SN2Q6rLCJ8gbCt6fN+rC+6tMGS99LaxQ==}
-    dev: true
 
   /is-alphanumerical@2.0.1:
     resolution: {integrity: sha512-hmbYhX/9MUMF5uh7tOXyK/n0ZvWpad5caBA17GsC6vyuCqaWliRG5K1qS9inmUhEMaOBIW7/whAnSwveW/LtZw==}
     dependencies:
       is-alphabetical: 2.0.1
       is-decimal: 2.0.1
-    dev: true
 
   /is-arguments@1.1.1:
     resolution: {integrity: sha512-8Q7EARjzEnKpt/PCD7e1cgUS0a6X8u5tdSiMqXhojOdoV9TsMsiO+9VLC5vAmO8N7/GmXn7yjR8qnA6bVAEzfA==}
@@ -12026,7 +12035,6 @@ packages:
 
   /is-decimal@2.0.1:
     resolution: {integrity: sha512-AAB9hiomQs5DXWcRB1rqsxGUstbRroFOPPVAomNk/3XHR5JyEZChOyTWe2oayKnsSsr/kcGqF+z6yuH6HHpN0A==}
-    dev: true
 
   /is-deflate@1.0.0:
     resolution: {integrity: sha512-YDoFpuZWu1VRXlsnlYMzKyVRITXj7Ej/V9gXQ2/pAe7X1J7M/RNOqaIYi6qUn+B7nGyB9pDXrv02dsB58d2ZAQ==}
