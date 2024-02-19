@@ -185,8 +185,8 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // so clipboard always have at least two level instance selector
         const [targetInstanceId, parentInstanceId] = instanceSelector;
         const parentInstanceSelector = instanceSelector.slice(1);
-        const fragment = extractWebstudioFragment(targetInstanceId);
         updateWebstudioData((data) => {
+          const fragment = extractWebstudioFragment(data, targetInstanceId);
           const { newInstanceIds } = insertWebstudioFragmentCopy({
             data,
             fragment,

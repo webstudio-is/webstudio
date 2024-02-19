@@ -19,8 +19,8 @@ import {
   type WebstudioFragment,
   type WebstudioData,
   type Resource,
+  findTreeInstanceIdsExcludingSlotDescendants,
 } from "@webstudio-is/sdk";
-import { findTreeInstanceIdsExcludingSlotDescendants } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
@@ -101,9 +101,27 @@ export const updateWebstudioData = (mutate: (data: WebstudioData) => void) => {
         styles,
         assets,
       });
-      //
     }
   );
+};
+
+export const getWebstudioData = (): WebstudioData => {
+  const pages = $pages.get();
+  if (pages === undefined) {
+    throw Error(`Cannot get webstudio data with empty pages`);
+  }
+  return {
+    pages,
+    instances: $instances.get(),
+    props: $props.get(),
+    dataSources: $dataSources.get(),
+    resources: $resources.get(),
+    breakpoints: $breakpoints.get(),
+    styleSourceSelections: $styleSourceSelections.get(),
+    styleSources: $styleSources.get(),
+    styles: $styles.get(),
+    assets: $assets.get(),
+  };
 };
 
 const getLabelFromComponentName = (component: Instance["component"]) => {
@@ -450,8 +468,8 @@ export const reparentInstance = (
   dropTarget: DroppableTarget
 ) => {
   const [rootInstanceId] = sourceInstanceSelector;
-  const fragment = extractWebstudioFragment(rootInstanceId);
   updateWebstudioData((data) => {
+    const fragment = extractWebstudioFragment(data, rootInstanceId);
     const reparentDropTarget = getReparentDropTargetMutable(
       data.instances,
       data.props,
@@ -648,17 +666,20 @@ const collectUsedDataSources = (
 };
 
 export const extractWebstudioFragment = (
+  data: WebstudioData,
   rootInstanceId: string
 ): WebstudioFragment => {
-  const assets = $assets.get();
-  const instances = $instances.get();
-  const dataSources = $dataSources.get();
-  const resources = $resources.get();
-  const props = $props.get();
-  const styleSourceSelections = $styleSourceSelections.get();
-  const styleSources = $styleSources.get();
-  const breakpoints = $breakpoints.get();
-  const styles = $styles.get();
+  const {
+    assets,
+    instances,
+    dataSources,
+    resources,
+    props,
+    styleSourceSelections,
+    styleSources,
+    breakpoints,
+    styles,
+  } = data;
 
   // collect the instance by id and all its descendants including portal instances
   const fragmentInstanceIds = findTreeInstanceIds(instances, rootInstanceId);

@@ -29,6 +29,7 @@ import {
   insertWebstudioFragmentCopy,
   isInstanceDetachable,
   updateWebstudioData,
+  getWebstudioData,
 } from "../instance-utils";
 import { portalComponent } from "@webstudio-is/react-sdk";
 
@@ -58,7 +59,7 @@ const getTreeData = (targetInstanceSelector: InstanceSelector) => {
 
   return {
     instanceSelector: targetInstanceSelector,
-    ...extractWebstudioFragment(targetInstanceId),
+    ...extractWebstudioFragment(getWebstudioData(), targetInstanceId),
   };
 };
 
