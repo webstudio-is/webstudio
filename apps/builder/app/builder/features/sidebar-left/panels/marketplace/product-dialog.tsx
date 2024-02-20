@@ -14,7 +14,7 @@ export const ProductDialog = ({
   item: MarketplaceProduct;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  if (item.ui?.component !== "dialog") {
+  if (item.component !== "dialog") {
     return;
   }
   return (
@@ -23,8 +23,8 @@ export const ProductDialog = ({
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
-          width: item.ui.width,
-          height: item.ui.height,
+          width: item.width,
+          height: item.height,
           zIndex: theme.zIndices[1],
           resize: "both",
         }}

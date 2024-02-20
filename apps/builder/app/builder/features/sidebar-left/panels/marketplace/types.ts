@@ -1,19 +1,22 @@
 export type Category = "sectionTemplates" | "apps";
 
-export type MarketplaceProduct = {
+type BaseProduct = {
   id: string;
   category: Category;
   label: string;
   url: string;
   authToken: string;
   projectId: string;
-  ui?:
-    | {
-        component: "panel";
-      }
-    | {
-        component: "dialog";
-        width?: number;
-        height?: number;
-      };
 };
+
+type PanelProduct = BaseProduct & {
+  component: "panel";
+};
+
+type DialogProduct = BaseProduct & {
+  component: "dialog";
+  width?: number;
+  height?: number;
+};
+
+export type MarketplaceProduct = PanelProduct | DialogProduct;

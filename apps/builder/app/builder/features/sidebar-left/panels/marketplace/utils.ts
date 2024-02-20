@@ -9,6 +9,7 @@ export const items: Array<MarketplaceProduct> = [
   {
     id: nanoid(),
     category: "sectionTemplates",
+    component: "panel",
     label: "Basic Sections",
     url: "http://localhost:3001/copy-1/test",
     authToken: "436191d4-974f-43bb-a878-ea8a51339a9a",

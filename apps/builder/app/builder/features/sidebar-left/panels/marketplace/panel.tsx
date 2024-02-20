@@ -17,7 +17,7 @@ import { $selectedInstanceSelector } from "~/shared/nano-states";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [activeItem, setActiveItem] = useActiveItem();
-  const component = activeItem?.ui?.component ?? "panel";
+  const component = activeItem?.component ?? "panel";
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
