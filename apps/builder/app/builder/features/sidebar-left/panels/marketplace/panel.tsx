@@ -39,7 +39,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         const action = event.data ?? {};
         console.log(action, activeItem);
         if (
-          action.namespace === "MarketplaceStore" &&
+          action.namespace === "MarketplaceProduct" &&
           action.type === "insert" &&
           activeItem !== undefined
         ) {

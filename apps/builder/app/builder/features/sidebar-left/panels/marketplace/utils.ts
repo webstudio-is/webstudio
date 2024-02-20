@@ -1,11 +1,11 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
 import { nanoid } from "nanoid";
-import type { Category, MarketplaceStore } from "./types";
+import type { Category, MarketplaceProduct } from "./types";
 
-const $activeMarketplaceItemId = atom<MarketplaceStore["id"] | undefined>();
+const $activeMarketplaceItemId = atom<MarketplaceProduct["id"] | undefined>();
 
-export const items: Array<MarketplaceStore> = [
+export const items: Array<MarketplaceProduct> = [
   {
     id: nanoid(),
     category: "sectionTemplates",
@@ -21,8 +21,8 @@ export const categories: Array<{ category: Category; label: string }> = [
   { category: "apps", label: "Apps" },
 ];
 
-export const getItemsByCategory = (items: Array<MarketplaceStore>) => {
-  const itemsByCategory = new Map<Category, Array<MarketplaceStore>>();
+export const getItemsByCategory = (items: Array<MarketplaceProduct>) => {
+  const itemsByCategory = new Map<Category, Array<MarketplaceProduct>>();
 
   for (const item of items) {
     if (

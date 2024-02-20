@@ -10,10 +10,10 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { usePress } from "@react-aria/interactions";
-import type { Category, MarketplaceStore } from "./types";
+import type { Category, MarketplaceProduct } from "./types";
 import { getItemsByCategory, categories, useActiveItem, items } from "./utils";
 
-const itemsByCategory = new Map<Category, Array<MarketplaceStore>>(
+const itemsByCategory = new Map<Category, Array<MarketplaceProduct>>(
   getItemsByCategory(items)
 );
 
@@ -33,7 +33,7 @@ export const Marketplace = () => {
           <List asChild>
             <Flex direction="column">
               {(itemsByCategory.get(category) ?? []).map(
-                (meta: MarketplaceStore, index) => {
+                (meta: MarketplaceProduct, index) => {
                   return (
                     <ListItem asChild key={meta.id}>
                       <Flex
