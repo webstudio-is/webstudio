@@ -2,10 +2,17 @@ import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
 import { nanoid } from "nanoid";
 import type { Category, MarketplaceProduct } from "./types";
+import { $selectedInstanceSelector } from "~/shared/nano-states";
+import { loadProjectDataById } from "@webstudio-is/http-client";
+import {
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
 
-const $activeMarketplaceItemId = atom<MarketplaceProduct["id"] | undefined>();
+const $activeProductId = atom<MarketplaceProduct["id"] | undefined>();
 
-export const items: Array<MarketplaceProduct> = [
+export const products: Array<MarketplaceProduct> = [
   {
     id: nanoid(),
     category: "sectionTemplates",
@@ -22,31 +29,98 @@ export const categories: Array<{ category: Category; label: string }> = [
   { category: "apps", label: "Apps" },
 ];
 
-export const getItemsByCategory = (items: Array<MarketplaceProduct>) => {
-  const itemsByCategory = new Map<Category, Array<MarketplaceProduct>>();
+export const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
+  const productsByCategory = new Map<Category, Array<MarketplaceProduct>>();
 
-  for (const item of items) {
+  for (const product of products) {
     if (
-      categories.some((category) => category.category === item.category) ===
+      categories.some((category) => category.category === product.category) ===
       false
     ) {
-      throw new Error(`Unknown category: ${item.category}`);
+      throw new Error(`Unknown category: ${product.category}`);
     }
-    let categoryItems = itemsByCategory.get(item.category);
+    let categoryItems = productsByCategory.get(product.category);
     if (categoryItems === undefined) {
       categoryItems = [];
-      itemsByCategory.set(item.category, categoryItems);
+      productsByCategory.set(product.category, categoryItems);
     }
-    categoryItems.push(item);
+    categoryItems.push(product);
   }
-  return itemsByCategory;
+  return productsByCategory;
 };
 
-export const useActiveItem = () => {
-  const activeMarketplaceItemId = useStore($activeMarketplaceItemId);
-  const item = activeMarketplaceItemId
-    ? items.find((item) => item.id === activeMarketplaceItemId)
+export const useActiveProduct = () => {
+  const activeProductId = useStore($activeProductId);
+  const product = activeProductId
+    ? products.find((product) => product.id === activeProductId)
     : undefined;
 
-  return [item, $activeMarketplaceItemId.set] as const;
+  return [product, $activeProductId.set] as const;
+};
+
+type Action = {
+  type: "insert";
+  payload: string;
+};
+
+export const subscribeActions = (callback: (action: Action) => void) => {
+  const onMessage = (event: MessageEvent) => {
+    if (event.data.namespace === "MarketplaceProduct") {
+      callback(event.data);
+    }
+  };
+  addEventListener("message", onMessage, false);
+
+  return () => {
+    removeEventListener("message", onMessage, false);
+  };
+};
+
+export const insert = async ({
+  instanceId,
+  projectId,
+  authToken,
+}: {
+  instanceId: string;
+  projectId: string;
+  authToken: string;
+}) => {
+  const instanceSelector = $selectedInstanceSelector.get();
+  if (instanceSelector === undefined || instanceSelector.length === 1) {
+    return;
+  }
+
+  const data = await loadProjectDataById({
+    projectId,
+    authToken,
+    origin: location.origin,
+  });
+  const fragment = extractWebstudioFragment(
+    {
+      pages: data.build.pages,
+      assets: new Map(data.assets.map((asset) => [asset.id, asset])),
+      instances: new Map(data.build.instances),
+      dataSources: new Map(data.build.dataSources),
+      resources: new Map(data.build.resources),
+      props: new Map(data.build.props),
+      styleSourceSelections: new Map(data.build.styleSourceSelections),
+      styleSources: new Map(data.build.styleSources),
+      breakpoints: new Map(data.build.breakpoints),
+      styles: new Map(data.build.styles),
+    },
+    instanceId
+  );
+
+  // body is not allowed to copy
+  // so clipboard always have at least two level instance selector
+  //const [targetInstanceId, parentInstanceId] = instanceSelector;
+  //const parentInstanceSelector = instanceSelector.slice(1);
+
+  updateWebstudioData((data) => {
+    insertWebstudioFragmentCopy({
+      fragment,
+      data,
+      availableDataSources: new Set(),
+    });
+  });
 };

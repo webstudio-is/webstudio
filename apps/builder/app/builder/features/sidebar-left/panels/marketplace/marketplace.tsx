@@ -10,10 +10,15 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { Category, MarketplaceProduct } from "./types";
-import { getItemsByCategory, categories, useActiveItem, items } from "./utils";
+import {
+  getProductsByCategory,
+  categories,
+  useActiveProduct,
+  products,
+} from "./utils";
 
-const itemsByCategory = new Map<Category, Array<MarketplaceProduct>>(
-  getItemsByCategory(items)
+const productsByCategory = new Map<Category, Array<MarketplaceProduct>>(
+  getProductsByCategory(products)
 );
 
 const Product = ({ meta, ...props }: { meta: MarketplaceProduct }) => {
@@ -38,26 +43,26 @@ const Product = ({ meta, ...props }: { meta: MarketplaceProduct }) => {
 };
 
 export const Marketplace = () => {
-  const [, setActiveItem] = useActiveItem();
+  const [, setActiveProduct] = useActiveProduct();
 
   return (
     <ScrollArea>
       {categories.map(({ category, label }) => {
-        const items = itemsByCategory.get(category);
-        if (items === undefined || items.length === 0) {
+        const products = productsByCategory.get(category);
+        if (products === undefined || products.length === 0) {
           return;
         }
         return (
           <CollapsibleSection label={label} key={category} fullWidth>
             <List asChild>
               <Flex direction="column">
-                {items.map((meta: MarketplaceProduct) => {
+                {products.map((meta: MarketplaceProduct) => {
                   return (
                     <ListItem
                       asChild
                       key={meta.id}
                       onSelect={() => {
-                        setActiveItem(meta.id);
+                        setActiveProduct(meta.id);
                       }}
                     >
                       <Product meta={meta} />

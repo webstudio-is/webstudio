@@ -4,10 +4,10 @@ import type { MarketplaceProduct } from "./types";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
 
 export const ProductPanel = ({
-  item,
+  product,
   onOpenChange,
 }: {
-  item: MarketplaceProduct;
+  product: MarketplaceProduct;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   return (
@@ -23,7 +23,7 @@ export const ProductPanel = ({
           Back to Overview
         </Button>
       </Flex>
-      <Iframe src={item.url} />
+      <Iframe src={product.url} />
     </Flex>
   );
 };

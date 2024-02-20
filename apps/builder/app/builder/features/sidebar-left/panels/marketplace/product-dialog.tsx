@@ -8,13 +8,13 @@ import type { MarketplaceProduct } from "./types";
 import { Iframe } from "./iframe";
 
 export const ProductDialog = ({
-  item,
+  product,
   onOpenChange,
 }: {
-  item: MarketplaceProduct;
+  product: MarketplaceProduct;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  if (item.component !== "dialog") {
+  if (product.component !== "dialog") {
     return;
   }
   return (
@@ -23,18 +23,18 @@ export const ProductDialog = ({
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
-          width: item.width,
-          height: item.height,
+          width: product.width,
+          height: product.height,
           zIndex: theme.zIndices[1],
           resize: "both",
         }}
         overlayCss={{ zIndex: theme.zIndices[1] }}
       >
-        <Iframe src={item.url} />
+        <Iframe src={product.url} />
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
          */}
-        <DialogTitle>{item.label}</DialogTitle>
+        <DialogTitle>{product.label}</DialogTitle>
       </DialogContent>
     </Dialog>
   );
