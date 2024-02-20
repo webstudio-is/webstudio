@@ -12,27 +12,13 @@ export const generateResourcesLoader = ({
   dataSources: DataSources;
   resources: Resources;
 }) => {
-  let generatedVariables = "";
   let generatedOutput = "";
   let generatedLoaders = "";
   let hasResources = false;
 
+  const usedDataSources: DataSources = new Map();
+
   for (const dataSource of dataSources.values()) {
-    if (dataSource.type === "variable") {
-      const name = scope.getName(dataSource.id, dataSource.name);
-      const value = JSON.stringify(dataSource.value.value);
-      generatedVariables += `let ${name} = ${value}\n`;
-    }
-
-    if (dataSource.type === "parameter") {
-      // support only page path params parameter
-      if (dataSource.id !== page.pathParamsDataSourceId) {
-        continue;
-      }
-      const name = scope.getName(dataSource.id, dataSource.name);
-      generatedVariables += `const ${name} = _props.params\n`;
-    }
-
     if (dataSource.type === "resource") {
       const resource = resources.get(dataSource.resourceId);
       if (resource === undefined) {
@@ -48,6 +34,7 @@ export const generateResourcesLoader = ({
       const url = generateExpression({
         expression: resource.url,
         dataSources,
+        usedDataSources,
         scope,
       });
       generatedLoaders += `url: ${url},\n`;
@@ -57,6 +44,7 @@ export const generateResourcesLoader = ({
         const value = generateExpression({
           expression: header.value,
           dataSources,
+          usedDataSources,
           scope,
         });
         generatedLoaders += `{ name: "${header.name}", value: ${value} },\n`;
@@ -67,11 +55,30 @@ export const generateResourcesLoader = ({
         const body = generateExpression({
           expression: resource.body,
           dataSources,
+          usedDataSources,
           scope,
         });
         generatedLoaders += `body: ${body},\n`;
       }
       generatedLoaders += `}),\n`;
+    }
+  }
+
+  let generatedVariables = "";
+  for (const dataSource of usedDataSources.values()) {
+    if (dataSource.type === "variable") {
+      const name = scope.getName(dataSource.id, dataSource.name);
+      const value = JSON.stringify(dataSource.value.value);
+      generatedVariables += `let ${name} = ${value}\n`;
+    }
+
+    if (dataSource.type === "parameter") {
+      // support only page path params parameter
+      if (dataSource.id !== page.pathParamsDataSourceId) {
+        continue;
+      }
+      const name = scope.getName(dataSource.id, dataSource.name);
+      generatedVariables += `const ${name} = _props.params\n`;
     }
   }
 
@@ -81,8 +88,8 @@ export const generateResourcesLoader = ({
   }
   generated += `type Params = Record<string, string | undefined>\n`;
   generated += `export const loadResources = async (_props: { params: Params }) => {\n`;
+  generated += generatedVariables;
   if (hasResources) {
-    generated += generatedVariables;
     generated += `const [\n`;
     generated += generatedOutput;
     generated += `] = await Promise.all([\n`;

@@ -193,7 +193,7 @@ export const generateExpression = ({
 }: {
   expression: string;
   dataSources: DataSources;
-  usedDataSources?: DataSources;
+  usedDataSources: DataSources;
   scope: Scope;
 }) => {
   return validateExpression(expression, {

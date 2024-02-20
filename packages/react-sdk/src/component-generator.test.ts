@@ -55,6 +55,7 @@ test("generate jsx element with children and without them", () => {
       ]),
       props: new Map(),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -73,6 +74,7 @@ test("generate jsx element with children and without them", () => {
       instance: createInstance("image", "Image", []),
       props: new Map(),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -94,6 +96,7 @@ test("generate jsx element with namespaces components", () => {
       ]),
       props: new Map(),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -112,6 +115,7 @@ test("generate jsx element with namespaces components", () => {
       instance: createInstance("image", "@webstudio-is/library:Image", []),
       props: new Map(),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -163,6 +167,7 @@ test("generate jsx element with literal props", () => {
       ]),
       props,
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "Children\n",
     })
@@ -183,6 +188,7 @@ test("generate jsx element with literal props", () => {
       instance: createInstance("image", "Image", []),
       props,
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -219,6 +225,7 @@ test("ignore asset and page props", () => {
         }),
       ]),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -278,6 +285,7 @@ test("generate jsx element with data sources and action", () => {
           value: { type: "number", value: 0 },
         }),
       ]),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -312,6 +320,7 @@ test("generate jsx element with condition based on show prop", () => {
         }),
       ]),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -336,6 +345,7 @@ test("generate jsx element with condition based on show prop", () => {
         }),
       ]),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -361,6 +371,7 @@ test("generate jsx element with condition based on show prop", () => {
           value: { type: "boolean", value: false },
         }),
       ]),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
       children: "",
     })
@@ -382,6 +393,7 @@ test("generate jsx element with index prop", () => {
       instance: createInstance("box", "Box", []),
       props: new Map(),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map([["box", 5]]),
       children: "",
     })
@@ -406,6 +418,7 @@ test("generate jsx children with text", () => {
       instances: new Map(),
       props: new Map(),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
@@ -436,6 +449,7 @@ test("generate jsx children with expression", () => {
           value: { type: "string", value: "world" },
         }),
       ]),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
@@ -468,6 +482,7 @@ test("generate jsx children with nested instances", () => {
         }),
       ]),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
@@ -505,6 +520,7 @@ test("deduplicate base and namespaced components with same short name", () => {
       ]),
       props: new Map(),
       dataSources: new Map(),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
@@ -571,6 +587,7 @@ test("generate collection component as map", () => {
           value: "$ws$dataSource$dataSourceItem",
         }),
       ]),
+      usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
