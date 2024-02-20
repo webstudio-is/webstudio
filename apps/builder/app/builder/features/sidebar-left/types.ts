@@ -5,7 +5,7 @@ export type TabName =
   | "components"
   | "navigator"
   | "pages"
-  | "store"
+  | "marketplace"
   | "none";
 
 export type TabContentProps = {

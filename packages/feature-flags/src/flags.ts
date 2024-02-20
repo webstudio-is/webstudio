@@ -7,3 +7,4 @@ export const bindings = false;
 export const cms = false;
 export const folders = false;
 export const redirects = false;
+export const marketplace = false;
