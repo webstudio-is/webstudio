@@ -20,7 +20,7 @@ export const ProductPanel = ({
           }}
           color="neutral"
         >
-          Back to Overview
+          {product.label}
         </Button>
       </Flex>
       <Iframe src={product.url} />

@@ -5,6 +5,7 @@ import {
   ScrollArea,
   Text,
   focusRingStyle,
+  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
@@ -21,23 +22,28 @@ const productsByCategory = new Map<Category, Array<MarketplaceProduct>>(
   getProductsByCategory(products)
 );
 
+const focusOutline = focusRingStyle({
+  top: 0,
+  bottom: 0,
+});
+
 const Product = ({ product, ...props }: { product: MarketplaceProduct }) => {
   return (
     <Flex
       {...props}
-      gap="1"
+      gap="2"
       css={{
         position: "relative",
         height: theme.spacing[13],
         px: theme.spacing[9],
         outline: "none",
-        "&:focus-visible": focusRingStyle,
-        "&:hover": focusRingStyle,
+        "&:focus-visible": focusOutline,
+        "&:hover": focusOutline,
       }}
       align="center"
     >
-      <MetaIcon icon={product.icon} />
-      <Text>{product.label}</Text>
+      <MetaIcon icon={product.icon} size={rawTheme.spacing[11]} />
+      <Text variant="labelsSentenceCase">{product.label}</Text>
     </Flex>
   );
 };

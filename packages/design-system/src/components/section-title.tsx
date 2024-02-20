@@ -50,7 +50,7 @@ const labelContainerStyle = css({
 });
 
 const titleButtonStyle = css(titleButtonLayoutStyle, {
-  "&:focus-visible": focusRingStyle,
+  "&:focus-visible": focusRingStyle(),
 });
 
 const suffixSlotStyle = css({

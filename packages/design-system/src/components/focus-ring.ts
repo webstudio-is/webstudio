@@ -1,6 +1,6 @@
-import { theme } from "../stitches.config";
+import { theme, type CSS } from "../stitches.config";
 
-export const focusRingStyle = {
+export const focusRingStyle = (style?: CSS) => ({
   "&::after": {
     content: '""',
     position: "absolute",
@@ -9,5 +9,6 @@ export const focusRingStyle = {
     outlineStyle: "solid",
     outlineColor: theme.colors.borderFocus,
     borderRadius: theme.borderRadius[3],
+    ...style,
   },
-};
+});

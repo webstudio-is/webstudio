@@ -9,7 +9,7 @@ import {
   insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
-import { BoxIcon } from "@webstudio-is/icons/svg";
+import { WebstudioIcon } from "@webstudio-is/icons/svg";
 
 const $activeProductId = atom<MarketplaceProduct["id"] | undefined>();
 
@@ -19,12 +19,11 @@ export const products: Array<MarketplaceProduct> = [
     id: nanoid(),
     category: "sectionTemplates",
     component: "panel",
-    label: "Basic Sections",
+    label: "Starter Sections",
     url: "http://localhost:3001/copy-1/test",
     authToken: "436191d4-974f-43bb-a878-ea8a51339a9a",
     projectId: "7db43bf6-eecb-48f8-82a7-884506953e1b",
-    // @todo use the right icon
-    icon: BoxIcon,
+    icon: WebstudioIcon,
   },
 ];
 

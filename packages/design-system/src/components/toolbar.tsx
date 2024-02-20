@@ -47,14 +47,14 @@ const toggleItemStyle = css(textVariants.labelsTitleCase, {
   background: "transparent",
   transition: "200ms background",
 
-  "&:focus-visible": focusRingStyle,
+  "&:focus-visible": focusRingStyle(),
   "&:hover, &[data-state=on], &[data-state=open], &[aria-checked=true]": {
     background: theme.colors.backgroundTopbarHover,
   },
   variants: {
     // Just for story
     focused: {
-      true: focusRingStyle,
+      true: focusRingStyle(),
     },
     variant: {
       subtle: {
