@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { atom } from "nanostores";
+import { atom, computed } from "nanostores";
 import { nanoid } from "nanoid";
 import type { Category, MarketplaceItem } from "./types";
 
@@ -10,24 +10,9 @@ export const items: Array<MarketplaceItem> = [
     id: nanoid(),
     category: "sectionTemplates",
     label: "Basic Sections",
-    url: "https://webstudio.is",
-  },
-  {
-    id: nanoid(),
-    category: "sectionTemplates",
-    label: "Basic Section 2",
-    url: "https://webstudio.is",
-  },
-  {
-    id: nanoid(),
-    category: "apps",
-    label: "My App",
-    url: "https://webstudio.is",
-    ui: {
-      component: "dialog",
-      width: 600,
-      height: 400,
-    },
+    url: "http://localhost:3001/copy-1/test",
+    authToken: "436191d4-974f-43bb-a878-ea8a51339a9a",
+    projectId: "7db43bf6-eecb-48f8-82a7-884506953e1b",
   },
 ];
 
@@ -61,5 +46,6 @@ export const useActiveItem = () => {
   const item = activeMarketplaceItemId
     ? items.find((item) => item.id === activeMarketplaceItemId)
     : undefined;
+
   return [item, $activeMarketplaceItemId.set] as const;
 };

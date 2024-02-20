@@ -11,8 +11,16 @@ import {
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { usePress } from "@react-aria/interactions";
 import type { Category, MarketplaceItem } from "./types";
-import { getItemsByCategory, categories, useActiveItem, items } from "./utils";
+import {
+  getItemsByCategory,
+  categories,
+  useActiveItem,
+  items,
+  $activeMarketplaceItem,
+} from "./utils";
 import { useEffect } from "react";
+import { loadProjectDataById } from "@webstudio-is/http-client";
+import { useStore } from "@nanostores/react";
 
 const itemsByCategory = new Map<Category, Array<MarketplaceItem>>(
   getItemsByCategory(items)
@@ -26,25 +34,6 @@ export const Marketplace = () => {
       setActiveItem(target.dataset.id);
     },
   });
-
-  useEffect(() => {
-    if (typeof window !== "object") {
-      return;
-    }
-    window.addEventListener(
-      "message",
-      (event: MessageEvent) => {
-        const action = event.data ?? {};
-        if (
-          action.namespace === "MarketplaceItem" &&
-          action.type === "insert"
-        ) {
-          console.log(action);
-        }
-      },
-      false
-    );
-  }, []);
 
   return (
     <ScrollArea>

@@ -5,6 +5,8 @@ export type MarketplaceItem = {
   category: Category;
   label: string;
   url: string;
+  authToken: string;
+  projectId: string;
   ui?:
     | {
         component: "panel";
