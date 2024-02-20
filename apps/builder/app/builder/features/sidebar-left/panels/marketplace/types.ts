@@ -1,6 +1,6 @@
 export type Category = "sectionTemplates" | "apps";
 
-export type MarketplaceItem = {
+export type MarketplaceStore = {
   id: string;
   category: Category;
   label: string;

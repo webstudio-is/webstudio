@@ -9,7 +9,7 @@ type Props = {
   children?: ReactNode;
 } & WebstudioComponentSystemProps;
 
-export const MarketplaceItem = forwardRef<ElementRef<"div">, Props>(
+export const MarketplaceStore = forwardRef<ElementRef<"div">, Props>(
   (props, ref) => {
     return (
       <div
@@ -31,4 +31,4 @@ export const MarketplaceItem = forwardRef<ElementRef<"div">, Props>(
   }
 );
 
-MarketplaceItem.displayName = "MarketplaceItem";
+MarketplaceStore.displayName = "MarketplaceStore";

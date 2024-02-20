@@ -3,8 +3,8 @@ import { Flex } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { Marketplace } from "./marketplace";
-import { ItemDialog } from "./item-dialog";
-import { ItemPanel } from "./item-panel";
+import { ProductDialog } from "./product-dialog";
+import { ProductPanel } from "./product-panel";
 import { useActiveItem } from "./utils";
 import { useEffect } from "react";
 import { loadProjectDataById } from "@webstudio-is/http-client";
@@ -39,11 +39,10 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         const action = event.data ?? {};
         console.log(action, activeItem);
         if (
-          action.namespace === "MarketplaceItem" &&
+          action.namespace === "MarketplaceStore" &&
           action.type === "insert" &&
           activeItem !== undefined
         ) {
-          console.log(action);
           const data = await loadProjectDataById({
             projectId: activeItem.projectId,
             authToken: activeItem.authToken,
@@ -67,8 +66,8 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
           // body is not allowed to copy
           // so clipboard always have at least two level instance selector
-          const [targetInstanceId, parentInstanceId] = instanceSelector;
-          const parentInstanceSelector = instanceSelector.slice(1);
+          //const [targetInstanceId, parentInstanceId] = instanceSelector;
+          //const parentInstanceSelector = instanceSelector.slice(1);
 
           updateWebstudioData((data) => {
             insertWebstudioFragmentCopy({
@@ -91,10 +90,10 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
       {component === "dialog" && activeItem && (
-        <ItemDialog item={activeItem} onOpenChange={handleOpenChange} />
+        <ProductDialog item={activeItem} onOpenChange={handleOpenChange} />
       )}
       {component === "panel" && activeItem ? (
-        <ItemPanel item={activeItem} onOpenChange={handleOpenChange} />
+        <ProductPanel item={activeItem} onOpenChange={handleOpenChange} />
       ) : (
         <Marketplace />
       )}
