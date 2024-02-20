@@ -9,7 +9,6 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { usePress } from "@react-aria/interactions";
 import type { Category, MarketplaceProduct } from "./types";
 import { getItemsByCategory, categories, useActiveItem, items } from "./utils";
 
@@ -17,51 +16,59 @@ const itemsByCategory = new Map<Category, Array<MarketplaceProduct>>(
   getItemsByCategory(items)
 );
 
+const Product = ({ meta, ...props }: { meta: MarketplaceProduct }) => {
+  return (
+    <Flex
+      {...props}
+      gap="1"
+      css={{
+        position: "relative",
+        height: theme.spacing[13],
+        px: theme.spacing[9],
+        outline: "none",
+        "&:focus-visible": focusRingStyle,
+        "&:hover": focusRingStyle,
+      }}
+      align="center"
+    >
+      <BoxIcon />
+      <Text>{meta.label}</Text>
+    </Flex>
+  );
+};
+
 export const Marketplace = () => {
   const [, setActiveItem] = useActiveItem();
-  const { pressProps } = usePress({
-    onPress(event) {
-      const target = event.target as HTMLElement;
-      setActiveItem(target.dataset.id);
-    },
-  });
 
   return (
     <ScrollArea>
-      {categories.map(({ category, label }) => (
-        <CollapsibleSection label={label} key={category} fullWidth>
-          <List asChild>
-            <Flex direction="column">
-              {(itemsByCategory.get(category) ?? []).map(
-                (meta: MarketplaceProduct, index) => {
+      {categories.map(({ category, label }) => {
+        const items = itemsByCategory.get(category);
+        if (items === undefined || items.length === 0) {
+          return;
+        }
+        return (
+          <CollapsibleSection label={label} key={category} fullWidth>
+            <List asChild>
+              <Flex direction="column">
+                {items.map((meta: MarketplaceProduct) => {
                   return (
-                    <ListItem asChild key={meta.id}>
-                      <Flex
-                        {...pressProps}
-                        tabIndex={index === 0 ? 0 : -1}
-                        gap="1"
-                        data-id={meta.id}
-                        css={{
-                          position: "relative",
-                          height: theme.spacing[13],
-                          px: theme.spacing[9],
-                          outline: "none",
-                          "&:focus-visible": focusRingStyle,
-                          "&:hover": focusRingStyle,
-                        }}
-                        align="center"
-                      >
-                        <BoxIcon />
-                        <Text>{meta.label}</Text>
-                      </Flex>
+                    <ListItem
+                      asChild
+                      key={meta.id}
+                      onSelect={() => {
+                        setActiveItem(meta.id);
+                      }}
+                    >
+                      <Product meta={meta} />
                     </ListItem>
                   );
-                }
-              )}
-            </Flex>
-          </List>
-        </CollapsibleSection>
-      ))}
+                })}
+              </Flex>
+            </List>
+          </CollapsibleSection>
+        );
+      })}
     </ScrollArea>
   );
 };
