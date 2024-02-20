@@ -16,6 +16,7 @@ import {
   useActiveProduct,
   products,
 } from "./utils";
+import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const productsByCategory = new Map<Category, Array<MarketplaceProduct>>(
   getProductsByCategory(products)
@@ -36,7 +37,7 @@ const Product = ({ meta, ...props }: { meta: MarketplaceProduct }) => {
       }}
       align="center"
     >
-      <BoxIcon />
+      <MetaIcon icon={meta.icon} />
       <Text>{meta.label}</Text>
     </Flex>
   );

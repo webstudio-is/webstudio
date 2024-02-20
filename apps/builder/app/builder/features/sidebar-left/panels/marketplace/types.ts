@@ -7,6 +7,7 @@ type BaseProduct = {
   url: string;
   authToken: string;
   projectId: string;
+  icon: string;
 };
 
 type PanelProduct = BaseProduct & {
