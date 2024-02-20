@@ -37,7 +37,7 @@ const generateAction = ({
   scope: Scope;
   prop: Extract<Prop, { type: "action" }>;
   dataSources: DataSources;
-  usedDataSources?: DataSources;
+  usedDataSources: DataSources;
 }) => {
   const setters = new Set<DataSource>();
   // important to fallback to empty argumets to render empty function
@@ -55,7 +55,7 @@ const generateAction = ({
         const depId = decodeDataSourceVariable(identifier);
         const dep = depId ? dataSources.get(depId) : undefined;
         if (dep) {
-          usedDataSources?.set(dep.id, dep);
+          usedDataSources.set(dep.id, dep);
           if (assignee) {
             setters.add(dep);
           }
@@ -96,7 +96,7 @@ const generatePropValue = ({
   scope: Scope;
   prop: Prop;
   dataSources: DataSources;
-  usedDataSources?: DataSources;
+  usedDataSources: DataSources;
 }) => {
   // ignore asset and page props which are handled by components internally
   if (prop.type === "asset" || prop.type === "page") {
@@ -117,7 +117,7 @@ const generatePropValue = ({
     if (dataSource === undefined) {
       return;
     }
-    usedDataSources?.set(dataSource.id, dataSource);
+    usedDataSources.set(dataSource.id, dataSource);
     return scope.getName(dataSource.id, dataSource.name);
   }
   // inline expression to safely use collection item
@@ -149,7 +149,7 @@ export const generateJsxElement = ({
   instance: Instance;
   props: Props;
   dataSources: DataSources;
-  usedDataSources?: DataSources;
+  usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   children: string;
   classesMap?: Map<string, Array<string>>;
@@ -276,7 +276,7 @@ export const generateJsxChildren = ({
   instances: Instances;
   props: Props;
   dataSources: DataSources;
-  usedDataSources?: DataSources;
+  usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap?: Map<string, Array<string>>;
 }) => {
@@ -295,6 +295,7 @@ export const generateJsxChildren = ({
       const expression = generateExpression({
         expression: child.value,
         dataSources,
+        usedDataSources,
         scope,
       });
       generatedChildren = `{${expression}}\n`;

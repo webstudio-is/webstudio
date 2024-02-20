@@ -129,7 +129,7 @@ test("generate variable and use in resources loader", () => {
   );
 });
 
-test("generate page params variable and use in resources loader", () => {
+test("generate path params variable and use in resources loader", () => {
   expect(
     generateResourcesLoader({
       scope: createScope(),
@@ -148,7 +148,7 @@ test("generate page params variable and use in resources loader", () => {
         {
           id: "variableParamsId",
           scopeInstanceId: "body",
-          name: "Page params",
+          name: "Path Params",
           type: "parameter",
         },
       ]),
@@ -168,14 +168,14 @@ test("generate page params variable and use in resources loader", () => {
       import { loadResource } from "@webstudio-is/sdk";
       type Params = Record<string, string | undefined>
       export const loadResources = async (_props: { params: Params }) => {
-      const Pageparams = _props.params
+      const PathParams = _props.params
       const [
       variableName,
       ] = await Promise.all([
       loadResource({
       id: "resourceId",
       name: "resourceName",
-      url: "https://my-json.com/" + Pageparams?.slug,
+      url: "https://my-json.com/" + PathParams?.slug,
       method: "post",
       headers: [
       { name: "Content-Type", value: "application/json" },
@@ -208,4 +208,58 @@ test("generate empty resources loader", () => {
       }
     `)
   );
+});
+
+test("prevent generating unused variables", () => {
+  expect(
+    generateResourcesLoader({
+      scope: createScope(),
+      page: { rootInstanceId: "body" } as Page,
+      dataSources: toMap([
+        {
+          id: "unuseVariableId",
+          scopeInstanceId: "body",
+          name: "Unused Variable",
+          type: "variable",
+          value: { type: "string", value: "" },
+        },
+      ]),
+      resources: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+"type Params = Record<string, string | undefined>
+export const loadResources = async (_props: { params: Params }) => {
+return {
+} as Record<string, unknown>
+}
+"
+`);
+});
+
+test("prevent generating unused path params variable", () => {
+  expect(
+    generateResourcesLoader({
+      scope: createScope(),
+      page: {
+        rootInstanceId: "body",
+        pathParamsDataSourceId: "variableParamsId",
+      } as Page,
+      dataSources: toMap([
+        {
+          id: "variableParamsId",
+          scopeInstanceId: "body",
+          name: "Unused Path Params",
+          type: "parameter",
+        },
+      ]),
+      resources: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+"type Params = Record<string, string | undefined>
+export const loadResources = async (_props: { params: Params }) => {
+return {
+} as Record<string, unknown>
+}
+"
+`);
 });
