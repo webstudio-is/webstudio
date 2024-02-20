@@ -1,4 +1,3 @@
-import { BoxIcon } from "@webstudio-is/icons";
 import {
   Flex,
   List,
@@ -22,7 +21,7 @@ const productsByCategory = new Map<Category, Array<MarketplaceProduct>>(
   getProductsByCategory(products)
 );
 
-const Product = ({ meta, ...props }: { meta: MarketplaceProduct }) => {
+const Product = ({ product, ...props }: { product: MarketplaceProduct }) => {
   return (
     <Flex
       {...props}
@@ -37,8 +36,8 @@ const Product = ({ meta, ...props }: { meta: MarketplaceProduct }) => {
       }}
       align="center"
     >
-      <MetaIcon icon={meta.icon} />
-      <Text>{meta.label}</Text>
+      <MetaIcon icon={product.icon} />
+      <Text>{product.label}</Text>
     </Flex>
   );
 };
@@ -57,16 +56,16 @@ export const Marketplace = () => {
           <CollapsibleSection label={label} key={category} fullWidth>
             <List asChild>
               <Flex direction="column">
-                {products.map((meta: MarketplaceProduct) => {
+                {products.map((product: MarketplaceProduct) => {
                   return (
                     <ListItem
                       asChild
-                      key={meta.id}
+                      key={product.id}
                       onSelect={() => {
-                        setActiveProduct(meta.id);
+                        setActiveProduct(product.id);
                       }}
                     >
-                      <Product meta={meta} />
+                      <Product product={product} />
                     </ListItem>
                   );
                 })}
