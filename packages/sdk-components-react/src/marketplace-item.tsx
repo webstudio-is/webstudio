@@ -1,30 +1,32 @@
+import {
+  componentAttribute,
+  idAttribute,
+  type WebstudioComponentSystemProps,
+} from "@webstudio-is/react-sdk";
 import { forwardRef, type ElementRef, type ReactNode } from "react";
-
-const requestCopy = (selector: string) => {
-  window.parent.postMessage({ type: "requestCopy", payload: selector });
-};
 
 type Props = {
   children?: ReactNode;
-};
+} & WebstudioComponentSystemProps;
 
 export const MarketplaceItem = forwardRef<ElementRef<"div">, Props>(
-  ({ children, ...props }, ref) => {
+  (props, ref) => {
     return (
       <div
         {...props}
         ref={ref}
-        style={{ display: children ? "contents" : "block" }}
-      >
-        {children}
-        <button
-          onClick={() => {
-            requestCopy(props["ws-data-selector"]);
-          }}
-        >
-          Copy
-        </button>
-      </div>
+        style={{ display: props.children ? "contents" : "block" }}
+        onClick={() => {
+          window.parent.postMessage(
+            {
+              type: "insert",
+              namespace: props[componentAttribute],
+              payload: props[idAttribute],
+            },
+            "*"
+          );
+        }}
+      />
     );
   }
 );

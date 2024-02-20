@@ -35,7 +35,10 @@ export const Marketplace = () => {
       "message",
       (event: MessageEvent) => {
         const action = event.data ?? {};
-        if (action.type === "requestCopy") {
+        if (
+          action.namespace === "MarketplaceItem" &&
+          action.type === "insert"
+        ) {
           console.log(action);
         }
       },
