@@ -2,12 +2,10 @@ import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
 import { nanoid } from "nanoid";
 import type { Category, MarketplaceProduct } from "./types";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
 import { loadProjectDataById } from "@webstudio-is/http-client";
 import {
   extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
-  updateWebstudioData,
+  findTargetAndInserFragment,
 } from "~/shared/instance-utils";
 import { WebstudioIcon } from "@webstudio-is/icons/svg";
 
@@ -68,7 +66,7 @@ type Action = {
 
 export const subscribeActions = (callback: (action: Action) => void) => {
   const onMessage = (event: MessageEvent) => {
-    if (event.data.namespace === "MarketplaceProduct") {
+    if (event.data.namespace === "MarketplaceItem") {
       callback(event.data);
     }
   };
@@ -79,7 +77,6 @@ export const subscribeActions = (callback: (action: Action) => void) => {
   };
 };
 
-// @todo finish actual insertion
 export const insert = async ({
   instanceId,
   projectId,
@@ -89,11 +86,6 @@ export const insert = async ({
   projectId: string;
   authToken: string;
 }) => {
-  const instanceSelector = $selectedInstanceSelector.get();
-  if (instanceSelector === undefined || instanceSelector.length === 1) {
-    return;
-  }
-
   const data = await loadProjectDataById({
     projectId,
     authToken,
@@ -115,16 +107,5 @@ export const insert = async ({
     instanceId
   );
 
-  // body is not allowed to copy
-  // so clipboard always have at least two level instance selector
-  //const [targetInstanceId, parentInstanceId] = instanceSelector;
-  //const parentInstanceSelector = instanceSelector.slice(1);
-
-  updateWebstudioData((data) => {
-    insertWebstudioFragmentCopy({
-      fragment,
-      data,
-      availableDataSources: new Set(),
-    });
-  });
+  findTargetAndInserFragment(fragment);
 };
