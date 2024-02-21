@@ -24,6 +24,11 @@ export const ToolbarToggleGroup = styled(ToolbarPrimitive.ToggleGroup, {
   alignItems: "center",
 });
 
+const focusRing = focusRingStyle({
+  top: theme.spacing[3],
+  bottom: theme.spacing[3],
+});
+
 const toggleItemStyle = css(textVariants.labelsTitleCase, {
   // reset styles
   boxSizing: "border-box",
@@ -47,14 +52,14 @@ const toggleItemStyle = css(textVariants.labelsTitleCase, {
   background: "transparent",
   transition: "200ms background",
 
-  "&:focus-visible": focusRingStyle(),
+  "&:focus-visible": focusRing,
   "&:hover, &[data-state=on], &[data-state=open], &[aria-checked=true]": {
     background: theme.colors.backgroundTopbarHover,
   },
   variants: {
     // Just for story
     focused: {
-      true: focusRingStyle(),
+      true: focusRing,
     },
     variant: {
       subtle: {

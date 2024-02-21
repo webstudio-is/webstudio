@@ -22,10 +22,7 @@ const productsByCategory = new Map<Category, Array<MarketplaceProduct>>(
   getProductsByCategory(products)
 );
 
-const focusOutline = focusRingStyle({
-  top: 0,
-  bottom: 0,
-});
+const focusOutline = focusRingStyle();
 
 const Product = ({ product, ...props }: { product: MarketplaceProduct }) => {
   return (
