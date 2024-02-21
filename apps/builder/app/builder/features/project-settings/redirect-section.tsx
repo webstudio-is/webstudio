@@ -167,13 +167,13 @@ export const RedirectSection = () => {
             placeholder="301"
             options={["301", "302"]}
             value={httpStatus ?? "301"}
-            css={{ zIndex: theme.zIndices["2"], width: theme.spacing[19] }}
+            css={{ zIndex: theme.zIndices["1"], width: theme.spacing[18] }}
             onChange={(value) => {
               setHttpStatus(value as PageRedirect["status"]);
             }}
           />
 
-          <ArrowRightIcon />
+          <ArrowRightIcon size={16} style={{ flexShrink: 0 }} />
 
           <InputErrorsTooltip
             errors={newPathErrors.length > 0 ? newPathErrors : undefined}
@@ -225,7 +225,7 @@ export const RedirectSection = () => {
                         <Text>
                           {redirect.old}, {redirect.status ?? "301"}
                         </Text>
-                        <ArrowRightIcon />
+                        <ArrowRightIcon size={16} />
                         <Text truncate>{redirect.new}</Text>
                       </Flex>
                       <SmallIconButton
