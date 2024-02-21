@@ -9,6 +9,7 @@ import {
   ListItem,
   SmallIconButton,
   InputErrorsTooltip,
+  Select,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
@@ -28,6 +29,8 @@ export const RedirectSection = () => {
   );
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
+  const [httpStatus, setHttpStatus] =
+    useState<PageRedirect["status"]>(undefined);
   const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);
   const [newPathErrors, setNewPathErrors] = useState<string[]>([]);
   const pages = useStore($pages);
@@ -115,7 +118,14 @@ export const RedirectSection = () => {
       return;
     }
 
-    handleSave([{ old: oldPath, new: newPath }, ...redirects]);
+    handleSave([
+      {
+        old: oldPath,
+        new: newPath,
+        status: httpStatus === undefined ? "301" : httpStatus,
+      },
+      ...redirects,
+    ]);
     setOldPath("");
     setNewPath("");
   };
@@ -168,6 +178,17 @@ export const RedirectSection = () => {
             />
           </InputErrorsTooltip>
 
+          <Select
+            id="redirect-type"
+            placeholder="301"
+            options={["301", "302"]}
+            value={httpStatus === undefined ? "301" : httpStatus}
+            css={{ zIndex: theme.zIndices["2"], width: theme.spacing[19] }}
+            onChange={(value) => {
+              setHttpStatus(value as PageRedirect["status"]);
+            }}
+          />
+
           <Button
             disabled={isValidRedirects === false || oldPath === newPath}
             onClick={handleAddRedirect}
@@ -201,6 +222,12 @@ export const RedirectSection = () => {
                     >
                       <Flex gap="2">
                         <Text>{redirect.old}</Text>
+                        <ArrowRightIcon />
+                        <Text>
+                          {redirect.status === undefined
+                            ? "301"
+                            : redirect.status}
+                        </Text>
                         <ArrowRightIcon />
                         <Text truncate>{redirect.new}</Text>
                       </Flex>
