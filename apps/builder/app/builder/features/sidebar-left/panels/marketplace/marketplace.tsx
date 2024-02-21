@@ -16,7 +16,6 @@ import {
   useActiveProduct,
   products,
 } from "./utils";
-import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const productsByCategory = new Map<Category, Array<MarketplaceProduct>>(
   getProductsByCategory(products)
@@ -39,7 +38,11 @@ const Product = ({ product, ...props }: { product: MarketplaceProduct }) => {
       }}
       align="center"
     >
-      <MetaIcon icon={product.icon} size={rawTheme.spacing[11]} />
+      <img
+        src={`${new URL(product.url).origin}/favicon.ico`}
+        style={{ width: rawTheme.spacing[11], height: rawTheme.spacing[11] }}
+        aria-disabled
+      />
       <Text variant="labelsSentenceCase">{product.label}</Text>
     </Flex>
   );
