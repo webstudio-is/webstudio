@@ -58,4 +58,4 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   );
 };
 
-export const icon = <ExtensionIcon />;
+export const Icon = ExtensionIcon;

@@ -127,6 +127,7 @@ export * from "./mic-off";
 export * from "./mic";
 export * from "./minus";
 export * from "./navigation-menu";
+export * from "./navigator";
 export * from "./no-wrap";
 export * from "./offline";
 export * from "./order-first";

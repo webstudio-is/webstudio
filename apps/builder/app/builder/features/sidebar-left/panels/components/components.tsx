@@ -127,4 +127,4 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   );
 };
 
-export const icon = <PlusIcon />;
+export const Icon = PlusIcon;

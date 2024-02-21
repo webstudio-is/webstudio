@@ -127,6 +127,7 @@ export { MicOffIcon } from "./mic-off";
 export { MicIcon } from "./mic";
 export { MinusIcon } from "./minus";
 export { NavigationMenuIcon } from "./navigation-menu";
+export { NavigatorIcon } from "./navigator";
 export { NoWrapIcon } from "./no-wrap";
 export { OfflineIcon } from "./offline";
 export { OrderFirstIcon } from "./order-first";
