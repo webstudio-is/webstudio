@@ -161,6 +161,18 @@ export const RedirectSection = () => {
               color={oldPathErrors.length === 0 ? undefined : "error"}
             />
           </InputErrorsTooltip>
+
+          <Select
+            id="redirect-type"
+            placeholder="301"
+            options={["301", "302"]}
+            value={httpStatus ?? "301"}
+            css={{ zIndex: theme.zIndices["2"], width: theme.spacing[19] }}
+            onChange={(value) => {
+              setHttpStatus(value as PageRedirect["status"]);
+            }}
+          />
+
           <ArrowRightIcon />
 
           <InputErrorsTooltip
@@ -177,17 +189,6 @@ export const RedirectSection = () => {
               color={newPathErrors.length === 0 ? undefined : "error"}
             />
           </InputErrorsTooltip>
-
-          <Select
-            id="redirect-type"
-            placeholder="301"
-            options={["301", "302"]}
-            value={httpStatus ?? "301"}
-            css={{ zIndex: theme.zIndices["2"], width: theme.spacing[19] }}
-            onChange={(value) => {
-              setHttpStatus(value as PageRedirect["status"]);
-            }}
-          />
 
           <Button
             disabled={isValidRedirects === false || oldPath === newPath}
