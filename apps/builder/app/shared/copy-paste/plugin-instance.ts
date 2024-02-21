@@ -25,7 +25,7 @@ import {
   isInstanceDetachable,
   updateWebstudioData,
   getWebstudioData,
-  addInstanceChildrenMutable,
+  insertInstanceChildrenMutable,
 } from "../instance-utils";
 import { portalComponent } from "@webstudio-is/react-sdk";
 
@@ -202,7 +202,7 @@ export const onPaste = (clipboardData: string): boolean => {
     const children: Instance["children"] = [
       { type: "id", value: newRootInstanceId },
     ];
-    addInstanceChildrenMutable(data, children, pasteTarget);
+    insertInstanceChildrenMutable(data, children, pasteTarget);
   });
 
   return true;

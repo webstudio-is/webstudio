@@ -33,7 +33,7 @@ import {
   insertWebstudioFragmentCopy,
   reparentInstance,
   getWebstudioData,
-  addInstanceChildrenMutable,
+  insertInstanceChildrenMutable,
 } from "./instance-utils";
 import {
   $assets,
@@ -439,11 +439,11 @@ describe("find closest droppable target", () => {
   });
 });
 
-describe("add instance children", () => {
-  test("add instance children into empty target", () => {
+describe("insert instance children", () => {
+  test("insert instance children into empty target", () => {
     const instances = toMap([createInstance("body", "Body", [])]);
     const data = getWebstudioDataStub({ instances });
-    addInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -452,12 +452,12 @@ describe("add instance children", () => {
     );
   });
 
-  test("add instance children into the end of target", () => {
+  test("insert instance children into the end of target", () => {
     const instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "text" }]),
     ]);
     const data = getWebstudioDataStub({ instances });
-    addInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
       parentSelector: ["body"],
       position: "end",
     });
@@ -471,12 +471,12 @@ describe("add instance children", () => {
     );
   });
 
-  test("add instance children into the start of target", () => {
+  test("insert instance children into the start of target", () => {
     const instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "text" }]),
     ]);
     const data = getWebstudioDataStub({ instances });
-    addInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
       parentSelector: ["body"],
       position: 0,
     });
@@ -490,13 +490,13 @@ describe("add instance children", () => {
     );
   });
 
-  test("add instance children at the start of text", () => {
+  test("insert instance children at the start of text", () => {
     const instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "text" }]),
       createInstance("text", "Text", [{ type: "text", value: "text" }]),
     ]);
     const data = getWebstudioDataStub({ instances });
-    addInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
       parentSelector: ["text", "body"],
       position: 0,
     });
@@ -524,13 +524,13 @@ describe("add instance children", () => {
     );
   });
 
-  test("add instance children at the end of text", () => {
+  test("insert instance children at the end of text", () => {
     const instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "text" }]),
       createInstance("text", "Text", [{ type: "text", value: "text" }]),
     ]);
     const data = getWebstudioDataStub({ instances });
-    addInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
       parentSelector: ["text", "body"],
       position: "end",
     });
@@ -558,7 +558,7 @@ describe("add instance children", () => {
     );
   });
 
-  test("add instance children between text children", () => {
+  test("insert instance children between text children", () => {
     const instances = toMap([
       createInstance("body", "Body", [{ type: "id", value: "text" }]),
       createInstance("text", "Text", [
@@ -570,7 +570,7 @@ describe("add instance children", () => {
       createInstance("italic", "Italic", [{ type: "text", value: "italic" }]),
     ]);
     const data = getWebstudioDataStub({ instances });
-    addInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
+    insertInstanceChildrenMutable(data, [{ type: "id", value: "box" }], {
       parentSelector: ["text", "body"],
       position: 1,
     });

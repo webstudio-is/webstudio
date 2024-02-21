@@ -373,7 +373,7 @@ export const findClosestDroppableTarget = (
   };
 };
 
-export const addInstanceChildrenMutable = (
+export const insertInstanceChildrenMutable = (
   data: WebstudioData,
   children: Instance["children"],
   insertTarget: DroppableTarget
@@ -425,7 +425,7 @@ export const insertTemplateData = (
     for (const instance of insertedInstances) {
       instances.set(instance.id, instance);
     }
-    addInstanceChildrenMutable(data, children, dropTarget);
+    insertInstanceChildrenMutable(data, children, dropTarget);
     insertPropsCopyMutable(props, insertedProps, new Map());
     for (const dataSource of insertedDataSources) {
       dataSources.set(dataSource.id, dataSource);
