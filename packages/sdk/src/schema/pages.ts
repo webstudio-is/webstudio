@@ -120,6 +120,7 @@ export const ProjectNewRedirectPath = PagePath.or(
 export const PageRedirect = z.object({
   old: PagePath,
   new: ProjectNewRedirectPath,
+  status: z.enum(["301", "302"]).optional(),
 });
 export type PageRedirect = z.infer<typeof PageRedirect>;
 

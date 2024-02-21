@@ -650,7 +650,7 @@ ${utilsExport}
       const content = `import { type LoaderArgs, redirect } from "@remix-run/server-runtime";
 
 export const loader = (arg: LoaderArgs) => {
-  return redirect("${redirect.new}", 301);
+  return redirect("${redirect.new}", ${redirect.status ?? 301});
 };
 `;
 

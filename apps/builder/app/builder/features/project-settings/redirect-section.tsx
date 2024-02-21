@@ -9,6 +9,7 @@ import {
   ListItem,
   SmallIconButton,
   InputErrorsTooltip,
+  Select,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent } from "react";
@@ -28,6 +29,8 @@ export const RedirectSection = () => {
   );
   const [oldPath, setOldPath] = useState<string>("");
   const [newPath, setNewPath] = useState<string>("");
+  const [httpStatus, setHttpStatus] =
+    useState<PageRedirect["status"]>(undefined);
   const [oldPathErrors, setOldPathErrors] = useState<string[]>([]);
   const [newPathErrors, setNewPathErrors] = useState<string[]>([]);
   const pages = useStore($pages);
@@ -115,7 +118,14 @@ export const RedirectSection = () => {
       return;
     }
 
-    handleSave([{ old: oldPath, new: newPath }, ...redirects]);
+    handleSave([
+      {
+        old: oldPath,
+        new: newPath,
+        status: httpStatus ?? "301",
+      },
+      ...redirects,
+    ]);
     setOldPath("");
     setNewPath("");
   };
@@ -129,7 +139,7 @@ export const RedirectSection = () => {
   return (
     <>
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Text variant="titles">301 Redirects</Text>
+        <Text variant="titles">Redirects</Text>
         <Text color="subtle">
           Redirects old URLs to new ones so that you don’t lose any traffic or
           search engine rankings.
@@ -151,7 +161,19 @@ export const RedirectSection = () => {
               color={oldPathErrors.length === 0 ? undefined : "error"}
             />
           </InputErrorsTooltip>
-          <ArrowRightIcon />
+
+          <Select
+            id="redirect-type"
+            placeholder="301"
+            options={["301", "302"]}
+            value={httpStatus ?? "301"}
+            css={{ zIndex: theme.zIndices["1"], width: theme.spacing[18] }}
+            onChange={(value) => {
+              setHttpStatus(value as PageRedirect["status"]);
+            }}
+          />
+
+          <ArrowRightIcon size={16} style={{ flexShrink: 0 }} />
 
           <InputErrorsTooltip
             errors={newPathErrors.length > 0 ? newPathErrors : undefined}
@@ -200,8 +222,10 @@ export const RedirectSection = () => {
                       }}
                     >
                       <Flex gap="2">
-                        <Text>{redirect.old}</Text>
-                        <ArrowRightIcon />
+                        <Text>
+                          {redirect.old}, {redirect.status ?? "301"}
+                        </Text>
+                        <ArrowRightIcon size={16} />
                         <Text truncate>{redirect.new}</Text>
                       </Flex>
                       <SmallIconButton
