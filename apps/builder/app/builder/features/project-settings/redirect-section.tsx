@@ -122,7 +122,7 @@ export const RedirectSection = () => {
       {
         old: oldPath,
         new: newPath,
-        status: httpStatus === undefined ? "301" : httpStatus,
+        status: httpStatus ?? "301",
       },
       ...redirects,
     ]);
@@ -139,7 +139,7 @@ export const RedirectSection = () => {
   return (
     <>
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Text variant="titles">301 Redirects</Text>
+        <Text variant="titles">Redirects</Text>
         <Text color="subtle">
           Redirects old URLs to new ones so that you don’t lose any traffic or
           search engine rankings.
@@ -182,7 +182,7 @@ export const RedirectSection = () => {
             id="redirect-type"
             placeholder="301"
             options={["301", "302"]}
-            value={httpStatus === undefined ? "301" : httpStatus}
+            value={httpStatus ?? "301"}
             css={{ zIndex: theme.zIndices["2"], width: theme.spacing[19] }}
             onChange={(value) => {
               setHttpStatus(value as PageRedirect["status"]);
@@ -221,12 +221,8 @@ export const RedirectSection = () => {
                       }}
                     >
                       <Flex gap="2">
-                        <Text>{redirect.old}</Text>
-                        <ArrowRightIcon />
                         <Text>
-                          {redirect.status === undefined
-                            ? "301"
-                            : redirect.status}
+                          {redirect.old}, {redirect.status ?? "301"}
                         </Text>
                         <ArrowRightIcon />
                         <Text truncate>{redirect.new}</Text>
