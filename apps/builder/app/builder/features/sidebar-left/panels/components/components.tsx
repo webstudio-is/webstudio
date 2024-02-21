@@ -63,7 +63,20 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       />
       <ScrollArea>
         {componentCategories
-          .filter((category) => category !== "hidden")
+          .filter((category) => {
+            if (category === "hidden") {
+              return false;
+            }
+
+            if (
+              category === "utilities" &&
+              isFeatureEnabled("marketplace") === false
+            ) {
+              return false;
+            }
+
+            return true;
+          })
           .map((category) => (
             <CollapsibleSection label={category} key={category} fullWidth>
               <ArrowFocus
