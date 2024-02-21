@@ -49,10 +49,11 @@ import {
   type DroppableTarget,
   type InstanceSelector,
   findLocalStyleSourcesWithinInstances,
-  insertInstancesMutable,
   getAncestorInstanceSelector,
   insertPropsCopyMutable,
   getReparentDropTargetMutable,
+  getInstanceOrCreateFragmentIfNecessary,
+  wrapEditableChildrenAroundDropTargetMutable,
 } from "./tree-utils";
 import { removeByMutable } from "./array-utils";
 import { isBaseBreakpoint } from "./breakpoints";
@@ -372,6 +373,35 @@ export const findClosestDroppableTarget = (
   };
 };
 
+export const insertInstanceChildrenMutable = (
+  data: WebstudioData,
+  children: Instance["children"],
+  insertTarget: DroppableTarget
+) => {
+  const metas = $registeredComponentMetas.get();
+  insertTarget =
+    getInstanceOrCreateFragmentIfNecessary(data.instances, insertTarget) ??
+    insertTarget;
+  insertTarget =
+    wrapEditableChildrenAroundDropTargetMutable(
+      data.instances,
+      data.props,
+      metas,
+      insertTarget
+    ) ?? insertTarget;
+  const [parentInstanceId] = insertTarget.parentSelector;
+  const parentInstance = data.instances.get(parentInstanceId);
+  if (parentInstance === undefined) {
+    return;
+  }
+  const { position } = insertTarget;
+  if (position === "end") {
+    parentInstance.children.push(...children);
+  } else {
+    parentInstance.children.splice(position, 0, ...children);
+  }
+};
+
 export const insertTemplateData = (
   templateData: WebstudioFragment,
   dropTarget: DroppableTarget
@@ -383,62 +413,47 @@ export const insertTemplateData = (
     dataSources: insertedDataSources,
   } = templateData;
   const rootInstanceId = insertedInstances[0].id;
-  serverSyncStore.createTransaction(
-    [
-      $instances,
-      // insert data sources before props to avoid error
-      // about missing data source when compute data source logic
-      $dataSources,
-      $props,
-      $styleSourceSelections,
-      $styleSources,
-      $styles,
-    ],
-    (
+  updateWebstudioData((data) => {
+    const {
       instances,
       dataSources,
       props,
       styleSourceSelections,
       styleSources,
-      styles
-    ) => {
-      insertInstancesMutable(
-        instances,
-        props,
-        $registeredComponentMetas.get(),
-        insertedInstances,
-        children,
-        dropTarget
-      );
-      insertPropsCopyMutable(props, insertedProps, new Map());
-      for (const dataSource of insertedDataSources) {
-        dataSources.set(dataSource.id, dataSource);
-      }
+      styles,
+    } = data;
+    for (const instance of insertedInstances) {
+      instances.set(instance.id, instance);
+    }
+    insertInstanceChildrenMutable(data, children, dropTarget);
+    insertPropsCopyMutable(props, insertedProps, new Map());
+    for (const dataSource of insertedDataSources) {
+      dataSources.set(dataSource.id, dataSource);
+    }
 
-      // insert only new style sources and their styles to support
-      // embed template tokens which have persistent id
-      // so when user changes these styles and then again add component with token
-      // nothing breaks visually
-      const insertedStyleSources = new Set<StyleSource["id"]>();
-      for (const styleSource of templateData.styleSources) {
-        if (styleSources.has(styleSource.id) === false) {
-          insertedStyleSources.add(styleSource.id);
-          styleSources.set(styleSource.id, styleSource);
-        }
-      }
-      for (const styleDecl of templateData.styles) {
-        if (insertedStyleSources.has(styleDecl.styleSourceId)) {
-          styles.set(getStyleDeclKey(styleDecl), styleDecl);
-        }
-      }
-      for (const styleSourceSelection of templateData.styleSourceSelections) {
-        styleSourceSelections.set(
-          styleSourceSelection.instanceId,
-          styleSourceSelection
-        );
+    // insert only new style sources and their styles to support
+    // embed template tokens which have persistent id
+    // so when user changes these styles and then again add component with token
+    // nothing breaks visually
+    const insertedStyleSources = new Set<StyleSource["id"]>();
+    for (const styleSource of templateData.styleSources) {
+      if (styleSources.has(styleSource.id) === false) {
+        insertedStyleSources.add(styleSource.id);
+        styleSources.set(styleSource.id, styleSource);
       }
     }
-  );
+    for (const styleDecl of templateData.styles) {
+      if (insertedStyleSources.has(styleDecl.styleSourceId)) {
+        styles.set(getStyleDeclKey(styleDecl), styleDecl);
+      }
+    }
+    for (const styleSourceSelection of templateData.styleSourceSelections) {
+      styleSourceSelections.set(
+        styleSourceSelection.instanceId,
+        styleSourceSelection
+      );
+    }
+  });
 
   $selectedInstanceSelector.set([rootInstanceId, ...dropTarget.parentSelector]);
 };

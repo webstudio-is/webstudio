@@ -14,12 +14,7 @@ import {
   $registeredComponentMetas,
   $instances,
 } from "../nano-states";
-import {
-  type InstanceSelector,
-  type DroppableTarget,
-  getInstanceOrCreateFragmentIfNecessary,
-  wrapEditableChildrenAroundDropTargetMutable,
-} from "../tree-utils";
+import type { InstanceSelector, DroppableTarget } from "../tree-utils";
 import {
   computeInstancesConstraints,
   deleteInstanceMutable,
@@ -30,6 +25,7 @@ import {
   isInstanceDetachable,
   updateWebstudioData,
   getWebstudioData,
+  insertInstanceChildrenMutable,
 } from "../instance-utils";
 import { portalComponent } from "@webstudio-is/react-sdk";
 
@@ -171,7 +167,6 @@ export const onPaste = (clipboardData: string): boolean => {
 
   const selectedPage = $selectedPage.get();
   const project = $project.get();
-  const metas = $registeredComponentMetas.get();
 
   if (
     fragment === undefined ||
@@ -204,32 +199,10 @@ export const onPaste = (clipboardData: string): boolean => {
     if (newRootInstanceId === undefined) {
       return;
     }
-    let dropTarget = pasteTarget;
-    dropTarget =
-      getInstanceOrCreateFragmentIfNecessary(data.instances, dropTarget) ??
-      dropTarget;
-    dropTarget =
-      wrapEditableChildrenAroundDropTargetMutable(
-        data.instances,
-        data.props,
-        metas,
-        dropTarget
-      ) ?? dropTarget;
-    const [parentId] = dropTarget.parentSelector;
-    const parentInstance = data.instances.get(parentId);
-    if (parentInstance === undefined) {
-      return;
-    }
-    const child: Instance["children"][number] = {
-      type: "id",
-      value: newRootInstanceId,
-    };
-    const { position } = dropTarget;
-    if (position === "end") {
-      parentInstance.children.push(child);
-    } else {
-      parentInstance.children.splice(position, 0, child);
-    }
+    const children: Instance["children"] = [
+      { type: "id", value: newRootInstanceId },
+    ];
+    insertInstanceChildrenMutable(data, children, pasteTarget);
   });
 
   return true;
