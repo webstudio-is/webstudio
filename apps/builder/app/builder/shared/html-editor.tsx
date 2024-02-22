@@ -1,4 +1,4 @@
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useMemo, type ReactNode, useState } from "react";
 import {
   keymap,
   drawSelection,
@@ -21,8 +21,21 @@ import {
   completionKeymap,
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
-import { theme, textVariants, css } from "@webstudio-is/design-system";
+import {
+  theme,
+  textVariants,
+  css,
+  Dialog,
+  DialogContent,
+  SmallIconButton,
+  DialogTrigger,
+  DialogTitle,
+  Button,
+  DialogClose,
+  Box,
+} from "@webstudio-is/design-system";
 import { CodeEditor } from "./code-editor";
+import { BoxIcon, CrossIcon } from "@webstudio-is/icons";
 
 const autocompletionStyle = css({
   "&.cm-tooltip.cm-tooltip-autocomplete": {
@@ -67,6 +80,7 @@ const autocompletionStyle = css({
 });
 
 const wrapperStyle = css({
+  position: "relative",
   "& .cm-content": {
     // 1 line is 16px
     // set min 10 lines and max 20 lines
@@ -81,41 +95,45 @@ export const HtmlEditor = forwardRef<
     readOnly?: boolean;
     invalid?: boolean;
     value: string;
+    title?: ReactNode;
     onChange: (newValue: string) => void;
     onBlur?: (event: FocusEvent) => void;
   }
->(({ readOnly = false, invalid = false, value, onChange, onBlur }, ref) => {
-  const extensions = useMemo(
-    () => [
-      highlightActiveLine(),
-      highlightSpecialChars(),
-      history(),
-      drawSelection(),
-      dropCursor(),
-      indentOnInput(),
-      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-      html({}),
-      bracketMatching(),
-      closeBrackets(),
-      // render autocomplete in body
-      // to prevent popover scroll overflow
-      tooltips({ parent: document.body }),
-      autocompletion({
-        icons: false,
-        tooltipClass: () => autocompletionStyle.toString(),
-      }),
-      keymap.of([
-        ...closeBracketsKeymap,
-        ...defaultKeymap,
-        ...historyKeymap,
-        ...completionKeymap,
-      ]),
-    ],
-    []
-  );
+>(
+  (
+    { readOnly = false, invalid = false, value, title, onChange, onBlur },
+    ref
+  ) => {
+    const extensions = useMemo(
+      () => [
+        highlightActiveLine(),
+        highlightSpecialChars(),
+        history(),
+        drawSelection(),
+        dropCursor(),
+        indentOnInput(),
+        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+        html({}),
+        bracketMatching(),
+        closeBrackets(),
+        // render autocomplete in body
+        // to prevent popover scroll overflow
+        tooltips({ parent: document.body }),
+        autocompletion({
+          icons: false,
+          tooltipClass: () => autocompletionStyle.toString(),
+        }),
+        keymap.of([
+          ...closeBracketsKeymap,
+          ...defaultKeymap,
+          ...historyKeymap,
+          ...completionKeymap,
+        ]),
+      ],
+      []
+    );
 
-  return (
-    <div className={wrapperStyle.toString()} ref={ref}>
+    const editor = (
       <CodeEditor
         extensions={extensions}
         readOnly={readOnly}
@@ -124,8 +142,80 @@ export const HtmlEditor = forwardRef<
         onChange={onChange}
         onBlur={onBlur}
       />
-    </div>
-  );
-});
+    );
+
+    return (
+      <div className={wrapperStyle.toString()} ref={ref}>
+        {editor}
+        <CodeEditorDialog title={title} content={editor}>
+          <SmallIconButton
+            icon={<BoxIcon />}
+            css={{
+              position: "absolute",
+              top: 2,
+              right: 2,
+            }}
+          />
+        </CodeEditorDialog>
+      </div>
+    );
+  }
+);
 
 HtmlEditor.displayName = "HtmlEditor";
+
+const CodeEditorDialog = ({
+  title,
+  content,
+  children,
+}: {
+  title: ReactNode;
+  content: ReactNode;
+  children: ReactNode;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
+        // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
+        css={{
+          maxWidth: "80vw",
+          width: isExpanded ? "80vw" : 640,
+          height: isExpanded ? "80vh" : 480,
+          zIndex: theme.zIndices[1],
+        }}
+        overlayCss={{ zIndex: theme.zIndices[1] }}
+      >
+        <Box css={{ padding: theme.spacing[7], height: "100%" }}>{content}</Box>
+        {/* Title is at the end intentionally,
+         * to make the close button last in the tab order
+         */}
+        <DialogTitle
+          suffix={
+            <>
+              <Button
+                color="ghost"
+                prefix={<BoxIcon />}
+                aria-label="Expand"
+                onClick={() => {
+                  setIsExpanded(isExpanded ? false : true);
+                }}
+              />
+              <DialogClose asChild>
+                <Button
+                  color="ghost"
+                  prefix={<CrossIcon />}
+                  aria-label="Close"
+                />
+              </DialogClose>
+            </>
+          }
+        >
+          {title}
+        </DialogTitle>
+      </DialogContent>
+    </Dialog>
+  );
+};
