@@ -17,19 +17,6 @@ import {
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 import type { PageData } from "~/routes/_index";
-export const fontAssets: Asset[] = [
-  {
-    id: "a8fb692a-5970-4014-ad4d-45c6f1edea36",
-    name: "CormorantGaramond-Medium_-nWJ-OtHncaW9xDHQ9hSA_CBl88Oo59QKH_z9pCWva2.woff2",
-    description: null,
-    projectId: "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    size: 156212,
-    type: "font",
-    createdAt: "2024-02-22T05:36:52.004Z",
-    format: "woff2",
-    meta: { family: "Cormorant Garamond", style: "normal", weight: 500 },
-  },
-];
 export const imageAssets: ImageAsset[] = [
   {
     id: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",

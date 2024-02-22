@@ -17,7 +17,6 @@ import {
 } from "@webstudio-is/sdk-components-react";
 
 import type { PageData } from "~/routes/_index";
-export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
   {
     id: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",

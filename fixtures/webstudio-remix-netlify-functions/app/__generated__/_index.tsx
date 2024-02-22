@@ -17,7 +17,6 @@ import {
 } from "@webstudio-is/sdk-components-react";
 
 import type { PageData } from "~/routes/_index";
-export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
 
 // Font assets on current page (can be preloaded)
