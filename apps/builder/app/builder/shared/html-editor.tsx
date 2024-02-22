@@ -75,63 +75,57 @@ const wrapperStyle = css({
   },
 });
 
-export const HtmlEditor = forwardRef(
-  (
-    {
-      readOnly = false,
-      invalid = false,
-      value,
-      onChange,
-      onBlur,
-    }: {
-      readOnly?: boolean;
-      invalid?: boolean;
-      value: string;
-      onChange: (newValue: string) => void;
-      onBlur?: (event: FocusEvent) => void;
-    },
-    ref: any
-  ) => {
-    const extensions = useMemo(
-      () => [
-        highlightActiveLine(),
-        highlightSpecialChars(),
-        history(),
-        drawSelection(),
-        dropCursor(),
-        indentOnInput(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-        html({}),
-        bracketMatching(),
-        closeBrackets(),
-        // render autocomplete in body
-        // to prevent popover scroll overflow
-        tooltips({ parent: document.body }),
-        autocompletion({
-          icons: false,
-          tooltipClass: () => autocompletionStyle.toString(),
-        }),
-        keymap.of([
-          ...closeBracketsKeymap,
-          ...defaultKeymap,
-          ...historyKeymap,
-          ...completionKeymap,
-        ]),
-      ],
-      []
-    );
-
-    return (
-      <div className={wrapperStyle.toString()} ref={ref}>
-        <CodeEditor
-          extensions={extensions}
-          readOnly={readOnly}
-          invalid={invalid}
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
-        />
-      </div>
-    );
+export const HtmlEditor = forwardRef<
+  HTMLDivElement,
+  {
+    readOnly?: boolean;
+    invalid?: boolean;
+    value: string;
+    onChange: (newValue: string) => void;
+    onBlur?: (event: FocusEvent) => void;
   }
-);
+>(({ readOnly = false, invalid = false, value, onChange, onBlur }, ref) => {
+  const extensions = useMemo(
+    () => [
+      highlightActiveLine(),
+      highlightSpecialChars(),
+      history(),
+      drawSelection(),
+      dropCursor(),
+      indentOnInput(),
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      html({}),
+      bracketMatching(),
+      closeBrackets(),
+      // render autocomplete in body
+      // to prevent popover scroll overflow
+      tooltips({ parent: document.body }),
+      autocompletion({
+        icons: false,
+        tooltipClass: () => autocompletionStyle.toString(),
+      }),
+      keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+      ]),
+    ],
+    []
+  );
+
+  return (
+    <div className={wrapperStyle.toString()} ref={ref}>
+      <CodeEditor
+        extensions={extensions}
+        readOnly={readOnly}
+        invalid={invalid}
+        value={value}
+        onChange={onChange}
+        onBlur={onBlur}
+      />
+    </div>
+  );
+});
+
+HtmlEditor.displayName = "HtmlEditor";
