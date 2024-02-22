@@ -25,6 +25,10 @@ const rootStyle = css({
     borderColor: theme.colors.borderFocus,
     outline: `1px solid ${theme.colors.borderFocus}`,
   },
+  '&[data-invalid="true"]': {
+    borderColor: theme.colors.borderDestructiveMain,
+    outlineColor: theme.colors.borderDestructiveMain,
+  },
   "& .cm-focused": {
     outline: "none",
   },
@@ -45,6 +49,7 @@ export const CodeEditor = ({
   className,
   readOnly = false,
   autoFocus = false,
+  invalid = false,
   value,
   onChange,
   onBlur,
@@ -53,9 +58,10 @@ export const CodeEditor = ({
   className?: string;
   readOnly?: boolean;
   autoFocus?: boolean;
+  invalid?: boolean;
   value: string;
   onChange: (newValue: string) => void;
-  onBlur?: () => void;
+  onBlur?: (event: FocusEvent) => void;
 }) => {
   const editorRef = useRef<null | HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>();
@@ -111,8 +117,8 @@ export const CodeEditor = ({
           }
         }),
         EditorView.domEventHandlers({
-          blur: () => {
-            onBlurRef.current?.();
+          blur(event) {
+            onBlurRef.current?.(event);
           },
         }),
       ]),
@@ -141,5 +147,7 @@ export const CodeEditor = ({
   if (className) {
     rootClassName += ` ${className}`;
   }
-  return <div className={rootClassName} ref={editorRef}></div>;
+  return (
+    <div className={rootClassName} data-invalid={invalid} ref={editorRef}></div>
+  );
 };

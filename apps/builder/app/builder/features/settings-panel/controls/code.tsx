@@ -14,6 +14,67 @@ import {
   $selectedInstanceScope,
   useBindingState,
 } from "../shared";
+import { useState } from "react";
+import {
+  Button,
+  Flex,
+  SmallIconButton,
+  Text,
+  Tooltip,
+  rawTheme,
+  theme,
+} from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
+
+const ErrorInfo = ({
+  error,
+  onAutoFix,
+}: {
+  error?: Error;
+  onAutoFix: () => void;
+}) => {
+  if (error === undefined) {
+    return;
+  }
+  const errorContent = (
+    <Flex direction="column" gap="2" css={{ width: theme.spacing[28] }}>
+      <Text>
+        Entered HTML has a validation error. Do you want us to fix it?
+      </Text>
+      <Button
+        color="neutral-destructive"
+        onClick={() => {
+          onAutoFix();
+        }}
+      >
+        Fix automatically
+      </Button>
+    </Flex>
+  );
+
+  return (
+    <Tooltip content={errorContent} delayDuration={0}>
+      <SmallIconButton
+        icon={<InfoCircleIcon color={rawTheme.colors.foregroundDestructive} />}
+      />
+    </Tooltip>
+  );
+};
+
+type Error = { message: string; value: string; expected: string };
+
+const validateHtml = (value: string): Error | undefined => {
+  // This is basically what browser does when innerHTML is set
+  // but isolated within temporary element
+  // so the result is correct markup
+  const div = document.createElement("div");
+  div.innerHTML = value;
+  const expected = div.innerHTML;
+  // We don't need to show error for unnecessary whitespace.
+  if (value.replace(/\s/g, "") !== expected.replace(/\s/g, "")) {
+    return { message: "Invalid HTML detected", value, expected };
+  }
+};
 
 export const CodeControl = ({
   meta,
@@ -24,21 +85,23 @@ export const CodeControl = ({
   onChange,
   onDelete,
 }: ControlProps<"code">) => {
+  const [error, setError] = useState<Error>();
   const metaOverride = {
     ...meta,
     control: "text" as const,
   };
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
-    // sanitize html before saving
-    // this is basically what browser does when innerHTML is set
-    // but isolated within temporary element
-    // so the result is correct markup
-    const div = document.createElement("div");
-    div.innerHTML = value;
+    const error = validateHtml(value);
+    setError(error);
+
+    if (error) {
+      return;
+    }
+
     if (prop?.type === "expression") {
-      updateExpressionValue(prop.value, div.innerHTML);
+      updateExpressionValue(prop.value, value);
     } else {
-      onChange({ type: "string", value: div.innerHTML });
+      onChange({ type: "string", value });
     }
   });
   const label = getLabel(metaOverride, propName);
@@ -53,12 +116,23 @@ export const CodeControl = ({
   return (
     <VerticalLayout
       label={
-        <Label
-          description={metaOverride.description}
-          readOnly={overwritable === false}
-        >
-          {label}
-        </Label>
+        <Flex gap="1" align="center">
+          <Label
+            description={metaOverride.description}
+            readOnly={overwritable === false}
+          >
+            {label}
+          </Label>
+          <ErrorInfo
+            error={error}
+            onAutoFix={() => {
+              if (error) {
+                setError(undefined);
+                localValue.set(error.expected);
+              }
+            }}
+          />
+        </Flex>
       }
       deletable={deletable}
       onDelete={onDelete}
@@ -66,8 +140,12 @@ export const CodeControl = ({
       <BindingControl>
         <HtmlEditor
           readOnly={overwritable === false}
+          invalid={error !== undefined}
           value={localValue.value}
-          onChange={localValue.set}
+          onChange={(value) => {
+            setError(undefined);
+            localValue.set(value);
+          }}
           onBlur={localValue.save}
         />
         <BindingPopover

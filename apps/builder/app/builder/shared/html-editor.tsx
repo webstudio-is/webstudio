@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { forwardRef, useMemo } from "react";
 import {
   keymap,
   drawSelection,
@@ -75,17 +75,16 @@ const wrapperStyle = css({
   },
 });
 
-export const HtmlEditor = ({
-  readOnly = false,
-  value,
-  onChange,
-  onBlur,
-}: {
-  readOnly?: boolean;
-  value: string;
-  onChange: (newValue: string) => void;
-  onBlur?: () => void;
-}) => {
+export const HtmlEditor = forwardRef<
+  HTMLDivElement,
+  {
+    readOnly?: boolean;
+    invalid?: boolean;
+    value: string;
+    onChange: (newValue: string) => void;
+    onBlur?: (event: FocusEvent) => void;
+  }
+>(({ readOnly = false, invalid = false, value, onChange, onBlur }, ref) => {
   const extensions = useMemo(
     () => [
       highlightActiveLine(),
@@ -116,14 +115,17 @@ export const HtmlEditor = ({
   );
 
   return (
-    <div className={wrapperStyle.toString()}>
+    <div className={wrapperStyle.toString()} ref={ref}>
       <CodeEditor
         extensions={extensions}
         readOnly={readOnly}
+        invalid={invalid}
         value={value}
         onChange={onChange}
         onBlur={onBlur}
       />
     </div>
   );
-};
+});
+
+HtmlEditor.displayName = "HtmlEditor";
