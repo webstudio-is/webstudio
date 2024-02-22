@@ -6,13 +6,13 @@ import {
   type ActionArgs,
   type LoaderArgs,
   json,
+  redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import type { Page as PageType, ProjectMeta } from "@webstudio-is/sdk";
+import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
-  fontAssets,
   pageData,
   user,
   projectId,
@@ -21,6 +21,9 @@ import {
   Page,
   imageAssets,
   getRemixParams,
+  getPageMeta,
+  pageFontAssets,
+  pageBackgroundImageAssets,
 } from "../__generated__/[script-test]._index";
 import { loadResources } from "../__generated__/[script-test]._index.server";
 import css from "../__generated__/index.css";
@@ -33,6 +36,15 @@ export type PageData = {
 export const loader = async (arg: LoaderArgs) => {
   const params = getRemixParams(arg.params);
   const resources = await loadResources({ params });
+  const pageMeta = getPageMeta({ params, resources });
+
+  if (pageMeta.redirect) {
+    const status =
+      pageMeta.status === 301 || pageMeta.status === 302
+        ? pageMeta.status
+        : 302;
+    return redirect(pageMeta.redirect, status);
+  }
 
   const host =
     arg.request.headers.get("x-forwarded-host") ||
@@ -53,10 +65,14 @@ export const loader = async (arg: LoaderArgs) => {
       excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
       params,
       resources,
+      pageMeta,
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
-    { headers: { "Cache-Control": "public, max-age=600" } }
+    {
+      status: pageMeta.status,
+      headers: { "Cache-Control": "public, max-age=600" },
+    }
   );
 };
 
@@ -66,6 +82,94 @@ export const headers = () => {
   };
 };
 
+export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
+  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [];
+  if (data === undefined) {
+    return metas;
+  }
+  const { pageMeta } = data;
+  const { project } = pageData;
+
+  if (data.url) {
+    metas.push({
+      property: "og:url",
+      content: data.url,
+    });
+  }
+
+  if (pageMeta.title) {
+    metas.push({ title: pageMeta.title });
+
+    metas.push({
+      property: "og:title",
+      content: pageMeta.title,
+    });
+  }
+
+  metas.push({ property: "og:type", content: "website" });
+
+  const origin = `https://${data.host}`;
+
+  if (project?.siteName) {
+    metas.push({
+      property: "og:site_name",
+      content: project.siteName,
+    });
+    metas.push({
+      "script:ld+json": {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: project.siteName,
+        url: origin,
+      },
+    });
+  }
+
+  if (pageMeta.excludePageFromSearch || data.excludeFromSearch) {
+    metas.push({
+      name: "robots",
+      content: "noindex, nofollow",
+    });
+  }
+
+  if (pageMeta.description) {
+    metas.push({
+      name: "description",
+      content: pageMeta.description,
+    });
+    metas.push({
+      property: "og:description",
+      content: pageMeta.description,
+    });
+  }
+
+  if (pageMeta.socialImageAssetId) {
+    const imageAsset = imageAssets.find(
+      (asset) => asset.id === pageMeta.socialImageAssetId
+    );
+
+    if (imageAsset) {
+      metas.push({
+        property: "og:image",
+        content: `https://${data.host}${imageLoader({
+          src: imageAsset.name,
+          // Do not transform social image (not enough information do we need to do this)
+          format: "raw",
+        })}`,
+      });
+    }
+  } else if (pageMeta.socialImageUrl) {
+    metas.push({
+      property: "og:image",
+      content: pageMeta.socialImageUrl,
+    });
+  }
+
+  metas.push(...pageMeta.custom);
+
+  return metas;
+};
+
 export const links: LinksFunction = () => {
   const result: LinkDescriptor[] = [];
 
@@ -73,6 +177,59 @@ export const links: LinksFunction = () => {
     rel: "stylesheet",
     href: css,
   });
+
+  const { project } = pageData;
+
+  if (project?.faviconAssetId) {
+    const imageAsset = imageAssets.find(
+      (asset) => asset.id === project.faviconAssetId
+    );
+
+    if (imageAsset) {
+      result.push({
+        rel: "icon",
+        href: imageLoader({
+          src: imageAsset.name,
+          width: 128,
+          quality: 100,
+          format: "auto",
+        }),
+        type: undefined,
+      });
+    }
+  } else {
+    result.push({
+      rel: "icon",
+      href: "/favicon.ico",
+      type: "image/x-icon",
+    });
+
+    result.push({
+      rel: "shortcut icon",
+      href: "/favicon.ico",
+      type: "image/x-icon",
+    });
+  }
+
+  for (const asset of pageFontAssets) {
+    result.push({
+      rel: "preload",
+      href: assetBaseUrl + asset.name,
+      as: "font",
+    });
+  }
+
+  for (const backgroundImageAsset of pageBackgroundImageAssets) {
+    result.push({
+      rel: "preload",
+      href: imageLoader({
+        src: backgroundImageAsset.name,
+        format: "raw",
+      }),
+      as: "image",
+    });
+  }
+
   return result;
 };
 

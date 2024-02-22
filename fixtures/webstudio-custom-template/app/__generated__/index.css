@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/custom-folder/CormorantGaramond-Medium_-nWJ-OtHncaW9xDHQ9hSA_CBl88Oo59QKH_z9pCWva2.woff2")
+    format("woff2");
+}
 html {
   margin: 0;
   display: grid;
@@ -82,6 +90,38 @@ html {
 @media all {
   .c11x2bo2 {
     font-size: 4em;
+  }
+  .cykwawo {
+    font-family: "Cormorant Garamond", sans-serif;
+  }
+  .c1qmshyz {
+    background-attachment: scroll, scroll, scroll;
+  }
+  .c12wnxll {
+    -webkit-background-clip: border-box, border-box, border-box;
+  }
+  .c1hzshzo {
+    background-blend-mode: normal, normal, normal;
+  }
+  .c136ve95 {
+    background-image: linear-gradient(
+        rgba(255, 0, 0, 0.2),
+        rgba(0, 255, 255, 0.2)
+      ),
+      url("/custom-folder/home_wsKvRSqvkajPPBeycZ-C8.svg"),
+      linear-gradient(to right, rgba(255, 0, 255, 0.2), rgba(0, 255, 0, 0.2));
+  }
+  .cyttr60 {
+    background-origin: padding-box, padding-box, padding-box;
+  }
+  .c1cywb85 {
+    background-position: 0%, 0%, 0%;
+  }
+  .c187ui6a {
+    background-repeat: repeat, repeat, repeat;
+  }
+  .c1azrtl7 {
+    background-size: auto, auto, auto;
   }
   .c1vynykc {
     margin-top: 15px;

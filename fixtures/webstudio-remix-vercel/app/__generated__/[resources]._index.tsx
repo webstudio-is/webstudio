@@ -2,7 +2,12 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import type {
+  Asset,
+  FontAsset,
+  ImageAsset,
+  ProjectMeta,
+} from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
@@ -12,7 +17,6 @@ import {
 } from "@webstudio-is/sdk-components-react";
 
 import type { PageData } from "~/routes/_index";
-export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
   {
     id: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
@@ -48,6 +52,12 @@ export const imageAssets: ImageAsset[] = [
     meta: { width: 1024, height: 1024 },
   },
 ];
+
+// Font assets on current page (can be preloaded)
+export const pageFontAssets: FontAsset[] = [];
+
+export const pageBackgroundImageAssets: ImageAsset[] = [];
+
 export const pageData: PageData = {
   project: {
     siteName: "KittyGuardedZone",
