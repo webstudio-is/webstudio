@@ -23,6 +23,8 @@ import {
   imageAssets,
   getRemixParams,
   getPageMeta,
+  pageFontAssets,
+  pageBackgroundImageAssets,
 } from "../../../__generated__/_index";
 import { loadResources } from "../../../__generated__/_index.server";
 import css from "../__generated__/index.css";
@@ -210,17 +212,23 @@ export const links: LinksFunction = () => {
     });
   }
 
-  for (const asset of fontAssets) {
-    if (asset.type === "font") {
-      result.push({
-        rel: "preload",
-        href: assetBaseUrl + asset.name,
-        as: "font",
-        crossOrigin: "anonymous",
-        // @todo add mimeType
-        // type: asset.mimeType,
-      });
-    }
+  for (const asset of pageFontAssets) {
+    result.push({
+      rel: "preload",
+      href: assetBaseUrl + asset.name,
+      as: "font",
+    });
+  }
+
+  for (const backgroundImageAsset of pageBackgroundImageAssets) {
+    result.push({
+      rel: "preload",
+      href: imageLoader({
+        src: backgroundImageAsset.name,
+        format: "raw",
+      }),
+      as: "image",
+    });
   }
 
   return result;
