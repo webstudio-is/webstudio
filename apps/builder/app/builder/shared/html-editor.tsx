@@ -32,7 +32,8 @@ import {
   DialogTitle,
   Button,
   DialogClose,
-  Box,
+  Grid,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { CodeEditor } from "./code-editor";
 import { BoxIcon, CrossIcon } from "@webstudio-is/icons";
@@ -174,6 +175,10 @@ const CodeEditorDialog = ({
   children: ReactNode;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const width = isExpanded ? "80vw" : "640px";
+  const height = isExpanded ? "80vh" : "480px";
+  const padding = rawTheme.spacing[7];
+
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -181,14 +186,26 @@ const CodeEditorDialog = ({
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
-          maxWidth: "80vw",
-          width: isExpanded ? "80vw" : 640,
-          height: isExpanded ? "80vh" : 480,
+          maxWidth: "none",
+          maxHeight: "none",
           zIndex: theme.zIndices[1],
         }}
         overlayCss={{ zIndex: theme.zIndices[1] }}
       >
-        <Box css={{ padding: theme.spacing[7], height: "100%" }}>{content}</Box>
+        <Grid
+          css={{
+            padding,
+            width,
+            height,
+            overflow: "hidden",
+            boxSizing: "content-box",
+            "& .cm-content": {
+              maxHeight: `calc(${height} - ${padding})`,
+            },
+          }}
+        >
+          {content}
+        </Grid>
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
          */}
