@@ -9,7 +9,6 @@ import {
   useContext,
   type ReactNode,
 } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   DotIcon,
   InfoCircleIcon,
@@ -396,9 +395,6 @@ export const BindingPopover = ({
   const hasUnsavedChange = useRef<boolean>(false);
   const preventedClosing = useRef<boolean>(false);
 
-  if (isFeatureEnabled("bindings") === false) {
-    return;
-  }
   const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
   return (
     <FloatingPanelPopover

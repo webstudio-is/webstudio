@@ -8,7 +8,6 @@ import {
   Separator,
   ScrollArea,
 } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { MetaSection } from "./meta-section";
 import { CompilerSection } from "./compiler-section";
@@ -37,12 +36,8 @@ const ProjectSettingsView = ({
             <MetaSection />
             <Separator />
             <CompilerSection />
-            {isFeatureEnabled("redirects") && (
-              <>
-                <Separator />
-                <RedirectSection />
-              </>
-            )}
+            <Separator />
+            <RedirectSection />
             <div />
           </Grid>
         </ScrollArea>

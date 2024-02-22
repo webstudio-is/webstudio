@@ -34,7 +34,6 @@ import {
   CssValueInput,
 } from "../../shared/css-value-input";
 import { theme } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { TooltipContent } from "../../../style-panel/shared/property-name";
 
 const GapLinked = ({
@@ -453,10 +452,8 @@ const orderedDisplayValues = [
   "inline-flex",
   "inline",
   "none",
+  "contents",
 ];
-if (isFeatureEnabled("displayContents")) {
-  orderedDisplayValues.push("contents");
-}
 
 const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
   const aIndex = orderedDisplayValues.indexOf(a.name);

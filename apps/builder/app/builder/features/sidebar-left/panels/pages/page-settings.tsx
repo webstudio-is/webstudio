@@ -622,7 +622,7 @@ const FormFields = ({
             </Grid>
           </Grid>
 
-          {isFeatureEnabled("folders") && values.isHomePage === false && (
+          {values.isHomePage === false && (
             <Grid gap={1}>
               <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
               <Select
@@ -652,37 +652,35 @@ const FormFields = ({
           )}
 
           {isFeatureEnabled("cms") && (
-            <StatusField
-              errors={errors.status}
-              value={values.status}
-              onChange={(value) => onChange({ field: "status", value })}
-            />
+            <>
+              <StatusField
+                errors={errors.status}
+                value={values.status}
+                onChange={(value) => onChange({ field: "status", value })}
+              />
+              <RedirectField
+                errors={errors.redirect}
+                value={values.redirect}
+                onChange={(value) => onChange({ field: "redirect", value })}
+              />
+              <PanelBanner>
+                <Text>
+                  Dynamic routing, redirect and status code are a part of the
+                  CMS functionality.
+                </Text>
+                <Flex align="center" gap={1}>
+                  <UploadIcon />
+                  <Link
+                    color="inherit"
+                    target="_blank"
+                    href="https://webstudio.is/pricing"
+                  >
+                    Upgrade to Pro
+                  </Link>
+                </Flex>
+              </PanelBanner>
+            </>
           )}
-
-          {isFeatureEnabled("cms") && (
-            <RedirectField
-              errors={errors.redirect}
-              value={values.redirect}
-              onChange={(value) => onChange({ field: "redirect", value })}
-            />
-          )}
-
-          <PanelBanner>
-            <Text>
-              Dynamic routing, redirect and status code are a part of the CMS
-              functionality.
-            </Text>
-            <Flex align="center" gap={1}>
-              <UploadIcon />
-              <Link
-                color="inherit"
-                target="_blank"
-                href="https://webstudio.is/pricing"
-              >
-                Upgrade to Pro
-              </Link>
-            </Flex>
-          </PanelBanner>
         </Grid>
 
         <Separator />
