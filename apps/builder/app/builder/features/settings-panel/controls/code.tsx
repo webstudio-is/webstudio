@@ -35,10 +35,15 @@ export const CodeControl = ({
     // so the result is correct markup
     const div = document.createElement("div");
     div.innerHTML = value;
+    const sanitizedValue = div.innerHTML;
+    if (value !== sanitizedValue) {
+      // @todo show editor in error state
+      return;
+    }
     if (prop?.type === "expression") {
-      updateExpressionValue(prop.value, div.innerHTML);
+      updateExpressionValue(prop.value, sanitizedValue);
     } else {
-      onChange({ type: "string", value: div.innerHTML });
+      onChange({ type: "string", value: sanitizedValue });
     }
   });
   const label = getLabel(metaOverride, propName);
