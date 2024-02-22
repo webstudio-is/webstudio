@@ -295,6 +295,7 @@ export const prebuild = async (options: {
   const projectMetas = new Map<Instance["component"], WsComponentMeta>();
   const componentsByPage: ComponentsByPage = {};
   const siteDataByPage: SiteDataByPage = {};
+  const fontAssetsByPage: Record<Page["id"], FontAsset[]> = {};
 
   for (const page of Object.values(siteData.pages)) {
     const instanceMap = new Map(siteData.build.instances);
@@ -364,6 +365,36 @@ export const prebuild = async (options: {
         projectMetas.set(instance.component, meta);
       }
     }
+
+    // Extract background SVGs and Font assets
+    const styleSourceSelections = siteData.build?.styleSourceSelections ?? [];
+    const pageStyleSourceIds = new Set(
+      styleSourceSelections
+        .filter(([, { instanceId }]) => pageInstanceSet.has(instanceId))
+        .map(([, { values }]) => values)
+        .flat()
+    );
+
+    const pageStyles = siteData.build?.styles?.filter(([, { styleSourceId }]) =>
+      pageStyleSourceIds.has(styleSourceId)
+    );
+
+    // Extract fonts
+    const pageFontStylesSet = new Set(
+      pageStyles
+        .filter(([, { property }]) => property === "fontFamily")
+        .map(([, { value }]) =>
+          value.type === "fontFamily" ? value.value : undefined
+        )
+        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
+        .flat()
+    );
+
+    const pageFontAssets = siteData.assets
+      .filter((asset): asset is FontAsset => asset.type === "font")
+      .filter((fontAsset) => pageFontStylesSet.has(fontAsset.meta.family));
+
+    fontAssetsByPage[page.id] = pageFontAssets;
   }
 
   const assetsToDownload: Promise<void>[] = [];
@@ -500,6 +531,7 @@ export const prebuild = async (options: {
     }
 
     const pageData = siteDataByPage[pageId];
+    const pageFontAssets = fontAssetsByPage[pageId];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       project: siteData.build.pages.meta,
@@ -552,13 +584,16 @@ export const prebuild = async (options: {
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import { Fragment, useState } from "react";
-import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import type { Asset, FontAsset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}
 import type { PageData } from "~/routes/_index";
 export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
+
+// Font assets on current page (can be preloaded)
+export const pageFontAssets: FontAsset[] = ${JSON.stringify(pageFontAssets)}
 export const pageData: PageData = ${JSON.stringify(renderedPageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user

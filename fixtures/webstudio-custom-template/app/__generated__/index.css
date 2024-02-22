@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/custom-folder/CormorantGaramond-Medium_-nWJ-OtHncaW9xDHQ9hSA_CBl88Oo59QKH_z9pCWva2.woff2")
+    format("woff2");
+}
 html {
   margin: 0;
   display: grid;
@@ -82,6 +90,9 @@ html {
 @media all {
   .c11x2bo2 {
     font-size: 4em;
+  }
+  .cykwawo {
+    font-family: "Cormorant Garamond", sans-serif;
   }
   .c1vynykc {
     margin-top: 15px;
