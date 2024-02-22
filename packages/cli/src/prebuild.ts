@@ -425,7 +425,6 @@ export const prebuild = async (options: {
   }
 
   const assetsToDownload: Promise<void>[] = [];
-  const fontAssets: FontAsset[] = [];
 
   const imageAssets: ImageAsset[] = [];
   for (const asset of siteData.assets) {
@@ -464,7 +463,6 @@ export const prebuild = async (options: {
             )
           )
         );
-        fontAssets.push(asset);
       }
     }
   }
@@ -617,7 +615,6 @@ import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}
 import type { PageData } from "~/routes/_index";
-export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
 
 // Font assets on current page (can be preloaded)

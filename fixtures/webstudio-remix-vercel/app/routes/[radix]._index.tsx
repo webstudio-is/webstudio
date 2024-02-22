@@ -13,7 +13,6 @@ import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
-  fontAssets,
   pageData,
   user,
   projectId,
