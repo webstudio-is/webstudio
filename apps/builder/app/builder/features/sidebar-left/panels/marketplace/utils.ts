@@ -89,11 +89,17 @@ export const insert = async ({
     authToken,
     origin: location.origin,
   });
+  const instances = new Map(data.build.instances);
+  // Taking the first child of the Marketplace Item instance
+  const childInstanceId = instances.get(instanceId)?.children[0].value;
+  if (childInstanceId === undefined) {
+    return;
+  }
   const fragment = extractWebstudioFragment(
     {
       pages: data.build.pages,
       assets: new Map(data.assets.map((asset) => [asset.id, asset])),
-      instances: new Map(data.build.instances),
+      instances,
       dataSources: new Map(data.build.dataSources),
       resources: new Map(data.build.resources),
       props: new Map(data.build.props),
@@ -102,8 +108,7 @@ export const insert = async ({
       breakpoints: new Map(data.build.breakpoints),
       styles: new Map(data.build.styles),
     },
-    instanceId
+    childInstanceId
   );
-
   findTargetAndInserFragment(fragment);
 };
