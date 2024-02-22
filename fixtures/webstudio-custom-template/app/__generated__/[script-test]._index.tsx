@@ -46,6 +46,9 @@ export const imageAssets: ImageAsset[] = [
 
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: FontAsset[] = [];
+
+export const pageBackgroundImageAssets: ImageAsset[] = [];
+
 export const pageData: PageData = {
   project: {
     siteName: "Fixture Site",

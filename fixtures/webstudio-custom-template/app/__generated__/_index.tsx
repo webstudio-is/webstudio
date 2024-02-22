@@ -58,6 +58,21 @@ export const pageFontAssets: FontAsset[] = [
     meta: { family: "Cormorant Garamond", style: "normal", weight: 500 },
   },
 ];
+
+export const pageBackgroundImageAssets: ImageAsset[] = [
+  {
+    id: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
+    name: "home_wsKvRSqvkajPPBeycZ-C8.svg",
+    description: null,
+    projectId: "0d856812-61d8-4014-a20a-82e01c0eb8ee",
+    size: 3350,
+    type: "image",
+    format: "svg",
+    createdAt: "2023-10-30T20:35:47.113Z",
+    meta: { width: 16, height: 16 },
+  },
+];
+
 export const pageData: PageData = {
   project: {
     siteName: "Fixture Site",
@@ -99,7 +114,7 @@ const Page = ({}: { params: any }) => {
       <Heading
         data-ws-id="7pwqBSgrfuuOfk1JblWcL"
         data-ws-component="Heading"
-        className="c11x2bo2 cykwawo"
+        className="c11x2bo2 cykwawo c1qmshyz c12wnxll c1hzshzo c136ve95 cyttr60 c1cywb85 c187ui6a c1azrtl7"
       >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
