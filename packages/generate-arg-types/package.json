@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/generate-arg-types",
-  "version": "0.133.0",
+  "version": "0.134.0",
   "description": "Generate components property types",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
