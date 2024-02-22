@@ -42,6 +42,10 @@ const rootStyle = css({
   "& .cm-line": {
     padding: 0,
   },
+  "& .cm-editor": {
+    // makes sure you can click to focus when editor content is smaller than the container
+    height: "100%",
+  },
 });
 
 export const CodeEditor = ({
