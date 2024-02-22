@@ -36,12 +36,7 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import { CodeEditor } from "./code-editor";
-import {
-  CrossIcon,
-  DimensionsIcon,
-  MaximizeIcon,
-  MinimizeIcon,
-} from "@webstudio-is/icons";
+import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
 const autocompletionStyle = css({
   "&.cm-tooltip.cm-tooltip-autocomplete": {
