@@ -295,6 +295,8 @@ export const prebuild = async (options: {
   const projectMetas = new Map<Instance["component"], WsComponentMeta>();
   const componentsByPage: ComponentsByPage = {};
   const siteDataByPage: SiteDataByPage = {};
+  const fontAssetsByPage: Record<Page["id"], FontAsset[]> = {};
+  const backgroundImageAssetsByPage: Record<Page["id"], ImageAsset[]> = {};
 
   for (const page of Object.values(siteData.pages)) {
     const instanceMap = new Map(siteData.build.instances);
@@ -364,10 +366,65 @@ export const prebuild = async (options: {
         projectMetas.set(instance.component, meta);
       }
     }
+
+    // Extract background SVGs and Font assets
+    const styleSourceSelections = siteData.build?.styleSourceSelections ?? [];
+    const pageStyleSourceIds = new Set(
+      styleSourceSelections
+        .filter(([, { instanceId }]) => pageInstanceSet.has(instanceId))
+        .map(([, { values }]) => values)
+        .flat()
+    );
+
+    const pageStyles = siteData.build?.styles?.filter(([, { styleSourceId }]) =>
+      pageStyleSourceIds.has(styleSourceId)
+    );
+
+    // Extract fonts
+    const pageFontFamilySet = new Set(
+      pageStyles
+        .filter(([, { property }]) => property === "fontFamily")
+        .map(([, { value }]) =>
+          value.type === "fontFamily" ? value.value : undefined
+        )
+        .flat()
+        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
+    );
+
+    const pageFontAssets = siteData.assets
+      .filter((asset): asset is FontAsset => asset.type === "font")
+      .filter((fontAsset) => pageFontFamilySet.has(fontAsset.meta.family));
+
+    fontAssetsByPage[page.id] = pageFontAssets;
+
+    // Extract background images
+    // backgroundImage => "value.type=="layers" => value.type == "image" => .value (assetId)
+    const backgroundImageAssetIdSet = new Set(
+      pageStyles
+        .filter(([, { property }]) => property === "backgroundImage")
+        .map(([, { value }]) =>
+          value.type === "layers"
+            ? value.value.map((layer) =>
+                layer.type === "image"
+                  ? layer.value.type === "asset"
+                    ? layer.value.value
+                    : undefined
+                  : undefined
+              )
+            : undefined
+        )
+        .flat()
+        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined)
+    );
+
+    const backgroundImageAssets = siteData.assets
+      .filter((asset): asset is ImageAsset => asset.type === "image")
+      .filter((imageAsset) => backgroundImageAssetIdSet.has(imageAsset.id));
+
+    backgroundImageAssetsByPage[page.id] = backgroundImageAssets;
   }
 
   const assetsToDownload: Promise<void>[] = [];
-  const fontAssets: FontAsset[] = [];
 
   const imageAssets: ImageAsset[] = [];
   for (const asset of siteData.assets) {
@@ -406,7 +463,6 @@ export const prebuild = async (options: {
             )
           )
         );
-        fontAssets.push(asset);
       }
     }
   }
@@ -500,6 +556,8 @@ export const prebuild = async (options: {
     }
 
     const pageData = siteDataByPage[pageId];
+    const pageFontAssets = fontAssetsByPage[pageId];
+    const pageBackgroundImageAssets = backgroundImageAssetsByPage[pageId];
     // serialize data only used in runtime
     const renderedPageData: PageData = {
       project: siteData.build.pages.meta,
@@ -552,13 +610,20 @@ export const prebuild = async (options: {
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import { Fragment, useState } from "react";
-import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import type { Asset, FontAsset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}
 import type { PageData } from "~/routes/_index";
-export const fontAssets: Asset[] = ${JSON.stringify(fontAssets)}
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
+
+// Font assets on current page (can be preloaded)
+export const pageFontAssets: FontAsset[] = ${JSON.stringify(pageFontAssets)}
+
+export const pageBackgroundImageAssets: ImageAsset[] = ${JSON.stringify(
+      pageBackgroundImageAssets
+    )}
+
 export const pageData: PageData = ${JSON.stringify(renderedPageData)};
 export const user: { email: string | null } | undefined = ${JSON.stringify(
       siteData.user
