@@ -36,7 +36,12 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import { CodeEditor } from "./code-editor";
-import { BoxIcon, CrossIcon } from "@webstudio-is/icons";
+import {
+  CrossIcon,
+  DimensionsIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+} from "@webstudio-is/icons";
 
 const autocompletionStyle = css({
   "&.cm-tooltip.cm-tooltip-autocomplete": {
@@ -150,7 +155,7 @@ export const HtmlEditor = forwardRef<
         {editor}
         <CodeEditorDialog title={title} content={editor}>
           <SmallIconButton
-            icon={<BoxIcon />}
+            icon={<MaximizeIcon />}
             css={{
               position: "absolute",
               top: 2,
@@ -214,7 +219,7 @@ const CodeEditorDialog = ({
             <>
               <Button
                 color="ghost"
-                prefix={<BoxIcon />}
+                prefix={isExpanded ? <MinimizeIcon /> : <MaximizeIcon />}
                 aria-label="Expand"
                 onClick={() => {
                   setIsExpanded(isExpanded ? false : true);
