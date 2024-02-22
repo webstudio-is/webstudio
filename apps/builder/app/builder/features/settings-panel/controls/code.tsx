@@ -113,6 +113,18 @@ export const CodeControl = ({
     prop?.type === "expression" ? prop.value : undefined
   );
 
+  const errorInfo = (
+    <ErrorInfo
+      error={error}
+      onAutoFix={() => {
+        if (error) {
+          setError(undefined);
+          localValue.set(error.expected);
+        }
+      }}
+    />
+  );
+
   return (
     <VerticalLayout
       label={
@@ -123,15 +135,7 @@ export const CodeControl = ({
           >
             {label}
           </Label>
-          <ErrorInfo
-            error={error}
-            onAutoFix={() => {
-              if (error) {
-                setError(undefined);
-                localValue.set(error.expected);
-              }
-            }}
-          />
+          {errorInfo}
         </Flex>
       }
       deletable={deletable}
@@ -139,6 +143,12 @@ export const CodeControl = ({
     >
       <BindingControl>
         <HtmlEditor
+          title={
+            <Flex gap="1" align="center">
+              <Text variant="labelsTitleCase">HTML Code Editor</Text>
+              {errorInfo}
+            </Flex>
+          }
           readOnly={overwritable === false}
           invalid={error !== undefined}
           value={localValue.value}
