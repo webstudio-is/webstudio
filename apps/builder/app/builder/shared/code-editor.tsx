@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode, useState } from "react";
 import {
   Annotation,
   EditorState,
@@ -6,11 +6,26 @@ import {
   type Extension,
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
-import { theme, textVariants, css } from "@webstudio-is/design-system";
+import {
+  theme,
+  textVariants,
+  css,
+  SmallIconButton,
+  rawTheme,
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  Grid,
+  DialogTitle,
+  Button,
+  DialogClose,
+  Flex,
+} from "@webstudio-is/design-system";
+import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
 const ExternalChange = Annotation.define<boolean>();
 
-const rootStyle = css({
+const editorContentStyle = css({
   ...textVariants.mono,
   boxSizing: "border-box",
   color: theme.colors.foregroundMain,
@@ -48,25 +63,25 @@ const rootStyle = css({
   },
 });
 
-export const CodeEditor = ({
-  extensions,
-  className,
-  readOnly = false,
-  autoFocus = false,
-  invalid = false,
-  value,
-  onChange,
-  onBlur,
-}: {
+type EditorContentProps = {
   extensions: Extension[];
-  className?: string;
   readOnly?: boolean;
   autoFocus?: boolean;
   invalid?: boolean;
   value: string;
   onChange: (newValue: string) => void;
   onBlur?: (event: FocusEvent) => void;
-}) => {
+};
+
+const EditorContent = ({
+  extensions,
+  readOnly = false,
+  autoFocus = false,
+  invalid = false,
+  value,
+  onChange,
+  onBlur,
+}: EditorContentProps) => {
   const editorRef = useRef<null | HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>();
 
@@ -147,11 +162,117 @@ export const CodeEditor = ({
     });
   }, [value]);
 
-  let rootClassName = rootStyle.toString();
-  if (className) {
-    rootClassName += ` ${className}`;
-  }
   return (
-    <div className={rootClassName} data-invalid={invalid} ref={editorRef}></div>
+    <div
+      className={editorContentStyle()}
+      data-invalid={invalid}
+      ref={editorRef}
+    />
+  );
+};
+
+const CodeEditorDialog = ({
+  title,
+  content,
+  children,
+}: {
+  title: ReactNode;
+  content: ReactNode;
+  children: ReactNode;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const width = isExpanded ? "80vw" : "640px";
+  const height = isExpanded ? "80vh" : "480px";
+  const padding = rawTheme.spacing[7];
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
+        // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
+        css={{
+          maxWidth: "none",
+          maxHeight: "none",
+          zIndex: theme.zIndices[1],
+        }}
+        overlayCss={{ zIndex: theme.zIndices[1] }}
+      >
+        <Grid
+          css={{
+            padding,
+            width,
+            height,
+            overflow: "hidden",
+            boxSizing: "content-box",
+            "& .cm-content": {
+              maxHeight: `calc(${height} - ${padding})`,
+            },
+          }}
+        >
+          {content}
+        </Grid>
+        {/* Title is at the end intentionally,
+         * to make the close button last in the tab order
+         */}
+        <DialogTitle
+          suffix={
+            <Flex gap="1">
+              <Button
+                color="ghost"
+                prefix={isExpanded ? <MinimizeIcon /> : <MaximizeIcon />}
+                aria-label="Expand"
+                onClick={() => {
+                  setIsExpanded(isExpanded ? false : true);
+                }}
+              />
+              <DialogClose asChild>
+                <Button
+                  color="ghost"
+                  prefix={<CrossIcon />}
+                  aria-label="Close"
+                />
+              </DialogClose>
+            </Flex>
+          }
+        >
+          {title}
+        </DialogTitle>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const codeEditorStyle = css({
+  position: "relative",
+  "&:hover": {
+    "--ws-code-editor-dialog-maximize-icon-display": "block",
+  },
+});
+
+export const CodeEditor = ({
+  className,
+  title,
+  ...editorContentProps
+}: EditorContentProps & {
+  className?: string;
+  title?: ReactNode;
+}) => {
+  const content = <EditorContent {...editorContentProps} />;
+  return (
+    <div className={codeEditorStyle({ className })}>
+      {content}
+      <CodeEditorDialog title={title} content={content}>
+        <SmallIconButton
+          icon={<MaximizeIcon />}
+          css={{
+            position: "absolute",
+            top: 6,
+            right: 4,
+            display: `var(--ws-code-editor-dialog-maximize-icon-display, none)`,
+          }}
+        />
+      </CodeEditorDialog>
+    </div>
   );
 };
