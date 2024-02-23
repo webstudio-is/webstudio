@@ -544,6 +544,7 @@ const FormFields = ({
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
+  const { allowDynamicData } = useStore($userPlanFeatures);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
 
   const pageUrl = usePageUrl(values, pathParamsDataSourceId);
@@ -663,22 +664,24 @@ const FormFields = ({
                 value={values.redirect}
                 onChange={(value) => onChange({ field: "redirect", value })}
               />
-              <PanelBanner>
-                <Text>
-                  Dynamic routing, redirect and status code are a part of the
-                  CMS functionality.
-                </Text>
-                <Flex align="center" gap={1}>
-                  <UploadIcon />
-                  <Link
-                    color="inherit"
-                    target="_blank"
-                    href="https://webstudio.is/pricing"
-                  >
-                    Upgrade to Pro
-                  </Link>
-                </Flex>
-              </PanelBanner>
+              {allowDynamicData === false && (
+                <PanelBanner>
+                  <Text>
+                    Dynamic routing, redirect and status code are a part of the
+                    CMS functionality.
+                  </Text>
+                  <Flex align="center" gap={1}>
+                    <UploadIcon />
+                    <Link
+                      color="inherit"
+                      target="_blank"
+                      href="https://webstudio.is/pricing"
+                    >
+                      Upgrade to Pro
+                    </Link>
+                  </Flex>
+                </PanelBanner>
+              )}
             </>
           )}
         </Grid>
