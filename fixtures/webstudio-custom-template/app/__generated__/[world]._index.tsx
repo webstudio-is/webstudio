@@ -10,11 +10,7 @@ import type {
 } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
-import {
-  Body as Body,
-  Link as Link,
-} from "@webstudio-is/sdk-components-react-remix";
-import { Heading as Heading } from "@webstudio-is/sdk-components-react";
+import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 
 import type { PageData } from "~/routes/_index";
 export const imageAssets: ImageAsset[] = [
@@ -56,36 +52,19 @@ export const getPageMeta = ({
   resources: Record<string, any>;
 }): PageMeta => {
   return {
-    title: "Script Test",
+    title: "Untitled",
     description: "",
     excludePageFromSearch: false,
-    socialImageAssetId: "",
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
+    socialImageAssetId: undefined,
+    socialImageUrl: "",
+    status: 200,
+    redirect: "",
     custom: [],
   };
 };
 
 const Page = ({}: { params: any }) => {
-  return (
-    <Body
-      data-ws-id="LW98_-srDnnagkR10lsk4"
-      data-ws-component="Body"
-      className="c1vynykc c122cnm9 c15qd3jj c1jp5sfs"
-    >
-      <Heading data-ws-id="SHXddDLFWST_sy44UfGQO" data-ws-component="Heading">
-        {"Script Test"}
-      </Heading>
-      <Link
-        data-ws-id="8MXByradrqVRiGSyHI0aH"
-        data-ws-component="Link"
-        href={"/"}
-      >
-        {"Go Home"}
-      </Link>
-    </Body>
-  );
+  return <Body data-ws-id="jDb2FuSK2-azIZxkH5XNv" data-ws-component="Body" />;
 };
 
 export { Page };

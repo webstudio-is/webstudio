@@ -24,8 +24,8 @@ import {
   getPageMeta,
   pageFontAssets,
   pageBackgroundImageAssets,
-} from "../__generated__/[nested].[nested-page]._index";
-import { loadResources } from "../__generated__/[nested].[nested-page]._index.server";
+} from "../__generated__/[world]._index";
+import { loadResources } from "../__generated__/[world]._index.server";
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 

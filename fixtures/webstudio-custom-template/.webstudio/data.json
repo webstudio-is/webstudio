@@ -1,19 +1,23 @@
 {
   "build": {
-    "id": "0c1fd955-ccd4-45cc-b62d-c12777f2c28b",
+    "id": "8f6d166a-f965-4461-b903-faf265c378f7",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 125,
-    "createdAt": "2024-02-22T06:28:11.305Z",
-    "updatedAt": "2024-02-22T06:28:11.305Z",
+    "version": 127,
+    "createdAt": "2024-02-23T10:10:16.827Z",
+    "updatedAt": "2024-02-23T10:10:16.827Z",
     "pages": {
       "meta": {
         "siteName": "Fixture Site",
         "faviconAssetId": "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
         "code": "<script>console.log('HELLO')</script>\n<meta property=\"saas:test\" content=\"test\">"
       },
-      "settings": {
-        "atomicStyles": true
-      },
+      "redirects": [
+        {
+          "old": "/hello",
+          "new": "/world",
+          "status": "301"
+        }
+      ],
       "homePage": {
         "id": "nfzls_SkTc9jKYyxcZ8Lw",
         "name": "Home",
@@ -42,6 +46,26 @@
           },
           "rootInstanceId": "LW98_-srDnnagkR10lsk4",
           "path": "/script-test"
+        },
+        {
+          "id": "lyz5sZaJ7WzLt71cX3VJ2",
+          "name": "world",
+          "title": "\"Untitled\"",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "false",
+            "socialImageUrl": "\"\"",
+            "status": "200",
+            "redirect": "\"\"",
+            "custom": [
+              {
+                "property": "",
+                "content": "\"\""
+              }
+            ]
+          },
+          "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
+          "path": "/world"
         }
       ],
       "folders": [
@@ -49,7 +73,11 @@
           "id": "root",
           "name": "Root",
           "slug": "",
-          "children": ["nfzls_SkTc9jKYyxcZ8Lw", "xT46WZKzCBTvUCIObMELW"]
+          "children": [
+            "nfzls_SkTc9jKYyxcZ8Lw",
+            "xT46WZKzCBTvUCIObMELW",
+            "lyz5sZaJ7WzLt71cX3VJ2"
+          ]
         }
       ]
     },
@@ -585,6 +613,15 @@
             }
           ]
         }
+      ],
+      [
+        "jDb2FuSK2-azIZxkH5XNv",
+        {
+          "type": "instance",
+          "id": "jDb2FuSK2-azIZxkH5XNv",
+          "component": "Body",
+          "children": []
+        }
       ]
     ],
     "deployment": {
@@ -630,6 +667,26 @@
       },
       "rootInstanceId": "LW98_-srDnnagkR10lsk4",
       "path": "/script-test"
+    },
+    {
+      "id": "lyz5sZaJ7WzLt71cX3VJ2",
+      "name": "world",
+      "title": "\"Untitled\"",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "false",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
+      "path": "/world"
     }
   ],
   "assets": [
