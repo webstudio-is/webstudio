@@ -4,7 +4,6 @@ import { usePress } from "@react-aria/interactions";
 import {
   type WsComponentMeta,
   componentCategories,
-  collectionComponent,
 } from "@webstudio-is/react-sdk";
 import {
   theme,
