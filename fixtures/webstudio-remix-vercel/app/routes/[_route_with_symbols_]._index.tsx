@@ -214,18 +214,16 @@ export const links: LinksFunction = () => {
   for (const asset of pageFontAssets) {
     result.push({
       rel: "preload",
-      href: assetBaseUrl + asset.name,
+      href: `${assetBaseUrl}${asset.name}`,
       as: "font",
+      crossOrigin: "anonymous",
     });
   }
 
   for (const backgroundImageAsset of pageBackgroundImageAssets) {
     result.push({
       rel: "preload",
-      href: imageLoader({
-        src: backgroundImageAsset.name,
-        format: "raw",
-      }),
+      href: `${assetBaseUrl}${backgroundImageAsset.name}`,
       as: "image",
     });
   }
