@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "5eb1ac93-67ea-45e9-86a7-152a34d5dab6",
+    "id": "0c1fd955-ccd4-45cc-b62d-c12777f2c28b",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 113,
-    "createdAt": "2024-02-07T18:05:33.222Z",
-    "updatedAt": "2024-02-07T18:05:33.222Z",
+    "version": 125,
+    "createdAt": "2024-02-22T06:28:11.305Z",
+    "updatedAt": "2024-02-22T06:28:11.305Z",
     "pages": {
       "meta": {
         "siteName": "Fixture Site",
@@ -201,6 +201,224 @@
             "type": "unit",
             "unit": "px",
             "value": 15
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:fontFamily:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "fontFamily",
+          "value": {
+            "type": "fontFamily",
+            "value": ["Cormorant Garamond"]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundAttachment:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundAttachment",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "keyword",
+                "value": "scroll"
+              },
+              {
+                "type": "keyword",
+                "value": "scroll"
+              },
+              {
+                "type": "keyword",
+                "value": "scroll"
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundClip:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundClip",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "keyword",
+                "value": "border-box"
+              },
+              {
+                "type": "keyword",
+                "value": "border-box"
+              },
+              {
+                "type": "keyword",
+                "value": "border-box"
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundBlendMode:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundBlendMode",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "keyword",
+                "value": "normal"
+              },
+              {
+                "type": "keyword",
+                "value": "normal"
+              },
+              {
+                "type": "keyword",
+                "value": "normal"
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundImage:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundImage",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "unparsed",
+                "value": "linear-gradient(rgba(255,0,0,0.2),rgba(0,255,255,0.2))"
+              },
+              {
+                "type": "image",
+                "value": {
+                  "type": "asset",
+                  "value": "cd1e9fad-8df1-45c6-800f-05fda2d2469f"
+                }
+              },
+              {
+                "type": "unparsed",
+                "value": "linear-gradient(to right,rgba(255,0,255,0.2),rgba(0,255,0,0.2))"
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundOrigin:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundOrigin",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "keyword",
+                "value": "padding-box"
+              },
+              {
+                "type": "keyword",
+                "value": "padding-box"
+              },
+              {
+                "type": "keyword",
+                "value": "padding-box"
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundPosition:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundPosition",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "unit",
+                "value": 0,
+                "unit": "%"
+              },
+              {
+                "type": "unit",
+                "value": 0,
+                "unit": "%"
+              },
+              {
+                "type": "unit",
+                "value": 0,
+                "unit": "%"
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundRepeat:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundRepeat",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "keyword",
+                "value": "repeat"
+              },
+              {
+                "type": "keyword",
+                "value": "repeat"
+              },
+              {
+                "type": "keyword",
+                "value": "repeat"
+              }
+            ]
+          }
+        }
+      ],
+      [
+        "NfeivFkbA_acBLVg7dn9P:mIDIDBHsdlix3RVZAVmv7:backgroundSize:",
+        {
+          "breakpointId": "mIDIDBHsdlix3RVZAVmv7",
+          "styleSourceId": "NfeivFkbA_acBLVg7dn9P",
+          "property": "backgroundSize",
+          "value": {
+            "type": "layers",
+            "value": [
+              {
+                "type": "keyword",
+                "value": "auto"
+              },
+              {
+                "type": "keyword",
+                "value": "auto"
+              },
+              {
+                "type": "keyword",
+                "value": "auto"
+              }
+            ]
           }
         }
       ]
@@ -415,6 +633,21 @@
     }
   ],
   "assets": [
+    {
+      "id": "a8fb692a-5970-4014-ad4d-45c6f1edea36",
+      "name": "CormorantGaramond-Medium_-nWJ-OtHncaW9xDHQ9hSA_CBl88Oo59QKH_z9pCWva2.woff2",
+      "description": null,
+      "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
+      "size": 156212,
+      "type": "font",
+      "createdAt": "2024-02-22T05:36:52.004Z",
+      "format": "woff2",
+      "meta": {
+        "family": "Cormorant Garamond",
+        "style": "normal",
+        "weight": 500
+      }
+    },
     {
       "id": "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
       "name": "home_wsKvRSqvkajPPBeycZ-C8.svg",

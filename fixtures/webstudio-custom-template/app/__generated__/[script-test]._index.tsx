@@ -2,7 +2,12 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type { Asset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import type {
+  Asset,
+  FontAsset,
+  ImageAsset,
+  ProjectMeta,
+} from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 import {
@@ -12,7 +17,6 @@ import {
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 import type { PageData } from "~/routes/_index";
-export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [
   {
     id: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
@@ -26,6 +30,12 @@ export const imageAssets: ImageAsset[] = [
     meta: { width: 16, height: 16 },
   },
 ];
+
+// Font assets on current page (can be preloaded)
+export const pageFontAssets: FontAsset[] = [];
+
+export const pageBackgroundImageAssets: ImageAsset[] = [];
+
 export const pageData: PageData = {
   project: {
     siteName: "Fixture Site",

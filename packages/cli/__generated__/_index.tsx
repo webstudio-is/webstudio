@@ -1,11 +1,10 @@
 /**
  * The only intent of this file is to support typings inside ../templates/route-template for easier development.
  **/
-import type { Asset, ImageAsset } from "@webstudio-is/sdk";
+import type { ImageAsset, FontAsset } from "@webstudio-is/sdk";
 import type { PageData } from "../templates/defaults/__templates__/route-template";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 
-export const fontAssets: Asset[] = [];
 export const imageAssets: ImageAsset[] = [];
 
 export const pageData: PageData = {
@@ -48,3 +47,6 @@ export const formsProperties = new Map<
   string,
   { method?: string; action?: string }
 >([]);
+
+export const pageFontAssets: FontAsset[] = [];
+export const pageBackgroundImageAssets: ImageAsset[] = [];

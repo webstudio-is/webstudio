@@ -58,16 +58,20 @@ DialogContent.displayName = "DialogContent";
 export const DialogTitle = ({
   children,
   closeLabel = "Close dialog",
+  suffix,
 }: {
   children: ReactNode;
+  suffix?: ReactNode;
   closeLabel?: string;
 }) => (
   <TitleSlot>
     <PanelTitle
       suffix={
-        <Primitive.Close asChild>
-          <CloseButton aria-label={closeLabel} />
-        </Primitive.Close>
+        suffix ?? (
+          <DialogClose asChild>
+            <CloseButton aria-label={closeLabel} />
+          </DialogClose>
+        )
       }
     >
       <Primitive.Title className={titleStyle()}>{children}</Primitive.Title>
