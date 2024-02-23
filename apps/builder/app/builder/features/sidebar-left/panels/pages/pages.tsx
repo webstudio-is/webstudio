@@ -42,7 +42,6 @@ import {
   NewFolderSettings,
   newFolderId,
 } from "./folder-settings";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { serverSyncStore } from "~/shared/sync";
 import { useMount } from "~/shared/hook-utils/use-mount";
 import { ROOT_FOLDER_ID, type Folder } from "@webstudio-is/sdk";
@@ -249,16 +248,14 @@ const PagesPanel = ({
         title="Pages"
         suffix={
           <>
-            {isFeatureEnabled("folders") && (
-              <Tooltip content="New folder" side="bottom">
-                <Button
-                  onClick={() => onCreateNewFolder()}
-                  aria-label="New folder"
-                  prefix={<NewFolderIcon />}
-                  color="ghost"
-                />
-              </Tooltip>
-            )}
+            <Tooltip content="New folder" side="bottom">
+              <Button
+                onClick={() => onCreateNewFolder()}
+                aria-label="New folder"
+                prefix={<NewFolderIcon />}
+                color="ghost"
+              />
+            </Tooltip>
             <Tooltip content="New page" side="bottom">
               <Button
                 onClick={() => onCreateNewPage()}

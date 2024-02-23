@@ -34,8 +34,8 @@ import {
   CssValueInput,
 } from "../../shared/css-value-input";
 import { theme } from "@webstudio-is/design-system";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { TooltipContent } from "../../../style-panel/shared/property-name";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const GapLinked = ({
   isLinked,
@@ -454,6 +454,7 @@ const orderedDisplayValues = [
   "inline",
   "none",
 ];
+
 if (isFeatureEnabled("displayContents")) {
   orderedDisplayValues.push("contents");
 }

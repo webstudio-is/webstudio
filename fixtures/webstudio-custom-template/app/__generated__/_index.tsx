@@ -123,7 +123,7 @@ export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
 
-export const pagesPaths = new Set(["", "/script-test"]);
+export const pagesPaths = new Set(["", "/script-test", "/world"]);
 
 export const formsProperties = new Map<
   string,
