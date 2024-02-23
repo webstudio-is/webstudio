@@ -29,7 +29,6 @@ import { getInstanceLabel } from "~/shared/instance-utils";
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
-  console.log(metaByComponentName);
   const { metaByCategory, componentNamesByMeta } = useMemo(
     () => getMetaMaps(metaByComponentName),
     [metaByComponentName]
