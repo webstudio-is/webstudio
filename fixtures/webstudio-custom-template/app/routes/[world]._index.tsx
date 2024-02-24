@@ -6,7 +6,10 @@ import {
   type ActionArgs,
   type LoaderArgs,
   json,
+<<<<<<< HEAD
   redirect,
+=======
+>>>>>>> 2d1936ae4 (Resync and rebuild)
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
 import type { ProjectMeta } from "@webstudio-is/sdk";
@@ -43,7 +46,11 @@ export const loader = async (arg: LoaderArgs) => {
       pageMeta.status === 301 || pageMeta.status === 302
         ? pageMeta.status
         : 302;
+<<<<<<< HEAD
     return redirect(pageMeta.redirect, status);
+=======
+    return Response.redirect(pageMeta.redirect, status);
+>>>>>>> 2d1936ae4 (Resync and rebuild)
   }
 
   const host =
@@ -214,16 +221,28 @@ export const links: LinksFunction = () => {
   for (const asset of pageFontAssets) {
     result.push({
       rel: "preload",
+<<<<<<< HEAD
       href: `${assetBaseUrl}${asset.name}`,
       as: "font",
       crossOrigin: "anonymous",
+=======
+      href: assetBaseUrl + asset.name,
+      as: "font",
+>>>>>>> 2d1936ae4 (Resync and rebuild)
     });
   }
 
   for (const backgroundImageAsset of pageBackgroundImageAssets) {
     result.push({
       rel: "preload",
+<<<<<<< HEAD
       href: `${assetBaseUrl}${backgroundImageAsset.name}`,
+=======
+      href: imageLoader({
+        src: backgroundImageAsset.name,
+        format: "raw",
+      }),
+>>>>>>> 2d1936ae4 (Resync and rebuild)
       as: "image",
     });
   }
