@@ -4,7 +4,6 @@ import { usePress } from "@react-aria/interactions";
 import {
   type WsComponentMeta,
   componentCategories,
-  collectionComponent,
 } from "@webstudio-is/react-sdk";
 import {
   theme,
@@ -90,9 +89,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                       (meta: WsComponentMeta, index) => {
                         const component = componentNamesByMeta.get(meta);
                         if (component === undefined) {
-                          return;
-                        }
-                        if (component === collectionComponent) {
                           return;
                         }
                         return (
