@@ -1,22 +1,19 @@
-export type Category = "sectionTemplates" | "apps";
-
-type BaseProduct = {
+type BaseMeta = {
   id: string;
-  category: Category;
   label: string;
   url: string;
   authToken: string;
   projectId: string;
 };
 
-type PanelProduct = BaseProduct & {
-  component: "panel";
+type PanelMeta = BaseMeta & {
+  category: "templates";
 };
 
-type DialogProduct = BaseProduct & {
-  component: "dialog";
+type DialogMeta = BaseMeta & {
+  category: "apps";
   width?: number;
   height?: number;
 };
 
-export type MarketplaceProduct = PanelProduct | DialogProduct;
+export type MarketplaceProduct = PanelMeta | DialogMeta;

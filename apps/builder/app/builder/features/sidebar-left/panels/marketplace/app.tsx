@@ -7,14 +7,14 @@ import {
 import type { MarketplaceProduct } from "./types";
 import { Iframe } from "./iframe";
 
-export const ProductDialog = ({
+export const App = ({
   product,
   onOpenChange,
 }: {
   product: MarketplaceProduct;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  if (product.component !== "dialog") {
+  if (product.category !== "apps") {
     return;
   }
   return (

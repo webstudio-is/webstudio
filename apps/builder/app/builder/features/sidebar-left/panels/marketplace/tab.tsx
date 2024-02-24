@@ -4,32 +4,37 @@ import { Flex } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { Marketplace } from "./marketplace";
-import { ProductDialog } from "./product-dialog";
-import { ProductPanel } from "./product-panel";
-import { insert, subscribeActions, useActiveProduct } from "./utils";
+import { App } from "./app";
+import { Templates } from "./template";
+import {
+  $activeProductData,
+  insert,
+  subscribeActions,
+  useActiveProduct,
+} from "./utils";
 import type { MarketplaceProduct } from "./types";
+import { useStore } from "@nanostores/react";
 
 const useActions = (activeProduct?: MarketplaceProduct) => {
+  const activeProductData = useStore($activeProductData);
   useEffect(() => {
     return subscribeActions((action) => {
-      if (activeProduct === undefined) {
+      if (activeProduct === undefined || activeProductData === undefined) {
         return;
       }
       if (action.type === "insert") {
         insert({
           instanceId: action.payload,
-          projectId: activeProduct.projectId,
-          authToken: activeProduct.authToken,
+          data: activeProductData,
         });
       }
     });
-  }, [activeProduct]);
+  }, [activeProduct, activeProductData]);
 };
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [activeProduct, setActiveProduct] = useActiveProduct();
   useActions(activeProduct);
-  const component = activeProduct?.component ?? "panel";
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
@@ -43,14 +48,11 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         title="Marketplace"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      {component === "dialog" && activeProduct && (
-        <ProductDialog
-          product={activeProduct}
-          onOpenChange={handleOpenChange}
-        />
+      {activeProduct?.category === "apps" && (
+        <App product={activeProduct} onOpenChange={handleOpenChange} />
       )}
-      {component === "panel" && activeProduct ? (
-        <ProductPanel product={activeProduct} onOpenChange={handleOpenChange} />
+      {activeProduct?.category === "templates" ? (
+        <Templates product={activeProduct} onOpenChange={handleOpenChange} />
       ) : (
         <Marketplace />
       )}

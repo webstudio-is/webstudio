@@ -383,6 +383,8 @@ export const TreeItemLabelBase: ForwardRefRenderFunction<
         truncate
         css={{
           ml: prefix ? theme.spacing[3] : 0,
+          flexBasis: 0,
+          flexGrow: 1,
         }}
         {...restProps}
       >

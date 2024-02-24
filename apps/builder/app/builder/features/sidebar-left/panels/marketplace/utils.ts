@@ -1,35 +1,45 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
 import { nanoid } from "nanoid";
-import type { Category, MarketplaceProduct } from "./types";
-import { loadProjectDataById } from "@webstudio-is/http-client";
+import type { MarketplaceProduct } from "./types";
+import { loadProjectDataById, type Data } from "@webstudio-is/http-client";
 import {
   extractWebstudioFragment,
   findTargetAndInserFragment,
 } from "~/shared/instance-utils";
+import type { WebstudioData } from "@webstudio-is/sdk";
 
 const $activeProductId = atom<MarketplaceProduct["id"] | undefined>();
+
+export const $activeProductData = atom<WebstudioData | undefined>();
 
 export const products: Array<MarketplaceProduct> = [
   // @todo use the right product
   {
     id: nanoid(),
-    category: "sectionTemplates",
-    component: "panel",
+    category: "templates",
     label: "Starter Sections",
-    url: "http://localhost:3001/copy-1/test",
+    url: "http://localhost:3000",
     authToken: "436191d4-974f-43bb-a878-ea8a51339a9a",
     projectId: "7db43bf6-eecb-48f8-82a7-884506953e1b",
   },
 ];
 
-export const categories: Array<{ category: Category; label: string }> = [
-  { category: "sectionTemplates", label: "Section Templates" },
+//http://localhost:3000/builder/7db43bf6-eecb-48f8-82a7-884506953e1b?authToken=436191d4-974f-43bb-a878-ea8a51339a9a&mode=preview
+
+export const categories: Array<{
+  category: MarketplaceProduct["category"];
+  label: string;
+}> = [
+  { category: "templates", label: "Templates" },
   { category: "apps", label: "Apps" },
 ];
 
 export const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
-  const productsByCategory = new Map<Category, Array<MarketplaceProduct>>();
+  const productsByCategory = new Map<
+    MarketplaceProduct["category"],
+    Array<MarketplaceProduct>
+  >();
 
   for (const product of products) {
     if (
@@ -54,8 +64,41 @@ export const useActiveProduct = () => {
     ? products.find((product) => product.id === activeProductId)
     : undefined;
 
-  return [product, $activeProductId.set] as const;
+  const setActiveProduct = async (id?: MarketplaceProduct["id"]) => {
+    $activeProductId.set(id);
+    const product = products.find((product) => product.id === id);
+    if (product === undefined || id === undefined) {
+      return;
+    }
+    let webstudioData;
+    try {
+      const data = await loadProjectDataById({
+        projectId: product.projectId,
+        authToken: product.authToken,
+        origin: location.origin, //"https://apps.webstudio.is",
+      });
+      webstudioData = toWebstudioData(data);
+    } catch (error) {
+      // @todo what should happen if there is an error?
+      console.error(error);
+    }
+    $activeProductData.set(webstudioData);
+  };
+  return [product, setActiveProduct] as const;
 };
+
+const toWebstudioData = (data: Data): WebstudioData => ({
+  pages: data.build.pages,
+  assets: new Map(data.assets.map((asset) => [asset.id, asset])),
+  instances: new Map(data.build.instances),
+  dataSources: new Map(data.build.dataSources),
+  resources: new Map(data.build.resources),
+  props: new Map(data.build.props),
+  styleSourceSelections: new Map(data.build.styleSourceSelections),
+  styleSources: new Map(data.build.styleSources),
+  breakpoints: new Map(data.build.breakpoints),
+  styles: new Map(data.build.styles),
+});
 
 type Action = {
   type: "insert";
@@ -77,38 +120,16 @@ export const subscribeActions = (callback: (action: Action) => void) => {
 
 export const insert = async ({
   instanceId,
-  projectId,
-  authToken,
+  data,
 }: {
   instanceId: string;
-  projectId: string;
-  authToken: string;
+  data: WebstudioData;
 }) => {
-  const data = await loadProjectDataById({
-    projectId,
-    authToken,
-    origin: location.origin,
-  });
-  const instances = new Map(data.build.instances);
   // Taking the first child of the Marketplace Item instance
-  const childInstanceId = instances.get(instanceId)?.children[0].value;
+  const childInstanceId = data.instances.get(instanceId)?.children[0].value;
   if (childInstanceId === undefined) {
     return;
   }
-  const fragment = extractWebstudioFragment(
-    {
-      pages: data.build.pages,
-      assets: new Map(data.assets.map((asset) => [asset.id, asset])),
-      instances,
-      dataSources: new Map(data.build.dataSources),
-      resources: new Map(data.build.resources),
-      props: new Map(data.build.props),
-      styleSourceSelections: new Map(data.build.styleSourceSelections),
-      styleSources: new Map(data.build.styleSources),
-      breakpoints: new Map(data.build.breakpoints),
-      styles: new Map(data.build.styles),
-    },
-    childInstanceId
-  );
+  const fragment = extractWebstudioFragment(data, childInstanceId);
   findTargetAndInserFragment(fragment);
 };

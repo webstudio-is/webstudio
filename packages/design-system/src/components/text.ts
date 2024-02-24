@@ -53,9 +53,6 @@ export const textStyle = css({
         pb: "0.5em",
         mt: "-0.5em",
         mb: "-0.5em",
-
-        flexBasis: 0,
-        flexGrow: 1,
       },
     },
     userSelect: {

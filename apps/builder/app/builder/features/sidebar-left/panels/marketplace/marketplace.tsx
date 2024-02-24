@@ -9,7 +9,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import type { Category, MarketplaceProduct } from "./types";
+import type { MarketplaceProduct } from "./types";
 import {
   getProductsByCategory,
   categories,
@@ -17,9 +17,10 @@ import {
   products,
 } from "./utils";
 
-const productsByCategory = new Map<Category, Array<MarketplaceProduct>>(
-  getProductsByCategory(products)
-);
+const productsByCategory = new Map<
+  MarketplaceProduct["category"],
+  Array<MarketplaceProduct>
+>(getProductsByCategory(products));
 
 const focusOutline = focusRingStyle();
 
@@ -62,11 +63,12 @@ export const Marketplace = () => {
           <CollapsibleSection label={label} key={category} fullWidth>
             <List asChild>
               <Flex direction="column">
-                {products.map((product: MarketplaceProduct) => {
+                {products.map((product: MarketplaceProduct, index) => {
                   return (
                     <ListItem
                       asChild
                       key={product.id}
+                      index={index}
                       onSelect={() => {
                         setActiveProduct(product.id);
                       }}
