@@ -130,6 +130,10 @@ export const insert = async ({
   if (childInstanceId === undefined) {
     return;
   }
+  //  const childInstanceId = instanceId;
+  const child = data.instances.get(childInstanceId);
   const fragment = extractWebstudioFragment(data, childInstanceId);
+  console.log({ instanceId, childInstanceId, data, child, fragment });
+
   findTargetAndInserFragment(fragment);
 };

@@ -308,12 +308,14 @@ const $editingPage = computed(
   }
 );
 
+export type VariableValues = Map<string, unknown>;
+
 export const $pageRootScope = computed(
   [$editingPage, $variableValuesByInstanceSelector, $dataSources],
   (editingPage, variableValuesByInstanceSelector, dataSources) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
-    const variableValues = new Map<string, unknown>();
+    const variableValues: VariableValues = new Map();
     if (editingPage === undefined) {
       return { variableValues, scope, aliases };
     }
