@@ -14,7 +14,6 @@ import { ChevronLeftIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $activeProductData, insert } from "./utils";
 import { computeExpression } from "~/shared/nano-states";
-import { $pageRootScope, type VariableValues } from "../pages/page-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
@@ -103,11 +102,15 @@ const marketplaceMeta = {
   title: "ws:title",
 };
 
-const getTemplatesDataByCategory = (
-  data: WebstudioData,
-  variableValues: VariableValues
-) => {
+const getTemplatesDataByCategory = (data?: WebstudioData) => {
   const templatesByCategory = new Map<string, Array<TemplateData>>();
+
+  if (data === undefined) {
+    return templatesByCategory;
+  }
+
+  // In the future we could support bindings in the store as well.
+  const variableValues = new Map();
 
   for (const page of data.pages.pages) {
     let category = page.meta.custom?.find(
@@ -159,15 +162,10 @@ export const Templates = ({
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const activeProductData = useStore($activeProductData);
-  // @todo use variables from the template project
-  const { variableValues } = useStore($pageRootScope);
-
-  const templatesDataByCategory = useMemo(() => {
-    if (activeProductData === undefined) {
-      return;
-    }
-    return getTemplatesDataByCategory(activeProductData, variableValues);
-  }, [activeProductData, variableValues]);
+  const templatesDataByCategory = useMemo(
+    () => getTemplatesDataByCategory(activeProductData),
+    [activeProductData]
+  );
 
   if (
     templatesDataByCategory === undefined ||
