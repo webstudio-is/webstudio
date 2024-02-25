@@ -33,29 +33,6 @@ export const categories: Array<{
   { category: "apps", label: "Apps" },
 ];
 
-export const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
-  const productsByCategory = new Map<
-    MarketplaceProduct["category"],
-    Array<MarketplaceProduct>
-  >();
-
-  for (const product of products) {
-    if (
-      categories.some((category) => category.category === product.category) ===
-      false
-    ) {
-      throw new Error(`Unknown category: ${product.category}`);
-    }
-    let categoryItems = productsByCategory.get(product.category);
-    if (categoryItems === undefined) {
-      categoryItems = [];
-      productsByCategory.set(product.category, categoryItems);
-    }
-    categoryItems.push(product);
-  }
-  return productsByCategory;
-};
-
 export const useActiveProduct = () => {
   const activeProductId = useStore($activeProductId);
   const product = activeProductId
@@ -97,24 +74,6 @@ const toWebstudioData = (data: Data): WebstudioData => ({
   breakpoints: new Map(data.build.breakpoints),
   styles: new Map(data.build.styles),
 });
-
-type Action = {
-  type: "insert";
-  payload: string;
-};
-
-export const subscribeActions = (callback: (action: Action) => void) => {
-  const onMessage = (event: MessageEvent) => {
-    if (event.data.namespace === "MarketplaceItem") {
-      callback(event.data);
-    }
-  };
-  addEventListener("message", onMessage, false);
-
-  return () => {
-    removeEventListener("message", onMessage, false);
-  };
-};
 
 /**
  * Insert page as a template.

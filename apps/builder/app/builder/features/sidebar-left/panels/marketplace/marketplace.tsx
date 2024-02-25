@@ -10,12 +10,30 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { MarketplaceProduct } from "./types";
-import {
-  getProductsByCategory,
-  categories,
-  useActiveProduct,
-  products,
-} from "./utils";
+import { categories, useActiveProduct, products } from "./utils";
+
+const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
+  const productsByCategory = new Map<
+    MarketplaceProduct["category"],
+    Array<MarketplaceProduct>
+  >();
+
+  for (const product of products) {
+    if (
+      categories.some((category) => category.category === product.category) ===
+      false
+    ) {
+      throw new Error(`Unknown category: ${product.category}`);
+    }
+    let categoryItems = productsByCategory.get(product.category);
+    if (categoryItems === undefined) {
+      categoryItems = [];
+      productsByCategory.set(product.category, categoryItems);
+    }
+    categoryItems.push(product);
+  }
+  return productsByCategory;
+};
 
 const productsByCategory = new Map<
   MarketplaceProduct["category"],
