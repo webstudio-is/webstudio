@@ -711,14 +711,10 @@ ${utilsExport}
     for (const redirect of redirects) {
       const redirectPagePath = generateRemixRoute(redirect.old);
       const redirectFileName = `${redirectPagePath}.ts`;
-
-      const content = `import { type LoaderArgs, redirect } from "@remix-run/server-runtime";
-
-export const loader = (arg: LoaderArgs) => {
-  return redirect("${redirect.new}", ${redirect.status ?? 301});
+      const content = `export const loader = () => {
+  return Response.redirect("${redirect.new}", ${redirect.status ?? 301});
 };
 `;
-
       await ensureFileInPath(join(routesDir, redirectFileName), content);
     }
   }

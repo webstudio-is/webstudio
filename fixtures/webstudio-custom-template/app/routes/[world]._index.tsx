@@ -6,7 +6,6 @@ import {
   type ActionArgs,
   type LoaderArgs,
   json,
-  redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
 import type { ProjectMeta } from "@webstudio-is/sdk";
@@ -43,7 +42,7 @@ export const loader = async (arg: LoaderArgs) => {
       pageMeta.status === 301 || pageMeta.status === 302
         ? pageMeta.status
         : 302;
-    return redirect(pageMeta.redirect, status);
+    return Response.redirect(pageMeta.redirect, status);
   }
 
   const host =
