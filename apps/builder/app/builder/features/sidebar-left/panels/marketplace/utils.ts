@@ -14,7 +14,7 @@ const $activeProductId = atom<MarketplaceProduct["id"] | undefined>();
 export const $activeProductData = atom<WebstudioData | undefined>();
 
 export const products: Array<MarketplaceProduct> = [
-  // @todo use the right product
+  // @todo use the right product, find a better place for this initial list
   {
     id: nanoid(),
     category: "templates",
@@ -24,8 +24,6 @@ export const products: Array<MarketplaceProduct> = [
     projectId: "7db43bf6-eecb-48f8-82a7-884506953e1b",
   },
 ];
-
-//http://localhost:3000/builder/7db43bf6-eecb-48f8-82a7-884506953e1b?authToken=436191d4-974f-43bb-a878-ea8a51339a9a&mode=preview
 
 export const categories: Array<{
   category: MarketplaceProduct["category"];
@@ -75,7 +73,7 @@ export const useActiveProduct = () => {
       const data = await loadProjectDataById({
         projectId: product.projectId,
         authToken: product.authToken,
-        origin: location.origin, //"https://apps.webstudio.is",
+        origin: location.origin,
       });
       webstudioData = toWebstudioData(data);
     } catch (error) {
@@ -118,6 +116,11 @@ export const subscribeActions = (callback: (action: Action) => void) => {
   };
 };
 
+/**
+ * Insert page as a template.
+ * - Currently only supports inserting everything from the body
+ * - Could be extended to support children of some other instance e.g. Marketplace Item
+ */
 export const insert = async ({
   instanceId,
   data,
@@ -125,15 +128,9 @@ export const insert = async ({
   instanceId: string;
   data: WebstudioData;
 }) => {
-  // Taking the first child of the Marketplace Item instance
-  const childInstanceId = data.instances.get(instanceId)?.children[0].value;
-  if (childInstanceId === undefined) {
-    return;
-  }
-  //  const childInstanceId = instanceId;
-  const child = data.instances.get(childInstanceId);
-  const fragment = extractWebstudioFragment(data, childInstanceId);
-  console.log({ instanceId, childInstanceId, data, child, fragment });
-
+  const fragment = extractWebstudioFragment(data, instanceId);
+  fragment.instances = fragment.instances.filter(
+    (instance) => instance.component !== "Body"
+  );
   findTargetAndInserFragment(fragment);
 };

@@ -8,6 +8,7 @@ import {
   Text,
   theme,
   focusRingStyle,
+  css,
 } from "@webstudio-is/design-system";
 import type { MarketplaceProduct } from "./types";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
@@ -16,28 +17,66 @@ import { $activeProductData, insert } from "./utils";
 import { computeExpression } from "~/shared/nano-states";
 import { $pageRootScope, type VariableValues } from "../pages/page-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import type { Page, WebstudioData } from "@webstudio-is/sdk";
+import type { Asset, Page, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
+import env from "~/shared/env";
+import { Image, createImageLoader } from "@webstudio-is/image";
 
 const focusOutline = focusRingStyle();
 
-const Template = ({ page, ...listItemProps }: { page: Page }) => {
-  // @todo use variables from the template project
-  const { variableValues } = useStore($pageRootScope);
-  let socialImageUrl;
+const imageLoader = createImageLoader({
+  imageBaseUrl: env.IMAGE_BASE_URL,
+});
 
-  if (page.meta.socialImageUrl) {
-    socialImageUrl = String(
-      computeExpression(page.meta.socialImageUrl, variableValues)
-    );
-  }
+const imageContainerStyle = css({
+  position: "relative",
+  overflow: "hidden",
 
-  // @todo render asset
-  //const socialImageAsset = page.meta.socialImageAssetId
-  //  ? activeProductData.assets.get(page.meta.socialImageAssetId)
-  //  : undefined;
+  aspectRatio: "1.91",
+});
 
-  const title = String(computeExpression(page.title, variableValues));
+const imageStyle = css({
+  position: "absolute",
+  top: 0,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  transition: "transform 100ms",
+  "&:hover": {
+    transform: "scale(1.1)",
+  },
+});
+
+const Thumbnail = ({
+  asset,
+  imageUrl,
+}: {
+  asset?: Asset;
+  imageUrl?: string;
+}) => {
+  return (
+    <div className={imageContainerStyle()}>
+      {imageUrl && <img src={imageUrl} className={imageStyle()} />}
+      {asset && (
+        <Image src={asset.name} loader={imageLoader} className={imageStyle()} />
+      )}
+    </div>
+  );
+};
+
+type TemplateData = {
+  socialImageAsset?: Asset;
+  socialImageUrl?: string;
+  title?: string;
+  rootInstanceId: string;
+};
+
+const Template = ({
+  socialImageAsset,
+  socialImageUrl,
+  title,
+  ...listItemProps
+}: TemplateData) => {
   return (
     <Flex
       {...listItemProps}
@@ -46,26 +85,24 @@ const Template = ({ page, ...listItemProps }: { page: Page }) => {
         px: theme.spacing[9],
         py: theme.spacing[5],
         position: "relative",
+        overflow: "hidden",
         outline: "none",
         "&:hover": focusOutline,
         "&:focus-visible": focusOutline,
       }}
       gap="1"
     >
-      {
-        // @todo set width/height/aspectRatio
-      }
-      <img src={socialImageUrl} />
-      <Text truncate>{title}</Text>
+      <Thumbnail asset={socialImageAsset} imageUrl={socialImageUrl} />
+      {title && <Text truncate>{title}</Text>}
     </Flex>
   );
 };
 
-const getTemplatesByCategory = (
+const getTemplatesDataByCategory = (
   data: WebstudioData,
   variableValues: VariableValues
 ) => {
-  const templatesByCategory = new Map<string, Array<Page>>();
+  const templatesByCategory = new Map<string, Array<TemplateData>>();
 
   for (const page of data.pages.pages) {
     let category = page.meta.custom?.find(
@@ -80,7 +117,30 @@ const getTemplatesByCategory = (
         templates = [];
         templatesByCategory.set(category, templates);
       }
-      templates.push(page);
+
+      const socialImageUrl = page.meta.socialImageUrl
+        ? String(computeExpression(page.meta.socialImageUrl, variableValues))
+        : undefined;
+      const socialImageAsset = page.meta.socialImageAssetId
+        ? data.assets.get(page.meta.socialImageAssetId)
+        : undefined;
+
+      let title = page.meta.custom?.find(
+        ({ property }) => property === "ws:title"
+      )?.content;
+      if (title !== undefined) {
+        title = computeExpression(title, variableValues);
+      }
+      if (title === undefined || title === "") {
+        title = computeExpression(page.title, variableValues);
+      }
+
+      templates.push({
+        title,
+        socialImageUrl,
+        socialImageAsset,
+        rootInstanceId: page.rootInstanceId,
+      });
     }
   }
   return templatesByCategory;
@@ -97,14 +157,17 @@ export const Templates = ({
   // @todo use variables from the template project
   const { variableValues } = useStore($pageRootScope);
 
-  const templatesByCategory = useMemo(() => {
+  const templatesDataByCategory = useMemo(() => {
     if (activeProductData === undefined) {
       return;
     }
-    return getTemplatesByCategory(activeProductData, variableValues);
+    return getTemplatesDataByCategory(activeProductData, variableValues);
   }, [activeProductData, variableValues]);
 
-  if (templatesByCategory === undefined || activeProductData === undefined) {
+  if (
+    templatesDataByCategory === undefined ||
+    activeProductData === undefined
+  ) {
     return;
   }
 
@@ -123,26 +186,26 @@ export const Templates = ({
       </Flex>
       <Separator />
       <ScrollArea>
-        {Array.from(templatesByCategory.keys()).map((category) => {
+        {Array.from(templatesDataByCategory.keys()).map((category) => {
           return (
             <CollapsibleSection label={category} key={category} fullWidth>
               <List asChild>
                 <Flex direction="column">
-                  {(templatesByCategory.get(category) || []).map(
-                    (page, index) => {
+                  {(templatesDataByCategory.get(category) || []).map(
+                    (templateProps, index) => {
                       return (
                         <ListItem
                           asChild
-                          key={page.id}
+                          key={templateProps.rootInstanceId}
                           index={index}
                           onSelect={() => {
                             insert({
-                              instanceId: page.rootInstanceId,
+                              instanceId: templateProps.rootInstanceId,
                               data: activeProductData,
                             });
                           }}
                         >
-                          <Template page={page} />
+                          <Template {...templateProps} />
                         </ListItem>
                       );
                     }

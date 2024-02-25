@@ -12,6 +12,7 @@ export const focusRingStyle = (style?: CSS) => ({
     outlineStyle: "solid",
     outlineColor: theme.colors.borderFocus,
     borderRadius: theme.borderRadius[3],
+    pointerEvents: "none",
     ...style,
   },
 });
