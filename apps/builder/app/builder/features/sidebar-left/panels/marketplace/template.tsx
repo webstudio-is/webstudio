@@ -191,8 +191,9 @@ export const Templates = ({
             <CollapsibleSection label={category} key={category} fullWidth>
               <List asChild>
                 <Flex direction="column">
-                  {(templatesDataByCategory.get(category) || []).map(
-                    (templateProps, index) => {
+                  {templatesDataByCategory
+                    .get(category)
+                    ?.map((templateProps, index) => {
                       return (
                         <ListItem
                           asChild
@@ -208,8 +209,7 @@ export const Templates = ({
                           <Template {...templateProps} />
                         </ListItem>
                       );
-                    }
-                  )}
+                    })}
                 </Flex>
               </List>
             </CollapsibleSection>
