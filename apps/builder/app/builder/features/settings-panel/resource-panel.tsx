@@ -28,6 +28,7 @@ import { humanizeString } from "~/shared/string-utils";
 import { serverSyncStore } from "~/shared/sync";
 import {
   $dataSources,
+  $pages,
   $resources,
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
@@ -243,9 +244,45 @@ const Headers = ({
   );
 };
 
+const $hiddenDataSourceIds = computed(
+  [$dataSources, $pages],
+  (dataSources, pages) => {
+    const dataSourceIds = new Set<DataSource["id"]>();
+    for (const dataSource of dataSources.values()) {
+      // hide collection item and component parameters from resources
+      // to prevent waterfall and loop requests ans not complicate compiler
+      if (dataSource.type === "parameter") {
+        dataSourceIds.add(dataSource.id);
+      }
+      // prevent resources using data of other resources
+      if (dataSource.type === "resource") {
+        dataSourceIds.add(dataSource.id);
+      }
+    }
+    if (pages) {
+      for (const page of pages.pages) {
+        if (page.pathParamsDataSourceId) {
+          dataSourceIds.delete(page.pathParamsDataSourceId);
+        }
+      }
+    }
+    return dataSourceIds;
+  }
+);
+
 const $selectedInstanceScope = computed(
-  [$selectedInstanceSelector, $variableValuesByInstanceSelector, $dataSources],
-  (instanceSelector, variableValuesByInstanceSelector, dataSources) => {
+  [
+    $selectedInstanceSelector,
+    $variableValuesByInstanceSelector,
+    $dataSources,
+    $hiddenDataSourceIds,
+  ],
+  (
+    instanceSelector,
+    variableValuesByInstanceSelector,
+    dataSources,
+    hiddenDataSourceIds
+  ) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
     if (instanceSelector === undefined) {
@@ -256,9 +293,11 @@ const $selectedInstanceScope = computed(
     );
     if (values) {
       for (const [dataSourceId, value] of values) {
+        if (hiddenDataSourceIds.has(dataSourceId)) {
+          continue;
+        }
         const dataSource = dataSources.get(dataSourceId);
-        // prevent resources using data of other resources
-        if (dataSource === undefined || dataSource.type === "resource") {
+        if (dataSource === undefined) {
           continue;
         }
         const name = encodeDataSourceVariable(dataSourceId);
