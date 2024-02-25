@@ -1,40 +1,32 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
-import { nanoid } from "nanoid";
-import type { MarketplaceProduct } from "./types";
 import { loadProjectDataById, type Data } from "@webstudio-is/http-client";
 import {
   extractWebstudioFragment,
   findTargetAndInserеFragment,
 } from "~/shared/instance-utils";
 import type { WebstudioData } from "@webstudio-is/sdk";
+import productsData from "./products.json";
+import { MarketplaceProduct } from "./schema";
 
 const $activeProductId = atom<MarketplaceProduct["id"] | undefined>();
 
 export const $activeProductData = atom<WebstudioData | undefined>();
 
-export const products: Array<MarketplaceProduct> = [
-  // @todo use the right product, find a better place for this initial list
-  {
-    id: nanoid(),
-    category: "templates",
-    label: "Starter Sections",
-    url: "http://localhost:3000",
-    authToken: "436191d4-974f-43bb-a878-ea8a51339a9a",
-    projectId: "7db43bf6-eecb-48f8-82a7-884506953e1b",
-  },
-];
+export const $products = atom(
+  productsData.map((product, index) =>
+    MarketplaceProduct.parse({ ...product, id: String(index) })
+  )
+);
 
 export const categories: Array<{
   category: MarketplaceProduct["category"];
   label: string;
-}> = [
-  { category: "templates", label: "Templates" },
-  { category: "apps", label: "Apps" },
-];
+}> = [{ category: "templates", label: "Templates" }];
 
 export const useActiveProduct = () => {
   const activeProductId = useStore($activeProductId);
+  const products = useStore($products);
   const product = activeProductId
     ? products.find((product) => product.id === activeProductId)
     : undefined;

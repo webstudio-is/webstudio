@@ -9,8 +9,10 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import type { MarketplaceProduct } from "./types";
-import { categories, useActiveProduct, products } from "./utils";
+import { $products, categories, useActiveProduct } from "./utils";
+import type { MarketplaceProduct } from "./schema";
+import { useMemo } from "react";
+import { useStore } from "@nanostores/react";
 
 const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
   const productsByCategory = new Map<
@@ -34,11 +36,6 @@ const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
   }
   return productsByCategory;
 };
-
-const productsByCategory = new Map<
-  MarketplaceProduct["category"],
-  Array<MarketplaceProduct>
->(getProductsByCategory(products));
 
 const focusOutline = focusRingStyle();
 
@@ -69,6 +66,12 @@ const Product = ({ product, ...props }: { product: MarketplaceProduct }) => {
 
 export const Marketplace = () => {
   const [, setActiveProduct] = useActiveProduct();
+  const products = useStore($products);
+
+  const productsByCategory = useMemo(
+    () => new Map(getProductsByCategory(products)),
+    [products]
+  );
 
   return (
     <ScrollArea>

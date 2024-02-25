@@ -10,7 +10,6 @@ import {
   focusRingStyle,
   css,
 } from "@webstudio-is/design-system";
-import type { MarketplaceProduct } from "./types";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
 import { useStore } from "@nanostores/react";
 import { $activeProductData, insert } from "./utils";
@@ -21,6 +20,7 @@ import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
+import type { MarketplaceProduct } from "./schema";
 
 const focusOutline = focusRingStyle();
 
@@ -71,11 +71,11 @@ type TemplateData = {
 };
 
 const Template = ({
-  socialImageAsset,
-  socialImageUrl,
-  title,
+  data: { socialImageAsset, socialImageUrl, title },
   ...listItemProps
-}: TemplateData) => {
+}: {
+  data: TemplateData;
+}) => {
   return (
     <Flex
       {...listItemProps}
@@ -198,20 +198,20 @@ export const Templates = ({
                 <Flex direction="column">
                   {templatesDataByCategory
                     .get(category)
-                    ?.map((templateProps, index) => {
+                    ?.map((templateData, index) => {
                       return (
                         <ListItem
                           asChild
-                          key={templateProps.rootInstanceId}
+                          key={templateData.rootInstanceId}
                           index={index}
                           onSelect={() => {
                             insert({
-                              instanceId: templateProps.rootInstanceId,
+                              instanceId: templateData.rootInstanceId,
                               data: activeProductData,
                             });
                           }}
                         >
-                          <Template {...templateProps} />
+                          <Template data={templateData} />
                         </ListItem>
                       );
                     })}
