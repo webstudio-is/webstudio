@@ -8,6 +8,8 @@ import type {
 import type { ObjectExpression, Property } from "@jsep-plugin/object";
 import type { DataSources, Scope } from "@webstudio-is/sdk";
 
+jsep.literals["undefined"] = "undefined";
+
 jsep.plugins.register(jsepAssignment);
 jsep.plugins.register(jsepObject);
 

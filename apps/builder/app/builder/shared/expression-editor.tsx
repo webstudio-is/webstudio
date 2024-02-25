@@ -424,7 +424,8 @@ export const ExpressionEditor = ({
         onChange={(value) => {
           try {
             let hasReplacements = false;
-            // replace unknown webstudio variables with null to prevent invalid compilation
+            // replace unknown webstudio variables with undefined
+            // to prevent invalid compilation
             const newExpression = validateExpression(value, {
               effectful: true,
               transformIdentifier: (identifier) => {
@@ -433,7 +434,7 @@ export const ExpressionEditor = ({
                   aliases.has(identifier) === false
                 ) {
                   hasReplacements = true;
-                  return `null`;
+                  return `undefined`;
                 }
                 return identifier;
               },
