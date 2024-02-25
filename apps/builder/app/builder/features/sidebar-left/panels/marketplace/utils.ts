@@ -5,7 +5,7 @@ import type { MarketplaceProduct } from "./types";
 import { loadProjectDataById, type Data } from "@webstudio-is/http-client";
 import {
   extractWebstudioFragment,
-  findTargetAndInserFragment,
+  findTargetAndInserеFragment,
 } from "~/shared/instance-utils";
 import type { WebstudioData } from "@webstudio-is/sdk";
 
@@ -91,5 +91,5 @@ export const insert = async ({
   fragment.instances = fragment.instances.filter(
     (instance) => instance.component !== "Body"
   );
-  findTargetAndInserFragment(fragment);
+  findTargetAndInserеFragment(fragment);
 };

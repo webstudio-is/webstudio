@@ -31,7 +31,6 @@ const imageLoader = createImageLoader({
 const imageContainerStyle = css({
   position: "relative",
   overflow: "hidden",
-
   aspectRatio: "1.91",
 });
 
@@ -98,6 +97,12 @@ const Template = ({
   );
 };
 
+// Special meta properties for the marketplace
+const marketplaceMeta = {
+  category: "ws:category",
+  title: "ws:title",
+};
+
 const getTemplatesDataByCategory = (
   data: WebstudioData,
   variableValues: VariableValues
@@ -106,7 +111,7 @@ const getTemplatesDataByCategory = (
 
   for (const page of data.pages.pages) {
     let category = page.meta.custom?.find(
-      ({ property }) => property === "ws:category"
+      ({ property }) => property === marketplaceMeta.category
     )?.content;
     if (category !== undefined) {
       category = computeExpression(category, variableValues);
@@ -126,7 +131,7 @@ const getTemplatesDataByCategory = (
         : undefined;
 
       let title = page.meta.custom?.find(
-        ({ property }) => property === "ws:title"
+        ({ property }) => property === marketplaceMeta.title
       )?.content;
       if (title !== undefined) {
         title = computeExpression(title, variableValues);
