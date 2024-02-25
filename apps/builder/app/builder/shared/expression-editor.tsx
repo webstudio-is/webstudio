@@ -36,7 +36,10 @@ import {
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
-import { validateExpression } from "@webstudio-is/react-sdk";
+import {
+  decodeDataSourceVariable,
+  validateExpression,
+} from "@webstudio-is/react-sdk";
 import { CodeEditor } from "./code-editor";
 
 export const formatValue = (value: unknown) => {
@@ -421,11 +424,14 @@ export const ExpressionEditor = ({
         onChange={(value) => {
           try {
             let hasReplacements = false;
-            // replace unknown variables with null to prevent invalid compilation
+            // replace unknown webstudio variables with null to prevent invalid compilation
             const newExpression = validateExpression(value, {
               effectful: true,
               transformIdentifier: (identifier) => {
-                if (aliases.has(identifier) === false) {
+                if (
+                  decodeDataSourceVariable(identifier) &&
+                  aliases.has(identifier) === false
+                ) {
                   hasReplacements = true;
                   return `null`;
                 }
