@@ -17,7 +17,7 @@ import { $activeProductData, insert } from "./utils";
 import { computeExpression } from "~/shared/nano-states";
 import { $pageRootScope, type VariableValues } from "../pages/page-utils";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import type { Asset, Page, WebstudioData } from "@webstudio-is/sdk";
+import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
