@@ -8,7 +8,9 @@ export const $selectedInstanceSelector = atom<undefined | InstanceSelector>(
   undefined
 );
 
-export const $editingItemId = atom<undefined | string>(undefined);
+export const $editingItemSelector = atom<undefined | InstanceSelector>(
+  undefined
+);
 
 export const $textEditingInstanceSelector = atom<
   undefined | InstanceSelector

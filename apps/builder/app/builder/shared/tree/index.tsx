@@ -13,7 +13,7 @@ import type { Instance } from "@webstudio-is/sdk";
 import { collectionComponent } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
-  $editingItemId,
+  $editingItemSelector,
   getIndexedInstanceId,
   $instances,
   $registeredComponentMetas,
@@ -23,6 +23,7 @@ import { useContentEditable } from "~/shared/dom-hooks";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { serverSyncStore } from "~/shared/sync";
 import type { InstanceSelector } from "~/shared/tree-utils";
+import { shallowEqual } from "shallow-equal";
 
 export const InstanceTree = (
   props: Omit<
@@ -32,7 +33,7 @@ export const InstanceTree = (
 ) => {
   const metas = useStore($registeredComponentMetas);
   const instances = useStore($instances);
-  const editingItemId = useStore($editingItemId);
+  const editingItemSelector = useStore($editingItemSelector);
   const propValues = useStore($propValuesByInstanceSelector);
 
   const canLeaveParent = useCallback(
@@ -118,7 +119,7 @@ export const InstanceTree = (
         return <></>;
       }
       const label = getInstanceLabel(props.itemData, meta);
-      const isEditing = props.itemData.id === editingItemId;
+      const isEditing = shallowEqual(props.itemSelector, editingItemSelector);
 
       return (
         <TreeItemBody {...props} selectionEvent="focus">
@@ -129,8 +130,8 @@ export const InstanceTree = (
               updateInstanceLabel(props.itemData.id, val);
             }}
             onChangeEditing={(isEditing) => {
-              $editingItemId.set(
-                isEditing === true ? props.itemData.id : undefined
+              $editingItemSelector.set(
+                isEditing === true ? props.itemSelector : undefined
               );
             }}
             prefix={<MetaIcon icon={meta.icon} />}
@@ -140,7 +141,7 @@ export const InstanceTree = (
         </TreeItemBody>
       );
     },
-    [metas, updateInstanceLabel, editingItemId]
+    [metas, updateInstanceLabel, editingItemSelector]
   );
 
   return (
@@ -149,7 +150,7 @@ export const InstanceTree = (
       canLeaveParent={canLeaveParent}
       getItemChildren={getItemChildren}
       renderItem={renderItem}
-      editingItemId={editingItemId}
+      editingItemId={editingItemSelector?.[0]}
     />
   );
 };
