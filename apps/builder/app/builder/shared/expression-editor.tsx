@@ -36,6 +36,10 @@ import {
 } from "@codemirror/autocomplete";
 import { javascript } from "@codemirror/lang-javascript";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
+import {
+  decodeDataSourceVariable,
+  validateExpression,
+} from "@webstudio-is/react-sdk";
 import { CodeEditor } from "./code-editor";
 
 export const formatValue = (value: unknown) => {
@@ -417,7 +421,34 @@ export const ExpressionEditor = ({
         readOnly={readOnly}
         autoFocus={autoFocus}
         value={value}
-        onChange={onChange}
+        onChange={(value) => {
+          try {
+            let hasReplacements = false;
+            // replace unknown webstudio variables with undefined
+            // to prevent invalid compilation
+            const newExpression = validateExpression(value, {
+              effectful: true,
+              transformIdentifier: (identifier) => {
+                if (
+                  decodeDataSourceVariable(identifier) &&
+                  aliases.has(identifier) === false
+                ) {
+                  hasReplacements = true;
+                  return `undefined`;
+                }
+                return identifier;
+              },
+            });
+            // reformat only when something is replaced
+            // to break user interaction
+            if (hasReplacements) {
+              value = newExpression;
+            }
+          } catch {
+            // empty block
+          }
+          onChange(value);
+        }}
         onBlur={onBlur}
       />
     </div>
