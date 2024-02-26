@@ -1,7 +1,7 @@
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
   $isPreviewMode,
-  $editingItemId,
+  $editingItemSelector,
   $instances,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
@@ -229,8 +229,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (selectedInstanceSelector === undefined) {
           return;
         }
-        const [targetInstanceId] = selectedInstanceSelector;
-        $editingItemId.set(targetInstanceId);
+        $editingItemSelector.set(selectedInstanceSelector);
       },
     },
 
