@@ -5,13 +5,26 @@ import {
   DialogTitle,
   Grid,
   theme,
-  Separator,
   ScrollArea,
+  Flex,
+  List,
+  ListItem,
+  focusRingStyle,
+  Text,
 } from "@webstudio-is/design-system";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
-import { MetaSection } from "./meta-section";
-import { CompilerSection } from "./compiler-section";
+import { GeneralSection } from "./general-section";
 import { RedirectSection } from "./redirect-section";
+import { useState } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+
+const focusOutline = focusRingStyle();
+
+const settingNames = ["General", "Redirects"];
+
+if (isFeatureEnabled("marketplace")) {
+  settingNames.push("Marketplace");
+}
 
 const ProjectSettingsView = ({
   isOpen,
@@ -20,27 +33,78 @@ const ProjectSettingsView = ({
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
+  const [selectedSetting, setSelectedSetting] = useState<
+    (typeof settingNames)[number]
+  >(settingNames[0]);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
-          width: theme.spacing[34],
+          width: "max-content",
+          maxWidth: "none",
+          height: theme.spacing[35],
           zIndex: theme.zIndices[1],
         }}
         overlayCss={{ zIndex: theme.zIndices[1] }}
       >
-        <ScrollArea>
-          <Grid gap={2} css={{ my: theme.spacing[5] }}>
-            <MetaSection />
-            <Separator />
-            <CompilerSection />
-            <Separator />
-            <RedirectSection />
-            <div />
-          </Grid>
-        </ScrollArea>
+        <Flex grow>
+          <List asChild>
+            <Flex
+              direction="column"
+              css={{
+                width: theme.spacing[26],
+                borderRight: `1px solid  ${theme.colors.borderMain}`,
+              }}
+            >
+              {settingNames.map((name, index) => {
+                return (
+                  <ListItem
+                    current={selectedSetting === name}
+                    asChild
+                    index={index}
+                    key={name}
+                    onSelect={() => {
+                      setSelectedSetting(name);
+                    }}
+                  >
+                    <Flex
+                      css={{
+                        position: "relative",
+                        height: theme.spacing[13],
+                        px: theme.spacing[9],
+                        outline: "none",
+                        "&:focus-visible": focusOutline,
+                        "&:hover": focusOutline,
+                        "&[aria-current=true]": {
+                          background: theme.colors.backgroundItemCurrent,
+                          color: theme.colors.foregroundContrastMain,
+                        },
+                      }}
+                      align="center"
+                    >
+                      <Text variant="labelsSentenceCase" truncate>
+                        {name}
+                      </Text>
+                    </Flex>
+                  </ListItem>
+                );
+              })}
+            </Flex>
+          </List>
+          <ScrollArea>
+            <Grid
+              gap={2}
+              css={{ my: theme.spacing[5], width: theme.spacing[34] }}
+            >
+              {selectedSetting === "General" && <GeneralSection />}
+              {selectedSetting === "Redirects" && <RedirectSection />}
+              <div />
+            </Grid>
+          </ScrollArea>
+        </Flex>
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
          */}
