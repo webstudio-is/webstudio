@@ -64,7 +64,7 @@ const Product = ({
     >
       <Flex align="center" gap="2">
         <img
-          src={`${new URL(product.publishedUrl).origin}/favicon.ico`}
+          src={product.faviconUrl}
           style={{ width: rawTheme.spacing[11], height: rawTheme.spacing[11] }}
           aria-disabled
         />

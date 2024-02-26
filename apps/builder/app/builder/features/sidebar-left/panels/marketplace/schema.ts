@@ -4,6 +4,7 @@ const Base = z.object({
   id: z.string(),
   label: z.string(),
   publishedUrl: z.string(),
+  faviconUrl: z.string(),
   authToken: z.string(),
   projectId: z.string(),
 });
