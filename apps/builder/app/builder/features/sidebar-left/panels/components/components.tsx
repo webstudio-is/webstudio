@@ -26,6 +26,7 @@ import { MetaIcon } from "~/builder/shared/meta-icon";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
@@ -61,7 +62,20 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
       />
       <ScrollArea>
         {componentCategories
-          .filter((category) => category !== "hidden")
+          .filter((category) => {
+            if (category === "hidden") {
+              return false;
+            }
+
+            if (
+              category === "utilities" &&
+              isFeatureEnabled("marketplace") === false
+            ) {
+              return false;
+            }
+
+            return true;
+          })
           .map((category) => (
             <CollapsibleSection label={category} key={category} fullWidth>
               <ArrowFocus
@@ -106,4 +120,4 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   );
 };
 
-export const icon = <PlusIcon />;
+export const Icon = PlusIcon;

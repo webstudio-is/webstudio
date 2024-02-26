@@ -44,6 +44,7 @@ import {
   $breakpoints,
   $pages,
   $resources,
+  $selectedPage,
 } from "./nano-states";
 import {
   type DroppableTarget,
@@ -400,6 +401,60 @@ export const insertInstanceChildrenMutable = (
   } else {
     parentInstance.children.splice(position, 0, ...children);
   }
+};
+
+export const findTargetAndInsertFragment = (fragment: WebstudioFragment) => {
+  let isSuccess = false;
+
+  const selectedPage = $selectedPage.get();
+  if (selectedPage === undefined) {
+    return isSuccess;
+  }
+  const metas = $registeredComponentMetas.get();
+  const newInstances = new Map(
+    fragment.instances.map((instance) => [instance.id, instance])
+  );
+  const rootInstanceIds = fragment.children
+    .filter((child) => child.type === "id")
+    .map((child) => child.value);
+  // paste to the root if nothing is selected
+  const instanceSelector = $selectedInstanceSelector.get() ?? [
+    selectedPage.rootInstanceId,
+  ];
+  const target = findClosestDroppableTarget(
+    metas,
+    $instances.get(),
+    instanceSelector,
+    computeInstancesConstraints(metas, newInstances, rootInstanceIds)
+  );
+
+  if (target === undefined) {
+    return isSuccess;
+  }
+
+  updateWebstudioData((data) => {
+    const { newInstanceIds } = insertWebstudioFragmentCopy({
+      data,
+      fragment,
+      availableDataSources: findAvailableDataSources(
+        data.dataSources,
+        data.instances,
+        instanceSelector
+      ),
+    });
+    const newRootInstanceId = newInstanceIds.get(fragment.instances[0].id);
+    if (newRootInstanceId === undefined) {
+      isSuccess = false;
+      return;
+    }
+    const children: Instance["children"] = [
+      { type: "id", value: newRootInstanceId },
+    ];
+    insertInstanceChildrenMutable(data, children, target);
+    isSuccess = true;
+  });
+
+  return isSuccess;
 };
 
 export const insertTemplateData = (

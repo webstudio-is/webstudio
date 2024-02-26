@@ -8,6 +8,7 @@ import { css, styled, theme } from "../stitches.config";
 import { separatorStyle } from "./separator";
 import { textVariants } from "./text";
 import { forwardRef, type Ref } from "react";
+import { focusRingStyle } from "./focus-ring";
 
 export const Toolbar = styled(ToolbarPrimitive.Root, {
   display: "flex",
@@ -23,18 +24,10 @@ export const ToolbarToggleGroup = styled(ToolbarPrimitive.ToggleGroup, {
   alignItems: "center",
 });
 
-// It is inside the button, so we need it as a separate element.
-const toolbarItemFocusRing = {
-  "&::after": {
-    content: '""',
-    position: "absolute",
-    inset: 4,
-    outlineWidth: 2,
-    outlineStyle: "solid",
-    outlineColor: theme.colors.borderFocus,
-    borderRadius: theme.borderRadius[3],
-  },
-};
+const focusRing = focusRingStyle({
+  top: theme.spacing[3],
+  bottom: theme.spacing[3],
+});
 
 const toggleItemStyle = css(textVariants.labelsTitleCase, {
   // reset styles
@@ -59,14 +52,14 @@ const toggleItemStyle = css(textVariants.labelsTitleCase, {
   background: "transparent",
   transition: "200ms background",
 
-  "&:focus-visible": toolbarItemFocusRing,
+  "&:focus-visible": focusRing,
   "&:hover, &[data-state=on], &[data-state=open], &[aria-checked=true]": {
     background: theme.colors.backgroundTopbarHover,
   },
   variants: {
     // Just for story
     focused: {
-      true: toolbarItemFocusRing,
+      true: focusRing,
     },
     variant: {
       subtle: {

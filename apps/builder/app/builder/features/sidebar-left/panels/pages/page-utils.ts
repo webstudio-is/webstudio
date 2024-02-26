@@ -313,9 +313,9 @@ export const $pageRootScope = computed(
   (editingPage, variableValuesByInstanceSelector, dataSources) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
-    const variableValues = new Map<string, unknown>();
+    const defaultValues = new Map<string, unknown>();
     if (editingPage === undefined) {
-      return { variableValues, scope, aliases };
+      return { variableValues: defaultValues, scope, aliases };
     }
     const values = variableValuesByInstanceSelector.get(
       JSON.stringify([editingPage.rootInstanceId])
@@ -331,7 +331,7 @@ export const $pageRootScope = computed(
         aliases.set(name, dataSource.name);
       }
     }
-    return { variableValues: values ?? variableValues, scope, aliases };
+    return { variableValues: values ?? defaultValues, scope, aliases };
   }
 );
 

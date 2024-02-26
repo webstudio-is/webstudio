@@ -25,6 +25,7 @@ export const componentCategories = [
   "forms",
   "radix",
   "hidden",
+  "utilities",
 ] as const;
 
 export const stateCategories = ["states", "component-states"] as const;

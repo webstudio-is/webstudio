@@ -17,6 +17,7 @@ import { theme, css, styled, type CSS } from "../stitches.config";
 import { Button } from "./button";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { Label, isLabelButton } from "./label";
+import { focusRingStyle } from "./focus-ring";
 
 const buttonContentColor = "--ws-section-title-button-content-color";
 const labelTextColor = "--ws-section-title-label-content-color";
@@ -49,16 +50,7 @@ const labelContainerStyle = css({
 });
 
 const titleButtonStyle = css(titleButtonLayoutStyle, {
-  "&:focus-visible::before": {
-    content: "''",
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: theme.spacing[2],
-    right: theme.spacing[2],
-    borderRadius: theme.borderRadius[4],
-    border: `2px solid ${theme.colors.borderFocus}`,
-  },
+  "&:focus-visible": focusRingStyle(),
 });
 
 const suffixSlotStyle = css({

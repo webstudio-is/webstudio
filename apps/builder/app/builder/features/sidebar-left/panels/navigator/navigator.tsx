@@ -1,4 +1,4 @@
-import { ListNestedIcon } from "@webstudio-is/icons";
+import { NavigatorIcon } from "@webstudio-is/icons";
 import { Navigator } from "../../navigator";
 import type { TabContentProps } from "../../types";
 
@@ -12,4 +12,4 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   );
 };
 
-export const icon = <ListNestedIcon />;
+export const Icon = NavigatorIcon;

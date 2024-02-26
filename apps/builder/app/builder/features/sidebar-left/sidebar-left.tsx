@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Tooltip } from "@webstudio-is/design-system";
+import { Box, Tooltip, rawTheme } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
 import { panels } from "./panels";
@@ -47,7 +47,7 @@ const AiTabTrigger = () => {
         );
       }}
     >
-      <AiIcon />
+      <AiIcon size={rawTheme.spacing[10]} />
     </SidebarTabsTrigger>
   );
 };
@@ -67,7 +67,7 @@ const HelpTabTrigger = () => {
             aria-label="Ask for help"
             data-state={helpIsOpen ? "active" : undefined}
           >
-            <HelpIcon size={22} />
+            <HelpIcon size={rawTheme.spacing[10]} />
           </SidebarTabsTrigger>
         </HelpPopover.Trigger>
       </Tooltip>
@@ -87,7 +87,7 @@ const GithubTabTrigger = () => {
           );
         }}
       >
-        <BugIcon size={22} />
+        <BugIcon size={rawTheme.spacing[10]} />
       </SidebarTabsTrigger>
     </Tooltip>
   );
@@ -121,18 +121,20 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         {isPreviewMode === false && (
           <>
             <SidebarTabsList>
-              {Array.from(panels.keys()).map((tabName) => (
-                <SidebarTabsTrigger
-                  key={tabName}
-                  aria-label={tabName}
-                  value={tabName}
-                  onClick={() => {
-                    setActiveTab(activeTab === tabName ? "none" : tabName);
-                  }}
-                >
-                  {tabName !== "none" && panels.get(tabName)?.icon}
-                </SidebarTabsTrigger>
-              ))}
+              {Array.from(panels.entries()).map(([tabName, { Icon }]) => {
+                return (
+                  <SidebarTabsTrigger
+                    key={tabName}
+                    aria-label={tabName}
+                    value={tabName}
+                    onClick={() => {
+                      setActiveTab(activeTab === tabName ? "none" : tabName);
+                    }}
+                  >
+                    <Icon size={rawTheme.spacing[10]} />
+                  </SidebarTabsTrigger>
+                );
+              })}
               <AiTabTrigger />
             </SidebarTabsList>
             <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
