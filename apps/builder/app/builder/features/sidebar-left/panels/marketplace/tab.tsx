@@ -4,10 +4,15 @@ import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { Marketplace } from "./marketplace";
 import { Templates } from "./template";
-import { useActiveProduct } from "./utils";
+import { builderPath } from "~/shared/router-utils";
+import { useFetcher } from "@remix-run/react";
+import { useState } from "react";
+import type { MarketplaceProduct } from "./schema";
+import { toWebstudioData } from "./utils";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
-  const [activeProduct, setActiveProduct] = useActiveProduct();
+  const [activeProduct, setActiveProduct] = useState<MarketplaceProduct>();
+  const { load, data } = useFetcher();
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
@@ -21,10 +26,25 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         title="Marketplace"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      {activeProduct?.category === "templates" ? (
-        <Templates product={activeProduct} onOpenChange={handleOpenChange} />
+      {activeProduct && data ? (
+        <Templates
+          product={activeProduct}
+          data={toWebstudioData(data)}
+          onOpenChange={handleOpenChange}
+        />
       ) : (
-        <Marketplace />
+        <Marketplace
+          activeProduct={activeProduct}
+          onSelect={(product) => {
+            setActiveProduct(product);
+            load(
+              builderPath({
+                projectId: product.projectId,
+                authToken: product.authToken,
+              })
+            );
+          }}
+        />
       )}
     </Flex>
   );

@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Flex,
   List,
@@ -9,10 +11,9 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { $products, categories, useActiveProduct } from "./utils";
+import { $products, categories } from "./utils";
 import type { MarketplaceProduct } from "./schema";
-import { useMemo } from "react";
-import { useStore } from "@nanostores/react";
+import { LoadingDotsIcon } from "@webstudio-is/icons";
 
 const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
   const productsByCategory = new Map<
@@ -39,11 +40,17 @@ const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
 
 const focusOutline = focusRingStyle();
 
-const Product = ({ product, ...props }: { product: MarketplaceProduct }) => {
+const Product = ({
+  product,
+  isLoading,
+  ...props
+}: {
+  product: MarketplaceProduct;
+  isLoading: boolean;
+}) => {
   return (
     <Flex
       {...props}
-      gap="2"
       css={{
         position: "relative",
         height: theme.spacing[13],
@@ -53,26 +60,35 @@ const Product = ({ product, ...props }: { product: MarketplaceProduct }) => {
         "&:hover": focusOutline,
       }}
       align="center"
+      justify="between"
     >
-      <img
-        src={`${new URL(product.url).origin}/favicon.ico`}
-        style={{ width: rawTheme.spacing[11], height: rawTheme.spacing[11] }}
-        aria-disabled
-      />
-      <Text variant="labelsSentenceCase">{product.label}</Text>
+      <Flex align="center" gap="2">
+        <img
+          src={`${new URL(product.publishedUrl).origin}/favicon.ico`}
+          style={{ width: rawTheme.spacing[11], height: rawTheme.spacing[11] }}
+          aria-disabled
+        />
+        <Text variant="labelsSentenceCase" truncate>
+          {product.label}
+        </Text>
+      </Flex>
+      {isLoading && <LoadingDotsIcon style={{ flexShrink: 0 }} />}
     </Flex>
   );
 };
 
-export const Marketplace = () => {
-  const [, setActiveProduct] = useActiveProduct();
+export const Marketplace = ({
+  activeProduct,
+  onSelect,
+}: {
+  activeProduct?: MarketplaceProduct;
+  onSelect: (product: MarketplaceProduct) => void;
+}) => {
   const products = useStore($products);
-
   const productsByCategory = useMemo(
     () => new Map(getProductsByCategory(products)),
     [products]
   );
-
   return (
     <ScrollArea>
       {categories.map(({ category, label }) => {
@@ -91,10 +107,13 @@ export const Marketplace = () => {
                       key={product.id}
                       index={index}
                       onSelect={() => {
-                        setActiveProduct(product.id);
+                        onSelect(product);
                       }}
                     >
-                      <Product product={product} />
+                      <Product
+                        product={product}
+                        isLoading={product.id === activeProduct?.id}
+                      />
                     </ListItem>
                   );
                 })}

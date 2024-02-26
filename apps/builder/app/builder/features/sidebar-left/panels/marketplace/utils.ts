@@ -1,6 +1,4 @@
-import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
-import { loadProjectDataById, type Data } from "@webstudio-is/http-client";
 import {
   extractWebstudioFragment,
   findTargetAndInserеFragment,
@@ -8,8 +6,7 @@ import {
 import type { WebstudioData } from "@webstudio-is/sdk";
 import productsData from "./products.json";
 import { MarketplaceProduct } from "./schema";
-
-const $activeProductId = atom<MarketplaceProduct["id"] | undefined>();
+import type { BuilderProps } from "~/builder";
 
 export const $activeProductData = atom<WebstudioData | undefined>();
 
@@ -24,39 +21,9 @@ export const categories: Array<{
   label: string;
 }> = [{ category: "templates", label: "Templates" }];
 
-export const useActiveProduct = () => {
-  const activeProductId = useStore($activeProductId);
-  const products = useStore($products);
-  const product = activeProductId
-    ? products.find((product) => product.id === activeProductId)
-    : undefined;
-
-  const setActiveProduct = async (id?: MarketplaceProduct["id"]) => {
-    $activeProductId.set(id);
-    const product = products.find((product) => product.id === id);
-    if (product === undefined || id === undefined) {
-      return;
-    }
-    let webstudioData;
-    try {
-      const data = await loadProjectDataById({
-        projectId: product.projectId,
-        authToken: product.authToken,
-        origin: location.origin,
-      });
-      webstudioData = toWebstudioData(data);
-    } catch (error) {
-      // @todo what should happen if there is an error?
-      console.error(error);
-    }
-    $activeProductData.set(webstudioData);
-  };
-  return [product, setActiveProduct] as const;
-};
-
-const toWebstudioData = (data: Data): WebstudioData => ({
+export const toWebstudioData = (data: BuilderProps): WebstudioData => ({
   pages: data.build.pages,
-  assets: new Map(data.assets.map((asset) => [asset.id, asset])),
+  assets: new Map(data.assets),
   instances: new Map(data.build.instances),
   dataSources: new Map(data.build.dataSources),
   resources: new Map(data.build.resources),

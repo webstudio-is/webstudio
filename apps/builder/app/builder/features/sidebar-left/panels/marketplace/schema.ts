@@ -3,7 +3,7 @@ import { z } from "zod";
 const Base = z.object({
   id: z.string(),
   label: z.string(),
-  url: z.string(),
+  publishedUrl: z.string(),
   authToken: z.string(),
   projectId: z.string(),
 });

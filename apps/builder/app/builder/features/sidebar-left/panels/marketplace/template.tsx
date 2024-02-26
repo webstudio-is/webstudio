@@ -11,8 +11,7 @@ import {
   css,
 } from "@webstudio-is/design-system";
 import { ChevronLeftIcon } from "@webstudio-is/icons";
-import { useStore } from "@nanostores/react";
-import { $activeProductData, insert } from "./utils";
+import { insert } from "./utils";
 import { computeExpression } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { Asset, WebstudioData } from "@webstudio-is/sdk";
@@ -156,21 +155,19 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
 
 export const Templates = ({
   product,
+  data,
   onOpenChange,
 }: {
   product: MarketplaceProduct;
+  data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  const activeProductData = useStore($activeProductData);
   const templatesDataByCategory = useMemo(
-    () => getTemplatesDataByCategory(activeProductData),
-    [activeProductData]
+    () => getTemplatesDataByCategory(data),
+    [data]
   );
 
-  if (
-    templatesDataByCategory === undefined ||
-    activeProductData === undefined
-  ) {
+  if (templatesDataByCategory === undefined || data === undefined) {
     return;
   }
 
@@ -205,7 +202,7 @@ export const Templates = ({
                           onSelect={() => {
                             insert({
                               instanceId: templateData.rootInstanceId,
-                              data: activeProductData,
+                              data,
                             });
                           }}
                         >
