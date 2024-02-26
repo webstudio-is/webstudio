@@ -173,7 +173,11 @@ export const Templates = ({
 
   return (
     <Flex direction="column" css={{ height: "100%" }}>
-      <Flex align="center" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+      <Flex
+        align="center"
+        shrink="false"
+        css={{ px: theme.spacing[9], py: theme.spacing[5] }}
+      >
         <Button
           prefix={<ChevronLeftIcon />}
           onClick={() => {
