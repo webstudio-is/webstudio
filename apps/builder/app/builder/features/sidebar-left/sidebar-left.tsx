@@ -121,8 +121,7 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         {isPreviewMode === false && (
           <>
             <SidebarTabsList>
-              {Array.from(panels.keys()).map((tabName) => {
-                const { Icon } = panels.get(tabName)!;
+              {Array.from(panels.entries()).map(([tabName, { Icon }]) => {
                 return (
                   <SidebarTabsTrigger
                     key={tabName}

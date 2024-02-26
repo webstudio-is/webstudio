@@ -403,7 +403,7 @@ export const insertInstanceChildrenMutable = (
   }
 };
 
-export const findTargetAndInserеFragment = (fragment: WebstudioFragment) => {
+export const findTargetAndInsertFragment = (fragment: WebstudioFragment) => {
   let isSuccess = false;
 
   const selectedPage = $selectedPage.get();

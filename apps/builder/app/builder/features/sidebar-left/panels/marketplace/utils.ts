@@ -1,7 +1,7 @@
 import { atom } from "nanostores";
 import {
   extractWebstudioFragment,
-  findTargetAndInserеFragment,
+  findTargetAndInsertFragment,
 } from "~/shared/instance-utils";
 import type { WebstudioData } from "@webstudio-is/sdk";
 import productsData from "./products.json";
@@ -39,7 +39,7 @@ export const toWebstudioData = (data: BuilderProps): WebstudioData => ({
  * - Currently only supports inserting everything from the body
  * - Could be extended to support children of some other instance e.g. Marketplace Item
  */
-export const insert = async ({
+export const insert = ({
   instanceId,
   data,
 }: {
@@ -50,5 +50,5 @@ export const insert = async ({
   fragment.instances = fragment.instances.filter(
     (instance) => instance.component !== "Body"
   );
-  findTargetAndInserеFragment(fragment);
+  findTargetAndInsertFragment(fragment);
 };
