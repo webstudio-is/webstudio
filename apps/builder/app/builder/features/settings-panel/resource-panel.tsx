@@ -9,7 +9,10 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import type { DataSource, Resource } from "@webstudio-is/sdk";
-import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
+import {
+  encodeDataSourceVariable,
+  isLiteralExpression,
+} from "@webstudio-is/react-sdk";
 import {
   Box,
   Button,
@@ -37,7 +40,6 @@ import {
   BindingControl,
   BindingPopover,
   evaluateExpressionWithinScope,
-  isLiteralExpression,
 } from "~/builder/shared/binding-popover";
 import {
   type Field,

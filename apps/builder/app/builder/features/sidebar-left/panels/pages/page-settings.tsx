@@ -50,6 +50,7 @@ import {
   HelpIcon,
   UploadIcon,
 } from "@webstudio-is/icons";
+import { isLiteralExpression } from "@webstudio-is/react-sdk";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../header";
 import { updateWebstudioData } from "~/shared/instance-utils";
@@ -65,7 +66,6 @@ import {
 import {
   BindingControl,
   BindingPopover,
-  isLiteralExpression,
 } from "~/builder/shared/binding-popover";
 import { serverSyncStore } from "~/shared/sync";
 import { SearchPreview } from "./search-preview";

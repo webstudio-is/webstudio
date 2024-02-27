@@ -60,20 +60,6 @@ export const evaluateExpressionWithinScope = (
   }
 };
 
-/**
- * execute valid expression without scope
- * to check any variable usage
- */
-export const isLiteralExpression = (expression: string) => {
-  try {
-    const fn = new Function(`return (${expression})`);
-    fn();
-    return true;
-  } catch {
-    return false;
-  }
-};
-
 const getUsedIdentifiers = (expression: string) => {
   const identifiers = new Set<string>();
   // prevent parsing empty expression

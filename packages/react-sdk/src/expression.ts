@@ -168,6 +168,43 @@ export const validateExpression = (
   });
 };
 
+const isLiteralNode = (node: Node): boolean => {
+  if (node.type === "Literal") {
+    return true;
+  }
+  if (node.type === "ArrayExpression") {
+    return (node.elements as Node[]).every(isLiteralNode);
+  }
+  if (node.type === "ObjectExpression") {
+    return node.properties.every((property) => {
+      const key = property.key as Node;
+      const isIdentifierKey =
+        key.type === "Identifier" && property.computed === false;
+      const isLiteralKey = key.type === "Literal";
+      return (
+        (isLiteralKey || isIdentifierKey) &&
+        isLiteralNode(property.value as Node)
+      );
+    });
+  }
+  return false;
+};
+
+/**
+ * check whether provided expression is a literal value
+ * like "", 0 or { param: "value" }
+ * which does not depends on any variable
+ */
+export const isLiteralExpression = (expression: string) => {
+  try {
+    const node = jsep(expression) as Node;
+    return isLiteralNode(node);
+  } catch {
+    // treat invalid expression as non-literal
+    return false;
+  }
+};
+
 const dataSourceVariablePrefix = "$ws$dataSource$";
 
 // data source id is generated with nanoid which has "-" in alphabeta
