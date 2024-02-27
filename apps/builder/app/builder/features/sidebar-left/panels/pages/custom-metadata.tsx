@@ -12,10 +12,10 @@ import {
 } from "@webstudio-is/design-system";
 import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { isLiteralExpression } from "@webstudio-is/react-sdk";
 import {
   BindingControl,
   BindingPopover,
-  isLiteralExpression,
 } from "~/builder/shared/binding-popover";
 import { computeExpression } from "~/shared/nano-states";
 import { $pageRootScope } from "./page-utils";

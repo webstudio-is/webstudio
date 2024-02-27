@@ -3,6 +3,7 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   executeExpression,
+  isLiteralExpression,
   validateExpression,
 } from "./expression";
 
@@ -86,6 +87,28 @@ test("allow indexed member expressions with identifiers", () => {
     })
   ).toEqual(`a[b]`);
   expect(ids).toEqual(["a", "b"]);
+});
+
+test("check simple literals", () => {
+  expect(isLiteralExpression(`""`)).toEqual(true);
+  expect(isLiteralExpression(`''`)).toEqual(true);
+  expect(isLiteralExpression(`0`)).toEqual(true);
+  expect(isLiteralExpression(`true`)).toEqual(true);
+  expect(isLiteralExpression(`[]`)).toEqual(true);
+  expect(isLiteralExpression(`{}`)).toEqual(true);
+  expect(isLiteralExpression(`"" + ""`)).toEqual(false);
+  expect(isLiteralExpression(`{}.field`)).toEqual(false);
+  expect(isLiteralExpression(`variable`)).toEqual(false);
+});
+
+test("check complex objects and arrays", () => {
+  expect(isLiteralExpression(`[1, 2, 3]`)).toEqual(true);
+  expect(isLiteralExpression(`[1, 2, variable]`)).toEqual(false);
+  expect(isLiteralExpression(`{ param: 0 }`)).toEqual(true);
+  expect(isLiteralExpression(`{ "param": 0 }`)).toEqual(true);
+  expect(isLiteralExpression(`{ param: variable }`)).toEqual(false);
+  expect(isLiteralExpression(`{ ["param"]: 0 }`)).toEqual(true);
+  expect(isLiteralExpression(`{ [variable]: 0 }`)).toEqual(false);
 });
 
 test("optionally transpile all member expressions into optional chaining", () => {

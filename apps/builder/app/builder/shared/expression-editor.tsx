@@ -348,10 +348,6 @@ const wrapperStyle = css({
   },
 });
 
-const errorStyle = css({
-  borderColor: theme.colors.borderDestructiveMain,
-});
-
 export const ExpressionEditor = ({
   scope = emptyScope,
   aliases = emptyAliases,
@@ -417,7 +413,7 @@ export const ExpressionEditor = ({
     <div className={wrapperStyle.toString()}>
       <CodeEditor
         extensions={extensions}
-        className={color === "error" ? errorStyle.toString() : undefined}
+        invalid={color === "error"}
         readOnly={readOnly}
         autoFocus={autoFocus}
         value={value}
