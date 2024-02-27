@@ -18,7 +18,7 @@ import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
-import type { MarketplaceProduct } from "./schema";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
 
 const focusOutline = focusRingStyle();
 
@@ -185,7 +185,7 @@ export const Templates = ({
           }}
           color="neutral"
         >
-          {product.label}
+          {product.name}
         </Button>
       </Flex>
       <Separator />

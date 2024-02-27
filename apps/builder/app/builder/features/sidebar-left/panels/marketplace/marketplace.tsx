@@ -12,8 +12,8 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { $products, categories } from "./utils";
-import type { MarketplaceProduct } from "./schema";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
 
 const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
   const productsByCategory = new Map<

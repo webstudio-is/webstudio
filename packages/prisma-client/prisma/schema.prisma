@@ -151,6 +151,7 @@ model Project {
   authorizationToken  AuthorizationToken[]
   previewImageAsset   Asset?                 @relation(fields: [previewImageAssetId, id], references: [id, projectId])
   previewImageAssetId String?
+  marketplaceStatus   PublishStatus?
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -161,6 +162,12 @@ enum PublishStatus {
   PENDING
   PUBLISHED
   FAILED
+}
+
+enum MarketplaceApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model Build {
@@ -182,6 +189,7 @@ model Build {
   dataSources           String @default("[]")
   resources             String @default("[]")
   instances             String @default("[]")
+  marketplaceProduct    String @default("{}")
 
   deployment    String?
   publishStatus PublishStatus @default(PENDING)

@@ -98,6 +98,7 @@ export const Checkbox = forwardRef(
 Checkbox.displayName = "Checkbox";
 
 export const CheckboxAndLabel = styled("div", {
+  boxSizing: "border-box",
   display: "flex",
   alignItems: "center",
   gap: theme.spacing[3],

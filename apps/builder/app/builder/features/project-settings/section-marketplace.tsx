@@ -10,14 +10,17 @@ import {
   Button,
   css,
   Flex,
+  CheckboxAndLabel,
+  Checkbox,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
-import { $assets } from "~/shared/nano-states";
+import { $assets, $marketplaceProduct } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
 import { useState } from "react";
-import { Form } from "@remix-run/react";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import { serverSyncStore } from "~/shared/sync";
 
 const imgStyle = css({
   width: 72,
@@ -28,13 +31,8 @@ const imgStyle = css({
   borderColor: theme.colors.borderMain,
 });
 
-const defaultMarketplaceData: any = {
-  name: "",
-  thumbnailAssetId: "",
-  description: "",
-  email: "",
-  website: "",
-  isSubmitted: false,
+const defaultMarketplaceProduct: MarketplaceProduct = {
+  category: "templates",
 };
 
 const imageLoader = createImageLoader({
@@ -42,23 +40,48 @@ const imageLoader = createImageLoader({
 });
 
 export const SectionMarketplace = () => {
-  const data = defaultMarketplaceData;
+  const marketplaceStatus = undefined;
+  const [data, setData] = useState(() => ({
+    ...defaultMarketplaceProduct,
+    ...$marketplaceProduct.get(),
+  }));
+
   const ids = useIds([
     "name",
     "thumbnailAssetId",
     "email",
     "website",
     "description",
+    "isConfirmed",
   ]);
   const assets = useStore($assets);
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string>(
     data.thumbnailAssetId ?? ""
   );
+  const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const asset = assets.get(thumbnailAssetId);
   const thumbnailUrl = asset ? `${asset.name}` : undefined;
 
+  const handleSave = <Setting extends keyof MarketplaceProduct>(
+    setting: Setting
+  ) => {
+    return (value: MarketplaceProduct[Setting]) => {
+      const nextData = { ...data, [setting]: value };
+      setData(nextData);
+      serverSyncStore.createTransaction(
+        [$marketplaceProduct],
+        (marketplaceProduct) => {
+          if (marketplaceProduct === undefined) {
+            return;
+          }
+          Object.assign(marketplaceProduct, nextData);
+        }
+      );
+    };
+  };
+
   return (
-    <Form style={{ display: "contents" }}>
+    <>
       <Grid
         gap={1}
         css={{
@@ -70,9 +93,11 @@ export const SectionMarketplace = () => {
         <Label htmlFor={ids.name}>Product Name</Label>
         <InputField
           id={ids.name}
-          defaultValue={data.name ?? ""}
-          name="name"
+          value={data.name ?? ""}
           autoFocus
+          onChange={(event) => {
+            handleSave("name")(event.target.value);
+          }}
         />
       </Grid>
 
@@ -112,8 +137,10 @@ export const SectionMarketplace = () => {
         <Label htmlFor={ids.email}>Email</Label>
         <InputField
           id={ids.email}
-          defaultValue={data.email ?? ""}
-          name="email"
+          value={data.email ?? ""}
+          onChange={(event) => {
+            handleSave("email")(event.target.value);
+          }}
           type="email"
         />
       </Grid>
@@ -130,8 +157,10 @@ export const SectionMarketplace = () => {
         <Label htmlFor={ids.website}>Website</Label>
         <InputField
           id={ids.website}
-          defaultValue={data.website ?? ""}
-          name="website"
+          value={data.website ?? ""}
+          onChange={(event) => {
+            handleSave("website")(event.target.value);
+          }}
           type="url"
         />
       </Grid>
@@ -145,15 +174,27 @@ export const SectionMarketplace = () => {
           rows={5}
           autoGrow
           maxRows={10}
-          defaultValue={data.description ?? ""}
+          value={data.description ?? ""}
+          onChange={handleSave("description")}
         />
       </Grid>
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <Text color="subtle">
-          Once submitted, this project will become available in a public
-          marketplace.
-        </Text>
+        <CheckboxAndLabel>
+          <Checkbox
+            checked={isConfirmed}
+            id={ids.isConfirmed}
+            onCheckedChange={(value) => {
+              if (typeof value === "boolean") {
+                setIsConfirmed(value);
+              }
+            }}
+          />
+          <Label htmlFor={ids.isConfirmed} css={{ flexBasis: "fit-content" }}>
+            I understand that by submitting, this project will become available
+            in a public marketplace.
+          </Label>
+        </CheckboxAndLabel>
       </Grid>
 
       <Flex
@@ -162,14 +203,17 @@ export const SectionMarketplace = () => {
         gap={2}
         css={{ mx: theme.spacing[5], px: theme.spacing[5] }}
       >
-        {data.isSubmitted ? (
-          <Button color="destructive" name="remove">
-            Remove from marketplace
-          </Button>
-        ) : (
-          <Button color="primary">Submit</Button>
+        {marketplaceStatus && (
+          <Button color="destructive">Remove from marketplace</Button>
         )}
+        <Button
+          color="primary"
+          disabled={isConfirmed === false}
+          onClick={() => {}}
+        >
+          Submit
+        </Button>
       </Flex>
-    </Form>
+    </>
   );
 };

@@ -7,8 +7,8 @@ import { Templates } from "./template";
 import { builderPath } from "~/shared/router-utils";
 import { useFetcher } from "@remix-run/react";
 import { useState } from "react";
-import type { MarketplaceProduct } from "./schema";
 import { toWebstudioData } from "./utils";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [activeProduct, setActiveProduct] = useState<MarketplaceProduct>();

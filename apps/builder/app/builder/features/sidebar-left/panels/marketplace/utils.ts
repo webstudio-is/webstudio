@@ -5,8 +5,8 @@ import {
 } from "~/shared/instance-utils";
 import type { WebstudioData } from "@webstudio-is/sdk";
 import productsData from "./products.json";
-import { MarketplaceProduct } from "./schema";
 import type { BuilderProps } from "~/builder";
+import { MarketplaceProduct } from "@webstudio-is/project-build";
 
 export const $activeProductData = atom<WebstudioData | undefined>();
 

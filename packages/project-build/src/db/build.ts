@@ -29,6 +29,7 @@ import { parseStyleSourceSelections } from "./style-source-selections";
 import { parseDeployment, serializeDeployment } from "./deployment";
 import { parsePages, serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
+import type { MarketplaceProduct } from "..";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -42,6 +43,14 @@ export const serializeData = <Type extends { id: string }>(
 ) => {
   const dataSourcesList: Type[] = Array.from(data.values());
   return JSON.stringify(dataSourcesList);
+};
+
+export const parseConfig = <Type>(string: string): Type => {
+  return JSON.parse(string);
+};
+
+export const serializeConfig = <Type>(data: Type) => {
+  return JSON.stringify(data);
 };
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
@@ -71,8 +80,10 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       resources: Array.from(parseData<Resource>(build.resources)),
       instances: Array.from(parseData<Instance>(build.instances)),
       deployment,
-    } satisfies Data["build"];
-
+      marketplaceProduct: parseConfig<MarketplaceProduct>(
+        build.marketplaceProduct
+      ),
+    } satisfies Data["build"] & { marketplaceProduct: MarketplaceProduct };
     return result;
   } finally {
     // eslint-disable-next-line no-console

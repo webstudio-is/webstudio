@@ -1,12 +1,11 @@
 import { z } from "zod";
 
 const Base = z.object({
-  id: z.string(),
-  label: z.string(),
-  publishedUrl: z.string(),
-  faviconUrl: z.string(),
-  authToken: z.string(),
-  projectId: z.string(),
+  name: z.string().optional(),
+  thumbnailAssetId: z.string().optional(),
+  description: z.string().optional(),
+  email: z.string().optional(),
+  website: z.string().optional(),
 });
 
 const TemplatesProduct = Base.extend({

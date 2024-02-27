@@ -39,6 +39,7 @@ import {
   $domains,
   $resources,
   subscribeResources,
+  $marketplaceProduct,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -256,6 +257,7 @@ export const Builder = ({
     $styleSourceSelections.set(new Map(build.styleSourceSelections));
     $breakpoints.set(new Map(build.breakpoints));
     $styles.set(new Map(build.styles));
+    $marketplaceProduct.set(build.marketplaceProduct);
   });
 
   useEffect(subscribeCommands, []);
