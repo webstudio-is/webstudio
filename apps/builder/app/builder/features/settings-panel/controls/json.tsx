@@ -29,15 +29,15 @@ export const JsonControl = ({
   onChange,
   onDelete,
 }: ControlProps<"json">) => {
-  const [error, setError] = useState<undefined | string>(undefined);
+  const [error, setError] = useState<boolean>(false);
   const valueString = formatValue(computedValue ?? "");
   const localValue = useLocalValue(valueString, (value) => {
+    const isLiteral = isLiteralExpression(value);
+    setError(isLiteral ? false : true);
     // prevent executing expressions which depends on global variables
-    if (isLiteralExpression(value) === false) {
-      setError("color");
+    if (isLiteral === false) {
       return;
     }
-    setError(undefined);
     try {
       // wrap into parens to treat object expression as value instead of block
       const parsedValue = eval(`(${value})`);
