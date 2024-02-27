@@ -13,10 +13,11 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
-import { GeneralSection } from "./general-section";
-import { RedirectSection } from "./redirect-section";
+import { SectionGeneral } from "./section-general";
+import { SectionRedirects } from "./section-redirects";
 import { useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { SectionMarketplace } from "./section-marketplace";
 
 const focusOutline = focusRingStyle();
 
@@ -99,8 +100,9 @@ const ProjectSettingsView = ({
               gap={2}
               css={{ my: theme.spacing[5], width: theme.spacing[34] }}
             >
-              {selectedSetting === "General" && <GeneralSection />}
-              {selectedSetting === "Redirects" && <RedirectSection />}
+              {selectedSetting === "General" && <SectionGeneral />}
+              {selectedSetting === "Redirects" && <SectionRedirects />}
+              {selectedSetting === "Marketplace" && <SectionMarketplace />}
               <div />
             </Grid>
           </ScrollArea>

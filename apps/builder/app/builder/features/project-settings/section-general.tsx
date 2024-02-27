@@ -36,7 +36,7 @@ const defaultMetaSettings: ProjectMeta = {
   code: "",
 };
 
-export const GeneralSection = () => {
+export const SectionGeneral = () => {
   const [meta, setMeta] = useState(
     () => $pages.get()?.meta ?? defaultMetaSettings
   );
