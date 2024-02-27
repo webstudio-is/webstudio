@@ -32,7 +32,6 @@ export const JsonControl = ({
   const [error, setError] = useState<undefined | string>(undefined);
   const valueString = formatValue(computedValue ?? "");
   const localValue = useLocalValue(valueString, (value) => {
-    // console.log(value, isLiteralExpression(value))
     // prevent executing expressions which depends on global variables
     if (isLiteralExpression(value) === false) {
       setError("color");
