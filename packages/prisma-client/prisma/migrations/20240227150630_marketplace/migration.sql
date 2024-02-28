@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "MarketplaceStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+CREATE TYPE "MarketplaceApprovalStatus" AS ENUM ('UNLISTED', 'PENDING', 'APPROVED', 'REJECTED');
 
 -- AlterTable
 ALTER TABLE
@@ -11,4 +11,4 @@ ADD
 ALTER TABLE
   "Project"
 ADD
-  COLUMN "marketplaceStatus" "PublishStatus";
+  COLUMN "marketplaceApprovalStatus" "MarketplaceApprovalStatus" NOT NULL DEFAULT 'UNLISTED';

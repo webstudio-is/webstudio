@@ -102,7 +102,8 @@ const ProjectSettingsView = ({
             >
               {selectedSetting === "General" && <SectionGeneral />}
               {selectedSetting === "Redirects" && <SectionRedirects />}
-              {selectedSetting === "Marketplace" && <SectionMarketplace />}
+              {selectedSetting === "Marketplace" &&
+                isFeatureEnabled("marketplace") && <SectionMarketplace />}
               <div />
             </Grid>
           </ScrollArea>

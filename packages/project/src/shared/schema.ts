@@ -9,6 +9,17 @@ export const Title = z
     `Minimum ${MIN_TITLE_LENGTH} characters required`
   );
 
+export const MarketplaceApprovalStatus = z.enum([
+  "UNLISTED",
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+]);
+
+export type MarketplaceApprovalStatus = z.infer<
+  typeof MarketplaceApprovalStatus
+>;
+
 export const Project = z.object({
   id: z.string(),
   title: Title,
@@ -32,6 +43,7 @@ export const Project = z.object({
       })
       .nullable()
   ),
+  marketplaceApprovalStatus: MarketplaceApprovalStatus,
 });
 
 export type Project = z.infer<typeof Project>;

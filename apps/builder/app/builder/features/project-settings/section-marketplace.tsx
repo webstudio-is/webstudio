@@ -14,13 +14,21 @@ import {
   Checkbox,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
-import { $assets, $marketplaceProduct } from "~/shared/nano-states";
+import {
+  $assets,
+  $authToken,
+  $marketplaceProduct,
+  $project,
+} from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import { serverSyncStore } from "~/shared/sync";
+import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
+import { Project, type ProjectRouter } from "@webstudio-is/project";
+import { projectsPath } from "~/shared/router-utils";
 
 const imgStyle = css({
   width: 72,
@@ -39,8 +47,18 @@ const imageLoader = createImageLoader({
   imageBaseUrl: env.IMAGE_BASE_URL,
 });
 
+const trpc = createTrpcRemixProxy<ProjectRouter>((method) =>
+  projectsPath(method, { authToken: $authToken.get() })
+);
+
 export const SectionMarketplace = () => {
-  const marketplaceStatus = undefined;
+  const project = useStore($project);
+  const {
+    send: setMarketplaceApprovalStatus,
+    data: updatedProject,
+    state: marketplaceApprovalStatusLoadingState,
+  } = trpc.setMarketplaceApprovalStatus.useMutation();
+
   const [data, setData] = useState(() => ({
     ...defaultMarketplaceProduct,
     ...$marketplaceProduct.get(),
@@ -55,12 +73,21 @@ export const SectionMarketplace = () => {
     "isConfirmed",
   ]);
   const assets = useStore($assets);
-  const [thumbnailAssetId, setThumbnailAssetId] = useState<string>(
-    data.thumbnailAssetId ?? ""
-  );
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
-  const asset = assets.get(thumbnailAssetId);
+  const asset = assets.get(data.thumbnailAssetId ?? "");
   const thumbnailUrl = asset ? `${asset.name}` : undefined;
+
+  const marketplaceApprovalStatus = updatedProject?.marketplaceApprovalStatus;
+
+  useEffect(() => {
+    if (marketplaceApprovalStatus) {
+      const nextProject = {
+        ...$project.get(),
+        marketplaceApprovalStatus,
+      } as Project;
+      $project.set(nextProject);
+    }
+  }, [marketplaceApprovalStatus]);
 
   const handleSave = <Setting extends keyof MarketplaceProduct>(
     setting: Setting
@@ -79,6 +106,10 @@ export const SectionMarketplace = () => {
       );
     };
   };
+
+  if (project === undefined) {
+    return;
+  }
 
   return (
     <>
@@ -118,7 +149,7 @@ export const SectionMarketplace = () => {
             <Text color="subtle">
               Upload a 32 x 32 px image to display in the marketplace overview.
             </Text>
-            <ImageControl onAssetIdChange={setThumbnailAssetId}>
+            <ImageControl onAssetIdChange={handleSave("thumbnailAssetId")}>
               <Button css={{ justifySelf: "start" }}>Upload</Button>
             </ImageControl>
           </Grid>
@@ -178,41 +209,67 @@ export const SectionMarketplace = () => {
           onChange={handleSave("description")}
         />
       </Grid>
-
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <CheckboxAndLabel>
-          <Checkbox
-            checked={isConfirmed}
-            id={ids.isConfirmed}
-            onCheckedChange={(value) => {
-              if (typeof value === "boolean") {
-                setIsConfirmed(value);
-              }
-            }}
-          />
-          <Label htmlFor={ids.isConfirmed} css={{ flexBasis: "fit-content" }}>
-            I understand that by submitting, this project will become available
-            in a public marketplace.
-          </Label>
-        </CheckboxAndLabel>
-      </Grid>
-
+      {project.marketplaceApprovalStatus === "UNLISTED" && (
+        <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+          <CheckboxAndLabel>
+            <Checkbox
+              checked={isConfirmed}
+              id={ids.isConfirmed}
+              onCheckedChange={(value) => {
+                if (typeof value === "boolean") {
+                  setIsConfirmed(value);
+                }
+              }}
+            />
+            <Label htmlFor={ids.isConfirmed} css={{ flexBasis: "fit-content" }}>
+              I understand that by submitting, this project will become
+              available in a public marketplace.
+            </Label>
+          </CheckboxAndLabel>
+        </Grid>
+      )}
       <Flex
         align="center"
         justify="end"
         gap={2}
         css={{ mx: theme.spacing[5], px: theme.spacing[5] }}
       >
-        {marketplaceStatus && (
-          <Button color="destructive">Remove from marketplace</Button>
+        {project.marketplaceApprovalStatus === "UNLISTED" ? (
+          <Button
+            color="primary"
+            disabled={isConfirmed === false}
+            state={
+              marketplaceApprovalStatusLoadingState === "idle"
+                ? undefined
+                : "pending"
+            }
+            onClick={() => {
+              setMarketplaceApprovalStatus({
+                projectId: project.id,
+                marketplaceApprovalStatus: "PENDING",
+              });
+            }}
+          >
+            Submit
+          </Button>
+        ) : (
+          <Button
+            state={
+              marketplaceApprovalStatusLoadingState === "idle"
+                ? undefined
+                : "pending"
+            }
+            color="destructive"
+            onClick={() => {
+              setMarketplaceApprovalStatus({
+                projectId: project.id,
+                marketplaceApprovalStatus: "UNLISTED",
+              });
+            }}
+          >
+            Unlist from Marketplace
+          </Button>
         )}
-        <Button
-          color="primary"
-          disabled={isConfirmed === false}
-          onClick={() => {}}
-        >
-          Submit
-        </Button>
       </Flex>
     </>
   );

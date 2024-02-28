@@ -137,21 +137,21 @@ view UserProduct {
 }
 
 model Project {
-  id                  String                 @id @default(uuid())
-  createdAt           DateTime               @default(now())
-  title               String
-  domain              String                 @unique
-  user                User?                  @relation(fields: [userId], references: [id])
-  userId              String?
-  build               Build[]
-  isDeleted           Boolean                @default(false)
-  files               File[]
-  projectDomain       ProjectDomain[]
-  latestBuild         LatestBuildPerProject?
-  authorizationToken  AuthorizationToken[]
-  previewImageAsset   Asset?                 @relation(fields: [previewImageAssetId, id], references: [id, projectId])
-  previewImageAssetId String?
-  marketplaceStatus   PublishStatus?
+  id                        String                    @id @default(uuid())
+  createdAt                 DateTime                  @default(now())
+  title                     String
+  domain                    String                    @unique
+  user                      User?                     @relation(fields: [userId], references: [id])
+  userId                    String?
+  build                     Build[]
+  isDeleted                 Boolean                   @default(false)
+  files                     File[]
+  projectDomain             ProjectDomain[]
+  latestBuild               LatestBuildPerProject?
+  authorizationToken        AuthorizationToken[]
+  previewImageAsset         Asset?                    @relation(fields: [previewImageAssetId, id], references: [id, projectId])
+  previewImageAssetId       String?
+  marketplaceApprovalStatus MarketplaceApprovalStatus @default(UNLISTED)
 
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
@@ -165,6 +165,7 @@ enum PublishStatus {
 }
 
 enum MarketplaceApprovalStatus {
+  UNLISTED
   PENDING
   APPROVED
   REJECTED

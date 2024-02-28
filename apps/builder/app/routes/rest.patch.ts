@@ -220,8 +220,6 @@ export const action = async ({ request }: ActionArgs) => {
             patches
           );
 
-          console.log("marketplaceProduct", buildData.marketplaceProduct);
-
           continue;
         }
 
