@@ -9,7 +9,7 @@ const Base = z.object({
 });
 
 const TemplatesProduct = Base.extend({
-  category: z.literal("templates"),
+  category: z.literal("templates").default("templates"),
 });
 
 // Will add an AppProduct later.

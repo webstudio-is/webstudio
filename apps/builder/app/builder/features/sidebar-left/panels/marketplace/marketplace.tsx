@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { useStore } from "@nanostores/react";
+import { useEffect, useMemo } from "react";
 import {
   Flex,
   List,
@@ -11,41 +10,51 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { $products, categories } from "./utils";
+import { categories } from "./utils";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
+import type { MarketplaceRouter } from "~/shared/marketplace/router";
+import { marketplacePath } from "~/shared/router-utils";
+import env from "~/shared/env";
+import { Image, createImageLoader } from "@webstudio-is/image";
+import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
+import type { Project } from "@webstudio-is/project";
 
-const getProductsByCategory = (products: Array<MarketplaceProduct>) => {
-  const productsByCategory = new Map<
-    MarketplaceProduct["category"],
-    Array<MarketplaceProduct>
+const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
+  const itemsByCategory = new Map<
+    MarketplaceOverviewItem["category"],
+    Array<MarketplaceOverviewItem>
   >();
 
-  for (const product of products) {
+  for (const product of items) {
     if (
       categories.some((category) => category.category === product.category) ===
       false
     ) {
       throw new Error(`Unknown category: ${product.category}`);
     }
-    let categoryItems = productsByCategory.get(product.category);
+    let categoryItems = itemsByCategory.get(product.category);
     if (categoryItems === undefined) {
       categoryItems = [];
-      productsByCategory.set(product.category, categoryItems);
+      itemsByCategory.set(product.category, categoryItems);
     }
     categoryItems.push(product);
   }
-  return productsByCategory;
+  return itemsByCategory;
 };
 
 const focusOutline = focusRingStyle();
 
+const imageLoader = createImageLoader({
+  imageBaseUrl: env.IMAGE_BASE_URL,
+});
+
 const Product = ({
-  product,
+  item,
   isLoading,
   ...props
 }: {
-  product: MarketplaceProduct;
+  item: MarketplaceOverviewItem;
   isLoading: boolean;
 }) => {
   return (
@@ -63,13 +72,15 @@ const Product = ({
       justify="between"
     >
       <Flex align="center" gap="2">
-        <img
-          src={product.faviconUrl}
-          style={{ width: rawTheme.spacing[11], height: rawTheme.spacing[11] }}
+        <Image
+          src={item.thumbnailAssetName}
+          loader={imageLoader}
+          width={rawTheme.spacing[11]}
+          height={rawTheme.spacing[11]}
           aria-disabled
         />
         <Text variant="labelsSentenceCase" truncate>
-          {product.label}
+          {item.name}
         </Text>
       </Flex>
       {isLoading && <LoadingDotsIcon style={{ flexShrink: 0 }} />}
@@ -77,42 +88,51 @@ const Product = ({
   );
 };
 
+const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
+
 export const Marketplace = ({
-  activeProduct,
+  activeProjectId,
   onSelect,
 }: {
-  activeProduct?: MarketplaceProduct;
-  onSelect: (product: MarketplaceProduct) => void;
+  activeProjectId?: Project["id"];
+  onSelect: (projectId: Project["id"]) => void;
 }) => {
-  const products = useStore($products);
-  const productsByCategory = useMemo(
-    () => new Map(getProductsByCategory(products)),
-    [products]
-  );
+  const {
+    load: loadItems,
+    data: items,
+    state: itemsState,
+  } = trpc.getItems.useQuery();
+
+  const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
+
+  useEffect(() => {
+    loadItems();
+  }, []);
+
   return (
     <ScrollArea>
       {categories.map(({ category, label }) => {
-        const products = productsByCategory.get(category);
-        if (products === undefined || products.length === 0) {
+        const items = itemsByCategory.get(category);
+        if (items === undefined || items.length === 0) {
           return;
         }
         return (
           <CollapsibleSection label={label} key={category} fullWidth>
             <List asChild>
               <Flex direction="column">
-                {products.map((product: MarketplaceProduct, index) => {
+                {items.map((item, index) => {
                   return (
                     <ListItem
                       asChild
-                      key={product.id}
+                      key={item.projectId}
                       index={index}
                       onSelect={() => {
-                        onSelect(product);
+                        onSelect(item.projectId);
                       }}
                     >
                       <Product
-                        product={product}
-                        isLoading={product.id === activeProduct?.id}
+                        item={item}
+                        isLoading={item.projectId === activeProjectId}
                       />
                     </ListItem>
                   );

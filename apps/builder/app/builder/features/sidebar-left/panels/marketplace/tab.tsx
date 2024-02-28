@@ -8,15 +8,16 @@ import { builderPath } from "~/shared/router-utils";
 import { useFetcher } from "@remix-run/react";
 import { useState } from "react";
 import { toWebstudioData } from "./utils";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
-  const [activeProduct, setActiveProduct] = useState<MarketplaceProduct>();
+  const [activeProjectId, setActiveProjectId] =
+    useState<MarketplaceOverviewItem>();
   const { load, data } = useFetcher();
 
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen === false) {
-      setActiveProduct(undefined);
+      setActiveProjectId(undefined);
     }
   };
 
@@ -26,23 +27,22 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         title="Marketplace"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      {activeProduct && data ? (
+      {activeProjectId && data ? (
         <Templates
-          product={activeProduct}
+          projectId={activeProjectId}
           data={toWebstudioData(data)}
           onOpenChange={handleOpenChange}
         />
       ) : (
         <Marketplace
-          activeProduct={activeProduct}
+          activeProjectId={activeProjectId}
           onSelect={(product) => {
-            setActiveProduct(product);
-            load(
-              builderPath({
-                projectId: product.projectId,
-                authToken: product.authToken,
-              })
-            );
+            setActiveProjectId(product);
+            load();
+            //builderPath({
+            //  projectId: product.projectId,
+            //  authToken: product.authToken,
+            //})
           }}
         />
       )}
