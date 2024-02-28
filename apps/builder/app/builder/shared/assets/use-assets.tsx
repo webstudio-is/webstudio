@@ -168,7 +168,7 @@ export const useUploadAsset = () => {
     setAsset({ ...uploadedAsset, id: assetId });
   };
 
-  const uploadAssets = (type: AssetType, files: File[]) => {
+  const uploadAssets = async (type: AssetType, files: File[]) => {
     const projectId = $project.get()?.id;
     const authToken = $authToken.get();
     if (projectId === undefined) {
@@ -181,7 +181,7 @@ export const useUploadAsset = () => {
 
     for (const fileData of filesData) {
       const assetId = fileData.assetId;
-      uploadAsset({
+      await uploadAsset({
         authToken,
         projectId,
         file: fileData.file,
