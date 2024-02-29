@@ -257,6 +257,13 @@ export const setMarketplaceApprovalStatus = async (
   },
   context: AppContext
 ) => {
+  if (
+    marketplaceApprovalStatus === "APPROVED" ||
+    marketplaceApprovalStatus === "REJECTED"
+  ) {
+    // User can't approve or reject
+    throw new Error("Invalid status");
+  }
   await assertEditPermission(projectId, context);
 
   return await prisma.project.update({
