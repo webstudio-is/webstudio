@@ -11,7 +11,7 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 
-const cssTryParseValue = (input: string) => {
+export const cssTreeTryParseValue = (input: string) => {
   try {
     const ast = csstree.parse(input, { context: "value" });
     return ast;
@@ -24,7 +24,7 @@ export const isValidDeclaration = (
   property: string,
   value: string
 ): boolean => {
-  const ast = cssTryParseValue(value);
+  const ast = cssTreeTryParseValue(value);
 
   if (ast == null) {
     return false;
@@ -70,7 +70,7 @@ export const parseCssValue = (
     return invalidValue;
   }
 
-  const ast = cssTryParseValue(input);
+  const ast = cssTreeTryParseValue(input);
 
   if (ast == null) {
     warnOnce(

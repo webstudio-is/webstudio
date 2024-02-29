@@ -40,7 +40,7 @@ export const FilterSection = (props: RenderCategoryProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseFilter("contrast(175%) brightness(103%)"),
+                  parseFilter("blur(5px)"),
                   currentStyle,
                   props.createBatchUpdate
                 );

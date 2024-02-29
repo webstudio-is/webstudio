@@ -3,17 +3,17 @@ import type {
   InvalidValue,
   LayerValueItem,
   LayersValue,
-  TupleValueItem,
 } from "@webstudio-is/css-engine";
+import { cssTreeTryParseValue, isValidDeclaration } from "../parse-css-value";
 
-const cssTreeTryParseValue = (input: string) => {
-  try {
-    const ast = csstree.parse(input, { context: "value" });
-    return ast;
-  } catch {
-    return undefined;
-  }
-};
+/*
+  https://github.com/webstudio-is/webstudio/issues/1016
+  https://github.com/csstree/csstree/issues/246
+
+  css-tree can't validate filter values.
+  So, we are relying on the isValidDeclaration function to validate the filter value.
+  Which uses browser CSSStyleValue.parse to validate.
+*/
 
 export const parseFilter = (input: string): LayersValue | InvalidValue => {
   let tokenStream = input.trim();
@@ -37,8 +37,8 @@ export const parseFilter = (input: string): LayersValue | InvalidValue => {
     };
   }
 
-  const parsed = csstree.lexer.matchProperty("filter", cssAst);
-  if (parsed.error) {
+  const isValidFilterDecleration = isValidDeclaration("filter", input);
+  if (isValidFilterDecleration === false) {
     return {
       type: "invalid",
       value: input,
@@ -46,7 +46,6 @@ export const parseFilter = (input: string): LayersValue | InvalidValue => {
   }
 
   const layers: LayerValueItem[] = [];
-
   csstree.walk(cssAst, (node) => {
     if (node.type === "Value") {
       for (const child of node.children) {

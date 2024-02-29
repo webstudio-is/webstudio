@@ -14,7 +14,7 @@ export const deleteLayer = (
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
   const layer = layers.value[index];
-  if (layer.type !== "unparsed") {
+  if (layer.type === "unparsed") {
     return;
   }
 
@@ -41,7 +41,7 @@ export const hideLayer = (
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
   const layer = layers.value[index];
-  if (layer.type !== "unparsed") {
+  if (layer.type === "unparsed" || layer.type !== "tuple") {
     return;
   }
 
@@ -90,7 +90,7 @@ export const updateLayer = (
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
   const layer = layers.value[index];
-  if (layer.type !== "unparsed") {
+  if (layer.type === "unparsed") {
     return;
   }
 

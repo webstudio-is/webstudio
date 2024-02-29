@@ -7,15 +7,7 @@ import type {
   TupleValueItem,
   Unit,
 } from "@webstudio-is/css-engine";
-
-const cssTreeTryParseValue = (input: string) => {
-  try {
-    const ast = csstree.parse(input, { context: "value" });
-    return ast;
-  } catch {
-    return undefined;
-  }
-};
+import { cssTreeTryParseValue } from "../parse-css-value";
 
 export const parseBoxShadow = (
   boxShadow: string
