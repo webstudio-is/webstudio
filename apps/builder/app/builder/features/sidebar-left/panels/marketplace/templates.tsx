@@ -83,8 +83,13 @@ const Template = ({
         position: "relative",
         overflow: "hidden",
         outline: "none",
-        "&:hover": focusOutline,
-        "&:focus-visible": focusOutline,
+        "&:hover": {
+          background: theme.colors.backgroundPresetMain,
+        },
+        "&:focus-visible": {
+          ...focusOutline,
+          background: theme.colors.backgroundPresetMain,
+        },
       }}
       gap="1"
     >
