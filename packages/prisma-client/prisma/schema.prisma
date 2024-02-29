@@ -195,6 +195,8 @@ model Build {
   deployment    String?
   publishStatus PublishStatus @default(PENDING)
 
+  latestBuildPerProject LatestBuildPerProject?
+
   @@id([id, projectId])
 }
 
@@ -297,6 +299,7 @@ view LatestBuildPerProjectDomain {
 
 view LatestBuildPerProject {
   buildId String
+  build   Build  @relation(fields: [buildId, projectId], references: [id, projectId])
 
   projectId String
   domain    String
@@ -307,17 +310,19 @@ view LatestBuildPerProject {
   updatedAt     DateTime
 
   @@id([projectId, domain])
+  @@unique([buildId, projectId])
 }
 
 // Dashboard
 view DashboardProject {
-  id                  String   @id @default(uuid())
-  createdAt           DateTime @default(now())
-  title               String
-  domain              String
-  userId              String?
-  previewImageAsset   Asset?   @relation(fields: [previewImageAssetId, id], references: [id, projectId])
-  previewImageAssetId String?
-  isDeleted           Boolean  @default(false)
-  isPublished         Boolean
+  id                        String                    @id @default(uuid())
+  createdAt                 DateTime                  @default(now())
+  title                     String
+  domain                    String
+  userId                    String?
+  previewImageAsset         Asset?                    @relation(fields: [previewImageAssetId, id], references: [id, projectId])
+  previewImageAssetId       String?
+  isDeleted                 Boolean                   @default(false)
+  isPublished               Boolean
+  marketplaceApprovalStatus MarketplaceApprovalStatus @default(UNLISTED)
 }
