@@ -8,7 +8,7 @@ import {
   json,
   redirect,
 } from "@remix-run/server-runtime";
-import { useLoaderData, Links, Meta } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
@@ -312,28 +312,19 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
-  const { params, resources, pageMeta } = useLoaderData<typeof loader>();
+  const { params, resources } = useLoaderData<typeof loader>();
   return (
-    <html lang={pageMeta.language ?? "en"}>
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <Meta />
-        <Links />
-      </head>
-
-      <ReactSdkContext.Provider
-        value={{
-          imageLoader,
-          assetBaseUrl,
-          imageBaseUrl,
-          pagesPaths,
-          resources,
-        }}
-      >
-        <Page params={params} />
-      </ReactSdkContext.Provider>
-    </html>
+    <ReactSdkContext.Provider
+      value={{
+        imageLoader,
+        assetBaseUrl,
+        imageBaseUrl,
+        pagesPaths,
+        resources,
+      }}
+    >
+      <Page params={params} />
+    </ReactSdkContext.Provider>
   );
 };
 

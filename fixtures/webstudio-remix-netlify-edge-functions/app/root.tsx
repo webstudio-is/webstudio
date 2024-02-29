@@ -1,1 +1,1 @@
-export { Outlet as default } from "@remix-run/react";
+export { Root as default } from "@webstudio-is/react-sdk";
