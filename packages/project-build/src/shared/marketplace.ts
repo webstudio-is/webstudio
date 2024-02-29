@@ -1,15 +1,17 @@
 import { z } from "zod";
 
 const Base = z.object({
-  name: z.string().optional(),
-  thumbnailAssetId: z.string().optional(),
-  description: z.string().optional(),
-  email: z.string().optional(),
-  website: z.string().optional(),
+  name: z.string().refine((name) => name.length >= 2, {
+    message: "Name requires at least 2 characterss",
+  }),
+  thumbnailAssetId: z.string(),
+  description: z.string(),
+  email: z.string().email(),
+  website: z.string().url().optional(),
 });
 
 const TemplatesProduct = Base.extend({
-  category: z.literal("templates").default("templates"),
+  category: z.literal("templates"),
 });
 
 // Will add an AppProduct later.

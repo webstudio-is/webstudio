@@ -1,6 +1,7 @@
 import { prisma } from "@webstudio-is/prisma-client";
 import { MarketplaceProduct } from "@webstudio-is/project-build";
 import type { MarketplaceOverviewItem } from "./types";
+import { parseConfig } from "@webstudio-is/project-build/index.server";
 
 export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
   const projects = await prisma.project.findMany({
@@ -23,27 +24,24 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
     },
   });
 
-  // @todo move this?
-  const products = [];
+  const items = [];
 
   for (const project of projects) {
-    const { latestBuild } = project;
-    if (!latestBuild) {
+    if (project.latestBuild === null) {
       continue;
     }
 
-    const marketplaceProduct = MarketplaceProduct.parse(
-      JSON.parse(latestBuild.build.marketplaceProduct)
+    const product = MarketplaceProduct.parse(
+      parseConfig(project.latestBuild.build.marketplaceProduct)
     );
 
-    products.push({
+    items.push({
       projectId: project.id,
-      ...marketplaceProduct,
+      ...product,
     });
   }
-
-  const assetIds = products
-    .map((product) => product.thumbnailAssetId)
+  const assetIds = items
+    .map((item) => item.thumbnailAssetId)
     .filter((value): value is string => value != null);
 
   const assets =
@@ -57,11 +55,11 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
         })
       : [];
 
-  return products.map((product) => {
+  return items.map((item) => {
     return {
-      ...product,
+      ...item,
       thumbnailAssetName: assets.find(
-        (asset) => asset.id === product.thumbnailAssetId
+        (asset) => asset.id === item.thumbnailAssetId
       )?.name,
     };
   });

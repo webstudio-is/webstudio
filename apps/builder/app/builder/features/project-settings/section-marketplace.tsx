@@ -12,6 +12,7 @@ import {
   Flex,
   CheckboxAndLabel,
   Checkbox,
+  InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
 import {
@@ -24,7 +25,7 @@ import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
 import { useEffect, useState } from "react";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import { MarketplaceProduct } from "@webstudio-is/project-build";
 import { serverSyncStore } from "~/shared/sync";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import { Project, type ProjectRouter } from "@webstudio-is/project";
@@ -41,6 +42,10 @@ const imgStyle = css({
 
 const defaultMarketplaceProduct: MarketplaceProduct = {
   category: "templates",
+  name: "",
+  thumbnailAssetId: "",
+  description: "",
+  email: "",
 };
 
 const imageLoader = createImageLoader({
@@ -51,6 +56,13 @@ const trpc = createTrpcRemixProxy<ProjectRouter>((method) =>
   projectsPath(method, { authToken: $authToken.get() })
 );
 
+const validate = (data: MarketplaceProduct) => {
+  const parsedResult = MarketplaceProduct.safeParse(data);
+  if (parsedResult.success === false) {
+    return parsedResult.error.formErrors.fieldErrors;
+  }
+};
+
 export const SectionMarketplace = () => {
   const project = useStore($project);
   const {
@@ -58,12 +70,10 @@ export const SectionMarketplace = () => {
     data: updatedProject,
     state: marketplaceApprovalStatusLoadingState,
   } = trpc.setMarketplaceApprovalStatus.useMutation();
-
   const [data, setData] = useState(() => ({
     ...defaultMarketplaceProduct,
     ...$marketplaceProduct.get(),
   }));
-
   const ids = useIds([
     "name",
     "thumbnailAssetId",
@@ -74,16 +84,19 @@ export const SectionMarketplace = () => {
   ]);
   const assets = useStore($assets);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
+  const [errors, setErrors] = useState<ReturnType<typeof validate>>();
   const asset = assets.get(data.thumbnailAssetId ?? "");
   const thumbnailUrl = asset ? `${asset.name}` : undefined;
 
   const marketplaceApprovalStatus = updatedProject?.marketplaceApprovalStatus;
   useEffect(() => {
-    const nextProject = {
-      ...$project.get(),
-      marketplaceApprovalStatus,
-    } as Project;
-    $project.set(nextProject);
+    if (marketplaceApprovalStatus) {
+      const nextProject = {
+        ...$project.get(),
+        marketplaceApprovalStatus,
+      } as Project;
+      $project.set(nextProject);
+    }
   }, [marketplaceApprovalStatus]);
 
   const handleSave = <Setting extends keyof MarketplaceProduct>(
@@ -91,7 +104,12 @@ export const SectionMarketplace = () => {
   ) => {
     return (value: MarketplaceProduct[Setting]) => {
       const nextData = { ...data, [setting]: value };
+      const errors = validate(nextData);
+      setErrors(errors);
       setData(nextData);
+      if (errors) {
+        return;
+      }
       serverSyncStore.createTransaction(
         [$marketplaceProduct],
         (marketplaceProduct) => {
@@ -107,7 +125,6 @@ export const SectionMarketplace = () => {
   if (project === undefined) {
     return;
   }
-
   return (
     <>
       <Grid
@@ -119,14 +136,17 @@ export const SectionMarketplace = () => {
       >
         <Text variant="titles">Marketplace</Text>
         <Label htmlFor={ids.name}>Product Name</Label>
-        <InputField
-          id={ids.name}
-          value={data.name ?? ""}
-          autoFocus
-          onChange={(event) => {
-            handleSave("name")(event.target.value);
-          }}
-        />
+        <InputErrorsTooltip errors={errors?.name}>
+          <InputField
+            id={ids.name}
+            value={data.name ?? ""}
+            autoFocus
+            color={errors?.name && "error"}
+            onChange={(event) => {
+              handleSave("name")(event.target.value);
+            }}
+          />
+        </InputErrorsTooltip>
       </Grid>
 
       <Separator />
@@ -163,14 +183,16 @@ export const SectionMarketplace = () => {
         }}
       >
         <Label htmlFor={ids.email}>Email</Label>
-        <InputField
-          id={ids.email}
-          value={data.email ?? ""}
-          onChange={(event) => {
-            handleSave("email")(event.target.value);
-          }}
-          type="email"
-        />
+        <InputErrorsTooltip errors={errors?.email}>
+          <InputField
+            id={ids.email}
+            value={data.email ?? ""}
+            color={errors?.email && "error"}
+            onChange={(event) => {
+              handleSave("email")(event.target.value);
+            }}
+          />
+        </InputErrorsTooltip>
       </Grid>
 
       <Separator />
@@ -183,14 +205,16 @@ export const SectionMarketplace = () => {
         }}
       >
         <Label htmlFor={ids.website}>Website</Label>
-        <InputField
-          id={ids.website}
-          value={data.website ?? ""}
-          onChange={(event) => {
-            handleSave("website")(event.target.value);
-          }}
-          type="url"
-        />
+        <InputErrorsTooltip errors={errors?.website}>
+          <InputField
+            id={ids.website}
+            value={data.website ?? ""}
+            color={errors?.website && "error"}
+            onChange={(event) => {
+              handleSave("website")(event.target.value);
+            }}
+          />
+        </InputErrorsTooltip>
       </Grid>
 
       <Separator />
