@@ -246,19 +246,19 @@ export const SectionMarketplace = () => {
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
         <PanelBanner>
           <Text color="destructive">
-            Don't forget to publish your project after every change to make your
-            changes available in the marketplace!
+            {`Don't forget to publish your project after every change to make your
+            changes available in the marketplace!`}
           </Text>
           <Text color="destructive">
-            Ensure that every page containing a template has the "ws:category"
+            {`Ensure that every page containing a template has the "ws:category"
             meta in the page settings. Optionally, you can also define
-            "ws:title"; otherwise, the page title will be used.
+            "ws:title"; otherwise, the page title will be used.`}
           </Text>
 
           {project.marketplaceApprovalStatus === "UNLISTED" && (
             <Text>
-              After submitting, we will review your project. Please reach out to
-              us on Discord if you have any questions.
+              {`After submitting, we will review your project. Please reach out to
+              us on Discord if you have any questions.`}
             </Text>
           )}
         </PanelBanner>
