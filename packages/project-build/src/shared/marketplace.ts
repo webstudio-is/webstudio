@@ -1,9 +1,7 @@
 import { z } from "zod";
 
 const Base = z.object({
-  name: z.string().refine((name) => name.length >= 2, {
-    message: "Name requires at least 2 characterss",
-  }),
+  name: z.string().min(2),
   thumbnailAssetId: z.string(),
   description: z.string(),
   email: z.string().email(),
