@@ -28,6 +28,18 @@ export const Resource = z.object({
 
 export type Resource = z.infer<typeof Resource>;
 
+// evaluated variant of resource
+export const ResourceRequest = z.object({
+  id: ResourceId,
+  name: z.string(),
+  method: Method,
+  url: z.string(),
+  headers: z.array(Header),
+  body: z.optional(z.unknown()),
+});
+
+export type ResourceRequest = z.infer<typeof ResourceRequest>;
+
 export const Resources = z.map(ResourceId, Resource);
 
 export type Resources = z.infer<typeof Resources>;

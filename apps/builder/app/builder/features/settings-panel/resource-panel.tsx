@@ -47,6 +47,7 @@ import {
   useField,
   composeFields,
 } from "~/shared/form-utils";
+import { ExpressionEditor } from "~/builder/shared/expression-editor";
 
 const validateHeaderName = (value: string) =>
   value.trim().length === 0 ? "Header name is required" : undefined;
@@ -125,22 +126,6 @@ const HeaderPair = ({
       </Label>
       <Box css={{ gridArea: "value-input", position: "relative" }}>
         <BindingControl>
-          <BindingPopover
-            scope={editorScope}
-            aliases={editorAliases}
-            variant={isLiteralExpression(value) ? "default" : "bound"}
-            value={value}
-            onChange={(newValue) => {
-              valueField.onChange(newValue);
-              valueField.onBlur();
-              onChange(name, newValue);
-            }}
-            onRemove={(evaluatedValue) => {
-              valueField.onChange(JSON.stringify(evaluatedValue));
-              valueField.onBlur();
-              onChange(name, JSON.stringify(evaluatedValue));
-            }}
-          />
           <InputErrorsTooltip
             errors={valueField.error ? [valueField.error] : undefined}
           >
@@ -158,6 +143,22 @@ const HeaderPair = ({
               onBlur={valueField.onBlur}
             />
           </InputErrorsTooltip>
+          <BindingPopover
+            scope={editorScope}
+            aliases={editorAliases}
+            variant={isLiteralExpression(value) ? "default" : "bound"}
+            value={value}
+            onChange={(newValue) => {
+              valueField.onChange(newValue);
+              valueField.onBlur();
+              onChange(name, newValue);
+            }}
+            onRemove={(evaluatedValue) => {
+              valueField.onChange(JSON.stringify(evaluatedValue));
+              valueField.onBlur();
+              onChange(name, JSON.stringify(evaluatedValue));
+            }}
+          />
         </BindingControl>
       </Box>
 
@@ -311,6 +312,98 @@ const $selectedInstanceScope = computed(
   }
 );
 
+const BodyField = ({
+  editorAliases,
+  editorScope,
+  contentType,
+  bodyField,
+}: {
+  editorAliases: Map<string, string>;
+  editorScope: Record<string, unknown>;
+  contentType?: string;
+  bodyField: Field<undefined | string>;
+}) => {
+  const evaluatedBodyValue =
+    bodyField.value === undefined
+      ? undefined
+      : evaluateExpressionWithinScope(bodyField.value, editorScope);
+  const evaluatedContentType = contentType
+    ? evaluateExpressionWithinScope(contentType, editorScope)
+    : undefined;
+  const isBound =
+    bodyField.value !== undefined &&
+    isLiteralExpression(bodyField.value) === false;
+  const isJsonBody = String(evaluatedContentType ?? "") === "application/json";
+
+  const [localValue, setLocalValue] = useState<undefined | string>();
+
+  return (
+    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Label>Body</Label>
+      <BindingControl>
+        <InputErrorsTooltip
+          errors={bodyField.error ? [bodyField.error] : undefined}
+        >
+          {isJsonBody ? (
+            // wrap with div to position error tooltip
+            <div>
+              <ExpressionEditor
+                color={bodyField.error ? "error" : undefined}
+                // expressions with variables cannot be edited
+                readOnly={
+                  localValue === undefined && isBound && bodyField.valid
+                }
+                value={
+                  localValue ??
+                  JSON.stringify(evaluatedBodyValue, null, 2) ??
+                  bodyField.value ??
+                  ""
+                }
+                onChange={(value) => {
+                  setLocalValue(value);
+                  bodyField.onChange(value);
+                }}
+                onBlur={() => {
+                  setLocalValue(undefined);
+                  bodyField.onBlur();
+                }}
+              />
+            </div>
+          ) : (
+            <TextArea
+              autoGrow={true}
+              maxRows={10}
+              // expressions with variables cannot be edited
+              disabled={isBound}
+              state={bodyField.error ? "invalid" : undefined}
+              value={String(evaluatedBodyValue ?? "")}
+              // update text value as string literal
+              onChange={(newValue) =>
+                bodyField.onChange(JSON.stringify(newValue))
+              }
+              onBlur={bodyField.onBlur}
+            />
+          )}
+        </InputErrorsTooltip>
+        <BindingPopover
+          scope={editorScope}
+          aliases={editorAliases}
+          variant={isBound ? "bound" : "default"}
+          value={bodyField.value ?? ""}
+          onChange={(value) => {
+            bodyField.onChange(value);
+            bodyField.onBlur();
+          }}
+          onRemove={(evaluatedValue) => {
+            bodyField.onChange(JSON.stringify(evaluatedValue));
+            bodyField.onBlur();
+          }}
+        />
+      </BindingControl>
+    </Flex>
+  );
+};
+
 type PanelApi = ComposedFields & {
   save: () => void;
 };
@@ -364,12 +457,19 @@ export const ResourceForm = forwardRef<
     initialValue: resource?.headers ?? [],
     validate: (_value) => undefined,
   });
-  const bodyField = useField<string>({
-    initialValue: resource?.body ?? `""`,
+  const bodyField = useField<undefined | string>({
+    initialValue: resource?.body,
     validate: (value) => {
+      // skip empty expressions
+      if (value === undefined) {
+        return;
+      }
       const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-      if (typeof evaluatedValue !== "string") {
-        return "Body expects a string";
+      const isString = typeof evaluatedValue === "string";
+      const isJson =
+        typeof evaluatedValue === "object" && evaluatedValue !== null;
+      if (isString === false && isJson === false) {
+        return "Body expects a string or json";
       }
     },
   });
@@ -428,20 +528,6 @@ export const ResourceForm = forwardRef<
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={urlId}>URL</Label>
         <BindingControl>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(urlField.value) ? "default" : "bound"}
-            value={urlField.value}
-            onChange={(value) => {
-              urlField.onChange(value);
-              urlField.onBlur();
-            }}
-            onRemove={(evaluatedValue) => {
-              urlField.onChange(JSON.stringify(evaluatedValue));
-              urlField.onBlur();
-            }}
-          />
           <InputErrorsTooltip
             errors={urlField.error ? [urlField.error] : undefined}
           >
@@ -460,6 +546,20 @@ export const ResourceForm = forwardRef<
               onBlur={urlField.onBlur}
             />
           </InputErrorsTooltip>
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(urlField.value) ? "default" : "bound"}
+            value={urlField.value}
+            onChange={(value) => {
+              urlField.onChange(value);
+              urlField.onBlur();
+            }}
+            onRemove={(evaluatedValue) => {
+              urlField.onChange(JSON.stringify(evaluatedValue));
+              urlField.onBlur();
+            }}
+          />
         </BindingControl>
       </Flex>
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
@@ -481,46 +581,16 @@ export const ResourceForm = forwardRef<
         />
       </Flex>
       {method !== "get" && (
-        <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-          <Label>Body</Label>
-          <BindingControl>
-            <BindingPopover
-              scope={scope}
-              aliases={aliases}
-              variant={
-                isLiteralExpression(bodyField.value) ? "default" : "bound"
-              }
-              value={bodyField.value}
-              onChange={(value) => {
-                bodyField.onChange(value);
-                bodyField.onBlur();
-              }}
-              onRemove={(evaluatedValue) => {
-                bodyField.onChange(JSON.stringify(evaluatedValue));
-                bodyField.onBlur();
-              }}
-            />
-            <InputErrorsTooltip
-              errors={bodyField.error ? [bodyField.error] : undefined}
-            >
-              <TextArea
-                autoGrow={true}
-                maxRows={10}
-                // expressions with variables cannot be edited
-                disabled={isLiteralExpression(bodyField.value) === false}
-                state={bodyField.error ? "invalid" : undefined}
-                value={String(
-                  evaluateExpressionWithinScope(bodyField.value, scope)
-                )}
-                // update text value as string literal
-                onChange={(newValue) =>
-                  bodyField.onChange(JSON.stringify(newValue))
-                }
-                onBlur={bodyField.onBlur}
-              />
-            </InputErrorsTooltip>
-          </BindingControl>
-        </Flex>
+        <BodyField
+          editorScope={scope}
+          editorAliases={aliases}
+          contentType={
+            headersField.value.find(
+              (header) => header.name.toLowerCase() === "content-type"
+            )?.value
+          }
+          bodyField={bodyField}
+        />
       )}
     </>
   );

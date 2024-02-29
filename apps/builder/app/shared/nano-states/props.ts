@@ -1,5 +1,11 @@
 import { atom, computed } from "nanostores";
-import type { Resource, DataSource, Instance, Prop } from "@webstudio-is/sdk";
+import type {
+  Resource,
+  DataSource,
+  Instance,
+  Prop,
+  ResourceRequest,
+} from "@webstudio-is/sdk";
 import {
   collectionComponent,
   decodeDataSourceVariable,
@@ -433,8 +439,8 @@ const $loaderVariableValues = computed(
 const computeResource = (
   resource: Resource,
   values: Map<DataSource["id"], unknown>
-): Resource => {
-  const request: Resource = {
+): ResourceRequest => {
+  const request: ResourceRequest = {
     id: resource.id,
     name: resource.name,
     url: computeExpression(resource.url, values),
@@ -453,7 +459,7 @@ const computeResource = (
 const $computedResources = computed(
   [$resources, $loaderVariableValues],
   (resources, values) => {
-    const computedResources: Resource[] = [];
+    const computedResources: ResourceRequest[] = [];
     for (const resource of resources.values()) {
       computedResources.push(computeResource(resource, values));
     }
@@ -467,7 +473,7 @@ export const $areResourcesLoading = computed(
   (resourcesLoadingCount) => resourcesLoadingCount > 0
 );
 
-const loadResources = async (resourceRequests: Resource[]) => {
+const loadResources = async (resourceRequests: ResourceRequest[]) => {
   $resourcesLoadingCount.set($resourcesLoadingCount.get() + 1);
   const response = await fetch(restResourcesLoader(), {
     method: "POST",
@@ -511,8 +517,8 @@ export const subscribeResources = () => {
     (computedResources, invalidator) =>
       [computedResources, invalidator] as const
   ).subscribe(async ([computedResources]) => {
-    const matched = new Map<Resource["id"], Resource>();
-    const missing = new Map<Resource["id"], Resource>();
+    const matched = new Map<Resource["id"], ResourceRequest>();
+    const missing = new Map<Resource["id"], ResourceRequest>();
     for (const request of computedResources) {
       const cacheKey = JSON.stringify(request);
       if (cacheByKeys.has(cacheKey)) {
