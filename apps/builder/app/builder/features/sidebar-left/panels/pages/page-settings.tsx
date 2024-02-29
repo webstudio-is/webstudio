@@ -174,7 +174,7 @@ const SharedPageValues = z.object({
   title: PageTitle,
   description: z.string().optional(),
   excludePageFromSearch: z.boolean().optional(),
-  language: z.optional(Language.or(EmptyString)),
+  language: Language.or(EmptyString),
   socialImageUrl: z.string().optional(),
   status: Status.optional(),
   redirect: z.optional(ProjectNewRedirectPath.or(EmptyString)),
