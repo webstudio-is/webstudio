@@ -78,15 +78,12 @@ export const SectionMarketplace = () => {
   const thumbnailUrl = asset ? `${asset.name}` : undefined;
 
   const marketplaceApprovalStatus = updatedProject?.marketplaceApprovalStatus;
-
   useEffect(() => {
-    if (marketplaceApprovalStatus) {
-      const nextProject = {
-        ...$project.get(),
-        marketplaceApprovalStatus,
-      } as Project;
-      $project.set(nextProject);
-    }
+    const nextProject = {
+      ...$project.get(),
+      marketplaceApprovalStatus,
+    } as Project;
+    $project.set(nextProject);
   }, [marketplaceApprovalStatus]);
 
   const handleSave = <Setting extends keyof MarketplaceProduct>(
