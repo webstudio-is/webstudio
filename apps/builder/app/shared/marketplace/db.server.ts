@@ -42,16 +42,16 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
     });
   }
 
-  const ids = products
+  const assetIds = products
     .map((product) => product.thumbnailAssetId)
-    .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
+    .filter((value): value is string => value != null);
 
   const assets =
-    ids.length > 0
+    assetIds.length > 0
       ? await prisma.asset.findMany({
           where: {
             id: {
-              in: ids,
+              in: assetIds,
             },
           },
         })
