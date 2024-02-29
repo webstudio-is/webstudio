@@ -1,4 +1,5 @@
 import { useStore } from "@nanostores/react";
+import { isLiteralExpression } from "@webstudio-is/react-sdk";
 import {
   type ControlProps,
   getLabel,
@@ -17,6 +18,7 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
+import { useState } from "react";
 
 export const JsonControl = ({
   meta,
@@ -27,8 +29,15 @@ export const JsonControl = ({
   onChange,
   onDelete,
 }: ControlProps<"json">) => {
+  const [error, setError] = useState<boolean>(false);
   const valueString = formatValue(computedValue ?? "");
   const localValue = useLocalValue(valueString, (value) => {
+    const isLiteral = isLiteralExpression(value);
+    setError(isLiteral ? false : true);
+    // prevent executing expressions which depends on global variables
+    if (isLiteral === false) {
+      return;
+    }
     try {
       // wrap into parens to treat object expression as value instead of block
       const parsedValue = eval(`(${value})`);
@@ -61,6 +70,7 @@ export const JsonControl = ({
     >
       <BindingControl>
         <ExpressionEditor
+          color={error ? "error" : undefined}
           readOnly={overwritable === false}
           value={localValue.value}
           onChange={localValue.set}

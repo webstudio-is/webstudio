@@ -251,16 +251,14 @@ const codeEditorStyle = css({
 });
 
 export const CodeEditor = ({
-  className,
   title,
   ...editorContentProps
 }: EditorContentProps & {
-  className?: string;
   title?: ReactNode;
 }) => {
   const content = <EditorContent {...editorContentProps} />;
   return (
-    <div className={codeEditorStyle({ className })}>
+    <div className={codeEditorStyle()}>
       {content}
       <CodeEditorDialog title={title} content={content}>
         <SmallIconButton

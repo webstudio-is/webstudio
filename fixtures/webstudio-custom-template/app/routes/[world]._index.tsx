@@ -5,7 +5,9 @@ import {
   type LinkDescriptor,
   type ActionArgs,
   type LoaderArgs,
+  type HeadersArgs,
   json,
+  redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
 import type { ProjectMeta } from "@webstudio-is/sdk";
@@ -42,7 +44,7 @@ export const loader = async (arg: LoaderArgs) => {
       pageMeta.status === 301 || pageMeta.status === 302
         ? pageMeta.status
         : 302;
-    return Response.redirect(pageMeta.redirect, status);
+    return redirect(pageMeta.redirect, status);
   }
 
   const host =
@@ -70,14 +72,18 @@ export const loader = async (arg: LoaderArgs) => {
     // In case of CRM Data, this should be set to 0
     {
       status: pageMeta.status,
-      headers: { "Cache-Control": "public, max-age=600" },
+      headers: {
+        "Cache-Control": "public, max-age=600",
+        "x-ws-language": pageMeta.language ?? "en",
+      },
     }
   );
 };
 
-export const headers = () => {
+export const headers = ({ loaderHeaders }: HeadersArgs) => {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
+    "x-ws-language": loaderHeaders.get("x-ws-language"),
   };
 };
 

@@ -87,6 +87,7 @@ export const getPageMeta = ({
     title: "form",
     description: "",
     excludePageFromSearch: undefined,
+    language: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
     status: undefined,

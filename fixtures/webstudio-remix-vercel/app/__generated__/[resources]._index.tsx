@@ -81,6 +81,7 @@ export const getPageMeta = ({
     title: "resources",
     description: "",
     excludePageFromSearch: false,
+    language: undefined,
     socialImageAssetId: "",
     socialImageUrl: undefined,
     status: undefined,
