@@ -31,13 +31,17 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
       continue;
     }
 
-    const product = MarketplaceProduct.parse(
+    const parsedProduct = MarketplaceProduct.safeParse(
       parseConfig(project.latestBuild.build.marketplaceProduct)
     );
 
+    if (parsedProduct.success === false) {
+      continue;
+    }
+
     items.push({
       projectId: project.id,
-      ...product,
+      ...parsedProduct.data,
     });
   }
   const assetIds = items
