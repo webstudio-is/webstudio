@@ -1,6 +1,6 @@
-import type { Resource } from "./schema/resources";
+import type { ResourceRequest } from "./schema/resources";
 
-export const loadResource = async (resourceData: Resource) => {
+export const loadResource = async (resourceData: ResourceRequest) => {
   const { url, method, headers, body } = resourceData;
   const requestHeaders = new Headers(
     headers.map(({ name, value }): [string, string] => [name, value])
@@ -10,7 +10,12 @@ export const loadResource = async (resourceData: Resource) => {
     headers: requestHeaders,
   };
   if (method !== "get" && body !== undefined) {
-    requestInit.body = body;
+    if (typeof body === "string") {
+      requestInit.body = body;
+    }
+    if (typeof body === "object") {
+      requestInit.body = JSON.stringify(body);
+    }
   }
   try {
     // cloudflare workers fail when fetching url contains spaces
