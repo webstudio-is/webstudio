@@ -26,10 +26,12 @@ import {
   BoxShadowsSection,
   ListItemSection,
   TransitionSection,
+  FilterSection,
 } from "./sections";
 
 export const categories = [
   "layout",
+  "filter",
   "flexChild",
   "gridChild",
   "listItem",
@@ -157,4 +159,5 @@ export const sections: Record<
   effects: EffectsSection,
   boxShadows: BoxShadowsSection,
   transitions: TransitionSection,
+  filter: FilterSection,
 };

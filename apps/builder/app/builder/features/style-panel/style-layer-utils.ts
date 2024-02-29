@@ -13,12 +13,12 @@ export const deleteLayer = (
   layers: LayersValue,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
-  const batch = createBatchUpdate();
   const layer = layers.value[index];
-
-  if (layer.type !== "tuple" && layer.type !== "unparsed") {
+  if (layer.type !== "unparsed") {
     return;
   }
+
+  const batch = createBatchUpdate();
   const newLayers = [...layers.value];
   newLayers.splice(index, 1);
 
@@ -40,12 +40,12 @@ export const hideLayer = (
   layers: LayersValue,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
-  const batch = createBatchUpdate();
   const layer = layers.value[index];
-
-  if (layer.type !== "tuple" && layer.type !== "unparsed") {
+  if (layer.type !== "unparsed") {
     return;
   }
+
+  const batch = createBatchUpdate();
   const newLayers = [...layers.value];
   newLayers.splice(index, 1, {
     ...layer,
@@ -89,12 +89,12 @@ export const updateLayer = (
   index: number,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
-  const batch = createBatchUpdate();
   const layer = layers.value[index];
-
-  if (layer.type !== "tuple" && layer.type !== "unparsed") {
+  if (layer.type !== "unparsed") {
     return;
   }
+
+  const batch = createBatchUpdate();
   const newLayers = [...layers.value];
   newLayers.splice(index, 1, ...newValue.value);
   batch.setProperty(property)({

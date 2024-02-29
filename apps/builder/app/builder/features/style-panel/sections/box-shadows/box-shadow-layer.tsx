@@ -1,4 +1,4 @@
-import type { TupleValue } from "@webstudio-is/css-engine";
+import type { LayerValueItem } from "@webstudio-is/css-engine";
 import {
   Label,
   SmallIconButton,
@@ -18,8 +18,12 @@ import { toValue } from "@webstudio-is/css-engine";
 import { ColorThumb } from "../../shared/color-thumb";
 import type { LayerProps } from "../../style-layers-list";
 
-const useLayer = (layer: TupleValue) => {
+const useLayer = (layer: LayerValueItem) => {
   return useMemo(() => {
+    if (layer.type !== "tuple") {
+      return undefined;
+    }
+
     const name = [];
     const shadow = [];
     let color: RgbaColor | undefined;
@@ -51,7 +55,13 @@ const useLayer = (layer: TupleValue) => {
 
 export const Layer = (props: LayerProps) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
-  const { name, shadow, color } = useLayer(layer);
+  const properties = useLayer(layer);
+
+  if (layer.type !== "tuple" || properties === undefined) {
+    return null;
+  }
+
+  const { name, shadow, color } = properties;
 
   return (
     <FloatingPanel
