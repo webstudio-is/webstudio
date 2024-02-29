@@ -88,6 +88,7 @@ export const getPageMeta = ({
     description:
       "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
     excludePageFromSearch: undefined,
+    language: undefined,
     socialImageAssetId: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
     socialImageUrl: undefined,
     status: undefined,
