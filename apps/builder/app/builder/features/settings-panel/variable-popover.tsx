@@ -58,6 +58,7 @@ import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
 import { ResourceForm } from "./resource-panel";
+import { ExpandableTextField } from "./expandable-text-field";
 
 /**
  * convert value expression to js value
@@ -195,10 +196,11 @@ const StringForm = forwardRef<
   return (
     <Flex direction="column" css={{ gap: theme.spacing[3] }}>
       <Label htmlFor={valueId}>Value</Label>
-      <InputField
+      <ExpandableTextField
+        title={`Variable "${nameField.value || "Unnamed"}"`}
         id={valueId}
         value={value}
-        onChange={(event) => setValue(event.target.value)}
+        onChange={setValue}
       />
     </Flex>
   );
