@@ -6,13 +6,13 @@ import {
   theme,
   Text,
   TextArea,
-  Separator,
   Button,
   css,
   Flex,
   CheckboxAndLabel,
   Checkbox,
   InputErrorsTooltip,
+  PanelBanner,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
 import {
@@ -149,8 +149,6 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
-      <Separator />
-
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
         <Label>Thumbnail</Label>
         <Grid flow="column" gap={3}>
@@ -173,8 +171,6 @@ export const SectionMarketplace = () => {
         </Grid>
       </Grid>
 
-      <Separator />
-
       <Grid
         gap={1}
         css={{
@@ -194,8 +190,6 @@ export const SectionMarketplace = () => {
           />
         </InputErrorsTooltip>
       </Grid>
-
-      <Separator />
 
       <Grid
         gap={1}
@@ -217,8 +211,6 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
-      <Separator />
-
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
         <Label htmlFor={ids.description}>Description</Label>
         <TextArea
@@ -230,6 +222,7 @@ export const SectionMarketplace = () => {
           onChange={handleSave("description")}
         />
       </Grid>
+
       {project.marketplaceApprovalStatus === "UNLISTED" && (
         <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
           <CheckboxAndLabel>
@@ -249,6 +242,28 @@ export const SectionMarketplace = () => {
           </CheckboxAndLabel>
         </Grid>
       )}
+
+      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+        <PanelBanner>
+          <Text color="destructive">
+            Don't forget to publish your project after every change to make your
+            changes available in the marketplace!
+          </Text>
+          <Text color="destructive">
+            Ensure that every page containing a template has the "ws:category"
+            meta in the page settings. Optionally, you can also define
+            "ws:title"; otherwise, the page title will be used.
+          </Text>
+
+          {project.marketplaceApprovalStatus === "UNLISTED" && (
+            <Text>
+              After submitting, we will review your project. Please reach out to
+              us on Discord if you have any questions.
+            </Text>
+          )}
+        </PanelBanner>
+      </Grid>
+
       <Flex
         align="center"
         justify="end"
