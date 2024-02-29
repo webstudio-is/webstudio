@@ -18,7 +18,6 @@ import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
 
 const focusOutline = focusRingStyle();
 
@@ -154,11 +153,11 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
 };
 
 export const Templates = ({
-  product,
+  name,
   data,
   onOpenChange,
 }: {
-  product: MarketplaceProduct;
+  name: string;
   data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -185,7 +184,7 @@ export const Templates = ({
           }}
           color="neutral"
         >
-          {product.name}
+          {name}
         </Button>
       </Flex>
       <Separator />

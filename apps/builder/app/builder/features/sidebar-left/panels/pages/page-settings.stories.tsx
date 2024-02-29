@@ -71,6 +71,7 @@ $project.set({
     id: "0",
     name: "0",
   },
+  marketplaceApprovalStatus: "UNLISTED",
 });
 
 export const PageSettingsEdit = () => {

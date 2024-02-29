@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
   Flex,
   List,
@@ -12,9 +12,6 @@ import {
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { categories } from "./utils";
 import { LoadingDotsIcon } from "@webstudio-is/icons";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
-import type { MarketplaceRouter } from "~/shared/marketplace/router";
-import { marketplacePath } from "~/shared/router-utils";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
@@ -88,26 +85,16 @@ const Product = ({
   );
 };
 
-const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
-
 export const Marketplace = ({
   activeProjectId,
+  items,
   onSelect,
 }: {
   activeProjectId?: Project["id"];
-  onSelect: (projectId: Project["id"]) => void;
+  items?: Array<MarketplaceOverviewItem>;
+  onSelect: (item: MarketplaceOverviewItem) => void;
 }) => {
-  const {
-    load: loadItems,
-    data: items,
-    state: itemsState,
-  } = trpc.getItems.useQuery();
-
   const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
-
-  useEffect(() => {
-    loadItems();
-  }, []);
 
   return (
     <ScrollArea>
@@ -127,7 +114,7 @@ export const Marketplace = ({
                       key={item.projectId}
                       index={index}
                       onSelect={() => {
-                        onSelect(item.projectId);
+                        onSelect(item);
                       }}
                     >
                       <Product

@@ -3,23 +3,33 @@ import { Flex } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { Marketplace } from "./marketplace";
-import { Templates } from "./template";
-import { builderPath } from "~/shared/router-utils";
+import { Templates } from "./templates";
+import { builderPath, marketplacePath } from "~/shared/router-utils";
 import { useFetcher } from "@remix-run/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toWebstudioData } from "./utils";
+import type { BuilderProps } from "~/builder";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
+import type { MarketplaceRouter } from "~/shared/marketplace/router";
+import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
+
+const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
-  const [activeProjectId, setActiveProjectId] =
+  const [activeOverviewItem, setAciveOverviewItem] =
     useState<MarketplaceOverviewItem>();
-  const { load, data } = useFetcher();
+  const { load, data } = useFetcher<BuilderProps>();
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen === false) {
-      setActiveProjectId(undefined);
-    }
-  };
+  const {
+    load: loadItems,
+    data: items,
+    // @todo show loading
+    //state: itemsState,
+  } = trpc.getItems.useQuery();
+
+  useEffect(() => {
+    loadItems();
+  }, [loadItems]);
 
   return (
     <Flex direction="column" css={{ height: "100%" }}>
@@ -27,22 +37,23 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         title="Marketplace"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
-      {activeProjectId && data ? (
+      {activeOverviewItem?.name && data ? (
         <Templates
-          projectId={activeProjectId}
+          name={activeOverviewItem.name}
           data={toWebstudioData(data)}
-          onOpenChange={handleOpenChange}
+          onOpenChange={(isOpen: boolean) => {
+            if (isOpen === false) {
+              setAciveOverviewItem(undefined);
+            }
+          }}
         />
       ) : (
         <Marketplace
-          activeProjectId={activeProjectId}
-          onSelect={(product) => {
-            setActiveProjectId(product);
-            load();
-            //builderPath({
-            //  projectId: product.projectId,
-            //  authToken: product.authToken,
-            //})
+          items={items}
+          activeProjectId={activeOverviewItem?.projectId}
+          onSelect={(activeOverviewItem) => {
+            setAciveOverviewItem(activeOverviewItem);
+            load(builderPath({ projectId: activeOverviewItem.projectId }));
           }}
         />
       )}

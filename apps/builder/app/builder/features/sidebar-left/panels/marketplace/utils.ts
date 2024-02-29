@@ -14,6 +14,7 @@ export const categories: Array<{
   label: string;
 }> = [{ category: "templates", label: "Templates" }];
 
+// @todo move BuilderProps?
 export const toWebstudioData = (data: BuilderProps): WebstudioData => ({
   pages: data.build.pages,
   assets: new Map(data.assets),
