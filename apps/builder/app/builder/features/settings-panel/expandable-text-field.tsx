@@ -64,9 +64,6 @@ export const ExpandableTextField = forwardRef<
               height,
               overflow: "hidden",
               boxSizing: "content-box",
-              "& textarea": {
-                // height: `calc(${height} - ${padding})`,
-              },
             }}
           >
             <TextArea ref={ref} {...props} grow={true} />
