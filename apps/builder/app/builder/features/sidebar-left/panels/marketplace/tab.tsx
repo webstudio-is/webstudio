@@ -7,8 +7,7 @@ import { Templates } from "./templates";
 import { builderPath, marketplacePath } from "~/shared/router-utils";
 import { useFetcher } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { toWebstudioData } from "./utils";
-import type { BuilderProps } from "~/builder";
+import { toWebstudioData, type BuildData } from "./utils";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { MarketplaceRouter } from "~/shared/marketplace/router";
 import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
@@ -18,7 +17,7 @@ const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [activeOverviewItem, setAciveOverviewItem] =
     useState<MarketplaceOverviewItem>();
-  const { load, data } = useFetcher<BuilderProps>();
+  const { load, data } = useFetcher<BuildData>();
 
   const {
     load: loadItems,
