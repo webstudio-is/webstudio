@@ -3,9 +3,9 @@
 import { nanoid } from "nanoid";
 import {
   type Build as DbBuild,
+  type $Enums,
   prisma,
   Prisma,
-  $Enums,
 } from "@webstudio-is/prisma-client";
 import {
   AuthorizationError,

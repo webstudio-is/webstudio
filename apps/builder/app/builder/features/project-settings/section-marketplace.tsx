@@ -61,11 +61,11 @@ const validate = (data: MarketplaceProduct) => {
 
 const useMarketplaceApprovalStatus = () => {
   const { send, data, state } = trpc.setMarketplaceApprovalStatus.useMutation();
-  const project = $project.get();
+  const project = useStore($project);
 
   const status =
     data?.marketplaceApprovalStatus ??
-    $project.get()?.marketplaceApprovalStatus ??
+    project?.marketplaceApprovalStatus ??
     "UNLISTED";
 
   useEffect(() => {
@@ -75,7 +75,7 @@ const useMarketplaceApprovalStatus = () => {
         marketplaceApprovalStatus: status,
       });
     }
-  }, [status]);
+  }, [status, project]);
 
   return {
     status,
