@@ -123,6 +123,7 @@ export const HtmlEditor = forwardRef<
     return (
       <div className={wrapperStyle()} ref={ref}>
         <CodeEditor
+          title={title}
           extensions={extensions}
           readOnly={readOnly}
           invalid={invalid}
