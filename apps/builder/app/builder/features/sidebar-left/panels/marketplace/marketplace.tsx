@@ -1,5 +1,5 @@
-import { ExtensionIcon } from "@webstudio-is/icons";
-import { Flex } from "@webstudio-is/design-system";
+import { ExtensionIcon, SpinnerIcon } from "@webstudio-is/icons";
+import { Flex, rawTheme } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton } from "../../header";
 import { Overview } from "./overview";
@@ -19,17 +19,11 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
   const {
     load: getItems,
-    data: overviewItems,
-    // @todo show loading
-    //state: itemsState,
+    data: items,
+    state: itemsLoadingState,
   } = trpc.getItems.useQuery();
 
-  const {
-    load: getBuildData,
-    data: buildData,
-    // @todo show loading
-    //state: itemsState,
-  } = trpc.getBuildData.useQuery();
+  const { load: getBuildData, data: buildData } = trpc.getBuildData.useQuery();
 
   useEffect(() => {
     getItems();
@@ -41,6 +35,11 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         title="Marketplace"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
+      {itemsLoadingState !== "idle" && (
+        <Flex justify="center" css={{ mt: "20%" }}>
+          <SpinnerIcon size={rawTheme.spacing[15]} />
+        </Flex>
+      )}
       {activeOverviewItem && buildData ? (
         <Templates
           name={activeOverviewItem.name}
@@ -53,7 +52,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         />
       ) : (
         <Overview
-          items={overviewItems}
+          items={items}
           activeProjectId={activeOverviewItem?.projectId}
           onSelect={(activeOverviewItem) => {
             setAciveOverviewItem(activeOverviewItem);
