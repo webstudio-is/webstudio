@@ -28,7 +28,7 @@ import { useEffect, useState } from "react";
 import { MarketplaceProduct } from "@webstudio-is/project-build";
 import { serverSyncStore } from "~/shared/sync";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { Project, type ProjectRouter } from "@webstudio-is/project";
+import { type ProjectRouter } from "@webstudio-is/project";
 import { projectsPath } from "~/shared/router-utils";
 
 const imgStyle = css({
@@ -65,7 +65,8 @@ const useMarketplaceApprovalStatus = () => {
 
   const status =
     data?.marketplaceApprovalStatus ??
-    $project.get()?.marketplaceApprovalStatus;
+    $project.get()?.marketplaceApprovalStatus ??
+    "UNLISTED";
 
   useEffect(() => {
     if (status && project) {
@@ -247,7 +248,21 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
-      {project.marketplaceApprovalStatus === "UNLISTED" && (
+      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+        <PanelBanner>
+          <Text>
+            {`Please set for every template page a "ws:category"
+            meta tag in the page settings. Optionally, you can also define
+            "ws:title"; otherwise, the page title will be used.`}
+          </Text>
+          <Text color="destructive">
+            {`Don't forget to publish your project after every change to make your
+            changes available in the marketplace!`}
+          </Text>
+        </PanelBanner>
+      </Grid>
+
+      {approval.status === "UNLISTED" && (
         <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
           <CheckboxAndLabel>
             <Checkbox
@@ -267,34 +282,14 @@ export const SectionMarketplace = () => {
         </Grid>
       )}
 
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
-        <PanelBanner>
-          <Text color="destructive">
-            {`Don't forget to publish your project after every change to make your
-            changes available in the marketplace!`}
-          </Text>
-          <Text color="destructive">
-            {`Ensure that every page containing a template has the "ws:category"
-            meta in the page settings. Optionally, you can also define
-            "ws:title"; otherwise, the page title will be used.`}
-          </Text>
-
-          {project.marketplaceApprovalStatus === "UNLISTED" && (
-            <Text>
-              {`After submitting, we will review your project. Please reach out to
-            us on Discord if you have any questions.`}
-            </Text>
-          )}
-        </PanelBanner>
-      </Grid>
-
       <Flex
         align="center"
-        justify="end"
+        justify="between"
         gap={2}
         css={{ mx: theme.spacing[5], px: theme.spacing[5] }}
       >
-        {project.marketplaceApprovalStatus === "UNLISTED" ? (
+        <Text>Status: {approval.status.toLocaleLowerCase()}</Text>
+        {approval.status === "UNLISTED" ? (
           <Button
             color="primary"
             disabled={isConfirmed === false}
