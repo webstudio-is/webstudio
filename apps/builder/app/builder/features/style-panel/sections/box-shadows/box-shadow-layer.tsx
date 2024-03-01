@@ -1,4 +1,4 @@
-import type { LayerValueItem } from "@webstudio-is/css-engine";
+import type { LayerValueItem, TupleValueItem } from "@webstudio-is/css-engine";
 import {
   Label,
   SmallIconButton,
@@ -18,10 +18,10 @@ import { toValue } from "@webstudio-is/css-engine";
 import { ColorThumb } from "../../shared/color-thumb";
 import type { LayerProps } from "../../style-layers-list";
 
-const useLayer = (layer: LayerValueItem) => {
+const useLayer = (layer: LayerValueItem | TupleValueItem) => {
   return useMemo(() => {
     if (layer.type !== "tuple") {
-      return undefined;
+      return;
     }
 
     const name = [];
@@ -53,7 +53,7 @@ const useLayer = (layer: LayerValueItem) => {
   }, [layer]);
 };
 
-export const Layer = (props: LayerProps) => {
+export const BoxShadowLayer = (props: LayerProps) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
   const properties = useLayer(layer);
 

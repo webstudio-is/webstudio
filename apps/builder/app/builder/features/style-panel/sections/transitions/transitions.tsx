@@ -15,7 +15,7 @@ import { PropertyName } from "../../shared/property-name";
 import { addLayer } from "../../style-layer-utils";
 import { parseTransition } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
-import { Layer } from "./transition-layer";
+import { TransitionLayer } from "./transition-layer";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
@@ -92,7 +92,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           {...props}
           renderLayer={(layerProps) => {
             return (
-              <Layer
+              <TransitionLayer
                 {...layerProps}
                 key={layerProps.index}
                 layer={layerProps.layer}

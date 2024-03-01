@@ -12,7 +12,7 @@ import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import type { RenderCategoryProps } from "../../style-sections";
 import { LayersList } from "../../style-layers-list";
-import { Layer } from "./box-shadow-layer";
+import { BoxShadowLayer } from "./box-shadow-layer";
 import { addLayer } from "../../style-layer-utils";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 
@@ -71,7 +71,7 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
           layers={value}
           {...props}
           renderLayer={(layersProps) => (
-            <Layer key={layersProps.index} {...layersProps} />
+            <BoxShadowLayer key={layersProps.index} {...layersProps} />
           )}
         />
       )}

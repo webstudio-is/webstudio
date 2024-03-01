@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import { SubtractIcon } from "@webstudio-is/icons";
 
-export const Layer = (props: LayerProps) => {
+export const FilterLayer = (props: LayerProps) => {
   const { index, id, layer, isHighlighted, onDeleteLayer } = props;
 
   if (layer.type !== "keyword") {
@@ -29,7 +29,7 @@ export const Layer = (props: LayerProps) => {
     >
       <CssValueListItem
         id={id}
-        draggable={true}
+        draggable={false}
         active={isHighlighted}
         index={index}
         label={<Label truncate>{layer.value}</Label>}

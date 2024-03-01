@@ -9,12 +9,12 @@ import {
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { PlusIcon } from "@webstudio-is/icons";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import { type StyleProperty } from "@webstudio-is/css-engine";
 import { getStyleSource } from "../../shared/style-info";
 import { LayersList } from "../../style-layers-list";
+import { FilterLayer } from "./filter-layer";
 import { addLayer } from "../../style-layer-utils";
 import { parseFilter } from "@webstudio-is/css-data";
-import { Layer } from "./filter-layer";
 
 const property: StyleProperty = "filter";
 const label = "Filter";
@@ -23,7 +23,7 @@ export const FilterSection = (props: RenderCategoryProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layerStyleSource = getStyleSource(currentStyle[property]);
-  const value = currentStyle[property]?.value;
+  const filterValue = currentStyle[property]?.value;
 
   return (
     <CollapsibleSectionBase
@@ -40,7 +40,7 @@ export const FilterSection = (props: RenderCategoryProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseFilter("blur(5px)"),
+                  parseFilter("blur(0px)"),
                   currentStyle,
                   props.createBatchUpdate
                 );
@@ -63,13 +63,13 @@ export const FilterSection = (props: RenderCategoryProps) => {
         </SectionTitle>
       }
     >
-      {value?.type === "layers" && value.value.length > 0 && (
+      {filterValue?.type === "tuple" && filterValue.value.length > 0 && (
         <LayersList
           {...props}
           property={property}
-          layers={value}
+          layers={filterValue}
           renderLayer={(layerProps) => (
-            <Layer key={layerProps.index} {...layerProps} />
+            <FilterLayer {...layerProps} key={layerProps.index} />
           )}
         />
       )}

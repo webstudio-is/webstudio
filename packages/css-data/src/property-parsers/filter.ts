@@ -1,8 +1,8 @@
 import * as csstree from "css-tree";
 import type {
   InvalidValue,
-  LayerValueItem,
-  LayersValue,
+  TupleValue,
+  TupleValueItem,
 } from "@webstudio-is/css-engine";
 import { cssTreeTryParseValue, isValidDeclaration } from "../parse-css-value";
 
@@ -15,7 +15,7 @@ import { cssTreeTryParseValue, isValidDeclaration } from "../parse-css-value";
   Which uses browser CSSStyleValue.parse to validate.
 */
 
-export const parseFilter = (input: string): LayersValue | InvalidValue => {
+export const parseFilter = (input: string): TupleValue | InvalidValue => {
   let tokenStream = input.trim();
   tokenStream = tokenStream.endsWith(";")
     ? tokenStream.slice(0, -1)
@@ -45,7 +45,7 @@ export const parseFilter = (input: string): LayersValue | InvalidValue => {
     };
   }
 
-  const layers: LayerValueItem[] = [];
+  const layers: TupleValueItem[] = [];
   csstree.walk(cssAst, (node) => {
     if (node.type === "Value") {
       for (const child of node.children) {
@@ -57,7 +57,7 @@ export const parseFilter = (input: string): LayersValue | InvalidValue => {
   });
 
   return {
-    type: "layers",
+    type: "tuple",
     value: [...layers],
   };
 };

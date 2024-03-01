@@ -22,7 +22,7 @@ type FilterContentProps = {
   index: number;
   layer: LayerValueItem;
   filter: string;
-  onEditLayer: (index: number, layers: LayersValue) => void;
+  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
 };
 
 export const FilterSectionContent = ({

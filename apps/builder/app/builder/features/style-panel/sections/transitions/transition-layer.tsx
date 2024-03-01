@@ -12,10 +12,11 @@ import {
   TupleValue,
   toValue,
   type LayerValueItem,
+  TupleValueItem,
 } from "@webstudio-is/css-engine";
 import { findTimingFunctionFromValue } from "./transition-utils";
 
-const useLayer = (layer: LayerValueItem) => {
+const useLayer = (layer: LayerValueItem | TupleValueItem) => {
   return useMemo(() => {
     if (layer.type !== "tuple") {
       return;
@@ -41,7 +42,7 @@ const useLayer = (layer: LayerValueItem) => {
   }, [layer]);
 };
 
-export const Layer = (props: LayerProps) => {
+export const TransitionLayer = (props: LayerProps) => {
   const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
   const properties = useLayer(layer);
 
