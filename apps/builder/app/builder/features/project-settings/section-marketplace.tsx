@@ -40,12 +40,8 @@ const imgStyle = css({
   borderColor: theme.colors.borderMain,
 });
 
-const defaultMarketplaceProduct: MarketplaceProduct = {
+const defaultMarketplaceProduct = {
   category: "templates",
-  name: "",
-  thumbnailAssetId: "",
-  description: "",
-  email: "",
 };
 
 const imageLoader = createImageLoader({
@@ -63,17 +59,49 @@ const validate = (data: MarketplaceProduct) => {
   }
 };
 
+const useMarketplaceApprovalStatus = () => {
+  const { send, data, state } = trpc.setMarketplaceApprovalStatus.useMutation();
+  const project = $project.get();
+
+  const status =
+    data?.marketplaceApprovalStatus ??
+    $project.get()?.marketplaceApprovalStatus;
+
+  useEffect(() => {
+    if (status && project) {
+      $project.set({
+        ...project,
+        marketplaceApprovalStatus: status,
+      });
+    }
+  }, [status]);
+
+  return {
+    status,
+    state,
+    submit() {
+      if (project) {
+        send({
+          projectId: project.id,
+          marketplaceApprovalStatus: "PENDING",
+        });
+      }
+    },
+    unlist() {
+      if (project) {
+        send({
+          projectId: project.id,
+          marketplaceApprovalStatus: "UNLISTED",
+        });
+      }
+    },
+  };
+};
+
 export const SectionMarketplace = () => {
   const project = useStore($project);
-  const {
-    send: setMarketplaceApprovalStatus,
-    data: updatedProject,
-    state: marketplaceApprovalStatusLoadingState,
-  } = trpc.setMarketplaceApprovalStatus.useMutation();
-  const [data, setData] = useState(() => ({
-    ...defaultMarketplaceProduct,
-    ...$marketplaceProduct.get(),
-  }));
+  const approval = useMarketplaceApprovalStatus();
+  const [data, setData] = useState(() => $marketplaceProduct.get());
   const ids = useIds([
     "name",
     "thumbnailAssetId",
@@ -85,25 +113,22 @@ export const SectionMarketplace = () => {
   const assets = useStore($assets);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
   const [errors, setErrors] = useState<ReturnType<typeof validate>>();
+
+  if (data === undefined || project === undefined) {
+    return;
+  }
   const asset = assets.get(data.thumbnailAssetId ?? "");
   const thumbnailUrl = asset ? `${asset.name}` : undefined;
-
-  const marketplaceApprovalStatus = updatedProject?.marketplaceApprovalStatus;
-  useEffect(() => {
-    if (marketplaceApprovalStatus) {
-      const nextProject = {
-        ...$project.get(),
-        marketplaceApprovalStatus,
-      } as Project;
-      $project.set(nextProject);
-    }
-  }, [marketplaceApprovalStatus]);
 
   const handleSave = <Setting extends keyof MarketplaceProduct>(
     setting: Setting
   ) => {
     return (value: MarketplaceProduct[Setting]) => {
-      const nextData = { ...data, [setting]: value };
+      const nextData = {
+        ...defaultMarketplaceProduct,
+        ...data,
+        [setting]: value,
+      };
       const errors = validate(nextData);
       setErrors(errors);
       setData(nextData);
@@ -122,9 +147,6 @@ export const SectionMarketplace = () => {
     };
   };
 
-  if (project === undefined) {
-    return;
-  }
   return (
     <>
       <Grid
@@ -213,14 +235,16 @@ export const SectionMarketplace = () => {
 
       <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
         <Label htmlFor={ids.description}>Description</Label>
-        <TextArea
-          id={ids.description}
-          rows={5}
-          autoGrow
-          maxRows={10}
-          value={data.description ?? ""}
-          onChange={handleSave("description")}
-        />
+        <InputErrorsTooltip errors={errors?.description}>
+          <TextArea
+            id={ids.description}
+            rows={5}
+            autoGrow
+            maxRows={10}
+            value={data.description ?? ""}
+            onChange={handleSave("description")}
+          />
+        </InputErrorsTooltip>
       </Grid>
 
       {project.marketplaceApprovalStatus === "UNLISTED" && (
@@ -258,7 +282,7 @@ export const SectionMarketplace = () => {
           {project.marketplaceApprovalStatus === "UNLISTED" && (
             <Text>
               {`After submitting, we will review your project. Please reach out to
-              us on Discord if you have any questions.`}
+            us on Discord if you have any questions.`}
             </Text>
           )}
         </PanelBanner>
@@ -274,34 +298,16 @@ export const SectionMarketplace = () => {
           <Button
             color="primary"
             disabled={isConfirmed === false}
-            state={
-              marketplaceApprovalStatusLoadingState === "idle"
-                ? undefined
-                : "pending"
-            }
-            onClick={() => {
-              setMarketplaceApprovalStatus({
-                projectId: project.id,
-                marketplaceApprovalStatus: "PENDING",
-              });
-            }}
+            state={approval.state === "idle" ? undefined : "pending"}
+            onClick={approval.submit}
           >
             Submit
           </Button>
         ) : (
           <Button
-            state={
-              marketplaceApprovalStatusLoadingState === "idle"
-                ? undefined
-                : "pending"
-            }
+            state={approval.state === "idle" ? undefined : "pending"}
             color="destructive"
-            onClick={() => {
-              setMarketplaceApprovalStatus({
-                projectId: project.id,
-                marketplaceApprovalStatus: "UNLISTED",
-              });
-            }}
+            onClick={approval.unlist}
           >
             Unlist from Marketplace
           </Button>
