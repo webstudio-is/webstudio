@@ -5,6 +5,7 @@ import {
   type Build as DbBuild,
   prisma,
   Prisma,
+  $Enums,
 } from "@webstudio-is/prisma-client";
 import {
   AuthorizationError,
@@ -114,6 +115,34 @@ export const loadBuildByProjectId = async (
 
   if (build === null) {
     throw new Error("Dev build not found");
+  }
+
+  return parseBuild(build);
+};
+
+export const loadProdBuildByProjectId = async (
+  projectId: Build["projectId"],
+  where: {
+    marketplaceApprovalStatus?: $Enums.MarketplaceApprovalStatus;
+  }
+): Promise<Build> => {
+  const projectData = await prisma.project.findUnique({
+    where: {
+      ...where,
+      id_isDeleted: { id: projectId, isDeleted: false },
+    },
+    select: {
+      latestBuild: {
+        select: {
+          build: true,
+        },
+      },
+    },
+  });
+
+  const build = projectData?.latestBuild?.build;
+  if (build === undefined) {
+    throw new Error("Prod build not found");
   }
 
   return parseBuild(build);

@@ -1,7 +1,29 @@
 import { prisma } from "@webstudio-is/prisma-client";
 import { MarketplaceProduct } from "@webstudio-is/project-build";
-import type { MarketplaceOverviewItem } from "./types";
-import { parseConfig } from "@webstudio-is/project-build/index.server";
+import type { BuildData, MarketplaceOverviewItem } from "./types";
+import {
+  loadProdBuildByProjectId,
+  parseConfig,
+} from "@webstudio-is/project-build/index.server";
+import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { Project } from "@webstudio-is/project";
+import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
+
+export const getBuildProdData = async (
+  { projectId }: { projectId: Project["id"] },
+  context: AppContext
+): Promise<BuildData> => {
+  const build = await loadProdBuildByProjectId(projectId, {
+    marketplaceApprovalStatus: "APPROVED",
+  });
+
+  const assets = await loadAssetsByProject(projectId, context);
+
+  return {
+    assets: assets.map((asset) => [asset.id, asset]),
+    build,
+  };
+};
 
 export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
   const projects = await prisma.project.findMany({

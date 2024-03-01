@@ -114,8 +114,9 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
 
   // In the future we could support bindings in the store as well.
   const variableValues = new Map();
+  const pages = [data.pages.homePage, ...data.pages.pages];
 
-  for (const page of data.pages.pages) {
+  for (const page of pages) {
     let category = page.meta.custom?.find(
       ({ property }) => property === marketplaceMeta.category
     )?.content;

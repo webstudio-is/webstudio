@@ -3,8 +3,9 @@ import {
   extractWebstudioFragment,
   findTargetAndInsertFragment,
 } from "~/shared/instance-utils";
-import type { Asset, WebstudioData } from "@webstudio-is/sdk";
-import { MarketplaceProduct, type Build } from "@webstudio-is/project-build";
+import type { WebstudioData } from "@webstudio-is/sdk";
+import { MarketplaceProduct } from "@webstudio-is/project-build";
+import type { BuildData } from "~/shared/marketplace/types";
 
 export const $activeProductData = atom<WebstudioData | undefined>();
 
@@ -12,11 +13,6 @@ export const categories: Array<{
   category: MarketplaceProduct["category"];
   label: string;
 }> = [{ category: "templates", label: "Templates" }];
-
-export type BuildData = {
-  build: Build;
-  assets: Array<[Asset["id"], Asset]>;
-};
 
 export const toWebstudioData = (data: BuildData): WebstudioData => ({
   pages: data.build.pages,
