@@ -30,6 +30,7 @@ import {
   Select,
   SelectItem,
   Switch,
+  TextArea,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
@@ -57,6 +58,10 @@ import {
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
+import {
+  EditorDialog,
+  EditorDialogControl,
+} from "~/builder/shared/code-editor";
 import { ResourceForm } from "./resource-panel";
 
 /**
@@ -195,11 +200,24 @@ const StringForm = forwardRef<
   return (
     <Flex direction="column" css={{ gap: theme.spacing[3] }}>
       <Label htmlFor={valueId}>Value</Label>
-      <InputField
-        id={valueId}
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-      />
+      <EditorDialogControl>
+        <TextArea
+          rows={1}
+          maxRows={10}
+          autoGrow={true}
+          id={valueId}
+          value={value}
+          onChange={setValue}
+        />
+        <EditorDialog title={`Variable "${nameField.value || "Unnamed"}"`}>
+          <TextArea
+            grow={true}
+            id={valueId}
+            value={value}
+            onChange={setValue}
+          />
+        </EditorDialog>
+      </EditorDialogControl>
     </Flex>
   );
 });

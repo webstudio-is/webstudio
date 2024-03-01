@@ -27,6 +27,9 @@ const ExternalChange = Annotation.define<boolean>();
 
 const editorContentStyle = css({
   ...textVariants.mono,
+  // fit editor into parent if stretched
+  display: "flex",
+  minHeight: 0,
   boxSizing: "border-box",
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
@@ -58,6 +61,7 @@ const editorContentStyle = css({
     padding: 0,
   },
   "& .cm-editor": {
+    width: "100%",
     // makes sure you can click to focus when editor content is smaller than the container
     height: "100%",
   },
@@ -171,23 +175,41 @@ const EditorContent = ({
   );
 };
 
-const CodeEditorDialog = ({
+const editorDialogControlStyle = css({
+  position: "relative",
+  "&:hover": {
+    "--ws-code-editor-maximize-icon-visibility": "visible",
+  },
+});
+
+export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
+  return <div className={editorDialogControlStyle()}>{children}</div>;
+};
+
+export const EditorDialog = ({
   title,
-  content,
   children,
 }: {
-  title: ReactNode;
-  content: ReactNode;
+  title?: ReactNode;
   children: ReactNode;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const width = isExpanded ? "80vw" : "640px";
   const height = isExpanded ? "80vh" : "480px";
   const padding = rawTheme.spacing[7];
-
   return (
     <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogTrigger asChild>
+        <SmallIconButton
+          icon={<MaximizeIcon />}
+          css={{
+            position: "absolute",
+            top: 6,
+            right: 4,
+            visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
+          }}
+        />
+      </DialogTrigger>
       <DialogContent
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
@@ -199,18 +221,16 @@ const CodeEditorDialog = ({
         overlayCss={{ zIndex: theme.zIndices[1] }}
       >
         <Grid
+          align="stretch"
           css={{
             padding,
             width,
             height,
             overflow: "hidden",
             boxSizing: "content-box",
-            "& .cm-content": {
-              maxHeight: `calc(${height} - ${padding})`,
-            },
           }}
         >
-          {content}
+          {children}
         </Grid>
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
@@ -222,9 +242,7 @@ const CodeEditorDialog = ({
                 color="ghost"
                 prefix={isExpanded ? <MinimizeIcon /> : <MaximizeIcon />}
                 aria-label="Expand"
-                onClick={() => {
-                  setIsExpanded(isExpanded ? false : true);
-                }}
+                onClick={() => setIsExpanded(isExpanded ? false : true)}
               />
               <DialogClose asChild>
                 <Button
@@ -243,13 +261,6 @@ const CodeEditorDialog = ({
   );
 };
 
-const codeEditorStyle = css({
-  position: "relative",
-  "&:hover": {
-    "--ws-code-editor-dialog-maximize-icon-display": "block",
-  },
-});
-
 export const CodeEditor = ({
   title,
   ...editorContentProps
@@ -258,19 +269,9 @@ export const CodeEditor = ({
 }) => {
   const content = <EditorContent {...editorContentProps} />;
   return (
-    <div className={codeEditorStyle()}>
+    <EditorDialogControl>
       {content}
-      <CodeEditorDialog title={title} content={content}>
-        <SmallIconButton
-          icon={<MaximizeIcon />}
-          css={{
-            position: "absolute",
-            top: 6,
-            right: 4,
-            display: `var(--ws-code-editor-dialog-maximize-icon-display, none)`,
-          }}
-        />
-      </CodeEditorDialog>
-    </div>
+      <EditorDialog title={title}>{content}</EditorDialog>
+    </EditorDialogControl>
   );
 };
