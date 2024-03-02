@@ -5,6 +5,7 @@ import {
   type LinkDescriptor,
   type ActionArgs,
   type LoaderArgs,
+  type HeadersArgs,
   json,
   redirect,
 } from "@remix-run/server-runtime";
@@ -71,14 +72,18 @@ export const loader = async (arg: LoaderArgs) => {
     // In case of CRM Data, this should be set to 0
     {
       status: pageMeta.status,
-      headers: { "Cache-Control": "public, max-age=600" },
+      headers: {
+        "Cache-Control": "public, max-age=600",
+        "x-ws-language": pageMeta.language ?? "en",
+      },
     }
   );
 };
 
-export const headers = () => {
+export const headers = ({ loaderHeaders }: HeadersArgs) => {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
+    "x-ws-language": loaderHeaders.get("x-ws-language"),
   };
 };
 

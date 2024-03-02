@@ -78,6 +78,7 @@ export const getPageMeta = ({
     title: "Nested Page",
     description: "",
     excludePageFromSearch: false,
+    language: undefined,
     socialImageAssetId: "",
     socialImageUrl: undefined,
     status: undefined,

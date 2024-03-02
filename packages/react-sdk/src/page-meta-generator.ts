@@ -11,6 +11,7 @@ export type PageMeta = {
   title: string;
   description?: string;
   excludePageFromSearch?: boolean;
+  language?: string;
   socialImageAssetId?: Asset["id"];
   socialImageUrl?: string;
   status?: number;
@@ -44,6 +45,12 @@ export const generatePageMeta = ({
   });
   const excludePageFromSearchExpression = generateExpression({
     expression: page.meta.excludePageFromSearch ?? "undefined",
+    dataSources,
+    usedDataSources,
+    scope: localScope,
+  });
+  const languageExpression = generateExpression({
+    expression: page.meta.language ?? "undefined",
     dataSources,
     usedDataSources,
     scope: localScope,
@@ -125,6 +132,7 @@ export const generatePageMeta = ({
   generated += `    title: ${titleExpression},\n`;
   generated += `    description: ${descriptionExpression},\n`;
   generated += `    excludePageFromSearch: ${excludePageFromSearchExpression},\n`;
+  generated += `    language: ${languageExpression},\n`;
   generated += `    socialImageAssetId: ${socialImageAssetIdExpression},\n`;
   generated += `    socialImageUrl: ${socialImageUrlExpression},\n`;
   generated += `    status: ${statusExpression},\n`;

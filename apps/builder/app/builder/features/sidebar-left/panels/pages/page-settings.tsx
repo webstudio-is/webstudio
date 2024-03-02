@@ -4,6 +4,7 @@ import { type FocusEventHandler, useState, useCallback, useId } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
+import * as bcp47 from "bcp-47";
 import slugify from "slugify";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
@@ -101,6 +102,7 @@ const fieldDefaultValues = {
   title: `"Untitled"`,
   description: `""`,
   excludePageFromSearch: `false`,
+  language: `""`,
   socialImageUrl: `""`,
   socialImageAssetId: "",
   status: `200`,
@@ -160,11 +162,19 @@ const Status = z
     "Status code expects 2xx, 3xx, 4xx or 5xx"
   );
 
+const Language = z
+  .string()
+  .refine(
+    (value) => bcp47.parse(value).language !== null,
+    "The language is invalid"
+  );
+
 const SharedPageValues = z.object({
   name: PageName,
   title: PageTitle,
   description: z.string().optional(),
   excludePageFromSearch: z.boolean().optional(),
+  language: Language.or(EmptyString),
   socialImageUrl: z.string().optional(),
   status: Status.optional(),
   redirect: z.optional(ProjectNewRedirectPath.or(EmptyString)),
@@ -223,6 +233,7 @@ const validateValues = (
       values.excludePageFromSearch,
       variableValues
     ),
+    language: computeExpression(values.language, variableValues),
     socialImageUrl: computeExpression(values.socialImageUrl, variableValues),
     status: computeExpression(values.status, variableValues),
     redirect: computeExpression(values.redirect, variableValues),
@@ -278,6 +289,7 @@ const toFormValues = (
     excludePageFromSearch:
       page.meta.excludePageFromSearch ??
       fieldDefaultValues.excludePageFromSearch,
+    language: page.meta.language ?? fieldDefaultValues.language,
     status: page.meta.status ?? fieldDefaultValues.status,
     redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
     isHomePage,
@@ -470,7 +482,7 @@ const RedirectField = ({
             aliases={aliases}
             variant={isLiteralExpression(value) ? "default" : "bound"}
             value={value}
-            onChange={(value) => onChange(value)}
+            onChange={onChange}
             onRemove={(evaluatedValue) =>
               onChange(JSON.stringify(evaluatedValue))
             }
@@ -484,6 +496,46 @@ const RedirectField = ({
             disabled={
               allowDynamicData === false || isLiteralExpression(value) === false
             }
+            value={String(computeExpression(value, variableValues))}
+            onChange={(event) => onChange(JSON.stringify(event.target.value))}
+          />
+        </InputErrorsTooltip>
+      </BindingControl>
+    </Grid>
+  );
+};
+
+const LanguageField = ({
+  errors,
+  value,
+  onChange,
+}: {
+  errors?: string[];
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const id = useId();
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
+  return (
+    <Grid gap={1}>
+      <Label htmlFor={id}>Language</Label>
+      <BindingControl>
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={onChange}
+          onRemove={(evaluatedValue) =>
+            onChange(JSON.stringify(evaluatedValue))
+          }
+        />
+        <InputErrorsTooltip errors={errors}>
+          <InputField
+            color={errors && "error"}
+            id={id}
+            placeholder="en-US"
+            disabled={isLiteralExpression(value) === false}
             value={String(computeExpression(value, variableValues))}
             onChange={(event) => onChange(JSON.stringify(event.target.value))}
           />
@@ -871,6 +923,14 @@ const FormFields = ({
               </Grid>
             </BindingControl>
           </Grid>
+
+          {isFeatureEnabled("cms") && (
+            <LanguageField
+              errors={errors.language}
+              value={values.language}
+              onChange={(value) => onChange({ field: "language", value })}
+            />
+          )}
         </Grid>
 
         <Separator />
@@ -1181,6 +1241,11 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.excludePageFromSearch !== undefined) {
       page.meta.excludePageFromSearch = values.excludePageFromSearch;
+    }
+
+    if (values.language !== undefined) {
+      page.meta.language =
+        values.language.length > 0 ? values.language : undefined;
     }
 
     if (values.status !== undefined) {

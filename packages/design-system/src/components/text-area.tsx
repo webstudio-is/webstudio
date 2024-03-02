@@ -35,7 +35,7 @@ const gridStyle = css({
     background: theme.colors.backgroundInputDisabled,
   },
   variants: {
-    autoGrow: {
+    grow: {
       true: {
         resize: "none",
       },
@@ -104,6 +104,7 @@ type Props = Omit<
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
+  grow?: boolean;
   autoGrow?: boolean;
   variant?: "regular" | "mono";
 };
@@ -118,6 +119,7 @@ export const TextArea = forwardRef(
       state,
       value,
       onChange,
+      grow,
       autoGrow,
       variant = "regular",
       ...props
@@ -135,7 +137,7 @@ export const TextArea = forwardRef(
     const minHeight =
       rows * LINE_HEIGHT + PADDING_TOP + PADDING_BOTTOM + BORDER * 2;
 
-    const height = autoGrow ? undefined : minHeight;
+    const height = autoGrow || grow ? undefined : minHeight;
 
     const maxHeight = maxRows
       ? maxRows * LINE_HEIGHT + PADDING_TOP + PADDING_BOTTOM + BORDER * 2
@@ -145,7 +147,7 @@ export const TextArea = forwardRef(
       <Grid
         className={gridStyle({
           state,
-          autoGrow,
+          grow: grow || autoGrow,
           variant,
           css: { height, minHeight, maxHeight },
         })}

@@ -83,6 +83,7 @@ export const getPageMeta = ({
     title: "Site Title",
     description: "Page description f511c297-b44f-4e4b-96bd-d013da06bada",
     excludePageFromSearch: undefined,
+    language: undefined,
     socialImageAssetId: undefined,
     socialImageUrl: undefined,
     status: undefined,

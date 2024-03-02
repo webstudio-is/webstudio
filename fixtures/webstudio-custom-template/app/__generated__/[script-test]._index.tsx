@@ -59,6 +59,7 @@ export const getPageMeta = ({
     title: "Script Test",
     description: "",
     excludePageFromSearch: false,
+    language: undefined,
     socialImageAssetId: "",
     socialImageUrl: undefined,
     status: undefined,
