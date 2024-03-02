@@ -4,6 +4,7 @@ import {
   List,
   ListItem,
   ScrollArea,
+  SmallIconButton,
   Text,
   focusRingStyle,
   rawTheme,
@@ -11,11 +12,16 @@ import {
 } from "@webstudio-is/design-system";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { categories } from "./utils";
-import { LoadingDotsIcon } from "@webstudio-is/icons";
+import {
+  ChevronRightIcon,
+  EllipsesIcon,
+  SpinnerIcon,
+} from "@webstudio-is/icons";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { Project } from "@webstudio-is/project";
+import { usePress } from "@react-aria/interactions";
 
 const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
   const itemsByCategory = new Map<
@@ -50,11 +56,21 @@ const imageLoader = createImageLoader({
 const OverviewItem = ({
   item,
   isLoading,
+  isOpen,
+  onOpenStateChange,
   ...props
 }: {
   item: MarketplaceOverviewItem;
   isLoading: boolean;
+  isOpen: boolean;
+  onOpenStateChange: (isOpen: boolean) => void;
 }) => {
+  const { pressProps } = usePress({
+    onPress() {
+      onOpenStateChange(isOpen ? false : true);
+    },
+  });
+
   return (
     <Flex
       {...props}
@@ -81,7 +97,16 @@ const OverviewItem = ({
           {item.name}
         </Text>
       </Flex>
-      {isLoading && <LoadingDotsIcon style={{ flexShrink: 0 }} />}
+      <Flex shrink={false} align="center">
+        {isLoading ? (
+          <SpinnerIcon />
+        ) : (
+          <SmallIconButton
+            icon={isOpen ? <ChevronRightIcon /> : <EllipsesIcon />}
+            {...pressProps}
+          />
+        )}
+      </Flex>
     </Flex>
   );
 };
@@ -90,10 +115,14 @@ export const Overview = ({
   activeProjectId,
   items,
   onSelect,
+  openDetailsProjectId,
+  onOpenDetailsProjectIdChange,
 }: {
   activeProjectId?: Project["id"];
   items?: Array<MarketplaceOverviewItem>;
   onSelect: (item: MarketplaceOverviewItem) => void;
+  openDetailsProjectId?: Project["id"];
+  onOpenDetailsProjectIdChange: (projectId?: string) => void;
 }) => {
   const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
 
@@ -121,6 +150,12 @@ export const Overview = ({
                       <OverviewItem
                         item={item}
                         isLoading={item.projectId === activeProjectId}
+                        isOpen={openDetailsProjectId === item.projectId}
+                        onOpenStateChange={(isOpen) => {
+                          onOpenDetailsProjectIdChange(
+                            isOpen ? item.projectId : undefined
+                          );
+                        }}
                       />
                     </ListItem>
                   );

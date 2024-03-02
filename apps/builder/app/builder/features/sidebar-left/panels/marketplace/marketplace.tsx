@@ -10,12 +10,17 @@ import { toWebstudioData } from "./utils";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { MarketplaceRouter } from "~/shared/marketplace/router";
 import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
+import type { Project } from "@webstudio-is/project";
+import { SettingsPanel } from "../pages/settings-panel";
+import { ItemDetails } from "./item-details";
 
 const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [activeOverviewItem, setAciveOverviewItem] =
     useState<MarketplaceOverviewItem>();
+  const [openDetailsProjectId, setOpenDetailsProjectId] =
+    useState<Project["id"]>();
 
   const {
     load: getItems,
@@ -28,6 +33,10 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   useEffect(() => {
     getItems();
   }, [getItems]);
+
+  const openDetailsItem = items?.find(
+    (item) => item.projectId === openDetailsProjectId
+  );
 
   return (
     <Flex direction="column" css={{ height: "100%" }}>
@@ -58,7 +67,19 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
             setAciveOverviewItem(activeOverviewItem);
             getBuildData({ projectId: activeOverviewItem.projectId });
           }}
+          openDetailsProjectId={openDetailsProjectId}
+          onOpenDetailsProjectIdChange={setOpenDetailsProjectId}
         />
+      )}
+      {openDetailsItem && (
+        <SettingsPanel isOpen>
+          <ItemDetails
+            item={openDetailsItem}
+            onClose={() => {
+              setOpenDetailsProjectId(undefined);
+            }}
+          />
+        </SettingsPanel>
       )}
     </Flex>
   );

@@ -69,13 +69,14 @@ const useMarketplaceApprovalStatus = () => {
     "UNLISTED";
 
   useEffect(() => {
-    if (status && project) {
+    const project = $project.get();
+    if (project) {
       $project.set({
         ...project,
         marketplaceApprovalStatus: status,
       });
     }
-  }, [status, project]);
+  }, [status]);
 
   return {
     status,

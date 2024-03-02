@@ -1,4 +1,4 @@
-import { usePress } from "@react-aria/interactions";
+import { usePress, type PressEvent } from "@react-aria/interactions";
 import { Slot, type SlotProps } from "@radix-ui/react-slot";
 import { ArrowFocus } from "./arrow-focus";
 
@@ -24,7 +24,7 @@ type ListItemProps = SlotProps & {
   state?: "disabled" | "selected";
   current?: boolean;
   index?: number;
-  onSelect?: () => void;
+  onSelect?: (event: PressEvent) => void;
   asChild?: boolean;
 };
 
@@ -43,8 +43,8 @@ export const ListItem = ({
       ? { "data-state": "selected" }
       : undefined;
   const { pressProps } = usePress({
-    onPress() {
-      onSelect?.();
+    onPress(event) {
+      onSelect?.(event);
     },
   });
   const Component = asChild ? Slot : "li";
