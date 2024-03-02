@@ -136,7 +136,6 @@ export const SectionMarketplace = () => {
       const errors = validate(nextData);
       setErrors(errors);
       setData(nextData);
-      console.log(nextData);
       if (errors) {
         return;
       }
