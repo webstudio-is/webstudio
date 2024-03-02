@@ -47,7 +47,7 @@ export const TransitionLayer = (props: LayerProps) => {
   const properties = useLayer(layer);
 
   if (layer.type !== "tuple" || properties === undefined) {
-    return null;
+    return;
   }
 
   const { transition, label } = properties;

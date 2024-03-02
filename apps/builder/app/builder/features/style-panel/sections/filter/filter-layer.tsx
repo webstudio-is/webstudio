@@ -12,7 +12,7 @@ export const FilterLayer = (props: LayerProps) => {
   const { index, id, layer, isHighlighted, onDeleteLayer } = props;
 
   if (layer.type !== "keyword") {
-    return null;
+    return;
   }
 
   return (
