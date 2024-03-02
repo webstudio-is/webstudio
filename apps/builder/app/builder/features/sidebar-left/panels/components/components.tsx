@@ -66,14 +66,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             if (category === "hidden") {
               return false;
             }
-
-            if (
-              category === "utilities" &&
-              isFeatureEnabled("marketplace") === false
-            ) {
-              return false;
-            }
-
             return true;
           })
           .map((category) => (
