@@ -10,7 +10,7 @@ import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { Header } from "../../header";
 import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
 
-export const ItemDetails = ({
+export const About = ({
   item,
   onClose,
 }: {
