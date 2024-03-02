@@ -8,7 +8,6 @@ import {
   type TreeItemRenderProps,
   type ItemSelector,
   styled,
-  Flex,
   Tooltip,
   Box,
   Button,
@@ -25,8 +24,8 @@ import {
   DynamicPageIcon,
 } from "@webstudio-is/icons";
 import type { TabContentProps } from "../../types";
-import { CloseButton, Header } from "../../shared/header";
-import { AttachedPanel } from "../../shared/attached-panel";
+import { CloseButton, Header, Root } from "../../shared/panel";
+import { ExtendedPanel } from "../../shared/extended-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
@@ -233,17 +232,7 @@ const PagesPanel = ({
   }
 
   return (
-    <Flex
-      css={{
-        position: "relative",
-        height: "100%",
-        // z-index needed for page settings animation
-        zIndex: 1,
-        flexGrow: 1,
-        background: theme.colors.backgroundPanel,
-      }}
-      direction="column"
-    >
+    <Root>
       <Header
         title="Pages"
         suffix={
@@ -308,7 +297,7 @@ const PagesPanel = ({
           }}
         />
       </Box>
-    </Flex>
+    </Root>
   );
 };
 
@@ -420,7 +409,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         editingItemId={editingItemId}
       />
 
-      <AttachedPanel isOpen={editingItemId !== undefined}>
+      <ExtendedPanel isOpen={editingItemId !== undefined}>
         {editingItemId !== undefined && (
           <>
             {isFolder(editingItemId, pages.folders) ? (
@@ -436,7 +425,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
             )}
           </>
         )}
-      </AttachedPanel>
+      </ExtendedPanel>
     </>
   );
 };

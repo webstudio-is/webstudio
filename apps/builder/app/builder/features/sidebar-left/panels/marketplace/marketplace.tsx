@@ -1,7 +1,7 @@
 import { ExtensionIcon, SpinnerIcon } from "@webstudio-is/icons";
 import { Flex, rawTheme } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
-import { Header, CloseButton } from "../../shared/header";
+import { Header, CloseButton, Root } from "../../shared/panel";
 import { Overview } from "./overview";
 import { SectionTemplates } from "./section-templates";
 import { marketplacePath } from "~/shared/router-utils";
@@ -11,7 +11,7 @@ import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { MarketplaceRouter } from "~/shared/marketplace/router";
 import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import type { Project } from "@webstudio-is/project";
-import { AttachedPanel } from "../../shared/attached-panel";
+import { ExtendedPanel } from "../../shared/extended-panel";
 import { About } from "./about";
 
 const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
@@ -37,14 +37,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 
   return (
     <>
-      <Flex
-        direction="column"
-        css={{
-          height: "100%",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
+      <Root>
         <Header
           title="Marketplace"
           suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
@@ -76,15 +69,15 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
             onOpenAbout={setopenAbout}
           />
         )}
-      </Flex>
-      <AttachedPanel isOpen={openAboutItem !== undefined}>
+      </Root>
+      <ExtendedPanel isOpen={openAboutItem !== undefined}>
         <About
           item={openAboutItem}
           onClose={() => {
             setopenAbout(undefined);
           }}
         />
-      </AttachedPanel>
+      </ExtendedPanel>
     </>
   );
 };

@@ -8,7 +8,7 @@ import {
   type StyleInfo,
   useStyleInfo,
   type StyleValueInfo,
-} from "../../style-panel/shared/style-info";
+} from "../../../style-panel/shared/style-info";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";

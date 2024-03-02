@@ -16,7 +16,7 @@ import {
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { TabContentProps } from "../../types";
-import { Header, CloseButton } from "../../shared/header";
+import { Header, CloseButton, Root } from "../../shared/panel";
 import {
   dragItemAttribute,
   elementToComponentName,
@@ -51,10 +51,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <Flex
-      css={{ height: "100%", flexDirection: "column" }}
-      ref={draggableContainerRef}
-    >
+    <Root ref={draggableContainerRef}>
       <Header
         title="Components"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
@@ -107,7 +104,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             </CollapsibleSection>
           ))}
       </ScrollArea>
-    </Flex>
+    </Root>
   );
 };
 
