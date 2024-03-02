@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "@jest/globals";
 import type {
+  KeywordValue,
   LayersValue,
   StyleProperty,
   StyleValue,
@@ -14,7 +15,7 @@ import {
   updateLayer,
 } from "./style-layer-utils";
 import type { StyleInfo } from "./shared/style-info";
-import { parseBoxShadow } from "@webstudio-is/css-data";
+import { parseBoxShadow, parseFilter } from "@webstudio-is/css-data";
 
 let styleInfo: StyleInfo = {};
 let published = false;
@@ -349,5 +350,59 @@ describe("boxShadowUtils", () => {
         },
       ]
     `);
+  });
+
+  test("updates the item in a tuple by passing index", () => {
+    const oldVaue: TupleValue = {
+      type: "tuple",
+      value: [
+        {
+          type: "keyword",
+          value: "blur(0px)",
+        },
+        {
+          type: "keyword",
+          value: "drop-shadow(3px 3px red)",
+        },
+        {
+          type: "keyword",
+          value: "sepia(100%)",
+        },
+        {
+          type: "keyword",
+          value: "drop-shadow(-3px -3px blue)",
+        },
+      ],
+    };
+
+    const newValue: TupleValue = {
+      type: "tuple",
+      value: [
+        { type: "keyword", value: "blur(5px)" },
+        { type: "keyword", value: "sepia(60%)" },
+      ],
+    };
+
+    updateLayer("filter", newValue, oldVaue, 0, createBatchUpdate);
+    const filter = styleInfo["filter"]?.value as TupleValue;
+
+    expect(filter).toBeDefined();
+    expect(filter.value[0]).toBe(newValue.value[0]);
+    expect(filter.value.length).toBe(5);
+  });
+
+  test("swap the values in a tuple using indexe's", () => {
+    addLayer(
+      "filter",
+      parseFilter(
+        "drop-shadow(3px 3px red) sepia(100%) drop-shadow(-3px -3px blue)"
+      ),
+      styleInfo,
+      createBatchUpdate
+    );
+
+    swapLayers("filter", 1, 2, styleInfo, createBatchUpdate);
+    const filter = styleInfo["filter"]?.value as TupleValue;
+    expect((filter?.value[2] as KeywordValue)?.value).toBe("sepia(100%)");
   });
 });

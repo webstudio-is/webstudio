@@ -29,7 +29,7 @@ export const FilterLayer = (props: LayerProps) => {
     >
       <CssValueListItem
         id={id}
-        draggable={false}
+        draggable={true}
         active={isHighlighted}
         index={index}
         label={<Label truncate>{layer.value}</Label>}
