@@ -40,8 +40,8 @@ const imgStyle = css({
   borderColor: theme.colors.borderMain,
 });
 
-const defaultMarketplaceProduct = {
-  category: "templates",
+const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
+  category: "sectionTemplates",
 };
 
 const imageLoader = createImageLoader({

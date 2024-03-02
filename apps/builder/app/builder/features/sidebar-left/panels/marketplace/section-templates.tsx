@@ -67,7 +67,7 @@ type TemplateData = {
   rootInstanceId: string;
 };
 
-const Template = ({
+const SectionTemplate = ({
   data: { socialImageAsset, socialImageUrl, title },
   ...listItemProps
 }: {
@@ -158,7 +158,7 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
   return templatesByCategory;
 };
 
-export const Templates = ({
+export const SectionTemplates = ({
   name,
   data,
   onOpenChange,
@@ -215,7 +215,7 @@ export const Templates = ({
                             });
                           }}
                         >
-                          <Template data={templateData} />
+                          <SectionTemplate data={templateData} />
                         </ListItem>
                       );
                     })}

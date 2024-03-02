@@ -12,7 +12,7 @@ export const $activeProductData = atom<WebstudioData | undefined>();
 export const categories: Array<{
   category: MarketplaceProduct["category"];
   label: string;
-}> = [{ category: "templates", label: "Templates" }];
+}> = [{ category: "sectionTemplates", label: "Section Templates" }];
 
 export const toWebstudioData = (data: BuildData): WebstudioData => ({
   pages: data.build.pages,
