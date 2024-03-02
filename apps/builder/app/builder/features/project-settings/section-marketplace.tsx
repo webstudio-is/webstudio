@@ -107,6 +107,7 @@ export const SectionMarketplace = () => {
   const ids = useIds([
     "name",
     "thumbnailAssetId",
+    "author",
     "email",
     "website",
     "issues",
@@ -135,6 +136,7 @@ export const SectionMarketplace = () => {
       const errors = validate(nextData);
       setErrors(errors);
       setData(nextData);
+      console.log(nextData);
       if (errors) {
         return;
       }
@@ -189,6 +191,20 @@ export const SectionMarketplace = () => {
             </ImageControl>
           </Grid>
         </Grid>
+      </Grid>
+
+      <Grid gap={1} css={sectionSpacing}>
+        <Label htmlFor={ids.author}>Author</Label>
+        <InputErrorsTooltip errors={errors?.author}>
+          <InputField
+            id={ids.author}
+            value={data.author ?? ""}
+            color={errors?.author && "error"}
+            onChange={(event) => {
+              handleSave("author")(event.target.value);
+            }}
+          />
+        </InputErrorsTooltip>
       </Grid>
 
       <Grid gap={1} css={sectionSpacing}>

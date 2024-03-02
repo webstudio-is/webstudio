@@ -45,7 +45,6 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
       },
     },
   });
-
   const items = [];
 
   for (const project of projects) {
@@ -58,6 +57,7 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
     );
 
     if (parsedProduct.success === false) {
+      console.error(parsedProduct.error.formErrors.fieldErrors);
       continue;
     }
 

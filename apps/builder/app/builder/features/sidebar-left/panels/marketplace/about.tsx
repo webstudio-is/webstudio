@@ -45,6 +45,9 @@ export const About = ({
       >
         <Text>{item.description}</Text>
         <Flex direction="column">
+          <Flex gap="1">
+            <Text>Author: {item.author}</Text>
+          </Flex>
           {item.website && (
             <Flex gap="1">
               <Text>Website:</Text>

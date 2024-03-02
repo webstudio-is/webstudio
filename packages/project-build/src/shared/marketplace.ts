@@ -3,6 +3,7 @@ import { z } from "zod";
 const Base = z.object({
   name: z.string().min(2).trim(),
   thumbnailAssetId: z.string(),
+  author: z.string().min(2).trim(),
   email: z.string().email().trim(),
   website: z.union([z.string().url().trim().optional(), z.literal("")]),
   issues: z.union([z.string().url().trim().optional(), z.literal("")]),
