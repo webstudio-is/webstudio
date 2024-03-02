@@ -115,14 +115,14 @@ export const Overview = ({
   activeProjectId,
   items,
   onSelect,
-  openDetailsProjectId,
-  onOpenDetailsProjectIdChange,
+  openAbout,
+  onOpenAbout,
 }: {
   activeProjectId?: Project["id"];
   items?: Array<MarketplaceOverviewItem>;
   onSelect: (item: MarketplaceOverviewItem) => void;
-  openDetailsProjectId?: Project["id"];
-  onOpenDetailsProjectIdChange: (projectId?: string) => void;
+  openAbout?: Project["id"];
+  onOpenAbout: (projectId?: string) => void;
 }) => {
   const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
 
@@ -150,11 +150,9 @@ export const Overview = ({
                       <OverviewItem
                         item={item}
                         isLoading={item.projectId === activeProjectId}
-                        isOpen={openDetailsProjectId === item.projectId}
+                        isOpen={openAbout === item.projectId}
                         onOpenStateChange={(isOpen) => {
-                          onOpenDetailsProjectIdChange(
-                            isOpen ? item.projectId : undefined
-                          );
+                          onOpenAbout(isOpen ? item.projectId : undefined);
                         }}
                       />
                     </ListItem>
