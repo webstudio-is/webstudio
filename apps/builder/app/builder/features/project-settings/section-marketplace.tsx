@@ -109,6 +109,7 @@ export const SectionMarketplace = () => {
     "thumbnailAssetId",
     "email",
     "website",
+    "issues",
     "description",
     "isConfirmed",
   ]);
@@ -148,16 +149,11 @@ export const SectionMarketplace = () => {
       );
     };
   };
+  const sectionSpacing = { mx: theme.spacing[5], px: theme.spacing[5] };
 
   return (
     <>
-      <Grid
-        gap={1}
-        css={{
-          mx: theme.spacing[5],
-          px: theme.spacing[5],
-        }}
-      >
+      <Grid gap={1} css={sectionSpacing}>
         <Text variant="titles">Marketplace</Text>
         <Label htmlFor={ids.name}>Product Name</Label>
         <InputErrorsTooltip errors={errors?.name}>
@@ -173,7 +169,7 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+      <Grid gap={2} css={sectionSpacing}>
         <Label>Thumbnail</Label>
         <Grid flow="column" gap={3}>
           <Image
@@ -195,13 +191,7 @@ export const SectionMarketplace = () => {
         </Grid>
       </Grid>
 
-      <Grid
-        gap={1}
-        css={{
-          mx: theme.spacing[5],
-          px: theme.spacing[5],
-        }}
-      >
+      <Grid gap={1} css={sectionSpacing}>
         <Label htmlFor={ids.email}>Email</Label>
         <InputErrorsTooltip errors={errors?.email}>
           <InputField
@@ -215,13 +205,7 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
-      <Grid
-        gap={1}
-        css={{
-          mx: theme.spacing[5],
-          px: theme.spacing[5],
-        }}
-      >
+      <Grid gap={1} css={sectionSpacing}>
         <Label htmlFor={ids.website}>Website</Label>
         <InputErrorsTooltip errors={errors?.website}>
           <InputField
@@ -235,7 +219,21 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+      <Grid gap={1} css={sectionSpacing}>
+        <Label htmlFor={ids.issues}>Issues Tracker</Label>
+        <InputErrorsTooltip errors={errors?.issues}>
+          <InputField
+            id={ids.issues}
+            value={data.issues ?? ""}
+            color={errors?.issues && "error"}
+            onChange={(event) => {
+              handleSave("issues")(event.target.value);
+            }}
+          />
+        </InputErrorsTooltip>
+      </Grid>
+
+      <Grid gap={2} css={sectionSpacing}>
         <Label htmlFor={ids.description}>Description</Label>
         <InputErrorsTooltip errors={errors?.description}>
           <TextArea
@@ -249,7 +247,7 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+      <Grid gap={2} css={sectionSpacing}>
         <PanelBanner>
           <Text>
             {`Please set for every template page a "ws:category"
@@ -264,7 +262,7 @@ export const SectionMarketplace = () => {
       </Grid>
 
       {approval.status === "UNLISTED" && (
-        <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+        <Grid gap={2} css={sectionSpacing}>
           <CheckboxAndLabel>
             <Checkbox
               checked={isConfirmed}
@@ -283,12 +281,7 @@ export const SectionMarketplace = () => {
         </Grid>
       )}
 
-      <Flex
-        align="center"
-        justify="between"
-        gap={2}
-        css={{ mx: theme.spacing[5], px: theme.spacing[5] }}
-      >
+      <Flex align="center" justify="between" gap={2} css={sectionSpacing}>
         <Text>Status: {approval.status.toLocaleLowerCase()}</Text>
         {approval.status === "UNLISTED" ? (
           <Button

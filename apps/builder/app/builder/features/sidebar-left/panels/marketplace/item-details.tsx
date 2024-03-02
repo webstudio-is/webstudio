@@ -45,16 +45,26 @@ export const ItemDetails = ({
       >
         <Text>{item.description}</Text>
         <Flex direction="column">
-          <Flex gap="1">
-            <Text>Website</Text>
-            <Link href={item.website} target="_blank">
-              {item.website}
-            </Link>
-          </Flex>
+          {item.website && (
+            <Flex gap="1">
+              <Text>Website:</Text>
+              <Link href={item.website} target="_blank">
+                {item.website}
+              </Link>
+            </Flex>
+          )}
           <Flex gap="1">
             <Text>Email:</Text>
             <Link href={`mailto:${item.email}`}>{item.email}</Link>
           </Flex>
+          {item.issues && (
+            <Flex gap="1">
+              <Text>Issues Tracker:</Text>
+              <Link href={item.issues} target="_blank">
+                {item.issues}
+              </Link>
+            </Flex>
+          )}
         </Flex>
       </Flex>
     </>

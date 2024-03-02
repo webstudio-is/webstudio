@@ -5,6 +5,7 @@ const Base = z.object({
   thumbnailAssetId: z.string(),
   email: z.string().email().trim(),
   website: z.union([z.string().url().trim().optional(), z.literal("")]),
+  issues: z.union([z.string().url().trim().optional(), z.literal("")]),
   description: z.string().trim().min(10),
 });
 
