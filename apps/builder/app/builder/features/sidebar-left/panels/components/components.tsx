@@ -16,7 +16,7 @@ import {
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { TabContentProps } from "../../types";
-import { Header, CloseButton } from "../../header";
+import { Header, CloseButton } from "../../shared/header";
 import {
   dragItemAttribute,
   elementToComponentName,

@@ -53,7 +53,7 @@ const CollapsibleContent = styled(Collapsible.Content, {
   },
 });
 
-export const SettingsPanel = ({
+export const AttachedPanel = ({
   children,
   isOpen,
 }: {

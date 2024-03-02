@@ -7,7 +7,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import { Header } from "../../header";
+import { Header } from "../../shared/header";
 import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
 
 export const About = ({

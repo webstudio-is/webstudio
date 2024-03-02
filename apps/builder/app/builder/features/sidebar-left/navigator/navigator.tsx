@@ -1,6 +1,6 @@
 import { Flex, Separator } from "@webstudio-is/design-system";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
-import { Header, CloseButton } from "../header";
+import { Header, CloseButton } from "../shared/header";
 import { CssPreview } from "./css-preview";
 import { useHotkeys } from "react-hotkeys-hook";
 import { emitCommand } from "~/builder/shared/commands";

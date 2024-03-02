@@ -25,8 +25,8 @@ import {
   DynamicPageIcon,
 } from "@webstudio-is/icons";
 import type { TabContentProps } from "../../types";
-import { CloseButton, Header } from "../../header";
-import { SettingsPanel } from "./settings-panel";
+import { CloseButton, Header } from "../../shared/header";
+import { AttachedPanel } from "../../shared/attached-panel";
 import { NewPageSettings, PageSettings } from "./page-settings";
 import { $pages, $selectedPageId } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
@@ -420,21 +420,23 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
         editingItemId={editingItemId}
       />
 
-      {editingItemId && (
-        <SettingsPanel isOpen>
-          {isFolder(editingItemId, pages.folders) ? (
-            <FolderEditor
-              editingFolderId={editingItemId}
-              setEditingFolderId={$editingPagesItemId.set}
-            />
-          ) : (
-            <PageEditor
-              editingPageId={editingItemId}
-              setEditingPageId={$editingPagesItemId.set}
-            />
-          )}
-        </SettingsPanel>
-      )}
+      <AttachedPanel isOpen={editingItemId !== undefined}>
+        {editingItemId !== undefined && (
+          <>
+            {isFolder(editingItemId, pages.folders) ? (
+              <FolderEditor
+                editingFolderId={editingItemId}
+                setEditingFolderId={$editingPagesItemId.set}
+              />
+            ) : (
+              <PageEditor
+                editingPageId={editingItemId}
+                setEditingPageId={$editingPagesItemId.set}
+              />
+            )}
+          </>
+        )}
+      </AttachedPanel>
     </>
   );
 };

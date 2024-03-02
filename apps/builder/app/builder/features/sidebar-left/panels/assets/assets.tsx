@@ -2,7 +2,7 @@ import { ImageIcon } from "@webstudio-is/icons";
 import { Flex } from "@webstudio-is/design-system";
 import { ImageManager } from "~/builder/shared/image-manager";
 import type { TabContentProps } from "../../types";
-import { Header, CloseButton } from "../../header";
+import { Header, CloseButton } from "../../shared/header";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   return (
