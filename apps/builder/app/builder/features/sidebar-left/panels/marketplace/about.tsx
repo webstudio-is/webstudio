@@ -41,13 +41,11 @@ export const About = ({
       <Flex
         direction="column"
         css={{ my: theme.spacing[5], mx: theme.spacing[8] }}
-        gap="2"
+        gap="3"
       >
         <Text>{item.description}</Text>
-        <Flex direction="column">
-          <Flex gap="1">
-            <Text>Author: {item.author}</Text>
-          </Flex>
+        <Flex direction="column" gap="1">
+          <Text>Author: {item.author}</Text>
           {item.website && (
             <Flex gap="1">
               <Text>Website:</Text>
