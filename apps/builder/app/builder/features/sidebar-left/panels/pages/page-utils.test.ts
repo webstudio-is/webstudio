@@ -590,6 +590,49 @@ describe("duplicate page", () => {
     });
   });
 
+  test("check full page path when duplicating inside a folder", () => {
+    $instances.set(
+      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+    );
+    $pages.set({
+      homePage: {
+        id: "homeId",
+        name: "Home",
+        path: "/",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "home",
+      },
+      pages: [
+        {
+          id: "pageId",
+          name: "My Name",
+          path: "/my-path",
+          title: `"My Title"`,
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+      folders: [
+        {
+          id: "folderId",
+          name: "Folder",
+          slug: "folder",
+          children: ["pageId"],
+        },
+      ],
+    });
+    duplicatePage("pageId");
+    expect($pages.get()?.pages[1]).toEqual({
+      id: expect.not.stringMatching("pageId"),
+      name: "My Name (1)",
+      path: "/my-path-1",
+      title: `"My Title"`,
+      meta: {},
+      rootInstanceId: expect.not.stringMatching("body"),
+    });
+  });
+
   test("replace variables in page meta", () => {
     $instances.set(
       toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
