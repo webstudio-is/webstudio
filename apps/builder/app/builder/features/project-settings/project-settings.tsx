@@ -27,6 +27,9 @@ if (isFeatureEnabled("marketplace")) {
   settingNames.push("Marketplace");
 }
 
+const leftPanelWidth = theme.spacing[26];
+const rightPanelWidth = theme.spacing[34];
+
 const ProjectSettingsView = ({
   isOpen,
   onOpenChange,
@@ -44,7 +47,7 @@ const ProjectSettingsView = ({
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
-          width: "max-content",
+          width: `calc(${leftPanelWidth} + ${rightPanelWidth})`,
           maxWidth: "none",
           height: theme.spacing[35],
           zIndex: theme.zIndices[1],
@@ -55,8 +58,9 @@ const ProjectSettingsView = ({
           <List asChild>
             <Flex
               direction="column"
+              shrink={false}
               css={{
-                width: theme.spacing[26],
+                width: leftPanelWidth,
                 borderRight: `1px solid  ${theme.colors.borderMain}`,
               }}
             >
@@ -96,10 +100,7 @@ const ProjectSettingsView = ({
             </Flex>
           </List>
           <ScrollArea>
-            <Grid
-              gap={2}
-              css={{ my: theme.spacing[5], width: theme.spacing[34] }}
-            >
+            <Grid gap={2} css={{ my: theme.spacing[5] }}>
               {selectedSetting === "General" && <SectionGeneral />}
               {selectedSetting === "Redirects" && <SectionRedirects />}
               {selectedSetting === "Marketplace" &&
