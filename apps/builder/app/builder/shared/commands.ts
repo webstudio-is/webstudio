@@ -122,7 +122,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openBreakpointsMenu",
-      defaultHotkeys: ["meta+b", "ctrl+b"],
       handler: () => {
         $breakpointsMenuView.set("initial");
       },
