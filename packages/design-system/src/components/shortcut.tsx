@@ -1,4 +1,4 @@
-import { DeprecatedText2 } from "@webstudio-is/design-system";
+import { Text } from "./text";
 
 const isMac =
   typeof navigator === "object" ? /mac/i.test(navigator.platform) : false;
@@ -9,6 +9,7 @@ const shortcutSymbolMap: Record<string, string> = {
   shift: "⇧",
   option: "⌥",
   backspace: "⌫",
+  click: "+click",
 };
 
 const shortcutWinMap: Record<string, string> = {
@@ -32,10 +33,6 @@ const format = (value: ShortcutDefinition) => {
   );
 };
 
-export const ShortcutHint = ({ value }: { value: ShortcutDefinition }) => {
-  return (
-    <DeprecatedText2 css={{ letterSpacing: 1.5 }}>
-      {format(value)}
-    </DeprecatedText2>
-  );
+export const Shortcut = ({ value }: { value: ShortcutDefinition }) => {
+  return <Text color="subtle">{format(value)}</Text>;
 };

@@ -11,6 +11,7 @@ import {
   type TooltipProps,
   Text,
   ScrollArea,
+  Shortcut,
 } from "@webstudio-is/design-system";
 import { ResetIcon } from "@webstudio-is/icons";
 import type {
@@ -271,7 +272,8 @@ export const TooltipContent = ({
           <Button
             color="dark"
             prefix={<ResetIcon />}
-            css={{ flexGrow: 1 }}
+            suffix={<Shortcut value={["option", "click"]} />}
+            css={{ flexGrow: 1, flexAlign: "center" }}
             onClick={onReset}
           >
             Reset value
