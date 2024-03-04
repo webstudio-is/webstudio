@@ -261,8 +261,7 @@ export const setMarketplaceApprovalStatus = async (
     marketplaceApprovalStatus === "APPROVED" ||
     marketplaceApprovalStatus === "REJECTED"
   ) {
-    // User can't approve or reject
-    throw new Error("Invalid status");
+    throw new Error("User can't approve or reject");
   }
   await assertEditPermission(projectId, context);
 

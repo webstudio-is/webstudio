@@ -120,6 +120,7 @@ export const SectionRedirects = () => {
       return;
     }
 
+    // Needs to apply state before setting focus.
     flushSync(() => {
       handleSave([
         {
