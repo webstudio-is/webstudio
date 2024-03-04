@@ -34,7 +34,7 @@ import {
   HelpIcon,
 } from "@webstudio-is/icons";
 import { useIds } from "~/shared/form-utils";
-import { Header, HeaderSuffixSpacer } from "../../header";
+import { Header, HeaderSuffixSpacer } from "../../shared/panel";
 import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";

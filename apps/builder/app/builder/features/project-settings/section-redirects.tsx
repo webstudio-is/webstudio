@@ -12,7 +12,7 @@ import {
   Select,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
-import { useState, type ChangeEvent } from "react";
+import { useState, type ChangeEvent, useRef } from "react";
 import {
   PagePath,
   PageRedirect,
@@ -22,8 +22,9 @@ import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
 import { $pages } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
+import { flushSync } from "react-dom";
 
-export const RedirectSection = () => {
+export const SectionRedirects = () => {
   const [redirects, setRedirects] = useState(
     () => $pages.get()?.redirects ?? []
   );
@@ -35,6 +36,7 @@ export const RedirectSection = () => {
   const [newPathErrors, setNewPathErrors] = useState<string[]>([]);
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
+  const oldPathRef = useRef<HTMLInputElement>(null);
 
   const redirectKeys = Object.keys(redirects);
   const isValidRedirects =
@@ -118,16 +120,20 @@ export const RedirectSection = () => {
       return;
     }
 
-    handleSave([
-      {
-        old: oldPath,
-        new: newPath,
-        status: httpStatus ?? "301",
-      },
-      ...redirects,
-    ]);
-    setOldPath("");
-    setNewPath("");
+    // Needs to apply state before setting focus.
+    flushSync(() => {
+      handleSave([
+        {
+          old: oldPath,
+          new: newPath,
+          status: httpStatus ?? "301",
+        },
+        ...redirects,
+      ]);
+      setOldPath("");
+      setNewPath("");
+    });
+    oldPathRef.current?.focus();
   };
 
   const handleDeleteRedirect = (index: number) => {
@@ -152,6 +158,8 @@ export const RedirectSection = () => {
             css={{ zIndex: theme.zIndices["1"] }}
           >
             <InputField
+              ref={oldPathRef}
+              autoFocus
               type="text"
               placeholder="/old-path"
               value={oldPath}

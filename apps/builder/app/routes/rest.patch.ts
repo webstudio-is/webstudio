@@ -19,7 +19,7 @@ import {
   Resources,
   Resource,
 } from "@webstudio-is/sdk";
-import type { Build } from "@webstudio-is/project-build";
+import { type Build, MarketplaceProduct } from "@webstudio-is/project-build";
 import {
   parsePages,
   parseStyleSourceSelections,
@@ -29,6 +29,8 @@ import {
   serializeStyles,
   parseData,
   serializeData,
+  parseConfig,
+  serializeConfig,
 } from "@webstudio-is/project-build/index.server";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
@@ -106,6 +108,7 @@ export const action = async ({ request }: ActionArgs) => {
       styleSources?: StyleSources;
       styleSourceSelections?: StyleSourceSelections;
       styles?: Styles;
+      marketplaceProduct?: MarketplaceProduct;
     } = {};
 
     let previewImageAssetId: string | null | undefined = undefined;
@@ -207,6 +210,19 @@ export const action = async ({ request }: ActionArgs) => {
           continue;
         }
 
+        if (namespace === "marketplaceProduct") {
+          const marketplaceProduct =
+            buildData.marketplaceProduct ??
+            parseConfig<MarketplaceProduct>(build.marketplaceProduct);
+
+          buildData.marketplaceProduct = applyPatches(
+            marketplaceProduct,
+            patches
+          );
+
+          continue;
+        }
+
         return { errors: `Unknown namespace "${namespace}"` };
       }
     }
@@ -277,6 +293,12 @@ export const action = async ({ request }: ActionArgs) => {
       Styles.parse(stylesToValidate);
 
       dbBuildData.styles = serializeStyles(buildData.styles);
+    }
+
+    if (buildData.marketplaceProduct) {
+      dbBuildData.marketplaceProduct = serializeConfig<MarketplaceProduct>(
+        MarketplaceProduct.parse(buildData.marketplaceProduct)
+      );
     }
 
     const { count } = await prisma.build.updateMany({

@@ -27,6 +27,7 @@ import { $instances, $selectedInstanceSelector } from "./instances";
 import { $selectedPage } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
 
 export const $project = atom<Project | undefined>();
 
@@ -313,3 +314,5 @@ export type DragAndDropState = {
 export const $dragAndDropState = atom<DragAndDropState>({
   isDragging: false,
 });
+
+export const $marketplaceProduct = atom<undefined | MarketplaceProduct>();

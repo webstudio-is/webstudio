@@ -11,6 +11,7 @@ import type {
   DataSource,
   Resource,
 } from "@webstudio-is/sdk";
+import type { MarketplaceProduct } from "./shared/marketplace";
 
 export type Build = {
   id: string;
@@ -28,4 +29,5 @@ export type Build = {
   dataSources: [DataSource["id"], DataSource][];
   resources: [Resource["id"], Resource][];
   deployment?: Deployment | undefined;
+  marketplaceProduct: MarketplaceProduct;
 };
