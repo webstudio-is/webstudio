@@ -16,6 +16,7 @@ const CollapsibleRoot = styled(Collapsible.Root, {
   display: "flex",
   flexDirection: "column",
   marginLeft: 1,
+  zIndex: -1,
 });
 
 const openKeyframes = keyframes({
@@ -53,7 +54,7 @@ const CollapsibleContent = styled(Collapsible.Content, {
   },
 });
 
-export const SettingsPanel = ({
+export const ExtendedPanel = ({
   children,
   isOpen,
 }: {

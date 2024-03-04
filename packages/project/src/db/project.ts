@@ -10,7 +10,7 @@ import {
   createBuild,
   cloneBuild,
 } from "@webstudio-is/project-build/index.server";
-import { Project, Title } from "../shared/schema";
+import { MarketplaceApprovalStatus, Project, Title } from "../shared/schema";
 import { generateDomain, validateProjectDomain } from "./project-domain";
 
 export const loadById = async (
@@ -245,4 +245,28 @@ export const updateDomain = async (
     }
     throw error;
   }
+};
+
+export const setMarketplaceApprovalStatus = async (
+  {
+    projectId,
+    marketplaceApprovalStatus,
+  }: {
+    projectId: Project["id"];
+    marketplaceApprovalStatus: MarketplaceApprovalStatus;
+  },
+  context: AppContext
+) => {
+  if (
+    marketplaceApprovalStatus === "APPROVED" ||
+    marketplaceApprovalStatus === "REJECTED"
+  ) {
+    throw new Error("User can't approve or reject");
+  }
+  await assertEditPermission(projectId, context);
+
+  return await prisma.project.update({
+    where: { id: projectId },
+    data: { marketplaceApprovalStatus },
+  });
 };

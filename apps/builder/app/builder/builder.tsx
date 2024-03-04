@@ -10,7 +10,11 @@ import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
-import { SidebarLeft, Navigator } from "./features/sidebar-left";
+import {
+  SidebarLeft,
+  NavigatorContent,
+  useNavigatorLayout,
+} from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
 import builderStyles from "./builder.css";
@@ -39,6 +43,7 @@ import {
   $domains,
   $resources,
   subscribeResources,
+  $marketplaceProduct,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -51,7 +56,6 @@ import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
-import { useNavigatorLayout } from "./features/sidebar-left/navigator";
 import { CloneProjectDialog } from "~/shared/clone-project";
 
 registerContainers();
@@ -211,7 +215,7 @@ const NavigatorPanel = ({
           height: "100%",
         }}
       >
-        <Navigator isClosable={false} />
+        <NavigatorContent isClosable={false} />
       </Box>
     </SidePanel>
   );
@@ -256,6 +260,7 @@ export const Builder = ({
     $styleSourceSelections.set(new Map(build.styleSourceSelections));
     $breakpoints.set(new Map(build.breakpoints));
     $styles.set(new Map(build.styles));
+    $marketplaceProduct.set(build.marketplaceProduct);
   });
 
   useEffect(subscribeCommands, []);

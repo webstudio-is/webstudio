@@ -58,6 +58,7 @@ export const WithProjects: ComponentStory<typeof Dashboard> = () => {
       isPublished: false,
       latestBuild: null,
       previewImageAsset: null,
+      marketplaceApprovalStatus: "UNLISTED" as const,
     },
   ];
   const router = createRouter(

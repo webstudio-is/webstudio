@@ -122,13 +122,14 @@ export const TextArea = forwardRef(
       grow,
       autoGrow,
       variant = "regular",
+      defaultValue,
       ...props
     }: Props,
     ref: Ref<HTMLTextAreaElement>
   ) => {
     const [textValue, setTextValue] = useControllableState({
       prop: value,
-      defaultProp: props.defaultValue,
+      defaultProp: defaultValue,
       onChange,
     });
 

@@ -16,7 +16,7 @@ import {
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { TabContentProps } from "../../types";
-import { Header, CloseButton } from "../../header";
+import { Header, CloseButton, Root } from "../../shared/panel";
 import {
   dragItemAttribute,
   elementToComponentName,
@@ -26,7 +26,6 @@ import { MetaIcon } from "~/builder/shared/meta-icon";
 import { $registeredComponentMetas } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
@@ -52,10 +51,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   });
 
   return (
-    <Flex
-      css={{ height: "100%", flexDirection: "column" }}
-      ref={draggableContainerRef}
-    >
+    <Root ref={draggableContainerRef}>
       <Header
         title="Components"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
@@ -66,14 +62,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             if (category === "hidden") {
               return false;
             }
-
-            if (
-              category === "utilities" &&
-              isFeatureEnabled("marketplace") === false
-            ) {
-              return false;
-            }
-
             return true;
           })
           .map((category) => (
@@ -116,7 +104,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             </CollapsibleSection>
           ))}
       </ScrollArea>
-    </Flex>
+    </Root>
   );
 };
 

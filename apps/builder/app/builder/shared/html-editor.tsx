@@ -74,9 +74,6 @@ const wrapperStyle = css({
     minHeight: 160,
     maxHeight: 320,
   },
-  "&:hover": {
-    "--ws-code-editor-dialog-maximize-icon-display": "block",
-  },
 });
 
 export const HtmlEditor = forwardRef<
@@ -126,6 +123,7 @@ export const HtmlEditor = forwardRef<
     return (
       <div className={wrapperStyle()} ref={ref}>
         <CodeEditor
+          title={title}
           extensions={extensions}
           readOnly={readOnly}
           invalid={invalid}

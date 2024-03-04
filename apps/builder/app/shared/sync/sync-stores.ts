@@ -35,6 +35,7 @@ import {
   $selectedInstanceStates,
   $resources,
   $resourceValues,
+  $marketplaceProduct,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -84,6 +85,7 @@ export const registerContainers = () => {
   serverSyncStore.register("dataSources", $dataSources);
   serverSyncStore.register("resources", $resources);
   serverSyncStore.register("assets", $assets);
+  serverSyncStore.register("marketplaceProduct", $marketplaceProduct);
   // synchronize whole states
   clientStores.set("project", $project);
   clientStores.set("dataSourceVariables", $dataSourceVariables);

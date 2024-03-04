@@ -1,2 +1,2 @@
 export { SidebarLeft } from "./sidebar-left";
-export { Navigator } from "./navigator";
+export { NavigatorContent, useNavigatorLayout } from "./panels/navigator";
