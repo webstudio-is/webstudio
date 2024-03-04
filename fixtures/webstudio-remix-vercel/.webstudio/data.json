@@ -3284,7 +3284,8 @@
     "deployment": {
       "domains": [],
       "projectDomain": "webstudio-fixture-project-a-0su3o"
-    }
+    },
+    "marketplaceProduct": {}
   },
   "page": {
     "id": "7Db64ZXgYiRqKSQNR-qTQ",

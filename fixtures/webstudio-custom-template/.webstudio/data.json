@@ -627,7 +627,8 @@
     "deployment": {
       "domains": [],
       "projectDomain": "webstudio-custom-template-cochj"
-    }
+    },
+    "marketplaceProduct": {}
   },
   "page": {
     "id": "nfzls_SkTc9jKYyxcZ8Lw",

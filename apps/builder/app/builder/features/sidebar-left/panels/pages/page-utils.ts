@@ -337,16 +337,28 @@ export const $pageRootScope = computed(
 
 const deduplicatePath = (pages: Pages, page: Page) => {
   const fullPath = getPagePath(page.id, pages);
-  const matchedPage = findPageByIdOrPath(fullPath, pages);
+  let matchedPage = findPageByIdOrPath(fullPath, pages);
+  let { path } = page;
 
   if (matchedPage === undefined) {
-    return page.path;
+    return path;
   }
-  let counter = 1;
-  while (findPageByIdOrPath(`${fullPath}-${counter}`, pages) !== undefined) {
+
+  if (path === "/") {
+    path = "";
+  }
+
+  let counter = 0;
+  const folder = findParentFolderByChildId(page.id, pages.folders);
+  const folderPath = folder ? getPagePath(folder.id, pages) : "";
+  while (matchedPage !== undefined) {
     counter += 1;
+    matchedPage = findPageByIdOrPath(
+      `${folderPath}/copy-${counter}${path}`,
+      pages
+    );
   }
-  return page.path === "/" ? `/${counter}` : `${page.path}-${counter}`;
+  return `/copy-${counter}${path}`;
 };
 
 const replaceDataSources = (
