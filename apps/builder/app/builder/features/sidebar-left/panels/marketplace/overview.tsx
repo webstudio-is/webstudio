@@ -29,21 +29,21 @@ const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
     Array<MarketplaceOverviewItem>
   >();
 
-  for (const OverviewItem of items) {
+  for (const item of items) {
     if (
-      categories.some(
-        (category) => category.category === OverviewItem.category
-      ) === false
+      categories.some((category) => category.category === item.category) ===
+      false
     ) {
-      throw new Error(`Unknown category: ${OverviewItem.category}`);
+      throw new Error(`Unknown category: ${item.category}`);
     }
-    let categoryItems = itemsByCategory.get(OverviewItem.category);
+    let categoryItems = itemsByCategory.get(item.category);
     if (categoryItems === undefined) {
       categoryItems = [];
-      itemsByCategory.set(OverviewItem.category, categoryItems);
+      itemsByCategory.set(item.category, categoryItems);
     }
-    categoryItems.push(OverviewItem);
+    categoryItems.push(item);
   }
+
   return itemsByCategory;
 };
 
