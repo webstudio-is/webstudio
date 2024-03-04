@@ -139,9 +139,6 @@ export const Menu = () => {
           </Tooltip>
           <DropdownMenuItem onSelect={() => emitCommand("openBreakpointsMenu")}>
             Breakpoints
-            <DropdownMenuItemRightSlot>
-              <ShortcutHint value={["cmd", "b"]} />
-            </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <ViewMenuItem />
           <DropdownMenuSeparator />
