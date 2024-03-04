@@ -337,7 +337,7 @@ export const $pageRootScope = computed(
 
 const deduplicatePath = (pages: Pages, page: Page) => {
   const fullPath = getPagePath(page.id, pages);
-  const matchedPage = findPageByIdOrPath(fullPath, pages);
+  let matchedPage = findPageByIdOrPath(fullPath, pages);
   let { path } = page;
 
   if (matchedPage === undefined) {
@@ -348,26 +348,17 @@ const deduplicatePath = (pages: Pages, page: Page) => {
     path = "";
   }
 
-  let counter = 1;
-  while (findPageByIdOrPath(`/copy-${counter}${path}`, pages) !== undefined) {
+  let counter = 0;
+  const folder = findParentFolderByChildId(page.id, pages.folders);
+  const folderPath = folder ? getPagePath(folder.id, pages) : "";
+  while (matchedPage !== undefined) {
     counter += 1;
+    matchedPage = findPageByIdOrPath(
+      `${folderPath}/copy-${counter}${path}`,
+      pages
+    );
   }
   return `/copy-${counter}${path}`;
-
-  //
-  //  if (page.path.includes('*')) {
-  //    // In case of a wildcard, counter needs to come before the wildcard or there will be no difference
-  //    if (page.path.endsWith("/*")) {
-  //      return page.path.replace("/*", `-${counter}/*`);
-  //    }
-  //    // Named wildcard e.g. /name* -> /name1*
-  //    const match = page.path.match(/.*\/(.+)\*/)
-  //    if (match && match[1]) {
-  //      return page.path.replace("/*", `-${counter}/*`);
-  //    }
-  //  }
-  //
-  //return page.path === "/" ? `/${counter}` : `${page.path}-${counter}`;
 };
 
 const replaceDataSources = (
