@@ -531,7 +531,7 @@ describe("duplicate page", () => {
     expect($pages.get()?.pages[0]).toEqual({
       id: expect.not.stringMatching("pageId"),
       name: "My Name (1)",
-      path: "/copy-1",
+      path: "/1",
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
@@ -554,7 +554,7 @@ describe("duplicate page", () => {
     );
   });
 
-  test("non-home page preserving old path with prefix", () => {
+  test("non-home page preserving old path and name with suffix", () => {
     $instances.set(
       toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
     );
@@ -570,7 +570,7 @@ describe("duplicate page", () => {
       pages: [
         {
           id: "pageId",
-          name: "My Name",
+          name: "My Name (1)",
           path: "/my-path",
           title: `"My Title"`,
           meta: {},
@@ -582,8 +582,8 @@ describe("duplicate page", () => {
     duplicatePage("pageId");
     expect($pages.get()?.pages[1]).toEqual({
       id: expect.not.stringMatching("pageId"),
-      name: "My Name (1)",
-      path: "/copy-1/my-path",
+      name: "My Name (2)",
+      path: "/my-path-1",
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
@@ -634,7 +634,7 @@ describe("duplicate page", () => {
     expect($pages.get()?.pages[0]).toEqual({
       id: expect.not.stringMatching("pageId"),
       name: "My Name (1)",
-      path: "/copy-1",
+      path: "/1",
       title: `"Title: " + ${newVariableName}`,
       meta: {
         description: `"Description: " + ${newVariableName}`,
@@ -684,7 +684,7 @@ describe("duplicate page", () => {
     expect($pages.get()?.pages[0]).toEqual({
       id: expect.not.stringMatching("pageId"),
       name: "My Name (1)",
-      path: "/copy-1",
+      path: "/1",
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),

@@ -335,22 +335,18 @@ export const $pageRootScope = computed(
   }
 );
 
-const deduplicatePath = (pages: undefined | Pages, path: string) => {
-  if (pages === undefined) {
-    return path;
-  }
-  const matchedPage = findPageByIdOrPath(path, pages);
+const deduplicatePath = (pages: Pages, page: Page) => {
+  const fullPath = getPagePath(page.id, pages);
+  const matchedPage = findPageByIdOrPath(fullPath, pages);
+
   if (matchedPage === undefined) {
-    return path;
-  }
-  if (path === "/") {
-    path = "";
+    return page.path;
   }
   let counter = 1;
-  while (findPageByIdOrPath(`/copy-${counter}${path}`, pages) !== undefined) {
+  while (findPageByIdOrPath(`${fullPath}-${counter}`, pages) !== undefined) {
     counter += 1;
   }
-  return `/copy-${counter}${path}`;
+  return page.path === "/" ? `/${counter}` : `${page.path}-${counter}`;
 };
 
 const replaceDataSources = (
@@ -409,7 +405,7 @@ export const duplicatePage = (pageId: Page["id"]) => {
       rootInstanceId: newRootInstanceId,
       pathParamsDataSourceId: newPathParamsDataSourceId,
       name: newName,
-      path: deduplicatePath(pages, page.path),
+      path: deduplicatePath(pages, page),
       title: replaceDataSources(page.title, newDataSourceIds),
       meta: {
         ...page.meta,
