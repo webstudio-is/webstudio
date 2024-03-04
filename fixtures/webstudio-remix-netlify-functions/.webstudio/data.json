@@ -187,7 +187,8 @@
     "deployment": {
       "domains": [],
       "projectDomain": "cli-basic-test-d0osr"
-    }
+    },
+    "marketplaceProduct": {}
   },
   "page": {
     "id": "9di_L14CzctvSruIoKVvE",
