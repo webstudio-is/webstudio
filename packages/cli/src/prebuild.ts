@@ -211,7 +211,7 @@ export const prebuild = async (options: {
   /**
    * Template to use for the build in addition to defaults template
    **/
-  template?: string;
+  template?: string[];
 }) => {
   if (options.template === undefined) {
     throw new Error(
@@ -219,14 +219,22 @@ export const prebuild = async (options: {
     );
   }
 
-  if (
-    options.template !== "vanilla" &&
-    (await isCliTemplate(options.template)) === false &&
-    options.template.startsWith(".") === false
-  ) {
-    throw Error(
-      `\n Template ${options.template} is not available \n Please check webstudio --help for more details`
-    );
+  for (const template of options.template) {
+    // default template is always applied no need to check
+    if (template === "vanilla") {
+      continue;
+    }
+
+    // Template is local user template
+    if (template.startsWith(".")) {
+      continue;
+    }
+
+    if ((await isCliTemplate(template)) === false) {
+      throw Error(
+        `\n Template ${options.template} is not available \n Please check webstudio --help for more details`
+      );
+    }
   }
 
   const spinner = ora("Scaffolding the project files");
@@ -244,8 +252,13 @@ export const prebuild = async (options: {
 
   await copyTemplates();
 
-  if (options.template !== "vanilla") {
-    await copyTemplates(options.template);
+  for (const template of options.template) {
+    // default template is already applied no need to copy twice
+    if (template === "vanilla") {
+      continue;
+    }
+
+    await copyTemplates(template);
   }
 
   const constants: typeof sharedConstants = await import(
