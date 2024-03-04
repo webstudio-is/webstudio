@@ -33,7 +33,6 @@ import {
   type ProjectRouter,
 } from "@webstudio-is/project";
 import { projectsPath } from "~/shared/router-utils";
-import type { Project } from "@webstudio-is/prisma-client";
 
 const imgStyle = css({
   width: 72,
