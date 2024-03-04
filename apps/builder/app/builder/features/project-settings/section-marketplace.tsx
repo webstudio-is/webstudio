@@ -24,12 +24,16 @@ import {
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MarketplaceProduct } from "@webstudio-is/project-build";
 import { serverSyncStore } from "~/shared/sync";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { type ProjectRouter } from "@webstudio-is/project";
+import {
+  MarketplaceApprovalStatus,
+  type ProjectRouter,
+} from "@webstudio-is/project";
 import { projectsPath } from "~/shared/router-utils";
+import type { Project } from "@webstudio-is/prisma-client";
 
 const imgStyle = css({
   width: 72,
@@ -68,33 +72,43 @@ const useMarketplaceApprovalStatus = () => {
     project?.marketplaceApprovalStatus ??
     "UNLISTED";
 
-  useEffect(() => {
+  const handleSuccess = ({
+    marketplaceApprovalStatus,
+  }: {
+    marketplaceApprovalStatus: MarketplaceApprovalStatus;
+  }) => {
     const project = $project.get();
     if (project) {
       $project.set({
         ...project,
-        marketplaceApprovalStatus: status,
+        marketplaceApprovalStatus,
       });
     }
-  }, [status]);
+  };
 
   return {
     status,
     state,
     submit() {
       if (project) {
-        send({
-          projectId: project.id,
-          marketplaceApprovalStatus: "PENDING",
-        });
+        send(
+          {
+            projectId: project.id,
+            marketplaceApprovalStatus: "PENDING",
+          },
+          handleSuccess
+        );
       }
     },
     unlist() {
       if (project) {
-        send({
-          projectId: project.id,
-          marketplaceApprovalStatus: "UNLISTED",
-        });
+        send(
+          {
+            projectId: project.id,
+            marketplaceApprovalStatus: "UNLISTED",
+          },
+          handleSuccess
+        );
       }
     },
   };
@@ -265,7 +279,7 @@ export const SectionMarketplace = () => {
       <Grid gap={2} css={sectionSpacing}>
         <PanelBanner>
           <Text>
-            {`Please set for every template page a "ws:category"
+            {`For a page to show up in the marketplace, you will need to add a "ws:category"
             meta tag in the page settings. Optionally, you can also define
             "ws:title"; otherwise, the page title will be used.`}
           </Text>
