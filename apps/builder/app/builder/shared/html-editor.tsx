@@ -68,7 +68,9 @@ const autocompletionStyle = css({
 
 const wrapperStyle = css({
   position: "relative",
-  "& .cm-content": {
+  // do not override .cm-content here
+  // it may break scrolling
+  "& .cm-editor": {
     // 1 line is 16px
     // set min 10 lines and max 20 lines
     minHeight: 160,

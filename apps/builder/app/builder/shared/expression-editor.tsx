@@ -341,7 +341,9 @@ const emptyScope: Scope = {};
 const emptyAliases: Aliases = new Map();
 
 const wrapperStyle = css({
-  "& .cm-content": {
+  // do not override .cm-content here
+  // it may break scrolling
+  "& .cm-editor": {
     // 1 line is 16px
     // set and max 20 lines
     maxHeight: 320,
