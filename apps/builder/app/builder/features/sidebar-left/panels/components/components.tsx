@@ -84,6 +84,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                           <ComponentCard
                             {...{ [dragItemAttribute]: component }}
                             label={getInstanceLabel({ component }, meta)}
+                            description={meta.description}
                             icon={<MetaIcon size="auto" icon={meta.icon} />}
                           />
                         </ListItem>
