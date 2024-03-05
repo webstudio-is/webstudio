@@ -80,7 +80,7 @@ export * from "./components/scroll-area";
 export * from "./components/primitives/use-scrub";
 export * from "./components/primitives/numeric-input-arrow-keys";
 export * from "./components/primitives/list";
-export * from "./components/shortcut";
+export * from "./components/kbd";
 
 // Deprecated
 

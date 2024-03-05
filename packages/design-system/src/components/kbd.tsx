@@ -33,6 +33,10 @@ const format = (value: ShortcutDefinition) => {
   );
 };
 
-export const Shortcut = ({ value }: { value: ShortcutDefinition }) => {
-  return <Text color="subtle">{format(value)}</Text>;
+export const Kbd = ({ value }: { value: ShortcutDefinition }) => {
+  return (
+    <Text color="subtle" as="kbd">
+      {format(value)}
+    </Text>
+  );
 };
