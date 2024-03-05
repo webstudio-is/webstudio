@@ -104,7 +104,7 @@ export const initFlow = async (
 
   await build({
     ...options,
-    ...(projectTemplate && { template: projectTemplate }),
+    ...(projectTemplate && { template: [projectTemplate] }),
   });
 
   if (shouldInstallDeps === true) {

@@ -554,7 +554,97 @@ describe("duplicate page", () => {
     );
   });
 
-  test("non-home page preserving old path with prefix", () => {
+  test("non-home page preserving old path and name with prefix", () => {
+    $instances.set(
+      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+    );
+    $pages.set({
+      homePage: {
+        id: "homeId",
+        name: "Home",
+        path: "/",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "home",
+      },
+      pages: [
+        {
+          id: "pageId",
+          name: "My Name (1)",
+          path: "/my-path",
+          title: `"My Title"`,
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+      folders: [],
+    });
+    duplicatePage("pageId");
+    expect($pages.get()?.pages[1]).toEqual({
+      id: expect.not.stringMatching("pageId"),
+      name: "My Name (2)",
+      path: "/copy-1/my-path",
+      title: `"My Title"`,
+      meta: {},
+      rootInstanceId: expect.not.stringMatching("body"),
+    });
+  });
+
+  test("handle wildcards", () => {
+    $instances.set(
+      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+    );
+    $pages.set({
+      homePage: {
+        id: "homeId",
+        name: "Home",
+        path: "/",
+        title: `"Home"`,
+        meta: {},
+        rootInstanceId: "home",
+      },
+      pages: [
+        {
+          id: "pageId1",
+          name: "My Name 1",
+          path: "/my-path/*",
+          title: `"My Title"`,
+          meta: {},
+          rootInstanceId: "body",
+        },
+        {
+          id: "pageId2",
+          name: "My Name 2",
+          // Named wildcard
+          path: "/my-path/name*",
+          title: `"My Title"`,
+          meta: {},
+          rootInstanceId: "body",
+        },
+      ],
+      folders: [],
+    });
+    duplicatePage("pageId1");
+    duplicatePage("pageId2");
+    expect($pages.get()?.pages[2]).toEqual({
+      id: expect.not.stringMatching("pageId1"),
+      name: "My Name 1 (1)",
+      path: "/copy-1/my-path/*",
+      title: `"My Title"`,
+      meta: {},
+      rootInstanceId: expect.not.stringMatching("body"),
+    });
+    expect($pages.get()?.pages[3]).toEqual({
+      id: expect.not.stringMatching("pageId2"),
+      name: "My Name 2 (1)",
+      path: "/copy-1/my-path/name*",
+      title: `"My Title"`,
+      meta: {},
+      rootInstanceId: expect.not.stringMatching("body"),
+    });
+  });
+
+  test("check full page path when duplicating inside a folder", () => {
     $instances.set(
       toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
     );
@@ -577,7 +667,14 @@ describe("duplicate page", () => {
           rootInstanceId: "body",
         },
       ],
-      folders: [],
+      folders: [
+        {
+          id: "folderId",
+          name: "Folder",
+          slug: "folder",
+          children: ["pageId"],
+        },
+      ],
     });
     duplicatePage("pageId");
     expect($pages.get()?.pages[1]).toEqual({

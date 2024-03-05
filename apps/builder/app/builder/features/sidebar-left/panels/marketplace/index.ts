@@ -1,1 +1,1 @@
-export * from "./tab";
+export * from "./marketplace";

@@ -53,7 +53,7 @@ import {
 } from "@webstudio-is/icons";
 import { isLiteralExpression } from "@webstudio-is/react-sdk";
 import { useIds } from "~/shared/form-utils";
-import { Header, HeaderSuffixSpacer } from "../../header";
+import { Header, HeaderSuffixSpacer } from "../../shared/panel";
 import { updateWebstudioData } from "~/shared/instance-utils";
 import {
   $assets,

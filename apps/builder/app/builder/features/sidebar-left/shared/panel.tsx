@@ -4,8 +4,11 @@ import {
   Separator,
   PanelTitle,
   TitleSuffixSpacer,
+  Flex,
+  theme,
 } from "@webstudio-is/design-system";
 import { CrossIcon } from "@webstudio-is/icons";
+import { forwardRef, type ComponentProps } from "react";
 
 type HeaderProps = {
   title: string;
@@ -39,3 +42,23 @@ export const CloseButton = ({
     />
   </Tooltip>
 );
+
+export const Root = forwardRef<HTMLDivElement, ComponentProps<typeof Flex>>(
+  (props, ref) => {
+    return (
+      <Flex
+        css={{
+          position: "relative",
+          height: "100%",
+          flexGrow: 1,
+          background: theme.colors.backgroundPanel,
+        }}
+        direction="column"
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+
+Root.displayName = "Root";

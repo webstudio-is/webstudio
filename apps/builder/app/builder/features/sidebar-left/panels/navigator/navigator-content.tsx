@@ -1,6 +1,6 @@
 import { Flex, Separator } from "@webstudio-is/design-system";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
-import { Header, CloseButton } from "../header";
+import { Header, CloseButton, Root } from "../../shared/panel";
 import { CssPreview } from "./css-preview";
 import { useHotkeys } from "react-hotkeys-hook";
 import { emitCommand } from "~/builder/shared/commands";
@@ -27,7 +27,10 @@ type NavigatorProps = {
   onClose?: () => void;
 };
 
-export const Navigator = ({ isClosable = true, onClose }: NavigatorProps) => {
+export const NavigatorContent = ({
+  isClosable = true,
+  onClose,
+}: NavigatorProps) => {
   const shortcutRef = useHotkeys<HTMLDivElement>(
     "enter",
     () => emitCommand("editInstanceText"),
@@ -35,7 +38,7 @@ export const Navigator = ({ isClosable = true, onClose }: NavigatorProps) => {
   );
 
   return (
-    <Flex ref={shortcutRef} css={{ height: "100%", flexDirection: "column" }}>
+    <Root ref={shortcutRef}>
       <Header
         title="Navigator"
         suffix={isClosable && <CloseButton onClick={() => onClose?.()} />}
@@ -45,6 +48,6 @@ export const Navigator = ({ isClosable = true, onClose }: NavigatorProps) => {
         <Separator />
         <CssPreview />
       </Flex>
-    </Flex>
+    </Root>
   );
 };

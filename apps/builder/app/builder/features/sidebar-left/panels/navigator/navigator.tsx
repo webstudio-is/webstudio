@@ -1,10 +1,10 @@
 import { NavigatorIcon } from "@webstudio-is/icons";
-import { Navigator } from "../../navigator";
+import { NavigatorContent } from "./navigator-content";
 import type { TabContentProps } from "../../types";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   return (
-    <Navigator
+    <NavigatorContent
       onClose={() => {
         onSetActiveTab("none");
       }}

@@ -18,7 +18,6 @@ import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
-import type { MarketplaceProduct } from "./schema";
 
 const focusOutline = focusRingStyle();
 
@@ -68,7 +67,7 @@ type TemplateData = {
   rootInstanceId: string;
 };
 
-const Template = ({
+const SectionTemplate = ({
   data: { socialImageAsset, socialImageUrl, title },
   ...listItemProps
 }: {
@@ -84,8 +83,13 @@ const Template = ({
         position: "relative",
         overflow: "hidden",
         outline: "none",
-        "&:hover": focusOutline,
-        "&:focus-visible": focusOutline,
+        "&:hover": {
+          background: theme.colors.backgroundPresetMain,
+        },
+        "&:focus-visible": {
+          ...focusOutline,
+          background: theme.colors.backgroundPresetMain,
+        },
       }}
       gap="1"
     >
@@ -110,8 +114,9 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
 
   // In the future we could support bindings in the store as well.
   const variableValues = new Map();
+  const pages = [data.pages.homePage, ...data.pages.pages];
 
-  for (const page of data.pages.pages) {
+  for (const page of pages) {
     let category = page.meta.custom?.find(
       ({ property }) => property === marketplaceMeta.category
     )?.content;
@@ -153,12 +158,12 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
   return templatesByCategory;
 };
 
-export const Templates = ({
-  product,
+export const SectionTemplates = ({
+  name,
   data,
   onOpenChange,
 }: {
-  product: MarketplaceProduct;
+  name: string;
   data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -173,7 +178,11 @@ export const Templates = ({
 
   return (
     <Flex direction="column" css={{ height: "100%" }}>
-      <Flex align="center" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+      <Flex
+        align="center"
+        shrink="false"
+        css={{ px: theme.spacing[9], py: theme.spacing[5] }}
+      >
         <Button
           prefix={<ChevronLeftIcon />}
           onClick={() => {
@@ -181,7 +190,7 @@ export const Templates = ({
           }}
           color="neutral"
         >
-          {product.label}
+          {name}
         </Button>
       </Flex>
       <Separator />
@@ -206,7 +215,7 @@ export const Templates = ({
                             });
                           }}
                         >
-                          <Template data={templateData} />
+                          <SectionTemplate data={templateData} />
                         </ListItem>
                       );
                     })}
