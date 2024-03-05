@@ -1,9 +1,9 @@
-import { Shortcut } from "./shortcut";
+import { Separator } from "./separator";
 
 export default {
-  title: "Library/Shortcut",
+  title: "Library/Separator",
 };
 
-const ShortcutStory = () => <Shortcut value={["cmd", "z"]} />;
+const SeparatorStory = () => <Separator />;
 
-export { ShortcutStory as Shortcut };
+export { SeparatorStory as Separator };
