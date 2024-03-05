@@ -14,8 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuPortal,
   Tooltip,
+  Kbd,
 } from "@webstudio-is/design-system";
-import { ShortcutHint } from "./shortcut-hint";
 import {
   useIsShareDialogOpen,
   useIsPublishDialogOpen,
@@ -145,13 +145,13 @@ export const Menu = () => {
           <DropdownMenuItem onSelect={() => emitCommand("undo")}>
             Undo
             <DropdownMenuItemRightSlot>
-              <ShortcutHint value={["cmd", "z"]} />
+              <Kbd value={["cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => emitCommand("redo")}>
             Redo
             <DropdownMenuItemRightSlot>
-              <ShortcutHint value={["shift", "cmd", "z"]} />
+              <Kbd value={["shift", "cmd", "z"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           {/* https://github.com/webstudio-is/webstudio/issues/499
@@ -162,7 +162,7 @@ export const Menu = () => {
             }}
           >
             Copy
-            <DropdownMenuItemRightSlot><ShortcutHint value={["cmd", "c"]} /></DropdownMenuItemRightSlot>
+            <DropdownMenuItemRightSlot><Kbd value={["cmd", "c"]} /></DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
@@ -170,14 +170,14 @@ export const Menu = () => {
             }}
           >
             Paste
-            <DropdownMenuItemRightSlot><ShortcutHint value={["cmd", "v"]} /></DropdownMenuItemRightSlot>
+            <DropdownMenuItemRightSlot><Kbd value={["cmd", "v"]} /></DropdownMenuItemRightSlot>
           </DropdownMenuItem>
 
           */}
           <DropdownMenuItem onSelect={() => emitCommand("deleteInstance")}>
             Delete
             <DropdownMenuItemRightSlot>
-              <ShortcutHint value={["backspace"]} />
+              <Kbd value={["backspace"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -185,7 +185,7 @@ export const Menu = () => {
           <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
             Preview
             <DropdownMenuItemRightSlot>
-              <ShortcutHint value={["cmd", "shift", "p"]} />
+              <Kbd value={["cmd", "shift", "p"]} />
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
 

@@ -11,6 +11,7 @@ import {
   type TooltipProps,
   Text,
   ScrollArea,
+  Kbd,
 } from "@webstudio-is/design-system";
 import { ResetIcon } from "@webstudio-is/icons";
 import type {
@@ -270,8 +271,13 @@ export const TooltipContent = ({
         onReset !== undefined && (
           <Button
             color="dark"
-            prefix={<ResetIcon />}
-            css={{ flexGrow: 1 }}
+            prefix={
+              <Flex justify="end">
+                <ResetIcon />
+              </Flex>
+            }
+            suffix={<Kbd value={["option", "click"]} />}
+            css={{ gridTemplateColumns: "2fr 3fr 1fr" }}
             onClick={onReset}
           >
             Reset value
