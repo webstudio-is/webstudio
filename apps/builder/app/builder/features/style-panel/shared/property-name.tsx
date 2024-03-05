@@ -271,9 +271,13 @@ export const TooltipContent = ({
         onReset !== undefined && (
           <Button
             color="dark"
-            prefix={<ResetIcon />}
+            prefix={
+              <Flex justify="end">
+                <ResetIcon />
+              </Flex>
+            }
             suffix={<Shortcut value={["option", "click"]} />}
-            css={{ flexGrow: 1, flexAlign: "center" }}
+            css={{ gridTemplateColumns: "2fr 3fr 1fr" }}
             onClick={onReset}
           >
             Reset value
