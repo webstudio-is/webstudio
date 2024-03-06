@@ -11,6 +11,7 @@ import type {
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
+import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
 import type { PageData } from "~/routes/_index";
 export const imageAssets: ImageAsset[] = [
@@ -55,7 +56,7 @@ export const getPageMeta = ({
     title: "Untitled",
     description: "",
     excludePageFromSearch: false,
-    language: undefined,
+    language: "ru",
     socialImageAssetId: undefined,
     socialImageUrl: "",
     status: 200,
@@ -65,7 +66,13 @@ export const getPageMeta = ({
 };
 
 const Page = ({}: { params: any }) => {
-  return <Body data-ws-id="jDb2FuSK2-azIZxkH5XNv" data-ws-component="Body" />;
+  return (
+    <Body data-ws-id="jDb2FuSK2-azIZxkH5XNv" data-ws-component="Body">
+      <Heading data-ws-id="D7kQxgXxrjei-MS_KzUa2" data-ws-component="Heading">
+        {"Привет Мир"}
+      </Heading>
+    </Body>
+  );
 };
 
 export { Page };
