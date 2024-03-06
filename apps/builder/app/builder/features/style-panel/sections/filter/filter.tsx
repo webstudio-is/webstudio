@@ -5,6 +5,7 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
@@ -35,17 +36,20 @@ export const FilterSection = (props: RenderCategoryProps) => {
         <SectionTitle
           dots={getDots(currentStyle, [property])}
           suffix={
-            <SectionTitleButton
-              prefix={<PlusIcon />}
-              onClick={() => {
-                addLayer(
-                  property,
-                  parseFilter("blur(0px)"),
-                  currentStyle,
-                  props.createBatchUpdate
-                );
-              }}
-            />
+            <Tooltip content={"Add a filter"}>
+              <SectionTitleButton
+                prefix={<PlusIcon />}
+                onClick={() => {
+                  addLayer(
+                    property,
+                    parseFilter("blur(0px)"),
+                    currentStyle,
+                    props.createBatchUpdate
+                  );
+                  setIsOpen(true);
+                }}
+              />
+            </Tooltip>
           }
         >
           <PropertyName

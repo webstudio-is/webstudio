@@ -31,7 +31,6 @@ import {
 
 export const categories = [
   "layout",
-  "filter",
   "flexChild",
   "gridChild",
   "listItem",
@@ -45,6 +44,7 @@ export const categories = [
   "effects",
   "outline",
   "transitions",
+  "filter",
 ] as const;
 
 export type Category = (typeof categories)[number];
