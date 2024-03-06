@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "8f6d166a-f965-4461-b903-faf265c378f7",
+    "id": "3c68e999-d7d1-4064-a898-a39948ee4316",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 127,
-    "createdAt": "2024-02-23T10:10:16.827Z",
-    "updatedAt": "2024-02-23T10:10:16.827Z",
+    "version": 132,
+    "createdAt": "2024-03-05T15:38:45.184Z",
+    "updatedAt": "2024-03-05T15:38:45.184Z",
     "pages": {
       "meta": {
         "siteName": "Fixture Site",
@@ -54,15 +54,11 @@
           "meta": {
             "description": "\"\"",
             "excludePageFromSearch": "false",
+            "language": "\"ru\"",
             "socialImageUrl": "\"\"",
             "status": "200",
             "redirect": "\"\"",
-            "custom": [
-              {
-                "property": "",
-                "content": "\"\""
-              }
-            ]
+            "custom": []
           },
           "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
           "path": "/world"
@@ -620,7 +616,26 @@
           "type": "instance",
           "id": "jDb2FuSK2-azIZxkH5XNv",
           "component": "Body",
-          "children": []
+          "children": [
+            {
+              "type": "id",
+              "value": "D7kQxgXxrjei-MS_KzUa2"
+            }
+          ]
+        }
+      ],
+      [
+        "D7kQxgXxrjei-MS_KzUa2",
+        {
+          "type": "instance",
+          "id": "D7kQxgXxrjei-MS_KzUa2",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Привет Мир"
+            }
+          ]
         }
       ]
     ],
@@ -676,15 +691,11 @@
       "meta": {
         "description": "\"\"",
         "excludePageFromSearch": "false",
+        "language": "\"ru\"",
         "socialImageUrl": "\"\"",
         "status": "200",
         "redirect": "\"\"",
-        "custom": [
-          {
-            "property": "",
-            "content": "\"\""
-          }
-        ]
+        "custom": []
       },
       "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
       "path": "/world"
