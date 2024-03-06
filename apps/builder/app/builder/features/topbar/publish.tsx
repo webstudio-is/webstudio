@@ -723,6 +723,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
         <Tooltip
           side="bottom"
           content={tooltipContent ?? "Publish to Webstudio Cloud"}
+          sideOffset={parseFloat(rawTheme.spacing[5])}
         >
           <FloatingPanelPopoverTrigger asChild>
             <Button disabled={isPublishEnabled === false} color="positive">
