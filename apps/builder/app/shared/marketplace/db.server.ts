@@ -17,7 +17,9 @@ export const getBuildProdData = async (
     marketplaceApprovalStatus: "APPROVED",
   });
 
-  const assets = await loadAssetsByProject(projectId, context);
+  const assets = await loadAssetsByProject(projectId, context, {
+    skipPermissionsCheck: true,
+  });
 
   return {
     assets: assets.map((asset) => [asset.id, asset]),

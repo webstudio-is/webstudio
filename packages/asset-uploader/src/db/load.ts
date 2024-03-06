@@ -9,12 +9,15 @@ import { formatAsset } from "../utils/format-asset";
 
 export const loadAssetsByProject = async (
   projectId: Project["id"],
-  context: AppContext
+  context: AppContext,
+  { skipPermissionsCheck = false }: { skipPermissionsCheck?: boolean } = {}
 ): Promise<Asset[]> => {
-  const canRead = await authorizeProject.hasProjectPermit(
-    { projectId, permit: "view" },
-    context
-  );
+  const canRead =
+    skipPermissionsCheck ||
+    (await authorizeProject.hasProjectPermit(
+      { projectId, permit: "view" },
+      context
+    ));
 
   if (canRead === false) {
     throw new AuthorizationError(

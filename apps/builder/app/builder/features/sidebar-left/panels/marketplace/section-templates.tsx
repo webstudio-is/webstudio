@@ -195,35 +195,37 @@ export const SectionTemplates = ({
       </Flex>
       <Separator />
       <ScrollArea>
-        {Array.from(templatesDataByCategory.keys()).map((category) => {
-          return (
-            <CollapsibleSection label={category} key={category} fullWidth>
-              <List asChild>
-                <Flex direction="column">
-                  {templatesDataByCategory
-                    .get(category)
-                    ?.map((templateData, index) => {
-                      return (
-                        <ListItem
-                          asChild
-                          key={templateData.rootInstanceId}
-                          index={index}
-                          onSelect={() => {
-                            insert({
-                              instanceId: templateData.rootInstanceId,
-                              data,
-                            });
-                          }}
-                        >
-                          <SectionTemplate data={templateData} />
-                        </ListItem>
-                      );
-                    })}
-                </Flex>
-              </List>
-            </CollapsibleSection>
-          );
-        })}
+        {Array.from(templatesDataByCategory.keys())
+          .sort()
+          .map((category) => {
+            return (
+              <CollapsibleSection label={category} key={category} fullWidth>
+                <List asChild>
+                  <Flex direction="column">
+                    {templatesDataByCategory
+                      .get(category)
+                      ?.map((templateData, index) => {
+                        return (
+                          <ListItem
+                            asChild
+                            key={templateData.rootInstanceId}
+                            index={index}
+                            onSelect={() => {
+                              insert({
+                                instanceId: templateData.rootInstanceId,
+                                data,
+                              });
+                            }}
+                          >
+                            <SectionTemplate data={templateData} />
+                          </ListItem>
+                        );
+                      })}
+                  </Flex>
+                </List>
+              </CollapsibleSection>
+            );
+          })}
       </ScrollArea>
     </Flex>
   );
