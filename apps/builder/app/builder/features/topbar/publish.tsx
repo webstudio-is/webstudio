@@ -720,7 +720,10 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   return (
     <FloatingPanelPopover modal open={isOpen} onOpenChange={handleOpenChange}>
       <FloatingPanelAnchor>
-        <Tooltip side="bottom" content={tooltipContent}>
+        <Tooltip
+          side="bottom"
+          content={tooltipContent ?? "Publish to Webstudio Cloud"}
+        >
           <FloatingPanelPopoverTrigger asChild>
             <Button disabled={isPublishEnabled === false} color="positive">
               Publish

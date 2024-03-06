@@ -19,6 +19,7 @@ import {
   Box,
   PopoverMenuItemContainer,
   PopoverMenuItemRightSlot,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { BreakpointsEditor } from "./breakpoints-editor";
 import { BreakpointsPopoverToolbarButton } from "./breakpoints-popover-toolbar-button";
@@ -88,9 +89,11 @@ export const BreakpointsPopover = () => {
         $breakpointsMenuView.set(isOpen ? "initial" : undefined);
       }}
     >
-      <PopoverTrigger aria-label="Show breakpoints" asChild>
-        <BreakpointsPopoverToolbarButton css={{ gap: theme.spacing[5] }} />
-      </PopoverTrigger>
+      <Tooltip content="Breakpoints">
+        <PopoverTrigger aria-label="Breakpoints" asChild>
+          <BreakpointsPopoverToolbarButton css={{ gap: theme.spacing[5] }} />
+        </PopoverTrigger>
+      </Tooltip>
       <PopoverPortal>
         <PopoverContent
           css={{ zIndex: theme.zIndices[1], padding: 0 }}

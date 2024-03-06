@@ -109,3 +109,5 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 };
 
 export const Icon = PlusIcon;
+
+export const label = "Components";

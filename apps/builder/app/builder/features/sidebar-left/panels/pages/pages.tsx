@@ -431,3 +431,5 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 };
 
 export const Icon = PageIcon;
+
+export const label = "Pages";

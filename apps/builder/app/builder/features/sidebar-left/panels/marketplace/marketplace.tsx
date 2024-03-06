@@ -83,3 +83,5 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 };
 
 export const Icon = ExtensionIcon;
+
+export const label = "Marketplace";
