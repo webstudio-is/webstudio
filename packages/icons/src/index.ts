@@ -8,7 +8,6 @@ export * from "./justify-items-end";
 export * from "./justify-items-space-around";
 export * from "./justify-items-space-between";
 export * from "./justify-items-start";
-export * from "./cloud";
 export * from "./trash";
 export * from "./size";
 export * from "./gear";

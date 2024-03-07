@@ -35,20 +35,22 @@ const useActiveTab = () => {
 const AiTabTrigger = () => {
   const [clientSettings, setClientSetting] = useClientSettings();
   return (
-    <SidebarTabsTrigger
-      aria-label="ai"
-      value={
-        "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
-      }
-      onClick={() => {
-        setClientSetting(
-          "isAiCommandBarVisible",
-          clientSettings.isAiCommandBarVisible === true ? false : true
-        );
-      }}
-    >
-      <AiIcon size={rawTheme.spacing[10]} />
-    </SidebarTabsTrigger>
+    <Tooltip side="right" content="AI">
+      <SidebarTabsTrigger
+        aria-label="AI"
+        value={
+          "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
+        }
+        onClick={() => {
+          setClientSetting(
+            "isAiCommandBarVisible",
+            clientSettings.isAiCommandBarVisible === true ? false : true
+          );
+        }}
+      >
+        <AiIcon size={rawTheme.spacing[10]} />
+      </SidebarTabsTrigger>
+    </Tooltip>
   );
 };
 
@@ -56,15 +58,11 @@ const HelpTabTrigger = () => {
   const [helpIsOpen, setHelpIsOpen] = useState(false);
   return (
     <HelpPopover onOpenChange={setHelpIsOpen}>
-      <Tooltip
-        side="right"
-        content="Learn Webstudio or ask for help"
-        delayDuration={0}
-      >
+      <Tooltip side="right" content="Learn Webstudio or ask for help">
         <HelpPopover.Trigger asChild>
           <SidebarTabsTrigger
             as="button"
-            aria-label="Ask for help"
+            aria-label="Learn Webstudio or ask for help"
             data-state={helpIsOpen ? "active" : undefined}
           >
             <HelpIcon size={rawTheme.spacing[10]} />
@@ -77,10 +75,10 @@ const HelpTabTrigger = () => {
 
 const GithubTabTrigger = () => {
   return (
-    <Tooltip side="right" content="Report a bug on Github" delayDuration={0}>
+    <Tooltip side="right" content="Report a bug on Github">
       <SidebarTabsTrigger
         as="button"
-        aria-label="Report bug"
+        aria-label="Report a bug on Github"
         onClick={() => {
           window.open(
             "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
@@ -121,23 +119,28 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         {isPreviewMode === false && (
           <>
             <SidebarTabsList>
-              {Array.from(panels.entries()).map(([tabName, { Icon }]) => {
-                return (
-                  <SidebarTabsTrigger
-                    key={tabName}
-                    aria-label={tabName}
-                    value={tabName}
-                    onClick={() => {
-                      setActiveTab(activeTab === tabName ? "none" : tabName);
-                    }}
-                  >
-                    <Icon size={rawTheme.spacing[10]} />
-                  </SidebarTabsTrigger>
-                );
-              })}
+              {Array.from(panels.entries()).map(
+                ([tabName, { Icon, label }]) => {
+                  return (
+                    <Tooltip side="right" content={label} key={tabName}>
+                      <SidebarTabsTrigger
+                        aria-label={label}
+                        value={tabName}
+                        onClick={() => {
+                          setActiveTab(
+                            activeTab === tabName ? "none" : tabName
+                          );
+                        }}
+                      >
+                        <Icon size={rawTheme.spacing[10]} />
+                      </SidebarTabsTrigger>
+                    </Tooltip>
+                  );
+                }
+              )}
               <AiTabTrigger />
             </SidebarTabsList>
-            <Box css={{ borderRight: `1px solid  ${theme.colors.borderMain}` }}>
+            <Box css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}>
               <HelpTabTrigger />
               <GithubTabTrigger />
             </Box>

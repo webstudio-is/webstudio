@@ -65,6 +65,7 @@ export * from "./chevron-filled-up";
 export * from "./chevron-left";
 export * from "./chevron-right";
 export * from "./chevron-up";
+export * from "./cloud";
 export * from "./code-text";
 export * from "./collapsible";
 export * from "./commit";

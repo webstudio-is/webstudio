@@ -86,7 +86,7 @@ export const Tooltip = forwardRef(
       }
     }, [open]);
 
-    if (!content) {
+    if (content == null) {
       return children;
     }
 
