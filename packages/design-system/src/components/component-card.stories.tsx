@@ -1,6 +1,7 @@
 import { BoxIcon } from "@webstudio-is/icons";
 import { StoryGrid, StorySection } from "./storybook";
 import { ComponentCard } from "./component-card";
+import { TooltipProvider } from "./tooltip";
 
 export default {
   title: "Library/Component Card",
@@ -8,7 +9,7 @@ export default {
 
 export const Demo = () => {
   return (
-    <>
+    <TooltipProvider>
       <StorySection title="States">
         <StoryGrid horizontal>
           <ComponentCard icon={<BoxIcon />} label="Box" tabIndex={1} />
@@ -52,7 +53,7 @@ export const Demo = () => {
           />
         </StoryGrid>
       </StorySection>
-    </>
+    </TooltipProvider>
   );
 };
 Demo.storyName = "Component Card";

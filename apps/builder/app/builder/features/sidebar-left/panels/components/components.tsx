@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useStore } from "@nanostores/react";
-import { usePress } from "@react-aria/interactions";
 import {
   type WsComponentMeta,
   componentCategories,
@@ -9,9 +8,9 @@ import {
   theme,
   Flex,
   ComponentCard,
-  Tooltip,
-  ArrowFocus,
   ScrollArea,
+  List,
+  ListItem,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
@@ -37,18 +36,6 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     publish,
     metaByComponentName,
   });
-  const { pressProps } = usePress({
-    onPress(event) {
-      const component = elementToComponentName(
-        event.target,
-        metaByComponentName
-      );
-      if (component) {
-        onSetActiveTab("none");
-        handleInsert(component);
-      }
-    },
-  });
 
   return (
     <Root ref={draggableContainerRef}>
@@ -66,41 +53,47 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
           })
           .map((category) => (
             <CollapsibleSection label={category} key={category} fullWidth>
-              <ArrowFocus
-                render={({ handleKeyDown }) => (
-                  <Flex
-                    onKeyDown={handleKeyDown}
-                    gap="2"
-                    wrap="wrap"
-                    css={{ px: theme.spacing[9], overflow: "auto" }}
-                  >
-                    {(metaByCategory.get(category) ?? []).map(
-                      (meta: WsComponentMeta, index) => {
-                        const component = componentNamesByMeta.get(meta);
-                        if (component === undefined) {
-                          return;
-                        }
-                        return (
-                          <Tooltip
-                            content={meta.description ?? meta.label}
-                            key={component}
-                            css={{ maxWidth: theme.spacing[28] }}
-                          >
-                            <ComponentCard
-                              {...pressProps}
-                              {...{ [dragItemAttribute]: component }}
-                              label={getInstanceLabel({ component }, meta)}
-                              icon={<MetaIcon size="auto" icon={meta.icon} />}
-                              tabIndex={index === 0 ? 0 : -1}
-                            />
-                          </Tooltip>
-                        );
+              <List asChild>
+                <Flex
+                  gap="2"
+                  wrap="wrap"
+                  css={{ px: theme.spacing[9], overflow: "auto" }}
+                >
+                  {(metaByCategory.get(category) ?? []).map(
+                    (meta: WsComponentMeta, index) => {
+                      const component = componentNamesByMeta.get(meta);
+                      if (component === undefined) {
+                        return;
                       }
-                    )}
-                    {dragCard}
-                  </Flex>
-                )}
-              />
+                      return (
+                        <ListItem
+                          asChild
+                          index={index}
+                          key={component}
+                          onSelect={(event) => {
+                            const component = elementToComponentName(
+                              event.target as HTMLElement,
+                              metaByComponentName
+                            );
+                            if (component) {
+                              onSetActiveTab("none");
+                              handleInsert(component);
+                            }
+                          }}
+                        >
+                          <ComponentCard
+                            {...{ [dragItemAttribute]: component }}
+                            label={getInstanceLabel({ component }, meta)}
+                            description={meta.description}
+                            icon={<MetaIcon size="auto" icon={meta.icon} />}
+                          />
+                        </ListItem>
+                      );
+                    }
+                  )}
+                  {dragCard}
+                </Flex>
+              </List>
             </CollapsibleSection>
           ))}
       </ScrollArea>
