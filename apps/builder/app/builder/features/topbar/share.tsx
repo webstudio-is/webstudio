@@ -37,16 +37,16 @@ export const ShareButton = ({
       onOpenChange={setIsShareOpen}
     >
       <FloatingPanelAnchor>
-        <FloatingPanelPopoverTrigger asChild>
-          <Tooltip
-            content={tooltipContent ?? "Share a project link"}
-            sideOffset={parseFloat(rawTheme.spacing[5])}
-          >
+        <Tooltip
+          content={tooltipContent ?? "Share a project link"}
+          sideOffset={parseFloat(rawTheme.spacing[5])}
+        >
+          <FloatingPanelPopoverTrigger asChild>
             <Button disabled={isShareDisabled} color="gradient">
               Share
             </Button>
-          </Tooltip>
-        </FloatingPanelPopoverTrigger>
+          </FloatingPanelPopoverTrigger>
+        </Tooltip>
       </FloatingPanelAnchor>
       <FloatingPanelPopoverContent
         sideOffset={parseFloat(rawTheme.spacing[8])}
