@@ -77,7 +77,7 @@ const calculateUnitSizes = (element: HTMLElement): UnitSizes => {
 
 const subscribeSelectedInstance = (
   selectedInstanceSelector: Readonly<InstanceSelector>,
-  queueTask: (task: () => void) => void
+  debounceEffect: (callback: () => void) => void
 ) => {
   if (selectedInstanceSelector.length === 0) {
     return;
@@ -192,7 +192,7 @@ const subscribeSelectedInstance = (
   };
 
   const update = () => {
-    queueTask(() => {
+    debounceEffect(() => {
       updateElements();
       // Having hover etc, element can have no size because of that
       // Newly created element can have 0 size
@@ -297,7 +297,9 @@ const subscribeSelectedInstance = (
   };
 };
 
-export const subscribeSelected = (queueTask: (task: () => void) => void) => {
+export const subscribeSelected = (
+  debounceEffect: (callback: () => void) => void
+) => {
   let previousSelectedInstance: readonly string[] | undefined = undefined;
   let unsubscribeSelectedInstance = () => {};
 
@@ -306,7 +308,7 @@ export const subscribeSelected = (queueTask: (task: () => void) => void) => {
       if (instanceSelector !== previousSelectedInstance) {
         unsubscribeSelectedInstance();
         unsubscribeSelectedInstance =
-          subscribeSelectedInstance(instanceSelector ?? [], queueTask) ??
+          subscribeSelectedInstance(instanceSelector ?? [], debounceEffect) ??
           (() => {});
         previousSelectedInstance = instanceSelector;
       }

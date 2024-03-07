@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { subscribeSelected } from "./instance-selected";
-import { useEffectQueue } from "~/shared/hook-utils/use-effect-queue";
+import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
 
 export const useSelectedInstance = () => {
-  const execTaskInEffect = useEffectQueue();
+  const debounceEffect = useDebounceEffect();
 
   useEffect(() => {
-    return subscribeSelected(execTaskInEffect);
-  }, [execTaskInEffect]);
+    return subscribeSelected(debounceEffect);
+  }, [debounceEffect]);
 };

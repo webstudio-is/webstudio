@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Debounce task execution until useEffect
+ * Debounce callback execution until useEffect
  * Example:
- *   const scheduleEffect = useEffectQueue();
+ *   const scheduleEffect = useDebounceEffect();
  *   scheduleEffect(() => { ... })
  */
-export const useEffectQueue = () => {
+export const useDebounceEffect = () => {
   const [updateCallback, setUpdateCallback] = useState(() => () => {
     /* empty */
   });
@@ -17,7 +17,7 @@ export const useEffectQueue = () => {
     updateCallback();
   }, [updateCallback]);
 
-  return useCallback((task: () => void) => {
-    setUpdateCallback(() => task);
+  return useCallback((callback: () => void) => {
+    setUpdateCallback(() => callback);
   }, []);
 };

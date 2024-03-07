@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
-import { useEffectQueue } from "~/shared/hook-utils/use-effect-queue";
+import { useDebounceEffect } from "~/shared/hook-utils/use-debounce-effect";
 import { subscribeScrollNewInstanceIntoView } from "./scroll-new-instance-into-view";
 import type { Instances } from "@webstudio-is/sdk";
 
 export const useScrollNewInstanceIntoView = () => {
-  const execTaskInEffect = useEffectQueue();
+  const debounceEffect = useDebounceEffect();
   const ref = useRef<Instances>();
   useEffect(() => {
-    return subscribeScrollNewInstanceIntoView(execTaskInEffect, ref);
-  }, [execTaskInEffect]);
+    return subscribeScrollNewInstanceIntoView(debounceEffect, ref);
+  }, [debounceEffect]);
 };

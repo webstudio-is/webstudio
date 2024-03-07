@@ -6,7 +6,7 @@ import { $instances } from "~/shared/nano-states";
  * When a new instance is added to the canvas, scroll it into view.
  */
 export const subscribeScrollNewInstanceIntoView = (
-  queueTask: (task: () => void) => void,
+  debounceEffect: (callback: () => void) => void,
   previousInstances: { current?: Instances }
 ) => {
   return $instances.subscribe((instances) => {
@@ -26,7 +26,7 @@ export const subscribeScrollNewInstanceIntoView = (
       return;
     }
     previousInstances.current = instances;
-    queueTask(() => {
+    debounceEffect(() => {
       const element = document.querySelector(
         `[${idAttribute}="${newInstanceId}"]`
       );
