@@ -68,14 +68,10 @@ const autocompletionStyle = css({
 
 const wrapperStyle = css({
   position: "relative",
-  // avoid modifying height in .cm-content
-  // because it breaks scroll events and makes scrolling laggy
-  "& .cm-editor": {
-    // 1 line is 16px
-    // set min 10 lines and max 20 lines
-    minHeight: 160,
-    maxHeight: 320,
-  },
+  // 1 line is 16px
+  // set min 10 lines and max 20 lines
+  "--ws-code-editor-min-height": "160px",
+  "--ws-code-editor-max-height": "320px",
 });
 
 export const HtmlEditor = forwardRef<

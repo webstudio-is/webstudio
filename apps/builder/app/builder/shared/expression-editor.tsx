@@ -341,13 +341,9 @@ const emptyScope: Scope = {};
 const emptyAliases: Aliases = new Map();
 
 const wrapperStyle = css({
-  // avoid modifying height in .cm-content
-  // because it breaks scroll events and makes scrolling laggy
-  "& .cm-editor": {
-    // 1 line is 16px
-    // set and max 20 lines
-    maxHeight: 320,
-  },
+  // 1 line is 16px
+  // set and max 20 lines
+  "--ws-code-editor-max-height": "320px",
 });
 
 export const ExpressionEditor = ({
