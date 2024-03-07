@@ -68,8 +68,8 @@ const autocompletionStyle = css({
 
 const wrapperStyle = css({
   position: "relative",
-  // do not override .cm-content here
-  // it may break scrolling
+  // avoid modifying height in .cm-content
+  // because it breaks scroll events and makes scrolling laggy
   "& .cm-editor": {
     // 1 line is 16px
     // set min 10 lines and max 20 lines
