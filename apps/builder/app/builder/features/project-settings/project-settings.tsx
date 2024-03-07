@@ -28,7 +28,7 @@ if (isFeatureEnabled("marketplace")) {
 }
 
 const leftPanelWidth = theme.spacing[26];
-const rightPanelWidth = theme.spacing[34];
+const rightPanelWidth = theme.spacing[35];
 
 const ProjectSettingsView = ({
   isOpen,
