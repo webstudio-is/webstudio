@@ -19,7 +19,7 @@ const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [activeOverviewItem, setAciveOverviewItem] =
     useState<MarketplaceOverviewItem>();
-  const [openAbout, setopenAbout] = useState<Project["id"]>();
+  const [openAbout, setOpenAbout] = useState<Project["id"]>();
 
   const {
     load: getItems,
@@ -42,11 +42,6 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           title="Marketplace"
           suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
         />
-        {itemsLoadingState !== "idle" && (
-          <Flex justify="center" css={{ mt: "20%" }}>
-            <SpinnerIcon size={rawTheme.spacing[15]} />
-          </Flex>
-        )}
         {activeOverviewItem && buildData ? (
           <SectionTemplates
             name={activeOverviewItem.name}
@@ -66,15 +61,20 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
               getBuildData({ projectId: activeOverviewItem.projectId });
             }}
             openAbout={openAbout}
-            onOpenAbout={setopenAbout}
+            onOpenAbout={setOpenAbout}
           />
+        )}
+        {itemsLoadingState !== "idle" && (
+          <Flex justify="center" css={{ mt: "20%" }}>
+            <SpinnerIcon size={rawTheme.spacing[15]} />
+          </Flex>
         )}
       </Root>
       <ExtendedPanel isOpen={openAboutItem !== undefined}>
         <About
           item={openAboutItem}
           onClose={() => {
-            setopenAbout(undefined);
+            setOpenAbout(undefined);
           }}
         />
       </ExtendedPanel>

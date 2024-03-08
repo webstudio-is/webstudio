@@ -1,8 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Flex,
   List,
   ListItem,
+  PanelTabs,
+  PanelTabsContent,
+  PanelTabsList,
+  PanelTabsTrigger,
   ScrollArea,
   SmallIconButton,
   Text,
@@ -10,7 +14,6 @@ import {
   rawTheme,
   theme,
 } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { categories } from "./utils";
 import {
   ChevronRightIcon,
@@ -125,19 +128,29 @@ export const Overview = ({
   onOpenAbout: (projectId?: string) => void;
 }) => {
   const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
+  const [selectedCategory, setSelectedCategory] =
+    useState<MarketplaceOverviewItem["category"]>("sectionTemplates");
+
+  const categoryItems = itemsByCategory.get(selectedCategory);
 
   return (
-    <ScrollArea>
-      {categories.map(({ category, label }) => {
-        const items = itemsByCategory.get(category);
-        if (items === undefined || items.length === 0) {
-          return;
-        }
-        return (
-          <CollapsibleSection label={label} key={category} fullWidth>
+    <PanelTabs
+      value={selectedCategory}
+      onValueChange={(category) => {
+        setSelectedCategory(category as MarketplaceOverviewItem["category"]);
+      }}
+      asChild
+    >
+      <Flex direction="column">
+        <PanelTabsList>
+          <PanelTabsTrigger value="sectionTemplates">Sections</PanelTabsTrigger>
+          <PanelTabsTrigger value="pageTemplates">Templates</PanelTabsTrigger>
+        </PanelTabsList>
+        <PanelTabsContent value={selectedCategory}>
+          <ScrollArea>
             <List asChild>
               <Flex direction="column">
-                {items.map((item, index) => {
+                {categoryItems?.map((item, index) => {
                   return (
                     <ListItem
                       asChild
@@ -160,9 +173,9 @@ export const Overview = ({
                 })}
               </Flex>
             </List>
-          </CollapsibleSection>
-        );
-      })}
-    </ScrollArea>
+          </ScrollArea>
+        </PanelTabsContent>
+      </Flex>
+    </PanelTabs>
   );
 };
