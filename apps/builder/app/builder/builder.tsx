@@ -59,6 +59,7 @@ import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
+import { useToastErrors } from "~/shared/error/toast-error";
 
 registerContainers();
 
@@ -268,6 +269,7 @@ export const Builder = ({
     $marketplaceProduct.set(build.marketplaceProduct);
   });
 
+  useToastErrors();
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
 

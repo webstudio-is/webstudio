@@ -225,7 +225,7 @@ export const Menu = () => {
             sideOffset={10}
             content={
               authTokenPermission.canClone === false
-                ? "Cloning is disabled by the project owner"
+                ? "Cloning has been disabled by the project owner"
                 : undefined
             }
           >

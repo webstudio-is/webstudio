@@ -309,6 +309,8 @@ export const $authTokenPermissions = atom<TokenPermissions>({
 
 export const $authToken = atom<string | undefined>(undefined);
 
+export const $toastErrors = atom<string[]>([]);
+
 export type DragAndDropState = {
   isDragging: boolean;
   dropTarget?: ItemDropTarget;
