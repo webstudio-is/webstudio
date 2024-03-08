@@ -10,8 +10,12 @@ let toastErrorsIndex = 0;
 export const useToastErrors = () => {
   useEffect(() => {
     return $toastErrors.subscribe((toastErrors) => {
-      for (let i = toastErrorsIndex; i < toastErrors.length; i++) {
-        toast.error(toastErrors[i]);
+      for (
+        let errorIndex = toastErrorsIndex;
+        errorIndex < toastErrors.length;
+        errorIndex++
+      ) {
+        toast.error(toastErrors[errorIndex]);
       }
 
       toastErrorsIndex = toastErrors.length;
