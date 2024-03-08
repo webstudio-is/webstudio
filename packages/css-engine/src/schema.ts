@@ -54,6 +54,14 @@ const RgbValue = z.object({
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
+export const FunctionValue = z.object({
+  type: z.literal("function"),
+  name: z.string(),
+  args: z.lazy(() => z.array(StyleValue)),
+});
+
+export type FunctionValue = z.infer<typeof FunctionValue>;
+
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.union([
