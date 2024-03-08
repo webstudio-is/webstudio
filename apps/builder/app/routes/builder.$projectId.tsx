@@ -8,6 +8,8 @@ import { redirect, type LoaderArgs, json } from "@remix-run/node";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { db as domainDb } from "@webstudio-is/domain/index.server";
 import { db } from "@webstudio-is/project/index.server";
+import { db as authDb } from "@webstudio-is/authorization-token/index.server";
+
 import {
   AuthorizationError,
   authorizeProject,
@@ -78,6 +80,17 @@ export const loader = async ({
 
     const authToken = url.searchParams.get("authToken") ?? undefined;
 
+    const authTokenPermissions =
+      authPermit !== "own" && authToken !== undefined
+        ? await authDb.getTokenPermissions(
+            {
+              projectId: project.id,
+              token: authToken,
+            },
+            context
+          )
+        : authDb.tokenDefaultPermissions;
+
     const { userPlanFeatures } = context;
     if (userPlanFeatures === undefined) {
       throw new Error("User plan features are not defined");
@@ -93,6 +106,7 @@ export const loader = async ({
       build: devBuild,
       assets: assets.map((asset) => [asset.id, asset]),
       authToken,
+      authTokenPermissions,
       authPermit,
       userPlanFeatures,
     };

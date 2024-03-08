@@ -56,6 +56,43 @@ export const findMany = async (
   return dbTokens;
 };
 
+export const tokenDefaultPermissions = {
+  canClone: true,
+  canCopy: true,
+};
+
+export type TokenPermissions = typeof tokenDefaultPermissions;
+
+export const getTokenPermissions = async (
+  props: { projectId: Project["id"]; token: AuthorizationToken["token"] },
+  context: AppContext
+): Promise<TokenPermissions> => {
+  const dbToken = await prisma.authorizationToken.findUnique({
+    where: {
+      // eslint-disable-next-line camelcase
+      token_projectId: {
+        projectId: props.projectId,
+        token: props.token,
+      },
+    },
+  });
+
+  if (dbToken === null) {
+    throw new AuthorizationError("Authorization token not found");
+  }
+
+  switch (dbToken.relation) {
+    // canClone, canCopy permissions can be applied for viewers only
+    case "viewers":
+      return {
+        canClone: dbToken.canClone,
+        canCopy: dbToken.canCopy,
+      };
+    default:
+      return tokenDefaultPermissions;
+  }
+};
+
 export const create = async (
   props: {
     projectId: Project["id"];
