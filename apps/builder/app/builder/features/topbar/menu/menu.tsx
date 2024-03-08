@@ -190,7 +190,11 @@ export const Menu = () => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
 
-          <Tooltip side="right" content={disabledShareTooltipContent}>
+          <Tooltip
+            side="right"
+            sideOffset={10}
+            content={disabledShareTooltipContent}
+          >
             <DropdownMenuItem
               onSelect={() => {
                 setIsShareOpen(true);
@@ -201,7 +205,11 @@ export const Menu = () => {
             </DropdownMenuItem>
           </Tooltip>
 
-          <Tooltip side="right" content={disabledPublishTooltipContent}>
+          <Tooltip
+            side="right"
+            sideOffset={10}
+            content={disabledPublishTooltipContent}
+          >
             <DropdownMenuItem
               onSelect={() => {
                 setIsPublishOpen(true);
@@ -214,6 +222,7 @@ export const Menu = () => {
 
           <Tooltip
             side="right"
+            sideOffset={10}
             content={
               authTokenPermission.canClone === false
                 ? "Cloning is disabled by the project owner"
