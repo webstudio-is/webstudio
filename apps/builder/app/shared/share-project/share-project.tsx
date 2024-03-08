@@ -196,16 +196,6 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
                 </Grid>
               </Grid>
             )}
-            {/*
-              Hide temporarily until we have a way to allow edit content but not edit tree, etc.
-
-              <Permission
-                onCheckedChange={handleCheckedChange("editors")}
-                checked={relation === "editors"}
-                title="Edit Content"
-                info="Recipients can view the project and edit content like text and images, but they will not be able to change the styles or structure of your project."
-              />
-            */}
             <Permission
               onCheckedChange={handleCheckedChange("builders")}
               checked={value.relation === "builders"}
@@ -281,8 +271,6 @@ export type LinkOptions = {
 };
 
 type SharedLinkItemType = {
-  // onChangeRelation: (permission: Relation) => void;
-  // onChangeName: (name: string) => void;
   value: LinkOptions;
   onChange: (value: LinkOptions) => void;
   onDelete: () => void;
