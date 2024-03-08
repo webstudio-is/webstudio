@@ -1,5 +1,4 @@
 import { createContext, useContext } from "react";
-import type { Page } from "@webstudio-is/sdk";
 import type { ImageLoader } from "@webstudio-is/image";
 
 export type Params = {
@@ -32,12 +31,6 @@ export type Params = {
 export const ReactSdkContext = createContext<
   Params & {
     imageLoader: ImageLoader;
-    /**
-     * List of pages paths for link component
-     * to navigate without reloading on published sites
-     * always empty for builder which handle anchor clicks globally
-     */
-    pagesPaths: Set<Page["path"]>;
     // resources need to be any to support accessing unknown fields without extra checks
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resources: Record<string, any>;
@@ -46,7 +39,6 @@ export const ReactSdkContext = createContext<
   assetBaseUrl: "/",
   imageBaseUrl: "/",
   imageLoader: ({ src }) => src,
-  pagesPaths: new Set(),
   resources: {},
 });
 

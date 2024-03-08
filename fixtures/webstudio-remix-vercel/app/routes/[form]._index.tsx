@@ -17,7 +17,6 @@ import {
   pageData,
   user,
   projectId,
-  pagesPaths,
   formsProperties,
   Page,
   imageAssets,
@@ -324,7 +323,6 @@ const Outlet = () => {
         imageLoader,
         assetBaseUrl,
         imageBaseUrl,
-        pagesPaths,
         resources,
       }}
     >
