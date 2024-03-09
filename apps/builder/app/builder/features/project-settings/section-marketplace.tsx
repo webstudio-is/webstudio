@@ -13,6 +13,7 @@ import {
   Checkbox,
   InputErrorsTooltip,
   PanelBanner,
+  Select,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
 import {
@@ -25,7 +26,10 @@ import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
 import { useState } from "react";
-import { MarketplaceProduct } from "@webstudio-is/project-build";
+import {
+  MarketplaceProduct,
+  marketplaceCategories,
+} from "@webstudio-is/project-build";
 import { serverSyncStore } from "~/shared/sync";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import {
@@ -119,6 +123,7 @@ export const SectionMarketplace = () => {
   const [data, setData] = useState(() => $marketplaceProduct.get());
   const ids = useIds([
     "name",
+    "category",
     "thumbnailAssetId",
     "author",
     "email",
@@ -149,6 +154,7 @@ export const SectionMarketplace = () => {
       const errors = validate(nextData);
       setErrors(errors);
       setData(nextData);
+
       if (errors) {
         return;
       }
@@ -183,16 +189,32 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
+      <Grid gap={1} css={sectionSpacing}>
+        <Label htmlFor={ids.category}>Category</Label>
+        <Select
+          css={{ zIndex: theme.zIndices[1] }}
+          options={Array.from(marketplaceCategories.keys())}
+          getLabel={(category: MarketplaceProduct["category"]) =>
+            marketplaceCategories.get(category)
+          }
+          onChange={handleSave("category")}
+          value={data.category}
+          defaultValue={defaultMarketplaceProduct.category}
+        />
+      </Grid>
+
       <Grid gap={2} css={sectionSpacing}>
         <Label>Thumbnail</Label>
         <Grid flow="column" gap={3}>
-          <Image
-            width={72}
-            height={72}
-            className={imgStyle()}
-            src={thumbnailUrl}
-            loader={imageLoader}
-          />
+          <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
+            <Image
+              width={72}
+              height={72}
+              className={imgStyle()}
+              src={thumbnailUrl}
+              loader={imageLoader}
+            />
+          </InputErrorsTooltip>
 
           <Grid gap={2}>
             <Text color="subtle">

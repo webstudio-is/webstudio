@@ -9,8 +9,9 @@ import {
   theme,
   focusRingStyle,
   css,
+  Link,
 } from "@webstudio-is/design-system";
-import { ChevronLeftIcon } from "@webstudio-is/icons";
+import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import { insert } from "./utils";
 import { computeExpression } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
@@ -18,6 +19,7 @@ import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
+import { builderUrl } from "~/shared/router-utils";
 
 const focusOutline = focusRingStyle();
 
@@ -120,50 +122,56 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
     let category = page.meta.custom?.find(
       ({ property }) => property === marketplaceMeta.category
     )?.content;
+
     if (category !== undefined) {
       category = computeExpression(category, variableValues);
     }
-    if (category !== undefined) {
-      let templates = templatesByCategory.get(category);
-      if (templates === undefined) {
-        templates = [];
-        templatesByCategory.set(category, templates);
-      }
 
-      const socialImageUrl = page.meta.socialImageUrl
-        ? String(computeExpression(page.meta.socialImageUrl, variableValues))
-        : undefined;
-      const socialImageAsset = page.meta.socialImageAssetId
-        ? data.assets.get(page.meta.socialImageAssetId)
-        : undefined;
-
-      let title = page.meta.custom?.find(
-        ({ property }) => property === marketplaceMeta.title
-      )?.content;
-      if (title !== undefined) {
-        title = computeExpression(title, variableValues);
-      }
-      if (title === undefined || title === "") {
-        title = computeExpression(page.title, variableValues);
-      }
-
-      templates.push({
-        title,
-        socialImageUrl,
-        socialImageAsset,
-        rootInstanceId: page.rootInstanceId,
-      });
+    if (category === undefined) {
+      category = "Pages";
     }
+
+    let templates = templatesByCategory.get(category);
+    if (templates === undefined) {
+      templates = [];
+      templatesByCategory.set(category, templates);
+    }
+
+    const socialImageUrl = page.meta.socialImageUrl
+      ? String(computeExpression(page.meta.socialImageUrl, variableValues))
+      : undefined;
+    const socialImageAsset = page.meta.socialImageAssetId
+      ? data.assets.get(page.meta.socialImageAssetId)
+      : undefined;
+
+    let title = page.meta.custom?.find(
+      ({ property }) => property === marketplaceMeta.title
+    )?.content;
+    if (title !== undefined) {
+      title = computeExpression(title, variableValues);
+    }
+    if (title === undefined || title === "") {
+      title = computeExpression(page.title, variableValues);
+    }
+
+    templates.push({
+      title,
+      socialImageUrl,
+      socialImageAsset,
+      rootInstanceId: page.rootInstanceId,
+    });
   }
   return templatesByCategory;
 };
 
-export const SectionTemplates = ({
+export const Templates = ({
   name,
+  projectId,
   data,
   onOpenChange,
 }: {
   name: string;
+  projectId: string;
   data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -181,6 +189,7 @@ export const SectionTemplates = ({
       <Flex
         align="center"
         shrink="false"
+        justify="between"
         css={{ px: theme.spacing[9], py: theme.spacing[5] }}
       >
         <Button
@@ -192,6 +201,17 @@ export const SectionTemplates = ({
         >
           {name}
         </Button>
+        <Link
+          underline="none"
+          href={builderUrl({
+            projectId: projectId,
+            origin: location.origin,
+          })}
+          target="_blank"
+          aria-label="Open project in new tab"
+        >
+          <ExternalLinkIcon />
+        </Link>
       </Flex>
       <Separator />
       <ScrollArea>

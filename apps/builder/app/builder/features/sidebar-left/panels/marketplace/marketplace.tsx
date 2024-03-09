@@ -3,7 +3,7 @@ import { Flex, rawTheme } from "@webstudio-is/design-system";
 import type { TabContentProps } from "../../types";
 import { Header, CloseButton, Root } from "../../shared/panel";
 import { Overview } from "./overview";
-import { SectionTemplates } from "./section-templates";
+import { Templates } from "./templates";
 import { marketplacePath } from "~/shared/router-utils";
 import { useEffect, useState } from "react";
 import { toWebstudioData } from "./utils";
@@ -43,7 +43,8 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
         />
         {activeOverviewItem && buildData ? (
-          <SectionTemplates
+          <Templates
+            projectId={activeOverviewItem.projectId}
             name={activeOverviewItem.name}
             data={toWebstudioData(buildData)}
             onOpenChange={(isOpen: boolean) => {
