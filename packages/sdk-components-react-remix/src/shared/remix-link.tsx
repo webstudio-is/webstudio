@@ -16,15 +16,16 @@ type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {
 
 export const wrapLinkComponent = (BaseLink: typeof Link) => {
   const Component = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
-    const { pagesPaths } = useContext(ReactSdkContext);
+    const { assetBaseUrl } = useContext(ReactSdkContext);
     const href = props.href;
 
-    // use remix link when url references webstudio page
-    if (href !== undefined) {
-      const url = new URL(href, "https://any-valid.url");
-      if (pagesPaths.has(url.pathname === "/" ? "" : url.pathname)) {
-        return <RemixLink {...props} to={href} ref={ref} />;
-      }
+    // use remix link for home page and all relative urls
+    // ignore asset paths which can be relative too
+    if (
+      href === "" ||
+      (href?.startsWith("/") && href.startsWith(assetBaseUrl) === false)
+    ) {
+      return <RemixLink {...props} to={href} ref={ref} />;
     }
 
     const { prefetch, reloadDocument, replace, preventScrollReset, ...rest } =

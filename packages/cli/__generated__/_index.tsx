@@ -41,8 +41,6 @@ export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
 
-export const pagesPaths = new Set<string>();
-
 export const formsProperties = new Map<
   string,
   { method?: string; action?: string }

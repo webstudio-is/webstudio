@@ -1,35 +1,9 @@
 import { expect, test } from "@jest/globals";
 import { generateUtilsExport } from "./generator";
 
-const createPage = (path: string) => ({
-  id: path,
-  path,
-  name: "",
-  title: "",
-  rootInstanceId: "",
-  meta: {},
-});
-
-const pages = {
-  meta: {},
-  pages: [],
-  folders: [
-    {
-      id: "root",
-      name: "Root",
-      slug: "",
-      children: [],
-    },
-  ],
-};
-
 test("generates forms properties", () => {
   expect(
     generateUtilsExport({
-      pages: {
-        ...pages,
-        homePage: createPage("1"),
-      },
       props: new Map([
         [
           "method1Id",
@@ -66,29 +40,20 @@ test("generates forms properties", () => {
       ]),
     })
   ).toMatchInlineSnapshot(`
+"
+  export const formsProperties = new Map<string, { method?: string, action?: string }>([["1",{"method":"post"}],["2",{"method":"get","action":"/index.php"}]])
   "
-    export const pagesPaths = new Set(["1"])
-
-    export const formsProperties = new Map<string, { method?: string, action?: string }>([["1",{"method":"post"}],["2",{"method":"get","action":"/index.php"}]])
-    "
-  `);
+`);
 });
 
 test("generates list of pages paths", () => {
   expect(
     generateUtilsExport({
-      pages: {
-        ...pages,
-        homePage: createPage("/path1"),
-        pages: [createPage("/path2"), createPage("/path3")],
-      },
       props: new Map(),
     })
   ).toMatchInlineSnapshot(`
+"
+  export const formsProperties = new Map<string, { method?: string, action?: string }>([])
   "
-    export const pagesPaths = new Set(["/path1","/path2","/path3"])
-
-    export const formsProperties = new Map<string, { method?: string, action?: string }>([])
-    "
-  `);
+`);
 });
