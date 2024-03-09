@@ -19,7 +19,8 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
     const { assetBaseUrl } = useContext(ReactSdkContext);
     const href = props.href;
 
-    // use remix link when url references webstudio page
+    // use remix link for home page and all relative urls
+    // ignore asset paths which can be relative too
     if (
       href === "" ||
       (href?.startsWith("/") && href.startsWith(assetBaseUrl) === false)
