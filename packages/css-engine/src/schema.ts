@@ -60,12 +60,12 @@ export const FunctionValue: z.ZodType<{
   type: "function";
   name: string;
   seperator?: string | undefined;
-  args: Array<StyleValue>;
+  args: StyleValue;
 }> = z.object({
   type: z.literal("function"),
   name: z.string(),
   seperator: z.string().optional(),
-  args: z.lazy(() => z.array(StyleValue)),
+  args: z.lazy(() => StyleValue),
 });
 
 export const ImageValue = z.object({

@@ -113,9 +113,7 @@ export const toValue = (
   }
 
   if (value.type === "function") {
-    return `${value.name}(${value.args
-      .map((arg) => toValue(arg, transformValue))
-      .join(value.seperator ? ", " : " ")})`;
+    return `${value.name}(${toValue(value.args, transformValue)})`;
   }
 
   return captureError(new Error("Unknown value type"), value);

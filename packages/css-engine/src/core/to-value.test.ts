@@ -136,23 +136,24 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     const translate3D = toValue({
       type: "function",
       name: "translate3d",
-      seperator: ",",
-      args: [
-        { type: "unit", value: 42, unit: "px" },
-        { type: "unit", value: -62, unit: "px" },
-        { type: "unit", value: -135, unit: "px" },
-      ],
+      args: {
+        type: "keyword",
+        value: "42px, -62px, -135px",
+      },
     });
 
     const dropShadowValue = toValue({
       type: "function",
       name: "drop-shadow",
-      args: [
-        { type: "unit", value: 10, unit: "px" },
-        { type: "unit", value: 10, unit: "px" },
-        { type: "unit", value: 10, unit: "px" },
-        { type: "keyword", value: "red" },
-      ],
+      args: {
+        type: "tuple",
+        value: [
+          { type: "unit", value: 10, unit: "px" },
+          { type: "unit", value: 10, unit: "px" },
+          { type: "unit", value: 10, unit: "px" },
+          { type: "keyword", value: "red" },
+        ],
+      },
     });
 
     expect(translate3D).toBe("translate3d(42px, -62px, -135px)");
