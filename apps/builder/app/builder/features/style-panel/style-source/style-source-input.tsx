@@ -145,6 +145,26 @@ const TextFieldBase: ForwardRefRenderFunction<
       }
       onKeyDown={onKeyDown}
     >
+      {/* We want input to be the first element in DOM so it receives the focus first */}
+      {editingItemId === undefined && (
+        <DeprecatedTextFieldInput
+          {...textFieldProps}
+          css={{
+            color: theme.colors.hiContrast,
+            fontVariantNumeric: "tabular-nums",
+            fontFamily: theme.fonts.sans,
+            fontSize: theme.deprecatedFontSize[3],
+            lineHeight: 1,
+            order: 1,
+          }}
+          value={label}
+          type={type}
+          onClick={onClick}
+          ref={mergeRefs(internalInputRef, inputRef ?? null)}
+          spellCheck={false}
+          aria-label="New Style Source Input"
+        />
+      )}
       {value.map((item) => (
         <StyleSource
           key={item.id}
@@ -185,26 +205,6 @@ const TextFieldBase: ForwardRefRenderFunction<
         </StyleSource>
       ))}
       {placementIndicator}
-      {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItemId === undefined && (
-        <DeprecatedTextFieldInput
-          {...textFieldProps}
-          css={{
-            color: theme.colors.hiContrast,
-            fontVariantNumeric: "tabular-nums",
-            fontFamily: theme.fonts.sans,
-            fontSize: theme.deprecatedFontSize[3],
-            lineHeight: 1,
-            order: 0,
-          }}
-          value={label}
-          type={type}
-          onClick={onClick}
-          ref={mergeRefs(internalInputRef, inputRef ?? null)}
-          spellCheck={false}
-          aria-label="New Style Source Input"
-        />
-      )}
     </TextFieldContainer>
   );
 };
