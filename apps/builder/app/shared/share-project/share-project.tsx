@@ -150,52 +150,74 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               checked={value.relation === "viewers"}
               onCheckedChange={handleCheckedChange("viewers")}
               title="View"
-              info="Recipients can view, copy instances and clone the project"
+              //info="Recipients can view, copy instances and clone the project"
+              info={
+                <Flex direction="column">
+                  Recipients can view, copy instances and clone the project.
+                  {hasProPlan !== true && (
+                    <>
+                      <br />
+                      <br />
+                      Upgrade to a Pro account to set additional permissions.
+                      <br /> <br />
+                      <Link
+                        className={buttonStyle({ color: "gradient" })}
+                        color="contrast"
+                        underline="none"
+                        href="https://webstudio.is/pricing"
+                        target="_blank"
+                      >
+                        Upgrade
+                      </Link>
+                    </>
+                  )}
+                </Flex>
+              }
             />
-            {value.relation === "viewers" && hasProPlan && (
+
+            <Grid
+              css={{
+                ml: theme.spacing[6],
+              }}
+            >
               <Grid
+                gap={1}
+                flow={"column"}
                 css={{
-                  ml: theme.spacing[6],
+                  alignItems: "center",
+                  justifyContent: "start",
                 }}
               >
-                <Grid
-                  gap={1}
-                  flow={"column"}
-                  css={{
-                    alignItems: "center",
-                    justifyContent: "start",
+                <Checkbox
+                  disabled={hasProPlan !== true}
+                  checked={value.canClone}
+                  onCheckedChange={(canClone) => {
+                    onChange({ ...value, canClone: Boolean(canClone) });
                   }}
-                >
-                  <Checkbox
-                    // disabled={overwritable === false}
-                    checked={value.canClone}
-                    onCheckedChange={(canClone) => {
-                      onChange({ ...value, canClone: Boolean(canClone) });
-                    }}
-                    id={`viewer-can-clone`}
-                  />
-                  <Label htmlFor={`viewer-can-clone`}>Can clone</Label>
-                </Grid>
-                <Grid
-                  gap={1}
-                  flow={"column"}
-                  css={{
-                    alignItems: "center",
-                    justifyContent: "start",
-                  }}
-                >
-                  <Checkbox
-                    // disabled={overwritable === false}
-                    checked={value.canCopy}
-                    onCheckedChange={(canCopy) => {
-                      onChange({ ...value, canCopy: Boolean(canCopy) });
-                    }}
-                    id={`viewer-can-copy`}
-                  />
-                  <Label htmlFor={`viewer-can-copy`}>Can copy</Label>
-                </Grid>
+                  id={`viewer-can-clone`}
+                />
+                <Label htmlFor={`viewer-can-clone`}>Can clone</Label>
               </Grid>
-            )}
+              <Grid
+                gap={1}
+                flow={"column"}
+                css={{
+                  alignItems: "center",
+                  justifyContent: "start",
+                }}
+              >
+                <Checkbox
+                  disabled={hasProPlan !== true}
+                  checked={value.canCopy}
+                  onCheckedChange={(canCopy) => {
+                    onChange({ ...value, canCopy: Boolean(canCopy) });
+                  }}
+                  id={`viewer-can-copy`}
+                />
+                <Label htmlFor={`viewer-can-copy`}>Can copy</Label>
+              </Grid>
+            </Grid>
+
             <Permission
               onCheckedChange={handleCheckedChange("builders")}
               checked={value.relation === "builders"}
