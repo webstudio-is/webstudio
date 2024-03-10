@@ -286,6 +286,7 @@ export const StyleSource = ({
           disabled={disabled || isEditing}
           isEditing={isEditing}
           onClick={onSelect}
+          tabIndex={-1}
         >
           {typeof children === "string" ? (
             <EditableText
