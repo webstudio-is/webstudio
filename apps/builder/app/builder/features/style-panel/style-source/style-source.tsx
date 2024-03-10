@@ -110,7 +110,6 @@ export type ItemSource = "token" | "componentToken" | "tag" | "local";
 
 type EditableTextProps = {
   label: string;
-  isEditable: boolean;
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
   onChangeValue: (value: string) => void;
@@ -118,13 +117,12 @@ type EditableTextProps = {
 
 const EditableText = ({
   label,
-  isEditable,
   isEditing,
   onChangeEditing,
   onChangeValue,
 }: EditableTextProps) => {
   const { ref, handlers } = useContentEditable({
-    isEditable,
+    isEditable: false,
     isEditing,
     onChangeEditing,
     onChangeValue,
@@ -243,7 +241,7 @@ const StyleSourceState = styled(Text, {
 
 type StyleSourceProps = {
   id: string;
-  label: string;
+  children: ReactNode;
   menuItems: ReactNode;
   selected: boolean;
   state: undefined | string;
@@ -259,7 +257,6 @@ type StyleSourceProps = {
 
 export const StyleSource = ({
   id,
-  label,
   menuItems,
   selected,
   state,
@@ -268,6 +265,7 @@ export const StyleSource = ({
   isEditing,
   isDragging,
   source,
+  children,
   onChangeValue,
   onChangeEditing,
   onSelect,
@@ -289,13 +287,16 @@ export const StyleSource = ({
           isEditing={isEditing}
           onClick={onSelect}
         >
-          <EditableText
-            isEditable={source !== "local"}
-            isEditing={isEditing}
-            onChangeEditing={onChangeEditing}
-            onChangeValue={onChangeValue}
-            label={label}
-          />
+          {typeof children === "string" ? (
+            <EditableText
+              isEditing={isEditing}
+              onChangeEditing={onChangeEditing}
+              onChangeValue={onChangeValue}
+              label={children}
+            />
+          ) : (
+            children
+          )}
         </StyleSourceButton>
       </Flex>
       {stateLabel !== undefined && (

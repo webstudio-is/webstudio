@@ -31,8 +31,9 @@ import {
   rawTheme,
   theme,
   styled,
+  Flex,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, DotIcon, LocalStyleIcon } from "@webstudio-is/icons";
 import {
   forwardRef,
   useState,
@@ -147,7 +148,6 @@ const TextFieldBase: ForwardRefRenderFunction<
       {value.map((item) => (
         <StyleSource
           key={item.id}
-          label={item.label}
           menuItems={renderStyleSourceMenuItems(item)}
           id={item.id}
           selected={item.id === selectedItemSelector?.styleSourceId}
@@ -174,7 +174,15 @@ const TextFieldBase: ForwardRefRenderFunction<
             onEditItem?.();
             onChangeItem?.({ ...item, label });
           }}
-        />
+        >
+          {item.source === "local" ? (
+            <Flex align="center" justify="center">
+              <LocalStyleIcon />
+            </Flex>
+          ) : (
+            item.label
+          )}
+        </StyleSource>
       ))}
       {placementIndicator}
       {/* We want input to be the first element in DOM so it receives the focus first */}
