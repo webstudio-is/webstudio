@@ -1,9 +1,4 @@
-import type {
-  InvalidValue,
-  LayerValueItem,
-  LayersValue,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { InvalidValue, LayersValue } from "@webstudio-is/css-engine";
 import {
   Flex,
   theme,
@@ -20,13 +15,11 @@ import { parseFilter } from "@webstudio-is/css-data";
 
 type FilterContentProps = {
   index: number;
-  layer: LayerValueItem;
   filter: string;
-  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
+  onEditLayer: (index: number, layers: LayersValue) => void;
 };
 
 export const FilterSectionContent = ({
-  layer,
   index,
   filter,
   onEditLayer,
@@ -91,6 +84,9 @@ export const FilterSectionContent = ({
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             handleComplete();
+            // On pressing Enter, the textarea is creating a new line.
+            // In-order to prevent it and update the content.
+            // We prevent the default behaviour
             event.preventDefault();
           }
         }}

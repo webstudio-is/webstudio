@@ -1,8 +1,7 @@
-import {
-  TupleValue,
-  type InvalidValue,
-  type LayersValue,
-  type StyleProperty,
+import type {
+  InvalidValue,
+  LayersValue,
+  StyleProperty,
 } from "@webstudio-is/css-engine";
 import type { RenderCategoryProps } from "./style-sections";
 import type { StyleInfo } from "./shared/style-info";
@@ -11,22 +10,29 @@ import type { CreateBatchUpdate } from "./shared/use-style-data";
 export const deleteLayer = (
   property: StyleProperty,
   index: number,
-  layers: LayersValue | TupleValue,
+  layers: LayersValue,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
-  let newLayers: LayersValue | TupleValue;
-  if (layers.type === "layers") {
-    newLayers = { type: "layers", value: [...layers.value] };
-  } else {
-    newLayers = { type: "tuple", value: [...layers.value] };
-  }
-  newLayers.value.splice(index, 1);
   const batch = createBatchUpdate();
+  const value = layers.value[index];
 
-  if (newLayers.value.length === 0) {
+  if (
+    value.type !== "tuple" &&
+    value.type !== "function" &&
+    value.type !== "unparsed"
+  ) {
+    return;
+  }
+  const newLayers = [...layers.value];
+  newLayers.splice(index, 1);
+
+  if (newLayers.length === 0) {
     batch.deleteProperty(property);
   } else {
-    batch.setProperty(property)(newLayers);
+    batch.setProperty(property)({
+      type: "layers",
+      value: newLayers,
+    });
   }
 
   batch.publish();
@@ -35,24 +41,19 @@ export const deleteLayer = (
 export const hideLayer = (
   property: StyleProperty,
   index: number,
-  layers: LayersValue | TupleValue,
+  layers: LayersValue,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
-  // We can only hide a individual layer and not single instance of a tuple
-  if (layers.type === "tuple") {
-    return;
-  }
-
-  const layer = layers.value[index];
-  if (layer.type !== "tuple" && layer.type !== "unparsed") {
-    return;
-  }
-
   const batch = createBatchUpdate();
+  const value = layers.value[index];
+
+  if (value.type !== "tuple" && value.type !== "unparsed") {
+    return;
+  }
   const newLayers = [...layers.value];
   newLayers.splice(index, 1, {
-    ...layer,
-    hidden: layer.hidden !== true,
+    ...value,
+    hidden: value.hidden !== true,
   });
   batch.setProperty(property)({
     type: "layers",
@@ -64,73 +65,62 @@ export const hideLayer = (
 
 export const addLayer = (
   property: StyleProperty,
-  layerValue: LayersValue | TupleValue | InvalidValue,
+  value: LayersValue | InvalidValue,
   style: StyleInfo,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
-  if (layerValue.type === "invalid") {
+  if (value.type === "invalid") {
     return;
   }
+
   const layers = style[property]?.value;
-  const batch = createBatchUpdate();
 
   // Initially its none, so we can just set it.
-  if (layers?.type === "layers" && layerValue.type === "layers") {
-    layerValue.value = [...layerValue.value, ...layers.value];
+  if (layers?.type === "layers") {
+    // Adding layers we had before
+    value.value = [...value.value, ...layers.value];
   }
 
-  if (layers?.type === "tuple" && layerValue.type === "tuple") {
-    layerValue.value = [...layerValue.value, ...layers.value];
-  }
-
-  batch.setProperty(property)(layerValue);
+  const batch = createBatchUpdate();
+  batch.setProperty(property)(value);
   batch.publish();
 };
 
 export const updateLayer = (
   property: StyleProperty,
-  newValue: LayersValue | TupleValue,
-  layers: LayersValue | TupleValue,
+  newValue: LayersValue,
+  layers: LayersValue,
   index: number,
   createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
 ) => {
+  const batch = createBatchUpdate();
   const value = layers.value[index];
-  if (value.type === "unparsed") {
+  if (
+    value.type !== "tuple" &&
+    value.type !== "function" &&
+    value.type !== "unparsed"
+  ) {
     return;
   }
+  const newLayers = [...layers.value];
+  newLayers.splice(index, 1, ...newValue.value);
+  batch.setProperty(property)({
+    type: "layers",
+    value: newLayers,
+  });
 
-  if (
-    (layers.type === "layers" && newValue.type === "layers") ||
-    (layers.type === "tuple" && newValue.type === "tuple")
-  ) {
-    const newLayers = { type: layers.type, value: [...layers.value] };
-    newLayers.value.splice(index, 1, ...newValue.value);
-
-    const batch = createBatchUpdate();
-    batch.setProperty(property)(newLayers as LayersValue | TupleValue);
-    batch.publish();
-  }
+  batch.publish();
 };
 
-export const getLayerCount = (
-  property: StyleProperty,
-  style: StyleInfo
-): number => {
+export const getLayerCount = (property: StyleProperty, style: StyleInfo) => {
   const value = style[property]?.value;
-  return value?.type === "layers" || value?.type === "tuple"
-    ? value.value.length
-    : 0;
+  const layers = value?.type === "layers" ? value : undefined;
+  return layers?.value.length ?? 0;
 };
 
-export const getValue = (
-  property: StyleProperty,
-  style: StyleInfo
-): TupleValue | LayersValue | undefined => {
+export const getValue = (property: StyleProperty, style: StyleInfo) => {
   const value = style[property]?.value;
-  return value?.type === "layers" ||
-    (value?.type === "tuple" && value.value.length > 0)
-    ? value
-    : undefined;
+  return value?.type === "layers" && value.value.length > 0 ? value : undefined;
 };
 
 export const swapLayers = (
@@ -140,24 +130,20 @@ export const swapLayers = (
   style: StyleInfo,
   createBatchUpdate: CreateBatchUpdate
 ) => {
+  const batch = createBatchUpdate();
   const value = getValue(property, style);
 
   if (value === undefined) {
     return;
   }
 
-  if (value.type !== "layers" && value.type !== "tuple") {
-    return;
-  }
+  const newValue = [...value.value];
+  newValue.splice(oldIndex, 1);
+  newValue.splice(newIndex, 0, value.value[oldIndex]);
 
-  const newLayers = {
-    type: value.type,
-    value: [...value.value],
-  };
-  newLayers.value.splice(oldIndex, 1);
-  newLayers.value.splice(newIndex, 0, value.value[oldIndex]);
-  const batch = createBatchUpdate();
-
-  batch.setProperty(property)(newLayers as LayersValue | TupleValue);
+  batch.setProperty(property)({
+    ...value,
+    value: newValue,
+  });
   batch.publish();
 };

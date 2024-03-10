@@ -7,13 +7,12 @@ import {
   SmallIconButton,
 } from "@webstudio-is/design-system";
 import { SubtractIcon } from "@webstudio-is/icons";
+import { useMemo } from "react";
+import { toValue } from "@webstudio-is/css-engine";
 
 export const FilterLayer = (props: LayerProps) => {
   const { index, id, layer, isHighlighted, onDeleteLayer } = props;
-
-  if (layer.type !== "keyword") {
-    return;
-  }
+  const filter = useMemo(() => toValue(layer), [layer]);
 
   return (
     <FloatingPanel
@@ -21,8 +20,7 @@ export const FilterLayer = (props: LayerProps) => {
       content={
         <FilterSectionContent
           index={index}
-          layer={layer}
-          filter={layer.value}
+          filter={filter}
           onEditLayer={props.onEditLayer}
         />
       }
@@ -32,17 +30,16 @@ export const FilterLayer = (props: LayerProps) => {
         draggable={true}
         active={isHighlighted}
         index={index}
-        label={<Label truncate>{layer.value}</Label>}
+        label={<Label truncate>{filter}</Label>}
         buttons={
-          <SmallIconButton
-            variant="destructive"
-            tabIndex={-1}
-            icon={<SubtractIcon />}
-            onClick={(event) => {
-              onDeleteLayer(index);
-              event.preventDefault();
-            }}
-          />
+          <>
+            <SmallIconButton
+              variant="destructive"
+              tabIndex={-1}
+              icon={<SubtractIcon />}
+              onClick={() => onDeleteLayer(index)}
+            />
+          </>
         }
       />
     </FloatingPanel>

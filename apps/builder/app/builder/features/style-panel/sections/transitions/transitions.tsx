@@ -21,6 +21,7 @@ import { useStore } from "@nanostores/react";
 
 const property: StyleProperty = "transition";
 const label = "Transitions";
+const INITIAL_TRANSITION = "opacity 200ms ease";
 
 export const TransitionSection = (props: RenderCategoryProps) => {
   const { currentStyle, deleteProperty } = props;
@@ -59,8 +60,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    // Using default transition value
-                    parseTransition("opacity 200ms ease"),
+                    parseTransition(INITIAL_TRANSITION),
                     currentStyle,
                     props.createBatchUpdate
                   );

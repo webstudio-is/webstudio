@@ -1,10 +1,12 @@
 import * as csstree from "css-tree";
 import type {
   InvalidValue,
-  TupleValue,
+  LayerValueItem,
+  LayersValue,
   TupleValueItem,
+  Unit,
 } from "@webstudio-is/css-engine";
-import { cssTreeTryParseValue, isValidDeclaration } from "../parse-css-value";
+import { cssTryParseValue, isValidDeclaration } from "../parse-css-value";
 
 /*
   https://github.com/webstudio-is/webstudio/issues/1016
@@ -15,7 +17,7 @@ import { cssTreeTryParseValue, isValidDeclaration } from "../parse-css-value";
   Which uses browser CSSStyleValue.parse to validate.
 */
 
-export const parseFilter = (input: string): TupleValue | InvalidValue => {
+export const parseFilter = (input: string): LayersValue | InvalidValue => {
   let tokenStream = input.trim();
   tokenStream = tokenStream.endsWith(";")
     ? tokenStream.slice(0, -1)
@@ -29,7 +31,7 @@ export const parseFilter = (input: string): TupleValue | InvalidValue => {
       : tokenStream;
   }
 
-  const cssAst = cssTreeTryParseValue(tokenStream);
+  const cssAst = cssTryParseValue(tokenStream);
   if (cssAst === undefined) {
     return {
       type: "invalid",
@@ -45,19 +47,56 @@ export const parseFilter = (input: string): TupleValue | InvalidValue => {
     };
   }
 
-  const layers: TupleValueItem[] = [];
+  const layers: LayerValueItem[] = [];
   csstree.walk(cssAst, (node) => {
     if (node.type === "Value") {
       for (const child of node.children) {
         if (child.type === "Function") {
-          layers.push({ type: "keyword", value: csstree.generate(child) });
+          const tuple: TupleValueItem[] = [];
+          for (const arg of child.children) {
+            if (arg.type === "Dimension") {
+              tuple.push({
+                type: "unit",
+                value: Number(arg.value),
+                unit: arg.unit as Unit,
+              });
+            }
+
+            if (arg.type === "Percentage") {
+              tuple.push({
+                type: "unit",
+                value: Number(arg.value),
+                unit: "%",
+              });
+            }
+
+            if (arg.type === "Identifier") {
+              tuple.push({
+                type: "keyword",
+                value: arg.name,
+              });
+            }
+
+            if (arg.type === "Number") {
+              tuple.push({
+                type: "keyword",
+                value: arg.value,
+              });
+            }
+          }
+
+          layers.push({
+            type: "function",
+            name: child.name,
+            args: { type: "tuple", value: tuple },
+          });
         }
       }
     }
   });
 
   return {
-    type: "tuple",
+    type: "layers",
     value: [...layers],
   };
 };

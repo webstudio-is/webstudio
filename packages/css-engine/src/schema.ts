@@ -118,6 +118,7 @@ const LayerValueItem = z.union([
   ImageValue,
   TupleValue,
   InvalidValue,
+  FunctionValue,
 ]);
 
 export type LayerValueItem = z.infer<typeof LayerValueItem>;

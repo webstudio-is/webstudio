@@ -18,6 +18,7 @@ import { parseBoxShadow } from "@webstudio-is/css-data";
 
 const property: StyleProperty = "boxShadow";
 const label = "Box Shadows";
+const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
 export const BoxShadowsSection = (props: RenderCategoryProps) => {
   const { currentStyle, deleteProperty } = props;
@@ -40,8 +41,7 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  // Just using some default shadow by default
-                  parseBoxShadow("0px 2px 5px 0px rgba(0, 0, 0, 0.2)"),
+                  parseBoxShadow(INITIAL_BOX_SHADOW),
                   currentStyle,
                   props.createBatchUpdate
                 );

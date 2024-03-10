@@ -2,8 +2,6 @@ import type {
   LayerValueItem,
   LayersValue,
   StyleProperty,
-  TupleValue,
-  TupleValueItem,
 } from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
@@ -27,12 +25,12 @@ import type {
 export type LayerProps = {
   id: string;
   index: number;
-  layer: LayerValueItem | TupleValueItem;
+  layer: LayerValueItem;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;
   onDeleteLayer: (index: number) => void;
-  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
+  onEditLayer: (index: number, layers: LayersValue) => void;
   createBatchUpdate: CreateBatchUpdate;
   deleteProperty: DeleteProperty;
 };
@@ -40,7 +38,7 @@ export type LayerProps = {
 type LayerListProperties = RenderCategoryProps & {
   disabled?: boolean;
   property: StyleProperty;
-  layers: LayersValue | TupleValue;
+  layers: LayersValue;
   renderLayer: (props: LayerProps) => JSX.Element;
 };
 
@@ -79,7 +77,7 @@ export const LayersList = ({
     return hideLayer(property, index, layers, createBatchUpdate);
   };
 
-  const onEditLayer = (index: number, newLayers: LayersValue | TupleValue) => {
+  const onEditLayer = (index: number, newLayers: LayersValue) => {
     return updateLayer(property, newLayers, layers, index, createBatchUpdate);
   };
 

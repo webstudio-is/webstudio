@@ -98,10 +98,7 @@ export const BoxShadowLayer = (props: LayerProps) => {
               tabIndex={-1}
               disabled={layer.hidden}
               icon={<SubtractIcon />}
-              onClick={(event) => {
-                onDeleteLayer(index);
-                event.preventDefault();
-              }}
+              onClick={() => onDeleteLayer(index)}
             />
           </>
         }

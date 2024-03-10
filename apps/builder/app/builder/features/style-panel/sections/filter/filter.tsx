@@ -19,12 +19,13 @@ import { parseFilter } from "@webstudio-is/css-data";
 
 const property: StyleProperty = "filter";
 const label = "Filter";
+const INITIAL_FILTER = "blur(0px)";
 
 export const FilterSection = (props: RenderCategoryProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layerStyleSource = getStyleSource(currentStyle[property]);
-  const filterValue = currentStyle[property]?.value;
+  const value = currentStyle[property]?.value;
 
   return (
     <CollapsibleSectionBase
@@ -42,7 +43,7 @@ export const FilterSection = (props: RenderCategoryProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    parseFilter("blur(0px)"),
+                    parseFilter(INITIAL_FILTER),
                     currentStyle,
                     props.createBatchUpdate
                   );
@@ -67,11 +68,11 @@ export const FilterSection = (props: RenderCategoryProps) => {
         </SectionTitle>
       }
     >
-      {filterValue?.type === "tuple" && filterValue.value.length > 0 && (
+      {value?.type === "layers" && value.value.length > 0 && (
         <LayersList
           {...props}
           property={property}
-          layers={filterValue}
+          layers={value}
           renderLayer={(layerProps) => (
             <FilterLayer {...layerProps} key={layerProps.index} />
           )}

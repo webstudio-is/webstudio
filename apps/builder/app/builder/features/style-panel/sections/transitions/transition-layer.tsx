@@ -78,10 +78,7 @@ export const TransitionLayer = (props: LayerProps) => {
               tabIndex={-1}
               disabled={disabled || layer?.hidden}
               icon={<SubtractIcon />}
-              onClick={(event) => {
-                onDeleteLayer(index);
-                event.preventDefault();
-              }}
+              onClick={() => onDeleteLayer(index)}
             />
           </>
         }

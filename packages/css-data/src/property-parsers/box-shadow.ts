@@ -7,7 +7,7 @@ import type {
   TupleValueItem,
   Unit,
 } from "@webstudio-is/css-engine";
-import { cssTreeTryParseValue } from "../parse-css-value";
+import { cssTryParseValue } from "../parse-css-value";
 
 export const parseBoxShadow = (
   boxShadow: string
@@ -25,7 +25,7 @@ export const parseBoxShadow = (
       : tokenStream;
   }
 
-  const cssAst = cssTreeTryParseValue(tokenStream);
+  const cssAst = cssTryParseValue(tokenStream);
 
   if (cssAst === undefined) {
     return {
