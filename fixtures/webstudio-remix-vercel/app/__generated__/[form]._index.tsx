@@ -220,16 +220,6 @@ export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
 
-export const pagesPaths = new Set([
-  "",
-  "/radix",
-  "/_route_with_symbols_",
-  "/form",
-  "/heading-with-id",
-  "/resources",
-  "/nested/nested-page",
-]);
-
 export const formsProperties = new Map<
   string,
   { method?: string; action?: string }
