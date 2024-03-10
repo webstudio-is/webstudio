@@ -112,5 +112,11 @@ export const toValue = (
     return value.value.map((value) => toValue(value, transformValue)).join(" ");
   }
 
+  if (value.type === "function") {
+    return `${value.name}(${value.args
+      .map((arg) => toValue(arg, transformValue))
+      .join(value.seperator ? ", " : " ")})`;
+  }
+
   return captureError(new Error("Unknown value type"), value);
 };
