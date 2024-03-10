@@ -134,7 +134,6 @@ const TextFieldBase: ForwardRefRenderFunction<
     items: value,
     onSort,
   });
-
   return (
     <TextFieldContainer
       {...focusProps}
@@ -437,7 +436,20 @@ export const StyleSourceInput = (
     },
   });
 
-  const inputProps = getInputProps();
+  const inputProps = getInputProps({
+    onKeyDown(event) {
+      if (
+        event.key === "Backspace" &&
+        label === "" &&
+        props.editingItemId === undefined
+      ) {
+        const item = value[value.length - 2];
+        if (item) {
+          props.onRemoveItem?.(item.id);
+        }
+      }
+    },
+  });
 
   let hasNewTokenItem = false;
   let hasGlobalTokenItem = false;
