@@ -695,7 +695,8 @@ const traverseStyleValue = (
     value.type === "unparsed" ||
     value.type === "invalid" ||
     value.type === "unset" ||
-    value.type === "rgb"
+    value.type === "rgb" ||
+    value.type === "function"
   ) {
     callback(value);
     return;
