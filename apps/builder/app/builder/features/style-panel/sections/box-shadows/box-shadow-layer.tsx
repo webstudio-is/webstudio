@@ -1,4 +1,4 @@
-import type { LayerValueItem, TupleValueItem } from "@webstudio-is/css-engine";
+import type { FunctionValue, TupleValue } from "@webstudio-is/css-engine";
 import {
   Label,
   SmallIconButton,
@@ -18,7 +18,7 @@ import { toValue } from "@webstudio-is/css-engine";
 import { ColorThumb } from "../../shared/color-thumb";
 import type { LayerProps } from "../../style-layers-list";
 
-const useLayer = (layer: LayerValueItem | TupleValueItem) => {
+const useLayer = (layer: TupleValue | FunctionValue) => {
   return useMemo(() => {
     if (layer.type !== "tuple") {
       return;

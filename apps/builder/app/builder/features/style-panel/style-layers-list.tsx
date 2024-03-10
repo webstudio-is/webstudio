@@ -1,7 +1,8 @@
 import type {
-  LayerValueItem,
+  FunctionValue,
   LayersValue,
   StyleProperty,
+  TupleValue,
 } from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
@@ -25,7 +26,7 @@ import type {
 export type LayerProps = {
   id: string;
   index: number;
-  layer: LayerValueItem;
+  layer: TupleValue | FunctionValue;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;
@@ -85,6 +86,9 @@ export const LayersList = ({
     <CssValueListArrowFocus dragItemId={dragItemId}>
       <Flex direction="column" ref={sortableRefCallback}>
         {layers.value.map((layer, index) => {
+          if (layer.type !== "tuple" && layer.type !== "function") {
+            return null;
+          }
           const id = String(index);
           return renderLayer({
             id,
