@@ -5,10 +5,7 @@ import {
   ListItem,
   ScrollArea,
   Separator,
-  Text,
   theme,
-  focusRingStyle,
-  css,
   Link,
 } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
@@ -17,88 +14,14 @@ import { computeExpression } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
-import env from "~/shared/env";
-import { Image, createImageLoader } from "@webstudio-is/image";
 import { builderUrl } from "~/shared/router-utils";
-
-const focusOutline = focusRingStyle();
-
-const imageLoader = createImageLoader({
-  imageBaseUrl: env.IMAGE_BASE_URL,
-});
-
-const imageContainerStyle = css({
-  position: "relative",
-  overflow: "hidden",
-  aspectRatio: "1.91",
-});
-
-const imageStyle = css({
-  position: "absolute",
-  top: 0,
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  transition: "transform 100ms",
-  "&:hover": {
-    transform: "scale(1.1)",
-  },
-});
-
-const Thumbnail = ({
-  asset,
-  imageUrl,
-}: {
-  asset?: Asset;
-  imageUrl?: string;
-}) => {
-  return (
-    <div className={imageContainerStyle()}>
-      {imageUrl && <img src={imageUrl} className={imageStyle()} />}
-      {asset && (
-        <Image src={asset.name} loader={imageLoader} className={imageStyle()} />
-      )}
-    </div>
-  );
-};
+import { Card } from "./card";
 
 type TemplateData = {
   socialImageAsset?: Asset;
   socialImageUrl?: string;
   title?: string;
   rootInstanceId: string;
-};
-
-const SectionTemplate = ({
-  data: { socialImageAsset, socialImageUrl, title },
-  ...listItemProps
-}: {
-  data: TemplateData;
-}) => {
-  return (
-    <Flex
-      {...listItemProps}
-      direction="column"
-      css={{
-        px: theme.spacing[9],
-        py: theme.spacing[5],
-        position: "relative",
-        overflow: "hidden",
-        outline: "none",
-        "&:hover": {
-          background: theme.colors.backgroundPresetMain,
-        },
-        "&:focus-visible": {
-          ...focusOutline,
-          background: theme.colors.backgroundPresetMain,
-        },
-      }}
-      gap="1"
-    >
-      <Thumbnail asset={socialImageAsset} imageUrl={socialImageUrl} />
-      {title && <Text truncate>{title}</Text>}
-    </Flex>
-  );
 };
 
 // Special meta properties for the marketplace
@@ -237,7 +160,13 @@ export const Templates = ({
                               });
                             }}
                           >
-                            <SectionTemplate data={templateData} />
+                            <Card
+                              image={
+                                templateData.socialImageAsset ??
+                                templateData.socialImageUrl
+                              }
+                              title={templateData.title}
+                            />
                           </ListItem>
                         );
                       })}

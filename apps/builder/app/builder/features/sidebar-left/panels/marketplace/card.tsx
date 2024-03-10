@@ -21,17 +21,16 @@ const imageContainerStyle = css({
   position: "relative",
   overflow: "hidden",
   aspectRatio: "1.91",
-  "&[data-state=loading]": {
-    "--ws-marketplace-card-spinner-display": "block",
-  },
 });
 
 const spinnerStyle = css({
   position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  display: `var(--ws-marketplace-card-spinner-display, none)`,
+  inset: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "rgba(255, 255, 255, 0.5)",
+  backdropFilter: "blur(8px)",
 });
 
 const imageStyle = css({
@@ -47,32 +46,45 @@ const imageStyle = css({
 });
 
 type ThumbnailProps = {
-  image?: { name: string } | string;
+  image?: { name: string } | string | "";
   state?: "loading";
 };
 
 const Thumbnail = ({ image, state }: ThumbnailProps) => {
   return (
-    <div className={imageContainerStyle()} data-state={state}>
-      {typeof image === "string" ? (
+    <div className={imageContainerStyle()}>
+      {image === "" ? (
+        // Will render a placeholder
+        <Image loader={imageLoader} className={imageStyle()} />
+      ) : typeof image === "string" ? (
+        // Its a URL.
         <img src={image} className={imageStyle()} />
-      ) : image !== undefined ? (
-        <Image src={image.name} loader={imageLoader} className={imageStyle()} />
-      ) : undefined}
-      <SpinnerIcon className={spinnerStyle()} size={rawTheme.spacing[15]} />
+      ) : (
+        <Image
+          src={image?.name}
+          loader={imageLoader}
+          className={imageStyle()}
+        />
+      )}
+
+      {state === "loading" && (
+        <div className={spinnerStyle()}>
+          <SpinnerIcon size={rawTheme.spacing[15]} />
+        </div>
+      )}
     </div>
   );
 };
 
 type CardProps = {
-  thumbnail?: ThumbnailProps["image"];
+  image?: ThumbnailProps["image"];
   title?: string;
   suffix?: React.ReactNode;
   state?: "selected" | "loading";
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ thumbnail, title, suffix, state = "initial" as const, ...props }, ref) => {
+  ({ image, title, suffix, state = "initial" as const, ...props }, ref) => {
     return (
       <Flex
         {...props}
@@ -90,7 +102,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         gap="1"
       >
         <Thumbnail
-          image={thumbnail}
+          image={image}
           state={state === "loading" ? state : undefined}
         />
         <Flex align="center">

@@ -60,7 +60,7 @@ const GalleryOverviewItem = ({
     <Card
       {...props}
       title={item.name}
-      thumbnail={
+      image={
         item.thumbnailAssetName ? { name: item.thumbnailAssetName } : undefined
       }
       state={isOpen ? "selected" : isLoading ? "loading" : undefined}
