@@ -59,12 +59,10 @@ export type FunctionValue = z.infer<typeof FunctionValue>;
 export const FunctionValue: z.ZodType<{
   type: "function";
   name: string;
-  seperator?: string | undefined;
   args: StyleValue;
 }> = z.object({
   type: z.literal("function"),
   name: z.string(),
-  seperator: z.string().optional(),
   args: z.lazy(() => StyleValue),
 });
 
