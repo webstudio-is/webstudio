@@ -9,7 +9,7 @@
  * const {update, cleanup} = createContentController(target, {
  *   contents: [
  *     { name: 'unit', match: (value) => value === 'px' },
- *     { name: 'number', match: (value) => Number.isNaN(parseFloat(value)) === false },
+ *     { name: 'number', match: (value) => Number.isNaN(Number.parseFloat(value)) === false },
  *     { name: 'unknown', match: (value) => true },
  *   ],
  *   onMouseMove: ({name, value, position}) => { },

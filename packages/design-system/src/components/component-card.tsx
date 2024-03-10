@@ -3,9 +3,10 @@
  * https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=2608-8921
  */
 
-import { forwardRef, type ElementRef, type ComponentProps } from "react";
-import { textVariants } from "../";
+import { forwardRef, type ComponentProps } from "react";
 import { css, theme } from "../stitches.config";
+import { textVariants } from "./text";
+import { Tooltip } from "./tooltip";
 
 const cardStyle = css({
   boxSizing: "border-box",
@@ -60,25 +61,31 @@ const textStyle = css(textVariants.small, {
 
 type ComponentCardProps = {
   label: string;
+  description?: string;
   icon: JSX.Element;
   state?: "hover" | "disabled" | "focus";
 } & ComponentProps<"div">;
 
-export const ComponentCard = forwardRef<ElementRef<"div">, ComponentCardProps>(
-  ({ icon, label, className, state, ...props }, ref) => {
+export const ComponentCard = forwardRef<HTMLDivElement, ComponentCardProps>(
+  ({ icon, label, className, state, description, ...props }, ref) => {
     return (
-      <div
-        className={cardStyle({ className })}
-        ref={ref}
-        data-state={state}
-        {...props}
+      <Tooltip
+        content={description ?? label}
+        css={{ maxWidth: theme.spacing[28] }}
       >
-        {icon}
+        <div
+          className={cardStyle({ className })}
+          ref={ref}
+          data-state={state}
+          {...props}
+        >
+          {icon}
 
-        <div className={textContainerStyle()}>
-          <div className={textStyle()}>{label}</div>
+          <div className={textContainerStyle()}>
+            <div className={textStyle()}>{label}</div>
+          </div>
         </div>
-      </div>
+      </Tooltip>
     );
   }
 );

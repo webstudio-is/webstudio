@@ -56,14 +56,18 @@ const editorContentStyle = css({
   },
   "& .cm-content": {
     padding: 0,
+    // makes sure you can click to focus when editor content is smaller than the container
+    minHeight: "100%",
   },
   "& .cm-line": {
     padding: 0,
   },
   "& .cm-editor": {
     width: "100%",
-    // makes sure you can click to focus when editor content is smaller than the container
-    height: "100%",
+    // avoid modifying height in .cm-content
+    // because it breaks scroll events and makes scrolling laggy
+    minHeight: "var(--ws-code-editor-min-height, auto)",
+    maxHeight: "var(--ws-code-editor-max-height, none)",
   },
 });
 

@@ -16,3 +16,5 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 };
 
 export const Icon = ImageIcon;
+
+export const label = "Assets";

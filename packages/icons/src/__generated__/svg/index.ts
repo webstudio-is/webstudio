@@ -65,6 +65,7 @@ export { ChevronFilledUpIcon } from "./chevron-filled-up";
 export { ChevronLeftIcon } from "./chevron-left";
 export { ChevronRightIcon } from "./chevron-right";
 export { ChevronUpIcon } from "./chevron-up";
+export { CloudIcon } from "./cloud";
 export { CodeTextIcon } from "./code-text";
 export { CollapsibleIcon } from "./collapsible";
 export { CommitIcon } from "./commit";

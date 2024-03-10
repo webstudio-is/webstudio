@@ -13,3 +13,5 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
 };
 
 export const Icon = NavigatorIcon;
+
+export const label = "Navigator";

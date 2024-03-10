@@ -49,12 +49,13 @@ import { subscribeInstanceSelection } from "./instance-selection";
 import { subscribeInstanceHovering } from "./instance-hovering";
 import { useHashLinkSync } from "~/shared/pages";
 import { useMount } from "~/shared/hook-utils/use-mount";
-import { useSelectedInstance } from "./instance-selected-react";
+import { useSelectedInstance } from "./use-selected-instance";
 import { subscribeInterceptedEvents } from "./interceptor";
 import type { ImageLoader } from "@webstudio-is/image";
 import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
+import { useScrollNewInstanceIntoView } from "./shared/use-scroll-new-instance-into-view";
 
 registerContainers();
 
@@ -123,11 +124,11 @@ const DesignMode = ({ params }: { params: Params }) => {
   // in both places
   useCopyPaste();
 
+  useScrollNewInstanceIntoView();
   useSelectedInstance();
   useEffect(updateCollaborativeInstanceRect, []);
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
-
   return null;
 };
 
@@ -136,10 +137,7 @@ type CanvasProps = {
   imageLoader: ImageLoader;
 };
 
-export const Canvas = ({
-  params,
-  imageLoader,
-}: CanvasProps): JSX.Element | null => {
+export const Canvas = ({ params, imageLoader }: CanvasProps) => {
   useCanvasStore(publish);
   const isPreviewMode = useStore($isPreviewMode);
 
