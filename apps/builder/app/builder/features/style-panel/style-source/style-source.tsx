@@ -160,6 +160,7 @@ const StyleSourceContainer = styled(Box, {
   variants: {
     source: {
       local: {
+        order: 1,
         backgroundColor: theme.colors.backgroundStyleSourceLocal,
         [menuTriggerGradientVar]:
           theme.colors.backgroundStyleSourceGradientLocal,

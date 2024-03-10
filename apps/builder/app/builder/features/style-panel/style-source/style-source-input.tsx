@@ -187,6 +187,7 @@ const TextFieldBase: ForwardRefRenderFunction<
             fontFamily: theme.fonts.sans,
             fontSize: theme.deprecatedFontSize[3],
             lineHeight: 1,
+            order: 0,
           }}
           value={label}
           type={type}
