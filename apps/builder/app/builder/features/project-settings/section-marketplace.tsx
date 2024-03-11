@@ -298,9 +298,8 @@ export const SectionMarketplace = () => {
       <Grid gap={2} css={sectionSpacing}>
         <PanelBanner>
           <Text>
-            {`For a page to show up in the marketplace, you will need to add a "ws:category"
-            meta tag in the page settings. Optionally, you can also define
-            "ws:title"; otherwise, the page title will be used.`}
+            {`You can add a "ws:category" meta tag in the page settings for pages being grouped by category. You can also define
+            "ws:title" for each page; otherwise, the page title will be used.`}
           </Text>
           <Text color="destructive">
             {`Don't forget to publish your project after every change to make your
