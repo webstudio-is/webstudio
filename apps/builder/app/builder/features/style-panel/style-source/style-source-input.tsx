@@ -292,6 +292,7 @@ const renderMenuItems = (props: {
 }) => {
   return (
     <>
+      <DropdownMenuLabel>{props.item.label}</DropdownMenuLabel>
       {props.item.source !== "local" && (
         <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
           Edit Name
