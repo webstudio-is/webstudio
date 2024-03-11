@@ -218,7 +218,8 @@ export const SectionMarketplace = () => {
 
           <Grid gap={2}>
             <Text color="subtle">
-              Upload a 32 x 32 px image to display in the marketplace overview.
+              Image to display in the marketplace overview. The optimal
+              dimensions are 600x315 px or larger with a 1.91:1 aspect ratio.
             </Text>
             <ImageControl onAssetIdChange={handleSave("thumbnailAssetId")}>
               <Button css={{ justifySelf: "start" }}>Upload</Button>
