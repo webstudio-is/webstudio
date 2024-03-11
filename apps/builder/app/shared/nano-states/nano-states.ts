@@ -28,6 +28,7 @@ import { $selectedPage } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
 import type { Project } from "@webstudio-is/project";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import type { TokenPermissions } from "@webstudio-is/authorization-token";
 
 export const $project = atom<Project | undefined>();
 
@@ -301,8 +302,14 @@ export const $hoveredInstanceSelector = atom<undefined | InstanceSelector>(
 export const $isPreviewMode = atom<boolean>(false);
 
 export const $authPermit = atom<AuthPermit>("view");
+export const $authTokenPermissions = atom<TokenPermissions>({
+  canClone: true,
+  canCopy: true,
+});
 
 export const $authToken = atom<string | undefined>(undefined);
+
+export const $toastErrors = atom<string[]>([]);
 
 export type DragAndDropState = {
   isDragging: boolean;

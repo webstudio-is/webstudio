@@ -24,6 +24,8 @@ import {
   $selectedInstanceRenderState,
   $hoveredInstanceSelector,
   $isPreviewMode,
+  $authTokenPermissions,
+  $toastErrors,
   synchronizedCanvasStores,
   $synchronizedInstances,
   $synchronizedBreakpoints,
@@ -108,6 +110,9 @@ export const registerContainers = () => {
   );
   clientStores.set("hoveredInstanceSelector", $hoveredInstanceSelector);
   clientStores.set("isPreviewMode", $isPreviewMode);
+  clientStores.set("authTokenPermissions", $authTokenPermissions);
+  clientStores.set("toastErrors", $toastErrors);
+
   clientStores.set("selectedStyleSources", $selectedStyleSources);
   clientStores.set("selectedStyleState", $selectedStyleState);
   clientStores.set("dragAndDropState", $dragAndDropState);
