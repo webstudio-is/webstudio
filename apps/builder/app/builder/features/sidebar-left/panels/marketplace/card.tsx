@@ -46,7 +46,7 @@ const imageStyle = css({
 });
 
 type ThumbnailProps = {
-  image?: { name: string } | string | "";
+  image?: { name: string } | string;
   state?: "loading";
 };
 
