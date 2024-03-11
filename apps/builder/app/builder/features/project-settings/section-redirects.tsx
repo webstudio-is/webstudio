@@ -23,9 +23,10 @@ import {
 } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
-import { $pages } from "~/shared/nano-states";
+import { $pages, $project } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { flushSync } from "react-dom";
+import { getPublishedUrl } from "~/shared/router-utils";
 
 export const SectionRedirects = () => {
   const [redirects, setRedirects] = useState(
@@ -40,6 +41,8 @@ export const SectionRedirects = () => {
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
   const oldPathRef = useRef<HTMLInputElement>(null);
+  const projectData = useStore($project);
+  const publishedUrl = new URL(getPublishedUrl(projectData?.domain ?? ""));
 
   const redirectKeys = Object.keys(redirects);
   const isValidRedirects =
@@ -236,8 +239,10 @@ export const SectionRedirects = () => {
                         <Tooltip content={redirect.old}>
                           <Link
                             underline="hover"
-                            // @todo needs a link with published domain
-                            href={redirect.old}
+                            href={new URL(
+                              redirect.old,
+                              publishedUrl
+                            ).toString()}
                             css={truncate()}
                             target="_blank"
                           >
@@ -251,8 +256,10 @@ export const SectionRedirects = () => {
                         <Tooltip content={redirect.new}>
                           <Link
                             underline="hover"
-                            // @todo needs a link with published domain
-                            href={redirect.new}
+                            href={new URL(
+                              redirect.new,
+                              publishedUrl
+                            ).toString()}
                             css={truncate()}
                             target="_blank"
                           >
