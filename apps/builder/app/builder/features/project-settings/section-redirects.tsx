@@ -10,6 +10,9 @@ import {
   SmallIconButton,
   InputErrorsTooltip,
   Select,
+  Link,
+  truncate,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent, useRef } from "react";
@@ -230,17 +233,37 @@ export const SectionRedirects = () => {
                       }}
                     >
                       <Flex gap="2" align="center">
-                        <Text truncate>
-                          {redirect.old}, {redirect.status ?? "301"}
-                        </Text>
+                        <Tooltip content={redirect.old}>
+                          <Link
+                            underline="hover"
+                            // @todo needs a link with published domain
+                            href={redirect.old}
+                            css={truncate()}
+                            target="_blank"
+                          >
+                            {redirect.old}
+                          </Link>
+                        </Tooltip>
+                        <Text>{redirect.status ?? "301"}</Text>
                         <Flex shrink={false} align="center">
                           <ArrowRightIcon size={16} aria-disabled />
                         </Flex>
-                        <Text truncate>{redirect.new}</Text>
+                        <Tooltip content={redirect.new}>
+                          <Link
+                            underline="hover"
+                            // @todo needs a link with published domain
+                            href={redirect.new}
+                            css={truncate()}
+                            target="_blank"
+                          >
+                            {redirect.new}
+                          </Link>
+                        </Tooltip>
                       </Flex>
                       <SmallIconButton
                         variant="destructive"
                         icon={<TrashIcon />}
+                        aria-label={`Delete redirect from ${redirect.old}`}
                         onClick={() => handleDeleteRedirect(index)}
                       />
                     </Flex>
