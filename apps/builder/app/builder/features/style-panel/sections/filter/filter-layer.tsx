@@ -22,6 +22,7 @@ export const FilterLayer = (props: LayerProps) => {
           index={index}
           filter={filter}
           onEditLayer={props.onEditLayer}
+          deleteProperty={props.deleteProperty}
         />
       }
     >

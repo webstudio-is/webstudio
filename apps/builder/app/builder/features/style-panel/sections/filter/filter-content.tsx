@@ -17,12 +17,14 @@ type FilterContentProps = {
   index: number;
   filter: string;
   onEditLayer: (index: number, layers: LayersValue) => void;
+  deleteProperty: DeleteProperty;
 };
 
 export const FilterSectionContent = ({
   index,
   filter,
   onEditLayer,
+  deleteProperty,
 }: FilterContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -83,11 +85,23 @@ export const FilterSectionContent = ({
         onChange={handleChange}
         onBlur={handleComplete}
         onKeyDown={(event) => {
+          event.stopPropagation();
+
           if (event.key === "Enter") {
             handleComplete();
             // On pressing Enter, the textarea is creating a new line.
             // In-order to prevent it and update the content.
             // We prevent the default behaviour
+            event.preventDefault();
+          }
+
+          if (event.key === "Escape") {
+            if (intermediateValue === undefined) {
+              return;
+            }
+
+            deleteProperty("filter", { isEphemeral: true });
+            setIntermediateValue(undefined);
             event.preventDefault();
           }
         }}
