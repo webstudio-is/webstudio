@@ -62,6 +62,7 @@ const Thumbnail = ({ image, state }: ThumbnailProps) => {
       ) : (
         <Image
           src={image?.name}
+          width={rawTheme.spacing[28]}
           loader={imageLoader}
           className={imageStyle()}
         />
