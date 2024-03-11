@@ -39,6 +39,8 @@ export const PanelTabsTrigger = styled(Primitive.Trigger, {
 });
 
 export const PanelTabsContent = styled(Primitive.Content, {
+  display: "grid",
+  minHeight: 0,
   "&:focus": { outline: "none" },
   "&[data-state=inactive]": { display: "none" },
 });
