@@ -124,7 +124,6 @@ export const SectionMarketplace = () => {
   const ids = useIds([
     "name",
     "category",
-    "thumbnailAssetId",
     "author",
     "email",
     "website",
