@@ -74,6 +74,24 @@ export const menuItemCss = css(textVariants.labelsTitleCase, {
         color: theme.colors.foregroundDestructive,
       },
     },
+    hint: {
+      true: {
+        ...textVariants.labelsSentenceCase,
+        px: theme.spacing[5],
+        background: theme.colors.backgroundMenuHint,
+        borderRadius: theme.borderRadius[2],
+        overflow: "hidden",
+        "&::before": {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          content: '""',
+          width: 2,
+          height: "100%",
+          background: theme.colors.backgroundGradientVertical,
+        },
+      },
+    },
   },
 });
 

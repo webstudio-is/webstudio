@@ -123,6 +123,7 @@ export { ListItemIcon } from "./list-item";
 export { ListViewIcon } from "./list-view";
 export { ListIcon } from "./list";
 export { LoadingDotsIcon } from "./loading-dots";
+export { LocalStyleIcon } from "./local-style";
 export { MaximizeIcon } from "./maximize";
 export { MenuEllipsesIcon } from "./menu-ellipses";
 export { MicOffIcon } from "./mic-off";
