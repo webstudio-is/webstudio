@@ -76,6 +76,7 @@ export const menuItemCss = css(textVariants.labelsTitleCase, {
     },
     hint: {
       true: {
+        ...textVariants.labelsSentenceCase,
         px: theme.spacing[5],
         background: theme.colors.backgroundMenuHint,
         borderRadius: theme.borderRadius[2],

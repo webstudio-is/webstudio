@@ -45,6 +45,7 @@ import {
 import { useState } from "react";
 import { DeprecatedIconButton } from "./__DEPRECATED__/icon-button";
 import { StorySection } from "./storybook";
+import { theme } from "../stitches.config";
 
 const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   const [isApple, setIsApple] = useState(true);
@@ -131,6 +132,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
             </DropdownMenuRadioGroup>
           </>
         )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem hint>Hint</DropdownMenuItem>
         <DropdownMenuArrow />
       </DropdownMenuContent>
