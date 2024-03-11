@@ -123,7 +123,7 @@ const EditableText = ({
   onChangeValue,
 }: EditableTextProps) => {
   const { ref, handlers } = useContentEditable({
-    isEditable: false,
+    isEditable: true,
     isEditing,
     onChangeEditing,
     onChangeValue,
