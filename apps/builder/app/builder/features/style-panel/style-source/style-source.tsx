@@ -98,6 +98,7 @@ const Menu = (props: MenuProps) => {
       <DropdownMenuPortal>
         <DropdownMenuContent
           onCloseAutoFocus={(event) => event.preventDefault()}
+          css={{ maxWidth: theme.spacing[24] }}
         >
           {props.children}
         </DropdownMenuContent>
@@ -110,7 +111,6 @@ export type ItemSource = "token" | "componentToken" | "tag" | "local";
 
 type EditableTextProps = {
   label: string;
-  isEditable: boolean;
   isEditing: boolean;
   onChangeEditing: (isEditing: boolean) => void;
   onChangeValue: (value: string) => void;
@@ -118,13 +118,12 @@ type EditableTextProps = {
 
 const EditableText = ({
   label,
-  isEditable,
   isEditing,
   onChangeEditing,
   onChangeValue,
 }: EditableTextProps) => {
   const { ref, handlers } = useContentEditable({
-    isEditable,
+    isEditable: true,
     isEditing,
     onChangeEditing,
     onChangeValue,
@@ -160,6 +159,7 @@ const StyleSourceContainer = styled(Box, {
   variants: {
     source: {
       local: {
+        order: 1,
         backgroundColor: theme.colors.backgroundStyleSourceLocal,
         [menuTriggerGradientVar]:
           theme.colors.backgroundStyleSourceGradientLocal,
@@ -242,7 +242,7 @@ const StyleSourceState = styled(Text, {
 
 type StyleSourceProps = {
   id: string;
-  label: string;
+  children: ReactNode;
   menuItems: ReactNode;
   selected: boolean;
   state: undefined | string;
@@ -258,7 +258,6 @@ type StyleSourceProps = {
 
 export const StyleSource = ({
   id,
-  label,
   menuItems,
   selected,
   state,
@@ -267,6 +266,7 @@ export const StyleSource = ({
   isEditing,
   isDragging,
   source,
+  children,
   onChangeValue,
   onChangeEditing,
   onSelect,
@@ -287,14 +287,18 @@ export const StyleSource = ({
           disabled={disabled || isEditing}
           isEditing={isEditing}
           onClick={onSelect}
+          tabIndex={-1}
         >
-          <EditableText
-            isEditable={source !== "local"}
-            isEditing={isEditing}
-            onChangeEditing={onChangeEditing}
-            onChangeValue={onChangeValue}
-            label={label}
-          />
+          {typeof children === "string" ? (
+            <EditableText
+              isEditing={isEditing}
+              onChangeEditing={onChangeEditing}
+              onChangeValue={onChangeValue}
+              label={children}
+            />
+          ) : (
+            children
+          )}
         </StyleSourceButton>
       </Flex>
       {stateLabel !== undefined && (

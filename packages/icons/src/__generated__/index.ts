@@ -123,6 +123,7 @@ export * from "./list-item";
 export * from "./list-view";
 export * from "./list";
 export * from "./loading-dots";
+export * from "./local-style";
 export * from "./maximize";
 export * from "./menu-ellipses";
 export * from "./mic-off";

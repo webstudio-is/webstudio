@@ -31,8 +31,9 @@ import {
   rawTheme,
   theme,
   styled,
+  Flex,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, DotIcon, LocalStyleIcon } from "@webstudio-is/icons";
 import {
   forwardRef,
   useState,
@@ -133,7 +134,6 @@ const TextFieldBase: ForwardRefRenderFunction<
     items: value,
     onSort,
   });
-
   return (
     <TextFieldContainer
       {...focusProps}
@@ -144,10 +144,29 @@ const TextFieldBase: ForwardRefRenderFunction<
       }
       onKeyDown={onKeyDown}
     >
+      {/* We want input to be the first element in DOM so it receives the focus first */}
+      {editingItemId === undefined && (
+        <DeprecatedTextFieldInput
+          {...textFieldProps}
+          css={{
+            color: theme.colors.hiContrast,
+            fontVariantNumeric: "tabular-nums",
+            fontFamily: theme.fonts.sans,
+            fontSize: theme.deprecatedFontSize[3],
+            lineHeight: 1,
+            order: 1,
+          }}
+          value={label}
+          type={type}
+          onClick={onClick}
+          ref={mergeRefs(internalInputRef, inputRef ?? null)}
+          spellCheck={false}
+          aria-label="New Style Source Input"
+        />
+      )}
       {value.map((item) => (
         <StyleSource
           key={item.id}
-          label={item.label}
           menuItems={renderStyleSourceMenuItems(item)}
           id={item.id}
           selected={item.id === selectedItemSelector?.styleSourceId}
@@ -174,28 +193,17 @@ const TextFieldBase: ForwardRefRenderFunction<
             onEditItem?.();
             onChangeItem?.({ ...item, label });
           }}
-        />
+        >
+          {item.source === "local" ? (
+            <Flex align="center" justify="center">
+              <LocalStyleIcon />
+            </Flex>
+          ) : (
+            item.label
+          )}
+        </StyleSource>
       ))}
       {placementIndicator}
-      {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItemId === undefined && (
-        <DeprecatedTextFieldInput
-          {...textFieldProps}
-          css={{
-            color: theme.colors.hiContrast,
-            fontVariantNumeric: "tabular-nums",
-            fontFamily: theme.fonts.sans,
-            fontSize: theme.deprecatedFontSize[3],
-            lineHeight: 1,
-          }}
-          value={label}
-          type={type}
-          onClick={onClick}
-          ref={mergeRefs(internalInputRef, inputRef ?? null)}
-          spellCheck={false}
-          aria-label="New Style Source Input"
-        />
-      )}
     </TextFieldContainer>
   );
 };
@@ -284,6 +292,7 @@ const renderMenuItems = (props: {
 }) => {
   return (
     <>
+      <DropdownMenuLabel>{props.item.label}</DropdownMenuLabel>
       {props.item.source !== "local" && (
         <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
           Edit Name
@@ -383,6 +392,18 @@ const renderMenuItems = (props: {
           </Fragment>
         );
       })}
+
+      <DropdownMenuSeparator />
+      {props.item.source === "local" && (
+        <DropdownMenuItem hint>
+          Style instances without creating a token or override a token locally.
+        </DropdownMenuItem>
+      )}
+      {props.item.source !== "local" && (
+        <DropdownMenuItem hint>
+          Reuse styles across multiple instances by creating a token.
+        </DropdownMenuItem>
+      )}
     </>
   );
 };
@@ -428,7 +449,20 @@ export const StyleSourceInput = (
     },
   });
 
-  const inputProps = getInputProps();
+  const inputProps = getInputProps({
+    onKeyDown(event) {
+      if (
+        event.key === "Backspace" &&
+        label === "" &&
+        props.editingItemId === undefined
+      ) {
+        const item = value[value.length - 2];
+        if (item) {
+          props.onRemoveItem?.(item.id);
+        }
+      }
+    },
+  });
 
   let hasNewTokenItem = false;
   let hasGlobalTokenItem = false;
