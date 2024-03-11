@@ -336,7 +336,7 @@ export const SectionMarketplace = () => {
         {approval.status === "UNLISTED" ? (
           <Button
             color="primary"
-            disabled={isConfirmed === false}
+            disabled={isConfirmed === false || errors !== undefined}
             state={approval.state === "idle" ? undefined : "pending"}
             onClick={approval.submit}
           >
