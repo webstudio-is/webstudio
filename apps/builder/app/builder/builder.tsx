@@ -44,6 +44,7 @@ import {
   $resources,
   subscribeResources,
   $marketplaceProduct,
+  $authTokenPermissions,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -57,6 +58,8 @@ import { ProjectSettings } from "./features/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
+import type { TokenPermissions } from "@webstudio-is/authorization-token";
+import { useToastErrors } from "~/shared/error/toast-error";
 
 registerContainers();
 
@@ -228,6 +231,7 @@ export type BuilderProps = {
   assets: [Asset["id"], Asset][];
   authToken?: string;
   authPermit: AuthPermit;
+  authTokenPermissions: TokenPermissions;
   userPlanFeatures: UserPlanFeatures;
 };
 
@@ -239,6 +243,7 @@ export const Builder = ({
   authToken,
   authPermit,
   userPlanFeatures,
+  authTokenPermissions,
 }: BuilderProps) => {
   useMount(() => {
     // additional data stores
@@ -247,6 +252,7 @@ export const Builder = ({
     $authPermit.set(authPermit);
     $authToken.set(authToken);
     $userPlanFeatures.set(userPlanFeatures);
+    $authTokenPermissions.set(authTokenPermissions);
 
     // set initial containers value
     $assets.set(new Map(assets));
@@ -263,6 +269,7 @@ export const Builder = ({
     $marketplaceProduct.set(build.marketplaceProduct);
   });
 
+  useToastErrors();
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
 

@@ -18,16 +18,22 @@ const initialLinks: Array<LinkOptions> = [
     token: uuid(),
     name: "View Only",
     relation: "viewers",
+    canClone: false,
+    canCopy: false,
   },
   {
     token: uuid(),
     name: "View and Edit",
     relation: "editors",
+    canClone: false,
+    canCopy: false,
   },
   {
     token: uuid(),
     name: "Build",
     relation: "builders",
+    canClone: false,
+    canCopy: false,
   },
 ];
 
@@ -56,6 +62,8 @@ const useShareProject = (
         token: uuid(),
         name: "Custom Link",
         relation: "viewers",
+        canClone: false,
+        canCopy: false,
       },
     ]);
   };

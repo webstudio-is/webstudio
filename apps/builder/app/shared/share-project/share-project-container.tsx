@@ -31,9 +31,7 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
     }
     const updatedLink = {
       projectId: projectId,
-      token: link.token,
-      relation: link.relation,
-      name: link.name,
+      ...link,
     };
     const updatedLinks = links.map((currentLink) => {
       if (currentLink.token === updatedLink.token) {
