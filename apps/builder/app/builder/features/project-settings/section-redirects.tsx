@@ -229,11 +229,13 @@ export const SectionRedirects = () => {
                         overflow: "hidden",
                       }}
                     >
-                      <Flex gap="2">
-                        <Text>
+                      <Flex gap="2" align="center">
+                        <Text truncate>
                           {redirect.old}, {redirect.status ?? "301"}
                         </Text>
-                        <ArrowRightIcon size={16} />
+                        <Flex shrink={false} align="center">
+                          <ArrowRightIcon size={16} aria-disabled />
+                        </Flex>
                         <Text truncate>{redirect.new}</Text>
                       </Flex>
                       <SmallIconButton
