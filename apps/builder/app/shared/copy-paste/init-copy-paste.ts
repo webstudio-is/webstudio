@@ -1,3 +1,6 @@
+import { toastError } from "../error/toast-error";
+import { $authTokenPermissions } from "../nano-states";
+
 const isValidClipboardEvent = (event: ClipboardEvent) => {
   const selection = document.getSelection();
   if (selection?.type === "Range") {
@@ -39,6 +42,12 @@ type Plugin = {
 
 export const initCopyPaste = (plugins: Plugin[]) => {
   const handleCopy = (event: ClipboardEvent) => {
+    if ($authTokenPermissions.get().canCopy === false) {
+      toastError("Copying has been disabled by the project owner");
+      event.preventDefault();
+      return;
+    }
+
     if (
       event.clipboardData === null ||
       isValidClipboardEvent(event) === false

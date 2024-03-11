@@ -53,7 +53,6 @@ export const createElementsTree = ({
       value={{
         renderer,
         imageLoader,
-        pagesPaths: new Set(),
         assetBaseUrl,
         imageBaseUrl,
         resources: {},

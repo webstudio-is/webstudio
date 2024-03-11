@@ -1,2 +1,2 @@
-export * as db from "./db";
+export { db } from "./db";
 export * from "./trpc";

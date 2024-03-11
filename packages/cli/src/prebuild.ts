@@ -581,10 +581,7 @@ export const prebuild = async (options: {
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
-    const utilsExport = generateUtilsExport({
-      pages: siteData.build.pages,
-      props,
-    });
+    const utilsExport = generateUtilsExport({ props });
     // generate new Page Params variable if does not exist
     // to allow always passing it from route template
     const pathParamsDataSourceId =

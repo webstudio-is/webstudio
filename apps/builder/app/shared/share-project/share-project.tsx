@@ -21,6 +21,8 @@ import {
   Link,
   buttonStyle,
   IconButton,
+  Checkbox,
+  Grid,
 } from "@webstudio-is/design-system";
 import {
   CopyIcon,
@@ -81,27 +83,20 @@ const Permission = ({
 };
 
 type MenuProps = {
-  relation: Relation;
   name: string;
+  value: LinkOptions;
   hasProPlan: boolean;
-  onChangePermission: (relation: Relation) => void;
-  onChangeName: (name: string) => void;
+  onChange: (value: LinkOptions) => void;
   onDelete: () => void;
 };
 
-const Menu = ({
-  hasProPlan,
-  relation,
-  name,
-  onChangePermission,
-  onChangeName,
-  onDelete,
-}: MenuProps) => {
+const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
+
   const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
     if (checked) {
-      onChangePermission(relation);
+      onChange({ ...value, relation });
     }
   };
 
@@ -110,7 +105,7 @@ const Menu = ({
       return;
     }
 
-    onChangeName(customLinkName);
+    onChange({ ...value, name: customLinkName });
     setIsOpen(false);
   };
 
@@ -142,7 +137,7 @@ const Menu = ({
                   saveCustomLinkName();
                 }
               }}
-              onBlur={() => onChangeName(customLinkName)}
+              onBlur={() => onChange({ ...value, name: customLinkName })}
               placeholder="Share Project"
               name="Name"
               autoFocus
@@ -152,24 +147,80 @@ const Menu = ({
           <Item>
             <Label>Permissions</Label>
             <Permission
-              checked={relation === "viewers"}
+              checked={value.relation === "viewers"}
               onCheckedChange={handleCheckedChange("viewers")}
               title="View"
-              info="Recipients can view, copy instances and clone the project"
+              //info="Recipients can view, copy instances and clone the project"
+              info={
+                <Flex direction="column">
+                  Recipients can view, copy instances and clone the project.
+                  {hasProPlan !== true && (
+                    <>
+                      <br />
+                      <br />
+                      Upgrade to a Pro account to set additional permissions.
+                      <br /> <br />
+                      <Link
+                        className={buttonStyle({ color: "gradient" })}
+                        color="contrast"
+                        underline="none"
+                        href="https://webstudio.is/pricing"
+                        target="_blank"
+                      >
+                        Upgrade
+                      </Link>
+                    </>
+                  )}
+                </Flex>
+              }
             />
-            {/*
-           Hide temporarily until we have a way to allow edit content but not edit tree, etc.
 
-          <Permission
-            onCheckedChange={handleCheckedChange("editors")}
-            checked={relation === "editors"}
-            title="Edit Content"
-            info="Recipients can view the project and edit content like text and images, but they will not be able to change the styles or structure of your project."
-          />
-          */}
+            <Grid
+              css={{
+                ml: theme.spacing[6],
+              }}
+            >
+              <Grid
+                gap={1}
+                flow={"column"}
+                css={{
+                  alignItems: "center",
+                  justifyContent: "start",
+                }}
+              >
+                <Checkbox
+                  disabled={hasProPlan !== true}
+                  checked={value.canClone}
+                  onCheckedChange={(canClone) => {
+                    onChange({ ...value, canClone: Boolean(canClone) });
+                  }}
+                  id={`viewer-can-clone`}
+                />
+                <Label htmlFor={`viewer-can-clone`}>Can clone</Label>
+              </Grid>
+              <Grid
+                gap={1}
+                flow={"column"}
+                css={{
+                  alignItems: "center",
+                  justifyContent: "start",
+                }}
+              >
+                <Checkbox
+                  disabled={hasProPlan !== true}
+                  checked={value.canCopy}
+                  onCheckedChange={(canCopy) => {
+                    onChange({ ...value, canCopy: Boolean(canCopy) });
+                  }}
+                  id={`viewer-can-copy`}
+                />
+                <Label htmlFor={`viewer-can-copy`}>Can copy</Label>
+              </Grid>
+            </Grid>
+
             <Permission
               onCheckedChange={handleCheckedChange("builders")}
-              checked={relation === "builders"}
+              checked={value.relation === "builders"}
               title="Build"
               info="Recipients can make any changes but can not publish the project."
             />
@@ -177,7 +228,7 @@ const Menu = ({
             <Permission
               disabled={hasProPlan !== true}
               onCheckedChange={handleCheckedChange("administrators")}
-              checked={relation === "administrators"}
+              checked={value.relation === "administrators"}
               title="Admin"
               info={
                 <Flex direction="column">
@@ -237,11 +288,13 @@ export type LinkOptions = {
   token: string;
   name: string;
   relation: Relation;
+  canCopy: boolean;
+  canClone: boolean;
 };
 
-type SharedLinkItemType = LinkOptions & {
-  onChangeRelation: (permission: Relation) => void;
-  onChangeName: (name: string) => void;
+type SharedLinkItemType = {
+  value: LinkOptions;
+  onChange: (value: LinkOptions) => void;
   onDelete: () => void;
   builderUrl: (props: {
     authToken: string;
@@ -251,16 +304,13 @@ type SharedLinkItemType = LinkOptions & {
 };
 
 const SharedLinkItem = ({
-  token,
-  name,
-  relation,
-  onChangeRelation,
-  onChangeName,
+  value,
+  onChange,
   onDelete,
   builderUrl,
   hasProPlan,
 }: SharedLinkItemType) => {
-  const [currentName, setCurrentName] = useState(name);
+  const [currentName, setCurrentName] = useState(value.name);
   const [isCopied, setIsCopied] = useState(false);
 
   return (
@@ -280,8 +330,8 @@ const SharedLinkItem = ({
           onClick={() => {
             navigator.clipboard.writeText(
               builderUrl({
-                authToken: token,
-                mode: relation === "viewers" ? "preview" : "edit",
+                authToken: value.token,
+                mode: value.relation === "viewers" ? "preview" : "edit",
               })
             );
             setIsCopied(true);
@@ -292,11 +342,10 @@ const SharedLinkItem = ({
       </Tooltip>
       <Menu
         name={currentName}
-        relation={relation}
-        onChangePermission={onChangeRelation}
-        onChangeName={(name) => {
-          setCurrentName(name);
-          onChangeName(name);
+        value={value}
+        onChange={(value) => {
+          setCurrentName(value.name);
+          onChange(value);
         }}
         onDelete={onDelete}
         hasProPlan={hasProPlan}
@@ -344,19 +393,14 @@ export const ShareProject = ({
   const items = links.map((link) => (
     <Fragment key={link.token}>
       <SharedLinkItem
-        onChangeRelation={(relation) => {
-          onChange({ ...link, relation });
-        }}
-        onChangeName={(name) => {
-          onChange({ ...link, name });
+        onChange={(value) => {
+          onChange(value);
         }}
         onDelete={() => {
           onDelete(link);
         }}
         builderUrl={builderUrl}
-        name={link.name}
-        relation={link.relation}
-        token={link.token}
+        value={link}
         hasProPlan={hasProPlan}
       />
       <Separator />

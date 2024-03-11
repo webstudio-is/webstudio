@@ -54,6 +54,18 @@ const RgbValue = z.object({
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
+export type FunctionValue = z.infer<typeof FunctionValue>;
+
+export const FunctionValue: z.ZodType<{
+  type: "function";
+  name: string;
+  args: StyleValue;
+}> = z.object({
+  type: z.literal("function"),
+  name: z.string(),
+  args: z.lazy(() => StyleValue),
+});
+
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.union([
@@ -87,6 +99,7 @@ export const TupleValueItem = z.union([
   KeywordValue,
   UnparsedValue,
   RgbValue,
+  FunctionValue,
 ]);
 export type TupleValueItem = z.infer<typeof TupleValueItem>;
 
@@ -127,6 +140,7 @@ const ValidStaticStyleValue = z.union([
   RgbValue,
   UnparsedValue,
   TupleValue,
+  FunctionValue,
 ]);
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
@@ -149,7 +163,8 @@ export const isValidStaticStyleValue = (
     staticStyleValue.type === "fontFamily" ||
     staticStyleValue.type === "rgb" ||
     staticStyleValue.type === "unparsed" ||
-    staticStyleValue.type === "tuple"
+    staticStyleValue.type === "tuple" ||
+    staticStyleValue.type === "function"
   );
 };
 
