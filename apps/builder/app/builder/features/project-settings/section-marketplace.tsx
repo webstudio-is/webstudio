@@ -39,12 +39,11 @@ import {
 import { projectsPath } from "~/shared/router-utils";
 
 const imgStyle = css({
-  width: 72,
-  height: 72,
   borderRadius: theme.borderRadius[4],
   borderWidth: 1,
   borderStyle: "solid",
   borderColor: theme.colors.borderMain,
+  aspectRatio: "1.91",
 });
 
 const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
@@ -207,8 +206,7 @@ export const SectionMarketplace = () => {
         <Grid flow="column" gap={3}>
           <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
             <Image
-              width={72}
-              height={72}
+              width={theme.spacing[28]}
               className={imgStyle()}
               src={thumbnailUrl}
               loader={imageLoader}
