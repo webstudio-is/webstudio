@@ -142,18 +142,27 @@ export const computeExpression = (
   expression: string,
   variables: Map<DataSource["id"], unknown>
 ) => {
-  let code = "";
-  for (const [id, value] of variables) {
-    const identifier = encodeDataSourceVariable(id);
-    code += `const ${identifier} = ${JSON.stringify(value)};\n`;
-  }
   try {
+    const usedVariables = new Map();
     const transpiled = validateExpression(expression, {
       effectful: true,
       optional: true,
+      transformIdentifier: (identifier) => {
+        const id = decodeDataSourceVariable(identifier);
+        if (id) {
+          usedVariables.set(identifier, id);
+        }
+        return identifier;
+      },
     });
+    let code = "";
+    // add only used variables in expression and get values
+    // from variables map without additional serializing of these values
+    for (const [identifier, id] of usedVariables) {
+      code += `let ${identifier} = _variables.get("${id}");\n`;
+    }
     code += `return (${transpiled})`;
-    const result = new Function(code)();
+    const result = new Function("_variables", code)(variables);
     return result;
   } catch {
     // empty block
