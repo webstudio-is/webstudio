@@ -19,7 +19,7 @@ import { parseFilter } from "@webstudio-is/css-data";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const property: StyleProperty = "filter";
-const label = "Filter";
+const label = "Filters";
 const INITIAL_FILTER = "blur(0px)";
 
 export const FilterSection = (props: RenderCategoryProps) => {
