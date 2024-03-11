@@ -396,13 +396,12 @@ const renderMenuItems = (props: {
       <DropdownMenuSeparator />
       {props.item.source === "local" && (
         <DropdownMenuItem hint>
-          Style instances without creating a token. It will override tokens in
-          case of a conflict.
+          Style instances without creating a token or override a token locally.
         </DropdownMenuItem>
       )}
       {props.item.source !== "local" && (
         <DropdownMenuItem hint>
-          Use a token to reuse styles across multiple instances.
+          Reuse styles across multiple instances by creating a token.
         </DropdownMenuItem>
       )}
     </>
