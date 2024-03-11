@@ -131,7 +131,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
             </DropdownMenuRadioGroup>
           </>
         )}
-
+        <DropdownMenuItem hint>Hint</DropdownMenuItem>
         <DropdownMenuArrow />
       </DropdownMenuContent>
     </DropdownMenu>
