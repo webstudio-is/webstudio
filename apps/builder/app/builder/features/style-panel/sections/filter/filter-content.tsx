@@ -12,6 +12,7 @@ import { InfoCircleIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import type { IntermediateStyleValue } from "../../shared/css-value-input";
 import { parseFilter } from "@webstudio-is/css-data";
+import type { DeleteProperty } from "../../shared/use-style-data";
 
 type FilterContentProps = {
   index: number;
@@ -69,13 +70,27 @@ export const FilterSectionContent = ({
         <Flex align={"center"} gap={1}>
           Code
           <Tooltip
-            variant="wrapped"
-            content={<Text>TODO: Add content for the filter tooltip</Text>}
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Filters</Text>
+                <Text variant="monoBold">filter</Text>
+                <Text>
+                  Applies graphical effects like
+                  <br />
+                  blur or color shift to an element
+                </Text>
+              </Flex>
+            }
           >
             <InfoCircleIcon />
           </Tooltip>
         </Flex>
       </Label>
+      {
+        // @todo Replace the TextArea with code-editor.
+        // For more details, please refer to the issue
+        // https://github.com/webstudio-is/webstudio/issues/2977
+      }
       <TextArea
         rows={3}
         name="description"
