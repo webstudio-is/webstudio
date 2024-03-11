@@ -341,7 +341,7 @@ export const SectionMarketplace = () => {
             state={approval.state === "idle" ? undefined : "pending"}
             onClick={approval.submit}
           >
-            Submit
+            Start Review
           </Button>
         ) : (
           <Button
