@@ -81,6 +81,7 @@ export const FilterSectionContent = ({
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
         onChange={handleChange}
+        onBlur={handleComplete}
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             handleComplete();

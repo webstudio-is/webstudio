@@ -16,7 +16,6 @@ import { LayersList } from "../../style-layers-list";
 import { FilterLayer } from "./filter-layer";
 import { addLayer } from "../../style-layer-utils";
 import { parseFilter } from "@webstudio-is/css-data";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const property: StyleProperty = "filter";
 const label = "Filters";
@@ -27,10 +26,6 @@ export const FilterSection = (props: RenderCategoryProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const layerStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
-
-  if (isFeatureEnabled("cssFilters") === false) {
-    return;
-  }
 
   return (
     <CollapsibleSectionBase
