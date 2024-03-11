@@ -215,6 +215,9 @@ model AuthorizationToken {
   relation  AuthorizationRelation @default(viewers)
   createdAt DateTime              @default(now())
 
+  canClone Boolean @default(true)
+  canCopy  Boolean @default(true)
+
   @@id([token, projectId])
   @@unique([token])
 }

@@ -29,7 +29,7 @@ import {
 } from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $authTokenPermissions } from "~/shared/nano-states";
 import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
@@ -98,6 +98,7 @@ export const Menu = () => {
   const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
+  const authTokenPermission = useStore($authTokenPermissions);
 
   const isPublishEnabled = authPermit === "own" || authPermit === "admin";
 
@@ -189,7 +190,11 @@ export const Menu = () => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
 
-          <Tooltip side="right" content={disabledShareTooltipContent}>
+          <Tooltip
+            side="right"
+            sideOffset={10}
+            content={disabledShareTooltipContent}
+          >
             <DropdownMenuItem
               onSelect={() => {
                 setIsShareOpen(true);
@@ -200,7 +205,11 @@ export const Menu = () => {
             </DropdownMenuItem>
           </Tooltip>
 
-          <Tooltip side="right" content={disabledPublishTooltipContent}>
+          <Tooltip
+            side="right"
+            sideOffset={10}
+            content={disabledPublishTooltipContent}
+          >
             <DropdownMenuItem
               onSelect={() => {
                 setIsPublishOpen(true);
@@ -210,13 +219,26 @@ export const Menu = () => {
               Publish
             </DropdownMenuItem>
           </Tooltip>
-          <DropdownMenuItem
-            onSelect={() => {
-              $isCloneDialogOpen.set(true);
-            }}
+
+          <Tooltip
+            side="right"
+            sideOffset={10}
+            content={
+              authTokenPermission.canClone === false
+                ? "Cloning has been disabled by the project owner"
+                : undefined
+            }
           >
-            Clone
-          </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                $isCloneDialogOpen.set(true);
+              }}
+              disabled={authTokenPermission.canClone === false}
+            >
+              Clone
+            </DropdownMenuItem>
+          </Tooltip>
+
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {
