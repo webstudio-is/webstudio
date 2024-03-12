@@ -33,6 +33,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, ImageProps>(
 
     return (
       <img
+        alt=""
         {...imageProps}
         {...imageAttributes}
         decoding={decoding}
