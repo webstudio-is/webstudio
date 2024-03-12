@@ -15,7 +15,7 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "fast-glob": "^3.2.12",
     "react-docgen-typescript": "^2.2.2",
-    "zod": "^3.21.4"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",

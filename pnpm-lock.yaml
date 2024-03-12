@@ -374,8 +374,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@hono/node-server':
         specifier: ^1.2.0
@@ -736,11 +736,11 @@ importers:
         specifier: ^3.2.1
         version: 3.2.1
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
       zod-to-json-schema:
         specifier: ^3.21.4
-        version: 3.21.4(zod@3.21.4)
+        version: 3.21.4(zod@3.22.4)
     devDependencies:
       '@webstudio-is/jest-config':
         specifier: workspace:^
@@ -816,8 +816,8 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/authorization-token:
     dependencies:
@@ -828,8 +828,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -892,8 +892,8 @@ importers:
         specifier: ^17.7.2
         version: 17.7.2
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@types/node':
         specifier: ^18.17.1
@@ -972,8 +972,8 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/css-engine:
     dependencies:
@@ -1033,8 +1033,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1218,8 +1218,8 @@ importers:
         specifier: workspace:*
         version: link:../trpc-interface
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1282,8 +1282,8 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/form-handlers:
     devDependencies:
@@ -1325,8 +1325,8 @@ importers:
         specifier: ^2.2.2
         version: 2.2.2(typescript@5.2.2)
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
@@ -1457,8 +1457,8 @@ importers:
         specifier: ^2.2.3
         version: 2.2.3
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@webstudio-is/jest-config':
         specifier: workspace:^
@@ -1522,8 +1522,8 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/project:
     dependencies:
@@ -1552,8 +1552,8 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@types/uuid':
         specifier: ^8.3.4
@@ -1580,8 +1580,8 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@jest/globals':
         specifier: ^29.7.0
@@ -1675,8 +1675,8 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
 
   packages/scripts:
     dependencies:
@@ -1709,8 +1709,8 @@ importers:
         specifier: workspace:*
         version: link:../fonts
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@jest/globals':
         specifier: ^29.7.0
@@ -1969,8 +1969,8 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
       zod:
-        specifier: ^3.21.4
-        version: 3.21.4
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@types/node':
         specifier: ^18.17.1
@@ -17779,16 +17779,16 @@ packages:
       stack-trace: 0.0.10
     dev: true
 
-  /zod-to-json-schema@3.21.4(zod@3.21.4):
+  /zod-to-json-schema@3.21.4(zod@3.22.4):
     resolution: {integrity: sha512-fjUZh4nQ1s6HMccgIeE0VP4QG/YRGPmyjO9sAh890aQKPEk3nqbfUXhMFaC+Dr5KvYBm8BCyvfpZf2jY9aGSsw==}
     peerDependencies:
       zod: ^3.21.4
     dependencies:
-      zod: 3.21.4
+      zod: 3.22.4
     dev: false
 
-  /zod@3.21.4:
-    resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
+  /zod@3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
