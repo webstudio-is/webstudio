@@ -26,11 +26,12 @@ import {
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import {
+  $dataSourceVariables,
   $dataSources,
   $pages,
+  $resourceValues,
   $selectedInstanceSelector,
   $selectedPageId,
-  $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 
 type TreePage = {
@@ -308,30 +309,53 @@ const $editingPage = computed(
   }
 );
 
+const $pageRootVariableValues = computed(
+  [$editingPage, $dataSources, $dataSourceVariables, $resourceValues],
+  (page, dataSources, dataSourceVariables, resourceValues) => {
+    const variableValues = new Map<string, unknown>();
+    if (page === undefined) {
+      return variableValues;
+    }
+    for (const variable of dataSources.values()) {
+      if (variable.scopeInstanceId !== page.rootInstanceId) {
+        continue;
+      }
+      if (variable.type === "variable") {
+        const value = dataSourceVariables.get(variable.id);
+        variableValues.set(variable.id, value ?? variable.value.value);
+      }
+      if (variable.type === "parameter") {
+        const value = dataSourceVariables.get(variable.id);
+        variableValues.set(variable.id, value);
+      }
+      if (variable.type === "resource") {
+        const value = resourceValues.get(variable.resourceId);
+        variableValues.set(variable.id, value);
+      }
+    }
+    return variableValues;
+  }
+);
+
 export const $pageRootScope = computed(
-  [$editingPage, $variableValuesByInstanceSelector, $dataSources],
-  (editingPage, variableValuesByInstanceSelector, dataSources) => {
+  [$editingPage, $pageRootVariableValues, $dataSources],
+  (editingPage, pageRootVariableValues, dataSources) => {
     const scope: Record<string, unknown> = {};
     const aliases = new Map<string, string>();
     const defaultValues = new Map<string, unknown>();
     if (editingPage === undefined) {
       return { variableValues: defaultValues, scope, aliases };
     }
-    const values = variableValuesByInstanceSelector.get(
-      JSON.stringify([editingPage.rootInstanceId])
-    );
-    if (values) {
-      for (const [dataSourceId, value] of values) {
-        const dataSource = dataSources.get(dataSourceId);
-        if (dataSource === undefined) {
-          continue;
-        }
-        const name = encodeDataSourceVariable(dataSourceId);
-        scope[name] = value;
-        aliases.set(name, dataSource.name);
+    for (const [dataSourceId, value] of pageRootVariableValues) {
+      const dataSource = dataSources.get(dataSourceId);
+      if (dataSource === undefined) {
+        continue;
       }
+      const name = encodeDataSourceVariable(dataSourceId);
+      scope[name] = value;
+      aliases.set(name, dataSource.name);
     }
-    return { variableValues: values ?? defaultValues, scope, aliases };
+    return { variableValues: pageRootVariableValues, scope, aliases };
   }
 );
 

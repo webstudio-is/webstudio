@@ -13,12 +13,17 @@ import {
   filterSelfAndChildren,
   getExistingRoutePaths,
   duplicatePage,
+  $editingPagesItemId,
+  $pageRootScope,
 } from "./page-utils";
 import {
+  $dataSourceVariables,
   $dataSources,
   $instances,
   $pages,
   $project,
+  $resourceValues,
+  $selectedPageId,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
@@ -787,5 +792,92 @@ describe("duplicate page", () => {
       rootInstanceId: expect.not.stringMatching("body"),
       pathParamsDataSourceId: newDataSource.id,
     });
+  });
+});
+
+test("page root scope should rely on editing page", () => {
+  const pages = createDefaultPages({
+    rootInstanceId: "homeRootId",
+    homePageId: "homePageId",
+  });
+  pages.pages.push({
+    id: "pageId",
+    rootInstanceId: "pageRootId",
+    name: "My Name",
+    path: "/",
+    title: `"My Title"`,
+    meta: {},
+  });
+  $pages.set(pages);
+  $selectedPageId.set("homePageId");
+  $editingPagesItemId.set("pageId");
+  $dataSources.set(
+    toMap([
+      {
+        id: "1",
+        scopeInstanceId: "homeRootId",
+        name: "home variable",
+        type: "variable",
+        value: { type: "string", value: "" },
+      },
+      {
+        id: "2",
+        scopeInstanceId: "pageRootId",
+        name: "page variable",
+        type: "variable",
+        value: { type: "string", value: "" },
+      },
+    ])
+  );
+  expect($pageRootScope.get()).toEqual({
+    aliases: new Map([["$ws$dataSource$2", "page variable"]]),
+    scope: { $ws$dataSource$2: "" },
+    variableValues: new Map([["2", ""]]),
+  });
+});
+
+test("page root scope should use variable and resource values", () => {
+  $pages.set(
+    createDefaultPages({
+      rootInstanceId: "homeRootId",
+      homePageId: "homePageId",
+    })
+  );
+  $editingPagesItemId.set("homePageId");
+  $dataSources.set(
+    toMap([
+      {
+        id: "valueVariableId",
+        scopeInstanceId: "homeRootId",
+        name: "value variable",
+        type: "variable",
+        value: { type: "string", value: "" },
+      },
+      {
+        id: "resourceVariableId",
+        scopeInstanceId: "homeRootId",
+        name: "resource variable",
+        type: "resource",
+        resourceId: "resourceId",
+      },
+    ])
+  );
+  $dataSourceVariables.set(
+    new Map([["valueVariableId", "value variable value"]])
+  );
+  $resourceValues.set(new Map([["resourceId", "resource variable value"]]));
+  expect($pageRootScope.get()).toEqual({
+    aliases: new Map([
+      ["$ws$dataSource$valueVariableId", "value variable"],
+      ["$ws$dataSource$resourceVariableId", "resource variable"],
+    ]),
+    scope: {
+      $ws$dataSource$resourceVariableId: "resource variable value",
+      $ws$dataSource$valueVariableId: "value variable value",
+    },
+    variableValues: new Map([
+      ["valueVariableId", "value variable value"],
+      ["resourceVariableId", "resource variable value"],
+    ]),
   });
 });
