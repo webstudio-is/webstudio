@@ -108,7 +108,9 @@ describe("boxShadowUtils", () => {
     expect(published).toBe(true);
     expect(boxShadowValue).toBeDefined();
     expect(deletedProperties.has("boxShadow")).toBe(false);
-    expect(boxShadowValue.value[0].value).toMatchInlineSnapshot(`
+    expect(boxShadowValue.value[0].type).toBe("tuple");
+    expect((boxShadowValue.value[0] as TupleValue).value)
+      .toMatchInlineSnapshot(`
       [
         {
           "type": "unit",
@@ -323,7 +325,8 @@ describe("boxShadowUtils", () => {
     swapLayers(property, 0, 1, styleInfo, createBatchUpdate);
     const boxShadow = styleInfo["boxShadow"]?.value as LayersValue;
 
-    expect(boxShadow.value[0].value).toMatchInlineSnapshot(`
+    expect(boxShadow.value[0].type).toBe("tuple");
+    expect((boxShadow.value[0] as TupleValue).value).toMatchInlineSnapshot(`
       [
         {
           "type": "unit",

@@ -49,9 +49,11 @@ const useLayer = (layer: TupleValue) => {
   }, [layer]);
 };
 
-export const Layer = (props: LayerProps) => {
+export const BoxShadowLayer = <T extends TupleValue>(props: LayerProps<T>) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
-  const { name, shadow, color } = useLayer(layer);
+  const properties = useLayer(layer);
+
+  const { name, shadow, color } = properties;
 
   return (
     <FloatingPanel
@@ -88,10 +90,7 @@ export const Layer = (props: LayerProps) => {
               tabIndex={-1}
               disabled={layer.hidden}
               icon={<SubtractIcon />}
-              onClick={(event) => {
-                onDeleteLayer(index);
-                event.preventDefault();
-              }}
+              onClick={() => onDeleteLayer(index)}
             />
           </>
         }

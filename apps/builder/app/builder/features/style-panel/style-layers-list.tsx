@@ -1,8 +1,4 @@
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
   Flex,
@@ -22,10 +18,10 @@ import type {
   DeleteProperty,
 } from "./shared/use-style-data";
 
-export type LayerProps = {
+export type LayerProps<T> = {
   id: string;
   index: number;
-  layer: TupleValue;
+  layer: T;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;
@@ -35,14 +31,14 @@ export type LayerProps = {
   deleteProperty: DeleteProperty;
 };
 
-type LayerListProperties = RenderCategoryProps & {
+type LayerListProperties<T> = RenderCategoryProps & {
   disabled?: boolean;
   property: StyleProperty;
   layers: LayersValue;
-  renderLayer: (props: LayerProps) => JSX.Element;
+  renderLayer: (props: LayerProps<T>) => JSX.Element;
 };
 
-export const LayersList = ({
+export const LayersList = <T,>({
   property,
   layers,
   disabled,
@@ -50,7 +46,7 @@ export const LayersList = ({
   renderLayer,
   createBatchUpdate,
   deleteProperty,
-}: LayerListProperties) => {
+}: LayerListProperties<T>) => {
   const layersCount = getLayerCount(property, currentStyle);
 
   const sortableItems = useMemo(
@@ -85,7 +81,7 @@ export const LayersList = ({
     <CssValueListArrowFocus dragItemId={dragItemId}>
       <Flex direction="column" ref={sortableRefCallback}>
         {layers.value.map((layer, index) => {
-          if (layer.type !== "tuple") {
+          if (layer.type !== "tuple" && layer.type !== "function") {
             return null;
           }
           const id = String(index);
@@ -100,7 +96,7 @@ export const LayersList = ({
             createBatchUpdate,
             deleteProperty,
             onEditLayer,
-          });
+          } as LayerProps<T>);
         })}
         {placementIndicator}
       </Flex>

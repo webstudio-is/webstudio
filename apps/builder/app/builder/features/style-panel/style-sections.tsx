@@ -26,6 +26,7 @@ import {
   BoxShadowsSection,
   ListItemSection,
   TransitionSection,
+  FilterSection,
 } from "./sections";
 
 export const categories = [
@@ -43,6 +44,7 @@ export const categories = [
   "effects",
   "outline",
   "transitions",
+  "filter",
 ] as const;
 
 export type Category = (typeof categories)[number];
@@ -157,4 +159,5 @@ export const sections: Record<
   effects: EffectsSection,
   boxShadows: BoxShadowsSection,
   transitions: TransitionSection,
+  filter: FilterSection,
 };

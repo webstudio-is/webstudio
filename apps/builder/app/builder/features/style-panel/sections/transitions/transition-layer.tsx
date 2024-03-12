@@ -11,9 +11,8 @@ import type { LayerProps } from "../../style-layers-list";
 import { TupleValue, toValue } from "@webstudio-is/css-engine";
 import { findTimingFunctionFromValue } from "./transition-utils";
 
-export const Layer = (props: LayerProps) => {
-  const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
-  const { transition, label } = useMemo(() => {
+const useLayer = (layer: TupleValue) => {
+  return useMemo(() => {
     const label: TupleValue = {
       type: "tuple",
       value: [],
@@ -32,6 +31,13 @@ export const Layer = (props: LayerProps) => {
 
     return { transition: toValue(layer), label: toValue(label) };
   }, [layer]);
+};
+
+export const TransitionLayer = <T extends TupleValue>(props: LayerProps<T>) => {
+  const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
+  const properties = useLayer(layer);
+
+  const { transition, label } = properties;
 
   return (
     <FloatingPanel
@@ -59,10 +65,7 @@ export const Layer = (props: LayerProps) => {
               tabIndex={-1}
               disabled={disabled || layer?.hidden}
               icon={<SubtractIcon />}
-              onClick={(event) => {
-                onDeleteLayer(index);
-                event.preventDefault();
-              }}
+              onClick={() => onDeleteLayer(index)}
             />
           </>
         }

@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
 import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 import type { RenderCategoryProps } from "../../style-sections";
 import {
@@ -15,12 +15,13 @@ import { PropertyName } from "../../shared/property-name";
 import { addLayer } from "../../style-layer-utils";
 import { parseTransition } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
-import { Layer } from "./transition-layer";
+import { TransitionLayer } from "./transition-layer";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
 const property: StyleProperty = "transition";
 const label = "Transitions";
+const INITIAL_TRANSITION = "opacity 200ms ease";
 
 export const TransitionSection = (props: RenderCategoryProps) => {
   const { currentStyle, deleteProperty } = props;
@@ -59,8 +60,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    // Using default transition value
-                    parseTransition("opacity 200ms ease"),
+                    parseTransition(INITIAL_TRANSITION),
                     currentStyle,
                     props.createBatchUpdate
                   );
@@ -86,13 +86,13 @@ export const TransitionSection = (props: RenderCategoryProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList
+        <LayersList<TupleValue>
           property={property}
           layers={value}
           {...props}
           renderLayer={(layerProps) => {
             return (
-              <Layer
+              <TransitionLayer
                 {...layerProps}
                 key={layerProps.index}
                 layer={layerProps.layer}
