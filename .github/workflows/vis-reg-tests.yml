@@ -29,7 +29,7 @@ jobs:
         run: pnpm run --filter=@webstudio-is/design-system storybook:build
 
       - name: Lost Pixel
-        uses: lost-pixel/lost-pixel@v3.1.0
+        uses: lost-pixel/lost-pixel@v3.15.1
         env:
           LOST_PIXEL_CONFIG_DIR: packages/design-system
           LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
@@ -50,7 +50,7 @@ jobs:
         run: pnpm run --filter=@webstudio-is/builder storybook:build
 
       - name: Lost Pixel
-        uses: lost-pixel/lost-pixel@v3.1.0
+        uses: lost-pixel/lost-pixel@v3.15.1
         env:
           LOST_PIXEL_CONFIG_DIR: apps/builder
           LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
