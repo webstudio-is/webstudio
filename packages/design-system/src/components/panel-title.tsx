@@ -5,7 +5,9 @@
 
 import { forwardRef, type ReactNode, type Ref } from "react";
 import { theme, styled, type CSS } from "../stitches.config";
+import { truncate } from "../utilities";
 import { textVariants } from "./text";
+import { Box } from "./box";
 
 type TitleProps = {
   children: ReactNode;
@@ -43,7 +45,7 @@ export const PanelTitle = forwardRef(
     ref: Ref<HTMLDivElement>
   ) => (
     <Container className={className} css={css} ref={ref}>
-      <div>{children}</div>
+      <Box css={truncate()}>{children}</Box>
       {suffix && <SuffixSlot>{suffix}</SuffixSlot>}
     </Container>
   )
