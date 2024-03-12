@@ -10,6 +10,9 @@ import {
   SmallIconButton,
   InputErrorsTooltip,
   Select,
+  Link,
+  truncate,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent, useRef } from "react";
@@ -20,9 +23,10 @@ import {
 } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
-import { $pages } from "~/shared/nano-states";
+import { $pages, $project } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { flushSync } from "react-dom";
+import { getPublishedUrl } from "~/shared/router-utils";
 
 export const SectionRedirects = () => {
   const [redirects, setRedirects] = useState(
@@ -37,6 +41,8 @@ export const SectionRedirects = () => {
   const pages = useStore($pages);
   const existingPaths = getExistingRoutePaths(pages);
   const oldPathRef = useRef<HTMLInputElement>(null);
+  const projectData = useStore($project);
+  const publishedUrl = new URL(getPublishedUrl(projectData?.domain ?? ""));
 
   const redirectKeys = Object.keys(redirects);
   const isValidRedirects =
@@ -229,16 +235,42 @@ export const SectionRedirects = () => {
                         overflow: "hidden",
                       }}
                     >
-                      <Flex gap="2">
-                        <Text>
-                          {redirect.old}, {redirect.status ?? "301"}
-                        </Text>
-                        <ArrowRightIcon size={16} />
-                        <Text truncate>{redirect.new}</Text>
+                      <Flex gap="2" align="center">
+                        <Tooltip content={redirect.old}>
+                          <Link
+                            underline="hover"
+                            href={new URL(
+                              redirect.old,
+                              publishedUrl
+                            ).toString()}
+                            css={truncate()}
+                            target="_blank"
+                          >
+                            {redirect.old}
+                          </Link>
+                        </Tooltip>
+                        <Text>{redirect.status ?? "301"}</Text>
+                        <Flex shrink={false} align="center">
+                          <ArrowRightIcon size={16} aria-disabled />
+                        </Flex>
+                        <Tooltip content={redirect.new}>
+                          <Link
+                            underline="hover"
+                            href={new URL(
+                              redirect.new,
+                              publishedUrl
+                            ).toString()}
+                            css={truncate()}
+                            target="_blank"
+                          >
+                            {redirect.new}
+                          </Link>
+                        </Tooltip>
                       </Flex>
                       <SmallIconButton
                         variant="destructive"
                         icon={<TrashIcon />}
+                        aria-label={`Delete redirect from ${redirect.old}`}
                         onClick={() => handleDeleteRedirect(index)}
                       />
                     </Flex>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import warnOnce from "warn-once";
+import type { CSS } from "./stitches.config";
 
 export const canvasPointerEventsPropertyName = "--canvas-pointer-events";
 
@@ -82,7 +83,7 @@ export const useDisableCanvasPointerEvents = () => {
   return enableDisable;
 };
 
-export const truncate = () => ({
+export const truncate = (): CSS => ({
   whiteSpace: "nowrap",
   textOverflow: "ellipsis",
   overflow: "hidden",

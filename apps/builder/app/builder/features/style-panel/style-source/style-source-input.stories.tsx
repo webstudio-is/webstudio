@@ -93,7 +93,7 @@ export const WithTruncatedItem: ComponentStory<
       id: nanoid(),
       label:
         "Local Something Something Something Something Something Something Something Something Something Something Something",
-      source: "local",
+      source: "token",
       disabled: false,
       states: [],
     },

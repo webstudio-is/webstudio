@@ -21,26 +21,28 @@ import { SectionMarketplace } from "./section-marketplace";
 
 const focusOutline = focusRingStyle();
 
-const settingNames = ["General", "Redirects"];
+const sectionNames = ["General", "Redirects"];
 
 if (isFeatureEnabled("marketplace")) {
-  settingNames.push("Marketplace");
+  sectionNames.push("Marketplace");
 }
+
+type SectionName = (typeof sectionNames)[number];
 
 const leftPanelWidth = theme.spacing[26];
 const rightPanelWidth = theme.spacing[35];
 
-const ProjectSettingsView = ({
+export const ProjectSettingsView = ({
+  currentSection,
+  onSectionChange,
   isOpen,
   onOpenChange,
 }: {
+  currentSection: SectionName;
+  onSectionChange?: (section: SectionName) => void;
   isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
+  onOpenChange?: (isOpen: boolean) => void;
 }) => {
-  const [selectedSetting, setSelectedSetting] = useState<
-    (typeof settingNames)[number]
-  >(settingNames[0]);
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
@@ -64,15 +66,15 @@ const ProjectSettingsView = ({
                 borderRight: `1px solid  ${theme.colors.borderMain}`,
               }}
             >
-              {settingNames.map((name, index) => {
+              {sectionNames.map((name, index) => {
                 return (
                   <ListItem
-                    current={selectedSetting === name}
+                    current={currentSection === name}
                     asChild
                     index={index}
                     key={name}
                     onSelect={() => {
-                      setSelectedSetting(name);
+                      onSectionChange?.(name);
                     }}
                   >
                     <Flex
@@ -101,9 +103,9 @@ const ProjectSettingsView = ({
           </List>
           <ScrollArea>
             <Grid gap={2} css={{ my: theme.spacing[5] }}>
-              {selectedSetting === "General" && <SectionGeneral />}
-              {selectedSetting === "Redirects" && <SectionRedirects />}
-              {selectedSetting === "Marketplace" &&
+              {currentSection === "General" && <SectionGeneral />}
+              {currentSection === "Redirects" && <SectionRedirects />}
+              {currentSection === "Marketplace" &&
                 isFeatureEnabled("marketplace") && <SectionMarketplace />}
               <div />
             </Grid>
@@ -120,10 +122,15 @@ const ProjectSettingsView = ({
 
 export const ProjectSettings = () => {
   const isOpen = useStore($isProjectSettingsOpen);
+  const [currentSection, setCurrentSection] = useState<SectionName>(
+    sectionNames[0]
+  );
 
   return (
     <ProjectSettingsView
       isOpen={isOpen}
+      currentSection={currentSection}
+      onSectionChange={setCurrentSection}
       onOpenChange={$isProjectSettingsOpen.set}
     />
   );
