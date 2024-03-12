@@ -432,6 +432,12 @@ export const duplicatePage = (pageId: Page["id"]) => {
       page.pathParamsDataSourceId === undefined
         ? undefined
         : newDataSourceIds.get(page.pathParamsDataSourceId);
+    // @todo simplify after releasing migration with system variable
+    const newSystemDataSourceId =
+      page.systemDataSourceId === undefined
+        ? undefined
+        : newDataSourceIds.get(page.systemDataSourceId);
+
     if (newRootInstanceId === undefined) {
       return;
     }
@@ -440,6 +446,8 @@ export const duplicatePage = (pageId: Page["id"]) => {
       id: newPageId,
       rootInstanceId: newRootInstanceId,
       pathParamsDataSourceId: newPathParamsDataSourceId,
+      systemDataSourceId: newSystemDataSourceId,
+      // @todo create new data source
       name: newName,
       path: deduplicatePath(pages, page),
       title: replaceDataSources(page.title, newDataSourceIds),

@@ -41,7 +41,10 @@ $assets.set(
   ])
 );
 
-const pages = createDefaultPages({ rootInstanceId: "root-instance-id" });
+const pages = createDefaultPages({
+  rootInstanceId: "root-instance-id",
+  systemDataSourceId: "systemDataSourceId",
+});
 pages.meta = {
   siteName: "Project name",
   faviconAssetId: "imageId",
@@ -54,6 +57,7 @@ pages.pages.push({
   name: "page-name",
   meta: {},
   rootInstanceId: "root-instance-id",
+  systemDataSourceId: "systemDataSourceId",
 });
 const rootFolder = pages.folders.find(isRoot);
 rootFolder?.children.push("pageId");

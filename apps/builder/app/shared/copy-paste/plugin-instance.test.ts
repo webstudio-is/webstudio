@@ -40,7 +40,11 @@ $registeredComponentMetas.set(
 );
 $project.set({ id: "my-project" } as Project);
 $pages.set(
-  createDefaultPages({ homePageId: "home-page", rootInstanceId: "body0" })
+  createDefaultPages({
+    homePageId: "home-page",
+    rootInstanceId: "body0",
+    systemDataSourceId: "",
+  })
 );
 $selectedPageId.set("home-page");
 

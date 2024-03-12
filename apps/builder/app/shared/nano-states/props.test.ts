@@ -40,6 +40,7 @@ const selectPageRoot = (rootInstanceId: Instance["id"]) => {
     homePageId: "pageId",
     homePagePath: "/my-page",
     rootInstanceId,
+    systemDataSourceId: "system",
   });
   $pages.set(defaultPages);
   $selectedPageId.set(defaultPages.homePage.id);

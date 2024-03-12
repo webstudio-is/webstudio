@@ -29,6 +29,7 @@ import { groupBy } from "../array-utils";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
@@ -344,6 +345,12 @@ export const $variableValuesByInstanceSelector = computed(
       const variables = variablesByInstanceId.get(instanceId);
       if (variables) {
         for (const variable of variables) {
+          if (
+            variable.id === page.systemDataSourceId &&
+            isFeatureEnabled("cms") === false
+          ) {
+            continue;
+          }
           if (variable.type === "variable") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value ?? variable.value.value);
