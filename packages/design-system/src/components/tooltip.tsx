@@ -107,11 +107,16 @@ export const Tooltip = forwardRef(
             side="top"
             align="center"
             sideOffset={2}
-            collisionPadding={8}
+            // collisionPadding={8}
             arrowPadding={8}
+            /* Example of hiding */
+            hideWhenDetached={true}
+            collisionBoundary={[{ x: 0, y: 90, width: 1000, height: 200 }]}
+            /* End of example of hiding  */
             {...props}
           >
             {typeof content === "string" ? <Text>{content}</Text> : content}
+
             <Box css={{ color: theme.colors.transparentExtreme }}>
               <Arrow offset={5} width={11} height={5} />
             </Box>
