@@ -158,7 +158,7 @@ describe("Image optimizations not applied", () => {
       loader: createImageLoader({ imageBaseUrl: "/asset/image/" }),
     });
 
-    expect(imgAttr).toMatchInlineSnapshot(`null`);
+    expect(imgAttr).toMatchInlineSnapshot(`undefined`);
   });
 
   test("src is undefined", () => {
@@ -172,6 +172,6 @@ describe("Image optimizations not applied", () => {
       loader: createImageLoader({ imageBaseUrl: "/asset/image/" }),
     });
 
-    expect(imgAttr).toMatchInlineSnapshot(`null`);
+    expect(imgAttr).toMatchInlineSnapshot(`undefined`);
   });
 });
