@@ -182,11 +182,9 @@ export const InputErrorsTooltip = ({
           () => {
             const rect = nearestScrollableElement.getBoundingClientRect();
 
-            const collisionPadding = -8;
-
             setCollisionBoundary((prev) => {
-              const newY = rect.y + collisionPadding;
-              const newHeight = rect.height - 2 * collisionPadding;
+              const newY = rect.y;
+              const newHeight = rect.height;
 
               if (prev?.y === newY && prev.height === newHeight) {
                 return prev;
@@ -219,7 +217,7 @@ export const InputErrorsTooltip = ({
       <Tooltip
         {...rest}
         collisionBoundary={collisionBoundary as never}
-        collisionPadding={0}
+        collisionPadding={-8}
         hideWhenDetached={true}
         content={content ?? " "}
         open={errors !== undefined && errors.length !== 0}
