@@ -1,4 +1,4 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
 import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 import type { RenderCategoryProps } from "../../style-sections";
 import {
@@ -86,7 +86,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList
+        <LayersList<TupleValue>
           property={property}
           layers={value}
           {...props}

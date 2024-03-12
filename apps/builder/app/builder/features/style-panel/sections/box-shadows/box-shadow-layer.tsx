@@ -1,4 +1,4 @@
-import type { FunctionValue, TupleValue } from "@webstudio-is/css-engine";
+import type { TupleValue } from "@webstudio-is/css-engine";
 import {
   Label,
   SmallIconButton,
@@ -18,12 +18,8 @@ import { toValue } from "@webstudio-is/css-engine";
 import { ColorThumb } from "../../shared/color-thumb";
 import type { LayerProps } from "../../style-layers-list";
 
-const useLayer = (layer: TupleValue | FunctionValue) => {
+const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
-    if (layer.type !== "tuple") {
-      return;
-    }
-
     const name = [];
     const shadow = [];
     let color: RgbaColor | undefined;
@@ -53,13 +49,9 @@ const useLayer = (layer: TupleValue | FunctionValue) => {
   }, [layer]);
 };
 
-export const BoxShadowLayer = (props: LayerProps) => {
+export const BoxShadowLayer = <T extends TupleValue>(props: LayerProps<T>) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
   const properties = useLayer(layer);
-
-  if (layer.type !== "tuple" || properties === undefined) {
-    return;
-  }
 
   const { name, shadow, color } = properties;
 

@@ -8,15 +8,11 @@ import { SubtractIcon } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransitionContent } from "./transition-content";
 import type { LayerProps } from "../../style-layers-list";
-import { FunctionValue, TupleValue, toValue } from "@webstudio-is/css-engine";
+import { TupleValue, toValue } from "@webstudio-is/css-engine";
 import { findTimingFunctionFromValue } from "./transition-utils";
 
-const useLayer = (layer: TupleValue | FunctionValue) => {
+const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
-    if (layer.type !== "tuple") {
-      return;
-    }
-
     const label: TupleValue = {
       type: "tuple",
       value: [],
@@ -37,13 +33,9 @@ const useLayer = (layer: TupleValue | FunctionValue) => {
   }, [layer]);
 };
 
-export const TransitionLayer = (props: LayerProps) => {
+export const TransitionLayer = <T extends TupleValue>(props: LayerProps<T>) => {
   const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
   const properties = useLayer(layer);
-
-  if (layer.type !== "tuple" || properties === undefined) {
-    return;
-  }
 
   const { transition, label } = properties;
 

@@ -8,9 +8,9 @@ import {
 } from "@webstudio-is/design-system";
 import { SubtractIcon } from "@webstudio-is/icons";
 import { useMemo } from "react";
-import { toValue } from "@webstudio-is/css-engine";
+import { FunctionValue, toValue } from "@webstudio-is/css-engine";
 
-export const FilterLayer = (props: LayerProps) => {
+export const FilterLayer = <T extends FunctionValue>(props: LayerProps<T>) => {
   const { index, id, layer, isHighlighted, onDeleteLayer } = props;
   const filter = useMemo(() => toValue(layer), [layer]);
 

@@ -4,7 +4,7 @@ import {
   SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
 import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
@@ -66,7 +66,7 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList
+        <LayersList<TupleValue>
           property={property}
           layers={value}
           {...props}
