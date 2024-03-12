@@ -14,6 +14,7 @@ import {
   InputErrorsTooltip,
   PanelBanner,
   Select,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
 import {
@@ -206,7 +207,7 @@ export const SectionMarketplace = () => {
         <Grid flow="column" gap={3}>
           <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
             <Image
-              width={theme.spacing[28]}
+              width={rawTheme.spacing[28]}
               className={imgStyle()}
               src={thumbnailUrl}
               loader={imageLoader}
