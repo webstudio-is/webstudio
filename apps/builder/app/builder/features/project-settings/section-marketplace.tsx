@@ -321,7 +321,7 @@ export const SectionMarketplace = () => {
                 }
               }}
             />
-            <Label htmlFor={ids.isConfirmed} css={{ flexBasis: "fit-content" }}>
+            <Label htmlFor={ids.isConfirmed} css={{ flexShrink: 1 }}>
               I understand that by submitting, this project will become
               available in a public marketplace.
             </Label>
