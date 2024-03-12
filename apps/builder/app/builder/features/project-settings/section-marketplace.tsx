@@ -39,21 +39,21 @@ import {
 } from "@webstudio-is/project";
 import { projectsPath } from "~/shared/router-utils";
 
-const imgStyle = css({
+const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
   borderWidth: 1,
   borderStyle: "solid",
   borderColor: theme.colors.borderMain,
   aspectRatio: "1.91",
+  objectFit: "cover",
+});
+const imageLoader = createImageLoader({
+  imageBaseUrl: env.IMAGE_BASE_URL,
 });
 
 const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
   category: "sectionTemplates",
 };
-
-const imageLoader = createImageLoader({
-  imageBaseUrl: env.IMAGE_BASE_URL,
-});
 
 const trpc = createTrpcRemixProxy<ProjectRouter>((method) =>
   projectsPath(method, { authToken: $authToken.get() })
@@ -208,7 +208,7 @@ export const SectionMarketplace = () => {
           <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
             <Image
               width={rawTheme.spacing[28]}
-              className={imgStyle()}
+              className={thumbnailStyle()}
               src={thumbnailUrl}
               loader={imageLoader}
             />
