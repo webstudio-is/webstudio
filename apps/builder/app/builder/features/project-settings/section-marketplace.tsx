@@ -13,6 +13,8 @@ import {
   Checkbox,
   InputErrorsTooltip,
   PanelBanner,
+  Select,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
 import {
@@ -25,7 +27,10 @@ import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
 import { useState } from "react";
-import { MarketplaceProduct } from "@webstudio-is/project-build";
+import {
+  MarketplaceProduct,
+  marketplaceCategories,
+} from "@webstudio-is/project-build";
 import { serverSyncStore } from "~/shared/sync";
 import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
 import {
@@ -35,12 +40,11 @@ import {
 import { projectsPath } from "~/shared/router-utils";
 
 const imgStyle = css({
-  width: 72,
-  height: 72,
   borderRadius: theme.borderRadius[4],
   borderWidth: 1,
   borderStyle: "solid",
   borderColor: theme.colors.borderMain,
+  aspectRatio: "1.91",
 });
 
 const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
@@ -119,7 +123,7 @@ export const SectionMarketplace = () => {
   const [data, setData] = useState(() => $marketplaceProduct.get());
   const ids = useIds([
     "name",
-    "thumbnailAssetId",
+    "category",
     "author",
     "email",
     "website",
@@ -149,6 +153,7 @@ export const SectionMarketplace = () => {
       const errors = validate(nextData);
       setErrors(errors);
       setData(nextData);
+
       if (errors) {
         return;
       }
@@ -183,20 +188,36 @@ export const SectionMarketplace = () => {
         </InputErrorsTooltip>
       </Grid>
 
+      <Grid gap={1} css={sectionSpacing}>
+        <Label htmlFor={ids.category}>Category</Label>
+        <Select
+          css={{ zIndex: theme.zIndices[1] }}
+          options={Array.from(marketplaceCategories.keys())}
+          getLabel={(category: MarketplaceProduct["category"]) =>
+            marketplaceCategories.get(category)
+          }
+          onChange={handleSave("category")}
+          value={data.category}
+          defaultValue={defaultMarketplaceProduct.category}
+        />
+      </Grid>
+
       <Grid gap={2} css={sectionSpacing}>
         <Label>Thumbnail</Label>
         <Grid flow="column" gap={3}>
-          <Image
-            width={72}
-            height={72}
-            className={imgStyle()}
-            src={thumbnailUrl}
-            loader={imageLoader}
-          />
+          <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
+            <Image
+              width={rawTheme.spacing[28]}
+              className={imgStyle()}
+              src={thumbnailUrl}
+              loader={imageLoader}
+            />
+          </InputErrorsTooltip>
 
           <Grid gap={2}>
             <Text color="subtle">
-              Upload a 32 x 32 px image to display in the marketplace overview.
+              The optimal dimensions in marketplace are 600x315 px or larger
+              with a 1.91:1 aspect ratio.
             </Text>
             <ImageControl onAssetIdChange={handleSave("thumbnailAssetId")}>
               <Button css={{ justifySelf: "start" }}>Upload</Button>
@@ -278,9 +299,8 @@ export const SectionMarketplace = () => {
       <Grid gap={2} css={sectionSpacing}>
         <PanelBanner>
           <Text>
-            {`For a page to show up in the marketplace, you will need to add a "ws:category"
-            meta tag in the page settings. Optionally, you can also define
-            "ws:title"; otherwise, the page title will be used.`}
+            {`You can add a "ws:category" meta tag in the page settings for pages being grouped by category. You can also define
+            "ws:title" for each page; otherwise, the page title will be used.`}
           </Text>
           <Text color="destructive">
             {`Don't forget to publish your project after every change to make your
@@ -314,11 +334,11 @@ export const SectionMarketplace = () => {
         {approval.status === "UNLISTED" ? (
           <Button
             color="primary"
-            disabled={isConfirmed === false}
+            disabled={isConfirmed === false || errors !== undefined}
             state={approval.state === "idle" ? undefined : "pending"}
             onClick={approval.submit}
           >
-            Submit
+            Start Review
           </Button>
         ) : (
           <Button

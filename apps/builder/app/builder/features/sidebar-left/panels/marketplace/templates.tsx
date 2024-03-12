@@ -5,98 +5,23 @@ import {
   ListItem,
   ScrollArea,
   Separator,
-  Text,
   theme,
-  focusRingStyle,
-  css,
+  Link,
 } from "@webstudio-is/design-system";
-import { ChevronLeftIcon } from "@webstudio-is/icons";
+import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import { insert } from "./utils";
 import { computeExpression } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import type { Asset, WebstudioData } from "@webstudio-is/sdk";
 import { useMemo } from "react";
-import env from "~/shared/env";
-import { Image, createImageLoader } from "@webstudio-is/image";
-
-const focusOutline = focusRingStyle();
-
-const imageLoader = createImageLoader({
-  imageBaseUrl: env.IMAGE_BASE_URL,
-});
-
-const imageContainerStyle = css({
-  position: "relative",
-  overflow: "hidden",
-  aspectRatio: "1.91",
-});
-
-const imageStyle = css({
-  position: "absolute",
-  top: 0,
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  transition: "transform 100ms",
-  "&:hover": {
-    transform: "scale(1.1)",
-  },
-});
-
-const Thumbnail = ({
-  asset,
-  imageUrl,
-}: {
-  asset?: Asset;
-  imageUrl?: string;
-}) => {
-  return (
-    <div className={imageContainerStyle()}>
-      {imageUrl && <img src={imageUrl} className={imageStyle()} />}
-      {asset && (
-        <Image src={asset.name} loader={imageLoader} className={imageStyle()} />
-      )}
-    </div>
-  );
-};
+import { builderUrl } from "~/shared/router-utils";
+import { Card } from "./card";
 
 type TemplateData = {
   socialImageAsset?: Asset;
   socialImageUrl?: string;
   title?: string;
   rootInstanceId: string;
-};
-
-const SectionTemplate = ({
-  data: { socialImageAsset, socialImageUrl, title },
-  ...listItemProps
-}: {
-  data: TemplateData;
-}) => {
-  return (
-    <Flex
-      {...listItemProps}
-      direction="column"
-      css={{
-        px: theme.spacing[9],
-        py: theme.spacing[5],
-        position: "relative",
-        overflow: "hidden",
-        outline: "none",
-        "&:hover": {
-          background: theme.colors.backgroundPresetMain,
-        },
-        "&:focus-visible": {
-          ...focusOutline,
-          background: theme.colors.backgroundPresetMain,
-        },
-      }}
-      gap="1"
-    >
-      <Thumbnail asset={socialImageAsset} imageUrl={socialImageUrl} />
-      {title && <Text truncate>{title}</Text>}
-    </Flex>
-  );
 };
 
 // Special meta properties for the marketplace
@@ -120,50 +45,56 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
     let category = page.meta.custom?.find(
       ({ property }) => property === marketplaceMeta.category
     )?.content;
+
     if (category !== undefined) {
       category = computeExpression(category, variableValues);
     }
-    if (category !== undefined) {
-      let templates = templatesByCategory.get(category);
-      if (templates === undefined) {
-        templates = [];
-        templatesByCategory.set(category, templates);
-      }
 
-      const socialImageUrl = page.meta.socialImageUrl
-        ? String(computeExpression(page.meta.socialImageUrl, variableValues))
-        : undefined;
-      const socialImageAsset = page.meta.socialImageAssetId
-        ? data.assets.get(page.meta.socialImageAssetId)
-        : undefined;
-
-      let title = page.meta.custom?.find(
-        ({ property }) => property === marketplaceMeta.title
-      )?.content;
-      if (title !== undefined) {
-        title = computeExpression(title, variableValues);
-      }
-      if (title === undefined || title === "") {
-        title = computeExpression(page.title, variableValues);
-      }
-
-      templates.push({
-        title,
-        socialImageUrl,
-        socialImageAsset,
-        rootInstanceId: page.rootInstanceId,
-      });
+    if (category === undefined) {
+      category = "Pages";
     }
+
+    let templates = templatesByCategory.get(category);
+    if (templates === undefined) {
+      templates = [];
+      templatesByCategory.set(category, templates);
+    }
+
+    const socialImageUrl = page.meta.socialImageUrl
+      ? String(computeExpression(page.meta.socialImageUrl, variableValues))
+      : undefined;
+    const socialImageAsset = page.meta.socialImageAssetId
+      ? data.assets.get(page.meta.socialImageAssetId)
+      : undefined;
+
+    let title = page.meta.custom?.find(
+      ({ property }) => property === marketplaceMeta.title
+    )?.content;
+    if (title !== undefined) {
+      title = computeExpression(title, variableValues);
+    }
+    if (title === undefined || title === "") {
+      title = computeExpression(page.title, variableValues);
+    }
+
+    templates.push({
+      title,
+      socialImageUrl,
+      socialImageAsset,
+      rootInstanceId: page.rootInstanceId,
+    });
   }
   return templatesByCategory;
 };
 
-export const SectionTemplates = ({
+export const Templates = ({
   name,
+  projectId,
   data,
   onOpenChange,
 }: {
   name: string;
+  projectId: string;
   data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -181,6 +112,7 @@ export const SectionTemplates = ({
       <Flex
         align="center"
         shrink="false"
+        justify="between"
         css={{ px: theme.spacing[9], py: theme.spacing[5] }}
       >
         <Button
@@ -192,6 +124,17 @@ export const SectionTemplates = ({
         >
           {name}
         </Button>
+        <Link
+          underline="none"
+          href={builderUrl({
+            projectId: projectId,
+            origin: location.origin,
+          })}
+          target="_blank"
+          aria-label="Open project in new tab"
+        >
+          <ExternalLinkIcon />
+        </Link>
       </Flex>
       <Separator />
       <ScrollArea>
@@ -217,7 +160,13 @@ export const SectionTemplates = ({
                               });
                             }}
                           >
-                            <SectionTemplate data={templateData} />
+                            <Card
+                              image={
+                                templateData.socialImageAsset ??
+                                templateData.socialImageUrl
+                              }
+                              title={templateData.title}
+                            />
                           </ListItem>
                         );
                       })}

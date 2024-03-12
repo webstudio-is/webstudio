@@ -7,6 +7,10 @@
 import { styled } from "../stitches.config";
 import { theme } from "../stitches.config";
 
+const openOrHoverStateStyle = {
+  backgroundColor: theme.colors.backgroundHover,
+};
+
 export const IconButton = styled("button", {
   // reset styles
   boxSizing: "border-box",
@@ -20,9 +24,8 @@ export const IconButton = styled("button", {
   alignItems: "center",
   // prevent shrinking inside flex box
   flexShrink: 0,
-  // set size and shape
-  width: 28,
-  height: 28,
+  width: theme.spacing[12],
+  height: theme.spacing[12],
   borderRadius: theme.borderRadius[3],
 
   "&[data-focused=true], &:focus-visible": {
@@ -37,24 +40,13 @@ export const IconButton = styled("button", {
   },
 
   // https://www.radix-ui.com/docs/primitives/components/popover#trigger
-  "&[data-state=open]": {
-    borderColor: "transparent",
-    backgroundColor: theme.colors.backgroundActive,
-    color: theme.colors.foregroundContrastMain,
-    "&:hover, &[data-hovered=true]": {
-      borderColor: "transparent",
-      backgroundColor: theme.colors.backgroundActive,
-      color: theme.colors.foregroundContrastMain,
-    },
-  },
+  "&[data-state=open]": openOrHoverStateStyle,
 
   variants: {
     variant: {
       default: {
         color: theme.colors.foregroundMain,
-        "&:hover, &[data-hovered=true]": {
-          backgroundColor: theme.colors.backgroundHover,
-        },
+        "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
         // According to the design https://www.figma.com/file/sfCE7iLS0k25qCxiifQNLE/%F0%9F%93%9A-Webstudio-Library?node-id=4-3199&t=lpT9jFuaiUnz1Foa-0
         // only the default variant has different toggle state
         // https://www.radix-ui.com/docs/primitives/components/toggle#root
@@ -62,9 +54,7 @@ export const IconButton = styled("button", {
           backgroundColor: theme.colors.backgroundPresetMain,
           borderColor: theme.colors.borderMain,
 
-          "&:hover, &[data-hovered=true]": {
-            backgroundColor: theme.colors.backgroundHover,
-          },
+          "&:hover, &[data-hovered=true]": openOrHoverStateStyle,
         },
 
         "&:disabled": {
@@ -119,6 +109,9 @@ export const IconButton = styled("button", {
           color: theme.colors.foregroundDisabled,
         },
       },
+    },
+    state: {
+      open: openOrHoverStateStyle,
     },
   },
 

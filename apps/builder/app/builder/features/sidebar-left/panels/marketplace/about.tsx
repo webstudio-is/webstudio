@@ -2,13 +2,16 @@ import {
   Button,
   Flex,
   Link,
+  Separator,
   Text,
   Tooltip,
+  buttonStyle,
   theme,
 } from "@webstudio-is/design-system";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { Header } from "../../shared/panel";
-import { ChevronDoubleLeftIcon } from "@webstudio-is/icons";
+import { ChevronDoubleLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
+import { builderUrl } from "~/shared/router-utils";
 
 export const About = ({
   item,
@@ -67,6 +70,23 @@ export const About = ({
             </Flex>
           )}
         </Flex>
+      </Flex>
+      <Separator />
+      <Flex gap="1" css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+        <Link
+          className={buttonStyle({
+            color: "neutral",
+            css: { gap: theme.spacing[3] },
+          })}
+          underline="none"
+          href={builderUrl({
+            projectId: item.projectId,
+            origin: location.origin,
+          })}
+          target="_blank"
+        >
+          <ExternalLinkIcon aria-hidden /> Open project
+        </Link>
       </Flex>
     </>
   );
