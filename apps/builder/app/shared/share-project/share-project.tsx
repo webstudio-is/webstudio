@@ -196,7 +196,12 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
                   }}
                   id={`viewer-can-clone`}
                 />
-                <Label htmlFor={`viewer-can-clone`}>Can clone</Label>
+                <Label
+                  htmlFor={`viewer-can-clone`}
+                  disabled={hasProPlan !== true}
+                >
+                  Can clone
+                </Label>
               </Grid>
               <Grid
                 gap={1}
@@ -214,7 +219,12 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
                   }}
                   id={`viewer-can-copy`}
                 />
-                <Label htmlFor={`viewer-can-copy`}>Can copy</Label>
+                <Label
+                  htmlFor={`viewer-can-copy`}
+                  disabled={hasProPlan !== true}
+                >
+                  Can copy
+                </Label>
               </Grid>
             </Grid>
 
