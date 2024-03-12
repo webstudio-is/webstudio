@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-const Base = z.object({
+export const MarketplaceProduct = z.object({
+  category: z.union([
+    z.literal("sectionTemplates"),
+    z.literal("pageTemplates"),
+  ]),
   name: z.string().min(2).trim(),
   thumbnailAssetId: z.string(),
   author: z.string().min(2).trim(),
@@ -9,11 +13,12 @@ const Base = z.object({
   issues: z.union([z.string().url().trim().optional(), z.literal("")]),
   description: z.string().trim().min(10),
 });
-
-const TemplatesProduct = Base.extend({
-  category: z.literal("sectionTemplates"),
-});
-
-// Will add an AppProduct later.
-export const MarketplaceProduct = TemplatesProduct;
 export type MarketplaceProduct = z.infer<typeof MarketplaceProduct>;
+
+export const marketplaceCategories = new Map<
+  MarketplaceProduct["category"],
+  string
+>([
+  ["sectionTemplates", "Sections"],
+  ["pageTemplates", "Pages"],
+]);

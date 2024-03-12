@@ -47,6 +47,6 @@
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "json5": "^2.2.3",
-    "zod": "^3.21.4"
+    "zod": "^3.22.4"
   }
 }

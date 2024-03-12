@@ -31,6 +31,7 @@ import {
   HelpIcon,
 } from "@webstudio-is/icons";
 import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
+import { useIds } from "../form-utils";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -91,6 +92,7 @@ type MenuProps = {
 };
 
 const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
+  const ids = useIds(["name", "canClone", "canCopy"]);
   const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
 
@@ -127,8 +129,9 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
           sideOffset={0}
         >
           <Item>
-            <Label>Name</Label>
+            <Label htmlFor={ids.name}>Name</Label>
             <InputField
+              id={ids.name}
               color={customLinkName.length === 0 ? "error" : undefined}
               value={customLinkName}
               onChange={(event) => setCustomLinkName(event.target.value.trim())}
@@ -194,9 +197,11 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
                   onCheckedChange={(canClone) => {
                     onChange({ ...value, canClone: Boolean(canClone) });
                   }}
-                  id={`viewer-can-clone`}
+                  id={ids.canClone}
                 />
-                <Label htmlFor={`viewer-can-clone`}>Can clone</Label>
+                <Label htmlFor={ids.canClone} disabled={hasProPlan !== true}>
+                  Can clone
+                </Label>
               </Grid>
               <Grid
                 gap={1}
@@ -212,9 +217,11 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
                   onCheckedChange={(canCopy) => {
                     onChange({ ...value, canCopy: Boolean(canCopy) });
                   }}
-                  id={`viewer-can-copy`}
+                  id={ids.canCopy}
                 />
-                <Label htmlFor={`viewer-can-copy`}>Can copy</Label>
+                <Label htmlFor={ids.canCopy} disabled={hasProPlan !== true}>
+                  Can copy
+                </Label>
               </Grid>
             </Grid>
 

@@ -1,5 +1,11 @@
 import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
-import { forwardRef, useEffect } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
+import {
+  autoUpdate,
+  getOverflowAncestors,
+  type ReferenceElement,
+} from "@floating-ui/dom";
+
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
@@ -122,6 +128,10 @@ export const Tooltip = forwardRef(
   }
 );
 
+const isReferenceElement = (value: unknown): value is ReferenceElement => {
+  return value instanceof Element || value instanceof Window;
+};
+
 Tooltip.displayName = "Tooltip";
 
 export const InputErrorsTooltip = ({
@@ -138,19 +148,84 @@ export const InputErrorsTooltip = ({
   const content = errors?.map((error, index) => (
     <Text key={index}>{error}</Text>
   ));
+
+  const ref = useRef<HTMLDivElement>();
+  // Use collision boundary to hide tooltips if original element out of visible area in the scroll viewport
+  const [collisionBoundary, setCollisionBoundary] = useState<
+    | {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }
+    | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (ref.current != null) {
+      const ancestors = getOverflowAncestors(ref.current, [], false);
+      if (ancestors.length === 2) {
+        // Only window and window viewport - do nothing
+        return;
+      }
+
+      const nearestScrollableElement = ancestors[0];
+
+      if (
+        nearestScrollableElement instanceof HTMLElement &&
+        isReferenceElement(ancestors[1])
+      ) {
+        // Track collision boundary size/position changes
+        const cleanup = autoUpdate(
+          ancestors[1],
+          nearestScrollableElement,
+          () => {
+            const rect = nearestScrollableElement.getBoundingClientRect();
+
+            setCollisionBoundary((prev) => {
+              const newY = rect.y;
+              const newHeight = rect.height;
+
+              if (prev?.y === newY && prev.height === newHeight) {
+                return prev;
+              }
+
+              const next = {
+                x: 0,
+                width: window.visualViewport?.width ?? 100000,
+                y: newY,
+                height: newHeight,
+              };
+
+              return next;
+            });
+          }
+        );
+
+        return cleanup;
+      }
+    }
+  }, []);
+
+  // We intentionally always pass non empty content to avoid optimization inside Tooltip
+  // where it renders {children} directly if content is empty.
+  // If this optimization accur, the input will remount which will cause focus loss
+  // and current value loss.
   return (
-    // We intentionally always pass non empty content to avoid optimization inside Tooltip
-    // where it renders {children} directly if content is empty.
-    // If this optimization accur, the input will remount which will cause focus loss
-    // and current value loss.
-    <Tooltip
-      {...rest}
-      content={content ?? " "}
-      open={errors !== undefined && errors.length !== 0}
-      side={side ?? "right"}
-      css={css}
-    >
-      {children}
-    </Tooltip>
+    <>
+      <Box ref={ref as never} css={{ display: "contents" }}></Box>
+      <Tooltip
+        {...rest}
+        collisionBoundary={collisionBoundary as never}
+        collisionPadding={-8}
+        hideWhenDetached={true}
+        content={content ?? " "}
+        open={errors !== undefined && errors.length !== 0}
+        side={side ?? "right"}
+        css={css}
+      >
+        {children}
+      </Tooltip>
+    </>
   );
 };

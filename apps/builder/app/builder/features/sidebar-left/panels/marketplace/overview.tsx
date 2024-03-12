@@ -1,27 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Flex,
+  IconButton,
   List,
   ListItem,
+  PanelTabs,
+  PanelTabsContent,
+  PanelTabsList,
+  PanelTabsTrigger,
   ScrollArea,
-  SmallIconButton,
-  Text,
-  focusRingStyle,
-  rawTheme,
-  theme,
 } from "@webstudio-is/design-system";
-import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import { categories } from "./utils";
-import {
-  ChevronRightIcon,
-  EllipsesIcon,
-  SpinnerIcon,
-} from "@webstudio-is/icons";
-import env from "~/shared/env";
-import { Image, createImageLoader } from "@webstudio-is/image";
+import { EllipsesIcon } from "@webstudio-is/icons";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { Project } from "@webstudio-is/project";
 import { usePress } from "@react-aria/interactions";
+import { marketplaceCategories } from "@webstudio-is/project-build";
+import { Card } from "./card";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
   const itemsByCategory = new Map<
@@ -30,10 +25,7 @@ const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
   >();
 
   for (const item of items) {
-    if (
-      categories.some((category) => category.category === item.category) ===
-      false
-    ) {
+    if (marketplaceCategories.has(item.category) === false) {
       throw new Error(`Unknown category: ${item.category}`);
     }
     let categoryItems = itemsByCategory.get(item.category);
@@ -47,13 +39,7 @@ const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
   return itemsByCategory;
 };
 
-const focusOutline = focusRingStyle();
-
-const imageLoader = createImageLoader({
-  imageBaseUrl: env.IMAGE_BASE_URL,
-});
-
-const OverviewItem = ({
+const GalleryOverviewItem = ({
   item,
   isLoading,
   isOpen,
@@ -72,42 +58,21 @@ const OverviewItem = ({
   });
 
   return (
-    <Flex
+    <Card
       {...props}
-      css={{
-        position: "relative",
-        height: theme.spacing[13],
-        px: theme.spacing[9],
-        outline: "none",
-        "&:focus-visible": focusOutline,
-        "&:hover": focusOutline,
-      }}
-      align="center"
-      justify="between"
-    >
-      <Flex align="center" gap="2">
-        <Image
-          src={item.thumbnailAssetName}
-          loader={imageLoader}
-          width={rawTheme.spacing[11]}
-          height={rawTheme.spacing[11]}
-          aria-disabled
-        />
-        <Text variant="labelsSentenceCase" truncate>
-          {item.name}
-        </Text>
-      </Flex>
-      <Flex shrink={false} align="center">
-        {isLoading ? (
-          <SpinnerIcon />
-        ) : (
-          <SmallIconButton
-            icon={isOpen ? <ChevronRightIcon /> : <EllipsesIcon />}
-            {...pressProps}
-          />
-        )}
-      </Flex>
-    </Flex>
+      title={item.name}
+      image={
+        item.thumbnailAssetName ? { name: item.thumbnailAssetName } : undefined
+      }
+      state={isOpen ? "selected" : isLoading ? "loading" : undefined}
+      suffix={
+        <Flex shrink={false} align="center">
+          <IconButton {...pressProps} state={isOpen ? "open" : undefined}>
+            <EllipsesIcon />
+          </IconButton>
+        </Flex>
+      }
+    />
   );
 };
 
@@ -125,19 +90,40 @@ export const Overview = ({
   onOpenAbout: (projectId?: string) => void;
 }) => {
   const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
+  const [selectedCategory, setSelectedCategory] =
+    useState<MarketplaceOverviewItem["category"]>("sectionTemplates");
+
+  const categoryItems = itemsByCategory.get(selectedCategory);
 
   return (
-    <ScrollArea>
-      {categories.map(({ category, label }) => {
-        const items = itemsByCategory.get(category);
-        if (items === undefined || items.length === 0) {
-          return;
-        }
-        return (
-          <CollapsibleSection label={label} key={category} fullWidth>
+    <PanelTabs
+      value={selectedCategory}
+      onValueChange={(category) => {
+        setSelectedCategory(category as MarketplaceOverviewItem["category"]);
+      }}
+      asChild
+    >
+      <Flex direction="column">
+        <PanelTabsList>
+          {Array.from(marketplaceCategories.keys()).map((category) => {
+            if (
+              category === "pageTemplates" &&
+              isFeatureEnabled("pageTemplates") === false
+            ) {
+              return;
+            }
+            return (
+              <PanelTabsTrigger key={category} value={category}>
+                {marketplaceCategories.get(category)}
+              </PanelTabsTrigger>
+            );
+          })}
+        </PanelTabsList>
+        <PanelTabsContent value={selectedCategory} tabIndex={-1}>
+          <ScrollArea>
             <List asChild>
               <Flex direction="column">
-                {items.map((item, index) => {
+                {categoryItems?.map((item, index) => {
                   return (
                     <ListItem
                       asChild
@@ -145,9 +131,10 @@ export const Overview = ({
                       index={index}
                       onSelect={() => {
                         onSelect(item);
+                        onOpenAbout(undefined);
                       }}
                     >
-                      <OverviewItem
+                      <GalleryOverviewItem
                         item={item}
                         isLoading={item.projectId === activeProjectId}
                         isOpen={openAbout === item.projectId}
@@ -160,9 +147,9 @@ export const Overview = ({
                 })}
               </Flex>
             </List>
-          </CollapsibleSection>
-        );
-      })}
-    </ScrollArea>
+          </ScrollArea>
+        </PanelTabsContent>
+      </Flex>
+    </PanelTabs>
   );
 };
