@@ -1,0 +1,161 @@
+{
+  "build": {
+    "id": "a2bb0218-2402-40b6-9bb7-dd4b20c15d3b",
+    "projectId": "622a2a82-59b2-44ea-abfe-5c02cc93b771",
+    "version": 4,
+    "createdAt": "2024-03-12T20:28:10.825Z",
+    "updatedAt": "2024-03-12T20:28:10.825Z",
+    "pages": {
+      "meta": {},
+      "homePage": {
+        "id": "_QXokkQrHp0aIdDB2P7QE",
+        "name": "test",
+        "title": "\"Untitled\"",
+        "meta": {
+          "description": "\"\"",
+          "excludePageFromSearch": "false",
+          "language": "\"\"",
+          "socialImageUrl": "\"\"",
+          "status": "200",
+          "redirect": "\"\"",
+          "custom": [
+            {
+              "property": "",
+              "content": "\"\""
+            }
+          ]
+        },
+        "rootInstanceId": "_l4bGUCK0eHbg-ZcXXT2V",
+        "path": ""
+      },
+      "pages": [],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": ["wfS976ppY6VDf6AqGf8AA"]
+        },
+        {
+          "id": "wfS976ppY6VDf6AqGf8AA",
+          "name": "FolderA",
+          "slug": "foldera",
+          "children": ["_QXokkQrHp0aIdDB2P7QE"]
+        }
+      ]
+    },
+    "breakpoints": [
+      [
+        "ruecJ6rHEr0F3mDHPo6eU",
+        {
+          "id": "ruecJ6rHEr0F3mDHPo6eU",
+          "label": "Base"
+        }
+      ],
+      [
+        "mms3y5g80l0jg1PoQdBTq",
+        {
+          "id": "mms3y5g80l0jg1PoQdBTq",
+          "label": "Tablet",
+          "maxWidth": 991
+        }
+      ],
+      [
+        "ezE_pnwaKePnXljWAIb-Y",
+        {
+          "id": "ezE_pnwaKePnXljWAIb-Y",
+          "label": "Mobile landscape",
+          "maxWidth": 767
+        }
+      ],
+      [
+        "i2VDixjlZJA8AqNyvoQWT",
+        {
+          "id": "i2VDixjlZJA8AqNyvoQWT",
+          "label": "Mobile portrait",
+          "maxWidth": 479
+        }
+      ]
+    ],
+    "styles": [],
+    "styleSources": [],
+    "styleSourceSelections": [],
+    "props": [],
+    "dataSources": [],
+    "resources": [],
+    "instances": [
+      [
+        "fg9Np_0gMD-VCnxKbI8OP",
+        {
+          "type": "instance",
+          "id": "fg9Np_0gMD-VCnxKbI8OP",
+          "component": "Body",
+          "children": []
+        }
+      ],
+      [
+        "_l4bGUCK0eHbg-ZcXXT2V",
+        {
+          "type": "instance",
+          "id": "_l4bGUCK0eHbg-ZcXXT2V",
+          "component": "Body",
+          "children": []
+        }
+      ]
+    ],
+    "deployment": {
+      "domains": [],
+      "projectDomain": "main-in-folder-kqe5r"
+    },
+    "marketplaceProduct": {}
+  },
+  "page": {
+    "id": "_QXokkQrHp0aIdDB2P7QE",
+    "name": "test",
+    "title": "\"Untitled\"",
+    "meta": {
+      "description": "\"\"",
+      "excludePageFromSearch": "false",
+      "language": "\"\"",
+      "socialImageUrl": "\"\"",
+      "status": "200",
+      "redirect": "\"\"",
+      "custom": [
+        {
+          "property": "",
+          "content": "\"\""
+        }
+      ]
+    },
+    "rootInstanceId": "_l4bGUCK0eHbg-ZcXXT2V",
+    "path": ""
+  },
+  "pages": [
+    {
+      "id": "_QXokkQrHp0aIdDB2P7QE",
+      "name": "test",
+      "title": "\"Untitled\"",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "false",
+        "language": "\"\"",
+        "socialImageUrl": "\"\"",
+        "status": "200",
+        "redirect": "\"\"",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "rootInstanceId": "_l4bGUCK0eHbg-ZcXXT2V",
+      "path": ""
+    }
+  ],
+  "assets": [],
+  "user": {
+    "email": "hello@webstudio.is"
+  },
+  "projectDomain": "main-in-folder-kqe5r"
+}
