@@ -41,7 +41,7 @@
     "strip-indent": "^4.0.0",
     "title-case": "^4.1.0",
     "yargs": "^17.7.2",
-    "zod": "^3.21.4"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^18.17.1",
