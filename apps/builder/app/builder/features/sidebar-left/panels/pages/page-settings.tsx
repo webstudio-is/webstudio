@@ -1214,7 +1214,7 @@ const createPage = (pageId: Page["id"], values: Values) => {
         component: "Body",
         children: [],
       });
-      dataSources.set(rootInstanceId, {
+      dataSources.set(systemDataSourceId, {
         id: systemDataSourceId,
         scopeInstanceId: rootInstanceId,
         name: "system",
