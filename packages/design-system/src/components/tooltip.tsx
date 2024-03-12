@@ -1,6 +1,10 @@
 import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { autoUpdate, getOverflowAncestors } from "@floating-ui/dom";
+import {
+  autoUpdate,
+  getOverflowAncestors,
+  type ReferenceElement,
+} from "@floating-ui/dom";
 
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
@@ -124,6 +128,10 @@ export const Tooltip = forwardRef(
   }
 );
 
+const isReferenceElement = (value: unknown): value is ReferenceElement => {
+  return value instanceof Element || value instanceof Window;
+};
+
 Tooltip.displayName = "Tooltip";
 
 export const InputErrorsTooltip = ({
@@ -142,6 +150,7 @@ export const InputErrorsTooltip = ({
   ));
 
   const ref = useRef<HTMLDivElement>();
+  // Use collision boundary to hide tooltips if original element out of visible area in the scroll viewport
   const [collisionBoundary, setCollisionBoundary] = useState<
     | {
         x: number;
@@ -160,14 +169,18 @@ export const InputErrorsTooltip = ({
         return;
       }
 
-      const nearesScrollableElement = ancestors[0];
+      const nearestScrollableElement = ancestors[0];
 
-      if (nearesScrollableElement instanceof HTMLElement) {
+      if (
+        nearestScrollableElement instanceof HTMLElement &&
+        isReferenceElement(ancestors[1])
+      ) {
+        // Track collision boundary size/position changes
         const cleanup = autoUpdate(
-          ancestors[1] as never,
-          nearesScrollableElement,
+          ancestors[1],
+          nearestScrollableElement,
           () => {
-            const rect = nearesScrollableElement.getBoundingClientRect();
+            const rect = nearestScrollableElement.getBoundingClientRect();
 
             const collisionPadding = -8;
 
@@ -200,7 +213,6 @@ export const InputErrorsTooltip = ({
   // where it renders {children} directly if content is empty.
   // If this optimization accur, the input will remount which will cause focus loss
   // and current value loss.
-
   return (
     <>
       <Box ref={ref as never} css={{ display: "contents" }}></Box>
