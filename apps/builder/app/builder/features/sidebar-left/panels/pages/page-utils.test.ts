@@ -566,7 +566,10 @@ describe("duplicate page", () => {
       folders: [],
     });
     duplicatePage("pageId");
-    const newPage = $pages.get()?.pages[0]!;
+    const newPage = $pages.get()?.pages[0];
+    if (newPage === undefined) {
+      throw Error("New page does not exist");
+    }
     expect(newPage).toEqual({
       id: expect.not.stringMatching("pageId"),
       name: "My Name (1)",
