@@ -1,5 +1,7 @@
 import { beforeEach, expect, test } from "@jest/globals";
 import { cleanStores } from "nanostores";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { setEnv } from "@webstudio-is/feature-flags";
 import type { Instance } from "@webstudio-is/sdk";
 import {
   collectionComponent,
@@ -21,7 +23,8 @@ import {
   $resources,
 } from "./nano-states";
 import { $params } from "~/canvas/stores";
-import { createDefaultPages } from "@webstudio-is/project-build";
+
+setEnv("*");
 
 const getIdValuePair = <T extends { id: string }>(item: T) =>
   [item.id, item] as const;
@@ -40,7 +43,7 @@ const selectPageRoot = (rootInstanceId: Instance["id"]) => {
     homePageId: "pageId",
     homePagePath: "/my-page",
     rootInstanceId,
-    systemDataSourceId: "system",
+    systemDataSourceId: "systemId",
   });
   $pages.set(defaultPages);
   $selectedPageId.set(defaultPages.homePage.id);
@@ -873,6 +876,55 @@ test("compute parameter and resource variables without values to make it availab
         new Map<string, unknown>([
           ["parameterVariableId", undefined],
           ["resourceVariableId", undefined],
+        ]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
+
+test("prefill default system variable value", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "systemId",
+        scopeInstanceId: "body",
+        name: "system",
+        type: "parameter",
+      },
+    ])
+  );
+  $props.set(new Map());
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([["systemId", { params: {}, search: {} }]]),
+      ],
+    ])
+  );
+
+  $dataSourceVariables.set(
+    new Map([["systemId", { params: { slug: "my-post" }, search: {} }]])
+  );
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([
+          ["systemId", { params: { slug: "my-post" }, search: {} }],
         ]),
       ],
     ])

@@ -264,8 +264,8 @@ const $hiddenDataSourceIds = computed(
     }
     if (pages) {
       for (const page of pages.pages) {
-        if (page.pathParamsDataSourceId) {
-          dataSourceIds.delete(page.pathParamsDataSourceId);
+        if (page.systemDataSourceId) {
+          dataSourceIds.delete(page.systemDataSourceId);
         }
       }
     }

@@ -61,18 +61,26 @@ const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
     .replace(/\/+/g, "/");
 });
 
-type PathParams = Record<string, string>;
+export type System = {
+  params: Record<string, string>;
+  search: Record<string, string>;
+};
+
+const initialSystem: System = {
+  params: {},
+  search: {},
+};
 
 const $selectedPagePathParams = computed(
   [$selectedPage, $dataSourceVariables],
   (selectedPage, dataSourceVariables) => {
-    if (selectedPage?.pathParamsDataSourceId === undefined) {
+    if (selectedPage?.systemDataSourceId === undefined) {
       return {};
     }
-    const pathParams = dataSourceVariables.get(
-      selectedPage?.pathParamsDataSourceId
-    ) as undefined | PathParams;
-    return pathParams;
+    const system = dataSourceVariables.get(selectedPage.systemDataSourceId) as
+      | undefined
+      | System;
+    return system?.params;
   }
 );
 
@@ -81,7 +89,7 @@ const updatePathParam = (name: string, value: string) => {
   const path = $selectedPagePath.get();
   const tokens = tokenizePathnamePattern(path);
   // delete stale fields
-  const newParams: PathParams = {};
+  const newParams: Record<string, string> = {};
   for (const token of tokens) {
     if (token.type === "param") {
       newParams[token.name] = pathParams?.[token.name] ?? "";
@@ -89,9 +97,17 @@ const updatePathParam = (name: string, value: string) => {
   }
   newParams[name] = value;
   const page = $selectedPage.get();
-  if (page?.pathParamsDataSourceId) {
+  if (page?.systemDataSourceId) {
     const dataSourceVariables = new Map($dataSourceVariables.get());
-    dataSourceVariables.set(page.pathParamsDataSourceId, newParams);
+    const system = dataSourceVariables.get(page.systemDataSourceId) as
+      | undefined
+      | System;
+    const newSystem: System = {
+      ...initialSystem,
+      ...system,
+      params: newParams,
+    };
+    dataSourceVariables.set(page.systemDataSourceId, newSystem);
     $dataSourceVariables.set(dataSourceVariables);
   }
 };

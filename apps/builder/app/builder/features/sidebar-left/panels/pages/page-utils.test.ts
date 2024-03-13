@@ -819,49 +819,6 @@ describe("duplicate page", () => {
       systemDataSourceId: expect.not.stringMatching("system"),
     });
   });
-
-  test("replace path params variable", () => {
-    $instances.set(
-      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
-    );
-    $dataSources.set(
-      toMap([
-        {
-          id: "pathParamsId",
-          scopeInstanceId: "body",
-          name: "Path Params",
-          type: "parameter",
-        },
-      ])
-    );
-    $pages.set({
-      homePage: {
-        id: "pageId",
-        name: "My Name",
-        path: "/",
-        title: `"My Title"`,
-        meta: {},
-        rootInstanceId: "body",
-        pathParamsDataSourceId: "pathParamsId",
-        systemDataSourceId: "system",
-      },
-      pages: [],
-      folders: [],
-    });
-    duplicatePage("pageId");
-    const [_oldDataSource, newDataSource] = $dataSources.get().values();
-    expect(newDataSource.id).not.toEqual("pathParamsId");
-    expect($pages.get()?.pages[0]).toEqual({
-      id: expect.not.stringMatching("pageId"),
-      name: "My Name (1)",
-      path: "/copy-1",
-      title: `"My Title"`,
-      meta: {},
-      rootInstanceId: expect.not.stringMatching("body"),
-      pathParamsDataSourceId: newDataSource.id,
-      systemDataSourceId: expect.not.stringMatching("system"),
-    });
-  });
 });
 
 test("page root scope should rely on editing page", () => {
@@ -950,6 +907,47 @@ test("page root scope should use variable and resource values", () => {
     variableValues: new Map([
       ["valueVariableId", "value variable value"],
       ["resourceVariableId", "resource variable value"],
+    ]),
+  });
+});
+
+test("page root scope should prefill default system variable value", () => {
+  $pages.set(
+    createDefaultPages({
+      rootInstanceId: "homeRootId",
+      homePageId: "homePageId",
+      systemDataSourceId: "systemId",
+    })
+  );
+  $editingPagesItemId.set("homePageId");
+  $dataSources.set(
+    toMap([
+      {
+        id: "systemId",
+        scopeInstanceId: "homeRootId",
+        name: "system",
+        type: "parameter",
+      },
+    ])
+  );
+  expect($pageRootScope.get()).toEqual({
+    aliases: new Map([["$ws$dataSource$systemId", "system"]]),
+    scope: {
+      $ws$dataSource$systemId: { params: {}, search: {} },
+    },
+    variableValues: new Map([["systemId", { params: {}, search: {} }]]),
+  });
+
+  $dataSourceVariables.set(
+    new Map([["systemId", { params: { slug: "my-post" }, search: {} }]])
+  );
+  expect($pageRootScope.get()).toEqual({
+    aliases: new Map([["$ws$dataSource$systemId", "system"]]),
+    scope: {
+      $ws$dataSource$systemId: { params: { slug: "my-post" }, search: {} },
+    },
+    variableValues: new Map([
+      ["systemId", { params: { slug: "my-post" }, search: {} }],
     ]),
   });
 });
