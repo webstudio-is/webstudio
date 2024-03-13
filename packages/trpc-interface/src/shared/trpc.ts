@@ -8,6 +8,8 @@ export const createContext = async () => {
 
 export type Context = inferAsyncReturnType<typeof createContext>;
 
+// Here is different router and trpc types not the same as in ../context/router.server.ts
+// And used only for saas shared routers
 export const { router, procedure, middleware } = initTRPC
   .context<Context>()
   .create();
