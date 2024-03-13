@@ -20,7 +20,8 @@
         "title": "\"Home\"",
         "meta": {},
         "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
-        "path": ""
+        "path": "",
+        "systemDataSourceId": "HdKSzlJZasGmZlW8b-va0"
       },
       "pages": [],
       "folders": [
@@ -134,7 +135,17 @@
       ]
     ],
     "props": [],
-    "dataSources": [],
+    "dataSources": [
+      [
+        "HdKSzlJZasGmZlW8b-va0",
+        {
+          "id": "HdKSzlJZasGmZlW8b-va0",
+          "scopeInstanceId": "MMimeobf_zi4ZkRGXapju",
+          "name": "system",
+          "type": "parameter"
+        }
+      ]
+    ],
     "resources": [],
     "instances": [
       [
@@ -196,7 +207,8 @@
     "title": "\"Home\"",
     "meta": {},
     "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
-    "path": ""
+    "path": "",
+    "systemDataSourceId": "HdKSzlJZasGmZlW8b-va0"
   },
   "pages": [
     {
@@ -205,7 +217,8 @@
       "title": "\"Home\"",
       "meta": {},
       "rootInstanceId": "MMimeobf_zi4ZkRGXapju",
-      "path": ""
+      "path": "",
+      "systemDataSourceId": "HdKSzlJZasGmZlW8b-va0"
     }
   ],
   "assets": [],
