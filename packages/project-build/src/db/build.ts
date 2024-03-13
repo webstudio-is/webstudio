@@ -199,8 +199,19 @@ export const createBuild = async (
 
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
+  const systemDataSource: DataSource = {
+    id: nanoid(),
+    scopeInstanceId: rootInstanceId,
+    name: "system",
+    type: "parameter",
+  };
 
-  const defaultPages = Pages.parse(createDefaultPages({ rootInstanceId }));
+  const defaultPages = Pages.parse(
+    createDefaultPages({
+      rootInstanceId,
+      systemDataSourceId: systemDataSource.id,
+    })
+  );
 
   await client.build.create({
     data: {
@@ -210,6 +221,9 @@ export const createBuild = async (
         new Map(createInitialBreakpoints())
       ),
       instances: serializeData<Instance>(new Map(newInstances)),
+      dataSources: serializeData<DataSource>(
+        new Map([[systemDataSource.id, systemDataSource]])
+      ),
     },
   });
 };

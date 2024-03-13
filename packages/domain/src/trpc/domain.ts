@@ -1,11 +1,9 @@
 import { z } from "zod";
-import { initTRPC } from "@trpc/server";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { db } from "../db";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
-
-const { router, procedure } = initTRPC.context<AppContext>().create();
+import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {

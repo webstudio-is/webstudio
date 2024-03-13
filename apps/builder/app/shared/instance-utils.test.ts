@@ -56,7 +56,7 @@ import { createDefaultPages } from "@webstudio-is/project-build";
 enableMapSet();
 registerContainers();
 
-$pages.set(createDefaultPages({ rootInstanceId: "" }));
+$pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
 
 const defaultMetasMap = new Map(Object.entries(defaultMetas));
 $registeredComponentMetas.set(defaultMetasMap);
@@ -973,7 +973,7 @@ describe("reparent instance", () => {
 const getWebstudioDataStub = (
   data?: Partial<WebstudioData>
 ): WebstudioData => ({
-  pages: createDefaultPages({ rootInstanceId: "" }),
+  pages: createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }),
   assets: new Map(),
   dataSources: new Map(),
   resources: new Map(),

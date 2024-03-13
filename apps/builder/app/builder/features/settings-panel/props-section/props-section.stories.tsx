@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Instance, Prop, Asset } from "@webstudio-is/sdk";
+import type { Instance, Prop, Asset, Page } from "@webstudio-is/sdk";
 import type { PropMeta } from "@webstudio-is/react-sdk";
 import { textVariants } from "@webstudio-is/design-system";
 import { PropsSection } from "./props-section";
@@ -25,17 +25,21 @@ const unique = () => `${++id}`;
 const instanceId = unique();
 const projectId = unique();
 
-const page = (name: string, path: string) => ({
+const page = (name: string, path: string): Page => ({
   id: unique(),
   name,
   title: name,
   path,
   meta: {},
   rootInstanceId: unique(),
+  systemDataSourceId: unique(),
 });
 
 $pages.set({
-  ...createDefaultPages({ rootInstanceId: unique() }),
+  ...createDefaultPages({
+    rootInstanceId: unique(),
+    systemDataSourceId: unique(),
+  }),
   homePage: page("Home", "/"),
   pages: [
     page("About", "/about"),

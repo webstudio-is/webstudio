@@ -1,6 +1,5 @@
-import { loadResource } from "@webstudio-is/sdk";
-type Params = Record<string, string | undefined>;
-export const loadResources = async (_props: { params: Params }) => {
+import { loadResource, type System } from "@webstudio-is/sdk";
+export const loadResources = async (_props: { system: System }) => {
   const [list_1] = await Promise.all([
     loadResource({
       id: "1vX6SQdaCjJN6MvJlG_cQ",

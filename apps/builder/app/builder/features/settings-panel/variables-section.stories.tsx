@@ -23,7 +23,9 @@ $instances.set(
   ])
 );
 $selectedPageId.set("home");
-$pages.set(createDefaultPages({ rootInstanceId: "root" }));
+$pages.set(
+  createDefaultPages({ rootInstanceId: "root", systemDataSourceId: "system" })
+);
 
 export const VariablesSection: StoryObj = {
   render: () => (

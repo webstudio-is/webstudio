@@ -519,6 +519,8 @@ export const prebuild = async (options: {
       "createPageMeta",
       "PageData",
       "Asset",
+      "ProjectMeta",
+      "System",
       "fontAssets",
       "pageData",
       "user",
@@ -582,28 +584,17 @@ export const prebuild = async (options: {
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
     const utilsExport = generateUtilsExport({ props });
-    // generate new Page Params variable if does not exist
-    // to allow always passing it from route template
-    const pathParamsDataSourceId =
-      pageData.page.pathParamsDataSourceId ?? "pathParamsDataSourceId";
-    if (pageData.page.pathParamsDataSourceId === undefined) {
-      dataSources.set(pathParamsDataSourceId, {
-        id: pathParamsDataSourceId,
-        name: "Path Params",
-        type: "parameter",
-      });
-    }
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
       rootInstanceId,
       parameters: [
         {
-          id: `params`,
+          id: `system`,
           instanceId: "",
-          name: "params",
+          name: "system",
           type: "parameter",
-          value: pathParamsDataSourceId,
+          value: pageData.page.systemDataSourceId ?? "",
         },
       ],
       instances,
@@ -620,7 +611,7 @@ export const prebuild = async (options: {
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import { Fragment, useState } from "react";
-import type { Asset, FontAsset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
+import type { Asset, FontAsset, ImageAsset, ProjectMeta, System } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}

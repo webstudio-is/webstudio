@@ -1,6 +1,6 @@
 import * as db from "../db";
 import { z } from "zod";
-import { router, procedure } from "./trpc";
+import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { MarketplaceApprovalStatus, Title } from "../shared/schema";
 
 export const projectRouter = router({

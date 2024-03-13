@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { procedure, router } from "../trpc";
+import { procedure, router } from "@webstudio-is/trpc-interface/index.server";
 import { getItems, getBuildProdData } from "./db.server";
 
 export const marketplaceRouter = router({

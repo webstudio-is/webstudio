@@ -1,7 +1,7 @@
 /**
  * The only intent of this file is to support typings inside ../templates/route-template for easier development.
  **/
-import type { ImageAsset, FontAsset } from "@webstudio-is/sdk";
+import type { ImageAsset, FontAsset, System } from "@webstudio-is/sdk";
 import type { PageData } from "../templates/defaults/__templates__/route-template";
 import type { PageMeta } from "@webstudio-is/react-sdk";
 
@@ -21,7 +21,7 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "project-id";
 
 export const getPageMeta = ({}: {
-  params: Record<string, any>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -30,7 +30,7 @@ export const getPageMeta = ({}: {
   };
 };
 
-const Page = (_props: { params: any }) => {
+const Page = (_props: { system: any }) => {
   return <></>;
 };
 

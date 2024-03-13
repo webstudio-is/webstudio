@@ -26,7 +26,8 @@
           "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
         },
         "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
-        "path": ""
+        "path": "",
+        "systemDataSourceId": "gzU1wxmnHwY-x5jPet-3Y"
       },
       "pages": [
         {
@@ -45,7 +46,8 @@
             ]
           },
           "rootInstanceId": "LW98_-srDnnagkR10lsk4",
-          "path": "/script-test"
+          "path": "/script-test",
+          "systemDataSourceId": "pCHIauvdC2bIuiCOAhV9Z"
         },
         {
           "id": "lyz5sZaJ7WzLt71cX3VJ2",
@@ -61,7 +63,8 @@
             "custom": []
           },
           "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
-          "path": "/world"
+          "path": "/world",
+          "systemDataSourceId": "E2nbgH6ec91fv6I4xF7DR"
         }
       ],
       "folders": [
@@ -515,7 +518,35 @@
         }
       ]
     ],
-    "dataSources": [],
+    "dataSources": [
+      [
+        "gzU1wxmnHwY-x5jPet-3Y",
+        {
+          "id": "gzU1wxmnHwY-x5jPet-3Y",
+          "scopeInstanceId": "ibXgMoi9_ipHx1gVrvii0",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "pCHIauvdC2bIuiCOAhV9Z",
+        {
+          "id": "pCHIauvdC2bIuiCOAhV9Z",
+          "scopeInstanceId": "LW98_-srDnnagkR10lsk4",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "E2nbgH6ec91fv6I4xF7DR",
+        {
+          "id": "E2nbgH6ec91fv6I4xF7DR",
+          "scopeInstanceId": "jDb2FuSK2-azIZxkH5XNv",
+          "name": "system",
+          "type": "parameter"
+        }
+      ]
+    ],
     "resources": [],
     "instances": [
       [
@@ -653,7 +684,8 @@
       "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
     },
     "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
-    "path": ""
+    "path": "",
+    "systemDataSourceId": "gzU1wxmnHwY-x5jPet-3Y"
   },
   "pages": [
     {
@@ -664,7 +696,8 @@
         "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
       },
       "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
-      "path": ""
+      "path": "",
+      "systemDataSourceId": "gzU1wxmnHwY-x5jPet-3Y"
     },
     {
       "id": "xT46WZKzCBTvUCIObMELW",
@@ -682,7 +715,8 @@
         ]
       },
       "rootInstanceId": "LW98_-srDnnagkR10lsk4",
-      "path": "/script-test"
+      "path": "/script-test",
+      "systemDataSourceId": "pCHIauvdC2bIuiCOAhV9Z"
     },
     {
       "id": "lyz5sZaJ7WzLt71cX3VJ2",
@@ -698,7 +732,8 @@
         "custom": []
       },
       "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
-      "path": "/world"
+      "path": "/world",
+      "systemDataSourceId": "E2nbgH6ec91fv6I4xF7DR"
     }
   ],
   "assets": [

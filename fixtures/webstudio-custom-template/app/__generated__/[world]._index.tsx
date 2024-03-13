@@ -7,6 +7,7 @@ import type {
   FontAsset,
   ImageAsset,
   ProjectMeta,
+  System,
 } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import type { PageMeta } from "@webstudio-is/react-sdk";
@@ -46,10 +47,10 @@ export const user: { email: string | null } | undefined = {
 export const projectId = "0d856812-61d8-4014-a20a-82e01c0eb8ee";
 
 export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -65,7 +66,7 @@ export const getPageMeta = ({
   };
 };
 
-const Page = ({}: { params: any }) => {
+const Page = ({}: { system: any }) => {
   return (
     <Body data-ws-id="jDb2FuSK2-azIZxkH5XNv" data-ws-component="Body">
       <Heading data-ws-id="D7kQxgXxrjei-MS_KzUa2" data-ws-component="Heading">

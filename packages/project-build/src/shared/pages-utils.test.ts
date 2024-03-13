@@ -5,6 +5,7 @@ test("createDefaultPages", () => {
   expect(
     createDefaultPages({
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     })
   ).toEqual({
@@ -16,6 +17,7 @@ test("createDefaultPages", () => {
       title: `"Home"`,
       meta: {},
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
     },
     pages: [],
     folders: [
