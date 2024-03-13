@@ -39,6 +39,11 @@ type Pages = {
 
 export default async () => {
   const client = new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DIRECT_URL ?? process.env.DATABASE_URL,
+      },
+    },
     // Uncomment to see the queries in console as the migration runs
     // log: ["query", "info", "warn", "error"],
   });
