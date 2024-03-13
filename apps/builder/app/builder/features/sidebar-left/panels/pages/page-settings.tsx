@@ -90,7 +90,7 @@ import {
   duplicatePage,
 } from "./page-utils";
 import { Form } from "./form";
-import { $publishedOrigin } from "~/builder/features/address-bar";
+import { type System, $publishedOrigin } from "~/builder/features/address-bar";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
@@ -545,10 +545,7 @@ const LanguageField = ({
   );
 };
 
-const usePageUrl = (
-  values: Values,
-  pathParamsDataSourceId?: DataSource["id"]
-) => {
+const usePageUrl = (values: Values, systemDataSourceId?: DataSource["id"]) => {
   const pages = useStore($pages);
   const foldersPath =
     pages === undefined ? "" : getPagePath(values.parentFolderId, pages);
@@ -558,14 +555,11 @@ const usePageUrl = (
     .replace(/\/+/g, "/");
 
   const dataSourceVariables = useStore($dataSourceVariables);
-  const storedParams =
-    pathParamsDataSourceId === undefined
+  const storedSystem =
+    systemDataSourceId === undefined
       ? undefined
-      : (dataSourceVariables.get(pathParamsDataSourceId) as Record<
-          string,
-          string
-        >);
-  const pathParams = storedParams ?? {};
+      : (dataSourceVariables.get(systemDataSourceId) as System);
+  const pathParams = storedSystem?.params ?? {};
 
   const publishedOrigin = useStore($publishedOrigin);
   const tokens = tokenizePathnamePattern(path);
@@ -574,13 +568,13 @@ const usePageUrl = (
 };
 
 const FormFields = ({
-  pathParamsDataSourceId,
+  systemDataSourceId,
   autoSelect,
   errors,
   values,
   onChange,
 }: {
-  pathParamsDataSourceId?: DataSource["id"];
+  systemDataSourceId?: DataSource["id"];
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
@@ -599,7 +593,7 @@ const FormFields = ({
   const { allowDynamicData } = useStore($userPlanFeatures);
   const { variableValues, scope, aliases } = useStore($pageRootScope);
 
-  const pageUrl = usePageUrl(values, pathParamsDataSourceId);
+  const pageUrl = usePageUrl(values, systemDataSourceId);
 
   if (pages === undefined) {
     return;
@@ -1285,58 +1279,38 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
     }
   };
 
-  serverSyncStore.createTransaction(
-    [$pages, $dataSources],
-    (pages, dataSources) => {
-      if (pages === undefined) {
-        return;
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+
+    // swap home page
+    if (values.isHomePage && pages.homePage.id !== pageId) {
+      const newHomePageIndex = pages.pages.findIndex(
+        (page) => page.id === pageId
+      );
+      if (newHomePageIndex === -1) {
+        throw new Error(`Page with id ${pageId} not found`);
       }
 
-      // swap home page
-      if (values.isHomePage && pages.homePage.id !== pageId) {
-        const newHomePageIndex = pages.pages.findIndex(
-          (page) => page.id === pageId
-        );
-        if (newHomePageIndex === -1) {
-          throw new Error(`Page with id ${pageId} not found`);
-        }
+      const tmp = pages.homePage;
+      pages.homePage = pages.pages[newHomePageIndex];
 
-        const tmp = pages.homePage;
-        pages.homePage = pages.pages[newHomePageIndex];
+      pages.homePage.path = "";
+      pages.pages[newHomePageIndex] = tmp;
 
-        pages.homePage.path = "";
-        pages.pages[newHomePageIndex] = tmp;
+      tmp.path = nameToPath(pages, tmp.name);
+    }
 
-        tmp.path = nameToPath(pages, tmp.name);
-      }
-
-      if (pages.homePage.id === pageId) {
-        updatePageMutable(pages.homePage, values, pages.folders);
-      }
-
-      for (const page of pages.pages) {
-        if (page.id === pageId) {
-          // mutate page before working with path params
-          updatePageMutable(page, values, pages.folders);
-          // create "Path Params" variable when pattern is specified in path
-
-          if (
-            isPathnamePattern(page.path) &&
-            page.pathParamsDataSourceId === undefined
-          ) {
-            page.pathParamsDataSourceId = nanoid();
-            dataSources.set(page.pathParamsDataSourceId, {
-              id: page.pathParamsDataSourceId,
-              // scope new variable to page root
-              scopeInstanceId: page.rootInstanceId,
-              type: "parameter",
-              name: "Path Params",
-            });
-          }
-        }
+    if (pages.homePage.id === pageId) {
+      updatePageMutable(pages.homePage, values, pages.folders);
+    }
+    for (const page of pages.pages) {
+      if (page.id === pageId) {
+        updatePageMutable(page, values, pages.folders);
       }
     }
-  );
+  });
 };
 
 export const PageSettings = ({
@@ -1432,7 +1406,7 @@ export const PageSettings = ({
       }}
     >
       <FormFields
-        pathParamsDataSourceId={page.pathParamsDataSourceId}
+        systemDataSourceId={page.systemDataSourceId}
         errors={errors}
         values={values}
         onChange={handleChange}

@@ -358,6 +358,15 @@ export const $variableValuesByInstanceSelector = computed(
           if (variable.type === "parameter") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value);
+            if (
+              variable.id === page.systemDataSourceId &&
+              value === undefined
+            ) {
+              variableValues.set(variable.id, {
+                params: {},
+                search: {},
+              });
+            }
           }
           if (variable.type === "resource") {
             const value = resourceValues.get(variable.resourceId);
