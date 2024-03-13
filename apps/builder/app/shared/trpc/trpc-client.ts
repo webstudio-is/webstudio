@@ -59,7 +59,7 @@ type Client = Record<
   string,
   Record<
     string,
-    { query: (args: unknown) => unknown; mutation: (args: unknown) => unknown }
+    { query: (args: unknown) => unknown; mutate: (args: unknown) => unknown }
   >
 >;
 
@@ -99,7 +99,7 @@ export const trpcClient: {
         // }
 
         const result = await (client as unknown as Client)[namespace][method][
-          hook === "useMutation" ? "mutation" : "query"
+          hook === "useMutation" ? "mutate" : "query"
         ](input);
 
         // Newer request has been made, ignore this one

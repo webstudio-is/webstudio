@@ -48,13 +48,9 @@ import {
   AlertIcon,
   CopyIcon,
 } from "@webstudio-is/icons";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
-import { builderDomainsPath } from "~/shared/router-utils";
-import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
-
-const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
 type ProjectData =
   | {
@@ -90,7 +86,7 @@ const ChangeProjectDomain = ({
     send: updateProjectDomain,
     state: updateProjectDomainState,
     error: updateProjectSystemError,
-  } = trpc.updateProjectDomain.useMutation();
+  } = trpcClient.domain.updateProjectDomain.useMutation();
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
@@ -254,7 +250,7 @@ const Publish = ({
     state: publishState,
     data: publishData,
     error: publishSystemError,
-  } = trpc.publish.useMutation();
+  } = trpcClient.domain.publish.useMutation();
 
   useEffect(() => {
     if (isPublishing) {
@@ -352,7 +348,7 @@ const ErrorText = ({ children }: { children: string }) => (
 );
 
 const useCanAddDomain = () => {
-  const { load, data } = trpc.countTotalDomains.useQuery();
+  const { load, data } = trpcClient.domain.countTotalDomains.useQuery();
   const { maxDomainsAllowedPerUser, hasProPlan } = useStore($userPlanFeatures);
   useEffect(() => {
     load();
@@ -374,14 +370,14 @@ const Content = (props: {
     load: domainRefresh,
     state: domainState,
     error: domainSystemError,
-  } = trpc.findMany.useQuery();
+  } = trpcClient.domain.findMany.useQuery();
 
   const {
     load: projectLoad,
     data: projectData,
     state: projectState,
     error: projectSystemError,
-  } = trpc.project.useQuery();
+  } = trpcClient.domain.project.useQuery();
 
   useEffect(() => {
     projectLoad({ projectId: props.projectId });
