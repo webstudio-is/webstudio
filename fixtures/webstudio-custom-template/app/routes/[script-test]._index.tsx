@@ -35,8 +35,12 @@ export type PageData = {
 
 export const loader = async (arg: LoaderArgs) => {
   const params = getRemixParams(arg.params);
-  const resources = await loadResources({ params });
-  const pageMeta = getPageMeta({ params, resources });
+  const system = {
+    params,
+    search: {},
+  };
+  const resources = await loadResources({ system });
+  const pageMeta = getPageMeta({ system, resources });
 
   if (pageMeta.redirect) {
     const status =
@@ -63,7 +67,7 @@ export const loader = async (arg: LoaderArgs) => {
       host,
       url: url.href,
       excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
-      params,
+      system,
       resources,
       pageMeta,
     },
@@ -316,7 +320,7 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
-  const { params, resources } = useLoaderData<typeof loader>();
+  const { system, resources } = useLoaderData<typeof loader>();
   return (
     <ReactSdkContext.Provider
       value={{
@@ -326,7 +330,7 @@ const Outlet = () => {
         resources,
       }}
     >
-      <Page params={params} />
+      <Page system={system} />
     </ReactSdkContext.Provider>
   );
 };

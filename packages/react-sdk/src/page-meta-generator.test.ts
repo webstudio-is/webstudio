@@ -21,10 +21,10 @@ test("generate minimal static page meta factory", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -71,10 +71,10 @@ test("generate complete static page meta factory", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -120,10 +120,10 @@ test("generate asset url instead of id", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -164,10 +164,10 @@ test("generate custom meta ignoring empty property name", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   return {
@@ -215,10 +215,10 @@ test("generate page meta factory with variables", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   let VariableName = ""
@@ -239,7 +239,7 @@ test("generate page meta factory with variables", () => {
 `);
 });
 
-test("generate page meta factory with path params", () => {
+test("generate page meta factory with system", () => {
   expect(
     generatePageMeta({
       globalScope: createScope(),
@@ -248,30 +248,30 @@ test("generate page meta factory with path params", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        title: `$ws$dataSource$pathParamsId.slug`,
+        title: `$ws$dataSource$systemId.params.slug`,
         meta: {},
-        pathParamsDataSourceId: "pathParamsId",
+        systemDataSourceId: "systemId",
       },
       dataSources: toMap([
         {
-          id: "pathParamsId",
+          id: "systemId",
           scopeInstanceId: "body",
-          name: "Path Params",
+          name: "system",
           type: "parameter",
         },
       ]),
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
-  let PathParams = params
+  let system_1 = system
   return {
-    title: PathParams?.slug,
+    title: system_1?.params?.slug,
     description: undefined,
     excludePageFromSearch: undefined,
     language: undefined,
@@ -311,10 +311,10 @@ test("generate page meta factory with resources", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   let CmsPage = resources.CmsPage
@@ -344,7 +344,7 @@ test("generate page meta factory without unused variables", () => {
         name: "",
         path: "",
         rootInstanceId: "",
-        pathParamsDataSourceId: "unusedPathParamsId",
+        systemDataSourceId: "unusedSystemId",
         title: `$ws$dataSource$usedVariableId`,
         meta: {},
       },
@@ -364,9 +364,9 @@ test("generate page meta factory without unused variables", () => {
           value: { type: "string", value: "" },
         },
         {
-          id: "unusedPathParamsId",
+          id: "unusedSystemId",
           scopeInstanceId: "body",
-          name: "Unused Path Params",
+          name: "Unused System",
           type: "parameter",
         },
         {
@@ -380,10 +380,10 @@ test("generate page meta factory without unused variables", () => {
     })
   ).toMatchInlineSnapshot(`
 "export const getPageMeta = ({
-  params,
+  system,
   resources,
 }: {
-  params: Record<string, undefined | string>;
+  system: System;
   resources: Record<string, any>;
 }): PageMeta => {
   let UsedName = ""
