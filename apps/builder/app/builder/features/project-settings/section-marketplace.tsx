@@ -45,7 +45,13 @@ const thumbnailStyle = css({
   borderStyle: "solid",
   borderColor: theme.colors.borderMain,
   aspectRatio: "1.91",
-  objectFit: "cover",
+  variants: {
+    hasAsset: {
+      true: {
+        objectFit: "cover",
+      },
+    },
+  },
 });
 const imageLoader = createImageLoader({
   imageBaseUrl: env.IMAGE_BASE_URL,
@@ -139,7 +145,6 @@ export const SectionMarketplace = () => {
     return;
   }
   const asset = assets.get(data.thumbnailAssetId ?? "");
-  const thumbnailUrl = asset ? `${asset.name}` : undefined;
 
   const handleSave = <Setting extends keyof MarketplaceProduct>(
     setting: Setting
@@ -208,8 +213,8 @@ export const SectionMarketplace = () => {
           <InputErrorsTooltip errors={errors?.thumbnailAssetId}>
             <Image
               width={rawTheme.spacing[28]}
-              className={thumbnailStyle()}
-              src={thumbnailUrl}
+              className={thumbnailStyle({ hasAsset: asset !== undefined })}
+              src={asset ? `${asset.name}` : undefined}
               loader={imageLoader}
             />
           </InputErrorsTooltip>
@@ -321,7 +326,7 @@ export const SectionMarketplace = () => {
                 }
               }}
             />
-            <Label htmlFor={ids.isConfirmed} css={{ flexBasis: "fit-content" }}>
+            <Label htmlFor={ids.isConfirmed} css={{ flexShrink: 1 }}>
               I understand that by submitting, this project will become
               available in a public marketplace.
             </Label>

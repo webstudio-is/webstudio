@@ -78,11 +78,13 @@ const GalleryOverviewItem = ({
 
 export const Overview = ({
   activeProjectId,
+  hidden,
   items,
   onSelect,
   openAbout,
   onOpenAbout,
 }: {
+  hidden?: boolean;
   activeProjectId?: Project["id"];
   items?: Array<MarketplaceOverviewItem>;
   onSelect: (item: MarketplaceOverviewItem) => void;
@@ -102,6 +104,7 @@ export const Overview = ({
         setSelectedCategory(category as MarketplaceOverviewItem["category"]);
       }}
       asChild
+      hidden={hidden}
     >
       <Flex direction="column">
         <PanelTabsList>

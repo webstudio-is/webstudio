@@ -7,6 +7,7 @@ import {
   Tooltip,
   buttonStyle,
   theme,
+  truncate,
 } from "@webstudio-is/design-system";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { Header } from "../../shared/panel";
@@ -48,23 +49,25 @@ export const About = ({
       >
         <Text>{item.description}</Text>
         <Flex direction="column" gap="1">
-          <Text>Author: {item.author}</Text>
+          <Text truncate>Author: {item.author}</Text>
           {item.website && (
             <Flex gap="1">
-              <Text>Website:</Text>
-              <Link href={item.website} target="_blank">
+              <Text css={{ flexShrink: 0 }}>Website:</Text>
+              <Link href={item.website} target="_blank" css={truncate()}>
                 {item.website}
               </Link>
             </Flex>
           )}
           <Flex gap="1">
-            <Text>Email:</Text>
-            <Link href={`mailto:${item.email}`}>{item.email}</Link>
+            <Text css={{ flexShrink: 0 }}>Email:</Text>
+            <Link href={`mailto:${item.email}`} css={truncate()}>
+              {item.email}
+            </Link>
           </Flex>
           {item.issues && (
             <Flex gap="1">
-              <Text>Issues Tracker:</Text>
-              <Link href={item.issues} target="_blank">
+              <Text css={{ flexShrink: 0 }}>Issues Tracker:</Text>
+              <Link href={item.issues} target="_blank" css={truncate()}>
                 {item.issues}
               </Link>
             </Flex>

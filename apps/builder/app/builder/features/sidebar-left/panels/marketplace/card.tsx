@@ -38,10 +38,16 @@ const imageStyle = css({
   top: 0,
   width: "100%",
   height: "100%",
-  objectFit: "cover",
   transition: "transform 100ms",
   "&:hover": {
     transform: "scale(1.1)",
+  },
+  variants: {
+    hasAsset: {
+      true: {
+        objectFit: "cover",
+      },
+    },
   },
 });
 
@@ -53,18 +59,18 @@ type ThumbnailProps = {
 const Thumbnail = ({ image, state }: ThumbnailProps) => {
   return (
     <div className={imageContainerStyle()}>
-      {image === "" ? (
+      {image === "" || image === undefined ? (
         // Will render a placeholder
         <Image loader={imageLoader} className={imageStyle()} />
       ) : typeof image === "string" ? (
         // Its a URL.
-        <img src={image} className={imageStyle()} />
+        <img src={image} className={imageStyle({ hasAsset: true })} />
       ) : (
         <Image
-          src={image?.name}
+          src={image.name}
           width={rawTheme.spacing[28]}
           loader={imageLoader}
-          className={imageStyle()}
+          className={imageStyle({ hasAsset: true })}
         />
       )}
 
