@@ -8,15 +8,11 @@ import {
   Text,
   Grid,
 } from "@webstudio-is/design-system";
-import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { validateDomain } from "@webstudio-is/domain";
 import type { Project } from "@webstudio-is/project";
 import { useId, useState } from "react";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
-import { builderDomainsPath } from "~/shared/router-utils";
 import { CustomCodeIcon } from "@webstudio-is/icons";
-
-const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
 type DomainsAddProps = {
   projectId: Project["id"];
@@ -43,7 +39,7 @@ export const AddDomain = ({
     send: create,
     state: сreateState,
     error: сreateSystemError,
-  } = trpc.create.useMutation();
+  } = trpcClient.domain.create.useMutation();
   const [isOpen, setIsOpen] = useState(false);
   const [domain, setDomain] = useState("");
   const [error, setError] = useState<string>();

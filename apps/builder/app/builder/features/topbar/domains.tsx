@@ -11,10 +11,7 @@ import {
   NestedInputButton,
   Separator,
 } from "@webstudio-is/design-system";
-import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import type { Project } from "@webstudio-is/project";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
-import { builderDomainsPath } from "~/shared/router-utils";
 import {
   AlertIcon,
   CheckCircleIcon,
@@ -29,8 +26,7 @@ import type { PublishStatus } from "@webstudio-is/prisma-client";
 // eslint-disable-next-line import/no-internal-modules
 import formatDistance from "date-fns/formatDistance";
 import { Entri } from "./entri";
-
-const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
 export type Domain = {
   projectId: Project["id"];
@@ -212,21 +208,21 @@ const DomainItem = (props: {
     state: verifyState,
     data: verifyData,
     error: verifySystemError,
-  } = trpc.verify.useMutation();
+  } = trpcClient.domain.verify.useMutation();
 
   const {
     send: remove,
     state: removeState,
     data: removeData,
     error: removeSystemError,
-  } = trpc.remove.useMutation();
+  } = trpcClient.domain.remove.useMutation();
 
   const {
     send: updateStatus,
     state: updateStatusState,
     data: updateStatusData,
     error: updateStatusError,
-  } = trpc.updateStatus.useMutation();
+  } = trpcClient.domain.updateStatus.useMutation();
 
   const [isStatusLoading, setIsStatusLoading] = useState(true);
 
