@@ -9,7 +9,6 @@ import {
   PanelTabsList,
   PanelTabsTrigger,
   ScrollArea,
-  type CSS,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
@@ -79,18 +78,18 @@ const GalleryOverviewItem = ({
 
 export const Overview = ({
   activeProjectId,
+  hidden,
   items,
   onSelect,
   openAbout,
   onOpenAbout,
-  css,
 }: {
+  hidden?: boolean;
   activeProjectId?: Project["id"];
   items?: Array<MarketplaceOverviewItem>;
   onSelect: (item: MarketplaceOverviewItem) => void;
   openAbout?: Project["id"];
   onOpenAbout: (projectId?: string) => void;
-  css: CSS;
 }) => {
   const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
   const [selectedCategory, setSelectedCategory] =
@@ -105,7 +104,7 @@ export const Overview = ({
         setSelectedCategory(category as MarketplaceOverviewItem["category"]);
       }}
       asChild
-      css={css}
+      hidden={hidden}
     >
       <Flex direction="column">
         <PanelTabsList>

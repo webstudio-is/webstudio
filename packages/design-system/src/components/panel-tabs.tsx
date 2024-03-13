@@ -10,6 +10,7 @@ import { styled, theme } from "../stitches.config";
 export const PanelTabs = styled(Primitive.Root, {
   display: "flex",
   flexDirection: "column",
+  "&[hidden]": { display: "none" },
 });
 
 export const PanelTabsList = styled(Primitive.List, {
