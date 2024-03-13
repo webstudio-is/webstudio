@@ -73,21 +73,18 @@ export const generateResourcesLoader = ({
     }
 
     if (dataSource.type === "parameter") {
-      // support only page path params parameter
-      if (dataSource.id !== page.pathParamsDataSourceId) {
+      // support only page system parameter
+      if (dataSource.id !== page.systemDataSourceId) {
         continue;
       }
       const name = scope.getName(dataSource.id, dataSource.name);
-      generatedVariables += `const ${name} = _props.params\n`;
+      generatedVariables += `const ${name} = _props.system\n`;
     }
   }
 
   let generated = "";
-  if (hasResources) {
-    generated += `import { loadResource } from "@webstudio-is/sdk";\n`;
-  }
-  generated += `type Params = Record<string, string | undefined>\n`;
-  generated += `export const loadResources = async (_props: { params: Params }) => {\n`;
+  generated += `import { loadResource, type System } from "@webstudio-is/sdk";\n`;
+  generated += `export const loadResources = async (_props: { system: System }) => {\n`;
   generated += generatedVariables;
   if (hasResources) {
     generated += `const [\n`;

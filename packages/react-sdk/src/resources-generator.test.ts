@@ -36,9 +36,8 @@ test("generate resources loader", () => {
     })
   ).toEqual(
     clear(`
-      import { loadResource } from "@webstudio-is/sdk";
-      type Params = Record<string, string | undefined>
-      export const loadResources = async (_props: { params: Params }) => {
+      import { loadResource, type System } from "@webstudio-is/sdk";
+      export const loadResources = async (_props: { system: System }) => {
       const [
       variableName,
       ] = await Promise.all([
@@ -67,7 +66,7 @@ test("generate variable and use in resources loader", () => {
       scope: createScope(),
       page: {
         rootInstanceId: "body",
-        pathParamsDataSourceId: "variableParamsId",
+        systemDataSourceId: "variableSystemId",
       } as Page,
       dataSources: toMap([
         {
@@ -103,9 +102,8 @@ test("generate variable and use in resources loader", () => {
     })
   ).toEqual(
     clear(`
-      import { loadResource } from "@webstudio-is/sdk";
-      type Params = Record<string, string | undefined>
-      export const loadResources = async (_props: { params: Params }) => {
+      import { loadResource, type System } from "@webstudio-is/sdk";
+      export const loadResources = async (_props: { system: System }) => {
       let AccessToken = "my-token"
       const [
       variableName,
@@ -129,13 +127,13 @@ test("generate variable and use in resources loader", () => {
   );
 });
 
-test("generate path params variable and use in resources loader", () => {
+test("generate system variable and use in resources loader", () => {
   expect(
     generateResourcesLoader({
       scope: createScope(),
       page: {
         rootInstanceId: "body",
-        pathParamsDataSourceId: "variableParamsId",
+        systemDataSourceId: "variableSystemId",
       } as Page,
       dataSources: toMap([
         {
@@ -146,9 +144,9 @@ test("generate path params variable and use in resources loader", () => {
           resourceId: "resourceId",
         },
         {
-          id: "variableParamsId",
+          id: "variableSystemId",
           scopeInstanceId: "body",
-          name: "Path Params",
+          name: "system",
           type: "parameter",
         },
       ]),
@@ -156,7 +154,7 @@ test("generate path params variable and use in resources loader", () => {
         {
           id: "resourceId",
           name: "resourceName",
-          url: `"https://my-json.com/" + $ws$dataSource$variableParamsId.slug`,
+          url: `"https://my-json.com/" + $ws$dataSource$variableSystemId.params.slug`,
           method: "post",
           headers: [{ name: "Content-Type", value: `"application/json"` }],
           body: `{ body: true }`,
@@ -165,17 +163,16 @@ test("generate path params variable and use in resources loader", () => {
     })
   ).toEqual(
     clear(`
-      import { loadResource } from "@webstudio-is/sdk";
-      type Params = Record<string, string | undefined>
-      export const loadResources = async (_props: { params: Params }) => {
-      const PathParams = _props.params
+      import { loadResource, type System } from "@webstudio-is/sdk";
+      export const loadResources = async (_props: { system: System }) => {
+      const system = _props.system
       const [
       variableName,
       ] = await Promise.all([
       loadResource({
       id: "resourceId",
       name: "resourceName",
-      url: "https://my-json.com/" + PathParams?.slug,
+      url: "https://my-json.com/" + system?.params?.slug,
       method: "post",
       headers: [
       { name: "Content-Type", value: "application/json" },
@@ -201,8 +198,8 @@ test("generate empty resources loader", () => {
     })
   ).toEqual(
     clear(`
-      type Params = Record<string, string | undefined>
-      export const loadResources = async (_props: { params: Params }) => {
+      import { loadResource, type System } from "@webstudio-is/sdk";
+      export const loadResources = async (_props: { system: System }) => {
       return {
       } as Record<string, unknown>
       }
@@ -227,8 +224,8 @@ test("prevent generating unused variables", () => {
       resources: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"type Params = Record<string, string | undefined>
-export const loadResources = async (_props: { params: Params }) => {
+"import { loadResource, type System } from "@webstudio-is/sdk";
+export const loadResources = async (_props: { system: System }) => {
 return {
 } as Record<string, unknown>
 }
@@ -236,27 +233,27 @@ return {
 `);
 });
 
-test("prevent generating unused path params variable", () => {
+test("prevent generating unused system variable", () => {
   expect(
     generateResourcesLoader({
       scope: createScope(),
       page: {
         rootInstanceId: "body",
-        pathParamsDataSourceId: "variableParamsId",
+        systemDataSourceId: "variableParamsId",
       } as Page,
       dataSources: toMap([
         {
           id: "variableParamsId",
           scopeInstanceId: "body",
-          name: "Unused Path Params",
+          name: "Unused System",
           type: "parameter",
         },
       ]),
       resources: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"type Params = Record<string, string | undefined>
-export const loadResources = async (_props: { params: Params }) => {
+"import { loadResource, type System } from "@webstudio-is/sdk";
+export const loadResources = async (_props: { system: System }) => {
 return {
 } as Record<string, unknown>
 }

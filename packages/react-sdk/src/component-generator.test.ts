@@ -768,29 +768,29 @@ test("avoid generating collection parameter variable as state", () => {
   );
 });
 
-test("generate params variable when present", () => {
+test("generate system variable when present", () => {
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
-      scope: createScope(["params"]),
+      scope: createScope(["system"]),
       name: "Page",
       rootInstanceId: "body",
       parameters: [
         {
-          id: "pathParamsPropId",
+          id: "pathSystemPropId",
           type: "parameter",
           instanceId: "",
-          name: "params",
-          value: "pathParamsId",
+          name: "system",
+          value: "systemId",
         },
       ],
       instances: new Map([createInstancePair("body", "Body", [])]),
       dataSources: new Map([
         createDataSourcePair({
-          id: "pathParamsId",
+          id: "systemId",
           scopeInstanceId: "body",
           type: "parameter",
-          name: "params",
+          name: "system",
         }),
       ]),
       props: new Map([
@@ -799,18 +799,18 @@ test("generate params variable when present", () => {
           instanceId: "body",
           name: "data-slug",
           type: "expression",
-          value: "$ws$dataSource$pathParamsId.slug",
+          value: "$ws$dataSource$systemId.params.slug",
         }),
       ]),
       indexesWithinAncestors: new Map(),
     })
   ).toEqual(
     clear(`
-    const Page = ({ params: params_1, }: { params: any; }) => {
+    const Page = ({ system: system_1, }: { system: any; }) => {
     return <Body
     data-ws-id="body"
     data-ws-component="Body"
-    data-slug={params_1?.slug} />
+    data-slug={system_1?.params?.slug} />
     }
     `)
   );
@@ -883,10 +883,10 @@ test("avoid generating unused variables", () => {
       rootInstanceId: "body",
       parameters: [
         {
-          id: "pathParamsPropId",
+          id: "systemPropId",
           type: "parameter",
           instanceId: "",
-          name: "params",
+          name: "system",
           value: "unusedParameterId",
         },
       ],
@@ -933,7 +933,7 @@ test("avoid generating unused variables", () => {
       indexesWithinAncestors: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"const Page = ({ }: { params: any; }) => {
+"const Page = ({ }: { system: any; }) => {
 let [UsedVariableName, set$UsedVariableName] = useState<any>("initial")
 return <Body
 data-ws-id="body"

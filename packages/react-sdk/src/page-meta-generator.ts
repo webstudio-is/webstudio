@@ -29,7 +29,7 @@ export const generatePageMeta = ({
   dataSources: DataSources;
 }) => {
   // reserve parameter names passed to generated function
-  const localScope = createScope(["params", "resources"]);
+  const localScope = createScope(["system", "resources"]);
   const usedDataSources: DataSources = new Map();
   const titleExpression = generateExpression({
     expression: page.title,
@@ -97,10 +97,10 @@ export const generatePageMeta = ({
   customExpression += `    ]`;
   let generated = "";
   generated += `export const getPageMeta = ({\n`;
-  generated += `  params,\n`;
+  generated += `  system,\n`;
   generated += `  resources,\n`;
   generated += `}: {\n`;
-  generated += `  params: Record<string, undefined | string>;\n`;
+  generated += `  system: System;\n`;
   generated += `  resources: Record<string, any>;\n`;
   generated += `}): PageMeta => {\n`;
   for (const dataSource of usedDataSources.values()) {
@@ -111,9 +111,9 @@ export const generatePageMeta = ({
       continue;
     }
     if (dataSource.type === "parameter") {
-      if (dataSource.id === page.pathParamsDataSourceId) {
+      if (dataSource.id === page.systemDataSourceId) {
         const valueName = localScope.getName(dataSource.id, dataSource.name);
-        generated += `  let ${valueName} = params\n`;
+        generated += `  let ${valueName} = system\n`;
       }
       continue;
     }

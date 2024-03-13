@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export type System = {
+  params: Record<string, string | undefined>;
+  search: Record<string, string | undefined>;
+};
+
 const MIN_TITLE_LENGTH = 2;
 
 const PageId = z.string();
@@ -59,7 +64,6 @@ const commonPageFields = {
       .optional(),
   }),
   rootInstanceId: z.string(),
-  pathParamsDataSourceId: z.optional(z.string()),
   // @todo make required after releasing migration
   systemDataSourceId: z.optional(z.string()),
 } as const;
