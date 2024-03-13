@@ -1,5 +1,16 @@
 import { URLPattern } from "urlpattern-polyfill";
 
+const baseUrl = "http://url";
+
+export const matchPathnamePattern = (pattern: string, pathname: string) => {
+  try {
+    return new URLPattern({ pathname: pattern }).exec({ pathname })?.pathname
+      .groups;
+  } catch {
+    // empty block
+  }
+};
+
 // allowed syntax
 // :name - group without modifiers
 // :name? - group with optional modifier
@@ -80,8 +91,6 @@ export const compilePathnamePattern = (
   }
   return compiledPathname;
 };
-
-const baseUrl = "http://url";
 
 export const validatePathnamePattern = (pathname: string) => {
   try {

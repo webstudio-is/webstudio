@@ -9,6 +9,7 @@ import type {
   DataSource,
   DataSources,
   Instance,
+  Page,
   Prop,
   Props,
   Resource,
@@ -17,6 +18,7 @@ import type {
   StyleSource,
   StyleSources,
   StyleSourceSelections,
+  System,
 } from "@webstudio-is/sdk";
 import type { Style } from "@webstudio-is/css-engine";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
@@ -48,6 +50,22 @@ export const $dataSources = atom<DataSources>(new Map());
 export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
+
+export const updateSystemParams = (page: Page, params: System["params"]) => {
+  if (page.systemDataSourceId === undefined) {
+    return;
+  }
+  const dataSourceVariables = new Map($dataSourceVariables.get());
+  const system = dataSourceVariables.get(page.systemDataSourceId) as
+    | undefined
+    | System;
+  dataSourceVariables.set(page.systemDataSourceId, {
+    search: {},
+    ...system,
+    params: params,
+  } satisfies System);
+  $dataSourceVariables.set(dataSourceVariables);
+};
 
 export const $resources = atom(new Map<Resource["id"], Resource>());
 export const $resourceValues = atom(new Map<Resource["id"], unknown>());

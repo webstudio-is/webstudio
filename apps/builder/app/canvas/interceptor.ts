@@ -1,5 +1,10 @@
 import { findPageByIdOrPath } from "@webstudio-is/sdk";
-import { $isPreviewMode, $pages } from "~/shared/nano-states";
+import { matchPathnamePattern } from "~/builder/shared/url-pattern";
+import {
+  $isPreviewMode,
+  $pages,
+  updateSystemParams,
+} from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
@@ -24,6 +29,14 @@ const handleLinkClick = (element: HTMLAnchorElement) => {
   }
 
   const pageHref = new URL(href, "https://any-valid.url");
+  for (const page of [pages.homePage, ...pages.pages]) {
+    const params = matchPathnamePattern(page.path, pageHref.pathname);
+    if (params) {
+      switchPage(page.id, pageHref.hash);
+      updateSystemParams(page, params);
+      break;
+    }
+  }
   const page = findPageByIdOrPath(pageHref.pathname, pages);
   if (page) {
     switchPage(page.id, pageHref.hash);
