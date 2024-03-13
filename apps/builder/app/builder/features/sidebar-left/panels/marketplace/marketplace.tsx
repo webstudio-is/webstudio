@@ -5,9 +5,12 @@ import { Header, CloseButton, Root } from "../../shared/panel";
 import { Overview } from "./overview";
 import { Templates } from "./templates";
 import { marketplacePath } from "~/shared/router-utils";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toWebstudioData } from "./utils";
-import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
+import type {
+  BuildData,
+  MarketplaceOverviewItem,
+} from "~/shared/marketplace/types";
 import type { MarketplaceRouter } from "~/shared/marketplace/router";
 import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import type { Project } from "@webstudio-is/project";
@@ -42,7 +45,8 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           title="Marketplace"
           suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
         />
-        {activeOverviewItem && buildData ? (
+        {activeOverviewItem &&
+        buildData?.build.projectId === activeOverviewItem.projectId ? (
           <Templates
             projectId={activeOverviewItem.projectId}
             name={activeOverviewItem.name}
