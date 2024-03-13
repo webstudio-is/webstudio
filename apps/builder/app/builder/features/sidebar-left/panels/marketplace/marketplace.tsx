@@ -37,6 +37,9 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   }, [getItems]);
 
   const openAboutItem = items?.find((item) => item.projectId === openAbout);
+  const showTemplates =
+    activeOverviewItem &&
+    buildData?.build.projectId === activeOverviewItem.projectId;
 
   return (
     <>
@@ -45,8 +48,19 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           title="Marketplace"
           suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
         />
-        {activeOverviewItem &&
-        buildData?.build.projectId === activeOverviewItem.projectId ? (
+        <Overview
+          items={items}
+          activeProjectId={activeOverviewItem?.projectId}
+          onSelect={(activeOverviewItem) => {
+            setAciveOverviewItem(activeOverviewItem);
+            getBuildData({ projectId: activeOverviewItem.projectId });
+          }}
+          openAbout={openAbout}
+          onOpenAbout={setOpenAbout}
+          css={{ display: showTemplates ? "none" : "block" }}
+        />
+
+        {showTemplates && (
           <Templates
             projectId={activeOverviewItem.projectId}
             name={activeOverviewItem.name}
@@ -56,17 +70,6 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
                 setAciveOverviewItem(undefined);
               }
             }}
-          />
-        ) : (
-          <Overview
-            items={items}
-            activeProjectId={activeOverviewItem?.projectId}
-            onSelect={(activeOverviewItem) => {
-              setAciveOverviewItem(activeOverviewItem);
-              getBuildData({ projectId: activeOverviewItem.projectId });
-            }}
-            openAbout={openAbout}
-            onOpenAbout={setOpenAbout}
           />
         )}
         {itemsLoadingState !== "idle" && (
