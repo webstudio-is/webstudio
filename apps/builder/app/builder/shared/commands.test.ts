@@ -23,7 +23,7 @@ const createInstancePair = (
 
 const metas = new Map(Object.entries(baseMetas));
 
-$pages.set(createDefaultPages({ rootInstanceId: "" }));
+$pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
 
 describe("deleteInstance", () => {
   // body

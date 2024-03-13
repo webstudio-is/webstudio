@@ -1191,18 +1191,20 @@ const NewPageSettingsView = ({
 
 const createPage = (pageId: Page["id"], values: Values) => {
   serverSyncStore.createTransaction(
-    [$pages, $instances],
-    (pages, instances) => {
+    [$pages, $instances, $dataSources],
+    (pages, instances, dataSources) => {
       if (pages === undefined) {
         return;
       }
       const rootInstanceId = nanoid();
+      const systemDataSourceId = nanoid();
       pages.pages.push({
         id: pageId,
         name: values.name,
         path: values.path,
         title: values.title,
         rootInstanceId,
+        systemDataSourceId,
         meta: {},
       });
 
@@ -1211,6 +1213,12 @@ const createPage = (pageId: Page["id"], values: Values) => {
         id: rootInstanceId,
         component: "Body",
         children: [],
+      });
+      dataSources.set(systemDataSourceId, {
+        id: systemDataSourceId,
+        scopeInstanceId: rootInstanceId,
+        name: "system",
+        type: "parameter",
       });
 
       registerFolderChildMutable(pages.folders, pageId, values.parentFolderId);

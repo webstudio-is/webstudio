@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { isRoot, type Folder, Instance } from "@webstudio-is/sdk";
+import { isRoot, type Folder, Instance, DataSource } from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
   deleteFolderWithChildrenMutable,
@@ -37,6 +37,7 @@ describe("toTreeData", () => {
   test("initial pages always has home pages and a root folder", () => {
     const pages = createDefaultPages({
       rootInstanceId: "id",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     const tree = toTreeData(pages);
@@ -53,6 +54,7 @@ describe("toTreeData", () => {
             name: "Home",
             path: "",
             rootInstanceId: "id",
+            systemDataSourceId: "systemDataSourceId",
             title: `"Home"`,
           },
           id: "homePageId",
@@ -65,6 +67,7 @@ describe("toTreeData", () => {
   test("add empty folder", () => {
     const pages = createDefaultPages({
       rootInstanceId: "id",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     pages.folders.push({
@@ -89,6 +92,7 @@ describe("toTreeData", () => {
             name: "Home",
             path: "",
             rootInstanceId: "id",
+            systemDataSourceId: "systemDataSourceId",
             title: `"Home"`,
           },
           id: "homePageId",
@@ -108,6 +112,7 @@ describe("toTreeData", () => {
   test("add a page inside a folder", () => {
     const pages = createDefaultPages({
       rootInstanceId: "id",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     pages.pages.push({
@@ -116,6 +121,7 @@ describe("toTreeData", () => {
       name: "Page",
       path: "/page",
       rootInstanceId: "id",
+      systemDataSourceId: "systemDataSourceId",
       title: `"Page"`,
     });
     pages.folders.push({
@@ -141,6 +147,7 @@ describe("toTreeData", () => {
             name: "Home",
             path: "",
             rootInstanceId: "id",
+            systemDataSourceId: "systemDataSourceId",
             title: `"Home"`,
           },
           id: "homePageId",
@@ -161,6 +168,7 @@ describe("toTreeData", () => {
                 name: "Page",
                 path: "/page",
                 rootInstanceId: "id",
+                systemDataSourceId: "systemDataSourceId",
                 title: `"Page"`,
               },
             },
@@ -173,6 +181,7 @@ describe("toTreeData", () => {
   test("nest a folder", () => {
     const pages = createDefaultPages({
       rootInstanceId: "id",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     const rootFolder = pages.folders.find(isRoot);
@@ -206,6 +215,7 @@ describe("toTreeData", () => {
             title: `"Home"`,
             meta: {},
             rootInstanceId: "id",
+            systemDataSourceId: "systemDataSourceId",
           },
         },
         {
@@ -234,6 +244,7 @@ describe("reparentOrphansMutable", () => {
   test("reparent orphans to the root", () => {
     const pages = createDefaultPages({
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     pages.pages.push({
@@ -242,6 +253,7 @@ describe("reparentOrphansMutable", () => {
       name: "Page",
       path: "/page",
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       title: `"Page"`,
     });
     pages.folders.push({
@@ -265,6 +277,7 @@ describe("cleanupChildRefsMutable", () => {
   test("cleanup refs", () => {
     const { folders } = createDefaultPages({
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     folders.push({
@@ -288,6 +301,7 @@ describe("cleanupChildRefsMutable", () => {
 describe("isSlugUsed", () => {
   const { folders } = createDefaultPages({
     rootInstanceId: "rootInstanceId",
+    systemDataSourceId: "systemDataSourceId",
     homePageId: "homePageId",
   });
   folders.push({
@@ -333,6 +347,7 @@ describe("registerFolderChildMutable", () => {
   test("register a folder child in the root via fallback", () => {
     const { folders } = createDefaultPages({
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     registerFolderChildMutable(folders, "folderId");
@@ -343,6 +358,7 @@ describe("registerFolderChildMutable", () => {
   test("register a folder child in a provided folder", () => {
     const { folders } = createDefaultPages({
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     const folder = {
@@ -359,6 +375,7 @@ describe("registerFolderChildMutable", () => {
   test("register in a provided folder & cleanup old refs", () => {
     const { folders } = createDefaultPages({
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       homePageId: "homePageId",
     });
     const folder = {
@@ -486,6 +503,7 @@ describe("filterSelfAndChildren", () => {
 describe("getExistingRoutePaths", () => {
   const pages = createDefaultPages({
     rootInstanceId: "rootInstanceId",
+    systemDataSourceId: "systemDataSourceId",
     homePageId: "homePageId",
   });
 
@@ -496,6 +514,7 @@ describe("getExistingRoutePaths", () => {
       name: "Page",
       path: "/page",
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       title: `"Page"`,
     });
 
@@ -505,6 +524,7 @@ describe("getExistingRoutePaths", () => {
       name: "Blog",
       path: "/blog/:id",
       rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
       title: `"Blog"`,
     });
 
@@ -516,9 +536,21 @@ describe("getExistingRoutePaths", () => {
 describe("duplicate page", () => {
   $project.set({ id: "projectId" } as Project);
 
-  test("home page with new root instance", () => {
+  test("home page with new root instance and system data source", () => {
     $instances.set(
-      toMap([{ type: "instance", id: "body", component: "Body", children: [] }])
+      toMap<Instance>([
+        { type: "instance", id: "body", component: "Body", children: [] },
+      ])
+    );
+    $dataSources.set(
+      toMap<DataSource>([
+        {
+          id: "system",
+          scopeInstanceId: "body",
+          name: "system",
+          type: "parameter",
+        },
+      ])
     );
     $pages.set({
       homePage: {
@@ -528,19 +560,42 @@ describe("duplicate page", () => {
         title: `"My Title"`,
         meta: {},
         rootInstanceId: "body",
+        systemDataSourceId: "system",
       },
       pages: [],
       folders: [],
     });
     duplicatePage("pageId");
-    expect($pages.get()?.pages[0]).toEqual({
+    const newPage = $pages.get()?.pages[0];
+    if (newPage === undefined) {
+      throw Error("New page does not exist");
+    }
+    expect(newPage).toEqual({
       id: expect.not.stringMatching("pageId"),
       name: "My Name (1)",
       path: "/copy-1",
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
+      systemDataSourceId: expect.not.stringMatching("system"),
     });
+    expect($dataSources.get()).toEqual(
+      toMap<DataSource>([
+        {
+          id: "system",
+          scopeInstanceId: "body",
+          name: "system",
+          type: "parameter",
+        },
+        {
+          // @todo remove cast after releasing system variable migration
+          id: newPage.systemDataSourceId!,
+          scopeInstanceId: newPage.rootInstanceId,
+          name: "system",
+          type: "parameter",
+        },
+      ])
+    );
     expect($instances.get()).toEqual(
       toMap<Instance>([
         {
@@ -551,7 +606,7 @@ describe("duplicate page", () => {
         },
         {
           type: "instance",
-          id: expect.not.stringMatching("body") as unknown as string,
+          id: newPage.rootInstanceId,
           component: "Body",
           children: [],
         },
@@ -571,6 +626,7 @@ describe("duplicate page", () => {
         title: `"Home"`,
         meta: {},
         rootInstanceId: "home",
+        systemDataSourceId: "homeSystem",
       },
       pages: [
         {
@@ -580,6 +636,7 @@ describe("duplicate page", () => {
           title: `"My Title"`,
           meta: {},
           rootInstanceId: "body",
+          systemDataSourceId: "pageSystem",
         },
       ],
       folders: [],
@@ -607,6 +664,7 @@ describe("duplicate page", () => {
         title: `"Home"`,
         meta: {},
         rootInstanceId: "home",
+        systemDataSourceId: "system",
       },
       pages: [
         {
@@ -616,6 +674,7 @@ describe("duplicate page", () => {
           title: `"My Title"`,
           meta: {},
           rootInstanceId: "body",
+          systemDataSourceId: "system",
         },
         {
           id: "pageId2",
@@ -625,6 +684,7 @@ describe("duplicate page", () => {
           title: `"My Title"`,
           meta: {},
           rootInstanceId: "body",
+          systemDataSourceId: "system",
         },
       ],
       folders: [],
@@ -638,6 +698,7 @@ describe("duplicate page", () => {
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
+      systemDataSourceId: expect.not.stringMatching("system"),
     });
     expect($pages.get()?.pages[3]).toEqual({
       id: expect.not.stringMatching("pageId2"),
@@ -646,6 +707,7 @@ describe("duplicate page", () => {
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
+      systemDataSourceId: expect.not.stringMatching("system"),
     });
   });
 
@@ -661,6 +723,7 @@ describe("duplicate page", () => {
         title: `"Home"`,
         meta: {},
         rootInstanceId: "home",
+        systemDataSourceId: "system",
       },
       pages: [
         {
@@ -670,6 +733,7 @@ describe("duplicate page", () => {
           title: `"My Title"`,
           meta: {},
           rootInstanceId: "body",
+          systemDataSourceId: "system",
         },
       ],
       folders: [
@@ -689,6 +753,7 @@ describe("duplicate page", () => {
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
+      systemDataSourceId: expect.not.stringMatching("system"),
     });
   });
 
@@ -725,6 +790,7 @@ describe("duplicate page", () => {
           ],
         },
         rootInstanceId: "body",
+        systemDataSourceId: "system",
       },
       pages: [],
       folders: [],
@@ -750,6 +816,7 @@ describe("duplicate page", () => {
         ],
       },
       rootInstanceId: expect.not.stringMatching("body"),
+      systemDataSourceId: expect.not.stringMatching("system"),
     });
   });
 
@@ -776,6 +843,7 @@ describe("duplicate page", () => {
         meta: {},
         rootInstanceId: "body",
         pathParamsDataSourceId: "pathParamsId",
+        systemDataSourceId: "system",
       },
       pages: [],
       folders: [],
@@ -791,6 +859,7 @@ describe("duplicate page", () => {
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
       pathParamsDataSourceId: newDataSource.id,
+      systemDataSourceId: expect.not.stringMatching("system"),
     });
   });
 });
@@ -799,6 +868,7 @@ test("page root scope should rely on editing page", () => {
   const pages = createDefaultPages({
     rootInstanceId: "homeRootId",
     homePageId: "homePageId",
+    systemDataSourceId: "system",
   });
   pages.pages.push({
     id: "pageId",
@@ -807,6 +877,7 @@ test("page root scope should rely on editing page", () => {
     path: "/",
     title: `"My Title"`,
     meta: {},
+    systemDataSourceId: "system",
   });
   $pages.set(pages);
   $selectedPageId.set("homePageId");
@@ -841,6 +912,7 @@ test("page root scope should use variable and resource values", () => {
     createDefaultPages({
       rootInstanceId: "homeRootId",
       homePageId: "homePageId",
+      systemDataSourceId: "system",
     })
   );
   $editingPagesItemId.set("homePageId");
