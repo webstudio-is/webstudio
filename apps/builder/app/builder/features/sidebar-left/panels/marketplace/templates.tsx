@@ -114,6 +114,7 @@ export const Templates = ({
         shrink="false"
         justify="between"
         css={{ px: theme.spacing[9], py: theme.spacing[5] }}
+        gap="3"
       >
         <Button
           prefix={<ChevronLeftIcon />}
