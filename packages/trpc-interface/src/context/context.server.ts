@@ -15,9 +15,9 @@ type AuthorizationContext = {
   authToken: string | undefined;
 
   /**
-   * project list serves as a template and is accessible to everyone.
+   * Projects approved for the marketplace are available to everyone.
    */
-  projectTemplates: string[];
+  marketplaceProjectIds: Array<string>;
 
   /**
    * Allow service 2 service communications to skip authorization for view calls

@@ -51,10 +51,10 @@ export const hasProjectPermit = async (
       return true;
     }
 
-    const isTemplate = context.authorization.projectTemplates.includes(
-      props.projectId
-    );
-    if (props.permit === "view" && isTemplate) {
+    const isInMarketplace =
+      context.authorization.marketplaceProjectIds.includes(props.projectId);
+
+    if (props.permit === "view" && isInMarketplace) {
       return true;
     }
 

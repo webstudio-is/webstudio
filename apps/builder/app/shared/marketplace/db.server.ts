@@ -27,6 +27,25 @@ export const getBuildProdData = async (
   };
 };
 
+export const getAllApprovedProjectIds = async (): Promise<
+  Array<Project["id"]>
+> => {
+  const projects = await prisma.project.findMany({
+    where: {
+      isDeleted: false,
+      marketplaceApprovalStatus: "APPROVED",
+      NOT: {
+        latestBuild: null,
+      },
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  return projects.map((project) => project.id);
+};
+
 export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
   const projects = await prisma.project.findMany({
     where: {

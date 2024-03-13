@@ -7,6 +7,7 @@ import {
   getTokenPlanFeatures,
   getUserPlanFeatures,
 } from "./db/user-plan-features.server";
+import { getAllApprovedProjectIds } from "./marketplace/db.server";
 
 const createAuthorizationContext = async (
   request: Request
@@ -16,6 +17,7 @@ const createAuthorizationContext = async (
   const authToken = url.searchParams.get("authToken") ?? url.hostname;
 
   const user = await authenticator.isAuthenticated(request);
+  const marketplaceProjectIds = await getAllApprovedProjectIds();
 
   const isServiceCall =
     request.headers.has("Authorization") &&
@@ -25,7 +27,7 @@ const createAuthorizationContext = async (
     userId: user?.id,
     authToken,
     isServiceCall,
-    projectTemplates: env.PROJECT_TEMPLATES,
+    marketplaceProjectIds,
     authorizeTrpc: trpcClient.authorize,
   };
 
