@@ -22,6 +22,7 @@ import { Title } from "@webstudio-is/project";
 import { builderPath } from "~/shared/router-utils";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { trpcClient } from "~/shared/trpc/trpc-client";
+import { useRevalidator } from "@remix-run/react";
 
 type DialogProps = {
   title: string;
@@ -121,6 +122,7 @@ const useCreateProject = () => {
   const navigate = useNavigate();
   const { send, state } = trpcClient.dashboardProject.create.useMutation();
   const [errors, setErrors] = useState<string>();
+  const revalidator = useRevalidator();
 
   const handleSubmit = ({ title }: { title: string }) => {
     const parsed = Title.safeParse(title);
@@ -131,6 +133,7 @@ const useCreateProject = () => {
     setErrors(errors);
     if (parsed.success) {
       send({ title }, (data) => {
+        revalidator.revalidate();
         if (data?.id) {
           navigate(builderPath({ projectId: data.id }));
         }
@@ -190,6 +193,7 @@ const useRenameProject = ({
 }) => {
   const { send, state } = trpcClient.dashboardProject.rename.useMutation();
   const [errors, setErrors] = useState<string>();
+  const revalidator = useRevalidator();
 
   const handleSubmit = ({ title }: { title: string }) => {
     const parsed = Title.safeParse(title);
@@ -199,7 +203,9 @@ const useRenameProject = ({
         : undefined;
     setErrors(errors);
     if (parsed.success) {
-      send({ projectId, title });
+      send({ projectId, title }, () => {
+        revalidator.revalidate();
+      });
       onOpenChange(false);
     }
   };
@@ -261,6 +267,7 @@ const useDeleteProject = ({
     trpcClient.dashboardProject.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
   const errors = data && "errors" in data ? data.errors : undefined;
+  const revalidator = useRevalidator();
 
   useEffect(() => {
     if (errors) {
@@ -270,7 +277,9 @@ const useDeleteProject = ({
   }, [errors, onOpenChange, onHiddenChange]);
 
   const handleSubmit = () => {
-    send({ projectId });
+    send({ projectId }, () => {
+      revalidator.revalidate();
+    });
     onHiddenChange(true);
     onOpenChange(false);
   };
@@ -351,8 +360,12 @@ export const DeleteProjectDialog = ({
 
 export const useCloneProject = (projectId: DashboardProject["id"]) => {
   const { send } = trpcClient.dashboardProject.clone.useMutation();
+  const revalidator = useRevalidator();
+
   return () => {
-    send({ projectId });
+    send({ projectId }, () => {
+      revalidator.revalidate();
+    });
   };
 };
 

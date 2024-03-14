@@ -14,7 +14,10 @@ const createAuthorizationContext = async (
 ): Promise<AppContext["authorization"]> => {
   const url = new URL(request.url);
 
-  const authToken = url.searchParams.get("authToken") ?? url.hostname;
+  const authToken =
+    url.searchParams.get("authToken") ??
+    request.headers.get("x-auth-token") ??
+    url.hostname;
 
   const user = await authenticator.isAuthenticated(request);
   const marketplaceProjectIds = await getAllApprovedProjectIds();

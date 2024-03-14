@@ -10,15 +10,19 @@ import type {
 // eslint-disable-next-line import/no-internal-modules
 import { createRecursiveProxy } from "@trpc/server/shared";
 import { useMemo, useState } from "react";
+import { $authToken } from "../nano-states";
 
 const client = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({
       url: "/trpc",
       // You can pass any HTTP headers you wish here
-      async headers() {
+      async headers(opts) {
+        const authToken = $authToken.get();
+
+        // Pass token to api call
         return {
-          // authorization: getAuthCookie(),
+          "x-auth-token": authToken,
         };
       },
     }),
