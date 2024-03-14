@@ -17,12 +17,7 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
-import {
-  $assets,
-  // $authToken,
-  $marketplaceProduct,
-  $project,
-} from "~/shared/nano-states";
+import { $assets, $marketplaceProduct, $project } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";

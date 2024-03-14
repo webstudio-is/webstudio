@@ -29,8 +29,6 @@ const client = createTRPCProxyClient<AppRouter>({
   ],
 });
 
-client.marketplace.getBuildData.query;
-
 type Procedures<T> = T extends AnyRouter
   ? {
       [Procedure in keyof T["_def"]["record"]]: T["_def"]["record"][Procedure] extends AnyMutationProcedure
