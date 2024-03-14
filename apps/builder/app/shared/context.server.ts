@@ -84,6 +84,23 @@ const createUserPlanContext = async (
   return planFeatures;
 };
 
+const createTrpcCache = () => {
+  const proceduresMaxAge = new Map<string, number>();
+  const setMaxAge = (path: string, value: number) => {
+    proceduresMaxAge.set(
+      path,
+      Math.min(proceduresMaxAge.get(path) ?? Number.MAX_SAFE_INTEGER, value)
+    );
+  };
+
+  const getMaxAge = (path: string) => proceduresMaxAge.get(path);
+
+  return {
+    setMaxAge,
+    getMaxAge,
+  };
+};
+
 /**
  * argument buildEnv==="prod" only if we are loading project with production build
  */
@@ -93,11 +110,14 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const deployment = createDeploymentContext(request);
   const entri = createEntriContext();
   const userPlanFeatures = await createUserPlanContext(request, authorization);
+  const trpcCache = createTrpcCache();
+
   return {
     authorization,
     domain,
     deployment,
     entri,
     userPlanFeatures,
+    trpcCache,
   };
 };
