@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@remix-run/react";
+import { useNavigate, useRevalidator } from "@remix-run/react";
 import {
   Box,
   Button,
@@ -18,8 +18,6 @@ import { Title, Project } from "@webstudio-is/project";
 import { builderPath } from "~/shared/router-utils";
 import { trpcClient } from "./trpc/trpc-client";
 
-// import { $authToken } from "./nano-states";
-
 const useCloneProject = ({
   projectId,
   onOpenChange,
@@ -27,6 +25,7 @@ const useCloneProject = ({
   projectId: Project["id"];
   onOpenChange: (isOpen: boolean) => void;
 }) => {
+  const revalidator = useRevalidator();
   const navigate = useNavigate();
   const { send, state } = trpcClient.project.clone.useMutation();
   const [errors, setErrors] = useState<string>();
@@ -42,6 +41,7 @@ const useCloneProject = ({
 
     if (parsed.success) {
       send({ projectId, title }, (data) => {
+        revalidator.revalidate();
         if (data?.id) {
           navigate(builderPath({ projectId: data.id }));
           onOpenChange(false);

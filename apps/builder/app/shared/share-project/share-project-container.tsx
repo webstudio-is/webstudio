@@ -59,11 +59,18 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
   };
 
   const handleCreate = () => {
-    createToken({
-      projectId: projectId,
-      relation: "viewers",
-      name: "Custom link",
-    });
+    createToken(
+      {
+        projectId: projectId,
+        relation: "viewers",
+        name: "Custom link",
+      },
+      () => {
+        load({ projectId }, (data) => {
+          setLinks(data ?? []);
+        });
+      }
+    );
   };
 
   const isPending =
