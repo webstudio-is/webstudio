@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "@remix-run/react";
-import type { DashboardProjectRouter } from "@webstudio-is/dashboard";
 import {
   Box,
   Button,
@@ -20,9 +19,9 @@ import {
 import { PlusIcon } from "@webstudio-is/icons";
 import type { DashboardProject } from "@webstudio-is/prisma-client";
 import { Title } from "@webstudio-is/project";
-import { dashboardProjectsPath, builderPath } from "~/shared/router-utils";
-import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
+import { builderPath } from "~/shared/router-utils";
 import { ShareProjectContainer } from "~/shared/share-project";
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
 type DialogProps = {
   title: string;
@@ -118,13 +117,9 @@ const DialogContent = ({
   );
 };
 
-const trpc = createTrpcRemixProxy<DashboardProjectRouter>(
-  dashboardProjectsPath
-);
-
 const useCreateProject = () => {
   const navigate = useNavigate();
-  const { send, state } = trpc.create.useMutation();
+  const { send, state } = trpcClient.dashboardProject.create.useMutation();
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = ({ title }: { title: string }) => {
@@ -193,7 +188,7 @@ const useRenameProject = ({
   projectId: DashboardProject["id"];
   onOpenChange: (isOpen: boolean) => void;
 }) => {
-  const { send, state } = trpc.rename.useMutation();
+  const { send, state } = trpcClient.dashboardProject.rename.useMutation();
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = ({ title }: { title: string }) => {
@@ -262,7 +257,8 @@ const useDeleteProject = ({
   onOpenChange: (isOpen: boolean) => void;
   onHiddenChange: (isHidden: boolean) => void;
 }) => {
-  const { send, data, state } = trpc.delete.useMutation();
+  const { send, data, state } =
+    trpcClient.dashboardProject.delete.useMutation();
   const [isMatch, setIsMatch] = useState(false);
   const errors = data && "errors" in data ? data.errors : undefined;
 
@@ -354,7 +350,7 @@ export const DeleteProjectDialog = ({
 };
 
 export const useCloneProject = (projectId: DashboardProject["id"]) => {
-  const { send } = trpc.clone.useMutation();
+  const { send } = trpcClient.dashboardProject.clone.useMutation();
   return () => {
     send({ projectId });
   };

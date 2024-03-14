@@ -14,14 +14,11 @@ import {
   Dialog,
   DialogActions,
 } from "@webstudio-is/design-system";
-import { Title, type ProjectRouter, Project } from "@webstudio-is/project";
-import { projectsPath, builderPath } from "~/shared/router-utils";
-import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import { $authToken } from "./nano-states";
+import { Title, Project } from "@webstudio-is/project";
+import { builderPath } from "~/shared/router-utils";
+import { trpcClient } from "./trpc/trpc-client";
 
-const trpc = createTrpcRemixProxy<ProjectRouter>((method) =>
-  projectsPath(method, { authToken: $authToken.get() })
-);
+// import { $authToken } from "./nano-states";
 
 const useCloneProject = ({
   projectId,
@@ -31,7 +28,7 @@ const useCloneProject = ({
   onOpenChange: (isOpen: boolean) => void;
 }) => {
   const navigate = useNavigate();
-  const { send, state } = trpc.clone.useMutation();
+  const { send, state } = trpcClient.project.clone.useMutation();
   const [errors, setErrors] = useState<string>();
 
   const handleSubmit = ({ title }: { title: string }) => {
