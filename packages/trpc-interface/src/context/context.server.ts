@@ -69,6 +69,11 @@ type UserPlanFeatures = {
   boolean | number
 >;
 
+type TrpcCache = {
+  setMaxAge: (path: string, value: number) => void;
+  getMaxAge: (path: string) => number | undefined;
+};
+
 /**
  * AppContext is a global context that is passed to all trpc/api queries/mutations
  * "authorization" is made inside the namespace because eventually there will be
@@ -80,4 +85,5 @@ export type AppContext = {
   deployment: DeploymentContext;
   entri: EntriContext;
   userPlanFeatures: UserPlanFeatures | undefined;
+  trpcCache: TrpcCache;
 };

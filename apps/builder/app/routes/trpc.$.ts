@@ -19,10 +19,45 @@ export const action = async ({ request }: ActionArgs) => {
     endpoint: "/trpc",
     batching: { enabled: true },
     responseMeta(opts) {
-      const { paths, errors, type } = opts;
-      // @todo: Add caching headers if cacheMiddleware is not used
-      console.info("responseMeta", { paths, errors, type });
-      return {};
+      // tRPC batches multiple requests into a single network call.
+      // The `paths` array lists all request paths included in the batch.
+      const { paths, errors, type, ctx } = opts;
+
+      if (paths === undefined) {
+        return {};
+      }
+
+      if (type !== "query") {
+        // Only queries can be cached
+        return {};
+      }
+
+      if (errors.length > 0) {
+        // Errors should not be cached
+        return {};
+      }
+
+      // To enable efficient batching of tRPC requests,
+      // adopt the least max age among all paths for caching, or disable caching entirely if no max-age is set.
+      let minMaxAge = Number.MAX_SAFE_INTEGER;
+      for (const path of paths) {
+        const maxAge = ctx?.trpcCache.getMaxAge(path);
+
+        if (maxAge === undefined) {
+          return {};
+        }
+
+        minMaxAge = Math.min(minMaxAge, maxAge);
+      }
+
+      // Cap the max age at 1 hour
+      minMaxAge = Math.min(minMaxAge, 60 * 60);
+
+      return {
+        headers: {
+          "Cache-Control": `public, max-age=${minMaxAge}, s-maxage=${minMaxAge}`,
+        },
+      };
     },
     async createContext(opts) {
       return await createContext(opts.req);

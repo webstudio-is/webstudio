@@ -12,4 +12,5 @@ export {
   procedure,
   middleware,
   mergeRouters,
+  createCacheMiddleware,
 } from "./context/router.server";
