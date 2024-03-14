@@ -1,11 +1,7 @@
 import useScript from "react-script-hook";
-import type { DomainRouter } from "@webstudio-is/domain/index.server";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
-import { builderDomainsPath } from "~/shared/router-utils";
 import { globalCss } from "@webstudio-is/design-system";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
+import { trpcClient } from "../trpc/trpc-client";
 
 const scriptAttributes = {
   async: true,
@@ -88,7 +84,7 @@ export const useEntri = ({ domain, dnsRecords, onClose }: UseEntriProps) => {
     load: entriTokenLoad,
     data: entriTokenData,
     error: entriTokenSystemError,
-  } = trpc.getEntriToken.useQuery();
+  } = trpcClient.domain.getEntriToken.useQuery();
 
   useEffect(() => {
     const handleOnEntriClose = (event: CustomEvent<EntriCloseDetail>) => {

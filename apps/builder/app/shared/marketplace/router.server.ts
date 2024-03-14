@@ -16,5 +16,3 @@ export const marketplaceRouter = router({
       return await getBuildProdData(input, ctx);
     }),
 });
-
-export type MarketplaceRouter = typeof marketplaceRouter;

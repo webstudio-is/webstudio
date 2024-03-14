@@ -4,17 +4,13 @@ import type { TabContentProps } from "../../types";
 import { Header, CloseButton, Root } from "../../shared/panel";
 import { Overview } from "./overview";
 import { Templates } from "./templates";
-import { marketplacePath } from "~/shared/router-utils";
 import { useEffect, useState } from "react";
 import { toWebstudioData } from "./utils";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
-import type { MarketplaceRouter } from "~/shared/marketplace/router";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
 import type { Project } from "@webstudio-is/project";
 import { ExtendedPanel } from "../../shared/extended-panel";
 import { About } from "./about";
-
-const trpc = createTrpcFetchProxy<MarketplaceRouter>(marketplacePath);
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   const [activeOverviewItem, setAciveOverviewItem] =
@@ -25,9 +21,10 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
     load: getItems,
     data: items,
     state: itemsLoadingState,
-  } = trpc.getItems.useQuery();
+  } = trpcClient.marketplace.getItems.useQuery();
 
-  const { load: getBuildData, data: buildData } = trpc.getBuildData.useQuery();
+  const { load: getBuildData, data: buildData } =
+    trpcClient.marketplace.getBuildData.useQuery();
 
   useEffect(() => {
     getItems();

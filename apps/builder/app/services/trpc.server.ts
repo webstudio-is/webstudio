@@ -5,7 +5,7 @@ const TRPC_SERVER_URL = env.TRPC_SERVER_URL ?? "";
 const TRPC_SERVER_API_TOKEN = env.TRPC_SERVER_API_TOKEN ?? "";
 const BRANCH_NAME = env.BRANCH_NAME;
 
-export const trpcClient = createTrpcProxyServiceClient(
+export const trpcSharedClient = createTrpcProxyServiceClient(
   TRPC_SERVER_URL !== "" && TRPC_SERVER_API_TOKEN !== ""
     ? {
         url: TRPC_SERVER_URL,

@@ -17,12 +17,7 @@ import {
   rawTheme,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
-import {
-  $assets,
-  $authToken,
-  $marketplaceProduct,
-  $project,
-} from "~/shared/nano-states";
+import { $assets, $marketplaceProduct, $project } from "~/shared/nano-states";
 import env from "~/shared/env";
 import { Image, createImageLoader } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
@@ -32,12 +27,8 @@ import {
   marketplaceCategories,
 } from "@webstudio-is/project-build";
 import { serverSyncStore } from "~/shared/sync";
-import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import {
-  MarketplaceApprovalStatus,
-  type ProjectRouter,
-} from "@webstudio-is/project";
-import { projectsPath } from "~/shared/router-utils";
+import { MarketplaceApprovalStatus } from "@webstudio-is/project";
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
 const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
@@ -61,10 +52,6 @@ const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
   category: "sectionTemplates",
 };
 
-const trpc = createTrpcRemixProxy<ProjectRouter>((method) =>
-  projectsPath(method, { authToken: $authToken.get() })
-);
-
 const validate = (data: MarketplaceProduct) => {
   const parsedResult = MarketplaceProduct.safeParse(data);
   if (parsedResult.success === false) {
@@ -73,7 +60,8 @@ const validate = (data: MarketplaceProduct) => {
 };
 
 const useMarketplaceApprovalStatus = () => {
-  const { send, data, state } = trpc.setMarketplaceApprovalStatus.useMutation();
+  const { send, data, state } =
+    trpcClient.project.setMarketplaceApprovalStatus.useMutation();
   const project = useStore($project);
 
   const status =

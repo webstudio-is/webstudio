@@ -1,20 +1,22 @@
 import { ShareProject, type LinkOptions } from "./share-project";
-import { createTrpcRemixProxy } from "~/shared/remix/trpc-remix-proxy";
-import type { AuthorizationTokensRouter } from "@webstudio-is/authorization-token";
-import { authorizationTokenPath, builderUrl } from "~/shared/router-utils";
+import { builderUrl } from "~/shared/router-utils";
 import { useEffect, useRef, useState } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import type { Project } from "@webstudio-is/prisma-client";
-
-const trpc = createTrpcRemixProxy<AuthorizationTokensRouter>(
-  authorizationTokenPath
-);
+import { trpcClient } from "../trpc/trpc-client";
 
 const useShareProjectContainer = (projectId: Project["id"]) => {
-  const { data, load, state: loadState } = trpc.findMany.useQuery();
-  const { send: createToken, state: createState } = trpc.create.useMutation();
-  const { send: removeToken, state: removeState } = trpc.remove.useMutation();
-  const { send: updateToken, state: updateState } = trpc.update.useMutation();
+  const {
+    data,
+    load,
+    state: loadState,
+  } = trpcClient.authorizationToken.findMany.useQuery();
+  const { send: createToken, state: createState } =
+    trpcClient.authorizationToken.create.useMutation();
+  const { send: removeToken, state: removeState } =
+    trpcClient.authorizationToken.remove.useMutation();
+  const { send: updateToken, state: updateState } =
+    trpcClient.authorizationToken.update.useMutation();
   const [links, setLinks] = useState(data ?? []);
   const deletingLinks = useRef(new Set<string>());
 
@@ -57,11 +59,18 @@ const useShareProjectContainer = (projectId: Project["id"]) => {
   };
 
   const handleCreate = () => {
-    createToken({
-      projectId: projectId,
-      relation: "viewers",
-      name: "Custom link",
-    });
+    createToken(
+      {
+        projectId: projectId,
+        relation: "viewers",
+        name: "Custom link",
+      },
+      () => {
+        load({ projectId }, (data) => {
+          setLinks(data ?? []);
+        });
+      }
+    );
   };
 
   const isPending =
