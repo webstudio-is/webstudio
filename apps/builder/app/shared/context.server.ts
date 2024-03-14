@@ -1,7 +1,7 @@
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
 import env from "~/env/env.server";
 import { authenticator } from "~/services/auth.server";
-import { trpcClient } from "~/services/trpc.server";
+import { trpcSharedClient } from "~/services/trpc.server";
 import { entryApi } from "./entri/entri-api.server";
 import {
   getTokenPlanFeatures,
@@ -31,7 +31,7 @@ const createAuthorizationContext = async (
     authToken,
     isServiceCall,
     marketplaceProjectIds,
-    authorizeTrpc: trpcClient.authorize,
+    authorizeTrpc: trpcSharedClient.authorize,
   };
 
   return context;
@@ -39,7 +39,7 @@ const createAuthorizationContext = async (
 
 const createDomainContext = (request: Request) => {
   const context: AppContext["domain"] = {
-    domainTrpc: trpcClient.domain,
+    domainTrpc: trpcSharedClient.domain,
   };
 
   return context;
@@ -49,7 +49,7 @@ const createDeploymentContext = (request: Request) => {
   const url = new URL(request.url);
 
   const context: AppContext["deployment"] = {
-    deploymentTrpc: trpcClient.deployment,
+    deploymentTrpc: trpcSharedClient.deployment,
     env: {
       BUILDER_ORIGIN: url.origin,
       BRANCH_NAME: env.BRANCH_NAME ?? "main",
