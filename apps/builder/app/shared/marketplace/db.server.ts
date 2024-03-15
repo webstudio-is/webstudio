@@ -30,51 +30,22 @@ export const getBuildProdData = async (
 export const getAllApprovedProjectIds = async (): Promise<
   Array<Project["id"]>
 > => {
-  const projects = await prisma.project.findMany({
-    where: {
-      isDeleted: false,
-      marketplaceApprovalStatus: "APPROVED",
-      NOT: {
-        latestBuild: null,
-      },
-    },
-    select: {
-      id: true,
-    },
-  });
+  const approvedMarketplaceProducts =
+    await prisma.approvedMarketplaceProduct.findMany();
 
-  return projects.map((project) => project.id);
+  return approvedMarketplaceProducts.map(
+    (approvedMarketplaceProduct) => approvedMarketplaceProduct.projectId
+  );
 };
 
 export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
-  const projects = await prisma.project.findMany({
-    where: {
-      isDeleted: false,
-      marketplaceApprovalStatus: "APPROVED",
-      NOT: {
-        latestBuild: null,
-      },
-    },
-    select: {
-      id: true,
-      latestBuild: {
-        select: {
-          build: {
-            select: { id: true, marketplaceProduct: true },
-          },
-        },
-      },
-    },
-  });
+  const approvedMarketplaceProducts =
+    await prisma.approvedMarketplaceProduct.findMany();
   const items = [];
 
-  for (const project of projects) {
-    if (project.latestBuild === null) {
-      continue;
-    }
-
+  for (const approvedMarketplaceProduct of approvedMarketplaceProducts) {
     const parsedProduct = MarketplaceProduct.safeParse(
-      parseConfig(project.latestBuild.build.marketplaceProduct)
+      parseConfig(approvedMarketplaceProduct.marketplaceProduct)
     );
 
     if (parsedProduct.success === false) {
@@ -83,7 +54,7 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
     }
 
     items.push({
-      projectId: project.id,
+      projectId: approvedMarketplaceProduct.projectId,
       ...parsedProduct.data,
     });
   }
