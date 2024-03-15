@@ -42,8 +42,12 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
   const pages = [data.pages.homePage, ...data.pages.pages];
 
   for (const page of pages) {
+    const excludePageFromSearch = computeExpression(
+      page.meta.excludePageFromSearch || "false",
+      variableValues
+    );
     // We allow user to hide the page in the marketplace.
-    if (page.meta.excludePageFromSearch === "true") {
+    if (excludePageFromSearch) {
       continue;
     }
 
