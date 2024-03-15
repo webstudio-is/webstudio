@@ -19,6 +19,11 @@ export const action = async ({ request }: ActionArgs) => {
     endpoint: "/trpc",
     batching: { enabled: true },
     responseMeta(opts) {
+      // Disable trpc cache
+      if (process.env.NODE_ENV !== "production") {
+        return {};
+      }
+
       // tRPC batches multiple requests into a single network call.
       // The `paths` array lists all request paths included in the batch.
       const { paths, errors, type, ctx } = opts;
