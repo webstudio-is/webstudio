@@ -156,6 +156,8 @@ model Project {
   @@unique([id, isDeleted])
   @@unique([domain, isDeleted])
   @@unique([id, domain])
+  // ApprovedMarketplaceProduct view performance index
+  @@index([isDeleted, marketplaceApprovalStatus])
 }
 
 enum PublishStatus {
@@ -198,6 +200,8 @@ model Build {
   latestBuildPerProject LatestBuildPerProject?
 
   @@id([id, projectId])
+  // ApprovedMarketplaceProduct view performance index
+  @@index([projectId, createdAt(sort: Desc)])
 }
 
 enum AuthorizationRelation {
@@ -328,4 +332,9 @@ view DashboardProject {
   isDeleted                 Boolean                   @default(false)
   isPublished               Boolean
   marketplaceApprovalStatus MarketplaceApprovalStatus @default(UNLISTED)
+}
+
+view ApprovedMarketplaceProduct {
+  projectId          String @id
+  marketplaceProduct String
 }
