@@ -41,6 +41,8 @@
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
+    "acorn": "^8.11.3",
+    "acorn-walk": "^8.3.2",
     "change-case": "^5.0.2",
     "html-tags": "^3.3.1",
     "jsep": "^1.3.8",
