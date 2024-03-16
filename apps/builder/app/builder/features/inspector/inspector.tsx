@@ -15,6 +15,7 @@ import {
   Flex,
   ScrollArea,
   Separator,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { StylePanel } from "~/builder/features/style-panel";
 import { SettingsPanelContainer } from "~/builder/features/settings-panel";
@@ -118,9 +119,25 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
             <Flex direction="column">
               <PanelTabsList>
                 {isStyleTabVisible && (
-                  <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
+                  <Tooltip
+                    variant="wrapped"
+                    content="The Style panel allows manipulation of CSS visually."
+                  >
+                    <div>
+                      <PanelTabsTrigger value="style">Style</PanelTabsTrigger>
+                    </div>
+                  </Tooltip>
                 )}
-                <PanelTabsTrigger value="settings">Settings</PanelTabsTrigger>
+                <Tooltip
+                  variant="wrapped"
+                  content="The Settings panel allows for customizing component properties and HTML attributes."
+                >
+                  <div>
+                    <PanelTabsTrigger value="settings">
+                      Settings
+                    </PanelTabsTrigger>
+                  </div>
+                </Tooltip>
               </PanelTabsList>
               <Separator />
               <PanelTabsContent value="style" css={contentStyle} tabIndex={-1}>
