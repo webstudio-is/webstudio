@@ -6,7 +6,7 @@ import type {
   AssignmentExpression,
 } from "@jsep-plugin/assignment";
 import type { ObjectExpression, Property } from "@jsep-plugin/object";
-import { parse, type Identifier } from "acorn";
+import { type Identifier, parseExpressionAt } from "acorn";
 import { simple } from "acorn-walk";
 import type { DataSources, Scope } from "@webstudio-is/sdk";
 
@@ -227,9 +227,7 @@ export const transpileExpression = ({
     assignee: boolean
   ) => string | undefined | void;
 }) => {
-  const root = parse(expression, {
-    ecmaVersion: "latest",
-  });
+  const root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
   const replacements: [start: number, end: number, fragment: string][] = [];
   const replaceIdentifier = (node: Identifier, assignee: boolean) => {
     const newName = replaceVariable?.(node.name, assignee);

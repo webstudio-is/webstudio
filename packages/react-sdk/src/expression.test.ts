@@ -238,6 +238,14 @@ describe("transpile expression", () => {
       })
     ).toEqual("a_assignee = b_assigner");
   });
+
+  test("transpile object literal without changes", () => {
+    expect(
+      transpileExpression({
+        expression: `{ ...name }`,
+      })
+    ).toEqual(`{ ...name }`);
+  });
 });
 
 test("encode/decode variable names", () => {
