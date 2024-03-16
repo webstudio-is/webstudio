@@ -187,7 +187,7 @@ export const SectionMarketplace = () => {
           css={{ zIndex: theme.zIndices[1] }}
           options={Array.from(marketplaceCategories.keys())}
           getLabel={(category: MarketplaceProduct["category"]) =>
-            marketplaceCategories.get(category)
+            marketplaceCategories.get(category)?.label
           }
           onChange={handleSave("category")}
           value={data.category}
