@@ -47,6 +47,7 @@ const generateAction = ({
     args = value.args;
     assignersCode += transpileExpression({
       expression: value.code,
+      executable: true,
       replaceVariable: (identifier, assignee) => {
         if (args?.includes(identifier)) {
           return;

@@ -78,6 +78,7 @@ const parseJsonValue = (code: string) => {
   try {
     code = transpileExpression({
       expression: code,
+      executable: true,
       replaceVariable: (id) => {
         ids.add(id);
       },

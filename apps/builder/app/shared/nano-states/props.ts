@@ -53,6 +53,7 @@ const generateAction = (prop: Extract<Prop, { type: "action" }>) => {
     args = value.args;
     assignersCode += transpileExpression({
       expression: value.code,
+      executable: true,
       replaceVariable: (identifier, assignee) => {
         if (args?.includes(identifier)) {
           return;
@@ -145,6 +146,7 @@ export const computeExpression = (
     const usedVariables = new Map();
     const transpiled = transpileExpression({
       expression,
+      executable: true,
       replaceVariable: (identifier) => {
         const id = decodeDataSourceVariable(identifier);
         if (id) {
