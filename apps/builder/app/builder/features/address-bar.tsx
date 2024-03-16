@@ -27,6 +27,7 @@ import {
   $pages,
   $project,
   $selectedPage,
+  updateSystemParams,
 } from "~/shared/nano-states";
 import env from "~/shared/env";
 import {
@@ -66,11 +67,6 @@ export type System = {
   search: Record<string, string>;
 };
 
-const initialSystem: System = {
-  params: {},
-  search: {},
-};
-
 const $selectedPagePathParams = computed(
   [$selectedPage, $dataSourceVariables],
   (selectedPage, dataSourceVariables) => {
@@ -97,18 +93,8 @@ const updatePathParam = (name: string, value: string) => {
   }
   newParams[name] = value;
   const page = $selectedPage.get();
-  if (page?.systemDataSourceId) {
-    const dataSourceVariables = new Map($dataSourceVariables.get());
-    const system = dataSourceVariables.get(page.systemDataSourceId) as
-      | undefined
-      | System;
-    const newSystem: System = {
-      ...initialSystem,
-      ...system,
-      params: newParams,
-    };
-    dataSourceVariables.set(page.systemDataSourceId, newSystem);
-    $dataSourceVariables.set(dataSourceVariables);
+  if (page) {
+    updateSystemParams(page, newParams);
   }
 };
 
