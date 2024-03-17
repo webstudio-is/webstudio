@@ -137,6 +137,12 @@ const warmConnections = () => {
   if (warmed) {
     return;
   }
+
+  if (window.matchMedia("(hover: none)").matches) {
+    // Useless on touch devices
+    return;
+  }
+
   preconnect(PLAYER_CDN);
   preconnect(IFRAME_CDN);
   preconnect(IMAGE_CDN);

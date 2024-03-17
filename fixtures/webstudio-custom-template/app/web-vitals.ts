@@ -29,17 +29,14 @@ const logEvent = (
     metric_value: number;
   }
 ) => {
-  setTimeout(async () => {
-    performance.measure(`${name}`, {
-      detail: JSON.stringify(params),
-      duration: params.metric_value,
-      start: performance.now(),
-    });
-  }, 0);
+  performance.measure(`${name}`, {
+    detail: JSON.stringify(params),
+    duration: params.metric_value,
+    start: performance.now(),
+  });
+
   // eslint-disable-next-line no-console
   console.info(JSON.stringify({ name, params }));
-
-  // navigator.sendBeacon("/cgi/log/web-vitals", JSON.stringify({ name, params }));
 };
 
 const buildElementHumanReadablePath = (element: Element) => {
@@ -202,22 +199,10 @@ const sendToAnalitics: CLSReportCallbackWithAttribution &
     }
   }
 
-  // Sometemes web-vitals don't detect any element, try to use last touched element
-  if (_lastTouchedElement != null) {
-    try {
-      const content = buildElementHumanReadablePath(_lastTouchedElement);
-      params.last_touched_path = content;
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-    }
-  }
-
   logEvent(name, Object.assign(params, overrides, { is_mobile: _isMobile }));
 };
 
 let _subscribed = false;
-let _lastTouchedElement: Element | undefined = undefined;
 let _isMobile = false;
 
 export const subscribe = () => {
@@ -242,22 +227,12 @@ export const subscribe = () => {
     console.error(e);
   }
 
-  const handlePointerDown = (event: PointerEvent) => {
-    if (event.target instanceof Element) {
-      _lastTouchedElement = event.target;
-    }
-  };
-
   const options = {
     capture: true,
     passive: true,
   };
 
-  document.addEventListener("pointerdown", handlePointerDown, options);
-
   _subscribed = true;
 
-  return () => {
-    document.removeEventListener("pointerdown", handlePointerDown, options);
-  };
+  return () => {};
 };
