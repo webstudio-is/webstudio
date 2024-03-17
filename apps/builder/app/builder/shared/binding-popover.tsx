@@ -37,6 +37,7 @@ import {
 } from "@webstudio-is/design-system";
 import {
   decodeDataSourceVariable,
+  lintExpression,
   validateExpression,
 } from "@webstudio-is/react-sdk";
 import { ExpressionEditor, formatValuePreview } from "./expression-editor";
@@ -97,30 +98,18 @@ const BindingPanel = ({
 }) => {
   const [expression, setExpression] = useState(value);
   const usedIdentifiers = useMemo(() => getUsedIdentifiers(value), [value]);
-  const [error, setError] = useState<undefined | string>();
+  const [errors, setErrors] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
   const scopeEntries = Object.entries(scope);
 
   const updateExpression = (newExpression: string) => {
     setExpression(newExpression);
     onChange();
-    try {
-      if (newExpression.trim().length === 0) {
-        throw Error("Cannot use empty expression");
-      }
-      // update value only when expression is valid
-      validateExpression(newExpression, {
-        transformIdentifier: (identifier) => {
-          if (aliases.has(identifier) === false) {
-            throw Error(`Unknown variable "${identifier}"`);
-          }
-          return identifier;
-        },
-      });
-      setError(undefined);
-    } catch (error) {
-      setError((error as Error).message);
-    }
+    const diagnostics = lintExpression({
+      expression: newExpression,
+      availableVariables: new Set(aliases.keys()),
+    });
+    setErrors(diagnostics.map((diagnostic) => diagnostic.message));
   };
 
   return (
@@ -195,7 +184,11 @@ const BindingPanel = ({
       <Box css={{ padding: `0 ${theme.spacing[9]} ${theme.spacing[9]}` }}>
         <InputErrorsTooltip
           errors={
-            touched && error ? [error] : valueError ? [valueError] : undefined
+            touched && errors.length > 0
+              ? errors
+              : valueError
+              ? [valueError]
+              : undefined
           }
         >
           <div>
@@ -203,7 +196,7 @@ const BindingPanel = ({
               scope={scope}
               aliases={aliases}
               color={
-                error !== undefined || valueError !== undefined
+                errors.length > 0 || valueError !== undefined
                   ? "error"
                   : undefined
               }
@@ -214,7 +207,7 @@ const BindingPanel = ({
                 setTouched(false);
               }}
               onBlur={() => {
-                onSave(expression, error !== undefined);
+                onSave(expression, errors.length > 0);
                 setTouched(true);
               }}
             />

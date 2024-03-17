@@ -6,7 +6,7 @@ import type {
   AssignmentExpression,
 } from "@jsep-plugin/assignment";
 import type { ObjectExpression, Property } from "@jsep-plugin/object";
-import { type Identifier, parseExpressionAt } from "acorn";
+import { type Expression, type Identifier, parseExpressionAt } from "acorn";
 import { simple } from "acorn-walk";
 import type { DataSources, Scope } from "@webstudio-is/sdk";
 
@@ -170,23 +170,126 @@ export const validateExpression = (
   });
 };
 
-const isLiteralNode = (node: Node): boolean => {
+export type Diagnostic = {
+  from: number;
+  to: number;
+  severity: "error" | "hint" | "info" | "warning";
+  message: string;
+};
+
+type ExpressionVisitor = {
+  [K in Expression["type"]]: (node: Extract<Expression, { type: K }>) => void;
+};
+
+export const lintExpression = ({
+  expression,
+  availableVariables = new Set(),
+  allowAssignment = false,
+}: {
+  expression: string;
+  availableVariables?: Set<Identifier["name"]>;
+  allowAssignment?: boolean;
+}): Diagnostic[] => {
+  const diagnostics: Diagnostic[] = [];
+  const addError = (message: string) => {
+    return (node: Expression) => {
+      diagnostics.push({
+        from: node.start,
+        to: node.end,
+        severity: "error",
+        message: message,
+      });
+    };
+  };
+  // allow empty expression
+  if (expression.trim().length === 0) {
+    return diagnostics;
+  }
+  try {
+    const root = parseExpressionAt(expression, 0, {
+      ecmaVersion: "latest",
+      // support parsing import to forbid explicitly
+      sourceType: "module",
+    });
+    simple(root, {
+      Identifier(node) {
+        if (availableVariables.has(node.name) === false) {
+          addError(`"${node.name}" is not available in the scope`)(node);
+        }
+      },
+      Literal() {},
+      ArrayExpression() {},
+      ObjectExpression() {},
+      UnaryExpression() {},
+      BinaryExpression() {},
+      LogicalExpression() {},
+      MemberExpression() {},
+      ConditionalExpression() {},
+      TemplateLiteral() {},
+      ChainExpression() {},
+      ParenthesizedExpression() {},
+      AssignmentExpression(node) {
+        if (allowAssignment === false) {
+          addError("Assignment is supported only inside actions")(node);
+          return;
+        }
+        simple(node.left, {
+          Identifier(node) {
+            if (availableVariables.has(node.name) === false) {
+              addError(`"${node.name}" is not available in the scope`)(node);
+            }
+          },
+        });
+      },
+      // parser forbids to yield inside module
+      YieldExpression() {},
+      ThisExpression: addError(`"this" keyword is not supported`),
+      FunctionExpression: addError("Functions are not supported"),
+      UpdateExpression: addError("Increment and decrement are not supported"),
+      CallExpression: addError("Functions are not supported"),
+      NewExpression: addError("Classes are not supported"),
+      SequenceExpression: addError(`Only single expression is supported`),
+      ArrowFunctionExpression: addError("Functions are not supported"),
+      TaggedTemplateExpression: addError("Tagged template is not supported"),
+      ClassExpression: addError("Classes are not supported"),
+      MetaProperty: addError("Imports are not supported"),
+      AwaitExpression: addError(`"await" keyword is not supported`),
+      ImportExpression: addError("Imports are not supported"),
+    } satisfies ExpressionVisitor);
+  } catch (error) {
+    const castedError = error as { message: string; pos: number };
+    diagnostics.push({
+      from: castedError.pos,
+      to: castedError.pos,
+      severity: "error",
+      message: castedError.message,
+    });
+  }
+  return diagnostics;
+};
+
+const isLiteralNode = (node: Expression): boolean => {
   if (node.type === "Literal") {
     return true;
   }
   if (node.type === "ArrayExpression") {
-    return (node.elements as Node[]).every(isLiteralNode);
+    return node.elements.every((node) => {
+      if (node === null || node.type === "SpreadElement") {
+        return false;
+      }
+      return isLiteralNode(node);
+    });
   }
   if (node.type === "ObjectExpression") {
     return node.properties.every((property) => {
-      const key = property.key as Node;
+      if (property.type === "SpreadElement") {
+        return false;
+      }
+      const key = property.key;
       const isIdentifierKey =
         key.type === "Identifier" && property.computed === false;
       const isLiteralKey = key.type === "Literal";
-      return (
-        (isLiteralKey || isIdentifierKey) &&
-        isLiteralNode(property.value as Node)
-      );
+      return (isLiteralKey || isIdentifierKey) && isLiteralNode(property.value);
     });
   }
   return false;
@@ -199,7 +302,7 @@ const isLiteralNode = (node: Node): boolean => {
  */
 export const isLiteralExpression = (expression: string) => {
   try {
-    const node = jsep(expression) as Node;
+    const node = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
     return isLiteralNode(node);
   } catch {
     // treat invalid expression as non-literal
