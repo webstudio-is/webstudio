@@ -39,7 +39,7 @@
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "storybook:dev": "storybook dev -p 6006",
+    "storybook:dev": "storybook dev -p 6006 --static-dir=./public",
     "storybook:build": "storybook build"
   },
   "peerDependencies": {

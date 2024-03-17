@@ -16,6 +16,8 @@ import {
   createContext,
   type ContextType,
   useMemo,
+  useCallback,
+  useTransition,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { shallowEqual } from "shallow-equal";
@@ -233,6 +235,7 @@ const useVimeo = ({
   const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("initial");
   const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setPlayerStatus(
@@ -273,7 +276,16 @@ const useVimeo = ({
       setPlayerStatus("ready");
     });
   }, [stableOptions, playerStatus, loading]);
-  return { previewImageUrl, playerStatus, setPlayerStatus, elementRef };
+
+  const start = useCallback(() => {
+    startTransition(() => {
+      setPlayerStatus("initialized");
+    });
+  }, []);
+
+  const status = isPending ? "initialized" : playerStatus;
+
+  return { previewImageUrl, status, start, elementRef };
 };
 
 export type VimeoOptions = Omit<
@@ -347,43 +359,42 @@ export const Vimeo = forwardRef<Ref, Props>(
     ref
   ) => {
     const { renderer } = useContext(ReactSdkContext);
-    const { previewImageUrl, playerStatus, setPlayerStatus, elementRef } =
-      useVimeo({
-        renderer,
-        showPreview,
-        loading,
-        options: {
-          url,
-          autoplay,
-          autopause,
-          keyboard,
-          loop,
-          muted,
-          pip,
-          playsinline,
-          quality,
-          responsive,
-          speed,
-          transparent,
-          portrait: showPortrait,
-          byline: showByline,
-          title: showTitle,
-          color: controlsColor,
-          controls: showControls,
-          interactive_params: interactiveParams,
-          background: backgroundMode,
-          dnt: doNotTrack,
-        },
-      });
+    const { previewImageUrl, status, start, elementRef } = useVimeo({
+      renderer,
+      showPreview,
+      loading,
+      options: {
+        url,
+        autoplay,
+        autopause,
+        keyboard,
+        loop,
+        muted,
+        pip,
+        playsinline,
+        quality,
+        responsive,
+        speed,
+        transparent,
+        portrait: showPortrait,
+        byline: showByline,
+        title: showTitle,
+        color: controlsColor,
+        controls: showControls,
+        interactive_params: interactiveParams,
+        background: backgroundMode,
+        dnt: doNotTrack,
+      },
+    });
 
     return (
       <VimeoContext.Provider
         value={{
-          status: playerStatus,
+          status,
           previewImageUrl,
           onInitPlayer() {
             if (renderer !== "canvas") {
-              setPlayerStatus("initialized");
+              start();
             }
           },
         }}
