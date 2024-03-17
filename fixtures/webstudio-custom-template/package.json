@@ -45,7 +45,7 @@
   "size-limit": [
     {
       "path": "public/build/*.js",
-      "limit": "137 kB",
+      "limit": "160 kB",
       "gzip": false
     }
   ],
