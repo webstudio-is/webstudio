@@ -6,6 +6,8 @@ import type {
   AssignmentExpression,
 } from "@jsep-plugin/assignment";
 import type { ObjectExpression, Property } from "@jsep-plugin/object";
+import { type Identifier, parseExpressionAt } from "acorn";
+import { simple } from "acorn-walk";
 import type { DataSources, Scope } from "@webstudio-is/sdk";
 
 jsep.literals["undefined"] = "undefined";
@@ -205,6 +207,67 @@ export const isLiteralExpression = (expression: string) => {
   }
 };
 
+/**
+ * transpile expression into executable one
+ *
+ * add optional chaining operator to every member expression
+ * to access any field without runtime errors
+ *
+ * replace variable names if necessary
+ */
+export const transpileExpression = ({
+  expression,
+  executable = false,
+  replaceVariable,
+}: {
+  expression: string;
+  executable?: boolean;
+  replaceVariable?: (
+    identifier: string,
+    assignee: boolean
+  ) => string | undefined | void;
+}) => {
+  const root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+  const replacements: [start: number, end: number, fragment: string][] = [];
+  const replaceIdentifier = (node: Identifier, assignee: boolean) => {
+    const newName = replaceVariable?.(node.name, assignee);
+    if (newName) {
+      replacements.push([node.start, node.end, newName]);
+    }
+  };
+  simple(root, {
+    Identifier: (node) => replaceIdentifier(node, false),
+    AssignmentExpression(node) {
+      simple(node.left, {
+        Identifier: (node) => replaceIdentifier(node, true),
+      });
+    },
+    MemberExpression(node) {
+      if (executable === false || node.optional) {
+        return;
+      }
+      // a . b -> a ?. b
+      if (node.computed === false) {
+        const dotIndex = expression.indexOf(".", node.object.end);
+        replacements.push([dotIndex, dotIndex, "?"]);
+      }
+      // a [b] -> a ?.[b]
+      if (node.computed === true) {
+        const dotIndex = expression.indexOf("[", node.object.end);
+        replacements.push([dotIndex, dotIndex, "?."]);
+      }
+    },
+  });
+  // order from the latest to the first insertion to not break other positions
+  replacements.sort(([leftStart], [rightStart]) => rightStart - leftStart);
+  for (const [start, end, fragment] of replacements) {
+    const before = expression.slice(0, start);
+    const after = expression.slice(end);
+    expression = before + fragment + after;
+  }
+  return expression;
+};
+
 const dataSourceVariablePrefix = "$ws$dataSource$";
 
 // data source id is generated with nanoid which has "-" in alphabeta
@@ -235,19 +298,16 @@ export const generateExpression = ({
   usedDataSources: DataSources;
   scope: Scope;
 }) => {
-  return validateExpression(expression, {
-    // parse any expression
-    effectful: true,
-    // transpile to safely executable member expressions
-    optional: true,
-    transformIdentifier: (identifier) => {
+  return transpileExpression({
+    expression,
+    executable: true,
+    replaceVariable: (identifier) => {
       const depId = decodeDataSourceVariable(identifier);
       const dep = depId ? dataSources.get(depId) : undefined;
       if (dep) {
         usedDataSources?.set(dep.id, dep);
         return scope.getName(dep.id, dep.name);
       }
-      return identifier;
     },
   });
 };

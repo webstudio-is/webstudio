@@ -34,7 +34,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { validateExpression } from "@webstudio-is/react-sdk";
+import { transpileExpression } from "@webstudio-is/react-sdk";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
@@ -76,11 +76,11 @@ const parseJsonValue = (code: string) => {
     return result;
   }
   try {
-    code = validateExpression(code, {
-      optional: true,
-      transformIdentifier: (id) => {
+    code = transpileExpression({
+      expression: code,
+      executable: true,
+      replaceVariable: (id) => {
         ids.add(id);
-        return id;
       },
     });
   } catch (error) {

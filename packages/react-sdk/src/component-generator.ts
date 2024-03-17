@@ -17,8 +17,8 @@ import {
 import { collectionComponent } from "./core-components";
 import {
   generateExpression,
-  validateExpression,
   decodeDataSourceVariable,
+  transpileExpression,
 } from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
@@ -45,12 +45,12 @@ const generateAction = ({
   let assignersCode = "";
   for (const value of prop.value) {
     args = value.args;
-    assignersCode += validateExpression(value.code, {
-      optional: true,
-      effectful: true,
-      transformIdentifier: (identifier, assignee) => {
+    assignersCode += transpileExpression({
+      expression: value.code,
+      executable: true,
+      replaceVariable: (identifier, assignee) => {
         if (args?.includes(identifier)) {
-          return identifier;
+          return;
         }
         const depId = decodeDataSourceVariable(identifier);
         const dep = depId ? dataSources.get(depId) : undefined;
@@ -64,7 +64,6 @@ const generateAction = ({
         }
         // eslint-disable-next-line no-console
         console.error(`Unknown dependency "${identifier}"`);
-        return identifier;
       },
     });
     assignersCode += `\n`;
