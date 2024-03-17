@@ -18,6 +18,7 @@ import { SectionRedirects } from "./section-redirects";
 import { useState } from "react";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { SectionMarketplace } from "./section-marketplace";
+import { leftPanelWidth, rightPanelWidth } from "./utils";
 
 const focusOutline = focusRingStyle();
 
@@ -28,9 +29,6 @@ if (isFeatureEnabled("marketplace")) {
 }
 
 type SectionName = (typeof sectionNames)[number];
-
-const leftPanelWidth = theme.spacing[26];
-const rightPanelWidth = theme.spacing[35];
 
 export const ProjectSettingsView = ({
   currentSection,

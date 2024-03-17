@@ -18,7 +18,6 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
-import { Text } from "./text";
 
 export const SelectContent = styled(Primitive.Content, menuCss);
 
@@ -77,7 +76,7 @@ export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
-const Description = styled(Text, menuItemCss);
+const Description = styled(menuItemCss);
 
 type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
@@ -95,16 +94,15 @@ export type SelectProps<Option = SelectOption> = {
   onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   children?: ReactNode;
+  getDescription?: (option: Option) => ReactNode | undefined;
 } & (Option extends string
   ? {
       getLabel?: (option: Option) => string | undefined;
       getValue?: (option: Option) => string | undefined;
-      getDescription?: (option: Option) => string | undefined;
     }
   : {
       getLabel: (option: Option) => string | undefined;
       getValue: (option: Option) => string | undefined;
-      getDescription?: (option: Option) => string | undefined;
     }) &
   TriggerPassThroughProps;
 
@@ -129,7 +127,7 @@ const SelectBase = <Option,>(
     open,
     getLabel = defaultGetValue,
     getValue = defaultGetValue,
-    getDescription = defaultGetValue,
+    getDescription,
     name,
     children,
     prefix,
@@ -148,7 +146,7 @@ const SelectBase = <Option,>(
 
   const itemForDescription = highlightedItem ?? value ?? defaultValue;
   const description = itemForDescription
-    ? getDescription(itemForDescription)
+    ? getDescription?.(itemForDescription)
     : undefined;
 
   return (
@@ -200,11 +198,11 @@ const SelectBase = <Option,>(
                   {getLabel(option)}
                 </SelectItem>
               ))}
-            {description && <Description hint>{description}</Description>}
           </SelectViewport>
           <SelectScrollDownButton>
             <ChevronDownIcon />
           </SelectScrollDownButton>
+          {description && <Description hint>{description}</Description>}
         </SelectContent>
       </Primitive.Portal>
     </Primitive.Root>

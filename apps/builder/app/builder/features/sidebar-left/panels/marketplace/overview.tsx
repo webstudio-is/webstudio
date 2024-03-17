@@ -118,11 +118,12 @@ export const Overview = ({
             }
             return (
               <Tooltip
+                key={category}
                 variant="wrapped"
                 content={marketplaceCategories.get(category)?.description}
               >
                 <div>
-                  <PanelTabsTrigger key={category} value={category}>
+                  <PanelTabsTrigger value={category}>
                     {marketplaceCategories.get(category)?.label}
                   </PanelTabsTrigger>
                 </div>
