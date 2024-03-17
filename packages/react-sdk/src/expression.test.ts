@@ -1,9 +1,10 @@
-import { expect, test } from "@jest/globals";
+import { describe, expect, test } from "@jest/globals";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   executeExpression,
   isLiteralExpression,
+  transpileExpression,
   validateExpression,
 } from "./expression";
 
@@ -171,6 +172,80 @@ test("transform identifiers", () => {
       transformIdentifier: (id) => `$ws$${id}`,
     })
   ).toEqual(`$ws$a + $ws$b`);
+});
+
+describe("transpile expression", () => {
+  test("preserve spaces and parentheses", () => {
+    expect(
+      transpileExpression({ expression: " 1 + (2 + 3) ", executable: true })
+    ).toEqual(" 1 + (2 + 3) ");
+  });
+
+  test("add optional chaining with dot syntax", () => {
+    expect(
+      transpileExpression({ expression: "a.b . c", executable: true })
+    ).toEqual("a?.b ?. c");
+  });
+
+  test("add optional chaining with computed", () => {
+    expect(
+      transpileExpression({ expression: "a['b'] [c]", executable: true })
+    ).toEqual("a?.['b'] ?.[c]");
+  });
+
+  test("skip optional chaining", () => {
+    expect(
+      transpileExpression({ expression: "a?.['b']?.c", executable: true })
+    ).toEqual("a?.['b']?.c");
+  });
+
+  test("replace variable", () => {
+    expect(
+      transpileExpression({
+        expression: "(a + c) * b",
+        replaceVariable: (identifier) => identifier + "_1",
+      })
+    ).toEqual("(a_1 + c_1) * b_1");
+    expect(
+      transpileExpression({
+        expression: "a = c",
+        replaceVariable: (identifier) => identifier + "_1",
+      })
+    ).toEqual("a_1 = c_1");
+  });
+
+  test("skip identifiers in nested member expressions", () => {
+    const identifiers: string[] = [];
+    const transpiled = transpileExpression({
+      expression: "a.b + c.d * e[f]",
+      replaceVariable: (identifier) => {
+        identifiers.push(identifier);
+        return identifier + "_1";
+      },
+    });
+    expect(identifiers).toEqual(["a", "c", "e", "f"]);
+    expect(transpiled).toEqual("a_1.b + c_1.d * e_1[f_1]");
+  });
+
+  test("inform identifier is an assignee", () => {
+    expect(
+      transpileExpression({
+        expression: "a = b",
+        replaceVariable: (identifier, assignee) => {
+          const suffix = assignee ? "_assignee" : "_assigner";
+          return identifier + suffix;
+        },
+      })
+    ).toEqual("a_assignee = b_assigner");
+  });
+
+  test("transpile object literal without changes", () => {
+    expect(
+      transpileExpression({
+        expression: `{ ...name }`,
+      })
+    ).toEqual(`{ ...name }`);
+  });
 });
 
 test("encode/decode variable names", () => {

@@ -13,7 +13,7 @@ import {
   normalizeProps,
   portalComponent,
   textContentAttribute,
-  validateExpression,
+  transpileExpression,
 } from "@webstudio-is/react-sdk";
 import { $instances } from "./instances";
 import {
@@ -51,12 +51,12 @@ const generateAction = (prop: Extract<Prop, { type: "action" }>) => {
   let assignersCode = "";
   for (const value of prop.value) {
     args = value.args;
-    assignersCode += validateExpression(value.code, {
-      optional: true,
-      effectful: true,
-      transformIdentifier: (identifier, assignee) => {
+    assignersCode += transpileExpression({
+      expression: value.code,
+      executable: true,
+      replaceVariable: (identifier, assignee) => {
         if (args?.includes(identifier)) {
-          return identifier;
+          return;
         }
         const depId = decodeDataSourceVariable(identifier);
         if (depId) {
@@ -65,7 +65,6 @@ const generateAction = (prop: Extract<Prop, { type: "action" }>) => {
             setters.add(depId);
           }
         }
-        return identifier;
       },
     });
     assignersCode += `\n`;
@@ -145,15 +144,14 @@ export const computeExpression = (
 ) => {
   try {
     const usedVariables = new Map();
-    const transpiled = validateExpression(expression, {
-      effectful: true,
-      optional: true,
-      transformIdentifier: (identifier) => {
+    const transpiled = transpileExpression({
+      expression,
+      executable: true,
+      replaceVariable: (identifier) => {
         const id = decodeDataSourceVariable(identifier);
         if (id) {
           usedVariables.set(identifier, id);
         }
-        return identifier;
       },
     });
     let code = "";

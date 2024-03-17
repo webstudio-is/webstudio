@@ -49,7 +49,7 @@ test("generate resources loader", () => {
       headers: [
       { name: "Content-Type", value: "application/json" },
       ],
-      body: {body: true},
+      body: { body: true },
       }),
       ])
       return {
@@ -116,7 +116,7 @@ test("generate variable and use in resources loader", () => {
       headers: [
       { name: "Authorization", value: "Token " + AccessToken },
       ],
-      body: {body: true},
+      body: { body: true },
       }),
       ])
       return {
@@ -177,7 +177,7 @@ test("generate system variable and use in resources loader", () => {
       headers: [
       { name: "Content-Type", value: "application/json" },
       ],
-      body: {body: true},
+      body: { body: true },
       }),
       ])
       return {
