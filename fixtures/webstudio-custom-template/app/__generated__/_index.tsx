@@ -19,9 +19,10 @@ import {
   Heading as Heading,
   Vimeo as Vimeo,
   VimeoPreviewImage as VimeoPreviewImage,
+  VimeoPlayButton as VimeoPlayButton,
   Box as Box,
   HtmlEmbed as HtmlEmbed,
-  VimeoPlayButton as VimeoPlayButton,
+  VimeoSpinner as VimeoSpinner,
 } from "@webstudio-is/sdk-components-react";
 
 import type { PageData } from "~/routes/_index";
@@ -136,19 +137,20 @@ const Page = ({}: { system: any }) => {
           src={"/custom-folder/home_wsKvRSqvkajPPBeycZ-C8.svg"}
           className="c1eccbi0 cc32szi cuk1bdz c1ge5ofh c1fwh0y5 ch160p4 c1jxoq3x cewch87 c1la265j"
         />
-        <Box
-          data-ws-id="CnbJrVYAMQ7aDqemVdWI5"
-          data-ws-component="Box"
+        <VimeoSpinner
+          data-ws-id="o8sAMUoaOraWYZClEfRgl"
+          data-ws-component="VimeoSpinner"
           className="c1eccbi0 ce5jzw0 cq3eebu c1319rdz c1x7j4n5 c176tfq4 c1qg633k"
         >
           <HtmlEmbed
-            data-ws-id="JeL4m1QcrRyK7gPyN3p5j"
+            data-ws-id="BeQ7sgDlUizFvf4aHqOsh"
             data-ws-component="HtmlEmbed"
             code={
               '<svg xmlns="http://www.w3.org/2000/svg" id="e2CRglijn891" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" viewBox="0 0 128 128" fill="currentColor" width="100%" height="100%" style="display: block;"><style>@keyframes e2CRglijn892_tr__tr{0%{transform:translate(64px,64px) rotate(90deg);animation-timing-function:cubic-bezier(.42,0,.58,1)}50%{transform:translate(64px,64px) rotate(810deg);animation-timing-function:cubic-bezier(.42,0,.58,1)}to{transform:translate(64px,64px) rotate(1530deg)}}@keyframes e2CRglijn892_s_p{0%,to{stroke:#39fbbb}25%{stroke:#4a4efa}50%{stroke:#e63cfe}75%{stroke:#ffae3c}}@keyframes e2CRglijn892_s_do{0%{stroke-dashoffset:251.89}2.5%,52.5%{stroke-dashoffset:263.88;animation-timing-function:cubic-bezier(.42,0,.58,1)}25%,75%{stroke-dashoffset:131.945}to{stroke-dashoffset:251.885909}}#e2CRglijn892_tr{animation:e2CRglijn892_tr__tr 3000ms linear infinite normal forwards}#e2CRglijn892{animation-name:e2CRglijn892_s_p,e2CRglijn892_s_do;animation-duration:3000ms;animation-fill-mode:forwards;animation-timing-function:linear;animation-direction:normal;animation-iteration-count:infinite}</style><g id="e2CRglijn892_tr" transform="translate(64,64) rotate(90)"><circle id="e2CRglijn892" r="42" fill="none" stroke="#39fbbb" stroke-dasharray="263.89" stroke-dashoffset="251.89" stroke-linecap="round" stroke-width="16" transform="scale(-1,1) translate(0,0)"/></g></svg>'
             }
+            executeScriptOnCanvas={false}
           />
-        </Box>
+        </VimeoSpinner>
         <VimeoPlayButton
           data-ws-id="9hBBPGSf7hB30ZkSHKjNd"
           data-ws-component="VimeoPlayButton"

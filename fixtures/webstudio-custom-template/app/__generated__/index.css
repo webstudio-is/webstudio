@@ -104,6 +104,25 @@ html {
     max-width: 100%;
     display: block;
   }
+  button:where([data-ws-component="VimeoPlayButton"]) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    text-transform: none;
+  }
   div:where([data-ws-component="Box"]) {
     box-sizing: border-box;
     border-top-width: 1px;
@@ -184,24 +203,13 @@ html {
     border-left-width: 1px;
     outline-width: 1px;
   }
-  button:where([data-ws-component="VimeoPlayButton"]) {
-    font-family: inherit;
-    font-size: 100%;
-    line-height: 1.15;
-    margin-top: 0;
-    margin-right: 0;
-    margin-bottom: 0;
-    margin-left: 0;
+  div:where([data-ws-component="VimeoSpinner"]) {
     box-sizing: border-box;
     border-top-width: 1px;
     border-right-width: 1px;
     border-bottom-width: 1px;
     border-left-width: 1px;
-    border-top-style: solid;
-    border-right-style: solid;
-    border-bottom-style: solid;
-    border-left-style: solid;
-    text-transform: none;
+    outline-width: 1px;
   }
 }
 @media all {
@@ -285,29 +293,17 @@ html {
   .c1la265j {
     object-position: cover;
   }
-  .ce5jzw0 {
-    top: 50%;
-  }
-  .cq3eebu {
-    left: 50%;
-  }
-  .c1319rdz {
-    width: 70px;
-  }
-  .c1x7j4n5 {
-    height: 70px;
-  }
-  .c176tfq4 {
-    margin-top: -35px;
-  }
-  .c1qg633k {
-    margin-left: -35px;
-  }
   .c1yx3ait {
     width: 140px;
   }
   .c1scl4ay {
     height: 80px;
+  }
+  .ce5jzw0 {
+    top: 50%;
+  }
+  .cq3eebu {
+    left: 50%;
   }
   .cxar3by {
     margin-top: -40px;
@@ -365,5 +361,17 @@ html {
   }
   .c1xa5m0w {
     height: 60px;
+  }
+  .c1319rdz {
+    width: 70px;
+  }
+  .c1x7j4n5 {
+    height: 70px;
+  }
+  .c176tfq4 {
+    margin-top: -35px;
+  }
+  .c1qg633k {
+    margin-left: -35px;
   }
 }

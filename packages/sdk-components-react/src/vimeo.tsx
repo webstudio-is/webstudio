@@ -242,6 +242,7 @@ const useVimeo = ({
   const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
   const [isPending, startTransition] = useTransition();
+  const loadPreviewOnceRef = useRef(false);
 
   useEffect(() => {
     setPlayerStatus(
@@ -257,10 +258,19 @@ const useVimeo = ({
     ) {
       return;
     }
+
     if (showPreview) {
-      loadPreviewImage(elementRef.current, options.url).then(
-        setPreviewImageUrl
-      );
+      if (loadPreviewOnceRef.current) {
+        return;
+      }
+
+      loadPreviewOnceRef.current = true;
+
+      loadPreviewImage(elementRef.current, options.url)
+        .then(setPreviewImageUrl)
+        .catch(() => {
+          /* DO NOTHING */
+        });
       return;
     }
     setPreviewImageUrl(undefined);
