@@ -17,7 +17,6 @@ import {
   type ContextType,
   useMemo,
   useCallback,
-  useTransition,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { shallowEqual } from "shallow-equal";
@@ -138,11 +137,6 @@ const warmConnections = () => {
     return;
   }
 
-  if (window.matchMedia("(hover: none)").matches) {
-    // Useless on touch devices
-    return;
-  }
-
   preconnect(PLAYER_CDN);
   preconnect(IFRAME_CDN);
   preconnect(IMAGE_CDN);
@@ -241,7 +235,7 @@ const useVimeo = ({
   const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("initial");
   const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const loadPreviewOnceRef = useRef(false);
 
   useEffect(() => {
@@ -285,18 +279,30 @@ const useVimeo = ({
   }, [options]);
 
   useEffect(() => {
-    if (elementRef.current === null || playerStatus === "initial") {
+    if (isPending) {
+      setPlayerStatus((status) =>
+        status === "initial" ? "initialized" : status
+      );
+    }
+  }, [isPending]);
+
+  const toggleCreatePlayer = playerStatus !== "initial";
+
+  useEffect(() => {
+    if (elementRef.current === null) {
       return;
     }
+    if (toggleCreatePlayer === false) {
+      return;
+    }
+
     return createPlayer(elementRef.current, stableOptions, { loading }, () => {
       setPlayerStatus("ready");
     });
-  }, [stableOptions, playerStatus, loading]);
+  }, [stableOptions, toggleCreatePlayer, loading]);
 
   const start = useCallback(() => {
-    startTransition(() => {
-      setPlayerStatus("initialized");
-    });
+    setIsPending(true);
   }, []);
 
   const status = isPending ? "initialized" : playerStatus;
