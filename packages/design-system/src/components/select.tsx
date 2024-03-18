@@ -202,6 +202,7 @@ const SelectBase = <Option,>(
           <SelectScrollDownButton>
             <ChevronDownIcon />
           </SelectScrollDownButton>
+          <SelectSeparator />
           {description && <Description hint>{description}</Description>}
         </SelectContent>
       </Primitive.Portal>
