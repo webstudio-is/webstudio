@@ -37,8 +37,8 @@ import {
 } from "@webstudio-is/design-system";
 import {
   decodeDataSourceVariable,
+  getExpressionIdentifiers,
   lintExpression,
-  validateExpression,
 } from "@webstudio-is/react-sdk";
 import { ExpressionEditor, formatValuePreview } from "./expression-editor";
 import { useSideOffset } from "./floating-panel";
@@ -61,26 +61,6 @@ export const evaluateExpressionWithinScope = (
   }
 };
 
-const getUsedIdentifiers = (expression: string) => {
-  const identifiers = new Set<string>();
-  // prevent parsing empty expression
-  if (expression === "") {
-    return identifiers;
-  }
-  // avoid parsing error
-  try {
-    validateExpression(expression, {
-      transformIdentifier: (identifier) => {
-        identifiers.add(identifier);
-        return identifier;
-      },
-    });
-  } catch {
-    //
-  }
-  return identifiers;
-};
-
 const BindingPanel = ({
   scope,
   aliases,
@@ -97,7 +77,10 @@ const BindingPanel = ({
   onSave: (value: string, invalid: boolean) => void;
 }) => {
   const [expression, setExpression] = useState(value);
-  const usedIdentifiers = useMemo(() => getUsedIdentifiers(value), [value]);
+  const usedIdentifiers = useMemo(
+    () => getExpressionIdentifiers(value),
+    [value]
+  );
   const [errors, setErrors] = useState<string[]>([]);
   const [touched, setTouched] = useState(false);
   const scopeEntries = Object.entries(scope);

@@ -25,10 +25,11 @@ import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
   decodeDataSourceVariable,
-  validateExpression,
   encodeDataSourceVariable,
   portalComponent,
   collectionComponent,
+  transpileExpression,
+  getExpressionIdentifiers,
 } from "@webstudio-is/react-sdk";
 import {
   $props,
@@ -720,19 +721,12 @@ const collectUsedDataSources = (
   expression: string,
   usedDataSourceIds: Set<DataSource["id"]>
 ) => {
-  try {
-    validateExpression(expression, {
-      effectful: true,
-      transformIdentifier(identifier) {
-        const id = decodeDataSourceVariable(identifier);
-        if (id !== undefined) {
-          usedDataSourceIds.add(id);
-        }
-        return identifier;
-      },
-    });
-  } catch {
-    // empty block
+  const identifiers = getExpressionIdentifiers(expression);
+  for (const identifier of identifiers) {
+    const id = decodeDataSourceVariable(identifier);
+    if (id !== undefined) {
+      usedDataSourceIds.add(id);
+    }
   }
 };
 
@@ -951,15 +945,15 @@ const inlineUnavailableDataSources = ({
   dataSources: DataSources;
 }) => {
   let isDiscarded = false;
-  const newCode = validateExpression(code, {
-    effectful: true,
-    transformIdentifier: (identifier, assignee) => {
+  const newCode = transpileExpression({
+    expression: code,
+    replaceVariable: (identifier, assignee) => {
       const dataSourceId = decodeDataSourceVariable(identifier);
       if (
         dataSourceId === undefined ||
         availableDataSources.has(dataSourceId)
       ) {
-        return identifier;
+        return;
       }
       // left operand of assign operator cannot be inlined
       if (assignee) {
@@ -980,12 +974,12 @@ const replaceDataSources = (
   code: string,
   replacements: Map<DataSource["id"], DataSource["id"]>
 ) => {
-  return validateExpression(code, {
-    effectful: true,
-    transformIdentifier: (identifier) => {
+  return transpileExpression({
+    expression: code,
+    replaceVariable: (identifier) => {
       const dataSourceId = decodeDataSourceVariable(identifier);
       if (dataSourceId === undefined) {
-        return identifier;
+        return;
       }
       return encodeDataSourceVariable(
         replacements.get(dataSourceId) ?? dataSourceId

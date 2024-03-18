@@ -86,6 +86,131 @@ html {
     min-height: 1em;
     display: inline-block;
   }
+  div:where([data-ws-component="Vimeo"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  img:where([data-ws-component="VimeoPreviewImage"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    max-width: 100%;
+    display: block;
+  }
+  button:where([data-ws-component="VimeoPlayButton"]) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    text-transform: none;
+  }
+  div:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  address:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  article:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  aside:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  figure:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  footer:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  header:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  main:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  nav:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  section:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  div:where([data-ws-component="VimeoSpinner"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
 }
 @media all {
   .c11x2bo2 {
@@ -134,5 +259,119 @@ html {
   }
   .c1jp5sfs {
     margin-left: 15px;
+  }
+  .ca1m5u0 {
+    position: relative;
+  }
+  .ciuvvr7 {
+    aspect-ratio: 640/360;
+  }
+  .cuk1bdz {
+    width: 100%;
+  }
+  .c1eccbi0 {
+    position: absolute;
+  }
+  .cc32szi {
+    object-fit: cover;
+  }
+  .c1ge5ofh {
+    height: 100%;
+  }
+  .c1fwh0y5 {
+    border-top-left-radius: 20px;
+  }
+  .ch160p4 {
+    border-top-right-radius: 20px;
+  }
+  .c1jxoq3x {
+    border-bottom-left-radius: 20px;
+  }
+  .cewch87 {
+    border-bottom-right-radius: 20px;
+  }
+  .c1la265j {
+    object-position: cover;
+  }
+  .c1yx3ait {
+    width: 140px;
+  }
+  .c1scl4ay {
+    height: 80px;
+  }
+  .ce5jzw0 {
+    top: 50%;
+  }
+  .cq3eebu {
+    left: 50%;
+  }
+  .cxar3by {
+    margin-top: -40px;
+  }
+  .c1fiqkhd {
+    margin-left: -70px;
+  }
+  .c1b095zn {
+    display: flex;
+  }
+  .cyw79s9 {
+    align-items: center;
+  }
+  .c2f7s8e {
+    justify-content: center;
+  }
+  .c9bs64c {
+    border-top-style: none;
+  }
+  .c6lou2r {
+    border-right-style: none;
+  }
+  .c16c73ai {
+    border-bottom-style: none;
+  }
+  .c1fisnnh {
+    border-left-style: none;
+  }
+  .c82rye8 {
+    border-top-left-radius: 5px;
+  }
+  .c1xaktbd {
+    border-top-right-radius: 5px;
+  }
+  .c1xplc5b {
+    border-bottom-left-radius: 5px;
+  }
+  .c5admkk {
+    border-bottom-right-radius: 5px;
+  }
+  .ccn3fhu {
+    cursor: pointer;
+  }
+  .cyn2bny {
+    background-color: rgba(18, 18, 18, 1);
+  }
+  .c1xs2zvh {
+    color: rgba(255, 255, 255, 1);
+  }
+  .c1be0m8p:hover {
+    background-color: rgba(0, 173, 239, 1);
+  }
+  .c14af118 {
+    width: 60px;
+  }
+  .c1xa5m0w {
+    height: 60px;
+  }
+  .c1319rdz {
+    width: 70px;
+  }
+  .c1x7j4n5 {
+    height: 70px;
+  }
+  .c176tfq4 {
+    margin-top: -35px;
+  }
+  .c1qg633k {
+    margin-left: -35px;
   }
 }

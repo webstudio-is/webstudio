@@ -14,7 +14,7 @@ import type {
 } from "@webstudio-is/sdk";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { Simplify } from "type-fest";
-import { encodeDataSourceVariable, validateExpression } from "./expression";
+import { encodeDataSourceVariable, transpileExpression } from "./expression";
 import type { WsComponentMeta } from "./components/component-meta";
 
 const EmbedTemplateText = z.object({
@@ -203,8 +203,9 @@ const createInstancesFromTemplate = (
               name: prop.name,
               type: "expression",
               // replace all references with variable names
-              value: validateExpression(prop.code, {
-                transformIdentifier: (ref) => {
+              value: transpileExpression({
+                expression: prop.code,
+                replaceVariable: (ref) => {
                   const id = dataSourceByRef.get(ref)?.id ?? ref;
                   return encodeDataSourceVariable(id);
                 },
@@ -226,12 +227,12 @@ const createInstancesFromTemplate = (
                   type: "execute",
                   args,
                   // replace all references with variable names
-                  code: validateExpression(value.code, {
-                    effectful: true,
-                    transformIdentifier: (ref) => {
+                  code: transpileExpression({
+                    expression: value.code,
+                    replaceVariable: (ref) => {
                       // bypass arguments without changes
                       if (args.includes(ref)) {
-                        return ref;
+                        return;
                       }
                       const id = dataSourceByRef.get(ref)?.id ?? ref;
                       return encodeDataSourceVariable(id);
@@ -363,8 +364,9 @@ const createInstancesFromTemplate = (
       parentChildren.push({
         type: "expression",
         // replace all references with variable names
-        value: validateExpression(item.value, {
-          transformIdentifier: (ref) => {
+        value: transpileExpression({
+          expression: item.value,
+          replaceVariable: (ref) => {
             const id = dataSourceByRef.get(ref)?.id ?? ref;
             return encodeDataSourceVariable(id);
           },

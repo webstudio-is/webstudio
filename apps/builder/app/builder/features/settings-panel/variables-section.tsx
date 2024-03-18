@@ -19,7 +19,7 @@ import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
-  validateExpression,
+  getExpressionIdentifiers,
 } from "@webstudio-is/react-sdk";
 import {
   $dataSources,
@@ -83,20 +83,12 @@ const $usedVariables = computed(
   (instances, props, resources) => {
     const usedVariables = new Set<DataSource["id"]>();
     const collectExpressionVariables = (expression: string) => {
-      try {
-        validateExpression(expression, {
-          // parse any expression
-          effectful: true,
-          transformIdentifier: (identifier) => {
-            const id = decodeDataSourceVariable(identifier);
-            if (id !== undefined) {
-              usedVariables.add(id);
-            }
-            return identifier;
-          },
-        });
-      } catch {
-        // empty block
+      const identifiers = getExpressionIdentifiers(expression);
+      for (const identifier of identifiers) {
+        const id = decodeDataSourceVariable(identifier);
+        if (id !== undefined) {
+          usedVariables.add(id);
+        }
       }
     };
     for (const instance of instances.values()) {
