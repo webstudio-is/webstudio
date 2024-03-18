@@ -12,7 +12,7 @@ import type { DataSource, Resource } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   isLiteralExpression,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import {
   Box,
   Button,

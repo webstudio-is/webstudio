@@ -1,5 +1,5 @@
 import type { DataSources, Page, Resources, Scope } from "@webstudio-is/sdk";
-import { generateExpression } from "./expression";
+import { generateExpression } from "@webstudio-is/sdk";
 
 export const generateResourcesLoader = ({
   scope,

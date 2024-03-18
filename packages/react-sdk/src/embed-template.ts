@@ -2,6 +2,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { titleCase } from "title-case";
 import { noCase } from "change-case";
+import type { Simplify } from "type-fest";
 import type {
   Instance,
   Prop,
@@ -12,9 +13,11 @@ import type {
   DataSource,
   WebstudioFragment,
 } from "@webstudio-is/sdk";
+import {
+  encodeDataSourceVariable,
+  transpileExpression,
+} from "@webstudio-is/sdk";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
-import type { Simplify } from "type-fest";
-import { encodeDataSourceVariable, transpileExpression } from "./expression";
 import type { WsComponentMeta } from "./components/component-meta";
 
 const EmbedTemplateText = z.object({

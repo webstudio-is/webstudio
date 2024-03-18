@@ -1,7 +1,6 @@
 import { enableMapSet } from "immer";
 import { describe, test, expect, beforeEach } from "@jest/globals";
 import {
-  encodeDataSourceVariable,
   portalComponent,
   collectionComponent,
   type WsComponentMeta,
@@ -20,6 +19,7 @@ import type {
   StyleSource,
   WebstudioData,
 } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
   computeInstancesConstraints,
