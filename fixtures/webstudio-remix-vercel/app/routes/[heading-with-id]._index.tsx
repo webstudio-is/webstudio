@@ -10,7 +10,7 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import { convertSearchParams, type ProjectMeta } from "@webstudio-is/sdk";
+import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
@@ -38,7 +38,7 @@ export const loader = async (arg: LoaderArgs) => {
   const params = getRemixParams(arg.params);
   const system = {
     params,
-    search: convertSearchParams(url.searchParams),
+    search: Object.fromEntries(url.searchParams),
   };
   const resources = await loadResources({ system });
   const pageMeta = getPageMeta({ system, resources });
