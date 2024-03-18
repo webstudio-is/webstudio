@@ -8,6 +8,7 @@ import {
   transpileExpression,
   validateExpression,
   type Diagnostic,
+  getExpressionIdentifiers,
 } from "./expression";
 
 test("allow literals and array expressions", () => {
@@ -358,6 +359,23 @@ test("transform identifiers", () => {
       transformIdentifier: (id) => `$ws$${id}`,
     })
   ).toEqual(`$ws$a + $ws$b`);
+});
+
+describe("get expression identifiers", () => {
+  test("find all identifiers", () => {
+    expect(getExpressionIdentifiers("a = b * c.d")).toEqual(
+      new Set(["a", "b", "c"])
+    );
+  });
+
+  test("deduplicate identifiers", () => {
+    expect(getExpressionIdentifiers("a = a + b")).toEqual(new Set(["a", "b"]));
+  });
+
+  test("not fail when invalid syntax", () => {
+    expect(getExpressionIdentifiers("")).toEqual(new Set());
+    expect(getExpressionIdentifiers("a = a +")).toEqual(new Set());
+  });
 });
 
 describe("transpile expression", () => {

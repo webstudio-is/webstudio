@@ -4,7 +4,7 @@ import { createRootFolder } from "@webstudio-is/project-build";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  validateExpression,
+  transpileExpression,
 } from "@webstudio-is/react-sdk";
 import {
   type Page,
@@ -395,12 +395,12 @@ const replaceDataSources = (
   expression: string,
   replacements: Map<DataSource["id"], DataSource["id"]>
 ) => {
-  return validateExpression(expression, {
-    effectful: true,
-    transformIdentifier: (identifier) => {
+  return transpileExpression({
+    expression,
+    replaceVariable: (identifier) => {
       const dataSourceId = decodeDataSourceVariable(identifier);
       if (dataSourceId === undefined) {
-        return identifier;
+        return;
       }
       return encodeDataSourceVariable(
         replacements.get(dataSourceId) ?? dataSourceId

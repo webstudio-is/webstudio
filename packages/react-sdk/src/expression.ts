@@ -310,6 +310,24 @@ export const isLiteralExpression = (expression: string) => {
   }
 };
 
+export const getExpressionIdentifiers = (expression: string) => {
+  const identifiers = new Set<string>();
+  try {
+    const root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+    simple(root, {
+      Identifier: (node) => identifiers.add(node.name),
+      AssignmentExpression(node) {
+        simple(node.left, {
+          Identifier: (node) => identifiers.add(node.name),
+        });
+      },
+    });
+  } catch {
+    // empty block
+  }
+  return identifiers;
+};
+
 /**
  * transpile expression into executable one
  *
