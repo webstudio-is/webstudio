@@ -202,7 +202,6 @@ const SelectBase = <Option,>(
           <SelectScrollDownButton>
             <ChevronDownIcon />
           </SelectScrollDownButton>
-          <SelectSeparator />
           {description && (
             <>
               <SelectSeparator />
