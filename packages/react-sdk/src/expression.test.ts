@@ -4,8 +4,10 @@ import {
   encodeDataSourceVariable,
   executeExpression,
   isLiteralExpression,
+  lintExpression,
   transpileExpression,
   validateExpression,
+  type Diagnostic,
 } from "./expression";
 
 test("allow literals and array expressions", () => {
@@ -90,6 +92,188 @@ test("allow indexed member expressions with identifiers", () => {
   expect(ids).toEqual(["a", "b"]);
 });
 
+describe("lint expression", () => {
+  const error = (from: number, to: number, message: string): Diagnostic => ({
+    from,
+    to,
+    severity: "error",
+    message,
+  });
+
+  test("supports empty expression", () => {
+    expect(lintExpression({ expression: `` })).toEqual([]);
+  });
+
+  test("output parse error as diagnostic", () => {
+    expect(lintExpression({ expression: `a + ` })).toEqual([
+      error(4, 4, "Unexpected token (1:4)"),
+    ]);
+  });
+
+  test("restrict expression syntax", () => {
+    expect(lintExpression({ expression: `var a = 1` })).toEqual([
+      error(0, 0, "Unexpected token (1:0)"),
+    ]);
+  });
+
+  test("supports accessing variable fields", () => {
+    expect(
+      lintExpression({
+        expression: `a.b.c`,
+        availableVariables: new Set(["a"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("supports literals", () => {
+    expect(
+      lintExpression({
+        expression: `"" + 0 + true + [] + {}`,
+      })
+    ).toEqual([]);
+  });
+
+  test("supports ternary operator", () => {
+    expect(
+      lintExpression({
+        expression: `true ? false : true`,
+      })
+    ).toEqual([]);
+  });
+
+  test("supports template literals", () => {
+    expect(
+      lintExpression({
+        expression: "`my ${1} template ${'2'}`",
+      })
+    ).toEqual([]);
+    expect(
+      lintExpression({
+        expression: "`my template",
+      })
+    ).toEqual([error(1, 1, "Unterminated template (1:1)")]);
+  });
+
+  test("supports parentheses", () => {
+    expect(
+      lintExpression({
+        expression: "(1 + 1) * 2",
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid assignment until enabled", () => {
+    expect(
+      lintExpression({
+        expression: ` a = 1`,
+        availableVariables: new Set(["a"]),
+      })
+    ).toEqual([error(1, 6, "Assignment is supported only inside actions")]);
+    expect(
+      lintExpression({
+        expression: ` a = 1`,
+        allowAssignment: true,
+        availableVariables: new Set(["a"]),
+      })
+    ).toEqual([]);
+  });
+
+  test("forbid unavailable variables", () => {
+    expect(
+      lintExpression({ expression: ` a = b + 1`, allowAssignment: true })
+    ).toEqual([
+      error(5, 6, `"b" is not available in the scope`),
+      error(1, 2, `"a" is not available in the scope`),
+    ]);
+    expect(
+      lintExpression({
+        expression: ` a = b + 1`,
+        allowAssignment: true,
+        availableVariables: new Set(["a", "b"]),
+      })
+    ).toEqual([]);
+  });
+
+  test(`forbid "this" keyword`, () => {
+    expect(lintExpression({ expression: ` this.name` })).toEqual([
+      error(1, 5, `"this" keyword is not supported`),
+    ]);
+  });
+
+  test("forbid functions", () => {
+    expect(
+      lintExpression({
+        expression: ` function(){} + (() => {}) + fn()`,
+        availableVariables: new Set(["fn"]),
+      })
+    ).toEqual([
+      error(1, 13, "Functions are not supported"),
+      error(17, 25, "Functions are not supported"),
+      error(29, 33, "Functions are not supported"),
+    ]);
+  });
+
+  test("forbid increment and decrement", () => {
+    expect(
+      lintExpression({
+        expression: ` ++i + --j`,
+        availableVariables: new Set(["j", "i"]),
+      })
+    ).toEqual([
+      error(1, 4, "Increment and decrement are not supported"),
+      error(7, 10, "Increment and decrement are not supported"),
+    ]);
+  });
+
+  test("forbid sequence expression", () => {
+    expect(lintExpression({ expression: ` 1, 2, 3` })).toEqual([
+      error(1, 8, "Only single expression is supported"),
+    ]);
+  });
+
+  test(`forbid "yield" keyword`, () => {
+    expect(lintExpression({ expression: ` yield 1` })).toEqual([
+      error(1, 1, `The keyword 'yield' is reserved (1:1)`),
+    ]);
+  });
+
+  test("forbid tagged template", () => {
+    expect(
+      lintExpression({
+        expression: " tag`hello`",
+        availableVariables: new Set(["tag"]),
+      })
+    ).toEqual([error(1, 11, "Tagged template is not supported")]);
+  });
+
+  test("forbid classes", () => {
+    expect(
+      lintExpression({
+        expression: ` class {} + new MyClass()`,
+        availableVariables: new Set(["MyClass"]),
+      })
+    ).toEqual([
+      error(1, 9, "Classes are not supported"),
+      error(12, 25, "Classes are not supported"),
+    ]);
+  });
+
+  test("forbid imports", () => {
+    expect(
+      lintExpression({ expression: ` import("") + import.meta.url` })
+    ).toEqual([
+      error(1, 11, "Imports are not supported"),
+      error(14, 25, "Imports are not supported"),
+    ]);
+  });
+
+  test(`forbid "await" keyword`, () => {
+    expect(lintExpression({ expression: ` await 1` })).toEqual([
+      error(1, 8, `"await" keyword is not supported`),
+    ]);
+  });
+});
+
 test("check simple literals", () => {
   expect(isLiteralExpression(`""`)).toEqual(true);
   expect(isLiteralExpression(`''`)).toEqual(true);
@@ -105,11 +289,13 @@ test("check simple literals", () => {
 test("check complex objects and arrays", () => {
   expect(isLiteralExpression(`[1, 2, 3]`)).toEqual(true);
   expect(isLiteralExpression(`[1, 2, variable]`)).toEqual(false);
+  expect(isLiteralExpression(`[...variable]`)).toEqual(false);
   expect(isLiteralExpression(`{ param: 0 }`)).toEqual(true);
   expect(isLiteralExpression(`{ "param": 0 }`)).toEqual(true);
   expect(isLiteralExpression(`{ param: variable }`)).toEqual(false);
   expect(isLiteralExpression(`{ ["param"]: 0 }`)).toEqual(true);
   expect(isLiteralExpression(`{ [variable]: 0 }`)).toEqual(false);
+  expect(isLiteralExpression(`{ ...variable }`)).toEqual(false);
 });
 
 test("optionally transpile all member expressions into optional chaining", () => {
