@@ -5,7 +5,10 @@ import {
   type ComponentProps,
   useMemo,
   forwardRef,
+  useState,
 } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import { styled, theme } from "../stitches.config";
 import {
   menuCss,
   menuItemCss,
@@ -15,8 +18,6 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
-import { styled, theme } from "../stitches.config";
-import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
 export const SelectContent = styled(Primitive.Content, menuCss);
 
@@ -75,6 +76,8 @@ export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
+const Description = styled(menuItemCss);
+
 type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
   "onChange" | "value" | "defaultValue" | "asChild" | "prefix"
@@ -91,6 +94,7 @@ export type SelectProps<Option = SelectOption> = {
   onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   children?: ReactNode;
+  getDescription?: (option: Option) => ReactNode | undefined;
 } & (Option extends string
   ? {
       getLabel?: (option: Option) => string | undefined;
@@ -107,7 +111,7 @@ const defaultGetValue = (option: unknown) => {
     return option;
   }
   throw new Error(
-    `Cannot automatically convert ${typeof option} to string. Provide a getValue/getLabel`
+    `Cannot automatically convert ${typeof option} to string. Provide a getValue/getLabel/getDescription`
   );
 };
 
@@ -123,6 +127,7 @@ const SelectBase = <Option,>(
     open,
     getLabel = defaultGetValue,
     getValue = defaultGetValue,
+    getDescription,
     name,
     children,
     prefix,
@@ -137,6 +142,12 @@ const SelectBase = <Option,>(
     }
     return map;
   }, [options, getValue]);
+  const [highlightedItem, setHighlightedItem] = useState<Option | undefined>();
+
+  const itemForDescription = highlightedItem ?? value ?? defaultValue;
+  const description = itemForDescription
+    ? getDescription?.(itemForDescription)
+    : undefined;
 
   return (
     <Primitive.Root
@@ -173,12 +184,15 @@ const SelectBase = <Option,>(
                   textValue={getLabel(option)}
                   onMouseEnter={() => {
                     onItemHighlight?.(option);
+                    setHighlightedItem(option);
                   }}
                   onMouseLeave={() => {
                     onItemHighlight?.();
+                    setHighlightedItem(undefined);
                   }}
                   onFocus={() => {
                     onItemHighlight?.(option);
+                    setHighlightedItem(option);
                   }}
                 >
                   {getLabel(option)}
@@ -188,6 +202,7 @@ const SelectBase = <Option,>(
           <SelectScrollDownButton>
             <ChevronDownIcon />
           </SelectScrollDownButton>
+          {description && <Description hint>{description}</Description>}
         </SelectContent>
       </Primitive.Portal>
     </Primitive.Root>

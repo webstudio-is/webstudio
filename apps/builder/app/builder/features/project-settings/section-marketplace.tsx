@@ -15,6 +15,7 @@ import {
   PanelBanner,
   Select,
   rawTheme,
+  Box,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
 import { $assets, $marketplaceProduct, $project } from "~/shared/nano-states";
@@ -29,6 +30,7 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 import { MarketplaceApprovalStatus } from "@webstudio-is/project";
 import { trpcClient } from "~/shared/trpc/trpc-client";
+import { rightPanelWidth, sectionSpacing } from "./utils";
 
 const thumbnailStyle = css({
   borderRadius: theme.borderRadius[4],
@@ -161,7 +163,6 @@ export const SectionMarketplace = () => {
       );
     };
   };
-  const sectionSpacing = { mx: theme.spacing[5], px: theme.spacing[5] };
 
   return (
     <>
@@ -187,8 +188,13 @@ export const SectionMarketplace = () => {
           css={{ zIndex: theme.zIndices[1] }}
           options={Array.from(marketplaceCategories.keys())}
           getLabel={(category: MarketplaceProduct["category"]) =>
-            marketplaceCategories.get(category)
+            marketplaceCategories.get(category)?.label
           }
+          getDescription={(category: MarketplaceProduct["category"]) => (
+            <Box css={{ width: rightPanelWidth }}>
+              {marketplaceCategories.get(category)?.description}
+            </Box>
+          )}
           onChange={handleSave("category")}
           value={data.category}
           defaultValue={defaultMarketplaceProduct.category}

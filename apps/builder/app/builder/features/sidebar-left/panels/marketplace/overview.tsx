@@ -9,6 +9,7 @@ import {
   PanelTabsList,
   PanelTabsTrigger,
   ScrollArea,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
 import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
@@ -116,9 +117,17 @@ export const Overview = ({
               return;
             }
             return (
-              <PanelTabsTrigger key={category} value={category}>
-                {marketplaceCategories.get(category)}
-              </PanelTabsTrigger>
+              <Tooltip
+                key={category}
+                variant="wrapped"
+                content={marketplaceCategories.get(category)?.description}
+              >
+                <div>
+                  <PanelTabsTrigger value={category}>
+                    {marketplaceCategories.get(category)?.label}
+                  </PanelTabsTrigger>
+                </div>
+              </Tooltip>
             );
           })}
         </PanelTabsList>

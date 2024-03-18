@@ -20,8 +20,22 @@ export type MarketplaceProduct = z.infer<typeof MarketplaceProduct>;
 
 export const marketplaceCategories = new Map<
   MarketplaceProduct["category"],
-  string
+  { label: string; description: string }
 >([
-  ["sectionTemplates", "Sections"],
-  ["pageTemplates", "Pages"],
+  [
+    "sectionTemplates",
+    {
+      label: "Sections",
+      description:
+        "Section templates are pre-designed layouts for quickly creating pages from sections.",
+    },
+  ],
+  [
+    "pageTemplates",
+    {
+      label: "Pages",
+      description:
+        "Page templates are pre-designed single or multi-page layouts for entire pages.",
+    },
+  ],
 ]);

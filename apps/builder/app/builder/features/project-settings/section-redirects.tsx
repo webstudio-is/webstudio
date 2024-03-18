@@ -27,6 +27,7 @@ import { $pages, $project } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { flushSync } from "react-dom";
 import { getPublishedUrl } from "~/shared/router-utils";
+import { sectionSpacing } from "./utils";
 
 export const SectionRedirects = () => {
   const [redirects, setRedirects] = useState(
@@ -150,7 +151,7 @@ export const SectionRedirects = () => {
 
   return (
     <>
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+      <Grid gap={2} css={sectionSpacing}>
         <Text variant="titles">Redirects</Text>
         <Text color="subtle">
           Redirects old URLs to new ones so that you don’t lose any traffic or
@@ -215,12 +216,7 @@ export const SectionRedirects = () => {
       </Grid>
 
       {redirectKeys.length > 0 ? (
-        <Grid
-          css={{
-            p: theme.spacing[5],
-            mx: theme.spacing[5],
-          }}
-        >
+        <Grid css={sectionSpacing}>
           <List asChild>
             <Flex direction="column" gap="1">
               {redirects.map((redirect, index) => {

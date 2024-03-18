@@ -20,6 +20,7 @@ import { useIds } from "~/shared/form-utils";
 import type { ProjectMeta, CompilerSettings } from "@webstudio-is/sdk";
 import { useState } from "react";
 import { serverSyncStore } from "~/shared/sync";
+import { sectionSpacing } from "./utils";
 
 const imgStyle = css({
   width: 72,
@@ -69,13 +70,7 @@ export const SectionGeneral = () => {
 
   return (
     <>
-      <Grid
-        gap={1}
-        css={{
-          mx: theme.spacing[5],
-          px: theme.spacing[5],
-        }}
-      >
+      <Grid gap={1} css={sectionSpacing}>
         <Text variant="titles">General</Text>
         <Label htmlFor={ids.siteName}>Site Name</Label>
         <InputField
@@ -91,7 +86,7 @@ export const SectionGeneral = () => {
 
       <Separator />
 
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+      <Grid gap={2} css={sectionSpacing}>
         <Label>Favicon</Label>
         <Grid flow="column" gap={3}>
           <Image
@@ -115,7 +110,7 @@ export const SectionGeneral = () => {
 
       <Separator />
 
-      <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+      <Grid gap={2} css={sectionSpacing}>
         <Label htmlFor={ids.code}>Custom Code</Label>
         <Text color="subtle">
           Custom code and scripts will be added at the end of the &lt;head&gt;
@@ -158,7 +153,7 @@ const CompilerSection = () => {
   };
 
   return (
-    <Grid gap={2} css={{ mx: theme.spacing[5], px: theme.spacing[5] }}>
+    <Grid gap={2} css={sectionSpacing}>
       <Label htmlFor={ids.atomicStyles}>Compiler</Label>
       <CheckboxAndLabel>
         <Checkbox
