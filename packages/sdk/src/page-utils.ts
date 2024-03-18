@@ -73,3 +73,15 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
 
   return paths.reverse().join("/").replace(/\/+/g, "/");
 };
+
+/**
+ * convert URLSearchParams instance into key/value object
+ * to easily access from expressions
+ */
+export const convertSearchParams = (searchParams: URLSearchParams) => {
+  const search: Record<string, string> = {};
+  for (const [key, value] of searchParams) {
+    search[key] = value;
+  }
+  return search;
+};
