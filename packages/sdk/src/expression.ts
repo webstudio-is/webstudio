@@ -1,6 +1,7 @@
 import { type Expression, type Identifier, parseExpressionAt } from "acorn";
 import { simple } from "acorn-walk";
-import type { DataSources, Scope } from "@webstudio-is/sdk";
+import type { DataSources } from "./schema/data-sources";
+import type { Scope } from "./scope";
 
 export type Diagnostic = {
   from: number;

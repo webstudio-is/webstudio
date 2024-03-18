@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
-import { isLiteralExpression } from "@webstudio-is/react-sdk";
+import { isLiteralExpression } from "@webstudio-is/sdk";
 import {
   type ControlProps,
   getLabel,
@@ -18,7 +19,6 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
-import { useState } from "react";
 
 export const JsonControl = ({
   meta,

@@ -29,7 +29,6 @@ import {
   generateResourcesLoader,
   collectionComponent,
   generatePageMeta,
-  executeExpression,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -47,6 +46,7 @@ import {
   findTreeInstanceIds,
   getPagePath,
   parseComponentName,
+  executeExpression,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";

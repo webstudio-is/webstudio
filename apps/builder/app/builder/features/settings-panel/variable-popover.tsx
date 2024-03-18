@@ -34,7 +34,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { transpileExpression } from "@webstudio-is/react-sdk";
+import { transpileExpression } from "@webstudio-is/sdk";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,

@@ -20,16 +20,16 @@ import {
   type WebstudioData,
   type Resource,
   findTreeInstanceIdsExcludingSlotDescendants,
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  transpileExpression,
+  getExpressionIdentifiers,
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateDataFromEmbedTemplate,
-  decodeDataSourceVariable,
-  encodeDataSourceVariable,
   portalComponent,
   collectionComponent,
-  transpileExpression,
-  getExpressionIdentifiers,
 } from "@webstudio-is/react-sdk";
 import {
   $props,

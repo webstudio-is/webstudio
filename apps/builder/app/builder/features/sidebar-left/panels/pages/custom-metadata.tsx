@@ -12,7 +12,7 @@ import {
 } from "@webstudio-is/design-system";
 import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { isLiteralExpression } from "@webstudio-is/react-sdk";
+import { isLiteralExpression } from "@webstudio-is/sdk";
 import {
   BindingControl,
   BindingPopover,

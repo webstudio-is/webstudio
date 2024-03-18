@@ -8,9 +8,9 @@ import {
   type HookContext,
   namespaceMeta,
   getIndexesWithinAncestors,
-  decodeDataSourceVariable,
 } from "@webstudio-is/react-sdk";
 import type { Instance } from "@webstudio-is/sdk";
+import { decodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
 import { $dataSourceVariables, $dataSources, $props } from "./nano-states";
 import { $instances, $selectedInstanceSelector } from "./instances";

@@ -8,10 +8,10 @@ import type {
   DataSource,
   DataSources,
 } from "@webstudio-is/sdk";
+import { encodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { Project } from "@webstudio-is/project";
 import {
   collectionComponent,
-  encodeDataSourceVariable,
   coreMetas,
   portalComponent,
 } from "@webstudio-is/react-sdk";

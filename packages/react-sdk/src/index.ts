@@ -17,7 +17,6 @@ export {
 export * from "./embed-template";
 export * from "./props";
 export * from "./context";
-export * from "./expression";
 export { getIndexesWithinAncestors } from "./instance-utils";
 export * from "./hook";
 export { generateUtilsExport } from "./generator";

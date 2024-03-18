@@ -39,7 +39,7 @@ import { theme, textVariants, css } from "@webstudio-is/design-system";
 import {
   decodeDataSourceVariable,
   transpileExpression,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { CodeEditor } from "./code-editor";
 
 export const formatValue = (value: unknown) => {
