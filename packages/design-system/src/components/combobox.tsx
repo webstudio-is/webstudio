@@ -25,7 +25,7 @@ import {
   type UseComboboxGetItemPropsOptions,
 } from "downshift";
 import { matchSorter } from "match-sorter";
-import { styled, theme } from "../stitches.config";
+import { styled } from "../stitches.config";
 import {
   menuItemCss,
   menuCss,
@@ -39,8 +39,7 @@ const Listbox = styled(
   "ul",
   {
     margin: "unset", // reset <ul>
-    overflow: "auto",
-    maxHeight: theme.spacing[34],
+    listStyle: "none",
     variants: {
       state: { closed: { display: "none" } },
       empty: { true: { display: "none" } },
