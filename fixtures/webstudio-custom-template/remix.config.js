@@ -5,7 +5,6 @@ module.exports = {
   serverDependenciesToBundle: [
     /@webstudio-is\//,
     "nanoid",
-    "@jsep-plugin/assignment",
     "change-case",
     "title-case",
   ],

@@ -1604,12 +1604,6 @@ importers:
 
   packages/react-sdk:
     dependencies:
-      '@jsep-plugin/assignment':
-        specifier: ^1.2.1
-        version: 1.2.1(jsep@1.3.8)
-      '@jsep-plugin/object':
-        specifier: ^1.2.1
-        version: 1.2.1(jsep@1.3.8)
       '@webstudio-is/css-engine':
         specifier: workspace:*
         version: link:../css-engine
@@ -1637,9 +1631,6 @@ importers:
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1
-      jsep:
-        specifier: ^1.3.8
-        version: 1.3.8
       nanoid:
         specifier: ^5.0.1
         version: 5.0.1
@@ -4634,24 +4625,6 @@ packages:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.14
-
-  /@jsep-plugin/assignment@1.2.1(jsep@1.3.8):
-    resolution: {integrity: sha512-gaHqbubTi29aZpVbBlECRpmdia+L5/lh2BwtIJTmtxdbecEyyX/ejAOg7eQDGNvGOUmPY7Z2Yxdy9ioyH/VJeA==}
-    engines: {node: '>= 10.16.0'}
-    peerDependencies:
-      jsep: ^0.4.0||^1.0.0
-    dependencies:
-      jsep: 1.3.8
-    dev: false
-
-  /@jsep-plugin/object@1.2.1(jsep@1.3.8):
-    resolution: {integrity: sha512-6YoZP80h2QFCuxyqj+OvoqEnTu2r5cSRpgpvGauWlvnevFP/F/dibpvXDpnHeqwT2FIzzvg47YOe3QD/UT8vJw==}
-    engines: {node: '>= 10.16.0'}
-    peerDependencies:
-      jsep: ^0.4.0||^1.0.0
-    dependencies:
-      jsep: 1.3.8
-    dev: false
 
   /@jspm/core@2.0.1:
     resolution: {integrity: sha512-Lg3PnLp0QXpxwLIAuuJboLeRaIhrgJjeuh797QADg3xz8wGLugQOS5DpsE8A6i6Adgzf+bacllkKZG3J0tGfDw==}
@@ -12845,11 +12818,6 @@ packages:
       write-file-atomic: 2.4.3
     transitivePeerDependencies:
       - supports-color
-
-  /jsep@1.3.8:
-    resolution: {integrity: sha512-qofGylTGgYj9gZFsHuyWAN4jr35eJ66qJCK4eKDnldohuUoQFbU3iZn2zjvEbd9wOAhP9Wx5DsAAduTyE1PSWQ==}
-    engines: {node: '>= 10.16.0'}
-    dev: false
 
   /jsesc@0.5.0:
     resolution: {integrity: sha512-uZz5UnB7u4T9LvwmFqXii7pZSouaRPorGs5who1Ip7VO0wxanFvBL7GkM6dTHlgX+jhBApRetaWpnDabOeTcnA==}
