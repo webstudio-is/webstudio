@@ -1,7 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import type { Pages } from "./schema/pages";
 import {
-  convertSearchParams,
   findPageByIdOrPath,
   findParentFolderByChildId,
   getPagePath,
@@ -118,19 +117,5 @@ describe("findParentFolderByChildId", () => {
     expect(
       findParentFolderByChildId("folderId-1-1-1", pages.folders)?.id
     ).toEqual("folderId-1-1");
-  });
-});
-
-test("convert search params", () => {
-  const searchParams = new URLSearchParams([
-    ["single1", "1"],
-    ["single2", "2"],
-    ["multiple", "3"],
-    ["multiple", "4"],
-  ]);
-  expect(convertSearchParams(searchParams)).toEqual({
-    single1: "1",
-    single2: "2",
-    multiple: "4",
   });
 });

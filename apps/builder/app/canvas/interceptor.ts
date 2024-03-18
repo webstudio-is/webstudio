@@ -1,4 +1,4 @@
-import { convertSearchParams, findPageByIdOrPath } from "@webstudio-is/sdk";
+import { findPageByIdOrPath } from "@webstudio-is/sdk";
 import { matchPathnamePattern } from "~/builder/shared/url-pattern";
 import { $isPreviewMode, $pages, updateSystem } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
@@ -30,7 +30,7 @@ const handleLinkClick = (element: HTMLAnchorElement) => {
     // but webstudio stores home page as empty string
     const params = matchPathnamePattern(page.path || "/", pageHref.pathname);
     if (params) {
-      const search = convertSearchParams(pageHref.searchParams);
+      const search = Object.fromEntries(pageHref.searchParams);
       switchPage(page.id, pageHref.hash);
       updateSystem(page, { params, search });
       break;
