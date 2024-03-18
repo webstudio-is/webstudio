@@ -34,10 +34,11 @@ export type PageData = {
 };
 
 export const loader = async (arg: LoaderArgs) => {
+  const url = new URL(arg.request.url);
   const params = getRemixParams(arg.params);
   const system = {
     params,
-    search: {},
+    search: Object.fromEntries(url.searchParams),
   };
   const resources = await loadResources({ system });
   const pageMeta = getPageMeta({ system, resources });
@@ -55,7 +56,6 @@ export const loader = async (arg: LoaderArgs) => {
     arg.request.headers.get("host") ||
     "";
 
-  const url = new URL(arg.request.url);
   url.host = host;
   url.protocol = "https";
 

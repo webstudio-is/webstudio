@@ -27,7 +27,7 @@ import {
   $pages,
   $project,
   $selectedPage,
-  updateSystemParams,
+  updateSystem,
 } from "~/shared/nano-states";
 import env from "~/shared/env";
 import {
@@ -94,7 +94,7 @@ const updatePathParam = (name: string, value: string) => {
   newParams[name] = value;
   const page = $selectedPage.get();
   if (page) {
-    updateSystemParams(page, newParams);
+    updateSystem(page, { params: newParams });
   }
 };
 

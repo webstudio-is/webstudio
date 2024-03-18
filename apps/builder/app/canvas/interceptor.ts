@@ -1,10 +1,6 @@
 import { findPageByIdOrPath } from "@webstudio-is/sdk";
 import { matchPathnamePattern } from "~/builder/shared/url-pattern";
-import {
-  $isPreviewMode,
-  $pages,
-  updateSystemParams,
-} from "~/shared/nano-states";
+import { $isPreviewMode, $pages, updateSystem } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
@@ -30,10 +26,13 @@ const handleLinkClick = (element: HTMLAnchorElement) => {
 
   const pageHref = new URL(href, "https://any-valid.url");
   for (const page of [pages.homePage, ...pages.pages]) {
-    const params = matchPathnamePattern(page.path, pageHref.pathname);
+    // URL always parses root page as /
+    // but webstudio stores home page as empty string
+    const params = matchPathnamePattern(page.path || "/", pageHref.pathname);
     if (params) {
+      const search = Object.fromEntries(pageHref.searchParams);
       switchPage(page.id, pageHref.hash);
-      updateSystemParams(page, params);
+      updateSystem(page, { params, search });
       break;
     }
   }

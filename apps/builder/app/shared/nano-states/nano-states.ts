@@ -51,7 +51,7 @@ export const $dataSourceVariables = atom<Map<DataSource["id"], unknown>>(
   new Map()
 );
 
-export const updateSystemParams = (page: Page, params: System["params"]) => {
+export const updateSystem = (page: Page, update: Partial<System>) => {
   if (page.systemDataSourceId === undefined) {
     return;
   }
@@ -59,11 +59,13 @@ export const updateSystemParams = (page: Page, params: System["params"]) => {
   const system = dataSourceVariables.get(page.systemDataSourceId) as
     | undefined
     | System;
-  dataSourceVariables.set(page.systemDataSourceId, {
+  const newSystem: System = {
     search: {},
+    params: {},
     ...system,
-    params: params,
-  } satisfies System);
+    ...update,
+  };
+  dataSourceVariables.set(page.systemDataSourceId, newSystem);
   $dataSourceVariables.set(dataSourceVariables);
 };
 
