@@ -1619,12 +1619,6 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
-      acorn:
-        specifier: ^8.11.3
-        version: 8.11.3
-      acorn-walk:
-        specifier: ^8.3.2
-        version: 8.3.2
       change-case:
         specifier: ^5.0.2
         version: 5.0.2
