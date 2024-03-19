@@ -640,7 +640,7 @@ export const CssValueInput = ({
       ? highlightedValue
       : value.type === "keyword"
       ? value
-      : items[0].type === "keyword"
+      : items[0]?.type === "keyword"
       ? items[0]
       : undefined;
   if (valueForDescription) {
