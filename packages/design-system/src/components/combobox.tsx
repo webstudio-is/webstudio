@@ -105,6 +105,8 @@ export const ComboboxListbox = forwardRef<
   );
 });
 
+ComboboxListbox.displayName = "ComboboxListbox";
+
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
 export const Combobox = (props: ComponentProps<typeof Popover>) => {
