@@ -16,6 +16,7 @@ import {
   createContext,
   type ContextType,
   useMemo,
+  useCallback,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { shallowEqual } from "shallow-equal";
@@ -135,6 +136,12 @@ const warmConnections = () => {
   if (warmed) {
     return;
   }
+
+  if (window.matchMedia("(hover: none)").matches) {
+    // Useless on touch devices
+    return;
+  }
+
   preconnect(PLAYER_CDN);
   preconnect(IFRAME_CDN);
   preconnect(IMAGE_CDN);
@@ -233,6 +240,8 @@ const useVimeo = ({
   const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("initial");
   const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
+  const [isPending, setIsPending] = useState(false);
+  const loadPreviewOnceRef = useRef(false);
 
   useEffect(() => {
     setPlayerStatus(
@@ -248,10 +257,19 @@ const useVimeo = ({
     ) {
       return;
     }
+
     if (showPreview) {
-      loadPreviewImage(elementRef.current, options.url).then(
-        setPreviewImageUrl
-      );
+      if (loadPreviewOnceRef.current) {
+        return;
+      }
+
+      loadPreviewOnceRef.current = true;
+
+      loadPreviewImage(elementRef.current, options.url)
+        .then(setPreviewImageUrl)
+        .catch(() => {
+          /* DO NOTHING */
+        });
       return;
     }
     setPreviewImageUrl(undefined);
@@ -266,14 +284,35 @@ const useVimeo = ({
   }, [options]);
 
   useEffect(() => {
-    if (elementRef.current === null || playerStatus === "initial") {
+    if (isPending) {
+      setPlayerStatus((status) =>
+        status === "initial" ? "initialized" : status
+      );
+    }
+  }, [isPending]);
+
+  const toggleCreatePlayer = playerStatus !== "initial";
+
+  useEffect(() => {
+    if (elementRef.current === null) {
       return;
     }
+    if (toggleCreatePlayer === false) {
+      return;
+    }
+
     return createPlayer(elementRef.current, stableOptions, { loading }, () => {
       setPlayerStatus("ready");
     });
-  }, [stableOptions, playerStatus, loading]);
-  return { previewImageUrl, playerStatus, setPlayerStatus, elementRef };
+  }, [stableOptions, toggleCreatePlayer, loading]);
+
+  const start = useCallback(() => {
+    setIsPending(true);
+  }, []);
+
+  const status = isPending ? "initialized" : playerStatus;
+
+  return { previewImageUrl, status, start, elementRef };
 };
 
 export type VimeoOptions = Omit<
@@ -347,43 +386,42 @@ export const Vimeo = forwardRef<Ref, Props>(
     ref
   ) => {
     const { renderer } = useContext(ReactSdkContext);
-    const { previewImageUrl, playerStatus, setPlayerStatus, elementRef } =
-      useVimeo({
-        renderer,
-        showPreview,
-        loading,
-        options: {
-          url,
-          autoplay,
-          autopause,
-          keyboard,
-          loop,
-          muted,
-          pip,
-          playsinline,
-          quality,
-          responsive,
-          speed,
-          transparent,
-          portrait: showPortrait,
-          byline: showByline,
-          title: showTitle,
-          color: controlsColor,
-          controls: showControls,
-          interactive_params: interactiveParams,
-          background: backgroundMode,
-          dnt: doNotTrack,
-        },
-      });
+    const { previewImageUrl, status, start, elementRef } = useVimeo({
+      renderer,
+      showPreview,
+      loading,
+      options: {
+        url,
+        autoplay,
+        autopause,
+        keyboard,
+        loop,
+        muted,
+        pip,
+        playsinline,
+        quality,
+        responsive,
+        speed,
+        transparent,
+        portrait: showPortrait,
+        byline: showByline,
+        title: showTitle,
+        color: controlsColor,
+        controls: showControls,
+        interactive_params: interactiveParams,
+        background: backgroundMode,
+        dnt: doNotTrack,
+      },
+    });
 
     return (
       <VimeoContext.Provider
         value={{
-          status: playerStatus,
+          status,
           previewImageUrl,
           onInitPlayer() {
             if (renderer !== "canvas") {
-              setPlayerStatus("initialized");
+              start();
             }
           },
         }}

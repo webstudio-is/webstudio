@@ -101,7 +101,7 @@ export const meta: WsComponentMeta = {
         },
         {
           type: "instance",
-          component: "Box",
+          component: "VimeoSpinner",
           label: "Spinner",
           styles: [
             {
