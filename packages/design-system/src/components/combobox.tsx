@@ -9,6 +9,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useLayoutEffect,
 } from "react";
 import {
   Portal,
@@ -34,6 +35,7 @@ import {
   separatorCss,
   MenuCheckedIcon,
 } from "./menu";
+import { mergeRefs } from "@react-aria/utils";
 
 const Listbox = styled(
   "ul",
@@ -98,17 +100,32 @@ export const Combobox = (props: ComponentProps<typeof Popover>) => {
 };
 
 export const ComboboxContent = forwardRef(
-  (props: ComponentProps<typeof PopoverContent>, ref: Ref<HTMLDivElement>) => (
-    <Portal>
-      <PopoverContent
-        ref={ref}
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-        }}
-        {...props}
-      />
-    </Portal>
-  )
+  (
+    {
+      style,
+      fixedHeight,
+      ...props
+    }: ComponentProps<typeof PopoverContent> & {
+      // We don't want the hint height change to make the popover jump around
+      fixedHeight?: boolean;
+    },
+    forwardRef: Ref<HTMLDivElement>
+  ) => {
+    const [height, heightRef] = useCalcHeight();
+    const ref = fixedHeight ? mergeRefs(forwardRef, heightRef) : forwardRef;
+    return (
+      <Portal>
+        <PopoverContent
+          ref={ref}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+          }}
+          style={{ height, ...style }}
+          {...props}
+        />
+      </Portal>
+    );
+  }
 );
 ComboboxContent.displayName = "ComboboxContent";
 
@@ -327,4 +344,17 @@ export const useCombobox = <Item,>({
     getInputProps: enhancedGetInputProps,
     resetFilter,
   };
+};
+
+const useCalcHeight = () => {
+  const [height, setHeight] = useState<"auto" | number>("auto");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      setHeight(ref.current.clientHeight);
+    }
+  }, [ref.current]);
+
+  return [height, ref] as const;
 };

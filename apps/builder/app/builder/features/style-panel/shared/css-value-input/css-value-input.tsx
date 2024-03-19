@@ -675,7 +675,12 @@ export const CssValueInput = ({
           />
         </ComboboxAnchor>
         {isOpen && (
-          <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
+          <ComboboxContent
+            align="start"
+            sideOffset={2}
+            collisionPadding={10}
+            fixedHeight
+          >
             <ComboboxListbox {...menuProps}>
               {items.map((item, index) => (
                 <ComboboxListboxItem
