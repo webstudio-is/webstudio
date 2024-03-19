@@ -134,6 +134,9 @@ export const ComboboxContent = forwardRef(
           onOpenAutoFocus={(event) => {
             event.preventDefault();
           }}
+          // Using a height here is a hack.
+          // It allows to prevent radix from changing position of the popover when height changes due to
+          // hint content changes, otherwise the items will jump under user's cursor.
           style={{ height, ...style }}
           {...props}
         />
