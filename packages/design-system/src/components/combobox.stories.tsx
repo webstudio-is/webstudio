@@ -1,17 +1,16 @@
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { useCallback, useState } from "react";
-import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
+import type {
+  UseComboboxState,
+  UseComboboxStateChangeOptions,
+} from "downshift";
 import {
   ComboboxListboxItem,
   useCombobox,
   comboboxStateChangeTypes,
 } from "./combobox";
 import { Flex } from "./flex";
-import { theme } from "../stitches.config";
-import type {
-  UseComboboxState,
-  UseComboboxStateChangeOptions,
-} from "downshift";
+import { InputField } from "./input-field";
 
 export const Complex = () => {
   const [value, setValue] = useState<string | null>(null);
@@ -64,13 +63,14 @@ export const Complex = () => {
     });
 
   return (
-    <Flex
-      {...getComboboxProps()}
-      css={{ flexDirection: "column", gap: theme.spacing[9] }}
-    >
-      <DeprecatedTextField
+    <Flex {...getComboboxProps()} direction="column" gap="3">
+      <InputField
         type="search"
-        prefix={<MagnifyingGlassIcon />}
+        prefix={
+          <Flex align="center">
+            <MagnifyingGlassIcon />
+          </Flex>
+        }
         {...getInputProps({})}
       />
       <fieldset>
