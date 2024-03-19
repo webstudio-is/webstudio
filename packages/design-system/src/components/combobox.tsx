@@ -354,7 +354,7 @@ const useCalcHeight = () => {
     if (ref.current) {
       setHeight(ref.current.clientHeight);
     }
-  }, [ref.current]);
+  }, []);
 
   return [height, ref] as const;
 };
