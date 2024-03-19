@@ -1,7 +1,13 @@
 import { describe, expect, test } from "@jest/globals";
 import type { Project } from "@webstudio-is/project";
 import { createDefaultPages } from "@webstudio-is/project-build";
-import { isRoot, type Folder, Instance, DataSource } from "@webstudio-is/sdk";
+import {
+  isRoot,
+  type Folder,
+  Instance,
+  DataSource,
+  encodeDataSourceVariable,
+} from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
   deleteFolderWithChildrenMutable,
@@ -26,7 +32,6 @@ import {
   $selectedPageId,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
-import { encodeDataSourceVariable } from "@webstudio-is/react-sdk";
 
 registerContainers();
 

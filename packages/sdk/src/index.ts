@@ -15,3 +15,4 @@ export * from "./instances-utils";
 export * from "./page-utils";
 export * from "./scope";
 export * from "./resource-loader";
+export * from "./expression";

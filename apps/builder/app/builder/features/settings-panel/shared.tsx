@@ -1,5 +1,6 @@
 import { atom, computed, type ReadableAtom } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { useDebouncedCallback } from "use-debounce";
 import {
   type ComponentPropsWithoutRef,
   type ReactNode,
@@ -10,11 +11,11 @@ import {
   type ComponentProps,
 } from "react";
 import equal from "fast-deep-equal";
+import type { PropMeta } from "@webstudio-is/react-sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  type PropMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import type { Prop, Asset } from "@webstudio-is/sdk";
 import { HelpIcon, SubtractIcon } from "@webstudio-is/icons";
 import {
@@ -37,7 +38,6 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
-import { useDebouncedCallback } from "use-debounce";
 
 export type PropValue =
   | { type: "number"; value: number }

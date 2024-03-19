@@ -39,7 +39,7 @@ import {
   decodeDataSourceVariable,
   getExpressionIdentifiers,
   lintExpression,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import { ExpressionEditor, formatValuePreview } from "./expression-editor";
 import { useSideOffset } from "./floating-panel";
 import { $dataSourceVariables } from "~/shared/nano-states";

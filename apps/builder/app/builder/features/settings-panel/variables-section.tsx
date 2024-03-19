@@ -20,7 +20,7 @@ import type { DataSource } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
   getExpressionIdentifiers,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import {
   $dataSources,
   $instances,

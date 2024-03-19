@@ -2,11 +2,6 @@ import { nanoid } from "nanoid";
 import { atom, computed } from "nanostores";
 import { createRootFolder } from "@webstudio-is/project-build";
 import {
-  decodeDataSourceVariable,
-  encodeDataSourceVariable,
-  transpileExpression,
-} from "@webstudio-is/react-sdk";
-import {
   type Page,
   Pages,
   type Folder,
@@ -17,6 +12,9 @@ import {
   getPagePath,
   findParentFolderByChildId,
   DataSource,
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  transpileExpression,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {

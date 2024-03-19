@@ -21,6 +21,7 @@ import {
   findParentFolderByChildId,
   ProjectNewRedirectPath,
   DataSource,
+  isLiteralExpression,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -51,7 +52,6 @@ import {
   HelpIcon,
   UploadIcon,
 } from "@webstudio-is/icons";
-import { isLiteralExpression } from "@webstudio-is/react-sdk";
 import { useIds } from "~/shared/form-utils";
 import { Header, HeaderSuffixSpacer } from "../../shared/panel";
 import { updateWebstudioData } from "~/shared/instance-utils";

@@ -7,14 +7,17 @@ import type {
   ResourceRequest,
 } from "@webstudio-is/sdk";
 import {
-  collectionComponent,
   decodeDataSourceVariable,
   encodeDataSourceVariable,
+  transpileExpression,
+} from "@webstudio-is/sdk";
+import {
+  collectionComponent,
   normalizeProps,
   portalComponent,
   textContentAttribute,
-  transpileExpression,
 } from "@webstudio-is/react-sdk";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $instances } from "./instances";
 import {
   $dataSourceVariables,
@@ -29,7 +32,6 @@ import { groupBy } from "../array-utils";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],

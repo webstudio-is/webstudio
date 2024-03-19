@@ -7,7 +7,12 @@ import type {
   Prop,
   DataSource,
 } from "@webstudio-is/sdk";
-import { parseComponentName } from "@webstudio-is/sdk";
+import {
+  parseComponentName,
+  generateExpression,
+  decodeDataSourceVariable,
+  transpileExpression,
+} from "@webstudio-is/sdk";
 import {
   componentAttribute,
   idAttribute,
@@ -15,11 +20,6 @@ import {
   showAttribute,
 } from "./props";
 import { collectionComponent } from "./core-components";
-import {
-  generateExpression,
-  decodeDataSourceVariable,
-  transpileExpression,
-} from "./expression";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 /**
