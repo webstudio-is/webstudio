@@ -9,7 +9,6 @@ import {
   useCallback,
   useEffect,
   useRef,
-  useLayoutEffect,
 } from "react";
 import {
   Portal,
@@ -26,6 +25,7 @@ import {
   type UseComboboxGetItemPropsOptions,
 } from "downshift";
 import { matchSorter } from "match-sorter";
+import { mergeRefs } from "@react-aria/utils";
 import { styled, theme } from "../stitches.config";
 import {
   menuItemCss,
@@ -35,8 +35,8 @@ import {
   separatorCss,
   MenuCheckedIcon,
 } from "./menu";
-import { mergeRefs } from "@react-aria/utils";
-import { Box, ScrollArea } from "..";
+import { Box } from "./box";
+import { ScrollArea } from "./scroll-area";
 
 const Listbox = styled(
   "ul",
@@ -125,8 +125,16 @@ export const ComboboxContent = forwardRef(
     },
     forwardRef: Ref<HTMLDivElement>
   ) => {
-    const [height, heightRef] = useCalcHeight();
-    const ref = fixedHeight ? mergeRefs(forwardRef, heightRef) : forwardRef;
+    // Using a height here is a hack.
+    // It allows to prevent radix from changing position of the popover when height changes due to
+    // hint content changes, otherwise the items will jump under user's cursor.
+    const [contentHeight, setContentHeight] = useState<"auto" | number>("auto");
+    const contentRef = (element: HTMLDivElement | null) => {
+      if (fixedHeight && element && contentHeight === "auto") {
+        setContentHeight(element.getBoundingClientRect().height);
+      }
+    };
+    const ref = fixedHeight ? mergeRefs(forwardRef, contentRef) : forwardRef;
     return (
       <Portal>
         <PopoverContent
@@ -134,10 +142,7 @@ export const ComboboxContent = forwardRef(
           onOpenAutoFocus={(event) => {
             event.preventDefault();
           }}
-          // Using a height here is a hack.
-          // It allows to prevent radix from changing position of the popover when height changes due to
-          // hint content changes, otherwise the items will jump under user's cursor.
-          style={{ height, ...style }}
+          style={{ height: contentHeight, ...style }}
           {...props}
         />
       </Portal>
@@ -361,17 +366,4 @@ export const useCombobox = <Item,>({
     getInputProps: enhancedGetInputProps,
     resetFilter,
   };
-};
-
-const useCalcHeight = () => {
-  const [height, setHeight] = useState<"auto" | number>("auto");
-  const ref = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (ref.current) {
-      setHeight(ref.current.clientHeight);
-    }
-  }, []);
-
-  return [height, ref] as const;
 };

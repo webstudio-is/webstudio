@@ -26,6 +26,7 @@ export const SelectControl = ({
 
   return (
     <Select
+      fixedHeight
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}

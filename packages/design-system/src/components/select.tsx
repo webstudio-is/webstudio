@@ -7,7 +7,6 @@ import {
   forwardRef,
   useState,
 } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import {
   menuCss,
@@ -18,6 +17,7 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
+import { ScrollArea } from "./scroll-area";
 
 export const SelectContent = styled(Primitive.Content, menuCss);
 
@@ -76,7 +76,10 @@ export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
-const Description = styled(menuItemCss);
+const Description = styled(menuItemCss, {
+  flexGrow: 1,
+  alignItems: "flex-start",
+});
 
 type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
@@ -115,6 +118,8 @@ const defaultGetValue = (option: unknown) => {
   );
 };
 
+type SelectBaseProps<Option> = SelectProps<Option> & { fixedHeight?: boolean };
+
 const SelectBase = <Option,>(
   {
     options,
@@ -131,8 +136,9 @@ const SelectBase = <Option,>(
     name,
     children,
     prefix,
+    fixedHeight,
     ...props
-  }: SelectProps<Option>,
+  }: SelectBaseProps<Option>,
   forwardedRef: Ref<HTMLButtonElement>
 ) => {
   const valueToOption = useMemo(() => {
@@ -148,6 +154,16 @@ const SelectBase = <Option,>(
   const description = itemForDescription
     ? getDescription?.(itemForDescription)
     : undefined;
+
+  // Using a height here is a hack.
+  // It allows to prevent radix from changing position of the popover when height changes due to
+  // hint content changes, otherwise the items will jump under user's cursor.
+  const [contentHeight, setContentHeight] = useState<"auto" | number>("auto");
+  const contentRef = (element: HTMLDivElement | null) => {
+    if (fixedHeight && element && contentHeight === "auto") {
+      setContentHeight(element.getBoundingClientRect().height);
+    }
+  };
 
   return (
     <Primitive.Root
@@ -171,37 +187,38 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent css={{ zIndex: props.css?.zIndex ?? 0 }}>
-          <SelectScrollUpButton>
-            <ChevronUpIcon />
-          </SelectScrollUpButton>
-          <SelectViewport>
-            {children ||
-              options.map((option) => (
-                <SelectItem
-                  key={getValue(option)}
-                  value={getValue(option) ?? ""}
-                  textValue={getLabel(option)}
-                  onMouseEnter={() => {
-                    onItemHighlight?.(option);
-                    setHighlightedItem(option);
-                  }}
-                  onMouseLeave={() => {
-                    onItemHighlight?.();
-                    setHighlightedItem(undefined);
-                  }}
-                  onFocus={() => {
-                    onItemHighlight?.(option);
-                    setHighlightedItem(option);
-                  }}
-                >
-                  {getLabel(option)}
-                </SelectItem>
-              ))}
+        <SelectContent
+          css={{ zIndex: props.css?.zIndex ?? 0 }}
+          position="popper"
+          style={{ height: contentHeight }}
+          ref={contentRef}
+        >
+          <SelectViewport asChild>
+            <ScrollArea css={{ maxHeight: theme.spacing[34] }}>
+              {children ||
+                options.map((option) => (
+                  <SelectItem
+                    key={getValue(option)}
+                    value={getValue(option) ?? ""}
+                    textValue={getLabel(option)}
+                    onMouseEnter={() => {
+                      onItemHighlight?.(option);
+                      setHighlightedItem(option);
+                    }}
+                    onMouseLeave={() => {
+                      onItemHighlight?.();
+                      setHighlightedItem(undefined);
+                    }}
+                    onFocus={() => {
+                      onItemHighlight?.(option);
+                      setHighlightedItem(option);
+                    }}
+                  >
+                    {getLabel(option)}
+                  </SelectItem>
+                ))}
+            </ScrollArea>
           </SelectViewport>
-          <SelectScrollDownButton>
-            <ChevronDownIcon />
-          </SelectScrollDownButton>
           {description && (
             <>
               <SelectSeparator />
@@ -215,5 +232,5 @@ const SelectBase = <Option,>(
 };
 
 export const Select = forwardRef(SelectBase) as <Option>(
-  props: SelectProps<Option> & { ref?: Ref<HTMLButtonElement> }
+  props: SelectBaseProps<Option> & { ref?: Ref<HTMLButtonElement> }
 ) => JSX.Element | null;
