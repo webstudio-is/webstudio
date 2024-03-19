@@ -26,7 +26,7 @@ import {
   type UseComboboxGetItemPropsOptions,
 } from "downshift";
 import { matchSorter } from "match-sorter";
-import { styled } from "../stitches.config";
+import { styled, theme } from "../stitches.config";
 import {
   menuItemCss,
   menuCss,
@@ -36,6 +36,7 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { mergeRefs } from "@react-aria/utils";
+import { Box, ScrollArea } from "..";
 
 const Listbox = styled(
   "ul",
@@ -91,7 +92,18 @@ const ListboxItemBase: ForwardRefRenderFunction<
   );
 };
 
-export const ComboboxListbox = Listbox;
+export const ComboboxListbox = forwardRef<
+  HTMLUListElement,
+  ComponentProps<typeof Listbox>
+>(({ children, ...props }, ref) => {
+  return (
+    <Listbox {...props} ref={ref}>
+      <ScrollArea>
+        <Box css={{ maxHeight: theme.spacing[34] }}>{children}</Box>
+      </ScrollArea>
+    </Listbox>
+  );
+});
 
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
