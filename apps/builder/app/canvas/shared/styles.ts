@@ -16,6 +16,7 @@ import {
   type StyleValue,
   type StyleProperty,
   isValidStaticStyleValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import {
   $assets,
@@ -160,9 +161,20 @@ const subscribeEphemeralStyle = (params: Params) => {
     const transformer = createImageValueTransformer(assets, {
       assetBaseUrl: params.assetBaseUrl,
     });
+
     for (const styleDecl of ephemeralStyles) {
-      const { instanceId, breakpointId, state, property, value } = styleDecl;
-      const customProperty = `--${toVarNamespace(instanceId, property)}`;
+      const {
+        instanceId,
+        breakpointId,
+        state,
+        property,
+        value,
+        styleSourceId,
+      } = styleDecl;
+      const customProperty = `--${
+        toVarValue(styleSourceId, property, value)?.value ?? "invalid-property"
+      }`;
+
       document.body.style.setProperty(
         customProperty,
         toValue(value, transformer)
@@ -177,14 +189,32 @@ const subscribeEphemeralStyle = (params: Params) => {
         assets,
         params,
       });
-      // this is possible on newly created instances,
-      // properties are not yet defined in the style.
-      if (rule.styleMap.has(property) === false) {
-        const varValue = toVarValue(instanceId, property, value);
-        if (varValue) {
-          rule.styleMap.set(property, varValue);
-        }
+
+      const propertyValue = rule.styleMap.get(property);
+
+      const varValue = toVarValue(styleSourceId, property, value);
+
+      if (varValue === undefined) {
+        continue;
       }
+
+      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
+      if (property === "backgroundClip") {
+        continue;
+      }
+
+      // Variable names are equal, no need to update
+      if (
+        propertyValue?.type === "var" &&
+        propertyValue.value === varValue.value
+      ) {
+        continue;
+      }
+
+      // this is possible on newly created instances, or
+      // in case of property variable defined on the other style source
+      // or properties are not yet defined in the style.
+      rule.styleMap.set(property, varValue);
     }
 
     for (const property of deletedCustomProperties) {
@@ -248,10 +278,10 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
 // to quickly pass the values over CSS variable witout rerendering the components tree.
 // Results in values like this: `var(--namespace, staticValue)`
 const toVarValue = (
-  instanceId: Instance["id"],
+  styleSourceId: StyleDecl["styleSourceId"],
   styleProperty: StyleProperty,
   styleValue: StyleValue
-): undefined | StyleValue => {
+): undefined | VarValue => {
   if (styleValue.type === "var") {
     return styleValue;
   }
@@ -259,7 +289,7 @@ const toVarValue = (
   if (isValidStaticStyleValue(styleValue)) {
     return {
       type: "var",
-      value: toVarNamespace(instanceId, styleProperty),
+      value: `${styleProperty}-${styleSourceId}`,
       fallbacks: [styleValue],
     };
   }
@@ -350,7 +380,7 @@ export const useCssRules = ({
     });
 
     for (const styleDecl of orderedStyles) {
-      const { breakpointId, state, property, value } = styleDecl;
+      const { breakpointId, state, property, value, styleSourceId } = styleDecl;
 
       // create new rule or use cached one
       const rule = getOrCreateRule({
@@ -376,7 +406,7 @@ export const useCssRules = ({
       if (property === "backgroundClip") {
         rule.styleMap.set(property, value);
       } else {
-        const varValue = toVarValue(instanceId, property, value);
+        const varValue = toVarValue(styleSourceId, property, value);
         if (varValue) {
           rule.styleMap.set(property, varValue);
         }
@@ -392,8 +422,4 @@ export const useCssRules = ({
 
     userSheet.render();
   }, [instanceId, selectedState, instanceStyles, breakpoints]);
-};
-
-const toVarNamespace = (id: string, property: string) => {
-  return `${property}-${id}`;
 };
