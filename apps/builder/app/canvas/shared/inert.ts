@@ -25,6 +25,7 @@ const setAutoDisposeInert = (timeout: number) => {
 
 /**
  * Controls (e.g., radix focus scope) may inadvertently shift focus from inputs.
+ * Example: When the user modifies styles or content in the settings panel, the use of a mutation observer with Radix causes the focus to shift to the Radix dialog.
  * Currently, there's no way to block focus shifts inside iframes (see https:*github.com/w3c/webappsec-permissions-policy/issues/273 for future updates).
  * Workaround: use the `inert` attribute on iframe body to prevent focus changes.
  */
