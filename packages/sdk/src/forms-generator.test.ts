@@ -1,10 +1,10 @@
 import { expect, test } from "@jest/globals";
-import { generateUtilsExport } from "./generator";
+import { generateFormsProperties } from "./forms-generator";
 
 test("generates forms properties", () => {
   expect(
-    generateUtilsExport({
-      props: new Map([
+    generateFormsProperties(
+      new Map([
         [
           "method1Id",
           {
@@ -37,23 +37,17 @@ test("generates forms properties", () => {
             value: "/index.php",
           },
         ],
-      ]),
-    })
+      ])
+    )
   ).toMatchInlineSnapshot(`
+"type FormProperties = { method?: string, action?: string }
+export const formsProperties = new Map<string, FormProperties>([["1",{"method":"post"}],["2",{"method":"get","action":"/index.php"}]])
 "
-  export const formsProperties = new Map<string, { method?: string, action?: string }>([["1",{"method":"post"}],["2",{"method":"get","action":"/index.php"}]])
-  "
 `);
-});
 
-test("generates list of pages paths", () => {
-  expect(
-    generateUtilsExport({
-      props: new Map(),
-    })
-  ).toMatchInlineSnapshot(`
+  expect(generateFormsProperties(new Map())).toMatchInlineSnapshot(`
+"type FormProperties = { method?: string, action?: string }
+export const formsProperties = new Map<string, FormProperties>([])
 "
-  export const formsProperties = new Map<string, { method?: string, action?: string }>([])
-  "
 `);
 });

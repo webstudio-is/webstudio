@@ -1,5 +1,8 @@
-import type { DataSources, Page, Resources, Scope } from "@webstudio-is/sdk";
-import { generateExpression } from "@webstudio-is/sdk";
+import type { DataSources } from "./schema/data-sources";
+import type { Page } from "./schema/pages";
+import type { Resources } from "./schema/resources";
+import type { Scope } from "./scope";
+import { generateExpression } from "./expression";
 
 export const generateResourcesLoader = ({
   scope,

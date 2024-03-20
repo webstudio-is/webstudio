@@ -7,10 +7,8 @@ import type {
   FontAsset,
   ImageAsset,
   ProjectMeta,
-  System,
 } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
-import type { PageMeta } from "@webstudio-is/react-sdk";
 import {
   Body as Body,
   Link as Link,
@@ -76,32 +74,6 @@ export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
-
-export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "The Ultimate Cat Protection Zone",
-    description:
-      "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
-    excludePageFromSearch: undefined,
-    language: undefined,
-    socialImageAssetId: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [
-      {
-        property: "fb:app_id",
-        content: "app_id_app_id_app_id",
-      },
-    ],
-  };
-};
 
 const Page = ({}: { system: any }) => {
   return (
@@ -200,13 +172,3 @@ const Page = ({}: { system: any }) => {
 };
 
 export { Page };
-
-type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params;
-};
-
-export const formsProperties = new Map<
-  string,
-  { method?: string; action?: string }
->([]);

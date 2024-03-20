@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { createScope } from "@webstudio-is/sdk";
+import { createScope } from "./scope";
 import { generatePageMeta } from "./page-meta-generator";
 
 const toMap = <T extends { id: string }>(list: T[]) =>

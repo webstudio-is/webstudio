@@ -7,10 +7,8 @@ import type {
   FontAsset,
   ImageAsset,
   ProjectMeta,
-  System,
 } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
-import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Accordion as Accordion,
@@ -78,27 +76,6 @@ export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
-
-export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "Radix Revelations: Unraveling the Feline Mystique",
-    description:
-      "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
-    excludePageFromSearch: true,
-    language: undefined,
-    socialImageAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [],
-  };
-};
 
 const Page = ({}: { system: any }) => {
   let [accordionValue, set$accordionValue] = useState<any>("0");
@@ -250,13 +227,3 @@ const Page = ({}: { system: any }) => {
 };
 
 export { Page };
-
-type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params;
-};
-
-export const formsProperties = new Map<
-  string,
-  { method?: string; action?: string }
->([]);

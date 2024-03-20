@@ -7,10 +7,8 @@ import type {
   FontAsset,
   ImageAsset,
   ProjectMeta,
-  System,
 } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
-import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
@@ -46,26 +44,6 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "0d856812-61d8-4014-a20a-82e01c0eb8ee";
 
-export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "Untitled",
-    description: "",
-    excludePageFromSearch: false,
-    language: "ru",
-    socialImageAssetId: undefined,
-    socialImageUrl: "",
-    status: 200,
-    redirect: "",
-    custom: [],
-  };
-};
-
 const Page = ({}: { system: any }) => {
   return (
     <Body data-ws-id="jDb2FuSK2-azIZxkH5XNv" data-ws-component="Body">
@@ -77,13 +55,3 @@ const Page = ({}: { system: any }) => {
 };
 
 export { Page };
-
-type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params;
-};
-
-export const formsProperties = new Map<
-  string,
-  { method?: string; action?: string }
->([]);

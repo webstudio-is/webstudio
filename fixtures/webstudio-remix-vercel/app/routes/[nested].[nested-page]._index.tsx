@@ -17,15 +17,17 @@ import {
   pageData,
   user,
   projectId,
-  formsProperties,
   Page,
   imageAssets,
-  getRemixParams,
-  getPageMeta,
   pageFontAssets,
   pageBackgroundImageAssets,
 } from "../__generated__/[nested].[nested-page]._index";
-import { loadResources } from "../__generated__/[nested].[nested-page]._index.server";
+import {
+  formsProperties,
+  loadResources,
+  getPageMeta,
+  getRemixParams,
+} from "../__generated__/[nested].[nested-page]._index.server";
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
