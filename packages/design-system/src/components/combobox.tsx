@@ -115,14 +115,7 @@ export const Combobox = (props: ComponentProps<typeof Popover>) => {
 
 export const ComboboxContent = forwardRef(
   (
-    {
-      style,
-      fixedHeight,
-      ...props
-    }: ComponentProps<typeof PopoverContent> & {
-      // We don't want the hint height change to make the popover jump around
-      fixedHeight?: boolean;
-    },
+    { style, ...props }: ComponentProps<typeof PopoverContent>,
     forwardRef: Ref<HTMLDivElement>
   ) => {
     // Using a height here is a hack.
@@ -130,15 +123,14 @@ export const ComboboxContent = forwardRef(
     // hint content changes, otherwise the items will jump under user's cursor.
     const [contentHeight, setContentHeight] = useState<"auto" | number>("auto");
     const contentRef = (element: HTMLDivElement | null) => {
-      if (fixedHeight && element && contentHeight === "auto") {
+      if (element && contentHeight === "auto") {
         setContentHeight(element.getBoundingClientRect().height);
       }
     };
-    const ref = fixedHeight ? mergeRefs(forwardRef, contentRef) : forwardRef;
     return (
       <Portal>
         <PopoverContent
-          ref={ref}
+          ref={mergeRefs(forwardRef, contentRef)}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
           }}

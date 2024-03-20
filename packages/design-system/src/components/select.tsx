@@ -118,7 +118,7 @@ const defaultGetValue = (option: unknown) => {
   );
 };
 
-type SelectBaseProps<Option> = SelectProps<Option> & { fixedHeight?: boolean };
+type SelectBaseProps<Option> = SelectProps<Option>;
 
 const SelectBase = <Option,>(
   {
@@ -136,7 +136,6 @@ const SelectBase = <Option,>(
     name,
     children,
     prefix,
-    fixedHeight,
     ...props
   }: SelectBaseProps<Option>,
   forwardedRef: Ref<HTMLButtonElement>
@@ -160,11 +159,11 @@ const SelectBase = <Option,>(
   // hint content changes, otherwise the items will jump under user's cursor.
   const [contentHeight, setContentHeight] = useState<"auto" | number>("auto");
   const contentRef = (element: HTMLDivElement | null) => {
-    if (fixedHeight && element && contentHeight === "auto") {
+    if (element && contentHeight === "auto") {
       setContentHeight(element.getBoundingClientRect().height);
     }
   };
-
+  console.log({ contentHeight });
   return (
     <Primitive.Root
       name={name}

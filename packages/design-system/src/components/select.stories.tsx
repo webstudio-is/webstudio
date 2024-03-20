@@ -109,12 +109,18 @@ export const WithDescriptions: StoryFn<typeof Select> = () => {
   );
 };
 
-export const Boundaries: StoryFn<typeof Select> = () => {
+export const PositionPopper: StoryFn<typeof Select> = () => {
   const items = Array(100)
     .fill(0)
     .map((_, index) => `Item ${index}`);
   const [value, setValue] = useState(items[0]);
   return (
-    <Select name="fruit" options={items} value={value} onChange={setValue} />
+    <Select
+      position="popper"
+      name="fruit"
+      options={items}
+      value={value}
+      onChange={setValue}
+    />
   );
 };
