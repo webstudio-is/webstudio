@@ -61,7 +61,6 @@ import {
   isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "~/constants.mjs";
-import type { PageData } from "../templates/defaults/__templates__/route-template";
 
 const limit = pLimit(10);
 
@@ -515,13 +514,6 @@ export const prebuild = async (options: {
       "useState",
       "Fragment",
       "useResource",
-      "PageData",
-      "Asset",
-      "ProjectMeta",
-      "fontAssets",
-      "pageData",
-      "user",
-      "projectId",
       "Page",
       "_props",
     ]);
@@ -569,10 +561,6 @@ export const prebuild = async (options: {
     const pageData = siteDataByPage[pageId];
     const pageFontAssets = fontAssetsByPage[pageId];
     const pageBackgroundImageAssets = backgroundImageAssetsByPage[pageId];
-    // serialize data only used in runtime
-    const renderedPageData: PageData = {
-      project: siteData.build.pages.meta,
-    };
 
     const rootInstanceId = pageData.page.rootInstanceId;
     const instances = new Map(pageData.build.instances);
@@ -605,25 +593,10 @@ export const prebuild = async (options: {
 
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
+
 import { Fragment, useState } from "react";
-import type { Asset, FontAsset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 ${componentImports}
-import type { PageData } from "~/routes/_index";
-export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
-
-// Font assets on current page (can be preloaded)
-export const pageFontAssets: FontAsset[] = ${JSON.stringify(pageFontAssets)}
-
-export const pageBackgroundImageAssets: ImageAsset[] = ${JSON.stringify(
-      pageBackgroundImageAssets
-    )}
-
-export const pageData: PageData = ${JSON.stringify(renderedPageData)};
-export const user: { email: string | null } | undefined = ${JSON.stringify(
-      siteData.user
-    )};
-export const projectId = "${siteData.build.projectId}";
 
 ${pageComponent}
 
@@ -632,7 +605,7 @@ export { Page }
     const serverExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 
-import type { PageMeta } from "@webstudio-is/sdk";
+import type { ImageAsset, FontAsset, ProjectMeta, PageMeta } from "@webstudio-is/sdk";
 ${generateResourcesLoader({
   scope,
   page: pageData.page,
@@ -649,6 +622,26 @@ ${generatePageMeta({
 ${generateFormsProperties(props)}
 
 ${generateRemixParams(pageData.page.path)}
+
+export const projectId = "${siteData.build.projectId}";
+
+export const user: { email: string | null } | undefined = ${JSON.stringify(
+      siteData.user
+    )};
+
+export const projectMeta: ProjectMeta = ${JSON.stringify(
+      siteData.build.pages.meta
+    )};
+
+export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
+
+// Font assets on current page (can be preloaded)
+export const pageFontAssets: FontAsset[] = ${JSON.stringify(pageFontAssets)}
+
+export const pageBackgroundImageAssets: ImageAsset[] = ${JSON.stringify(
+      pageBackgroundImageAssets
+    )}
+
 `;
 
     /*

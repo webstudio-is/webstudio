@@ -1,4 +1,13 @@
-import type { PageMeta, System } from "@webstudio-is/sdk";
+/**
+ * The only intent of this file is to support typings inside ../templates/route-template for easier development.
+ **/
+import type {
+  ImageAsset,
+  FontAsset,
+  ProjectMeta,
+  PageMeta,
+  System,
+} from "@webstudio-is/sdk";
 
 export const loadResources = async (_props: { system: System }) => {
   const [] = await Promise.all([]);
@@ -24,3 +33,21 @@ type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
+
+export const projectId = "project-id";
+
+export const user: { email: string | null } | undefined = {
+  email: "email@domain",
+};
+
+export const projectMeta: undefined | ProjectMeta = {
+  siteName: "",
+  faviconAssetId: "",
+  code: "",
+};
+
+export const imageAssets: ImageAsset[] = [];
+
+export const pageFontAssets: FontAsset[] = [];
+
+export const pageBackgroundImageAssets: ImageAsset[] = [];

@@ -10,30 +10,23 @@ import {
   redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import type { ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
-import {
-  pageData,
-  user,
-  projectId,
-  Page,
-  imageAssets,
-  pageFontAssets,
-  pageBackgroundImageAssets,
-} from "../../../__generated__/_index";
+import { Page } from "../../../__generated__/_index";
 import {
   formsProperties,
   loadResources,
   getPageMeta,
   getRemixParams,
+  projectId,
+  user,
+  projectMeta,
+  imageAssets,
+  pageFontAssets,
+  pageBackgroundImageAssets,
 } from "../../../__generated__/_index.server";
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
-
-export type PageData = {
-  project?: ProjectMeta;
-};
 
 export const loader = async (arg: LoaderArgs) => {
   const url = new URL(arg.request.url);
@@ -98,7 +91,6 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     return metas;
   }
   const { pageMeta } = data;
-  const { project } = pageData;
 
   if (data.url) {
     metas.push({
@@ -120,16 +112,16 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
 
   const origin = `https://${data.host}`;
 
-  if (project?.siteName) {
+  if (projectMeta?.siteName) {
     metas.push({
       property: "og:site_name",
-      content: project.siteName,
+      content: projectMeta.siteName,
     });
     metas.push({
       "script:ld+json": {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: project.siteName,
+        name: projectMeta.siteName,
         url: origin,
       },
     });
@@ -188,12 +180,9 @@ export const links: LinksFunction = () => {
     href: css,
   });
 
-  const { project } = pageData;
-
-  if (project?.faviconAssetId) {
-    const imageAsset = imageAssets.find(
-      (asset) => asset.id === project.faviconAssetId
-    );
+  if (projectMeta?.faviconAssetId) {
+    const faviconAssetId = projectMeta?.faviconAssetId;
+    const imageAsset = imageAssets.find((asset) => asset.id === faviconAssetId);
 
     if (imageAsset) {
       result.push({

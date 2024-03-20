@@ -1,7 +1,12 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
-import type { PageMeta } from "@webstudio-is/sdk";
+import type {
+  ImageAsset,
+  FontAsset,
+  ProjectMeta,
+  PageMeta,
+} from "@webstudio-is/sdk";
 import { loadResource, type System } from "@webstudio-is/sdk";
 export const loadResources = async (_props: { system: System }) => {
   return {} as Record<string, unknown>;
@@ -34,3 +39,22 @@ type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
+
+export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
+
+export const user: { email: string | null } | undefined = {
+  email: "hello@webstudio.is",
+};
+
+export const projectMeta: ProjectMeta = {
+  siteName: "",
+  faviconAssetId: "",
+  code: "",
+};
+
+export const imageAssets: ImageAsset[] = [];
+
+// Font assets on current page (can be preloaded)
+export const pageFontAssets: FontAsset[] = [];
+
+export const pageBackgroundImageAssets: ImageAsset[] = [];
