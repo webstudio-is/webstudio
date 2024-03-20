@@ -2,34 +2,12 @@
 /* This is a auto generated file for building the project */
 
 import { Fragment, useState } from "react";
-import type {
-  Asset,
-  FontAsset,
-  ImageAsset,
-  ProjectMeta,
-} from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import {
   Heading as Heading,
   Text as Text,
 } from "@webstudio-is/sdk-components-react";
-
-import type { PageData } from "~/routes/_index";
-export const imageAssets: ImageAsset[] = [];
-
-// Font assets on current page (can be preloaded)
-export const pageFontAssets: FontAsset[] = [];
-
-export const pageBackgroundImageAssets: ImageAsset[] = [];
-
-export const pageData: PageData = {
-  project: { siteName: "", faviconAssetId: "", code: "" },
-};
-export const user: { email: string | null } | undefined = {
-  email: "hello@webstudio.is",
-};
-export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
 
 const Page = ({}: { system: any }) => {
   return (
