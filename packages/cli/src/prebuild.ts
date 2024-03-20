@@ -17,7 +17,6 @@ import ora from "ora";
 import merge from "deepmerge";
 import {
   generateCss,
-  generateUtilsExport,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
   namespaceMeta,
@@ -26,9 +25,7 @@ import {
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
-  generateResourcesLoader,
   collectionComponent,
-  generatePageMeta,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -47,6 +44,9 @@ import {
   getPagePath,
   parseComponentName,
   executeExpression,
+  generateFormsProperties,
+  generateResourcesLoader,
+  generatePageMeta,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -515,17 +515,13 @@ export const prebuild = async (options: {
       "useState",
       "Fragment",
       "useResource",
-      "PageMeta",
-      "createPageMeta",
       "PageData",
       "Asset",
       "ProjectMeta",
-      "System",
       "fontAssets",
       "pageData",
       "user",
       "projectId",
-      "formsProperties",
       "Page",
       "_props",
     ]);
@@ -583,7 +579,6 @@ export const prebuild = async (options: {
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
-    const utilsExport = generateUtilsExport({ props });
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
@@ -611,9 +606,8 @@ export const prebuild = async (options: {
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 import { Fragment, useState } from "react";
-import type { Asset, FontAsset, ImageAsset, ProjectMeta, System } from "@webstudio-is/sdk";
+import type { Asset, FontAsset, ImageAsset, ProjectMeta } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
-import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}
 import type { PageData } from "~/routes/_index";
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
@@ -631,15 +625,30 @@ export const user: { email: string | null } | undefined = ${JSON.stringify(
     )};
 export const projectId = "${siteData.build.projectId}";
 
-${generatePageMeta({ globalScope: scope, page: pageData.page, dataSources })}
-
 ${pageComponent}
 
 export { Page }
+`;
+    const serverExports = `/* eslint-disable */
+/* This is a auto generated file for building the project */ \n
+
+import type { PageMeta } from "@webstudio-is/sdk";
+${generateResourcesLoader({
+  scope,
+  page: pageData.page,
+  dataSources,
+  resources,
+})}
+
+${generatePageMeta({
+  globalScope: scope,
+  page: pageData.page,
+  dataSources,
+})}
+
+${generateFormsProperties(props)}
 
 ${generateRemixParams(pageData.page.path)}
-
-${utilsExport}
 `;
 
     /*
@@ -673,12 +682,7 @@ ${utilsExport}
 
     await ensureFileInPath(
       join(generatedDir, `${remixRoute}.server.tsx`),
-      generateResourcesLoader({
-        scope,
-        page: pageData.page,
-        dataSources,
-        resources,
-      })
+      serverExports
     );
   }
 

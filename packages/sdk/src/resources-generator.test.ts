@@ -1,6 +1,7 @@
 import { expect, test } from "@jest/globals";
 import stripIndent from "strip-indent";
-import { createScope, type Page } from "@webstudio-is/sdk";
+import type { Page } from "./schema/pages";
+import { createScope } from "./scope";
 import { generateResourcesLoader } from "./resources-generator";
 
 const clear = (input: string) =>

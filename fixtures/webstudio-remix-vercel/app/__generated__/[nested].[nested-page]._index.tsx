@@ -7,10 +7,8 @@ import type {
   FontAsset,
   ImageAsset,
   ProjectMeta,
-  System,
 } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
-import type { PageMeta } from "@webstudio-is/react-sdk";
 import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
 import { Heading as Heading } from "@webstudio-is/sdk-components-react";
 
@@ -68,26 +66,6 @@ export const user: { email: string | null } | undefined = {
 };
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const getPageMeta = ({
-  system,
-  resources,
-}: {
-  system: System;
-  resources: Record<string, any>;
-}): PageMeta => {
-  return {
-    title: "Nested Page",
-    description: "",
-    excludePageFromSearch: false,
-    language: undefined,
-    socialImageAssetId: "",
-    socialImageUrl: undefined,
-    status: undefined,
-    redirect: undefined,
-    custom: [],
-  };
-};
-
 const Page = ({}: { system: any }) => {
   return (
     <Body data-ws-id="L0ZXd5F9xk9Rsl9ORzIkJ" data-ws-component="Body">
@@ -99,13 +77,3 @@ const Page = ({}: { system: any }) => {
 };
 
 export { Page };
-
-type Params = Record<string, string | undefined>;
-export const getRemixParams = ({ ...params }: Params): Params => {
-  return params;
-};
-
-export const formsProperties = new Map<
-  string,
-  { method?: string; action?: string }
->([]);
