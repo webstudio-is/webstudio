@@ -343,3 +343,5 @@ export const $dragAndDropState = atom<DragAndDropState>({
 });
 
 export const $marketplaceProduct = atom<undefined | MarketplaceProduct>();
+
+export const $inspectorLastInputTime = atom<number>(0);

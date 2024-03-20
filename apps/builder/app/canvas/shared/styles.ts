@@ -34,6 +34,7 @@ import {
   compareMedia,
 } from "@webstudio-is/css-engine";
 import { $ephemeralStyles } from "../stores";
+import { resetInert, setInert } from "./inert";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const helpersSheet = createRegularStyleSheet({ name: "helpers" });
@@ -118,40 +119,11 @@ const subscribeEphemeralStyle = (params: Params) => {
   // track custom properties added on previous ephemeral styles change
   const addedCustomProperties = new Set<string>();
 
-  let timeoutHandle: number | undefined = undefined;
-
-  const resetInert = () => {
-    document.body.removeAttribute("inert");
-    clearTimeout(timeoutHandle);
-    timeoutHandle = undefined;
-  };
-
-  // 1000 ms is a reasonable time for the preview to reset.
-  // Anyway should never happen after user has finished preview changes (can happen during preview changes)
-  const AUTO_DISPOSE_INERT_TIMEOUT = 1000;
-
-  // A brief delay to ensure mutation observers within the focus scope are activated by the preview changes.
-  const DISPOSE_INERT_TIMEOUT = 300;
-
-  const setAutoDisposeInert = (timeout: number) => {
-    document.body.setAttribute("inert", "true");
-
-    // To prevent a completely non-interactive canvas due to edge cases,
-    // make sure to clean up preview changes if preview styles fail to reset correctly.
-    clearTimeout(timeoutHandle);
-
-    timeoutHandle = window.setTimeout(resetInert, timeout);
-  };
-
   return $ephemeralStyles.subscribe((ephemeralStyles) => {
-    // Controls (e.g., radix focus scope) may inadvertently shift focus from inputs.
-    // Currently, there's no way to block focus shifts inside iframes (see https://github.com/w3c/webappsec-permissions-policy/issues/273 for future updates).
-    // Workaround: use the `inert` attribute on iframe body to prevent focus changes.
     if (ephemeralStyles.length > 0) {
-      setAutoDisposeInert(AUTO_DISPOSE_INERT_TIMEOUT);
+      setInert();
     } else {
-      // Delayed reset same as set with smaller timeout
-      setAutoDisposeInert(DISPOSE_INERT_TIMEOUT);
+      resetInert();
     }
 
     // track custom properties not set on this change
