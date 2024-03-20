@@ -86,6 +86,7 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
             ephemeralStyles.push({
               instanceId: selectedInstance.id,
               breakpointId: selectedBreakpoint.id,
+              styleSourceId: styleSourceSelector.styleSourceId,
               state: styleSourceSelector.state,
               property: update.property,
               value: update.value,

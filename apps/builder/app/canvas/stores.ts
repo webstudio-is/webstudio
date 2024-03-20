@@ -7,6 +7,7 @@ export const $ephemeralStyles = atom<
     instanceId: Instance["id"];
     breakpointId: StyleDecl["breakpointId"];
     state: StyleDecl["state"];
+    styleSourceId: StyleDecl["styleSourceId"];
     property: StyleDecl["property"];
     value: StyleDecl["value"];
   }>
