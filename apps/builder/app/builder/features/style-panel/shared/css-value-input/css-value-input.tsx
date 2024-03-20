@@ -638,8 +638,8 @@ export const CssValueInput = ({
   const valueForDescription =
     highlightedValue?.type === "keyword"
       ? highlightedValue
-      : value.type === "keyword"
-      ? value
+      : props.value?.type === "keyword"
+      ? props.value
       : items[0]?.type === "keyword"
       ? items[0]
       : undefined;
@@ -675,12 +675,7 @@ export const CssValueInput = ({
           />
         </ComboboxAnchor>
         {isOpen && (
-          <ComboboxContent
-            align="start"
-            sideOffset={2}
-            collisionPadding={10}
-            fixedHeight
-          >
+          <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
             <ComboboxListbox {...menuProps}>
               {items.map((item, index) => (
                 <ComboboxListboxItem
