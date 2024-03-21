@@ -25,7 +25,6 @@ import {
   type UseComboboxGetItemPropsOptions,
 } from "downshift";
 import { matchSorter } from "match-sorter";
-import { mergeRefs } from "@react-aria/utils";
 import { styled, theme } from "../stitches.config";
 import {
   menuItemCss,
@@ -35,12 +34,14 @@ import {
   separatorCss,
   MenuCheckedIcon,
 } from "./menu";
-import { Box } from "./box";
 import { ScrollArea } from "./scroll-area";
+import { Flex } from "./flex";
 
 const Listbox = styled(
   "ul",
   {
+    display: "flex",
+    flexDirection: "column",
     margin: "unset", // reset <ul>
     listStyle: "none",
     variants: {
@@ -99,7 +100,9 @@ export const ComboboxListbox = forwardRef<
   return (
     <Listbox {...props} ref={ref}>
       <ScrollArea>
-        <Box css={{ maxHeight: theme.spacing[34] }}>{children}</Box>
+        <Flex direction="column" css={{ maxHeight: theme.spacing[34] }}>
+          {children}
+        </Flex>
       </ScrollArea>
     </Listbox>
   );
@@ -109,32 +112,62 @@ ComboboxListbox.displayName = "ComboboxListbox";
 
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
+export const ComboboxItemDescription = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
+  return (
+    <>
+      <ComboboxSeparator
+        style={{
+          display: `var(--ws-combobox-description-display-bottom, none)`,
+          order: "var(--ws-combobox-description-order)",
+        }}
+      />
+      <ComboboxListboxItem
+        hint
+        style={{ order: "var(--ws-combobox-description-order)" }}
+      >
+        {children}
+      </ComboboxListboxItem>
+      <ComboboxSeparator
+        style={{
+          display: `var(--ws-combobox-description-display-top, none)`,
+          order: "var(--ws-combobox-description-order)",
+        }}
+      />
+    </>
+  );
+};
+
 export const Combobox = (props: ComponentProps<typeof Popover>) => {
   return <Popover {...props} modal />;
 };
+
+const StyledPopoverContent = styled(PopoverContent, {
+  "&[data-side=top]": {
+    "--ws-combobox-description-display-top": "block",
+    "--ws-combobox-description-order": 0,
+  },
+  "&[data-side=bottom]": {
+    "--ws-combobox-description-display-bottom": "block",
+    "--ws-combobox-description-order": 2,
+  },
+});
 
 export const ComboboxContent = forwardRef(
   (
     { style, ...props }: ComponentProps<typeof PopoverContent>,
     forwardRef: Ref<HTMLDivElement>
   ) => {
-    // Using a height here is a hack.
-    // It allows to prevent radix from changing position of the popover when height changes due to
-    // hint content changes, otherwise the items will jump under user's cursor.
-    const [contentHeight, setContentHeight] = useState<"auto" | number>("auto");
-    const contentRef = (element: HTMLDivElement | null) => {
-      if (element && contentHeight === "auto") {
-        setContentHeight(element.getBoundingClientRect().height);
-      }
-    };
     return (
       <Portal>
-        <PopoverContent
-          ref={mergeRefs(forwardRef, contentRef)}
+        <StyledPopoverContent
+          ref={forwardRef}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
           }}
-          style={{ height: contentHeight, ...style }}
           {...props}
         />
       </Portal>

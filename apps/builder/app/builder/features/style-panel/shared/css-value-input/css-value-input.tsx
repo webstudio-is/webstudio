@@ -14,6 +14,7 @@ import {
   handleNumericInputArrowKeys,
   ComboboxSeparator,
   theme,
+  ComboboxItemDescription,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -686,12 +687,9 @@ export const CssValueInput = ({
                 </ComboboxListboxItem>
               ))}
               {description && (
-                <>
-                  <ComboboxSeparator />
-                  <ComboboxListboxItem hint>
-                    <Box css={{ width: theme.spacing[25] }}>{description}</Box>
-                  </ComboboxListboxItem>
-                </>
+                <ComboboxItemDescription>
+                  <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+                </ComboboxItemDescription>
               )}
             </ComboboxListbox>
           </ComboboxContent>
