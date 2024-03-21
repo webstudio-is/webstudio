@@ -13,7 +13,7 @@ const Container = styled("button", {
   flexWrap: "wrap",
   alignItems: "baseline",
   justifyContent: "center",
-  border: "1px solid transparent",
+  border: "none",
   borderRadius: theme.borderRadius[3],
   padding: `${theme.spacing[2]}`,
 
@@ -30,22 +30,18 @@ const Container = styled("button", {
       local: {
         color: theme.colors.foregroundLocalMain,
         backgroundColor: theme.colors.backgroundLocalMain,
-        borderColor: theme.colors.borderLocalMain,
       },
       overwritten: {
         color: theme.colors.foregroundOverwrittenMain,
         backgroundColor: theme.colors.backgroundOverwrittenMain,
-        borderColor: theme.colors.borderOverwrittenMain,
       },
       preset: {
         color: theme.colors.foregroundMain,
         backgroundColor: theme.colors.backgroundPresetMain,
-        borderColor: theme.colors.borderMain,
       },
       remote: {
         color: theme.colors.foregroundRemoteMain,
         backgroundColor: theme.colors.backgroundRemoteMain,
-        borderColor: theme.colors.borderRemoteMain,
       },
     },
   },

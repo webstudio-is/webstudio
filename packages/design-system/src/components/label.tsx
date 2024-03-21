@@ -31,6 +31,7 @@ const StyledLabel = styled(RadixLabel, {
   py: theme.spacing[1],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
+  transition: "200ms color, 200ms background-color",
 
   // https://github.com/webstudio-is/webstudio/issues/1271#issuecomment-1478436340
   "&:focus-visible": {
@@ -54,11 +55,15 @@ const StyledLabel = styled(RadixLabel, {
     color: {
       default: {
         color: theme.colors.foregroundMain,
+        "&:hover": {
+          px: theme.spacing[3],
+          mx: `calc(${theme.spacing[3]} * -1)`,
+          backgroundColor: theme.colors.backgroundHover,
+        },
       },
       preset: {
         px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundPresetMain,
-        borderColor: theme.colors.borderMain,
         color: theme.colors.foregroundMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundPresetHover,
@@ -67,7 +72,6 @@ const StyledLabel = styled(RadixLabel, {
       local: {
         px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundLocalMain,
-        borderColor: theme.colors.borderLocalMain,
         color: theme.colors.foregroundLocalMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundLocalHover,
@@ -76,7 +80,6 @@ const StyledLabel = styled(RadixLabel, {
       overwritten: {
         px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundOverwrittenMain,
-        borderColor: theme.colors.borderOverwrittenMain,
         color: theme.colors.foregroundOverwrittenMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundOverwrittenHover,
@@ -85,7 +88,6 @@ const StyledLabel = styled(RadixLabel, {
       remote: {
         px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundRemoteMain,
-        borderColor: theme.colors.borderRemoteMain,
         color: theme.colors.foregroundRemoteMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundRemoteHover,
