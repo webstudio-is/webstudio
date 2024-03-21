@@ -32,6 +32,7 @@ const StyledLabel = styled(RadixLabel, {
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
   transition: "200ms color, 200ms background-color",
+  color: theme.colors.foregroundMain,
 
   // https://github.com/webstudio-is/webstudio/issues/1271#issuecomment-1478436340
   "&:focus-visible": {
@@ -110,7 +111,6 @@ const StyledLabel = styled(RadixLabel, {
   },
 
   defaultVariants: {
-    color: "default",
     sectionTitle: false,
   },
 });
