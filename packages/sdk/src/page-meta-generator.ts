@@ -1,5 +1,8 @@
-import type { Asset, DataSources, Page, Scope } from "@webstudio-is/sdk";
-import { createScope, generateExpression } from "@webstudio-is/sdk";
+import type { Asset } from "./schema/assets";
+import type { DataSources } from "./schema/data-sources";
+import type { Page } from "./schema/pages";
+import { type Scope, createScope } from "./scope";
+import { generateExpression } from "./expression";
 
 export type PageMeta = {
   title: string;

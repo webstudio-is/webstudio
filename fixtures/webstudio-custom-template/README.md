@@ -18,3 +18,12 @@ pnpm fixtures:sync
 pnpm fixtures:build
 # exec `pnpm run dev` to see result
 ```
+
+## Can be used for profiling
+
+```bash
+pnpm build
+pnpm start
+```
+
+execute chrome profiler see web vital events inside

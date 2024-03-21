@@ -16,6 +16,7 @@ import {
   type StyleValue,
   type StyleProperty,
   isValidStaticStyleValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import {
   $assets,
@@ -33,6 +34,7 @@ import {
   compareMedia,
 } from "@webstudio-is/css-engine";
 import { $ephemeralStyles } from "../stores";
+import { resetInert, setInert } from "./inert";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const helpersSheet = createRegularStyleSheet({ name: "helpers" });
@@ -117,40 +119,11 @@ const subscribeEphemeralStyle = (params: Params) => {
   // track custom properties added on previous ephemeral styles change
   const addedCustomProperties = new Set<string>();
 
-  let timeoutHandle: number | undefined = undefined;
-
-  const resetInert = () => {
-    document.body.removeAttribute("inert");
-    clearTimeout(timeoutHandle);
-    timeoutHandle = undefined;
-  };
-
-  // 1000 ms is a reasonable time for the preview to reset.
-  // Anyway should never happen after user has finished preview changes (can happen during preview changes)
-  const AUTO_DISPOSE_INERT_TIMEOUT = 1000;
-
-  // A brief delay to ensure mutation observers within the focus scope are activated by the preview changes.
-  const DISPOSE_INERT_TIMEOUT = 300;
-
-  const setAutoDisposeInert = (timeout: number) => {
-    document.body.setAttribute("inert", "true");
-
-    // To prevent a completely non-interactive canvas due to edge cases,
-    // make sure to clean up preview changes if preview styles fail to reset correctly.
-    clearTimeout(timeoutHandle);
-
-    timeoutHandle = window.setTimeout(resetInert, timeout);
-  };
-
   return $ephemeralStyles.subscribe((ephemeralStyles) => {
-    // Controls (e.g., radix focus scope) may inadvertently shift focus from inputs.
-    // Currently, there's no way to block focus shifts inside iframes (see https://github.com/w3c/webappsec-permissions-policy/issues/273 for future updates).
-    // Workaround: use the `inert` attribute on iframe body to prevent focus changes.
     if (ephemeralStyles.length > 0) {
-      setAutoDisposeInert(AUTO_DISPOSE_INERT_TIMEOUT);
+      setInert();
     } else {
-      // Delayed reset same as set with smaller timeout
-      setAutoDisposeInert(DISPOSE_INERT_TIMEOUT);
+      resetInert();
     }
 
     // track custom properties not set on this change
@@ -160,9 +133,20 @@ const subscribeEphemeralStyle = (params: Params) => {
     const transformer = createImageValueTransformer(assets, {
       assetBaseUrl: params.assetBaseUrl,
     });
+
     for (const styleDecl of ephemeralStyles) {
-      const { instanceId, breakpointId, state, property, value } = styleDecl;
-      const customProperty = `--${toVarNamespace(instanceId, property)}`;
+      const {
+        instanceId,
+        breakpointId,
+        state,
+        property,
+        value,
+        styleSourceId,
+      } = styleDecl;
+      const customProperty = `--${
+        toVarValue(styleSourceId, property, value)?.value ?? "invalid-property"
+      }`;
+
       document.body.style.setProperty(
         customProperty,
         toValue(value, transformer)
@@ -177,14 +161,32 @@ const subscribeEphemeralStyle = (params: Params) => {
         assets,
         params,
       });
-      // this is possible on newly created instances,
-      // properties are not yet defined in the style.
-      if (rule.styleMap.has(property) === false) {
-        const varValue = toVarValue(instanceId, property, value);
-        if (varValue) {
-          rule.styleMap.set(property, varValue);
-        }
+
+      const propertyValue = rule.styleMap.get(property);
+
+      const varValue = toVarValue(styleSourceId, property, value);
+
+      if (varValue === undefined) {
+        continue;
       }
+
+      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
+      if (property === "backgroundClip") {
+        continue;
+      }
+
+      // Variable names are equal, no need to update
+      if (
+        propertyValue?.type === "var" &&
+        propertyValue.value === varValue.value
+      ) {
+        continue;
+      }
+
+      // this is possible on newly created instances, or
+      // in case of property variable defined on the other style source
+      // or properties are not yet defined in the style.
+      rule.styleMap.set(property, varValue);
     }
 
     for (const property of deletedCustomProperties) {
@@ -248,10 +250,10 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
 // to quickly pass the values over CSS variable witout rerendering the components tree.
 // Results in values like this: `var(--namespace, staticValue)`
 const toVarValue = (
-  instanceId: Instance["id"],
+  styleSourceId: StyleDecl["styleSourceId"],
   styleProperty: StyleProperty,
   styleValue: StyleValue
-): undefined | StyleValue => {
+): undefined | VarValue => {
   if (styleValue.type === "var") {
     return styleValue;
   }
@@ -259,7 +261,7 @@ const toVarValue = (
   if (isValidStaticStyleValue(styleValue)) {
     return {
       type: "var",
-      value: toVarNamespace(instanceId, styleProperty),
+      value: `${styleProperty}-${styleSourceId}`,
       fallbacks: [styleValue],
     };
   }
@@ -350,7 +352,7 @@ export const useCssRules = ({
     });
 
     for (const styleDecl of orderedStyles) {
-      const { breakpointId, state, property, value } = styleDecl;
+      const { breakpointId, state, property, value, styleSourceId } = styleDecl;
 
       // create new rule or use cached one
       const rule = getOrCreateRule({
@@ -376,7 +378,7 @@ export const useCssRules = ({
       if (property === "backgroundClip") {
         rule.styleMap.set(property, value);
       } else {
-        const varValue = toVarValue(instanceId, property, value);
+        const varValue = toVarValue(styleSourceId, property, value);
         if (varValue) {
           rule.styleMap.set(property, varValue);
         }
@@ -392,8 +394,4 @@ export const useCssRules = ({
 
     userSheet.render();
   }, [instanceId, selectedState, instanceStyles, breakpoints]);
-};
-
-const toVarNamespace = (id: string, property: string) => {
-  return `${property}-${id}`;
 };

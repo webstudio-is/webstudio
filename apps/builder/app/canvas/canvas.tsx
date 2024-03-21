@@ -56,6 +56,7 @@ import { subscribeCommands } from "~/canvas/shared/commands";
 import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
 import { useScrollNewInstanceIntoView } from "./shared/use-scroll-new-instance-into-view";
+import { subscribeInspectorEdits } from "./inspector-edits";
 
 registerContainers();
 
@@ -129,6 +130,7 @@ const DesignMode = ({ params }: { params: Params }) => {
   useEffect(updateCollaborativeInstanceRect, []);
   useEffect(subscribeInstanceSelection, []);
   useEffect(subscribeInstanceHovering, []);
+  useEffect(subscribeInspectorEdits, []);
   return null;
 };
 

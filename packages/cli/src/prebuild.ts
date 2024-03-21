@@ -17,7 +17,6 @@ import ora from "ora";
 import merge from "deepmerge";
 import {
   generateCss,
-  generateUtilsExport,
   generateWebstudioComponent,
   getIndexesWithinAncestors,
   namespaceMeta,
@@ -26,9 +25,7 @@ import {
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
-  generateResourcesLoader,
   collectionComponent,
-  generatePageMeta,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -47,6 +44,9 @@ import {
   getPagePath,
   parseComponentName,
   executeExpression,
+  generateFormsProperties,
+  generateResourcesLoader,
+  generatePageMeta,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -61,7 +61,6 @@ import {
   isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "~/constants.mjs";
-import type { PageData } from "../templates/defaults/__templates__/route-template";
 
 const limit = pLimit(10);
 
@@ -515,17 +514,6 @@ export const prebuild = async (options: {
       "useState",
       "Fragment",
       "useResource",
-      "PageMeta",
-      "createPageMeta",
-      "PageData",
-      "Asset",
-      "ProjectMeta",
-      "System",
-      "fontAssets",
-      "pageData",
-      "user",
-      "projectId",
-      "formsProperties",
       "Page",
       "_props",
     ]);
@@ -573,17 +561,12 @@ export const prebuild = async (options: {
     const pageData = siteDataByPage[pageId];
     const pageFontAssets = fontAssetsByPage[pageId];
     const pageBackgroundImageAssets = backgroundImageAssetsByPage[pageId];
-    // serialize data only used in runtime
-    const renderedPageData: PageData = {
-      project: siteData.build.pages.meta,
-    };
 
     const rootInstanceId = pageData.page.rootInstanceId;
     const instances = new Map(pageData.build.instances);
     const props = new Map(pageData.build.props);
     const dataSources = new Map(pageData.build.dataSources);
     const resources = new Map(pageData.build.resources);
-    const utilsExport = generateUtilsExport({ props });
     const pageComponent = generateWebstudioComponent({
       scope,
       name: "Page",
@@ -610,12 +593,46 @@ export const prebuild = async (options: {
 
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
+
 import { Fragment, useState } from "react";
-import type { Asset, FontAsset, ImageAsset, ProjectMeta, System } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
-import type { PageMeta } from "@webstudio-is/react-sdk";
 ${componentImports}
-import type { PageData } from "~/routes/_index";
+
+${pageComponent}
+
+export { Page }
+`;
+    const serverExports = `/* eslint-disable */
+/* This is a auto generated file for building the project */ \n
+
+import type { ImageAsset, FontAsset, ProjectMeta, PageMeta } from "@webstudio-is/sdk";
+${generateResourcesLoader({
+  scope,
+  page: pageData.page,
+  dataSources,
+  resources,
+})}
+
+${generatePageMeta({
+  globalScope: scope,
+  page: pageData.page,
+  dataSources,
+})}
+
+${generateFormsProperties(props)}
+
+${generateRemixParams(pageData.page.path)}
+
+export const projectId = "${siteData.build.projectId}";
+
+export const user: { email: string | null } | undefined = ${JSON.stringify(
+      siteData.user
+    )};
+
+export const projectMeta: ProjectMeta = ${JSON.stringify(
+      siteData.build.pages.meta
+    )};
+
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
 
 // Font assets on current page (can be preloaded)
@@ -625,21 +642,6 @@ export const pageBackgroundImageAssets: ImageAsset[] = ${JSON.stringify(
       pageBackgroundImageAssets
     )}
 
-export const pageData: PageData = ${JSON.stringify(renderedPageData)};
-export const user: { email: string | null } | undefined = ${JSON.stringify(
-      siteData.user
-    )};
-export const projectId = "${siteData.build.projectId}";
-
-${generatePageMeta({ globalScope: scope, page: pageData.page, dataSources })}
-
-${pageComponent}
-
-export { Page }
-
-${generateRemixParams(pageData.page.path)}
-
-${utilsExport}
 `;
 
     /*
@@ -673,12 +675,7 @@ ${utilsExport}
 
     await ensureFileInPath(
       join(generatedDir, `${remixRoute}.server.tsx`),
-      generateResourcesLoader({
-        scope,
-        page: pageData.page,
-        dataSources,
-        resources,
-      })
+      serverExports
     );
   }
 

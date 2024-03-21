@@ -485,6 +485,9 @@ importers:
       size-limit:
         specifier: ^9.0.0
         version: 9.0.0
+      web-vitals:
+        specifier: ^3.5.2
+        version: 3.5.2
     devDependencies:
       '@remix-run/dev':
         specifier: ^1.19.2
@@ -17456,6 +17459,10 @@ packages:
   /web-streams-polyfill@4.0.0-beta.3:
     resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
     engines: {node: '>= 14'}
+    dev: false
+
+  /web-vitals@3.5.2:
+    resolution: {integrity: sha512-c0rhqNcHXRkY/ogGDJQxZ9Im9D19hDihbzSQJrsioex+KnFgmMzBiy57Z1EjkhX/+OjyBpclDCzz2ITtjokFmg==}
     dev: false
 
   /webidl-conversions@3.0.1:
