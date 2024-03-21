@@ -114,9 +114,9 @@ export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
 export const ComboboxItemDescription = ({
   children,
-}: {
-  children: ReactNode;
-}) => {
+  style,
+  ...props
+}: ComponentProps<typeof ListboxItem>) => {
   return (
     <>
       <ComboboxSeparator
@@ -125,12 +125,13 @@ export const ComboboxItemDescription = ({
           order: "var(--ws-combobox-description-order)",
         }}
       />
-      <ComboboxListboxItem
+      <ListboxItem
+        {...props}
         hint
-        style={{ order: "var(--ws-combobox-description-order)" }}
+        style={{ ...style, order: "var(--ws-combobox-description-order)" }}
       >
         {children}
-      </ComboboxListboxItem>
+      </ListboxItem>
       <ComboboxSeparator
         style={{
           display: `var(--ws-combobox-description-display-top, none)`,

@@ -12,7 +12,6 @@ import {
   NestedIconLabel,
   InputField,
   handleNumericInputArrowKeys,
-  ComboboxSeparator,
   theme,
   ComboboxItemDescription,
 } from "@webstudio-is/design-system";

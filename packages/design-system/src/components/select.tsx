@@ -7,6 +7,7 @@ import {
   forwardRef,
   useState,
 } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { styled, theme } from "../stitches.config";
 import {
   menuCss,
@@ -17,9 +18,17 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
-import { ScrollArea } from "./scroll-area";
 
-export const SelectContent = styled(Primitive.Content, menuCss);
+export const SelectContent = styled(Primitive.Content, menuCss, {
+  "&[data-side=top]": {
+    "--ws-select-description-display-top": "block",
+    "--ws-select-description-order": 0,
+  },
+  "&[data-side=bottom]": {
+    "--ws-select-description-display-bottom": "block",
+    "--ws-select-description-order": 2,
+  },
+});
 
 export const SelectViewport = Primitive.Viewport;
 
@@ -76,10 +85,41 @@ export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
-const Description = styled(menuItemCss, {
-  flexGrow: 1,
-  alignItems: "flex-start",
-});
+const Description = styled("div", menuItemCss);
+
+// Note this only works in combination with position: popper on Content component, because only popper exposes data-side attribute
+export const SelectItemDescription = ({
+  children,
+  style,
+  ...props
+}: ComponentProps<typeof Description>) => {
+  return (
+    <>
+      <SelectSeparator
+        style={{
+          display: `var(--ws-select-description-display-bottom, none)`,
+          order: "var(--ws-select-description-order)",
+        }}
+      />
+      <Description
+        {...props}
+        hint
+        style={{
+          ...style,
+          order: "var(--ws-select-description-order)",
+        }}
+      >
+        {children}
+      </Description>
+      <SelectSeparator
+        style={{
+          display: `var(--ws-select-description-display-top, none)`,
+          order: "var(--ws-select-description-order)",
+        }}
+      />
+    </>
+  );
+};
 
 type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
@@ -98,6 +138,7 @@ export type SelectProps<Option = SelectOption> = {
   placeholder?: string;
   children?: ReactNode;
   getDescription?: (option: Option) => ReactNode | undefined;
+  position?: ComponentProps<typeof SelectContent>["position"];
 } & (Option extends string
   ? {
       getLabel?: (option: Option) => string | undefined;
@@ -118,8 +159,6 @@ const defaultGetValue = (option: unknown) => {
   );
 };
 
-type SelectBaseProps<Option> = SelectProps<Option>;
-
 const SelectBase = <Option,>(
   {
     options,
@@ -136,8 +175,9 @@ const SelectBase = <Option,>(
     name,
     children,
     prefix,
+    position = "popper",
     ...props
-  }: SelectBaseProps<Option>,
+  }: SelectProps<Option>,
   forwardedRef: Ref<HTMLButtonElement>
 ) => {
   const valueToOption = useMemo(() => {
@@ -154,16 +194,6 @@ const SelectBase = <Option,>(
     ? getDescription?.(itemForDescription)
     : undefined;
 
-  // Using a height here is a hack.
-  // It allows to prevent radix from changing position of the popover when height changes due to
-  // hint content changes, otherwise the items will jump under user's cursor.
-  const [contentHeight, setContentHeight] = useState<"auto" | number>("auto");
-  const contentRef = (element: HTMLDivElement | null) => {
-    if (element && contentHeight === "auto") {
-      setContentHeight(element.getBoundingClientRect().height);
-    }
-  };
-  console.log({ contentHeight });
   return (
     <Primitive.Root
       name={name}
@@ -188,41 +218,40 @@ const SelectBase = <Option,>(
       <Primitive.Portal>
         <SelectContent
           css={{ zIndex: props.css?.zIndex ?? 0 }}
-          position="popper"
-          style={{ height: contentHeight }}
-          ref={contentRef}
+          position={position}
         >
-          <SelectViewport asChild>
-            <ScrollArea css={{ maxHeight: theme.spacing[34] }}>
-              {children ||
-                options.map((option) => (
-                  <SelectItem
-                    key={getValue(option)}
-                    value={getValue(option) ?? ""}
-                    textValue={getLabel(option)}
-                    onMouseEnter={() => {
-                      onItemHighlight?.(option);
-                      setHighlightedItem(option);
-                    }}
-                    onMouseLeave={() => {
-                      onItemHighlight?.();
-                      setHighlightedItem(undefined);
-                    }}
-                    onFocus={() => {
-                      onItemHighlight?.(option);
-                      setHighlightedItem(option);
-                    }}
-                  >
-                    {getLabel(option)}
-                  </SelectItem>
-                ))}
-            </ScrollArea>
+          <SelectScrollUpButton>
+            <ChevronUpIcon />
+          </SelectScrollUpButton>
+          <SelectViewport style={{ order: 1 }}>
+            {children ||
+              options.map((option) => (
+                <SelectItem
+                  key={getValue(option)}
+                  value={getValue(option) ?? ""}
+                  textValue={getLabel(option)}
+                  onMouseEnter={() => {
+                    onItemHighlight?.(option);
+                    setHighlightedItem(option);
+                  }}
+                  onMouseLeave={() => {
+                    onItemHighlight?.();
+                    setHighlightedItem(undefined);
+                  }}
+                  onFocus={() => {
+                    onItemHighlight?.(option);
+                    setHighlightedItem(option);
+                  }}
+                >
+                  {getLabel(option)}
+                </SelectItem>
+              ))}
           </SelectViewport>
+          <SelectScrollDownButton>
+            <ChevronDownIcon />
+          </SelectScrollDownButton>
           {description && (
-            <>
-              <SelectSeparator />
-              <Description hint>{description}</Description>
-            </>
+            <SelectItemDescription>{description}</SelectItemDescription>
           )}
         </SelectContent>
       </Primitive.Portal>
@@ -231,5 +260,5 @@ const SelectBase = <Option,>(
 };
 
 export const Select = forwardRef(SelectBase) as <Option>(
-  props: SelectBaseProps<Option> & { ref?: Ref<HTMLButtonElement> }
+  props: SelectProps<Option> & { ref?: Ref<HTMLButtonElement> }
 ) => JSX.Element | null;
