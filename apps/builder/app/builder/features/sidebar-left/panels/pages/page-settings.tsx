@@ -1333,6 +1333,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
       pages.pages[newHomePageIndex] = oldHomePage;
 
+      // For simplicity skip logic in case of names are same i.e. Old Home 1, Old Home 2
       oldHomePage.name = "Old Home";
       oldHomePage.path = nameToPath(pages, oldHomePage.name);
 
