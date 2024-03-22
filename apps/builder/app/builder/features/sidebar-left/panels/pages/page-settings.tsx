@@ -88,6 +88,8 @@ import {
   deletePageMutable,
   $pageRootScope,
   duplicatePage,
+  isRootId,
+  toTreeData,
 } from "./page-utils";
 import { Form } from "./form";
 import { type System, $publishedOrigin } from "~/builder/features/address-bar";
@@ -641,31 +643,54 @@ const FormFields = ({
 
             <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
               {values.isHomePage ? (
-                <HomeIcon />
+                <>
+                  <HomeIcon />
+                  <Text
+                    css={{
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    “{values.name}” is the home page
+                  </Text>
+                </>
+              ) : isRootId(values.parentFolderId) === false ? (
+                <>
+                  <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                  <Text
+                    css={{
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all",
+                    }}
+                    color="subtle"
+                  >
+                    Move this page to the “{toTreeData(pages).root.name}” folder
+                    to set it as your home page
+                  </Text>
+                </>
               ) : (
-                <Checkbox
-                  id={fieldIds.isHomePage}
-                  onCheckedChange={() => {
-                    onChange({ field: "path", value: "" });
-                    onChange({
-                      field: "isHomePage",
-                      value: !values.isHomePage,
-                    });
-                  }}
-                />
+                <>
+                  <Checkbox
+                    id={fieldIds.isHomePage}
+                    onCheckedChange={() => {
+                      onChange({ field: "path", value: "" });
+                      onChange({
+                        field: "isHomePage",
+                        value: !values.isHomePage,
+                      });
+                    }}
+                  />
+                  <Label
+                    css={{
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all",
+                    }}
+                    htmlFor={fieldIds.isHomePage}
+                  >
+                    Make “{values.name}” the home page
+                  </Label>
+                </>
               )}
-
-              <Label
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                }}
-                htmlFor={fieldIds.isHomePage}
-              >
-                {values.isHomePage
-                  ? `“${values.name}” is the home page`
-                  : `Make “${values.name}” the home page`}
-              </Label>
             </Grid>
           </Grid>
 
