@@ -116,7 +116,7 @@ export const getComputedStyleDecl = ({
   let computedValue: StyleValue = initialValue;
 
   // start computing from the root
-  for (const instanceId of instanceSelector.slice().reverse()) {
+  for (const instanceId of Array.from(instanceSelector).reverse()) {
     // https://drafts.csswg.org/css-cascade-5/#inheriting
     const inheritedValue: StyleValue = computedValue;
 
