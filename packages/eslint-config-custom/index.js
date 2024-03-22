@@ -63,6 +63,16 @@ module.exports = {
           'ImportDeclaration[source.value="react"] ImportDefaultSpecifier',
       },
     ],
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        types: {
+          // un-ban a type that's banned by default
+          "{}": false,
+        },
+        extendDefaults: true,
+      },
+    ],
   },
   ignorePatterns: ["*.d.ts"],
   overrides: [
