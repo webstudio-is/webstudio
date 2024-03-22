@@ -1347,7 +1347,7 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         throw new Error("Root folder must have children");
       }
 
-      // Move home to the first position in the root folder
+      // Swap home to the first position in the root folder
       const childIndexOfHome = rootFolder?.children.indexOf(pages.homePage.id);
 
       if (childIndexOfHome === -1) {
