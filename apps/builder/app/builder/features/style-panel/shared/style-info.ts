@@ -65,6 +65,8 @@ type SourceProperties = {
  * For some cases we are encouraging to use custom defaults, than
  * `initial` values provided by browsers. This helps in controlling the behaviour
  * of such properties
+ *
+ * @todo override in generated properties
  */
 const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
   outlineWidth: { value: 0, type: "unit", unit: "px" },
