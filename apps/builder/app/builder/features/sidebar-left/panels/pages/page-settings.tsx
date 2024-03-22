@@ -1,6 +1,12 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback, useId } from "react";
+import {
+  type FocusEventHandler,
+  useState,
+  useCallback,
+  useId,
+  useEffect,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -1322,8 +1328,12 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       pages.homePage = pages.pages[newHomePageIndex];
 
       pages.homePage.path = "";
+
+      pages.homePage.name = "Home";
+
       pages.pages[newHomePageIndex] = tmp;
 
+      tmp.name = "Old Home";
       tmp.path = nameToPath(pages, tmp.name);
     }
 
@@ -1387,6 +1397,13 @@ export const PageSettings = ({
 
   const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
 
+  const [refreshDebounce, setRefreshDebounce] = useState(0);
+
+  useEffect(() => {
+    // we can't flush immediately as setState haven't propagated at that time
+    handleSubmitDebounced.flush();
+  }, [refreshDebounce, handleSubmitDebounced]);
+
   const handleChange = useCallback(
     <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {
       setUnsavedValues((values) => ({
@@ -1394,6 +1411,10 @@ export const PageSettings = ({
         [event.field]: event.value,
       }));
       handleSubmitDebounced();
+
+      if (event.field === "isHomePage") {
+        setRefreshDebounce((prev) => prev + 1);
+      }
     },
     [handleSubmitDebounced]
   );
