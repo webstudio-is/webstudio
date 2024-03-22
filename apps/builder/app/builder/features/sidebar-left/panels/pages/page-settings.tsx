@@ -1324,17 +1324,37 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         throw new Error(`Page with id ${pageId} not found`);
       }
 
-      const tmp = pages.homePage;
+      const oldHomePage = pages.homePage;
       pages.homePage = pages.pages[newHomePageIndex];
 
       pages.homePage.path = "";
 
       pages.homePage.name = "Home";
 
-      pages.pages[newHomePageIndex] = tmp;
+      pages.pages[newHomePageIndex] = oldHomePage;
 
-      tmp.name = "Old Home";
-      tmp.path = nameToPath(pages, tmp.name);
+      oldHomePage.name = "Old Home";
+      oldHomePage.path = nameToPath(pages, oldHomePage.name);
+
+      const rootFolder = pages.folders.find((folder) => isRootId(folder.id));
+
+      if (rootFolder === undefined) {
+        throw new Error("Root folder not found");
+      }
+
+      if (rootFolder.children === undefined) {
+        throw new Error("Root folder must have children");
+      }
+
+      // Move home to the first position in the root folder
+      const childIndexOfHome = rootFolder?.children.indexOf(pages.homePage.id);
+
+      if (childIndexOfHome === -1) {
+        throw new Error("Both pages must be children of Root folder");
+      }
+
+      rootFolder.children[childIndexOfHome] = rootFolder.children[0];
+      rootFolder.children[0] = pages.homePage.id;
     }
 
     if (pages.homePage.id === pageId) {
