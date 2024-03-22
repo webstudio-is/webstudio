@@ -93,12 +93,26 @@ export const toTreeData = (
         continue;
       }
     }
+
+    // Show Home page first
+    const sortedChildren = Array.from(children.values()).sort(
+      (pageA, pageB) => {
+        if (pageA.id === pages.homePage.id) {
+          return -1;
+        }
+        if (pageB.id === pages.homePage.id) {
+          return 1;
+        }
+        return 0;
+      }
+    );
+
     return {
       type: "folder",
       id: folder.id,
       name: folder.name,
       slug: folder.slug,
-      children: Array.from(children.values()),
+      children: sortedChildren,
     } satisfies TreeFolder;
   };
   const rootFolder = foldersMap.get(PAGES_ROOT_ID);
