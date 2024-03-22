@@ -211,3 +211,115 @@ test("inherit style from ancestors", () => {
       .computedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
+
+test("support currentcolor keyword", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "level1Local",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "level2Local",
+      property: "borderTopColor",
+      // support lower case
+      value: { type: "keyword", value: "currentcolor" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "level2Local",
+      property: "backgroundColor",
+      // support camel case
+      value: { type: "keyword", value: "currentColor" },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([
+      ["level2", ["level2Local"]],
+      ["level1", ["level1Local"]],
+    ]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["level2", "level1"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "borderTopColor" })
+  ).toEqual(
+    expect.objectContaining({
+      computedValue: { type: "keyword", value: "currentcolor" },
+      usedValue: { type: "keyword", value: "blue" },
+    })
+  );
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "backgroundColor" })
+  ).toEqual(
+    expect.objectContaining({
+      computedValue: { type: "keyword", value: "currentColor" },
+      usedValue: { type: "keyword", value: "blue" },
+    })
+  );
+});
+
+test("in color property currentcolor is inherited", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "level1Local",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "level2Local",
+      property: "color",
+      value: { type: "keyword", value: "currentcolor" },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([
+      ["level2", ["level2Local"]],
+      ["level1", ["level1Local"]],
+    ]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["level2", "level1"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" })
+  ).toEqual(
+    expect.objectContaining({
+      computedValue: { type: "keyword", value: "currentcolor" },
+      usedValue: { type: "keyword", value: "blue" },
+    })
+  );
+});
+
+test("in root color property currentcolor is initial", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "color",
+      value: { type: "keyword", value: "currentcolor" },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["body"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" })
+  ).toEqual(
+    expect.objectContaining({
+      computedValue: { type: "keyword", value: "currentcolor" },
+      usedValue: { type: "keyword", value: "black" },
+    })
+  );
+});

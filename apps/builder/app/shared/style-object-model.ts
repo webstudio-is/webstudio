@@ -83,14 +83,13 @@ const getCascadedValue = ({
 };
 
 const matchKeyword = (styleValue: undefined | StyleValue, keyword: string) =>
-  styleValue?.type === "keyword" && styleValue.value === keyword;
+  styleValue?.type === "keyword" && styleValue.value.toLowerCase() === keyword;
 
 /**
  * follow value processing specification
  * https://drafts.csswg.org/css-cascade-5/#value-stages
  *
  * @todo
- * - current color
  * - custom property
  * - html
  * - preset
@@ -108,17 +107,21 @@ export const getComputedStyleDecl = ({
   model: StyleObjectModel;
   styleSelector: StyleSelector;
   property: Property;
-}) => {
+}): {
+  computedValue: StyleValue;
+  usedValue: StyleValue;
+} => {
   const { instanceSelector } = styleSelector;
   const propertyData = properties[property];
   const inherited = propertyData.inherited;
   const initialValue = propertyData.initial;
+  let inheritedValue: StyleValue = initialValue;
   let computedValue: StyleValue = initialValue;
 
   // start computing from the root
   for (const instanceId of Array.from(instanceSelector).reverse()) {
     // https://drafts.csswg.org/css-cascade-5/#inheriting
-    const inheritedValue: StyleValue = computedValue;
+    inheritedValue = computedValue;
 
     // https://drafts.csswg.org/css-cascade-5/#cascaded
     const { cascadedValue } = getCascadedValue({ model, instanceId, property });
@@ -151,5 +154,21 @@ export const getComputedStyleDecl = ({
     computedValue = specifiedValue;
   }
 
-  return { computedValue };
+  // https://drafts.csswg.org/css-cascade-5/#used
+  let usedValue: StyleValue = computedValue;
+  // https://drafts.csswg.org/css-color-4/#resolving-other-colors
+  if (matchKeyword(computedValue, "currentcolor")) {
+    if (property === "color") {
+      usedValue = inheritedValue;
+    } else {
+      const currentColor = getComputedStyleDecl({
+        model,
+        styleSelector,
+        property: "color",
+      });
+      usedValue = currentColor.usedValue;
+    }
+  }
+
+  return { computedValue, usedValue };
 };
