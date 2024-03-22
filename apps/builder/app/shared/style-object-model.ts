@@ -82,7 +82,7 @@ const getCascadedValue = ({
   return { cascadedValue };
 };
 
-const isKeyword = (styleValue: undefined | StyleValue, keyword: string) =>
+const matchKeyword = (styleValue: undefined | StyleValue, keyword: string) =>
   styleValue?.type === "keyword" && styleValue.value === keyword;
 
 /**
@@ -127,11 +127,11 @@ export const getComputedStyleDecl = ({
     let specifiedValue: StyleValue;
     // explicit defaulting
     // https://drafts.csswg.org/css-cascade-5/#defaulting-keywords
-    if (isKeyword(cascadedValue, "initial")) {
+    if (matchKeyword(cascadedValue, "initial")) {
       specifiedValue = initialValue;
-    } else if (isKeyword(cascadedValue, "inherit")) {
+    } else if (matchKeyword(cascadedValue, "inherit")) {
       specifiedValue = inheritedValue;
-    } else if (isKeyword(cascadedValue, "unset")) {
+    } else if (matchKeyword(cascadedValue, "unset")) {
       if (inherited) {
         specifiedValue = inheritedValue;
       } else {
