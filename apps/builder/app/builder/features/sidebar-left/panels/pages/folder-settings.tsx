@@ -38,7 +38,7 @@ import { Header, HeaderSuffixSpacer } from "../../shared/panel";
 import { $pages } from "~/shared/nano-states";
 import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
-import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import {
   isSlugUsed,
   registerFolderChildMutable,

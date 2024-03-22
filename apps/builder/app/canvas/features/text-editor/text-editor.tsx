@@ -30,7 +30,7 @@ import {
   $convertTextToLexical,
 } from "./interop";
 import { colord } from "colord";
-import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
