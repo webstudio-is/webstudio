@@ -114,13 +114,12 @@ export const getComputedStyleDecl = ({
   const propertyData = properties[property];
   const inherited = propertyData.inherited;
   const initialValue = propertyData.initial;
-  let inheritedValue: StyleValue = initialValue;
   let computedValue: StyleValue = initialValue;
 
   // start computing from the root
   for (const instanceId of Array.from(instanceSelector).reverse()) {
     // https://drafts.csswg.org/css-cascade-5/#inheriting
-    inheritedValue = computedValue;
+    const inheritedValue: StyleValue = computedValue;
 
     // https://drafts.csswg.org/css-cascade-5/#cascaded
     const { cascadedValue } = getCascadedValue({ model, instanceId, property });
