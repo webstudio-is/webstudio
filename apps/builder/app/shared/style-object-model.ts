@@ -108,7 +108,6 @@ export const getComputedStyleDecl = ({
   styleSelector: StyleSelector;
   property: Property;
 }): {
-  computedValue: StyleValue;
   usedValue: StyleValue;
 } => {
   const { instanceSelector } = styleSelector;
@@ -132,7 +131,12 @@ export const getComputedStyleDecl = ({
     // https://drafts.csswg.org/css-cascade-5/#defaulting-keywords
     if (matchKeyword(cascadedValue, "initial")) {
       specifiedValue = initialValue;
-    } else if (matchKeyword(cascadedValue, "inherit")) {
+    } else if (
+      matchKeyword(cascadedValue, "inherit") ||
+      // treat currentcolor as inherit when used on color property
+      // https://www.w3.org/TR/css-color-3/#currentColor-def
+      (property === "color" && matchKeyword(cascadedValue, "currentcolor"))
+    ) {
       specifiedValue = inheritedValue;
     } else if (matchKeyword(cascadedValue, "unset")) {
       if (inherited) {
@@ -158,17 +162,13 @@ export const getComputedStyleDecl = ({
   let usedValue: StyleValue = computedValue;
   // https://drafts.csswg.org/css-color-4/#resolving-other-colors
   if (matchKeyword(computedValue, "currentcolor")) {
-    if (property === "color") {
-      usedValue = inheritedValue;
-    } else {
-      const currentColor = getComputedStyleDecl({
-        model,
-        styleSelector,
-        property: "color",
-      });
-      usedValue = currentColor.usedValue;
-    }
+    const currentColor = getComputedStyleDecl({
+      model,
+      styleSelector,
+      property: "color",
+    });
+    usedValue = currentColor.usedValue;
   }
 
-  return { computedValue, usedValue };
+  return { usedValue };
 };

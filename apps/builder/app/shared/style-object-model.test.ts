@@ -38,18 +38,15 @@ test("use cascaded style when specified and fallback to initial value", () => {
   };
   // cascaded property
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
   ).toEqual({ type: "unit", unit: "px", value: 10 });
   // initial for not inherited property
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "height" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "height" }).usedValue
   ).toEqual({ type: "keyword", value: "auto" });
   // initial for inherited property
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
   ).toEqual({ type: "keyword", value: "black" });
 });
 
@@ -70,8 +67,7 @@ test("support initial keyword", () => {
     instanceSelector: ["body"],
   };
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
 
@@ -115,13 +111,11 @@ test("support inherit keyword", () => {
   };
   // should inherit declared value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
   ).toEqual({ type: "unit", unit: "px", value: 10 });
   // should inherit initial value as height is not inherited
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "height" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "height" }).usedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
 
@@ -164,13 +158,11 @@ test("support unset keyword", () => {
   };
   // when property is not inherited use initial value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
   ).toEqual({ type: "keyword", value: "auto" });
   // when property is inherited use inherited value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
   ).toEqual({ type: "keyword", value: "blue" });
 });
 
@@ -202,13 +194,11 @@ test("inherit style from ancestors", () => {
   };
   // inherited value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
   ).toEqual({ type: "keyword", value: "blue" });
   // not inherited value
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "width" })
-      .computedValue
+    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
   ).toEqual({ type: "keyword", value: "auto" });
 });
 
@@ -247,20 +237,12 @@ test("support currentcolor keyword", () => {
   };
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "borderTopColor" })
-  ).toEqual(
-    expect.objectContaining({
-      computedValue: { type: "keyword", value: "currentcolor" },
-      usedValue: { type: "keyword", value: "blue" },
-    })
-  );
+      .usedValue
+  ).toEqual({ type: "keyword", value: "blue" });
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "backgroundColor" })
-  ).toEqual(
-    expect.objectContaining({
-      computedValue: { type: "keyword", value: "currentColor" },
-      usedValue: { type: "keyword", value: "blue" },
-    })
-  );
+      .usedValue
+  ).toEqual({ type: "keyword", value: "blue" });
 });
 
 test("in color property currentcolor is inherited", () => {
@@ -277,25 +259,27 @@ test("in color property currentcolor is inherited", () => {
       property: "color",
       value: { type: "keyword", value: "currentcolor" },
     },
+    {
+      breakpointId: "base",
+      styleSourceId: "level3Local",
+      property: "color",
+      value: { type: "keyword", value: "currentcolor" },
+    },
   ];
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([
+      ["level3", ["level3Local"]],
       ["level2", ["level2Local"]],
       ["level1", ["level1Local"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
   };
   const styleSelector: StyleSelector = {
-    instanceSelector: ["level2", "level1"],
+    instanceSelector: ["level3", "level2", "level1"],
   };
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" })
-  ).toEqual(
-    expect.objectContaining({
-      computedValue: { type: "keyword", value: "currentcolor" },
-      usedValue: { type: "keyword", value: "blue" },
-    })
-  );
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "blue" });
 });
 
 test("in root color property currentcolor is initial", () => {
@@ -315,11 +299,6 @@ test("in root color property currentcolor is initial", () => {
     instanceSelector: ["body"],
   };
   expect(
-    getComputedStyleDecl({ model, styleSelector, property: "color" })
-  ).toEqual(
-    expect.objectContaining({
-      computedValue: { type: "keyword", value: "currentcolor" },
-      usedValue: { type: "keyword", value: "black" },
-    })
-  );
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "black" });
 });
