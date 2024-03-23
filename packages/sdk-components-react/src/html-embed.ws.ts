@@ -27,7 +27,7 @@ export const propsMeta: WsComponentPropsMeta = {
       ...props.executeScriptOnCanvas,
       label: "Run scripts on canvas",
       description:
-        "Allow script execution without switching to preview mode. This only affects editing mode.",
+        "Allow script execution on canvas without switching to preview mode. This only affects editing mode.",
     },
     code: {
       required: true,
