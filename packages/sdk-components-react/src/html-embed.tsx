@@ -87,8 +87,7 @@ const Placeholder = (props: ChildProps) => {
 };
 
 /**
- * Scripts are executed when rendered client side and `shouldExecute` is true, otherwise regular innerHTML won't execute scripts when clientOnly setting is used.
- * Server-side rendered scripts are executed as like any server-side rendered HTML.
+ * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
  */
 const ExecutableHtml = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
@@ -112,7 +111,7 @@ const ExecutableHtml = (props: ChildProps) => {
 };
 
 /**
- * Scripts are executed when rendered server side
+ * Scripts are executed when rendered server side without any manual intervention.
  */
 const InnerHtml = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
