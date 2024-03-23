@@ -302,3 +302,259 @@ test("in root color property currentcolor is initial", () => {
     getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
   ).toEqual({ type: "keyword", value: "black" });
 });
+
+test("support custom properties", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "--my-property",
+      value: { type: "keyword", value: "blue" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "color",
+      value: { type: "var", value: "--my-property", fallbacks: [] },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["body"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "--my-property" })
+      .usedValue
+  ).toEqual({ type: "keyword", value: "blue" });
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "blue" });
+});
+
+test("use fallback value when custom property does not exist", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "color",
+      value: {
+        type: "var",
+        value: "--my-property",
+        fallbacks: [{ type: "keyword", value: "red" }],
+      },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["body"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("use initial value when custom property does not exist", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "color",
+      value: { type: "var", value: "--my-property", fallbacks: [] },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["body"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "black" });
+});
+
+test("use inherited value when custom property does not exist", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "width",
+      value: { type: "keyword", value: "fit-content" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+      property: "color",
+      value: { type: "var", value: "--my-property", fallbacks: [] },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+      property: "width",
+      value: { type: "var", value: "--my-property", fallbacks: [] },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([
+      ["body", ["bodyLocal"]],
+      ["box", ["boxLocal"]],
+    ]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["box", "body"],
+  };
+  // inherited property use inherited value
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+  // not inherited property use initial value
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
+  ).toEqual({ type: "keyword", value: "auto" });
+});
+
+test("inherit custom property", () => {
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "level1Local",
+      property: "--my-property",
+      value: { type: "keyword", value: "blue" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "level3Local",
+      property: "color",
+      value: { type: "var", value: "--my-property", fallbacks: [] },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([
+      ["level3", ["level3Local"]],
+      ["level2", ["level2Local"]],
+      ["level1", ["level1Local"]],
+    ]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["level3", "level2", "level1"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "--my-property" })
+      .usedValue
+  ).toEqual({ type: "keyword", value: "blue" });
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "blue" });
+});
+
+test("resolve dependency cycles in custom properties", () => {
+  // .body { --color: red; }
+  // .box { --color: var(--another); --another: var(--color); background-color: var(--color) }
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "--color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+      property: "--color",
+      value: { type: "var", value: "--another", fallbacks: [] },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+      property: "--another",
+      value: { type: "var", value: "--color", fallbacks: [] },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+      property: "color",
+      value: { type: "var", value: "--color", fallbacks: [] },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([
+      ["body", ["bodyLocal"]],
+      ["box", ["boxLocal"]],
+    ]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["box", "body"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "black" });
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "--color" })
+      .usedValue
+  ).toEqual({ type: "invalid", value: "" });
+});
+
+test("resolve non-cyclic references in custom properties", () => {
+  // .body { --color: red; --another: var(--color); }
+  // .box { --color: var(--another); background-color: var(--color) }
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "--color",
+      value: { type: "keyword", value: "red" },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      property: "--another",
+      value: { type: "var", value: "--color", fallbacks: [] },
+    },
+    {
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+      property: "--color",
+      value: { type: "var", value: "--another", fallbacks: [] },
+    },
+    // same custom property name is defined in parent
+    {
+      breakpointId: "base",
+      styleSourceId: "boxLocal",
+      property: "color",
+      value: { type: "var", value: "--color", fallbacks: [] },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([
+      ["body", ["bodyLocal"]],
+      ["box", ["boxLocal"]],
+    ]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+  };
+  const styleSelector: StyleSelector = {
+    instanceSelector: ["box", "body"],
+  };
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "color" }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+  expect(
+    getComputedStyleDecl({ model, styleSelector, property: "--color" })
+      .usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+});

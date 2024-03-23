@@ -116,5 +116,10 @@ export const toValue = (
     return `${value.name}(${toValue(value.args, transformValue)})`;
   }
 
+  // https://www.w3.org/TR/css-variables-1/#guaranteed-invalid
+  if (value.type === "guaranteedInvalid") {
+    return "";
+  }
+
   return captureError(new Error("Unknown value type"), value);
 };
