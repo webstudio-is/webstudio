@@ -96,11 +96,10 @@ const ExecutableHtml = (props: ChildProps) => {
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container == null) {
-      return;
+    if (container) {
+      execute(container);
     }
-    execute(container);
-  }, [shouldExecute]);
+  }, []);
 
   return (
     <div
