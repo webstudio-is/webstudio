@@ -2,6 +2,11 @@ import { createContext, useContext } from "react";
 import type { ImageLoader } from "@webstudio-is/image";
 
 export type Params = {
+  /**
+   * When rendering a published version, there is no renderer defined.
+   * - canvas is the builder canvas in dev mode
+   * - preview is the preview mode in builder
+   */
   renderer?: "canvas" | "preview";
   /**
    * Base url ir base path for images with ending slash.

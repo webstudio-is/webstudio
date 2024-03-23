@@ -77,17 +77,26 @@ type ChildProps = {
   shouldExecute?: boolean;
 };
 
+const Placeholder = (props: ChildProps) => {
+  const { code, innerRef, ...rest } = props;
+  return (
+    <div ref={innerRef} {...rest} style={{ padding: "20px" }}>
+      {'Open the "Settings" panel to insert HTML code'}
+    </div>
+  );
+};
+
 /**
  * Scripts are executed when rendered client side and `shouldExecute` is true, otherwise regular innerHTML won't execute scripts when clientOnly setting is used.
  * Server-side rendered scripts are executed as like any server-side rendered HTML.
  */
 const ExecutableHtml = (props: ChildProps) => {
-  const { code, shouldExecute, innerRef, ...rest } = props;
+  const { code, innerRef, ...rest } = props;
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container == null || shouldExecute !== true) {
+    if (container == null) {
       return;
     }
     execute(container);
@@ -103,13 +112,47 @@ const ExecutableHtml = (props: ChildProps) => {
   );
 };
 
-const Placeholder = (props: ChildProps) => {
+/**
+ * Scripts are executed when rendered server side
+ */
+const InnerHtml = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
+
   return (
-    <div ref={innerRef} {...rest} style={{ padding: "20px" }}>
-      {'Open the "Settings" panel to insert HTML code'}
-    </div>
+    <div
+      {...rest}
+      ref={innerRef}
+      style={{ display: "contents" }}
+      dangerouslySetInnerHTML={{ __html: code ?? "" }}
+    />
   );
+};
+
+const shouldExecute = ({
+  renderer,
+  executeScriptOnCanvas = false,
+  clientOnly = false,
+}: {
+  renderer?: "canvas" | "preview";
+  executeScriptOnCanvas?: boolean;
+  clientOnly?: boolean;
+}) => {
+  // We are rendering in published mode.
+  if (renderer === undefined) {
+    return clientOnly;
+  }
+
+  // On canvas in preview we always execute the scripts, because in doesn't have SSR.
+  if (renderer === "preview") {
+    return true;
+  }
+
+  // On builder canvas we have a special setting to allow execution. This is useful if the execution doesn't hurt the build process.
+  if (renderer === "canvas") {
+    return executeScriptOnCanvas;
+  }
+
+  return false;
 };
 
 type HtmlEmbedProps = {
@@ -131,19 +174,17 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       return <Placeholder innerRef={ref} {...rest} />;
     }
 
-    const shouldExecute =
-      (renderer === "canvas" && executeScriptOnCanvas === true) ||
-      renderer === "preview" ||
-      clientOnly;
+    const execute = shouldExecute({
+      renderer,
+      executeScriptOnCanvas,
+      clientOnly,
+    });
 
-    return (
-      <ExecutableHtml
-        innerRef={ref}
-        code={code}
-        shouldExecute={shouldExecute}
-        {...rest}
-      />
-    );
+    if (execute) {
+      return <ExecutableHtml innerRef={ref} code={code} {...rest} />;
+    }
+
+    return <InnerHtml innerRef={ref} code={code} {...rest} />;
   }
 );
 
