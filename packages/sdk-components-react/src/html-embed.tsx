@@ -50,7 +50,7 @@ const execute = async (container: HTMLElement) => {
 
   scripts.forEach((script) => {
     const type = script.getAttribute("type");
-    if (type == null || type == "" || type === "text/javascript") {
+    if (type == null || type === "" || type === "text/javascript") {
       const tasks = script.hasAttribute("async") ? asyncTasks : syncTasks;
       tasks.push(() => {
         return insertScript(script);
