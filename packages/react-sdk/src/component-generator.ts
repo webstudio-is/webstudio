@@ -62,7 +62,7 @@ const generateAction = ({
           const valueName = scope.getName(dep.id, dep.name);
           return valueName;
         }
-        // eslint-disable-next-line no-console
+
         console.error(`Unknown dependency "${identifier}"`);
       },
     });

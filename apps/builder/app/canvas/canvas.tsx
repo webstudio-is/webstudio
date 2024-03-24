@@ -85,8 +85,8 @@ const useElementsTree = (
 
   if (typeof window === "undefined") {
     // @todo remove after https://github.com/webstudio-is/webstudio/issues/1313 now its needed to be sure that no leaks exists
-    // eslint-disable-next-line no-console
-    console.log({
+
+    console.info({
       $assets: $assets.get().size,
       $pages: $pages.get()?.pages.length ?? 0,
       $instances: $instances.get().size,
