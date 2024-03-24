@@ -164,7 +164,6 @@ export const fetchResult = async (
                   appliedOperations.add(JSON.stringify(operation));
                 }
               } catch (error) {
-                // eslint-disable-next-line no-console
                 console.error(error);
               }
             }

@@ -85,7 +85,7 @@ export default async () => {
       let hasNext = true;
 
       while (hasNext) {
-        console.log("CHUNK", cursor);
+        console.info("CHUNK", cursor);
         console.time("read");
 
         const cursorOptions: {} = cursor
@@ -138,7 +138,7 @@ export default async () => {
           }
         }
         console.timeEnd("parse-change");
-        console.log("changedBuilds.length", changedBuilds.length);
+        console.info("changedBuilds.length", changedBuilds.length);
         console.time("update");
 
         const sql = `
@@ -159,7 +159,7 @@ export default async () => {
         );
 
         console.timeEnd("update");
-        console.log("res", res);
+        console.info("res", res);
       }
     },
     { timeout: 3600000 }

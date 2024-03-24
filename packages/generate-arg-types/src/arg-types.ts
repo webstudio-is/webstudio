@@ -115,8 +115,7 @@ export const getArgType = (propItem: PropItem): PropMeta | undefined => {
         return;
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.log("Error while parsing prop:", propItem);
+    console.info("Error while parsing prop:", propItem);
     throw error;
   }
 };

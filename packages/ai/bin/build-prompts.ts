@@ -31,6 +31,6 @@ prompts.forEach((filePath) => {
     .replace(/\$/g, "\\$"); // @todo technically we should escape only the $ that belong to template literals.;
 
   fs.writeFileSync(generatedPath, `export const prompt = \`${content}\`;\n`);
-  // eslint-disable-next-line no-console
-  console.log(`Done generating argTypes for ${generatedPath}`);
+
+  console.info(`Done generating argTypes for ${generatedPath}`);
 });

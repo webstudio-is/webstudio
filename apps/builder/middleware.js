@@ -215,7 +215,6 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
   }
 
   if (success === false) {
-    // eslint-disable-next-line no-console
     console.warn(
       `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining} key=${key}`
     );
@@ -401,7 +400,6 @@ app.onError(async (err, ctx) => {
     return err.getResponse();
   }
 
-  // eslint-disable-next-line no-console
   console.error(err.stack ?? err);
 
   return ctx.json({ cause: err.cause, message: err.message });
@@ -424,7 +422,6 @@ if (process.env.NODE_ENV !== "production") {
 
     importedModule.then(({ serve }) => {
       serve({ ...app, port: 3002 }, (info) => {
-        // eslint-disable-next-line no-console
         console.info(`Listening on http://localhost:${info.port}`);
       });
     });
