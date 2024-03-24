@@ -6,9 +6,10 @@ import {
   useMemo,
   forwardRef,
   useState,
+  useEffect,
 } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
-import { styled, theme } from "../stitches.config";
+import { rawTheme, styled, theme } from "../stitches.config";
 import {
   menuCss,
   menuItemCss,
@@ -18,6 +19,7 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
+import { atom } from "nanostores";
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
   "&[data-side=top]": {
@@ -91,8 +93,26 @@ const Description = styled("div", menuItemCss);
 export const SelectItemDescription = ({
   children,
   style,
+  $highlightedItem,
+  value,
+  defaultValue,
+  getDescription,
   ...props
 }: ComponentProps<typeof Description>) => {
+  const [description, setDescription] = useState<string>();
+
+  useEffect(() => {
+    $highlightedItem.subscribe((highlightedItem) => {
+      const itemForDescription = highlightedItem ?? value ?? defaultValue;
+      const description = itemForDescription
+        ? getDescription?.(itemForDescription)
+        : undefined;
+      setDescription(description);
+    });
+  }, [$highlightedItem, getDescription, value, defaultValue]);
+  if (description === undefined) {
+    return;
+  }
   return (
     <>
       <SelectSeparator
@@ -109,7 +129,7 @@ export const SelectItemDescription = ({
           order: "var(--ws-select-description-order)",
         }}
       >
-        {children}
+        {description}
       </Description>
       <SelectSeparator
         style={{
@@ -138,7 +158,6 @@ export type SelectProps<Option = SelectOption> = {
   placeholder?: string;
   children?: ReactNode;
   getDescription?: (option: Option) => ReactNode | undefined;
-  position?: ComponentProps<typeof SelectContent>["position"];
 } & (Option extends string
   ? {
       getLabel?: (option: Option) => string | undefined;
@@ -175,7 +194,6 @@ const SelectBase = <Option,>(
     name,
     children,
     prefix,
-    position = "popper",
     ...props
   }: SelectProps<Option>,
   forwardedRef: Ref<HTMLButtonElement>
@@ -187,12 +205,7 @@ const SelectBase = <Option,>(
     }
     return map;
   }, [options, getValue]);
-  const [highlightedItem, setHighlightedItem] = useState<Option | undefined>();
-
-  const itemForDescription = highlightedItem ?? value ?? defaultValue;
-  const description = itemForDescription
-    ? getDescription?.(itemForDescription)
-    : undefined;
+  const $highlightedItem = atom<Option | undefined>();
 
   return (
     <Primitive.Root
@@ -217,13 +230,14 @@ const SelectBase = <Option,>(
       </Primitive.Trigger>
       <Primitive.Portal>
         <SelectContent
+          position="popper"
           css={{ zIndex: props.css?.zIndex ?? 0 }}
-          position={position}
         >
-          <SelectScrollUpButton>
+          <SelectScrollUpButton css={{ order: 1 }}>
             <ChevronUpIcon />
           </SelectScrollUpButton>
-          <SelectViewport style={{ order: 1 }}>
+
+          <SelectViewport style={{ order: 1, maxHeight: rawTheme.spacing[34] }}>
             {children ||
               options.map((option) => (
                 <SelectItem
@@ -232,27 +246,31 @@ const SelectBase = <Option,>(
                   textValue={getLabel(option)}
                   onMouseEnter={() => {
                     onItemHighlight?.(option);
-                    setHighlightedItem(option);
+                    $highlightedItem.set(option);
                   }}
                   onMouseLeave={() => {
                     onItemHighlight?.();
-                    setHighlightedItem(undefined);
+                    $highlightedItem.set(undefined);
                   }}
                   onFocus={() => {
                     onItemHighlight?.(option);
-                    setHighlightedItem(option);
+                    $highlightedItem.set(option);
                   }}
                 >
                   {getLabel(option)}
                 </SelectItem>
               ))}
           </SelectViewport>
-          <SelectScrollDownButton>
+
+          <SelectScrollDownButton css={{ order: 2 }}>
             <ChevronDownIcon />
           </SelectScrollDownButton>
-          {description && (
-            <SelectItemDescription>{description}</SelectItemDescription>
-          )}
+          <SelectItemDescription
+            $highlightedItem={$highlightedItem}
+            value={value}
+            defaultValue={defaultValue}
+            getDescription={getDescription}
+          />
         </SelectContent>
       </Primitive.Portal>
     </Primitive.Root>
