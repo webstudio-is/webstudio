@@ -55,7 +55,6 @@ export const serializeConfig = <Type>(data: Type) => {
 };
 
 const parseBuild = async (build: DbBuild): Promise<Build> => {
-  // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
     const pages = parsePages(build.pages);
@@ -87,7 +86,6 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
     } satisfies Data["build"] & { marketplaceProduct: MarketplaceProduct };
     return result;
   } finally {
-    // eslint-disable-next-line no-console
     console.timeEnd("parseBuild");
   }
 };

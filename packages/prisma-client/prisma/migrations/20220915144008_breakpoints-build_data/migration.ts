@@ -37,7 +37,7 @@ export default () => {
       //     );
 
       //     if (build === undefined) {
-      //       // eslint-disable-next-line no-console
+      //
       //       console.warn(
       //         `Build not found for breakpoint ${breakpoint.treeId}. Deleting!`
       //       );
@@ -62,7 +62,6 @@ export default () => {
         );
 
         if (build === undefined) {
-          // eslint-disable-next-line no-console
           console.warn(
             `Build not found for breakpoint ${breakpoint.treeId}. Deleting!`
           );
@@ -71,8 +70,7 @@ export default () => {
             where: { treeId: breakpoint.treeId },
           });
         } else {
-          // eslint-disable-next-line no-console
-          console.log(`Updating breakpoint ${breakpoint.treeId}`);
+          console.info(`Updating breakpoint ${breakpoint.treeId}`);
           await prisma.breakpoints.update({
             where: { treeId: breakpoint.treeId },
             data: {

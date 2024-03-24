@@ -39,7 +39,7 @@ export async function handler({ request }) {
 
   if (result.succes === true) {
     // An array of detected command names.
-    console.log(result.data);
+    console.info(result.data);
   }
 }
 ```

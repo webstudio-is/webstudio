@@ -815,7 +815,6 @@ export const useStyleInfoByInstanceId = (
     instanceSelector !== undefined &&
     isAncestorOrSelfOfSelectedInstance(instanceSelector) === false
   ) {
-    // eslint-disable-next-line no-console
     console.error(
       `The style works correctly only on ancestors of the selected element,
        as our style data only includes information about these ancestors.
