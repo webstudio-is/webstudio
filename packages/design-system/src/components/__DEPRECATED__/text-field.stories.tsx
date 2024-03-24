@@ -166,7 +166,6 @@ export const Interactive: ComponentStory<typeof DeprecatedTextField> = () => {
       />
       <Button
         onClick={() => {
-          // eslint-disable-next-line no-console
           setValue(JSON.stringify(wrapperRef.current?.getBoundingClientRect()));
         }}
       >

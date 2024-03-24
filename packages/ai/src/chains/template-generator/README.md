@@ -77,7 +77,7 @@ function UiComponent() {
         ).then((response) => {
           if (response.success) {
             // Log the template
-            console.log(response.data);
+            console.info(response.data);
           }
         });
       }}

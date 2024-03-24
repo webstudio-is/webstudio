@@ -21,9 +21,9 @@ export const main = async () => {
         if (err) {
           throw err; // preserve stack
         }
-        // eslint-disable-next-line no-console
+
         console.error(msg);
-        // eslint-disable-next-line no-console
+
         console.error(yargs.help());
 
         process.exit(1);

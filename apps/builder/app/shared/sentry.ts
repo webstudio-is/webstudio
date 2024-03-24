@@ -37,8 +37,7 @@ export const sentryMessage = ({
   }
 
   if (skipLogging !== true) {
-    // eslint-disable-next-line no-console
-    console.log(message);
+    console.info(message);
   }
 };
 
@@ -56,7 +55,6 @@ export const sentryException = ({
     });
   }
   if (skipLogging !== true) {
-    // eslint-disable-next-line no-console
     console.error(error);
   }
 };

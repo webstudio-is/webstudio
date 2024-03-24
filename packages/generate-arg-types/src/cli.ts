@@ -44,9 +44,9 @@ if (typeof componentsGlobString === "undefined") {
 const globs = componentsGlobString.split(" ");
 const componentFiles = fg.sync(globs);
 
-console.log(`Resolved tscofig.json at ${tsConfigPath}\n`);
-console.log(`Glob patterns used: \n${globs.join("\n")}\n`);
-console.log(`Found files to process: \n${componentFiles.join("\n")}\n`);
+console.info(`Resolved tscofig.json at ${tsConfigPath}\n`);
+console.info(`Glob patterns used: \n${globs.join("\n")}\n`);
+console.info(`Found files to process: \n${componentFiles.join("\n")}\n`);
 
 if (componentFiles.length === 0) {
   throw new Error("No component files found");
@@ -146,6 +146,6 @@ type CustomDescriptionsType = {
     mkdirSync(generatedDir, { recursive: true });
     writeFileSync(generatedPath, fileContent);
 
-    console.log(`Done generating argTypes for ${generatedPath}`);
+    console.info(`Done generating argTypes for ${generatedPath}`);
   }
 })();

@@ -35,7 +35,6 @@ const logEvent = (
     start: performance.now(),
   });
 
-  // eslint-disable-next-line no-console
   console.info(JSON.stringify({ name, params }));
 };
 
@@ -192,9 +191,8 @@ const sendToAnalitics: CLSReportCallbackWithAttribution &
         params.debug_target_path = content;
       }
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error(e);
-      // eslint-disable-next-line no-console
+
       console.error(`selector: ${selector} seems like not working`);
     }
   }
@@ -223,7 +221,6 @@ export const subscribe = () => {
   try {
     _isMobile = window.matchMedia("(hover: none)").matches;
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error(e);
   }
 

@@ -193,7 +193,6 @@ export default () => {
                   value: [style.value],
                 };
               } else {
-                // eslint-disable-next-line no-console
                 console.warn("unsupported style value", style.value);
               }
             }
