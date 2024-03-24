@@ -6,7 +6,6 @@ import {
   useMemo,
   forwardRef,
   useState,
-  useEffect,
 } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { rawTheme, styled, theme } from "../stitches.config";
@@ -19,7 +18,6 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
-import { atom } from "nanostores";
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
   "&[data-side=top]": {
@@ -93,26 +91,8 @@ const Description = styled("div", menuItemCss);
 export const SelectItemDescription = ({
   children,
   style,
-  $highlightedItem,
-  value,
-  defaultValue,
-  getDescription,
   ...props
 }: ComponentProps<typeof Description>) => {
-  const [description, setDescription] = useState<string>();
-
-  useEffect(() => {
-    $highlightedItem.subscribe((highlightedItem) => {
-      const itemForDescription = highlightedItem ?? value ?? defaultValue;
-      const description = itemForDescription
-        ? getDescription?.(itemForDescription)
-        : undefined;
-      setDescription(description);
-    });
-  }, [$highlightedItem, getDescription, value, defaultValue]);
-  if (description === undefined) {
-    return;
-  }
   return (
     <>
       <SelectSeparator
@@ -129,7 +109,7 @@ export const SelectItemDescription = ({
           order: "var(--ws-select-description-order)",
         }}
       >
-        {description}
+        {children}
       </Description>
       <SelectSeparator
         style={{
@@ -205,7 +185,13 @@ const SelectBase = <Option,>(
     }
     return map;
   }, [options, getValue]);
-  const $highlightedItem = atom<Option | undefined>();
+
+  const [highlightedItem, setHighlightedItem] = useState<Option>();
+
+  const itemForDescription = highlightedItem ?? value ?? defaultValue;
+  const description = itemForDescription
+    ? getDescription?.(itemForDescription)
+    : undefined;
 
   return (
     <Primitive.Root
@@ -246,15 +232,15 @@ const SelectBase = <Option,>(
                   textValue={getLabel(option)}
                   onMouseEnter={() => {
                     onItemHighlight?.(option);
-                    $highlightedItem.set(option);
+                    setHighlightedItem(option);
                   }}
                   onMouseLeave={() => {
                     onItemHighlight?.();
-                    $highlightedItem.set(undefined);
+                    setHighlightedItem(undefined);
                   }}
                   onFocus={() => {
                     onItemHighlight?.(option);
-                    $highlightedItem.set(option);
+                    setHighlightedItem(option);
                   }}
                 >
                   {getLabel(option)}
@@ -265,12 +251,10 @@ const SelectBase = <Option,>(
           <SelectScrollDownButton css={{ order: 2 }}>
             <ChevronDownIcon />
           </SelectScrollDownButton>
-          <SelectItemDescription
-            $highlightedItem={$highlightedItem}
-            value={value}
-            defaultValue={defaultValue}
-            getDescription={getDescription}
-          />
+
+          {description && (
+            <SelectItemDescription>{description}</SelectItemDescription>
+          )}
         </SelectContent>
       </Primitive.Portal>
     </Primitive.Root>
