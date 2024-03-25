@@ -43,7 +43,6 @@ module.exports = {
     "is-alphanumerical",
     "is-alphabetical",
     "is-decimal",
-    "emotion",
   ],
   // appDirectory: "app",
   // assetsBuildDirectory: "public/build",
