@@ -120,6 +120,7 @@ export const Basic: StoryFn<typeof TextEditor> = ({ onChange }) => {
           rootInstanceSelector={["1"]}
           instances={instances}
           contentEditable={<ContentEditable />}
+          onBlur={() => {}}
           onChange={onChange}
           onSelectInstance={(instanceId) =>
             console.info("select instance", instanceId)

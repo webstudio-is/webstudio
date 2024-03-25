@@ -367,6 +367,9 @@ export const WebstudioComponentCanvas = forwardRef<
         rootRef={rootRef}
         rootInstanceSelector={instanceSelector}
         instances={instances}
+        onBlur={() => {
+          $textEditingInstanceSelector.set(undefined);
+        }}
         contentEditable={
           <ContentEditable
             renderComponentWithRef={(elementRef) => (

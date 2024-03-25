@@ -81,7 +81,7 @@ import { ImageControl } from "~/builder/features/project-settings";
 import { ImageInfo } from "./image-info";
 import { SocialPreview } from "./social-preview";
 // @todo should be moved to shared because features should not depend on features
-import { useEffectEvent } from "~/builder/features/ai/hooks/effect-event";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { CustomMetadata } from "./custom-metadata";
 import {
   compilePathnamePattern,

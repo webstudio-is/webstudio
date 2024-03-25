@@ -30,6 +30,7 @@ import {
   $convertTextToLexical,
 } from "./interop";
 import { colord } from "colord";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
@@ -59,6 +60,27 @@ const AutofocusPlugin = () => {
     editor.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  return null;
+};
+
+const InterceptBlurPlugin = (props: { onBlur: () => void }) => {
+  const [editor] = useLexicalComposerContext();
+  const onBlur = useEffectEvent(props.onBlur);
+
+  useEffect(() => {
+    const rootElement = editor.getRootElement();
+
+    if (rootElement === null) {
+      return;
+    }
+
+    rootElement.addEventListener("blur", onBlur);
+
+    return () => {
+      rootElement.removeEventListener("blur", onBlur);
+    };
+  }, [editor, onBlur]);
 
   return null;
 };
@@ -182,6 +204,7 @@ type TextEditorProps = {
   instances: Instances;
   contentEditable: JSX.Element;
   onChange: (instancesList: Instance[]) => void;
+  onBlur: () => void;
   onSelectInstance: (instanceId: Instance["id"]) => void;
 };
 
@@ -191,6 +214,7 @@ export const TextEditor = ({
   instances,
   contentEditable,
   onChange,
+  onBlur,
   onSelectInstance,
 }: TextEditorProps) => {
   // class names must be started with letter so we add a prefix
@@ -248,6 +272,7 @@ export const TextEditor = ({
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <AutofocusPlugin />
+      <InterceptBlurPlugin onBlur={onBlur} />
       <RemoveParagaphsPlugin />
       <CaretColorPlugin />
       <ToolbarConnectorPlugin

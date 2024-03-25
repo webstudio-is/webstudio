@@ -43,7 +43,7 @@ import { useLongPressToggle } from "./hooks/long-press-toggle";
 import { AiCommandBarButton } from "./ai-button";
 import { fetchTranscription } from "./ai-fetch-transcription";
 import { fetchResult } from "./ai-fetch-result";
-import { useEffectEvent } from "./hooks/effect-event";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import { AiApiException, RateLimitException } from "./api-exceptions";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { flushSync } from "react-dom";
