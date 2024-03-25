@@ -110,8 +110,7 @@ export const hasProjectPermit = async (
   } finally {
     const diff = Date.now() - start;
 
-    // eslint-disable-next-line no-console
-    console.log(`hasProjectPermit execution ${diff}ms`);
+    console.info(`hasProjectPermit execution ${diff}ms`);
   }
 };
 
@@ -150,7 +149,6 @@ export const getProjectPermit = async <T extends AuthPermit>(
   } finally {
     const diff = Date.now() - start;
 
-    // eslint-disable-next-line no-console
-    console.log(`getProjectPermit execution ${diff}ms`);
+    console.info(`getProjectPermit execution ${diff}ms`);
   }
 };

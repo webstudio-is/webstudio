@@ -65,6 +65,8 @@ type SourceProperties = {
  * For some cases we are encouraging to use custom defaults, than
  * `initial` values provided by browsers. This helps in controlling the behaviour
  * of such properties
+ *
+ * @todo override in generated properties
  */
 const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
   outlineWidth: { value: 0, type: "unit", unit: "px" },
@@ -813,7 +815,6 @@ export const useStyleInfoByInstanceId = (
     instanceSelector !== undefined &&
     isAncestorOrSelfOfSelectedInstance(instanceSelector) === false
   ) {
-    // eslint-disable-next-line no-console
     console.error(
       `The style works correctly only on ancestors of the selected element,
        as our style data only includes information about these ancestors.

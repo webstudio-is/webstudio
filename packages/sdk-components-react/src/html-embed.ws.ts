@@ -18,9 +18,16 @@ export const meta: WsComponentMeta = {
 export const propsMeta: WsComponentPropsMeta = {
   props: {
     ...props,
+    clientOnly: {
+      ...props.clientOnly,
+      description:
+        "Activate it for any scripts that can mutate the DOM or introduce interactivity. This only affects the published site.",
+    },
     executeScriptOnCanvas: {
       ...props.executeScriptOnCanvas,
-      label: "Run script on canvas",
+      label: "Run scripts on canvas",
+      description:
+        "Allow script execution on canvas without switching to preview mode. This only affects build mode.",
     },
     code: {
       required: true,

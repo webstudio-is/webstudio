@@ -25,7 +25,6 @@ export const action = async ({ request }: ActionArgs) => {
   if (response.ok === false) {
     const message = await response.text();
 
-    // eslint-disable-next-line no-console
     console.error("ERROR", response.status, message);
 
     return {
@@ -41,7 +40,6 @@ export const action = async ({ request }: ActionArgs) => {
   const data = zTranscription.safeParse(await response.json());
 
   if (data.success === false) {
-    // eslint-disable-next-line no-console
     console.error("ERROR openai transcriptions", data.error);
   }
 

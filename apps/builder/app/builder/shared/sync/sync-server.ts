@@ -226,14 +226,14 @@ const syncServer = async function () {
           // It's usually ok to be here, probably restorable with retries
           const text = await response.text();
           // To investigate some strange errors we have seen
-          // eslint-disable-next-line no-console
+
           console.info(`Non ok respone: ${text}`);
         }
       } catch (e) {
         if (navigator.onLine) {
           // ERR_CONNECTION_REFUSED or like, probably restorable with retries
           // anyway lets's log it
-          // eslint-disable-next-line no-console
+
           console.info(e instanceof Error ? e.message : JSON.stringify(e));
         }
       }

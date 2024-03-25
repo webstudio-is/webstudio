@@ -15,8 +15,7 @@ export const PositionLayoutComponent = (
       renderCell={() => <Cell />}
       activeProperties={args.activeProperties}
       onHover={(hoverProps) => {
-        // eslint-disable-next-line no-console
-        console.log(hoverProps);
+        console.info(hoverProps);
       }}
     />
   </Grid>

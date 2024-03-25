@@ -46,8 +46,8 @@ export const prisma =
 
 prisma.$on("query", (e) => {
   // Try to minify the query as vercel/new relic log size is limited
-  // eslint-disable-next-line no-console
-  console.log(
+
+  console.info(
     "Query: " +
       e.query
         .replace(/"public"\./g, "")
@@ -57,10 +57,9 @@ prisma.$on("query", (e) => {
         .replace(/"Asset"\./g, "")
   );
 
-  // eslint-disable-next-line no-console
-  console.log("Params: " + e.params.slice(0, 200));
-  // eslint-disable-next-line no-console
-  console.log("Duration: " + e.duration + "ms");
+  console.info("Params: " + e.params.slice(0, 200));
+
+  console.info("Duration: " + e.duration + "ms");
 });
 
 if (process.env.NODE_ENV !== "production") {

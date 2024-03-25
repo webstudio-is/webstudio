@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-// When you're adding a log for debugging use console.log as normal.
+// When you're adding a log for debugging use console.info as normal.
 // Use logger only for CLI output.
 
 export const info = (message: unknown) => {
@@ -16,5 +16,5 @@ export const warn = (message: unknown) => {
 };
 
 export const debug = (message: unknown) => {
-  console.log(message);
+  console.info(message);
 };

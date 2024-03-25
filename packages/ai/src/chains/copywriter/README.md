@@ -95,7 +95,7 @@ function UiComponent() {
             signal: abort.current.signal,
             onChunk: (id, { completion, done }) => {
               // Log the completion.
-              console.log(completion)
+              console.info(completion)
               if (done) {
                 doSomething(completion);
               }
@@ -161,7 +161,7 @@ useEffect(() => {
     }
 
     console.clear();
-    console.log(currenTextInstance);
+    console.info(currenTextInstance);
     // patchTextInstance(currenTextInstance);
   } catch (error) {
     /**/

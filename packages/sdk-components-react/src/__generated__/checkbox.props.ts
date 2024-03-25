@@ -738,6 +738,13 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     options: ["on", "off"],
   },
+  value: {
+    required: false,
+    control: "text",
+    type: "string",
+    description:
+      "Defines a default value which will be displayed in the element on pageload.",
+  },
   vocab: { required: false, control: "text", type: "string" },
   width: {
     required: false,

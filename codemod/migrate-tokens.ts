@@ -31,7 +31,7 @@ const getRecursiveFileReads = async (dir: string) => {
 
 const readDirectory = async (dir: string) => {
   const results = await getRecursiveFileReads(dir);
-  console.log(results.length);
+  console.info(results.length);
   return results;
 };
 
