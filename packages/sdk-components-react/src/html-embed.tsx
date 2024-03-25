@@ -90,7 +90,7 @@ const Placeholder = (props: ChildProps) => {
  * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
  * Also executes scripts on the published site when `clientOnly` is true.
  */
-const ClientHtml = (props: ChildProps) => {
+const ClientEmbed = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +114,7 @@ const ClientHtml = (props: ChildProps) => {
 /**
  * Scripts are executed when rendered server side without any manual intervention.
  */
-const ServerHtml = (props: ChildProps) => {
+const ServerEmbed = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
 
   return (
@@ -127,6 +127,9 @@ const ServerHtml = (props: ChildProps) => {
   );
 };
 
+// When option `clientOnly` is used and we are on the server
+const NonExecutableEmbed = (props: ChildProps) => <></>;
+
 const shouldExecute = ({
   renderer,
   executeScriptOnCanvas = false,
@@ -136,11 +139,12 @@ const shouldExecute = ({
   executeScriptOnCanvas?: boolean;
   isServer: boolean;
 }) => {
+  // SSR will ensure execution on the client by the browser.
   if (isServer) {
     return false;
   }
 
-  // We are rendering in published mode on the client.
+  // We are rendering in published mode on the client, so will need to execute the scripts manually.
   if (renderer === undefined) {
     return true;
   }
@@ -166,8 +170,13 @@ type HtmlEmbedProps = {
 
 export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
-    const { renderer } = useContext(ReactSdkContext);
     const { code, executeScriptOnCanvas, clientOnly, ...rest } = props;
+    const { renderer } = useContext(ReactSdkContext);
+    const isServer = useSyncExternalStore(
+      () => () => {},
+      () => false,
+      () => true
+    );
 
     // - code can be actually undefined when prop is not provided
     // - cast code to string in case non-string value is computed from expression
@@ -175,14 +184,10 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       return <Placeholder innerRef={ref} {...rest} />;
     }
 
-    const isServer = useSyncExternalStore(
-      () => () => {},
-      () => false,
-      () => true
-    );
+    let Embed = ServerEmbed;
 
     if (isServer && clientOnly) {
-      return;
+      Embed = NonExecutableEmbed;
     }
 
     const execute = shouldExecute({
@@ -191,9 +196,11 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       executeScriptOnCanvas,
     });
 
-    const Html = execute ? ClientHtml : ServerHtml;
+    if (execute) {
+      Embed = ClientEmbed;
+    }
 
-    return <Html innerRef={ref} code={code} {...rest} />;
+    return <Embed innerRef={ref} code={code} {...rest} />;
   }
 );
 
