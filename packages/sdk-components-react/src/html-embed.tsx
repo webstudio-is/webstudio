@@ -154,8 +154,9 @@ const getEmbed = ({
   }
 
   // On builder canvas we have a special setting to allow execution. This is useful if the execution doesn't hurt the build process.
-  if (renderer === "canvas" && executeScriptOnCanvas) {
-    return ClientEmbed;
+  // Otherwise we just need to render it as a static HTML
+  if (renderer === "canvas") {
+    return executeScriptOnCanvas ? ClientEmbed : ServerEmbed;
   }
 };
 
