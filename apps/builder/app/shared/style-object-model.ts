@@ -42,7 +42,7 @@ export type StyleSelector = {
   instanceSelector: InstanceSelector;
 };
 
-type Style = Map<StyleDecl["property"], StyleDecl>;
+type Style = Map<string, StyleDecl>;
 
 /**
  * model contains all data and cache of computed styles
@@ -53,8 +53,6 @@ export type StyleObjectModel = {
   styleByStyleSourceId: Map<StyleSource["id"], Style>;
 };
 
-type Property = keyof typeof properties;
-
 const getCascadedValue = ({
   model,
   instanceId,
@@ -62,7 +60,7 @@ const getCascadedValue = ({
 }: {
   model: StyleObjectModel;
   instanceId: Instance["id"];
-  property: Property;
+  property: string;
 }) => {
   // https://drafts.csswg.org/css-cascade-5/#declared
   const declaredValues = [];
@@ -86,11 +84,21 @@ const matchKeyword = (styleValue: undefined | StyleValue, keyword: string) =>
   styleValue?.type === "keyword" && styleValue.value.toLowerCase() === keyword;
 
 /**
+ * stable invalid values to support caching
+ */
+const guaranteedInvalidValue: StyleValue = { type: "guaranteedInvalid" };
+const invalidValue: StyleValue = { type: "invalid", value: "" };
+
+const customPropertyData = {
+  inherited: true,
+  initial: guaranteedInvalidValue,
+};
+
+/**
  * follow value processing specification
  * https://drafts.csswg.org/css-cascade-5/#value-stages
  *
  * @todo
- * - custom property
  * - html
  * - preset
  * - cascaded
@@ -103,29 +111,47 @@ export const getComputedStyleDecl = ({
   model,
   styleSelector,
   property,
+  customPropertiesGraph = new Map(),
 }: {
   model: StyleObjectModel;
   styleSelector: StyleSelector;
-  property: Property;
+  property: string;
+  /**
+   * for internal use only
+   */
+  customPropertiesGraph?: Map<Instance["id"], Set<string>>;
 }): {
+  computedValue: StyleValue;
   usedValue: StyleValue;
 } => {
   const { instanceSelector } = styleSelector;
-  const propertyData = properties[property];
+  const isCustomProperty = property.startsWith("--");
+  const propertyData = isCustomProperty
+    ? customPropertyData
+    : properties[property as keyof typeof properties];
   const inherited = propertyData.inherited;
-  const initialValue = propertyData.initial;
+  const initialValue: StyleValue = propertyData.initial;
   let computedValue: StyleValue = initialValue;
 
   // start computing from the root
-  for (const instanceId of Array.from(instanceSelector).reverse()) {
+  for (let index = instanceSelector.length - 1; index >= 0; index -= 1) {
+    const instanceId = instanceSelector[index];
+    let usedCustomProperties = customPropertiesGraph.get(instanceId);
+    if (usedCustomProperties === undefined) {
+      usedCustomProperties = new Set();
+      customPropertiesGraph.set(instanceId, usedCustomProperties);
+    }
+
     // https://drafts.csswg.org/css-cascade-5/#inheriting
     const inheritedValue: StyleValue = computedValue;
 
     // https://drafts.csswg.org/css-cascade-5/#cascaded
     const { cascadedValue } = getCascadedValue({ model, instanceId, property });
 
+    // resolve specified value
     // https://drafts.csswg.org/css-cascade-5/#specified
-    let specifiedValue: StyleValue;
+    let specifiedValue: StyleValue = initialValue;
+
     // explicit defaulting
     // https://drafts.csswg.org/css-cascade-5/#defaulting-keywords
     if (matchKeyword(cascadedValue, "initial")) {
@@ -155,6 +181,41 @@ export const getComputedStyleDecl = ({
 
     // https://drafts.csswg.org/css-cascade-5/#computed
     computedValue = specifiedValue;
+
+    if (computedValue.type === "var") {
+      const customProperty = computedValue.value;
+      // https://www.w3.org/TR/css-variables-1/#cycles
+      if (usedCustomProperties.has(customProperty)) {
+        computedValue = invalidValue;
+        break;
+      }
+      usedCustomProperties.add(customProperty);
+
+      const fallback = computedValue.fallbacks.at(0);
+      const customPropertyValue = getComputedStyleDecl({
+        model,
+        styleSelector: {
+          ...styleSelector,
+          // resolve custom properties on instance they are defined
+          // instead of where they are accessed
+          instanceSelector: instanceSelector.slice(index),
+        },
+        property: customProperty,
+        customPropertiesGraph,
+      });
+      computedValue = customPropertyValue.computedValue;
+      // https://www.w3.org/TR/css-variables-1/#invalid-variables
+      if (
+        computedValue.type === "guaranteedInvalid" ||
+        (isCustomProperty === false && computedValue.type === "invalid")
+      ) {
+        if (inherited) {
+          computedValue = fallback ?? inheritedValue;
+        } else {
+          computedValue = fallback ?? initialValue;
+        }
+      }
+    }
   }
 
   // https://drafts.csswg.org/css-cascade-5/#used
@@ -169,5 +230,5 @@ export const getComputedStyleDecl = ({
     usedValue = currentColor.usedValue;
   }
 
-  return { usedValue };
+  return { computedValue, usedValue };
 };

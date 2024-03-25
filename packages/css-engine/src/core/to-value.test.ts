@@ -195,4 +195,11 @@ describe("Convert WS CSS Values to native CSS strings", () => {
 
     expect(value).toMatchInlineSnapshot(`"url("fo\\"o\\\\o.png")"`);
   });
+
+  test("guaranteed-invalid", () => {
+    const value = toValue({
+      type: "guaranteedInvalid",
+    });
+    expect(value).toBe("");
+  });
 });
