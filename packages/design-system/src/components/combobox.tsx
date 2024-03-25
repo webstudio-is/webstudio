@@ -34,13 +34,16 @@ import {
   separatorCss,
   MenuCheckedIcon,
 } from "./menu";
+import { ScrollArea } from "./scroll-area";
+import { Flex } from "./flex";
 
 const Listbox = styled(
   "ul",
   {
+    display: "flex",
+    flexDirection: "column",
     margin: "unset", // reset <ul>
-    overflow: "auto",
-    maxHeight: theme.spacing[34],
+    listStyle: "none",
     variants: {
       state: { closed: { display: "none" } },
       empty: { true: { display: "none" } },
@@ -90,26 +93,87 @@ const ListboxItemBase: ForwardRefRenderFunction<
   );
 };
 
-export const ComboboxListbox = Listbox;
+export const ComboboxListbox = forwardRef<
+  HTMLUListElement,
+  ComponentProps<typeof Listbox>
+>(({ children, ...props }, ref) => {
+  return (
+    <Listbox {...props} ref={ref}>
+      <ScrollArea>
+        <Flex direction="column" css={{ maxHeight: theme.spacing[34] }}>
+          {children}
+        </Flex>
+      </ScrollArea>
+    </Listbox>
+  );
+});
+
+ComboboxListbox.displayName = "ComboboxListbox";
 
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
+
+export const ComboboxItemDescription = ({
+  children,
+  style,
+  ...props
+}: ComponentProps<typeof ListboxItem>) => {
+  return (
+    <>
+      <ComboboxSeparator
+        style={{
+          display: `var(--ws-combobox-description-display-bottom, none)`,
+          order: "var(--ws-combobox-description-order)",
+        }}
+      />
+      <ListboxItem
+        {...props}
+        hint
+        style={{ ...style, order: "var(--ws-combobox-description-order)" }}
+      >
+        {children}
+      </ListboxItem>
+      <ComboboxSeparator
+        style={{
+          display: `var(--ws-combobox-description-display-top, none)`,
+          order: "var(--ws-combobox-description-order)",
+        }}
+      />
+    </>
+  );
+};
 
 export const Combobox = (props: ComponentProps<typeof Popover>) => {
   return <Popover {...props} modal />;
 };
 
+const StyledPopoverContent = styled(PopoverContent, {
+  "&[data-side=top]": {
+    "--ws-combobox-description-display-top": "block",
+    "--ws-combobox-description-order": 0,
+  },
+  "&[data-side=bottom]": {
+    "--ws-combobox-description-display-bottom": "block",
+    "--ws-combobox-description-order": 2,
+  },
+});
+
 export const ComboboxContent = forwardRef(
-  (props: ComponentProps<typeof PopoverContent>, ref: Ref<HTMLDivElement>) => (
-    <Portal>
-      <PopoverContent
-        ref={ref}
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-        }}
-        {...props}
-      />
-    </Portal>
-  )
+  (
+    { style, ...props }: ComponentProps<typeof PopoverContent>,
+    forwardRef: Ref<HTMLDivElement>
+  ) => {
+    return (
+      <Portal>
+        <StyledPopoverContent
+          ref={forwardRef}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+          }}
+          {...props}
+        />
+      </Portal>
+    );
+  }
 );
 ComboboxContent.displayName = "ComboboxContent";
 

@@ -399,7 +399,7 @@ const renderMenuItems = (props: {
           Style instances without creating a token or override a token locally.
         </DropdownMenuItem>
       )}
-      {props.item.source !== "local" && (
+      {props.item.source === "token" && (
         <DropdownMenuItem hint>
           Reuse styles across multiple instances by creating a token.
         </DropdownMenuItem>

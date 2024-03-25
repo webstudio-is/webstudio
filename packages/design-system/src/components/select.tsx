@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
-import { styled, theme } from "../stitches.config";
+import { rawTheme, styled, theme } from "../stitches.config";
 import {
   menuCss,
   menuItemCss,
@@ -19,7 +19,16 @@ import {
 } from "./menu";
 import { SelectButton } from "./select-button";
 
-export const SelectContent = styled(Primitive.Content, menuCss);
+export const SelectContent = styled(Primitive.Content, menuCss, {
+  "&[data-side=top]": {
+    "--ws-select-description-display-top": "block",
+    "--ws-select-description-order": 0,
+  },
+  "&[data-side=bottom]": {
+    "--ws-select-description-display-bottom": "block",
+    "--ws-select-description-order": 2,
+  },
+});
 
 export const SelectViewport = Primitive.Viewport;
 
@@ -76,7 +85,41 @@ export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
-const Description = styled(menuItemCss);
+const Description = styled("div", menuItemCss);
+
+// Note this only works in combination with position: popper on Content component, because only popper exposes data-side attribute
+export const SelectItemDescription = ({
+  children,
+  style,
+  ...props
+}: ComponentProps<typeof Description>) => {
+  return (
+    <>
+      <SelectSeparator
+        style={{
+          display: `var(--ws-select-description-display-bottom, none)`,
+          order: "var(--ws-select-description-order)",
+        }}
+      />
+      <Description
+        {...props}
+        hint
+        style={{
+          ...style,
+          order: "var(--ws-select-description-order)",
+        }}
+      >
+        {children}
+      </Description>
+      <SelectSeparator
+        style={{
+          display: `var(--ws-select-description-display-top, none)`,
+          order: "var(--ws-select-description-order)",
+        }}
+      />
+    </>
+  );
+};
 
 type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
@@ -142,7 +185,8 @@ const SelectBase = <Option,>(
     }
     return map;
   }, [options, getValue]);
-  const [highlightedItem, setHighlightedItem] = useState<Option | undefined>();
+
+  const [highlightedItem, setHighlightedItem] = useState<Option>();
 
   const itemForDescription = highlightedItem ?? value ?? defaultValue;
   const description = itemForDescription
@@ -171,11 +215,15 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent css={{ zIndex: props.css?.zIndex ?? 0 }}>
-          <SelectScrollUpButton>
+        <SelectContent
+          position="popper"
+          css={{ zIndex: props.css?.zIndex ?? 0 }}
+        >
+          <SelectScrollUpButton css={{ order: 1 }}>
             <ChevronUpIcon />
           </SelectScrollUpButton>
-          <SelectViewport>
+
+          <SelectViewport style={{ order: 1, maxHeight: rawTheme.spacing[34] }}>
             {children ||
               options.map((option) => (
                 <SelectItem
@@ -199,10 +247,14 @@ const SelectBase = <Option,>(
                 </SelectItem>
               ))}
           </SelectViewport>
-          <SelectScrollDownButton>
+
+          <SelectScrollDownButton css={{ order: 2 }}>
             <ChevronDownIcon />
           </SelectScrollDownButton>
-          {description && <Description hint>{description}</Description>}
+
+          {description && (
+            <SelectItemDescription>{description}</SelectItemDescription>
+          )}
         </SelectContent>
       </Primitive.Portal>
     </Primitive.Root>

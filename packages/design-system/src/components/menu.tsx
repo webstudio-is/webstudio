@@ -50,6 +50,7 @@ export const menuItemCss = css(textVariants.labelsTitleCase, {
   cursor: "default",
   position: "relative",
   display: "flex",
+  order: 1,
   alignItems: "center",
   color: theme.colors.foregroundMain,
   mx: itemMargin,

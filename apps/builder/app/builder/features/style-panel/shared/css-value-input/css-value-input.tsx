@@ -12,6 +12,8 @@ import {
   NestedIconLabel,
   InputField,
   handleNumericInputArrowKeys,
+  theme,
+  ComboboxItemDescription,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -26,6 +28,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
@@ -33,7 +36,11 @@ import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
 import { toPascalCase } from "../keyword-utils";
-import { isValidDeclaration, properties } from "@webstudio-is/css-data";
+import {
+  declarationDescriptions,
+  isValidDeclaration,
+  properties,
+} from "@webstudio-is/css-data";
 import {
   $selectedInstanceBrowserStyle,
   $selectedInstanceUnitSizes,
@@ -359,6 +366,10 @@ export const CssValueInput = ({
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
+  // Used to show description
+  const [highlightedValue, setHighlighedValue] = useState<
+    StyleValue | undefined
+  >();
 
   const onChange = (input: string | undefined) => {
     if (input === undefined) {
@@ -406,6 +417,8 @@ export const CssValueInput = ({
     isOpen,
     highlightedIndex,
   } = useCombobox<CssValueInputValue>({
+    // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
+    defaultHighlightedIndex: 0,
     items: keywords,
     value,
     selectedItem: props.value,
@@ -420,11 +433,13 @@ export const CssValueInput = ({
     onItemHighlight: (value) => {
       if (value == null) {
         onHighlight(undefined);
+        setHighlighedValue(undefined);
         return;
       }
 
       if (value.type !== "intermediate") {
         onHighlight(value);
+        setHighlighedValue(value);
       }
     },
   });
@@ -618,6 +633,23 @@ export const CssValueInput = ({
       </Box>
     );
 
+  let description;
+  // When user hovers or focuses an item in the combobox list we want to show the description of the item and otherwise show the description of the current value
+  const valueForDescription =
+    highlightedValue?.type === "keyword"
+      ? highlightedValue
+      : props.value?.type === "keyword"
+      ? props.value
+      : items[0]?.type === "keyword"
+      ? items[0]
+      : undefined;
+  if (valueForDescription) {
+    const key = `${property}:${toValue(
+      valueForDescription
+    )}` as keyof typeof declarationDescriptions;
+    description = declarationDescriptions[key];
+  }
+
   return (
     <Combobox open={isOpen}>
       <Box {...getComboboxProps()}>
@@ -653,6 +685,11 @@ export const CssValueInput = ({
                   {itemToString(item)}
                 </ComboboxListboxItem>
               ))}
+              {description && (
+                <ComboboxItemDescription>
+                  <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+                </ComboboxItemDescription>
+              )}
             </ComboboxListbox>
           </ComboboxContent>
         )}

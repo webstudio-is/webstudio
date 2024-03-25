@@ -1,25 +1,29 @@
 import { MagnifyingGlassIcon } from "@webstudio-is/icons";
 import { useCallback, useState } from "react";
-import { DeprecatedTextField } from "./__DEPRECATED__/text-field";
-import {
-  ComboboxListboxItem,
-  useCombobox,
-  comboboxStateChangeTypes,
-} from "./combobox";
-import { Flex } from "./flex";
-import { theme } from "../stitches.config";
 import type {
   UseComboboxState,
   UseComboboxStateChangeOptions,
 } from "downshift";
+import {
+  ComboboxListboxItem,
+  useCombobox,
+  comboboxStateChangeTypes,
+  ComboboxContent,
+  Combobox,
+  ComboboxListbox,
+  ComboboxAnchor,
+  ComboboxItemDescription,
+} from "./combobox";
+import { Flex } from "./flex";
+import { InputField } from "./input-field";
 
 export const Complex = () => {
-  const [value, setValue] = useState<string | null>(null);
+  const [value, setValue] = useState("");
 
   const stateReducer = useCallback(
     (
-      state: UseComboboxState<string | null>,
-      actionAndChanges: UseComboboxStateChangeOptions<string | null>
+      state: UseComboboxState<string>,
+      actionAndChanges: UseComboboxStateChangeOptions<string>
     ) => {
       const { type, changes } = actionAndChanges;
       switch (type) {
@@ -51,44 +55,57 @@ export const Complex = () => {
     []
   );
 
-  const { items, getComboboxProps, getMenuProps, getItemProps, getInputProps } =
-    useCombobox<string | null>({
-      items: ["Apple", "Banana", "Orange"],
-      value,
-      selectedItem: value,
-      itemToString: (item) => item ?? "",
-      stateReducer,
-      onItemSelect: (value) => {
+  const {
+    items,
+    getComboboxProps,
+    getMenuProps,
+    getItemProps,
+    getInputProps,
+    isOpen,
+  } = useCombobox<string>({
+    items: ["Apple", "Banana", "Orange"],
+    value,
+    selectedItem: value,
+    itemToString: (item) => item ?? "",
+    stateReducer,
+    onItemSelect: setValue,
+    onInputChange: (value) => {
+      if (value) {
         setValue(value);
-      },
-    });
+      }
+    },
+  });
 
   return (
-    <Flex
-      {...getComboboxProps()}
-      css={{ flexDirection: "column", gap: theme.spacing[9] }}
-    >
-      <DeprecatedTextField
-        type="search"
-        prefix={<MagnifyingGlassIcon />}
-        {...getInputProps({})}
-      />
-      <fieldset>
-        <legend>Choose an item</legend>
-        <Flex {...getMenuProps()} css={{ flexDirection: "column" }}>
-          {items.map((item, index) => {
-            return (
-              <ComboboxListboxItem
-                key={index}
-                {...getItemProps({ item, index })}
-              >
-                {item}
-              </ComboboxListboxItem>
-            );
-          })}
-        </Flex>
-      </fieldset>
-    </Flex>
+    <Combobox open={isOpen}>
+      <Flex {...getComboboxProps()} direction="column" gap="3">
+        <ComboboxAnchor>
+          <InputField
+            prefix={
+              <Flex align="center">
+                <MagnifyingGlassIcon />
+              </Flex>
+            }
+            {...getInputProps({ value })}
+          />
+        </ComboboxAnchor>
+        <ComboboxContent>
+          <ComboboxListbox {...getMenuProps()}>
+            {items.map((item, index) => {
+              return (
+                <ComboboxListboxItem
+                  key={index}
+                  {...getItemProps({ item, index })}
+                >
+                  {item}
+                </ComboboxListboxItem>
+              );
+            })}
+            <ComboboxItemDescription>Description</ComboboxItemDescription>
+          </ComboboxListbox>
+        </ComboboxContent>
+      </Flex>
+    </Combobox>
   );
 };
 

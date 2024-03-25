@@ -1,8 +1,8 @@
 import { toValue } from "@webstudio-is/css-engine";
-import { Select } from "@webstudio-is/design-system";
+import { Box, Select, theme } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import { toPascalCase } from "../../shared/keyword-utils";
-import { parseCssValue } from "@webstudio-is/css-data";
+import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
 import type { ControlProps } from "../../style-sections";
 
 export const SelectControl = ({
@@ -17,6 +17,7 @@ export const SelectControl = ({
   const setValue = setProperty(property);
   const options = (items ?? defaultItems).map(({ name }) => name);
   const value = toValue(styleValue);
+
   // Append selected value when not present in the list of options
   // because radix requires values to always be in the list.
   if (options.includes(value) === false) {
@@ -51,6 +52,16 @@ export const SelectControl = ({
         if (isOpen === false && styleValue !== undefined) {
           deleteProperty(property, { isEphemeral: true });
         }
+      }}
+      getDescription={(option) => {
+        const key =
+          `${property}:${option}` as keyof typeof declarationDescriptions;
+
+        return (
+          <Box css={{ width: theme.spacing[25] }}>
+            {declarationDescriptions[key]}
+          </Box>
+        );
       }}
     />
   );
