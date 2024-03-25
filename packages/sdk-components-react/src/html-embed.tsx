@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   type ForwardedRef,
+  useSyncExternalStore,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
@@ -59,7 +60,9 @@ const execute = async (container: HTMLElement) => {
   });
 
   // Insert the script tags in parallel.
-  Promise.all(asyncTasks.map((task) => task()));
+  for (const task of asyncTasks) {
+    task();
+  }
 
   // Insert the script tags sequentially to preserve execution order.
   for (const task of syncTasks) {
@@ -86,7 +89,7 @@ const Placeholder = (props: ChildProps) => {
 /**
  * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
  */
-const ExecutableHtml = (props: ChildProps) => {
+const ClientHtml = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -110,7 +113,7 @@ const ExecutableHtml = (props: ChildProps) => {
 /**
  * Scripts are executed when rendered server side without any manual intervention.
  */
-const InnerHtml = (props: ChildProps) => {
+const ServerHtml = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
 
   return (
@@ -126,15 +129,13 @@ const InnerHtml = (props: ChildProps) => {
 const shouldExecute = ({
   renderer,
   executeScriptOnCanvas = false,
-  clientOnly = false,
 }: {
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
-  clientOnly?: boolean;
 }) => {
-  // We are rendering in published mode.
+  // We are rendering in published mode, where scripts are executed either from SSR or client side.
   if (renderer === undefined) {
-    return clientOnly;
+    return true;
   }
 
   // On canvas in preview we always execute the scripts, because in doesn't have SSR.
@@ -167,17 +168,24 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       return <Placeholder innerRef={ref} {...rest} />;
     }
 
+    const isServer = useSyncExternalStore(
+      () => () => {},
+      () => false,
+      () => true
+    );
+
+    if (isServer && clientOnly) {
+      return;
+    }
+
     const execute = shouldExecute({
       renderer,
       executeScriptOnCanvas,
-      clientOnly,
     });
 
-    if (execute) {
-      return <ExecutableHtml innerRef={ref} code={code} {...rest} />;
-    }
+    const Html = execute ? ClientHtml : ServerHtml;
 
-    return <InnerHtml innerRef={ref} code={code} {...rest} />;
+    return <Html innerRef={ref} code={code} {...rest} />;
   }
 );
 
