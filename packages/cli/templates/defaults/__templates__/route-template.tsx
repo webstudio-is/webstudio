@@ -12,7 +12,12 @@ import {
 import { useLoaderData } from "@remix-run/react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
-import { Page } from "../../../__generated__/_index";
+import {
+  Page,
+  favIconAsset,
+  pageFontAssets,
+  pageBackgroundImageAssets,
+} from "../../../__generated__/_index";
 import {
   formsProperties,
   loadResources,
@@ -22,9 +27,8 @@ import {
   user,
   projectMeta,
   imageAssets,
-  pageFontAssets,
-  pageBackgroundImageAssets,
 } from "../../../__generated__/_index.server";
+
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
@@ -180,22 +184,17 @@ export const links: LinksFunction = () => {
     href: css,
   });
 
-  if (projectMeta?.faviconAssetId) {
-    const faviconAssetId = projectMeta?.faviconAssetId;
-    const imageAsset = imageAssets.find((asset) => asset.id === faviconAssetId);
-
-    if (imageAsset) {
-      result.push({
-        rel: "icon",
-        href: imageLoader({
-          src: imageAsset.name,
-          width: 128,
-          quality: 100,
-          format: "auto",
-        }),
-        type: undefined,
-      });
-    }
+  if (favIconAsset) {
+    result.push({
+      rel: "icon",
+      href: imageLoader({
+        src: favIconAsset.name,
+        width: 128,
+        quality: 100,
+        format: "auto",
+      }),
+      type: undefined,
+    });
   } else {
     result.push({
       rel: "icon",
