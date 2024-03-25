@@ -23,11 +23,10 @@ const insertScript = (
     }
 
     if (hasSrc) {
-      script.onload = () => {
+      script.addEventListener("load", () => {
         resolve(script);
-      };
-      script.onerror = reject;
-      script.src = sourceScript.src;
+      });
+      script.addEventListener("error", reject);
     } else {
       script.textContent = sourceScript.innerText;
     }
