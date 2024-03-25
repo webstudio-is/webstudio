@@ -152,7 +152,7 @@ const getEmbed = ({
   if (renderer === undefined) {
     // On the first mount when SSR was enabled, scripts were already executed
     if (clientOnly === false && isFirstMount) {
-      return;
+      return StaticEmbed;
     }
     return ClientEmbed;
   }
