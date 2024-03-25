@@ -1,5 +1,4 @@
 #!/usr/bin/env tsx
-/* eslint-disable no-console */
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
@@ -46,6 +45,7 @@ const componentFiles = fg.sync(globs);
 
 console.info(`Resolved tscofig.json at ${tsConfigPath}\n`);
 console.info(`Glob patterns used: \n${globs.join("\n")}\n`);
+console.info(`Excluding props: \n${cliArgs.values.exclude?.join("\n")}\n`);
 console.info(`Found files to process: \n${componentFiles.join("\n")}\n`);
 
 if (componentFiles.length === 0) {
