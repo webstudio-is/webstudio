@@ -59,11 +59,8 @@ const execute = async (container: HTMLElement) => {
   });
 
   // Insert the script tags in parallel.
-  Promise.all(
-    asyncTasks.map(async (task) => {
-      return await task();
-    })
-  );
+  Promise.all(asyncTasks.map((task) => task()));
+
   // Insert the script tags sequentially to preserve execution order.
   for (const task of syncTasks) {
     await task();
