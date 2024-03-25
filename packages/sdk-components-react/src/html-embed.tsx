@@ -88,6 +88,7 @@ const Placeholder = (props: ChildProps) => {
 
 /**
  * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
+ * Also executes scripts on the published site when `clientOnly` is true.
  */
 const ClientHtml = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
@@ -129,11 +130,17 @@ const ServerHtml = (props: ChildProps) => {
 const shouldExecute = ({
   renderer,
   executeScriptOnCanvas = false,
+  isServer,
 }: {
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
+  isServer: boolean;
 }) => {
-  // We are rendering in published mode, where scripts are executed either from SSR or client side.
+  if (isServer) {
+    return false;
+  }
+
+  // We are rendering in published mode on the client.
   if (renderer === undefined) {
     return true;
   }
@@ -179,6 +186,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
     }
 
     const execute = shouldExecute({
+      isServer,
       renderer,
       executeScriptOnCanvas,
     });
