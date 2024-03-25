@@ -155,11 +155,6 @@ const renderProperty = (
           value: asset.meta.height,
           type: "number",
         });
-
-        setCssProperty("height")({
-          type: "keyword",
-          value: "fit-content",
-        });
       }
     },
   });
