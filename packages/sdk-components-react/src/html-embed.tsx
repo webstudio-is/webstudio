@@ -135,19 +135,25 @@ const getEmbed = ({
   executeScriptOnCanvas = false,
   clientOnly = false,
   isServer,
+  isFirstMount,
 }: {
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
   clientOnly?: boolean;
   isServer: boolean;
+  isFirstMount: boolean;
 }) => {
   if (isServer) {
     // Don't render anything on the server when clientOnly is true otherwise SSR will execute the scripts by the browser.
     return clientOnly ? undefined : ServerEmbed;
   }
 
-  // We are rendering in published mode on the client, so will need to execute the scripts manually.
+  // We are rendering in published mode on the client, so will need to execute the scripts manually
   if (renderer === undefined) {
+    // On the first mount when SSR was enabled, scripts were already executed
+    if (clientOnly === false && isFirstMount) {
+      return;
+    }
     return ClientEmbed;
   }
 
@@ -178,6 +184,10 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       () => false,
       () => true
     );
+    const isFirstMount = useRef(true);
+    useEffect(() => {
+      isFirstMount.current = false;
+    }, []);
 
     // - code can be actually undefined when prop is not provided
     // - cast code to string in case non-string value is computed from expression
@@ -187,6 +197,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
 
     const Embed = getEmbed({
       isServer,
+      isFirstMount: isFirstMount.current,
       renderer,
       executeScriptOnCanvas,
       clientOnly,
