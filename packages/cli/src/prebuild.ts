@@ -591,12 +591,28 @@ export const prebuild = async (options: {
       ),
     });
 
+    const favIconAsset = imageAssets.find(
+      (asset) => asset.id === siteData.build.pages.meta?.faviconAssetId
+    );
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 
 import { Fragment, useState } from "react";
+import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 ${componentImports}
+export const favIconAsset: ImageAsset | undefined = ${
+      favIconAsset ? JSON.stringify(favIconAsset) : "undefined"
+    };
+
+// Font assets on current page (can be preloaded)
+export const pageFontAssets: FontAsset[] = ${JSON.stringify(pageFontAssets)}
+
+export const pageBackgroundImageAssets: ImageAsset[] = ${JSON.stringify(
+      pageBackgroundImageAssets
+    )}
+
+
 
 ${pageComponent}
 
@@ -605,7 +621,7 @@ export { Page }
     const serverExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 
-import type { ImageAsset, FontAsset, ProjectMeta, PageMeta } from "@webstudio-is/sdk";
+import type { ImageAsset, ProjectMeta, PageMeta } from "@webstudio-is/sdk";
 ${generateResourcesLoader({
   scope,
   page: pageData.page,
@@ -634,13 +650,6 @@ export const projectMeta: ProjectMeta = ${JSON.stringify(
     )};
 
 export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
-
-// Font assets on current page (can be preloaded)
-export const pageFontAssets: FontAsset[] = ${JSON.stringify(pageFontAssets)}
-
-export const pageBackgroundImageAssets: ImageAsset[] = ${JSON.stringify(
-      pageBackgroundImageAssets
-    )}
 
 `;
 

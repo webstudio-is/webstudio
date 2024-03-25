@@ -1,12 +1,7 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
-import type {
-  ImageAsset,
-  FontAsset,
-  ProjectMeta,
-  PageMeta,
-} from "@webstudio-is/sdk";
+import type { ImageAsset, ProjectMeta, PageMeta } from "@webstudio-is/sdk";
 import { loadResource, type System } from "@webstudio-is/sdk";
 export const loadResources = async (_props: { system: System }) => {
   return {} as Record<string, unknown>;
@@ -65,8 +60,3 @@ export const imageAssets: ImageAsset[] = [
     meta: { width: 16, height: 16 },
   },
 ];
-
-// Font assets on current page (can be preloaded)
-export const pageFontAssets: FontAsset[] = [];
-
-export const pageBackgroundImageAssets: ImageAsset[] = [];

@@ -3,7 +3,6 @@
  **/
 import type {
   ImageAsset,
-  FontAsset,
   ProjectMeta,
   PageMeta,
   System,
@@ -47,7 +46,3 @@ export const projectMeta: undefined | ProjectMeta = {
 };
 
 export const imageAssets: ImageAsset[] = [];
-
-export const pageFontAssets: FontAsset[] = [];
-
-export const pageBackgroundImageAssets: ImageAsset[] = [];
