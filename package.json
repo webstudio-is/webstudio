@@ -40,8 +40,7 @@
     "typescript": "5.2.2"
   },
   "engines": {
-    "node": "18",
-    "pnpm": "8.8",
+    "node": ">=18",
     "yarn": "This project is configured to use pnpm"
   },
   "nano-staged": {
