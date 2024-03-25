@@ -1765,6 +1765,9 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0
     devDependencies:
+      '@jest/globals':
+        specifier: ^29.7.0
+        version: 29.7.0
       '@storybook/react':
         specifier: ^7.4.0
         version: 7.4.0(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2)
@@ -1777,6 +1780,9 @@ importers:
       '@webstudio-is/generate-arg-types':
         specifier: workspace:*
         version: link:../generate-arg-types
+      '@webstudio-is/jest-config':
+        specifier: workspace:*
+        version: link:../jest-config
       '@webstudio-is/storybook-config':
         specifier: workspace:*
         version: link:../storybook-config

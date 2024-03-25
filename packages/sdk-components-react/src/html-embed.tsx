@@ -127,45 +127,42 @@ const ServerEmbed = (props: ChildProps) => {
   );
 };
 
-// Alias for when static html is being rendered on the client
-const StaticEmbed = ServerEmbed;
-
-const getEmbed = ({
+export const getRenderMode = ({
   renderer,
+  runtime = "server",
+  isFirstMount = true,
   executeScriptOnCanvas = false,
   clientOnly = false,
-  isServer,
-  isFirstMount,
 }: {
   renderer?: "canvas" | "preview";
+  runtime?: "server" | "client";
+  isFirstMount?: boolean;
   executeScriptOnCanvas?: boolean;
   clientOnly?: boolean;
-  isServer: boolean;
-  isFirstMount: boolean;
 }) => {
-  if (isServer) {
+  if (runtime === "server") {
     // Don't render anything on the server when clientOnly is true otherwise SSR will execute the scripts by the browser.
-    return clientOnly ? undefined : ServerEmbed;
+    return clientOnly ? undefined : "static";
   }
 
   // We are rendering in published mode on the client, so will need to execute the scripts manually
   if (renderer === undefined) {
     // On the first mount when SSR was enabled, scripts were already executed
     if (clientOnly === false && isFirstMount) {
-      return StaticEmbed;
+      return "static";
     }
-    return ClientEmbed;
+    return "client";
   }
 
   // On canvas in preview we always execute the scripts, because in doesn't have SSR.
   if (renderer === "preview") {
-    return ClientEmbed;
+    return "client";
   }
 
   // On builder canvas we have a special setting to allow execution. This is useful if the execution doesn't hurt the build process.
   // Otherwise we just need to render it as a static HTML
   if (renderer === "canvas") {
-    return executeScriptOnCanvas ? ClientEmbed : StaticEmbed;
+    return executeScriptOnCanvas ? "client" : "static";
   }
 };
 
@@ -195,17 +192,19 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       return <Placeholder innerRef={ref} {...rest} />;
     }
 
-    const Embed = getEmbed({
-      isServer,
+    const mode = getRenderMode({
+      runtime: isServer ? "server" : "client",
       isFirstMount: isFirstMount.current,
       renderer,
       executeScriptOnCanvas,
       clientOnly,
     });
 
-    if (Embed === undefined) {
+    if (mode === undefined) {
       return;
     }
+
+    const Embed = mode === "client" ? ClientEmbed : ServerEmbed;
 
     return <Embed innerRef={ref} code={code} {...rest} />;
   }
