@@ -13,6 +13,7 @@ const insertScript = (
 ): Promise<HTMLScriptElement> => {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
+    const hasSrc = sourceScript.hasAttribute("src");
 
     // Copy all attributes from the source script to the new script, because we are going to replace the source script with the new one
     // and the user might rely on some attributes.
@@ -20,7 +21,7 @@ const insertScript = (
       script.setAttribute(name, value);
     }
 
-    if (sourceScript.src) {
+    if (hasSrc) {
       script.onload = () => {
         resolve(script);
       };
@@ -30,11 +31,10 @@ const insertScript = (
       script.textContent = sourceScript.innerText;
     }
 
-    document.head.appendChild(script);
     sourceScript.replaceWith(script);
 
     // Run the callback immediately for inline scripts.
-    if (sourceScript.hasAttribute("src") === false) {
+    if (hasSrc === false) {
       resolve(script);
     }
   });
