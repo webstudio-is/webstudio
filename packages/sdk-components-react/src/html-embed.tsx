@@ -127,39 +127,36 @@ const ServerEmbed = (props: ChildProps) => {
   );
 };
 
-// When option `clientOnly` is used and we are on the server
-const NonExecutableEmbed = (props: ChildProps) => <></>;
-
-const shouldExecute = ({
+const getEmbed = ({
   renderer,
   executeScriptOnCanvas = false,
+  clientOnly = false,
   isServer,
 }: {
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
+  clientOnly?: boolean;
   isServer: boolean;
 }) => {
-  // SSR will ensure execution on the client by the browser.
   if (isServer) {
-    return false;
+    // Don't render anything on the server when clientOnly is true otherwise SSR will execute the scripts by the browser.
+    return clientOnly ? undefined : ServerEmbed;
   }
 
   // We are rendering in published mode on the client, so will need to execute the scripts manually.
   if (renderer === undefined) {
-    return true;
+    return ClientEmbed;
   }
 
   // On canvas in preview we always execute the scripts, because in doesn't have SSR.
   if (renderer === "preview") {
-    return true;
+    return ClientEmbed;
   }
 
   // On builder canvas we have a special setting to allow execution. This is useful if the execution doesn't hurt the build process.
-  if (renderer === "canvas") {
-    return executeScriptOnCanvas;
+  if (renderer === "canvas" && executeScriptOnCanvas) {
+    return ClientEmbed;
   }
-
-  return false;
 };
 
 type HtmlEmbedProps = {
@@ -184,20 +181,15 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       return <Placeholder innerRef={ref} {...rest} />;
     }
 
-    let Embed = ServerEmbed;
-
-    if (isServer && clientOnly) {
-      Embed = NonExecutableEmbed;
-    }
-
-    const execute = shouldExecute({
+    const Embed = getEmbed({
       isServer,
       renderer,
       executeScriptOnCanvas,
+      clientOnly,
     });
 
-    if (execute) {
-      Embed = ClientEmbed;
+    if (Embed === undefined) {
+      return;
     }
 
     return <Embed innerRef={ref} code={code} {...rest} />;
