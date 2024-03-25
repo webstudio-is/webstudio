@@ -1,6 +1,12 @@
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { type FocusEventHandler, useState, useCallback, useId } from "react";
+import {
+  type FocusEventHandler,
+  useState,
+  useCallback,
+  useId,
+  useEffect,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
 import { useUnmount } from "react-use";
@@ -88,6 +94,8 @@ import {
   deletePageMutable,
   $pageRootScope,
   duplicatePage,
+  isRootId,
+  toTreeData,
 } from "./page-utils";
 import { Form } from "./form";
 import { type System, $publishedOrigin } from "~/builder/features/address-bar";
@@ -641,31 +649,54 @@ const FormFields = ({
 
             <Grid flow={"column"} gap={1} justify={"start"} align={"center"}>
               {values.isHomePage ? (
-                <HomeIcon />
+                <>
+                  <HomeIcon />
+                  <Text
+                    css={{
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    “{values.name}” is the home page
+                  </Text>
+                </>
+              ) : isRootId(values.parentFolderId) === false ? (
+                <>
+                  <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                  <Text
+                    css={{
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all",
+                    }}
+                    color="subtle"
+                  >
+                    Move this page to the “{toTreeData(pages).root.name}” folder
+                    to set it as your home page
+                  </Text>
+                </>
               ) : (
-                <Checkbox
-                  id={fieldIds.isHomePage}
-                  onCheckedChange={() => {
-                    onChange({ field: "path", value: "" });
-                    onChange({
-                      field: "isHomePage",
-                      value: !values.isHomePage,
-                    });
-                  }}
-                />
+                <>
+                  <Checkbox
+                    id={fieldIds.isHomePage}
+                    onCheckedChange={() => {
+                      onChange({ field: "path", value: "" });
+                      onChange({
+                        field: "isHomePage",
+                        value: !values.isHomePage,
+                      });
+                    }}
+                  />
+                  <Label
+                    css={{
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all",
+                    }}
+                    htmlFor={fieldIds.isHomePage}
+                  >
+                    Make “{values.name}” the home page
+                  </Label>
+                </>
               )}
-
-              <Label
-                css={{
-                  overflowWrap: "anywhere",
-                  wordBreak: "break-all",
-                }}
-                htmlFor={fieldIds.isHomePage}
-              >
-                {values.isHomePage
-                  ? `“${values.name}” is the home page`
-                  : `Make “${values.name}” the home page`}
-              </Label>
             </Grid>
           </Grid>
 
@@ -1293,13 +1324,38 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
         throw new Error(`Page with id ${pageId} not found`);
       }
 
-      const tmp = pages.homePage;
+      const oldHomePage = pages.homePage;
       pages.homePage = pages.pages[newHomePageIndex];
 
       pages.homePage.path = "";
-      pages.pages[newHomePageIndex] = tmp;
 
-      tmp.path = nameToPath(pages, tmp.name);
+      pages.homePage.name = "Home";
+
+      pages.pages[newHomePageIndex] = oldHomePage;
+
+      // For simplicity skip logic in case of names are same i.e. Old Home 1, Old Home 2
+      oldHomePage.name = "Old Home";
+      oldHomePage.path = nameToPath(pages, oldHomePage.name);
+
+      const rootFolder = pages.folders.find((folder) => isRootId(folder.id));
+
+      if (rootFolder === undefined) {
+        throw new Error("Root folder not found");
+      }
+
+      if (rootFolder.children === undefined) {
+        throw new Error("Root folder must have children");
+      }
+
+      // Swap home to the first position in the root folder
+      const childIndexOfHome = rootFolder?.children.indexOf(pages.homePage.id);
+
+      if (childIndexOfHome === -1) {
+        throw new Error("Both pages must be children of Root folder");
+      }
+
+      rootFolder.children[childIndexOfHome] = rootFolder.children[0];
+      rootFolder.children[0] = pages.homePage.id;
     }
 
     if (pages.homePage.id === pageId) {
@@ -1362,6 +1418,13 @@ export const PageSettings = ({
 
   const handleSubmitDebounced = useDebouncedCallback(debouncedFn, 1000);
 
+  const [refreshDebounce, setRefreshDebounce] = useState(0);
+
+  useEffect(() => {
+    // we can't flush immediately as setState haven't propagated at that time
+    handleSubmitDebounced.flush();
+  }, [refreshDebounce, handleSubmitDebounced]);
+
   const handleChange = useCallback(
     <Name extends FieldName>(event: { field: Name; value: Values[Name] }) => {
       setUnsavedValues((values) => ({
@@ -1369,6 +1432,10 @@ export const PageSettings = ({
         [event.field]: event.value,
       }));
       handleSubmitDebounced();
+
+      if (event.field === "isHomePage") {
+        setRefreshDebounce((prev) => prev + 1);
+      }
     },
     [handleSubmitDebounced]
   );

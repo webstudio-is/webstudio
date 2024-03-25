@@ -51,6 +51,10 @@ export type TreeData = TreeFolder | TreePage;
 
 type Index = Map<string, TreeData>;
 
+const PAGES_ROOT_ID = "root";
+
+export const isRootId = (id: string) => id === PAGES_ROOT_ID;
+
 /**
  * Return a nested tree structure from flat pages and folders.
  * To be used for rendering.
@@ -60,6 +64,7 @@ export const toTreeData = (
 ): { root: TreeFolder; index: Index } => {
   const pagesMap = new Map(pages.pages.map((page) => [page.id, page]));
   pagesMap.set(pages.homePage.id, pages.homePage);
+
   const foldersMap = new Map(
     pages.folders.map((folder) => [folder.id, folder])
   );
@@ -89,6 +94,7 @@ export const toTreeData = (
         continue;
       }
     }
+
     return {
       type: "folder",
       id: folder.id,
@@ -97,7 +103,7 @@ export const toTreeData = (
       children: Array.from(children.values()),
     } satisfies TreeFolder;
   };
-  const rootFolder = foldersMap.get("root");
+  const rootFolder = foldersMap.get(PAGES_ROOT_ID);
   if (rootFolder === undefined) {
     throw new Error("Root folder not found");
   }
