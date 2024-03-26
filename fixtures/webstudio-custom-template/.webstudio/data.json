@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "7c038d94-8a94-4ecb-a048-69da407986f2",
+    "id": "013a3982-43b2-4c80-90a6-fc306a5bdf2d",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 147,
-    "createdAt": "2024-03-17T18:28:52.083Z",
-    "updatedAt": "2024-03-17T18:28:52.083Z",
+    "version": 192,
+    "createdAt": "2024-03-26T14:06:11.500Z",
+    "updatedAt": "2024-03-26T14:06:11.500Z",
     "pages": {
       "meta": {
         "siteName": "Fixture Site",
@@ -1247,6 +1247,66 @@
           "type": "boolean",
           "value": false
         }
+      ],
+      [
+        "iqfFtqv6cjN4nb3w91dNq",
+        {
+          "id": "iqfFtqv6cjN4nb3w91dNq",
+          "instanceId": "ffuOk2adQRwdmAPbN0C02",
+          "name": "code",
+          "type": "string",
+          "value": "<script>console.log('PAGE MAIN SSR')</script>\n<script>console.log('PAGE MAIN 2 SSR')</script>\nSCRIPTS ARE HERE <br>"
+        }
+      ],
+      [
+        "K1pxEPsRa_Nt-wkIQEfjY",
+        {
+          "id": "K1pxEPsRa_Nt-wkIQEfjY",
+          "instanceId": "fx0TfnvHfudZ99agcyokN",
+          "name": "code",
+          "type": "string",
+          "value": "<br>\n<script>console.log('SCRIPT TEST SSR')</script>\n<script>console.log('SCRIPT TEST SSR 2')</script>\nSCRIPTS ARE HERE 2<br>"
+        }
+      ],
+      [
+        "unR2CL4WDfk00zIJpg8u_",
+        {
+          "id": "unR2CL4WDfk00zIJpg8u_",
+          "instanceId": "PI0W8MDhnG1glS5zDm8HQ",
+          "name": "code",
+          "type": "string",
+          "value": "<script>console.log('PAGE MAIN Client')</script>\n<script>console.log('PAGE MAIN 2 Client')</script>\nSCRIPTS ARE HERE <br>"
+        }
+      ],
+      [
+        "jrV4n4y5NOVhwRIDKkuo-",
+        {
+          "id": "jrV4n4y5NOVhwRIDKkuo-",
+          "instanceId": "PI0W8MDhnG1glS5zDm8HQ",
+          "name": "clientOnly",
+          "type": "boolean",
+          "value": true
+        }
+      ],
+      [
+        "jGj9meMRShEuCpWmHRy91",
+        {
+          "id": "jGj9meMRShEuCpWmHRy91",
+          "instanceId": "evFyHvPu9rGzKojoj723b",
+          "name": "code",
+          "type": "string",
+          "value": "<script>console.log('SCRIPTS TEST Client')</script>\n<script>console.log('SCRIPTS TEST 2 Client')</script>\nSCRIPTS ARE HERE <br>"
+        }
+      ],
+      [
+        "H2no86fAFL-WHxdVu6CJ4",
+        {
+          "id": "H2no86fAFL-WHxdVu6CJ4",
+          "instanceId": "evFyHvPu9rGzKojoj723b",
+          "name": "clientOnly",
+          "type": "boolean",
+          "value": true
+        }
       ]
     ],
     "dataSources": [
@@ -1293,6 +1353,14 @@
             },
             {
               "type": "id",
+              "value": "PI0W8MDhnG1glS5zDm8HQ"
+            },
+            {
+              "type": "id",
+              "value": "ffuOk2adQRwdmAPbN0C02"
+            },
+            {
+              "type": "id",
               "value": "QzTSoZnbGD6luZ5xcv893"
             },
             {
@@ -1330,6 +1398,14 @@
             {
               "type": "id",
               "value": "8MXByradrqVRiGSyHI0aH"
+            },
+            {
+              "type": "id",
+              "value": "fx0TfnvHfudZ99agcyokN"
+            },
+            {
+              "type": "id",
+              "value": "evFyHvPu9rGzKojoj723b"
             }
           ]
         }
@@ -1496,6 +1572,46 @@
           "id": "BeQ7sgDlUizFvf4aHqOsh",
           "component": "HtmlEmbed",
           "label": "Spinner SVG",
+          "children": []
+        }
+      ],
+      [
+        "ffuOk2adQRwdmAPbN0C02",
+        {
+          "type": "instance",
+          "id": "ffuOk2adQRwdmAPbN0C02",
+          "component": "HtmlEmbed",
+          "label": "SSR",
+          "children": []
+        }
+      ],
+      [
+        "fx0TfnvHfudZ99agcyokN",
+        {
+          "type": "instance",
+          "id": "fx0TfnvHfudZ99agcyokN",
+          "component": "HtmlEmbed",
+          "label": "SSR",
+          "children": []
+        }
+      ],
+      [
+        "PI0W8MDhnG1glS5zDm8HQ",
+        {
+          "type": "instance",
+          "id": "PI0W8MDhnG1glS5zDm8HQ",
+          "component": "HtmlEmbed",
+          "label": "CLient",
+          "children": []
+        }
+      ],
+      [
+        "evFyHvPu9rGzKojoj723b",
+        {
+          "type": "instance",
+          "id": "evFyHvPu9rGzKojoj723b",
+          "component": "HtmlEmbed",
+          "label": "CLient",
           "children": []
         }
       ]

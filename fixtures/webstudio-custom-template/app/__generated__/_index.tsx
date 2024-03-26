@@ -73,6 +73,21 @@ const Page = ({}: { system: any }) => {
       >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
+      <HtmlEmbed
+        data-ws-id="PI0W8MDhnG1glS5zDm8HQ"
+        data-ws-component="HtmlEmbed"
+        code={
+          "<script>console.log('PAGE MAIN Client')</script>\n<script>console.log('PAGE MAIN 2 Client')</script>\nSCRIPTS ARE HERE <br>"
+        }
+        clientOnly={true}
+      />
+      <HtmlEmbed
+        data-ws-id="ffuOk2adQRwdmAPbN0C02"
+        data-ws-component="HtmlEmbed"
+        code={
+          "<script>console.log('PAGE MAIN SSR')</script>\n<script>console.log('PAGE MAIN 2 SSR')</script>\nSCRIPTS ARE HERE <br>"
+        }
+      />
       <Link
         data-ws-id="QzTSoZnbGD6luZ5xcv893"
         data-ws-component="Link"
