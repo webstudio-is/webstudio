@@ -178,11 +178,8 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
     }
 
     if (ssrRendered) {
-      if (renderer === "canvas" || renderer === "preview") {
-        throw new Error("Canvas and Preview are not server rendered.");
-      }
+      // We are on published site, on server rendering or after hydration
 
-      // We are on published site
       if (clientOnly === false) {
         return <ServerEmbed innerRef={ref} code={code} {...rest} />;
       }
@@ -193,8 +190,8 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
         </ClientOnly>
       );
     }
-
     // We are or on canvas | preview | published site after client routing
+
     // The only case we need to prevent script execution if it's explicitly disabled on the canvas
     if (renderer === "canvas" && executeScriptOnCanvas === false) {
       return (
