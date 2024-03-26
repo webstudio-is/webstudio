@@ -8,29 +8,53 @@ import { test, expect, describe } from "@jest/globals";
 // eslint-disable-next-line import/no-internal-modules
 import "@testing-library/jest-dom/jest-globals";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { CLIENT_TEST_ID_PREFIX, HtmlEmbed } from "./html-embed";
+import { SCRIPT_PROCESSED_TEST_ID_PREFIX, HtmlEmbed } from "./html-embed";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 
 global.React = React;
 
-const SCRIPT_SERVER_TEST_ID = "script-a";
-const SCRIPT_CLIENT_TEST_ID = `${CLIENT_TEST_ID_PREFIX}${SCRIPT_SERVER_TEST_ID}`;
+const SCRIPT_TEST_ID = "script-a";
+const SCRIPT_PROCESSED_TEST_ID = `${SCRIPT_PROCESSED_TEST_ID_PREFIX}${SCRIPT_TEST_ID}`;
 
-const App = (props: { clientOnly: boolean }) => {
+const FRAGMENT_DIV_ID = "div";
+
+const App = (props: {
+  clientOnly: boolean;
+  renderer?: "canvas" | "preview";
+  executeScriptOnCanvas?: boolean;
+}) => {
   const [page, switchPage] = React.useReducer((n) => (n + 1) % 2, 0);
   const [refresh, setRefresh] = React.useReducer((n) => n + 1, 0);
 
-  const code = `<script data-testid="${SCRIPT_SERVER_TEST_ID}" data-page="${page}">console.log('hello')</script>`;
+  const code = `
+    <script data-testid="${SCRIPT_TEST_ID}" data-page="${page}">console.log('hello')</script>
+    <div data-testid="${FRAGMENT_DIV_ID}">hello</div>
+  `;
 
   return (
-    <div key={page}>
-      <HtmlEmbed code={code} clientOnly={props.clientOnly} />
-      <button type="button" onClick={switchPage}>
-        page:{page}
-      </button>
-      <button type="button" onClick={setRefresh}>
-        refresh:{refresh}
-      </button>
-    </div>
+    <ReactSdkContext.Provider
+      value={{
+        assetBaseUrl: "",
+        imageBaseUrl: "",
+        imageLoader: () => "",
+        renderer: props.renderer,
+        resources: {},
+      }}
+    >
+      <div key={page}>
+        <HtmlEmbed
+          code={code}
+          clientOnly={props.clientOnly}
+          executeScriptOnCanvas={props.executeScriptOnCanvas}
+        />
+        <button type="button" onClick={switchPage}>
+          page:{page}
+        </button>
+        <button type="button" onClick={setRefresh}>
+          refresh:{refresh}
+        </button>
+      </div>
+    </ReactSdkContext.Provider>
   );
 };
 
@@ -46,36 +70,40 @@ describe("Published site", () => {
     // Server rendering
     document.body.appendChild(container);
     container.innerHTML = ReactDOMServer.renderToString(ui);
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
 
     // Hydration
     render(ui, { container, hydrate: true });
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
 
     // Force page rerender
     fireEvent.click(screen.getByText("refresh:0"));
     expect(screen.getByText("refresh:1")).toBeInTheDocument();
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)?.dataset.page).toEqual(
-      "0"
-    );
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)?.dataset.page).toEqual("0");
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
 
     // Force page change
     fireEvent.click(screen.getByText("page:0"));
     expect(screen.getByText("page:1")).toBeTruthy();
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
     // Script has changed
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)?.dataset.page).toEqual(
-      "1"
-    );
+    expect(
+      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)?.dataset.page
+    ).toEqual("1");
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
   });
 
   /**
@@ -90,26 +118,31 @@ describe("Published site", () => {
     // Server rendering
     document.body.appendChild(container);
     container.innerHTML = ReactDOMServer.renderToString(ui);
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).not.toBeInTheDocument();
 
     // Hydration
     render(ui, { container, hydrate: true });
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
 
     // Force page rerender
     fireEvent.click(screen.getByText("refresh:0"));
     expect(screen.getByText("refresh:1")).toBeInTheDocument();
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)).toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)?.dataset.page).toEqual(
-      "0"
-    );
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)?.dataset.page
+    ).toEqual("0");
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
 
     // Force page change
     fireEvent.click(screen.getByText("page:0"));
@@ -117,10 +150,116 @@ describe("Published site", () => {
 
     // Wait execute await task(); to be executed (if exists)
     await Promise.resolve();
-    expect(screen.queryByTestId(SCRIPT_SERVER_TEST_ID)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)).toBeInTheDocument();
-    expect(screen.queryByTestId(SCRIPT_CLIENT_TEST_ID)?.dataset.page).toEqual(
-      "1"
-    );
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+    expect(
+      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)?.dataset.page
+    ).toEqual("1");
+    expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
   });
+});
+
+function cartesian<A, B>(a: A[], b: B[]): [A, B][];
+function cartesian<A, B, C>(a: A[], b: B[], c: C[]): [A, B, C][];
+
+// https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
+// eslint-disable-next-line func-style
+function cartesian(...a: unknown[][]) {
+  return a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
+}
+
+/**
+ * On canvas renderer, scripts are not executed on the server side.
+ */
+describe("Builder canvas, preview", () => {
+  /**
+   * On canvas if renderer is canvas, and executeScriptOnCanvas=false
+   * scripts postprocessing are not applied independently of clientOnly value.
+   */
+  test.each([true, false])(
+    "script processing are not applied when clientOnly=%p executeScriptOnCanvas=false and renderer=canvas",
+    async (clientOnly) => {
+      const ui = (
+        <App
+          clientOnly={clientOnly}
+          renderer={"canvas"}
+          executeScriptOnCanvas={false}
+        />
+      );
+
+      const container = document.createElement("div");
+      // Server rendering
+      document.body.appendChild(container);
+
+      // Hydration
+      render(ui, { container });
+      // Wait execute await task(); to be executed (if exists)
+      await Promise.resolve();
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
+      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("refresh:0"));
+      expect(screen.getByText("refresh:1")).toBeInTheDocument();
+      // Wait execute await task(); to be executed (if exists)
+      await Promise.resolve();
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).toBeInTheDocument();
+      expect(
+        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
+      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+    }
+  );
+
+  /**
+   * Script postprocessing is always applied for preview mode, independently of other props
+   * Script postprocessing is always applied for canvas renderer if executeScriptOnCanvas = true
+   */
+  test.each([
+    ...cartesian([true, false], ["preview" as const], [true, false]),
+    ...cartesian([true, false], ["canvas" as const], [true]),
+  ])(
+    "In preview mode, script processing are applied when clientOnly=%p and renderer=%p and executeScriptOnCanvas=%p",
+    async (clientOnly, renderer, executeScriptOnCanvas) => {
+      const ui = (
+        <App
+          clientOnly={clientOnly}
+          renderer={renderer}
+          executeScriptOnCanvas={executeScriptOnCanvas}
+        />
+      );
+
+      const container = document.createElement("div");
+      // Server rendering
+      document.body.appendChild(container);
+
+      // Hydration
+      render(ui, { container });
+      // Wait execute await task(); to be executed (if exists)
+      await Promise.resolve();
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText("refresh:0"));
+      expect(screen.getByText("refresh:1")).toBeInTheDocument();
+      // Wait execute await task(); to be executed (if exists)
+      await Promise.resolve();
+
+      expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId(FRAGMENT_DIV_ID)).toBeInTheDocument();
+
+      document.body.removeChild(container);
+    }
+  );
 });
