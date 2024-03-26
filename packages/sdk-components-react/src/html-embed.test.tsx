@@ -176,14 +176,19 @@ describe("Builder renderer= canvas | preview", () => {
    * On canvas if renderer is canvas, and executeScriptOnCanvas=false
    * scripts postprocessing are not applied independently of clientOnly value.
    */
-  test.each([true, false, undefined])(
-    "script processing are not applied when clientOnly=%p executeScriptOnCanvas=false and renderer=canvas",
-    async (clientOnly) => {
+  test.each(
+    cartesian(
+      [true, false, undefined], //clientOnly
+      [false, undefined] //executeScriptOnCanvas
+    )
+  )(
+    "script processing are not applied when clientOnly=%p executeScriptOnCanvas=%p and renderer=canvas",
+    async (clientOnly, executeScriptOnCanvas) => {
       const ui = (
         <App
           clientOnly={clientOnly}
           renderer={"canvas"}
-          executeScriptOnCanvas={false}
+          executeScriptOnCanvas={executeScriptOnCanvas}
         />
       );
 
@@ -228,7 +233,7 @@ describe("Builder renderer= canvas | preview", () => {
     ...cartesian(
       [true, false, undefined], // clientOnly
       ["canvas" as const], // renderer
-      [true, undefined] // executeScriptOnCanvas
+      [true] // executeScriptOnCanvas
     ),
   ])(
     "In preview mode, script processing are applied when clientOnly=%p and renderer=%p and executeScriptOnCanvas=%p",

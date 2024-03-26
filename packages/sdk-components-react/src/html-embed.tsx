@@ -193,7 +193,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
     // We are or on canvas | preview | published site after client routing
 
     // The only case we need to prevent script execution if it's explicitly disabled on the canvas
-    if (renderer === "canvas" && executeScriptOnCanvas === false) {
+    if (renderer === "canvas" && executeScriptOnCanvas !== true) {
       return (
         <ClientOnly>
           <ClientEmbedWithNonExecutableScripts
