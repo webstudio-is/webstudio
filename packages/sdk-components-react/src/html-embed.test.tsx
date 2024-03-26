@@ -12,6 +12,7 @@ import { __testing__, HtmlEmbed } from "./html-embed";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { cartesian } from "./test-utils/cartesian";
 
+// @todo: Find a better way to fix "detail: ReferenceError: React is not defined" (can be fixed by using import * as React from "react"; in components)
 global.React = React;
 
 const scriptTestIdPrefix = __testing__.scriptTestIdPrefix;
