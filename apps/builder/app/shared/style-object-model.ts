@@ -1,10 +1,10 @@
 import { properties } from "@webstudio-is/css-data";
 import { StyleValue } from "@webstudio-is/css-engine";
-import {
+import type {
   StyleDecl,
-  type Breakpoint,
-  type Instance,
-  type StyleSource,
+  Breakpoint,
+  Instance,
+  StyleSource,
 } from "@webstudio-is/sdk";
 
 /**
