@@ -5,9 +5,13 @@ import {
   useRef,
   type ForwardedRef,
   useSyncExternalStore,
+  useState,
+  type ReactNode,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
+
+export const CLIENT_TEST_ID_PREFIX = "client-";
 
 const insertScript = (
   sourceScript: HTMLScriptElement
@@ -20,6 +24,11 @@ const insertScript = (
     // and the user might rely on some attributes.
     for (const { name, value } of sourceScript.attributes) {
       script.setAttribute(name, value);
+    }
+
+    // For testing purposes, we add a prefix to the testid to differentiate between server and client rendered scripts.
+    if (script.dataset.testid !== undefined) {
+      script.dataset.testid = `${CLIENT_TEST_ID_PREFIX}${script.dataset.testid}`;
     }
 
     if (hasSrc) {
@@ -85,6 +94,19 @@ const Placeholder = (props: ChildProps) => {
   );
 };
 
+const ClientOnly = (props: { children: ReactNode }) => {
+  const isServer = useSyncExternalStore(
+    () => () => {},
+    () => false,
+    () => true
+  );
+
+  if (isServer) {
+    return;
+  }
+  return props.children;
+};
+
 /**
  * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
  * Also executes scripts on the published site when `clientOnly` is true.
@@ -92,10 +114,13 @@ const Placeholder = (props: ChildProps) => {
 const ClientEmbed = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   const containerRef = useRef<HTMLDivElement>(null);
+  const executeScripts = useRef(true);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container) {
+
+    if (container && executeScripts.current) {
+      executeScripts.current = false;
       execute(container);
     }
   }, []);
@@ -126,44 +151,7 @@ const ServerEmbed = (props: ChildProps) => {
   );
 };
 
-export const getRenderMode = ({
-  renderer,
-  runtime = "server",
-  isFirstMount = true,
-  executeScriptOnCanvas = false,
-  clientOnly = false,
-}: {
-  renderer?: "canvas" | "preview";
-  runtime?: "server" | "client";
-  isFirstMount?: boolean;
-  executeScriptOnCanvas?: boolean;
-  clientOnly?: boolean;
-}) => {
-  if (runtime === "server") {
-    // Don't render anything on the server when clientOnly is true otherwise SSR will execute the scripts by the browser.
-    return clientOnly ? undefined : "static";
-  }
-
-  // We are rendering in published mode on the client, so will need to execute the scripts manually
-  if (renderer === undefined) {
-    // On the first mount when SSR was enabled, scripts were already executed
-    if (clientOnly === false && isFirstMount) {
-      return "static";
-    }
-    return "client";
-  }
-
-  // On canvas in preview we always execute the scripts, because in doesn't have SSR.
-  if (renderer === "preview") {
-    return "client";
-  }
-
-  // On builder canvas we have a special setting to allow execution. This is useful if the execution doesn't hurt the build process.
-  // Otherwise we just need to render it as a static HTML
-  if (renderer === "canvas") {
-    return executeScriptOnCanvas ? "client" : "static";
-  }
-};
+const ClientEmbedWithNonExecutableScripts = ServerEmbed;
 
 type HtmlEmbedProps = {
   code: string;
@@ -175,15 +163,14 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
     const { code, executeScriptOnCanvas, clientOnly, ...rest } = props;
     const { renderer } = useContext(ReactSdkContext);
+
     const isServer = useSyncExternalStore(
       () => () => {},
       () => false,
       () => true
     );
-    const isFirstMount = useRef(true);
-    useEffect(() => {
-      isFirstMount.current = false;
-    }, []);
+
+    const [ssrRendered] = useState(isServer);
 
     // - code can be actually undefined when prop is not provided
     // - cast code to string in case non-string value is computed from expression
@@ -191,21 +178,43 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       return <Placeholder innerRef={ref} {...rest} />;
     }
 
-    const mode = getRenderMode({
-      runtime: isServer ? "server" : "client",
-      isFirstMount: isFirstMount.current,
-      renderer,
-      executeScriptOnCanvas,
-      clientOnly,
-    });
+    if (ssrRendered) {
+      if (renderer === "canvas" || renderer === "preview") {
+        throw new Error("Canvas and Preview are not server rendered.");
+      }
 
-    if (mode === undefined) {
-      return;
+      // We are on published site
+      if (clientOnly === false) {
+        return <ServerEmbed innerRef={ref} code={code} {...rest} />;
+      }
+
+      return (
+        <ClientOnly>
+          <ClientEmbed innerRef={ref} code={code} {...rest} />
+        </ClientOnly>
+      );
     }
 
-    const Embed = mode === "client" ? ClientEmbed : ServerEmbed;
+    // We are or on canvas | preview | published site after client routing
+    // The only case we need to prevent script execution if it's explicitly disabled on the canvas
+    if (renderer === "canvas" && executeScriptOnCanvas === false) {
+      return (
+        <ClientOnly>
+          <ClientEmbedWithNonExecutableScripts
+            innerRef={ref}
+            code={code}
+            {...rest}
+          />
+        </ClientOnly>
+      );
+    }
 
-    return <Embed innerRef={ref} code={code} {...rest} />;
+    // Use key={code} to allow scripts to be reexecuted when code has changed
+    return (
+      <ClientOnly>
+        <ClientEmbed key={code} innerRef={ref} code={code} {...rest} />
+      </ClientOnly>
+    );
   }
 );
 

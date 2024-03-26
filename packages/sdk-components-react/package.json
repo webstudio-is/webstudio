@@ -56,16 +56,19 @@
     "shallow-equal": "^3.1.0"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@storybook/react": "^7.4.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.2",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/generate-arg-types": "workspace:*",
+    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "jest-environment-jsdom": "^29.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "typescript": "5.2.2",
-    "@jest/globals": "^29.7.0",
-    "@webstudio-is/jest-config": "workspace:*"
+    "typescript": "5.2.2"
   }
 }
