@@ -4,9 +4,16 @@ import {
   useEffect,
   useRef,
   type ForwardedRef,
+  useSyncExternalStore,
+  useState,
+  type ReactNode,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
+
+export const __testing__ = {
+  scriptTestIdPrefix: "client-",
+};
 
 const insertScript = (
   sourceScript: HTMLScriptElement
@@ -21,12 +28,16 @@ const insertScript = (
       script.setAttribute(name, value);
     }
 
+    // For testing purposes, we add a prefix to the testid to differentiate between server and client rendered scripts.
+    if (script.dataset.testid !== undefined) {
+      script.dataset.testid = `${__testing__.scriptTestIdPrefix}${script.dataset.testid}`;
+    }
+
     if (hasSrc) {
-      script.onload = () => {
+      script.addEventListener("load", () => {
         resolve(script);
-      };
-      script.onerror = reject;
-      script.src = sourceScript.src;
+      });
+      script.addEventListener("error", reject);
     } else {
       script.textContent = sourceScript.innerText;
     }
@@ -59,7 +70,9 @@ const execute = async (container: HTMLElement) => {
   });
 
   // Insert the script tags in parallel.
-  Promise.all(asyncTasks.map((task) => task()));
+  for (const task of asyncTasks) {
+    task();
+  }
 
   // Insert the script tags sequentially to preserve execution order.
   for (const task of syncTasks) {
@@ -71,7 +84,6 @@ type ChildProps = {
   innerRef: ForwardedRef<HTMLDivElement>;
   // code can be actually undefined when prop is not provided
   code?: string;
-  shouldExecute?: boolean;
 };
 
 const Placeholder = (props: ChildProps) => {
@@ -83,16 +95,39 @@ const Placeholder = (props: ChildProps) => {
   );
 };
 
+const useIsServer = () => {
+  // https://tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store
+  const isServer = useSyncExternalStore(
+    () => () => {},
+    () => false,
+    () => true
+  );
+  return isServer;
+};
+
+const ClientOnly = (props: { children: ReactNode }) => {
+  const isServer = useIsServer();
+
+  if (isServer) {
+    return;
+  }
+  return props.children;
+};
+
 /**
  * Executes scripts when rendered in the builder manually, because innerHTML doesn't execute scripts.
+ * Also executes scripts on the published site when `clientOnly` is true.
  */
-const ExecutableHtml = (props: ChildProps) => {
+const ClientEmbed = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   const containerRef = useRef<HTMLDivElement>(null);
+  const executeScripts = useRef(true);
 
   useEffect(() => {
     const container = containerRef.current;
-    if (container) {
+
+    if (container && executeScripts.current) {
+      executeScripts.current = false;
       execute(container);
     }
   }, []);
@@ -110,7 +145,7 @@ const ExecutableHtml = (props: ChildProps) => {
 /**
  * Scripts are executed when rendered server side without any manual intervention.
  */
-const InnerHtml = (props: ChildProps) => {
+const ServerEmbed = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
 
   return (
@@ -123,32 +158,7 @@ const InnerHtml = (props: ChildProps) => {
   );
 };
 
-const shouldExecute = ({
-  renderer,
-  executeScriptOnCanvas = false,
-  clientOnly = false,
-}: {
-  renderer?: "canvas" | "preview";
-  executeScriptOnCanvas?: boolean;
-  clientOnly?: boolean;
-}) => {
-  // We are rendering in published mode.
-  if (renderer === undefined) {
-    return clientOnly;
-  }
-
-  // On canvas in preview we always execute the scripts, because in doesn't have SSR.
-  if (renderer === "preview") {
-    return true;
-  }
-
-  // On builder canvas we have a special setting to allow execution. This is useful if the execution doesn't hurt the build process.
-  if (renderer === "canvas") {
-    return executeScriptOnCanvas;
-  }
-
-  return false;
-};
+const ClientEmbedWithNonExecutableScripts = ServerEmbed;
 
 type HtmlEmbedProps = {
   code: string;
@@ -158,8 +168,12 @@ type HtmlEmbedProps = {
 
 export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
-    const { renderer } = useContext(ReactSdkContext);
     const { code, executeScriptOnCanvas, clientOnly, ...rest } = props;
+    const { renderer } = useContext(ReactSdkContext);
+
+    const isServer = useIsServer();
+
+    const [ssrRendered] = useState(isServer);
 
     // - code can be actually undefined when prop is not provided
     // - cast code to string in case non-string value is computed from expression
@@ -167,17 +181,44 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       return <Placeholder innerRef={ref} {...rest} />;
     }
 
-    const execute = shouldExecute({
-      renderer,
-      executeScriptOnCanvas,
-      clientOnly,
-    });
+    if (ssrRendered) {
+      // We are on published site, on server rendering or after hydration
+      if (clientOnly === false) {
+        return <ServerEmbed innerRef={ref} code={code} {...rest} />;
+      }
 
-    if (execute) {
-      return <ExecutableHtml innerRef={ref} code={code} {...rest} />;
+      return (
+        <ClientOnly>
+          <ClientEmbed innerRef={ref} code={code} {...rest} />
+        </ClientOnly>
+      );
+    }
+    // We are or on canvas | preview | published site after client routing
+
+    // The only case we need to prevent script execution if it's explicitly disabled on the canvas
+    if (renderer === "canvas" && executeScriptOnCanvas !== true) {
+      return (
+        <ClientOnly>
+          <ClientEmbedWithNonExecutableScripts
+            innerRef={ref}
+            code={code}
+            {...rest}
+          />
+        </ClientOnly>
+      );
     }
 
-    return <InnerHtml innerRef={ref} code={code} {...rest} />;
+    return (
+      <ClientOnly>
+        <ClientEmbed
+          // Use key={code} to allow scripts to be reexecuted when code has changed
+          key={code}
+          innerRef={ref}
+          code={code}
+          {...rest}
+        />
+      </ClientOnly>
+    );
   }
 );
 
