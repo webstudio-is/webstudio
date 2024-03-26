@@ -333,4 +333,22 @@ describe("Builder renderer= canvas | preview", () => {
       screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID_2)
     ).toBeInTheDocument();
   });
+
+  test.each(["", "   "])("Placeholder is shown if code is %p", async (code) => {
+    const AppWithCode = () => {
+      return <HtmlEmbed code={code} executeScriptOnCanvas={true} />;
+    };
+
+    const ui = <AppWithCode />;
+    const container = document.createElement("div");
+    // Server rendering
+    document.body.appendChild(container);
+
+    // Hydration
+    render(ui, { container });
+
+    expect(
+      screen.queryByText(`Open the "Settings" panel to insert HTML code`)
+    ).toBeInTheDocument();
+  });
 });
