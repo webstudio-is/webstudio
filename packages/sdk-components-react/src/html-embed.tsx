@@ -95,12 +95,18 @@ const Placeholder = (props: ChildProps) => {
   );
 };
 
-const ClientOnly = (props: { children: ReactNode }) => {
+const useIsServer = () => {
+  // https://tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store
   const isServer = useSyncExternalStore(
     () => () => {},
     () => false,
     () => true
   );
+  return isServer;
+};
+
+const ClientOnly = (props: { children: ReactNode }) => {
+  const isServer = useIsServer();
 
   if (isServer) {
     return;
@@ -165,11 +171,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
     const { code, executeScriptOnCanvas, clientOnly, ...rest } = props;
     const { renderer } = useContext(ReactSdkContext);
 
-    const isServer = useSyncExternalStore(
-      () => () => {},
-      () => false,
-      () => true
-    );
+    const isServer = useIsServer();
 
     const [ssrRendered] = useState(isServer);
 
@@ -181,7 +183,6 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
 
     if (ssrRendered) {
       // We are on published site, on server rendering or after hydration
-
       if (clientOnly === false) {
         return <ServerEmbed innerRef={ref} code={code} {...rest} />;
       }
@@ -207,10 +208,15 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
       );
     }
 
-    // Use key={code} to allow scripts to be reexecuted when code has changed
     return (
       <ClientOnly>
-        <ClientEmbed key={code} innerRef={ref} code={code} {...rest} />
+        <ClientEmbed
+          // Use key={code} to allow scripts to be reexecuted when code has changed
+          key={code}
+          innerRef={ref}
+          code={code}
+          {...rest}
+        />
       </ClientOnly>
     );
   }
