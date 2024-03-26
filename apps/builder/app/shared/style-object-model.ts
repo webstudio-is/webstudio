@@ -1,6 +1,11 @@
 import { properties } from "@webstudio-is/css-data";
 import { StyleValue } from "@webstudio-is/css-engine";
-import type { Instance, StyleDecl, StyleSource } from "@webstudio-is/sdk";
+import {
+  StyleDecl,
+  type Breakpoint,
+  type Instance,
+  type StyleSource,
+} from "@webstudio-is/sdk";
 
 /**
  *
@@ -33,6 +38,7 @@ import type { Instance, StyleDecl, StyleSource } from "@webstudio-is/sdk";
  */
 
 type InstanceSelector = string[];
+type Property = string;
 
 /**
  * style selector is a full address in a tree
@@ -40,9 +46,15 @@ type InstanceSelector = string[];
  */
 export type StyleSelector = {
   instanceSelector: InstanceSelector;
+  /**
+   * all currently active and ordered breakpoints
+   */
+  activeBreakpoints: Breakpoint["id"][];
+  /**
+   * all currently active and ordered breakpoints
+   */
+  activeStates: Set<string>;
 };
-
-type Style = Map<string, StyleDecl>;
 
 /**
  * model contains all data and cache of computed styles
@@ -50,33 +62,110 @@ type Style = Map<string, StyleDecl>;
  */
 export type StyleObjectModel = {
   styleSourcesByInstanceId: Map<Instance["id"], StyleSource["id"][]>;
-  styleByStyleSourceId: Map<StyleSource["id"], Style>;
+  styleByStyleSourceId: Map<`${StyleSource["id"]}:${Property}`, StyleDecl[]>;
+};
+
+/**
+ *
+ * Standard specificity is defined as ID-CLASS-TYPE.
+ * Though webstudio does not rely on these and also
+ * cannot rely on order of declarations.
+ *
+ * Instead webstudio define own specificity format
+ * STATE-BREAKPOINT-STYLESOURCE
+ *
+ * Declaration with selected STATE gets 2, with any other STATE gets 1
+ * Declaration BREAKPOINT is its position in ordered list
+ * Declaration STYLESOURCE is its position in predefined list
+ * excluding everything after selected STYLESOURCE
+ *
+ */
+type Specificity = [STATE: number, BREAKPOINT: number, STYLESOURCE: number];
+
+const compareSpecificity = (left: Specificity, right: Specificity) => {
+  // STATE-BREAKPOINT-STYLESOURCE
+  const stateDiff = left[0] - right[0];
+  if (stateDiff !== 0) {
+    return stateDiff;
+  }
+  const breakpointDiff = left[1] - right[1];
+  if (breakpointDiff !== 0) {
+    return breakpointDiff;
+  }
+  const styleSourceDiff = left[2] - right[2];
+  if (styleSourceDiff !== 0) {
+    return styleSourceDiff;
+  }
+  return 0;
+};
+
+const getSpecificity = ({
+  styleDecl,
+  activeBreakpoints,
+  activeStyleSources,
+}: {
+  styleDecl: StyleDecl;
+  activeBreakpoints: Breakpoint["id"][];
+  activeStyleSources: StyleSource["id"][];
+}): Specificity => {
+  const state = styleDecl.state === undefined ? 0 : 1;
+  const breakpoint = activeBreakpoints.indexOf(styleDecl.breakpointId);
+  const styleSource = activeStyleSources.indexOf(styleDecl.styleSourceId);
+  return [state, breakpoint, styleSource];
 };
 
 const getCascadedValue = ({
   model,
+  activeBreakpoints,
+  activeStates,
   instanceId,
   property,
 }: {
   model: StyleObjectModel;
+  activeBreakpoints: Breakpoint["id"][];
+  activeStates: Set<string>;
   instanceId: Instance["id"];
-  property: string;
+  property: Property;
 }) => {
+  const { styleSourcesByInstanceId, styleByStyleSourceId } = model;
+
   // https://drafts.csswg.org/css-cascade-5/#declared
-  const declaredValues = [];
-  const styleSourceIds = model.styleSourcesByInstanceId.get(instanceId);
+  type DeclaredValue = { specificity: Specificity; value: StyleValue };
+  const declaredValues: DeclaredValue[] = [];
+
+  // order values by style sources
+  const styleSourceIds = styleSourcesByInstanceId.get(instanceId);
   if (styleSourceIds) {
     for (const styleSourceId of styleSourceIds) {
-      const style = model.styleByStyleSourceId.get(styleSourceId);
-      const styleDecl = style?.get(property);
-      if (styleDecl) {
-        declaredValues.push(styleDecl.value);
+      const styles = styleByStyleSourceId.get(`${styleSourceId}:${property}`);
+      if (styles === undefined) {
+        continue;
+      }
+      for (const styleDecl of styles) {
+        // exclude values from inactive breakpoints
+        if (activeBreakpoints.includes(styleDecl.breakpointId) === false) {
+          continue;
+        }
+        if (styleDecl.state && activeStates.has(styleDecl.state) === false) {
+          continue;
+        }
+        // precompute specificity for all values before sorting
+        const specificity = getSpecificity({
+          styleDecl,
+          activeBreakpoints,
+          activeStyleSources: styleSourceIds,
+        });
+        declaredValues.push({ value: styleDecl.value, specificity });
       }
     }
   }
 
+  declaredValues.sort((left, right) =>
+    compareSpecificity(left.specificity, right.specificity)
+  );
+
   // https://drafts.csswg.org/css-cascade-5/#cascaded
-  const cascadedValue = declaredValues.at(-1);
+  const cascadedValue = declaredValues.at(-1)?.value;
   return { cascadedValue };
 };
 
@@ -101,10 +190,8 @@ const customPropertyData = {
  * @todo
  * - html
  * - preset
- * - cascaded
  * - selected style source
  * - selected state
- * - breakpoints
  *
  */
 export const getComputedStyleDecl = ({
@@ -115,16 +202,16 @@ export const getComputedStyleDecl = ({
 }: {
   model: StyleObjectModel;
   styleSelector: StyleSelector;
-  property: string;
+  property: Property;
   /**
    * for internal use only
    */
-  customPropertiesGraph?: Map<Instance["id"], Set<string>>;
+  customPropertiesGraph?: Map<Instance["id"], Set<Property>>;
 }): {
   computedValue: StyleValue;
   usedValue: StyleValue;
 } => {
-  const { instanceSelector } = styleSelector;
+  const { instanceSelector, activeBreakpoints, activeStates } = styleSelector;
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
@@ -146,7 +233,13 @@ export const getComputedStyleDecl = ({
     const inheritedValue: StyleValue = computedValue;
 
     // https://drafts.csswg.org/css-cascade-5/#cascaded
-    const { cascadedValue } = getCascadedValue({ model, instanceId, property });
+    const { cascadedValue } = getCascadedValue({
+      model,
+      activeBreakpoints,
+      activeStates,
+      instanceId,
+      property,
+    });
 
     // resolve specified value
     // https://drafts.csswg.org/css-cascade-5/#specified
