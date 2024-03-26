@@ -69,6 +69,7 @@ export const loader = async (arg: LoaderArgs) => {
       system,
       resources,
       pageMeta,
+      projectMeta,
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
@@ -94,7 +95,7 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
   if (data === undefined) {
     return metas;
   }
-  const { pageMeta } = data;
+  const { pageMeta, projectMeta } = data;
 
   if (data.url) {
     metas.push({

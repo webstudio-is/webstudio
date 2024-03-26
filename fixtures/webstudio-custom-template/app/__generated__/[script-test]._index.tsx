@@ -8,7 +8,10 @@ import {
   Body as Body,
   Link as Link,
 } from "@webstudio-is/sdk-components-react-remix";
-import { Heading as Heading } from "@webstudio-is/sdk-components-react";
+import {
+  Heading as Heading,
+  HtmlEmbed as HtmlEmbed,
+} from "@webstudio-is/sdk-components-react";
 
 export const favIconAsset: ImageAsset | undefined = {
   id: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
@@ -44,6 +47,21 @@ const Page = ({}: { system: any }) => {
       >
         {"Go Home"}
       </Link>
+      <HtmlEmbed
+        data-ws-id="fx0TfnvHfudZ99agcyokN"
+        data-ws-component="HtmlEmbed"
+        code={
+          "<br>\n<script>console.log('SCRIPT TEST SSR')</script>\n<script>console.log('SCRIPT TEST SSR 2')</script>\nSCRIPTS ARE HERE 2<br>"
+        }
+      />
+      <HtmlEmbed
+        data-ws-id="evFyHvPu9rGzKojoj723b"
+        data-ws-component="HtmlEmbed"
+        code={
+          "<script>console.log('SCRIPTS TEST Client')</script>\n<script>console.log('SCRIPTS TEST 2 Client')</script>\nSCRIPTS ARE HERE <br>"
+        }
+        clientOnly={true}
+      />
     </Body>
   );
 };
