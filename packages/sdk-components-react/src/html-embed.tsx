@@ -11,7 +11,9 @@ import {
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 
-export const SCRIPT_PROCESSED_TEST_ID_PREFIX = "client-";
+export const __testing__ = {
+  scriptTestIdPrefix: "client-",
+};
 
 const insertScript = (
   sourceScript: HTMLScriptElement
@@ -28,7 +30,7 @@ const insertScript = (
 
     // For testing purposes, we add a prefix to the testid to differentiate between server and client rendered scripts.
     if (script.dataset.testid !== undefined) {
-      script.dataset.testid = `${SCRIPT_PROCESSED_TEST_ID_PREFIX}${script.dataset.testid}`;
+      script.dataset.testid = `${__testing__.scriptTestIdPrefix}${script.dataset.testid}`;
     }
 
     if (hasSrc) {

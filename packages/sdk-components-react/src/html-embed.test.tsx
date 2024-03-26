@@ -8,13 +8,15 @@ import { test, expect, describe } from "@jest/globals";
 // eslint-disable-next-line import/no-internal-modules
 import "@testing-library/jest-dom/jest-globals";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { SCRIPT_PROCESSED_TEST_ID_PREFIX, HtmlEmbed } from "./html-embed";
+import { __testing__, HtmlEmbed } from "./html-embed";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { cartesian } from "./test-utils/cartesian";
 
 global.React = React;
 
+const scriptTestIdPrefix = __testing__.scriptTestIdPrefix;
 const SCRIPT_TEST_ID = "script-a";
-const SCRIPT_PROCESSED_TEST_ID = `${SCRIPT_PROCESSED_TEST_ID_PREFIX}${SCRIPT_TEST_ID}`;
+const SCRIPT_PROCESSED_TEST_ID = `${scriptTestIdPrefix}${SCRIPT_TEST_ID}`;
 
 const FRAGMENT_DIV_ID = "div";
 
@@ -159,15 +161,6 @@ describe("Published site", () => {
   });
 });
 
-function cartesian<A, B>(a: A[], b: B[]): [A, B][];
-function cartesian<A, B, C>(a: A[], b: B[], c: C[]): [A, B, C][];
-
-// https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
-// eslint-disable-next-line func-style
-function cartesian(...a: unknown[][]) {
-  return a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
-}
-
 /**
  * On canvas renderer, scripts are not executed on the server side.
  */
@@ -278,7 +271,7 @@ describe("Builder renderer= canvas | preview", () => {
 
   test("Code change cause scripts to be updated", async () => {
     const SCRIPT_TEST_ID_2 = "script-b";
-    const SCRIPT_PROCESSED_TEST_ID_2 = `${SCRIPT_PROCESSED_TEST_ID_PREFIX}${SCRIPT_TEST_ID_2}`;
+    const SCRIPT_PROCESSED_TEST_ID_2 = `${scriptTestIdPrefix}${SCRIPT_TEST_ID_2}`;
 
     const codes = [
       `<script data-testid="${SCRIPT_TEST_ID}">console.log('hello')</script>`,
