@@ -67,8 +67,8 @@ describe("Published site", () => {
    * - SSR: Renders script tags in HTML embeds directly, without modification, on the server side, on hydration and on refresh.
    * - Page Navigation: Executes scripts using additional processing described here https://ghinda.net/article/script-tags/.
    */
-  test("clientOnly === false", async () => {
-    const ui = <App clientOnly={false} />;
+  test.each([false, undefined])("clientOnly === false", async (clientOnly) => {
+    const ui = <App clientOnly={clientOnly} />;
     const container = document.createElement("div");
     // Server rendering
     document.body.appendChild(container);

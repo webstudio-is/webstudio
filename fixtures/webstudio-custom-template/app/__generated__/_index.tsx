@@ -16,6 +16,7 @@ import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
   VimeoSpinner as VimeoSpinner,
+  Image as Image,
 } from "@webstudio-is/sdk-components-react";
 
 export const favIconAsset: ImageAsset | undefined = {
@@ -72,6 +73,30 @@ const Page = ({}: { system: any }) => {
         className="c11x2bo2 cykwawo c1qmshyz c12wnxll c1hzshzo c136ve95 cyttr60 c1cywb85 c187ui6a c1azrtl7"
       >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
+      </Heading>
+      <Box
+        data-ws-id="GMg3Wi9tJBFMtKcwbIK6z"
+        data-ws-component="Box"
+        className="c1b095zn c8n5d6n chg86bx c9inwkc csxkr3h"
+      >
+        <Image
+          data-ws-id="Mfd_mI-VJtT4r7gICAvXi"
+          data-ws-component="Image"
+          src={
+            "/custom-folder/_937084ed-a798-49fe-8664-df93a2af605e_1JqSy_0Wy9fY5mXNZSLJ0.jpeg"
+          }
+          width={1024}
+          height={1024}
+          className="cp47ozi c133k2ks c1dww8sp c15iig68"
+        />
+        <Box
+          data-ws-id="COafOppxs73Ne4O0Geik0"
+          data-ws-component="Box"
+          className="cp47ozi c133k2ks c1dww8sp c15iig68"
+        />
+      </Box>
+      <Heading data-ws-id="jWb8SRMYG_XPWqCYvGZjo" data-ws-component="Heading">
+        {"Below Image"}
       </Heading>
       <HtmlEmbed
         data-ws-id="PI0W8MDhnG1glS5zDm8HQ"

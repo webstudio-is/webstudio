@@ -405,7 +405,6 @@ export const Story = () => {
           propsLogic={logic}
           propValues={new Map()}
           component="Button"
-          setCssProperty={() => () => undefined}
         />
       </div>
       <pre style={textVariants.mono}>

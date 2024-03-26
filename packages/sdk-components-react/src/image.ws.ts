@@ -24,6 +24,13 @@ const presetStyle = {
       property: "display",
       value: { type: "keyword", value: "block" },
     },
+    // Set image height to "auto" to reduce layout shift, improving compatibility across browsers like Safari.
+    // Unlike "fit-content," "auto" preserves the aspect ratio when the width exceeds max-width. (in Safari)
+    // See https://web.dev/articles/optimize-cls#best_practice_for_setting_image_dimensions
+    {
+      property: "height",
+      value: { type: "keyword", value: "auto" },
+    },
   ],
 } satisfies PresetStyle<typeof defaultTag>;
 

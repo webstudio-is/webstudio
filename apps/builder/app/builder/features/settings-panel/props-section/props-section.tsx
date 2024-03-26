@@ -21,10 +21,6 @@ import {
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
-import {
-  useStyleData,
-  type SetProperty as SetCssProperty,
-} from "~/builder/features/style-panel/shared/use-style-data";
 import { renderControl } from "../controls/combined";
 import {
   usePropsLogic,
@@ -112,13 +108,7 @@ const PropsCombobox = ({
 };
 
 const renderProperty = (
-  {
-    propsLogic: logic,
-    propValues,
-    setCssProperty,
-    component,
-    instanceId,
-  }: PropsSectionProps,
+  { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
   { deletable, autoFocus }: { deletable?: boolean; autoFocus?: boolean } = {}
 ) =>
@@ -155,11 +145,6 @@ const renderProperty = (
           value: asset.meta.height,
           type: "number",
         });
-
-        setCssProperty("height")({
-          type: "keyword",
-          value: "fit-content",
-        });
       }
     },
   });
@@ -184,7 +169,6 @@ type PropsSectionProps = {
   propValues: Map<string, unknown>;
   component: Instance["component"];
   instanceId: string;
-  setCssProperty: SetCssProperty;
 };
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
@@ -237,9 +221,6 @@ export const PropsSectionContainer = ({
 }: {
   selectedInstance: Instance;
 }) => {
-  const { setProperty: setCssProperty } = useStyleData({
-    selectedInstance: instance,
-  });
   const { propsByInstanceId } = useStore($propsIndex);
   const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
   const instanceSelector = useStore($selectedInstanceSelector);
@@ -286,7 +267,6 @@ export const PropsSectionContainer = ({
       propValues={propValues ?? new Map()}
       component={instance.component}
       instanceId={instance.id}
-      setCssProperty={setCssProperty}
     />
   );
 };
