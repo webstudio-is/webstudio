@@ -183,7 +183,7 @@ export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
 
     if (ssrRendered) {
       // We are on published site, on server rendering or after hydration
-      if (clientOnly === false) {
+      if (clientOnly !== true) {
         return <ServerEmbed innerRef={ref} code={code} {...rest} />;
       }
 
