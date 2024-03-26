@@ -333,7 +333,7 @@ describe("Builder renderer= canvas | preview", () => {
     expect(
       screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
     ).not.toBeInTheDocument();
-
+    // Code has changed, new script processed
     expect(
       screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID_2)
     ).toBeInTheDocument();
