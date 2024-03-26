@@ -19,7 +19,7 @@ const SCRIPT_PROCESSED_TEST_ID = `${SCRIPT_PROCESSED_TEST_ID_PREFIX}${SCRIPT_TES
 const FRAGMENT_DIV_ID = "div";
 
 const App = (props: {
-  clientOnly: boolean;
+  clientOnly?: boolean;
   renderer?: "canvas" | "preview";
   executeScriptOnCanvas?: boolean;
 }) => {
@@ -171,12 +171,12 @@ function cartesian(...a: unknown[][]) {
 /**
  * On canvas renderer, scripts are not executed on the server side.
  */
-describe("Builder canvas, preview", () => {
+describe("Builder renderer= canvas | preview", () => {
   /**
    * On canvas if renderer is canvas, and executeScriptOnCanvas=false
    * scripts postprocessing are not applied independently of clientOnly value.
    */
-  test.each([true, false])(
+  test.each([true, false, undefined])(
     "script processing are not applied when clientOnly=%p executeScriptOnCanvas=false and renderer=canvas",
     async (clientOnly) => {
       const ui = (
@@ -217,11 +217,19 @@ describe("Builder canvas, preview", () => {
 
   /**
    * Script postprocessing is always applied for preview mode, independently of other props
-   * Script postprocessing is always applied for canvas renderer if executeScriptOnCanvas = true
+   * Script postprocessing is always applied for canvas renderer if executeScriptOnCanvas = true or undefined
    */
   test.each([
-    ...cartesian([true, false], ["preview" as const], [true, false]),
-    ...cartesian([true, false], ["canvas" as const], [true]),
+    ...cartesian(
+      [true, false, undefined], // clientOnly
+      ["preview" as const], // renderer
+      [true, false, undefined] // executeScriptOnCanvas
+    ),
+    ...cartesian(
+      [true, false, undefined], // clientOnly
+      ["canvas" as const], // renderer
+      [true, undefined] // executeScriptOnCanvas
+    ),
   ])(
     "In preview mode, script processing are applied when clientOnly=%p and renderer=%p and executeScriptOnCanvas=%p",
     async (clientOnly, renderer, executeScriptOnCanvas) => {
@@ -262,4 +270,67 @@ describe("Builder canvas, preview", () => {
       document.body.removeChild(container);
     }
   );
+
+  test("Code change cause scripts to be updated", async () => {
+    const SCRIPT_TEST_ID_2 = "script-b";
+    const SCRIPT_PROCESSED_TEST_ID_2 = `${SCRIPT_PROCESSED_TEST_ID_PREFIX}${SCRIPT_TEST_ID_2}`;
+
+    const codes = [
+      `<script data-testid="${SCRIPT_TEST_ID}">console.log('hello')</script>`,
+      `<script data-testid="${SCRIPT_TEST_ID_2}">console.log('hello')</script>`,
+    ];
+
+    const AppWithCode = () => {
+      const [codeIndex, switchCodeIndex] = React.useReducer(
+        (n) => (n + 1) % 2,
+        0
+      );
+
+      const code = codes[codeIndex];
+
+      return (
+        <ReactSdkContext.Provider
+          value={{
+            assetBaseUrl: "",
+            imageBaseUrl: "",
+            imageLoader: () => "",
+            renderer: "canvas",
+            resources: {},
+          }}
+        >
+          <HtmlEmbed code={code} executeScriptOnCanvas={true} />
+          <button type="button" onClick={switchCodeIndex}>
+            code:{codeIndex}
+          </button>
+        </ReactSdkContext.Provider>
+      );
+    };
+
+    const ui = <AppWithCode />;
+    const container = document.createElement("div");
+    // Server rendering
+    document.body.appendChild(container);
+
+    // Hydration
+    render(ui, { container });
+    // Wait execute await task(); to be executed (if exists)
+    await Promise.resolve();
+
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)).toBeInTheDocument();
+
+    // Force page rerender
+    fireEvent.click(screen.getByText("code:0"));
+    // Wait execute await task(); to be executed (if exists)
+    await Promise.resolve();
+
+    expect(screen.queryByTestId(SCRIPT_TEST_ID)).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID)
+    ).not.toBeInTheDocument();
+
+    expect(
+      screen.queryByTestId(SCRIPT_PROCESSED_TEST_ID_2)
+    ).toBeInTheDocument();
+  });
 });
