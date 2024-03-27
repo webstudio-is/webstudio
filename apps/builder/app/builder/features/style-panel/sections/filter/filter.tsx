@@ -1,4 +1,4 @@
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { RenderCategoryProps } from "../../style-sections";
 import { useState } from "react";
 import {
@@ -28,7 +28,7 @@ export const FilterSection = (props: RenderCategoryProps) => {
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -78,6 +78,6 @@ export const FilterSection = (props: RenderCategoryProps) => {
           )}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

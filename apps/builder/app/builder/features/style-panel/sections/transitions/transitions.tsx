@@ -1,5 +1,5 @@
 import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { RenderCategoryProps } from "../../style-sections";
 import {
   SectionTitle,
@@ -38,7 +38,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
     selectedOrLastStyleSourceSelector.state === undefined;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -102,6 +102,6 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           }}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

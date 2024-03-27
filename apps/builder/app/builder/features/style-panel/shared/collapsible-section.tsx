@@ -2,7 +2,7 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 import { SectionTitle, SectionTitleLabel } from "@webstudio-is/design-system";
 import type { ReactNode } from "react";
 import {
-  CollapsibleSectionBase,
+  CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { getStyleSource, type StyleInfo } from "./style-info";
@@ -34,7 +34,7 @@ export const CollapsibleSection = (props: {
   const [isOpen, setIsOpen] = useOpenState(props);
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       label={label}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
@@ -46,6 +46,6 @@ export const CollapsibleSection = (props: {
       fullWidth={fullWidth}
     >
       {children}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

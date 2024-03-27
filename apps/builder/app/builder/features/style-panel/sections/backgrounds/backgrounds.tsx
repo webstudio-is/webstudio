@@ -45,7 +45,7 @@ import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useMemo } from "react";
 import type { RgbValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
-  CollapsibleSectionBase,
+  CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { getDots } from "../../shared/collapsible-section";
@@ -155,7 +155,7 @@ const BackgroundsCollapsibleSection = ({
   const layersStyleSource = getLayersStyleSource(currentStyle);
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       label={label}
       fullWidth
       isOpen={isOpen}
@@ -193,7 +193,7 @@ const BackgroundsCollapsibleSection = ({
       }
     >
       {children}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };
 
@@ -226,7 +226,6 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       deleteProperty={deleteProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
-      category={props.category}
     >
       <Flex gap={1} direction="column">
         <CssValueListArrowFocus dragItemId={dragItemId}>
