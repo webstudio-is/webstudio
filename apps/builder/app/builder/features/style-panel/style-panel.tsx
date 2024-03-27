@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import {
   theme,
   Box,
@@ -7,13 +8,34 @@ import {
   ScrollArea,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
+import { useStore } from "@nanostores/react";
+import { computed } from "nanostores";
 
 import { useStyleData } from "./shared/use-style-data";
-import { StyleSettings } from "./style-settings";
 
 import { StyleSourcesSection } from "./style-source-section";
 import { $selectedInstanceRenderState } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
+import {
+  $selectedInstanceIntanceToTag,
+  $selectedInstanceSelector,
+} from "~/shared/nano-states";
+import {
+  categories,
+  renderCategory,
+  shouldRenderCategory,
+  type RenderCategoryProps,
+} from "./style-sections";
+import { useParentStyle } from "./parent-style";
+
+const $selectedInstanceTag = computed(
+  [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
+  (instanceSelector, instanceToTag) => {
+    if (instanceSelector === undefined || instanceToTag === undefined) {
+      return;
+    }
+    return instanceToTag.get(instanceSelector[0]);
+  }
+);
 
 type StylePanelProps = {
   selectedInstance: Instance;
@@ -26,6 +48,8 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
     });
 
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
+  const selectedInstanceTag = useStore($selectedInstanceTag);
+  const parentStyle = useParentStyle();
 
   // If selected instance is not rendered on the canvas,
   // style panel will not work, because it needs the element in DOM in order to work.
@@ -38,6 +62,23 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
         </Card>
       </Box>
     );
+  }
+
+  const all = [];
+  for (const category of categories) {
+    const categoryProps: RenderCategoryProps = {
+      setProperty,
+      deleteProperty,
+      createBatchUpdate,
+      currentStyle,
+      category,
+    };
+
+    if (shouldRenderCategory(categoryProps, parentStyle, selectedInstanceTag)) {
+      all.push(
+        <Fragment key={category}>{renderCategory(categoryProps)}</Fragment>
+      );
+    }
   }
 
   return (
@@ -54,14 +95,7 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
         <StyleSourcesSection />
       </Box>
       <Separator />
-      <ScrollArea>
-        <StyleSettings
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-          createBatchUpdate={createBatchUpdate}
-        />
-      </ScrollArea>
+      <ScrollArea>{all}</ScrollArea>
     </>
   );
 };
