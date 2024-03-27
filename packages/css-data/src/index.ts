@@ -21,6 +21,8 @@ export { parseTailwindToWebstudio } from "./tailwind-parser/parse";
 
 import { properties as generatedProperties } from "./__generated__/properties";
 
+export { generatedProperties };
+
 // convert to writable to avoid conflicts with schema type
 export const properties = generatedProperties as WritableDeep<
   typeof generatedProperties
