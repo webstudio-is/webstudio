@@ -18,7 +18,7 @@ import {
 } from "./dropdown-menu";
 import {
   useCombobox,
-  Combobox,
+  ComboboxRoot,
   ComboboxContent,
   ComboboxAnchor,
   ComboboxListbox,
@@ -177,7 +177,7 @@ const ComboboxDemo = () => {
   const longItems = items.filter((item) => item === "Banana");
 
   return (
-    <Combobox open={isOpen}>
+    <ComboboxRoot open={isOpen}>
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
           <DeprecatedTextField
@@ -210,7 +210,7 @@ const ComboboxDemo = () => {
           </ComboboxListbox>
         </ComboboxContent>
       </div>
-    </Combobox>
+    </ComboboxRoot>
   );
 };
 

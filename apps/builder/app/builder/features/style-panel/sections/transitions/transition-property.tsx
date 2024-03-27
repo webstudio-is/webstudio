@@ -6,7 +6,7 @@ import {
 import {
   Label,
   InputField,
-  Combobox,
+  ComboboxRoot,
   ComboboxAnchor,
   useCombobox,
   ComboboxContent,
@@ -149,7 +149,7 @@ export const TransitionProperty = ({
           <Label css={{ display: "inline" }}> Property </Label>
         </Tooltip>
       </Flex>
-      <Combobox open={isOpen}>
+      <ComboboxRoot open={isOpen}>
         <div {...getComboboxProps()}>
           <ComboboxAnchor>
             <InputField
@@ -186,7 +186,7 @@ export const TransitionProperty = ({
             </ComboboxListbox>
           </ComboboxContent>
         </div>
-      </Combobox>
+      </ComboboxRoot>
     </>
   );
 };

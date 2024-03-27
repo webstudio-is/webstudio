@@ -16,7 +16,7 @@ import {
   Box,
   ComboboxListbox,
   ComboboxListboxItem,
-  Combobox,
+  ComboboxRoot,
   ComboboxAnchor,
   ComboboxContent,
   DeprecatedTextFieldInput,
@@ -471,7 +471,7 @@ export const StyleSourceInput = (
   const states = props.componentStates ?? [];
 
   return (
-    <Combobox open={isOpen}>
+    <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <TextField
@@ -575,6 +575,6 @@ export const StyleSourceInput = (
           </ComboboxListbox>
         </ComboboxContent>
       </Box>
-    </Combobox>
+    </ComboboxRoot>
   );
 };

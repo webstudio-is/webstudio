@@ -2,7 +2,7 @@ import { matchSorter } from "match-sorter";
 import {
   Box,
   useCombobox,
-  Combobox,
+  ComboboxRoot,
   ComboboxContent,
   ComboboxAnchor,
   ComboboxListbox,
@@ -648,7 +648,7 @@ export const CssValueInput = ({
   }
 
   return (
-    <Combobox open={isOpen}>
+    <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
@@ -691,6 +691,6 @@ export const CssValueInput = ({
           </ComboboxContent>
         )}
       </Box>
-    </Combobox>
+    </ComboboxRoot>
   );
 };

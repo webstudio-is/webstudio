@@ -9,7 +9,7 @@ import {
   useCombobox,
   comboboxStateChangeTypes,
   ComboboxContent,
-  Combobox,
+  ComboboxRoot,
   ComboboxListbox,
   ComboboxAnchor,
   ComboboxItemDescription,
@@ -77,7 +77,7 @@ export const Complex = () => {
   });
 
   return (
-    <Combobox open={isOpen}>
+    <ComboboxRoot open={isOpen}>
       <Flex {...getComboboxProps()} direction="column" gap="3">
         <ComboboxAnchor>
           <InputField
@@ -105,7 +105,7 @@ export const Complex = () => {
           </ComboboxListbox>
         </ComboboxContent>
       </Flex>
-    </Combobox>
+    </ComboboxRoot>
   );
 };
 

@@ -56,57 +56,6 @@ const matchOrSuggestToCreate = (
   return matched;
 };
 
-const PropsCombobox = ({
-  items,
-  onItemSelect,
-}: {
-  items: NameAndLabel[];
-  onItemSelect: (item: NameAndLabel) => void;
-}) => {
-  const [inputValue, setInputValue] = useState("");
-
-  const combobox = useCombobox<NameAndLabel>({
-    items,
-    itemToString,
-    onItemSelect,
-    selectedItem: undefined,
-    match: matchOrSuggestToCreate,
-    // this weird handling of value is needed to work around a limitation in useCombobox
-    // where it doesn't allow to leave both `value` and `selectedItem` empty/uncontrolled
-    value: { name: "", label: inputValue },
-    onInputChange: (value) => setInputValue(value ?? ""),
-  });
-
-  return (
-    <Combobox open={combobox.isOpen}>
-      <div {...combobox.getComboboxProps()}>
-        <ComboboxAnchor>
-          <InputField
-            autoFocus
-            {...combobox.getInputProps()}
-            placeholder="Find or create a property"
-            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
-          />
-        </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={2}>
-          <ComboboxListbox {...combobox.getMenuProps()}>
-            {combobox.isOpen &&
-              combobox.items.map((item, index) => (
-                <ComboboxListboxItem
-                  key={item.name}
-                  selectable={false}
-                  {...combobox.getItemProps({ item, index })}
-                >
-                  {itemToString(item)}
-                </ComboboxListboxItem>
-              ))}
-          </ComboboxListbox>
-        </ComboboxContent>
-      </div>
-    </Combobox>
-  );
-};
-
 const renderProperty = (
   { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
   { prop, propName, meta }: PropAndMeta,
@@ -155,14 +104,25 @@ const AddPropertyForm = ({
 }: {
   availableProps: NameAndLabel[];
   onPropSelected: (propName: string) => void;
-}) => (
-  <Flex css={{ height: theme.spacing[13] }} direction="column" justify="center">
-    <PropsCombobox
-      items={availableProps}
-      onItemSelect={(item) => onPropSelected(item.name)}
-    />
-  </Flex>
-);
+}) => {
+  return (
+    <Flex
+      css={{ height: theme.spacing[13] }}
+      direction="column"
+      justify="center"
+    >
+      <Combobox<NameAndLabel>
+        autoFocus
+        placeholder="Find or create a property"
+        items={availableProps}
+        itemToString={itemToString}
+        onItemSelect={(item) => onPropSelected(item.name)}
+        match={matchOrSuggestToCreate}
+        value={{ name: "", label: "" }}
+      />
+    </Flex>
+  );
+};
 
 type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;

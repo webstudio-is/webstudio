@@ -36,6 +36,7 @@ import {
 } from "./menu";
 import { ScrollArea } from "./scroll-area";
 import { Flex } from "./flex";
+import { InputField, NestedInputButton } from "..";
 
 const Listbox = styled(
   "ul",
@@ -142,7 +143,7 @@ export const ComboboxItemDescription = ({
   );
 };
 
-export const Combobox = (props: ComponentProps<typeof Popover>) => {
+export const ComboboxRoot = (props: ComponentProps<typeof Popover>) => {
   return <Popover {...props} modal />;
 };
 
@@ -229,11 +230,13 @@ const useFilter = <Item,>({
   };
 };
 
+type ItemToString<Item> = (item: Item | null) => string;
+
 type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
-  itemToString: (item: Item | null) => string;
+  itemToString: ItemToString<Item>;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
-  selectedItem: Item | undefined;
+  selectedItem?: Item;
   onInputChange?: (value: string | undefined) => void;
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value: Item | null) => void;
@@ -392,4 +395,39 @@ export const useCombobox = <Item,>({
     getInputProps: enhancedGetInputProps,
     resetFilter,
   };
+};
+
+export const Combobox = <Item,>({
+  autoFocus,
+  ...props
+}: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
+  const combobox = useCombobox<Item>(props);
+
+  return (
+    <ComboboxRoot open={combobox.isOpen}>
+      <div {...combobox.getComboboxProps()}>
+        <ComboboxAnchor>
+          <InputField
+            {...combobox.getInputProps()}
+            autoFocus={autoFocus}
+            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
+          />
+        </ComboboxAnchor>
+        <ComboboxContent align="start" sideOffset={2}>
+          <ComboboxListbox {...combobox.getMenuProps()}>
+            {combobox.isOpen &&
+              combobox.items.map((item, index) => (
+                <ComboboxListboxItem
+                  key={index}
+                  selectable={false}
+                  {...combobox.getItemProps({ item, index })}
+                >
+                  {props.itemToString(item)}
+                </ComboboxListboxItem>
+              ))}
+          </ComboboxListbox>
+        </ComboboxContent>
+      </div>
+    </ComboboxRoot>
+  );
 };
