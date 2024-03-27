@@ -47,13 +47,13 @@ type Property = string;
 export type StyleSelector = {
   instanceSelector: InstanceSelector;
   /**
-   * all currently active and ordered breakpoints
+   * all currently matching and ordered breakpoints
    */
-  activeBreakpoints: Breakpoint["id"][];
+  matchingBreakpoints: Breakpoint["id"][];
   /**
-   * all currently active and ordered breakpoints
+   * all currently matching and ordered breakpoints
    */
-  activeStates: Set<string>;
+  matchingStates: Set<string>;
 };
 
 /**
@@ -101,29 +101,29 @@ const compareSpecificity = (left: Specificity, right: Specificity) => {
 
 const getSpecificity = ({
   styleDecl,
-  activeBreakpoints,
-  activeStyleSources,
+  matchingBreakpoints,
+  matchingStyleSources,
 }: {
   styleDecl: StyleDecl;
-  activeBreakpoints: Breakpoint["id"][];
-  activeStyleSources: StyleSource["id"][];
+  matchingBreakpoints: Breakpoint["id"][];
+  matchingStyleSources: StyleSource["id"][];
 }): Specificity => {
   const state = styleDecl.state === undefined ? 0 : 1;
-  const breakpoint = activeBreakpoints.indexOf(styleDecl.breakpointId);
-  const styleSource = activeStyleSources.indexOf(styleDecl.styleSourceId);
+  const breakpoint = matchingBreakpoints.indexOf(styleDecl.breakpointId);
+  const styleSource = matchingStyleSources.indexOf(styleDecl.styleSourceId);
   return [state, breakpoint, styleSource];
 };
 
 const getCascadedValue = ({
   model,
-  activeBreakpoints,
-  activeStates,
+  matchingBreakpoints,
+  matchingStates,
   instanceId,
   property,
 }: {
   model: StyleObjectModel;
-  activeBreakpoints: Breakpoint["id"][];
-  activeStates: Set<string>;
+  matchingBreakpoints: Breakpoint["id"][];
+  matchingStates: Set<string>;
   instanceId: Instance["id"];
   property: Property;
 }) => {
@@ -142,18 +142,18 @@ const getCascadedValue = ({
         continue;
       }
       for (const styleDecl of styles) {
-        // exclude values from inactive breakpoints
-        if (activeBreakpoints.includes(styleDecl.breakpointId) === false) {
+        // exclude values from not matching breakpoints
+        if (matchingBreakpoints.includes(styleDecl.breakpointId) === false) {
           continue;
         }
-        if (styleDecl.state && activeStates.has(styleDecl.state) === false) {
+        if (styleDecl.state && matchingStates.has(styleDecl.state) === false) {
           continue;
         }
         // precompute specificity for all values before sorting
         const specificity = getSpecificity({
           styleDecl,
-          activeBreakpoints,
-          activeStyleSources: styleSourceIds,
+          matchingBreakpoints,
+          matchingStyleSources: styleSourceIds,
         });
         declaredValues.push({ value: styleDecl.value, specificity });
       }
@@ -211,7 +211,8 @@ export const getComputedStyleDecl = ({
   computedValue: StyleValue;
   usedValue: StyleValue;
 } => {
-  const { instanceSelector, activeBreakpoints, activeStates } = styleSelector;
+  const { instanceSelector, matchingBreakpoints, matchingStates } =
+    styleSelector;
   const isCustomProperty = property.startsWith("--");
   const propertyData = isCustomProperty
     ? customPropertyData
@@ -235,8 +236,8 @@ export const getComputedStyleDecl = ({
     // https://drafts.csswg.org/css-cascade-5/#cascaded
     const { cascadedValue } = getCascadedValue({
       model,
-      activeBreakpoints,
-      activeStates,
+      matchingBreakpoints,
+      matchingStates,
       instanceId,
       property,
     });
