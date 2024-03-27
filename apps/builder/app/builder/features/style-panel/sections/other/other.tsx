@@ -1,4 +1,3 @@
-import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { RenderCategoryProps } from "../../style-sections";
@@ -10,7 +9,9 @@ import { theme } from "@webstudio-is/design-system";
 import { generatedProperties } from "@webstudio-is/css-data";
 import { Fragment } from "react";
 
-const initialProperties: Array<StyleProperty> = [
+type GeneratedStyleProperty = keyof typeof generatedProperties;
+
+const initialProperties: Array<GeneratedStyleProperty> = [
   "opacity",
   "mixBlendMode",
   "cursor",
@@ -19,7 +20,8 @@ const initialProperties: Array<StyleProperty> = [
   "backdropFilter",
 ];
 
-export const OthersSection = ({
+// @todo when adding properties - maybe sort them by popularity from generatedProperties?
+export const OtherSection = ({
   currentStyle: style,
   setProperty,
   deleteProperty,
@@ -28,7 +30,9 @@ export const OthersSection = ({
     <CollapsibleSection
       label="Others"
       currentStyle={style}
-      properties={Object.keys(generatedProperties) as Array<StyleProperty>}
+      properties={
+        Object.keys(generatedProperties) as Array<GeneratedStyleProperty>
+      }
     >
       <Grid
         gap={2}
@@ -37,6 +41,7 @@ export const OthersSection = ({
         }}
       >
         {initialProperties.map((property) => {
+          const { unitGroups } = generatedProperties[property];
           return (
             <Fragment key={property}>
               <PropertyName
@@ -45,12 +50,21 @@ export const OthersSection = ({
                 style={style}
                 onReset={() => deleteProperty(property)}
               />
-              <SelectControl
-                property={property}
-                currentStyle={style}
-                setProperty={setProperty}
-                deleteProperty={deleteProperty}
-              />
+              {unitGroups.length > 0 ? (
+                <TextControl
+                  property={property}
+                  currentStyle={style}
+                  setProperty={setProperty}
+                  deleteProperty={deleteProperty}
+                />
+              ) : (
+                <SelectControl
+                  property={property}
+                  currentStyle={style}
+                  setProperty={setProperty}
+                  deleteProperty={deleteProperty}
+                />
+              )}
             </Fragment>
           );
         })}

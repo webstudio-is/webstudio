@@ -22,7 +22,7 @@ import {
   BackgroundsSection,
   BordersSection,
   OutlineSection,
-  OthersSection,
+  OtherSection,
   BoxShadowsSection,
   ListItemSection,
   TransitionSection,
@@ -160,5 +160,5 @@ export const sections: Record<
   filter: FilterSection,
   transitions: TransitionSection,
   outline: OutlineSection,
-  others: OthersSection,
+  others: OtherSection,
 };
