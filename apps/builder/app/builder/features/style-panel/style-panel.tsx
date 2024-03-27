@@ -10,6 +10,7 @@ import {
 import type { Instance } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { computed } from "nanostores";
+import type { htmlTags as HtmlTag } from "html-tags";
 
 import { useStyleData } from "./shared/use-style-data";
 
@@ -22,10 +23,12 @@ import {
 import {
   categories,
   renderCategory,
-  shouldRenderCategory,
   type RenderCategoryProps,
+  type Category,
 } from "./style-sections";
 import { useParentStyle } from "./parent-style";
+import type { StyleInfo } from "./shared/style-info";
+import { toValue } from "@webstudio-is/css-engine";
 
 const $selectedInstanceTag = computed(
   [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
@@ -36,6 +39,20 @@ const $selectedInstanceTag = computed(
     return instanceToTag.get(instanceSelector[0]);
   }
 );
+
+const shouldRenderCategory = (
+  category: Category,
+  parentStyle: StyleInfo,
+  tag: undefined | HtmlTag
+) => {
+  switch (category) {
+    case "flexChild":
+      return toValue(parentStyle.display?.value).includes("flex");
+    case "listItem":
+      return tag === "ul" || tag === "ol" || tag === "li";
+  }
+  return true;
+};
 
 type StylePanelProps = {
   selectedInstance: Instance;
@@ -66,29 +83,24 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
 
   const all = [];
   for (const category of categories) {
-    const categoryProps: RenderCategoryProps = {
-      setProperty,
-      deleteProperty,
-      createBatchUpdate,
-      currentStyle,
-      category,
-    };
-
-    if (shouldRenderCategory(categoryProps, parentStyle, selectedInstanceTag)) {
+    if (shouldRenderCategory(category, parentStyle, selectedInstanceTag)) {
       all.push(
-        <Fragment key={category}>{renderCategory(categoryProps)}</Fragment>
+        <Fragment key={category}>
+          {renderCategory({
+            setProperty,
+            deleteProperty,
+            createBatchUpdate,
+            currentStyle,
+            category,
+          })}
+        </Fragment>
       );
     }
   }
 
   return (
     <>
-      <Box
-        css={{
-          px: theme.spacing[9],
-          pb: theme.spacing[9],
-        }}
-      >
+      <Box css={{ px: theme.spacing[9], pb: theme.spacing[9] }}>
         <Text css={{ py: theme.spacing[7] }} variant="titles">
           Style Sources
         </Text>

@@ -1,5 +1,3 @@
-import type { htmlTags as HtmlTag } from "html-tags";
-import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type {
   SetProperty,
@@ -79,21 +77,6 @@ export const renderCategory = ({
       category={category}
     />
   );
-};
-
-export const shouldRenderCategory = (
-  { category }: RenderCategoryProps,
-  parentStyle: StyleInfo,
-  tag: undefined | HtmlTag
-) => {
-  switch (category) {
-    case "flexChild":
-      return toValue(parentStyle.display?.value).includes("flex");
-    case "listItem":
-      return tag === "ul" || tag === "ol" || tag === "li";
-  }
-
-  return true;
 };
 
 export const sections: Record<
