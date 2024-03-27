@@ -216,14 +216,12 @@ const useHandleKeyDown =
     ignoreUpDownNumeric,
     value,
     onChange,
-    onChangeComplete,
     onKeyDown,
   }: {
     ignoreEnter: boolean;
     ignoreUpDownNumeric: boolean;
     value: CssValueInputValue;
     onChange: (value: CssValueInputValue) => void;
-    onChangeComplete: (value: CssValueInputValue) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
@@ -235,7 +233,7 @@ const useHandleKeyDown =
     // Do not prevent downshift behaviour on item select
     if (ignoreEnter === false) {
       if (event.key === "Enter") {
-        onChangeComplete(value);
+        onChange(value);
       }
     }
 
@@ -591,9 +589,8 @@ export const CssValueInput = ({
       isUnitsOpen || (isOpen && !menuProps.empty && highlightedIndex !== -1),
     // Do not change the number value on the arrow up/down if any menu is opened
     ignoreUpDownNumeric: isUnitsOpen || isOpen,
-    onChangeComplete: (value) => onChangeComplete(value, "enter"),
+    onChange: (value) => onChangeComplete(value, "enter"),
     value,
-    onChange: props.onChange,
     onKeyDown: inputProps.onKeyDown,
   });
 
