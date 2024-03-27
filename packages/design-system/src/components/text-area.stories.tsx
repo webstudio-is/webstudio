@@ -7,7 +7,7 @@ export default {
 };
 
 const exampleValue =
-  "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ";
+  "Lorem g and typesetting industry. ";
 
 export const Demo = () => {
   const [value, setValue] = useState(exampleValue);
