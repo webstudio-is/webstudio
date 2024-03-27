@@ -1,13 +1,13 @@
-import { Grid } from "@webstudio-is/design-system";
+import { Fragment } from "react";
+import { theme, Grid } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { RenderCategoryProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";
-import { SelectControl, TextControl } from "../../controls";
 
 import { CollapsibleSection } from "../../shared/collapsible-section";
-import { theme } from "@webstudio-is/design-system";
 import { generatedProperties } from "@webstudio-is/css-data";
-import { Fragment } from "react";
+import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { getStyleSource } from "../../shared/style-info";
 
 type GeneratedStyleProperty = keyof typeof generatedProperties;
 
@@ -22,14 +22,14 @@ const initialProperties: Array<GeneratedStyleProperty> = [
 
 // @todo when adding properties - maybe sort them by popularity from generatedProperties?
 export const OtherSection = ({
-  currentStyle: style,
+  currentStyle,
   setProperty,
   deleteProperty,
 }: RenderCategoryProps) => {
   return (
     <CollapsibleSection
-      label="Others"
-      currentStyle={style}
+      label="Other"
+      currentStyle={currentStyle}
       properties={
         Object.keys(generatedProperties) as Array<GeneratedStyleProperty>
       }
@@ -41,30 +41,28 @@ export const OtherSection = ({
         }}
       >
         {initialProperties.map((property) => {
-          const { unitGroups } = generatedProperties[property];
+          const { items } = styleConfigByName(property);
+          const keywords = items.map((item) => ({
+            type: "keyword" as const,
+            value: item.name,
+          }));
           return (
             <Fragment key={property}>
               <PropertyName
                 label={styleConfigByName(property).label}
                 properties={[property]}
-                style={style}
+                style={currentStyle}
                 onReset={() => deleteProperty(property)}
               />
-              {unitGroups.length > 0 ? (
-                <TextControl
-                  property={property}
-                  currentStyle={style}
-                  setProperty={setProperty}
-                  deleteProperty={deleteProperty}
-                />
-              ) : (
-                <SelectControl
-                  property={property}
-                  currentStyle={style}
-                  setProperty={setProperty}
-                  deleteProperty={deleteProperty}
-                />
-              )}
+              <CssValueInputContainer
+                label={styleConfigByName(property).label}
+                property={property}
+                styleSource={getStyleSource(currentStyle[property])}
+                keywords={keywords}
+                value={currentStyle[property]?.value}
+                setValue={setProperty(property)}
+                deleteProperty={deleteProperty}
+              />
             </Fragment>
           );
         })}
