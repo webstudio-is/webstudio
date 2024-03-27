@@ -36,10 +36,6 @@ type StyleUpdates = {
   state: undefined | string;
 };
 
-type UseStyleData = {
-  selectedInstance: Instance;
-};
-
 export type StyleUpdateOptions = { isEphemeral: boolean };
 
 export type SetValue = (
@@ -60,7 +56,7 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = ({ selectedInstance }: UseStyleData) => {
+export const useStyleData = (selectedInstance: Instance) => {
   const selectedBreakpoint = useStore($selectedBreakpoint);
 
   const currentStyle = useStyleInfo();
@@ -160,6 +156,21 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
     [publishUpdates]
   );
 
+  // @todo add custom property to some list
+  const addProperty = useCallback<SetProperty>(
+    (property) => {
+      return (value, options = { isEphemeral: false }) => {
+        if (value.type !== "invalid") {
+          const updates = [{ operation: "set" as const, property, value }];
+          const type = options.isEphemeral ? "preview" : "update";
+
+          publishUpdates(type, updates);
+        }
+      };
+    },
+    [publishUpdates]
+  );
+
   const deleteProperty = useCallback(
     (property: StyleProperty, options = { isEphemeral: false }) => {
       const updates = [{ operation: "delete" as const, property }];
@@ -206,6 +217,7 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
   return {
     currentStyle,
     setProperty,
+    addProperty,
     deleteProperty,
     createBatchUpdate,
   };

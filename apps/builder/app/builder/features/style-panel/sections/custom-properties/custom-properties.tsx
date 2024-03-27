@@ -1,15 +1,18 @@
-import { Fragment } from "react";
-import { theme, Grid } from "@webstudio-is/design-system";
-import { styleConfigByName } from "../../shared/configs";
-import type { RenderCategoryProps } from "../../style-sections";
-import { PropertyName } from "../../shared/property-name";
-
-import { CollapsibleSection } from "../../shared/collapsible-section";
+import { Fragment, useState } from "react";
+import { theme, Grid, Combobox } from "@webstudio-is/design-system";
 import { generatedProperties } from "@webstudio-is/css-data";
+import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
+import type { RenderCategoryProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { styleConfigByName } from "../../shared/configs";
+import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
+import type { SetProperty } from "../../shared/use-style-data";
 
 type GeneratedStyleProperty = keyof typeof generatedProperties;
+const generatedPropertyNames = Object.keys(
+  generatedProperties
+) as Array<GeneratedStyleProperty>;
 
 const initialProperties: Array<GeneratedStyleProperty> = [
   "opacity",
@@ -21,25 +24,22 @@ const initialProperties: Array<GeneratedStyleProperty> = [
 ];
 
 // @todo when adding properties - maybe sort them by popularity from generatedProperties?
-export const OtherSection = ({
+export const CustomProperties = ({
   currentStyle,
   setProperty,
+  addProperty,
   deleteProperty,
-}: RenderCategoryProps) => {
+}: RenderCategoryProps & { addProperty: SetProperty }) => {
+  //const [addingProp, setAddingProp] = useState<GeneratedStyleProperty>();
+  //  <AddProperty onPropSelected={setAddingProp} />
+
   return (
-    <CollapsibleSection
-      label="Other"
-      currentStyle={currentStyle}
-      properties={
-        Object.keys(generatedProperties) as Array<GeneratedStyleProperty>
-      }
+    <CollapsibleSectionWithAddButton
+      label="Custom Properties"
+      onAdd={() => {}}
+      hasItems={true}
     >
-      <Grid
-        gap={2}
-        css={{
-          gridTemplateColumns: `1fr ${theme.spacing[22]}`,
-        }}
-      >
+      <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[22]}` }}>
         {initialProperties.map((property) => {
           const { items } = styleConfigByName(property);
           const keywords = items.map((item) => ({
@@ -67,6 +67,23 @@ export const OtherSection = ({
           );
         })}
       </Grid>
-    </CollapsibleSection>
+    </CollapsibleSectionWithAddButton>
+  );
+};
+
+const AddProperty = ({ onPropSelected }: any) => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox
+      autoFocus
+      placeholder="Find or create a property"
+      items={generatedPropertyNames}
+      itemToString={(property) => property ?? ""}
+      onItemSelect={(item) => onPropSelected(item)}
+      value={value}
+      onInputChange={(value) => {
+        setValue(value ?? "");
+      }}
+    />
   );
 };

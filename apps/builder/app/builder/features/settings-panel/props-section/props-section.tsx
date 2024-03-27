@@ -1,19 +1,7 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
-import {
-  theme,
-  useCombobox,
-  Combobox,
-  ComboboxContent,
-  ComboboxAnchor,
-  ComboboxListbox,
-  ComboboxListboxItem,
-  Separator,
-  Flex,
-  InputField,
-  NestedInputButton,
-} from "@webstudio-is/design-system";
+import { theme, Combobox, Separator, Flex } from "@webstudio-is/design-system";
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
@@ -98,7 +86,7 @@ const renderProperty = (
     },
   });
 
-const AddPropertyForm = ({
+const AddProperty = ({
   availableProps,
   onPropSelected,
 }: {
@@ -159,7 +147,7 @@ export const PropsSection = (props: PropsSectionProps) => {
       >
         <Flex gap="1" direction="column">
           {addingProp && (
-            <AddPropertyForm
+            <AddProperty
               availableProps={logic.availableProps}
               onPropSelected={(propName) => {
                 setAddingProp(false);

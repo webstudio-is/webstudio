@@ -16,7 +16,6 @@ import {
   BackgroundsSection,
   BordersSection,
   OutlineSection,
-  OtherSection,
   BoxShadowsSection,
   ListItemSection,
   TransitionSection,
@@ -36,8 +35,7 @@ export type Category =
   | "boxShadows"
   | "filter"
   | "transitions"
-  | "outline"
-  | "other";
+  | "outline";
 
 export type ControlProps = {
   property: StyleProperty;
@@ -53,7 +51,6 @@ export type RenderCategoryProps = {
   deleteProperty: DeleteProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
-  category: Category;
 };
 
 export const sections: Map<
@@ -73,5 +70,4 @@ export const sections: Map<
   ["filter", FilterSection],
   ["transitions", TransitionSection],
   ["outline", OutlineSection],
-  ["other", OtherSection],
 ]);

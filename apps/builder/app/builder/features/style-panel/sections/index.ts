@@ -8,7 +8,7 @@ export * from "./typography/typography";
 export * from "./backgrounds/backgrounds";
 export * from "./borders/borders";
 export * from "./outline/outline";
-export * from "./other/other";
+export * from "./custom-properties/custom-properties";
 export * from "./box-shadows/box-shadows";
 export * from "./transitions/transitions";
 export * from "./filter/filter";

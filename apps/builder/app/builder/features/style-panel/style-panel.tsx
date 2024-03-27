@@ -24,6 +24,7 @@ import { sections, type Category } from "./style-sections";
 import { useParentStyle } from "./parent-style";
 import type { StyleInfo } from "./shared/style-info";
 import { toValue } from "@webstudio-is/css-engine";
+import { CustomProperties } from "./sections";
 
 const $selectedInstanceTag = computed(
   [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
@@ -54,10 +55,13 @@ type StylePanelProps = {
 };
 
 export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
-  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
-    useStyleData({
-      selectedInstance,
-    });
+  const {
+    currentStyle,
+    setProperty,
+    addProperty,
+    deleteProperty,
+    createBatchUpdate,
+  } = useStyleData(selectedInstance);
 
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const selectedInstanceTag = useStore($selectedInstanceTag);
@@ -86,12 +90,20 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
             deleteProperty={deleteProperty}
             createBatchUpdate={createBatchUpdate}
             currentStyle={currentStyle}
-            category={category}
           />
         </Fragment>
       );
     }
   }
+  all.push(
+    <CustomProperties
+      setProperty={setProperty}
+      addProperty={addProperty}
+      deleteProperty={deleteProperty}
+      createBatchUpdate={createBatchUpdate}
+      currentStyle={currentStyle}
+    />
+  );
 
   return (
     <>
