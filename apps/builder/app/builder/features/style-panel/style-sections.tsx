@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type {
   SetProperty,
@@ -22,25 +23,21 @@ import {
   FilterSection,
 } from "./sections";
 
-// This controls the order of the sections in the style panel
-export const categories = [
-  "layout",
-  "flexChild",
-  "listItem",
-  "space",
-  "size",
-  "position",
-  "typography",
-  "backgrounds",
-  "borders",
-  "boxShadows",
-  "filter",
-  "transitions",
-  "outline",
-  "others",
-] as const;
-
-export type Category = (typeof categories)[number];
+export type Category =
+  | "layout"
+  | "flexChild"
+  | "listItem"
+  | "space"
+  | "size"
+  | "position"
+  | "typography"
+  | "backgrounds"
+  | "borders"
+  | "boxShadows"
+  | "filter"
+  | "transitions"
+  | "outline"
+  | "other";
 
 export type ControlProps = {
   property: StyleProperty;
@@ -59,42 +56,22 @@ export type RenderCategoryProps = {
   category: Category;
 };
 
-export const renderCategory = ({
-  setProperty,
-  deleteProperty,
-  createBatchUpdate,
-  currentStyle,
-  category,
-}: RenderCategoryProps) => {
-  const Section = sections[category];
-
-  return (
-    <Section
-      setProperty={setProperty}
-      deleteProperty={deleteProperty}
-      createBatchUpdate={createBatchUpdate}
-      currentStyle={currentStyle}
-      category={category}
-    />
-  );
-};
-
-export const sections: Record<
+export const sections: Map<
   Category,
-  (props: RenderCategoryProps) => JSX.Element | undefined
-> = {
-  layout: LayoutSection,
-  flexChild: FlexChildSection,
-  listItem: ListItemSection,
-  space: SpaceSection,
-  size: SizeSection,
-  position: PositionSection,
-  typography: TypographySection,
-  backgrounds: BackgroundsSection,
-  borders: BordersSection,
-  boxShadows: BoxShadowsSection,
-  filter: FilterSection,
-  transitions: TransitionSection,
-  outline: OutlineSection,
-  others: OtherSection,
-};
+  (props: RenderCategoryProps) => ReactNode
+> = new Map([
+  ["layout", LayoutSection],
+  ["flexChild", FlexChildSection],
+  ["listItem", ListItemSection],
+  ["space", SpaceSection],
+  ["size", SizeSection],
+  ["position", PositionSection],
+  ["typography", TypographySection],
+  ["backgrounds", BackgroundsSection],
+  ["borders", BordersSection],
+  ["boxShadows", BoxShadowsSection],
+  ["filter", FilterSection],
+  ["transitions", TransitionSection],
+  ["outline", OutlineSection],
+  ["other", OtherSection],
+]);

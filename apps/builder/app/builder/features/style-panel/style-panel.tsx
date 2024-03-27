@@ -20,12 +20,7 @@ import {
   $selectedInstanceIntanceToTag,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import {
-  categories,
-  renderCategory,
-  type RenderCategoryProps,
-  type Category,
-} from "./style-sections";
+import { sections, type Category } from "./style-sections";
 import { useParentStyle } from "./parent-style";
 import type { StyleInfo } from "./shared/style-info";
 import { toValue } from "@webstudio-is/css-engine";
@@ -82,17 +77,17 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
   }
 
   const all = [];
-  for (const category of categories) {
+  for (const [category, Section] of sections) {
     if (shouldRenderCategory(category, parentStyle, selectedInstanceTag)) {
       all.push(
         <Fragment key={category}>
-          {renderCategory({
-            setProperty,
-            deleteProperty,
-            createBatchUpdate,
-            currentStyle,
-            category,
-          })}
+          <Section
+            setProperty={setProperty}
+            deleteProperty={deleteProperty}
+            createBatchUpdate={createBatchUpdate}
+            currentStyle={currentStyle}
+            category={category}
+          />
         </Fragment>
       );
     }
