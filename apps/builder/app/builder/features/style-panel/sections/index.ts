@@ -9,7 +9,7 @@ export * from "./typography/typography";
 export * from "./backgrounds/backgrounds";
 export * from "./borders/borders";
 export * from "./outline/outline";
-export * from "./effects/effects";
+export * from "./others/others";
 export * from "./box-shadows/box-shadows";
 export * from "./transitions/transitions";
 export * from "./filter/filter";

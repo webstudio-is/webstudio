@@ -22,13 +22,14 @@ import {
   BackgroundsSection,
   BordersSection,
   OutlineSection,
-  EffectsSection,
+  OthersSection,
   BoxShadowsSection,
   ListItemSection,
   TransitionSection,
   FilterSection,
 } from "./sections";
 
+// This controls the order of the sections in the style panel
 export const categories = [
   "layout",
   "flexChild",
@@ -41,10 +42,10 @@ export const categories = [
   "backgrounds",
   "borders",
   "boxShadows",
-  "effects",
-  "outline",
-  "transitions",
   "filter",
+  "transitions",
+  "outline",
+  "others",
 ] as const;
 
 export type Category = (typeof categories)[number];
@@ -155,9 +156,9 @@ export const sections: Record<
   typography: TypographySection,
   backgrounds: BackgroundsSection,
   borders: BordersSection,
-  outline: OutlineSection,
-  effects: EffectsSection,
   boxShadows: BoxShadowsSection,
-  transitions: TransitionSection,
   filter: FilterSection,
+  transitions: TransitionSection,
+  outline: OutlineSection,
+  others: OthersSection,
 };

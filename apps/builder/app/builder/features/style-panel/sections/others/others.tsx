@@ -10,14 +10,14 @@ import { theme } from "@webstudio-is/design-system";
 
 const properties: StyleProperty[] = ["cursor", "opacity"];
 
-export const EffectsSection = ({
+export const OthersSection = ({
   currentStyle: style,
   setProperty,
   deleteProperty,
 }: RenderCategoryProps) => {
   return (
     <CollapsibleSection
-      label="Effects"
+      label="Others"
       currentStyle={style}
       properties={properties}
     >
