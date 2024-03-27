@@ -103,6 +103,7 @@ html {
     outline-width: 1px;
     max-width: 100%;
     display: block;
+    height: auto;
   }
   button:where([data-ws-component="VimeoPlayButton"]) {
     font-family: inherit;
@@ -210,6 +211,17 @@ html {
     border-bottom-width: 1px;
     border-left-width: 1px;
     outline-width: 1px;
+  }
+  img:where([data-ws-component="Image"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    max-width: 100%;
+    display: block;
+    height: auto;
   }
 }
 @media all {
@@ -373,5 +385,29 @@ html {
   }
   .c1qg633k {
     margin-left: -35px;
+  }
+  .c8n5d6n {
+    flex-direction: row;
+  }
+  .chg86bx {
+    flex-wrap: nowrap;
+  }
+  .c9inwkc {
+    align-items: stretch;
+  }
+  .csxkr3h {
+    justify-content: space-between;
+  }
+  .cp47ozi {
+    flex-grow: 1;
+  }
+  .c133k2ks {
+    flex-shrink: 0;
+  }
+  .c1dww8sp {
+    min-width: 0px;
+  }
+  .c15iig68 {
+    flex-basis: 0px;
   }
 }

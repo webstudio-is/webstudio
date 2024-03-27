@@ -165,6 +165,7 @@ html {
     outline-width: 1px;
     max-width: 100%;
     display: block;
+    height: auto;
   }
   a:where([data-ws-component="Link"]) {
     box-sizing: border-box;

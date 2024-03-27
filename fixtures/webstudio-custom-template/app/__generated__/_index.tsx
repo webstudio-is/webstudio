@@ -16,6 +16,7 @@ import {
   Box as Box,
   HtmlEmbed as HtmlEmbed,
   VimeoSpinner as VimeoSpinner,
+  Image as Image,
 } from "@webstudio-is/sdk-components-react";
 
 export const favIconAsset: ImageAsset | undefined = {
@@ -73,6 +74,45 @@ const Page = ({}: { system: any }) => {
       >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
+      <Box
+        data-ws-id="GMg3Wi9tJBFMtKcwbIK6z"
+        data-ws-component="Box"
+        className="c1b095zn c8n5d6n chg86bx c9inwkc csxkr3h"
+      >
+        <Image
+          data-ws-id="Mfd_mI-VJtT4r7gICAvXi"
+          data-ws-component="Image"
+          src={
+            "/custom-folder/_937084ed-a798-49fe-8664-df93a2af605e_1JqSy_0Wy9fY5mXNZSLJ0.jpeg"
+          }
+          width={1024}
+          height={1024}
+          className="cp47ozi c133k2ks c1dww8sp c15iig68"
+        />
+        <Box
+          data-ws-id="COafOppxs73Ne4O0Geik0"
+          data-ws-component="Box"
+          className="cp47ozi c133k2ks c1dww8sp c15iig68"
+        />
+      </Box>
+      <Heading data-ws-id="jWb8SRMYG_XPWqCYvGZjo" data-ws-component="Heading">
+        {"Below Image"}
+      </Heading>
+      <HtmlEmbed
+        data-ws-id="PI0W8MDhnG1glS5zDm8HQ"
+        data-ws-component="HtmlEmbed"
+        code={
+          "<script>console.log('PAGE MAIN Client')</script>\n<script>console.log('PAGE MAIN 2 Client')</script>\nSCRIPTS ARE HERE <br>"
+        }
+        clientOnly={true}
+      />
+      <HtmlEmbed
+        data-ws-id="ffuOk2adQRwdmAPbN0C02"
+        data-ws-component="HtmlEmbed"
+        code={
+          "<script>console.log('PAGE MAIN SSR')</script>\n<script>console.log('PAGE MAIN 2 SSR')</script>\nSCRIPTS ARE HERE <br>"
+        }
+      />
       <Link
         data-ws-id="QzTSoZnbGD6luZ5xcv893"
         data-ws-component="Link"
