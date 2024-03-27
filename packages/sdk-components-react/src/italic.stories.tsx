@@ -8,6 +8,6 @@ export default {
 
 export const Italic: StoryObj<typeof ItalicPrimitive> = {
   args: {
-    children: "some italic text",
+    children: "pizza pasta italy",
   },
 };

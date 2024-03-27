@@ -8,6 +8,6 @@ export default {
 
 export const Button: StoryObj<typeof ButtonPrimitive> = {
   args: {
-    children: "Click me",
+    children: "I am button",
   },
 };
