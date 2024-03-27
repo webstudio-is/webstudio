@@ -195,13 +195,16 @@ const defaultMatch = <Item,>(
     keys: [itemToString],
   });
 
+const defaultItemToString = <Item,>(item: Item) =>
+  typeof item === "string" ? item : "";
+
 const useFilter = <Item,>({
   items,
-  itemToString,
+  itemToString = defaultItemToString,
   match = defaultMatch,
 }: {
   items: Array<Item>;
-  itemToString: (item: Item | null) => string;
+  itemToString?: (item: Item | null) => string;
   match?: Match<Item>;
 }) => {
   const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);

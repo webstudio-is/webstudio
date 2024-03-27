@@ -105,6 +105,7 @@ const AddPropertyForm = ({
   availableProps: NameAndLabel[];
   onPropSelected: (propName: string) => void;
 }) => {
+  const [value, setValue] = useState("");
   return (
     <Flex
       css={{ height: theme.spacing[13] }}
@@ -118,7 +119,10 @@ const AddPropertyForm = ({
         itemToString={itemToString}
         onItemSelect={(item) => onPropSelected(item.name)}
         match={matchOrSuggestToCreate}
-        value={{ name: "", label: "" }}
+        value={{ name: "", label: value }}
+        onInputChange={(value) => {
+          setValue(value ?? "");
+        }}
       />
     </Flex>
   );
