@@ -275,6 +275,7 @@ export type ChangeReason =
   | "scrub-end";
 
 type CssValueInputProps = {
+  autoFocus?: boolean;
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -352,6 +353,7 @@ const match = <Item,>(
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 export const CssValueInput = ({
+  autoFocus,
   icon,
   prefix,
   showSuffix = true,
@@ -660,6 +662,7 @@ export const CssValueInput = ({
                 inputRef.current?.select();
               }
             }}
+            autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             containerRef={scrubRef}

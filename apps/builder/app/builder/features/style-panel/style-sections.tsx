@@ -20,6 +20,7 @@ import {
   ListItemSection,
   TransitionSection,
   FilterSection,
+  CustomPropertiesSection,
 } from "./sections";
 
 export type Category =
@@ -35,7 +36,8 @@ export type Category =
   | "boxShadows"
   | "filter"
   | "transitions"
-  | "outline";
+  | "outline"
+  | "custom";
 
 export type ControlProps = {
   property: StyleProperty;
@@ -68,4 +70,5 @@ export const sections: Map<Category, (props: SectionProps) => ReactNode> =
     ["filter", FilterSection],
     ["transitions", TransitionSection],
     ["outline", OutlineSection],
+    ["custom", CustomPropertiesSection],
   ]);
