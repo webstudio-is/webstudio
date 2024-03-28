@@ -1,5 +1,5 @@
 import { type ComponentProps, useState, useRef } from "react";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { getSpaceModifiersGroup, useScrub } from "../shared/scrub";
@@ -29,7 +29,7 @@ const Cell = ({
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
   scrubStatus: ReturnType<typeof useScrub>;
-  currentStyle: RenderCategoryProps["currentStyle"];
+  currentStyle: SectionProps["currentStyle"];
   createBatchUpdate: CreateBatchUpdate;
 }) => {
   const styleInfo = currentStyle[property];
@@ -85,7 +85,7 @@ export const SpaceSection = ({
   deleteProperty,
   createBatchUpdate,
   currentStyle,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
 
   const scrubStatus = useScrub({

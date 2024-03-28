@@ -1,7 +1,7 @@
 import { Flex, Grid, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";
@@ -29,7 +29,7 @@ const properties: StyleProperty[] = [
   "order",
 ];
 
-export const FlexChildSection = (props: RenderCategoryProps) => {
+export const FlexChildSection = (props: SectionProps) => {
   return (
     <CollapsibleSection
       label="Flex Child"
@@ -45,7 +45,7 @@ export const FlexChildSection = (props: RenderCategoryProps) => {
   );
 };
 
-const FlexChildSectionAlign = (props: RenderCategoryProps) => {
+const FlexChildSectionAlign = (props: SectionProps) => {
   const { setProperty, deleteProperty, currentStyle } = props;
   const setAlignSelf = setProperty("alignSelf");
 
@@ -115,7 +115,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
   );
 };
 
-const FlexChildSectionSizing = (props: RenderCategoryProps) => {
+const FlexChildSectionSizing = (props: SectionProps) => {
   const { createBatchUpdate, currentStyle } = props;
   const setSizing = createBatchUpdate();
   const onReset = () => {
@@ -233,7 +233,7 @@ const FlexChildSectionSizingPopover = ({
   currentStyle,
   setProperty,
   deleteProperty,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   return (
     <FloatingPanel
       title="Sizing"
@@ -297,7 +297,7 @@ const FlexChildSectionSizingPopover = ({
   );
 };
 
-const FlexChildSectionOrder = (props: RenderCategoryProps) => {
+const FlexChildSectionOrder = (props: SectionProps) => {
   const { deleteProperty, setProperty, currentStyle } = props;
   const setOrder = setProperty("order");
 
@@ -357,7 +357,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
   );
 };
 
-const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
+const FlexChildSectionOrderPopover = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
   return (
     <FloatingPanel

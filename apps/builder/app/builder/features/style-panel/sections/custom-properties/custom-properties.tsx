@@ -2,7 +2,7 @@ import { Fragment, useState } from "react";
 import { theme, Grid, Combobox } from "@webstudio-is/design-system";
 import { generatedProperties } from "@webstudio-is/css-data";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
@@ -29,7 +29,7 @@ export const CustomProperties = ({
   setProperty,
   addProperty,
   deleteProperty,
-}: RenderCategoryProps & { addProperty: SetProperty }) => {
+}: SectionProps & { addProperty: SetProperty }) => {
   //const [addingProp, setAddingProp] = useState<GeneratedStyleProperty>();
   //  <AddProperty onPropSelected={setAddingProp} />
 

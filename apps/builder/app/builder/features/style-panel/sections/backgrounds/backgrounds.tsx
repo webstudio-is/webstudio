@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
@@ -149,7 +149,7 @@ const BackgroundsCollapsibleSection = ({
   children,
   currentStyle,
   createBatchUpdate,
-}: RenderCategoryProps & { children: React.ReactNode }) => {
+}: SectionProps & { children: React.ReactNode }) => {
   const label = "Backgrounds";
   const [isOpen, setIsOpen] = useOpenState({ label });
   const layersStyleSource = getLayersStyleSource(currentStyle);
@@ -197,7 +197,7 @@ const BackgroundsCollapsibleSection = ({
   );
 };
 
-export const BackgroundsSection = (props: RenderCategoryProps) => {
+export const BackgroundsSection = (props: SectionProps) => {
   const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
     props;
   const layersCount = getLayerCount(currentStyle);

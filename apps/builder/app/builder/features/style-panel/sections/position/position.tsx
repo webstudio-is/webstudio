@@ -1,5 +1,5 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";
@@ -24,7 +24,7 @@ export const PositionSection = ({
   deleteProperty,
   currentStyle,
   createBatchUpdate,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   const parentStyle = useParentStyle();
 
   const positionValue = currentStyle.position?.value;

@@ -9,7 +9,7 @@ import { CssValueInputContainer } from "../../controls/position/css-value-input-
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { toValue } from "@webstudio-is/css-engine";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";
@@ -32,7 +32,7 @@ export const BorderProperty = ({
   label,
   description,
 }: Pick<
-  RenderCategoryProps,
+  SectionProps,
   "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
 > & {
   individualModeIcon?: ReactNode;

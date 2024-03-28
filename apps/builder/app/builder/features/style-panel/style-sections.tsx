@@ -46,28 +46,26 @@ export type ControlProps = {
   disabled?: boolean;
 };
 
-export type RenderCategoryProps = {
+export type SectionProps = {
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
   createBatchUpdate: CreateBatchUpdate;
   currentStyle: StyleInfo;
 };
 
-export const sections: Map<
-  Category,
-  (props: RenderCategoryProps) => ReactNode
-> = new Map([
-  ["layout", LayoutSection],
-  ["flexChild", FlexChildSection],
-  ["listItem", ListItemSection],
-  ["space", SpaceSection],
-  ["size", SizeSection],
-  ["position", PositionSection],
-  ["typography", TypographySection],
-  ["backgrounds", BackgroundsSection],
-  ["borders", BordersSection],
-  ["boxShadows", BoxShadowsSection],
-  ["filter", FilterSection],
-  ["transitions", TransitionSection],
-  ["outline", OutlineSection],
-]);
+export const sections: Map<Category, (props: SectionProps) => ReactNode> =
+  new Map([
+    ["layout", LayoutSection],
+    ["flexChild", FlexChildSection],
+    ["listItem", ListItemSection],
+    ["space", SpaceSection],
+    ["size", SizeSection],
+    ["position", PositionSection],
+    ["typography", TypographySection],
+    ["backgrounds", BackgroundsSection],
+    ["borders", BordersSection],
+    ["boxShadows", BoxShadowsSection],
+    ["filter", FilterSection],
+    ["transitions", TransitionSection],
+    ["outline", OutlineSection],
+  ]);
