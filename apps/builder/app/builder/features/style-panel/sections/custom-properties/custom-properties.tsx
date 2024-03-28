@@ -15,6 +15,7 @@ import {
 } from "~/shared/nano-states";
 import { matchSorter } from "match-sorter";
 import { guaranteedInvalidValue } from "~/shared/style-object-model";
+import { humanizeString } from "~/shared/string-utils";
 
 const propertyNames = Object.keys(properties) as Array<StyleProperty>;
 
@@ -105,7 +106,7 @@ export const CustomPropertiesSection = ({
   );
 };
 
-type Item = { value: string; label?: string };
+type Item = { value: string; label: string };
 
 const matchOrSuggestToCreate = (
   search: string,
@@ -136,18 +137,23 @@ const AddProperty = ({
   onSelect: (value: string) => void;
   propertyNames: Array<StyleProperty>;
 }) => {
-  const [item, setItem] = useState<Item>({ value: "" });
+  const [item, setItem] = useState<Item>({ value: "", label: "" });
+
   return (
     // @todo add a hint
     <Combobox<Item>
       autoFocus
       placeholder="Find or create a property"
-      items={propertyNames.map((value) => ({ value }))}
-      itemToString={(item) => item?.value ?? ""}
+      items={propertyNames.map((value) => ({
+        value,
+        label: humanizeString(value),
+      }))}
+      itemToString={(item) => item?.label ?? ""}
+      getItemProps={() => ({ text: "sentence" })}
       onItemSelect={(item) => onSelect(item.value)}
       value={item}
       onInputChange={(value) => {
-        setItem({ value: value ?? "" });
+        setItem({ value: value ?? "", label: value ?? "" });
       }}
       match={matchOrSuggestToCreate}
     />
