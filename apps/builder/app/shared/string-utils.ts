@@ -8,7 +8,11 @@ const cache: Map<string, string> = new Map([
 ]);
 
 export const humanizeString = (string: string): string => {
-  const result = cache.get(string) ?? titleCase(noCase(string));
+  let result = cache.get(string);
+  if (result === undefined) {
+    // CSS Variables don't need to be humanized
+    result = string.substr(0, 2) === "--" ? string : titleCase(noCase(string));
+  }
   cache.set(string, result);
   return result;
 };

@@ -85,7 +85,7 @@ export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
   const result = {
     label,
     property,
-    appliesTo: properties[property].appliesTo,
+    appliesTo: properties[property]?.appliesTo ?? "allElements",
     control: getControl(property),
     items: keywords.map((keyword) => ({ label: keyword, name: keyword })),
   };

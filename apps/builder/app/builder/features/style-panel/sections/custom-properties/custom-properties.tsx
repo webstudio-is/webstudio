@@ -13,6 +13,8 @@ import {
   $selectedInstanceSelector,
   useInstanceStyles,
 } from "~/shared/nano-states";
+import { matchSorter } from "match-sorter";
+import { guaranteedInvalidValue } from "~/shared/style-object-model";
 
 const propertyNames = Object.keys(properties) as Array<StyleProperty>;
 
@@ -56,15 +58,14 @@ export const CustomPropertiesSection = ({
     >
       {addingProp !== undefined && (
         <AddProperty
-          propertyNames={propertyNames}
+          propertyNames={propertyNames.filter(
+            (property) => listedProperties.includes(property) === false
+          )}
           onSelect={(value) => {
             if (value in properties || value.substr(0, 2) === "--") {
               const property = value as StyleProperty;
               setAddingProp(undefined);
-              setProperty(property)(
-                { type: "guaranteedInvalid" },
-                { listed: true }
-              );
+              setProperty(property)(guaranteedInvalidValue, { listed: true });
             }
           }}
         />
@@ -104,6 +105,30 @@ export const CustomPropertiesSection = ({
   );
 };
 
+type Item = { value: string; label?: string };
+
+const matchOrSuggestToCreate = (
+  search: string,
+  items: Array<Item>,
+  itemToString: (item: Item) => string
+): Array<Item> => {
+  const matched = matchSorter(items, search, {
+    keys: [itemToString],
+  });
+
+  if (
+    search.trim() !== "" &&
+    itemToString(matched[0]).toLocaleLowerCase() !==
+      search.toLocaleLowerCase().trim()
+  ) {
+    matched.unshift({
+      value: search.trim(),
+      label: `Create "${search.trim()}"`,
+    });
+  }
+  return matched;
+};
+
 const AddProperty = ({
   onSelect,
   propertyNames,
@@ -111,13 +136,12 @@ const AddProperty = ({
   onSelect: (value: string) => void;
   propertyNames: Array<StyleProperty>;
 }) => {
-  const [item, setItem] = useState({ value: "" });
+  const [item, setItem] = useState<Item>({ value: "" });
   return (
-    <Combobox
+    // @todo add a hint
+    <Combobox<Item>
       autoFocus
-      // @todo add create logic in matcher like in props
       placeholder="Find or create a property"
-      // @todo filter out already added properties
       items={propertyNames.map((value) => ({ value }))}
       itemToString={(item) => item?.value ?? ""}
       onItemSelect={(item) => onSelect(item.value)}
@@ -125,6 +149,7 @@ const AddProperty = ({
       onInputChange={(value) => {
         setItem({ value: value ?? "" });
       }}
+      match={matchOrSuggestToCreate}
     />
   );
 };

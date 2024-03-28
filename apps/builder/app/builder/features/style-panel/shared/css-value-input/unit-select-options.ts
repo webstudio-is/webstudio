@@ -40,6 +40,10 @@ export const buildOptions = (
       : undefined;
 
   const options: UnitOption[] = [];
+
+  if (property in properties === false) {
+    return options;
+  }
   const { unitGroups } = properties[property as keyof typeof properties];
 
   for (const unitGroup of unitGroups) {

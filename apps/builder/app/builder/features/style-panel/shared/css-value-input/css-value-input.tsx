@@ -49,6 +49,9 @@ import { convertUnits } from "./convert-units";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty) => {
+  if (property in properties === false) {
+    return true;
+  }
   const { unitGroups } = properties[property as keyof typeof properties];
   return unitGroups.length !== 0;
 };

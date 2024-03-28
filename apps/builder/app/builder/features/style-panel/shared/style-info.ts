@@ -32,6 +32,7 @@ import {
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
+import { guaranteedInvalidValue } from "~/shared/style-object-model";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -160,7 +161,8 @@ export const getStyleSource = (
   return "default";
 };
 
-const styleProperties = Object.keys(properties) as StyleProperty[];
+const propertyNames = Object.keys(properties) as StyleProperty[];
+
 const inheritableProperties = new Set<string>();
 for (const [property, value] of Object.entries(properties)) {
   if (value.inherited) {
@@ -686,14 +688,29 @@ const useStyleInfoByInstanceAndStyleSource = (
     return style;
   }, [instanceSelector, instanceToTag]);
 
+  const allPropertyNames = useMemo(() => {
+    const [selectedInstanceId] = instanceSelector ?? [];
+    const all: Set<StyleProperty> = new Set(propertyNames);
+    const styles = stylesByInstanceId.get(selectedInstanceId);
+    if (styles) {
+      for (const styleDecl of styles) {
+        if (all.has(styleDecl.property) === false) {
+          all.add(styleDecl.property);
+        }
+      }
+    }
+    return Array.from(all);
+  }, [instanceSelector, stylesByInstanceId]);
+
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
-    for (const property of styleProperties) {
+    for (const property of allPropertyNames) {
       // temporary solution until we start computing all styles from data
       const htmlValue = htmlStyle?.[property];
       const defaultValue =
         CUSTOM_DEFAULT_VALUES[property] ??
-        properties[property as keyof typeof properties].initial;
+        properties[property as keyof typeof properties]?.initial ??
+        guaranteedInvalidValue;
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
@@ -714,6 +731,7 @@ const useStyleInfoByInstanceAndStyleSource = (
         htmlValue;
       const inheritedValue = inherited?.value;
       const value = ownValue ?? inheritedValue ?? defaultValue;
+
       if (value) {
         if (property === "color") {
           const ownColor =
@@ -766,6 +784,7 @@ const useStyleInfoByInstanceAndStyleSource = (
     nextSourceInfo,
     previousSourceInfo,
     selectedStyle,
+    allPropertyNames,
   ]);
 
   return styleInfoData;
