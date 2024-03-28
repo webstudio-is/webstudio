@@ -156,21 +156,6 @@ export const useStyleData = (selectedInstance: Instance) => {
     [publishUpdates]
   );
 
-  // @todo add custom property to some list
-  const addProperty = useCallback<SetProperty>(
-    (property) => {
-      return (value, options = { isEphemeral: false }) => {
-        if (value.type !== "invalid") {
-          const updates = [{ operation: "set" as const, property, value }];
-          const type = options.isEphemeral ? "preview" : "update";
-
-          publishUpdates(type, updates);
-        }
-      };
-    },
-    [publishUpdates]
-  );
-
   const deleteProperty = useCallback(
     (property: StyleProperty, options = { isEphemeral: false }) => {
       const updates = [{ operation: "delete" as const, property }];
@@ -217,7 +202,6 @@ export const useStyleData = (selectedInstance: Instance) => {
   return {
     currentStyle,
     setProperty,
-    addProperty,
     deleteProperty,
     createBatchUpdate,
   };

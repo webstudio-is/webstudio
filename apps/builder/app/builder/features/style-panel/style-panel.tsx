@@ -55,13 +55,8 @@ type StylePanelProps = {
 };
 
 export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
-  const {
-    currentStyle,
-    setProperty,
-    addProperty,
-    deleteProperty,
-    createBatchUpdate,
-  } = useStyleData(selectedInstance);
+  const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
+    useStyleData(selectedInstance);
 
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const selectedInstanceTag = useStore($selectedInstanceTag);
@@ -98,7 +93,6 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
   all.push(
     <CustomProperties
       setProperty={setProperty}
-      addProperty={addProperty}
       deleteProperty={deleteProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
