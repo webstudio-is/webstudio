@@ -1,4 +1,5 @@
-import { properties } from "@webstudio-is/css-data";
+import type { htmlTags as HtmlTags } from "html-tags";
+import { html, properties } from "@webstudio-is/css-data";
 import { StyleValue } from "@webstudio-is/css-engine";
 import type {
   StyleDecl,
@@ -6,6 +7,7 @@ import type {
   Instance,
   StyleSource,
 } from "@webstudio-is/sdk";
+import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
 /**
  *
@@ -51,7 +53,7 @@ export type StyleSelector = {
    */
   matchingBreakpoints: Breakpoint["id"][];
   /**
-   * all currently matching and ordered breakpoints
+   * all currently matching and ordered breakpointsgg
    */
   matchingStates: Set<string>;
 };
@@ -63,6 +65,9 @@ export type StyleSelector = {
 export type StyleObjectModel = {
   styleSourcesByInstanceId: Map<Instance["id"], StyleSource["id"][]>;
   styleByStyleSourceId: Map<`${StyleSource["id"]}:${Property}`, StyleDecl[]>;
+  metas: Map<Instance["component"], WsComponentMeta>;
+  instanceTags: Map<Instance["id"], HtmlTags>;
+  instanceComponents: Map<Instance["id"], Instance["component"]>;
 };
 
 /**
@@ -72,27 +77,39 @@ export type StyleObjectModel = {
  * cannot rely on order of declarations.
  *
  * Instead webstudio define own specificity format
- * STATE-BREAKPOINT-STYLESOURCE
+ * LAYER-STATE-BREAKPOINT-STYLESOURCE
  *
+ * LAYER is similar to @layer and allows to group parts of styles like browser, preset, user styles
+ * and preset states are wrapped with :where to avoid specificity increasing
+ * in the future can be replaced with actual cascade laters
  * Declaration with selected STATE gets 2, with any other STATE gets 1
  * Declaration BREAKPOINT is its position in ordered list
  * Declaration STYLESOURCE is its position in predefined list
  * excluding everything after selected STYLESOURCE
  *
  */
-type Specificity = [STATE: number, BREAKPOINT: number, STYLESOURCE: number];
+type Specificity = [
+  LAYER: number,
+  STATE: number,
+  BREAKPOINT: number,
+  STYLESOURCE: number,
+];
 
 const compareSpecificity = (left: Specificity, right: Specificity) => {
-  // STATE-BREAKPOINT-STYLESOURCE
-  const stateDiff = left[0] - right[0];
+  // LAYER-STATE-BREAKPOINT-STYLESOURCE
+  const layerDiff = left[0] - right[0];
+  if (layerDiff !== 0) {
+    return layerDiff;
+  }
+  const stateDiff = left[1] - right[1];
   if (stateDiff !== 0) {
     return stateDiff;
   }
-  const breakpointDiff = left[1] - right[1];
+  const breakpointDiff = left[2] - right[2];
   if (breakpointDiff !== 0) {
     return breakpointDiff;
   }
-  const styleSourceDiff = left[2] - right[2];
+  const styleSourceDiff = left[3] - right[3];
   if (styleSourceDiff !== 0) {
     return styleSourceDiff;
   }
@@ -100,10 +117,12 @@ const compareSpecificity = (left: Specificity, right: Specificity) => {
 };
 
 const getSpecificity = ({
+  layer,
   styleDecl,
   matchingBreakpoints,
   matchingStyleSources,
 }: {
+  layer: number;
   styleDecl: StyleDecl;
   matchingBreakpoints: Breakpoint["id"][];
   matchingStyleSources: StyleSource["id"][];
@@ -111,7 +130,7 @@ const getSpecificity = ({
   const state = styleDecl.state === undefined ? 0 : 1;
   const breakpoint = matchingBreakpoints.indexOf(styleDecl.breakpointId);
   const styleSource = matchingStyleSources.indexOf(styleDecl.styleSourceId);
-  return [state, breakpoint, styleSource];
+  return [layer, state, breakpoint, styleSource];
 };
 
 const getCascadedValue = ({
@@ -127,13 +146,54 @@ const getCascadedValue = ({
   instanceId: Instance["id"];
   property: Property;
 }) => {
-  const { styleSourcesByInstanceId, styleByStyleSourceId } = model;
+  const {
+    styleSourcesByInstanceId,
+    styleByStyleSourceId,
+    instanceTags,
+    instanceComponents,
+    metas,
+  } = model;
+  const tag = instanceTags.get(instanceId);
+  const component = instanceComponents.get(instanceId);
+  const browserLayer = 0;
+  const presetLayer = 1;
+  const userLayer = 2;
 
   // https://drafts.csswg.org/css-cascade-5/#declared
   type DeclaredValue = { specificity: Specificity; value: StyleValue };
   const declaredValues: DeclaredValue[] = [];
 
-  // order values by style sources
+  // browser styles
+  const htmlStyles = tag ? html[tag] : undefined;
+  if (htmlStyles) {
+    for (const styleDecl of htmlStyles) {
+      if (styleDecl.property !== property) {
+        continue;
+      }
+      const specificity: Specificity = [browserLayer, 0, 0, 0];
+      declaredValues.push({ specificity, value: styleDecl.value });
+    }
+  }
+
+  // preset component styles
+  const preset = component ? metas.get(component)?.presetStyle : undefined;
+  const presetStyles = tag ? preset?.[tag] : undefined;
+  if (presetStyles) {
+    for (const styleDecl of presetStyles) {
+      if (styleDecl.property !== property) {
+        continue;
+      }
+      if (styleDecl.state && matchingStates.has(styleDecl.state) === false) {
+        continue;
+      }
+      // states from preset styles are rendered with :where() to avoid increasing specificity
+      const stateSpecificity = styleDecl.state === undefined ? 0 : 1;
+      const specificity: Specificity = [presetLayer, stateSpecificity, 0, 0];
+      declaredValues.push({ specificity, value: styleDecl.value });
+    }
+  }
+
+  // user styles
   const styleSourceIds = styleSourcesByInstanceId.get(instanceId);
   if (styleSourceIds) {
     for (const styleSourceId of styleSourceIds) {
@@ -151,6 +211,7 @@ const getCascadedValue = ({
         }
         // precompute specificity for all values before sorting
         const specificity = getSpecificity({
+          layer: userLayer,
           styleDecl,
           matchingBreakpoints,
           matchingStyleSources: styleSourceIds,
@@ -188,8 +249,6 @@ const customPropertyData = {
  * https://drafts.csswg.org/css-cascade-5/#value-stages
  *
  * @todo
- * - html
- * - preset
  * - selected style source
  * - selected state
  *
