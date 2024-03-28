@@ -7,7 +7,7 @@ import {
   BorderWidthLeftIcon,
 } from "@webstudio-is/icons";
 
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { BorderProperty } from "./border-property";
 
 const borderPropertyOptions = {
@@ -27,7 +27,7 @@ const borderPropertyOptions = {
 
 export const BorderWidth = (
   props: Pick<
-    RenderCategoryProps,
+    SectionProps,
     "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
   >
 ) => {

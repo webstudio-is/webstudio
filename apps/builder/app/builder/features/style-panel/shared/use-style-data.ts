@@ -36,10 +36,6 @@ type StyleUpdates = {
   state: undefined | string;
 };
 
-type UseStyleData = {
-  selectedInstance: Instance;
-};
-
 export type StyleUpdateOptions = { isEphemeral: boolean };
 
 export type SetValue = (
@@ -60,7 +56,7 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = ({ selectedInstance }: UseStyleData) => {
+export const useStyleData = (selectedInstance: Instance) => {
   const selectedBreakpoint = useStore($selectedBreakpoint);
 
   const currentStyle = useStyleInfo();

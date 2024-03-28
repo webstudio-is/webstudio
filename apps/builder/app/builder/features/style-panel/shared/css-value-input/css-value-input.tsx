@@ -2,7 +2,7 @@ import { matchSorter } from "match-sorter";
 import {
   Box,
   useCombobox,
-  Combobox,
+  ComboboxRoot,
   ComboboxContent,
   ComboboxAnchor,
   ComboboxListbox,
@@ -275,6 +275,7 @@ export type ChangeReason =
   | "scrub-end";
 
 type CssValueInputProps = {
+  autoFocus?: boolean;
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -352,6 +353,7 @@ const match = <Item,>(
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 export const CssValueInput = ({
+  autoFocus,
   icon,
   prefix,
   showSuffix = true,
@@ -648,7 +650,7 @@ export const CssValueInput = ({
   }
 
   return (
-    <Combobox open={isOpen}>
+    <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
@@ -660,6 +662,7 @@ export const CssValueInput = ({
                 inputRef.current?.select();
               }
             }}
+            autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             containerRef={scrubRef}
@@ -691,6 +694,6 @@ export const CssValueInput = ({
           </ComboboxContent>
         )}
       </Box>
-    </Combobox>
+    </ComboboxRoot>
   );
 };

@@ -5,12 +5,12 @@ import {
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { LayersList } from "../../style-layers-list";
 import { BoxShadowLayer } from "./box-shadow-layer";
 import { addLayer } from "../../style-layer-utils";
@@ -20,14 +20,14 @@ const property: StyleProperty = "boxShadow";
 const label = "Box Shadows";
 const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
-export const BoxShadowsSection = (props: RenderCategoryProps) => {
+export const BoxShadowsSection = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -75,6 +75,6 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
           )}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

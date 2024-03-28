@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -58,7 +58,7 @@ const properties: StyleProperty[] = [
   "hyphens",
 ];
 
-export const TypographySection = (props: RenderCategoryProps) => {
+export const TypographySection = (props: SectionProps) => {
   return (
     <CollapsibleSection
       label="Typography"
@@ -74,7 +74,7 @@ export const TypographySection = (props: RenderCategoryProps) => {
   );
 };
 
-export const TypographySectionFont = (props: RenderCategoryProps) => {
+export const TypographySectionFont = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
 
   return (
@@ -129,7 +129,7 @@ export const TypographySectionFont = (props: RenderCategoryProps) => {
   );
 };
 
-export const TypographySectionSizing = (props: RenderCategoryProps) => {
+export const TypographySectionSizing = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
 
   return (
@@ -185,7 +185,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
   );
 };
 
-export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
+export const TypographySectionAdvanced = (props: SectionProps) => {
   const { setProperty, deleteProperty, currentStyle } = props;
   const setTextAlign = setProperty("textAlign");
   const setTextDecorationLine = setProperty("textDecorationLine");
@@ -393,9 +393,7 @@ const AdvancedOptionsButton = forwardRef<
 });
 AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 
-export const TypographySectionAdvancedPopover = (
-  props: RenderCategoryProps
-) => {
+export const TypographySectionAdvancedPopover = (props: SectionProps) => {
   const { deleteProperty, setProperty, currentStyle } = props;
   const setDirection = setProperty("direction");
   const setTextOverflow = setProperty("textOverflow");

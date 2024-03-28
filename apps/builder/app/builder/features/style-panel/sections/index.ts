@@ -1,7 +1,6 @@
 export * from "./layout/layout";
 export * from "./list-item";
 export * from "./flex-child/flex-child";
-export * from "./grid-child/grid-child";
 export * from "./space/space";
 export * from "./size/size";
 export * from "./position/position";
@@ -9,7 +8,7 @@ export * from "./typography/typography";
 export * from "./backgrounds/backgrounds";
 export * from "./borders/borders";
 export * from "./outline/outline";
-export * from "./effects/effects";
+export * from "./custom-properties/custom-properties";
 export * from "./box-shadows/box-shadows";
 export * from "./transitions/transitions";
 export * from "./filter/filter";

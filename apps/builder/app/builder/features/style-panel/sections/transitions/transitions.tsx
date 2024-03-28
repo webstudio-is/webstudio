@@ -1,6 +1,6 @@
 import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
-import type { RenderCategoryProps } from "../../style-sections";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import type { SectionProps } from "../../style-sections";
 import {
   SectionTitle,
   SectionTitleButton,
@@ -23,7 +23,7 @@ const property: StyleProperty = "transition";
 const label = "Transitions";
 const INITIAL_TRANSITION = "opacity 200ms ease";
 
-export const TransitionSection = (props: RenderCategoryProps) => {
+export const TransitionSection = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layersStyleSource = getStyleSource(currentStyle[property]);
@@ -38,7 +38,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
     selectedOrLastStyleSourceSelector.state === undefined;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -102,6 +102,6 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           }}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

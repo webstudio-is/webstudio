@@ -12,7 +12,7 @@ import {
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
 import { toValue } from "@webstudio-is/css-engine";
@@ -26,10 +26,7 @@ const outlineStyleValues = [
 ];
 
 export const OutlineStyle = (
-  props: Pick<
-    RenderCategoryProps,
-    "currentStyle" | "setProperty" | "deleteProperty"
-  >
+  props: Pick<SectionProps, "currentStyle" | "setProperty" | "deleteProperty">
 ) => {
   const { currentStyle, setProperty, deleteProperty } = props;
   const outlineStyleValue = toValue(

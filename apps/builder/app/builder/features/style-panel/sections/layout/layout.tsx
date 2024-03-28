@@ -21,7 +21,7 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
 } from "@webstudio-is/icons";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../../style-sections";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName, PropertyTooltip } from "../../shared/property-name";
@@ -136,7 +136,7 @@ const FlexGap = ({
 }: {
   style: StyleInfo;
   createBatchUpdate: CreateBatchUpdate;
-  deleteProperty: RenderCategoryProps["deleteProperty"];
+  deleteProperty: SectionProps["deleteProperty"];
 }) => {
   const batchUpdate = createBatchUpdate();
 
@@ -322,9 +322,9 @@ const Toggle = ({
   iconOff: ReactNode;
   valueOn: string;
   valueOff: string;
-  currentStyle: RenderCategoryProps["currentStyle"];
-  setProperty: RenderCategoryProps["setProperty"];
-  deleteProperty: RenderCategoryProps["deleteProperty"];
+  currentStyle: SectionProps["currentStyle"];
+  setProperty: SectionProps["setProperty"];
+  deleteProperty: SectionProps["deleteProperty"];
 }) => {
   const { label } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
@@ -360,10 +360,10 @@ const LayoutSectionFlex = ({
   deleteProperty,
   createBatchUpdate,
 }: {
-  currentStyle: RenderCategoryProps["currentStyle"];
-  setProperty: RenderCategoryProps["setProperty"];
-  deleteProperty: RenderCategoryProps["deleteProperty"];
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
+  currentStyle: SectionProps["currentStyle"];
+  setProperty: SectionProps["setProperty"];
+  deleteProperty: SectionProps["deleteProperty"];
+  createBatchUpdate: SectionProps["createBatchUpdate"];
 }) => {
   const batchUpdate = createBatchUpdate();
 
@@ -481,7 +481,7 @@ export const LayoutSection = ({
   setProperty,
   deleteProperty,
   createBatchUpdate,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   const displayValue = toValue(currentStyle.display?.value);
 
   const { label, items } = styleConfigByName("display");

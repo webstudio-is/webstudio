@@ -9,6 +9,7 @@ const StyleDeclRaw = z.object({
   // @todo can't figure out how to make property to be enum
   property: z.string(),
   value: StyleValue,
+  listed: z.boolean().optional(),
 });
 
 export type StyleDecl = Simplify<

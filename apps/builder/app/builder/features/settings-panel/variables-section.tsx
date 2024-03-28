@@ -31,7 +31,7 @@ import {
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import {
-  CollapsibleSectionBase,
+  CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { formatValuePreview } from "~/builder/shared/expression-editor";
@@ -219,7 +219,7 @@ export const VariablesSection = () => {
   });
   return (
     <VariablePopoverProvider value={{ containerRef }}>
-      <CollapsibleSectionBase
+      <CollapsibleSectionRoot
         label="Variables"
         fullWidth={true}
         isOpen={isOpen}
@@ -248,7 +248,7 @@ export const VariablesSection = () => {
         <div ref={containerRef}>
           <VariablesList />
         </div>
-      </CollapsibleSectionBase>
+      </CollapsibleSectionRoot>
     </VariablePopoverProvider>
   );
 };

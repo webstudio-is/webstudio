@@ -1,5 +1,5 @@
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
-import type { RenderCategoryProps } from "../../style-sections";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import type { SectionProps } from "../../style-sections";
 import { useState } from "react";
 import {
   SectionTitle,
@@ -21,14 +21,14 @@ const property: StyleProperty = "filter";
 const label = "Filters";
 const INITIAL_FILTER = "blur(0px)";
 
-export const FilterSection = (props: RenderCategoryProps) => {
+export const FilterSection = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layerStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -78,6 +78,6 @@ export const FilterSection = (props: RenderCategoryProps) => {
           )}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };
