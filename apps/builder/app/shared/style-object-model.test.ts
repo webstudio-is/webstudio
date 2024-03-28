@@ -32,6 +32,9 @@ test("use cascaded style when specified and fallback to initial value", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -64,6 +67,9 @@ test("support initial keyword", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -109,6 +115,9 @@ test("support inherit keyword", () => {
       ["level1", ["level1Local"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
@@ -158,6 +167,9 @@ test("support unset keyword", () => {
       ["level1", ["level1Local"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["level2", "level1"],
@@ -196,6 +208,9 @@ test("inherit style from ancestors", () => {
       ["level1", ["level1Local"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
@@ -241,6 +256,9 @@ test("support currentcolor keyword", () => {
       ["level1", ["level1Local"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["level2", "level1"],
@@ -285,6 +303,9 @@ test("in color property currentcolor is inherited", () => {
       ["level1", ["level1Local"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
@@ -308,6 +329,9 @@ test("in root color property currentcolor is initial", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -337,6 +361,9 @@ test("support custom properties", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -368,6 +395,9 @@ test("use fallback value when custom property does not exist", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -391,6 +421,9 @@ test("use initial value when custom property does not exist", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -435,6 +468,9 @@ test("use inherited value when custom property does not exist", () => {
       ["box", ["boxLocal"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["box", "body"],
@@ -473,6 +509,9 @@ test("inherit custom property", () => {
       ["level1", ["level1Local"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["level3", "level2", "level1"],
@@ -523,6 +562,9 @@ test("resolve dependency cycles in custom properties", () => {
       ["box", ["boxLocal"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["box", "body"],
@@ -574,6 +616,9 @@ test("resolve non-cyclic references in custom properties", () => {
       ["box", ["boxLocal"]],
     ]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["box", "body"],
@@ -616,6 +661,9 @@ test("cascade value from matching breakpoints", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -654,6 +702,9 @@ test("ignore values from not matching breakpoints", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -686,6 +737,9 @@ test("cascade value from matching style sources", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyToken", "bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -719,6 +773,9 @@ test("cascade values with states as more specific", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -760,6 +817,9 @@ test("ignore values from not matching states", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -770,6 +830,131 @@ test("ignore values from not matching states", () => {
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
+});
+
+test("support html styles", () => {
+  // @layer browser { body { display: block } }
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([
+      ["body", ["bodyLocal"]],
+      ["span", ["spanLocal"]],
+    ]),
+    styleByStyleSourceId: getStyleByStyleSourceId([]),
+    metas: new Map(),
+    instanceTags: new Map([
+      ["body", "body"],
+      ["span", "span"],
+    ]),
+    instanceComponents: new Map(),
+  };
+  // tag with browser styles
+  expect(
+    getComputedStyleDecl({
+      model,
+      styleSelector: {
+        instanceSelector: ["body"],
+        matchingBreakpoints: ["base"],
+        matchingStates: new Set(),
+      },
+      property: "display",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "block" });
+  // tag without browser styles
+  expect(
+    getComputedStyleDecl({
+      model,
+      styleSelector: {
+        instanceSelector: ["span"],
+        matchingBreakpoints: ["base"],
+        matchingStates: new Set(),
+      },
+      property: "display",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "inline" });
+});
+
+test("support preset styles", () => {
+  // @layer preset { body:hover { width: 100px } }
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId([]),
+    instanceTags: new Map([["body", "body"]]),
+    instanceComponents: new Map([["body", "Body"]]),
+    metas: new Map([
+      [
+        "Body",
+        {
+          type: "container",
+          icon: "",
+          presetStyle: {
+            body: [
+              {
+                property: "width",
+                value: { type: "unit", value: 100, unit: "px" },
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+  };
+  expect(
+    getComputedStyleDecl({
+      model,
+      styleSelector: {
+        instanceSelector: ["body"],
+        matchingBreakpoints: ["base"],
+        matchingStates: new Set(),
+      },
+      property: "width",
+    }).usedValue
+  ).toEqual({ type: "unit", value: 100, unit: "px" });
+});
+
+test("ignore values from not matching states in preset styles", () => {
+  // @layer preset {
+  //   body { color: red }
+  //   body:focus { color: blue }
+  // }
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId([]),
+    instanceTags: new Map([["body", "body"]]),
+    instanceComponents: new Map([["body", "Body"]]),
+    metas: new Map([
+      [
+        "Body",
+        {
+          type: "container",
+          icon: "",
+          presetStyle: {
+            body: [
+              {
+                property: "color",
+                value: { type: "keyword", value: "red" },
+              },
+              {
+                state: ":focus",
+                property: "color",
+                value: { type: "keyword", value: "blue" },
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+  };
+  expect(
+    getComputedStyleDecl({
+      model,
+      styleSelector: {
+        instanceSelector: ["body"],
+        matchingBreakpoints: ["base"],
+        matchingStates: new Set(),
+      },
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
 });
 
 test("breakpoints are more specific than style sources", () => {
@@ -792,6 +977,9 @@ test("breakpoints are more specific than style sources", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyToken", "bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -826,6 +1014,9 @@ test("states are more specific than breakpoints", () => {
   const model: StyleObjectModel = {
     styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
     styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    metas: new Map(),
+    instanceTags: new Map(),
+    instanceComponents: new Map(),
   };
   const styleSelector: StyleSelector = {
     instanceSelector: ["body"],
@@ -836,4 +1027,93 @@ test("states are more specific than breakpoints", () => {
   expect(
     getComputedStyleDecl({ model, styleSelector, property: "width" }).usedValue
   ).toEqual({ type: "unit", unit: "px", value: 20 });
+});
+
+test("user styles are more specific than preset styles", () => {
+  // @layer preset { body:hover { color: blue } }
+  // body { color: red }
+  const styles: StyleDecl[] = [
+    {
+      breakpointId: "base",
+      styleSourceId: "bodyLocal",
+      // without state
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    },
+  ];
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId(styles),
+    instanceTags: new Map([["body", "body"]]),
+    instanceComponents: new Map([["body", "Body"]]),
+    metas: new Map([
+      [
+        "Body",
+        {
+          type: "container",
+          icon: "",
+          presetStyle: {
+            body: [
+              {
+                // with state
+                state: "hover",
+                property: "color",
+                value: { type: "keyword", value: "blue" },
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+  };
+  expect(
+    getComputedStyleDecl({
+      model,
+      styleSelector: {
+        instanceSelector: ["body"],
+        matchingBreakpoints: ["base"],
+        matchingStates: new Set([":hover"]),
+      },
+      property: "color",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "red" });
+});
+
+test("preset styles are more specific than browser styles", () => {
+  // @layer browser { body { display: block } }
+  // @layer preset { body { display: flex } }
+  const model: StyleObjectModel = {
+    styleSourcesByInstanceId: new Map([["body", ["bodyLocal"]]]),
+    styleByStyleSourceId: getStyleByStyleSourceId([]),
+    instanceTags: new Map([["body", "body"]]),
+    instanceComponents: new Map([["body", "Body"]]),
+    metas: new Map([
+      [
+        "Body",
+        {
+          type: "container",
+          icon: "",
+          presetStyle: {
+            body: [
+              {
+                property: "display",
+                value: { type: "keyword", value: "flex" },
+              },
+            ],
+          },
+        },
+      ],
+    ]),
+  };
+  expect(
+    getComputedStyleDecl({
+      model,
+      styleSelector: {
+        instanceSelector: ["body"],
+        matchingBreakpoints: ["base"],
+        matchingStates: new Set(),
+      },
+      property: "display",
+    }).usedValue
+  ).toEqual({ type: "keyword", value: "flex" });
 });
