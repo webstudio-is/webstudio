@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { theme, Grid, Combobox } from "@webstudio-is/design-system";
 import { properties } from "@webstudio-is/css-data";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
@@ -7,20 +7,23 @@ import { CssValueInputContainer } from "../../controls/position/css-value-input-
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
+import {
+  $selectedInstanceSelector,
+  useInstanceStyles,
+} from "~/shared/nano-states";
 
 const propertyNames = Object.keys(properties) as Array<StyleProperty>;
 
-const $listedProperties = atom<Array<StyleProperty>>([
+const initialListedProperties: Array<StyleProperty> = [
   "opacity",
   "mixBlendMode",
   "cursor",
   "pointerEvents",
   "userSelect",
   "backdropFilter",
-]);
+];
 
 // @todo when adding properties - maybe sort them by popularity from generatedProperties?
 export const CustomPropertiesSection = ({
@@ -28,8 +31,20 @@ export const CustomPropertiesSection = ({
   setProperty,
   deleteProperty,
 }: SectionProps) => {
-  const listedProperties = useStore($listedProperties);
   const [addingProp, setAddingProp] = useState<StyleProperty | "">();
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const styles = useInstanceStyles(
+    selectedInstanceSelector ? selectedInstanceSelector[0] : undefined
+  );
+  const listedProperties = useMemo(() => {
+    const listed = [...initialListedProperties];
+    for (const style of styles) {
+      if (style.listed) {
+        listed.unshift(style.property);
+      }
+    }
+    return listed;
+  }, [styles]);
 
   return (
     <CollapsibleSectionWithAddButton
@@ -46,8 +61,10 @@ export const CustomPropertiesSection = ({
             if (value in properties || value.substr(0, 2) === "--") {
               const property = value as StyleProperty;
               setAddingProp(undefined);
-              $listedProperties.set([property, ...listedProperties]);
-              setProperty(property)({ type: "guaranteedInvalid" });
+              setProperty(property)(
+                { type: "guaranteedInvalid" },
+                { listed: true }
+              );
             }
           }}
         />
@@ -74,7 +91,9 @@ export const CustomPropertiesSection = ({
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
                 value={currentStyle[property]?.value}
-                setValue={setProperty(property)}
+                setValue={(styleValue) => {
+                  setProperty(property)(styleValue, { listed: true });
+                }}
                 deleteProperty={deleteProperty}
               />
             </Fragment>
