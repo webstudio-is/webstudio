@@ -1,5 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
-import { theme, Grid, Combobox } from "@webstudio-is/design-system";
+import { theme, Grid, Combobox, Box } from "@webstudio-is/design-system";
 import { properties, propertyDescriptions } from "@webstudio-is/css-data";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../../style-sections";
@@ -17,8 +17,11 @@ import { matchSorter } from "match-sorter";
 import { guaranteedInvalidValue } from "~/shared/style-object-model";
 import { humanizeString } from "~/shared/string-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { toKebabCase } from "../../shared/keyword-utils";
 
-const propertyNames = Object.keys(properties) as Array<StyleProperty>;
+const propertyNames = Object.keys(properties).sort(
+  Intl.Collator().compare
+) as Array<StyleProperty>;
 
 const initialListedProperties: Array<StyleProperty> = [
   "opacity",
@@ -161,13 +164,19 @@ const AddProperty = ({
         setItem({ value: value ?? "", label: value ?? "" });
       }}
       match={matchOrSuggestToCreate}
-      getDescription={(item) =>
-        item && item?.value in propertyDescriptions
-          ? propertyDescriptions[
+      getDescription={(item) => {
+        let description = `Please look up ${
+          item?.value ? `"${toKebabCase(item?.value)}"` : "property"
+        } in MDN.`;
+        if (item && item.value in propertyDescriptions) {
+          description =
+            propertyDescriptions[
               item.value as keyof typeof propertyDescriptions
-            ]
-          : undefined
-      }
+            ];
+        }
+        return <Box css={{ width: theme.spacing[25] }}>{description}</Box>;
+      }}
+      defaultHighlightedIndex={0}
     />
   );
 };

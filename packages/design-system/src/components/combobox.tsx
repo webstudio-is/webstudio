@@ -36,7 +36,7 @@ import {
 } from "./menu";
 import { ScrollArea } from "./scroll-area";
 import { Flex } from "./flex";
-import { Box, InputField, NestedInputButton } from "..";
+import { InputField, NestedInputButton } from "..";
 
 const Listbox = styled(
   "ul",
@@ -130,7 +130,10 @@ export const ComboboxItemDescription = ({
       <ListboxItem
         {...props}
         hint
-        style={{ ...style, order: "var(--ws-combobox-description-order)" }}
+        style={{
+          ...style,
+          order: "var(--ws-combobox-description-order)",
+        }}
       >
         {children}
       </ListboxItem>
@@ -417,15 +420,17 @@ export const Combobox = <Item,>({
   getDescription,
   ...props
 }: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
-  const [description, setDescription] = useState<ReactNode>();
   const combobox = useCombobox<Item>({
     ...props,
-    onItemHighlight: (value) => {
-      props.onItemHighlight?.(value);
-      const description = getDescription?.(value);
-      setDescription(description);
+    onItemHighlight: (item) => {
+      props.onItemHighlight?.(item);
+      setDescription(getDescription?.(item));
     },
   });
+
+  const [description, setDescription] = useState<ReactNode>(
+    getDescription?.(combobox.items[props.defaultHighlightedIndex ?? -1])
+  );
 
   return (
     <ComboboxRoot open={combobox.isOpen}>
@@ -437,27 +442,35 @@ export const Combobox = <Item,>({
             suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
           />
         </ComboboxAnchor>
-        <ComboboxContent align="start" sideOffset={2}>
-          <ComboboxListbox {...combobox.getMenuProps()}>
-            {combobox.isOpen &&
-              combobox.items.map((item, index) => {
-                return (
-                  <ComboboxListboxItem
-                    key={index}
-                    selectable={false}
-                    {...combobox.getItemProps({ item, index })}
-                  >
-                    {props.itemToString(item)}
-                  </ComboboxListboxItem>
-                );
-              })}
-            {description && (
-              <ComboboxItemDescription>
-                <Box css={{ width: theme.spacing[25] }}>{description}</Box>
-              </ComboboxItemDescription>
-            )}
-          </ComboboxListbox>
-        </ComboboxContent>
+        <Portal>
+          <StyledPopoverContent
+            align="start"
+            sideOffset={2}
+            onOpenAutoFocus={(event) => {
+              event.preventDefault();
+            }}
+          >
+            <Listbox {...combobox.getMenuProps()}>
+              <ScrollArea css={{ order: 1, maxHeight: theme.spacing[34] }}>
+                {combobox.isOpen &&
+                  combobox.items.map((item, index) => {
+                    return (
+                      <ComboboxListboxItem
+                        key={index}
+                        selectable={false}
+                        {...combobox.getItemProps({ item, index })}
+                      >
+                        {props.itemToString(item)}
+                      </ComboboxListboxItem>
+                    );
+                  })}
+              </ScrollArea>
+              {description && (
+                <ComboboxItemDescription>{description}</ComboboxItemDescription>
+              )}
+            </Listbox>
+          </StyledPopoverContent>
+        </Portal>
       </div>
     </ComboboxRoot>
   );
