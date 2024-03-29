@@ -60,7 +60,7 @@ export const AdvancedSection = ({
       // Dedupe the list
       new Set([...listed, ...defined, ...initialPropertyNames])
     ) as Array<StyleProperty>;
-  }, [styles]);
+  }, [styles, currentStyle]);
 
   return (
     // Use the panel that can display the dots corectly, maybe create the same components but for style panel and use it everywhere?
