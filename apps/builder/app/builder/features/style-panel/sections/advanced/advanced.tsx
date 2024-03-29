@@ -16,6 +16,7 @@ import {
 import { matchSorter } from "match-sorter";
 import { guaranteedInvalidValue } from "~/shared/style-object-model";
 import { humanizeString } from "~/shared/string-utils";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 const propertyNames = Object.keys(properties) as Array<StyleProperty>;
 
@@ -116,6 +117,10 @@ const matchOrSuggestToCreate = (
   const matched = matchSorter(items, search, {
     keys: [itemToString],
   });
+
+  if (isFeatureEnabled("cssVars") === false) {
+    return matched;
+  }
 
   if (
     search.trim() !== "" &&
