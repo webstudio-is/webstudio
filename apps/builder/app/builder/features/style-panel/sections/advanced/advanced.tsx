@@ -6,7 +6,7 @@ import type { SectionProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
-import { getStyleSource } from "../../shared/style-info";
+import { getStyleSource, hasInstanceValue } from "../../shared/style-info";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
@@ -19,11 +19,11 @@ import { humanizeString } from "~/shared/string-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { toKebabCase } from "../../shared/keyword-utils";
 
-const propertyNames = Object.keys(properties).sort(
+const allPropertyNames = Object.keys(properties).sort(
   Intl.Collator().compare
 ) as Array<StyleProperty>;
 
-const initialListedProperties: Array<StyleProperty> = [
+const initialPropertyNames: Array<StyleProperty> = [
   "opacity",
   "mixBlendMode",
   "cursor",
@@ -42,14 +42,24 @@ export const AdvancedSection = ({
   const styles = useInstanceStyles(
     selectedInstanceSelector ? selectedInstanceSelector[0] : undefined
   );
-  const listedProperties = useMemo(() => {
-    const listed = [...initialListedProperties];
+  const propertyNames = useMemo(() => {
+    const listed = [];
     for (const style of styles) {
       if (style.listed) {
-        listed.unshift(style.property);
+        listed.push(style.property);
       }
     }
-    return listed;
+    const defined = [];
+    for (const property in currentStyle) {
+      if (hasInstanceValue(currentStyle, property as StyleProperty)) {
+        defined.push(property);
+      }
+    }
+
+    return Array.from(
+      // Dedupe the list
+      new Set([...listed, ...defined, ...initialPropertyNames])
+    ) as Array<StyleProperty>;
   }, [styles]);
 
   return (
@@ -63,8 +73,8 @@ export const AdvancedSection = ({
     >
       {addingProp !== undefined && (
         <AddProperty
-          propertyNames={propertyNames.filter(
-            (property) => listedProperties.includes(property) === false
+          propertyNames={allPropertyNames.filter(
+            (property) => propertyNames.includes(property) === false
           )}
           onSelect={(value) => {
             if (value in properties || value.startsWith("--")) {
@@ -76,7 +86,7 @@ export const AdvancedSection = ({
         />
       )}
       <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[22]}` }}>
-        {listedProperties.map((property, index) => {
+        {propertyNames.map((property, index) => {
           const { items } = styleConfigByName(property);
           const keywords = items.map((item) => ({
             type: "keyword" as const,

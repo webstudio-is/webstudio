@@ -882,3 +882,21 @@ export const getPriorityStyleSource = (
 
   return "default";
 };
+
+/**
+ * Has any value defined on that particular instance,
+ * excluding preset and inherited values.
+ */
+export const hasInstanceValue = (
+  currentStyle: StyleInfo,
+  property: StyleProperty
+) => {
+  const info = currentStyle[property];
+  return Boolean(
+    info?.cascaded ??
+      info?.htmlValue ??
+      info?.local ??
+      info?.stateful ??
+      info?.stateless
+  );
+};
