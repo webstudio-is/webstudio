@@ -897,6 +897,8 @@ export const hasInstanceValue = (
       info?.htmlValue ??
       info?.local ??
       info?.stateful ??
-      info?.stateless
+      info?.stateless ??
+      info?.nextSource?.value ??
+      info?.previousSource?.value
   );
 };
