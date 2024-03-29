@@ -63,7 +63,7 @@ export const AdvancedSection = ({
             (property) => listedProperties.includes(property) === false
           )}
           onSelect={(value) => {
-            if (value in properties || value.substr(0, 2) === "--") {
+            if (value in properties || value.startsWith("--")) {
               const property = value as StyleProperty;
               setAddingProp(undefined);
               setProperty(property)(guaranteedInvalidValue, { listed: true });

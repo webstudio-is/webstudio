@@ -16,7 +16,7 @@ export const parseIntermediateOrInvalidValue = (
 ): StyleValue => {
   const value = styleValue.value.trim();
 
-  if (property.substr(0, 2) === "--") {
+  if (property.startsWith("--")) {
     return {
       type: "unparsed",
       value,

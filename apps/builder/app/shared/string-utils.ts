@@ -11,7 +11,7 @@ export const humanizeString = (string: string): string => {
   let result = cache.get(string);
   if (result === undefined) {
     // CSS Variables don't need to be humanized
-    result = string.substr(0, 2) === "--" ? string : titleCase(noCase(string));
+    result = string.startsWith("--") ? string : titleCase(noCase(string));
   }
   cache.set(string, result);
   return result;
