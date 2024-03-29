@@ -24,7 +24,10 @@ import {
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import type { DeleteProperty } from "../../shared/use-style-data";
+import type {
+  DeleteProperty,
+  StyleUpdateOptions,
+} from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
@@ -88,13 +91,15 @@ export const TransitionContent = ({
     setIntermediateValue(undefined);
   };
 
-  const handlePropertyUpdate = (params: ExtractedTransitionProperties) => {
+  const handlePropertyUpdate = (
+    params: ExtractedTransitionProperties,
+    options: StyleUpdateOptions = { isEphemeral: false }
+  ) => {
     const value: Array<UnitValue | KeywordValue> = Object.values({
       ...{ property, duration, delay, timing },
       ...params,
     }).filter<UnitValue | KeywordValue>(
-      (item): item is UnitValue | KeywordValue =>
-        item !== null && item !== undefined
+      (item): item is UnitValue | KeywordValue => item != null
     );
     const newLayer: TupleValue = { type: "tuple", value };
 
@@ -103,7 +108,9 @@ export const TransitionContent = ({
       value: toValue(newLayer),
     });
 
-    onEditLayer(index, { type: "layers", value: [newLayer] });
+    if (options.isEphemeral === false) {
+      onEditLayer(index, { type: "layers", value: [newLayer] });
+    }
   };
 
   return (
@@ -154,11 +161,11 @@ export const TransitionContent = ({
           deleteProperty={() => {
             handlePropertyUpdate({ duration });
           }}
-          setValue={(value) => {
+          setValue={(value, options) => {
             if (value === undefined) {
               return;
             }
-            handlePropertyUpdate({ duration: value });
+            handlePropertyUpdate({ duration: value }, options);
           }}
         />
 
@@ -190,11 +197,11 @@ export const TransitionContent = ({
           label={transitionDelayConfig.label}
           keywords={[]}
           deleteProperty={() => handlePropertyUpdate({ delay })}
-          setValue={(value) => {
+          setValue={(value, options) => {
             if (value === undefined) {
               return;
             }
-            handlePropertyUpdate({ delay: value });
+            handlePropertyUpdate({ delay: value }, options);
           }}
         />
 
