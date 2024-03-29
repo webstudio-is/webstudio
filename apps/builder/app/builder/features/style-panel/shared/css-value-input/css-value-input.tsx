@@ -7,13 +7,14 @@ import {
   ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
+  ComboboxItemDescription,
+  ComboboxScrollArea,
   numericScrubControl,
   NestedInputButton,
   NestedIconLabel,
   InputField,
   handleNumericInputArrowKeys,
   theme,
-  ComboboxItemDescription,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -680,14 +681,16 @@ export const CssValueInput = ({
         {isOpen && (
           <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
             <ComboboxListbox {...menuProps}>
-              {items.map((item, index) => (
-                <ComboboxListboxItem
-                  {...getItemProps({ item, index })}
-                  key={index}
-                >
-                  {itemToString(item)}
-                </ComboboxListboxItem>
-              ))}
+              <ComboboxScrollArea>
+                {items.map((item, index) => (
+                  <ComboboxListboxItem
+                    {...getItemProps({ item, index })}
+                    key={index}
+                  >
+                    {itemToString(item)}
+                  </ComboboxListboxItem>
+                ))}
+              </ComboboxScrollArea>
               {description && (
                 <ComboboxItemDescription>
                   <Box css={{ width: theme.spacing[25] }}>{description}</Box>
