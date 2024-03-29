@@ -28,7 +28,7 @@ const initialListedProperties: Array<StyleProperty> = [
   "backdropFilter",
 ];
 
-export const CustomPropertiesSection = ({
+export const AdvancedSection = ({
   currentStyle,
   setProperty,
   deleteProperty,
@@ -51,7 +51,7 @@ export const CustomPropertiesSection = ({
   return (
     // Use the panel that can display the dots corectly, maybe create the same components but for style panel and use it everywhere?
     <CollapsibleSectionWithAddButton
-      label="Custom Properties"
+      label="Advanced"
       onAdd={() => {
         setAddingProp("");
       }}
