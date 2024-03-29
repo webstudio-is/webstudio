@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   toValue,
   type InvalidValue,
@@ -52,10 +52,6 @@ export const TransitionContent = ({
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >({ type: "intermediate", value: transition });
-
-  useEffect(() => {
-    setIntermediateValue({ type: "intermediate", value: transition });
-  }, [transition]);
 
   const { property, timing, delay, duration } =
     useMemo<ExtractedTransitionProperties>(
