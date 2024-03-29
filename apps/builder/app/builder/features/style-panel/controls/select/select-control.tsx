@@ -16,7 +16,7 @@ export const SelectControl = ({
   const styleValue = currentStyle[property]?.value;
   const setValue = setProperty(property);
   const options = (items ?? defaultItems).map(({ name }) => name);
-  const value = toValue(styleValue);
+  const value = toValue(styleValue) || "advanced";
 
   // Append selected value when not present in the list of options
   // because radix requires values to always be in the list.
@@ -56,6 +56,10 @@ export const SelectControl = ({
       getDescription={(option) => {
         const key =
           `${property}:${option}` as keyof typeof declarationDescriptions;
+
+        if (key in declarationDescriptions === false) {
+          return;
+        }
 
         return (
           <Box css={{ width: theme.spacing[25] }}>

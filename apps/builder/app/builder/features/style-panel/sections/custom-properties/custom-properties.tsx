@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { theme, Grid, Combobox } from "@webstudio-is/design-system";
-import { properties } from "@webstudio-is/css-data";
+import { properties, propertyDescriptions } from "@webstudio-is/css-data";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
@@ -28,7 +28,6 @@ const initialListedProperties: Array<StyleProperty> = [
   "backdropFilter",
 ];
 
-// @todo when adding properties - maybe sort them by popularity from generatedProperties?
 export const CustomPropertiesSection = ({
   currentStyle,
   setProperty,
@@ -50,6 +49,7 @@ export const CustomPropertiesSection = ({
   }, [styles]);
 
   return (
+    // Use the panel that can display the dots corectly, maybe create the same components but for style panel and use it everywhere?
     <CollapsibleSectionWithAddButton
       label="Custom Properties"
       onAdd={() => {
@@ -156,6 +156,13 @@ const AddProperty = ({
         setItem({ value: value ?? "", label: value ?? "" });
       }}
       match={matchOrSuggestToCreate}
+      getDescription={(item) =>
+        item && item?.value in propertyDescriptions
+          ? propertyDescriptions[
+              item.value as keyof typeof propertyDescriptions
+            ]
+          : undefined
+      }
     />
   );
 };

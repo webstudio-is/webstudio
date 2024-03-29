@@ -36,7 +36,7 @@ import {
 } from "./menu";
 import { ScrollArea } from "./scroll-area";
 import { Flex } from "./flex";
-import { InputField, NestedInputButton } from "..";
+import { Box, InputField, NestedInputButton } from "..";
 
 const Listbox = styled(
   "ul",
@@ -239,6 +239,7 @@ type ItemToString<Item> = (item: Item | null) => string;
 type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
   itemToString: ItemToString<Item>;
+  getDescription?: (item: Item | null) => ReactNode;
   getItemProps?: (
     options: UseComboboxGetItemPropsOptions<Item>
   ) => ComponentProps<typeof ComboboxListboxItem>;
@@ -413,9 +414,18 @@ export const useCombobox = <Item,>({
 
 export const Combobox = <Item,>({
   autoFocus,
+  getDescription,
   ...props
 }: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
-  const combobox = useCombobox<Item>(props);
+  const [description, setDescription] = useState<ReactNode>();
+  const combobox = useCombobox<Item>({
+    ...props,
+    onItemHighlight: (value) => {
+      props.onItemHighlight?.(value);
+      const description = getDescription?.(value);
+      setDescription(description);
+    },
+  });
 
   return (
     <ComboboxRoot open={combobox.isOpen}>
@@ -441,6 +451,11 @@ export const Combobox = <Item,>({
                   </ComboboxListboxItem>
                 );
               })}
+            {description && (
+              <ComboboxItemDescription>
+                <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+              </ComboboxItemDescription>
+            )}
           </ComboboxListbox>
         </ComboboxContent>
       </div>
