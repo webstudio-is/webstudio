@@ -272,7 +272,8 @@ export const getComputedStyleDecl = ({
 } => {
   const { instanceSelector, matchingBreakpoints, matchingStates } =
     styleSelector;
-  const propertyData = property.startsWith("--")
+  const isCustomProperty = property.startsWith("--");
+  const propertyData = isCustomProperty
     ? customPropertyData
     : properties[property as keyof typeof properties];
   const inherited = propertyData.inherited;
