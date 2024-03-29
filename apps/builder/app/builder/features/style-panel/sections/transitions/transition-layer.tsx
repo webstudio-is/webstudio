@@ -54,6 +54,7 @@ export const TransitionLayer = <T extends TupleValue>(props: LayerProps<T>) => {
     >
       <CssValueListItem
         id={id}
+        draggable
         active={isHighlighted}
         index={index}
         label={<Label truncate>{label}</Label>}

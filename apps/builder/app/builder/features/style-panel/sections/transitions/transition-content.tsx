@@ -54,25 +54,13 @@ export const TransitionContent = ({
   >({ type: "intermediate", value: transition });
 
   const { property, timing, delay, duration } =
-    useMemo<ExtractedTransitionProperties>(() => {
-      // @todo remove the effect from useMemo
-      setIntermediateValue({ type: "intermediate", value: transition });
-      return extractTransitionProperties(layer);
-    }, [layer, transition]);
+    useMemo<ExtractedTransitionProperties>(
+      () => extractTransitionProperties(layer),
+      [layer]
+    );
 
   const transitionDurationConfig = styleConfigByName("transitionDuration");
-  const transitionDurationKeywords = transitionDurationConfig.items.map(
-    (item) => ({
-      type: "keyword" as const,
-      value: item.name,
-    })
-  );
-
   const transitionDelayConfig = styleConfigByName("transitionDelay");
-  const transitionDelayKeywords = transitionDelayConfig.items.map((item) => ({
-    type: "keyword" as const,
-    value: item.name,
-  }));
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -165,7 +153,7 @@ export const TransitionContent = ({
           styleSource="local"
           /* Browser default for transition-duration */
           value={duration ?? { type: "unit", value: 0, unit: "ms" }}
-          keywords={transitionDurationKeywords}
+          keywords={[]}
           deleteProperty={() => {
             handlePropertyUpdate({ duration });
           }}
@@ -202,8 +190,8 @@ export const TransitionContent = ({
           styleSource="local"
           /* Browser default for transition-delay */
           value={delay ?? { type: "unit", value: 0, unit: "ms" }}
-          label={transitionDurationConfig.label}
-          keywords={transitionDelayKeywords}
+          label={transitionDelayConfig.label}
+          keywords={[]}
           deleteProperty={() => handlePropertyUpdate({ delay })}
           setValue={(value, options) => {
             if (value === undefined) {
