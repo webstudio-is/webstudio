@@ -1,12 +1,7 @@
 /**
  * The only intent of this file is to support typings inside ../templates/route-template for easier development.
  **/
-import type {
-  ImageAsset,
-  ProjectMeta,
-  PageMeta,
-  System,
-} from "@webstudio-is/sdk";
+import type { ProjectMeta, PageMeta, System } from "@webstudio-is/sdk";
 
 export const loadResources = async (_props: { system: System }) => {
   const [] = await Promise.all([]);
@@ -44,5 +39,3 @@ export const projectMeta: undefined | ProjectMeta = {
   faviconAssetId: "",
   code: "",
 };
-
-export const imageAssets: ImageAsset[] = [];

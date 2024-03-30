@@ -28,6 +28,18 @@ export const favIconAsset: ImageAsset | undefined = {
   meta: { width: 790, height: 786 },
 };
 
+export const socialImageAsset: ImageAsset | undefined = {
+  id: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+  name: "_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg",
+  description: null,
+  projectId: "cddc1d44-af37-4cb6-a430-d300cf6f932d",
+  size: 210614,
+  type: "image",
+  format: "jpeg",
+  createdAt: "2023-09-06T11:28:43.031Z",
+  meta: { width: 1024, height: 1024 },
+};
+
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: FontAsset[] = [];
 

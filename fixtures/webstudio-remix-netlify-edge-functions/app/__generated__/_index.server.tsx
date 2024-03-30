@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
-import type { ImageAsset, ProjectMeta, PageMeta } from "@webstudio-is/sdk";
+import type { ProjectMeta, PageMeta } from "@webstudio-is/sdk";
 import { loadResource, type System } from "@webstudio-is/sdk";
 export const loadResources = async (_props: { system: System }) => {
   return {} as Record<string, unknown>;
@@ -46,5 +46,3 @@ export const projectMeta: ProjectMeta = {
   faviconAssetId: "",
   code: "",
 };
-
-export const imageAssets: ImageAsset[] = [];
