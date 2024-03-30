@@ -15,6 +15,7 @@ import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
   Page,
   favIconAsset,
+  socialImageAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
 } from "../__generated__/[_route_with_symbols_]._index";
@@ -26,7 +27,6 @@ import {
   projectId,
   user,
   projectMeta,
-  imageAssets,
 } from "../__generated__/[_route_with_symbols_]._index.server";
 
 import css from "../__generated__/index.css";
@@ -150,21 +150,15 @@ export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
     });
   }
 
-  if (pageMeta.socialImageAssetId) {
-    const imageAsset = imageAssets.find(
-      (asset) => asset.id === pageMeta.socialImageAssetId
-    );
-
-    if (imageAsset) {
-      metas.push({
-        property: "og:image",
-        content: `https://${data.host}${imageLoader({
-          src: imageAsset.name,
-          // Do not transform social image (not enough information do we need to do this)
-          format: "raw",
-        })}`,
-      });
-    }
+  if (socialImageAsset) {
+    metas.push({
+      property: "og:image",
+      content: `https://${data.host}${imageLoader({
+        src: socialImageAsset.name,
+        // Do not transform social image (not enough information do we need to do this)
+        format: "raw",
+      })}`,
+    });
   } else if (pageMeta.socialImageUrl) {
     metas.push({
       property: "og:image",

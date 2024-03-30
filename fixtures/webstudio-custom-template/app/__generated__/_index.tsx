@@ -31,6 +31,8 @@ export const favIconAsset: ImageAsset | undefined = {
   meta: { width: 16, height: 16 },
 };
 
+export const socialImageAsset: ImageAsset | undefined = undefined;
+
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: FontAsset[] = [
   {
