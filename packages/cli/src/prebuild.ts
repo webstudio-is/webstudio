@@ -123,7 +123,7 @@ export const downloadAsset = async (
   }
 };
 
-const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
+const mergeJsonInto = async (sourcePath: string, destinationPath: string) => {
   const sourceJson = await readFile(sourcePath, "utf8");
   const destinationJson = await readFile(destinationPath, "utf8").catch(
     (error) => {
@@ -139,7 +139,7 @@ const mergeJsonFiles = async (sourcePath: string, destinationPath: string) => {
     }
   );
   const content = JSON.stringify(
-    merge(JSON.parse(sourceJson), JSON.parse(destinationJson)),
+    merge(JSON.parse(destinationJson), JSON.parse(sourceJson)),
     null,
     "  "
   );
@@ -191,7 +191,7 @@ const copyTemplates = async (template: string = "defaults") => {
   });
 
   if ((await isFileExists(join(templatePath, "package.json"))) === true) {
-    await mergeJsonFiles(
+    await mergeJsonInto(
       join(templatePath, "package.json"),
       join(cwd(), "package.json")
     );

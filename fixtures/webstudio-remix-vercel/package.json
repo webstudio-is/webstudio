@@ -6,7 +6,7 @@
     "typecheck": "tsc",
     "fixtures:link": "webstudio link --link 'https://main.prs.webstudio.is/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview'",
     "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "webstudio build --template vercel --preview && pnpm prettier --write ./app/ ./package.json"
+    "fixtures:build": "webstudio build --template internal --template vercel --preview && pnpm prettier --write ./app/ ./package.json"
   },
   "private": true,
   "sideEffects": false,
