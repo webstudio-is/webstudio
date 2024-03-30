@@ -7,12 +7,13 @@ import {
   Instance,
   DataSource,
   encodeDataSourceVariable,
+  ROOT_FOLDER_ID,
 } from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
   deleteFolderWithChildrenMutable,
   getAllChildrenAndSelf,
-  isSlugUsed,
+  isSlugAvailable,
   registerFolderChildMutable,
   reparentOrphansMutable,
   toTreeData,
@@ -47,7 +48,7 @@ describe("toTreeData", () => {
     });
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
-      id: "root",
+      id: ROOT_FOLDER_ID,
       name: "Root",
       slug: "",
       type: "folder",
@@ -85,7 +86,7 @@ describe("toTreeData", () => {
     rootFolder?.children.push("folderId");
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
-      id: "root",
+      id: ROOT_FOLDER_ID,
       name: "Root",
       slug: "",
       type: "folder",
@@ -140,7 +141,7 @@ describe("toTreeData", () => {
     const tree = toTreeData(pages);
 
     expect(tree.root).toEqual({
-      id: "root",
+      id: ROOT_FOLDER_ID,
       name: "Root",
       slug: "",
       type: "folder",
@@ -206,7 +207,7 @@ describe("toTreeData", () => {
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
       type: "folder",
-      id: "root",
+      id: ROOT_FOLDER_ID,
       name: "Root",
       slug: "",
       children: [
@@ -270,7 +271,7 @@ describe("reparentOrphansMutable", () => {
     reparentOrphansMutable(pages);
     const rootFolder = pages.folders.find(isRoot);
     expect(rootFolder).toEqual({
-      id: "root",
+      id: ROOT_FOLDER_ID,
       name: "Root",
       slug: "",
       children: ["homePageId", "folderId", "pageId"],
@@ -295,7 +296,7 @@ describe("cleanupChildRefsMutable", () => {
     rootFolder?.children.push("folderId");
     cleanupChildRefsMutable("folderId", folders);
     expect(rootFolder).toEqual({
-      id: "root",
+      id: ROOT_FOLDER_ID,
       name: "Root",
       slug: "",
       children: ["homePageId"],
@@ -303,7 +304,7 @@ describe("cleanupChildRefsMutable", () => {
   });
 });
 
-describe("isSlugUsed", () => {
+describe("isSlugAvailable", () => {
   const { folders } = createDefaultPages({
     rootInstanceId: "rootInstanceId",
     systemDataSourceId: "systemDataSourceId",
@@ -321,30 +322,45 @@ describe("isSlugUsed", () => {
     slug: "slug1-1",
     children: [],
   });
-
+  folders.push({
+    id: "folderId2-1",
+    name: "Folder 2-1",
+    slug: "",
+    children: [],
+  });
+  folders.push({
+    id: "folderId2-2",
+    name: "Folder 2-2",
+    slug: "",
+    children: [],
+  });
   const rootFolder = folders.find(isRoot)!;
   rootFolder.children.push("folderId1");
 
   test("available in the root", () => {
-    expect(isSlugUsed("slug", folders, rootFolder.id)).toBe(true);
+    expect(isSlugAvailable("slug", folders, rootFolder.id)).toBe(true);
   });
 
   test("not available in the root", () => {
-    expect(isSlugUsed("slug1", folders, rootFolder.id)).toBe(false);
+    expect(isSlugAvailable("slug1", folders, rootFolder.id)).toBe(false);
   });
 
   test("available in Folder 1", () => {
-    expect(isSlugUsed("slug", folders, "folderId1")).toBe(true);
+    expect(isSlugAvailable("slug", folders, "folderId1")).toBe(true);
   });
 
   test("not available in Folder 1", () => {
-    expect(isSlugUsed("slug1-1", folders, "folderId1")).toBe(false);
+    expect(isSlugAvailable("slug1-1", folders, "folderId1")).toBe(false);
   });
 
   test("existing folder can have a matching slug when its the same id/folder", () => {
-    expect(isSlugUsed("slug1-1", folders, "folderId1", "folderId1-1")).toBe(
-      true
-    );
+    expect(
+      isSlugAvailable("slug1-1", folders, "folderId1", "folderId1-1")
+    ).toBe(true);
+  });
+
+  test("empty folder slug can be defined multiple times", () => {
+    expect(isSlugAvailable("", folders, "rootInstanceId")).toBe(true);
   });
 });
 
@@ -391,8 +407,8 @@ describe("registerFolderChildMutable", () => {
     };
     folders.push(folder);
     const rootFolder = folders.find(isRoot);
-    registerFolderChildMutable(folders, "folderId", "root");
-    registerFolderChildMutable(folders, "folderId2", "root");
+    registerFolderChildMutable(folders, "folderId", ROOT_FOLDER_ID);
+    registerFolderChildMutable(folders, "folderId2", ROOT_FOLDER_ID);
 
     expect(rootFolder?.children).toEqual([
       "homePageId",
