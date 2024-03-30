@@ -1,3 +1,4 @@
+import { Links, Meta } from "@remix-run/react";
 import { redirect } from "@remix-run/node";
 import type { LoaderArgs } from "@remix-run/node";
 import {
@@ -5,13 +6,13 @@ import {
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import { type Params, Root } from "@webstudio-is/react-sdk";
+import type { Params } from "@webstudio-is/react-sdk";
+import { createImageLoader } from "@webstudio-is/image";
 import env from "~/env/env.public.server";
 import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { dashboardPath, isCanvas } from "~/shared/router-utils";
-import { createImageLoader } from "@webstudio-is/image";
 
 export const loader = async ({ request }: LoaderArgs) => {
   const url = new URL(request.url);
@@ -64,9 +65,17 @@ const Outlet = () => {
  */
 
 const Content = () => {
-  // @todo This is non-standard for Remix, is there a better way?
-  // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
-  return <Root Outlet={Outlet} />;
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <Meta />
+        <Links />
+      </head>
+      <Outlet />
+    </html>
+  );
 };
 
 export default Content;
