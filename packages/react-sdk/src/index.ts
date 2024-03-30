@@ -1,7 +1,6 @@
 export * from "./remix";
 export * from "./css/index";
 export * from "./tree/index";
-export * from "./app/index";
 export * from "./core-components";
 export * from "./components/components-utils";
 export { PropMeta } from "./prop-meta";
