@@ -1,6 +1,6 @@
-import type { LoaderArgs } from "@remix-run/server-runtime";
+import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 
-export const loader = (arg: LoaderArgs) => {
+export const loader = (arg: LoaderFunctionArgs) => {
   const host =
     arg.request.headers.get("x-forwarded-host") ||
     arg.request.headers.get("host") ||

@@ -1,11 +1,11 @@
 /* eslint-disable camelcase */
 import {
-  type V2_ServerRuntimeMetaFunction,
+  type V2_ServerRuntimeMetaFunction as MetaFunction,
   type LinksFunction,
   type LinkDescriptor,
-  type ActionArgs,
-  type LoaderArgs,
-  type HeadersArgs,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  type HeadersFunction,
   json,
   redirect,
 } from "@remix-run/server-runtime";
@@ -32,7 +32,7 @@ import {
 import css from "../__generated__/index.css";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
-export const loader = async (arg: LoaderArgs) => {
+export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);
   const params = getRemixParams(arg.params);
   const system = {
@@ -83,15 +83,15 @@ export const loader = async (arg: LoaderArgs) => {
   );
 };
 
-export const headers = ({ loaderHeaders }: HeadersArgs) => {
+export const headers: HeadersFunction = ({ loaderHeaders }) => {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
-    "x-ws-language": loaderHeaders.get("x-ws-language"),
+    "x-ws-language": loaderHeaders.get("x-ws-language") ?? "",
   };
 };
 
-export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
-  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [];
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const metas: ReturnType<MetaFunction> = [];
   if (data === undefined) {
     return metas;
   }
@@ -240,7 +240,7 @@ const getMethod = (value: string | undefined) => {
   }
 };
 
-export const action = async ({ request, context }: ActionArgs) => {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const formData = await request.formData();
 
   const formId = getFormId(formData);

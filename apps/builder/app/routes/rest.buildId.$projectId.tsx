@@ -1,4 +1,4 @@
-import { json, type LoaderArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
@@ -6,7 +6,7 @@ import { createContext } from "~/shared/context.server";
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<{ buildId: string | null }> => {
+}: LoaderFunctionArgs): Promise<{ buildId: string | null }> => {
   try {
     const projectId = params.projectId;
 

@@ -1,13 +1,13 @@
 import type {
-  LoaderArgs,
-  V2_MetaFunction as MetaFunction,
-} from "@remix-run/node";
+  LoaderFunctionArgs,
+  V2_ServerRuntimeMetaFunction as MetaFunction,
+} from "@remix-run/server-runtime";
 import { Root } from "~/shared/remix";
 import env from "~/env/env.public.server";
 import { getThemeData } from "~/shared/theme";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   return {
     env,
     theme: await getThemeData(request),

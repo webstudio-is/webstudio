@@ -1,7 +1,7 @@
-import { Links, Meta } from "@remix-run/react";
-import { redirect } from "@remix-run/node";
-import type { LoaderArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import {
+  Links,
+  Meta,
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
@@ -14,7 +14,7 @@ import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { dashboardPath, isCanvas } from "~/shared/router-utils";
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   // See remix.config.ts for the publicPath value
   const publicPath = "/build/";
