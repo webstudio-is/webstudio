@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { loadResource, ResourceRequest } from "@webstudio-is/sdk";
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const computedResources = z
     .array(ResourceRequest)
     .parse(await request.json());

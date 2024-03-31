@@ -1,12 +1,13 @@
 import { createReadStream } from "node:fs";
 import { join } from "node:path";
-import { type LoaderArgs, Response } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
+import { Response } from "@remix-run/node";
 import env from "~/env/env.server";
 
 // this route used as proxy for images to cloudflare endpoint
 // https://developers.cloudflare.com/fundamentals/get-started/reference/cdn-cgi-endpoint/
 
-export const loader = async ({ params, request }: LoaderArgs) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const { name } = params;
   if (name === undefined) {
     throw Error("Name is undefined");

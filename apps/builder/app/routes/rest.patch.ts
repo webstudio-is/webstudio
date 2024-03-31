@@ -1,5 +1,5 @@
 import { applyPatches } from "immer";
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { SyncItem } from "immerhin";
 import { prisma } from "@webstudio-is/prisma-client";
 import {
@@ -45,7 +45,7 @@ type PatchData = {
   version: number;
 };
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   try {
     const {
       buildId,

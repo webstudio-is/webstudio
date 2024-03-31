@@ -4,7 +4,11 @@ import {
   isRouteErrorResponse,
 } from "@remix-run/react";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { redirect, type LoaderArgs, json } from "@remix-run/node";
+import {
+  type LoaderFunctionArgs,
+  redirect,
+  json,
+} from "@remix-run/server-runtime";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { db as domainDb } from "@webstudio-is/domain/index.server";
 import { db } from "@webstudio-is/project/index.server";
@@ -26,7 +30,7 @@ export { links };
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<BuilderProps> => {
+}: LoaderFunctionArgs): Promise<BuilderProps> => {
   const context = await createContext(request);
 
   try {

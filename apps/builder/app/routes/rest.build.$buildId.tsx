@@ -1,4 +1,4 @@
-import { json, type LoaderArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import type { Data } from "@webstudio-is/http-client";
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { sentryException } from "~/shared/sentry";
@@ -9,7 +9,7 @@ import { getUserById, type User } from "~/shared/db/user.server";
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<
+}: LoaderFunctionArgs): Promise<
   Data & { user: { email: User["email"] } | undefined } & {
     projectDomain: string;
   }
