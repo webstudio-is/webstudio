@@ -46,7 +46,7 @@ export const Form = forwardRef<
     { children, action, method, state = "initial", onStateChange, ...rest },
     ref
   ) => {
-    const fetcher = useFetcher();
+    const fetcher = useFetcher<{ success: boolean }>();
 
     const instanceId = getInstanceIdFromComponentProps(rest);
 

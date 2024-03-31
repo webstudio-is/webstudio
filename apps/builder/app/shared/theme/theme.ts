@@ -69,7 +69,8 @@ export const setThemeSetting = (nextSetting: ThemeSetting) => {
  * Returns the class and style to applied to some root node serverside and during hydration.
  */
 export const useThemeProps = () => {
-  const data = useLoaderData();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data = useLoaderData<{ theme: any }>();
   if (data.theme.setting) {
     setting = data.theme.setting;
   }

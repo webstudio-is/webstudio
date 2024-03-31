@@ -1,7 +1,7 @@
 import { createReadStream } from "node:fs";
 import { join } from "node:path";
+import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
-import { Response } from "@remix-run/node";
 import env from "~/env/env.server";
 
 // this route used as proxy for images to cloudflare endpoint
@@ -52,5 +52,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   const fileUploadPath = env.FILE_UPLOAD_PATH;
   const filePath = join(process.cwd(), fileUploadPath, name);
-  return new Response(createReadStream(filePath));
+  return new Response(
+    createReadableStreamFromReadable(createReadStream(filePath))
+  );
 };

@@ -266,7 +266,7 @@ const requestPointerLock = (
     }`;
     state.cursor = cursorNode;
     if (state.cursor) {
-      targetNode.ownerDocument.documentElement.append(state.cursor);
+      targetNode.ownerDocument.documentElement.appendChild(state.cursor);
     }
     return () => {
       if (state.cursor) {
