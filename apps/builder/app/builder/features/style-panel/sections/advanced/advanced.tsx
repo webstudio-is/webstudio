@@ -1,7 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { theme, Grid } from "@webstudio-is/design-system";
 import { properties } from "@webstudio-is/css-data";
-import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
@@ -19,6 +18,7 @@ import {
   type StyleInfo,
 } from "../../shared/style-info";
 import { Add } from "./add";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 
 const allPropertyNames = Object.keys(properties).sort(
   Intl.Collator().compare
@@ -64,13 +64,13 @@ export const AdvancedSection = ({
   const propertyNames = usePropertyNames(currentStyle);
 
   return (
-    // Use the panel that can display the dots corectly, maybe create the same components but for style panel and use it everywhere?
-    <CollapsibleSectionWithAddButton
+    <CollapsibleSection
       label="Advanced"
+      currentStyle={currentStyle}
+      properties={propertyNames}
       onAdd={() => {
         setAddingProp("");
       }}
-      hasItems={true}
     >
       {addingProp !== undefined && (
         <Add
@@ -120,6 +120,6 @@ export const AdvancedSection = ({
           );
         })}
       </Grid>
-    </CollapsibleSectionWithAddButton>
+    </CollapsibleSection>
   );
 };
