@@ -108,8 +108,11 @@ export const AdvancedSection = ({
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
                 value={currentStyle[property]?.value}
-                setValue={(styleValue) => {
-                  setProperty(property)(styleValue, { listed: true });
+                setValue={(styleValue, options) => {
+                  setProperty(property)(styleValue, {
+                    ...options,
+                    listed: true,
+                  });
                 }}
                 deleteProperty={deleteProperty}
               />
