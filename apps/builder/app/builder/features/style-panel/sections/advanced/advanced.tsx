@@ -158,7 +158,6 @@ const AddProperty = ({
   const [item, setItem] = useState<Item>({ value: "", label: "" });
 
   return (
-    // @todo add a hint
     <Combobox<Item>
       autoFocus
       placeholder="Find or create a property"
