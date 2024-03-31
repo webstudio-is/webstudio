@@ -894,7 +894,6 @@ export const hasInstanceValue = (
   const info = currentStyle[property];
   return Boolean(
     info?.cascaded ??
-      info?.htmlValue ??
       info?.local ??
       info?.stateful ??
       info?.stateless ??
