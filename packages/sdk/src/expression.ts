@@ -36,6 +36,12 @@ export const lintExpression = ({
   };
   // allow empty expression
   if (expression.trim().length === 0) {
+    diagnostics.push({
+      from: 0,
+      to: 0,
+      severity: "error",
+      message: "Expression cannot be empty",
+    });
     return diagnostics;
   }
   try {
@@ -181,7 +187,14 @@ export const transpileExpression = ({
     assignee: boolean
   ) => string | undefined | void;
 }) => {
-  const root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+  let root;
+  try {
+    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+  } catch (error) {
+    const message = (error as Error).message;
+    // throw new error to trace error in our code instead of acorn
+    throw Error(`${message} in ${JSON.stringify(expression)}`);
+  }
   const replacements: [start: number, end: number, fragment: string][] = [];
   const replaceIdentifier = (node: Identifier, assignee: boolean) => {
     const newName = replaceVariable?.(node.name, assignee);
