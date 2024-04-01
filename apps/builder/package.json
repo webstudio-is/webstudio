@@ -4,7 +4,7 @@
   "private": true,
   "description": "Webstudio Builder UI as a service",
   "scripts": {
-    "prebuild": "ls -la node_modules && ls -la node_modules/@remix-run/dev && ls -la node_modules/@remix-run/dev/node_modules && ls -la node_modules/@remix-run/dev/node_modules/esbuild && remix --version",
+    "prebuild": "ls -la ../../node_modules/@remix-run/dev && remix --version",
     "build": "remix build",
     "start": "remix-serve build",
     "start-local": "NODE_OPTIONS='-r dotenv/config' remix-serve build",
