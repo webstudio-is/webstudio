@@ -5,7 +5,7 @@
   "description": "Webstudio Builder UI as a service",
   "scripts": {
     "prebuild": "which remix",
-    "build": "remix build && pnpm esbuild middleware-esm.js --outfile=middleware.js --format=cjs",
+    "build": "remix build",
     "start": "remix-serve build",
     "start-local": "NODE_OPTIONS='-r dotenv/config' remix-serve build",
     "dev": "remix dev",
