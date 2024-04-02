@@ -6,7 +6,7 @@
     "**/*.ts",
     "**/*.tsx",
     "../../@types/**/*.d.ts",
-    "./middleware.js"
+    "./middleware-esm.js"
   ],
 
   "compilerOptions": {
