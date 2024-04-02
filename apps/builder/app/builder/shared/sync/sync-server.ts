@@ -172,7 +172,8 @@ const syncServer = async function () {
         );
 
         if (response.ok) {
-          const result = await response.json();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const result = (await response.json()) as any;
           if (result.status === "ok") {
             details.version += 1;
             // stop retrying and wait next transactions

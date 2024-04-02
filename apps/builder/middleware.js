@@ -215,6 +215,7 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
   }
 
   if (success === false) {
+    // eslint-disable-next-line no-console
     console.warn(
       `ratelimit triggered: [${ratelimitName}] limit=${limit}, reset=${reset}, remaining=${remaining} key=${key}`
     );

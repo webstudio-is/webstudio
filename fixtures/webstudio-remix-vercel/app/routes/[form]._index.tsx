@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import {
-  type V2_ServerRuntimeMetaFunction as MetaFunction,
+  type ServerRuntimeMetaFunction as MetaFunction,
   type LinksFunction,
   type LinkDescriptor,
   type ActionFunctionArgs,
