@@ -86,6 +86,8 @@ const renderProperty = (
     },
   });
 
+const forbiddenProperties = new Set(["style"]);
+
 const AddProperty = ({
   availableProps,
   onPropSelected,
@@ -103,9 +105,15 @@ const AddProperty = ({
       <Combobox<NameAndLabel>
         autoFocus
         placeholder="Find or create a property"
+        // @todo add descriptions
         items={availableProps}
         itemToString={itemToString}
-        onItemSelect={(item) => onPropSelected(item.name)}
+        onItemSelect={(item) => {
+          if (forbiddenProperties.has(item.name)) {
+            return;
+          }
+          onPropSelected(item.name);
+        }}
         match={matchOrSuggestToCreate}
         value={{ name: "", label: value }}
         onInputChange={(value) => {
