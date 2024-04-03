@@ -40,7 +40,7 @@ import { nanoid } from "nanoid";
 import { serverSyncStore } from "~/shared/sync";
 import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import {
-  isSlugUsed,
+  isSlugAvailable,
   registerFolderChildMutable,
   deleteFolderWithChildrenMutable,
   deletePageMutable,
@@ -81,7 +81,7 @@ const validateValues = (
   }
   if (pages !== undefined && values.slug !== undefined) {
     if (
-      isSlugUsed(
+      isSlugAvailable(
         values.slug,
         pages.folders,
         values.parentFolderId,
