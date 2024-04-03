@@ -18,8 +18,13 @@ describe("lint expression", () => {
     message,
   });
 
-  test("supports empty expression", () => {
-    expect(lintExpression({ expression: `` })).toEqual([]);
+  test("forbid empty expression", () => {
+    expect(lintExpression({ expression: `` })).toEqual([
+      error(0, 0, `Expression cannot be empty`),
+    ]);
+    expect(lintExpression({ expression: `  ` })).toEqual([
+      error(0, 0, `Expression cannot be empty`),
+    ]);
   });
 
   test("output parse error as diagnostic", () => {
@@ -304,6 +309,16 @@ describe("transpile expression", () => {
         expression: `{ ...name }`,
       })
     ).toEqual(`{ ...name }`);
+  });
+
+  test("output more readable syntax error", () => {
+    let errorString = "";
+    try {
+      transpileExpression({ expression: `` });
+    } catch (error) {
+      errorString = (error as Error).message;
+    }
+    expect(errorString).toEqual(`Unexpected token (1:0) in ""`);
   });
 });
 
