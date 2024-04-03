@@ -1,4 +1,4 @@
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction } from "@remix-run/server-runtime";
 
 import { Root } from "~/shared/remix";
 import interFont from "@fontsource-variable/inter/index.css";

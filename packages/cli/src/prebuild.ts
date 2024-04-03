@@ -713,9 +713,9 @@ export const projectMeta: ProjectMeta =
       const redirectPagePath = generateRemixRoute(redirect.old);
       const redirectFileName = `${redirectPagePath}.ts`;
 
-      const content = `import { type LoaderArgs, redirect } from "@remix-run/server-runtime";
+      const content = `import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 
-export const loader = (arg: LoaderArgs) => {
+export const loader = (arg: LoaderFunctionArgs) => {
   return redirect("${redirect.new}", ${redirect.status ?? 301});
 };
 `;

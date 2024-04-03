@@ -33,7 +33,7 @@ const useOnFetchEnd = <Data,>(
 
 type State = "initial" | "success" | "error";
 
-export const Form = forwardRef<
+export const ServerForm = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & {
     /** Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully. */
@@ -46,7 +46,7 @@ export const Form = forwardRef<
     { children, action, method, state = "initial", onStateChange, ...rest },
     ref
   ) => {
-    const fetcher = useFetcher();
+    const fetcher = useFetcher<{ success: boolean }>();
 
     const instanceId = getInstanceIdFromComponentProps(rest);
 
@@ -64,4 +64,4 @@ export const Form = forwardRef<
   }
 );
 
-Form.displayName = "Form";
+ServerForm.displayName = "Form";

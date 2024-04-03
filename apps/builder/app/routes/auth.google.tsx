@@ -1,4 +1,8 @@
-import { type ActionArgs, type LoaderArgs, redirect } from "@remix-run/node";
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  redirect,
+} from "@remix-run/server-runtime";
 import { authenticator } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import { sentryException } from "~/shared/sentry";
@@ -9,9 +13,9 @@ export default function Google() {
   return null;
 }
 
-export const loader = (_args: LoaderArgs) => redirect("/login");
+export const loader = (_args: LoaderFunctionArgs) => redirect("/login");
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   const returnTo = await returnToPath(request);
 
   try {

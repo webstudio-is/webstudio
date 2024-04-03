@@ -42,7 +42,7 @@
   "sideEffects": false,
   "dependencies": {
     "@babel/parser": "^7.23.0",
-    "@babel/types": "^7.23.0",
+    "@babel/types": "^7.24.0",
     "@webstudio-is/css-data": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",

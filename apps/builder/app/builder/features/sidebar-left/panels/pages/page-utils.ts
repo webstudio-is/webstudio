@@ -169,13 +169,17 @@ export const reparentOrphansMutable = (pages: Pages) => {
  * Returns true if folder's slug is unique within it's future parent folder.
  * Needed to verify if the folder can be nested under the parent folder without modifying slug.
  */
-export const isSlugUsed = (
+export const isSlugAvailable = (
   slug: string,
   folders: Array<Folder>,
   parentFolderId: Folder["id"],
   // undefined folder id means new folder
   folderId?: Folder["id"]
 ) => {
+  // Empty slug can appear any amount of times.
+  if (slug === "") {
+    return true;
+  }
   const foldersMap = new Map(folders.map((folder) => [folder.id, folder]));
   const parentFolder = foldersMap.get(parentFolderId);
   // Should be impossible because at least root folder is always found.

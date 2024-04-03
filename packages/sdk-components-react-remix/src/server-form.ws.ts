@@ -4,10 +4,11 @@ import {
   type WsComponentPropsMeta,
   showAttribute,
 } from "@webstudio-is/react-sdk";
-import { props } from "./__generated__/form.props";
+import { props } from "./__generated__/server-form.props";
 
 export const meta: WsComponentMeta = {
   ...baseMeta,
+  label: "Server Form",
   states: [
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },

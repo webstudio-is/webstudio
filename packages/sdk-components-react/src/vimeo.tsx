@@ -120,7 +120,7 @@ const preconnect = (url: string) => {
   link.rel = "preconnect";
   link.href = url;
   link.crossOrigin = "true";
-  document.head.append(link);
+  document.head.appendChild(link);
 };
 
 let warmed = false;
@@ -209,7 +209,8 @@ const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
   const apiUrl = `https://vimeo.com/api/v2/video/${videoId}.json`;
 
   // Now fetch the JSON that locates our placeholder from vimeo's JSON API
-  const response = (await (await fetch(apiUrl)).json())[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const response = ((await (await fetch(apiUrl)).json()) as any)[0];
 
   // Extract the image id, e.g. 819916979, from a URL like:
   // thumbnail_large: "https://i.vimeocdn.com/video/819916979_640.jpg"

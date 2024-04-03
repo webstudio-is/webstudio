@@ -1,10 +1,13 @@
-import { redirect } from "@remix-run/node";
+import {
+  type LoaderFunctionArgs,
+  json,
+  redirect,
+} from "@remix-run/server-runtime";
 import { isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { z } from "zod";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import env from "~/env/env.server";
-import { type LoaderArgs, json } from "@remix-run/server-runtime";
 import cookie from "cookie";
 
 const zN8NResponse = z.union([
@@ -23,7 +26,7 @@ const zWebhookEnv = z.object({
   N8N_WEBHOOK_TOKEN: z.string(),
 });
 
-export const loader = async ({ request, params }: LoaderArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {

@@ -1,7 +1,6 @@
 import { type ComponentProps } from "react";
 import { useLoaderData, useRouteError } from "@remix-run/react";
-import type { LoaderArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
@@ -12,7 +11,7 @@ import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 export const loader = async ({
   request,
-}: LoaderArgs): Promise<ComponentProps<typeof Dashboard>> => {
+}: LoaderFunctionArgs): Promise<ComponentProps<typeof Dashboard>> => {
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {

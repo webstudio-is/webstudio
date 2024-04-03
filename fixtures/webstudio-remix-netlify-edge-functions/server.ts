@@ -1,4 +1,5 @@
 // Import path interpreted by the Remix compiler
+// eslint-disable-next-line import/no-internal-modules
 import * as build from "@remix-run/dev/server-build";
 import { createRequestHandler } from "@netlify/remix-edge-adapter";
 
