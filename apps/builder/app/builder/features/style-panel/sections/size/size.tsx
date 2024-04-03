@@ -2,7 +2,7 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import { Grid, Separator, styled } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { PropertyName } from "../../shared/property-name";
 import {
   SelectControl,
@@ -62,13 +62,13 @@ const properties: StyleProperty[] = [
   "aspectRatio",
 ];
 
-const Section = styled(Grid, {
+const SectionLayout = styled(Grid, {
   columnGap: theme.spacing[5],
   rowGap: theme.spacing[5],
   px: theme.spacing[9],
 });
 
-export const SizeSection = ({
+export const Section = ({
   currentStyle: style,
   setProperty,
   deleteProperty,
@@ -80,7 +80,7 @@ export const SizeSection = ({
       properties={properties}
       fullWidth
     >
-      <Section columns={2}>
+      <SectionLayout columns={2}>
         <SizeField
           property="width"
           style={style}
@@ -129,9 +129,9 @@ export const SizeSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-      </Section>
+      </SectionLayout>
       <Separator />
-      <Section columns={2}>
+      <SectionLayout columns={2}>
         <PropertyName
           label={styleConfigByName("overflow").label}
           properties={["overflow"]}
@@ -203,7 +203,7 @@ export const SizeSection = ({
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-      </Section>
+      </SectionLayout>
     </CollapsibleSection>
   );
 };

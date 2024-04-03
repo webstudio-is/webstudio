@@ -3,7 +3,6 @@ import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "../../shared/configs";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { parseCssValue } from "@webstudio-is/css-data";
-import type { ControlProps } from "../../style-sections";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import {
   type StyleValue,
@@ -12,6 +11,7 @@ import {
 } from "@webstudio-is/css-engine";
 import type { SetValue } from "../../shared/use-style-data";
 import { NonResetablePropertyName } from "../../shared/property-name";
+import type { ControlProps } from "../../controls";
 
 const StyleKeywordAuto = { type: "keyword" as const, value: "auto" };
 

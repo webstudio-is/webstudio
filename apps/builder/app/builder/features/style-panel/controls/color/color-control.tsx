@@ -1,15 +1,15 @@
+import { useState } from "react";
 import { Flex } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import type { ControlProps } from "../../style-sections";
+import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
+import { colord } from "colord";
 import {
   type CssColorPickerValueInput,
   ColorPicker,
 } from "../../shared/color-picker";
-import { colord } from "colord";
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
-import { useState } from "react";
-import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
+import type { ControlProps } from "../types";
 
 const parseColor = (color?: StyleValue): RgbValue => {
   const colordValue = colord(toValue(color));

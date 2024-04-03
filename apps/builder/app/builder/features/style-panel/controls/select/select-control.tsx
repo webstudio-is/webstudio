@@ -3,7 +3,7 @@ import { Box, Select, theme } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 
 export const SelectControl = ({
   property,

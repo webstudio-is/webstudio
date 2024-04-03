@@ -20,7 +20,7 @@ import {
   $selectedInstanceIntanceToTag,
   $selectedInstanceSelector,
 } from "~/shared/nano-states";
-import { sections, type Category } from "./style-sections";
+import { sections } from "./sections";
 import { useParentStyle } from "./parent-style";
 import type { StyleInfo } from "./shared/style-info";
 import { toValue } from "@webstudio-is/css-engine";
@@ -36,7 +36,7 @@ const $selectedInstanceTag = computed(
 );
 
 const shouldRenderCategory = (
-  category: Category,
+  category: string,
   parentStyle: StyleInfo,
   tag: undefined | HtmlTag
 ) => {
@@ -75,7 +75,8 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
   }
 
   const all = [];
-  for (const [category, Section] of sections) {
+
+  for (const [category, { Section }] of sections.entries()) {
     if (shouldRenderCategory(category, parentStyle, selectedInstanceTag)) {
       all.push(
         <Fragment key={category}>

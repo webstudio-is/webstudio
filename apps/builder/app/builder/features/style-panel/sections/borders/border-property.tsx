@@ -9,7 +9,7 @@ import { CssValueInputContainer } from "../../controls/position/css-value-input-
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { toValue } from "@webstudio-is/css-engine";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";

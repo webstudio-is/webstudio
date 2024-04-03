@@ -4,7 +4,7 @@ import {
   Flex,
   useSortable,
 } from "@webstudio-is/design-system";
-import type { SectionProps } from "./style-sections";
+import type { SectionProps } from "./sections";
 import {
   deleteLayer,
   getLayerCount,

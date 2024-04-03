@@ -21,7 +21,7 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
 } from "@webstudio-is/icons";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName, PropertyTooltip } from "../../shared/property-name";
@@ -476,7 +476,7 @@ const properties: StyleProperty[] = [
   "columnGap",
 ];
 
-export const LayoutSection = ({
+export const Section = ({
   currentStyle,
   setProperty,
   deleteProperty,

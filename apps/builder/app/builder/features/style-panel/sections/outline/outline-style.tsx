@@ -12,7 +12,7 @@ import {
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
 import { toValue } from "@webstudio-is/css-engine";

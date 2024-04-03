@@ -7,7 +7,7 @@ import {
   BorderWidthLeftIcon,
 } from "@webstudio-is/icons";
 
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { BorderProperty } from "./border-property";
 
 const borderPropertyOptions = {

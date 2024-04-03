@@ -8,7 +8,7 @@ import {
   useInstanceStyles,
 } from "~/shared/nano-states";
 import { guaranteedInvalidValue } from "~/shared/style-object-model";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
@@ -55,7 +55,7 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
   }, [styles, currentStyle]);
 };
 
-export const AdvancedSection = ({
+export const Section = ({
   currentStyle,
   setProperty,
   deleteProperty,

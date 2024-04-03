@@ -15,7 +15,7 @@ import {
 } from "@webstudio-is/icons";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 
 const borderStyleProperties: StyleProperty[] = [

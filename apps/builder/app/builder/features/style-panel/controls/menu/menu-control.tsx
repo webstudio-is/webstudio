@@ -12,7 +12,7 @@ import {
   IconButton,
   theme,
 } from "@webstudio-is/design-system";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import { iconConfigs, styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 import { PropertyTooltip } from "../../shared/property-name";

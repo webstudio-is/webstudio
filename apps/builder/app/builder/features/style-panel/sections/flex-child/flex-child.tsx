@@ -1,7 +1,7 @@
 import { Flex, Grid, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";
@@ -29,7 +29,7 @@ const properties: StyleProperty[] = [
   "order",
 ];
 
-export const FlexChildSection = (props: SectionProps) => {
+export const Section = (props: SectionProps) => {
   return (
     <CollapsibleSection
       label="Flex Child"

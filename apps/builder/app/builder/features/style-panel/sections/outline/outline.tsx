@@ -2,7 +2,7 @@ import { Flex, Grid, theme, Box } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorControl } from "../../controls";
 import { CollapsibleSection } from "../../shared/collapsible-section";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { OutlineStyle } from "./outline-style";
 import { PropertyName } from "../../shared/property-name";
 import { OutlineWidth } from "./outline-width";
@@ -16,7 +16,7 @@ const properties: StyleProperty[] = [
   "outlineOffset",
 ];
 
-export const OutlineSection = (props: SectionProps) => {
+export const Section = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
   const { outlineStyle } = currentStyle;
 

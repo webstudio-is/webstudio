@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
@@ -197,7 +197,7 @@ const BackgroundsCollapsibleSection = ({
   );
 };
 
-export const BackgroundsSection = (props: SectionProps) => {
+export const Section = (props: SectionProps) => {
   const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
     props;
   const layersCount = getLayerCount(currentStyle);

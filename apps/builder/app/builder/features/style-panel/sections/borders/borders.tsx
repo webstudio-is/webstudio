@@ -3,7 +3,7 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { BorderRadius } from "./border-radius";
 import { BorderStyle } from "./border-style";
@@ -38,7 +38,7 @@ const properties: StyleProperty[] = [
   "borderLeftWidth",
 ];
 
-export const BordersSection = (props: SectionProps) => {
+export const Section = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =
     props;
 

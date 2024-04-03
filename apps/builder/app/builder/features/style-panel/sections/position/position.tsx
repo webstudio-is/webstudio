@@ -1,5 +1,5 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";
@@ -19,7 +19,7 @@ const positionControlVisibleProperties = [
 
 const zIndexParents = ["flex", "grid", "inline-flex", "inline-grid"] as const;
 
-export const PositionSection = ({
+export const Section = ({
   setProperty,
   deleteProperty,
   currentStyle,

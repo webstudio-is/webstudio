@@ -1,5 +1,5 @@
 import { type ComponentProps, useState, useRef } from "react";
-import type { SectionProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section-component";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { getSpaceModifiersGroup, useScrub } from "../shared/scrub";
@@ -80,7 +80,7 @@ const Cell = ({
   );
 };
 
-export const SpaceSection = ({
+export const Section = ({
   setProperty,
   deleteProperty,
   createBatchUpdate,

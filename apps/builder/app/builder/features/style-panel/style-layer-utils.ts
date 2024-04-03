@@ -3,7 +3,7 @@ import type {
   LayersValue,
   StyleProperty,
 } from "@webstudio-is/css-engine";
-import type { SectionProps } from "./style-sections";
+import type { SectionProps } from "./sections";
 import type { StyleInfo } from "./shared/style-info";
 import type { CreateBatchUpdate } from "./shared/use-style-data";
 

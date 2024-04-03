@@ -4,7 +4,7 @@ import {
   TupleValueItem,
 } from "@webstudio-is/css-engine";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 import { CssValueInputContainer } from "./css-value-input-container";
