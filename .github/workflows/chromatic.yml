@@ -80,7 +80,7 @@ jobs:
 
       - name: Chromatic
         id: chromatic
-        uses: chromaui/action@v1
+        uses: chromaui/action@v11.3.0
         with:
           projectToken: ${{ matrix.chromaticSecretKey }}
           workingDir: ${{ matrix.workingDir }}
@@ -107,7 +107,7 @@ jobs:
 
       - name: Chromatic
         id: chromatic
-        uses: chromaui/action@v1
+        uses: chromaui/action@v11.3.0
         with:
           projectToken: aed47de034e6
           buildScriptName: storybook:build
