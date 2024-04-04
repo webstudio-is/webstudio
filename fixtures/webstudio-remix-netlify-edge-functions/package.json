@@ -2,8 +2,8 @@
   "scripts": {
     "predev": "node -e \"fs.rmSync('./public/_redirects', { recursive: true, force: true })\"",
     "start": "netlify serve",
-    "build": "remix build",
-    "dev": "remix dev",
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
     "typecheck": "tsc",
     "fixtures:link": "webstudio link --link 'https://main.prs.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93&'",
     "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
@@ -30,11 +30,11 @@
   "sideEffects": false,
   "devDependencies": {
     "@remix-run/dev": "^2.8.1",
-    "@remix-run/serve": "^2.8.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "typescript": "5.2.2",
-    "webstudio": "workspace:*"
+    "webstudio": "workspace:*",
+    "vite": "^5.2.8"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -45,5 +45,6 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "AGPL-3.0-or-later"
+  "license": "AGPL-3.0-or-later",
+  "type": "module"
 }
