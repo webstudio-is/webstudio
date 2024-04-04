@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { ComponentStory } from "@storybook/react";
+import type { StoryFn } from "@storybook/react";
 import { GapVerticalIcon, ChevronDownIcon } from "@webstudio-is/icons";
 import { Button } from "../button";
 import { Flex } from "../flex";
@@ -18,11 +18,11 @@ export default {
   },
 };
 
-export const Default: ComponentStory<typeof DeprecatedTextField> = () => {
+export const Default: StoryFn<typeof DeprecatedTextField> = () => {
   return <DeprecatedTextField />;
 };
 
-export const NativeProps: ComponentStory<typeof DeprecatedTextField> = () => {
+export const NativeProps: StoryFn<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
       <DeprecatedTextField placeholder="This is a placeholder" />
@@ -39,7 +39,7 @@ export const NativeProps: ComponentStory<typeof DeprecatedTextField> = () => {
   );
 };
 
-export const Variants: ComponentStory<typeof DeprecatedTextField> = () => {
+export const Variants: StoryFn<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
       <DeprecatedTextField />
@@ -50,7 +50,7 @@ export const Variants: ComponentStory<typeof DeprecatedTextField> = () => {
   );
 };
 
-export const State: ComponentStory<typeof DeprecatedTextField> = () => {
+export const State: StoryFn<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
       <DeprecatedTextField />
@@ -60,7 +60,7 @@ export const State: ComponentStory<typeof DeprecatedTextField> = () => {
   );
 };
 
-export const PrefixSuffix: ComponentStory<typeof DeprecatedTextField> = () => {
+export const PrefixSuffix: StoryFn<typeof DeprecatedTextField> = () => {
   return (
     <Flex direction="column" gap={3}>
       <DeprecatedTextField
@@ -93,7 +93,7 @@ export const PrefixSuffix: ComponentStory<typeof DeprecatedTextField> = () => {
   );
 };
 
-export const Layout: ComponentStory<typeof DeprecatedTextField> = () => {
+export const Layout: StoryFn<typeof DeprecatedTextField> = () => {
   return (
     <>
       <Flex direction="row" gap={2} css={{ justifyContent: "space-between" }}>
@@ -151,7 +151,7 @@ export const Layout: ComponentStory<typeof DeprecatedTextField> = () => {
   );
 };
 
-export const Interactive: ComponentStory<typeof DeprecatedTextField> = () => {
+export const Interactive: StoryFn<typeof DeprecatedTextField> = () => {
   const [value, setValue] = React.useState("");
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);

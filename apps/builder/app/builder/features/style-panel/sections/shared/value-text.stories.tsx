@@ -1,4 +1,4 @@
-import type { ComponentMeta } from "@storybook/react";
+import type { Meta } from "@storybook/react";
 import { type ComponentProps, useState } from "react";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { SpaceLayout } from "../space/layout";
@@ -47,4 +47,4 @@ export default {
       ),
     },
   },
-} as ComponentMeta<typeof ValueText>;
+} as Meta<typeof ValueText>;

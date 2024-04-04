@@ -1,4 +1,4 @@
-import type { ComponentStory } from "@storybook/react";
+import type { StoryFn } from "@storybook/react";
 import { StorySection, StoryGrid } from "./storybook";
 import { Label } from "./label";
 import { Box } from "./box";
@@ -11,11 +11,7 @@ export default {
 
 const colors = ["default", "preset", "local", "overwritten", "remote"] as const;
 
-const LabelStory: ComponentStory<typeof Label> = ({
-  color,
-  disabled,
-  children,
-}) => {
+const LabelStory: StoryFn<typeof Label> = ({ color, disabled, children }) => {
   return (
     <>
       <StorySection title="Configurable">
