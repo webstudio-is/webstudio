@@ -35,7 +35,7 @@
     "prettier": "3.0.3",
     "simple-git-hooks": "^2.9.0",
     "storybook": "^7.4.0",
-    "tsx": "^3.12.8",
+    "tsx": "^4.7.2",
     "turbo": "^1.8.6",
     "typescript": "5.2.2"
   },
