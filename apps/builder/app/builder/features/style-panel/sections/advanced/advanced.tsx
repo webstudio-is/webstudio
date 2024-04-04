@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState } from "react";
 import { theme, Grid } from "@webstudio-is/design-system";
-import { properties } from "@webstudio-is/css-data";
+import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
@@ -21,7 +21,7 @@ import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { visualProperties } from "../sections";
 
-const allPropertyNames = Object.keys(properties).sort(
+const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
 ) as Array<StyleProperty>;
 
@@ -59,6 +59,9 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
     return Array.from(names).reverse();
   }, [styles, currentStyle]);
 };
+
+// Only here to keep the same section module interface
+export const properties = [];
 
 export const Section = ({
   currentStyle,

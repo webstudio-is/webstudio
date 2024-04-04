@@ -12,6 +12,7 @@ import * as boxShadows from "./box-shadows/box-shadows";
 import * as filter from "./filter/filter";
 import * as transitions from "./transitions/transitions";
 import * as outline from "./outline/outline";
+import * as advanced from "./advanced/advanced";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "./shared/section-component";
 
@@ -35,6 +36,7 @@ export const sections = new Map<
   ["filter", filter],
   ["transitions", transitions],
   ["outline", outline],
+  ["advanced", advanced],
 ]);
 
 export const visualProperties = new Set<StyleProperty>([]);
