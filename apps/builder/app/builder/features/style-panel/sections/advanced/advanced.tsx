@@ -86,7 +86,7 @@ export const Section = ({
             (property) => propertyNames.includes(property) === false
           )}
           onSelect={(value) => {
-            if (value in properties || value.startsWith("--")) {
+            if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
               setAddingProp(undefined);
               setProperty(property)(guaranteedInvalidValue, { listed: true });
