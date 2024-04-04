@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*",
-    "tsx": "^3.12.8",
+    "tsx": "^4.7.2",
     "typescript": "5.2.2"
   },
   "files": [
