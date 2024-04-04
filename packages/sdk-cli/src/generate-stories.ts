@@ -145,21 +145,19 @@ export const generateStories = async () => {
         usedMetas.set(instance.component, meta);
       }
     }
-    const { cssText, classesMap } = generateCss(
-      {
-        assets: [],
-        breakpoints: [
-          [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
-        ],
-        styles: data.styles.map((item) => [getStyleDeclKey(item), item]),
-        styleSourceSelections: data.styleSourceSelections.map((item) => [
-          item.instanceId,
-          item,
-        ]),
-        componentMetas: usedMetas,
-      },
-      { assetBaseUrl: "/", atomic: true }
-    );
+    const { cssText, classesMap } = generateCss({
+      assets: new Map(),
+      breakpoints: new Map([
+        [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
+      ]),
+      styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
+      styleSourceSelections: new Map(
+        data.styleSourceSelections.map((item) => [item.instanceId, item])
+      ),
+      componentMetas: usedMetas,
+      assetBaseUrl: "/",
+      atomic: true,
+    });
     const scope = createScope(["Component", "Story", "props", "useState"]);
     let content = "";
     content += getStoriesImports({

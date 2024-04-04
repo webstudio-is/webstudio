@@ -476,20 +476,16 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating css file";
 
-  const { cssText, classesMap } = generateCss(
-    {
-      assets: siteData.assets,
-      breakpoints: siteData.build?.breakpoints,
-      styles: siteData.build?.styles,
-      styleSourceSelections: siteData.build?.styleSourceSelections,
-      // pass only used metas to not generate unused preset styles
-      componentMetas: projectMetas,
-    },
-    {
-      assetBaseUrl,
-      atomic: siteData.build.pages.compiler?.atomicStyles ?? true,
-    }
-  );
+  const { cssText, classesMap } = generateCss({
+    assets,
+    breakpoints: new Map(siteData.build?.breakpoints),
+    styles: new Map(siteData.build?.styles),
+    styleSourceSelections: new Map(siteData.build?.styleSourceSelections),
+    // pass only used metas to not generate unused preset styles
+    componentMetas: projectMetas,
+    assetBaseUrl,
+    atomic: siteData.build.pages.compiler?.atomicStyles ?? true,
+  });
 
   await ensureFileInPath(join(generatedDir, "index.css"), cssText);
 
