@@ -8,7 +8,7 @@ import { props } from "./__generated__/server-form.props";
 
 export const meta: WsComponentMeta = {
   ...baseMeta,
-  label: "Server Form",
+  label: "Form",
   states: [
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },

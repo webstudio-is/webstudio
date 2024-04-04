@@ -51,6 +51,8 @@ module.exports = {
           "react-dom/*",
           "@fontsource/**",
           "@fontsource-variable/**",
+          "@netlify/remix-adapter/**",
+          "@netlify/remix-edge-adapter/**",
         ],
       },
     ],
