@@ -19,7 +19,9 @@ import { TransitionLayer } from "./transition-layer";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
-const property: StyleProperty = "transition";
+export const properties = ["transition"] satisfies Array<StyleProperty>;
+
+const property: StyleProperty = properties[0];
 const label = "Transitions";
 const INITIAL_TRANSITION = "opacity 200ms ease";
 
@@ -74,7 +76,7 @@ export const Section = (props: SectionProps) => {
             title={label}
             style={currentStyle}
             description="Animate the transition between states on this instance."
-            properties={[property]}
+            properties={properties}
             label={
               <SectionTitleLabel color={layersStyleSource}>
                 {label}

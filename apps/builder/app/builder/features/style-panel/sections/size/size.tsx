@@ -49,7 +49,7 @@ const SizeField = ({
   );
 };
 
-const properties: StyleProperty[] = [
+export const properties = [
   "width",
   "height",
   "minWidth",
@@ -60,7 +60,7 @@ const properties: StyleProperty[] = [
   "objectFit",
   "objectPosition",
   "aspectRatio",
-];
+] satisfies Array<StyleProperty>;
 
 const SectionLayout = styled(Grid, {
   columnGap: theme.spacing[5],

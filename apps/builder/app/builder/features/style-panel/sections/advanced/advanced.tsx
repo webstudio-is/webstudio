@@ -19,6 +19,7 @@ import {
 } from "../../shared/style-info";
 import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
+import { visualProperties } from "../sections";
 
 const allPropertyNames = Object.keys(properties).sort(
   Intl.Collator().compare
@@ -40,9 +41,13 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
   );
   return useMemo(() => {
     const names = new Set(initialPropertyNames);
-    for (const property in currentStyle) {
-      if (hasInstanceValue(currentStyle, property as StyleProperty)) {
-        names.add(property as StyleProperty);
+    let property: StyleProperty;
+    for (property in currentStyle) {
+      if (
+        hasInstanceValue(currentStyle, property) &&
+        visualProperties.has(property) === false
+      ) {
+        names.add(property);
       }
     }
     for (const style of styles) {

@@ -465,7 +465,7 @@ const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
   return aIndex - bIndex;
 };
 
-const properties: StyleProperty[] = [
+export const properties = [
   "display",
   "flexDirection",
   "flexWrap",
@@ -474,7 +474,7 @@ const properties: StyleProperty[] = [
   "alignContent",
   "rowGap",
   "columnGap",
-];
+] satisfies Array<StyleProperty>;
 
 export const Section = ({
   currentStyle,

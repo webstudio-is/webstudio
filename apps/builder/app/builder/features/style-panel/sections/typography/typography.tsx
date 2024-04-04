@@ -41,7 +41,7 @@ import { getStyleSource, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
 import { forwardRef, type ComponentProps } from "react";
 
-const properties: StyleProperty[] = [
+export const properties = [
   "fontFamily",
   "fontWeight",
   "fontSize",
@@ -56,7 +56,7 @@ const properties: StyleProperty[] = [
   "whiteSpace",
   "textOverflow",
   "hyphens",
-];
+] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
   return (

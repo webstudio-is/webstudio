@@ -12,14 +12,14 @@ import { BorderWidth } from "./border-width";
 
 const { items: borderColorItems } = styleConfigByName("borderTopColor");
 
-const borderColorProperties: StyleProperty[] = [
+const borderColorProperties = [
   "borderTopColor",
   "borderRightColor",
   "borderBottomColor",
   "borderLeftColor",
-];
+] satisfies Array<StyleProperty>;
 
-const properties: StyleProperty[] = [
+export const properties = [
   ...borderColorProperties,
 
   "borderTopLeftRadius",
@@ -36,7 +36,7 @@ const properties: StyleProperty[] = [
   "borderRightWidth",
   "borderBottomWidth",
   "borderLeftWidth",
-];
+] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty, createBatchUpdate } =

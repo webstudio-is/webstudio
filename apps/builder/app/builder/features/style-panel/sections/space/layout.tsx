@@ -2,7 +2,7 @@ import { styled, useId } from "@webstudio-is/design-system";
 import { forwardRef } from "react";
 import type { ComponentProps, Ref } from "react";
 import type { HoverTarget, SpaceStyleProperty } from "./types";
-import { spacePropertiesNames } from "./types";
+import { spaceProperties } from "./properties";
 import { theme } from "@webstudio-is/design-system";
 
 const VALUE_WIDTH = 34;
@@ -324,7 +324,7 @@ export const SpaceLayout = forwardRef(
           <Label>Margin</Label>
           <Label inner>Padding</Label>
 
-          {spacePropertiesNames.map((property) => (
+          {spaceProperties.map((property) => (
             <Cell property={property} key={property}>
               {renderCell({ property })}
             </Cell>

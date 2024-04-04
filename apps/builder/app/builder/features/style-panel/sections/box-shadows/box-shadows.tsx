@@ -16,7 +16,9 @@ import { BoxShadowLayer } from "./box-shadow-layer";
 import { addLayer } from "../../style-layer-utils";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 
-const property: StyleProperty = "boxShadow";
+export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
+
+const property: StyleProperty = properties[0];
 const label = "Box Shadows";
 const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
@@ -53,7 +55,7 @@ export const Section = (props: SectionProps) => {
           <PropertyName
             title="Box Shadows"
             style={currentStyle}
-            properties={[property]}
+            properties={properties}
             description="Adds shadow effects around an element's frame."
             label={
               <SectionTitleLabel color={layersStyleSource}>

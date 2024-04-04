@@ -8,7 +8,7 @@ import { styleConfigByName } from "../../shared/configs";
 import { PositionControl } from "./position-control";
 import { useParentStyle } from "../../parent-style";
 
-const properties: StyleProperty[] = ["position"];
+export const properties = ["position"] satisfies Array<StyleProperty>;
 
 const positionControlVisibleProperties = [
   "relative",

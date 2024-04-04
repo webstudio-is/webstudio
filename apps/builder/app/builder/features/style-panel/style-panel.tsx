@@ -24,6 +24,7 @@ import { sections } from "./sections";
 import { useParentStyle } from "./parent-style";
 import type { StyleInfo } from "./shared/style-info";
 import { toValue } from "@webstudio-is/css-engine";
+import { Section as AdvancedSection } from "./sections/advanced/advanced";
 
 const $selectedInstanceTag = computed(
   [$selectedInstanceSelector, $selectedInstanceIntanceToTag],
@@ -90,6 +91,17 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
       );
     }
   }
+
+  all.push(
+    <AdvancedSection
+      key="advanced"
+      setProperty={setProperty}
+      deleteProperty={deleteProperty}
+      createBatchUpdate={createBatchUpdate}
+      currentStyle={currentStyle}
+    />
+  );
+
   return (
     <>
       <Box css={{ px: theme.spacing[9], pb: theme.spacing[9] }}>

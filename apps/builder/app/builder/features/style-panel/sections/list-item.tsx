@@ -7,7 +7,7 @@ import { SelectControl } from "../controls";
 
 import { CollapsibleSection } from "../shared/collapsible-section";
 
-const properties: StyleProperty[] = ["listStyleType"];
+export const properties = ["listStyleType"] satisfies Array<StyleProperty>;
 
 export const Section = ({
   currentStyle: style,

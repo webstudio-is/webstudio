@@ -21,13 +21,13 @@ import {
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 
-const properties: StyleProperty[] = [
+export const properties = [
   "flexShrink",
   "flexGrow",
   "flexBasis",
   "alignSelf",
   "order",
-];
+] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
   return (

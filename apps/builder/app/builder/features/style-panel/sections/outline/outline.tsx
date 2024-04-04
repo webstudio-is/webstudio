@@ -9,12 +9,12 @@ import { OutlineWidth } from "./outline-width";
 import { OutlineOffset } from "./outline-offset";
 
 const property: StyleProperty = "outlineColor";
-const properties: StyleProperty[] = [
+export const properties = [
   "outlineStyle",
   "outlineColor",
   "outlineWidth",
   "outlineOffset",
-];
+] satisfies Array<StyleProperty>;
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;

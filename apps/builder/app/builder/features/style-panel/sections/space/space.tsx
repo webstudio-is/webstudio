@@ -3,7 +3,7 @@ import type { SectionProps } from "../shared/section-component";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { getSpaceModifiersGroup, useScrub } from "../shared/scrub";
-import { spacePropertiesNames } from "./types";
+import { spaceProperties } from "./properties";
 import type { SpaceStyleProperty, HoverTarget } from "./types";
 import { InputPopover } from "../shared/input-popover";
 import { SpaceTooltip } from "./tooltip";
@@ -80,6 +80,8 @@ const Cell = ({
   );
 };
 
+export { spaceProperties as properties };
+
 export const Section = ({
   setProperty,
   deleteProperty,
@@ -97,7 +99,7 @@ export const Section = ({
     getModifiersGroup: getSpaceModifiersGroup,
     onChange: (values, options) => {
       const batch = createBatchUpdate();
-      for (const property of spacePropertiesNames) {
+      for (const property of spaceProperties) {
         const value = values[property];
         if (value !== undefined) {
           batch.setProperty(property)(value);
@@ -138,7 +140,7 @@ export const Section = ({
     <CollapsibleSection
       label="Space"
       currentStyle={currentStyle}
-      properties={spacePropertiesNames}
+      properties={spaceProperties}
     >
       <SpaceLayout
         ref={layoutRef}

@@ -133,7 +133,7 @@ const Layer = (props: {
   );
 };
 
-const properties: StyleProperty[] = [
+export const properties = [
   "backgroundAttachment",
   "backgroundClip",
   "backgroundColor",
@@ -143,7 +143,7 @@ const properties: StyleProperty[] = [
   "backgroundRepeat",
   "backgroundSize",
   "backgroundBlendMode",
-];
+] satisfies Array<StyleProperty>;
 
 const BackgroundsCollapsibleSection = ({
   children,
