@@ -496,9 +496,6 @@ importers:
       '@remix-run/dev':
         specifier: ^2.8.1
         version: 2.8.1(@remix-run/serve@2.8.1)(typescript@5.2.2)(vite@5.2.8)
-      '@remix-run/serve':
-        specifier: ^2.8.1
-        version: 2.8.1(typescript@5.2.2)
       '@types/react':
         specifier: ^18.2.20
         version: 18.2.21
@@ -566,9 +563,6 @@ importers:
       '@remix-run/dev':
         specifier: ^2.8.1
         version: 2.8.1(@remix-run/serve@2.8.1)(typescript@5.2.2)(vite@5.2.8)
-      '@remix-run/serve':
-        specifier: ^2.8.1
-        version: 2.8.1(typescript@5.2.2)
       '@types/react':
         specifier: ^18.2.20
         version: 18.2.21
@@ -636,9 +630,6 @@ importers:
       '@remix-run/dev':
         specifier: ^2.8.1
         version: 2.8.1(@remix-run/serve@2.8.1)(typescript@5.2.2)(vite@5.2.8)
-      '@remix-run/serve':
-        specifier: ^2.8.1
-        version: 2.8.1(typescript@5.2.2)
       '@types/react':
         specifier: ^18.2.20
         version: 18.2.21
