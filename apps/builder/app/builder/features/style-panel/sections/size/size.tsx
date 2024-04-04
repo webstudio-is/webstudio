@@ -8,6 +8,7 @@ import {
   SelectControl,
   TextControl,
   ObjectPositionControl,
+  type ControlProps,
 } from "../../controls";
 import {
   EyeconOpenIcon,
@@ -21,12 +22,12 @@ import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 
 const SizeField = ({
   property,
-  style,
+  currentStyle,
   setProperty,
   deleteProperty,
 }: {
   property: StyleProperty;
-  style: SectionProps["currentStyle"];
+  currentStyle: SectionProps["currentStyle"];
   setProperty: SectionProps["setProperty"];
   deleteProperty: SectionProps["deleteProperty"];
 }) => {
@@ -36,16 +37,92 @@ const SizeField = ({
       <PropertyName
         label={label}
         properties={[property]}
-        style={style}
+        style={currentStyle}
         onReset={() => deleteProperty(property)}
       />
       <TextControl
         property={property}
-        currentStyle={style}
+        currentStyle={currentStyle}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
     </Grid>
+  );
+};
+
+const overflowItems = new Map([
+  [
+    "visible",
+    {
+      child: <EyeconOpenIcon />,
+      title: "Overflow",
+      description:
+        "Content is fully visible and extends beyond the container if it exceeds its size.",
+      value: "visible",
+      propertyValues: "overflow: visible;",
+    },
+  ],
+  [
+    "hidden",
+    {
+      child: <EyeconClosedIcon />,
+      title: "Overflow",
+      description:
+        "Content that exceeds the container's size is clipped and hidden without scrollbars.",
+      value: "hidden",
+      propertyValues: "overflow: hidden;",
+    },
+  ],
+  [
+    "scroll",
+    {
+      child: <ScrollIcon />,
+      title: "Overflow",
+      description:
+        "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
+      value: "scroll",
+      propertyValues: "overflow: scroll;",
+    },
+  ],
+  [
+    "auto",
+    {
+      child: <AutoScrollIcon />,
+      title: "Overflow",
+      description:
+        "Scrollbars are added to the container only when necessary, based on the content size.",
+      value: "auto",
+      propertyValues: "overflow: auto;",
+    },
+  ],
+]);
+
+const OverflowControl = ({
+  property,
+  currentStyle,
+  setProperty,
+  deleteProperty,
+}: ControlProps) => {
+  const value = toValue(currentStyle.overflow?.value);
+  if (overflowItems.has(value) === false) {
+    return (
+      <SelectControl
+        property={property}
+        currentStyle={currentStyle}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+      />
+    );
+  }
+  return (
+    <ToggleGroupControl
+      style={currentStyle}
+      items={Array.from(overflowItems.values())}
+      value={value}
+      onValueChange={(value) =>
+        setProperty(property)({ type: "keyword", value })
+      }
+    />
   );
 };
 
@@ -69,63 +146,63 @@ const SectionLayout = styled(Grid, {
 });
 
 export const Section = ({
-  currentStyle: style,
+  currentStyle,
   setProperty,
   deleteProperty,
 }: SectionProps) => {
   return (
     <CollapsibleSection
       label="Size"
-      currentStyle={style}
+      currentStyle={currentStyle}
       properties={properties}
       fullWidth
     >
       <SectionLayout columns={2}>
         <SizeField
           property="width"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <SizeField
           property="height"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <SizeField
           property="minWidth"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <SizeField
           property="minHeight"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <SizeField
           property="maxWidth"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <SizeField
           property="maxHeight"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <PropertyName
           label={styleConfigByName("aspectRatio").label}
           properties={["aspectRatio"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("aspectRatio")}
         />
         <TextControl
           property={"aspectRatio"}
-          currentStyle={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
@@ -135,71 +212,36 @@ export const Section = ({
         <PropertyName
           label={styleConfigByName("overflow").label}
           properties={["overflow"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("overflow")}
         />
-        <ToggleGroupControl
-          style={style}
-          items={[
-            {
-              child: <EyeconOpenIcon />,
-              title: "Overflow",
-              description:
-                "Content is fully visible and extends beyond the container if it exceeds its size.",
-              value: "visible",
-              propertyValues: "overflow: visible;",
-            },
-            {
-              child: <EyeconClosedIcon />,
-              title: "Overflow",
-              description:
-                "Content that exceeds the container's size is clipped and hidden without scrollbars.",
-              value: "hidden",
-              propertyValues: "overflow: hidden;",
-            },
-            {
-              child: <ScrollIcon />,
-              title: "Overflow",
-              description:
-                "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
-              value: "scroll",
-              propertyValues: "overflow: scroll;",
-            },
-            {
-              child: <AutoScrollIcon />,
-              title: "Overflow",
-              description:
-                "Scrollbars are added to the container only when necessary, based on the content size.",
-              value: "auto",
-              propertyValues: "overflow: auto;",
-            },
-          ]}
-          value={toValue(style.overflow?.value)}
-          onValueChange={(value) =>
-            setProperty("overflow")({ type: "keyword", value })
-          }
+        <OverflowControl
+          property="overflow"
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
         />
         <PropertyName
           label={styleConfigByName("objectFit").label}
           properties={["objectFit"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("objectFit")}
         />
         <SelectControl
           property="objectFit"
-          currentStyle={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <PropertyName
           label={styleConfigByName("objectPosition").label}
           properties={["objectPosition"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("objectPosition")}
         />
         <ObjectPositionControl
           property="objectPosition"
-          currentStyle={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
