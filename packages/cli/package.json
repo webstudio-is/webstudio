@@ -48,7 +48,7 @@
     "@types/prompts": "^2.4.5",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "tsx": "^3.12.8",
+    "tsx": "^4.7.2",
     "typescript": "5.2.2"
   }
 }
