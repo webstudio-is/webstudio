@@ -138,13 +138,16 @@ export type SelectProps<Option = SelectOption> = {
   placeholder?: string;
   children?: ReactNode;
   getDescription?: (option: Option) => ReactNode | undefined;
+  getItemProps?: (
+    option: Option
+  ) => Omit<ComponentProps<typeof SelectItem>, "children" | "value">;
 } & (Option extends string
   ? {
-      getLabel?: (option: Option) => string | undefined;
+      getLabel?: (option: Option) => ReactNode | undefined;
       getValue?: (option: Option) => string | undefined;
     }
   : {
-      getLabel: (option: Option) => string | undefined;
+      getLabel: (option: Option) => ReactNode | undefined;
       getValue: (option: Option) => string | undefined;
     }) &
   TriggerPassThroughProps;
@@ -171,6 +174,7 @@ const SelectBase = <Option,>(
     getLabel = defaultGetValue,
     getValue = defaultGetValue,
     getDescription,
+    getItemProps,
     name,
     children,
     prefix,
@@ -225,27 +229,32 @@ const SelectBase = <Option,>(
 
           <SelectViewport style={{ order: 1, maxHeight: rawTheme.spacing[34] }}>
             {children ||
-              options.map((option) => (
-                <SelectItem
-                  key={getValue(option)}
-                  value={getValue(option) ?? ""}
-                  textValue={getLabel(option)}
-                  onMouseEnter={() => {
-                    onItemHighlight?.(option);
-                    setHighlightedItem(option);
-                  }}
-                  onMouseLeave={() => {
-                    onItemHighlight?.();
-                    setHighlightedItem(undefined);
-                  }}
-                  onFocus={() => {
-                    onItemHighlight?.(option);
-                    setHighlightedItem(option);
-                  }}
-                >
-                  {getLabel(option)}
-                </SelectItem>
-              ))}
+              options.map((option, index) => {
+                const value = getValue(option) ?? "";
+                const { textValue, ...rest } = getItemProps?.(option) ?? {};
+                return (
+                  <SelectItem
+                    key={value ?? index}
+                    value={value}
+                    textValue={textValue ?? value}
+                    onMouseEnter={() => {
+                      onItemHighlight?.(option);
+                      setHighlightedItem(option);
+                    }}
+                    onMouseLeave={() => {
+                      onItemHighlight?.();
+                      setHighlightedItem(undefined);
+                    }}
+                    onFocus={() => {
+                      onItemHighlight?.(option);
+                      setHighlightedItem(option);
+                    }}
+                    {...rest}
+                  >
+                    {getLabel(option)}
+                  </SelectItem>
+                );
+              })}
           </SelectViewport>
 
           <SelectScrollDownButton css={{ order: 2 }}>
