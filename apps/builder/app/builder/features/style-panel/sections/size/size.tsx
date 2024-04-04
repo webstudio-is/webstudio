@@ -25,12 +25,7 @@ const SizeField = ({
   currentStyle,
   setProperty,
   deleteProperty,
-}: {
-  property: StyleProperty;
-  currentStyle: SectionProps["currentStyle"];
-  setProperty: SectionProps["setProperty"];
-  deleteProperty: SectionProps["deleteProperty"];
-}) => {
+}: ControlProps) => {
   const { label } = styleConfigByName(property);
   return (
     <Grid gap={1}>
@@ -103,7 +98,7 @@ const OverflowControl = ({
   setProperty,
   deleteProperty,
 }: ControlProps) => {
-  const value = toValue(currentStyle.overflow?.value);
+  const value = toValue(currentStyle[property]?.value);
   if (overflowItems.has(value) === false) {
     return (
       <SelectControl
