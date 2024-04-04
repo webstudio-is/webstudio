@@ -1,8 +1,8 @@
 {
+  "type": "module",
   "scripts": {
-    "start": "remix-serve build",
-    "build": "remix build",
-    "dev": "remix dev",
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
     "typecheck": "tsc",
     "fixtures:link": "webstudio link --link 'https://main.prs.webstudio.is/builder/cddc1d44-af37-4cb6-a430-d300cf6f932d?authToken=1cdc6026-dd5b-4624-b89b-9bd45e9bcc3d&mode=preview'",
     "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
@@ -27,10 +27,10 @@
   },
   "devDependencies": {
     "@remix-run/dev": "^2.8.1",
-    "@remix-run/serve": "^2.8.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "typescript": "5.2.2",
+    "vite": "^5.2.8",
     "webstudio": "workspace:*"
   },
   "engines": {

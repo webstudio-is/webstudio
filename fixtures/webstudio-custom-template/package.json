@@ -1,10 +1,9 @@
 {
   "scripts": {
     "custom-template-script": "echo \"This is a custom template script\"",
-    "build": "remix build",
-    "dev": "remix dev",
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
     "typecheck": "tsc",
-    "start": "remix-serve build",
     "checks": "pnpm typecheck",
     "size-test": "rm -rf ./public && remix build && size-limit",
     "fixtures:link": "webstudio link --link 'https://main.prs.webstudio.is/builder/0d856812-61d8-4014-a20a-82e01c0eb8ee?authToken=d225fafb-4f20-4340-9359-c21df7c49a3f'",
@@ -33,11 +32,11 @@
   },
   "devDependencies": {
     "@remix-run/dev": "^2.8.1",
-    "@remix-run/serve": "^2.8.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "typescript": "5.2.2",
-    "webstudio": "workspace:*"
+    "webstudio": "workspace:*",
+    "vite": "^5.2.8"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -55,5 +54,6 @@
   "main": "index.js",
   "keywords": [],
   "author": "",
-  "license": "AGPL-3.0-or-later"
+  "license": "AGPL-3.0-or-later",
+  "type": "module"
 }

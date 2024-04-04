@@ -1,9 +1,10 @@
 {
+  "type": "module",
   "private": true,
   "sideEffects": false,
   "scripts": {
-    "build": "remix build",
-    "dev": "remix dev",
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -22,11 +23,11 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@remix-run/serve": "^2.8.1",
     "@remix-run/dev": "^2.8.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
-    "typescript": "5.2.2"
+    "typescript": "5.2.2",
+    "vite": "^5.2.8"
   },
   "engines": {
     "node": ">=18.0.0"

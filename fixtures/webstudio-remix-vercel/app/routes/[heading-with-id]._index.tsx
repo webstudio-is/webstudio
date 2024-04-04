@@ -29,7 +29,7 @@ import {
   projectMeta,
 } from "../__generated__/[heading-with-id]._index.server";
 
-import css from "../__generated__/index.css";
+import css from "../__generated__/index.css?url";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
 export const loader = async (arg: LoaderFunctionArgs) => {
