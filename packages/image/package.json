@@ -21,9 +21,9 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@storybook/addon-essentials": "^7.4.0",
-    "@storybook/addon-links": "^7.4.0",
-    "@storybook/react": "^7.4.0",
+    "@storybook/addon-essentials": "^8.0.5",
+    "@storybook/addon-links": "^8.0.5",
+    "@storybook/react": "^8.0.5",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/jest-config": "workspace:*",

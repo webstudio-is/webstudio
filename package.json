@@ -24,7 +24,6 @@
     "pre-commit": "./node_modules/.bin/nano-staged"
   },
   "devDependencies": {
-    "@storybook/react": "^7.4.0",
     "@types/css-tree": "^2.3.1",
     "@webstudio-is/eslint-config-custom": "workspace:*",
     "esbuild": "^0.20.2",
@@ -34,7 +33,7 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "simple-git-hooks": "^2.9.0",
-    "storybook": "^7.4.0",
+    "storybook": "^8.0.5",
     "tsx": "^4.7.2",
     "typescript": "5.4.5",
     "vite": "^5.2.11"
