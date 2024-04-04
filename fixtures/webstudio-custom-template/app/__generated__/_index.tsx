@@ -31,7 +31,17 @@ export const favIconAsset: ImageAsset | undefined = {
   meta: { width: 16, height: 16 },
 };
 
-export const socialImageAsset: ImageAsset | undefined = undefined;
+export const socialImageAsset: ImageAsset | undefined = {
+  id: "ff546bd2-9bb1-4717-a180-1a1fc05565dd",
+  name: "_937084ed-a798-49fe-8664-df93a2af605e_1JqSy_0Wy9fY5mXNZSLJ0.jpeg",
+  description: null,
+  projectId: "0d856812-61d8-4014-a20a-82e01c0eb8ee",
+  size: 210614,
+  type: "image",
+  format: "jpg",
+  createdAt: "2024-03-26T18:31:04.086Z",
+  meta: { width: 1024, height: 1024 },
+};
 
 // Font assets on current page (can be preloaded)
 export const pageFontAssets: FontAsset[] = [

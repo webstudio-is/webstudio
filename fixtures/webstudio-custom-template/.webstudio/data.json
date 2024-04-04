@@ -1,10 +1,10 @@
 {
   "build": {
-    "id": "14cb2397-e340-43db-b50d-a8ce419eb632",
+    "id": "95cd49ef-0f89-4e45-9c3f-137e3584343e",
     "projectId": "0d856812-61d8-4014-a20a-82e01c0eb8ee",
-    "version": 218,
-    "createdAt": "2024-03-26T18:34:56.154Z",
-    "updatedAt": "2024-03-26T18:34:56.154Z",
+    "version": 219,
+    "createdAt": "2024-04-04T14:33:58.620Z",
+    "updatedAt": "2024-04-04T14:33:58.620Z",
     "pages": {
       "meta": {
         "siteName": "Fixture Site",
@@ -23,11 +23,12 @@
         "name": "Home",
         "title": "\"Site Title\"",
         "meta": {
-          "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
+          "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\"",
+          "socialImageAssetId": "ff546bd2-9bb1-4717-a180-1a1fc05565dd"
         },
         "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
-        "path": "",
-        "systemDataSourceId": "_yJ0UuBlq2PEEobk8o_ku"
+        "systemDataSourceId": "_yJ0UuBlq2PEEobk8o_ku",
+        "path": ""
       },
       "pages": [
         {
@@ -46,8 +47,8 @@
             ]
           },
           "rootInstanceId": "LW98_-srDnnagkR10lsk4",
-          "path": "/script-test",
-          "systemDataSourceId": "Mlo1vx1bhMUxPcNRfzESD"
+          "systemDataSourceId": "Mlo1vx1bhMUxPcNRfzESD",
+          "path": "/script-test"
         },
         {
           "id": "lyz5sZaJ7WzLt71cX3VJ2",
@@ -63,8 +64,8 @@
             "custom": []
           },
           "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
-          "path": "/world",
-          "systemDataSourceId": "Zl0ZwsVkVbga9LehMyyQx"
+          "systemDataSourceId": "Zl0ZwsVkVbga9LehMyyQx",
+          "path": "/world"
         }
       ],
       "folders": [
@@ -1921,11 +1922,12 @@
     "name": "Home",
     "title": "\"Site Title\"",
     "meta": {
-      "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
+      "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\"",
+      "socialImageAssetId": "ff546bd2-9bb1-4717-a180-1a1fc05565dd"
     },
     "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
-    "path": "",
-    "systemDataSourceId": "_yJ0UuBlq2PEEobk8o_ku"
+    "systemDataSourceId": "_yJ0UuBlq2PEEobk8o_ku",
+    "path": ""
   },
   "pages": [
     {
@@ -1933,11 +1935,12 @@
       "name": "Home",
       "title": "\"Site Title\"",
       "meta": {
-        "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\""
+        "description": "\"Page description f511c297-b44f-4e4b-96bd-d013da06bada\"",
+        "socialImageAssetId": "ff546bd2-9bb1-4717-a180-1a1fc05565dd"
       },
       "rootInstanceId": "ibXgMoi9_ipHx1gVrvii0",
-      "path": "",
-      "systemDataSourceId": "_yJ0UuBlq2PEEobk8o_ku"
+      "systemDataSourceId": "_yJ0UuBlq2PEEobk8o_ku",
+      "path": ""
     },
     {
       "id": "xT46WZKzCBTvUCIObMELW",
@@ -1955,8 +1958,8 @@
         ]
       },
       "rootInstanceId": "LW98_-srDnnagkR10lsk4",
-      "path": "/script-test",
-      "systemDataSourceId": "Mlo1vx1bhMUxPcNRfzESD"
+      "systemDataSourceId": "Mlo1vx1bhMUxPcNRfzESD",
+      "path": "/script-test"
     },
     {
       "id": "lyz5sZaJ7WzLt71cX3VJ2",
@@ -1972,8 +1975,8 @@
         "custom": []
       },
       "rootInstanceId": "jDb2FuSK2-azIZxkH5XNv",
-      "path": "/world",
-      "systemDataSourceId": "Zl0ZwsVkVbga9LehMyyQx"
+      "systemDataSourceId": "Zl0ZwsVkVbga9LehMyyQx",
+      "path": "/world"
     }
   ],
   "assets": [
