@@ -28,7 +28,6 @@ import {
   ProBadge,
   ScrollArea,
   Select,
-  SelectItem,
   Switch,
   TextArea,
   Tooltip,
@@ -48,7 +47,6 @@ import {
   invalidateResource,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
-import { humanizeString } from "~/shared/string-utils";
 import {
   useField,
   type Field,
@@ -390,40 +388,57 @@ const VariablePanel = forwardRef<
     }
     return "string";
   });
-  const typeOptions: VariableType[] = [
-    "string",
-    "number",
-    "boolean",
-    "json",
-    "resource",
-  ];
-  const getTypeLabel = (value: VariableType) =>
-    value === "json" ? "JSON" : humanizeString(value);
+
+  const typeOptions: Map<
+    VariableType,
+    { label: ReactNode; description: string }
+  > = new Map([
+    ["string", { label: "String", description: "Any alphanumeric text." }],
+    [
+      "number",
+      {
+        label: "Number",
+        description: "Any number, can be used in math expressions.",
+      },
+    ],
+    [
+      "boolean",
+      { label: "Boolean", description: "A boolean is a true/false switch." },
+    ],
+    ["json", { label: "JSON", description: "Any JSON value" }],
+    [
+      "resource",
+      {
+        label: (
+          <Flex direction="row" gap="2" align="center">
+            Resource
+            {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          </Flex>
+        ),
+        description:
+          "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
+      },
+    ],
+  ]);
   const typeFieldElement = (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+    <Flex direction="column" gap="1">
       <Label>Type</Label>
-      <Select<VariableType>
-        options={typeOptions}
-        getLabel={getTypeLabel}
+      <Select
+        options={Array.from(typeOptions.keys())}
+        getLabel={(option: VariableType) => typeOptions.get(option)?.label}
+        getItemProps={(option) => ({
+          disabled: option === "resource" && allowDynamicData === false,
+        })}
+        getDescription={(option) => {
+          return (
+            <Box css={{ width: theme.spacing[25] }}>
+              {typeOptions.get(option)?.description}
+            </Box>
+          );
+        }}
         value={type}
         onChange={setType}
-      >
-        {typeOptions.map((option) => (
-          <SelectItem
-            key={option}
-            value={option}
-            textValue={getTypeLabel(option)}
-            disabled={option === "resource" && allowDynamicData === false}
-          >
-            {getTypeLabel(option)}
-            {option === "resource" && allowDynamicData === false && (
-              <Box css={{ display: "inline-block", ml: theme.spacing[3] }}>
-                <ProBadge>Pro</ProBadge>
-              </Box>
-            )}
-          </SelectItem>
-        ))}
-      </Select>
+      />
     </Flex>
   );
 
