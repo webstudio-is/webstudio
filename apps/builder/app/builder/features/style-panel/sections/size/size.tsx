@@ -18,7 +18,10 @@ import {
 } from "@webstudio-is/icons";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { theme } from "@webstudio-is/design-system";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import {
+  ToggleGroupControl,
+  type ToggleGroupControlProps,
+} from "../../controls/toggle/toggle-control";
 
 const SizeField = ({
   property,
@@ -45,61 +48,18 @@ const SizeField = ({
   );
 };
 
-const overflowItems = new Map([
-  [
-    "visible",
-    {
-      child: <EyeconOpenIcon />,
-      title: "Overflow",
-      description:
-        "Content is fully visible and extends beyond the container if it exceeds its size.",
-      value: "visible",
-      propertyValues: "overflow: visible;",
-    },
-  ],
-  [
-    "hidden",
-    {
-      child: <EyeconClosedIcon />,
-      title: "Overflow",
-      description:
-        "Content that exceeds the container's size is clipped and hidden without scrollbars.",
-      value: "hidden",
-      propertyValues: "overflow: hidden;",
-    },
-  ],
-  [
-    "scroll",
-    {
-      child: <ScrollIcon />,
-      title: "Overflow",
-      description:
-        "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
-      value: "scroll",
-      propertyValues: "overflow: scroll;",
-    },
-  ],
-  [
-    "auto",
-    {
-      child: <AutoScrollIcon />,
-      title: "Overflow",
-      description:
-        "Scrollbars are added to the container only when necessary, based on the content size.",
-      value: "auto",
-      propertyValues: "overflow: auto;",
-    },
-  ],
-]);
-
-const OverflowControl = ({
+const ToggleGroupOrSelectControl = ({
   property,
   currentStyle,
   setProperty,
   deleteProperty,
-}: ControlProps) => {
+  items,
+}: Omit<ControlProps, "items"> & {
+  items: ToggleGroupControlProps["items"];
+}) => {
   const value = toValue(currentStyle[property]?.value);
-  if (overflowItems.has(value) === false) {
+  const canUseToggleGroup = items.some((item) => item.value === value);
+  if (canUseToggleGroup === false) {
     return (
       <SelectControl
         property={property}
@@ -112,8 +72,9 @@ const OverflowControl = ({
   return (
     <ToggleGroupControl
       style={currentStyle}
-      items={Array.from(overflowItems.values())}
+      items={items}
       value={value}
+      onReset={() => deleteProperty(property)}
       onValueChange={(value) =>
         setProperty(property)({ type: "keyword", value })
       }
@@ -210,11 +171,46 @@ export const Section = ({
           style={currentStyle}
           onReset={() => deleteProperty("overflow")}
         />
-        <OverflowControl
+        <ToggleGroupOrSelectControl
           property="overflow"
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
+          items={[
+            {
+              child: <EyeconOpenIcon />,
+              title: "Overflow",
+              description:
+                "Content is fully visible and extends beyond the container if it exceeds its size.",
+              value: "visible",
+              propertyValues: "overflow: visible;",
+            },
+            {
+              child: <EyeconClosedIcon />,
+              title: "Overflow",
+              description:
+                "Content that exceeds the container's size is clipped and hidden without scrollbars.",
+              value: "hidden",
+              propertyValues: "overflow: hidden;",
+            },
+            {
+              child: <ScrollIcon />,
+              title: "Overflow",
+              description:
+                "Scrollbars are added to the container, allowing users to scroll and view the exceeding content.",
+              value: "scroll",
+              propertyValues: "overflow: scroll;",
+            },
+
+            {
+              child: <AutoScrollIcon />,
+              title: "Overflow",
+              description:
+                "Scrollbars are added to the container only when necessary, based on the content size.",
+              value: "auto",
+              propertyValues: "overflow: auto;",
+            },
+          ]}
         />
         <PropertyName
           label={styleConfigByName("objectFit").label}

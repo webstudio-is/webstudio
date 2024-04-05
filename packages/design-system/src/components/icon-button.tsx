@@ -27,6 +27,7 @@ export const IconButton = styled("button", {
   width: theme.spacing[12],
   height: theme.spacing[12],
   borderRadius: theme.borderRadius[3],
+  minWidth: 0,
 
   "&[data-focused=true], &:focus-visible": {
     outline: `2px solid ${theme.colors.borderFocus}`,

@@ -16,6 +16,7 @@ import {
   FontWeightControl,
   SelectControl,
   TextControl,
+  type ControlProps,
 } from "../../controls";
 import {
   CrossSmallIcon,
@@ -35,11 +36,15 @@ import {
   TextUnderlineIcon,
   TextUppercaseIcon,
 } from "@webstudio-is/icons";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import {
+  ToggleGroupControl,
+  type ToggleGroupControlProps,
+} from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
 import { forwardRef, type ComponentProps } from "react";
+import { styleConfigByName } from "../../shared/configs";
 
 export const properties = [
   "fontFamily",
@@ -65,7 +70,7 @@ export const Section = (props: SectionProps) => {
       currentStyle={props.currentStyle}
       properties={properties}
     >
-      <Flex css={{ gap: theme.spacing[7] }} direction="column">
+      <Flex gap="2" direction="column">
         <TypographySectionFont {...props} />
         <TypographySectionSizing {...props} />
         <TypographySectionAdvanced {...props} />
@@ -129,6 +134,53 @@ export const TypographySectionFont = (props: SectionProps) => {
   );
 };
 
+const ToggleGroupOrSelectControl = ({
+  property,
+  currentStyle,
+  setProperty,
+  deleteProperty,
+  items,
+  mapValue = (value) => value,
+}: Omit<ControlProps, "items"> & {
+  items: ToggleGroupControlProps["items"];
+  mapValue?: (value: string) => string;
+}) => {
+  const value = mapValue(toValue(currentStyle[property]?.value));
+  const canUseToggleGroup = items.some((item) => item.value === value);
+  const onReset = () => deleteProperty(property);
+  if (canUseToggleGroup === false) {
+    return (
+      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
+        <PropertyName
+          style={currentStyle}
+          properties={[property]}
+          label={styleConfigByName(property).label}
+          onReset={onReset}
+        />
+        <SelectControl
+          property={property}
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+        />
+      </Grid>
+    );
+  }
+  return (
+    <ToggleGroupControl
+      style={currentStyle}
+      styleSource={getStyleSource(currentStyle[property])}
+      items={items}
+      value={value}
+      properties={[property]}
+      onReset={onReset}
+      onValueChange={(value) =>
+        setProperty(property)({ type: "keyword", value })
+      }
+    />
+  );
+};
+
 export const TypographySectionSizing = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
 
@@ -186,38 +238,22 @@ export const TypographySectionSizing = (props: SectionProps) => {
 };
 
 export const TypographySectionAdvanced = (props: SectionProps) => {
-  const { setProperty, deleteProperty, currentStyle } = props;
-  const setTextAlign = setProperty("textAlign");
-  const setTextDecorationLine = setProperty("textDecorationLine");
-  const setTextTransform = setProperty("textTransform");
-  const setFontStyle = setProperty("fontStyle");
-
   return (
-    <Grid
-      css={{
-        gap: theme.spacing[5],
-      }}
-    >
-      <Grid
-        css={{
-          gridTemplateColumns: "1fr 1fr",
-          gap: theme.spacing[9],
-        }}
-      >
-        <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.textAlign)}
-          onValueChange={(value) => setTextAlign({ type: "keyword", value })}
-          onReset={() => deleteProperty("textAlign")}
-          value={String(getTextAlign(toValue(currentStyle.textAlign?.value)))}
-          properties={["textAlign"]}
+    <Grid gap="2">
+      <Grid align="end" gap="3" columns="2">
+        <ToggleGroupOrSelectControl
+          {...props}
+          property="textAlign"
+          mapValue={(value: string) =>
+            value === "left" ? "start" : value === "right" ? "end" : value
+          }
           items={[
             {
               child: <TextAlignLeftIcon />,
               title: "Text Align",
               description: "Aligns the text based on the writing direction.",
               value: "start",
-              propertyValues: "text-align: left;",
+              propertyValues: "text-align: start;",
             },
             {
               child: <TextAlignCenterIcon />,
@@ -232,7 +268,7 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
               title: "Text Align",
               description: "Aligns the text based on the writing direction.",
               value: "end",
-              propertyValues: "text-align: right;",
+              propertyValues: "text-align: end;",
             },
             {
               child: <TextAlignJustifyIcon />,
@@ -244,15 +280,9 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
             },
           ]}
         />
-        <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.textDecorationLine)}
-          onValueChange={(value) =>
-            setTextDecorationLine({ type: "keyword", value })
-          }
-          onReset={() => deleteProperty("textDecorationLine")}
-          properties={["textDecorationLine"]}
-          value={toValue(currentStyle.textDecorationLine?.value)}
+        <ToggleGroupOrSelectControl
+          {...props}
+          property="textDecorationLine"
           items={[
             {
               child: <CrossSmallIcon />,
@@ -279,22 +309,10 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
           ]}
         />
       </Grid>
-      <Grid
-        css={{
-          gridTemplateColumns: "1fr 1fr auto",
-          gap: theme.spacing[9],
-          alignItems: "center",
-        }}
-      >
-        <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.textTransform)}
-          onValueChange={(value) =>
-            setTextTransform({ type: "keyword", value })
-          }
-          properties={["textTransform"]}
-          onReset={() => deleteProperty("textTransform")}
-          value={toValue(currentStyle.textTransform?.value)}
+      <Grid align="end" gap="3" columns="2">
+        <ToggleGroupOrSelectControl
+          {...props}
+          property="textTransform"
           items={[
             {
               child: <CrossSmallIcon />,
@@ -330,33 +348,31 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
             },
           ]}
         />
-        <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.fontStyle)}
-          onValueChange={(value) => setFontStyle({ type: "keyword", value })}
-          onReset={() => deleteProperty("fontStyle")}
-          properties={["fontStyle"]}
-          value={toValue(currentStyle.fontStyle?.value)}
-          items={[
-            {
-              child: <CrossSmallIcon />,
-              title: "Font Style",
-              description:
-                "The default value. The text appears in a normal, upright style.",
-              value: "normal",
-              propertyValues: "font-style: normal;",
-            },
-            {
-              child: <TextItalicIcon />,
-              title: "Font Style",
-              description:
-                "The text appears in italic style, where it is slanted to the right.",
-              value: "italic",
-              propertyValues: "font-style: italic;",
-            },
-          ]}
-        />
-        <TypographySectionAdvancedPopover {...props} />
+        <Grid align="end" gap="1" css={{ gridTemplateColumns: "3fr 1fr" }}>
+          <ToggleGroupOrSelectControl
+            {...props}
+            property="fontStyle"
+            items={[
+              {
+                child: <CrossSmallIcon />,
+                title: "Font Style",
+                description:
+                  "The default value. The text appears in a normal, upright style.",
+                value: "normal",
+                propertyValues: "font-style: normal;",
+              },
+              {
+                child: <TextItalicIcon />,
+                title: "Font Style",
+                description:
+                  "The text appears in italic style, where it is slanted to the right.",
+                value: "italic",
+                propertyValues: "font-style: italic;",
+              },
+            ]}
+          />
+          <TypographySectionAdvancedPopover {...props} />
+        </Grid>
       </Grid>
     </Grid>
   );
@@ -536,15 +552,4 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
       />
     </FloatingPanel>
   );
-};
-
-const getTextAlign = (value: string) => {
-  switch (value) {
-    case "left":
-      return "start";
-    case "right":
-      return "end";
-    default:
-      return value;
-  }
 };
