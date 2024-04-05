@@ -23,4 +23,4 @@ const data = {
 };
 
 await writeFile(join(process.cwd(), "public/metas.json"), JSON.stringify(data));
-console.log("public/metas.json is generated");
+console.info("public/metas.json is generated");
