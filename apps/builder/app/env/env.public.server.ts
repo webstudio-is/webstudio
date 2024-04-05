@@ -10,7 +10,6 @@ import serverEnv from "./env.server";
 const env = {
   SENTRY_DSN: process.env.SENTRY_DSN,
   DEPLOYMENT_ENVIRONMENT: serverEnv.DEPLOYMENT_ENVIRONMENT,
-  DEBUG: process.env.DEBUG,
   FEATURES: process.env.FEATURES,
   BUILDER_HOST: process.env.BUILDER_HOST,
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
