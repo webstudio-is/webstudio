@@ -12,7 +12,10 @@ import type { SectionProps } from "../shared/section-component";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { getStyleSource } from "../../shared/style-info";
-import { declarationDescriptions } from "@webstudio-is/css-data";
+import {
+  declarationDescriptions,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
 
 const borderStyleProperties: StyleProperty[] = [
   "borderTopStyle",
@@ -63,7 +66,7 @@ export const BorderStyle = (
         style={props.currentStyle}
         properties={borderStyleProperties}
         label="Style"
-        description="Sets the style of the border"
+        description={propertyDescriptions.borderBlockStyle}
         onReset={onReset}
       />
       <ToggleGroupControl
