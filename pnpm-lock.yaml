@@ -251,9 +251,6 @@ importers:
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
-      debug:
-        specifier: ^4.3.4
-        version: 4.3.4
       detect-font:
         specifier: ^0.1.5
         version: 0.1.5
