@@ -107,6 +107,8 @@ const SidePanel = ({
         ...css,
         "&:last-of-type": {
           borderLeft: `1px solid  ${theme.colors.borderMain}`,
+          // Ensure content still has full width and avoid subpixels.
+          marginLeft: -1,
         },
       }}
     >

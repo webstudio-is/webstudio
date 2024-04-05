@@ -150,7 +150,13 @@ const ToggleGroupOrSelectControl = ({
   const onReset = () => deleteProperty(property);
   if (canUseToggleGroup === false) {
     return (
-      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
+      <Grid
+        css={{
+          gridTemplateColumns: "auto",
+          gap: theme.spacing[3],
+          width: `calc(${rawTheme.spacing[21]} + ${rawTheme.spacing[3]})`,
+        }}
+      >
         <PropertyName
           style={currentStyle}
           properties={[property]}
