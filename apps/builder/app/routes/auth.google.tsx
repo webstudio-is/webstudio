@@ -5,7 +5,6 @@ import {
 } from "@remix-run/server-runtime";
 import { authenticator } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
-import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { returnToPath } from "~/services/cookie.server";
 
@@ -29,7 +28,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       return error;
     }
     if (error instanceof Error) {
-      sentryException({
+      console.error({
         error,
         extras: {
           loginMethod: AUTH_PROVIDERS.LOGIN_GOOGLE,

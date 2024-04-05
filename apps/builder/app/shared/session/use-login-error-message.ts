@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { sentryMessage } from "../sentry";
 import { useSearchParams } from "@remix-run/react";
 
 export const AUTH_PROVIDERS = {
@@ -28,7 +27,7 @@ export const useLoginErrorMessage = (): string => {
       error !== null && message != null && message !== "";
 
     if (hasMessageToShow) {
-      sentryMessage({ message });
+      console.error({ message });
       setMessageToReturn(message);
 
       setSearchParams((prevSearchParams) => {
