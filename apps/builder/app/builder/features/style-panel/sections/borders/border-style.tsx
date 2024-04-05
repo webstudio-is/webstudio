@@ -1,22 +1,18 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import {
-  Grid,
-  theme,
-  ToggleGroup,
-  ToggleGroupButton,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Grid, theme } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
 import type { SectionProps } from "../shared/section-component";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
+import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import { getStyleSource } from "../../shared/style-info";
+import { declarationDescriptions } from "@webstudio-is/css-data";
 
 const borderStyleProperties: StyleProperty[] = [
   "borderTopStyle",
@@ -24,13 +20,6 @@ const borderStyleProperties: StyleProperty[] = [
   "borderLeftStyle",
   "borderBottomStyle",
 ];
-
-const borderStyleValues = [
-  { value: "none", Icon: SmallXIcon },
-  { value: "solid", Icon: DashBorderIcon },
-  { value: "dashed", Icon: DashedBorderIcon },
-  { value: "dotted", Icon: DottedBorderIcon },
-] as const;
 
 export const BorderStyle = (
   props: Pick<
@@ -61,6 +50,7 @@ export const BorderStyle = (
       value: "none",
     }
   );
+  const onReset = () => deleteBorderProperties(firstPropertyName);
 
   return (
     <Grid
@@ -72,33 +62,53 @@ export const BorderStyle = (
       <PropertyName
         style={props.currentStyle}
         properties={borderStyleProperties}
-        label={"Style"}
+        label="Style"
         description="Sets the style of the border"
-        onReset={() => deleteBorderProperties(firstPropertyName)}
+        onReset={onReset}
       />
-
-      <ToggleGroup
-        css={{
-          gridColumn: `span 2`,
-          justifySelf: "end",
-        }}
-        type="single"
+      <ToggleGroupControl
+        style={props.currentStyle}
+        styleSource={getStyleSource(props.currentStyle[firstPropertyName])}
+        items={[
+          {
+            child: <SmallXIcon />,
+            title: "None",
+            description: declarationDescriptions["borderBlockStyle:none"],
+            value: "none",
+            propertyValues: "border-style: none;",
+          },
+          {
+            child: <DashBorderIcon />,
+            title: "Solid",
+            description: declarationDescriptions["borderBlockStyle:solid"],
+            value: "solid",
+            propertyValues: "border-style: solid;",
+          },
+          {
+            child: <DashedBorderIcon />,
+            title: "Dashed",
+            description: declarationDescriptions["borderBlockStyle:dashed"],
+            value: "dashed",
+            propertyValues: "border-style: dashed;",
+          },
+          {
+            child: <DottedBorderIcon />,
+            title: "Dotted",
+            description: declarationDescriptions["borderBlockStyle:dotted"],
+            value: "dotted",
+            propertyValues: "border-style: dotted;",
+          },
+        ]}
         value={firstPropertyValue}
-        onValueChange={(value) => {
+        properties={borderStyleProperties}
+        onReset={onReset}
+        onValueChange={(value) =>
           setBorderProperties({
             type: "keyword",
             value,
-          });
-        }}
-      >
-        {borderStyleValues.map(({ value, Icon }) => (
-          <Tooltip key={value} content={toPascalCase(value)}>
-            <ToggleGroupButton value={value}>
-              <Icon />
-            </ToggleGroupButton>
-          </Tooltip>
-        ))}
-      </ToggleGroup>
+          })
+        }
+      />
     </Grid>
   );
 };
