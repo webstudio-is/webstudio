@@ -8,7 +8,6 @@ import {
   loadAssetsByProject,
   createUploadName,
 } from "@webstudio-is/asset-uploader/index.server";
-import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
 
@@ -52,7 +51,7 @@ export const action = async (props: ActionFunctionArgs) => {
     }
   } catch (error) {
     if (error instanceof Error) {
-      sentryException({ error });
+      console.error({ error });
       return {
         errors: error.message,
       };

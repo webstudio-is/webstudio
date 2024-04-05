@@ -5,7 +5,6 @@ import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
-import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
@@ -50,7 +49,7 @@ export const loader = async ({
 
 export const ErrorBoundary = () => {
   const error = useRouteError();
-  sentryException({ error });
+  console.error({ error });
   const message = error instanceof Error ? error.message : String(error);
   return <ErrorMessage message={message} />;
 };

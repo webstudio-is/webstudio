@@ -8,7 +8,6 @@ import serverEnv from "./env.server";
  * Never use a private key here, because it will become public.
  **/
 const env = {
-  SENTRY_DSN: process.env.SENTRY_DSN,
   DEPLOYMENT_ENVIRONMENT: serverEnv.DEPLOYMENT_ENVIRONMENT,
   FEATURES: process.env.FEATURES,
   BUILDER_HOST: process.env.BUILDER_HOST,

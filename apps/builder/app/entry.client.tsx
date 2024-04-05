@@ -1,20 +1,6 @@
-import { RemixBrowser, useLocation, useMatches } from "@remix-run/react";
-import { startTransition, StrictMode, useEffect } from "react";
+import { RemixBrowser } from "@remix-run/react";
+import { startTransition, StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
-import { BrowserTracing, remixRouterInstrumentation } from "@sentry/remix";
-import { initSentry } from "./shared/sentry";
-
-initSentry({
-  integrations: [
-    new BrowserTracing({
-      routingInstrumentation: remixRouterInstrumentation(
-        useEffect,
-        useLocation,
-        useMatches
-      ),
-    }),
-  ],
-});
 
 startTransition(() => {
   if (document.documentElement.dataset.builder === "true") {

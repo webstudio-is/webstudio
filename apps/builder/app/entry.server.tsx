@@ -1,15 +1,8 @@
 import { renderToString } from "react-dom/server";
 import type { EntryContext } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import * as Sentry from "@sentry/remix";
-import { prisma } from "@webstudio-is/prisma-client";
-import { initSentry } from "./shared/sentry";
 import { handleRequest as handleRequestBuilder } from "./shared/remix";
 import { isCanvas } from "./shared/router-utils";
-
-initSentry({
-  integrations: [new Sentry.Integrations.Prisma({ client: prisma })],
-});
 
 const handleRequestCanvas = (
   request: Request,

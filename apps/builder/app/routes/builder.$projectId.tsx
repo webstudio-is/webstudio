@@ -21,7 +21,6 @@ import {
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
-import { sentryException } from "~/shared/sentry";
 import { loginPath } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
 
@@ -138,7 +137,7 @@ export const loader = async ({
 
 export const ErrorBoundary = () => {
   const error = useRouteError();
-  sentryException({ error });
+  console.error({ error });
   const message = isRouteErrorResponse(error)
     ? error.data.message ?? error.data
     : error instanceof Error

@@ -9,7 +9,6 @@ import {
 import type { Params } from "@webstudio-is/react-sdk";
 import { createImageLoader } from "@webstudio-is/image";
 import env from "~/env/env.public.server";
-import { sentryException } from "~/shared/sentry";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { dashboardPath, isCanvas } from "~/shared/router-utils";
@@ -41,7 +40,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 export const ErrorBoundary = () => {
   const error = useRouteError();
 
-  sentryException({ error });
+  console.error({ error });
   const message = isRouteErrorResponse(error)
     ? error.data.message ?? error.data
     : error instanceof Error
