@@ -1,4 +1,4 @@
-import type { ComponentStory } from "@storybook/react";
+import type { StoryFn } from "@storybook/react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Dashboard } from "./dashboard";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
@@ -34,19 +34,20 @@ const userPlanFeatures: UserPlanFeatures = {
   maxDomainsAllowedPerUser: 5,
 };
 
-export const Empty: ComponentStory<typeof Dashboard> = () => {
+export const Empty: StoryFn<typeof Dashboard> = () => {
   const router = createRouter(
     <Dashboard
       user={user}
       projects={[]}
       projectTemplates={[]}
       userPlanFeatures={userPlanFeatures}
+      publisherHost={"https://wstd.work"}
     />
   );
   return <RouterProvider router={router} />;
 };
 
-export const WithProjects: ComponentStory<typeof Dashboard> = () => {
+export const WithProjects: StoryFn<typeof Dashboard> = () => {
   const projects = [
     {
       id: "0",
@@ -67,6 +68,7 @@ export const WithProjects: ComponentStory<typeof Dashboard> = () => {
       projects={projects}
       projectTemplates={projects}
       userPlanFeatures={userPlanFeatures}
+      publisherHost={"https://wstd.work"}
     />
   );
   return <RouterProvider router={router} />;

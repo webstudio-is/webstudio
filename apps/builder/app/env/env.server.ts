@@ -93,6 +93,8 @@ const env = {
 
   N8N_WEBHOOK_URL: process.env.N8N_WEBHOOK_URL,
   N8N_WEBHOOK_TOKEN: process.env.N8N_WEBHOOK_TOKEN,
+
+  PUBLISHER_HOST: process.env.PUBLISHER_HOST || "wstd.work",
 };
 
 export type ServerEnv = typeof env;

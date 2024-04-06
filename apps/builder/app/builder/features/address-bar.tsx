@@ -23,31 +23,16 @@ import {
 } from "@webstudio-is/sdk";
 import {
   $dataSourceVariables,
-  $domains,
   $pages,
-  $project,
+  $publishedUrl,
   $selectedPage,
   updateSystem,
 } from "~/shared/nano-states";
-import env from "~/shared/env";
 import {
   compilePathnamePattern,
   isPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-
-export const $publishedOrigin = computed(
-  [$project, $domains],
-  (project, domains) => {
-    const customDomain: string | undefined = domains[0];
-    const projectDomain = `${project?.domain}.${
-      env.PUBLISHER_HOST ?? "wstd.work"
-    }`;
-    const domain = customDomain ?? projectDomain;
-    const publishedUrl = new URL(`https://${domain}`);
-    return publishedUrl.origin;
-  }
-);
 
 const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
   if (pages === undefined || page === undefined) {
@@ -134,13 +119,13 @@ const useCopyUrl = (pageUrl: string) => {
 
 const AddressBar = () => {
   const id = useId();
-  const publishedOrigin = useStore($publishedOrigin);
+  const publishedUrl = useStore($publishedUrl);
   const path = useStore($selectedPagePath);
   const pathParams = useStore($selectedPagePathParams);
   const tokens = tokenizePathnamePattern(path);
   const compiledPath = compilePathnamePattern(tokens, pathParams ?? {});
   const { tooltipProps, buttonProps } = useCopyUrl(
-    `${publishedOrigin}${compiledPath}`
+    `${publishedUrl}${compiledPath}`
   );
 
   const errors = new Map<string, string>();
@@ -198,8 +183,8 @@ const AddressBar = () => {
 export const AddressBarPopover = () => {
   const [isOpen, setIsOpen] = useState(false);
   const path = useStore($selectedPagePath);
-  const publishedOrigin = useStore($publishedOrigin);
-  const { tooltipProps, buttonProps } = useCopyUrl(`${publishedOrigin}${path}`);
+  const publishedUrl = useStore($publishedUrl);
+  const { tooltipProps, buttonProps } = useCopyUrl(`${publishedUrl}${path}`);
 
   // show only copy button when path is static
   if (isPathnamePattern(path) === false) {

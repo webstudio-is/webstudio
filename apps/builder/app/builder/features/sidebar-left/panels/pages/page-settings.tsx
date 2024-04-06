@@ -69,6 +69,7 @@ import {
   $dataSources,
   computeExpression,
   $dataSourceVariables,
+  $publishedUrl,
 } from "~/shared/nano-states";
 import {
   BindingControl,
@@ -98,7 +99,7 @@ import {
   toTreeData,
 } from "./page-utils";
 import { Form } from "./form";
-import { type System, $publishedOrigin } from "~/builder/features/address-bar";
+import type { System } from "~/builder/features/address-bar";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
@@ -569,10 +570,10 @@ const usePageUrl = (values: Values, systemDataSourceId?: DataSource["id"]) => {
       : (dataSourceVariables.get(systemDataSourceId) as System);
   const pathParams = storedSystem?.params ?? {};
 
-  const publishedOrigin = useStore($publishedOrigin);
+  const publishedUrl = useStore($publishedUrl);
   const tokens = tokenizePathnamePattern(path);
   const compiledPath = compilePathnamePattern(tokens, pathParams);
-  return `${publishedOrigin}${compiledPath}`;
+  return `${publishedUrl}${compiledPath}`;
 };
 
 const FormFields = ({

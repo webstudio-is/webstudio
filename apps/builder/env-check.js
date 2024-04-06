@@ -35,11 +35,6 @@ if (process.env.DEPLOYMENT_ENVIRONMENT === "production") {
       "👉 In production DEPLOYMENT_URL is required for website functionality. Please set it to your production URL."
     );
   }
-  if (!process.env.BUILDER_HOST) {
-    errors.push(
-      "👉 In production BUILDER_HOST is required for website functionality. Please set it to your production URL of the builder."
-    );
-  }
   if (!process.env.PUBLISHER_HOST) {
     errors.push(
       "👉 In production PUBLISHER_HOST is required for website functionality. Please set it to your production URL of the builder."

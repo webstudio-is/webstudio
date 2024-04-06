@@ -20,13 +20,14 @@ import {
 } from "@webstudio-is/icons";
 import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
-import env from "~/shared/env";
 import { useCallback, useEffect, useState } from "react";
 import type { PublishStatus } from "@webstudio-is/prisma-client";
 // eslint-disable-next-line import/no-internal-modules
 import formatDistance from "date-fns/formatDistance";
 import { Entri } from "./entri";
 import { trpcClient } from "~/shared/trpc/trpc-client";
+import { useStore } from "@nanostores/react";
+import { $publisherHost } from "~/shared/nano-states";
 
 export type Domain = {
   projectId: Project["id"];
@@ -338,10 +339,9 @@ const DomainItem = (props: {
     domainUpdatedAt,
   ]);
 
+  const publisherHost = useStore($publisherHost);
   const cnameEntryName = getCname(props.projectDomain.domain.domain);
-  const cnameEntryValue = `${props.projectDomain.cname}.customers.${
-    env.PUBLISHER_HOST ?? "wstd.work"
-  }`;
+  const cnameEntryValue = `${props.projectDomain.cname}.customers.${publisherHost}`;
 
   const txtEntryName =
     cnameEntryName === "@"

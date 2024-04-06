@@ -34,7 +34,12 @@ import type { TokenPermissions } from "@webstudio-is/authorization-token";
 
 export const $project = atom<Project | undefined>();
 
-export const $domains = atom<string[]>([]);
+export const $publisherHost = atom<string>("wstd.work");
+
+export const $publishedUrl = computed(
+  [$project, $publisherHost],
+  (project, publisherHost) => `https://${project?.domain}.${publisherHost}`
+);
 
 export const $rootInstance = computed(
   [$instances, $selectedPage],

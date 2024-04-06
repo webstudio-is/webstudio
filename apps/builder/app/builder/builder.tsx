@@ -40,11 +40,11 @@ import {
   $styleSourceSelections,
   $styleSources,
   $styles,
-  $domains,
   $resources,
   subscribeResources,
   $marketplaceProduct,
   $authTokenPermissions,
+  $publisherHost,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -226,7 +226,7 @@ const NavigatorPanel = ({
 
 export type BuilderProps = {
   project: Project;
-  domains: string[];
+  publisherHost: string;
   build: Build;
   assets: [Asset["id"], Asset][];
   authToken?: string;
@@ -237,7 +237,7 @@ export type BuilderProps = {
 
 export const Builder = ({
   project,
-  domains,
+  publisherHost,
   build,
   assets,
   authToken,
@@ -248,7 +248,7 @@ export const Builder = ({
   useMount(() => {
     // additional data stores
     $project.set(project);
-    $domains.set(domains);
+    $publisherHost.set(publisherHost);
     $authPermit.set(authPermit);
     $authToken.set(authToken);
     $userPlanFeatures.set(userPlanFeatures);
