@@ -6,7 +6,10 @@ import { PropertyName } from "../../shared/property-name";
 import type { SectionProps } from "../shared/section-component";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { BorderRadius } from "./border-radius";
-import { BorderStyle } from "./border-style";
+import {
+  BorderStyle,
+  properties as borderStyleProperties,
+} from "./border-style";
 import { deleteAllProperties, setAllProperties } from "./border-utils";
 import { BorderWidth } from "./border-width";
 
@@ -27,10 +30,7 @@ export const properties = [
   "borderBottomLeftRadius",
   "borderBottomRightRadius",
 
-  "borderTopStyle",
-  "borderRightStyle",
-  "borderBottomStyle",
-  "borderLeftStyle",
+  ...borderStyleProperties,
 
   "borderTopWidth",
   "borderRightWidth",
