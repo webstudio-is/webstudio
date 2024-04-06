@@ -35,9 +35,7 @@ const initialPropertyNames: Array<StyleProperty> = [
 
 const usePropertyNames = (currentStyle: StyleInfo) => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
-  const styles = useInstanceStyles(
-    selectedInstanceSelector ? selectedInstanceSelector[0] : undefined
-  );
+  const styles = useInstanceStyles(selectedInstanceSelector?.[0]);
   return useMemo(() => {
     const names = new Set(initialPropertyNames);
     let property: StyleProperty;
