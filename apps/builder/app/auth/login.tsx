@@ -9,7 +9,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { GithubIcon, GoogleIcon, WebstudioIcon } from "@webstudio-is/icons";
-import { LoginButton } from "./login-button";
+import { BrandButton } from "./brand-button";
 import { Form } from "@remix-run/react";
 import { authPath } from "~/shared/router-utils";
 import { SecretLogin } from "./secret-login";
@@ -90,20 +90,20 @@ export const Login = ({
           <TooltipProvider>
             <Flex gap="3" direction="column">
               <Form action={authPath({ provider: "google" })} method="post">
-                <LoginButton
+                <BrandButton
                   disabled={isGoogleEnabled === false}
                   icon={<GoogleIcon size={22} />}
                 >
                   Sign in with Google
-                </LoginButton>
+                </BrandButton>
               </Form>
               <Form action={authPath({ provider: "github" })} method="post">
-                <LoginButton
+                <BrandButton
                   disabled={isGithubEnabled === false}
                   icon={<GithubIcon size={22} />}
                 >
                   Sign in with GitHub
-                </LoginButton>
+                </BrandButton>
               </Form>
               {isSecretLoginEnabled && <SecretLogin />}
             </Flex>

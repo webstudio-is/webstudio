@@ -8,7 +8,6 @@ import serverEnv from "./env.server";
  * Never use a private key here, because it will become public.
  **/
 const env = {
-  DEPLOYMENT_ENVIRONMENT: serverEnv.DEPLOYMENT_ENVIRONMENT,
   FEATURES: process.env.FEATURES,
   BUILDER_HOST: process.env.BUILDER_HOST,
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || null,
