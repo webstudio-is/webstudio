@@ -10,7 +10,6 @@ import {
   json,
 } from "@remix-run/server-runtime";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
-import { db as domainDb } from "@webstudio-is/domain/index.server";
 import { db } from "@webstudio-is/project/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
 
@@ -23,6 +22,7 @@ import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { loginPath } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
+import env from "~/env/env.server";
 
 export { links };
 
@@ -61,18 +61,6 @@ export const loader = async ({
 
     const assets = await loadAssetsByProject(project.id, context);
 
-    const currentProjectDomainsResult = await domainDb.findMany(
-      { projectId: project.id },
-      context
-    );
-
-    const domains = currentProjectDomainsResult.success
-      ? currentProjectDomainsResult.data
-          .filter((projectDomain) => projectDomain.verified)
-          .filter((projectDomain) => projectDomain.domain.status === "ACTIVE")
-          .map((projectDomain) => projectDomain.domain.domain)
-      : [];
-
     const end = Date.now();
 
     const diff = end - start;
@@ -103,9 +91,10 @@ export const loader = async ({
       throw new AuthorizationError("Project must have project userId defined");
     }
 
+    const publisherHost = env.PUBLISHER_HOST;
     return {
       project,
-      domains,
+      publisherHost,
       build: devBuild,
       assets: assets.map((asset) => [asset.id, asset]),
       authToken,

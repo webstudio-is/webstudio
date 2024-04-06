@@ -9,12 +9,14 @@ type ProjectsProps = {
   projects: Array<DashboardProject>;
   projectTemplates: Array<DashboardProject>;
   hasProPlan: boolean;
+  publisherHost: string;
 };
 
 export const Projects = ({
   projects,
   projectTemplates,
   hasProPlan,
+  publisherHost,
 }: ProjectsProps) => {
   return (
     <Panel>
@@ -38,6 +40,7 @@ export const Projects = ({
                 project={project}
                 key={project.id}
                 hasProPlan={hasProPlan}
+                publisherHost={publisherHost}
               />
             );
           })}
@@ -58,7 +61,13 @@ export const Projects = ({
             }}
           >
             {projectTemplates.map((project) => {
-              return <ProjectTemplateCard project={project} key={project.id} />;
+              return (
+                <ProjectTemplateCard
+                  project={project}
+                  publisherHost={publisherHost}
+                  key={project.id}
+                />
+              );
             })}
           </Grid>
         </Flex>

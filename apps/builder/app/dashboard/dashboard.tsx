@@ -47,6 +47,7 @@ type DashboardProps = {
   projects: Array<DashboardProject>;
   projectTemplates: Array<DashboardProject>;
   userPlanFeatures: UserPlanFeatures;
+  publisherHost: string;
 };
 
 export const Dashboard = ({
@@ -54,6 +55,7 @@ export const Dashboard = ({
   projects,
   projectTemplates,
   userPlanFeatures,
+  publisherHost,
 }: DashboardProps) => {
   globalStyles();
   return (
@@ -68,6 +70,7 @@ export const Dashboard = ({
             projects={projects}
             projectTemplates={projectTemplates}
             hasProPlan={userPlanFeatures.hasProPlan}
+            publisherHost={publisherHost}
           />
         </Section>
       </Main>
