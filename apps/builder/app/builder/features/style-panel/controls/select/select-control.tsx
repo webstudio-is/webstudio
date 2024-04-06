@@ -54,18 +54,17 @@ export const SelectControl = ({
         }
       }}
       getDescription={(option) => {
-        const key =
-          `${property}:${option}` as keyof typeof declarationDescriptions;
+        const description =
+          option === "advanced"
+            ? "Please change the value in the Advanced section."
+            : declarationDescriptions[
+                `${property}:${option}` as keyof typeof declarationDescriptions
+              ];
 
-        if (key in declarationDescriptions === false) {
+        if (description === undefined) {
           return;
         }
-
-        return (
-          <Box css={{ width: theme.spacing[25] }}>
-            {declarationDescriptions[key]}
-          </Box>
-        );
+        return <Box css={{ width: theme.spacing[25] }}>{description}</Box>;
       }}
     />
   );

@@ -90,6 +90,7 @@ export const BorderStyle = (
     toValue(props.currentStyle[property]?.value)
   );
 
+  // We can represent the value with a toggle group if all values are the same.
   const canUseToggleGroup =
     values[0] === values[1] &&
     values[0] === values[2] &&
