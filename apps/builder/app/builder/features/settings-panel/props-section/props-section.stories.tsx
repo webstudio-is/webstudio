@@ -12,12 +12,7 @@ import {
   registerComponentLibrary,
   $selectedPageId,
 } from "~/shared/nano-states";
-import { setMockEnv } from "~/shared/env";
-// eslint-disable-next-line import/no-internal-modules
-import catPath from "./props-panel.stories.assets/cat.jpg";
 import { createDefaultPages } from "@webstudio-is/project-build";
-
-setMockEnv({ ASSET_BASE_URL: catPath.replace("cat.jpg", "") });
 
 let id = 0;
 const unique = () => `${++id}`;

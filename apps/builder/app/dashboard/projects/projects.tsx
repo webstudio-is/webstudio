@@ -1,7 +1,9 @@
+import { useMemo } from "react";
 import { Flex, Grid, Text, rawTheme } from "@webstudio-is/design-system";
+import type { DashboardProject } from "@webstudio-is/dashboard";
+import { createImageLoader } from "@webstudio-is/image";
 import { EmptyState } from "./empty-state";
 import { Panel } from "../shared/panel";
-import type { DashboardProject } from "@webstudio-is/dashboard";
 import { ProjectCard, ProjectTemplateCard } from "./project-card";
 import { CreateProject } from "./project-dialogs";
 
@@ -10,6 +12,7 @@ type ProjectsProps = {
   projectTemplates: Array<DashboardProject>;
   hasProPlan: boolean;
   publisherHost: string;
+  imageBaseUrl: string;
 };
 
 export const Projects = ({
@@ -17,7 +20,12 @@ export const Projects = ({
   projectTemplates,
   hasProPlan,
   publisherHost,
+  imageBaseUrl,
 }: ProjectsProps) => {
+  const imageLoader = useMemo(
+    () => createImageLoader({ imageBaseUrl }),
+    [imageBaseUrl]
+  );
   return (
     <Panel>
       <Flex direction="column" gap="3">
@@ -41,6 +49,7 @@ export const Projects = ({
                 key={project.id}
                 hasProPlan={hasProPlan}
                 publisherHost={publisherHost}
+                imageLoader={imageLoader}
               />
             );
           })}
@@ -66,6 +75,7 @@ export const Projects = ({
                   project={project}
                   publisherHost={publisherHost}
                   key={project.id}
+                  imageLoader={imageLoader}
                 />
               );
             })}

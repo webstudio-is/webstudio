@@ -21,6 +21,10 @@ import type {
   System,
 } from "@webstudio-is/sdk";
 import type { Style } from "@webstudio-is/css-engine";
+import type { Project } from "@webstudio-is/project";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import type { TokenPermissions } from "@webstudio-is/authorization-token";
+import { createImageLoader, type ImageLoader } from "@webstudio-is/image";
 import type { DragStartPayload } from "~/canvas/shared/use-drag-drop";
 import { shallowComputed } from "../store-utils";
 import { type InstanceSelector } from "../tree-utils";
@@ -28,13 +32,14 @@ import type { htmlTags as HtmlTags } from "html-tags";
 import { $instances, $selectedInstanceSelector } from "./instances";
 import { $selectedPage } from "./pages";
 import type { UnitSizes } from "~/builder/features/style-panel/shared/css-value-input/convert-units";
-import type { Project } from "@webstudio-is/project";
-import type { MarketplaceProduct } from "@webstudio-is/project-build";
-import type { TokenPermissions } from "@webstudio-is/authorization-token";
 
 export const $project = atom<Project | undefined>();
 
 export const $publisherHost = atom<string>("wstd.work");
+
+export const $imageLoader = atom<ImageLoader>(
+  createImageLoader({ imageBaseUrl: "" })
+);
 
 export const $publishedUrl = computed(
   [$project, $publisherHost],

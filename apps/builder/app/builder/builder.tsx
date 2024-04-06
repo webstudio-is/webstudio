@@ -8,6 +8,7 @@ import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
 import {
@@ -45,6 +46,7 @@ import {
   $marketplaceProduct,
   $authTokenPermissions,
   $publisherHost,
+  $imageLoader,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -227,6 +229,7 @@ const NavigatorPanel = ({
 export type BuilderProps = {
   project: Project;
   publisherHost: string;
+  imageBaseUrl: string;
   build: Build;
   assets: [Asset["id"], Asset][];
   authToken?: string;
@@ -238,6 +241,7 @@ export type BuilderProps = {
 export const Builder = ({
   project,
   publisherHost,
+  imageBaseUrl,
   build,
   assets,
   authToken,
@@ -249,6 +253,7 @@ export const Builder = ({
     // additional data stores
     $project.set(project);
     $publisherHost.set(publisherHost);
+    $imageLoader.set(createImageLoader({ imageBaseUrl }));
     $authPermit.set(authPermit);
     $authToken.set(authToken);
     $userPlanFeatures.set(userPlanFeatures);
