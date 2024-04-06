@@ -34,7 +34,7 @@ import type { TokenPermissions } from "@webstudio-is/authorization-token";
 
 export const $project = atom<Project | undefined>();
 
-export const $publisherHost = atom<string>("https://wstd.work");
+export const $publisherHost = atom<string>("wstd.work");
 
 export const $publishedUrl = computed(
   [$project, $publisherHost],
