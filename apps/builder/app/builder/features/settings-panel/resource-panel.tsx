@@ -27,13 +27,14 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import { serverSyncStore } from "~/shared/sync";
 import {
   $dataSources,
-  $pages,
   $resources,
   $selectedInstanceSelector,
+  $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import {
@@ -248,8 +249,8 @@ const Headers = ({
 };
 
 const $hiddenDataSourceIds = computed(
-  [$dataSources, $pages],
-  (dataSources, pages) => {
+  [$dataSources, $selectedPage],
+  (dataSources, page) => {
     const dataSourceIds = new Set<DataSource["id"]>();
     for (const dataSource of dataSources.values()) {
       // hide collection item and component parameters from resources
@@ -262,12 +263,8 @@ const $hiddenDataSourceIds = computed(
         dataSourceIds.add(dataSource.id);
       }
     }
-    if (pages) {
-      for (const page of pages.pages) {
-        if (page.systemDataSourceId) {
-          dataSourceIds.delete(page.systemDataSourceId);
-        }
-      }
+    if (page?.systemDataSourceId && isFeatureEnabled("filters")) {
+      dataSourceIds.delete(page.systemDataSourceId);
     }
     return dataSourceIds;
   }
