@@ -22,14 +22,7 @@ export const Breadcrumbs = () => {
   const metas = useStore($registeredComponentMetas);
 
   return (
-    <Flex
-      align="center"
-      css={{
-        height: "100%",
-        color: theme.colors.hiContrast,
-        px: theme.spacing[3],
-      }}
-    >
+    <Flex align="center" css={{ height: "100%", px: theme.spacing[3] }}>
       {selectedInstanceSelector === undefined ? (
         <Text>No instance selected</Text>
       ) : (
@@ -54,6 +47,7 @@ export const Breadcrumbs = () => {
                     px: theme.spacing[5],
                     borderRadius: "100vh",
                     height: "100%",
+                    color: "inherit",
                   }}
                   key={instance.id}
                   onClick={() => {
