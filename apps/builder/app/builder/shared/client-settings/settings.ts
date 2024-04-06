@@ -1,8 +1,6 @@
 import { useEffect } from "react";
 import { atom } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { sentryMessage } from "~/shared/sentry";
-
 import { z } from "zod";
 
 const Settings = z.object({
@@ -33,7 +31,7 @@ const read = (): Settings => {
     return Settings.parse(JSON.parse(settingsString));
   } catch (error) {
     if (error instanceof Error) {
-      sentryMessage({
+      console.error({
         message: "Bad user settings in local storage",
         extras: {
           error: error.message,
