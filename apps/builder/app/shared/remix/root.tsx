@@ -5,7 +5,6 @@ import {
   Outlet as RemixOutlet,
   Scripts,
 } from "@remix-run/react";
-import { Env } from "~/shared/env";
 import { createHead } from "remix-island";
 
 export const Head = createHead(() => (
@@ -20,7 +19,6 @@ export const Root = ({ Outlet = RemixOutlet }) => {
     <>
       <Head />
       <Outlet />
-      <Env />
       <Scripts />
       {process.env.NODE_ENV === "development" && <LiveReload />}
     </>
