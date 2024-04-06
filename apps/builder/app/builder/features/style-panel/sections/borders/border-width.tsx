@@ -10,6 +10,13 @@ import {
 import type { SectionProps } from "../shared/section-component";
 import { BorderProperty } from "./border-property";
 
+export const properties = [
+  "borderTopWidth",
+  "borderRightWidth",
+  "borderBottomWidth",
+  "borderLeftWidth",
+] satisfies Array<StyleProperty>;
+
 const borderPropertyOptions = {
   borderTopWidth: {
     icon: <BorderWidthTopIcon />,

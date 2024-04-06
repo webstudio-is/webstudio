@@ -6,9 +6,15 @@ import {
   BorderRadiusTopRightIcon,
   BorderRadiusBottomLeftIcon,
 } from "@webstudio-is/icons";
-
 import type { SectionProps } from "../shared/section-component";
 import { BorderProperty } from "./border-property";
+
+export const properties = [
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius",
+] satisfies Array<StyleProperty>;
 
 const borderPropertyOptions = {
   borderTopLeftRadius: {
