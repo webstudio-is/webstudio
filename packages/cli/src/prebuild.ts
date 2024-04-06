@@ -438,13 +438,6 @@ export const prebuild = async (options: {
 
   const assetsToDownload: Promise<void>[] = [];
 
-  const imageAssets: ImageAsset[] = [];
-  for (const asset of siteData.assets) {
-    if (asset.type === "image") {
-      imageAssets.push(asset);
-    }
-  }
-
   const appDomain = options.preview ? "wstd.work" : "wstd.io";
   const assetBuildUrl = `https://${domain}.${appDomain}/cgi/asset/`;
 
@@ -478,6 +471,8 @@ export const prebuild = async (options: {
       }
     }
   }
+
+  const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
 
   spinner.text = "Generating css file";
 
@@ -591,9 +586,10 @@ export const prebuild = async (options: {
       ),
     });
 
-    const favIconAsset = imageAssets.find(
-      (asset) => asset.id === siteData.build.pages.meta?.faviconAssetId
-    );
+    const projectMeta = siteData.build.pages.meta;
+    const pageMeta = pageData.page.meta;
+    const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
+    const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
     const pageExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 
@@ -601,16 +597,19 @@ import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 ${componentImports}
-export const favIconAsset: ImageAsset | undefined = ${
-      favIconAsset ? JSON.stringify(favIconAsset) : "undefined"
-    };
+
+export const favIconAsset: ImageAsset | undefined =
+  ${JSON.stringify(favIconAsset)};
+
+export const socialImageAsset: ImageAsset | undefined =
+  ${JSON.stringify(socialImageAsset)};
 
 // Font assets on current page (can be preloaded)
-export const pageFontAssets: FontAsset[] = ${JSON.stringify(pageFontAssets)}
+export const pageFontAssets: FontAsset[] =
+  ${JSON.stringify(pageFontAssets)}
 
-export const pageBackgroundImageAssets: ImageAsset[] = ${JSON.stringify(
-      pageBackgroundImageAssets
-    )}
+export const pageBackgroundImageAssets: ImageAsset[] =
+  ${JSON.stringify(pageBackgroundImageAssets)}
 
 
 
@@ -621,7 +620,7 @@ export { Page }
     const serverExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 
-import type { ImageAsset, ProjectMeta, PageMeta } from "@webstudio-is/sdk";
+import type { ProjectMeta, PageMeta } from "@webstudio-is/sdk";
 ${generateResourcesLoader({
   scope,
   page: pageData.page,
@@ -641,16 +640,11 @@ ${generateRemixParams(pageData.page.path)}
 
 export const projectId = "${siteData.build.projectId}";
 
-export const user: { email: string | null } | undefined = ${JSON.stringify(
-      siteData.user
-    )};
+export const user: { email: string | null } | undefined =
+  ${JSON.stringify(siteData.user)};
 
-export const projectMeta: ProjectMeta = ${JSON.stringify(
-      siteData.build.pages.meta
-    )};
-
-export const imageAssets: ImageAsset[] = ${JSON.stringify(imageAssets)}
-
+export const projectMeta: ProjectMeta =
+  ${JSON.stringify(projectMeta)};
 `;
 
     /*
