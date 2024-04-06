@@ -1,7 +1,8 @@
+import { useStore } from "@nanostores/react";
 import { Box, Flex, Grid } from "@webstudio-is/design-system";
-import { Image, createImageLoader } from "@webstudio-is/image";
+import { Image } from "@webstudio-is/image";
+import { $imageLoader } from "~/shared/nano-states";
 import { formatUrl, truncateByWords, truncate } from "./social-utils";
-import env from "~/shared/env";
 
 /**
  * Full description with links https://developers.google.com/search/docs/appearance/visual-elements-gallery
@@ -66,7 +67,7 @@ const VerticalThreePointIcon = () => (
 );
 
 export const SearchPreview = (props: SearchPreviewProps) => {
-  const loader = createImageLoader({ imageBaseUrl: env.IMAGE_BASE_URL });
+  const imageLoader = useStore($imageLoader);
 
   return (
     <Grid
@@ -98,7 +99,7 @@ export const SearchPreview = (props: SearchPreviewProps) => {
           <Image
             width={18}
             height={18}
-            loader={loader}
+            loader={imageLoader}
             src={props.faviconUrl}
           />
         </Flex>

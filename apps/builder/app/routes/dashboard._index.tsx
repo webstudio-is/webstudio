@@ -44,6 +44,8 @@ export const loader = async ({
     projects,
     projectTemplates,
     userPlanFeatures,
+    publisherHost: env.PUBLISHER_HOST,
+    imageBaseUrl: env.IMAGE_BASE_URL,
   };
 };
 

@@ -1,7 +1,6 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Project } from "@webstudio-is/project";
 import type { ThemeSetting } from "~/shared/theme";
-import env from "~/shared/env";
 import { $authToken } from "../nano-states";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
@@ -157,19 +156,6 @@ export const getBuildUrl = ({ project }: { project: Project }) => {
   searchParams.set("projectId", project.id);
 
   return `/?${searchParams.toString()}`;
-};
-
-export const getPublishedUrl = (domain: string) => {
-  const protocol = typeof location === "object" ? location.protocol : "https:";
-
-  const publisherHost = env.PUBLISHER_HOST ?? "";
-
-  // We use location.host to get the hostname and port in development mode and to not break local testing.
-  const localhost = typeof location === "object" ? location.host : "";
-
-  const host = publisherHost || env.BUILDER_HOST || localhost;
-
-  return `${protocol}//${domain}.${host}`;
 };
 
 export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>

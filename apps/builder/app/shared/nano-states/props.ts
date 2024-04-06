@@ -346,7 +346,7 @@ export const $variableValuesByInstanceSelector = computed(
         for (const variable of variables) {
           if (
             variable.id === page.systemDataSourceId &&
-            isFeatureEnabled("cms") === false
+            isFeatureEnabled("filters") === false
           ) {
             continue;
           }

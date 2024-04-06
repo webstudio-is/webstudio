@@ -32,8 +32,7 @@ import {
   useIsPublishDialogOpen,
 } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { getPublishedUrl } from "~/shared/router-utils";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $publishedUrl } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -81,6 +80,7 @@ const ChangeProjectDomain = ({
   isPublishing,
 }: ChangeProjectDomainProps) => {
   const id = useId();
+  const publishedUrl = useStore($publishedUrl);
 
   const {
     send: updateProjectDomain,
@@ -107,8 +107,6 @@ const ChangeProjectDomain = ({
   useEffect(() => {
     refreshProject();
   }, [refreshProject]);
-
-  const publishedUrl = new URL(getPublishedUrl(project.domain));
 
   const handleUpdateProjectDomain = () => {
     const validationResult = validateProjectDomain(domain);
@@ -145,7 +143,7 @@ const ChangeProjectDomain = ({
 
   return (
     <CollapsibleDomainSection
-      title={publishedUrl.host}
+      title={new URL(publishedUrl).host}
       suffix={
         <Grid flow="column">
           <Tooltip content={error !== undefined ? error : statusText}>
@@ -169,12 +167,12 @@ const ChangeProjectDomain = ({
               )}
             </Flex>
           </Tooltip>
-          <Tooltip content={`Proceed to ${publishedUrl.href}`}>
+          <Tooltip content={`Proceed to ${publishedUrl}`}>
             <IconButton
               tabIndex={-1}
               disabled={error !== undefined || status !== "PUBLISHED"}
               onClick={(event) => {
-                window.open(publishedUrl.href, "_blank");
+                window.open(publishedUrl, "_blank");
                 event.preventDefault();
               }}
             >

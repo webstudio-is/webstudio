@@ -1,3 +1,5 @@
+import { forwardRef } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Flex,
   Text,
@@ -6,16 +8,11 @@ import {
   css,
   rawTheme,
 } from "@webstudio-is/design-system";
-import env from "~/shared/env";
-import { Image, createImageLoader } from "@webstudio-is/image";
-import { forwardRef } from "react";
+import { Image } from "@webstudio-is/image";
 import { SpinnerIcon } from "@webstudio-is/icons";
+import { $imageLoader } from "~/shared/nano-states";
 
 const focusOutline = focusRingStyle();
-
-const imageLoader = createImageLoader({
-  imageBaseUrl: env.IMAGE_BASE_URL,
-});
 
 const imageContainerStyle = css({
   position: "relative",
@@ -57,6 +54,7 @@ type ThumbnailProps = {
 };
 
 const Thumbnail = ({ image, state }: ThumbnailProps) => {
+  const imageLoader = useStore($imageLoader);
   return (
     <div className={imageContainerStyle()}>
       {image === "" || image === undefined ? (

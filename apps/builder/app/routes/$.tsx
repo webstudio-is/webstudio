@@ -8,7 +8,7 @@ import {
 } from "@remix-run/react";
 import type { Params } from "@webstudio-is/react-sdk";
 import { createImageLoader } from "@webstudio-is/image";
-import env from "~/env/env.public.server";
+import env from "~/env/env.server";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { dashboardPath, isCanvas } from "~/shared/router-utils";

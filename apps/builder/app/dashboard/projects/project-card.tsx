@@ -15,8 +15,9 @@ import {
   Link,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, EllipsesIcon } from "@webstudio-is/icons";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
-import { builderPath, getPublishedUrl } from "~/shared/router-utils";
+import { type KeyboardEvent, useRef, useState } from "react";
+import type { ImageLoader } from "@webstudio-is/image";
+import { builderPath } from "~/shared/router-utils";
 import {
   RenameProjectDialog,
   DeleteProjectDialog,
@@ -42,29 +43,19 @@ const titleStyle = css({
 
 const infoIconStyle = css({ flexShrink: 0 });
 
-const usePublishedLink = ({ domain }: { domain: string }) => {
-  const [url, setUrl] = useState<URL>();
-
-  useEffect(() => {
-    // It uses `window.location` to detect the default values when running locally localhost,
-    // so it needs an effect to avoid hydration errors.
-    setUrl(new URL(getPublishedUrl(domain)));
-  }, [domain]);
-
-  return { url };
-};
-
 const PublishedLink = ({
   domain,
+  publisherHost,
   tabIndex,
 }: {
   domain: string;
+  publisherHost: string;
   tabIndex: number;
 }) => {
-  const { url } = usePublishedLink({ domain });
+  const publishedUrl = `https://${domain}.${publisherHost}`;
   return (
     <Link
-      href={url?.href}
+      href={publishedUrl}
       target="_blank"
       rel="noreferrer"
       tabIndex={tabIndex}
@@ -72,7 +63,7 @@ const PublishedLink = ({
       underline="hover"
       css={truncate()}
     >
-      {url?.host}
+      {new URL(publishedUrl).host}
     </Link>
   );
 };
@@ -162,7 +153,12 @@ const formatDate = (date: string) => {
   });
 };
 
-type ProjectCardProps = { project: DashboardProject; hasProPlan: boolean };
+type ProjectCardProps = {
+  project: DashboardProject;
+  hasProPlan: boolean;
+  publisherHost: string;
+  imageLoader: ImageLoader;
+};
 
 export const ProjectCard = ({
   project: {
@@ -175,6 +171,8 @@ export const ProjectCard = ({
     previewImageAsset,
   },
   hasProPlan,
+  publisherHost,
+  imageLoader,
 }: ProjectCardProps) => {
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -196,6 +194,7 @@ export const ProjectCard = ({
             to={linkPath}
             name={previewImageAsset.name}
             ref={thumbnailRef}
+            imageLoader={imageLoader}
           />
         ) : (
           <ThumbnailLinkWithAbbr
@@ -234,7 +233,11 @@ export const ProjectCard = ({
             </Tooltip>
           </Flex>
           {isPublished ? (
-            <PublishedLink domain={domain} tabIndex={-1} />
+            <PublishedLink
+              publisherHost={publisherHost}
+              domain={domain}
+              tabIndex={-1}
+            />
           ) : (
             <Text color="subtle">Not Published</Text>
           )}
@@ -278,6 +281,8 @@ export const ProjectCard = ({
 
 export const ProjectTemplateCard = ({
   project,
+  publisherHost,
+  imageLoader,
 }: Omit<ProjectCardProps, "hasProPlan">) => {
   const { thumbnailRef, handleKeyDown } = useProjectCard();
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
@@ -294,6 +299,7 @@ export const ProjectTemplateCard = ({
             onClick={() => {
               setIsDuplicateDialogOpen(true);
             }}
+            imageLoader={imageLoader}
           />
         ) : (
           <ThumbnailWithAbbr
@@ -311,7 +317,11 @@ export const ProjectTemplateCard = ({
             {title}
           </Text>
           {isPublished ? (
-            <PublishedLink domain={domain} tabIndex={-1} />
+            <PublishedLink
+              publisherHost={publisherHost}
+              domain={domain}
+              tabIndex={-1}
+            />
           ) : (
             <Text color="subtle">Not Published</Text>
           )}
