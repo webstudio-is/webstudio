@@ -1,6 +1,5 @@
 import { useNavigate } from "@remix-run/react";
 import { useStore } from "@nanostores/react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import {
   theme,
   DropdownMenu,
@@ -22,11 +21,6 @@ import {
   $userPlanFeatures,
   $isCloneDialogOpen,
 } from "~/builder/shared/nano-states";
-import {
-  getThemeSetting,
-  setThemeSetting,
-  type ThemeSetting,
-} from "~/shared/theme";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
 import { $authPermit, $authTokenPermissions } from "~/shared/nano-states";
@@ -34,39 +28,6 @@ import { emitCommand } from "~/builder/shared/commands";
 import { MenuButton } from "./menu-button";
 import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { UploadIcon } from "@webstudio-is/icons";
-
-const ThemeMenuItem = () => {
-  if (isFeatureEnabled("dark") === false) {
-    return null;
-  }
-  const currentSetting = getThemeSetting();
-  const labels: Record<ThemeSetting, string> = {
-    light: "Light",
-    dark: "Dark",
-    system: "System theme",
-  };
-
-  const settings = Object.keys(labels) as Array<ThemeSetting>;
-
-  return (
-    <DropdownMenuSub>
-      <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
-      <DropdownMenuSubContent width="regular">
-        {settings.map((setting) => (
-          <DropdownMenuCheckboxItem
-            key={setting}
-            checked={currentSetting === setting}
-            onSelect={() => {
-              setThemeSetting(setting);
-            }}
-          >
-            {labels[setting]}
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuSubContent>
-    </DropdownMenuSub>
-  );
-};
 
 const ViewMenuItem = () => {
   const [clientSettings, setClientSetting] = useClientSettings();
@@ -182,7 +143,6 @@ export const Menu = () => {
             </DropdownMenuItemRightSlot>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <ThemeMenuItem />
           <DropdownMenuItem onSelect={() => emitCommand("togglePreview")}>
             Preview
             <DropdownMenuItemRightSlot>

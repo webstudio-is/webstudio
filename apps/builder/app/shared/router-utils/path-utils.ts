@@ -1,6 +1,5 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Project } from "@webstudio-is/project";
-import type { ThemeSetting } from "~/shared/theme";
 import { $authToken } from "../nano-states";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
@@ -133,9 +132,6 @@ export const restAssetsPath = ({ authToken }: { authToken?: string }) => {
 export const restAssetsUploadPath = ({ name }: { name: string }) => {
   return `/rest/assets/${name}`;
 };
-
-export const restThemePath = ({ setting }: { setting: ThemeSetting }) =>
-  `/rest/theme/${setting}`;
 
 export const restPatchPath = (props: { authToken?: string }) => {
   const urlSearchParams = new URLSearchParams();
