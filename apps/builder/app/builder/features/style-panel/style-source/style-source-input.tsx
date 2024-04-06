@@ -235,6 +235,9 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
 
 const newItemId = "__NEW__";
 
+// Maximum amount of tokens we show in the combobox
+const maxSuggestedTokens = 50;
+
 const matchOrSuggestToCreate = (
   search: string,
   items: IntermediateItem[],
@@ -262,7 +265,9 @@ const matchOrSuggestToCreate = (
     });
   }
   // skip already added values
-  return matched.filter((item) => item.isAdded === false).slice(0, 5);
+  return matched
+    .filter((item) => item.isAdded === false)
+    .slice(0, maxSuggestedTokens);
 };
 
 const markAddedValues = <Item extends IntermediateItem>(
