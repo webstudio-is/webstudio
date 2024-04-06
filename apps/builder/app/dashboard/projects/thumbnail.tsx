@@ -1,8 +1,7 @@
 import { forwardRef } from "react";
 import { Link } from "@remix-run/react";
-import { Image, createImageLoader } from "@webstudio-is/image";
+import { Image, type ImageLoader } from "@webstudio-is/image";
 import { css, theme, textVariants } from "@webstudio-is/design-system";
-import env from "~/shared/env";
 
 const abbrStyle = css(textVariants.brandThumbnailLargeDefault, {
   display: "flex",
@@ -53,10 +52,6 @@ export const ThumbnailWithAbbr = forwardRef<
 
 ThumbnailWithAbbr.displayName = "ThumbnailWithAbbr";
 
-const imageLoader = createImageLoader({
-  imageBaseUrl: env.IMAGE_BASE_URL,
-});
-
 const imageContainerStyle = css({
   position: "relative",
   background: theme.colors.brandBackgroundProjectCardFront,
@@ -78,8 +73,8 @@ const imageStyle = css({
 
 export const ThumbnailLinkWithImage = forwardRef<
   HTMLAnchorElement,
-  { name: string; to: string }
->(({ name, to }, ref) => {
+  { name: string; to: string; imageLoader: ImageLoader }
+>(({ name, to, imageLoader }, ref) => {
   return (
     <Link ref={ref} to={to} className={imageContainerStyle()} tabIndex={-1}>
       <Image src={name} loader={imageLoader} className={imageStyle()} />
@@ -90,8 +85,12 @@ ThumbnailLinkWithImage.displayName = "ThumbnailLinkWithImage";
 
 export const ThumbnailWithImage = forwardRef<
   HTMLDivElement,
-  { name: string; onClick: React.MouseEventHandler<HTMLDivElement> }
->(({ name, onClick }, ref) => {
+  {
+    name: string;
+    onClick: React.MouseEventHandler<HTMLDivElement>;
+    imageLoader: ImageLoader;
+  }
+>(({ name, onClick, imageLoader }, ref) => {
   return (
     <div
       ref={ref}

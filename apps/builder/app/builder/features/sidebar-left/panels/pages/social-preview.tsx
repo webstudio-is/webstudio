@@ -1,7 +1,8 @@
 import { Box, Grid, Label, css, theme } from "@webstudio-is/design-system";
-import { Image, createImageLoader } from "@webstudio-is/image";
-import env from "~/shared/env";
+import { Image } from "@webstudio-is/image";
 import { truncateByWords, truncate } from "./social-utils";
+import { useStore } from "@nanostores/react";
+import { $imageLoader } from "~/shared/nano-states";
 
 type SocialPreviewProps = {
   ogImageUrl?: string;
@@ -32,9 +33,7 @@ export const SocialPreview = ({
   ogTitle,
   ogUrl,
 }: SocialPreviewProps) => {
-  const imageLoader = createImageLoader({
-    imageBaseUrl: env.IMAGE_BASE_URL,
-  });
+  const imageLoader = useStore($imageLoader);
 
   return (
     <Grid gap={1}>
