@@ -236,7 +236,7 @@ const matchKeyword = (styleValue: undefined | StyleValue, keyword: string) =>
 /**
  * stable invalid values to support caching
  */
-export const guaranteedInvalidValue: StyleValue = { type: "guaranteedInvalid" };
+const guaranteedInvalidValue: StyleValue = { type: "guaranteedInvalid" };
 const invalidValue: StyleValue = { type: "invalid", value: "" };
 
 const customPropertyData = {

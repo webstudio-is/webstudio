@@ -32,7 +32,6 @@ import {
 import { $selectedBreakpoint } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
-import { guaranteedInvalidValue } from "~/shared/style-object-model";
 
 type CascadedValueInfo = {
   breakpointId: string;
@@ -707,10 +706,10 @@ const useStyleInfoByInstanceAndStyleSource = (
     for (const property of allPropertyNames) {
       // temporary solution until we start computing all styles from data
       const htmlValue = htmlStyle?.[property];
-      const defaultValue =
-        CUSTOM_DEFAULT_VALUES[property] ??
-        properties[property as keyof typeof properties]?.initial ??
-        guaranteedInvalidValue;
+      const defaultValue = CUSTOM_DEFAULT_VALUES[property] ??
+        properties[property as keyof typeof properties]?.initial ?? {
+          type: "guaranteedInvalid",
+        };
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];

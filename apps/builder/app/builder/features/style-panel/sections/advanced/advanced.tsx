@@ -7,7 +7,6 @@ import {
   $selectedInstanceSelector,
   useInstanceStyles,
 } from "~/shared/nano-states";
-import { guaranteedInvalidValue } from "~/shared/style-object-model";
 import type { SectionProps } from "../shared/section-component";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";
@@ -89,7 +88,10 @@ export const Section = ({
             if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
               setAddingProp(undefined);
-              setProperty(property)(guaranteedInvalidValue, { listed: true });
+              setProperty(property)(
+                { type: "guaranteedInvalid" },
+                { listed: true }
+              );
             }
           }}
         />
