@@ -1,0 +1,32 @@
+name: Publish packages on NPM 📦
+
+on:
+  push:
+    branches:
+      - "0.143.1"
+
+jobs:
+  publish:
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/ci-setup
+
+      - run: pnpm turbo run build dts
+
+      - name: Creating .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - run: pnpm -r publish --access public
