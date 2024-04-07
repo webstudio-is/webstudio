@@ -15,9 +15,8 @@ import {
   declarationDescriptions,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import { SelectControl } from "../../controls";
-import { styleConfigByName } from "../../shared/configs";
 import { deleteAllProperties, setAllProperties, rowCss } from "./utils";
+import { SelectGroup, canUseToggleGroup } from "./select-group";
 
 export const properties: StyleProperty[] = [
   "borderTopStyle",
@@ -86,57 +85,33 @@ export const BorderStyle = (
   );
   const onResetAll = () => deleteBorderProperties(firstPropertyName);
 
-  const values = properties.map((property) =>
-    toValue(props.currentStyle[property]?.value)
-  );
-
-  // We can represent the value with a toggle group if all values are the same.
-  const canUseToggleGroup =
-    values[0] === values[1] &&
-    values[0] === values[2] &&
-    values[0] === values[3];
-
-  if (canUseToggleGroup === false) {
+  if (canUseToggleGroup(properties, props.currentStyle)) {
     return (
-      <Grid columns="2" gap="2">
-        {properties.map((property) => (
-          <Grid gap="1" css={{ gridTemplateColumns: "auto" }} key={property}>
-            <PropertyName
-              style={props.currentStyle}
-              properties={[property]}
-              label={styleConfigByName(property).label}
-              onReset={() => props.deleteProperty(property)}
-            />
-            <SelectControl property={property} {...props} />
-          </Grid>
-        ))}
+      <Grid css={rowCss}>
+        <PropertyName
+          style={props.currentStyle}
+          properties={properties}
+          label="Style"
+          description={propertyDescriptions.borderBlockStyle}
+          onReset={onResetAll}
+        />
+        <ToggleGroupControl
+          style={props.currentStyle}
+          styleSource={getStyleSource(props.currentStyle[firstPropertyName])}
+          items={items}
+          value={firstPropertyValue}
+          properties={properties}
+          onReset={onResetAll}
+          onValueChange={(value) =>
+            setBorderProperties({
+              type: "keyword",
+              value,
+            })
+          }
+        />
       </Grid>
     );
   }
 
-  return (
-    <Grid css={rowCss}>
-      <PropertyName
-        style={props.currentStyle}
-        properties={properties}
-        label="Style"
-        description={propertyDescriptions.borderBlockStyle}
-        onReset={onResetAll}
-      />
-      <ToggleGroupControl
-        style={props.currentStyle}
-        styleSource={getStyleSource(props.currentStyle[firstPropertyName])}
-        items={items}
-        value={firstPropertyValue}
-        properties={properties}
-        onReset={onResetAll}
-        onValueChange={(value) =>
-          setBorderProperties({
-            type: "keyword",
-            value,
-          })
-        }
-      />
-    </Grid>
-  );
+  return <SelectGroup {...props} properties={properties} />;
 };
