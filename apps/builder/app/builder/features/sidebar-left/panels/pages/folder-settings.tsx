@@ -2,7 +2,6 @@ import { z } from "zod";
 import { type FocusEventHandler, useState, useCallback } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
-import { useUnmount } from "react-use";
 import slugify from "slugify";
 import {
   Folder,
@@ -48,6 +47,7 @@ import {
 } from "./page-utils";
 import { Form } from "./form";
 import { updateWebstudioData } from "~/shared/instance-utils";
+import { useUnmount } from "~/shared/hook-utils/use-mount";
 
 const Values = Folder.pick({ name: true, slug: true }).extend({
   parentFolderId: z.string(),

@@ -1,5 +1,4 @@
-import { useContext, useEffect, useMemo } from "react";
-import { useIsomorphicLayoutEffect } from "react-use";
+import { useContext, useEffect, useLayoutEffect, useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Assets, Instance, StyleDecl } from "@webstudio-is/sdk";
@@ -209,7 +208,7 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
   const assets = useStore($assets);
   const metas = useStore($registeredComponentMetas);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     const sortedBreakpoints = Array.from(breakpoints.values()).sort(
       compareMedia
     );
@@ -219,16 +218,16 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
     userSheet.render();
   }, [breakpoints]);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     fontsAndDefaultsSheet.clear();
     addGlobalRules(fontsAndDefaultsSheet, {
       assets,
       assetBaseUrl: params.assetBaseUrl,
     });
     fontsAndDefaultsSheet.render();
-  }, [assets]);
+  }, [assets, params.assetBaseUrl]);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     presetSheet.clear();
     for (const [component, meta] of metas) {
       const presetStyle = meta.presetStyle;
@@ -327,7 +326,7 @@ export const useCssRules = ({
   const breakpoints = useStore($breakpoints);
   const selectedState = useSelectedState(instanceId);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     // expect assets to be up to date by the time styles are changed
     // to avoid all styles rerendering when assets are changed
     const assets = $assets.get();
@@ -393,5 +392,5 @@ export const useCssRules = ({
     }
 
     userSheet.render();
-  }, [instanceId, selectedState, instanceStyles, breakpoints]);
+  }, [instanceId, selectedState, instanceStyles, breakpoints, params]);
 };
