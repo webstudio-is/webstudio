@@ -225,7 +225,7 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
       assetBaseUrl: params.assetBaseUrl,
     });
     fontsAndDefaultsSheet.render();
-  }, [assets]);
+  }, [assets, params.assetBaseUrl]);
 
   useLayoutEffect(() => {
     presetSheet.clear();
@@ -392,5 +392,5 @@ export const useCssRules = ({
     }
 
     userSheet.render();
-  }, [instanceId, selectedState, instanceStyles, breakpoints]);
+  }, [instanceId, selectedState, instanceStyles, breakpoints, params]);
 };
