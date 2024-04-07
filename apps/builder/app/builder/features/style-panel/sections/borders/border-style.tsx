@@ -1,6 +1,6 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
-import { Grid, theme } from "@webstudio-is/design-system";
+import { Grid } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
@@ -9,7 +9,6 @@ import {
 } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
 import type { SectionProps } from "../shared/section-component";
-import { deleteAllProperties, setAllProperties } from "./border-utils";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { getStyleSource } from "../../shared/style-info";
 import {
@@ -18,6 +17,7 @@ import {
 } from "@webstudio-is/css-data";
 import { SelectControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
+import { deleteAllProperties, setAllProperties, rowCss } from "./utils";
 
 export const properties: StyleProperty[] = [
   "borderTopStyle",
@@ -115,12 +115,7 @@ export const BorderStyle = (
   }
 
   return (
-    <Grid
-      css={{
-        gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
-      }}
-      gap="2"
-    >
+    <Grid css={rowCss}>
       <PropertyName
         style={props.currentStyle}
         properties={properties}
