@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {

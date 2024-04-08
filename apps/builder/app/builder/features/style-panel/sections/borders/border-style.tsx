@@ -8,15 +8,20 @@ import {
   SmallXIcon,
 } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { getStyleSource } from "../../shared/style-info";
 import {
   declarationDescriptions,
   propertyDescriptions,
 } from "@webstudio-is/css-data";
-import { deleteAllProperties, setAllProperties, rowCss } from "./utils";
-import { SelectGroup, canUseToggleGroup } from "./select-group";
+import {
+  deleteAllProperties,
+  setAllProperties,
+  rowCss,
+  isAdvancedValue,
+} from "./utils";
+import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 export const properties: StyleProperty[] = [
   "borderTopStyle",
@@ -77,29 +82,31 @@ export const BorderStyle = (
     props.createBatchUpdate
   )(firstPropertyName);
 
-  const firstPropertyValue = toValue(
+  const propertyValue = toValue(
     props.currentStyle[firstPropertyName]?.value ?? {
       type: "keyword",
       value: "none",
     }
   );
   const onResetAll = () => deleteBorderProperties(firstPropertyName);
+  const isAdvanced = isAdvancedValue(properties, props.currentStyle);
 
-  if (canUseToggleGroup(properties, props.currentStyle)) {
-    return (
-      <Grid css={rowCss}>
-        <PropertyName
-          style={props.currentStyle}
-          properties={properties}
-          label="Style"
-          description={propertyDescriptions.borderBlockStyle}
-          onReset={onResetAll}
-        />
+  return (
+    <Grid css={rowCss}>
+      <PropertyName
+        style={props.currentStyle}
+        properties={properties}
+        label="Style"
+        description={propertyDescriptions.borderBlockStyle}
+        onReset={onResetAll}
+      />
+      <AdvancedValueTooltip isAdvanced={isAdvanced}>
         <ToggleGroupControl
+          disabled={isAdvanced}
           style={props.currentStyle}
           styleSource={getStyleSource(props.currentStyle[firstPropertyName])}
           items={items}
-          value={firstPropertyValue}
+          value={propertyValue}
           properties={properties}
           onReset={onResetAll}
           onValueChange={(value) =>
@@ -109,9 +116,7 @@ export const BorderStyle = (
             })
           }
         />
-      </Grid>
-    );
-  }
-
-  return <SelectGroup {...props} properties={properties} />;
+      </AdvancedValueTooltip>
+    </Grid>
+  );
 };

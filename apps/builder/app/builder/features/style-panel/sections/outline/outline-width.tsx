@@ -1,6 +1,6 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";

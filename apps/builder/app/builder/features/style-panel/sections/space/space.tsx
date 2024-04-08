@@ -1,5 +1,5 @@
 import { type ComponentProps, useState, useRef } from "react";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { getSpaceModifiersGroup, useScrub } from "../shared/scrub";

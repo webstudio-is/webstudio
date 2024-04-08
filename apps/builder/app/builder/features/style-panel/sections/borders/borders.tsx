@@ -1,6 +1,6 @@
 import { Flex } from "@webstudio-is/design-system";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import {
   BorderRadius,

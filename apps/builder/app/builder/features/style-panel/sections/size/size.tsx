@@ -2,7 +2,7 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
 import { Grid, Separator, styled } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
   SelectControl,

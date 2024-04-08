@@ -14,7 +14,7 @@ import * as transitions from "./transitions/transitions";
 import * as outline from "./outline/outline";
 import * as advanced from "./advanced/advanced";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "./shared/section-component";
+import type { SectionProps } from "./shared/section";
 
 export const sections = new Map<
   string,

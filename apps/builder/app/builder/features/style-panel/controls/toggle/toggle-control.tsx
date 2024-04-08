@@ -22,6 +22,7 @@ export type ToggleGroupControlProps = {
   onValueChange?: (value: string) => void;
   onReset?: () => void;
   properties?: StyleProperty[] | undefined;
+  disabled?: boolean;
 };
 
 const ToggleGroupButtonWithTooltip = ({
@@ -36,6 +37,7 @@ const ToggleGroupButtonWithTooltip = ({
   onMouseEnter,
   style,
   properties,
+  disabled,
 }: {
   title: string;
   value: string;
@@ -48,6 +50,7 @@ const ToggleGroupButtonWithTooltip = ({
   onMouseEnter: (event: React.MouseEvent<HTMLButtonElement>) => void;
   style: StyleInfo;
   properties?: StyleProperty[] | undefined;
+  disabled?: boolean;
 }) => {
   const scrollableContent = Array.isArray(propertyValues)
     ? propertyValues.map((propertyValue) => (
@@ -67,6 +70,7 @@ const ToggleGroupButtonWithTooltip = ({
       onReset={onReset}
     >
       <ToggleGroupButton
+        disabled={disabled}
         onMouseEnter={onMouseEnter}
         value={value}
         onClick={(event) => {
@@ -90,6 +94,7 @@ export const ToggleGroupControl = ({
   onReset,
   style,
   properties,
+  disabled,
 }: ToggleGroupControlProps) => {
   // Issue: The tooltip's grace area is too big and overlaps with nearby buttons,
   // preventing the tooltip from changing when the buttons are hovered over in certain cases.
@@ -115,6 +120,7 @@ export const ToggleGroupControl = ({
         ) => {
           return (
             <ToggleGroupButtonWithTooltip
+              disabled={disabled}
               key={index}
               style={style}
               title={title}

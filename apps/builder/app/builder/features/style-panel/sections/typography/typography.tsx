@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,

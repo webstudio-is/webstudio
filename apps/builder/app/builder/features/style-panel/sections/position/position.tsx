@@ -1,5 +1,5 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";

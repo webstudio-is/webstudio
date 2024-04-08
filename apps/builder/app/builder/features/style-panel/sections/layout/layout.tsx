@@ -21,7 +21,7 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
 } from "@webstudio-is/icons";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
 import { PropertyName, PropertyTooltip } from "../../shared/property-name";

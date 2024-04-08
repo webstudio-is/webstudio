@@ -1,6 +1,6 @@
 import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import {
   SectionTitle,
   SectionTitleButton,

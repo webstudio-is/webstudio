@@ -3,9 +3,14 @@ import { Box, Grid } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import { ColorControl } from "../../controls";
 import { styleConfigByName } from "../../shared/configs";
-import type { SectionProps } from "../shared/section-component";
-import { deleteAllProperties, setAllProperties, rowCss } from "./utils";
-import { SelectGroup, canUseToggleGroup } from "./select-group";
+import type { SectionProps } from "../shared/section";
+import {
+  deleteAllProperties,
+  setAllProperties,
+  rowCss,
+  isAdvancedValue,
+} from "./utils";
+import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 export const properties = [
   "borderTopColor",
@@ -29,30 +34,30 @@ export const BorderColor = (props: SectionProps) => {
   );
 
   const setAllproperties = setAllProperties(properties, createBatchUpdate);
+  const isAdvanced = isAdvancedValue(properties, currentStyle);
+  console.log({ isAdvanced });
+  return (
+    <Grid css={rowCss}>
+      <PropertyName
+        style={currentStyle}
+        properties={properties}
+        label={"Color"}
+        description="Sets the color of the border"
+        onReset={() => deleteColorProperties(borderColorProperty)}
+      />
 
-  if (canUseToggleGroup(properties, currentStyle)) {
-    return (
-      <Grid css={rowCss}>
-        <PropertyName
-          style={currentStyle}
-          properties={properties}
-          label={"Color"}
-          description="Sets the color of the border"
-          onReset={() => deleteColorProperties(borderColorProperty)}
-        />
-
-        <Box css={{ gridColumn: `span 2` }}>
+      <Box css={{ gridColumn: `span 2` }}>
+        <AdvancedValueTooltip isAdvanced={isAdvanced}>
           <ColorControl
+            disabled={isAdvanced}
             property={borderColorProperty}
             items={items}
             currentStyle={currentStyle}
             setProperty={setAllproperties}
             deleteProperty={deleteColorProperties}
           />
-        </Box>
-      </Grid>
-    );
-  }
-
-  return <SelectGroup {...props} properties={properties} />;
+        </AdvancedValueTooltip>
+      </Box>
+    </Grid>
+  );
 };

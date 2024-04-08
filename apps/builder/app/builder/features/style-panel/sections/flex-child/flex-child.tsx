@@ -1,7 +1,7 @@
 import { Flex, Grid, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
 import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";

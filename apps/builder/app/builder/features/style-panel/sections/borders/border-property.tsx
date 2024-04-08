@@ -1,3 +1,6 @@
+import { type ReactNode } from "react";
+import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import {
   Box,
   Grid,
@@ -8,11 +11,8 @@ import { CssValueInputContainer } from "../../controls/position/css-value-input-
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { SectionProps } from "../shared/section-component";
-import { toValue } from "@webstudio-is/css-engine";
+import type { SectionProps } from "../shared/section";
 import { deleteAllProperties, rowCss, setAllProperties } from "./utils";
-import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";
-import { type ReactNode } from "react";
 import { useSelectedInstanceKv } from "../../shared/instances-kv";
 
 const borderPropertyStyleValueDefault: UnitValue = {

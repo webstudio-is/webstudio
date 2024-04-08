@@ -1,4 +1,4 @@
-import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
+import type { Ref, ComponentProps, ReactNode } from "react";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import {
   autoUpdate,
@@ -19,7 +19,7 @@ export const TooltipProvider = TooltipPrimitive.TooltipProvider;
 
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   Omit<ComponentProps<typeof Content>, "content"> & {
-    children: ReactElement;
+    children: ReactNode;
     content: ReactNode;
     delayDuration?: number;
     disableHoverableContent?: boolean;

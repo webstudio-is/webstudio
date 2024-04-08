@@ -10,7 +10,7 @@ import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
 import { BoxShadowLayer } from "./box-shadow-layer";
 import { addLayer } from "../../style-layer-utils";

@@ -1,5 +1,5 @@
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
-import type { SectionProps } from "../shared/section-component";
+import type { SectionProps } from "../shared/section";
 import { useState } from "react";
 import {
   SectionTitle,
