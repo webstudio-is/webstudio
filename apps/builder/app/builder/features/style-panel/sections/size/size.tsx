@@ -6,7 +6,7 @@ import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
   SelectControl,
-  TextControl,
+  TextControl as TextControlBase,
   ObjectPositionControl,
   type ControlProps,
 } from "../../controls";
@@ -19,11 +19,50 @@ import {
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { theme } from "@webstudio-is/design-system";
 import {
-  ToggleGroupControl,
+  ToggleGroupControl as ToggleGroupControlBase,
   type ToggleGroupControlProps,
 } from "../../controls/toggle/toggle-control";
+import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
-const SizeField = ({
+const ToggleGroupControl = ({
+  property,
+  currentStyle,
+  setProperty,
+  deleteProperty,
+  items,
+}: Omit<ControlProps, "items"> & {
+  items: ToggleGroupControlProps["items"];
+}) => {
+  const value = toValue(currentStyle[property]?.value);
+  const isAdvanced = items.some((item) => item.value === value) === false;
+  return (
+    <AdvancedValueTooltip isAdvanced={isAdvanced}>
+      <ToggleGroupControlBase
+        disabled={isAdvanced}
+        style={currentStyle}
+        items={items}
+        value={value}
+        onReset={() => deleteProperty(property)}
+        onValueChange={(value) =>
+          setProperty(property)({ type: "keyword", value })
+        }
+      />
+    </AdvancedValueTooltip>
+  );
+};
+
+const TextControl = (props: ControlProps) => {
+  const type = props.currentStyle[props.property]?.value.type;
+  const isAdvanced = type === "unparsed" || type === "guaranteedInvalid";
+
+  return (
+    <AdvancedValueTooltip isAdvanced={isAdvanced}>
+      <TextControlBase {...props} disabled={isAdvanced} />
+    </AdvancedValueTooltip>
+  );
+};
+
+const SizeProperty = ({
   property,
   currentStyle,
   setProperty,
@@ -45,40 +84,6 @@ const SizeField = ({
         deleteProperty={deleteProperty}
       />
     </Grid>
-  );
-};
-
-const ToggleGroupOrSelectControl = ({
-  property,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  items,
-}: Omit<ControlProps, "items"> & {
-  items: ToggleGroupControlProps["items"];
-}) => {
-  const value = toValue(currentStyle[property]?.value);
-  const canUseToggleGroup = items.some((item) => item.value === value);
-  if (canUseToggleGroup === false) {
-    return (
-      <SelectControl
-        property={property}
-        currentStyle={currentStyle}
-        setProperty={setProperty}
-        deleteProperty={deleteProperty}
-      />
-    );
-  }
-  return (
-    <ToggleGroupControl
-      style={currentStyle}
-      items={items}
-      value={value}
-      onReset={() => deleteProperty(property)}
-      onValueChange={(value) =>
-        setProperty(property)({ type: "keyword", value })
-      }
-    />
   );
 };
 
@@ -114,37 +119,37 @@ export const Section = ({
       fullWidth
     >
       <SectionLayout columns={2}>
-        <SizeField
+        <SizeProperty
           property="width"
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="height"
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="minWidth"
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="minHeight"
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="maxWidth"
           currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="maxHeight"
           currentStyle={currentStyle}
           setProperty={setProperty}
@@ -171,7 +176,7 @@ export const Section = ({
           style={currentStyle}
           onReset={() => deleteProperty("overflow")}
         />
-        <ToggleGroupOrSelectControl
+        <ToggleGroupControl
           property="overflow"
           currentStyle={currentStyle}
           setProperty={setProperty}

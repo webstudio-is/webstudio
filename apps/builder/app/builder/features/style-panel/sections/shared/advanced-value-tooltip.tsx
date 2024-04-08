@@ -1,4 +1,4 @@
-import { Tooltip } from "@webstudio-is/design-system";
+import { Box, Tooltip } from "@webstudio-is/design-system";
 import type { ReactNode } from "react";
 
 // Visual controls can't represent all CSS values and in that case we show it in the Advanced section.
@@ -11,8 +11,8 @@ export const AdvancedValueTooltip = ({
 }) => {
   if (isAdvanced) {
     return (
-      <Tooltip content="The value was defined in the Advanced section.">
-        <div>{children}</div>
+      <Tooltip content="The value is defined in the Advanced section.">
+        <Box>{children}</Box>
       </Tooltip>
     );
   }
