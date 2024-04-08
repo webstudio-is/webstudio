@@ -35,7 +35,7 @@ export const BorderColor = (props: SectionProps) => {
 
   const setAllproperties = setAllProperties(properties, createBatchUpdate);
   const isAdvanced = isAdvancedValue(properties, currentStyle);
-  console.log({ isAdvanced });
+
   return (
     <Grid css={rowCss}>
       <PropertyName
