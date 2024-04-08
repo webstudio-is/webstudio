@@ -37,14 +37,14 @@ import {
   TextUppercaseIcon,
 } from "@webstudio-is/icons";
 import {
-  ToggleGroupControl,
+  ToggleGroupControl as ToggleGroupControlBase,
   type ToggleGroupControlProps,
 } from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
 import { forwardRef, type ComponentProps } from "react";
-import { styleConfigByName } from "../../shared/configs";
+import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 export const properties = [
   "fontFamily",
@@ -124,7 +124,7 @@ export const TypographySectionFont = (props: SectionProps) => {
   );
 };
 
-const ToggleGroupOrSelectControl = ({
+const ToggleGroupControl = ({
   property,
   currentStyle,
   setProperty,
@@ -136,38 +136,22 @@ const ToggleGroupOrSelectControl = ({
   mapValue?: (value: string) => string;
 }) => {
   const value = mapValue(toValue(currentStyle[property]?.value));
-  const canUseToggleGroup = items.some((item) => item.value === value);
-  const onReset = () => deleteProperty(property);
-  if (canUseToggleGroup === false) {
-    return (
-      <Grid gap="1" css={{ gridTemplateColumns: "auto" }}>
-        <PropertyName
-          style={currentStyle}
-          properties={[property]}
-          label={styleConfigByName(property).label}
-          onReset={onReset}
-        />
-        <SelectControl
-          property={property}
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-      </Grid>
-    );
-  }
+  const isAdvanced = items.some((item) => item.value === value) === false;
   return (
-    <ToggleGroupControl
-      style={currentStyle}
-      styleSource={getStyleSource(currentStyle[property])}
-      items={items}
-      value={value}
-      properties={[property]}
-      onReset={onReset}
-      onValueChange={(value) =>
-        setProperty(property)({ type: "keyword", value })
-      }
-    />
+    <AdvancedValueTooltip isAdvanced={isAdvanced}>
+      <ToggleGroupControlBase
+        disabled={isAdvanced}
+        style={currentStyle}
+        styleSource={getStyleSource(currentStyle[property])}
+        items={items}
+        value={value}
+        properties={[property]}
+        onReset={() => deleteProperty(property)}
+        onValueChange={(value) =>
+          setProperty(property)({ type: "keyword", value })
+        }
+      />
+    </AdvancedValueTooltip>
   );
 };
 
@@ -225,7 +209,7 @@ export const TypographySectionSizing = (props: SectionProps) => {
 export const TypographySectionAdvanced = (props: SectionProps) => {
   return (
     <Grid gap="2" columns="2" align="end">
-      <ToggleGroupOrSelectControl
+      <ToggleGroupControl
         {...props}
         property="textAlign"
         mapValue={(value: string) =>
@@ -263,7 +247,7 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
           },
         ]}
       />
-      <ToggleGroupOrSelectControl
+      <ToggleGroupControl
         {...props}
         property="textDecorationLine"
         items={[
@@ -291,7 +275,7 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
           },
         ]}
       />
-      <ToggleGroupOrSelectControl
+      <ToggleGroupControl
         {...props}
         property="textTransform"
         items={[
@@ -330,7 +314,7 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
         ]}
       />
       <Grid align="end" gap="1" css={{ gridTemplateColumns: "3fr 1fr" }}>
-        <ToggleGroupOrSelectControl
+        <ToggleGroupControl
           {...props}
           property="fontStyle"
           items={[
@@ -391,9 +375,6 @@ AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 
 export const TypographySectionAdvancedPopover = (props: SectionProps) => {
   const { deleteProperty, setProperty, currentStyle } = props;
-  const setDirection = setProperty("direction");
-  const setTextOverflow = setProperty("textOverflow");
-  const setHyphens = setProperty("hyphens");
   const properties = {
     whiteSpace: "whiteSpace",
     direction: "direction",
@@ -434,11 +415,8 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               onReset={() => deleteProperty(properties.direction)}
             />
             <ToggleGroupControl
-              style={currentStyle}
-              onValueChange={(value) =>
-                setDirection({ type: "keyword", value })
-              }
-              value={toValue(currentStyle.direction?.value)}
+              {...props}
+              property={properties.direction}
               items={[
                 {
                   child: <TextDirectionLTRIcon />,
@@ -467,9 +445,8 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               onReset={() => deleteProperty(properties.hyphens)}
             />
             <ToggleGroupControl
-              style={currentStyle}
-              onValueChange={(value) => setHyphens({ type: "keyword", value })}
-              value={toValue(currentStyle.hyphens?.value)}
+              {...props}
+              property={properties.hyphens}
               items={[
                 {
                   child: <CrossSmallIcon />,
@@ -498,11 +475,8 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
               onReset={() => deleteProperty(properties.textOverflow)}
             />
             <ToggleGroupControl
-              style={currentStyle}
-              onValueChange={(value) =>
-                setTextOverflow({ type: "keyword", value })
-              }
-              value={toValue(currentStyle.textOverflow?.value)}
+              {...props}
+              property={properties.textOverflow}
               items={[
                 {
                   child: <CrossSmallIcon />,
