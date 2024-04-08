@@ -669,7 +669,7 @@ export const CssValueInput = ({
             autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
-            containerRef={scrubRef}
+            containerRef={disabled ? undefined : scrubRef}
             inputRef={inputRef}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
