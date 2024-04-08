@@ -36,6 +36,7 @@ import {
 import { theme } from "@webstudio-is/design-system";
 import { TooltipContent } from "../../../style-panel/shared/property-name";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 const GapLinked = ({
   isLinked,
@@ -482,10 +483,10 @@ export const Section = ({
   deleteProperty,
   createBatchUpdate,
 }: SectionProps) => {
-  const displayValue = toValue(currentStyle.display?.value);
+  const value = toValue(currentStyle.display?.value);
 
   const { label, items } = styleConfigByName("display");
-
+  const isAdvanced = value === "";
   return (
     <CollapsibleSection
       label="Layout"
@@ -506,18 +507,21 @@ export const Section = ({
             label={label}
             onReset={() => deleteProperty("display")}
           />
-          <SelectControl
-            property="display"
-            currentStyle={currentStyle}
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            items={items
-              .filter((item) => orderedDisplayValues.includes(item.name))
-              .sort(compareDisplayValues)}
-          />
+          <AdvancedValueTooltip isAdvanced={isAdvanced}>
+            <SelectControl
+              disabled={isAdvanced}
+              property="display"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+              items={items
+                .filter((item) => orderedDisplayValues.includes(item.name))
+                .sort(compareDisplayValues)}
+            />
+          </AdvancedValueTooltip>
         </Grid>
 
-        {(displayValue === "flex" || displayValue === "inline-flex") && (
+        {(value === "flex" || value === "inline-flex") && (
           <LayoutSectionFlex
             currentStyle={currentStyle}
             setProperty={setProperty}

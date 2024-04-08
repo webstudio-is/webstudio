@@ -11,12 +11,15 @@ export const SelectControl = ({
   setProperty,
   deleteProperty,
   items,
+  disabled,
 }: ControlProps) => {
   const { items: defaultItems } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
   const setValue = setProperty(property);
   const options = (items ?? defaultItems).map(({ name }) => name);
-  const value = toValue(styleValue) || "advanced";
+  // We can't render an empty string as a value when display was added but without a value.
+  // One case is when advanced property is being added, but no value is set.
+  const value = toValue(styleValue) || "empty";
 
   // Append selected value when not present in the list of options
   // because radix requires values to always be in the list.
@@ -26,6 +29,7 @@ export const SelectControl = ({
 
   return (
     <Select
+      disabled={disabled}
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
@@ -55,11 +59,9 @@ export const SelectControl = ({
       }}
       getDescription={(option) => {
         const description =
-          option === "advanced"
-            ? "Please change the value in the Advanced section."
-            : declarationDescriptions[
-                `${property}:${option}` as keyof typeof declarationDescriptions
-              ];
+          declarationDescriptions[
+            `${property}:${option}` as keyof typeof declarationDescriptions
+          ];
 
         if (description === undefined) {
           return;
