@@ -2,7 +2,7 @@ import { useState } from "react";
 import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
 import { useDebouncedCallback } from "use-debounce";
-import { HexColorInput, RgbaColorPicker } from "react-colorful";
+import { RgbaColorPicker } from "react-colorful";
 import type {
   InvalidValue,
   KeywordValue,
@@ -16,6 +16,7 @@ import {
   PopoverContent,
   useDisableCanvasPointerEvents,
   css,
+  InputField,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
@@ -82,25 +83,6 @@ export type CssColorPickerValueInput =
   | KeywordValue
   | IntermediateStyleValue
   | InvalidValue;
-
-const ControlledHexColorInput = ({
-  defaultColor,
-  onChange,
-}: {
-  defaultColor: string;
-  onChange: (newColor: string) => void;
-}) => {
-  const [color, setColor] = useState(defaultColor);
-  return (
-    <HexColorInput
-      color={color}
-      onChange={(newColor) => {
-        setColor(newColor);
-        onChange(newColor);
-      }}
-    />
-  );
-};
 
 type ColorPickerProps = {
   onChange: (value: CssColorPickerValueInput | undefined) => void;
@@ -222,11 +204,16 @@ export const ColorPicker = ({
             onComplete(color);
           }}
         />
-        <ControlledHexColorInput
+        <InputField
           key={currentHex}
-          defaultColor={currentHex}
-          onChange={(newHex) => {
-            onComplete(colorResultToRgbValue(colord(newHex).toRgb()));
+          defaultValue={currentHex.slice(1)}
+          onChange={(event) => {
+            const value = event.target.value;
+            const hex = value.startsWith("#") ? value : `#${value}`;
+            const color = colord(hex);
+            if (color.isValid()) {
+              onComplete(colorResultToRgbValue(color.toRgb()));
+            }
           }}
         />
       </PopoverContent>
