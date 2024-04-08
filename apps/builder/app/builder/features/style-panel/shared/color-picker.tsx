@@ -208,7 +208,7 @@ export const ColorPicker = ({
           key={currentHex}
           defaultValue={currentHex.slice(1)}
           onChange={(event) => {
-            const value = event.target.value;
+            const value = event.target.value.trim();
             const hex = value.startsWith("#") ? value : `#${value}`;
             const color = colord(hex);
             if (color.isValid()) {
