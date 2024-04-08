@@ -7,7 +7,7 @@
     "generate-metas": "pnpm tsx scripts/generate-metas.mts",
     "prebuild": "which remix",
     "build": "pnpm generate-metas && remix build",
-    "start": "remix-serve build",
+    "start": "remix-serve build/index.js",
     "start-local": "NODE_OPTIONS='-r dotenv/config' remix-serve build",
     "dev": "pnpm generate-metas && remix dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",

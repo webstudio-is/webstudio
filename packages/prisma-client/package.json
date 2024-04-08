@@ -8,8 +8,8 @@
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "dev": "prisma generate --watch & build-package --watch --no-generated-as-entries",
-    "build": "prisma format && prisma generate && build-package --no-generated-as-entries",
+    "dev": "pnpm build",
+    "build": "prisma format && prisma generate && esbuild src/prisma.ts --outdir=lib --format=cjs && cp src/cjs/package.json lib && cp -r src/__generated__ lib/__generated__",
     "dts": "tsc --declarationDir lib",
     "migrations": "./migrations-cli/cli.ts"
   },
@@ -17,21 +17,20 @@
     "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
-    "@prisma/client": "^5.8.1",
+    "@prisma/client": "^5.12.1",
     "@types/node": "^18.17.1",
     "@types/prompts": "^2.4.5",
-    "@webstudio-is/scripts": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "prisma": "^5.8.1",
+    "prisma": "^5.12.1",
     "tsx": "^4.7.2",
     "typescript": "5.2.2",
     "zod": "^3.22.4"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/index.d.ts",
-    "import": "./lib/index.js",
-    "require": "./lib/cjs/index.js"
+    "webstudio": "./src/prisma.ts",
+    "types": "./lib/prisma.d.ts",
+    "import": "./lib/prisma.js",
+    "require": "./lib/prisma.js"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,
