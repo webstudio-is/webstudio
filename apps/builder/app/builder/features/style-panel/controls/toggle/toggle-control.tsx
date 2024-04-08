@@ -3,15 +3,14 @@ import {
   ToggleGroup,
   ToggleGroupButton,
 } from "@webstudio-is/design-system";
-import type { StyleInfo, StyleSource } from "../../shared/style-info";
-import { useState, type ReactElement } from "react";
+import { getStyleSource } from "../../shared/style-info";
+import { useState } from "react";
 import { PropertyTooltip } from "../../shared/property-name";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
+import type { ControlProps } from "..";
 
-export type ToggleGroupControlProps = {
-  style: StyleInfo;
-  styleSource?: StyleSource;
-  value: string;
+export type ToggleGroupControlProps = Omit<ControlProps, "items"> & {
+  value?: string;
   items: {
     child: JSX.Element;
     title: string;
@@ -19,83 +18,20 @@ export type ToggleGroupControlProps = {
     value: string;
     propertyValues: string | string[];
   }[];
-  onValueChange?: (value: string) => void;
-  onReset?: () => void;
-  properties?: StyleProperty[] | undefined;
-  disabled?: boolean;
 };
 
-const ToggleGroupButtonWithTooltip = ({
-  title,
-  propertyValues,
-  description,
-  children,
-  value,
-  onReset,
-  tooltipOpen,
-  onTooltipOpenChange,
-  onMouseEnter,
-  style,
-  properties,
-  disabled,
-}: {
-  title: string;
-  value: string;
-  propertyValues: string | string[];
-  description: React.ReactNode;
-  children: ReactElement;
-  onReset?: () => void;
-  tooltipOpen: boolean;
-  onTooltipOpenChange: (open: boolean) => void;
-  onMouseEnter: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  style: StyleInfo;
-  properties?: StyleProperty[] | undefined;
-  disabled?: boolean;
-}) => {
-  const scrollableContent = Array.isArray(propertyValues)
-    ? propertyValues.map((propertyValue) => (
-        <div key={propertyValue}>{propertyValue}</div>
-      ))
-    : propertyValues;
-
-  return (
-    <PropertyTooltip
-      open={tooltipOpen}
-      onOpenChange={onTooltipOpenChange}
-      title={title}
-      scrollableContent={scrollableContent}
-      description={description}
-      properties={properties ?? []}
-      style={style}
-      onReset={onReset}
-    >
-      <ToggleGroupButton
-        disabled={disabled}
-        onMouseEnter={onMouseEnter}
-        value={value}
-        onClick={(event) => {
-          if (event.altKey) {
-            onReset?.();
-          }
-        }}
-      >
-        <Flex>{children}</Flex>
-      </ToggleGroupButton>
-    </PropertyTooltip>
-  );
-};
-
-// @todo refactor this control to follow the standard interface we otherwise have for all controls
 export const ToggleGroupControl = ({
-  styleSource,
-  value = "",
+  currentStyle,
+  property,
   items = [],
-  onValueChange,
-  onReset,
-  style,
-  properties,
   disabled,
+  setProperty,
+  deleteProperty,
+  value,
 }: ToggleGroupControlProps) => {
+  const styleSource = getStyleSource(currentStyle[property]);
+  const currentValue = value ?? toValue(currentStyle[property]?.value);
+
   // Issue: The tooltip's grace area is too big and overlaps with nearby buttons,
   // preventing the tooltip from changing when the buttons are hovered over in certain cases.
   // To solve issue and allow tooltips to change on button hover,
@@ -109,8 +45,10 @@ export const ToggleGroupControl = ({
     <ToggleGroup
       color={styleSource}
       type="single"
-      value={value}
-      onValueChange={onValueChange}
+      value={currentValue}
+      onValueChange={(value) => {
+        setProperty(property)({ type: "keyword", value });
+      }}
       css={{ width: "fit-content" }}
     >
       {items.map(
@@ -118,35 +56,53 @@ export const ToggleGroupControl = ({
           { child, title, value: itemValue, description, propertyValues },
           index
         ) => {
+          const scrollableContent = Array.isArray(propertyValues)
+            ? propertyValues.map((propertyValue) => (
+                <div key={propertyValue}>{propertyValue}</div>
+              ))
+            : propertyValues;
+          const handleReset = () => {
+            if (itemValue === currentValue) {
+              deleteProperty(property);
+            }
+          };
           return (
-            <ToggleGroupButtonWithTooltip
-              disabled={disabled}
-              key={index}
-              style={style}
-              title={title}
-              propertyValues={propertyValues}
-              properties={itemValue === value ? properties : []}
-              description={description}
-              value={itemValue}
-              onReset={itemValue === value ? onReset : undefined}
-              tooltipOpen={openTootips[index]}
-              onTooltipOpenChange={(open) => {
+            <PropertyTooltip
+              key={itemValue}
+              open={openTootips[index]}
+              onOpenChange={(open) => {
                 setOpenTooltips((openTooltips) => {
                   const newOpenTooltips = [...openTooltips];
                   newOpenTooltips[index] = open;
                   return newOpenTooltips;
                 });
               }}
-              onMouseEnter={(event) => {
-                setOpenTooltips((openTooltips) => {
-                  return openTooltips.map((openTooltip, i) =>
-                    i !== index ? false : openTooltip
-                  );
-                });
-              }}
+              title={title}
+              scrollableContent={scrollableContent}
+              description={description}
+              properties={itemValue === currentValue ? [property] : []}
+              style={currentStyle}
+              onReset={handleReset}
             >
-              {child}
-            </ToggleGroupButtonWithTooltip>
+              <ToggleGroupButton
+                disabled={disabled}
+                onMouseEnter={(event) => {
+                  setOpenTooltips((openTooltips) => {
+                    return openTooltips.map((openTooltip, i) =>
+                      i !== index ? false : openTooltip
+                    );
+                  });
+                }}
+                value={itemValue}
+                onClick={(event) => {
+                  if (event.altKey) {
+                    handleReset();
+                  }
+                }}
+              >
+                <Flex>{child}</Flex>
+              </ToggleGroupButton>
+            </PropertyTooltip>
           );
         }
       )}

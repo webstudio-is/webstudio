@@ -1,5 +1,4 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { toValue } from "@webstudio-is/css-engine";
 import { Grid } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
@@ -10,7 +9,6 @@ import {
 import { PropertyName } from "../../shared/property-name";
 import type { SectionProps } from "../shared/section";
 import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
-import { getStyleSource } from "../../shared/style-info";
 import {
   declarationDescriptions,
   propertyDescriptions,
@@ -82,13 +80,7 @@ export const BorderStyle = (
     props.createBatchUpdate
   )(firstPropertyName);
 
-  const propertyValue = toValue(
-    props.currentStyle[firstPropertyName]?.value ?? {
-      type: "keyword",
-      value: "none",
-    }
-  );
-  const onResetAll = () => deleteBorderProperties(firstPropertyName);
+  const handleDelete = () => deleteBorderProperties(firstPropertyName);
   const isAdvanced = isAdvancedValue(properties, props.currentStyle);
 
   return (
@@ -98,23 +90,16 @@ export const BorderStyle = (
         properties={properties}
         label="Style"
         description={propertyDescriptions.borderBlockStyle}
-        onReset={onResetAll}
+        onReset={handleDelete}
       />
       <AdvancedValueTooltip isAdvanced={isAdvanced}>
         <ToggleGroupControl
+          {...props}
           disabled={isAdvanced}
-          style={props.currentStyle}
-          styleSource={getStyleSource(props.currentStyle[firstPropertyName])}
           items={items}
-          value={propertyValue}
-          properties={properties}
-          onReset={onResetAll}
-          onValueChange={(value) =>
-            setBorderProperties({
-              type: "keyword",
-              value,
-            })
-          }
+          property={firstPropertyName}
+          deleteProperty={handleDelete}
+          setProperty={() => setBorderProperties}
         />
       </AdvancedValueTooltip>
     </Grid>

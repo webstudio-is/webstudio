@@ -16,7 +16,6 @@ import {
   FontWeightControl,
   SelectControl,
   TextControl,
-  type ControlProps,
 } from "../../controls";
 import {
   CrossSmallIcon,
@@ -41,7 +40,7 @@ import {
   type ToggleGroupControlProps,
 } from "../../controls/toggle/toggle-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import { type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
 import { forwardRef, type ComponentProps } from "react";
 import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
@@ -125,31 +124,19 @@ export const TypographySectionFont = (props: SectionProps) => {
 };
 
 const ToggleGroupControl = ({
-  property,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  items,
   mapValue = (value) => value,
-}: Omit<ControlProps, "items"> & {
-  items: ToggleGroupControlProps["items"];
-  mapValue?: (value: string) => string;
-}) => {
+  ...props
+}: ToggleGroupControlProps & { mapValue?: (value: string) => string }) => {
+  const { currentStyle, property, items = [] } = props;
   const value = mapValue(toValue(currentStyle[property]?.value));
   const isAdvanced = items.some((item) => item.value === value) === false;
   return (
     <AdvancedValueTooltip isAdvanced={isAdvanced}>
       <ToggleGroupControlBase
+        {...props}
         disabled={isAdvanced}
-        style={currentStyle}
-        styleSource={getStyleSource(currentStyle[property])}
+        currentStyle={currentStyle}
         items={items}
-        value={value}
-        properties={[property]}
-        onReset={() => deleteProperty(property)}
-        onValueChange={(value) =>
-          setProperty(property)({ type: "keyword", value })
-        }
       />
     </AdvancedValueTooltip>
   );

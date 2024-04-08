@@ -24,29 +24,13 @@ import {
 } from "../../controls/toggle/toggle-control";
 import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
-const ToggleGroupControl = ({
-  property,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-  items,
-}: Omit<ControlProps, "items"> & {
-  items: ToggleGroupControlProps["items"];
-}) => {
+const ToggleGroupControl = (props: ToggleGroupControlProps) => {
+  const { property, currentStyle, items } = props;
   const value = toValue(currentStyle[property]?.value);
   const isAdvanced = items.some((item) => item.value === value) === false;
   return (
     <AdvancedValueTooltip isAdvanced={isAdvanced}>
-      <ToggleGroupControlBase
-        disabled={isAdvanced}
-        style={currentStyle}
-        items={items}
-        value={value}
-        onReset={() => deleteProperty(property)}
-        onValueChange={(value) =>
-          setProperty(property)({ type: "keyword", value })
-        }
-      />
+      <ToggleGroupControlBase {...props} disabled={isAdvanced} />
     </AdvancedValueTooltip>
   );
 };
