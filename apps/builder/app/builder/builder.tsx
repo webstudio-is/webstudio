@@ -1,6 +1,5 @@
 import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/sdk";
@@ -53,7 +52,7 @@ import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
-import { useMount } from "~/shared/hook-utils/use-mount";
+import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/project-settings";

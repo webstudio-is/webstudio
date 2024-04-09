@@ -9,7 +9,6 @@ import {
 } from "react";
 import { useStore } from "@nanostores/react";
 import { useDebouncedCallback } from "use-debounce";
-import { useUnmount } from "react-use";
 import * as bcp47 from "bcp-47";
 import slugify from "slugify";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
@@ -102,6 +101,7 @@ import { Form } from "./form";
 import type { System } from "~/builder/features/address-bar";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { useUnmount } from "~/shared/hook-utils/use-mount";
 
 const fieldDefaultValues = {
   name: "Untitled",

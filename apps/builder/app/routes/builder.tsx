@@ -1,5 +1,5 @@
 import type { ServerRuntimeMetaFunction as MetaFunction } from "@remix-run/server-runtime";
-import { Root } from "~/shared/remix";
+import { Root } from "~/shared/remix/root";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
 
 export const meta: MetaFunction = () => {

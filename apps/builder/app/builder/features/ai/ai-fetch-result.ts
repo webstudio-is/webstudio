@@ -13,6 +13,7 @@ import {
   getStyleRules,
   idAttribute,
   componentAttribute,
+  type WsEmbedTemplate,
 } from "@webstudio-is/react-sdk";
 import { Instance, createScope, findTreeInstanceIds } from "@webstudio-is/sdk";
 import { computed } from "nanostores";
@@ -30,7 +31,6 @@ import {
 import { applyOperations, patchTextInstance } from "./apply-operations";
 import { restAi } from "~/shared/router-utils";
 import untruncateJson from "untruncate-json";
-import { traverseTemplate } from "@webstudio-is/jsx-utils";
 import { RequestParamsSchema } from "~/routes/rest.ai._index";
 import {
   AiApiException,
@@ -220,11 +220,24 @@ const $availableComponentsNames = computed(
   }
 );
 
+const traverseTemplate = (
+  template: WsEmbedTemplate,
+  fn: (node: WsEmbedTemplate[number]) => void
+) => {
+  for (const node of template) {
+    fn(node);
+    if (node.type === "instance") {
+      traverseTemplate(node.children, fn);
+    }
+  }
+};
+
 // The LLM gets a list of available component names
 // therefore we need to replace the component namespace with a LLM-friendly one
 // preserving context eg. Radix.Dialog instead of just Dialog
 const parseComponentName = (name: string) =>
   name.replace("@webstudio-is/sdk-components-react-radix:", "Radix.");
+
 // When AI generation is done we need to restore components namespaces.
 const restoreComponentsNamespace = (operations: operations.WsOperations) => {
   for (const operation of operations) {

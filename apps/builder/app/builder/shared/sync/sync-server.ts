@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useBeforeUnload } from "react-use";
 import { atom } from "nanostores";
 import { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
@@ -312,10 +311,15 @@ export const useSyncServer = ({
     authPermit,
   });
 
-  useBeforeUnload(
-    () =>
-      queueStatus.get().status !== "idle" &&
-      queueStatus.get().status !== "fatal",
-    "You have unsaved changes. Are you sure you want to leave?"
-  );
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      const { status } = queueStatus.get();
+      if (status === "idle" || status === "fatal") {
+        return;
+      }
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 };

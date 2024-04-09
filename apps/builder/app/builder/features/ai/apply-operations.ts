@@ -1,6 +1,6 @@
 import { serverSyncStore } from "~/shared/sync";
 import { generateDataFromEmbedTemplate } from "@webstudio-is/react-sdk";
-import { copywriter, type operations } from "@webstudio-is/ai";
+import type { copywriter, operations } from "@webstudio-is/ai";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import {
   deleteInstanceMutable,

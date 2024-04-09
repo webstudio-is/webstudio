@@ -1,7 +1,7 @@
 import { renderToString } from "react-dom/server";
 import type { EntryContext } from "@remix-run/node";
 import { RemixServer } from "@remix-run/react";
-import { handleRequest as handleRequestBuilder } from "./shared/remix";
+import { handleRequest as handleRequestBuilder } from "./shared/remix/handle-request.server";
 import { isCanvas } from "./shared/router-utils";
 
 const handleRequestCanvas = (

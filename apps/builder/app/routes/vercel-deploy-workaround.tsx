@@ -1,6 +1,6 @@
 import type { LinksFunction } from "@remix-run/server-runtime";
 
-import { Root } from "~/shared/remix";
+import { Root } from "~/shared/remix/root";
 import interFont from "@fontsource-variable/inter/index.css";
 import manropeVariableFont from "@fontsource-variable/manrope/index.css";
 import robotoMonoFont from "@fontsource/roboto-mono/index.css";

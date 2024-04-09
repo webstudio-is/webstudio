@@ -1,4 +1,3 @@
-import { z } from "zod";
 import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
 import { prompt as promptSystemTemplate } from "./__generated__/template-generator.system.prompt";
@@ -10,6 +9,7 @@ import {
 } from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
 import { getCode } from "../../utils/get-code";
+import { type Context, type Response, name } from "./schema";
 
 /**
  * Template Generator Chain.
@@ -17,17 +17,7 @@ import { getCode } from "../../utils/get-code";
  * Given a UI section or widget description, this chain generates a Webstudio Embed Template representing the UI.
  */
 
-export const name = "template-generator";
-
-export const ContextSchema = z.object({
-  // The prompt provides the original user request.
-  prompt: z.string(),
-  components: z.array(z.string()),
-});
-export type Context = z.infer<typeof ContextSchema>;
-
-export const ResponseSchema = WsEmbedTemplate;
-export type Response = z.infer<typeof ResponseSchema>;
+export { name };
 
 export const createChain = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>,
