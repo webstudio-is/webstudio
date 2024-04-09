@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
   Box,
   EnhancedTooltip,
   Flex,
   Grid,
   SmallToggleButton,
-  ToggleButton,
 } from "@webstudio-is/design-system";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
@@ -24,7 +23,7 @@ import {
 import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
-import { PropertyName, PropertyTooltip } from "../../shared/property-name";
+import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
@@ -36,6 +35,7 @@ import {
 import { theme } from "@webstudio-is/design-system";
 import { TooltipContent } from "../../../style-panel/shared/property-name";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { ToggleControl } from "../../controls/toggle/toggle-control";
 
 const GapLinked = ({
   isLinked,
@@ -307,53 +307,6 @@ const mapNormalTo = (
   return style;
 };
 
-const Toggle = ({
-  property,
-  iconOn,
-  iconOff,
-  valueOn,
-  valueOff,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-}: {
-  property: StyleProperty;
-  iconOn: ReactNode;
-  iconOff: ReactNode;
-  valueOn: string;
-  valueOff: string;
-  currentStyle: SectionProps["currentStyle"];
-  setProperty: SectionProps["setProperty"];
-  deleteProperty: SectionProps["deleteProperty"];
-}) => {
-  const { label } = styleConfigByName(property);
-  const styleValue = currentStyle[property]?.value;
-  const isPressed =
-    styleValue?.type === "keyword" && styleValue?.value === valueOn;
-
-  return (
-    <PropertyTooltip
-      title={label}
-      properties={[property]}
-      style={currentStyle}
-      onReset={() => deleteProperty(property)}
-    >
-      <ToggleButton
-        pressed={isPressed}
-        onPressedChange={(isPressed) => {
-          setProperty(property)({
-            type: "keyword",
-            value: isPressed ? valueOn : valueOff,
-          });
-        }}
-        variant={getStyleSource(currentStyle[property])}
-      >
-        {isPressed ? iconOn : iconOff}
-      </ToggleButton>
-    </PropertyTooltip>
-  );
-};
-
 const LayoutSectionFlex = ({
   currentStyle,
   setProperty,
@@ -394,12 +347,21 @@ const LayoutSectionFlex = ({
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
-            <Toggle
+            <ToggleControl
               property="flexWrap"
-              iconOn={<WrapIcon />}
-              iconOff={<NoWrapIcon />}
-              valueOn="wrap"
-              valueOff="nowrap"
+              items={[
+                {
+                  isPressed: true,
+                  Icon: WrapIcon,
+                  value: "wrap",
+                },
+                {
+                  isPressed: false,
+                  Icon: NoWrapIcon,
+                  value: "nowrap",
+                },
+              ]}
+              DefaultIcon={WrapIcon}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
