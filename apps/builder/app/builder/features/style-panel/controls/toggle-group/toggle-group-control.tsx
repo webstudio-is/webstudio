@@ -8,7 +8,7 @@ import { useState } from "react";
 import { PropertyTooltip } from "../../shared/property-name";
 import { toValue } from "@webstudio-is/css-engine";
 import type { ControlProps } from "..";
-import { AdvancedValueTooltip } from "../../sections/shared/advanced-value-tooltip";
+import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 
 export type ToggleGroupControlProps = Omit<ControlProps, "items"> & {
   value?: string;

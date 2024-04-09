@@ -3,10 +3,10 @@ import { Box, Flex, Tooltip, rawTheme } from "@webstudio-is/design-system";
 import { AlertIcon } from "@webstudio-is/icons";
 import { declarationDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { TooltipContent } from "../../shared/property-name";
-import { toKebabCase, toPascalCase } from "../../shared/keyword-utils";
-import type { StyleInfo } from "../../shared/style-info";
-import type { DeleteProperty } from "../../shared/use-style-data";
+import { TooltipContent } from "../shared/property-name";
+import { toKebabCase, toPascalCase } from "../shared/keyword-utils";
+import type { StyleInfo } from "../shared/style-info";
+import type { DeleteProperty } from "../shared/use-style-data";
 
 // Visual controls can't represent all CSS values and in that case we show it in the Advanced section.
 export const AdvancedValueTooltip = ({

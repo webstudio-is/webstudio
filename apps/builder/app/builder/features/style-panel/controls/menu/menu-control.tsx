@@ -16,7 +16,7 @@ import type { ControlProps } from "../types";
 import { iconConfigs, styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 import { PropertyTooltip } from "../../shared/property-name";
-import { AdvancedValueTooltip } from "../../sections/shared/advanced-value-tooltip";
+import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 
 export const MenuControl = ({
   currentStyle,

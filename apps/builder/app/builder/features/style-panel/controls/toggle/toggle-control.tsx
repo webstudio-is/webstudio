@@ -4,7 +4,7 @@ import { PropertyTooltip } from "../../shared/property-name";
 import type { ControlProps } from "../types";
 import { getStyleSource } from "../../shared/style-info";
 import type { IconComponent } from "@webstudio-is/icons";
-import { AdvancedValueTooltip } from "../../sections/shared/advanced-value-tooltip";
+import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 
 type Item = {
   isPressed: boolean;

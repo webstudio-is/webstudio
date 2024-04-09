@@ -10,7 +10,7 @@ import {
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
 import type { ControlProps } from "../types";
-import { AdvancedValueTooltip } from "../../sections/shared/advanced-value-tooltip";
+import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 
 const parseColor = (color?: StyleValue): RgbValue => {
   const colordValue = colord(toValue(color));
