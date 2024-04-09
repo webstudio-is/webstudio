@@ -16,7 +16,6 @@
   },
   "devDependencies": {
     "@webstudio-is/jest-config": "workspace:^",
-    "@webstudio-is/scripts": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "fast-glob": "^3.2.12",
     "type-fest": "^4.3.1",

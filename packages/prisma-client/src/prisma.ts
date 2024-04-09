@@ -1,5 +1,25 @@
 import { PrismaClient, Prisma } from "./__generated__";
-const { PrismaClientKnownRequestError, Decimal } = Prisma;
+
+export type {
+  User,
+  Build,
+  Project,
+  Asset,
+  File,
+  DashboardProject,
+  AuthorizationToken,
+  DomainStatus,
+  Domain,
+  ProjectWithDomain,
+  LatestBuildPerProjectDomain,
+  LatestBuildPerProject,
+  PublishStatus,
+  Product,
+  $Enums,
+} from "./__generated__";
+
+export { Prisma };
+export const { PrismaClientKnownRequestError, Decimal } = Prisma;
 
 declare global {
   // allow global `var` declarations
@@ -65,5 +85,3 @@ prisma.$on("query", (e) => {
 if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
-
-export { Prisma, PrismaClientKnownRequestError, Decimal };

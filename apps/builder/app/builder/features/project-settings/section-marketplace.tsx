@@ -18,9 +18,13 @@ import {
   Box,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
-import { $assets, $marketplaceProduct, $project } from "~/shared/nano-states";
-import env from "~/shared/env";
-import { Image, createImageLoader } from "@webstudio-is/image";
+import {
+  $assets,
+  $imageLoader,
+  $marketplaceProduct,
+  $project,
+} from "~/shared/nano-states";
+import { Image } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
 import { useState } from "react";
 import {
@@ -45,9 +49,6 @@ const thumbnailStyle = css({
       },
     },
   },
-});
-const imageLoader = createImageLoader({
-  imageBaseUrl: env.IMAGE_BASE_URL,
 });
 
 const defaultMarketplaceProduct: Partial<MarketplaceProduct> = {
@@ -115,6 +116,7 @@ const useMarketplaceApprovalStatus = () => {
 
 export const SectionMarketplace = () => {
   const project = useStore($project);
+  const imageLoader = useStore($imageLoader);
   const approval = useMarketplaceApprovalStatus();
   const [data, setData] = useState(() => $marketplaceProduct.get());
   const ids = useIds([

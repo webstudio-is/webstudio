@@ -1,18 +1,27 @@
-import { z } from "zod";
 import type { Model as BaseModel, ModelMessage, Chain } from "../../types";
 import { formatPrompt } from "../../utils/format-prompt";
 import { prompt as promptSystemTemplate } from "./__generated__/operations.system.prompt";
 import { prompt as promptUserTemplate } from "./__generated__/operations.user.prompt";
-
-import {
-  AiOperationsSchema,
-  aiToWs,
-  WsOperationsSchema,
-  type WsOperations,
-} from "./shared";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import { postProcessTemplate } from "../../utils/jsx-to-template.server";
 import { createErrorResponse } from "../../utils/create-error-response";
+import {
+  type Context,
+  type Response,
+  type AiOperations,
+  type WsOperations,
+  AiOperationsSchema,
+  name,
+} from "./schema";
+import * as editStyles from "./edit-styles.server";
+import * as generateTemplatePrompt from "./generate-template-prompt.server";
+// import * as generateInsertTemplate from "./generate-insert-template.server";
+import * as deleteInstance from "./delete-instance.server";
+
+export * as editStyles from "./edit-styles.server";
+export * as generateTemplatePrompt from "./generate-template-prompt.server";
+export * as generateInsertTemplate from "./generate-insert-template.server";
+export * as deleteInstance from "./delete-instance.server";
 
 /**
  * Operations Chain.
@@ -21,17 +30,28 @@ import { createErrorResponse } from "../../utils/create-error-response";
  * it generates a series of edit operations to fulfill an edit request coming from the user.
  */
 
-export const name = "operations";
+export { name };
 
-export const ContextSchema = z.object({
-  prompt: z.string().describe("Edit request from the user"),
-  components: z.array(z.string()).describe("Available Webstudio components"),
-  jsx: z.string().describe("Input JSX to edit"),
-});
-export type Context = z.infer<typeof ContextSchema>;
-
-export const ResponseSchema = WsOperationsSchema;
-export type Response = z.infer<typeof ResponseSchema>;
+const aiToWs = (aiOperations: AiOperations) => {
+  return aiOperations
+    .map((aiOperation) => {
+      if (aiOperation.operation === "editStylesWithTailwindCSS") {
+        return editStyles.aiOperationToWs(aiOperation);
+      }
+      if (aiOperation.operation === "generateTemplatePrompt") {
+        return generateTemplatePrompt.aiOperationToWs(aiOperation);
+      }
+      // if (aiOperation.operation === "generateInstanceWithTailwindStyles") {
+      //   return generateInsertTemplate.aiOperationToWs(aiOperation);
+      // }
+      if (aiOperation.operation === "deleteInstance") {
+        return deleteInstance.aiOperationToWs(aiOperation);
+      }
+    })
+    .filter(function <T>(value: T): value is NonNullable<T> {
+      return value !== undefined;
+    });
+};
 
 export const createChain = <ModelMessageFormat>(): Chain<
   BaseModel<ModelMessageFormat>,

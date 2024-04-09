@@ -13,9 +13,8 @@ import {
   css,
 } from "@webstudio-is/design-system";
 import { ImageControl } from "./image-control";
-import { $assets, $pages } from "~/shared/nano-states";
-import env from "~/shared/env";
-import { Image, createImageLoader } from "@webstudio-is/image";
+import { $assets, $imageLoader, $pages } from "~/shared/nano-states";
+import { Image } from "@webstudio-is/image";
 import { useIds } from "~/shared/form-utils";
 import type { ProjectMeta, CompilerSettings } from "@webstudio-is/sdk";
 import { useState } from "react";
@@ -45,10 +44,7 @@ export const SectionGeneral = () => {
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
-
-  const imageLoader = createImageLoader({
-    imageBaseUrl: env.IMAGE_BASE_URL,
-  });
+  const imageLoader = useStore($imageLoader);
 
   const handleSave = <Setting extends keyof ProjectMeta>(setting: Setting) => {
     return (value: ProjectMeta[Setting]) => {

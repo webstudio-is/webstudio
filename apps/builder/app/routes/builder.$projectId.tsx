@@ -95,6 +95,7 @@ export const loader = async ({
     return {
       project,
       publisherHost,
+      imageBaseUrl: env.IMAGE_BASE_URL,
       build: devBuild,
       assets: assets.map((asset) => [asset.id, asset]),
       authToken,

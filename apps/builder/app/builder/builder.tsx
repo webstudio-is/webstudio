@@ -1,6 +1,5 @@
 import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/sdk";
@@ -8,6 +7,7 @@ import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
 import {
@@ -45,13 +45,14 @@ import {
   $marketplaceProduct,
   $authTokenPermissions,
   $publisherHost,
+  $imageLoader,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
-import { useMount } from "~/shared/hook-utils/use-mount";
+import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
 import { ProjectSettings } from "./features/project-settings";
@@ -227,6 +228,7 @@ const NavigatorPanel = ({
 export type BuilderProps = {
   project: Project;
   publisherHost: string;
+  imageBaseUrl: string;
   build: Build;
   assets: [Asset["id"], Asset][];
   authToken?: string;
@@ -238,6 +240,7 @@ export type BuilderProps = {
 export const Builder = ({
   project,
   publisherHost,
+  imageBaseUrl,
   build,
   assets,
   authToken,
@@ -249,6 +252,7 @@ export const Builder = ({
     // additional data stores
     $project.set(project);
     $publisherHost.set(publisherHost);
+    $imageLoader.set(createImageLoader({ imageBaseUrl }));
     $authPermit.set(authPermit);
     $authToken.set(authToken);
     $userPlanFeatures.set(userPlanFeatures);

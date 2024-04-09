@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { colord, extend, type RgbaColor } from "colord";
 import namesPlugin from "colord/plugins/names";
-import { type ColorResult, type RGBColor, SketchPicker } from "react-color";
+import { useDebouncedCallback } from "use-debounce";
+import { RgbaColorPicker } from "react-colorful";
 import type {
   InvalidValue,
   KeywordValue,
@@ -13,8 +14,9 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  css,
   useDisableCanvasPointerEvents,
+  css,
+  InputField,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
@@ -26,25 +28,14 @@ import { ColorThumb } from "./color-thumb";
 // To support color names
 extend([namesPlugin]);
 
-const pickerStyle = css({
-  padding: theme.spacing[5],
-  background: theme.colors.panel,
-  // @todo this lib doesn't have another way to define styles for inputs
-  // we should either submit a PR or replace it
-  "& input": {
-    color: theme.colors.hiContrast,
-    background: theme.colors.loContrast,
+const colorfulStyles = css({
+  ".react-colorful__pointer": {
+    width: 20,
+    height: 20,
   },
 });
 
-const defaultPickerStyles = {
-  default: {
-    // Workaround to allow overrides using className
-    picker: { padding: "", background: "" },
-  },
-};
-
-const colorResultToRgbValue = (rgb: RgbaColor | RGBColor): RgbValue => {
+const colorResultToRgbValue = (rgb: RgbaColor): RgbValue => {
   return {
     type: "rgb",
     r: rgb.r,
@@ -155,16 +146,14 @@ export const ColorPicker = ({
    * By default, the color can be transparent, but if the user chooses a color from the picker,
    * we must set alpha = 1 otherwise all selected colors will be transparent.
    */
-  const fixColor = (color: ColorResult) => {
-    const newColor = { ...color.rgb };
-
+  const fixColor = (color: RgbaColor) => {
     if (
       currentValue.type === "keyword" &&
       currentValue.value === "transparent"
     ) {
-      newColor.a = 1;
+      color = { ...color, a: 1 };
     }
-    return colorResultToRgbValue(newColor);
+    return colorResultToRgbValue(color);
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -181,6 +170,14 @@ export const ColorPicker = ({
     enableCanvasPointerEvents();
   };
 
+  const parsedColor = colord(rgbValue);
+  const currentHex = parsedColor.toHex();
+
+  const onComplete = useDebouncedCallback(
+    (value: RgbValue) => onChangeComplete({ value }),
+    500
+  );
+
   const prefix = (
     <Popover modal open={displayColorPicker} onOpenChange={handleOpenChange}>
       <PopoverTrigger
@@ -190,24 +187,34 @@ export const ColorPicker = ({
       >
         <ColorThumb color={rgbValue} css={{ margin: theme.spacing[3] }} />
       </PopoverTrigger>
-
-      <PopoverContent>
-        <SketchPicker
+      <PopoverContent
+        css={{
+          display: "grid",
+          padding: theme.spacing[5],
+          gap: theme.spacing[5],
+        }}
+      >
+        <RgbaColorPicker
+          className={colorfulStyles.toString()}
           color={rgbValue}
-          onChange={(color: ColorResult, event) => {
-            const newColor = fixColor(color);
-            onChange(newColor);
+          onChange={(newValue) => {
+            const color = fixColor(newValue);
+            onChange(color);
+            // debounced
+            onComplete(color);
           }}
-          onChangeComplete={(color: ColorResult) => {
-            const newColor = fixColor(color);
-            onChangeComplete({
-              value: newColor,
-            });
+        />
+        <InputField
+          key={currentHex}
+          defaultValue={currentHex.slice(1)}
+          onChange={(event) => {
+            const value = event.target.value.trim();
+            const hex = value.startsWith("#") ? value : `#${value}`;
+            const color = colord(hex);
+            if (color.isValid()) {
+              onComplete(colorResultToRgbValue(color.toRgb()));
+            }
           }}
-          // @todo to remove both when we have preset colors
-          presetColors={[]}
-          className={pickerStyle()}
-          styles={defaultPickerStyles}
         />
       </PopoverContent>
     </Popover>
