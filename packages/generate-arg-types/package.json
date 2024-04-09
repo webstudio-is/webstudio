@@ -6,7 +6,6 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "checks": "pnpm typecheck"
   },
@@ -22,10 +21,6 @@
     "tsx": "^4.7.2",
     "typescript": "5.2.2"
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "bin": {
     "generate-arg-types": "./src/cli.ts"
   },

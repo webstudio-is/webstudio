@@ -8,11 +8,8 @@
   "scripts": {
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "build:mdn-data": "tsx ./bin/mdn-data.ts ./src/__generated__ &&  prettier --write \"./src/__generated__/\" \"../css-engine/src/__generated__/\"",
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts",
-    "dts": "tsc --project tsconfig.dts.json",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {
@@ -31,14 +28,8 @@
     "zod": "^3.19.1"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    "webstudio": "./src/index.ts"
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "private": true,
   "sideEffects": false,
