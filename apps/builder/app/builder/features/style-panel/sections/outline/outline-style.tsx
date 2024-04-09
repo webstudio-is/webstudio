@@ -1,11 +1,5 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import {
-  Grid,
-  theme,
-  ToggleGroup,
-  ToggleGroupButton,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Grid, theme, Box } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
@@ -13,9 +7,7 @@ import {
   SmallXIcon,
 } from "@webstudio-is/icons";
 import type { SectionProps } from "../shared/section";
-import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
-import { toValue } from "@webstudio-is/css-engine";
 import { declarationDescriptions } from "@webstudio-is/css-data";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 
@@ -70,7 +62,9 @@ export const OutlineStyle = (
         label={"Style"}
         onReset={() => deleteProperty(property)}
       />
-      <ToggleGroupControl {...props} items={items} property={property} />
+      <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
+        <ToggleGroupControl {...props} items={items} property={property} />{" "}
+      </Box>
     </Grid>
   );
 };

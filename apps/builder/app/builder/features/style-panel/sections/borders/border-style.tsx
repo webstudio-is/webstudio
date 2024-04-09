@@ -1,5 +1,5 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { Grid } from "@webstudio-is/design-system";
+import { Box, Grid } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
@@ -90,14 +90,16 @@ export const BorderStyle = (
         description={propertyDescriptions.borderBlockStyle}
         onReset={handleDelete}
       />
-      <ToggleGroupControl
-        {...props}
-        items={items}
-        property={firstPropertyName}
-        deleteProperty={handleDelete}
-        setProperty={() => setBorderProperties}
-        isAdvanced={isAdvancedValue(properties, props.currentStyle)}
-      />
+      <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
+        <ToggleGroupControl
+          {...props}
+          items={items}
+          property={firstPropertyName}
+          deleteProperty={handleDelete}
+          setProperty={() => setBorderProperties}
+          isAdvanced={isAdvancedValue(properties, props.currentStyle)}
+        />
+      </Box>
     </Grid>
   );
 };
