@@ -1,7 +1,8 @@
 {
-  "include": ["env.d.ts", "**/*.ts", "**/*.tsx", "**/*.mjs"],
+  "include": ["**/*.ts", "**/*.tsx", "**/*.mjs"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "types": ["@remix-run/node", "vite/client"],
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",

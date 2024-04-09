@@ -6,10 +6,7 @@
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
-    "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
@@ -77,14 +74,8 @@
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "import": "./lib/index.js",
-    "types": "./lib/types/index.d.ts"
+    "webstudio": "./src/index.ts"
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "private": true,
   "sideEffects": false

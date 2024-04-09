@@ -2,6 +2,7 @@
   "extends": "@webstudio-is/tsconfig/base.json",
   "include": ["**/*.ts", "**/*.tsx", "**/*.mjs"],
   "compilerOptions": {
+    "types": ["vite/client"],
     "module": "esnext",
     "allowJs": true,
     "checkJs": true,
