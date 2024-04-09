@@ -240,8 +240,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0
       date-fns:
-        specifier: ^2.30.0
-        version: 2.30.0
+        specifier: ^3.6.0
+        version: 3.6.0
       detect-font:
         specifier: ^0.1.5
         version: 0.1.5
@@ -420,6 +420,9 @@ importers:
       typescript:
         specifier: 5.2.2
         version: 5.2.2
+      vite:
+        specifier: ^5.2.8
+        version: 5.2.8
 
   fixtures/webstudio-custom-template:
     dependencies:
@@ -9401,11 +9404,8 @@ packages:
       whatwg-url: 11.0.0
     dev: true
 
-  /date-fns@2.30.0:
-    resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
-    engines: {node: '>=0.11'}
-    dependencies:
-      '@babel/runtime': 7.22.3
+  /date-fns@3.6.0:
+    resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
     dev: false
 
   /debug@2.6.9:

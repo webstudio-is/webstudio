@@ -12,7 +12,7 @@ import {
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { useMemo } from "react";
-import * as Prism from "prismjs";
+import Prism from "prismjs";
 import type { Style, StyleProperty } from "@webstudio-is/css-engine";
 import { captureError } from "@webstudio-is/error-utils";
 
