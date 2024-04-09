@@ -3,13 +3,14 @@
   "version": "0.144.0",
   "private": true,
   "description": "Webstudio Builder UI as a service",
+  "type": "module",
   "scripts": {
     "generate-metas": "pnpm tsx scripts/generate-metas.mts",
     "prebuild": "which remix",
-    "build": "pnpm generate-metas && remix build",
-    "start": "remix-serve build/index.js",
-    "start-local": "NODE_OPTIONS='-r dotenv/config' remix-serve build",
-    "dev": "pnpm generate-metas && remix dev",
+    "build": "pnpm generate-metas && remix vite:build",
+    "start": "remix-serve build/server/index.js",
+    "start-local": "NODE_OPTIONS='-r dotenv/config' remix-serve build/server/index.js",
+    "dev": "pnpm generate-metas && remix vite:dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
@@ -79,7 +80,7 @@
     "change-case": "^5.0.2",
     "colord": "^2.9.3",
     "cookie": "^0.6.0",
-    "date-fns": "^2.30.0",
+    "date-fns": "^3.6.0",
     "detect-font": "^0.1.5",
     "downshift": "^6.1.7",
     "fast-deep-equal": "^3.1.3",
@@ -140,7 +141,8 @@
     "html-tags": "^3.3.1",
     "react-test-renderer": "^18.2.0",
     "type-fest": "^4.3.1",
-    "typescript": "5.2.2"
+    "typescript": "5.2.2",
+    "vite": "^5.2.8"
   },
   "sideEffects": false,
   "license": "AGPL-3.0-or-later"

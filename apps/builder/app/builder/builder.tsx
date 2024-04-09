@@ -17,9 +17,9 @@ import {
 } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
-import builderStyles from "./builder.css";
+import builderStyles from "./builder.css?url";
 // eslint-disable-next-line import/no-internal-modules
-import prismStyles from "prismjs/themes/prism-solarizedlight.min.css";
+import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { Footer } from "./features/footer";
 import {
   CanvasIframe,
