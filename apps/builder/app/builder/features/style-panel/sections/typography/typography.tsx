@@ -6,7 +6,7 @@ import {
   IconButton,
   rawTheme,
 } from "@webstudio-is/design-system";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
@@ -170,13 +170,20 @@ export const TypographySectionSizing = (props: SectionProps) => {
 };
 
 export const TypographySectionAdvanced = (props: SectionProps) => {
+  const { currentStyle } = props;
+  const textAlignValue = toValue(currentStyle.textAlign?.value);
   return (
     <Grid gap="2" columns="2" align="end">
       <ToggleGroupControl
         {...props}
         property="textAlign"
-        mapValue={(value: string) =>
-          value === "left" ? "start" : value === "right" ? "end" : value
+        value={
+          // Convert to logical props
+          textAlignValue === "left"
+            ? "start"
+            : textAlignValue === "right"
+            ? "end"
+            : textAlignValue
         }
         items={[
           {
