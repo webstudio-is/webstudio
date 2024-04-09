@@ -10,6 +10,7 @@ import {
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
 import type { ControlProps } from "../types";
+import { AdvancedValueTooltip } from "../../sections/shared/advanced-value-tooltip";
 
 const parseColor = (color?: StyleValue): RgbValue => {
   const colordValue = colord(toValue(color));
@@ -66,44 +67,52 @@ export const ColorControl = ({
 
   return (
     <Flex align="center" gap="1">
-      <ColorPicker
-        disabled={isAdvanced}
-        currentColor={currentColor}
+      <AdvancedValueTooltip
+        isAdvanced={isAdvanced}
         property={property}
-        value={value}
-        styleSource={getStyleSource(styleInfo)}
-        keywords={(items ?? defaultItems).map((item) => ({
-          type: "keyword",
-          value: item.name,
-        }))}
-        intermediateValue={intermediateValue}
-        onChange={(styleValue) => {
-          setIntermediateValue(styleValue);
+        value={toValue(currentColor)}
+        currentStyle={currentStyle}
+        deleteProperty={deleteProperty}
+      >
+        <ColorPicker
+          disabled={isAdvanced}
+          currentColor={currentColor}
+          property={property}
+          value={value}
+          styleSource={getStyleSource(styleInfo)}
+          keywords={(items ?? defaultItems).map((item) => ({
+            type: "keyword",
+            value: item.name,
+          }))}
+          intermediateValue={intermediateValue}
+          onChange={(styleValue) => {
+            setIntermediateValue(styleValue);
 
-          if (styleValue === undefined) {
-            deleteProperty(property, { isEphemeral: true });
-            return;
-          }
+            if (styleValue === undefined) {
+              deleteProperty(property, { isEphemeral: true });
+              return;
+            }
 
-          if (styleValue.type !== "intermediate") {
-            setValue(styleValue, { isEphemeral: true });
-          }
-        }}
-        onHighlight={(styleValue) => {
-          if (styleValue !== undefined) {
-            setValue(styleValue, { isEphemeral: true });
-          } else {
+            if (styleValue.type !== "intermediate") {
+              setValue(styleValue, { isEphemeral: true });
+            }
+          }}
+          onHighlight={(styleValue) => {
+            if (styleValue !== undefined) {
+              setValue(styleValue, { isEphemeral: true });
+            } else {
+              deleteProperty(property, { isEphemeral: true });
+            }
+          }}
+          onChangeComplete={({ value }) => {
+            setValue(value);
+            setIntermediateValue(undefined);
+          }}
+          onAbort={() => {
             deleteProperty(property, { isEphemeral: true });
-          }
-        }}
-        onChangeComplete={({ value }) => {
-          setValue(value);
-          setIntermediateValue(undefined);
-        }}
-        onAbort={() => {
-          deleteProperty(property, { isEphemeral: true });
-        }}
-      />
+          }}
+        />
+      </AdvancedValueTooltip>
     </Flex>
   );
 };
