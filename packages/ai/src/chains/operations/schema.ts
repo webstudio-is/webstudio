@@ -1,9 +1,48 @@
 import { z } from "zod";
-
 import * as editStyles from "./edit-styles";
 import * as generateTemplatePrompt from "./generate-template-prompt";
 import * as generateInsertTemplate from "./generate-insert-template";
 import * as deleteInstance from "./delete-instance";
+
+export {
+  name as editStylesName,
+  aiOperation as editStylesAiOperation,
+  wsOperation as editStylesWsOperation,
+} from "./edit-styles";
+
+export {
+  name as generateTemplatePromptName,
+  aiOperation as generateTemplatePromptAiOperation,
+  wsOperation as generateTemplatePromptWsOperation,
+} from "./generate-template-prompt";
+
+export {
+  name as generateInsertTemplateName,
+  aiOperation as generateInsertTemplateAiOperation,
+  wsOperation as generateInsertTemplateWsOperation,
+} from "./generate-insert-template";
+
+export {
+  name as deleteInstanceName,
+  aiOperation as deleteInstanceAiOperation,
+  wsOperation as deleteInstanceWsOperation,
+} from "./delete-instance";
+
+/**
+ * Operations Chain.
+ *
+ * Given a description, available components and an existing instance as JSX and CSS,
+ * it generates a series of edit operations to fulfill an edit request coming from the user.
+ */
+
+export const name = "operations";
+
+export const ContextSchema = z.object({
+  prompt: z.string().describe("Edit request from the user"),
+  components: z.array(z.string()).describe("Available Webstudio components"),
+  jsx: z.string().describe("Input JSX to edit"),
+});
+export type Context = z.infer<typeof ContextSchema>;
 
 // AiOperations are supported LLM operations.
 // A valid completion is then converted to WsOperations
@@ -25,27 +64,6 @@ export const AiOperationsSchema = z.array(
 );
 export type AiOperations = z.infer<typeof AiOperationsSchema>;
 
-export const aiToWs = (aiOperations: AiOperations) => {
-  return aiOperations
-    .map((aiOperation) => {
-      if (aiOperation.operation === "editStylesWithTailwindCSS") {
-        return editStyles.aiOperationToWs(aiOperation);
-      }
-      if (aiOperation.operation === "generateTemplatePrompt") {
-        return generateTemplatePrompt.aiOperationToWs(aiOperation);
-      }
-      // if (aiOperation.operation === "generateInstanceWithTailwindStyles") {
-      //   return generateInsertTemplate.aiOperationToWs(aiOperation);
-      // }
-      if (aiOperation.operation === "deleteInstance") {
-        return deleteInstance.aiOperationToWs(aiOperation);
-      }
-    })
-    .filter(function <T>(value: T): value is NonNullable<T> {
-      return value !== undefined;
-    });
-};
-
 export const WsOperationsSchema = z.array(
   z.discriminatedUnion("operation", [
     editStyles.wsOperation,
@@ -55,3 +73,6 @@ export const WsOperationsSchema = z.array(
   ])
 );
 export type WsOperations = z.infer<typeof WsOperationsSchema>;
+
+export const ResponseSchema = WsOperationsSchema;
+export type Response = z.infer<typeof ResponseSchema>;

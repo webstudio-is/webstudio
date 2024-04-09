@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { EmbedTemplateStyleDecl, idAttribute } from "@webstudio-is/react-sdk";
-import { parseTailwindToWebstudio } from "@webstudio-is/css-data";
 
 export const name = "edit-styles";
 
@@ -25,17 +24,3 @@ export const wsOperation = z.object({
   styles: z.array(EmbedTemplateStyleDecl),
 });
 export type wsOperation = z.infer<typeof wsOperation>;
-
-export const aiOperationToWs = async (
-  operation: aiOperation
-): Promise<wsOperation> => {
-  if (operation.className === "") {
-    throw new Error(`Operation ${operation.operation} className is empty`);
-  }
-  const styles = await parseTailwindToWebstudio(operation.className);
-  return {
-    operation: "applyStyles",
-    instanceIds: operation.wsIds,
-    styles: styles,
-  };
-};
