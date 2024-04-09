@@ -1,5 +1,4 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { toValue } from "@webstudio-is/css-engine";
 import { Grid, Separator, styled } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { SectionProps } from "../shared/section";
@@ -18,17 +17,7 @@ import {
 } from "@webstudio-is/icons";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { theme } from "@webstudio-is/design-system";
-import {
-  ToggleGroupControl as ToggleGroupControlBase,
-  type ToggleGroupControlProps,
-} from "../../controls/toggle-group/toggle-group-control";
-
-const ToggleGroupControl = (props: ToggleGroupControlProps) => {
-  const { property, currentStyle, items } = props;
-  const value = toValue(currentStyle[property]?.value);
-  const isAdvanced = items.some((item) => item.value === value) === false;
-  return <ToggleGroupControlBase {...props} isAdvanced={isAdvanced} />;
-};
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 
 const SizeProperty = ({
   property,

@@ -43,6 +43,9 @@ export const ToggleGroupControl = ({
     Array.from(items, () => false)
   );
 
+  isAdvanced =
+    isAdvanced ?? items.some((item) => item.value === currentValue) === false;
+
   return (
     <AdvancedValueTooltip
       isAdvanced={isAdvanced}

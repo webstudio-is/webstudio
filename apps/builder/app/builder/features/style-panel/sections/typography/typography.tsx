@@ -6,7 +6,6 @@ import {
   IconButton,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { toValue } from "@webstudio-is/css-engine";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
@@ -35,10 +34,7 @@ import {
   TextUnderlineIcon,
   TextUppercaseIcon,
 } from "@webstudio-is/icons";
-import {
-  ToggleGroupControl as ToggleGroupControlBase,
-  type ToggleGroupControlProps,
-} from "../../controls/toggle-group/toggle-group-control";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
@@ -120,16 +116,6 @@ export const TypographySectionFont = (props: SectionProps) => {
       />
     </Grid>
   );
-};
-
-const ToggleGroupControl = ({
-  mapValue = (value) => value,
-  ...props
-}: ToggleGroupControlProps & { mapValue?: (value: string) => string }) => {
-  const { currentStyle, property, items = [] } = props;
-  const value = mapValue(toValue(currentStyle[property]?.value));
-  const isAdvanced = items.some((item) => item.value === value) === false;
-  return <ToggleGroupControlBase {...props} isAdvanced={isAdvanced} />;
 };
 
 export const TypographySectionSizing = (props: SectionProps) => {
