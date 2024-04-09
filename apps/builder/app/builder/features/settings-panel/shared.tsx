@@ -30,7 +30,6 @@ import {
   theme,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 import {
   $dataSourceVariables,
   $dataSources,
@@ -69,9 +68,6 @@ export type ControlProps<Control> = {
   onDelete: () => void;
   autoFocus?: boolean;
 };
-
-export const getLabel = (meta: { label?: string }, fallback: string) =>
-  meta.label || humanizeString(fallback);
 
 export const RemovePropButton = (props: { onClick: () => void }) => (
   <SmallIconButton icon={<SubtractIcon />} variant="destructive" {...props} />

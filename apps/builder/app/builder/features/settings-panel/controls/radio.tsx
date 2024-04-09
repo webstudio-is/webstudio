@@ -8,7 +8,6 @@ import {
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  getLabel,
   VerticalLayout,
   Label,
   $selectedInstanceScope,
@@ -33,7 +32,7 @@ export const RadioControl = ({
       : [value, ...meta.options];
 
   const id = useId();
-  const label = getLabel(meta, propName);
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
