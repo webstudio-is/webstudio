@@ -138,7 +138,7 @@ const UnitSelect = ({
           </SelectScrollUpButton>
           <SelectViewport>
             {options.map(({ id, label }) => (
-              <SelectItem key={id} value={id}>
+              <SelectItem key={id} value={id} text="sentence">
                 {label}
               </SelectItem>
             ))}
