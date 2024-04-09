@@ -200,9 +200,6 @@ importers:
       '@webstudio-is/image':
         specifier: workspace:*
         version: link:../../packages/image
-      '@webstudio-is/jsx-utils':
-        specifier: workspace:*
-        version: link:../../packages/jsx-utils
       '@webstudio-is/prisma-client':
         specifier: workspace:*
         version: link:../../packages/prisma-client
