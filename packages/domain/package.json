@@ -7,10 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
-    "dts": "tsc --project tsconfig.dts.json"
+    "checks": "pnpm typecheck"
   },
   "dependencies": {
     "@webstudio-is/prisma-client": "workspace:*",
@@ -25,20 +22,12 @@
   },
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts",
-      "import": "./lib/index.js",
-      "types": "./lib/types/index.d.ts"
+      "webstudio": "./src/index.ts"
     },
     "./index.server": {
-      "webstudio": "./src/index.server.ts",
-      "import": "./lib/index.server.js",
-      "types": "./lib/types/index.server.d.ts"
+      "webstudio": "./src/index.server.ts"
     }
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "private": true,
   "sideEffects": false

@@ -7,10 +7,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
-    "dts": "tsc --project tsconfig.dts.json"
+    "checks": "pnpm typecheck"
   },
   "dependencies": {
     "@trpc/server": "^10.38.1",
@@ -30,20 +27,12 @@
   },
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts",
-      "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js"
+      "webstudio": "./src/index.ts"
     },
     "./index.server": {
-      "webstudio": "./src/index.server.ts",
-      "types": "./lib/types/index.server.d.ts",
-      "import": "./lib/index.server.js"
+      "webstudio": "./src/index.server.ts"
     }
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "private": true,
   "sideEffects": false

@@ -10,10 +10,7 @@
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --passWithNoTests",
     "checks": "pnpm typecheck && pnpm test",
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && pnpm build:prompts && esbuild 'src/**/*.ts' --outdir=lib",
-    "build:prompts": "tsx ./bin/build-prompts.ts \"./src/chains/**/*.prompt.md\"",
-    "dts": "tsc --project tsconfig.dts.json"
+    "build:prompts": "tsx ./bin/build-prompts.ts \"./src/chains/**/*.prompt.md\""
   },
   "devDependencies": {
     "@webstudio-is/jest-config": "workspace:^",
@@ -24,20 +21,12 @@
   },
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts",
-      "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js"
+      "webstudio": "./src/index.ts"
     },
     "./index.server": {
-      "webstudio": "./src/index.server.ts",
-      "types": "./lib/types/index.server.d.ts",
-      "import": "./lib/index.server.js"
+      "webstudio": "./src/index.server.ts"
     }
   },
-  "files": [
-    "lib/*",
-    "!*.test.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "sideEffects": false,
   "dependencies": {

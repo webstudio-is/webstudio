@@ -5,7 +5,7 @@
   "description": "Webstudio Builder UI as a service",
   "type": "module",
   "scripts": {
-    "generate-metas": "pnpm tsx scripts/generate-metas.mts",
+    "generate-metas": "pnpm tsx --conditions=webstudio scripts/generate-metas.mts",
     "prebuild": "which remix",
     "build": "pnpm generate-metas && remix vite:build",
     "start": "remix-serve build/server/index.js",
