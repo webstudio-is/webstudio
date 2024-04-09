@@ -32,6 +32,7 @@ import {
   theme,
   styled,
   Flex,
+  ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, DotIcon, LocalStyleIcon } from "@webstudio-is/icons";
 import {
@@ -512,71 +513,73 @@ export const StyleSourceInput = (
         </ComboboxAnchor>
         <ComboboxContent align="start" sideOffset={5}>
           <ComboboxListbox {...getMenuProps()}>
-            {isOpen &&
-              items.map((item, index) => {
-                if (item.source === "local") {
-                  return;
-                }
+            <ComboboxScrollArea>
+              {isOpen &&
+                items.map((item, index) => {
+                  if (item.source === "local") {
+                    return;
+                  }
 
-                if (item.id === newItemId) {
-                  hasNewTokenItem = true;
+                  if (item.id === newItemId) {
+                    hasNewTokenItem = true;
+                    return (
+                      <Fragment key={index}>
+                        <ComboboxLabel>New Token</ComboboxLabel>
+                        <ComboboxListboxItem
+                          {...getItemProps({ item, index })}
+                          selectable={false}
+                        >
+                          <div>
+                            Create{" "}
+                            <StyleSourceBadge source="token">
+                              {item.label}
+                            </StyleSourceBadge>
+                          </div>
+                        </ComboboxListboxItem>
+                      </Fragment>
+                    );
+                  }
+
+                  let label = null;
+                  if (item.source === "token" && hasGlobalTokenItem === false) {
+                    hasGlobalTokenItem = true;
+                    label = (
+                      <>
+                        {hasNewTokenItem && <ComboboxSeparator />}
+                        <ComboboxLabel>Global Tokens</ComboboxLabel>
+                      </>
+                    );
+                  }
+
+                  if (
+                    item.source === "componentToken" &&
+                    hasComponentTokenItem === false
+                  ) {
+                    hasComponentTokenItem = true;
+                    label = (
+                      <>
+                        {(hasNewTokenItem || hasGlobalTokenItem) && (
+                          <ComboboxSeparator />
+                        )}
+                        <ComboboxLabel>Component Tokens</ComboboxLabel>
+                      </>
+                    );
+                  }
                   return (
                     <Fragment key={index}>
-                      <ComboboxLabel>New Token</ComboboxLabel>
+                      {label}
                       <ComboboxListboxItem
                         {...getItemProps({ item, index })}
                         selectable={false}
                       >
-                        <div>
-                          Create{" "}
-                          <StyleSourceBadge source="token">
-                            {item.label}
-                          </StyleSourceBadge>
-                        </div>
+                        <StyleSourceBadge source={item.source}>
+                          {item.label}
+                        </StyleSourceBadge>
                       </ComboboxListboxItem>
                     </Fragment>
                   );
-                }
-
-                let label = null;
-                if (item.source === "token" && hasGlobalTokenItem === false) {
-                  hasGlobalTokenItem = true;
-                  label = (
-                    <>
-                      {hasNewTokenItem && <ComboboxSeparator />}
-                      <ComboboxLabel>Global Tokens</ComboboxLabel>
-                    </>
-                  );
-                }
-
-                if (
-                  item.source === "componentToken" &&
-                  hasComponentTokenItem === false
-                ) {
-                  hasComponentTokenItem = true;
-                  label = (
-                    <>
-                      {(hasNewTokenItem || hasGlobalTokenItem) && (
-                        <ComboboxSeparator />
-                      )}
-                      <ComboboxLabel>Component Tokens</ComboboxLabel>
-                    </>
-                  );
-                }
-                return (
-                  <Fragment key={index}>
-                    {label}
-                    <ComboboxListboxItem
-                      {...getItemProps({ item, index })}
-                      selectable={false}
-                    >
-                      <StyleSourceBadge source={item.source}>
-                        {item.label}
-                      </StyleSourceBadge>
-                    </ComboboxListboxItem>
-                  </Fragment>
-                );
-              })}
+                })}
+            </ComboboxScrollArea>
           </ComboboxListbox>
         </ComboboxContent>
       </Box>
