@@ -90,20 +90,6 @@ export const createCompletionStream = (
         apiKey: config.apiKey,
         organization: config.organization,
       });
-      // Use polyfilled TransformStream because in Webstudio Builder
-      // globalThis.fetch is overriden to @remix-run/web-fetch.
-      //
-      // @remix-run/web-fetch uses @remix-run/web-stream which polyfills ReadableStream
-      // which has a runtime check on a private polyfill (web-streams-polyfill) property in .pipeThrough
-      // Since `ai`'s OpenAIStream passes a non-polyfilled TransformStream the check above fails.
-      //
-      // To temporarily fix this we override TransformStream to use the web-streams-polyfill one which is
-      // compatible with the one returned by @remix-run/web-fetch.
-      //
-      // @todo Remove this when https://github.com/remix-run/web-std-io/pull/42 is merged and
-      // and Webstudio upgrades to that version.
-      const { TransformStream } = await import("web-streams-polyfill");
-      globalThis.TransformStream = TransformStream;
 
       const response = await openai.chat.completions.create({
         stream: true,

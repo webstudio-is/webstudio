@@ -97,7 +97,6 @@
     "nanoevents": "^8.0.0",
     "nanoid": "^5.0.1",
     "nanostores": "^0.9.3",
-    "node-fetch": "^3.3.1",
     "pretty-bytes": "^6.1.1",
     "prismjs": "^1.29.0",
     "react": "^18.2.0",
