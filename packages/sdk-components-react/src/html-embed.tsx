@@ -60,13 +60,10 @@ const execute = async (container: HTMLElement) => {
   const asyncTasks: Array<ScriptTask> = [];
 
   scripts.forEach((script) => {
-    const type = script.getAttribute("type");
-    if (type == null || type === "" || type === "text/javascript") {
-      const tasks = script.hasAttribute("async") ? asyncTasks : syncTasks;
-      tasks.push(() => {
-        return insertScript(script);
-      });
-    }
+    const tasks = script.hasAttribute("async") ? asyncTasks : syncTasks;
+    tasks.push(() => {
+      return insertScript(script);
+    });
   });
 
   // Insert the script tags in parallel.
