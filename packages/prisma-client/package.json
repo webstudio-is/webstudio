@@ -27,10 +27,9 @@
     "zod": "^3.22.4"
   },
   "exports": {
-    "webstudio": "./src/prisma.ts",
     "types": "./lib/prisma.d.ts",
-    "import": "./lib/prisma.js",
-    "require": "./lib/prisma.js"
+    "import": "./prisma.mjs",
+    "require": "./prisma.cjs"
   },
   "license": "AGPL-3.0-or-later",
   "private": true,

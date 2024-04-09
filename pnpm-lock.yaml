@@ -420,6 +420,9 @@ importers:
       typescript:
         specifier: 5.2.2
         version: 5.2.2
+      vite:
+        specifier: ^5.2.8
+        version: 5.2.8
 
   fixtures/webstudio-custom-template:
     dependencies:
