@@ -8,10 +8,7 @@ const cache: Map<string, string> = new Map([
 ]);
 
 export const humanizeString = (string: string): string => {
-  let result = cache.get(string);
-  if (result === undefined) {
-    result = titleCase(noCase(string));
-  }
+  const result = cache.get(string) ?? titleCase(noCase(string));
   cache.set(string, result);
   return result;
 };
