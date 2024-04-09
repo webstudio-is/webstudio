@@ -1,7 +1,7 @@
 export * from "./stitches.config";
 export * from "./components/storybook";
 export * from "./utilities";
-export * from "@radix-ui/react-slot";
+export { type SlotProps, Slot } from "@radix-ui/react-slot";
 // Aligned with Figma
 
 export * from "./components/text";
@@ -67,7 +67,7 @@ export * from "./components/pro-badge";
 
 // No need to align
 
-export * from "@radix-ui/react-id";
+export { useId } from "@radix-ui/react-id";
 export * as Portal from "@radix-ui/react-portal";
 export { Box } from "./components/box";
 export { Flex } from "./components/flex";

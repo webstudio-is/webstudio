@@ -1,11 +1,11 @@
 import type { LinksFunction } from "@remix-run/server-runtime";
 
 import { Root } from "~/shared/remix/root";
-import interFont from "@fontsource-variable/inter/index.css";
-import manropeVariableFont from "@fontsource-variable/manrope/index.css";
-import robotoMonoFont from "@fontsource/roboto-mono/index.css";
+import interFont from "@fontsource-variable/inter/index.css?url";
+import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
+import robotoMonoFont from "@fontsource/roboto-mono/index.css?url";
 // eslint-disable-next-line import/no-internal-modules
-import appCss from "../shared/app.css";
+import appCss from "../shared/app.css?url";
 
 /**
  * For unknown reason vercel don't upload css assets if they are not exported from route path

@@ -1,10 +1,4 @@
-import {
-  Links,
-  LiveReload,
-  Meta,
-  Outlet as RemixOutlet,
-  Scripts,
-} from "@remix-run/react";
+import { Links, Meta, Outlet as RemixOutlet, Scripts } from "@remix-run/react";
 import { createHead } from "remix-island";
 
 export const Head = createHead(() => (
@@ -20,7 +14,6 @@ export const Root = ({ Outlet = RemixOutlet }) => {
       <Head />
       <Outlet />
       <Scripts />
-      {process.env.NODE_ENV === "development" && <LiveReload />}
     </>
   );
 };

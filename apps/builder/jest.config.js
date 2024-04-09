@@ -1,10 +1,10 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const baseConfig = require("@webstudio-is/jest-config");
+import baseConfig from "@webstudio-is/jest-config";
 
 /**
  * @type {import('@jest/types').Config.InitialOptions}
  */
-module.exports = {
+export default {
   ...baseConfig,
   testMatch: ["<rootDir>/app/**/*.test.ts"],
   moduleNameMapper: {
