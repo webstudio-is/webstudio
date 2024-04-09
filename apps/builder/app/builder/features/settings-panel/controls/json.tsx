@@ -3,7 +3,6 @@ import { useStore } from "@nanostores/react";
 import { isLiteralExpression } from "@webstudio-is/sdk";
 import {
   type ControlProps,
-  getLabel,
   useLocalValue,
   VerticalLayout,
   Label,
@@ -19,6 +18,7 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
+import { humanizeString } from "~/shared/string-utils";
 
 export const JsonControl = ({
   meta,
@@ -50,7 +50,7 @@ export const JsonControl = ({
       // empty block
     }
   });
-  const label = getLabel(meta, propName);
+  const label = humanizeString(meta.label || propName);
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression = prop?.type === "expression" ? prop.value : valueString;
