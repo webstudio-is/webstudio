@@ -3,7 +3,6 @@
   "version": "0.144.0",
   "private": true,
   "description": "Webstudio Builder UI as a service",
-  "type": "module",
   "scripts": {
     "generate-metas": "pnpm tsx scripts/generate-metas.mts",
     "prebuild": "which remix",
