@@ -313,7 +313,7 @@ app.use("*", async (ctx, next) => {
   ctx.set(
     "skipRateLimit",
     url.pathname.startsWith("/asset/") ||
-      url.pathname.startsWith("/build/") ||
+      url.pathname.startsWith("/assets/") ||
       url.pathname.endsWith(".ico")
   );
   return next();
