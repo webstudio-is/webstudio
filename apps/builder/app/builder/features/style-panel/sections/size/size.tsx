@@ -21,7 +21,7 @@ import { theme } from "@webstudio-is/design-system";
 import {
   ToggleGroupControl as ToggleGroupControlBase,
   type ToggleGroupControlProps,
-} from "../../controls/toggle/toggle-control";
+} from "../../controls/toggle-group/toggle-group-control";
 
 const ToggleGroupControl = (props: ToggleGroupControlProps) => {
   const { property, currentStyle, items } = props;

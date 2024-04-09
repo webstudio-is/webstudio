@@ -31,7 +31,7 @@ import {
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { useRef, useState } from "react";
 import { BackgroundSize } from "./background-size";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import {
   RepeatGridIcon,
   RepeatColumnIcon,

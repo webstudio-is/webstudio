@@ -8,7 +8,7 @@ import {
 } from "@webstudio-is/icons";
 import { PropertyName } from "../../shared/property-name";
 import type { SectionProps } from "../shared/section";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import {
   declarationDescriptions,
   propertyDescriptions,

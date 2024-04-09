@@ -38,7 +38,7 @@ import {
 import {
   ToggleGroupControl as ToggleGroupControlBase,
   type ToggleGroupControlProps,
-} from "../../controls/toggle/toggle-control";
+} from "../../controls/toggle-group/toggle-group-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
