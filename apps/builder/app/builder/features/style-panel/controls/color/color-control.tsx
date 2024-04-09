@@ -42,7 +42,6 @@ export const ColorControl = ({
   currentStyle,
   setProperty,
   deleteProperty,
-  isAdvanced,
 }: ControlProps) => {
   const [intermediateValue, setIntermediateValue] =
     useState<CssColorPickerValueInput>();
@@ -67,7 +66,6 @@ export const ColorControl = ({
   return (
     <Flex align="center" gap="1">
       <ColorPicker
-        disabled={isAdvanced}
         currentColor={currentColor}
         property={property}
         value={value}
