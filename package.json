@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "build": "turbo run build --filter='!./fixtures/*'",
-    "build-packages": "turbo run build --filter=\"!@webstudio-is/builder\"",
     "dts": "turbo run dts",
     "size-test": "turbo run size-test",
     "checks": "turbo run checks",

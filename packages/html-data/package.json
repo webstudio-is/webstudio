@@ -7,24 +7,15 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
-    "dts": "tsc --project tsconfig.dts.json"
+    "checks": "pnpm typecheck"
   },
   "devDependencies": {
     "@webstudio-is/tsconfig": "workspace:*"
   },
   "peerDependencies": {},
   "exports": {
-    "webstudio": "./src/index.ts",
-    "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js"
+    "webstudio": "./src/index.ts"
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "private": true,
   "sideEffects": false,
