@@ -116,6 +116,7 @@ export const BackgroundSize = (
               setValue(styleValue, { isEphemeral: true });
             }
           }}
+          getItemProps={() => ({ text: "sentence" })}
         />
       </Grid>
 

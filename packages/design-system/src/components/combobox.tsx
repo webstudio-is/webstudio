@@ -107,6 +107,7 @@ const ListboxItemBase: ForwardRefRenderFunction<
       {...(selected ? { "aria-current": true } : {})}
       {...(disabled ? {} : rest)}
       withIndicator={selectable}
+      text={rest.text ?? "sentence"}
     >
       {selectable && selected && <Indicator>{icon}</Indicator>}
       {children}

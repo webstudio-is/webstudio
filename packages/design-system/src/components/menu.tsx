@@ -98,7 +98,7 @@ export const menuItemCss = css({
       },
     },
   },
-  defaultVariants: { text: "sentence" },
+  defaultVariants: { text: "title" },
 });
 
 // To use outside of any menu context, e.g. in a Popover

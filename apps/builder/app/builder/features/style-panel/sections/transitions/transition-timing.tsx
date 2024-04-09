@@ -88,7 +88,7 @@ export const TransitionTiming = ({
           <SelectLabel>Default</SelectLabel>
           {Object.keys(defaultFunctions).map((defaultFunc) => {
             return (
-              <SelectItem key={defaultFunc} value={defaultFunc}>
+              <SelectItem key={defaultFunc} value={defaultFunc} text="sentence">
                 {defaultFunc}
               </SelectItem>
             );
@@ -101,7 +101,7 @@ export const TransitionTiming = ({
           <SelectLabel>Ease In</SelectLabel>
           {Object.keys(easeInFunctions).map((easeIn) => {
             return (
-              <SelectItem key={easeIn} value={easeIn}>
+              <SelectItem key={easeIn} value={easeIn} text="sentence">
                 {easeIn}
               </SelectItem>
             );
@@ -111,7 +111,7 @@ export const TransitionTiming = ({
           <SelectLabel>Ease Out</SelectLabel>
           {Object.keys(easeOutFunctions).map((easeOut) => {
             return (
-              <SelectItem key={easeOut} value={easeOut}>
+              <SelectItem key={easeOut} value={easeOut} text="sentence">
                 {easeOut}
               </SelectItem>
             );
@@ -121,7 +121,7 @@ export const TransitionTiming = ({
           <SelectLabel>Ease In Out</SelectLabel>
           {Object.keys(easeInOutFunctions).map((easeInOut) => {
             return (
-              <SelectItem key={easeInOut} value={easeInOut}>
+              <SelectItem key={easeInOut} value={easeInOut} text="sentence">
                 {easeInOut}
               </SelectItem>
             );

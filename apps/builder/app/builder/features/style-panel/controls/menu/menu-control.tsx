@@ -91,6 +91,7 @@ export const MenuControl = ({
             {items.map(({ name, label, icon }) => {
               return (
                 <DropdownMenuRadioItem
+                  text="sentence"
                   key={name}
                   value={label}
                   onFocus={() =>
