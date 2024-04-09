@@ -33,7 +33,7 @@ export const RadioControl = ({
       : [value, ...meta.options];
 
   const id = useId();
-  const label = getLabel(meta, propName);
+  const label = humanizeString(getLabel(meta, propName));
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

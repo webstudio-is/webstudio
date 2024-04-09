@@ -19,6 +19,7 @@ import {
   BindingControl,
   BindingPopover,
 } from "~/builder/shared/binding-popover";
+import { humanizeString } from "~/shared/string-utils";
 
 export const JsonControl = ({
   meta,
@@ -50,7 +51,7 @@ export const JsonControl = ({
       // empty block
     }
   });
-  const label = getLabel(meta, propName);
+  const label = humanizeString(getLabel(meta, propName));
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression = prop?.type === "expression" ? prop.value : valueString;

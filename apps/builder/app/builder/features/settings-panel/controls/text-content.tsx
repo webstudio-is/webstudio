@@ -19,6 +19,7 @@ import {
   updateExpressionValue,
   useBindingState,
 } from "../shared";
+import { humanizeString } from "~/shared/string-utils";
 
 const useInstance = (instanceId: Instance["id"]) => {
   const $store = useMemo(() => {
@@ -58,7 +59,7 @@ export const TextContent = ({
     }
   });
   const id = useId();
-  const label = getLabel(meta, propName);
+  const label = humanizeString(getLabel(meta, propName));
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   let expression: undefined | string;

@@ -34,7 +34,7 @@ export const SelectControl = ({
       ? meta.options
       : [value, ...meta.options];
 
-  const label = getLabel(meta, propName);
+  const label = humanizeString(getLabel(meta, propName));
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -63,7 +63,6 @@ export const SelectControl = ({
           disabled={overwritable === false}
           value={value}
           options={options}
-          getLabel={humanizeString}
           onChange={(value) => {
             if (prop?.type === "expression") {
               updateExpressionValue(prop.value, value);

@@ -30,7 +30,6 @@ import {
   theme,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 import {
   $dataSourceVariables,
   $dataSources,
@@ -38,6 +37,7 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
+import { toKebabCase } from "../style-panel/shared/keyword-utils";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -71,7 +71,7 @@ export type ControlProps<Control> = {
 };
 
 export const getLabel = (meta: { label?: string }, fallback: string) =>
-  meta.label || humanizeString(fallback);
+  meta.label || fallback;
 
 export const RemovePropButton = (props: { onClick: () => void }) => (
   <SmallIconButton icon={<SubtractIcon />} variant="destructive" {...props} />

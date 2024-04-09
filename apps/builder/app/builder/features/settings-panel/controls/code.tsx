@@ -25,6 +25,7 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
+import { humanizeString } from "~/shared/string-utils";
 
 const ErrorInfo = ({
   error,
@@ -104,7 +105,7 @@ export const CodeControl = ({
       onChange({ type: "string", value });
     }
   });
-  const label = getLabel(metaOverride, propName);
+  const label = humanizeString(getLabel(metaOverride, propName));
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
