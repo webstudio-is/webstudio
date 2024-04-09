@@ -37,7 +37,6 @@ import {
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import type { BindingVariant } from "~/builder/shared/binding-popover";
-import { toKebabCase } from "../style-panel/shared/keyword-utils";
 
 export type PropValue =
   | { type: "number"; value: number }
