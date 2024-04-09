@@ -1,4 +1,3 @@
-import { Fragment } from "react";
 import {
   theme,
   Box,
@@ -79,14 +78,13 @@ export const StylePanel = ({ selectedInstance }: StylePanelProps) => {
   for (const [category, { Section }] of sections.entries()) {
     if (shouldRenderCategory(category, parentStyle, selectedInstanceTag)) {
       all.push(
-        <Fragment key={category}>
-          <Section
-            setProperty={setProperty}
-            deleteProperty={deleteProperty}
-            createBatchUpdate={createBatchUpdate}
-            currentStyle={currentStyle}
-          />
-        </Fragment>
+        <Section
+          key={category}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+          createBatchUpdate={createBatchUpdate}
+          currentStyle={currentStyle}
+        />
       );
     }
   }
