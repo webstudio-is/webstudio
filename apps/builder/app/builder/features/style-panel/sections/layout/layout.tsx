@@ -19,6 +19,9 @@ import {
   ArrowLeftIcon,
   ArrowDownIcon,
   ArrowUpIcon,
+  AICenterIcon,
+  JCCenterIcon,
+  ACCenterIcon,
 } from "@webstudio-is/icons";
 import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
@@ -373,6 +376,7 @@ const LayoutSectionFlex = ({
               currentStyle={mapNormalTo(currentStyle, "alignItems", "stretch")}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
+              DefaultIcon={AICenterIcon}
             />
             <MenuControl
               property="justifyContent"
@@ -383,6 +387,7 @@ const LayoutSectionFlex = ({
               )}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
+              DefaultIcon={JCCenterIcon}
             />
             {showAlignContent && (
               <MenuControl
@@ -394,6 +399,7 @@ const LayoutSectionFlex = ({
                 )}
                 setProperty={setProperty}
                 deleteProperty={deleteProperty}
+                DefaultIcon={ACCenterIcon}
               />
             )}
           </Flex>
