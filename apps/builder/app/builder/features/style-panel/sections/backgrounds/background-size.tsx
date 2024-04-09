@@ -1,7 +1,6 @@
 import { Grid, Select, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "../../shared/configs";
-import { toPascalCase } from "../../shared/keyword-utils";
 import { parseCssValue } from "@webstudio-is/css-data";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import {
@@ -84,7 +83,6 @@ export const BackgroundSize = (
           // like css value input does
           placeholder=""
           options={selectOptions}
-          getLabel={toPascalCase}
           value={selectValue}
           onChange={(name: string) => {
             if (name === "custom") {

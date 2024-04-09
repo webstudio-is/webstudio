@@ -45,7 +45,7 @@ describe("Unit menu options", () => {
         },
         {
           "id": "auto",
-          "label": "Auto",
+          "label": "auto",
           "type": "keyword",
         },
       ]
