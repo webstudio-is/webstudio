@@ -1,4 +1,3 @@
-import { matchSorter } from "match-sorter";
 import {
   Box,
   useCombobox,
@@ -36,7 +35,7 @@ import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
-import { toPascalCase } from "../keyword-utils";
+import { toKebabCase } from "../keyword-utils";
 import {
   declarationDescriptions,
   isValidDeclaration,
@@ -310,21 +309,11 @@ const itemToString = (item: CssValueInputValue | null) => {
   return item === null
     ? ""
     : item.type === "keyword"
-    ? toPascalCase(toValue(item))
+    ? toKebabCase(toValue(item))
     : item.type === "intermediate" || item.type === "unit"
     ? String(item.value)
     : toValue(item);
 };
-
-const match = <Item,>(
-  search: string,
-  items: Array<Item>,
-  itemToString: (item: Item | null) => string
-) =>
-  matchSorter(items, search, {
-    keys: [itemToString, (item) => itemToString(item).replace(/\s/g, "-")],
-  });
-
 /**
  * Common:
  * - Free text editing
@@ -427,7 +416,6 @@ export const CssValueInput = ({
     value,
     selectedItem: props.value,
     itemToString,
-    match,
     onInputChange: (inputValue) => {
       onChange(inputValue);
     },

@@ -2,7 +2,7 @@ import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
-import { toPascalCase } from "../../shared/keyword-utils";
+import { toKebabCase } from "../../shared/keyword-utils";
 import type { ControlProps } from "../types";
 
 export const SelectControl = ({
@@ -33,7 +33,7 @@ export const SelectControl = ({
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
-      getLabel={toPascalCase}
+      getLabel={toKebabCase}
       value={value}
       onChange={(name) => {
         const nextValue = parseCssValue(property, name);
