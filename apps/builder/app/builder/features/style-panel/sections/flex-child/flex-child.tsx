@@ -1,8 +1,8 @@
 import { Flex, Grid, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "../../style-sections";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { SectionProps } from "../shared/section";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { PropertyName } from "../../shared/property-name";
 import { TextControl } from "../../controls";
 import {
@@ -21,15 +21,15 @@ import {
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 
-const properties: StyleProperty[] = [
+export const properties = [
   "flexShrink",
   "flexGrow",
   "flexBasis",
   "alignSelf",
   "order",
-];
+] satisfies Array<StyleProperty>;
 
-export const FlexChildSection = (props: RenderCategoryProps) => {
+export const Section = (props: SectionProps) => {
   return (
     <CollapsibleSection
       label="Flex Child"
@@ -45,23 +45,21 @@ export const FlexChildSection = (props: RenderCategoryProps) => {
   );
 };
 
-const FlexChildSectionAlign = (props: RenderCategoryProps) => {
-  const { setProperty, deleteProperty, currentStyle } = props;
-  const setAlignSelf = setProperty("alignSelf");
-
+const FlexChildSectionAlign = (props: SectionProps) => {
+  const { deleteProperty, currentStyle } = props;
+  const property = "alignSelf";
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
         style={currentStyle}
-        properties={["alignSelf"]}
+        properties={[property]}
         label="Align"
-        onReset={() => deleteProperty("alignSelf")}
+        onReset={() => deleteProperty(property)}
       />
       <ToggleGroupControl
-        style={props.currentStyle}
-        onValueChange={(value) => setAlignSelf({ type: "keyword", value })}
-        onReset={() => deleteProperty("alignSelf")}
-        value={toValue(currentStyle.alignSelf?.value)}
+        {...props}
+        // We don't support "flex" shorthand and this control is manipulating 3 properties at once
+        property={property}
         items={[
           {
             child: <SmallXIcon />,
@@ -115,7 +113,7 @@ const FlexChildSectionAlign = (props: RenderCategoryProps) => {
   );
 };
 
-const FlexChildSectionSizing = (props: RenderCategoryProps) => {
+const FlexChildSectionSizing = (props: SectionProps) => {
   const { createBatchUpdate, currentStyle } = props;
   const setSizing = createBatchUpdate();
   const onReset = () => {
@@ -135,53 +133,61 @@ const FlexChildSectionSizing = (props: RenderCategoryProps) => {
         onReset={onReset}
       />
       <ToggleGroupControl
-        style={props.currentStyle}
-        onReset={onReset}
-        onValueChange={(value) => {
-          switch (value) {
-            case "none": {
-              setSizing.setProperty("flexGrow")({
-                type: "unit",
-                value: 0,
-                unit: "number",
-              });
-              setSizing.setProperty("flexShrink")({
-                type: "unit",
-                value: 0,
-                unit: "number",
-              });
-              setSizing.publish();
-              break;
+        {...props}
+        // We don't support "flex" shorthand and this control is manipulating 3 properties at once
+        property="flexGrow"
+        deleteProperty={onReset}
+        setProperty={() => {
+          return (styleValue: StyleValue) => {
+            if (styleValue.type !== "keyword") {
+              // should not happen
+              return;
             }
-            case "grow": {
-              setSizing.setProperty("flexGrow")({
-                type: "unit",
-                value: 1,
-                unit: "number",
-              });
-              setSizing.setProperty("flexShrink")({
-                type: "unit",
-                value: 0,
-                unit: "number",
-              });
-              setSizing.publish();
-              break;
+            switch (styleValue.value) {
+              case "none": {
+                setSizing.setProperty("flexGrow")({
+                  type: "unit",
+                  value: 0,
+                  unit: "number",
+                });
+                setSizing.setProperty("flexShrink")({
+                  type: "unit",
+                  value: 0,
+                  unit: "number",
+                });
+                setSizing.publish();
+                break;
+              }
+              case "grow": {
+                setSizing.setProperty("flexGrow")({
+                  type: "unit",
+                  value: 1,
+                  unit: "number",
+                });
+                setSizing.setProperty("flexShrink")({
+                  type: "unit",
+                  value: 0,
+                  unit: "number",
+                });
+                setSizing.publish();
+                break;
+              }
+              case "shrink": {
+                setSizing.setProperty("flexGrow")({
+                  type: "unit",
+                  value: 0,
+                  unit: "number",
+                });
+                setSizing.setProperty("flexShrink")({
+                  type: "unit",
+                  value: 1,
+                  unit: "number",
+                });
+                setSizing.publish();
+                break;
+              }
             }
-            case "shrink": {
-              setSizing.setProperty("flexGrow")({
-                type: "unit",
-                value: 0,
-                unit: "number",
-              });
-              setSizing.setProperty("flexShrink")({
-                type: "unit",
-                value: 1,
-                unit: "number",
-              });
-              setSizing.publish();
-              break;
-            }
-          }
+          };
         }}
         value={getSizingValue(
           toValue(currentStyle.flexGrow?.value),
@@ -233,7 +239,7 @@ const FlexChildSectionSizingPopover = ({
   currentStyle,
   setProperty,
   deleteProperty,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   return (
     <FloatingPanel
       title="Sizing"
@@ -297,31 +303,42 @@ const FlexChildSectionSizingPopover = ({
   );
 };
 
-const FlexChildSectionOrder = (props: RenderCategoryProps) => {
+const FlexChildSectionOrder = (props: SectionProps) => {
   const { deleteProperty, setProperty, currentStyle } = props;
-  const setOrder = setProperty("order");
+  const property = "order";
+  const setOrder = setProperty(property);
 
   return (
     <Grid css={{ gridTemplateColumns: "4fr auto" }}>
       <PropertyName
         style={currentStyle}
-        properties={["order"]}
+        properties={[property]}
         label="Order"
-        onReset={() => deleteProperty("order")}
+        onReset={() => deleteProperty(property)}
       />
       <ToggleGroupControl
-        style={props.currentStyle}
-        onValueChange={(value) => {
-          switch (value) {
-            case "0":
-            case "1":
-            case "-1": {
-              setOrder({ type: "unit", value: Number(value), unit: "number" });
-              break;
+        {...props}
+        property={property}
+        setProperty={() => {
+          return (styleValue: StyleValue) => {
+            if (styleValue.type !== "keyword") {
+              // should not happen
+              return;
             }
-          }
+            switch (styleValue.value) {
+              case "0":
+              case "1":
+              case "-1": {
+                setOrder({
+                  type: "unit",
+                  value: Number(styleValue.value),
+                  unit: "number",
+                });
+                break;
+              }
+            }
+          };
         }}
-        value={toValue(currentStyle.order?.value)}
         items={[
           {
             child: <SmallXIcon />,
@@ -357,7 +374,7 @@ const FlexChildSectionOrder = (props: RenderCategoryProps) => {
   );
 };
 
-const FlexChildSectionOrderPopover = (props: RenderCategoryProps) => {
+const FlexChildSectionOrderPopover = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
   return (
     <FloatingPanel

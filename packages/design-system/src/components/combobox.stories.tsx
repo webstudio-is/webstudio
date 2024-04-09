@@ -9,13 +9,29 @@ import {
   useCombobox,
   comboboxStateChangeTypes,
   ComboboxContent,
-  Combobox,
+  ComboboxRoot,
   ComboboxListbox,
   ComboboxAnchor,
   ComboboxItemDescription,
+  Combobox,
 } from "./combobox";
 import { Flex } from "./flex";
 import { InputField } from "./input-field";
+
+export const Basic = () => {
+  const [value, setValue] = useState("");
+  return (
+    <Combobox<string>
+      value={value}
+      itemToString={(item) => item ?? ""}
+      items={["Apple", "Banana", "Orange"]}
+      onItemSelect={setValue}
+      onInputChange={(value) => {
+        setValue(value ?? "");
+      }}
+    />
+  );
+};
 
 export const Complex = () => {
   const [value, setValue] = useState("");
@@ -77,7 +93,7 @@ export const Complex = () => {
   });
 
   return (
-    <Combobox open={isOpen}>
+    <ComboboxRoot open={isOpen}>
       <Flex {...getComboboxProps()} direction="column" gap="3">
         <ComboboxAnchor>
           <InputField
@@ -105,7 +121,7 @@ export const Complex = () => {
           </ComboboxListbox>
         </ComboboxContent>
       </Flex>
-    </Combobox>
+    </ComboboxRoot>
   );
 };
 

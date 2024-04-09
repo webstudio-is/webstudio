@@ -1,13 +1,13 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { toValue } from "@webstudio-is/css-engine";
 import { Grid, Separator, styled } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
   SelectControl,
   TextControl,
   ObjectPositionControl,
+  type ControlProps,
 } from "../../controls";
 import {
   EyeconOpenIcon,
@@ -17,31 +17,26 @@ import {
 } from "@webstudio-is/icons";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { theme } from "@webstudio-is/design-system";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 
-const SizeField = ({
+const SizeProperty = ({
   property,
-  style,
+  currentStyle,
   setProperty,
   deleteProperty,
-}: {
-  property: StyleProperty;
-  style: RenderCategoryProps["currentStyle"];
-  setProperty: RenderCategoryProps["setProperty"];
-  deleteProperty: RenderCategoryProps["deleteProperty"];
-}) => {
+}: ControlProps) => {
   const { label } = styleConfigByName(property);
   return (
     <Grid gap={1}>
       <PropertyName
         label={label}
         properties={[property]}
-        style={style}
+        style={currentStyle}
         onReset={() => deleteProperty(property)}
       />
       <TextControl
         property={property}
-        currentStyle={style}
+        currentStyle={currentStyle}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
       />
@@ -49,7 +44,7 @@ const SizeField = ({
   );
 };
 
-const properties: StyleProperty[] = [
+export const properties = [
   "width",
   "height",
   "minWidth",
@@ -60,86 +55,89 @@ const properties: StyleProperty[] = [
   "objectFit",
   "objectPosition",
   "aspectRatio",
-];
+] satisfies Array<StyleProperty>;
 
-const Section = styled(Grid, {
+const SectionLayout = styled(Grid, {
   columnGap: theme.spacing[5],
   rowGap: theme.spacing[5],
   px: theme.spacing[9],
 });
 
-export const SizeSection = ({
-  currentStyle: style,
+export const Section = ({
+  currentStyle,
   setProperty,
   deleteProperty,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   return (
     <CollapsibleSection
       label="Size"
-      currentStyle={style}
+      currentStyle={currentStyle}
       properties={properties}
       fullWidth
     >
-      <Section columns={2}>
-        <SizeField
+      <SectionLayout columns={2}>
+        <SizeProperty
           property="width"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="height"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="minWidth"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="minHeight"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="maxWidth"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-        <SizeField
+        <SizeProperty
           property="maxHeight"
-          style={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <PropertyName
           label={styleConfigByName("aspectRatio").label}
           properties={["aspectRatio"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("aspectRatio")}
         />
         <TextControl
           property={"aspectRatio"}
-          currentStyle={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-      </Section>
+      </SectionLayout>
       <Separator />
-      <Section columns={2}>
+      <SectionLayout columns={2}>
         <PropertyName
           label={styleConfigByName("overflow").label}
           properties={["overflow"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("overflow")}
         />
         <ToggleGroupControl
-          style={style}
+          property="overflow"
+          currentStyle={currentStyle}
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
           items={[
             {
               child: <EyeconOpenIcon />,
@@ -165,6 +163,7 @@ export const SizeSection = ({
               value: "scroll",
               propertyValues: "overflow: scroll;",
             },
+
             {
               child: <AutoScrollIcon />,
               title: "Overflow",
@@ -174,36 +173,32 @@ export const SizeSection = ({
               propertyValues: "overflow: auto;",
             },
           ]}
-          value={toValue(style.overflow?.value)}
-          onValueChange={(value) =>
-            setProperty("overflow")({ type: "keyword", value })
-          }
         />
         <PropertyName
           label={styleConfigByName("objectFit").label}
           properties={["objectFit"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("objectFit")}
         />
         <SelectControl
           property="objectFit"
-          currentStyle={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
         <PropertyName
           label={styleConfigByName("objectPosition").label}
           properties={["objectPosition"]}
-          style={style}
+          style={currentStyle}
           onReset={() => deleteProperty("objectPosition")}
         />
         <ObjectPositionControl
           property="objectPosition"
-          currentStyle={style}
+          currentStyle={currentStyle}
           setProperty={setProperty}
           deleteProperty={deleteProperty}
         />
-      </Section>
+      </SectionLayout>
     </CollapsibleSection>
   );
 };

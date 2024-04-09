@@ -5,29 +5,31 @@ import {
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
 import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
 import { BoxShadowLayer } from "./box-shadow-layer";
 import { addLayer } from "../../style-layer-utils";
 import { parseBoxShadow } from "@webstudio-is/css-data";
 
-const property: StyleProperty = "boxShadow";
+export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
+
+const property: StyleProperty = properties[0];
 const label = "Box Shadows";
 const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
-export const BoxShadowsSection = (props: RenderCategoryProps) => {
+export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -53,7 +55,7 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
           <PropertyName
             title="Box Shadows"
             style={currentStyle}
-            properties={[property]}
+            properties={properties}
             description="Adds shadow effects around an element's frame."
             label={
               <SectionTitleLabel color={layersStyleSource}>
@@ -75,6 +77,6 @@ export const BoxShadowsSection = (props: RenderCategoryProps) => {
           )}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

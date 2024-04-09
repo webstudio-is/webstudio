@@ -3,7 +3,7 @@ import type {
   LayersValue,
   StyleProperty,
 } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "./style-sections";
+import type { SectionProps } from "./sections";
 import type { StyleInfo } from "./shared/style-info";
 import type { CreateBatchUpdate } from "./shared/use-style-data";
 
@@ -11,7 +11,7 @@ export const deleteLayer = (
   property: StyleProperty,
   index: number,
   layers: LayersValue,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   const batch = createBatchUpdate();
   const value = layers.value[index];
@@ -42,7 +42,7 @@ export const hideLayer = (
   property: StyleProperty,
   index: number,
   layers: LayersValue,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   const batch = createBatchUpdate();
   const value = layers.value[index];
@@ -67,7 +67,7 @@ export const addLayer = (
   property: StyleProperty,
   value: LayersValue | InvalidValue,
   style: StyleInfo,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   if (value.type === "invalid") {
     return;
@@ -91,7 +91,7 @@ export const updateLayer = (
   newValue: LayersValue,
   layers: LayersValue,
   index: number,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   const batch = createBatchUpdate();
   const value = layers.value[index];

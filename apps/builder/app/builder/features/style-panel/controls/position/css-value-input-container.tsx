@@ -18,18 +18,19 @@ type CssValueInputContainerProps = {
   deleteProperty: DeleteProperty;
   disabled?: boolean;
   icon?: JSX.Element;
+  autoFocus?: boolean;
 };
 
 export const CssValueInputContainer = ({
   property,
   keywords,
-  label,
   styleSource,
   value,
   setValue,
   deleteProperty,
   disabled,
   icon,
+  autoFocus,
 }: CssValueInputContainerProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -38,6 +39,7 @@ export const CssValueInputContainer = ({
   return (
     <Box>
       <CssValueInput
+        autoFocus={autoFocus}
         icon={icon}
         disabled={disabled}
         styleSource={styleSource}

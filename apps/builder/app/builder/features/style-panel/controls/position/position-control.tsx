@@ -4,7 +4,7 @@ import {
   TupleValueItem,
 } from "@webstudio-is/css-engine";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 import { CssValueInputContainer } from "./css-value-input-container";
@@ -49,6 +49,7 @@ export const PositionControl = ({
   property,
   setProperty,
   deleteProperty,
+  isAdvanced,
 }: ControlProps) => {
   const { label, items } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
@@ -114,6 +115,7 @@ export const PositionControl = ({
             value={value.value[0]}
             setValue={setValueX}
             deleteProperty={deleteProperty}
+            disabled={isAdvanced}
           />
 
           <NonResetablePropertyName
@@ -131,6 +133,7 @@ export const PositionControl = ({
             value={value.value[1]}
             setValue={setValueY}
             deleteProperty={deleteProperty}
+            disabled={isAdvanced}
           />
         </Grid>
       </Flex>

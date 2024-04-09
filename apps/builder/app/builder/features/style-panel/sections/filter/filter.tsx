@@ -1,5 +1,5 @@
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
-import type { RenderCategoryProps } from "../../style-sections";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import type { SectionProps } from "../shared/section";
 import { useState } from "react";
 import {
   SectionTitle,
@@ -17,18 +17,20 @@ import { FilterLayer } from "./filter-layer";
 import { addLayer } from "../../style-layer-utils";
 import { parseFilter } from "@webstudio-is/css-data";
 
-const property: StyleProperty = "filter";
+export const properties = ["filter"] satisfies Array<StyleProperty>;
+
+const property: StyleProperty = properties[0];
 const label = "Filters";
 const INITIAL_FILTER = "blur(0px)";
 
-export const FilterSection = (props: RenderCategoryProps) => {
+export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layerStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -56,7 +58,7 @@ export const FilterSection = (props: RenderCategoryProps) => {
           <PropertyName
             title={label}
             style={currentStyle}
-            properties={[property]}
+            properties={properties}
             description="Filter effects allow you to apply graphical effects like blurring, color shifting, and more to elements."
             label={
               <SectionTitleLabel color={layerStyleSource}>
@@ -78,6 +80,6 @@ export const FilterSection = (props: RenderCategoryProps) => {
           )}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

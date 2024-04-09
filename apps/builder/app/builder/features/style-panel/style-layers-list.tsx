@@ -4,7 +4,7 @@ import {
   Flex,
   useSortable,
 } from "@webstudio-is/design-system";
-import type { RenderCategoryProps } from "./style-sections";
+import type { SectionProps } from "./sections";
 import {
   deleteLayer,
   getLayerCount,
@@ -31,7 +31,7 @@ export type LayerProps<T> = {
   deleteProperty: DeleteProperty;
 };
 
-type LayerListProperties<T> = RenderCategoryProps & {
+type LayerListProperties<T> = SectionProps & {
   disabled?: boolean;
   property: StyleProperty;
   layers: LayersValue;

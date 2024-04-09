@@ -35,9 +35,9 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { ScrollArea } from "./scroll-area";
-import { Flex } from "./flex";
+import { Flex, InputField, NestedInputButton } from "..";
 
-const Listbox = styled(
+export const ComboboxListbox = styled(
   "ul",
   {
     display: "flex",
@@ -51,6 +51,26 @@ const Listbox = styled(
   },
   menuCss
 );
+
+export const ComboboxScrollArea = forwardRef(
+  (
+    { children, ...props }: ComponentProps<typeof ScrollArea>,
+    forwardRef: Ref<HTMLDivElement>
+  ) => {
+    return (
+      <ScrollArea css={{ order: 1 }} {...props}>
+        <Flex
+          ref={forwardRef}
+          direction="column"
+          css={{ maxHeight: theme.spacing[34] }}
+        >
+          {children}
+        </Flex>
+      </ScrollArea>
+    );
+  }
+);
+ComboboxScrollArea.displayName = "ComboboxScrollArea";
 
 const ListboxItem = styled("li", menuItemCss);
 
@@ -79,6 +99,7 @@ const ListboxItemBase: ForwardRefRenderFunction<
     icon = <MenuCheckedIcon />,
     ...rest
   } = props;
+
   return (
     <ListboxItem
       ref={ref}
@@ -86,29 +107,13 @@ const ListboxItemBase: ForwardRefRenderFunction<
       {...(selected ? { "aria-current": true } : {})}
       {...(disabled ? {} : rest)}
       withIndicator={selectable}
+      text={rest.text ?? "sentence"}
     >
       {selectable && selected && <Indicator>{icon}</Indicator>}
       {children}
     </ListboxItem>
   );
 };
-
-export const ComboboxListbox = forwardRef<
-  HTMLUListElement,
-  ComponentProps<typeof Listbox>
->(({ children, ...props }, ref) => {
-  return (
-    <Listbox {...props} ref={ref}>
-      <ScrollArea>
-        <Flex direction="column" css={{ maxHeight: theme.spacing[34] }}>
-          {children}
-        </Flex>
-      </ScrollArea>
-    </Listbox>
-  );
-});
-
-ComboboxListbox.displayName = "ComboboxListbox";
 
 export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
@@ -128,7 +133,10 @@ export const ComboboxItemDescription = ({
       <ListboxItem
         {...props}
         hint
-        style={{ ...style, order: "var(--ws-combobox-description-order)" }}
+        style={{
+          ...style,
+          order: "var(--ws-combobox-description-order)",
+        }}
       >
         {children}
       </ListboxItem>
@@ -142,7 +150,7 @@ export const ComboboxItemDescription = ({
   );
 };
 
-export const Combobox = (props: ComponentProps<typeof Popover>) => {
+export const ComboboxRoot = (props: ComponentProps<typeof Popover>) => {
   return <Popover {...props} modal />;
 };
 
@@ -194,13 +202,16 @@ const defaultMatch = <Item,>(
     keys: [itemToString],
   });
 
+const defaultItemToString = <Item,>(item: Item) =>
+  typeof item === "string" ? item : "";
+
 const useFilter = <Item,>({
   items,
-  itemToString,
+  itemToString = defaultItemToString,
   match = defaultMatch,
 }: {
   items: Array<Item>;
-  itemToString: (item: Item | null) => string;
+  itemToString?: (item: Item | null) => string;
   match?: Match<Item>;
 }) => {
   const [filteredItems, setFilteredItems] = useState<Array<Item>>(items);
@@ -229,11 +240,17 @@ const useFilter = <Item,>({
   };
 };
 
+type ItemToString<Item> = (item: Item | null) => string;
+
 type UseComboboxProps<Item> = UseDownshiftComboboxProps<Item> & {
   items: Array<Item>;
-  itemToString: (item: Item | null) => string;
+  itemToString: ItemToString<Item>;
+  getDescription?: (item: Item | null) => ReactNode;
+  getItemProps?: (
+    options: UseComboboxGetItemPropsOptions<Item>
+  ) => ComponentProps<typeof ComboboxListboxItem>;
   value: Item | null; // This is to prevent: "downshift: A component has changed the uncontrolled prop "selectedItem" to be controlled."
-  selectedItem: Item | undefined;
+  selectedItem?: Item;
   onInputChange?: (value: string | undefined) => void;
   onItemSelect?: (value: Item) => void;
   onItemHighlight?: (value: Item | null) => void;
@@ -251,6 +268,7 @@ export const useCombobox = <Item,>({
   items,
   value,
   selectedItem,
+  getItemProps,
   itemToString,
   onInputChange,
   onItemSelect,
@@ -323,9 +341,6 @@ export const useCombobox = <Item,>({
     },
   });
 
-  const { getItemProps, highlightedIndex, getMenuProps, getInputProps } =
-    downshiftProps;
-
   useEffect(() => {
     if (isOpen === false) {
       resetFilter();
@@ -340,9 +355,10 @@ export const useCombobox = <Item,>({
     }
   }, [isOpen, onItemSelect]);
 
+  const downshiftGetInputProps = downshiftProps.getInputProps;
   const enhancedGetInputProps = useCallback(
     (options?: UseComboboxGetInputPropsOptions) => {
-      const inputProps = getInputProps(options);
+      const inputProps = downshiftGetInputProps(options);
       return {
         ...inputProps,
         onChange: (event: ChangeEvent<HTMLInputElement>) => {
@@ -353,35 +369,47 @@ export const useCombobox = <Item,>({
         },
       };
     },
-    [getInputProps, onInputChange]
+    [downshiftGetInputProps, onInputChange]
   );
 
+  const downshiftHighlightedIndex = downshiftProps.highlightedIndex;
+  const downshiftGetItemProps = downshiftProps.getItemProps;
   const enhancedGetItemProps = useCallback(
     (options: UseComboboxGetItemPropsOptions<Item>) => {
+      const itemOptions = {
+        // We need to either deep compare objects here or use itemToString to get primitive types
+        selected:
+          selectedItem !== undefined &&
+          itemToString(selectedItem) === itemToString(options.item),
+        key: options.id,
+        ...options,
+      };
+
       return {
-        highlighted: highlightedIndex === options.index,
-        ...getItemProps({
-          // We need to either deep compare objects here or use itemToString to get primitive types
-          selected:
-            selectedItem !== undefined &&
-            itemToString(selectedItem) === itemToString(options.item),
-          key: options.id,
-          ...options,
-        }),
+        highlighted: downshiftHighlightedIndex === options.index,
+        ...downshiftGetItemProps(itemOptions),
+        ...getItemProps?.(itemOptions),
       };
     },
-    [getItemProps, highlightedIndex, itemToString, selectedItem]
+    [
+      downshiftHighlightedIndex,
+      downshiftGetItemProps,
+      itemToString,
+      selectedItem,
+      getItemProps,
+    ]
   );
 
+  const downshiftGetMenuProps = downshiftProps.getMenuProps;
   const enhancedGetMenuProps = useCallback(
-    (options?: Parameters<typeof getMenuProps>[0]) => {
+    (options?: Parameters<typeof downshiftGetMenuProps>[0]) => {
       return {
-        ...getMenuProps(options, { suppressRefError: true }),
+        ...downshiftGetMenuProps(options, { suppressRefError: true }),
         state: isOpen ? "open" : "closed",
         empty: filteredItems.length === 0,
       };
     },
-    [getMenuProps, isOpen, filteredItems.length]
+    [downshiftGetMenuProps, isOpen, filteredItems.length]
   );
 
   return {
@@ -392,4 +420,57 @@ export const useCombobox = <Item,>({
     getInputProps: enhancedGetInputProps,
     resetFilter,
   };
+};
+
+export const Combobox = <Item,>({
+  autoFocus,
+  getDescription,
+  ...props
+}: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
+  const combobox = useCombobox<Item>({
+    ...props,
+    onItemHighlight: (item) => {
+      props.onItemHighlight?.(item);
+      setDescription(getDescription?.(item));
+    },
+  });
+
+  const [description, setDescription] = useState<ReactNode>(
+    getDescription?.(combobox.items[props.defaultHighlightedIndex ?? -1])
+  );
+
+  return (
+    <ComboboxRoot open={combobox.isOpen}>
+      <div {...combobox.getComboboxProps()}>
+        <ComboboxAnchor>
+          <InputField
+            {...combobox.getInputProps()}
+            autoFocus={autoFocus}
+            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
+          />
+        </ComboboxAnchor>
+        <ComboboxContent>
+          <ComboboxListbox {...combobox.getMenuProps()}>
+            <ComboboxScrollArea>
+              {combobox.isOpen &&
+                combobox.items.map((item, index) => {
+                  return (
+                    <ComboboxListboxItem
+                      key={index}
+                      selectable={false}
+                      {...combobox.getItemProps({ item, index })}
+                    >
+                      {props.itemToString(item)}
+                    </ComboboxListboxItem>
+                  );
+                })}
+            </ComboboxScrollArea>
+            {description && (
+              <ComboboxItemDescription>{description}</ComboboxItemDescription>
+            )}
+          </ComboboxListbox>
+        </ComboboxContent>
+      </div>
+    </ComboboxRoot>
+  );
 };

@@ -4,7 +4,7 @@ import { PositionLayout } from "./position-layout";
 import { Grid, theme, Text } from "@webstudio-is/design-system";
 
 const Cell = () => (
-  <Text variant={"spaceSectionValueText"}>Auto{/*1.275&#8203;rem*/}</Text>
+  <Text variant={"spaceSectionValueText"}>auto{/*1.275&#8203;rem*/}</Text>
 );
 
 export const PositionLayoutComponent = (

@@ -5,4 +5,5 @@ export const aiRadixComponents = false;
 export const cms = false;
 export const marketplace = false;
 export const pageTemplates = false;
+export const cssVars = false;
 export const filters = false;

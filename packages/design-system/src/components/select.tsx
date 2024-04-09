@@ -38,11 +38,7 @@ export const SelectSeparator = styled(Primitive.Separator, separatorCss);
 
 export const SelectGroup = Primitive.Group;
 
-const StyledItem = styled(Primitive.Item, menuItemCss, {
-  // we don't want to transform text using CSS in case of the Select,
-  // we want getLabel to handle it
-  textTransform: "none",
-});
+const StyledItem = styled(Primitive.Item, menuItemCss);
 
 const StyledIndicator = styled(Primitive.ItemIndicator, menuItemIndicatorCss);
 

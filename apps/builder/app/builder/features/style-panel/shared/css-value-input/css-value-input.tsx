@@ -1,19 +1,19 @@
-import { matchSorter } from "match-sorter";
 import {
   Box,
   useCombobox,
-  Combobox,
+  ComboboxRoot,
   ComboboxContent,
   ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
+  ComboboxItemDescription,
+  ComboboxScrollArea,
   numericScrubControl,
   NestedInputButton,
   NestedIconLabel,
   InputField,
   handleNumericInputArrowKeys,
   theme,
-  ComboboxItemDescription,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -35,7 +35,7 @@ import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
-import { toPascalCase } from "../keyword-utils";
+import { toKebabCase } from "../keyword-utils";
 import {
   declarationDescriptions,
   isValidDeclaration,
@@ -49,6 +49,9 @@ import { convertUnits } from "./convert-units";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty) => {
+  if (property in properties === false) {
+    return true;
+  }
   const { unitGroups } = properties[property as keyof typeof properties];
   return unitGroups.length !== 0;
 };
@@ -275,6 +278,7 @@ export type ChangeReason =
   | "scrub-end";
 
 type CssValueInputProps = {
+  autoFocus?: boolean;
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -305,21 +309,11 @@ const itemToString = (item: CssValueInputValue | null) => {
   return item === null
     ? ""
     : item.type === "keyword"
-    ? toPascalCase(toValue(item))
+    ? toKebabCase(toValue(item))
     : item.type === "intermediate" || item.type === "unit"
     ? String(item.value)
     : toValue(item);
 };
-
-const match = <Item,>(
-  search: string,
-  items: Array<Item>,
-  itemToString: (item: Item | null) => string
-) =>
-  matchSorter(items, search, {
-    keys: [itemToString, (item) => itemToString(item).replace(/\s/g, "-")],
-  });
-
 /**
  * Common:
  * - Free text editing
@@ -352,6 +346,7 @@ const match = <Item,>(
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 export const CssValueInput = ({
+  autoFocus,
   icon,
   prefix,
   showSuffix = true,
@@ -421,7 +416,6 @@ export const CssValueInput = ({
     value,
     selectedItem: props.value,
     itemToString,
-    match,
     onInputChange: (inputValue) => {
       onChange(inputValue);
     },
@@ -648,7 +642,7 @@ export const CssValueInput = ({
   }
 
   return (
-    <Combobox open={isOpen}>
+    <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
@@ -660,9 +654,10 @@ export const CssValueInput = ({
                 inputRef.current?.select();
               }
             }}
+            autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
-            containerRef={scrubRef}
+            containerRef={disabled ? undefined : scrubRef}
             inputRef={inputRef}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
@@ -674,14 +669,16 @@ export const CssValueInput = ({
         {isOpen && (
           <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
             <ComboboxListbox {...menuProps}>
-              {items.map((item, index) => (
-                <ComboboxListboxItem
-                  {...getItemProps({ item, index })}
-                  key={index}
-                >
-                  {itemToString(item)}
-                </ComboboxListboxItem>
-              ))}
+              <ComboboxScrollArea>
+                {items.map((item, index) => (
+                  <ComboboxListboxItem
+                    {...getItemProps({ item, index })}
+                    key={index}
+                  >
+                    {itemToString(item)}
+                  </ComboboxListboxItem>
+                ))}
+              </ComboboxScrollArea>
               {description && (
                 <ComboboxItemDescription>
                   <Box css={{ width: theme.spacing[25] }}>{description}</Box>
@@ -691,6 +688,6 @@ export const CssValueInput = ({
           </ComboboxContent>
         )}
       </Box>
-    </Combobox>
+    </ComboboxRoot>
   );
 };

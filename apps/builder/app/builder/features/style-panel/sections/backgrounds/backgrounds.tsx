@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { styleConfigByName } from "../../shared/configs";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
@@ -45,7 +45,7 @@ import { getLayerName, LayerThumbnail } from "./background-thumbnail";
 import { useMemo } from "react";
 import type { RgbValue, StyleProperty } from "@webstudio-is/css-engine";
 import {
-  CollapsibleSectionBase,
+  CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
 import { getDots } from "../../shared/collapsible-section";
@@ -133,7 +133,7 @@ const Layer = (props: {
   );
 };
 
-const properties: StyleProperty[] = [
+export const properties = [
   "backgroundAttachment",
   "backgroundClip",
   "backgroundColor",
@@ -143,19 +143,19 @@ const properties: StyleProperty[] = [
   "backgroundRepeat",
   "backgroundSize",
   "backgroundBlendMode",
-];
+] satisfies Array<StyleProperty>;
 
 const BackgroundsCollapsibleSection = ({
   children,
   currentStyle,
   createBatchUpdate,
-}: RenderCategoryProps & { children: React.ReactNode }) => {
+}: SectionProps & { children: React.ReactNode }) => {
   const label = "Backgrounds";
   const [isOpen, setIsOpen] = useOpenState({ label });
   const layersStyleSource = getLayersStyleSource(currentStyle);
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       label={label}
       fullWidth
       isOpen={isOpen}
@@ -193,11 +193,11 @@ const BackgroundsCollapsibleSection = ({
       }
     >
       {children}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };
 
-export const BackgroundsSection = (props: RenderCategoryProps) => {
+export const Section = (props: SectionProps) => {
   const { setProperty, deleteProperty, currentStyle, createBatchUpdate } =
     props;
   const layersCount = getLayerCount(currentStyle);
@@ -226,7 +226,6 @@ export const BackgroundsSection = (props: RenderCategoryProps) => {
       deleteProperty={deleteProperty}
       createBatchUpdate={createBatchUpdate}
       currentStyle={currentStyle}
-      category={props.category}
     >
       <Flex gap={1} direction="column">
         <CssValueListArrowFocus dragItemId={dragItemId}>

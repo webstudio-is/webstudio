@@ -107,7 +107,8 @@ const SidePanel = ({
         height: "100%",
         ...css,
         "&:last-of-type": {
-          borderLeft: `1px solid  ${theme.colors.borderMain}`,
+          // Ensure content still has full width, avoid subpixels give layout round numbers
+          boxShadow: `inset 1px 0 0 0 ${theme.colors.borderMain}`,
         },
       }}
     >

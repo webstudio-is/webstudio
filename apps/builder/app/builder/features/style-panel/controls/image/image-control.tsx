@@ -3,7 +3,7 @@ import { Button } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 
 export const ImageControl = ({
   property,

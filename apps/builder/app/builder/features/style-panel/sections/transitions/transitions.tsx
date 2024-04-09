@@ -1,6 +1,6 @@
 import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
-import type { RenderCategoryProps } from "../../style-sections";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import type { SectionProps } from "../shared/section";
 import {
   SectionTitle,
   SectionTitleButton,
@@ -19,11 +19,13 @@ import { TransitionLayer } from "./transition-layer";
 import { $selectedOrLastStyleSourceSelector } from "~/shared/nano-states";
 import { useStore } from "@nanostores/react";
 
-const property: StyleProperty = "transition";
+export const properties = ["transition"] satisfies Array<StyleProperty>;
+
+const property: StyleProperty = properties[0];
 const label = "Transitions";
 const INITIAL_TRANSITION = "opacity 200ms ease";
 
-export const TransitionSection = (props: RenderCategoryProps) => {
+export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
   const layersStyleSource = getStyleSource(currentStyle[property]);
@@ -38,7 +40,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
     selectedOrLastStyleSourceSelector.state === undefined;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       fullWidth
       label={label}
       isOpen={isOpen}
@@ -74,7 +76,7 @@ export const TransitionSection = (props: RenderCategoryProps) => {
             title={label}
             style={currentStyle}
             description="Animate the transition between states on this instance."
-            properties={[property]}
+            properties={properties}
             label={
               <SectionTitleLabel color={layersStyleSource}>
                 {label}
@@ -102,6 +104,6 @@ export const TransitionSection = (props: RenderCategoryProps) => {
           }}
         />
       )}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

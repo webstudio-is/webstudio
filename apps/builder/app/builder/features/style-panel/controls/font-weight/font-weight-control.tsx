@@ -3,7 +3,7 @@ import { type FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
 import { useAssets } from "~/builder/shared/assets";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import { isSupportedFontWeight } from "./is-supported-font-weight";
 
 type FontWeightItem = {
@@ -77,6 +77,7 @@ export const FontWeightControl = ({
   property,
   currentStyle,
   setProperty,
+  isAdvanced,
 }: ControlProps) => {
   const fontWeight = currentStyle[property]?.value;
 
@@ -112,6 +113,7 @@ export const FontWeightControl = ({
 
   return (
     <Select
+      disabled={isAdvanced}
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""

@@ -6,7 +6,7 @@ import {
   SectionTitle,
 } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { CollapsibleSectionBase } from "~/builder/shared/collapsible-section";
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 
 export const CollapsibleDomainSection = ({
   initiallyOpen = false,
@@ -31,7 +31,7 @@ export const CollapsibleDomainSection = ({
   }, [open]);
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       label=""
       fullWidth
       isOpen={open}
@@ -67,6 +67,6 @@ export const CollapsibleDomainSection = ({
       >
         {children}
       </Flex>
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

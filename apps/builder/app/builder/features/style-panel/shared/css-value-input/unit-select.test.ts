@@ -15,7 +15,7 @@ describe("Unit menu options", () => {
       [
         {
           "id": "px",
-          "label": "PX",
+          "label": "px",
           "type": "unit",
         },
         {
@@ -25,27 +25,27 @@ describe("Unit menu options", () => {
         },
         {
           "id": "em",
-          "label": "EM",
+          "label": "em",
           "type": "unit",
         },
         {
           "id": "rem",
-          "label": "REM",
+          "label": "rem",
           "type": "unit",
         },
         {
           "id": "dvw",
-          "label": "DVW",
+          "label": "dvw",
           "type": "unit",
         },
         {
           "id": "dvh",
-          "label": "DVH",
+          "label": "dvh",
           "type": "unit",
         },
         {
           "id": "auto",
-          "label": "Auto",
+          "label": "auto",
           "type": "keyword",
         },
       ]
@@ -73,7 +73,7 @@ describe("Unit menu options", () => {
       [
         {
           "id": "px",
-          "label": "PX",
+          "label": "px",
           "type": "unit",
         },
         {
@@ -83,27 +83,27 @@ describe("Unit menu options", () => {
         },
         {
           "id": "em",
-          "label": "EM",
+          "label": "em",
           "type": "unit",
         },
         {
           "id": "rem",
-          "label": "REM",
+          "label": "rem",
           "type": "unit",
         },
         {
           "id": "dvw",
-          "label": "DVW",
+          "label": "dvw",
           "type": "unit",
         },
         {
           "id": "dvh",
-          "label": "DVH",
+          "label": "dvh",
           "type": "unit",
         },
         {
           "id": "auto",
-          "label": "Auto",
+          "label": "auto",
           "type": "keyword",
         },
       ]

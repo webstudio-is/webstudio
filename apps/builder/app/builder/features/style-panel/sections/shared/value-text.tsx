@@ -3,7 +3,6 @@ import type { StyleValue } from "@webstudio-is/css-engine";
 import { useMemo, type ComponentProps } from "react";
 import { theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import { toPascalCase } from "../../shared/keyword-utils";
 
 const Container = styled("button", {
   // fit-content is not needed for the "button" element,
@@ -91,7 +90,7 @@ export const ValueText = ({
 
     return (
       <Text css={{}} variant="spaceSectionValueText">
-        {toPascalCase(toValue(value))}
+        {toValue(value)}
       </Text>
     );
   }, [value, source]);

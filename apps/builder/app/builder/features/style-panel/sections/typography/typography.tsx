@@ -6,9 +6,8 @@ import {
   IconButton,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { toValue } from "@webstudio-is/css-engine";
-import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "../../style-sections";
+import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
+import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
   ColorControl,
@@ -35,13 +34,13 @@ import {
   TextUnderlineIcon,
   TextUppercaseIcon,
 } from "@webstudio-is/icons";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { getStyleSource, type StyleInfo } from "../../shared/style-info";
+import { type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
 import { forwardRef, type ComponentProps } from "react";
 
-const properties: StyleProperty[] = [
+export const properties = [
   "fontFamily",
   "fontWeight",
   "fontSize",
@@ -56,16 +55,16 @@ const properties: StyleProperty[] = [
   "whiteSpace",
   "textOverflow",
   "hyphens",
-];
+] satisfies Array<StyleProperty>;
 
-export const TypographySection = (props: RenderCategoryProps) => {
+export const Section = (props: SectionProps) => {
   return (
     <CollapsibleSection
       label="Typography"
       currentStyle={props.currentStyle}
       properties={properties}
     >
-      <Flex css={{ gap: theme.spacing[7] }} direction="column">
+      <Flex gap="2" direction="column">
         <TypographySectionFont {...props} />
         <TypographySectionSizing {...props} />
         <TypographySectionAdvanced {...props} />
@@ -74,72 +73,57 @@ export const TypographySection = (props: RenderCategoryProps) => {
   );
 };
 
-export const TypographySectionFont = (props: RenderCategoryProps) => {
+export const TypographySectionFont = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
 
   return (
-    <Grid
-      css={{
-        gap: theme.spacing[5],
-      }}
-    >
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-        <PropertyName
-          style={currentStyle}
-          label="Font"
-          properties={["fontFamily"]}
-          onReset={() => deleteProperty("fontFamily")}
-        />
-        <FontFamilyControl
-          property="fontFamily"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-      </Grid>
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-        <PropertyName
-          style={currentStyle}
-          label="Weight"
-          properties={["fontWeight"]}
-          onReset={() => deleteProperty("fontWeight")}
-        />
-        <FontWeightControl
-          property="fontWeight"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-      </Grid>
-      <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
-        <PropertyName
-          style={currentStyle}
-          label="Color"
-          properties={["color"]}
-          onReset={() => deleteProperty("color")}
-        />
-        <ColorControl
-          property="color"
-          currentStyle={currentStyle}
-          setProperty={setProperty}
-          deleteProperty={deleteProperty}
-        />
-      </Grid>
+    <Grid css={{ gridTemplateColumns: "4fr 6fr" }} gap={2}>
+      <PropertyName
+        style={currentStyle}
+        label="Family"
+        properties={["fontFamily"]}
+        onReset={() => deleteProperty("fontFamily")}
+      />
+      <FontFamilyControl
+        property="fontFamily"
+        currentStyle={currentStyle}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+      />
+      <PropertyName
+        style={currentStyle}
+        label="Weight"
+        properties={["fontWeight"]}
+        onReset={() => deleteProperty("fontWeight")}
+      />
+      <FontWeightControl
+        property="fontWeight"
+        currentStyle={currentStyle}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+      />
+      <PropertyName
+        style={currentStyle}
+        label="Color"
+        properties={["color"]}
+        onReset={() => deleteProperty("color")}
+      />
+      <ColorControl
+        property="color"
+        currentStyle={currentStyle}
+        setProperty={setProperty}
+        deleteProperty={deleteProperty}
+      />
     </Grid>
   );
 };
 
-export const TypographySectionSizing = (props: RenderCategoryProps) => {
+export const TypographySectionSizing = (props: SectionProps) => {
   const { currentStyle, setProperty, deleteProperty } = props;
 
   return (
-    <Grid
-      css={{
-        gridTemplateColumns: "1fr 1fr 1fr",
-        gap: theme.spacing[5],
-      }}
-    >
-      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
+    <Grid gap="2" css={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
+      <Grid gap="1">
         <PropertyName
           style={currentStyle}
           properties={["fontSize"]}
@@ -153,7 +137,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Grid>
-      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
+      <Grid gap="1">
         <PropertyName
           style={currentStyle}
           properties={["lineHeight"]}
@@ -167,7 +151,7 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
           deleteProperty={deleteProperty}
         />
       </Grid>
-      <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
+      <Grid gap="1">
         <PropertyName
           style={currentStyle}
           properties={["letterSpacing"]}
@@ -185,158 +169,124 @@ export const TypographySectionSizing = (props: RenderCategoryProps) => {
   );
 };
 
-export const TypographySectionAdvanced = (props: RenderCategoryProps) => {
-  const { setProperty, deleteProperty, currentStyle } = props;
-  const setTextAlign = setProperty("textAlign");
-  const setTextDecorationLine = setProperty("textDecorationLine");
-  const setTextTransform = setProperty("textTransform");
-  const setFontStyle = setProperty("fontStyle");
-
+export const TypographySectionAdvanced = (props: SectionProps) => {
+  const { currentStyle } = props;
+  const textAlignValue = toValue(currentStyle.textAlign?.value);
   return (
-    <Grid
-      css={{
-        gap: theme.spacing[5],
-      }}
-    >
-      <Grid
-        css={{
-          gridTemplateColumns: "1fr 1fr",
-          gap: theme.spacing[9],
-        }}
-      >
+    <Grid gap="2" columns="2" align="end">
+      <ToggleGroupControl
+        {...props}
+        property="textAlign"
+        value={
+          // Convert to logical props
+          textAlignValue === "left"
+            ? "start"
+            : textAlignValue === "right"
+            ? "end"
+            : textAlignValue
+        }
+        items={[
+          {
+            child: <TextAlignLeftIcon />,
+            title: "Text Align",
+            description: "Aligns the text based on the writing direction.",
+            value: "start",
+            propertyValues: "text-align: start;",
+          },
+          {
+            child: <TextAlignCenterIcon />,
+            title: "Text Align",
+            description: "Centers the text horizontally within its container.",
+            value: "center",
+            propertyValues: "text-align: center;",
+          },
+          {
+            child: <TextAlignRightIcon />,
+            title: "Text Align",
+            description: "Aligns the text based on the writing direction.",
+            value: "end",
+            propertyValues: "text-align: end;",
+          },
+          {
+            child: <TextAlignJustifyIcon />,
+            title: "Text Align",
+            description:
+              "Adjusts word spacing to align text to both the left and right edges of the container",
+            value: "justify",
+            propertyValues: "text-align: justify;",
+          },
+        ]}
+      />
+      <ToggleGroupControl
+        {...props}
+        property="textDecorationLine"
+        items={[
+          {
+            child: <CrossSmallIcon />,
+            title: "Text Decoration Line",
+            description: "No decoration is applied to the text.",
+            value: "none",
+            propertyValues: "text-decoration-line: none;",
+          },
+          {
+            title: "Text Decoration Line",
+            child: <TextUnderlineIcon />,
+            description: " Adds a horizontal line underneath the text.",
+            value: "underline",
+            propertyValues: "text-decoration-line: underline;",
+          },
+          {
+            title: "Text Decoration Line",
+            child: <TextStrikethroughIcon />,
+            description:
+              "Draws a horizontal line through the middle of the text.",
+            value: "line-through",
+            propertyValues: "text-decoration-line: line-through;",
+          },
+        ]}
+      />
+      <ToggleGroupControl
+        {...props}
+        property="textTransform"
+        items={[
+          {
+            child: <CrossSmallIcon />,
+            title: "Text Transform",
+            description:
+              "No transformation is applied to the text. The text appears as it is.",
+            value: "none",
+            propertyValues: "text-transform: none;",
+          },
+          {
+            child: <TextUppercaseIcon />,
+            title: "Text Transform",
+            description:
+              "Transforms the text to appear in all uppercase letters.",
+            value: "uppercase",
+            propertyValues: "text-transform: uppercase;",
+          },
+          {
+            child: <TextCapitalizeIcon />,
+            title: "Text Transform",
+            description:
+              "Transforms the first character of each word to uppercase, while the remaining characters are in lowercase.",
+            value: "capitalize",
+            propertyValues: "text-transform: capitalize;",
+          },
+          {
+            child: <TextLowercaseIcon />,
+            title: "Text Transform",
+            description:
+              " Transforms the text to appear in all lowercase letters.",
+            value: "lowercase",
+            propertyValues: "text-transform: lowercase;",
+          },
+        ]}
+      />
+      <Grid align="end" gap="1" css={{ gridTemplateColumns: "3fr 1fr" }}>
         <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.textAlign)}
-          onValueChange={(value) => setTextAlign({ type: "keyword", value })}
-          onReset={() => deleteProperty("textAlign")}
-          value={String(getTextAlign(toValue(currentStyle.textAlign?.value)))}
-          properties={["textAlign"]}
-          items={[
-            {
-              child: <TextAlignLeftIcon />,
-              title: "Text Align",
-              description: "Aligns the text based on the writing direction.",
-              value: "start",
-              propertyValues: "text-align: left;",
-            },
-            {
-              child: <TextAlignCenterIcon />,
-              title: "Text Align",
-              description:
-                "Centers the text horizontally within its container.",
-              value: "center",
-              propertyValues: "text-align: center;",
-            },
-            {
-              child: <TextAlignRightIcon />,
-              title: "Text Align",
-              description: "Aligns the text based on the writing direction.",
-              value: "end",
-              propertyValues: "text-align: right;",
-            },
-            {
-              child: <TextAlignJustifyIcon />,
-              title: "Text Align",
-              description:
-                "Adjusts word spacing to align text to both the left and right edges of the container",
-              value: "justify",
-              propertyValues: "text-align: justify;",
-            },
-          ]}
-        />
-        <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.textDecorationLine)}
-          onValueChange={(value) =>
-            setTextDecorationLine({ type: "keyword", value })
-          }
-          onReset={() => deleteProperty("textDecorationLine")}
-          properties={["textDecorationLine"]}
-          value={toValue(currentStyle.textDecorationLine?.value)}
-          items={[
-            {
-              child: <CrossSmallIcon />,
-              title: "Text Decoration Line",
-              description: "No decoration is applied to the text.",
-              value: "none",
-              propertyValues: "text-decoration-line: none;",
-            },
-            {
-              title: "Text Decoration Line",
-              child: <TextUnderlineIcon />,
-              description: " Adds a horizontal line underneath the text.",
-              value: "underline",
-              propertyValues: "text-decoration-line: underline;",
-            },
-            {
-              title: "Text Decoration Line",
-              child: <TextStrikethroughIcon />,
-              description:
-                "Draws a horizontal line through the middle of the text.",
-              value: "line-through",
-              propertyValues: "text-decoration-line: line-through;",
-            },
-          ]}
-        />
-      </Grid>
-      <Grid
-        css={{
-          gridTemplateColumns: "1fr 1fr auto",
-          gap: theme.spacing[9],
-          alignItems: "center",
-        }}
-      >
-        <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.textTransform)}
-          onValueChange={(value) =>
-            setTextTransform({ type: "keyword", value })
-          }
-          properties={["textTransform"]}
-          onReset={() => deleteProperty("textTransform")}
-          value={toValue(currentStyle.textTransform?.value)}
-          items={[
-            {
-              child: <CrossSmallIcon />,
-              title: "Text Transform",
-              description:
-                "No transformation is applied to the text. The text appears as it is.",
-              value: "none",
-              propertyValues: "text-transform: none;",
-            },
-            {
-              child: <TextUppercaseIcon />,
-              title: "Text Transform",
-              description:
-                "Transforms the text to appear in all uppercase letters.",
-              value: "uppercase",
-              propertyValues: "text-transform: uppercase;",
-            },
-            {
-              child: <TextCapitalizeIcon />,
-              title: "Text Transform",
-              description:
-                "Transforms the first character of each word to uppercase, while the remaining characters are in lowercase.",
-              value: "capitalize",
-              propertyValues: "text-transform: capitalize;",
-            },
-            {
-              child: <TextLowercaseIcon />,
-              title: "Text Transform",
-              description:
-                " Transforms the text to appear in all lowercase letters.",
-              value: "lowercase",
-              propertyValues: "text-transform: lowercase;",
-            },
-          ]}
-        />
-        <ToggleGroupControl
-          style={currentStyle}
-          styleSource={getStyleSource(currentStyle.fontStyle)}
-          onValueChange={(value) => setFontStyle({ type: "keyword", value })}
-          onReset={() => deleteProperty("fontStyle")}
-          properties={["fontStyle"]}
-          value={toValue(currentStyle.fontStyle?.value)}
+          {...props}
+          property="fontStyle"
           items={[
             {
               child: <CrossSmallIcon />,
@@ -393,13 +343,8 @@ const AdvancedOptionsButton = forwardRef<
 });
 AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 
-export const TypographySectionAdvancedPopover = (
-  props: RenderCategoryProps
-) => {
+export const TypographySectionAdvancedPopover = (props: SectionProps) => {
   const { deleteProperty, setProperty, currentStyle } = props;
-  const setDirection = setProperty("direction");
-  const setTextOverflow = setProperty("textOverflow");
-  const setHyphens = setProperty("hyphens");
   const properties = {
     whiteSpace: "whiteSpace",
     direction: "direction",
@@ -440,11 +385,8 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty(properties.direction)}
             />
             <ToggleGroupControl
-              style={currentStyle}
-              onValueChange={(value) =>
-                setDirection({ type: "keyword", value })
-              }
-              value={toValue(currentStyle.direction?.value)}
+              {...props}
+              property={properties.direction}
               items={[
                 {
                   child: <TextDirectionLTRIcon />,
@@ -473,9 +415,8 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty(properties.hyphens)}
             />
             <ToggleGroupControl
-              style={currentStyle}
-              onValueChange={(value) => setHyphens({ type: "keyword", value })}
-              value={toValue(currentStyle.hyphens?.value)}
+              {...props}
+              property={properties.hyphens}
               items={[
                 {
                   child: <CrossSmallIcon />,
@@ -504,11 +445,8 @@ export const TypographySectionAdvancedPopover = (
               onReset={() => deleteProperty(properties.textOverflow)}
             />
             <ToggleGroupControl
-              style={currentStyle}
-              onValueChange={(value) =>
-                setTextOverflow({ type: "keyword", value })
-              }
-              value={toValue(currentStyle.textOverflow?.value)}
+              {...props}
+              property={properties.textOverflow}
               items={[
                 {
                   child: <CrossSmallIcon />,
@@ -538,15 +476,4 @@ export const TypographySectionAdvancedPopover = (
       />
     </FloatingPanel>
   );
-};
-
-const getTextAlign = (value: string) => {
-  switch (value) {
-    case "left":
-      return "start";
-    case "right":
-      return "end";
-    default:
-      return value;
-  }
 };

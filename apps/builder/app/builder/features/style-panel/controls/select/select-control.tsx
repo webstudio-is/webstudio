@@ -1,9 +1,9 @@
+import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
 import { toValue } from "@webstudio-is/css-engine";
 import { Box, Select, theme } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
-import { toPascalCase } from "../../shared/keyword-utils";
-import { declarationDescriptions, parseCssValue } from "@webstudio-is/css-data";
-import type { ControlProps } from "../../style-sections";
+import { toKebabCase } from "../../shared/keyword-utils";
+import type { ControlProps } from "../types";
 
 export const SelectControl = ({
   property,
@@ -11,12 +11,15 @@ export const SelectControl = ({
   setProperty,
   deleteProperty,
   items,
+  isAdvanced,
 }: ControlProps) => {
   const { items: defaultItems } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
   const setValue = setProperty(property);
   const options = (items ?? defaultItems).map(({ name }) => name);
-  const value = toValue(styleValue);
+  // We can't render an empty string as a value when display was added but without a value.
+  // One case is when advanced property is being added, but no value is set.
+  const value = toValue(styleValue) || "empty";
 
   // Append selected value when not present in the list of options
   // because radix requires values to always be in the list.
@@ -26,10 +29,11 @@ export const SelectControl = ({
 
   return (
     <Select
+      disabled={isAdvanced}
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}
-      getLabel={toPascalCase}
+      getLabel={toKebabCase}
       value={value}
       onChange={(name) => {
         const nextValue = parseCssValue(property, name);
@@ -54,15 +58,17 @@ export const SelectControl = ({
         }
       }}
       getDescription={(option) => {
-        const key =
-          `${property}:${option}` as keyof typeof declarationDescriptions;
+        const description =
+          declarationDescriptions[
+            `${property}:${option}` as keyof typeof declarationDescriptions
+          ];
 
-        return (
-          <Box css={{ width: theme.spacing[25] }}>
-            {declarationDescriptions[key]}
-          </Box>
-        );
+        if (description === undefined) {
+          return;
+        }
+        return <Box css={{ width: theme.spacing[25] }}>{description}</Box>;
       }}
+      getItemProps={() => ({ text: "sentence" })}
     />
   );
 };

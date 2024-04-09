@@ -1,6 +1,6 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";
@@ -9,10 +9,7 @@ import { getStyleSource } from "../../shared/style-info";
 const property: StyleProperty = "outlineWidth";
 
 export const OutlineWidth = (
-  props: Pick<
-    RenderCategoryProps,
-    "currentStyle" | "setProperty" | "deleteProperty"
-  >
+  props: Pick<SectionProps, "currentStyle" | "setProperty" | "deleteProperty">
 ) => {
   const { deleteProperty, setProperty, currentStyle } = props;
   const outlineWidthValue = currentStyle[property]?.value;

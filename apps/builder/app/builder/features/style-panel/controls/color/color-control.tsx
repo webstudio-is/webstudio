@@ -1,15 +1,16 @@
+import { useState } from "react";
 import { Flex } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
-import type { ControlProps } from "../../style-sections";
+import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
+import { colord } from "colord";
 import {
   type CssColorPickerValueInput,
   ColorPicker,
 } from "../../shared/color-picker";
-import { colord } from "colord";
 import { getStyleSource } from "../../shared/style-info";
 import { styleConfigByName } from "../../shared/configs";
-import { useState } from "react";
-import type { RgbValue, StyleValue } from "@webstudio-is/css-engine";
+import type { ControlProps } from "../types";
+import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 
 const parseColor = (color?: StyleValue): RgbValue => {
   const colordValue = colord(toValue(color));
@@ -42,6 +43,7 @@ export const ColorControl = ({
   currentStyle,
   setProperty,
   deleteProperty,
+  isAdvanced,
 }: ControlProps) => {
   const [intermediateValue, setIntermediateValue] =
     useState<CssColorPickerValueInput>();
@@ -65,43 +67,52 @@ export const ColorControl = ({
 
   return (
     <Flex align="center" gap="1">
-      <ColorPicker
-        currentColor={currentColor}
+      <AdvancedValueTooltip
+        isAdvanced={isAdvanced}
         property={property}
-        value={value}
-        styleSource={getStyleSource(styleInfo)}
-        keywords={(items ?? defaultItems).map((item) => ({
-          type: "keyword",
-          value: item.name,
-        }))}
-        intermediateValue={intermediateValue}
-        onChange={(styleValue) => {
-          setIntermediateValue(styleValue);
+        value={toValue(currentColor)}
+        currentStyle={currentStyle}
+        deleteProperty={deleteProperty}
+      >
+        <ColorPicker
+          disabled={isAdvanced}
+          currentColor={currentColor}
+          property={property}
+          value={value}
+          styleSource={getStyleSource(styleInfo)}
+          keywords={(items ?? defaultItems).map((item) => ({
+            type: "keyword",
+            value: item.name,
+          }))}
+          intermediateValue={intermediateValue}
+          onChange={(styleValue) => {
+            setIntermediateValue(styleValue);
 
-          if (styleValue === undefined) {
-            deleteProperty(property, { isEphemeral: true });
-            return;
-          }
+            if (styleValue === undefined) {
+              deleteProperty(property, { isEphemeral: true });
+              return;
+            }
 
-          if (styleValue.type !== "intermediate") {
-            setValue(styleValue, { isEphemeral: true });
-          }
-        }}
-        onHighlight={(styleValue) => {
-          if (styleValue !== undefined) {
-            setValue(styleValue, { isEphemeral: true });
-          } else {
+            if (styleValue.type !== "intermediate") {
+              setValue(styleValue, { isEphemeral: true });
+            }
+          }}
+          onHighlight={(styleValue) => {
+            if (styleValue !== undefined) {
+              setValue(styleValue, { isEphemeral: true });
+            } else {
+              deleteProperty(property, { isEphemeral: true });
+            }
+          }}
+          onChangeComplete={({ value }) => {
+            setValue(value);
+            setIntermediateValue(undefined);
+          }}
+          onAbort={() => {
             deleteProperty(property, { isEphemeral: true });
-          }
-        }}
-        onChangeComplete={({ value }) => {
-          setValue(value);
-          setIntermediateValue(undefined);
-        }}
-        onAbort={() => {
-          deleteProperty(property, { isEphemeral: true });
-        }}
-      />
+          }}
+        />
+      </AdvancedValueTooltip>
     </Flex>
   );
 };

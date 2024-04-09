@@ -97,6 +97,7 @@ type ColorPickerProps = {
   styleSource: StyleSource;
   keywords?: Array<KeywordValue>;
   property: StyleProperty;
+  disabled?: boolean;
 };
 
 export const ColorPicker = ({
@@ -110,6 +111,7 @@ export const ColorPicker = ({
   styleSource,
   keywords,
   property,
+  disabled,
 }: ColorPickerProps) => {
   const [displayColorPicker, setDisplayColorPicker] = useState(false);
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
@@ -222,6 +224,7 @@ export const ColorPicker = ({
 
   return (
     <CssValueInput
+      disabled={disabled}
       styleSource={styleSource}
       prefix={prefix}
       showSuffix={false}

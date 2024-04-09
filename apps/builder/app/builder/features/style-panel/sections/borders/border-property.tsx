@@ -1,19 +1,18 @@
+import { type ReactNode } from "react";
+import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";
+import { toValue } from "@webstudio-is/css-engine";
 import {
   Box,
   Grid,
   NestedIconLabel,
   ToggleButton,
-  theme,
 } from "@webstudio-is/design-system";
 import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { RenderCategoryProps } from "../../style-sections";
-import { toValue } from "@webstudio-is/css-engine";
-import { deleteAllProperties, setAllProperties } from "./border-utils";
-import type { StyleProperty, UnitValue } from "@webstudio-is/css-engine";
-import { type ReactNode } from "react";
+import type { SectionProps } from "../shared/section";
+import { deleteAllProperties, rowCss, setAllProperties } from "./utils";
 import { useSelectedInstanceKv } from "../../shared/instances-kv";
 
 const borderPropertyStyleValueDefault: UnitValue = {
@@ -32,7 +31,7 @@ export const BorderProperty = ({
   label,
   description,
 }: Pick<
-  RenderCategoryProps,
+  SectionProps,
   "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
 > & {
   individualModeIcon?: ReactNode;
@@ -109,12 +108,7 @@ export const BorderProperty = ({
 
   return (
     <Grid gap={1}>
-      <Grid
-        css={{
-          gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
-        }}
-        gap={2}
-      >
+      <Grid css={rowCss}>
         <PropertyName
           style={currentStyle}
           properties={borderProperties}

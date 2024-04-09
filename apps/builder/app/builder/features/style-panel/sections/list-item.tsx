@@ -1,19 +1,19 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { styleConfigByName } from "../shared/configs";
-import type { RenderCategoryProps } from "../style-sections";
+import type { SectionProps } from "./shared/section";
 import { PropertyName } from "../shared/property-name";
 import { SelectControl } from "../controls";
 
 import { CollapsibleSection } from "../shared/collapsible-section";
 
-const properties: StyleProperty[] = ["listStyleType"];
+export const properties = ["listStyleType"] satisfies Array<StyleProperty>;
 
-export const ListItemSection = ({
+export const Section = ({
   currentStyle: style,
   setProperty,
   deleteProperty,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   return (
     <CollapsibleSection
       label="List Item"

@@ -25,7 +25,7 @@ const preStyle = css(textVariants.mono, {
 
 // - Compiles a CSS string from the style info
 // - Groups by category and separates categories with comments
-const getCssText = (instanceStyle: StyleInfo) => {
+const getCssText = (currentStyle: StyleInfo) => {
   const sheet = createRegularStyleSheet();
   type StyleValueInfoMap = Map<
     StyleProperty,
@@ -38,8 +38,8 @@ const getCssText = (instanceStyle: StyleInfo) => {
 
   // Aggregate styles by category so we can group them when rendering.
   let property: StyleProperty;
-  for (property in instanceStyle) {
-    const value = instanceStyle[property];
+  for (property in currentStyle) {
+    const value = currentStyle[property];
     if (value === undefined) {
       continue;
     }

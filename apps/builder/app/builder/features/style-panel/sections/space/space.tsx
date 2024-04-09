@@ -1,9 +1,9 @@
 import { type ComponentProps, useState, useRef } from "react";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { SpaceLayout } from "./layout";
 import { ValueText } from "../shared/value-text";
 import { getSpaceModifiersGroup, useScrub } from "../shared/scrub";
-import { spacePropertiesNames } from "./types";
+import { spaceProperties } from "./properties";
 import type { SpaceStyleProperty, HoverTarget } from "./types";
 import { InputPopover } from "../shared/input-popover";
 import { SpaceTooltip } from "./tooltip";
@@ -29,7 +29,7 @@ const Cell = ({
   onHover: (target: HoverTarget | undefined) => void;
   property: SpaceStyleProperty;
   scrubStatus: ReturnType<typeof useScrub>;
-  currentStyle: RenderCategoryProps["currentStyle"];
+  currentStyle: SectionProps["currentStyle"];
   createBatchUpdate: CreateBatchUpdate;
 }) => {
   const styleInfo = currentStyle[property];
@@ -80,12 +80,14 @@ const Cell = ({
   );
 };
 
-export const SpaceSection = ({
+export { spaceProperties as properties };
+
+export const Section = ({
   setProperty,
   deleteProperty,
   createBatchUpdate,
   currentStyle,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   const [hoverTarget, setHoverTarget] = useState<HoverTarget>();
 
   const scrubStatus = useScrub({
@@ -97,7 +99,7 @@ export const SpaceSection = ({
     getModifiersGroup: getSpaceModifiersGroup,
     onChange: (values, options) => {
       const batch = createBatchUpdate();
-      for (const property of spacePropertiesNames) {
+      for (const property of spaceProperties) {
         const value = values[property];
         if (value !== undefined) {
           batch.setProperty(property)(value);
@@ -138,7 +140,7 @@ export const SpaceSection = ({
     <CollapsibleSection
       label="Space"
       currentStyle={currentStyle}
-      properties={spacePropertiesNames}
+      properties={spaceProperties}
     >
       <SpaceLayout
         ref={layoutRef}

@@ -21,6 +21,7 @@ const chevronStyle = css({ color: `var(${chevronColor})` });
 
 const style = css({
   all: "unset", // reset <button>
+  minWidth: 0,
   height: theme.spacing[12],
   boxSizing: "border-box",
   display: "flex",

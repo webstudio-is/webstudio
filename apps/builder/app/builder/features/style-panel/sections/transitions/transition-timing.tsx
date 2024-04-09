@@ -19,7 +19,6 @@ import {
   type TimingFunctions,
   findTimingFunctionFromValue,
 } from "./transition-utils";
-import { humanizeString } from "~/shared/string-utils";
 
 type TransitionTimingProps = {
   timing: KeywordValue;
@@ -89,8 +88,8 @@ export const TransitionTiming = ({
           <SelectLabel>Default</SelectLabel>
           {Object.keys(defaultFunctions).map((defaultFunc) => {
             return (
-              <SelectItem key={defaultFunc} value={defaultFunc}>
-                {humanizeString(defaultFunc)}
+              <SelectItem key={defaultFunc} value={defaultFunc} text="sentence">
+                {defaultFunc}
               </SelectItem>
             );
           })}
@@ -102,8 +101,8 @@ export const TransitionTiming = ({
           <SelectLabel>Ease In</SelectLabel>
           {Object.keys(easeInFunctions).map((easeIn) => {
             return (
-              <SelectItem key={easeIn} value={easeIn}>
-                {humanizeString(easeIn)}
+              <SelectItem key={easeIn} value={easeIn} text="sentence">
+                {easeIn}
               </SelectItem>
             );
           })}
@@ -112,8 +111,8 @@ export const TransitionTiming = ({
           <SelectLabel>Ease Out</SelectLabel>
           {Object.keys(easeOutFunctions).map((easeOut) => {
             return (
-              <SelectItem key={easeOut} value={easeOut}>
-                {humanizeString(easeOut)}
+              <SelectItem key={easeOut} value={easeOut} text="sentence">
+                {easeOut}
               </SelectItem>
             );
           })}
@@ -122,8 +121,8 @@ export const TransitionTiming = ({
           <SelectLabel>Ease In Out</SelectLabel>
           {Object.keys(easeInOutFunctions).map((easeInOut) => {
             return (
-              <SelectItem key={easeInOut} value={easeInOut}>
-                {humanizeString(easeInOut)}
+              <SelectItem key={easeInOut} value={easeInOut} text="sentence">
+                {easeInOut}
               </SelectItem>
             );
           })}

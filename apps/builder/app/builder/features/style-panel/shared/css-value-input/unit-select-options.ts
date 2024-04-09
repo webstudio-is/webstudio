@@ -1,5 +1,4 @@
 import type { CssValueInputValue } from "./css-value-input";
-import { toPascalCase } from "../keyword-utils";
 import {
   keywordValues,
   properties,
@@ -40,6 +39,10 @@ export const buildOptions = (
       : undefined;
 
   const options: UnitOption[] = [];
+
+  if (property in properties === false) {
+    return options;
+  }
   const { unitGroups } = properties[property as keyof typeof properties];
 
   for (const unitGroup of unitGroups) {
@@ -58,7 +61,7 @@ export const buildOptions = (
       options.push({
         id: unit,
         type: "unit",
-        label: unit.toLocaleUpperCase(),
+        label: unit,
       });
     }
   }
@@ -89,10 +92,7 @@ export const buildOptions = (
     options.push({
       id: unit,
       type: "unit",
-      label:
-        unit === "number"
-          ? nestedSelectButtonUnitless
-          : unit.toLocaleUpperCase(),
+      label: unit === "number" ? nestedSelectButtonUnitless : unit,
     });
   }
 
@@ -125,7 +125,7 @@ export const buildOptions = (
   for (const keyword of webstudioKeywords) {
     options.push({
       id: keyword,
-      label: toPascalCase(keyword),
+      label: keyword,
       type: "keyword",
     });
   }
@@ -136,7 +136,7 @@ export const buildOptions = (
   ) {
     options.push({
       id: value.value,
-      label: toPascalCase(value.value),
+      label: value.value,
       type: "keyword",
     });
   }

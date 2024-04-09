@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
   Box,
   EnhancedTooltip,
   Flex,
   Grid,
   SmallToggleButton,
-  ToggleButton,
 } from "@webstudio-is/design-system";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import { toValue } from "@webstudio-is/css-engine";
@@ -20,11 +19,14 @@ import {
   ArrowLeftIcon,
   ArrowDownIcon,
   ArrowUpIcon,
+  AICenterIcon,
+  JCCenterIcon,
+  ACCenterIcon,
 } from "@webstudio-is/icons";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
 import { MenuControl, SelectControl } from "../../controls";
-import { PropertyName, PropertyTooltip } from "../../shared/property-name";
+import { PropertyName } from "../../shared/property-name";
 import { styleConfigByName } from "../../shared/configs";
 import type { CreateBatchUpdate } from "../../shared/use-style-data";
 import { getStyleSource, type StyleInfo } from "../../shared/style-info";
@@ -36,6 +38,7 @@ import {
 import { theme } from "@webstudio-is/design-system";
 import { TooltipContent } from "../../../style-panel/shared/property-name";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { ToggleControl } from "../../controls/toggle/toggle-control";
 
 const GapLinked = ({
   isLinked,
@@ -136,7 +139,7 @@ const FlexGap = ({
 }: {
   style: StyleInfo;
   createBatchUpdate: CreateBatchUpdate;
-  deleteProperty: RenderCategoryProps["deleteProperty"];
+  deleteProperty: SectionProps["deleteProperty"];
 }) => {
   const batchUpdate = createBatchUpdate();
 
@@ -307,63 +310,16 @@ const mapNormalTo = (
   return style;
 };
 
-const Toggle = ({
-  property,
-  iconOn,
-  iconOff,
-  valueOn,
-  valueOff,
-  currentStyle,
-  setProperty,
-  deleteProperty,
-}: {
-  property: StyleProperty;
-  iconOn: ReactNode;
-  iconOff: ReactNode;
-  valueOn: string;
-  valueOff: string;
-  currentStyle: RenderCategoryProps["currentStyle"];
-  setProperty: RenderCategoryProps["setProperty"];
-  deleteProperty: RenderCategoryProps["deleteProperty"];
-}) => {
-  const { label } = styleConfigByName(property);
-  const styleValue = currentStyle[property]?.value;
-  const isPressed =
-    styleValue?.type === "keyword" && styleValue?.value === valueOn;
-
-  return (
-    <PropertyTooltip
-      title={label}
-      properties={[property]}
-      style={currentStyle}
-      onReset={() => deleteProperty(property)}
-    >
-      <ToggleButton
-        pressed={isPressed}
-        onPressedChange={(isPressed) => {
-          setProperty(property)({
-            type: "keyword",
-            value: isPressed ? valueOn : valueOff,
-          });
-        }}
-        variant={getStyleSource(currentStyle[property])}
-      >
-        {isPressed ? iconOn : iconOff}
-      </ToggleButton>
-    </PropertyTooltip>
-  );
-};
-
 const LayoutSectionFlex = ({
   currentStyle,
   setProperty,
   deleteProperty,
   createBatchUpdate,
 }: {
-  currentStyle: RenderCategoryProps["currentStyle"];
-  setProperty: RenderCategoryProps["setProperty"];
-  deleteProperty: RenderCategoryProps["deleteProperty"];
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"];
+  currentStyle: SectionProps["currentStyle"];
+  setProperty: SectionProps["setProperty"];
+  deleteProperty: SectionProps["deleteProperty"];
+  createBatchUpdate: SectionProps["createBatchUpdate"];
 }) => {
   const batchUpdate = createBatchUpdate();
 
@@ -389,16 +345,26 @@ const LayoutSectionFlex = ({
                 column: ArrowDownIcon,
                 "column-reverse": ArrowUpIcon,
               }}
+              DefaultIcon={ArrowRightIcon}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
-            <Toggle
+            <ToggleControl
               property="flexWrap"
-              iconOn={<WrapIcon />}
-              iconOff={<NoWrapIcon />}
-              valueOn="wrap"
-              valueOff="nowrap"
+              items={[
+                {
+                  isPressed: true,
+                  Icon: WrapIcon,
+                  value: "wrap",
+                },
+                {
+                  isPressed: false,
+                  Icon: NoWrapIcon,
+                  value: "nowrap",
+                },
+              ]}
+              DefaultIcon={WrapIcon}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
@@ -410,6 +376,7 @@ const LayoutSectionFlex = ({
               currentStyle={mapNormalTo(currentStyle, "alignItems", "stretch")}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
+              DefaultIcon={AICenterIcon}
             />
             <MenuControl
               property="justifyContent"
@@ -420,6 +387,7 @@ const LayoutSectionFlex = ({
               )}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
+              DefaultIcon={JCCenterIcon}
             />
             {showAlignContent && (
               <MenuControl
@@ -431,6 +399,7 @@ const LayoutSectionFlex = ({
                 )}
                 setProperty={setProperty}
                 deleteProperty={deleteProperty}
+                DefaultIcon={ACCenterIcon}
               />
             )}
           </Flex>
@@ -465,7 +434,7 @@ const compareDisplayValues = (a: { name: string }, b: { name: string }) => {
   return aIndex - bIndex;
 };
 
-const properties: StyleProperty[] = [
+export const properties = [
   "display",
   "flexDirection",
   "flexWrap",
@@ -474,18 +443,17 @@ const properties: StyleProperty[] = [
   "alignContent",
   "rowGap",
   "columnGap",
-];
+] satisfies Array<StyleProperty>;
 
-export const LayoutSection = ({
+export const Section = ({
   currentStyle,
   setProperty,
   deleteProperty,
   createBatchUpdate,
-}: RenderCategoryProps) => {
-  const displayValue = toValue(currentStyle.display?.value);
+}: SectionProps) => {
+  const value = toValue(currentStyle.display?.value);
 
   const { label, items } = styleConfigByName("display");
-
   return (
     <CollapsibleSection
       label="Layout"
@@ -517,7 +485,7 @@ export const LayoutSection = ({
           />
         </Grid>
 
-        {(displayValue === "flex" || displayValue === "inline-flex") && (
+        {(value === "flex" || value === "inline-flex") && (
           <LayoutSectionFlex
             currentStyle={currentStyle}
             setProperty={setProperty}
