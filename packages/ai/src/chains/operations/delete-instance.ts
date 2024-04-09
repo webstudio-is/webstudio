@@ -13,7 +13,3 @@ export type aiOperation = z.infer<typeof aiOperation>;
 
 export const wsOperation = aiOperation;
 export type wsOperation = z.infer<typeof wsOperation>;
-
-export const aiOperationToWs = async (
-  operation: aiOperation
-): Promise<wsOperation> => operation;
