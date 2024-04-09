@@ -6,7 +6,6 @@ import {
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  getLabel,
   useLocalValue,
   VerticalLayout,
   ResponsiveLayout,
@@ -16,6 +15,7 @@ import {
   useBindingState,
 } from "../shared";
 import { useEffect, useRef } from "react";
+import { humanizeString } from "~/shared/string-utils";
 
 export const TextControl = ({
   meta,
@@ -35,7 +35,7 @@ export const TextControl = ({
     }
   });
   const id = useId();
-  const label = getLabel(meta, propName);
+  const label = humanizeString(meta.label || propName);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const rows = meta.rows ?? 1;
   const isTwoColumnLayout = rows < 2;

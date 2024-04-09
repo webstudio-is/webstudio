@@ -27,12 +27,12 @@ import {
   type NameAndLabel,
   type PropAndMeta,
 } from "./use-props-logic";
-import { Row, getLabel } from "../shared";
+import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
 import { matchSorter } from "match-sorter";
 
 const itemToString = (item: NameAndLabel | null) =>
-  item ? getLabel(item, item.name) : "";
+  item?.label || item?.name || "";
 
 const matchOrSuggestToCreate = (
   search: string,
