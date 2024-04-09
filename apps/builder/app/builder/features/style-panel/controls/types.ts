@@ -8,5 +8,5 @@ export type ControlProps = {
   currentStyle: StyleInfo;
   setProperty: SetProperty;
   deleteProperty: DeleteProperty;
-  disabled?: boolean;
+  isAdvanced?: boolean;
 };

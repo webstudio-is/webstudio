@@ -11,7 +11,7 @@ export const SelectControl = ({
   setProperty,
   deleteProperty,
   items,
-  disabled,
+  isAdvanced,
 }: ControlProps) => {
   const { items: defaultItems } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
@@ -29,7 +29,7 @@ export const SelectControl = ({
 
   return (
     <Select
-      disabled={disabled}
+      disabled={isAdvanced}
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""
       options={options}

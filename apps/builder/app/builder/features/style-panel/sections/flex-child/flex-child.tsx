@@ -143,7 +143,6 @@ const FlexChildSectionSizing = (props: SectionProps) => {
               // should not happen
               return;
             }
-            console.log(styleValue);
             switch (styleValue.value) {
               case "none": {
                 setSizing.setProperty("flexGrow")({

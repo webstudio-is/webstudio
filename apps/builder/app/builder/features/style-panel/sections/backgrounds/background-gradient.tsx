@@ -93,7 +93,6 @@ export const BackgroundGradient = (
       autoGrow
       maxRows={4}
       name="description"
-      disabled={props.disabled}
       value={textAreaValue ?? ""}
       state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
       onChange={handleChange}

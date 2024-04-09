@@ -6,7 +6,7 @@ import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
   SelectControl,
-  TextControl as TextControlBase,
+  TextControl,
   ObjectPositionControl,
   type ControlProps,
 } from "../../controls";
@@ -22,28 +22,12 @@ import {
   ToggleGroupControl as ToggleGroupControlBase,
   type ToggleGroupControlProps,
 } from "../../controls/toggle/toggle-control";
-import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 const ToggleGroupControl = (props: ToggleGroupControlProps) => {
   const { property, currentStyle, items } = props;
   const value = toValue(currentStyle[property]?.value);
   const isAdvanced = items.some((item) => item.value === value) === false;
-  return (
-    <AdvancedValueTooltip isAdvanced={isAdvanced}>
-      <ToggleGroupControlBase {...props} disabled={isAdvanced} />
-    </AdvancedValueTooltip>
-  );
-};
-
-const TextControl = (props: ControlProps) => {
-  const type = props.currentStyle[props.property]?.value.type;
-  const isAdvanced = type === "unparsed" || type === "guaranteedInvalid";
-
-  return (
-    <AdvancedValueTooltip isAdvanced={isAdvanced}>
-      <TextControlBase {...props} disabled={isAdvanced} />
-    </AdvancedValueTooltip>
-  );
+  return <ToggleGroupControlBase {...props} isAdvanced={isAdvanced} />;
 };
 
 const SizeProperty = ({

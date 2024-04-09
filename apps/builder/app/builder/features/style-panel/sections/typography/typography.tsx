@@ -43,7 +43,6 @@ import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { type StyleInfo } from "../../shared/style-info";
 import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
 import { forwardRef, type ComponentProps } from "react";
-import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 export const properties = [
   "fontFamily",
@@ -130,16 +129,7 @@ const ToggleGroupControl = ({
   const { currentStyle, property, items = [] } = props;
   const value = mapValue(toValue(currentStyle[property]?.value));
   const isAdvanced = items.some((item) => item.value === value) === false;
-  return (
-    <AdvancedValueTooltip isAdvanced={isAdvanced}>
-      <ToggleGroupControlBase
-        {...props}
-        disabled={isAdvanced}
-        currentStyle={currentStyle}
-        items={items}
-      />
-    </AdvancedValueTooltip>
-  );
+  return <ToggleGroupControlBase {...props} isAdvanced={isAdvanced} />;
 };
 
 export const TypographySectionSizing = (props: SectionProps) => {

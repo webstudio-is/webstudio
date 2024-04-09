@@ -16,7 +16,7 @@ export const TextControl = ({
   setProperty,
   deleteProperty,
   icon,
-  disabled,
+  isAdvanced,
 }: ControlProps & { icon?: JSX.Element }) => {
   const { items: defaultItems } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
@@ -31,7 +31,7 @@ export const TextControl = ({
   return (
     <Box>
       <CssValueInput
-        disabled={disabled}
+        disabled={isAdvanced}
         styleSource={getStyleSource(styleInfo)}
         icon={icon}
         property={property}

@@ -8,6 +8,7 @@ import { useState } from "react";
 import { PropertyTooltip } from "../../shared/property-name";
 import { toValue } from "@webstudio-is/css-engine";
 import type { ControlProps } from "..";
+import { AdvancedValueTooltip } from "../../sections/shared/advanced-value-tooltip";
 
 export type ToggleGroupControlProps = Omit<ControlProps, "items"> & {
   value?: string;
@@ -18,16 +19,17 @@ export type ToggleGroupControlProps = Omit<ControlProps, "items"> & {
     value: string;
     propertyValues: string | string[];
   }[];
+  isAdvanced?: boolean;
 };
 
 export const ToggleGroupControl = ({
   currentStyle,
   property,
   items = [],
-  disabled,
   setProperty,
   deleteProperty,
   value,
+  isAdvanced,
 }: ToggleGroupControlProps) => {
   const styleSource = getStyleSource(currentStyle[property]);
   const currentValue = value ?? toValue(currentStyle[property]?.value);
@@ -42,33 +44,36 @@ export const ToggleGroupControl = ({
   );
 
   return (
-    <ToggleGroup
-      color={styleSource}
-      type="single"
+    <AdvancedValueTooltip
+      isAdvanced={isAdvanced}
+      property={property}
       value={currentValue}
-      onValueChange={(value) => {
-        setProperty(property)({ type: "keyword", value });
-      }}
-      css={{ width: "fit-content" }}
+      currentStyle={currentStyle}
+      deleteProperty={deleteProperty}
     >
-      {items.map(
-        (
-          { child, title, value: itemValue, description, propertyValues },
-          index
-        ) => {
-          const scrollableContent = Array.isArray(propertyValues)
-            ? propertyValues.map((propertyValue) => (
+      <ToggleGroup
+        color={styleSource}
+        type="single"
+        value={currentValue}
+        onValueChange={(value) => {
+          setProperty(property)({ type: "keyword", value });
+        }}
+        css={{ width: "fit-content" }}
+      >
+        {items.map((item, index) => {
+          const scrollableContent = Array.isArray(item.propertyValues)
+            ? item.propertyValues.map((propertyValue) => (
                 <div key={propertyValue}>{propertyValue}</div>
               ))
-            : propertyValues;
+            : item.propertyValues;
           const handleReset = () => {
-            if (itemValue === currentValue) {
+            if (item.value === currentValue) {
               deleteProperty(property);
             }
           };
           return (
             <PropertyTooltip
-              key={itemValue}
+              key={item.value}
               open={openTootips[index]}
               onOpenChange={(open) => {
                 setOpenTooltips((openTooltips) => {
@@ -77,35 +82,35 @@ export const ToggleGroupControl = ({
                   return newOpenTooltips;
                 });
               }}
-              title={title}
+              title={item.title}
               scrollableContent={scrollableContent}
-              description={description}
-              properties={itemValue === currentValue ? [property] : []}
+              description={item.description}
+              properties={item.value === currentValue ? [property] : []}
               style={currentStyle}
               onReset={handleReset}
             >
               <ToggleGroupButton
-                disabled={disabled}
-                onMouseEnter={(event) => {
+                disabled={isAdvanced}
+                onMouseEnter={() => {
                   setOpenTooltips((openTooltips) => {
                     return openTooltips.map((openTooltip, i) =>
                       i !== index ? false : openTooltip
                     );
                   });
                 }}
-                value={itemValue}
+                value={item.value}
                 onClick={(event) => {
                   if (event.altKey) {
                     handleReset();
                   }
                 }}
               >
-                <Flex>{child}</Flex>
+                <Flex>{item.child}</Flex>
               </ToggleGroupButton>
             </PropertyTooltip>
           );
-        }
-      )}
-    </ToggleGroup>
+        })}
+      </ToggleGroup>
+    </AdvancedValueTooltip>
   );
 };

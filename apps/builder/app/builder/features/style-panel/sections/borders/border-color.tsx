@@ -10,7 +10,6 @@ import {
   rowCss,
   isAdvancedValue,
 } from "./utils";
-import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 export const properties = [
   "borderTopColor",
@@ -34,7 +33,6 @@ export const BorderColor = (props: SectionProps) => {
   );
 
   const setAllproperties = setAllProperties(properties, createBatchUpdate);
-  const isAdvanced = isAdvancedValue(properties, currentStyle);
 
   return (
     <Grid css={rowCss}>
@@ -47,16 +45,14 @@ export const BorderColor = (props: SectionProps) => {
       />
 
       <Box css={{ gridColumn: `span 2` }}>
-        <AdvancedValueTooltip isAdvanced={isAdvanced}>
-          <ColorControl
-            disabled={isAdvanced}
-            property={borderColorProperty}
-            items={items}
-            currentStyle={currentStyle}
-            setProperty={setAllproperties}
-            deleteProperty={deleteColorProperties}
-          />
-        </AdvancedValueTooltip>
+        <ColorControl
+          isAdvanced={isAdvancedValue(properties, currentStyle)}
+          property={borderColorProperty}
+          items={items}
+          currentStyle={currentStyle}
+          setProperty={setAllproperties}
+          deleteProperty={deleteColorProperties}
+        />
       </Box>
     </Grid>
   );

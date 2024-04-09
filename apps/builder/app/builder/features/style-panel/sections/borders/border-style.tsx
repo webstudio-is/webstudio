@@ -19,7 +19,6 @@ import {
   rowCss,
   isAdvancedValue,
 } from "./utils";
-import { AdvancedValueTooltip } from "../shared/advanced-value-tooltip";
 
 export const properties: StyleProperty[] = [
   "borderTopStyle",
@@ -81,7 +80,6 @@ export const BorderStyle = (
   )(firstPropertyName);
 
   const handleDelete = () => deleteBorderProperties(firstPropertyName);
-  const isAdvanced = isAdvancedValue(properties, props.currentStyle);
 
   return (
     <Grid css={rowCss}>
@@ -92,16 +90,14 @@ export const BorderStyle = (
         description={propertyDescriptions.borderBlockStyle}
         onReset={handleDelete}
       />
-      <AdvancedValueTooltip isAdvanced={isAdvanced}>
-        <ToggleGroupControl
-          {...props}
-          disabled={isAdvanced}
-          items={items}
-          property={firstPropertyName}
-          deleteProperty={handleDelete}
-          setProperty={() => setBorderProperties}
-        />
-      </AdvancedValueTooltip>
+      <ToggleGroupControl
+        {...props}
+        items={items}
+        property={firstPropertyName}
+        deleteProperty={handleDelete}
+        setProperty={() => setBorderProperties}
+        isAdvanced={isAdvancedValue(properties, props.currentStyle)}
+      />
     </Grid>
   );
 };
