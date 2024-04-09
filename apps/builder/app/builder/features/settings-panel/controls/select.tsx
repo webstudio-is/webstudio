@@ -8,7 +8,6 @@ import {
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  getLabel,
   VerticalLayout,
   Label,
   $selectedInstanceScope,
@@ -34,7 +33,7 @@ export const SelectControl = ({
       ? meta.options
       : [value, ...meta.options];
 
-  const label = humanizeString(getLabel(meta, propName));
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

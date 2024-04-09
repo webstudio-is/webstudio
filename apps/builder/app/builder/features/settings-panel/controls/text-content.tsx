@@ -11,7 +11,6 @@ import {
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  getLabel,
   useLocalValue,
   VerticalLayout,
   $selectedInstanceScope,
@@ -59,7 +58,7 @@ export const TextContent = ({
     }
   });
   const id = useId();
-  const label = humanizeString(getLabel(meta, propName));
+  const label = humanizeString(meta.label || propName);
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   let expression: undefined | string;

@@ -69,9 +69,6 @@ export type ControlProps<Control> = {
   autoFocus?: boolean;
 };
 
-export const getLabel = (meta: { label?: string }, fallback: string) =>
-  meta.label || fallback;
-
 export const RemovePropButton = (props: { onClick: () => void }) => (
   <SmallIconButton icon={<SubtractIcon />} variant="destructive" {...props} />
 );

@@ -33,7 +33,6 @@ import {
 } from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  getLabel,
   useLocalValue,
   VerticalLayout,
   Label,
@@ -477,7 +476,7 @@ export const UrlControl = ({
 
   const BaseControl = modes[mode].control;
 
-  const label = humanizeString(getLabel(meta, propName));
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);

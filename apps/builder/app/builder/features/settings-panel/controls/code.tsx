@@ -7,7 +7,6 @@ import {
 import {
   useLocalValue,
   type ControlProps,
-  getLabel,
   VerticalLayout,
   Label,
   updateExpressionValue,
@@ -105,7 +104,7 @@ export const CodeControl = ({
       onChange({ type: "string", value });
     }
   });
-  const label = humanizeString(getLabel(metaOverride, propName));
+  const label = humanizeString(metaOverride.label || propName);
 
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
