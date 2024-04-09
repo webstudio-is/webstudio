@@ -10,7 +10,7 @@ import type { DeleteProperty } from "../../shared/use-style-data";
 
 // Visual controls can't represent all CSS values and in that case we show it in the Advanced section.
 export const AdvancedValueTooltip = ({
-  isAdvanced,
+  isAdvanced = false,
   children,
   property,
   value,

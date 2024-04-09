@@ -389,6 +389,7 @@ const LayoutSectionFlex = ({
                 column: ArrowDownIcon,
                 "column-reverse": ArrowUpIcon,
               }}
+              DefaultIcon={ArrowRightIcon}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
