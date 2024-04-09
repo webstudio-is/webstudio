@@ -80,7 +80,7 @@
     "change-case": "^5.0.2",
     "colord": "^2.9.3",
     "cookie": "^0.6.0",
-    "date-fns": "^2.30.0",
+    "date-fns": "^3.6.0",
     "detect-font": "^0.1.5",
     "downshift": "^6.1.7",
     "fast-deep-equal": "^3.1.3",
