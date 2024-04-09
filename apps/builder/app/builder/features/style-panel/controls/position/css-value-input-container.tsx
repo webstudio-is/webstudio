@@ -24,7 +24,6 @@ type CssValueInputContainerProps = {
 export const CssValueInputContainer = ({
   property,
   keywords,
-  label,
   styleSource,
   value,
   setValue,

@@ -49,6 +49,7 @@ export const PositionControl = ({
   property,
   setProperty,
   deleteProperty,
+  isAdvanced,
 }: ControlProps) => {
   const { label, items } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
@@ -114,6 +115,7 @@ export const PositionControl = ({
             value={value.value[0]}
             setValue={setValueX}
             deleteProperty={deleteProperty}
+            disabled={isAdvanced}
           />
 
           <NonResetablePropertyName
@@ -131,6 +133,7 @@ export const PositionControl = ({
             value={value.value[1]}
             setValue={setValueY}
             deleteProperty={deleteProperty}
+            disabled={isAdvanced}
           />
         </Grid>
       </Flex>

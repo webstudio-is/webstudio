@@ -77,6 +77,7 @@ export const FontWeightControl = ({
   property,
   currentStyle,
   setProperty,
+  isAdvanced,
 }: ControlProps) => {
   const fontWeight = currentStyle[property]?.value;
 
@@ -112,6 +113,7 @@ export const FontWeightControl = ({
 
   return (
     <Select
+      disabled={isAdvanced}
       // show empty field instead of radix placeholder
       // like css value input does
       placeholder=""

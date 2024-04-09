@@ -24,10 +24,8 @@ export const MenuControl = ({
   items: passedItems,
   setProperty,
   deleteProperty,
-}: Pick<
-  ControlProps,
-  "currentStyle" | "property" | "items" | "setProperty" | "deleteProperty"
-> & { icons?: IconRecord }) => {
+  isAdvanced,
+}: ControlProps & { icons?: IconRecord }) => {
   const { label, items: defaultItems } = styleConfigByName(property);
   const styleValue = currentStyle[property];
   const value = styleValue?.value;
@@ -51,7 +49,7 @@ export const MenuControl = ({
 
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild disabled={isAdvanced}>
         <div>
           <PropertyTooltip
             title={label}

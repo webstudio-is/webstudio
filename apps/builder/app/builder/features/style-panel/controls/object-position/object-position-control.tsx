@@ -9,6 +9,7 @@ export const ObjectPositionControl = ({
   currentStyle,
   setProperty,
   deleteProperty,
+  isAdvanced,
 }: ControlProps) => {
   return (
     <Flex justify="end">
@@ -21,6 +22,7 @@ export const ObjectPositionControl = ({
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
+              isAdvanced={isAdvanced}
             />
           </Flex>
         }
