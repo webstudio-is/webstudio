@@ -18,12 +18,19 @@ import * as generateTemplatePrompt from "./generate-template-prompt.server";
 // import * as generateInsertTemplate from "./generate-insert-template.server";
 import * as deleteInstance from "./delete-instance.server";
 
-export { name };
-
 export * as editStyles from "./edit-styles.server";
 export * as generateTemplatePrompt from "./generate-template-prompt.server";
 export * as generateInsertTemplate from "./generate-insert-template.server";
 export * as deleteInstance from "./delete-instance.server";
+
+/**
+ * Operations Chain.
+ *
+ * Given a description, available components and an existing instance as JSX and CSS,
+ * it generates a series of edit operations to fulfill an edit request coming from the user.
+ */
+
+export { name };
 
 const aiToWs = (aiOperations: AiOperations) => {
   return aiOperations

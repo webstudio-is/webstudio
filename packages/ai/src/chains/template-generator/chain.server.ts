@@ -11,6 +11,12 @@ import { createErrorResponse } from "../../utils/create-error-response";
 import { getCode } from "../../utils/get-code";
 import { type Context, type Response, name } from "./schema";
 
+/**
+ * Template Generator Chain.
+ *
+ * Given a UI section or widget description, this chain generates a Webstudio Embed Template representing the UI.
+ */
+
 export { name };
 
 export const createChain = <ModelMessageFormat>(): Chain<

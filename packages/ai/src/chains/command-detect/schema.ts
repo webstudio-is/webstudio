@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-/**
- * Command Detect Chain
- *
- * Given a prompt and a list of possible commands and descriptions, it returns an array of operations matching the prompt request.
- */
-
 export const name = "command-detect";
 
 export const ContextSchema = z.object({

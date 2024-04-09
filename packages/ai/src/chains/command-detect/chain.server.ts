@@ -5,6 +5,12 @@ import { prompt as promptUserTemplate } from "./__generated__/command-detect.use
 import { createErrorResponse } from "../../utils/create-error-response";
 import { type Context, type Response, ResponseSchema, name } from "./schema";
 
+/**
+ * Command Detect Chain
+ *
+ * Given a prompt and a list of possible commands and descriptions, it returns an array of operations matching the prompt request.
+ */
+
 export { name };
 
 export const createChain = <ModelMessageFormat>(): Chain<

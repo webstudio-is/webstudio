@@ -28,13 +28,6 @@ export {
   wsOperation as deleteInstanceWsOperation,
 } from "./delete-instance";
 
-/**
- * Operations Chain.
- *
- * Given a description, available components and an existing instance as JSX and CSS,
- * it generates a series of edit operations to fulfill an edit request coming from the user.
- */
-
 export const name = "operations";
 
 export const ContextSchema = z.object({

@@ -13,6 +13,13 @@ import {
   type TextInstance,
 } from "./schema";
 
+/**
+ * Copywriter chain.
+ *
+ * Given a description and an instance id,
+ * this chain generates copy for the instance and all its descendant text nodes.
+ */
+
 export { name };
 
 export const createChain = <ModelMessageFormat>(): Chain<

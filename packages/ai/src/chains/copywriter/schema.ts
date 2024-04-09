@@ -1,12 +1,5 @@
 import { z } from "zod";
 
-/**
- * Copywriter chain.
- *
- * Given a description and an instance id,
- * this chain generates copy for the instance and all its descendant text nodes.
- */
-
 export const name = "copywriter";
 
 export const TextInstanceSchema = z.object({
