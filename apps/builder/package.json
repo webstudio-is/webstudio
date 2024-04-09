@@ -87,7 +87,6 @@
     "hyphenate-style-name": "^1.0.4",
     "immer": "^10.0.3",
     "immerhin": "^0.9.0",
-    "jose": "^4.11.2",
     "lexical": "^0.14.3",
     "match-sorter": "^6.3.1",
     "mdast-util-from-markdown": "^2.0.0",
