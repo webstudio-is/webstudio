@@ -3,7 +3,6 @@ import { theme, Combobox, Box } from "@webstudio-is/design-system";
 import { propertyDescriptions } from "@webstudio-is/css-data";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { matchSorter } from "match-sorter";
-import { humanizeString } from "~/shared/string-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { toKebabCase } from "../../shared/keyword-utils";
 
@@ -50,7 +49,7 @@ export const Add = ({
       placeholder="Find or create a property"
       items={propertyNames.map((value) => ({
         value,
-        label: humanizeString(value),
+        label: toKebabCase(value),
       }))}
       itemToString={(item) => item?.label ?? ""}
       getItemProps={() => ({ text: "sentence" })}
