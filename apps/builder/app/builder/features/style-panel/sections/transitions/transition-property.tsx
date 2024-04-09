@@ -23,7 +23,6 @@ import {
   ComboboxScrollArea,
 } from "@webstudio-is/design-system";
 import type { KeywordValue } from "@webstudio-is/css-engine";
-import { humanizeString } from "~/shared/string-utils";
 import { matchSorter } from "match-sorter";
 
 type AnimatableProperties = (typeof animatableProperties)[number];
@@ -76,7 +75,7 @@ export const TransitionProperty = ({
     })),
     value: { name: inputValue as AnimatableProperties, label: inputValue },
     selectedItem: undefined,
-    itemToString: (value) => humanizeString(value?.label || ""),
+    itemToString: (value) => value?.label || "",
     onItemSelect: (prop) => {
       if (isAnimatableProperty(prop.name) === false) {
         return;
@@ -125,7 +124,7 @@ export const TransitionProperty = ({
       })}
       selected={item.name === inputValue}
     >
-      {humanizeString(item?.label ?? "")}
+      {item?.label ?? ""}
     </ComboboxListboxItem>
   );
 

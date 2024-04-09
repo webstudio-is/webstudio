@@ -19,7 +19,6 @@ import {
   type TimingFunctions,
   findTimingFunctionFromValue,
 } from "./transition-utils";
-import { humanizeString } from "~/shared/string-utils";
 
 type TransitionTimingProps = {
   timing: KeywordValue;
@@ -90,7 +89,7 @@ export const TransitionTiming = ({
           {Object.keys(defaultFunctions).map((defaultFunc) => {
             return (
               <SelectItem key={defaultFunc} value={defaultFunc}>
-                {humanizeString(defaultFunc)}
+                {defaultFunc}
               </SelectItem>
             );
           })}
@@ -103,7 +102,7 @@ export const TransitionTiming = ({
           {Object.keys(easeInFunctions).map((easeIn) => {
             return (
               <SelectItem key={easeIn} value={easeIn}>
-                {humanizeString(easeIn)}
+                {easeIn}
               </SelectItem>
             );
           })}
@@ -113,7 +112,7 @@ export const TransitionTiming = ({
           {Object.keys(easeOutFunctions).map((easeOut) => {
             return (
               <SelectItem key={easeOut} value={easeOut}>
-                {humanizeString(easeOut)}
+                {easeOut}
               </SelectItem>
             );
           })}
@@ -123,7 +122,7 @@ export const TransitionTiming = ({
           {Object.keys(easeInOutFunctions).map((easeInOut) => {
             return (
               <SelectItem key={easeInOut} value={easeInOut}>
-                {humanizeString(easeInOut)}
+                {easeInOut}
               </SelectItem>
             );
           })}
