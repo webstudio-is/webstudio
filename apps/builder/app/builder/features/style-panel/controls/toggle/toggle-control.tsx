@@ -3,7 +3,7 @@ import { styleConfigByName } from "../../shared/configs";
 import { PropertyTooltip } from "../../shared/property-name";
 import type { ControlProps } from "../types";
 import { getStyleSource } from "../../shared/style-info";
-import type { IconComponent, IconRecord } from "@webstudio-is/icons";
+import type { IconComponent } from "@webstudio-is/icons";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 
 export const ToggleControl = ({
