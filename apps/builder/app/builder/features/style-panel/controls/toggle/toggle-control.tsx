@@ -3,8 +3,14 @@ import { styleConfigByName } from "../../shared/configs";
 import { PropertyTooltip } from "../../shared/property-name";
 import type { ControlProps } from "../types";
 import { getStyleSource } from "../../shared/style-info";
-import type { IconRecord } from "@webstudio-is/icons";
+import type { IconComponent } from "@webstudio-is/icons";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
+
+type Item = {
+  name: string;
+  label: string;
+  icon: IconComponent;
+};
 
 export const ToggleControl = ({
   property,
@@ -12,11 +18,9 @@ export const ToggleControl = ({
   setProperty,
   deleteProperty,
   items,
-  icons,
   isAdvanced,
 }: Omit<ControlProps, "items"> & {
-  items: [string, string];
-  icons: IconRecord;
+  items: [Item, Item];
 }) => {
   const { label } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
@@ -26,9 +30,10 @@ export const ToggleControl = ({
   }
 
   // First item is the pressed state
-  const isPressed = items[0] === styleValue.value ? true : false;
-  const Icon = icons[styleValue.value] ?? icons[items[0]];
-  isAdvanced = isAdvanced ?? items.includes(styleValue.value) === false;
+  const isPressed = items[0].name === styleValue.value ? true : false;
+  const currentItem = items.find((item) => item.name === styleValue.value);
+  const Icon = currentItem?.icon ?? items[0].icon;
+  isAdvanced = isAdvanced ?? currentItem === undefined;
 
   return (
     <AdvancedValueTooltip
@@ -50,7 +55,7 @@ export const ToggleControl = ({
           onPressedChange={(isPressed) => {
             setProperty(property)({
               type: "keyword",
-              value: isPressed ? items[0] : items[1],
+              value: isPressed ? items[0].name : items[1].name,
             });
           }}
           variant={getStyleSource(currentStyle[property])}
