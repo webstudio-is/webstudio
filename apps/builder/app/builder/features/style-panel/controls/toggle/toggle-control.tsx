@@ -3,14 +3,8 @@ import { styleConfigByName } from "../../shared/configs";
 import { PropertyTooltip } from "../../shared/property-name";
 import type { ControlProps } from "../types";
 import { getStyleSource } from "../../shared/style-info";
-import type { IconComponent } from "@webstudio-is/icons";
+import type { IconRecord } from "@webstudio-is/icons";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
-
-type Item = {
-  isPressed: boolean;
-  Icon: IconComponent;
-  value: string;
-};
 
 export const ToggleControl = ({
   property,
@@ -18,11 +12,11 @@ export const ToggleControl = ({
   setProperty,
   deleteProperty,
   items,
-  DefaultIcon,
+  icons,
   isAdvanced,
 }: Omit<ControlProps, "items"> & {
-  items: [Item, Item];
-  DefaultIcon?: IconComponent;
+  items: [string, string];
+  icons: IconRecord;
 }) => {
   const { label } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
@@ -30,16 +24,14 @@ export const ToggleControl = ({
   if (styleValue?.type !== "keyword") {
     return;
   }
-  const currentItem =
-    items[0].value === styleValue.value
-      ? items[0]
-      : items[1].value === styleValue.value
-      ? items[1]
-      : undefined;
 
-  const isPressed = currentItem?.isPressed ?? false;
-  const Icon = currentItem?.Icon ?? DefaultIcon;
-  isAdvanced = isAdvanced ?? currentItem === undefined;
+  // First item is the pressed state
+  const isPressed = items[0] === styleValue.value ? true : false;
+  const Icon = icons[styleValue.value] ?? icons[items[0]];
+  isAdvanced =
+    isAdvanced ??
+    (items[0] !== styleValue.value && items[1] !== styleValue.value);
+
   return (
     <AdvancedValueTooltip
       isAdvanced={isAdvanced}
@@ -60,15 +52,12 @@ export const ToggleControl = ({
           onPressedChange={(isPressed) => {
             setProperty(property)({
               type: "keyword",
-              value:
-                items[0].isPressed === isPressed
-                  ? items[0].value
-                  : items[1].value,
+              value: isPressed ? items[0] : items[1],
             });
           }}
           variant={getStyleSource(currentStyle[property])}
         >
-          {Icon ? <Icon /> : <></>}
+          <Icon />
         </ToggleButton>
       </PropertyTooltip>
     </AdvancedValueTooltip>
