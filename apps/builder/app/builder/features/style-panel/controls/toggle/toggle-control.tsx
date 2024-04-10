@@ -13,12 +13,10 @@ export const ToggleControl = ({
   deleteProperty,
   items,
   icons,
-  DefaultIcon,
   isAdvanced,
 }: Omit<ControlProps, "items"> & {
   items: [string, string];
-  DefaultIcon?: IconComponent;
-  icons: IconRecord;
+  icons: { [item: string]: IconComponent; default: IconComponent };
 }) => {
   const { label } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
@@ -29,7 +27,7 @@ export const ToggleControl = ({
 
   // First item is the pressed state
   const isPressed = items[0] === styleValue.value ? true : false;
-  const Icon = icons[styleValue.value] ?? DefaultIcon;
+  const Icon = icons[styleValue.value] ?? icons.default;
   isAdvanced =
     isAdvanced ??
     (items[0] !== styleValue.value && items[1] !== styleValue.value);

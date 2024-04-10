@@ -356,8 +356,8 @@ const LayoutSectionFlex = ({
               icons={{
                 wrap: WrapIcon,
                 nowrap: NoWrapIcon,
+                default: WrapIcon,
               }}
-              DefaultIcon={WrapIcon}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
