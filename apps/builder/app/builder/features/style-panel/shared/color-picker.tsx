@@ -30,8 +30,8 @@ extend([namesPlugin]);
 
 const colorfulStyles = css({
   ".react-colorful__pointer": {
-    width: 20,
-    height: 20,
+    width: theme.spacing[10],
+    height: theme.spacing[10],
   },
 });
 
