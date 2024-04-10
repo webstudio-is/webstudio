@@ -3,7 +3,7 @@ import { styleConfigByName } from "../../shared/configs";
 import { PropertyTooltip } from "../../shared/property-name";
 import type { ControlProps } from "../types";
 import { getStyleSource } from "../../shared/style-info";
-import type { IconComponent } from "@webstudio-is/icons";
+import type { IconRecord } from "@webstudio-is/icons";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 
 export const ToggleControl = ({
@@ -16,7 +16,7 @@ export const ToggleControl = ({
   isAdvanced,
 }: Omit<ControlProps, "items"> & {
   items: [string, string];
-  icons: { [item: string]: IconComponent; default: IconComponent };
+  icons: IconRecord;
 }) => {
   const { label } = styleConfigByName(property);
   const styleValue = currentStyle[property]?.value;
@@ -27,7 +27,7 @@ export const ToggleControl = ({
 
   // First item is the pressed state
   const isPressed = items[0] === styleValue.value ? true : false;
-  const Icon = icons[styleValue.value] ?? icons.default;
+  const Icon = icons[styleValue.value] ?? icons[items[0]];
   isAdvanced =
     isAdvanced ??
     (items[0] !== styleValue.value && items[1] !== styleValue.value);
