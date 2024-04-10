@@ -35,7 +35,6 @@ import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
-import { toKebabCase } from "../keyword-utils";
 import {
   declarationDescriptions,
   isValidDeclaration,
@@ -309,7 +308,8 @@ const itemToString = (item: CssValueInputValue | null) => {
   return item === null
     ? ""
     : item.type === "keyword"
-    ? toKebabCase(toValue(item))
+    ? // E.g. we want currentcolor to be lower case
+      toValue(item).toLocaleLowerCase()
     : item.type === "intermediate" || item.type === "unit"
     ? String(item.value)
     : toValue(item);
