@@ -327,8 +327,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(remix-auth@3.2.2)
       remix-island:
-        specifier: ^0.1.2
-        version: 0.1.2(@remix-run/react@2.8.1)(react-dom@18.2.0)(react@18.2.0)
+        specifier: ^0.2.0
+        version: 0.2.0(@remix-run/react@2.8.1)(react-dom@18.2.0)(react@18.2.0)
       shallow-equal:
         specifier: ^3.1.0
         version: 3.1.0
@@ -14897,8 +14897,8 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /remix-island@0.1.2(@remix-run/react@2.8.1)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-1vXF56y7ZKb8caUduCKdkbxObAxZnTO+arQ94QlwKK6a7wVozGCfiOOk3lr919rm7cy54eeqOVI0hud3cfHlLg==}
+  /remix-island@0.2.0(@remix-run/react@2.8.1)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-NujWtmulgupxNOMiWKAj8lg56eYsy09aV/2pML8rov8N8LmY1UnSml4XYad+KHLy/pgZ1D9UxAmjI6GBJydTUg==}
     peerDependencies:
       '@remix-run/react': '>= 1'
       '@remix-run/server-runtime': '>= 1'
