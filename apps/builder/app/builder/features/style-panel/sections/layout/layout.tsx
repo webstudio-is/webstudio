@@ -352,18 +352,11 @@ const LayoutSectionFlex = ({
             />
             <ToggleControl
               property="flexWrap"
-              items={[
-                {
-                  isPressed: true,
-                  Icon: WrapIcon,
-                  value: "wrap",
-                },
-                {
-                  isPressed: false,
-                  Icon: NoWrapIcon,
-                  value: "nowrap",
-                },
-              ]}
+              items={["wrap", "nowrap"]}
+              icons={{
+                wrap: WrapIcon,
+                nowrap: NoWrapIcon,
+              }}
               DefaultIcon={WrapIcon}
               currentStyle={currentStyle}
               setProperty={setProperty}
