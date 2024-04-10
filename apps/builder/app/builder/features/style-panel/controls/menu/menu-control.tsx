@@ -16,6 +16,7 @@ import type { ControlProps } from "../types";
 import { getStyleSource } from "../../shared/style-info";
 import { PropertyTooltip } from "../../shared/property-name";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
+import { toKebabCase } from "../../shared/keyword-utils";
 
 export const MenuControl = ({
   currentStyle,
@@ -59,6 +60,7 @@ export const MenuControl = ({
         <PropertyTooltip
           title={currentItem?.label}
           properties={[property]}
+          scrollableContent={`${toKebabCase(property)}: ${currentValue};`}
           style={currentStyle}
           onReset={() => deleteProperty(property)}
         >

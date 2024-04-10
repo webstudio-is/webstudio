@@ -5,6 +5,7 @@ import type { ControlProps } from "../types";
 import { getStyleSource } from "../../shared/style-info";
 import type { IconComponent } from "@webstudio-is/icons";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
+import { toKebabCase } from "../../shared/keyword-utils";
 
 type Item = {
   name: string;
@@ -45,6 +46,7 @@ export const ToggleControl = ({
     >
       <PropertyTooltip
         title={label}
+        scrollableContent={`${toKebabCase(property)}: ${styleValue.value};`}
         properties={[property]}
         style={currentStyle}
         onReset={() => deleteProperty(property)}
