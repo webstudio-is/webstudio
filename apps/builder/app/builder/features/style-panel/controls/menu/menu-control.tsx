@@ -1,12 +1,15 @@
 import { toValue } from "@webstudio-is/css-engine";
 import type { IconComponent } from "@webstudio-is/icons";
 import {
+  Box,
   DropdownMenu,
   DropdownMenuArrow,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   Flex,
   IconButton,
@@ -17,6 +20,8 @@ import { getStyleSource } from "../../shared/style-info";
 import { PropertyTooltip } from "../../shared/property-name";
 import { AdvancedValueTooltip } from "../advanced-value-tooltip";
 import { toKebabCase } from "../../shared/keyword-utils";
+import { useState } from "react";
+import { declarationDescriptions } from "@webstudio-is/css-data";
 
 export const MenuControl = ({
   currentStyle,
@@ -35,6 +40,7 @@ export const MenuControl = ({
   const styleValue = currentStyle[property];
   const value = styleValue?.value;
   const styleSource = getStyleSource(styleValue);
+  const [descriptionValue, setDescriptionValue] = useState<string>();
 
   if (value === undefined) {
     return;
@@ -44,7 +50,12 @@ export const MenuControl = ({
   const currentValue = toValue(value);
   const currentItem = items.find((item) => item.name === currentValue);
   const Icon = currentItem?.icon ?? items[0].icon;
-
+  const description =
+    declarationDescriptions[
+      `${property}:${
+        descriptionValue ?? currentValue
+      }` as keyof typeof declarationDescriptions
+    ];
   // If there is no icon, we can't represent the value visually and assume the value comes from advanced section.
   isAdvanced = isAdvanced ?? currentItem === undefined;
 
@@ -92,18 +103,20 @@ export const MenuControl = ({
                   text="sentence"
                   key={name}
                   value={name}
-                  onFocus={() =>
+                  onFocus={() => {
                     setValue(
                       { type: "keyword", value: name },
                       { isEphemeral: true }
-                    )
-                  }
-                  onBlur={() =>
+                    );
+                    setDescriptionValue(name);
+                  }}
+                  onBlur={() => {
                     setValue(
                       { type: "keyword", value: currentValue },
                       { isEphemeral: true }
-                    )
-                  }
+                    );
+                    setDescriptionValue(undefined);
+                  }}
                 >
                   <Flex
                     css={{
@@ -120,6 +133,10 @@ export const MenuControl = ({
               );
             })}
           </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem hint>
+            <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+          </DropdownMenuItem>
           <DropdownMenuArrow />
         </DropdownMenuContent>
       </DropdownMenuPortal>
