@@ -28,9 +28,7 @@ export const ToggleControl = ({
   // First item is the pressed state
   const isPressed = items[0] === styleValue.value ? true : false;
   const Icon = icons[styleValue.value] ?? icons[items[0]];
-  isAdvanced =
-    isAdvanced ??
-    (items[0] !== styleValue.value && items[1] !== styleValue.value);
+  isAdvanced = isAdvanced ?? items.includes(styleValue.value) === false;
 
   return (
     <AdvancedValueTooltip
