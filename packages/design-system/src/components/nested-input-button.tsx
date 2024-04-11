@@ -20,7 +20,6 @@ const style = css({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  height: theme.spacing[11],
   whiteSpace: "pre", // to make nestedSelectButtonUnitless work as expected
   "&:not(:has(svg))": {
     paddingLeft: theme.spacing[2],
@@ -49,7 +48,16 @@ const style = css({
         },
       },
     },
+    size: {
+      1: {
+        height: theme.spacing[10],
+      },
+      2: {
+        height: theme.spacing[11],
+      },
+    },
   },
+  defaultVariants: { size: 1 },
 });
 
 export const NestedInputButton = forwardRef(
@@ -58,17 +66,25 @@ export const NestedInputButton = forwardRef(
       css,
       className,
       children,
+      size,
       ...props
-    }: ComponentProps<"button"> & { css?: CSS },
+    }: ComponentProps<"button"> & { css?: CSS; size?: "1" | "2" },
     ref: Ref<HTMLButtonElement>
-  ) => (
-    <button
-      className={style({ css, className, hasChildren: children !== undefined })}
-      {...props}
-      ref={ref}
-    >
-      {children ?? <ChevronDownIcon />}
-    </button>
-  )
+  ) => {
+    return (
+      <button
+        className={style({
+          css,
+          className,
+          hasChildren: children !== undefined,
+          size,
+        })}
+        {...props}
+        ref={ref}
+      >
+        {children ?? <ChevronDownIcon />}
+      </button>
+    );
+  }
 );
 NestedInputButton.displayName = "NestedInputButton";

@@ -14,6 +14,7 @@ import {
   InputField,
   handleNumericInputArrowKeys,
   theme,
+  Flex,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -443,6 +444,7 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    size,
     property,
     value,
     onChange: (unitOrKeyword) => {
@@ -619,13 +621,13 @@ export const CssValueInput = ({
 
   const suffix =
     showSuffix === false ? null : (
-      <Box ref={suffixRef}>
+      <Flex align="center" ref={suffixRef}>
         {isUnitValue
           ? unitSelectElement
           : isKeywordValue
           ? keywordButtonElement
           : null}
-      </Box>
+      </Flex>
     );
 
   let description;
