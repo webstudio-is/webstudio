@@ -39,10 +39,10 @@ export const sections = new Map<
   ["advanced", advanced],
 ]);
 
-export const visualProperties = new Set<StyleProperty>([]);
+export const sectionsProperties = new Set<StyleProperty>([]);
 
 for (const { properties } of sections.values()) {
   for (const property of properties) {
-    visualProperties.add(property);
+    sectionsProperties.add(property);
   }
 }

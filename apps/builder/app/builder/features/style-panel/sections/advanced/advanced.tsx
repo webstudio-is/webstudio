@@ -18,7 +18,7 @@ import {
 } from "../../shared/style-info";
 import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
-import { visualProperties } from "../sections";
+import { sectionsProperties } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
@@ -43,7 +43,7 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
     for (property in currentStyle) {
       if (
         hasInstanceValue(currentStyle, property) &&
-        visualProperties.has(property) === false
+        sectionsProperties.has(property) === false
       ) {
         names.add(property);
       }
