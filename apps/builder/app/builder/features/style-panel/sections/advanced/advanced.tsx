@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Box, Flex, theme } from "@webstudio-is/design-system";
 import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
@@ -37,7 +37,9 @@ const initialPropertyNames: Array<StyleProperty> = [
 const usePropertyNames = (currentStyle: StyleInfo) => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const styles = useInstanceStyles(selectedInstanceSelector?.[0]);
-  return useMemo(() => {
+  // Ordererd recent properties for sorting.
+  const recent = useRef<Set<StyleProperty>>(new Set());
+  const propertyNames = useMemo(() => {
     const names = new Set(initialPropertyNames);
     let property: StyleProperty;
     for (property in currentStyle) {
@@ -54,8 +56,12 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
       }
     }
 
-    return Array.from(names).reverse();
+    return [
+      ...Array.from(names).filter((name) => recent.current.has(name) === false),
+      ...recent.current,
+    ].reverse();
   }, [styles, currentStyle]);
+  return { propertyNames, recentProperties: recent.current };
 };
 
 // Only here to keep the same section module interface
@@ -67,7 +73,7 @@ export const Section = ({
   deleteProperty,
 }: SectionProps) => {
   const [addingProp, setAddingProp] = useState<StyleProperty | "">();
-  const propertyNames = usePropertyNames(currentStyle);
+  const { propertyNames, recentProperties } = usePropertyNames(currentStyle);
 
   return (
     <CollapsibleSection
@@ -86,6 +92,7 @@ export const Section = ({
           onSelect={(value) => {
             if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
+              recentProperties.add(property);
               setAddingProp(undefined);
               setProperty(property)(
                 { type: "guaranteedInvalid" },
