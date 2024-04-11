@@ -38,9 +38,24 @@ jobs:
           cache: pnpm
 
       - uses: ./.github/actions/vercel
+        id: vercel
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           ref-name: ${{ github.ref_name }}
           sha: ${{ github.sha }}
+
+      - name: Show
+        run: |
+          echo "domain=${{ steps.vercel.outputs.domain }}"
+          echo "inspect-url=${{ steps.vercel.outputs.inspect-url }}"
+          echo "alias=${{ steps.vercel.outputs.alias }}"
+        shell: bash
+
+      - uses: ./.github/actions/add-status
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
+#          state: success
+#          description: "Vercel deployment successful"
+#          context: "Vercel Deploy"

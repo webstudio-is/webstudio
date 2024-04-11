@@ -99,10 +99,3 @@ runs:
 
         echo "value=${ALIAS}" >> $GITHUB_OUTPUT
       shell: bash
-
-    - name: Show
-      run: |
-        echo "domain=${{ steps.deploy.outputs.domain }}"
-        echo "inspect-url=${{ steps.deploy.outputs.inspect-url }}"
-        echo "alias=${{ steps.alias.outputs.value }}"
-      shell: bash
