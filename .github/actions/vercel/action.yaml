@@ -17,6 +17,16 @@ inputs:
   sha:
     description: "Sha"
     required: true
+outputs:
+  domain:
+    description: "Domain"
+    value: ${{ steps.deploy.outputs.domain }}
+  inspect-url:
+    description: "Inspect URL"
+    value: ${{ steps.deploy.outputs.inspect-url }}
+  alias:
+    description: "Alias"
+    value: ${{ steps.alias.outputs.value }}
 
 runs:
   using: "composite"
@@ -60,7 +70,7 @@ runs:
       shell: bash
 
     - name: Deploy
-      id: domain
+      id: deploy
       run: |
         vercel deploy \
         --prebuilt \
@@ -77,16 +87,22 @@ runs:
       shell: bash
 
     - name: Set Alias
+      id: alias
       run: |
+        ALIAS="${{ steps.branch.outputs.value }}-wstd-00"
+
         vercel alias set \
-        "${{ steps.domain.outputs.value }}" \
-        "${{ steps.branch.outputs.value }}-wstd-00" \
+        "${{ steps.deploy.outputs.domain }}" \
+        "${ALIAS}" \
         --token ${{ inputs.vercel-token }} \
-        --scope wstd
+        --scope getwebstudio
+
+        echo "value=${ALIAS}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Show
       run: |
-        echo "domain=${{ steps.domain.outputs.value }}"
-        echo "inspect-url=${{ steps.inspect-url.outputs.value }}"
+        echo "domain=${{ steps.deploy.outputs.domain }}"
+        echo "inspect-url=${{ steps.deploy.outputs.inspect-url }}"
+        echo "alias=${{ steps.alias.outputs.value }}"
       shell: bash
