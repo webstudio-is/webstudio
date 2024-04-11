@@ -8,6 +8,8 @@ generator client {
   // <output-placeholder-for-migrations>
   output          = "../src/__generated__"
   // </output-placeholder-for-migrations>
+
+  binaryTargets = env("PRISMA_BINARY_TARGET")
 }
 
 datasource db {
