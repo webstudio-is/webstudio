@@ -1,0 +1,73 @@
+name: "VERCEL BUILD AND DEPLOY"
+description: "Builds and deploy vercel project"
+
+inputs:
+  vercel-token:
+    description: "Vercel token"
+    required: true
+  vercel-org-id:
+    description: "Vercel Organization ID"
+    required: true
+  vercel-project-id:
+    description: "Vercel Project ID"
+    required: true
+  ref-name:
+    description: "Branch"
+    required: true
+  sha:
+    description: "Sha"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - id: branch
+      run: |
+        CLEANED_BRANCH_NAME=$( echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g' )
+        echo "::set-output name=value::${CLEANED_BRANCH_NAME}"
+      shell: bash
+
+    - id: short_sha
+      run: |
+        SHORT_SHA=$( echo "value=$(echo ${{ github.sha }} | cut -c1-7)" )
+        echo "::set-output name=value::${SHORT_SHA}"
+      shell: bash
+
+    - name: CREATE VERCEL PROJECT FILE
+      run: |
+        mkdir -p .vercel
+        cat <<"EOF" > .vercel/project.json
+        {
+          "projectId": "${{ inputs.vercel-project-id }}",
+          "orgId": "${{ inputs.vercel-org-id }}",
+          "settings": {
+            "alias": ["${{ steps.branch.outputs.value }}"],
+            "framework": "remix",
+            "devCommand": "pnpm dev",
+            "installCommand": "pnpm install",
+            "buildCommand": "pnpm --filter=@webstudio-is/prisma-client build:prod && pnpm --filter=@webstudio-is/builder build",
+            "outputDirectory": null,
+            "rootDirectory": "apps/builder",
+            "directoryListing": false,
+            "nodeVersion": "18.x"
+          }
+        }
+        EOF
+      shell: bash
+
+    - name: Build
+      run: |
+        vercel build
+      shell: bash
+
+    - name: Deploy
+      run: |
+        vercel deploy \
+        --prebuilt \
+        --token ${{ inputs.vercel-token }} \
+        --env SHORT_SHA=${{ steps.short_sha.outputs.value }} \
+        --env BRANCH_NAME=${{ steps.branch.outputs.value }} \
+        --meta GITHUB_SHA=${{ steps.short_sha.outputs.value }} \
+        --meta GITHUB_REF_NAME=${{ steps.branch.outputs.value }}
+
+      shell: bash

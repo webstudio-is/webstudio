@@ -30,15 +30,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
 
-      - id: branch
-        run: |
-          CLEANED_BRANCH_NAME=$( echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g' )
-          echo "::set-output name=value::${CLEANED_BRANCH_NAME}"
-
-      - id: short_sha
-        run: |
-          SHORT_SHA=$( echo "value=$(echo ${{ github.sha }} | cut -c1-7)" )
-          echo "::set-output name=value::${SHORT_SHA}"
-
-      - name: Echo Branch Name After CLeanup
-        run: echo "Hello, world! ${{  steps.branch.outputs.value }} SHA ${{ steps.short_sha.outputs.value }}"
+      - uses: ./.github/actions/vercel
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          ref-name: ${{ github.ref_name }}
+          sha: ${{ github.sha }}
