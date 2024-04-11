@@ -119,7 +119,7 @@ export const Section = ({
               />
               <Box css={{ p: theme.spacing[2], pt: 0 }}>:</Box>
               <CssValueInputContainer
-                variant="ghost"
+                variant="chromeless"
                 size="1"
                 fieldSizing="content"
                 autoFocus={addingProp !== undefined && index === 0}

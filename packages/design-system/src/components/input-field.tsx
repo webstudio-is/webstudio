@@ -93,7 +93,7 @@ const containerStyle = css({
   },
   variants: {
     variant: {
-      ghost: {
+      chromeless: {
         "&:not(:hover)": {
           borderColor: "transparent",
           backgroundColor: "transparent",
@@ -138,8 +138,8 @@ const Container = forwardRef(
       prefix?: ReactNode;
       suffix?: ReactNode;
       css?: CSS;
-      variant?: "ghost";
-      size?: "1" | "2";
+      variant: InputFieldProps["variant"];
+      size: InputFieldProps["size"];
     } & Omit<ComponentProps<"div">, "prefix">,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -213,6 +213,17 @@ const Input = forwardRef(
 );
 Input.displayName = "Input";
 
+type InputFieldProps = {
+  prefix?: ReactNode;
+  suffix?: ReactNode;
+  containerRef?: Ref<HTMLDivElement>;
+  inputRef?: Ref<HTMLInputElement>;
+  onFocus?: FocusEventHandler;
+  onBlur?: FocusEventHandler;
+  variant?: "chromeless";
+  size?: "1" | "2";
+};
+
 export const InputField = forwardRef(
   (
     {
@@ -227,16 +238,7 @@ export const InputField = forwardRef(
       variant,
       size,
       ...inputProps
-    }: InputProps & {
-      prefix?: ReactNode;
-      suffix?: ReactNode;
-      containerRef?: Ref<HTMLDivElement>;
-      inputRef?: Ref<HTMLInputElement>;
-      onFocus?: FocusEventHandler;
-      onBlur?: FocusEventHandler;
-      variant?: "ghost";
-      size?: "1" | "2";
-    },
+    }: InputProps & InputFieldProps,
     ref: Ref<HTMLDivElement>
   ) => {
     // Our input field can contain multiple focused elements,
