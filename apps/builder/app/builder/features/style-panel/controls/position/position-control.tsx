@@ -51,7 +51,7 @@ export const PositionControl = ({
   deleteProperty,
   isAdvanced,
 }: ControlProps) => {
-  const { label, items } = styleConfigByName(property);
+  const { items } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
   const value = toTuple(styleInfo?.value);
   const styleSource = getStyleSource(styleInfo);
@@ -108,7 +108,6 @@ export const PositionControl = ({
           />
 
           <CssValueInputContainer
-            label={label}
             property={property}
             styleSource={styleSource}
             keywords={keywords}
@@ -126,7 +125,6 @@ export const PositionControl = ({
           />
 
           <CssValueInputContainer
-            label={label}
             property={property}
             styleSource={styleSource}
             keywords={keywords}

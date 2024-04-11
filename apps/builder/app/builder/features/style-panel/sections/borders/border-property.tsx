@@ -124,7 +124,6 @@ export const BorderProperty = ({
           }}
         >
           <CssValueInputContainer
-            label={label}
             property={firstPropertyName}
             styleSource={borderWidthStyleSource}
             keywords={borderWidthKeywords}
@@ -153,7 +152,6 @@ export const BorderProperty = ({
                 </NestedIconLabel>
               }
               key={property}
-              label={styleConfigByName(property).label ?? ""}
               property={property}
               styleSource={getStyleSource(currentStyle[property])}
               keywords={borderWidthKeywords}

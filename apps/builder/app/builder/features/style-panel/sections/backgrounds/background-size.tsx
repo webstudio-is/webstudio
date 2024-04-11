@@ -145,7 +145,6 @@ export const BackgroundSize = (
 
         <CssValueInputContainer
           disabled={customSizeDisabled}
-          label={"Width"}
           property={property}
           styleSource={styleSource}
           keywords={customSizeOptions}
@@ -156,7 +155,6 @@ export const BackgroundSize = (
 
         <CssValueInputContainer
           disabled={customSizeDisabled}
-          label={"Height"}
           property={property}
           styleSource={styleSource}
           keywords={customSizeOptions}

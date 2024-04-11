@@ -1,5 +1,5 @@
-import { Fragment, useMemo, useState } from "react";
-import { theme, Grid } from "@webstudio-is/design-system";
+import { useMemo, useState } from "react";
+import { Box, Flex } from "@webstudio-is/design-system";
 import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
@@ -19,6 +19,7 @@ import {
 import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { visualProperties } from "../sections";
+import { toKebabCase } from "../../shared/keyword-utils";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
@@ -94,7 +95,7 @@ export const Section = ({
           }}
         />
       )}
-      <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[22]}` }}>
+      <Box>
         {propertyNames.map((property, index) => {
           const { items } = styleConfigByName(property);
           const keywords = items.map((item) => ({
@@ -102,16 +103,18 @@ export const Section = ({
             value: item.name,
           }));
           return (
-            <Fragment key={property}>
+            <Flex wrap="wrap" align="center" key={property}>
               <PropertyName
-                label={styleConfigByName(property).label}
+                label={toKebabCase(styleConfigByName(property).property)}
                 properties={[property]}
                 style={currentStyle}
                 onReset={() => deleteProperty(property)}
               />
+              <Box css={{ mx: 2, mb: 2 }}>:</Box>
               <CssValueInputContainer
+                variant="ghost"
+                fieldSizing="content"
                 autoFocus={addingProp !== undefined && index === 0}
-                label={styleConfigByName(property).label}
                 property={property}
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
@@ -124,10 +127,10 @@ export const Section = ({
                 }}
                 deleteProperty={deleteProperty}
               />
-            </Fragment>
+            </Flex>
           );
         })}
-      </Grid>
+      </Box>
     </CollapsibleSection>
   );
 };

@@ -36,7 +36,6 @@ export const OutlineWidth = (
       <CssValueInputContainer
         key={property}
         property={property}
-        label={outlineStyleConfig?.label || ""}
         styleSource={getStyleSource(currentStyle[property])}
         keywords={outlineStyleWidthKeywords}
         setValue={setProperty(property)}

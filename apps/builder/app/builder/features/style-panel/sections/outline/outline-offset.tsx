@@ -44,7 +44,6 @@ export const OutlineOffset = (
       <CssValueInputContainer
         key={property}
         property={property}
-        label={outlineOffsetStyleConfig?.label || ""}
         styleSource={getStyleSource(currentStyle[property])}
         keywords={outlineOffsetWidthKeywords}
         setValue={setProperty(property)}
