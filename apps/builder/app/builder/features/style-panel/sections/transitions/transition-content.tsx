@@ -31,8 +31,7 @@ import type {
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
-import { styleConfigByName } from "../../shared/configs";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 
 type TransitionContentProps = {
   index: number;
@@ -58,9 +57,6 @@ export const TransitionContent = ({
       () => extractTransitionProperties(layer),
       [layer]
     );
-
-  const transitionDurationConfig = styleConfigByName("transitionDuration");
-  const transitionDelayConfig = styleConfigByName("transitionDelay");
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -149,7 +145,6 @@ export const TransitionContent = ({
         <CssValueInputContainer
           key={"transitionDuration"}
           property={"transitionDuration"}
-          label={transitionDurationConfig.label}
           styleSource="local"
           /* Browser default for transition-duration */
           value={duration ?? { type: "unit", value: 0, unit: "ms" }}
@@ -190,7 +185,6 @@ export const TransitionContent = ({
           styleSource="local"
           /* Browser default for transition-delay */
           value={delay ?? { type: "unit", value: 0, unit: "ms" }}
-          label={transitionDelayConfig.label}
           keywords={[]}
           deleteProperty={() => handlePropertyUpdate({ delay })}
           setValue={(value, options) => {

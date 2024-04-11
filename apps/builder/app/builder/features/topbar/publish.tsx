@@ -186,7 +186,7 @@ const ChangeProjectDomain = ({
         <Grid gap={1}>
           <Label htmlFor={id}>Domain:</Label>
           <InputField
-            variant="mono"
+            text="mono"
             id={id}
             placeholder="Domain"
             value={domain}
@@ -590,7 +590,7 @@ const ExportContent = () => {
         <Flex gap={2}>
           <InputField
             css={{ flex: 1 }}
-            variant="mono"
+            text="mono"
             readOnly
             value={npxCommand}
           />

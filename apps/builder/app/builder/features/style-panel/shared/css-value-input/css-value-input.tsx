@@ -29,6 +29,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type ComponentProps,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
@@ -276,8 +277,10 @@ export type ChangeReason =
   | "keyword-select"
   | "scrub-end";
 
-type CssValueInputProps = {
-  autoFocus?: boolean;
+type CssValueInputProps = Pick<
+  ComponentProps<typeof InputField>,
+  "variant" | "size" | "autoFocus" | "disabled" | "fieldSizing" | "prefix"
+> & {
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -286,7 +289,6 @@ type CssValueInputProps = {
    * Selected item in the dropdown
    */
   keywords?: Array<KeywordValue>;
-  disabled?: boolean;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: {
     value: StyleValue;
@@ -295,7 +297,6 @@ type CssValueInputProps = {
   onHighlight: (value: StyleValue | undefined) => void;
   onAbort: () => void;
   icon?: ReactNode;
-  prefix?: ReactNode;
   showSuffix?: boolean;
 };
 
@@ -356,6 +357,9 @@ export const CssValueInput = ({
   onHighlight,
   onAbort,
   disabled,
+  fieldSizing,
+  variant,
+  size,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -646,7 +650,10 @@ export const CssValueInput = ({
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
+            size={size}
+            variant={variant}
             disabled={disabled}
+            fieldSizing={fieldSizing}
             {...inputProps}
             onFocus={() => {
               const isFocused = document.activeElement === inputRef.current;
@@ -663,7 +670,7 @@ export const CssValueInput = ({
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
             suffix={suffix}
-            css={{ cursor: "default" }}
+            css={{ cursor: "default", minWidth: "2em" }}
           />
         </ComboboxAnchor>
         {isOpen && (

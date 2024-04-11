@@ -2,7 +2,7 @@ import type { StyleProperty } from "@webstudio-is/css-engine";
 import { Grid, theme } from "@webstudio-is/design-system";
 import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
 
@@ -36,7 +36,6 @@ export const OutlineWidth = (
       <CssValueInputContainer
         key={property}
         property={property}
-        label={outlineStyleConfig?.label || ""}
         styleSource={getStyleSource(currentStyle[property])}
         keywords={outlineStyleWidthKeywords}
         setValue={setProperty(property)}

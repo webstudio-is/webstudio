@@ -7,7 +7,7 @@ import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import type { ControlProps } from "../types";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
-import { CssValueInputContainer } from "./css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
 import { NonResetablePropertyName } from "../../shared/property-name";
 
@@ -51,7 +51,7 @@ export const PositionControl = ({
   deleteProperty,
   isAdvanced,
 }: ControlProps) => {
-  const { label, items } = styleConfigByName(property);
+  const { items } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
   const value = toTuple(styleInfo?.value);
   const styleSource = getStyleSource(styleInfo);
@@ -108,7 +108,6 @@ export const PositionControl = ({
           />
 
           <CssValueInputContainer
-            label={label}
             property={property}
             styleSource={styleSource}
             keywords={keywords}
@@ -126,7 +125,6 @@ export const PositionControl = ({
           />
 
           <CssValueInputContainer
-            label={label}
             property={property}
             styleSource={styleSource}
             keywords={keywords}

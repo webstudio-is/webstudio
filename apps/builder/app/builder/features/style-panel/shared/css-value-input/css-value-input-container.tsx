@@ -1,36 +1,27 @@
 import { type ComponentProps, useState } from "react";
-import type { StyleValue, StyleProperty } from "@webstudio-is/css-engine";
+import type { StyleValue } from "@webstudio-is/css-engine";
 import { Box } from "@webstudio-is/design-system";
-import {
-  CssValueInput,
-  type IntermediateStyleValue,
-} from "../../shared/css-value-input";
-import type { StyleSource } from "../../shared/style-info";
-import type { DeleteProperty, SetValue } from "../../shared/use-style-data";
+import { CssValueInput, type IntermediateStyleValue } from ".";
+import type { DeleteProperty, SetValue } from "../use-style-data";
 
 type CssValueInputContainerProps = {
-  property: StyleProperty;
-  keywords: ComponentProps<typeof CssValueInput>["keywords"];
-  label: string;
-  styleSource: StyleSource;
-  value?: StyleValue;
   setValue: SetValue;
   deleteProperty: DeleteProperty;
-  disabled?: boolean;
-  icon?: JSX.Element;
-  autoFocus?: boolean;
-};
+} & Omit<
+  ComponentProps<typeof CssValueInput>,
+  | "onChange"
+  | "onHighlight"
+  | "onChangeComplete"
+  | "onAbort"
+  | "intermediateValue"
+>;
 
 export const CssValueInputContainer = ({
   property,
   keywords,
-  styleSource,
-  value,
   setValue,
   deleteProperty,
-  disabled,
-  icon,
-  autoFocus,
+  ...props
 }: CssValueInputContainerProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     StyleValue | IntermediateStyleValue
@@ -39,12 +30,8 @@ export const CssValueInputContainer = ({
   return (
     <Box>
       <CssValueInput
-        autoFocus={autoFocus}
-        icon={icon}
-        disabled={disabled}
-        styleSource={styleSource}
+        {...props}
         property={property}
-        value={value}
         intermediateValue={intermediateValue}
         keywords={keywords}
         onChange={(styleValue) => {

@@ -1,5 +1,5 @@
-import { Fragment, useMemo, useState } from "react";
-import { theme, Grid } from "@webstudio-is/design-system";
+import { useMemo, useRef, useState } from "react";
+import { Box, Flex, theme } from "@webstudio-is/design-system";
 import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
@@ -8,7 +8,7 @@ import {
   useInstanceStyles,
 } from "~/shared/nano-states";
 import type { SectionProps } from "../shared/section";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import {
@@ -18,7 +18,8 @@ import {
 } from "../../shared/style-info";
 import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
-import { visualProperties } from "../sections";
+import { sectionsProperties } from "../sections";
+import { toKebabCase } from "../../shared/keyword-utils";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
@@ -36,13 +37,15 @@ const initialPropertyNames: Array<StyleProperty> = [
 const usePropertyNames = (currentStyle: StyleInfo) => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const styles = useInstanceStyles(selectedInstanceSelector?.[0]);
-  return useMemo(() => {
+  // Ordererd recent properties for sorting.
+  const recent = useRef<Set<StyleProperty>>(new Set());
+  const propertyNames = useMemo(() => {
     const names = new Set(initialPropertyNames);
     let property: StyleProperty;
     for (property in currentStyle) {
       if (
         hasInstanceValue(currentStyle, property) &&
-        visualProperties.has(property) === false
+        sectionsProperties.has(property) === false
       ) {
         names.add(property);
       }
@@ -53,8 +56,12 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
       }
     }
 
-    return Array.from(names).reverse();
+    return [
+      ...Array.from(names).filter((name) => recent.current.has(name) === false),
+      ...recent.current,
+    ].reverse();
   }, [styles, currentStyle]);
+  return { propertyNames, recentProperties: recent.current };
 };
 
 // Only here to keep the same section module interface
@@ -66,7 +73,7 @@ export const Section = ({
   deleteProperty,
 }: SectionProps) => {
   const [addingProp, setAddingProp] = useState<StyleProperty | "">();
-  const propertyNames = usePropertyNames(currentStyle);
+  const { propertyNames, recentProperties } = usePropertyNames(currentStyle);
 
   return (
     <CollapsibleSection
@@ -85,6 +92,7 @@ export const Section = ({
           onSelect={(value) => {
             if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
+              recentProperties.add(property);
               setAddingProp(undefined);
               setProperty(property)(
                 { type: "guaranteedInvalid" },
@@ -94,7 +102,7 @@ export const Section = ({
           }}
         />
       )}
-      <Grid gap={2} css={{ gridTemplateColumns: `1fr ${theme.spacing[22]}` }}>
+      <Box>
         {propertyNames.map((property, index) => {
           const { items } = styleConfigByName(property);
           const keywords = items.map((item) => ({
@@ -102,16 +110,19 @@ export const Section = ({
             value: item.name,
           }));
           return (
-            <Fragment key={property}>
+            <Flex wrap="wrap" align="center" key={property}>
               <PropertyName
-                label={styleConfigByName(property).label}
+                label={toKebabCase(styleConfigByName(property).property)}
                 properties={[property]}
                 style={currentStyle}
                 onReset={() => deleteProperty(property)}
               />
+              <Box css={{ p: theme.spacing[2], pt: 0 }}>:</Box>
               <CssValueInputContainer
+                variant="chromeless"
+                size="1"
+                fieldSizing="content"
                 autoFocus={addingProp !== undefined && index === 0}
-                label={styleConfigByName(property).label}
                 property={property}
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
@@ -124,10 +135,10 @@ export const Section = ({
                 }}
                 deleteProperty={deleteProperty}
               />
-            </Fragment>
+            </Flex>
           );
         })}
-      </Grid>
+      </Box>
     </CollapsibleSection>
   );
 };

@@ -32,7 +32,7 @@ import {
 } from "@webstudio-is/icons";
 import { useMemo, useState } from "react";
 import type { IntermediateStyleValue } from "../../shared/css-value-input";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { ColorControl } from "../../controls";
 import type { SetProperty } from "../../shared/use-style-data";
@@ -181,7 +181,6 @@ export const BoxShadowContent = ({
               outline-offset is a fake property for validating box-shadow's offsetX.
             */
             property="outlineOffset"
-            label="Offset X"
             styleSource="local"
             keywords={[]}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
@@ -218,7 +217,6 @@ export const BoxShadowContent = ({
               border-top-width is a fake property for validating box-shadow's blur.
             */
             property="borderTopWidth"
-            label="BoxShadow Blur"
             styleSource="local"
             keywords={[]}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
@@ -255,7 +253,6 @@ export const BoxShadowContent = ({
               outline-offset is a fake property for validating box-shadow's offsetY.
             */
             property="outlineOffset"
-            label="Offset Y"
             styleSource="local"
             keywords={[]}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
@@ -294,7 +291,6 @@ export const BoxShadowContent = ({
               outline-offset is a fake property for validating box-shadow's spread.
             */
             property="outlineOffset"
-            label="BoxShadow Spread"
             styleSource="local"
             keywords={[]}
             value={spread ?? { type: "unit", value: 0, unit: "px" }}

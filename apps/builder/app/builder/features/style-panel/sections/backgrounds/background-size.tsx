@@ -2,7 +2,7 @@ import { Grid, Select, theme } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { styleConfigByName } from "../../shared/configs";
 import { parseCssValue } from "@webstudio-is/css-data";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import {
   type StyleValue,
   TupleValue,
@@ -145,7 +145,6 @@ export const BackgroundSize = (
 
         <CssValueInputContainer
           disabled={customSizeDisabled}
-          label={"Width"}
           property={property}
           styleSource={styleSource}
           keywords={customSizeOptions}
@@ -156,7 +155,6 @@ export const BackgroundSize = (
 
         <CssValueInputContainer
           disabled={customSizeDisabled}
-          label={"Height"}
           property={property}
           styleSource={styleSource}
           keywords={customSizeOptions}

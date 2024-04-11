@@ -57,19 +57,18 @@ const inputStyle = css({
     },
   },
   variants: {
-    variant: {
+    text: {
       regular: textVariants.regular,
       mono: textVariants.mono,
     },
   },
   defaultVariants: {
-    variant: "regular",
+    text: "regular",
   },
 });
 
 const containerStyle = css({
   display: "flex",
-  height: theme.spacing[12],
   boxSizing: "border-box",
   minWidth: 0,
   alignItems: "center",
@@ -92,6 +91,27 @@ const containerStyle = css({
   "&:has([data-input-field-input]:disabled)": {
     backgroundColor: theme.colors.backgroundInputDisabled,
   },
+  variants: {
+    variant: {
+      chromeless: {
+        "&:not(:hover)": {
+          borderColor: "transparent",
+          backgroundColor: "transparent",
+        },
+      },
+    },
+    size: {
+      1: {
+        height: theme.spacing[11],
+      },
+      2: {
+        height: theme.spacing[12],
+      },
+    },
+  },
+  defaultVariants: {
+    size: 2,
+  },
 });
 
 const suffixSlotStyle = css({
@@ -110,12 +130,16 @@ const Container = forwardRef(
       css,
       prefix,
       suffix,
+      variant,
+      size,
       ...props
     }: {
       children: ReactNode;
       prefix?: ReactNode;
       suffix?: ReactNode;
       css?: CSS;
+      variant: InputFieldProps["variant"];
+      size: InputFieldProps["size"];
     } & Omit<ComponentProps<"div">, "prefix">,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -123,7 +147,7 @@ const Container = forwardRef(
     if (!prefix && !suffix) {
       return (
         <div
-          className={containerStyle({ className, css })}
+          className={containerStyle({ className, css, variant, size })}
           {...props}
           ref={ref}
         >
@@ -136,7 +160,7 @@ const Container = forwardRef(
       <ArrowFocus
         render={({ handleKeyDown }) => (
           <div
-            className={containerStyle({ className, css })}
+            className={containerStyle({ className, css, variant, size })}
             {...props}
             onKeyDown={(event) => {
               props.onKeyDown?.(event);
@@ -166,12 +190,12 @@ type InputProps = {
   type?: (typeof inputFieldTypes)[number];
   color?: (typeof inputFieldColors)[number];
   css?: CSS;
-  variant?: "regular" | "mono";
-} & Omit<InputWithFieldSizingProps, "prefix" | "onFocus" | "onBlur">;
+  text?: "regular" | "mono";
+} & Omit<InputWithFieldSizingProps, "prefix" | "onFocus" | "onBlur" | "size">;
 
 const Input = forwardRef(
   (
-    { css, className, color, disabled = false, variant, ...props }: InputProps,
+    { css, className, color, disabled = false, text, ...props }: InputProps,
     ref: Ref<HTMLInputElement>
   ) => {
     return (
@@ -181,13 +205,24 @@ const Input = forwardRef(
         data-input-field-input // to distinguish from potential other inputs in prefix/suffix
         data-color={color}
         disabled={disabled}
-        className={inputStyle({ className, css, variant })}
+        className={inputStyle({ className, css, text })}
         ref={ref}
       />
     );
   }
 );
 Input.displayName = "Input";
+
+type InputFieldProps = {
+  prefix?: ReactNode;
+  suffix?: ReactNode;
+  containerRef?: Ref<HTMLDivElement>;
+  inputRef?: Ref<HTMLInputElement>;
+  onFocus?: FocusEventHandler;
+  onBlur?: FocusEventHandler;
+  variant?: "chromeless";
+  size?: "1" | "2";
+};
 
 export const InputField = forwardRef(
   (
@@ -200,15 +235,10 @@ export const InputField = forwardRef(
       inputRef,
       onFocus,
       onBlur,
+      variant,
+      size,
       ...inputProps
-    }: InputProps & {
-      prefix?: ReactNode;
-      suffix?: ReactNode;
-      containerRef?: Ref<HTMLDivElement>;
-      inputRef?: Ref<HTMLInputElement>;
-      onFocus?: FocusEventHandler;
-      onBlur?: FocusEventHandler;
-    },
+    }: InputProps & InputFieldProps,
     ref: Ref<HTMLDivElement>
   ) => {
     // Our input field can contain multiple focused elements,
@@ -224,6 +254,8 @@ export const InputField = forwardRef(
         className={className}
         prefix={prefix}
         suffix={suffix}
+        variant={variant}
+        size={size}
         {...focusWithinProps}
         ref={mergeRefs(ref, containerRef ?? null)}
       >

@@ -7,7 +7,7 @@ import {
   NestedIconLabel,
   ToggleButton,
 } from "@webstudio-is/design-system";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
@@ -124,7 +124,6 @@ export const BorderProperty = ({
           }}
         >
           <CssValueInputContainer
-            label={label}
             property={firstPropertyName}
             styleSource={borderWidthStyleSource}
             keywords={borderWidthKeywords}
@@ -153,7 +152,6 @@ export const BorderProperty = ({
                 </NestedIconLabel>
               }
               key={property}
-              label={styleConfigByName(property).label ?? ""}
               property={property}
               styleSource={getStyleSource(currentStyle[property])}
               keywords={borderWidthKeywords}

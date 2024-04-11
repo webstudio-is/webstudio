@@ -31,7 +31,7 @@ export const Demo = () => (
 
     <StorySection title="Mono">
       <StoryGrid horizontal>
-        <InputField defaultValue="mono text" variant="mono" />
+        <InputField defaultValue="mono text" text="mono" />
       </StoryGrid>
     </StorySection>
 
