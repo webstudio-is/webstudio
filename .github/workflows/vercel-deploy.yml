@@ -1,0 +1,35 @@
+name: Vercel Deploy
+
+on:
+  pull_request:
+    branches:
+      - "*.staging"
+      - "test-xxx"
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: cli-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  deployment:
+    environment:
+      name: staging
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgres://
+      AUTH_SECRET: test
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - name: Echo
+        run: echo "Hello, world!"
