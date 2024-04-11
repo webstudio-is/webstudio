@@ -51,10 +51,10 @@ jobs:
           echo "domain=${{ steps.vercel.outputs.domain }}"
           echo "inspect-url=${{ steps.vercel.outputs.inspect-url }}"
           echo "alias=${{ steps.vercel.outputs.alias }}"
-        shell: bash
-#      - uses: ./.github/actions/add-status
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          state: success
-#          description: "Vercel deployment successful"
-#          context: "Vercel Deploy"
+
+      - uses: ./.github/actions/add-status
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          state: success
+          description: "Vercel deployment successful"
+          context: "Vercel Deploy"
