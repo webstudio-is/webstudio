@@ -40,6 +40,7 @@ jobs:
 
       - uses: ./.github/actions/vercel
         id: vercel
+        name: Deploy to Vercel
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
@@ -48,7 +49,7 @@ jobs:
           sha: ${{ github.sha }}
           environment: ${{ matrix.environment }}
 
-      - name: Show
+      - name: Debug Vercel Outputs
         run: |
           echo "domain=${{ steps.vercel.outputs.domain }}"
           echo "inspect-url=${{ steps.vercel.outputs.inspect-url }}"
