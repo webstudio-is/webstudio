@@ -73,14 +73,14 @@ const ItemButton = styled("button", {
   position: "relative",
 });
 
-const nestingLinesDisplayVar = "--ws-tree-node-nesting-lines-display";
+const nestingLinesVisibilityVar = "--ws-tree-node-nesting-lines-visibility";
 
 export const showNestingLineVars = () => ({
-  [nestingLinesDisplayVar]: "visible",
+  [nestingLinesVisibilityVar]: "visible",
 });
 
 const NestingLine = styled(Box, {
-  visibility: `var(${nestingLinesDisplayVar}, hidden)`,
+  visibility: `var(${nestingLinesVisibilityVar}, hidden)`,
   width: Math.ceil(INDENT / 2),
   marginRight: Math.floor(INDENT / 2),
   height: ITEM_HEIGHT,
