@@ -65,4 +65,4 @@ jobs:
         with:
           title: "⭐ [${{ matrix.environment }}] Apps Webstudio URL"
           description: "[${{ matrix.environment }}] Site url"
-          url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.vercel.app"
+          url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"
