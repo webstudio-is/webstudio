@@ -1,9 +1,9 @@
 name: Vercel Deploy
 
 on:
-  pull_request:
-    # branches:
-    #  - "*.staging"
+  push:
+    branches:
+      - "*.staging"
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
