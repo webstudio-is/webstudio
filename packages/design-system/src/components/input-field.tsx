@@ -69,7 +69,6 @@ const inputStyle = css({
 
 const containerStyle = css({
   display: "flex",
-  height: theme.spacing[12],
   boxSizing: "border-box",
   minWidth: 0,
   alignItems: "center",
@@ -101,6 +100,17 @@ const containerStyle = css({
         },
       },
     },
+    size: {
+      1: {
+        height: theme.spacing[11],
+      },
+      2: {
+        height: theme.spacing[12],
+      },
+    },
+  },
+  defaultVariants: {
+    size: 2,
   },
 });
 
@@ -121,6 +131,7 @@ const Container = forwardRef(
       prefix,
       suffix,
       variant,
+      size,
       ...props
     }: {
       children: ReactNode;
@@ -128,6 +139,7 @@ const Container = forwardRef(
       suffix?: ReactNode;
       css?: CSS;
       variant?: "ghost";
+      size?: "1" | "2";
     } & Omit<ComponentProps<"div">, "prefix">,
     ref: Ref<HTMLDivElement>
   ) => {
@@ -135,7 +147,7 @@ const Container = forwardRef(
     if (!prefix && !suffix) {
       return (
         <div
-          className={containerStyle({ className, css, variant })}
+          className={containerStyle({ className, css, variant, size })}
           {...props}
           ref={ref}
         >
@@ -148,7 +160,7 @@ const Container = forwardRef(
       <ArrowFocus
         render={({ handleKeyDown }) => (
           <div
-            className={containerStyle({ className, css, variant })}
+            className={containerStyle({ className, css, variant, size })}
             {...props}
             onKeyDown={(event) => {
               props.onKeyDown?.(event);
@@ -179,7 +191,7 @@ type InputProps = {
   color?: (typeof inputFieldColors)[number];
   css?: CSS;
   text?: "regular" | "mono";
-} & Omit<InputWithFieldSizingProps, "prefix" | "onFocus" | "onBlur">;
+} & Omit<InputWithFieldSizingProps, "prefix" | "onFocus" | "onBlur" | "size">;
 
 const Input = forwardRef(
   (
@@ -213,6 +225,7 @@ export const InputField = forwardRef(
       onFocus,
       onBlur,
       variant,
+      size,
       ...inputProps
     }: InputProps & {
       prefix?: ReactNode;
@@ -222,6 +235,7 @@ export const InputField = forwardRef(
       onFocus?: FocusEventHandler;
       onBlur?: FocusEventHandler;
       variant?: "ghost";
+      size?: "1" | "2";
     },
     ref: Ref<HTMLDivElement>
   ) => {
@@ -239,6 +253,7 @@ export const InputField = forwardRef(
         prefix={prefix}
         suffix={suffix}
         variant={variant}
+        size={size}
         {...focusWithinProps}
         ref={mergeRefs(ref, containerRef ?? null)}
       >

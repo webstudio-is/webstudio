@@ -113,6 +113,7 @@ export const Section = ({
               <Box css={{ mx: 2, mb: 2 }}>:</Box>
               <CssValueInputContainer
                 variant="ghost"
+                size="1"
                 fieldSizing="content"
                 autoFocus={addingProp !== undefined && index === 0}
                 property={property}

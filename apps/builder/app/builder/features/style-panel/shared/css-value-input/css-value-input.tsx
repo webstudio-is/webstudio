@@ -279,7 +279,7 @@ export type ChangeReason =
 
 type CssValueInputProps = Pick<
   ComponentProps<typeof InputField>,
-  "variant" | "autoFocus" | "disabled" | "fieldSizing" | "prefix"
+  "variant" | "size" | "autoFocus" | "disabled" | "fieldSizing" | "prefix"
 > & {
   styleSource: StyleSource;
   property: StyleProperty;
@@ -359,6 +359,7 @@ export const CssValueInput = ({
   disabled,
   fieldSizing,
   variant,
+  size,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -649,6 +650,7 @@ export const CssValueInput = ({
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
+            size={size}
             variant={variant}
             disabled={disabled}
             fieldSizing={fieldSizing}
