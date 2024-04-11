@@ -9,7 +9,9 @@
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "dev": "pnpm build",
-    "build": "prisma format && prisma generate && esbuild src/prisma.ts --outdir=lib --format=cjs && cp src/cjs/package.json lib && cp -r src/__generated__ lib/__generated__ && pnpm dts",
+    "build": "prisma format && pnpm generate && esbuild src/prisma.ts --outdir=lib --format=cjs && cp src/cjs/package.json lib && cp -r src/__generated__ lib/__generated__ && pnpm dts",
+    "generate": "PRISMA_BINARY_TARGET=${PRISMA_BINARY_TARGET:-'[\"native\"]'} prisma generate",
+    "build:prod": "PRISMA_BINARY_TARGET='[\"rhel-openssl-1.0.x\"]' pnpm build",
     "dts": "tsc --declarationDir lib",
     "migrations": "./migrations-cli/cli.ts"
   },
