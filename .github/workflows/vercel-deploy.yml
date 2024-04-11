@@ -30,6 +30,12 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
 
+      - uses: pnpm/action-setup@v2.2.4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+          cache: pnpm
+
       - uses: ./.github/actions/vercel
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
