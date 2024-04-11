@@ -51,7 +51,7 @@ export const Add = ({
         value,
         label: toKebabCase(value),
       }))}
-      itemToString={(item) => item?.label ?? ""}
+      itemToString={(item) => item?.value ?? ""}
       getItemProps={() => ({ text: "sentence" })}
       onItemSelect={(item) => onSelect(item.value)}
       value={item}
