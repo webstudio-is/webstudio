@@ -22,6 +22,19 @@ import {
   AICenterIcon,
   JCCenterIcon,
   ACCenterIcon,
+  AIStartIcon,
+  AIEndIcon,
+  AIBaselineIcon,
+  AIStretchIcon,
+  JCStartIcon,
+  JCEndIcon,
+  JCSpaceBetweenIcon,
+  JCSpaceAroundIcon,
+  ACStartIcon,
+  ACEndIcon,
+  ACSpaceAroundIcon,
+  ACSpaceBetweenIcon,
+  ACStretchIcon,
 } from "@webstudio-is/icons";
 import type { SectionProps } from "../shared/section";
 import { FlexGrid } from "./shared/flex-grid";
@@ -339,24 +352,38 @@ const LayoutSectionFlex = ({
           <Flex css={{ gap: theme.spacing[7] }}>
             <MenuControl
               property="flexDirection"
-              icons={{
-                row: ArrowRightIcon,
-                "row-reverse": ArrowLeftIcon,
-                column: ArrowDownIcon,
-                "column-reverse": ArrowUpIcon,
-              }}
-              DefaultIcon={ArrowRightIcon}
+              items={[
+                { name: "row", label: "Row", icon: ArrowRightIcon },
+                {
+                  name: "row-reverse",
+                  label: "Row Reverse",
+                  icon: ArrowLeftIcon,
+                },
+                { name: "column", label: "Column", icon: ArrowDownIcon },
+                {
+                  name: "column-reverse",
+                  label: "Column Reverse",
+                  icon: ArrowUpIcon,
+                },
+              ]}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
             />
             <ToggleControl
               property="flexWrap"
-              items={["wrap", "nowrap"]}
-              icons={{
-                wrap: WrapIcon,
-                nowrap: NoWrapIcon,
-              }}
+              items={[
+                {
+                  name: "nowrap",
+                  label: "No Wrap",
+                  icon: NoWrapIcon,
+                },
+                {
+                  name: "wrap",
+                  label: "Wrap",
+                  icon: WrapIcon,
+                },
+              ]}
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
@@ -368,7 +395,13 @@ const LayoutSectionFlex = ({
               currentStyle={mapNormalTo(currentStyle, "alignItems", "stretch")}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
-              DefaultIcon={AICenterIcon}
+              items={[
+                { name: "stretch", label: "Stretch", icon: AIStretchIcon },
+                { name: "baseline", label: "Baseline", icon: AIBaselineIcon },
+                { name: "center", label: "Center", icon: AICenterIcon },
+                { name: "start", label: "Start", icon: AIStartIcon },
+                { name: "end", label: "End", icon: AIEndIcon },
+              ]}
             />
             <MenuControl
               property="justifyContent"
@@ -379,7 +412,21 @@ const LayoutSectionFlex = ({
               )}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
-              DefaultIcon={JCCenterIcon}
+              items={[
+                {
+                  name: "space-between",
+                  label: "Space Between",
+                  icon: JCSpaceBetweenIcon,
+                },
+                {
+                  name: "space-around",
+                  label: "Space Around",
+                  icon: JCSpaceAroundIcon,
+                },
+                { name: "center", label: "Center", icon: JCCenterIcon },
+                { name: "start", label: "Start", icon: JCStartIcon },
+                { name: "end", label: "End", icon: JCEndIcon },
+              ]}
             />
             {showAlignContent && (
               <MenuControl
@@ -391,7 +438,22 @@ const LayoutSectionFlex = ({
                 )}
                 setProperty={setProperty}
                 deleteProperty={deleteProperty}
-                DefaultIcon={ACCenterIcon}
+                items={[
+                  {
+                    name: "space-between",
+                    label: "Space Between",
+                    icon: ACSpaceBetweenIcon,
+                  },
+                  {
+                    name: "space-around",
+                    label: "Space Around",
+                    icon: ACSpaceAroundIcon,
+                  },
+                  { name: "stretch", label: "Stretch", icon: ACStretchIcon },
+                  { name: "center", label: "Center", icon: ACCenterIcon },
+                  { name: "start", label: "Start", icon: ACStartIcon },
+                  { name: "end", label: "End", icon: ACEndIcon },
+                ]}
               />
             )}
           </Flex>
