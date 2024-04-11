@@ -33,7 +33,6 @@ export const propsMeta: WsComponentPropsMeta = {
       required: true,
       control: "code",
       type: "string",
-      rows: 10,
     },
   },
   initialProps: ["clientOnly", "executeScriptOnCanvas"],

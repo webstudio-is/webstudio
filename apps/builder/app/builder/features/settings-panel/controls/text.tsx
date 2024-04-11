@@ -7,7 +7,6 @@ import {
 import {
   type ControlProps,
   useLocalValue,
-  VerticalLayout,
   ResponsiveLayout,
   Label,
   updateExpressionValue,
@@ -37,9 +36,6 @@ export const TextControl = ({
   const id = useId();
   const label = humanizeString(meta.label || propName);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const rows = meta.rows ?? 1;
-  const isTwoColumnLayout = rows < 2;
-
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
@@ -98,25 +94,13 @@ export const TextControl = ({
     </Label>
   );
 
-  if (isTwoColumnLayout) {
-    return (
-      <ResponsiveLayout
-        label={labelElement}
-        deletable={deletable}
-        onDelete={onDelete}
-      >
-        {input}
-      </ResponsiveLayout>
-    );
-  }
-
   return (
-    <VerticalLayout
+    <ResponsiveLayout
       label={labelElement}
       deletable={deletable}
       onDelete={onDelete}
     >
       {input}
-    </VerticalLayout>
+    </ResponsiveLayout>
   );
 };
