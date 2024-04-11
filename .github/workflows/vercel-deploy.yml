@@ -27,9 +27,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    env:
-      environment: staging
-
     steps:
       - uses: actions/checkout@v3
         with:
