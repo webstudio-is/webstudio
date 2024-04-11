@@ -2,13 +2,12 @@ name: Vercel Deploy
 
 on:
   pull_request:
-    branches:
-      - "*.staging"
-      - "test-xxx"
+    # branches:
+    #  - "*.staging"
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
-  group: cli-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  group: vercel-deploy-${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -18,6 +17,7 @@ jobs:
   deployment:
     environment:
       name: staging
+
     timeout-minutes: 20
 
     runs-on: ubuntu-latest
