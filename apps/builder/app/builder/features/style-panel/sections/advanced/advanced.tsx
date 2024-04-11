@@ -20,6 +20,7 @@ import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { sectionsProperties } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
+import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
@@ -67,14 +68,20 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
 // Only here to keep the same section module interface
 export const properties = [];
 
-export const Section = ({
-  currentStyle,
-  setProperty,
-  deleteProperty,
-}: SectionProps) => {
+export const Section = ({ currentStyle, ...props }: SectionProps) => {
   const [addingProp, setAddingProp] = useState<StyleProperty | "">();
   const { propertyNames, recentProperties } = usePropertyNames(currentStyle);
-
+  const deleteProperty: DeleteProperty = (property, options) => {
+    if (options?.isEphemeral !== true) {
+      recentProperties.delete(property);
+    }
+    return props.deleteProperty(property, options);
+  };
+  const setProperty: SetProperty = (property) => {
+    setAddingProp(undefined);
+    recentProperties.add(property);
+    return props.setProperty(property);
+  };
   return (
     <CollapsibleSection
       label="Advanced"
@@ -92,8 +99,6 @@ export const Section = ({
           onSelect={(value) => {
             if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
-              recentProperties.add(property);
-              setAddingProp(undefined);
               setProperty(property)(
                 { type: "guaranteedInvalid" },
                 { listed: true }
