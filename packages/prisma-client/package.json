@@ -23,7 +23,6 @@
     "@types/node": "^18.17.1",
     "@types/prompts": "^2.4.5",
     "@webstudio-is/tsconfig": "workspace:*",
-    "cross-env": "^7.0.3",
     "prisma": "^5.12.1",
     "tsx": "^4.7.2",
     "typescript": "5.2.2",
