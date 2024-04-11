@@ -16,15 +16,19 @@ permissions:
 
 jobs:
   deployment:
+    strategy:
+      matrix:
+        environment: [staging]
+
     environment:
-      name: staging
+      name: ${{ matrix.environment }}
 
     timeout-minutes: 20
 
     runs-on: ubuntu-latest
 
     env:
-      SHORT_SHA: ${{ github.sha }}
+      environment: staging
 
     steps:
       - uses: actions/checkout@v3
@@ -45,6 +49,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           ref-name: ${{ github.ref_name }}
           sha: ${{ github.sha }}
+          environment: ${{ matrix.environment }}
 
       - name: Show
         run: |
@@ -54,7 +59,12 @@ jobs:
 
       - uses: ./.github/actions/add-status
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          state: success
-          description: "Vercel deployment successful"
-          context: "Vercel Deploy"
+          title: "⏰ Vercel Inspection"
+          description: "Vercel logs"
+          url: "${{ steps.vercel.outputs.inspect-url }}"
+
+      - uses: ./.github/actions/add-status
+        with:
+          title: "⭐ Apps Webstudio URL"
+          description: "Vercel logs"
+          url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.vercel.app"

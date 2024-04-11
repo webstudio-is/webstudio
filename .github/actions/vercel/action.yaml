@@ -17,6 +17,10 @@ inputs:
   sha:
     description: "Sha"
     required: true
+  environment:
+    description: "Sha"
+    required: true
+
 outputs:
   domain:
     description: "Domain"
@@ -94,7 +98,7 @@ runs:
 
         vercel alias set \
         "${{ steps.deploy.outputs.domain }}" \
-        "${ALIAS}" \
+        "${ALIAS}-${{ inputs.environment }}" \
         --token ${{ inputs.vercel-token }} \
         --scope getwebstudio
 
