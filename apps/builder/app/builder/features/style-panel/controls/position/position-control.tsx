@@ -7,7 +7,7 @@ import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
 import type { ControlProps } from "../types";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
-import { CssValueInputContainer } from "./css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
 import { NonResetablePropertyName } from "../../shared/property-name";
 

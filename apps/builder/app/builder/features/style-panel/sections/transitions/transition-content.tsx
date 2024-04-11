@@ -31,7 +31,7 @@ import type {
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 
 type TransitionContentProps = {
   index: number;

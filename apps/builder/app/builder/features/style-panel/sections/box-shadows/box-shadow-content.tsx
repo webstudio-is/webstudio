@@ -32,7 +32,7 @@ import {
 } from "@webstudio-is/icons";
 import { useMemo, useState } from "react";
 import type { IntermediateStyleValue } from "../../shared/css-value-input";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { ColorControl } from "../../controls";
 import type { SetProperty } from "../../shared/use-style-data";

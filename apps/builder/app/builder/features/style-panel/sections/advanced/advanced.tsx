@@ -8,7 +8,7 @@ import {
   useInstanceStyles,
 } from "~/shared/nano-states";
 import type { SectionProps } from "../shared/section";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import { styleConfigByName } from "../../shared/configs";
 import { PropertyName } from "../../shared/property-name";
 import {
