@@ -26,14 +26,14 @@ const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
 ) as Array<StyleProperty>;
 
-const initialPropertyNames: Array<StyleProperty> = [
+const initialPropertyNames = new Set<StyleProperty>([
   "userSelect",
   "pointerEvents",
   "mixBlendMode",
   "backdropFilter",
   "cursor",
   "opacity",
-];
+]);
 
 const usePropertyNames = (currentStyle: StyleInfo) => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
@@ -58,9 +58,11 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
     }
 
     return [
-      ...Array.from(names).filter((name) => recent.current.has(name) === false),
       ...recent.current,
-    ].reverse();
+      ...Array.from(names)
+        .filter((name) => recent.current.has(name) === false)
+        .reverse(),
+    ];
   }, [styles, currentStyle]);
   return { propertyNames, recentProperties: recent.current };
 };
@@ -79,7 +81,9 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
   };
   const setProperty: SetProperty = (property) => {
     setAddingProp(undefined);
-    recentProperties.add(property);
+    if (propertyNames.includes(property) === false) {
+      recentProperties.add(property);
+    }
     return props.setProperty(property);
   };
   return (
