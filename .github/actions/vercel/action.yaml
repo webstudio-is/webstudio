@@ -80,7 +80,7 @@ runs:
       run: |
         vercel alias set \
         "${{ steps.domain.outputs.value }}" \
-        "${{ steps.branch.outputs.value }}-wstd-00"
+        "${{ steps.branch.outputs.value }}-wstd-00" \
         --token ${{ inputs.vercel-token }} \
         --scope wstd
       shell: bash
