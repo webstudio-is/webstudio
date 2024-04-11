@@ -52,8 +52,7 @@ jobs:
           echo "inspect-url=${{ steps.vercel.outputs.inspect-url }}"
           echo "alias=${{ steps.vercel.outputs.alias }}"
         shell: bash
-
-      - uses: ./.github/actions/add-status
+#      - uses: ./.github/actions/add-status
 #        with:
 #          token: ${{ secrets.GITHUB_TOKEN }}
 #          state: success

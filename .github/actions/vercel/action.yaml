@@ -33,8 +33,9 @@ runs:
   steps:
     - id: branch
       run: |
-        CLEANED_BRANCH_NAME=$( echo "${GITHUB_REF_NAME}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g' )
-        echo "value=${CLEANED_BRANCH_NAME}" >> $GITHUB_OUTPUT
+        CLEAN_NAME="${GITHUB_REF_NAME/.staging/}"
+        CLEAN_NAME=$( echo "${CLEAN_NAME}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g' )
+        echo "value=${CLEAN_NAME}" >> $GITHUB_OUTPUT
       shell: bash
 
     - id: short_sha
