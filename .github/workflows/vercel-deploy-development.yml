@@ -2,8 +2,6 @@ name: Vercel Deploy
 
 on:
   push:
-    branches:
-      - "*.staging"
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
@@ -18,7 +16,7 @@ jobs:
   deployment:
     strategy:
       matrix:
-        environment: [staging]
+        environment: [development]
 
     environment:
       name: ${{ matrix.environment }}
@@ -57,12 +55,12 @@ jobs:
 
       - uses: ./.github/actions/add-status
         with:
-          title: "⏰ Vercel Inspection"
-          description: "Vercel logs"
+          title: "⏰ [${{ matrix.environment }}] Vercel Inspection"
+          description: "[${{ matrix.environment }}] Vercel logs"
           url: "${{ steps.vercel.outputs.inspect-url }}"
 
       - uses: ./.github/actions/add-status
         with:
-          title: "⭐ Apps Webstudio URL"
-          description: "Vercel logs"
+          title: "⭐ [${{ matrix.environment }}] Apps Webstudio URL"
+          description: "[${{ matrix.environment }}] Site url"
           url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.vercel.app"
