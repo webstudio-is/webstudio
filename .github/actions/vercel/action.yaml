@@ -94,11 +94,11 @@ runs:
     - name: Set Alias
       id: alias
       run: |
-        ALIAS="${{ steps.branch.outputs.value }}-wstd-00"
+        ALIAS="${{ steps.branch.outputs.value }}"
 
         vercel alias set \
         "${{ steps.deploy.outputs.domain }}" \
-        "${ALIAS}-${{ inputs.environment }}" \
+        "${ALIAS}-wstd-00-${{ inputs.environment }}" \
         --token ${{ inputs.vercel-token }} \
         --scope getwebstudio
 
