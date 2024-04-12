@@ -33,15 +33,12 @@ const useActiveTab = () => {
 };
 
 const useHideActiveTabOnPreview = () => {
-  const previousRef = useRef($isPreviewMode.get());
-
   useEffect(() => {
     return $isPreviewMode.subscribe((isPreviewMode) => {
       // When user switches to preview mode we want to hide any active sidebar panel.
-      if (isPreviewMode && previousRef.current === false) {
+      if (isPreviewMode) {
         $activeSidebarPanel.set("none");
       }
-      previousRef.current = isPreviewMode;
     });
   }, []);
 };
