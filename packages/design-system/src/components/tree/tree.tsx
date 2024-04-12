@@ -2,7 +2,12 @@ import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ListPositionIndicator } from "../list-position-indicator";
-import { TreeNode, INDENT, type TreeItemRenderProps } from "./tree-node";
+import {
+  TreeNode,
+  INDENT,
+  type TreeItemRenderProps,
+  showNestingLineVars,
+} from "./tree-node";
 import {
   useHold,
   useDrop,
@@ -291,6 +296,7 @@ export const Tree = <Data extends { id: string }>({
         css={{
           // To not intersect last element with the scroll
           marginBottom: theme.spacing[7],
+          "&:hover": showNestingLineVars(),
         }}
       >
         <TreeNode
