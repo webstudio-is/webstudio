@@ -2,8 +2,6 @@ name: Vercel Deploy Staging
 
 on:
   push:
-    branches:
-      - "*.staging"
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
@@ -16,9 +14,18 @@ permissions:
 
 jobs:
   deployment:
+    # Execute development and staging on staging branches
+    # Execute only development on all other branches
     strategy:
       matrix:
-        environment: [staging]
+        environment:
+          - staging
+          - development
+        is-staging:
+          - ${{ endsWith(github.ref_name, '.staging') }}
+        exclude:
+          - environment: staging
+            is-staging: false
 
     environment:
       name: ${{ matrix.environment }}
