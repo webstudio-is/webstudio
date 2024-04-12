@@ -12,44 +12,59 @@ describe("Unit menu options", () => {
         nestedSelectButtonUnitless
       )
     ).toMatchInlineSnapshot(`
-      [
-        {
-          "id": "px",
-          "label": "px",
-          "type": "unit",
-        },
-        {
-          "id": "%",
-          "label": "%",
-          "type": "unit",
-        },
-        {
-          "id": "em",
-          "label": "em",
-          "type": "unit",
-        },
-        {
-          "id": "rem",
-          "label": "rem",
-          "type": "unit",
-        },
-        {
-          "id": "dvw",
-          "label": "dvw",
-          "type": "unit",
-        },
-        {
-          "id": "dvh",
-          "label": "dvh",
-          "type": "unit",
-        },
-        {
-          "id": "auto",
-          "label": "auto",
-          "type": "keyword",
-        },
-      ]
-    `);
+[
+  {
+    "id": "px",
+    "label": "px",
+    "type": "unit",
+  },
+  {
+    "id": "%",
+    "label": "%",
+    "type": "unit",
+  },
+  {
+    "id": "em",
+    "label": "em",
+    "type": "unit",
+  },
+  {
+    "id": "rem",
+    "label": "rem",
+    "type": "unit",
+  },
+  {
+    "id": "svw",
+    "label": "svw",
+    "type": "unit",
+  },
+  {
+    "id": "svh",
+    "label": "svh",
+    "type": "unit",
+  },
+  {
+    "id": "lvw",
+    "label": "lvw",
+    "type": "unit",
+  },
+  {
+    "id": "lvh",
+    "label": "lvh",
+    "type": "unit",
+  },
+  {
+    "id": "ch",
+    "label": "ch",
+    "type": "unit",
+  },
+  {
+    "id": "auto",
+    "label": "auto",
+    "type": "keyword",
+  },
+]
+`);
   });
 
   test("Should show options with unitless if value supports unitless", () => {
@@ -70,44 +85,59 @@ describe("Unit menu options", () => {
         nestedSelectButtonUnitless
       )
     ).toMatchInlineSnapshot(`
-      [
-        {
-          "id": "px",
-          "label": "px",
-          "type": "unit",
-        },
-        {
-          "id": "%",
-          "label": "%",
-          "type": "unit",
-        },
-        {
-          "id": "em",
-          "label": "em",
-          "type": "unit",
-        },
-        {
-          "id": "rem",
-          "label": "rem",
-          "type": "unit",
-        },
-        {
-          "id": "dvw",
-          "label": "dvw",
-          "type": "unit",
-        },
-        {
-          "id": "dvh",
-          "label": "dvh",
-          "type": "unit",
-        },
-        {
-          "id": "auto",
-          "label": "auto",
-          "type": "keyword",
-        },
-      ]
-    `);
+[
+  {
+    "id": "px",
+    "label": "px",
+    "type": "unit",
+  },
+  {
+    "id": "%",
+    "label": "%",
+    "type": "unit",
+  },
+  {
+    "id": "em",
+    "label": "em",
+    "type": "unit",
+  },
+  {
+    "id": "rem",
+    "label": "rem",
+    "type": "unit",
+  },
+  {
+    "id": "svw",
+    "label": "svw",
+    "type": "unit",
+  },
+  {
+    "id": "svh",
+    "label": "svh",
+    "type": "unit",
+  },
+  {
+    "id": "lvw",
+    "label": "lvw",
+    "type": "unit",
+  },
+  {
+    "id": "lvh",
+    "label": "lvh",
+    "type": "unit",
+  },
+  {
+    "id": "ch",
+    "label": "ch",
+    "type": "unit",
+  },
+  {
+    "id": "auto",
+    "label": "auto",
+    "type": "keyword",
+  },
+]
+`);
   });
 
   test("Should add unit to options even if it's not in a visibleLengthUnits", () => {

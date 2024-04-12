@@ -16,17 +16,12 @@ import { $isProjectSettingsOpen } from "~/shared/nano-states/seo";
 import { SectionGeneral } from "./section-general";
 import { SectionRedirects } from "./section-redirects";
 import { useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { SectionMarketplace } from "./section-marketplace";
 import { leftPanelWidth, rightPanelWidth } from "./utils";
 
 const focusOutline = focusRingStyle();
 
-const sectionNames = ["General", "Redirects"];
-
-if (isFeatureEnabled("marketplace")) {
-  sectionNames.push("Marketplace");
-}
+const sectionNames = ["General", "Redirects", "Marketplace"];
 
 type SectionName = (typeof sectionNames)[number];
 
@@ -103,8 +98,7 @@ export const ProjectSettingsView = ({
             <Grid gap={2} css={{ my: theme.spacing[5] }}>
               {currentSection === "General" && <SectionGeneral />}
               {currentSection === "Redirects" && <SectionRedirects />}
-              {currentSection === "Marketplace" &&
-                isFeatureEnabled("marketplace") && <SectionMarketplace />}
+              {currentSection === "Marketplace" && <SectionMarketplace />}
               <div />
             </Grid>
           </ScrollArea>
