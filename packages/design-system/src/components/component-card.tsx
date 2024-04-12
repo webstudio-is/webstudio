@@ -70,6 +70,7 @@ export const ComponentCard = forwardRef<HTMLDivElement, ComponentCardProps>(
   ({ icon, label, className, state, description, ...props }, ref) => {
     return (
       <Tooltip
+        disableHoverableContent
         content={description ?? label}
         css={{ maxWidth: theme.spacing[28] }}
       >
