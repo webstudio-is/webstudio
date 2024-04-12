@@ -24,11 +24,6 @@ describe("Unit menu options", () => {
     "type": "unit",
   },
   {
-    "id": "%",
-    "label": "%",
-    "type": "unit",
-  },
-  {
     "id": "em",
     "label": "em",
     "type": "unit",
@@ -94,11 +89,6 @@ describe("Unit menu options", () => {
   {
     "id": "px",
     "label": "px",
-    "type": "unit",
-  },
-  {
-    "id": "%",
-    "label": "%",
     "type": "unit",
   },
   {
