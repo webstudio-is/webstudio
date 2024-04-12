@@ -48,7 +48,10 @@ import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
 
-const TextEditor = lazy(() => import("../text-editor"));
+const TextEditor = lazy(async () => {
+  const { TextEditor } = await import("../text-editor");
+  return { default: TextEditor };
+});
 
 const ContentEditable = ({
   renderComponentWithRef,
