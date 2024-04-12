@@ -16,7 +16,7 @@ type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {
 
 export const wrapLinkComponent = (BaseLink: typeof Link) => {
   const Component = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
-    const { assetBaseUrl } = useContext(ReactSdkContext);
+    const { assetBaseUrl, renderer } = useContext(ReactSdkContext);
     const href = props.href;
 
     // use remix link for home page and all relative urls
@@ -25,7 +25,12 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
       href === "" ||
       (href?.startsWith("/") && href.startsWith(assetBaseUrl) === false)
     ) {
-      return <RemixLink {...props} to={href} ref={ref} />;
+      // remix links behave in unexpected way when delete in content editable
+      // always render simple <a> in canvas and preview
+      // since remix links do not affect it
+      if (renderer !== "canvas" && renderer !== "preview") {
+        return <RemixLink {...props} to={href} ref={ref} />;
+      }
     }
 
     const { prefetch, reloadDocument, replace, preventScrollReset, ...rest } =
