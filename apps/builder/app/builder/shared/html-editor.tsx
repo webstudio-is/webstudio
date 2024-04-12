@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, type ReactNode } from "react";
+import { forwardRef, useMemo, type ComponentProps } from "react";
 import {
   keymap,
   drawSelection,
@@ -22,7 +22,7 @@ import {
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
-import { CodeEditor } from "./code-editor";
+import { CodeEditor, getMinMaxHeightVars } from "./code-editor";
 
 const autocompletionStyle = css({
   "&.cm-tooltip.cm-tooltip-autocomplete": {
@@ -70,68 +70,47 @@ const wrapperStyle = css({
   position: "relative",
   // 1 line is 16px
   // set min 10 lines and max 20 lines
-  "--ws-code-editor-min-height": "160px",
-  "--ws-code-editor-max-height": "320px",
+  ...getMinMaxHeightVars({ minHeight: "160px", maxHeight: "320px" }),
 });
 
 export const HtmlEditor = forwardRef<
   HTMLDivElement,
-  {
-    readOnly?: boolean;
-    invalid?: boolean;
-    value: string;
-    title?: ReactNode;
-    onChange: (newValue: string) => void;
-    onBlur?: (event: FocusEvent) => void;
-  }
->(
-  (
-    { readOnly = false, invalid = false, value, title, onChange, onBlur },
-    ref
-  ) => {
-    const extensions = useMemo(
-      () => [
-        highlightActiveLine(),
-        highlightSpecialChars(),
-        history(),
-        drawSelection(),
-        dropCursor(),
-        indentOnInput(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-        html({}),
-        bracketMatching(),
-        closeBrackets(),
-        // render autocomplete in body
-        // to prevent popover scroll overflow
-        tooltips({ parent: document.body }),
-        autocompletion({
-          icons: false,
-          tooltipClass: () => autocompletionStyle.toString(),
-        }),
-        keymap.of([
-          ...closeBracketsKeymap,
-          ...defaultKeymap,
-          ...historyKeymap,
-          ...completionKeymap,
-        ]),
-      ],
-      []
-    );
+  Omit<ComponentProps<typeof CodeEditor>, "extensions">
+>((props, ref) => {
+  const extensions = useMemo(
+    () => [
+      highlightActiveLine(),
+      highlightSpecialChars(),
+      history(),
+      drawSelection(),
+      dropCursor(),
+      indentOnInput(),
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      html({}),
+      bracketMatching(),
+      closeBrackets(),
+      // render autocomplete in body
+      // to prevent popover scroll overflow
+      tooltips({ parent: document.body }),
+      autocompletion({
+        icons: false,
+        tooltipClass: () => autocompletionStyle.toString(),
+      }),
+      keymap.of([
+        ...closeBracketsKeymap,
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...completionKeymap,
+      ]),
+    ],
+    []
+  );
 
-    return (
-      <div className={wrapperStyle()} ref={ref}>
-        <CodeEditor
-          title={title}
-          extensions={extensions}
-          readOnly={readOnly}
-          invalid={invalid}
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
-        />
-      </div>
-    );
-  }
-);
+  return (
+    <div className={wrapperStyle()} ref={ref}>
+      <CodeEditor {...props} extensions={extensions} />
+    </div>
+  );
+});
 
 HtmlEditor.displayName = "HtmlEditor";

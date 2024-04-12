@@ -27,7 +27,10 @@ export const SelectedInstanceOutline = () => {
   }
   const rect = applyScale(outline.rect, scale);
   return (
-    <Outline rect={rect}>
+    <Outline
+      rect={rect}
+      variant={outline.instance.component === "Slot" ? "component" : "default"}
+    >
       <Label instance={outline.instance} instanceRect={rect} />
     </Outline>
   );

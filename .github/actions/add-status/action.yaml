@@ -1,0 +1,35 @@
+name: Add status to commit
+description: Add status to commit
+inputs:
+  url:
+    description: "URL"
+    required: true
+  title:
+    description: "Title"
+    required: true
+  description:
+    description: "Description"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Add URL to vercel deployment through *.prs.webstudio.is
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const branch = context.payload.pull_request?.head?.ref ?? context.payload.ref?.replace('refs/heads/', '')
+          const sha = context.payload.pull_request?.head?.sha ?? context.sha;
+
+          const status = {
+            state: 'success',
+            target_url: '${{ inputs.url }}',
+            description: '${{ inputs.description }}',
+            context: '${{ inputs.title }}'
+          };
+
+          github.rest.repos.createCommitStatus({
+            ...context.repo,
+            sha,
+            ...status
+          });

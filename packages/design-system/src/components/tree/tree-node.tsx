@@ -73,7 +73,14 @@ const ItemButton = styled("button", {
   position: "relative",
 });
 
+const nestingLinesVisibilityVar = "--ws-tree-node-nesting-lines-visibility";
+
+export const showNestingLineVars = () => ({
+  [nestingLinesVisibilityVar]: "visible",
+});
+
 const NestingLine = styled(Box, {
+  visibility: `var(${nestingLinesVisibilityVar}, hidden)`,
   width: Math.ceil(INDENT / 2),
   marginRight: Math.floor(INDENT / 2),
   height: ITEM_HEIGHT,
@@ -98,7 +105,7 @@ const NestingLines = ({
         <NestingLine key={index} isSelected={isSelected} />
       ))}
     </>
-  ) : null;
+  ) : undefined;
 
 const CollapsibleTrigger = styled("button", {
   all: "unset",

@@ -5,7 +5,6 @@ import {
   Label,
   theme,
   Text,
-  TextArea,
   Separator,
   Button,
   CheckboxAndLabel,
@@ -20,6 +19,7 @@ import type { ProjectMeta, CompilerSettings } from "@webstudio-is/sdk";
 import { useState } from "react";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
+import { HtmlEditor } from "~/builder/shared/html-editor";
 
 const imgStyle = css({
   width: 72,
@@ -40,7 +40,7 @@ export const SectionGeneral = () => {
   const [meta, setMeta] = useState(
     () => $pages.get()?.meta ?? defaultMetaSettings
   );
-  const ids = useIds(["siteName", "code"]);
+  const ids = useIds(["siteName"]);
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
@@ -107,19 +107,12 @@ export const SectionGeneral = () => {
       <Separator />
 
       <Grid gap={2} css={sectionSpacing}>
-        <Label htmlFor={ids.code}>Custom Code</Label>
+        <Label>Custom Code</Label>
         <Text color="subtle">
           Custom code and scripts will be added at the end of the &lt;head&gt;
           tag to every page across the published project.
         </Text>
-        <TextArea
-          id={ids.code}
-          rows={5}
-          autoGrow
-          maxRows={10}
-          value={meta.code ?? ""}
-          onChange={handleSave("code")}
-        />
+        <HtmlEditor value={meta.code ?? ""} onChange={handleSave("code")} />
       </Grid>
 
       <Separator />
