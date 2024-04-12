@@ -14,6 +14,10 @@ const preferedSorting = [
   ...units.percentage,
   "em",
   "rem",
+  "svw",
+  "svh",
+  "lvw",
+  "lvh",
   "dvw",
   "dvh",
   ...units.length,
@@ -26,7 +30,16 @@ const preferedSorting = [
   ...units.time,
 ];
 
-const visibleLengthUnits = ["px", "em", "rem", "dvw", "dvh"] as const;
+const initialLengthUnits = [
+  "px",
+  "em",
+  "rem",
+  "ch",
+  "svw",
+  "svh",
+  "lvw",
+  "lvh",
+] as const;
 
 export const buildOptions = (
   property: string,
@@ -56,7 +69,7 @@ export const buildOptions = (
     }
 
     const visibleUnits =
-      unitGroup === "length" ? visibleLengthUnits : units[unitGroup];
+      unitGroup === "length" ? initialLengthUnits : units[unitGroup];
     for (const unit of visibleUnits) {
       options.push({
         id: unit,
