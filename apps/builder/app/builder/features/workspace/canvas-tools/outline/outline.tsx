@@ -25,21 +25,27 @@ const baseStyle = css({
   boxSizing: "border-box",
   position: "absolute",
   pointerEvents: "none",
-  outline: `1px solid ${theme.colors.blue9}`,
-  outlineOffset: -1,
   top: 0,
   left: 0,
   variants: {
     variant: {
+      default: {
+        outline: `1px solid ${theme.colors.backgroundInfoMain}`,
+        outlineOffset: -1,
+      },
       collaboration: {
-        outline: "none",
         [angleVar]: `0deg`,
         border: `1px solid`,
         borderImage: `conic-gradient(from var(${angleVar}), #39FBBB 0%, #4A4EFA 12.5%, #E63CFE 25%, #FFAE3C 37.5%, #39FBBB 50%, #4A4EFA 62.5%, #E63CFE 75%, #FFAE3C 87.5%) 1`,
         animation: `2s ${angleKeyframes} linear infinite`,
       },
+      component: {
+        outline: `1px solid ${theme.colors.backgroundSuccessMain}`,
+        outlineOffset: -1,
+      },
     },
   },
+  defaultVariants: { variant: "default" },
 });
 
 const useDynamicStyle = (rect?: Rect) => {
@@ -58,7 +64,7 @@ const useDynamicStyle = (rect?: Rect) => {
 type OutlineProps = {
   children?: JSX.Element;
   rect?: Rect;
-  variant?: "collaboration";
+  variant?: "default" | "collaboration" | "component";
 };
 
 export const Outline = ({ children, rect, variant }: OutlineProps) => {
