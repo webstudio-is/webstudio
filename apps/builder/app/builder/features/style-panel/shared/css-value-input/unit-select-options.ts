@@ -32,7 +32,6 @@ const preferedSorting = [
 
 const initialLengthUnits = [
   "px",
-  "%",
   "em",
   "rem",
   "ch",
