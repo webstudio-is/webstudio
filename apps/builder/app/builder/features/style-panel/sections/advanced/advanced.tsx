@@ -20,19 +20,20 @@ import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { sectionsProperties } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
+import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
 ) as Array<StyleProperty>;
 
-const initialPropertyNames: Array<StyleProperty> = [
+const initialPropertyNames = new Set<StyleProperty>([
   "userSelect",
   "pointerEvents",
   "mixBlendMode",
   "backdropFilter",
   "cursor",
   "opacity",
-];
+]);
 
 const usePropertyNames = (currentStyle: StyleInfo) => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
@@ -57,9 +58,11 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
     }
 
     return [
-      ...Array.from(names).filter((name) => recent.current.has(name) === false),
       ...recent.current,
-    ].reverse();
+      ...Array.from(names)
+        .filter((name) => recent.current.has(name) === false)
+        .reverse(),
+    ];
   }, [styles, currentStyle]);
   return { propertyNames, recentProperties: recent.current };
 };
@@ -67,14 +70,22 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
 // Only here to keep the same section module interface
 export const properties = [];
 
-export const Section = ({
-  currentStyle,
-  setProperty,
-  deleteProperty,
-}: SectionProps) => {
+export const Section = ({ currentStyle, ...props }: SectionProps) => {
   const [addingProp, setAddingProp] = useState<StyleProperty | "">();
   const { propertyNames, recentProperties } = usePropertyNames(currentStyle);
-
+  const deleteProperty: DeleteProperty = (property, options) => {
+    if (options?.isEphemeral !== true) {
+      recentProperties.delete(property);
+    }
+    return props.deleteProperty(property, options);
+  };
+  const setProperty: SetProperty = (property) => {
+    setAddingProp(undefined);
+    if (propertyNames.includes(property) === false) {
+      recentProperties.add(property);
+    }
+    return props.setProperty(property);
+  };
   return (
     <CollapsibleSection
       label="Advanced"
@@ -92,8 +103,6 @@ export const Section = ({
           onSelect={(value) => {
             if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
-              recentProperties.add(property);
-              setAddingProp(undefined);
               setProperty(property)(
                 { type: "guaranteedInvalid" },
                 { listed: true }
