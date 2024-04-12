@@ -22,6 +22,8 @@ export const loadById = async (
     context
   );
 
+  console.info("canRead", canRead);
+
   if (canRead === false) {
     throw new AuthorizationError("You don't have access to this project");
   }

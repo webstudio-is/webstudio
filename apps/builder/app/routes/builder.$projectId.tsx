@@ -42,6 +42,8 @@ export const loader = async ({
     const start = Date.now();
     const project = await db.project.loadById(params.projectId, context);
 
+    console.info("project", project);
+
     const authPermit =
       (await authorizeProject.getProjectPermit(
         {
