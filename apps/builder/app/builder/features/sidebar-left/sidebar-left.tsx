@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, Tooltip, rawTheme } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
@@ -30,6 +30,20 @@ const useActiveTab = () => {
     nextTab = "none";
   }
   return [nextTab, $activeSidebarPanel.set] as const;
+};
+
+const useHideActiveTabOnPreview = () => {
+  const previousRef = useRef($isPreviewMode.get());
+
+  useEffect(() => {
+    return $isPreviewMode.subscribe((isPreviewMode) => {
+      // First time user switches to preview mode we want to hide any active sidebar panel.
+      if (isPreviewMode && previousRef.current === false) {
+        $activeSidebarPanel.set("none");
+      }
+      previousRef.current = isPreviewMode;
+    });
+  }, []);
 };
 
 const AiTabTrigger = () => {
@@ -97,6 +111,7 @@ type SidebarLeftProps = {
 
 export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const [activeTab, setActiveTab] = useActiveTab();
+  useHideActiveTabOnPreview();
   const dragAndDropState = useStore($dragAndDropState);
   const { TabContent } = panels.get(activeTab) ?? none;
   const isPreviewMode = useStore($isPreviewMode);
