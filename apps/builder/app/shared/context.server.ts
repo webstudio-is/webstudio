@@ -65,10 +65,7 @@ const createEntriContext = () => {
   };
 };
 
-const createUserPlanContext = async (
-  request: Request,
-  authorization: AppContext["authorization"]
-) => {
+const createUserPlanContext = async (request: Request) => {
   const url = new URL(request.url);
 
   const authToken = url.searchParams.get("authToken");
@@ -109,7 +106,7 @@ export const createContext = async (request: Request): Promise<AppContext> => {
   const domain = createDomainContext(request);
   const deployment = createDeploymentContext(request);
   const entri = createEntriContext();
-  const userPlanFeatures = await createUserPlanContext(request, authorization);
+  const userPlanFeatures = await createUserPlanContext(request);
   const trpcCache = createTrpcCache();
 
   return {
