@@ -17,7 +17,7 @@ import type { Project } from "@webstudio-is/project";
 import { usePress } from "@react-aria/interactions";
 import { marketplaceCategories } from "@webstudio-is/project-build";
 import { Card } from "./card";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import {} from "@webstudio-is/feature-flags";
 
 const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
   const itemsByCategory = new Map<
@@ -110,12 +110,6 @@ export const Overview = ({
       <Flex direction="column">
         <PanelTabsList>
           {Array.from(marketplaceCategories.keys()).map((category) => {
-            if (
-              category === "pageTemplates" &&
-              isFeatureEnabled("pageTemplates") === false
-            ) {
-              return;
-            }
             return (
               <Tooltip
                 key={category}
