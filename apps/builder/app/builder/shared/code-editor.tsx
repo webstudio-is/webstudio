@@ -25,6 +25,20 @@ import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
 const ExternalChange = Annotation.define<boolean>();
 
+const minHeightVar = "--ws-code-editor-min-height";
+const maxHeightVar = "--ws-code-editor-max-height";
+
+export const getMinMaxHeightVars = ({
+  minHeight,
+  maxHeight,
+}: {
+  minHeight: string;
+  maxHeight: string;
+}) => ({
+  [minHeightVar]: minHeight,
+  [maxHeightVar]: maxHeight,
+});
+
 const editorContentStyle = css({
   ...textVariants.mono,
   // fit editor into parent if stretched
@@ -66,8 +80,8 @@ const editorContentStyle = css({
     width: "100%",
     // avoid modifying height in .cm-content
     // because it breaks scroll events and makes scrolling laggy
-    minHeight: "var(--ws-code-editor-min-height, auto)",
-    maxHeight: "var(--ws-code-editor-max-height, none)",
+    minHeight: `var(${minHeightVar}, auto)`,
+    maxHeight: `var(${maxHeightVar}, none)`,
   },
 });
 
