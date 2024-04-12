@@ -56,7 +56,6 @@ const LabelContainer = styled(
     lineHeight: 1,
     minWidth: theme.spacing[13],
     whiteSpace: "nowrap",
-    backgroundColor: theme.colors.blue9,
   },
   {
     variants: {
@@ -71,7 +70,16 @@ const LabelContainer = styled(
           bottom: `-${theme.spacing[10]}`,
         },
       },
+      variant: {
+        default: {
+          backgroundColor: theme.colors.backgroundInfoMain,
+        },
+        component: {
+          backgroundColor: theme.colors.backgroundSuccessMain,
+        },
+      },
     },
+    defaultVariants: { variant: "default" },
   }
 );
 
@@ -88,7 +96,11 @@ export const Label = ({ instance, instanceRect }: LabelProps) => {
     return <></>;
   }
   return (
-    <LabelContainer position={position} ref={labelRef}>
+    <LabelContainer
+      position={position}
+      variant={instance.component === "Slot" ? "component" : "default"}
+      ref={labelRef}
+    >
       <MetaIcon size="1em" icon={meta.icon} />
       {getInstanceLabel(instance, meta)}
     </LabelContainer>
