@@ -105,7 +105,7 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
 
     const disposeScrubControl = numericScrubControl(ref.current, {
       getInitialValue() {
-        return $canvasWidth.get() || 0;
+        return $canvasWidth.get() ?? 0;
       },
       getValue(state, movement) {
         const value =
