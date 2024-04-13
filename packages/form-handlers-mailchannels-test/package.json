@@ -10,9 +10,9 @@
     "@webstudio-is/form-handlers": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^3.19.0",
+    "@cloudflare/workers-types": "^4.20240405.0",
     "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.2.2",
-    "wrangler": "^2.18.0"
+    "wrangler": "^3.48.0"
   }
 }

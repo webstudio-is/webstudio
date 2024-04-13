@@ -44,11 +44,13 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@remix-run/cloudflare-pages": "^2.8.1",
     "@types/node": "^18.17.1",
     "@types/prompts": "^2.4.5",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "tsx": "^4.7.2",
-    "typescript": "5.2.2"
+    "typescript": "5.2.2",
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }
