@@ -24,9 +24,10 @@ import {
   Select,
   SmallIconButton,
   TextArea,
+  Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
+import { DeleteIcon, InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { humanizeString } from "~/shared/string-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -524,7 +525,21 @@ export const ResourceForm = forwardRef<
   return (
     <>
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label htmlFor={urlId}>URL</Label>
+        <Label
+          htmlFor={urlId}
+          css={{ display: "flex", alignItems: "center", gap: theme.spacing[3] }}
+        >
+          URL
+          <Tooltip
+            content={
+              "You can paste a URL or cURL. cURL is a format that can be executed directly in your terminal because it contains the entire Resource configuration."
+            }
+            variant="wrapped"
+            disableHoverableContent={true}
+          >
+            <InfoCircleIcon tabIndex={0} />
+          </Tooltip>
+        </Label>
         <BindingControl>
           <InputErrorsTooltip
             errors={urlField.error ? [urlField.error] : undefined}
