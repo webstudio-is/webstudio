@@ -1,5 +1,4 @@
 {
-  "name": "tmp-remix-app",
   "private": true,
   "sideEffects": false,
   "type": "module",
