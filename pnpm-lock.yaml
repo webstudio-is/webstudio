@@ -278,9 +278,6 @@ importers:
       micromark-extension-gfm:
         specifier: ^3.0.0
         version: 3.0.0
-      mri:
-        specifier: ^1.2.0
-        version: 1.2.0
       nanoevents:
         specifier: ^8.0.0
         version: 8.0.0

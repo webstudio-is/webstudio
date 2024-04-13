@@ -93,7 +93,6 @@
     "mdast-util-gfm": "^3.0.0",
     "memoize-one": "^6.0.0",
     "micromark-extension-gfm": "^3.0.0",
-    "mri": "^1.2.0",
     "nanoevents": "^8.0.0",
     "nanoid": "^5.0.1",
     "nanostores": "^0.9.3",
