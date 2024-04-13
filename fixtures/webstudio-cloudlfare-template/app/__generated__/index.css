@@ -1,0 +1,431 @@
+html {
+  margin: 0;
+  display: grid;
+  min-height: 100%;
+}
+@media all {
+  body:where([data-ws-component="Body"]) {
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    font-family: Arial, Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h2:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h3:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h4:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h5:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h6:where([data-ws-component="Heading"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  div:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  address:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  article:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  aside:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  figure:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  footer:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  header:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  main:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  nav:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  section:where([data-ws-component="Box"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  p:where([data-ws-component="Paragraph"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  img:where([data-ws-component="Image"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    max-width: 100%;
+    display: block;
+    height: auto;
+  }
+  a:where([data-ws-component="Link"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+    display: inline-block;
+  }
+  div:where([data-ws-component="Text"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+  }
+  div:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:Accordion"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  div:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionItem"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  h3:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionHeader"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+  }
+  button:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionTrigger"]
+    ) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    text-transform: none;
+    background-color: transparent;
+    background-image: none;
+    border-top-color: rgba(226, 232, 240, 1);
+    border-right-color: rgba(226, 232, 240, 1);
+    border-bottom-color: rgba(226, 232, 240, 1);
+    border-left-color: rgba(226, 232, 240, 1);
+    padding-left: 0px;
+    padding-right: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+  div:where(
+      [data-ws-component="@webstudio-is/sdk-components-react-radix:AccordionContent"]
+    ) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+  }
+  form:where([data-ws-component="Form"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 20px;
+  }
+  label:where([data-ws-component="Label"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    display: block;
+  }
+  input:where([data-ws-component="Input"]) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    display: block;
+  }
+  button:where([data-ws-component="Button"]) {
+    font-family: inherit;
+    font-size: 100%;
+    line-height: 1.15;
+    margin-top: 0;
+    margin-right: 0;
+    margin-bottom: 0;
+    margin-left: 0;
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    text-transform: none;
+  }
+}
+@media all {
+  .cr3bcad {
+    font-size: 4em;
+  }
+  .ct8bqew {
+    display: flex;
+  }
+  .c18lita3 {
+    justify-content: center;
+  }
+  .c1ac63p {
+    align-items: start;
+  }
+  .cdojbwh {
+    min-width: 0px;
+  }
+  .c4wr6vh {
+    flex-grow: 1;
+  }
+  .cn27x24 {
+    flex-shrink: 0;
+  }
+  .cl3i1h5 {
+    flex-basis: 0px;
+  }
+  .c1arp7pb {
+    aspect-ratio: 1;
+  }
+  .c1wfdiy8 {
+    padding-top: 16px;
+  }
+  .cg4dwmz {
+    padding-right: 16px;
+  }
+  .c1psdgn0 {
+    padding-left: 16px;
+  }
+  .ciwrswx {
+    padding-bottom: 16px;
+  }
+  .c1lk4dyo {
+    border-bottom-width: 1px;
+  }
+  .cpa46rs {
+    border-bottom-style: solid;
+  }
+  .c1rs4a6c {
+    border-bottom-color: rgba(226, 232, 240, 1);
+  }
+  .c5exn1v {
+    flex-shrink: 1;
+  }
+  .c6th5p4 {
+    flex-basis: 0%;
+  }
+  .c8sklb9 {
+    align-items: center;
+  }
+  .cozm0zy {
+    justify-content: space-between;
+  }
+  .crf2knr {
+    padding-top: 1rem;
+  }
+  .c16vf3pr {
+    padding-bottom: 1rem;
+  }
+  .c1u6bhyx {
+    font-weight: 500;
+  }
+  .cgivo88 {
+    --accordion-trigger-icon-transform: 0deg;
+  }
+  .c1px50mc:hover {
+    text-decoration-line: underline;
+  }
+  .cnog96r[data-state="open"] {
+    --accordion-trigger-icon-transform: 180deg;
+  }
+  .c1chi4tu {
+    rotate: var(--accordion-trigger-icon-transform);
+  }
+  .chkajpy {
+    height: 1rem;
+  }
+  .cmhi6j0 {
+    width: 1rem;
+  }
+  .c1bn66w8 {
+    flex-grow: 0;
+  }
+  .cw6h46e {
+    transition-property: all;
+  }
+  .c1mmsm3k {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .c79adhm {
+    transition-duration: 200ms;
+  }
+  .c3kadi {
+    overflow: hidden;
+  }
+  .cl1n90y {
+    font-size: 0.875rem;
+  }
+  .c11hmcmb {
+    line-height: 1.25rem;
+  }
+  .cnpb7qg {
+    display: block;
+  }
+}
