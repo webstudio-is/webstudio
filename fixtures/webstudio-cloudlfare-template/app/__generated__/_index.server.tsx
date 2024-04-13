@@ -15,21 +15,15 @@ export const getPageMeta = ({
   resources: Record<string, any>;
 }): PageMeta => {
   return {
-    title: "The Ultimate Cat Protection Zone",
-    description:
-      "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+    title: "Home",
+    description: undefined,
     excludePageFromSearch: undefined,
     language: undefined,
-    socialImageAssetId: "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
+    socialImageAssetId: undefined,
     socialImageUrl: undefined,
     status: undefined,
     redirect: undefined,
-    custom: [
-      {
-        property: "fb:app_id",
-        content: "app_id_app_id_app_id",
-      },
-    ],
+    custom: [],
   };
 };
 
@@ -41,14 +35,14 @@ export const getRemixParams = ({ ...params }: Params): Params => {
   return params;
 };
 
-export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
+export const projectId = "d845c167-ea07-4875-b08d-83e97c09dcce";
 
 export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 
 export const projectMeta: ProjectMeta = {
-  siteName: "KittyGuardedZone",
-  faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
-  code: "<script>console.log('KittyGuardedZone')</script>\n",
+  siteName: "",
+  faviconAssetId: "",
+  code: "",
 };
