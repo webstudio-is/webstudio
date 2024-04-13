@@ -49,6 +49,7 @@ import {
   composeFields,
 } from "~/shared/form-utils";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
+import { parseCurl } from "./curl-parser";
 
 const validateHeaderName = (value: string) =>
   value.trim().length === 0 ? "Header name is required" : undefined;
@@ -537,9 +538,24 @@ export const ResourceForm = forwardRef<
                 evaluateExpressionWithinScope(urlField.value, scope)
               )}
               // update text value as string literal
-              onChange={(event) =>
-                urlField.onChange(JSON.stringify(event.target.value))
-              }
+              onChange={(event) => {
+                const value = event.target.value;
+                const curl = parseCurl(value);
+                if (curl) {
+                  // update all feilds when curl is paste into url field
+                  urlField.onChange(JSON.stringify(curl.url));
+                  setMethod(curl.method);
+                  headersField.onChange(
+                    curl.headers.map((header) => ({
+                      name: header.name,
+                      value: JSON.stringify(header.value),
+                    }))
+                  );
+                  bodyField.onChange(JSON.stringify(curl.body));
+                } else {
+                  urlField.onChange(JSON.stringify(value));
+                }
+              }}
               onBlur={urlField.onBlur}
             />
           </InputErrorsTooltip>

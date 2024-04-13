@@ -1,0 +1,119 @@
+import { expect, test } from "@jest/globals";
+import { parseCurl } from "./curl-parser";
+
+test("support url", () => {
+  const result = {
+    url: "https://my-url/hello-world",
+    method: "get",
+    headers: [],
+  };
+  expect(parseCurl(`curl https://my-url/hello-world`)).toEqual(result);
+  expect(parseCurl(`curl "https://my-url/hello-world"`)).toEqual(result);
+  expect(parseCurl(`curl 'https://my-url/hello-world'`)).toEqual(result);
+});
+
+test("support multiline", () => {
+  expect(
+    parseCurl(`curl \
+      'https://my-url/hello-world'
+  `)
+  ).toEqual({
+    url: "https://my-url/hello-world",
+    method: "get",
+    headers: [],
+  });
+});
+
+test("skip when invalid", () => {
+  expect(parseCurl(``)).toEqual(undefined);
+  expect(parseCurl(`  `)).toEqual(undefined);
+  expect(parseCurl(`something else`)).toEqual(undefined);
+  expect(parseCurl(`curl`)).toEqual(undefined);
+  expect(parseCurl(`curl `)).toEqual(undefined);
+});
+
+test("support method with --request and -X flags", () => {
+  const result = {
+    url: "https://my-url/hello-world",
+    method: "post",
+    headers: [],
+  };
+  expect(parseCurl(`curl --request post https://my-url/hello-world`)).toEqual(
+    result
+  );
+  expect(parseCurl(`curl https://my-url/hello-world -X POST`)).toEqual(result);
+  expect(
+    parseCurl(`curl --request put https://my-url/hello-world -X post`)
+  ).toEqual(result);
+  expect(
+    parseCurl(`curl -X put https://my-url/hello-world --request post`)
+  ).toEqual(result);
+});
+
+test("support headers with --header and -H flags", () => {
+  expect(
+    parseCurl(`curl https://my-url/hello-world --header "name: value"`)
+  ).toEqual({
+    url: "https://my-url/hello-world",
+    method: "get",
+    headers: [{ name: "name", value: "value" }],
+  });
+  expect(parseCurl(`curl https://my-url/hello-world -H "name: value"`)).toEqual(
+    {
+      url: "https://my-url/hello-world",
+      method: "get",
+      headers: [{ name: "name", value: "value" }],
+    }
+  );
+  expect(
+    parseCurl(
+      `curl https://my-url/hello-world --header="name:value1" -H "name : value2"`
+    )
+  ).toEqual({
+    url: "https://my-url/hello-world",
+    method: "get",
+    headers: [
+      { name: "name", value: "value1" },
+      { name: "name", value: "value2" },
+    ],
+  });
+});
+
+test("support text body", () => {
+  expect(
+    parseCurl(`curl https://my-url/hello-world --data '{"param":"value"}'`)
+  ).toEqual({
+    url: "https://my-url/hello-world",
+    method: "post",
+    headers: [],
+    body: `{"param":"value"}`,
+  });
+});
+
+test("support text body with explicit method", () => {
+  expect(
+    parseCurl(
+      `curl https://my-url/hello-world -X put --data '{"param":"value"}'`
+    )
+  ).toEqual({
+    url: "https://my-url/hello-world",
+    method: "put",
+    headers: [],
+    body: `{"param":"value"}`,
+  });
+});
+
+test("support json body", () => {
+  expect(
+    parseCurl(
+      `curl https://my-url/hello-world \
+        --header 'content-type: application/json' \
+        --data '{"param":"value"}'`
+    )
+  ).toEqual({
+    url: "https://my-url/hello-world",
+    method: "post",
+    headers: [{ name: "content-type", value: "application/json" }],
+    body: { param: "value" },
+  });
+});
