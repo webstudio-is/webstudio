@@ -1,0 +1,57 @@
+{
+  "type": "module",
+  "scripts": {
+    "fixtures:link": "webstudio link --link 'https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93&'",
+    "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "webstudio build --template internal --template cloudflare --preview && pnpm prettier --write ./app/ ./package.json",
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
+    "typecheck": "tsc",
+    "deploy": "npm run build && wrangler pages deploy ./build/client",
+    "start": "wrangler pages dev ./build/client",
+    "typegen": "wrangler types",
+    "preview": "npm run build && wrangler pages dev ./build/client",
+    "build-cf-types": "wrangler types"
+  },
+  "private": true,
+  "sideEffects": false,
+  "dependencies": {
+    "@remix-run/react": "^2.8.1",
+    "@remix-run/server-runtime": "^2.8.1",
+    "@remix-run/node": "^2.8.1",
+    "@webstudio-is/react-sdk": "workspace:*",
+    "@webstudio-is/sdk-components-react-radix": "workspace:*",
+    "@webstudio-is/sdk-components-react-remix": "workspace:*",
+    "@webstudio-is/sdk-components-react": "workspace:*",
+    "@webstudio-is/form-handlers": "workspace:*",
+    "@webstudio-is/image": "workspace:*",
+    "@webstudio-is/sdk": "workspace:*",
+    "isbot": "^4.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@remix-run/cloudflare": "^2.8.1",
+    "@remix-run/cloudflare-pages": "^2.8.1",
+    "miniflare": "^3.20231030.4"
+  },
+  "devDependencies": {
+    "webstudio": "workspace:*",
+    "@remix-run/dev": "^2.8.1",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "typescript": "5.2.2",
+    "vite": "^5.2.8",
+    "@cloudflare/workers-types": "^4.20240405.0",
+    "vite-tsconfig-paths": "^4.2.1",
+    "wrangler": "^3.48.0"
+  },
+  "name": "tmp-remix-app",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

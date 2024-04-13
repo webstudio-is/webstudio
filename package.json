@@ -68,8 +68,7 @@
     "patchedDependencies": {
       "@stitches/react@1.3.1-1": "patches/@stitches__react@1.3.1-1.patch",
       "css-tree@2.3.1": "patches/css-tree@2.3.1.patch",
-      "@types/css-tree@2.3.1": "patches/@types__css-tree@2.3.1.patch",
-      "@cloudflare/workers-types@3.19.0": "patches/@cloudflare__workers-types@3.19.0.patch"
+      "@types/css-tree@2.3.1": "patches/@types__css-tree@2.3.1.patch"
     }
   }
 }
