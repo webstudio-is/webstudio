@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { parseCurl } from "./curl-parser";
+import { generateCurl, parseCurl } from "./curl";
 
 test("support url", () => {
   const result = {
@@ -116,4 +116,54 @@ test("support json body", () => {
     headers: [{ name: "content-type", value: "application/json" }],
     body: { param: "value" },
   });
+});
+
+test("generate curl with json body", () => {
+  expect(
+    generateCurl({
+      id: "",
+      name: "",
+      url: "https://my-url.com",
+      method: "post",
+      headers: [{ name: "content-type", value: "application/json" }],
+      body: { param: "value" },
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com" \\
+  --request post \\
+  --header "content-type: application/json" \\
+  --data "{\\"param\\":\\"value\\"}""
+`);
+});
+
+test("generate curl with text body", () => {
+  expect(
+    generateCurl({
+      id: "",
+      name: "",
+      url: "https://my-url.com",
+      method: "post",
+      headers: [],
+      body: "my data",
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com" \\
+  --request post \\
+  --data "my data""
+`);
+});
+
+test("generate curl without body", () => {
+  expect(
+    generateCurl({
+      id: "",
+      name: "",
+      url: "https://my-url.com",
+      method: "post",
+      headers: [],
+    })
+  ).toMatchInlineSnapshot(`
+"curl "https://my-url.com" \\
+  --request post"
+`);
 });

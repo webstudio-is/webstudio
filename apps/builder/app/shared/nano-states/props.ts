@@ -514,15 +514,22 @@ const cacheByKeys = new Map<string, unknown>();
 
 const $invalidator = atom(0);
 
-// bump index of resource to invaldate cache entry
-export const invalidateResource = (resourceId: Resource["id"]) => {
+export const getComputedResource = (resourceId: Resource["id"]) => {
   const resources = $resources.get();
   const resource = resources.get(resourceId);
   if (resource === undefined) {
     return;
   }
   const values = $loaderVariableValues.get();
-  const request = computeResource(resource, values);
+  return computeResource(resource, values);
+};
+
+// bump index of resource to invaldate cache entry
+export const invalidateResource = (resourceId: Resource["id"]) => {
+  const request = getComputedResource(resourceId);
+  if (request === undefined) {
+    return;
+  }
   const cacheKey = JSON.stringify(request);
   cacheByKeys.delete(cacheKey);
   // trigger invalidation

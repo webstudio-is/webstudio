@@ -50,7 +50,7 @@ import {
   composeFields,
 } from "~/shared/form-utils";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
-import { parseCurl } from "./curl-parser";
+import { parseCurl } from "./curl";
 
 const validateHeaderName = (value: string) =>
   value.trim().length === 0 ? "Header name is required" : undefined;

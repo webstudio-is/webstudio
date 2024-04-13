@@ -1,4 +1,4 @@
-import type { Resource } from "@webstudio-is/sdk";
+import type { ResourceRequest } from "@webstudio-is/sdk";
 import { parseArgsStringToArgv } from "string-argv";
 import { parse as parseArgs } from "ultraflag";
 
@@ -11,12 +11,7 @@ curl --request POST 'https://my-url/hello-world' \
 
 */
 
-type Header = {
-  name: string;
-  value: string;
-};
-
-const getMethod = (value: string): Resource["method"] => {
+const getMethod = (value: string): ResourceRequest["method"] => {
   switch (value.toLowerCase()) {
     case "post":
       return "post";
@@ -29,7 +24,9 @@ const getMethod = (value: string): Resource["method"] => {
   }
 };
 
-export const parseCurl = (curl: string) => {
+type CurlRequest = Pick<ResourceRequest, "url" | "method" | "headers" | "body">;
+
+export const parseCurl = (curl: string): undefined | CurlRequest => {
   const argv = parseArgsStringToArgv(curl);
   if (argv.length === 0) {
     return;
@@ -50,7 +47,9 @@ export const parseCurl = (curl: string) => {
   const defaultMethod = args.data ? "post" : "get";
   const method = getMethod(args.request ?? defaultMethod);
   let contentType: undefined | string;
-  const headers: Header[] = ((args.header as string[]) ?? []).map((header) => {
+  const headers: ResourceRequest["headers"] = (
+    (args.header as string[]) ?? []
+  ).map((header) => {
     // in case of invalid header fallback value to empty string
     const [name, value = ""] = header.trim().split(/\s*:\s*/);
     if (name.toLowerCase() === "content-type") {
@@ -67,9 +66,28 @@ export const parseCurl = (curl: string) => {
     }
   }
   return {
-    url,
+    url: url as string,
     method,
     headers,
     body,
   };
+};
+
+export const generateCurl = (request: CurlRequest) => {
+  const args = [
+    `curl ${JSON.stringify(request.url)}`,
+    `--request ${request.method}`,
+  ];
+  for (const header of request.headers) {
+    args.push(`--header "${header.name}: ${header.value}"`);
+  }
+  if (request.body) {
+    let body = request.body;
+    // double serialize json
+    if (typeof request.body !== "string") {
+      body = JSON.stringify(body);
+    }
+    args.push(`--data ${JSON.stringify(body)}`);
+  }
+  return args.join(" \\\n  ");
 };
