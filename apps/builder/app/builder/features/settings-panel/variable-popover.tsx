@@ -13,7 +13,7 @@ import {
   useContext,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
-import { RefreshIcon } from "@webstudio-is/icons";
+import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
 import {
   Box,
   Button,
@@ -45,6 +45,7 @@ import {
   $areResourcesLoading,
   $selectedInstanceSelector,
   invalidateResource,
+  getComputedResource,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import {
@@ -61,6 +62,7 @@ import {
   EditorDialogControl,
 } from "~/builder/shared/code-editor";
 import { ResourceForm } from "./resource-panel";
+import { generateCurl } from "./curl";
 
 /**
  * convert value expression to js value
@@ -590,15 +592,37 @@ export const VariablePopoverTrigger = forwardRef<
           <FloatingPanelPopoverTitle
             actions={
               variable.type === "resource" && (
-                <Tooltip content="Refresh resource data" side="bottom">
-                  <Button
-                    aria-label="Refresh resource data"
-                    prefix={<RefreshIcon />}
-                    color="ghost"
-                    disabled={areResourcesLoading}
-                    onClick={() => invalidateResource(variable.resourceId)}
-                  />
-                </Tooltip>
+                <>
+                  <Tooltip
+                    content="Copy resource as cURL command"
+                    side="bottom"
+                  >
+                    <Button
+                      aria-label="Copy resource as cURL command"
+                      prefix={<CopyIcon />}
+                      color="ghost"
+                      onClick={() => {
+                        const resourceRequest = getComputedResource(
+                          variable.resourceId
+                        );
+                        if (resourceRequest) {
+                          navigator.clipboard.writeText(
+                            generateCurl(resourceRequest)
+                          );
+                        }
+                      }}
+                    />
+                  </Tooltip>
+                  <Tooltip content="Refresh resource data" side="bottom">
+                    <Button
+                      aria-label="Refresh resource data"
+                      prefix={<RefreshIcon />}
+                      color="ghost"
+                      disabled={areResourcesLoading}
+                      onClick={() => invalidateResource(variable.resourceId)}
+                    />
+                  </Tooltip>
+                </>
               )
             }
           >

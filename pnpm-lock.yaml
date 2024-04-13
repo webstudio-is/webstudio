@@ -329,12 +329,18 @@ importers:
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
+      string-argv:
+        specifier: ^0.3.2
+        version: 0.3.2
       strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
       title-case:
         specifier: ^4.1.0
         version: 4.1.0
+      ultraflag:
+        specifier: ^0.1.0
+        version: 0.1.0
       untruncate-json:
         specifier: ^0.0.1
         version: 0.0.1
@@ -15642,6 +15648,11 @@ packages:
     engines: {node: '>=0.6.19'}
     dev: false
 
+  /string-argv@0.3.2:
+    resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
+    engines: {node: '>=0.6.19'}
+    dev: false
+
   /string-hash@1.1.3:
     resolution: {integrity: sha512-kJUvRUFK49aub+a7T1nNE66EJbZBMnBgoC1UbCZ5n6bsZKBRga4KgBRTMn/pFkeCZSYtNeSyMxPDM0AXWELk2A==}
     dev: true
@@ -16341,6 +16352,10 @@ packages:
     hasBin: true
     requiresBuild: true
     optional: true
+
+  /ultraflag@0.1.0:
+    resolution: {integrity: sha512-F6J/7SZHkep//Ihd5N63b1ghzBUclZvFuSzsZgurFPS0h0Fj482mNdz8R9REm89ETSPPsPB9eJ3z7E52WkDMQw==}
+    dev: false
 
   /umzug@3.2.1:
     resolution: {integrity: sha512-XyWQowvP9CKZycKc/Zg9SYWrAWX/gJCE799AUTFqk8yC3tp44K1xWr3LoFF0MNEjClKOo1suCr5ASnoy+KltdA==}
