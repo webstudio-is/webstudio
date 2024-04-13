@@ -281,7 +281,7 @@ const Player = ({
       return;
     }
 
-    if (showPreview == false) {
+    if (showPreview === false) {
       onPreviewImageUrlChange(undefined);
       return;
     }
