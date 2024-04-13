@@ -293,7 +293,7 @@ const Player = ({
           console.error(`Could not load preview image for ${videoUrl}`);
         });
     }
-  }, [onPreviewImageUrlChange, showPreview, videoUrl, status]);
+  }, [onPreviewImageUrlChange, showPreview, videoUrl, previewImageUrl]);
 
   if (renderer === "canvas" || status === "initial") {
     return;
