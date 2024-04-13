@@ -121,8 +121,6 @@ test("support json body", () => {
 test("generate curl with json body", () => {
   expect(
     generateCurl({
-      id: "",
-      name: "",
       url: "https://my-url.com",
       method: "post",
       headers: [{ name: "content-type", value: "application/json" }],
@@ -139,8 +137,6 @@ test("generate curl with json body", () => {
 test("generate curl with text body", () => {
   expect(
     generateCurl({
-      id: "",
-      name: "",
       url: "https://my-url.com",
       method: "post",
       headers: [],
@@ -156,8 +152,6 @@ test("generate curl with text body", () => {
 test("generate curl without body", () => {
   expect(
     generateCurl({
-      id: "",
-      name: "",
       url: "https://my-url.com",
       method: "post",
       headers: [],
