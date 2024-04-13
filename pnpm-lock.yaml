@@ -1022,8 +1022,8 @@ importers:
         specifier: ^3.3.1
         version: 3.3.1
       mdn-data:
-        specifier: 2.0.32
-        version: 2.0.32
+        specifier: 2.5.0
+        version: 2.5.0
       tsx:
         specifier: ^4.7.2
         version: 4.7.2
@@ -12755,8 +12755,8 @@ packages:
   /mdn-data@2.0.30:
     resolution: {integrity: sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==}
 
-  /mdn-data@2.0.32:
-    resolution: {integrity: sha512-dGzrfhOPm47P8qlChU77TGlCEcFNOCDAhCbHP53LST3FR5jSB5JSHaPjyYW2uFd2CV6D6z4tzCGW09pTxSn0aA==}
+  /mdn-data@2.5.0:
+    resolution: {integrity: sha512-F0Gnb+YM4cR3JWmScWO0I1V78zPcuv1dGw2x4OZeHdjjQ8HPMmIBQZB7Lqq4HFfbNEU/dk6udt99siUJwNulog==}
     dev: true
 
   /media-query-parser@2.0.2:

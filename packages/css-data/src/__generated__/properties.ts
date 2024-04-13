@@ -38,7 +38,8 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.2430101,
-    appliesTo: "multilineFlexContainers",
+    appliesTo:
+      "blockContainersMultiColumnContainersFlexContainersGridContainers",
   },
   alignItems: {
     unitGroups: [],
@@ -152,6 +153,26 @@ export const properties = {
     },
     popularity: 0.07996997,
     appliesTo: "allElementsAndPseudos",
+  },
+  animationRangeEnd: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
+  animationRangeStart: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
   },
   animationTimingFunction: {
     unitGroups: [],
@@ -335,16 +356,6 @@ export const properties = {
     },
     popularity: 0.73157126,
     appliesTo: "allElements",
-  },
-  blockOverflow: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "clip",
-    },
-    popularity: 0,
-    appliesTo: "blockContainers",
   },
   blockSize: {
     unitGroups: ["length", "percentage"],
@@ -1289,7 +1300,7 @@ export const properties = {
       value: "inherit",
     },
     popularity: 0.88101351,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontFeatureSettings: {
     unitGroups: ["number"],
@@ -1299,7 +1310,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.12538368,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontKerning: {
     unitGroups: [],
@@ -1309,7 +1320,7 @@ export const properties = {
       value: "auto",
     },
     popularity: 0.01160796,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontLanguageOverride: {
     unitGroups: [],
@@ -1319,7 +1330,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontOpticalSizing: {
     unitGroups: [],
@@ -1329,7 +1340,7 @@ export const properties = {
       value: "auto",
     },
     popularity: 0.0006232,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontPalette: {
     unitGroups: [],
@@ -1359,7 +1370,7 @@ export const properties = {
       value: "inherit",
     },
     popularity: 0.90325346,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontSizeAdjust: {
     unitGroups: ["number"],
@@ -1369,7 +1380,7 @@ export const properties = {
       value: "none",
     },
     popularity: 0.000003,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontStretch: {
     unitGroups: ["percentage"],
@@ -1379,7 +1390,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.12741738,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontStyle: {
     unitGroups: ["angle"],
@@ -1389,7 +1400,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.7961795,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontSynthesis: {
     unitGroups: [],
@@ -1405,10 +1416,58 @@ export const properties = {
           type: "keyword",
           value: "style",
         },
+        {
+          type: "keyword",
+          value: "small-caps",
+        },
+        {
+          type: "keyword",
+          value: "position",
+        },
       ],
     },
     popularity: 0.00686166,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
+  },
+  fontSynthesisPosition: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "allElementsAndText",
+  },
+  fontSynthesisSmallCaps: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0.00015635,
+    appliesTo: "allElementsAndText",
+  },
+  fontSynthesisStyle: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0.00015634,
+    appliesTo: "allElementsAndText",
+  },
+  fontSynthesisWeight: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0.00015642,
+    appliesTo: "allElementsAndText",
   },
   fontVariant: {
     unitGroups: [],
@@ -1418,7 +1477,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.30968418,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontVariantAlternates: {
     unitGroups: [],
@@ -1428,7 +1487,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontVariantCaps: {
     unitGroups: [],
@@ -1438,7 +1497,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.00514777,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontVariantEastAsian: {
     unitGroups: [],
@@ -1448,7 +1507,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.00328361,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontVariantEmoji: {
     unitGroups: [],
@@ -1468,7 +1527,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.05055055,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontVariantNumeric: {
     unitGroups: [],
@@ -1478,7 +1537,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.01816086,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontVariantPosition: {
     unitGroups: [],
@@ -1488,7 +1547,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   fontWeight: {
     unitGroups: ["number"],
@@ -1498,7 +1557,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.88598106,
-    appliesTo: "allElements",
+    appliesTo: "allElementsAndText",
   },
   forcedColorAdjust: {
     unitGroups: [],
@@ -2126,8 +2185,19 @@ export const properties = {
     unitGroups: ["length", "percentage"],
     inherited: false,
     initial: {
-      type: "keyword",
-      value: "center",
+      type: "tuple",
+      value: [
+        {
+          type: "unit",
+          unit: "%",
+          value: 0,
+        },
+        {
+          type: "unit",
+          unit: "%",
+          value: 0,
+        },
+      ],
     },
     popularity: 0,
     appliesTo: "allElementsSVGContainerElements",
@@ -2372,7 +2442,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "auto",
+      value: "normal",
     },
     popularity: 3e-8,
     appliesTo: "transformableElements",
@@ -2425,7 +2495,7 @@ export const properties = {
     inherited: false,
     initial: {
       type: "keyword",
-      value: "currentColor",
+      value: "auto",
     },
     popularity: 0.09538741,
     appliesTo: "allElements",
@@ -2520,7 +2590,7 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.2917187,
-    appliesTo: "nonReplacedInlineElements",
+    appliesTo: "textElements",
   },
   overflowX: {
     unitGroups: [],
@@ -2541,6 +2611,16 @@ export const properties = {
     },
     popularity: 0.66040666,
     appliesTo: "blockContainersFlexContainersGridContainers",
+  },
+  overlay: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
   },
   overscrollBehavior: {
     unitGroups: [],
@@ -3285,7 +3365,7 @@ export const properties = {
   },
   textEmphasisColor: {
     unitGroups: [],
-    inherited: false,
+    inherited: true,
     initial: {
       type: "keyword",
       value: "currentColor",
@@ -3295,7 +3375,7 @@ export const properties = {
   },
   textEmphasisPosition: {
     unitGroups: [],
-    inherited: false,
+    inherited: true,
     initial: {
       type: "tuple",
       value: [
@@ -3314,7 +3394,7 @@ export const properties = {
   },
   textEmphasisStyle: {
     unitGroups: [],
-    inherited: false,
+    inherited: true,
     initial: {
       type: "keyword",
       value: "none",
@@ -3423,6 +3503,46 @@ export const properties = {
     popularity: 0.0070495,
     appliesTo: "allElements",
   },
+  textWrap: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "wrap",
+    },
+    popularity: 0,
+    appliesTo: "textAndBlockContainers",
+  },
+  textWrapMode: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "wrap",
+    },
+    popularity: 0,
+    appliesTo: "textAndBlockContainers",
+  },
+  textWrapStyle: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0,
+    appliesTo: "textAndBlockContainers",
+  },
+  timelineScope: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
   top: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -3529,6 +3649,16 @@ export const properties = {
     popularity: 0.78355592,
     appliesTo: "allElementsAndPseudos",
   },
+  transitionBehavior: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "normal",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
   transitionDelay: {
     unitGroups: ["time"],
     inherited: false,
@@ -3611,6 +3741,36 @@ export const properties = {
     popularity: 0.84531302,
     appliesTo: "inlineLevelAndTableCellElements",
   },
+  viewTimelineAxis: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "block",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
+  viewTimelineInset: {
+    unitGroups: ["length", "percentage"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
+  viewTimelineName: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0,
+    appliesTo: "allElements",
+  },
   viewTransitionName: {
     unitGroups: [],
     inherited: false,
@@ -3639,6 +3799,16 @@ export const properties = {
       value: "normal",
     },
     popularity: 0.80711821,
+    appliesTo: "allElements",
+  },
+  whiteSpaceCollapse: {
+    unitGroups: [],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "collapse",
+    },
+    popularity: 0,
     appliesTo: "allElements",
   },
   widows: {
