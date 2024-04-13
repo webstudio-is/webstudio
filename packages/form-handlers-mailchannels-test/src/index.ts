@@ -19,6 +19,8 @@ export default {
 
     const result = await mailchannelsHandler({
       formInfo: {
+        action: "submit",
+        method: "post",
         formData,
         projectId: "test-project",
         pageUrl: "https://example.com/some-page",
