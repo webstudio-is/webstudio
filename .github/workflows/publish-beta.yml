@@ -45,7 +45,8 @@ jobs:
       - name: Creating version using ${{ steps.short_sha.outputs.value }} sha
         run: pnpm -r exec pnpm version prepatch --preid ${{ steps.short_sha.outputs.value }}
 
-      - run: pnpm turbo run build dts
+      - run: pnpm -r build
+      - run: pnpm -r dts
 
       - name: Publishing ${{ steps.tag.outputs.value }} tag with sha ${{ steps.short_sha.outputs.value }}
         run: pnpm -r publish --tag "${{ steps.tag.outputs.value }}" --no-git-checks --access public

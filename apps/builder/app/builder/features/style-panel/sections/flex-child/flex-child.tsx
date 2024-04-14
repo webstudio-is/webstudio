@@ -246,25 +246,11 @@ const FlexChildSectionSizingPopover = ({
       content={
         <Grid
           css={{
-            gridTemplateColumns: "1.5fr 1fr 1fr",
+            gridTemplateColumns: "1fr 1fr 1.5fr",
             gap: theme.spacing[9],
             padding: theme.spacing[9],
           }}
         >
-          <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
-            <PropertyName
-              style={currentStyle}
-              properties={["flexBasis"]}
-              label="Basis"
-              onReset={() => deleteProperty("flexBasis")}
-            />
-            <TextControl
-              property="flexBasis"
-              currentStyle={currentStyle}
-              setProperty={setProperty}
-              deleteProperty={deleteProperty}
-            />
-          </Grid>
           <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
             <PropertyName
               style={currentStyle}
@@ -288,6 +274,20 @@ const FlexChildSectionSizingPopover = ({
             />
             <TextControl
               property="flexShrink"
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+            />
+          </Grid>
+          <Grid css={{ gridTemplateColumns: "auto", gap: theme.spacing[3] }}>
+            <PropertyName
+              style={currentStyle}
+              properties={["flexBasis"]}
+              label="Basis"
+              onReset={() => deleteProperty("flexBasis")}
+            />
+            <TextControl
+              property="flexBasis"
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
