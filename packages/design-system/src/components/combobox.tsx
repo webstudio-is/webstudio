@@ -446,7 +446,12 @@ export const Combobox = <Item,>({
         getDescription?.(combobox.items[combobox.highlightedIndex])
       );
     }
-  }, [combobox.items, combobox.highlightedIndex, combobox.selectedItem]);
+  }, [
+    combobox.items,
+    combobox.highlightedIndex,
+    combobox.selectedItem,
+    getDescription,
+  ]);
 
   return (
     <ComboboxRoot open={combobox.isOpen}>
