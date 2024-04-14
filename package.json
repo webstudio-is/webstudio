@@ -32,6 +32,7 @@
     "nano-staged": "^0.8.0",
     "prettier": "3.0.3",
     "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "simple-git-hooks": "^2.9.0",
     "storybook": "^7.4.0",
     "tsx": "^4.7.2",
