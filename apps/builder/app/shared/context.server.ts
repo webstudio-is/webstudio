@@ -45,13 +45,24 @@ const createDomainContext = (request: Request) => {
   return context;
 };
 
-const createDeploymentContext = (request: Request) => {
+const getRequestOrigin = (request: Request) => {
   const url = new URL(request.url);
+  console.info("getRequestOrigin", [...request.headers.entries()]);
 
+  // vercel overwrites x-forwarded-host on edge level even if our header is set
+  // as workaround we use custom header x-forwarded-ws-host to get the original host
+  url.host =
+    request.headers.get("x-forwarded-ws-host") ??
+    request.headers.get("x-forwarded-host") ??
+    url.host;
+  return url.origin;
+};
+
+const createDeploymentContext = (request: Request) => {
   const context: AppContext["deployment"] = {
     deploymentTrpc: trpcSharedClient.deployment,
     env: {
-      BUILDER_ORIGIN: url.origin,
+      BUILDER_ORIGIN: `${getRequestOrigin(request)}`,
       BRANCH_NAME: env.BRANCH_NAME ?? "main",
     },
   };

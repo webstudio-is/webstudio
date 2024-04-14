@@ -14,7 +14,7 @@
     "storybook:build": "storybook build",
     "migrations": "cd apps/builder && pnpm migrations --dev",
     "build-figma-tokens": "cd packages/design-system && pnpm build-figma-tokens",
-    "prepare": "git config core.hooksPath .git/hooks/ && simple-git-hooks",
+    "prepare": "which git && git config core.hooksPath .git/hooks/ && simple-git-hooks || echo git not installed",
     "local:version-snapshot": "pnpm -r exec pnpm version prepatch --preid $(cat /dev/urandom | LC_ALL=C tr -dc 'a-z' | fold -w 8 | head -n 1)",
     "local:publish-snapshot": "pnpm -r publish --access public --no-git-checks --registry http://localhost:4873",
     "local:dangerously-undo-version-snapshot": "git restore --source=$(git branch --show-current) '**/*/package.json'",
