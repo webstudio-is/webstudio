@@ -49,7 +49,12 @@ const getRequestOrigin = (request: Request) => {
   const url = new URL(request.url);
   console.info("getRequestOrigin", [...request.headers.entries()]);
 
-  url.host = request.headers.get("x-forwarded-host") ?? url.host;
+  // vercel overwrites x-forwarded-host on edge level even if our header is set
+  // as workaround we use custom header x-forwarded-ws-host to get the original host
+  url.host =
+    request.headers.get("x-forwarded-ws-host") ??
+    request.headers.get("x-forwarded-host") ??
+    url.host;
   return url.origin;
 };
 
