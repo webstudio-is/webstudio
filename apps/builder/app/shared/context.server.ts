@@ -57,7 +57,7 @@ const createDeploymentContext = (request: Request) => {
   const context: AppContext["deployment"] = {
     deploymentTrpc: trpcSharedClient.deployment,
     env: {
-      BUILDER_ORIGIN: `${getRequestOrigin(request)}-eeeee`,
+      BUILDER_ORIGIN: `${getRequestOrigin(request)}`,
       BRANCH_NAME: env.BRANCH_NAME ?? "main",
     },
   };
