@@ -4253,6 +4253,43 @@ export const declarationsGenerated = {
     "Inherits the white-space-collapse property from the parent element.",
   "whiteSpaceCollapse:unset":
     "Unsets the white-space-collapse property from the parent element.",
+  "animationTimingFunction:ease-in-out":
+    "Determines the speed curve of the animation: ease-in-out.",
+  "cursor:no-drop": "Indicates that the cursor should not be used: no-drop.",
+  "filter:none": "Resets the filter property to its initial value: none.",
+  "filter:initial": "Resets the filter property to its initial value: initial.",
+  "filter:inherit":
+    "Resets the filter property to its inherited value: inherit.",
+  "fontVariantPosition:inherit":
+    "Resets the font-variant-position to its inherited value.",
+  "fontVariantPosition:unset":
+    "Resets the font-variant-position to its unset value.",
+  "overflowY:initial": "Resets the overflow-y property to its initial value.",
+  "overflowY:inherit": "Resets the overflow-y property to its inherited value.",
+  "overflowY:unset": "Resets the overflow-y property to its unset value.",
+  "overscrollBehavior:initial":
+    "Resets the overscroll-behavior to its initial value.",
+  "overscrollBehavior:inherit":
+    "Resets the overscroll-behavior to its inherited value.",
+  "overscrollBehavior:unset":
+    "Resets the overscroll-behavior to its unset value.",
+  "pageBreakBefore:unset": "Resets the page-break-before to its unset value.",
+  "textAlign:left": "Sets the text to be aligned to the left.",
+  "textAlign:right": "Sets the text to be aligned to the right.",
+  "textAlign:center": "Aligns text to the center within its container.",
+  "textAlign:justify": "Spreads text evenly across the line.",
+  "textAlign:match-parent":
+    "Aligns text to the parent element matching its alignment.",
+  "textAlign:initial": "Resets the text alignment to its default value.",
+  "textAlign:inherit": "Inherits the text alignment from its parent element.",
+  "textAlign:unset":
+    "Resets the text alignment to its default value without inheriting.",
+  "textAlignLast:auto":
+    "Automatically determines the alignment of the last line.",
+  "textAlignLast:start":
+    "Aligns the last line of text to the start of the line.",
+  "textDecorationLine:unset":
+    "Resets the text decoration line to its initial value.",
 } as const;
 
 export const declarationsOverrides = {} as const;
