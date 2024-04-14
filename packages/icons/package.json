@@ -16,8 +16,13 @@
     "storybook:build": "storybook build"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
+    "@storybook/react": "^7.4.0",
     "@svgo/jsx": "^0.4.2",
+    "@types/node": "^18.17.1",
     "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "^18.2.0",
