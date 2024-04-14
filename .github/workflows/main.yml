@@ -45,5 +45,6 @@ jobs:
 
       - run: pnpm eslint . --ext .ts,.tsx --max-warnings 0 --cache --cache-strategy=content --cache-location=node_modules/.cache/eslint/.eslint-cache
 
-      - run: pnpm turbo run build
-      - run: pnpm turbo run size-test checks
+      - run: pnpm -r build
+      - run: pnpm -r size-test
+      - run: pnpm -r checks
