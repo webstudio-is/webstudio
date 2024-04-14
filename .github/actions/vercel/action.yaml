@@ -37,14 +37,16 @@ runs:
   steps:
     - id: branch
       run: |
-        CLEAN_NAME="${GITHUB_REF_NAME/.staging/}"
+        CLEAN_NAME="${REF_NAME/.staging/}"
         CLEAN_NAME=$( echo "${CLEAN_NAME}" | sed 's/[^a-zA-Z0-9_-]//g' | tr A-Z a-z | tr _ - | sed 's/-\{2,\}/-/g' )
         echo "value=${CLEAN_NAME}" >> $GITHUB_OUTPUT
       shell: bash
+      env:
+        REF_NAME: ${{ inputs.ref-name }}
 
     - id: short_sha
       run: |
-        SHORT_SHA=$( echo "value=$(echo ${{ github.sha }} | cut -c1-7)" )
+        SHORT_SHA=$( echo "value=$(echo ${{ inputs.sha }} | cut -c1-7)" )
         echo "value=${SHORT_SHA}" >> $GITHUB_OUTPUT
       shell: bash
 
@@ -81,8 +83,8 @@ runs:
         --prebuilt \
         --token ${{ inputs.vercel-token }} \
         --env SHORT_SHA=${{ steps.short_sha.outputs.value }} \
-        --env BRANCH_NAME=${{ steps.branch.outputs.value }} \
-        --meta GITHUB_SHA=${{ steps.short_sha.outputs.value }} \
+        --env BRANCH_NAME=${{ inputs.ref-name }} \
+        --meta GITHUB_SHA=${{ inputs.sha }} \
         --meta GITHUB_REF_NAME=${{ steps.branch.outputs.value }} \
         2> >(tee info.txt >&2) | tee domain.txt
 

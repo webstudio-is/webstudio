@@ -35,6 +35,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# turbo
+.turbo
+
 # data
 /data
 *.db

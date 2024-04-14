@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "@remix-run/react": "^2.8.1",
+    "@types/node": "^18.17.1",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/generate-arg-types": "workspace:*",

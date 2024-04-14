@@ -30,11 +30,13 @@
     "@webstudio-is/fonts": "workspace:*",
     "acorn": "^8.11.3",
     "acorn-walk": "^8.3.2",
+    "type-fest": "^4.3.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@webstudio-is/jest-config": "workspace:*",
-    "@webstudio-is/tsconfig": "workspace:*"
+    "@webstudio-is/tsconfig": "workspace:*",
+    "strip-indent": "^4.0.0"
   }
 }
