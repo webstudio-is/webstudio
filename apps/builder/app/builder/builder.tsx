@@ -17,9 +17,6 @@ import {
 } from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
-import builderStyles from "./builder.css?url";
-// eslint-disable-next-line import/no-internal-modules
-import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { Footer } from "./features/footer";
 import {
   CanvasIframe,
@@ -63,14 +60,6 @@ import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 
 registerContainers();
-
-// Can cause FOUC because of remix-island, be very accurate adding anything here
-export const links = () => {
-  return [
-    { rel: "stylesheet", href: builderStyles },
-    { rel: "stylesheet", href: prismStyles },
-  ];
-};
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
