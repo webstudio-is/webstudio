@@ -3,13 +3,21 @@
 # docker build -t docker-cli -f ./devops/cli/Dockerfile . --progress=plain
 # docker run --rm -it docker-cli sh
 # docker run --rm -it --env-file <(infisical export --format=dotenv --path='/GITHUB_SAAS' --env=dev | while IFS= read -r line; do eval "echo  $line"; done) docker-cli rclone copy -P -M --no-check-dest --header "Cache-Control: public,max-age=31536004,immutable" '/cli/package.json' 'r2:/build-artifacts'
-FROM node:18.20-alpine3.18
+FROM node:18-buster-slim
 
 ENV CI=true
 ENV SKIP_INSTALL_SIMPLE_GIT_HOOKS=true
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 
-RUN apk update && apk add curl rclone postgresql14-client --no-cache
+RUN apt-get update \
+&& apt-get install -yq curl gnupg lsb-release \
+&& curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc|gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg \
+&& echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-pgdg main" |tee  /etc/apt/sources.list.d/pgdg.list \
+&& apt-get update \
+&& DEBIAN_FRONTEND=noninteractive apt-get install -yq curl unzip postgresql-client-14
+
+RUN curl -fsSL https://bun.sh/install | bash
+RUN curl https://rclone.org/install.sh | bash
 
 COPY ./ /cli
 WORKDIR /cli
@@ -19,7 +27,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 RUN pnpm i -g zx
-RUN pnpm i -g bun
+
 
 # Install deps, build cli
 RUN pnpm install --ignore-scripts
