@@ -44,6 +44,9 @@ importers:
       prettier:
         specifier: 3.0.3
         version: 3.0.3
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
       simple-git-hooks:
         specifier: ^2.9.0
         version: 2.9.0
