@@ -24,6 +24,7 @@
     "pre-commit": "./node_modules/.bin/nano-staged"
   },
   "devDependencies": {
+    "@storybook/react": "^7.4.0",
     "@types/css-tree": "^2.3.1",
     "@webstudio-is/eslint-config-custom": "workspace:*",
     "esbuild": "^0.20.2",
