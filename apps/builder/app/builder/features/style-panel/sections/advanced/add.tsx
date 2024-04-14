@@ -21,11 +21,7 @@ const matchOrSuggestToCreate = (
     return matched;
   }
 
-  if (
-    search.trim() !== "" &&
-    itemToString(matched[0]).toLocaleLowerCase() !==
-      search.toLocaleLowerCase().trim()
-  ) {
+  if (search.trim().startsWith("--")) {
     matched.unshift({
       value: search.trim(),
       label: `Create "${search.trim()}"`,
@@ -60,9 +56,7 @@ export const Add = ({
       }}
       match={matchOrSuggestToCreate}
       getDescription={(item) => {
-        let description = `Please look up ${
-          item?.value ? `"${toKebabCase(item?.value)}"` : "property"
-        } in MDN.`;
+        let description = `Unknown CSS property.`;
         if (item && item.value in propertyDescriptions) {
           description =
             propertyDescriptions[
