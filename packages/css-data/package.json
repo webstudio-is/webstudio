@@ -13,7 +13,10 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@types/css-tree": "^2.3.1",
+    "@types/hyphenate-style-name": "^1.0.0",
+    "@types/node": "^18.17.1",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",

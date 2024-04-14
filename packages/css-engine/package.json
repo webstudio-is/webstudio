@@ -19,7 +19,8 @@
     "@emotion/hash": "^0.9.1",
     "@webstudio-is/error-utils": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
-    "hyphenate-style-name": "^1.0.4"
+    "hyphenate-style-name": "^1.0.4",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
