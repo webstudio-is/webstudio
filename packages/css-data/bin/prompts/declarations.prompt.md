@@ -14,12 +14,25 @@ Here is the list of CSS declarations:
 ```
 
 Respond with a matching list of explanations as a markdown code block.
-Don't repeat the declaration at the beginning of the explanation:
+
+Don't use CSS syntax or CSS property names or CSS values inside the explanation:
 
 Wrong:
-`- \\`align-content: normal\\` - Aligns content as usual.`
-
+`- text-wrap: wrap - The text wraps within the specified container.`
 Correct:
 `- The items are packed in their default position as if no align-content value was set.`
+Wrong:
+`- Resets the \\`view-timeline-inset\\` property to its initial value.`
+Correct:
+`- Resets the property to its initial value.`
+
+Don't use markdown syntax inside the explanation:
+
+Wrong:
+`**WebkitFontSmoothing**: Adjusts smoothing of fonts on webkit browsers for better readability.`
+Correct:
+`- Adjusts smoothing of fonts on webkit browsers for better readability.`
+
+Fix grammar mistakes after you generated the explanations.
 
 The response should start with ```markdown

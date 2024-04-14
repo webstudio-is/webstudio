@@ -453,6 +453,47 @@ export const propertiesGenerated = {
   writingMode: "Sets the direction in which lines of text are written.",
   zIndex:
     "Sets the stack order of an element. Higher value means closer to the top.",
+  WebkitFontSmoothing:
+    "Adjusts how text is rendered to improve readability, especially on non-retina displays.",
+  MozOsxFontSmoothing:
+    "Controls the smoothing strategy used while displaying text on macOS and iOS devices.",
+  animationRangeEnd:
+    "Sets the offset within the animation cycle where the animation ends.",
+  animationRangeStart:
+    "Sets the offset within the animation cycle where the animation starts.",
+  containerName: "Specifies the name of the flexible box layout container.",
+  containerType:
+    "Defines the display container type for the layout, like block or inline.",
+  fontPalette: "Handles color font system options for certain OpenType fonts.",
+  fontSynthesisPosition:
+    "Determines the method of synthesizing font variations for the position.",
+  fontSynthesisSmallCaps:
+    "Specifies the mechanism for synthesizing small-caps font faces.",
+  fontSynthesisStyle:
+    "Sets the synthesis style for a font, like normal or italic.",
+  fontSynthesisWeight:
+    "Establishes the font weight synthesis method for non-system fonts.",
+  fontVariantEmoji:
+    "Adjusts the usage of emoji characters in fonts to reflect the font variant preference.",
+  hyphenateLimitChars:
+    "Specifies the minimum number of characters in a word before hyphenation is allowed.",
+  overlay: "Specifies the stacking order for positioned elements that overlap.",
+  page: "Sets various properties related to page breaks and print layout.",
+  textWrap:
+    "Specifies the behavior of text wrapping in relation to the element's content box dimensions.",
+  textWrapMode:
+    "Controls the behavior of how the text wraps when reaching the end of a line",
+  textWrapStyle: "Defines the style of wrapping that will be applied to text",
+  timelineScope:
+    "Indicates whether a timeline is equivalent or independent from others",
+  transition: "Specifies the CSS property to apply a transition effect to",
+  transitionBehavior: "Determines how to animate a transition",
+  viewTimelineAxis: "Sets the axis used for a timeline view",
+  viewTimelineInset: "Sets the inset (left) position in a timeline",
+  viewTimelineName: "Sets a custom name for a timeline view",
+  viewTransitionName: "Sets a custom name for a transition effect",
+  whiteSpaceCollapse:
+    "Specifies how white space inside an element is collapsed",
 } as const;
 
 export const propertiesOverrides = {} as const;
@@ -3998,6 +4039,264 @@ export const declarationsGenerated = {
   "zIndex:inherit": "Inherits the z-index from its parent element.",
   "zIndex:unset":
     "Resets the z-index to its inherited value, or default if there is none.",
+  "WebkitFontSmoothing:auto":
+    "Adjusts smoothing of fonts on webkit browsers for better readability.",
+  "WebkitFontSmoothing:none":
+    "Disables font smoothing on webkit browsers for a pixelated effect.",
+  "WebkitFontSmoothing:antialiased":
+    "Applies subpixel antialiasing to fonts on webkit browsers.",
+  "WebkitFontSmoothing:subpixel-antialiased":
+    "Applies subpixel antialiasing to fonts on webkit browsers.",
+  "MozOsxFontSmoothing:auto":
+    "Adjusts font smoothing for better readability on macOS.",
+  "MozOsxFontSmoothing:grayscale":
+    "Renders fonts on macOS in grayscale for better readability.",
+  "listStyleType:disc": "Sets the list item marker to a filled circle shape.",
+  "listStyleType:circle": "Sets the list item marker to a hollow circle shape.",
+  "listStyleType:square": "Sets the list item marker to a filled square shape.",
+  "listStyleType:decimal": "Sets the list item marker to a decimal number.",
+  "listStyleType:georgian":
+    "Sets the list item marker to a Georgian character.",
+  "listStyleType:trad-chinese-informal":
+    "Sets the list item marker to a traditional Chinese character.",
+  "listStyleType:kannada": "Sets the list item marker to a Kannada character.",
+  "animationRangeEnd:normal":
+    "Specifies the ending position of the animation sequence.",
+  "animationRangeEnd:cover":
+    "Makes the animation cover the element's area when ending.",
+  "animationRangeEnd:contain":
+    "Keeps the animation contained within the element's area when ending.",
+  "animationRangeEnd:entry":
+    "The animation ends when reaching the entry point.",
+  "animationRangeEnd:exit": "The animation ends when reaching the exit point.",
+  "animationRangeEnd:entry-crossing":
+    "The animation ends when crossing the entry point.",
+  "animationRangeEnd:exit-crossing":
+    "The animation ends when crossing the exit point.",
+  "animationRangeEnd:initial": "Resets the animation to its initial end point.",
+  "animationRangeEnd:inherit":
+    "Inherits the animation end point from its parent.",
+  "animationRangeEnd:unset": "Unsets the animation end point to its default.",
+  "animationRangeStart:normal": "The animation starts at its normal position.",
+  "animationRangeStart:cover": "The animation starts at the cover position.",
+  "animationRangeStart:contain":
+    "The animation starts at the contain position.",
+  "animationRangeStart:entry":
+    "The animation starts when reaching the entry point.",
+  "animationRangeStart:exit":
+    "The animation starts when reaching the exit point.",
+  "animationRangeStart:entry-crossing":
+    "The animation starts when crossing the entry point.",
+  "animationRangeStart:exit-crossing":
+    "The animation starts when crossing the exit point.",
+  "animationRangeStart:initial":
+    "Resets the animation to its initial start point.",
+  "animationRangeStart:inherit":
+    "Inherits the animation start point from its parent.",
+  "animationRangeStart:unset": "Resets the property to its initial value.",
+  "containerName:none": "No name is assigned to the container.",
+  "containerName:initial": "The container takes on its default value.",
+  "containerName:inherit": "The container inherits the value from its parent.",
+  "containerName:unset": "The container has no defined value.",
+  "containerType:normal": "Specifies the layout algorithm for the container.",
+  "containerType:size": "Specifies the size of the container.",
+  "containerType:inline-size": "Specifies the inline size of the container.",
+  "containerType:initial": "The container takes on its default size.",
+  "containerType:inherit": "The container inherits the size from its parent.",
+  "containerType:unset": "The container has no defined size.",
+  "fontPalette:normal": "Sets the font palette to a normal value.",
+  "fontPalette:light": "Sets the font palette to a light value.",
+  "fontPalette:dark": "Sets the font palette to a dark value.",
+  "fontPalette:initial": "The font palette takes on its default setting.",
+  "fontPalette:inherit": "The font palette inherits the value from its parent.",
+  "fontPalette:unset": "Resets the font palette to its initial value.",
+  "fontSynthesis:position":
+    "Specifies how synthetic style variations are aplied.",
+  "fontSynthesisPosition:auto": "The item has no synthesized style variations.",
+  "fontSynthesisPosition:none":
+    "The item has auto synthesized style variations.",
+  "fontSynthesisPosition:initial":
+    "The item has initial synthesized style variations.",
+  "fontSynthesisPosition:inherit":
+    "The item has inherited synthesized style variations.",
+  "fontSynthesisPosition:unset":
+    "The item has unset synthesized style variations.",
+  "fontSynthesisSmallCaps:auto":
+    "The item has no synthesized small-caps variations.",
+  "fontSynthesisSmallCaps:none":
+    "The item has auto synthesized small-caps variations.",
+  "fontSynthesisSmallCaps:initial":
+    "The item has initial synthesized small-caps variations.",
+  "fontSynthesisSmallCaps:inherit":
+    "The item has inherited synthesized small-caps variations.",
+  "fontSynthesisSmallCaps:unset":
+    "The item has unset synthesized small-caps variations.",
+  "fontSynthesisStyle:auto": "The item has no synthesized style variations.",
+  "fontSynthesisStyle:none": "The item has auto synthesized style variations.",
+  "fontSynthesisStyle:initial":
+    "The item has initial synthesized style variations.",
+  "fontSynthesisStyle:inherit":
+    "The item has inherited synthesized style variations.",
+  "fontSynthesisStyle:unset":
+    "Adjusts font synthesis for style to its initial value.",
+  "fontSynthesisWeight:auto":
+    "Adjusts font synthesis for weight to automatic calculation.",
+  "fontSynthesisWeight:none":
+    "Adjusts font synthesis for weight to no adjustments made.",
+  "fontSynthesisWeight:initial":
+    "Adjusts font synthesis for weight to the property's initial value.",
+  "fontSynthesisWeight:inherit":
+    "Adjusts font synthesis for weight to be inherited from parent.",
+  "fontSynthesisWeight:unset":
+    "Adjusts font synthesis for weight to its initial value.",
+  "fontVariantEmoji:normal": "Renders emoji characters in the default style.",
+  "fontVariantEmoji:text": "Renders emoji characters as standard text.",
+  "fontVariantEmoji:emoji": "Renders emoji characters as emoji symbols.",
+  "fontVariantEmoji:unicode": "Renders emoji characters as unicode characters.",
+  "fontVariantEmoji:initial":
+    "Renders emoji characters with the property's initial value.",
+  "fontVariantEmoji:inherit": "Renders emoji characters with inherited style.",
+  "fontVariantEmoji:unset":
+    "Renders emoji characters with property set to its initial value.",
+  "hyphenateLimitChars:auto":
+    "Sets the maximum number of characters that can be hyphenated.",
+  "hyphenateLimitChars:initial":
+    "Sets the maximum number of characters to the property's initial value.",
+  "hyphenateLimitChars:inherit":
+    "Sets the maximum number of characters to be inherited.",
+  "hyphenateLimitChars:unset":
+    "Resets the maximum number of characters in hyphenated words to its initial value.",
+  "offsetPosition:normal":
+    "Sets the offset position to the normal position within the containing block.",
+  "overlay:none": "Removes any overlay effect on the element.",
+  "overlay:auto": "Automatically applies an overlay effect on the element.",
+  "overlay:initial": "Sets the overlay effect to its initial value.",
+  "overlay:inherit": "Inherits the overlay effect from its parent element.",
+  "overlay:unset":
+    "Unsets the overlay effect, allowing it to cascade down the DOM tree.",
+  "page:auto":
+    "Automatically determines the page size based on available space.",
+  "page:initial": "Sets the page size to the initial default value.",
+  "page:inherit": "Inherits the page size from its parent element.",
+  "page:unset":
+    "Unsets the page size, allowing it to be determined by the content.",
+  "scrollTimelineAxis:x": "Sets the scroll timeline axis to horizontal.",
+  "scrollTimelineAxis:y": "Sets the scroll timeline axis to vertical.",
+  "textWrap:wrap": "Allows text to wrap within the specified container.",
+  "textWrap:nowrap":
+    "Prevents text from wrapping, causing it to overflow the container.",
+  "textWrap:balance":
+    "Distributes text between multiple lines to achieve a visually balanced layout.",
+  "textWrap:stable": "The text is stable within the specified container.",
+  "textWrap:pretty": "The text is pretty within the specified container.",
+  "textWrap:initial": "Resets the property to its initial value.",
+  "textWrap:inherit":
+    "Sets the property to the containing element's computed value.",
+  "textWrap:unset": "Resets the property to its initial value.",
+  "textWrapMode:auto":
+    "The text wraps automatically within the specified container.",
+  "textWrapMode:wrap": "The text wraps within the specified container.",
+  "textWrapMode:nowrap":
+    "The text does not wrap within the specified container.",
+  "textWrapMode:initial": "Resets the property to its initial value.",
+  "textWrapMode:inherit":
+    "Sets the property to the containing element's computed value.",
+  "textWrapMode:unset": "Resets the property to its initial value.",
+  "textWrapStyle:auto": "The text style is automatically adjusted as needed.",
+  "textWrapStyle:balance":
+    "The text style is balanced within the specified container.",
+  "textWrapStyle:stable":
+    "The text style is stable within the specified container.",
+  "textWrapStyle:pretty":
+    "The text style is pretty within the specified container.",
+  "textWrapStyle:initial": "Resets the property to its initial value.",
+  "textWrapStyle:inherit":
+    "Inherit the text wrap style from the parent element.",
+  "textWrapStyle:unset": "Resets the text wrap style to its initial value.",
+  "timelineScope:none": "Specifies that no animation should be applied.",
+  "timelineScope:initial": "Resets the property to its initial value.",
+  "timelineScope:inherit":
+    "Inherits the timeline scope from the parent element.",
+  "timelineScope:unset": "Resets the timeline scope to its initial value.",
+  "transition:none": "No transition effect is applied to the element.",
+  "transition:all": "Smooth transition effect for all properties.",
+  "transition:linear": "Linear transition effect for all properties.",
+  "transition:ease": "Transition effect with ease timing function.",
+  "transition:ease-in": "Transition effect with ease-in timing function.",
+  "transition:ease-out": "Transition effect with ease-out timing function.",
+  "transition:ease-in-out":
+    "Transition effect with ease-in-out timing function.",
+  "transition:step-start":
+    "Transition effect that jumps to the final state instantly.",
+  "transition:step-end":
+    "Transition effect that jumps to the final state gradually.",
+  "transition:normal": "Default transition effect is applied.",
+  "transition:allow-discrete":
+    "Alters the style of the view transition to discrete intervals.",
+  "transition:initial": "Resets the transition property to its initial value.",
+  "transition:inherit":
+    "Inherits the transition property from its parent element.",
+  "transition:unset": "Resets the transition property to its default value.",
+  "transitionBehavior:normal":
+    "Specifies the behavior of the view transition as normal.",
+  "transitionBehavior:allow-discrete":
+    "Alters the style of the view transition to discrete intervals.",
+  "transitionBehavior:initial": "Resets the property to its initial value.",
+  "transitionBehavior:inherit":
+    "Inherits the property from its parent element.",
+  "transitionBehavior:unset": "Resets the property to its default value.",
+  "viewTimelineAxis:block":
+    "Specifies the orientation of the view timeline as a block.",
+  "viewTimelineAxis:inline":
+    "Specifies the orientation of the view timeline as inline.",
+  "viewTimelineAxis:x":
+    "Specifies the orientation of the view timeline along the x-axis.",
+  "viewTimelineAxis:y":
+    "Specifies the orientation of the view timeline along the y-axis.",
+  "viewTimelineAxis:initial": "Resets the property to its initial value.",
+  "viewTimelineAxis:inherit": "Inherits the property from its parent element.",
+  "viewTimelineAxis:unset": "Resets the property to its default value.",
+  "viewTimelineInset:auto": "Resets the property to its default value.",
+  "viewTimelineInset:initial": "Resets the property to its initial value.",
+  "viewTimelineInset:inherit":
+    "Inherits the property value from its parent element.",
+  "viewTimelineInset:unset": "Resets the property to its initial value.",
+  "viewTimelineName:none": "Hides the timeline name from view.",
+  "viewTimelineName:initial": "Resets the property to its initial value.",
+  "viewTimelineName:inherit":
+    "Inherits the property value from its parent element.",
+  "viewTimelineName:unset": "Resets the property to its initial value.",
+  "viewTransitionName:none": "Hides the transition name from view.",
+  "viewTransitionName:initial": "Resets the property to its initial value.",
+  "viewTransitionName:inherit":
+    "Inherits the property value from its parent element.",
+  "viewTransitionName:unset": "Resets the property to its initial value.",
+  "whiteSpace:collapse": "Collapses white space within the element.",
+  "whiteSpace:discard": "Discards white space within the element.",
+  "whiteSpace:preserve": "Preserves all white space within the element.",
+  "whiteSpace:preserve-breaks": "Preserves white space allowing line breaks.",
+  "whiteSpace:preserve-spaces":
+    "The content will be displayed without any modifications.",
+  "whiteSpace:wrap":
+    "The content will wrap to fit within the specified container.",
+  "whiteSpace:balance":
+    "The content will be distributed so that lines are of equal length.",
+  "whiteSpace:stable":
+    "The content will be distributed so that lines remain stable.",
+  "whiteSpace:pretty":
+    "The content is styled with extra care for better readability.",
+  "whiteSpaceCollapse:collapse": "Collapse adjacent spaces in the content.",
+  "whiteSpaceCollapse:discard": "Discard white spaces in the content.",
+  "whiteSpaceCollapse:preserve": "Preserve the white spaces in the content.",
+  "whiteSpaceCollapse:preserve-breaks":
+    "Preserve line breaks and white spaces in the content.",
+  "whiteSpaceCollapse:preserve-spaces": "Preserve white spaces in the content.",
+  "whiteSpaceCollapse:break-spaces": "Break white spaces between text.",
+  "whiteSpaceCollapse:initial": "Sets content to the initial value.",
+  "whiteSpaceCollapse:inherit":
+    "Inherits the white-space-collapse property from the parent element.",
+  "whiteSpaceCollapse:unset":
+    "Unsets the white-space-collapse property from the parent element.",
 } as const;
 
 export const declarationsOverrides = {} as const;
