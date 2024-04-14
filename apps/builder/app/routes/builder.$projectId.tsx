@@ -1,4 +1,4 @@
-import { Fragment, lazy } from "react";
+import { lazy } from "react";
 import {
   useLoaderData,
   useRouteError,
@@ -156,8 +156,7 @@ export const ErrorBoundary = () => {
 
 const Builder = lazy(async () => {
   const { Builder } = await import("~/builder/index.client");
-  // fallback to fragment because canvas is undefined in server bundle
-  return { default: Builder ?? Fragment };
+  return { default: Builder };
 });
 
 export const BuilderRoute = () => {
