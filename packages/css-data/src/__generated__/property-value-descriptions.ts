@@ -674,8 +674,6 @@ export const declarationsGenerated = {
     "The animation starts slow and gets faster.",
   "animationTimingFunction:ease-out":
     "The animation starts fast and slows down.",
-  "animationTimingFunction:ease-in-out":
-    "The animation starts slow, gets faster, and slows down again.```",
   "animationTimingFunction:step-start":
     "Specifies an abrupt change in the animation's progress at the start of each interval.",
   "animationTimingFunction:step-end":
@@ -1636,7 +1634,6 @@ export const declarationsGenerated = {
   "cursor:alias": "Sets cursor as an alias.",
   "cursor:copy": "Sets cursor as copy pointer.",
   "cursor:move": "Indicates the object can be moved.",
-  "cursor:no-drop": "Indicates an object cannot be dropped here.```",
   "cursor:not-allowed": 'Changes the cursor to a "not allowed" sign.',
   "cursor:e-resize": "Changes the cursor to an east-resize arrow.",
   "cursor:n-resize": "Changes the cursor to a north-resize arrow.",
@@ -1716,12 +1713,6 @@ export const declarationsGenerated = {
   "emptyCells:inherit": "Inherits empty-cells from its parent element.",
   "emptyCells:unset":
     "The table cells will adopt their parent's `empty-cells` behavior when unset.",
-  "filter:none":
-    "The `filter` value is set to none, indicating no initial filtering.",
-  "filter:initial":
-    "The `filter` value is set to default, indicating an initial filter state.",
-  "filter:inherit":
-    "The `filter` value is set to inherit, adopting the parent element's filter value.",
   "filter:unset":
     "The element's initial main size axis is set to its content size.",
   "flexBasis:content":
@@ -2044,10 +2035,6 @@ export const declarationsGenerated = {
     "The element displays its text as a superscript.",
   "fontVariantPosition:initial":
     "The element displays its text as subscript or superscript.",
-  "fontVariantPosition:inherit":
-    "The element inherits its parent's `font-variant-position`.",
-  "fontVariantPosition:unset":
-    "The element inherits its parent's `font-variant-position`.",
   "fontWeight:normal": "The font displays normal weight.",
   "fontWeight:bold": "The font displays bold weight.",
   "fontWeight:bolder":
@@ -3013,22 +3000,12 @@ export const declarationsGenerated = {
     "Adds a vertical scrollbar when content overflows the element.",
   "overflowY:auto":
     "Adds a vertical scrollbar when content overflows the element, only when necessary.",
-  "overflowY:initial": "Sets the `overflow-y` property to its default value.",
-  "overflowY:inherit":
-    "Inherits the `overflow-y` property from its parent element.",
-  "overflowY:unset": "Removes any user-defined `overflow-y` value.",
   "overscrollBehavior:contain":
     "Prevents pull-to-refresh and rubber band scrolling outside of the element.",
   "overscrollBehavior:none":
     "Disables all overscrolling of the element's content.",
   "overscrollBehavior:auto":
     "Enables overscrolling of the element's content if there is any.",
-  "overscrollBehavior:initial":
-    "Sets the `overscroll-behavior` property to its default value.",
-  "overscrollBehavior:inherit":
-    "Inherits the `overscroll-behavior` property from its parent element.",
-  "overscrollBehavior:unset":
-    "Remotes any user-defined `overscroll-behavior` value.",
   "overscrollBehaviorBlock:contain":
     "Disallows scrolling of the vertical axis of the element, unless it's a scroll container.",
   "overscrollBehaviorBlock:none":
@@ -3150,8 +3127,6 @@ export const declarationsGenerated = {
     "Forces a page break before the element, placing the next page on a left-hand page.",
   "pageBreakBefore:initial": "Sets the property to its default value `auto`.",
   "pageBreakBefore:inherit": "Inherits the property from its parent element.",
-  "pageBreakBefore:unset":
-    "`page-break-before` - Specifies whether a page break is allowed before an element.",
   "pageBreakInside:auto": "Allows breaks inside the element if necessary.",
   "pageBreakInside:avoid": "Avoids breaks inside the element if possible.",
   "pageBreakInside:initial": "Sets the default value.",
@@ -3479,23 +3454,6 @@ export const declarationsGenerated = {
     "The value of this property is inherited from the parent element if it exists, or else it is set to its initial value.",
   "textAlign:start": "Aligns the text at the start of the line.",
   "textAlign:end": "Aligns the text at the end of the line.",
-  "textAlign:left": "`text-align: left`- Aligns the text to the left.",
-  "textAlign:right": "`text-align: right`- Aligns the text to the right.",
-  "textAlign:center": "`text-align: center`- Centers the text.",
-  "textAlign:justify":
-    "`text-align: justify`- Stretches the text to fit the whole line.",
-  "textAlign:match-parent":
-    "`text-align: match-parent`- Aligns the text to its parent element.",
-  "textAlign:initial":
-    "`text-align: initial`- Sets the text alignment to the default value.",
-  "textAlign:inherit":
-    "`text-align: inherit`- The text alignment is inherited from its parent element.",
-  "textAlign:unset":
-    "`text-align: unset`- The text alignment is set to its default value or inherited from its parent element.",
-  "textAlignLast:auto":
-    "`text-align-last: auto`- Aligns the last line of text to the left",
-  "textAlignLast:start":
-    "`text-align-last: start`- Aligns the last line of text at the start of the paragraph.",
   "textAlignLast:end":
     "Aligns the last line of a text block to the right side.",
   "textAlignLast:left":
@@ -3534,8 +3492,6 @@ export const declarationsGenerated = {
     "Sets the text decoration to its default value.",
   "textDecorationLine:inherit":
     "Inherits the text decoration from the parent element.",
-  "textDecorationLine:unset":
-    "`text-decoration-line: unset`- Removes the text decoration if it has been set for the parent element.",
   "textDecorationSkip:none": "No part of the text decoration is skipped.",
   "textDecorationSkip:objects":
     "Skips any element with an object-fit or clip property.",
