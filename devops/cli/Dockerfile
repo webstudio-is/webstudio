@@ -19,7 +19,6 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 RUN pnpm i -g zx
-RUN pnpm i -g bun
 
 # Install deps, build cli
 RUN pnpm install --ignore-scripts
