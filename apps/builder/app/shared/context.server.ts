@@ -47,6 +47,8 @@ const createDomainContext = (request: Request) => {
 
 const getRequestOrigin = (request: Request) => {
   const url = new URL(request.url);
+  console.info("getRequestOrigin", [...request.headers.entries()]);
+
   url.host = request.headers.get("x-forwarded-host") ?? url.host;
   return url.origin;
 };
@@ -55,7 +57,7 @@ const createDeploymentContext = (request: Request) => {
   const context: AppContext["deployment"] = {
     deploymentTrpc: trpcSharedClient.deployment,
     env: {
-      BUILDER_ORIGIN: getRequestOrigin(request),
+      BUILDER_ORIGIN: `${getRequestOrigin(request)}-eeeee`,
       BRANCH_NAME: env.BRANCH_NAME ?? "main",
     },
   };
