@@ -16,7 +16,6 @@ RUN apt-get update \
 && apt-get update \
 && DEBIAN_FRONTEND=noninteractive apt-get install -yq curl unzip postgresql-client-14
 
-RUN curl -fsSL https://bun.sh/install | bash
 RUN curl https://rclone.org/install.sh | bash
 
 COPY ./ /cli
@@ -27,6 +26,7 @@ ENV PATH="$PNPM_HOME:$PATH"
 
 RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 RUN pnpm i -g zx
+RUN pnpm i -g bun
 
 
 # Install deps, build cli
