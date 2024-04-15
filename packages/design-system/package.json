@@ -15,6 +15,9 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@storybook/addon-actions": "^7.4.0",
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
     "@storybook/react": "^7.4.0",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/react": "^18.2.21",
@@ -25,13 +28,15 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsx": "^4.7.2",
-    "typescript": "5.2.2"
+    "typescript": "5.2.2",
+    "zod": "^3.22.4"
   },
   "peerDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.5.3",
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-accessible-icon": "^1.0.3",
     "@radix-ui/react-avatar": "^1.0.4",

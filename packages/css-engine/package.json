@@ -19,10 +19,14 @@
     "@emotion/hash": "^0.9.1",
     "@webstudio-is/error-utils": "workspace:*",
     "@webstudio-is/fonts": "workspace:*",
-    "hyphenate-style-name": "^1.0.4"
+    "hyphenate-style-name": "^1.0.4",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
+    "@storybook/react": "^7.4.0",
     "@types/hyphenate-style-name": "^1.0.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",

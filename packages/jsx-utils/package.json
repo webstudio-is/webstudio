@@ -12,6 +12,7 @@
     "checks": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@webstudio-is/jest-config": "workspace:^",
     "@webstudio-is/tsconfig": "workspace:^",
     "fast-glob": "^3.2.12",

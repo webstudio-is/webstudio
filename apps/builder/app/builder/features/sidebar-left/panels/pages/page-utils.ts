@@ -194,6 +194,34 @@ export const isSlugAvailable = (
   );
 };
 
+export const isPathAvailable = ({
+  pages,
+  path,
+  parentFolderId,
+  pageId,
+}: {
+  pages: Pages;
+  path: Page["path"];
+  parentFolderId: Folder["id"];
+  // undefined page id means new page
+  pageId?: Page["id"];
+}) => {
+  const map = new Map<Page["path"], Page>();
+  const allPages = [pages.homePage, ...pages.pages];
+  for (const page of allPages) {
+    map.set(getPagePath(page.id, pages), page);
+  }
+  const folderPath = getPagePath(parentFolderId, pages);
+  // When slug is empty, folderPath is "/".
+  const pagePath = folderPath === "/" ? path : `${folderPath}${path}`;
+  const existingPage = map.get(pagePath);
+  // We found another page that has the same path and the current page.
+  if (pageId && existingPage?.id === pageId) {
+    return true;
+  }
+  return existingPage === undefined;
+};
+
 /**
  * - Register a folder or a page inside children of a given parent folder.
  * - Fallback to a root folder.
