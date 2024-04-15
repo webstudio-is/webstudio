@@ -17,7 +17,18 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 RUN pnpm install --ignore-scripts
 RUN pnpm -r --filter './packages/*' run build
-RUN pnpm --filter 'webstudio-cloudlfare-template' deploy --prod /cloudlfare-template
+RUN pnpm --filter 'webstudio-cloudlfare-template' deploy /cloudlfare-template
+
+WORKDIR /cloudlfare-template
+
+RUN \
+  find . -name 'typescript@*' -type d -prune -exec rm -rf '{}' + && \
+  find . -name 'workerd*' -type f -prune -exec rm -rf '{}' + && \
+  find . -name '@storybook*' -type d -prune -exec rm -rf '{}' + && \
+  find . -name 'eslint@*' -type d -prune -exec rm -rf '{}' + && \
+  find . -name '@types+node@*' -type d -prune -exec rm -rf '{}' + && \
+  find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' + && \
+  find . -name 'wrangler@*' -type d -prune -exec rm -rf '{}' +
 
 
 FROM node:18.20-alpine3.18 as cloudflare-template
@@ -30,7 +41,7 @@ RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 
 RUN apk update && apk add bash curl rclone postgresql14-client --no-cache
 
-RUN pnpm i -g --prod zx && pnpm i -g --prod wrangler
+RUN pnpm i -g --prod zx && pnpm i -g --prod wrangler && find / -name 'workerd*' -type f -prune -exec rm -rf '{}' +
 
 COPY --from=build /cloudlfare-template /cloudlfare-template
 
