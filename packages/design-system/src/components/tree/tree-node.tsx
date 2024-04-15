@@ -267,7 +267,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   isExpanded,
   children,
   suffix,
-  suffixWidth = suffix ? theme.spacing[12] : "0px",
+  suffixWidth = suffix ? theme.spacing[9] : "0px",
   alwaysShowSuffix = false,
   forceFocus = false,
   selectionEvent = "click",
