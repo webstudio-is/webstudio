@@ -523,6 +523,9 @@ importers:
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
+      worktop:
+        specifier: 0.8.0-next.18
+        version: 0.8.0-next.18
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -788,6 +791,67 @@ importers:
       vite:
         specifier: ^5.2.8
         version: 5.2.8
+      webstudio:
+        specifier: workspace:*
+        version: link:../../packages/cli
+
+  fixtures/webstudio-remix-vercel-form-filters:
+    dependencies:
+      '@remix-run/node':
+        specifier: ^2.8.1
+        version: 2.8.1(typescript@5.2.2)
+      '@remix-run/react':
+        specifier: ^2.8.1
+        version: 2.8.1(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2)
+      '@remix-run/server-runtime':
+        specifier: ^2.8.1
+        version: 2.8.1(typescript@5.2.2)
+      '@webstudio-is/form-handlers':
+        specifier: workspace:*
+        version: link:../../packages/form-handlers
+      '@webstudio-is/image':
+        specifier: workspace:*
+        version: link:../../packages/image
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../../packages/react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react-radix
+      '@webstudio-is/sdk-components-react-remix':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react-remix
+      isbot:
+        specifier: ^3.6.8
+        version: 3.6.13
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
+    devDependencies:
+      '@remix-run/dev':
+        specifier: ^2.8.1
+        version: 2.8.1(@remix-run/serve@2.8.1)(typescript@5.2.2)(vite@4.4.9)
+      '@remix-run/serve':
+        specifier: ^2.8.1
+        version: 2.8.1(typescript@5.2.2)
+      '@types/react':
+        specifier: ^18.2.20
+        version: 18.2.21
+      '@types/react-dom':
+        specifier: ^18.2.7
+        version: 18.2.7
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -13587,6 +13651,11 @@ packages:
     resolution: {integrity: sha512-hzzEagAgDyoU1Q6yg5uI+AorQgdvMCur3FcKf7NhMKWsaYg+RnbTyHRa/9IlLF9rf455MOCtcqqrQQ83pPP7Uw==}
     engines: {node: '>=10'}
 
+  /mrmime@2.0.0:
+    resolution: {integrity: sha512-eu38+hdgojoyq63s+yTpN4XMBdt5l8HhMhc4VKLO9KM5caLIBvUm4thi7fFaxyTmCKeNnXZ5pAlBwCUnhA09uw==}
+    engines: {node: '>=10'}
+    dev: true
+
   /ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
 
@@ -14955,6 +15024,11 @@ packages:
       define-properties: 1.2.1
       es-errors: 1.3.0
       set-function-name: 2.0.2
+    dev: true
+
+  /regexparam@3.0.0:
+    resolution: {integrity: sha512-RSYAtP31mvYLkAHrOlh25pCNQ5hWnT106VukGaaFfuJrZFkGRX5GhUAdPqpSDXxOhA2c4akmRuplv1mRqnBn6Q==}
+    engines: {node: '>=8'}
     dev: true
 
   /regexpu-core@5.3.2:
@@ -17001,6 +17075,14 @@ packages:
       '@cloudflare/workerd-linux-64': 1.20240405.0
       '@cloudflare/workerd-linux-arm64': 1.20240405.0
       '@cloudflare/workerd-windows-64': 1.20240405.0
+
+  /worktop@0.8.0-next.18:
+    resolution: {integrity: sha512-+TvsA6VAVoMC3XDKR5MoC/qlLqDixEfOBysDEKnPIPou/NvoPWCAuXHXMsswwlvmEuvX56lQjvELLyLuzTKvRw==}
+    engines: {node: '>=12'}
+    dependencies:
+      mrmime: 2.0.0
+      regexparam: 3.0.0
+    dev: true
 
   /wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0):
     resolution: {integrity: sha512-JlLuch+6DtaC5HGp8YD9Au++XvMv34g3ySdlB5SyPbaObELi8P9ZID5vgyf9AA75djzxL7cuNOk1YdKCJEuq0w==}
