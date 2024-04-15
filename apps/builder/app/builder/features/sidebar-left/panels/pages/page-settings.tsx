@@ -96,6 +96,7 @@ import {
   duplicatePage,
   isRootId,
   toTreeData,
+  isPathAvailable,
 } from "./page-utils";
 import { Form } from "./form";
 import type { System } from "~/builder/features/address-bar";
@@ -205,25 +206,6 @@ const PageValues = SharedPageValues.extend({
   path: isFeatureEnabled("cms") ? PagePath : LegacyPagePath,
 });
 
-const isPathUnique = (
-  pages: Pages,
-  // undefined page id means new page
-  pageId: undefined | Page["id"],
-  path: string
-) => {
-  const list = [];
-  const set = new Set();
-  list.push(path);
-  set.add(path);
-  for (const page of pages.pages) {
-    if (page.id !== pageId) {
-      list.push(page.path);
-      set.add(page.path);
-    }
-  }
-  return list.length === set.size;
-};
-
 const validateValues = (
   pages: undefined | Pages,
   // undefined page id means new page
@@ -258,7 +240,14 @@ const validateValues = (
     return parsedResult.error.formErrors.fieldErrors;
   }
   if (pages !== undefined && values.path !== undefined) {
-    if (isPathUnique(pages, pageId, values.path) === false) {
+    if (
+      isPathAvailable({
+        pages,
+        path: values.path,
+        parentFolderId: values.parentFolderId,
+        pageId,
+      }) === false
+    ) {
       errors.path = errors.path ?? [];
       errors.path.push("All paths must be unique");
     }
