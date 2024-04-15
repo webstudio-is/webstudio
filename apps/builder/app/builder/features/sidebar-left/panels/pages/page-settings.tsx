@@ -333,20 +333,27 @@ const PathField = ({
                 <>
                   <Text>
                     Path is a subset of the URL that looks like this:
-                    &quot;/blog&quot;. To make the path dynamic and use it with
-                    CMS, you can use parameters and other features. CMS features
-                    are part of the Pro plan.
+                    &quot;/blog&quot;.
                   </Text>
-                  <Link
-                    className={buttonStyle({ color: "gradient" })}
-                    css={{ marginTop: theme.spacing[5], width: "100%" }}
-                    color="contrast"
-                    underline="none"
-                    target="_blank"
-                    href="https://webstudio.is/pricing"
-                  >
-                    Upgrade
-                  </Link>
+                  {allowDynamicData === false && isFeatureEnabled("cms") && (
+                    <>
+                      <Text>
+                        To make the path dynamic and use it with CMS, you can
+                        use parameters and other features. CMS features are part
+                        of the Pro plan.
+                      </Text>
+                      <Link
+                        className={buttonStyle({ color: "gradient" })}
+                        css={{ marginTop: theme.spacing[5], width: "100%" }}
+                        color="contrast"
+                        underline="none"
+                        target="_blank"
+                        href="https://webstudio.is/pricing"
+                      >
+                        Upgrade
+                      </Link>
+                    </>
+                  )}
                 </>
               }
               variant="wrapped"
