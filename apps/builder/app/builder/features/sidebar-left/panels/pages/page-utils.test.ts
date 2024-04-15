@@ -8,6 +8,7 @@ import {
   DataSource,
   encodeDataSourceVariable,
   ROOT_FOLDER_ID,
+  type Page,
 } from "@webstudio-is/sdk";
 import {
   cleanupChildRefsMutable,
@@ -36,6 +37,61 @@ import {
 import { registerContainers } from "~/shared/sync";
 
 registerContainers();
+
+const createPages = () => {
+  const data = createDefaultPages({
+    rootInstanceId: "rootInstanceId",
+    systemDataSourceId: "systemDataSourceId",
+    homePageId: "homePageId",
+  });
+
+  const { pages, folders } = data;
+  const f = (id: string, children: Array<Page | Folder>) => {
+    const folder = {
+      id,
+      name: id,
+      slug: id,
+      children: register(children, false),
+    };
+
+    return folder;
+  };
+
+  const p = (id: string, path: string): Page => {
+    const page = {
+      id,
+      meta: {},
+      name: id,
+      path,
+      rootInstanceId: "rootInstanceId",
+      systemDataSourceId: "systemDataSourceId",
+      title: `"${id}"`,
+    };
+    return page;
+  };
+
+  const register = (children: Array<Page | Folder>, root: boolean = true) => {
+    const childIds = [];
+    const rootFolder = folders.find(isRoot);
+
+    for (const child of children) {
+      childIds.push(child.id);
+      if ("meta" in child) {
+        pages.push(child);
+        continue;
+      }
+      folders.push(child);
+
+      if (root) {
+        rootFolder?.children.push(child.id);
+      }
+    }
+
+    return childIds;
+  };
+
+  return { f, p, register, pages: data };
+};
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
@@ -366,83 +422,41 @@ describe("isSlugAvailable", () => {
 });
 
 describe("isPathAvailable", () => {
-  const pages = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    systemDataSourceId: "systemDataSourceId",
-    homePageId: "homePageId",
-  });
-  pages.folders.push({
-    id: "folderId1",
-    name: "Folder 1",
-    slug: "slug1",
-    children: ["pageId1"],
-  });
-  pages.folders.push({
-    id: "folderId2",
-    name: "Folder 2",
-    slug: "slug2",
-    children: ["pageId2"],
-  });
-  pages.folders.push({
-    id: "folderId3",
-    name: "Folder 3",
-    slug: "/",
-    children: ["pageId3"],
-  });
-  pages.pages.push({
-    id: "pageId1",
-    meta: {},
-    name: "Page 1",
-    path: "/page",
-    rootInstanceId: "rootInstanceId",
-    systemDataSourceId: "systemDataSourceId",
-    title: `"Page 1"`,
-  });
-  pages.pages.push({
-    id: "pageId2",
-    meta: {},
-    name: "Page 2",
-    path: "/page",
-    rootInstanceId: "rootInstanceId",
-    systemDataSourceId: "systemDataSourceId",
-    title: `"Page 2"`,
-  });
-  pages.pages.push({
-    id: "pageId3",
-    meta: {},
-    name: "Page 3",
-    path: "/page",
-    rootInstanceId: "rootInstanceId",
-    systemDataSourceId: "systemDataSourceId",
-    title: `"Page 3"`,
-  });
+  const { f, p, register, pages } = createPages();
 
-  test("/slug2/page existing page", () => {
+  register([
+    f("folder1", [p("page1", "/page")]),
+    f("folder2", [p("page2", "/page")]),
+    f("/", [p("page3", "/page")]),
+  ]);
+
+  test("/folder2/page existing page", () => {
     expect(
-      isPathAvailable(
+      isPathAvailable({
         pages,
-        { path: "/page", parentFolderId: "folderId2" },
-        "pageId2"
-      )
+        path: "/page",
+        parentFolderId: "folder2",
+        pageId: "page2",
+      })
     ).toBe(true);
   });
 
-  test("/slug2/page new page", () => {
+  test("/folder2/page new page", () => {
     expect(
-      isPathAvailable(pages, { path: "/page", parentFolderId: "folderId2" })
+      isPathAvailable({ pages, path: "/page", parentFolderId: "folder2" })
     ).toBe(false);
   });
 
-  test("/slug2/page1 new page", () => {
+  test("/folder2/page1 new page", () => {
     expect(
-      isPathAvailable(pages, { path: "/page1", parentFolderId: "folderId2" })
+      isPathAvailable({ pages, path: "/page1", parentFolderId: "folder2" })
     ).toBe(true);
   });
 
   test("/page new page", () => {
-    expect(
-      isPathAvailable(pages, { path: "/page", parentFolderId: "folderId3" })
-    ).toBe(false);
+    expect(isPathAvailable({ pages, path: "/page", parentFolderId: "/" })).toBe(
+      false
+    );
   });
 });
 

@@ -240,7 +240,14 @@ const validateValues = (
     return parsedResult.error.formErrors.fieldErrors;
   }
   if (pages !== undefined && values.path !== undefined) {
-    if (isPathAvailable(pages, values, pageId) === false) {
+    if (
+      isPathAvailable({
+        pages,
+        path: values.path,
+        parentFolderId: values.parentFolderId,
+        pageId,
+      }) === false
+    ) {
       errors.path = errors.path ?? [];
       errors.path.push("All paths must be unique");
     }

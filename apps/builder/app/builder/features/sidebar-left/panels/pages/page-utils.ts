@@ -194,15 +194,18 @@ export const isSlugAvailable = (
   );
 };
 
-export const isPathAvailable = (
-  pages: Pages,
-  {
-    path,
-    parentFolderId,
-  }: { path: Page["path"]; parentFolderId: Folder["id"] },
+export const isPathAvailable = ({
+  pages,
+  path,
+  parentFolderId,
+  pageId,
+}: {
+  pages: Pages;
+  path: Page["path"];
+  parentFolderId: Folder["id"];
   // undefined page id means new page
-  pageId?: Page["id"]
-) => {
+  pageId?: Page["id"];
+}) => {
   const map = new Map<Page["path"], Page>();
   const allPages = [pages.homePage, ...pages.pages];
   for (const page of allPages) {
