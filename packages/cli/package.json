@@ -44,13 +44,24 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@netlify/remix-adapter": "^2.3.0",
+    "@netlify/remix-edge-adapter": "3.2.0",
+    "@remix-run/cloudflare": "^2.8.1",
     "@remix-run/cloudflare-pages": "^2.8.1",
+    "@remix-run/dev": "^2.8.1",
+    "@remix-run/node": "^2.8.1",
+    "@remix-run/react": "^2.8.1",
+    "@remix-run/server-runtime": "^2.8.1",
     "@types/node": "^18.17.1",
     "@types/prompts": "^2.4.5",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "@types/yargs": "^17.0.32",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "tsx": "^4.7.2",
     "typescript": "5.2.2",
-    "vite-tsconfig-paths": "^4.3.2"
+    "vite-tsconfig-paths": "^4.3.2",
+    "wrangler": "^3.48.0"
   }
 }

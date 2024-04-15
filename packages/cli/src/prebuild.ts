@@ -225,7 +225,7 @@ export const prebuild = async (options: {
     }
 
     // Template is local user template
-    if (template.startsWith(".")) {
+    if (template.startsWith(".") || template.startsWith("/")) {
       continue;
     }
 

@@ -57,6 +57,8 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
     "@storybook/react": "^7.4.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.2",
