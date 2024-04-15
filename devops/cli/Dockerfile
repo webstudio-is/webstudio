@@ -41,7 +41,8 @@ RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 
 RUN apk update && apk add bash curl rclone postgresql14-client --no-cache
 
-RUN pnpm i -g --prod zx && pnpm i -g --prod wrangler && find / -name 'workerd*' -type f -prune -exec rm -rf '{}' +
+RUN pnpm i -g --prod zx && pnpm i -g --prod wrangler
+# && find / -name 'workerd*' -type f -prune -exec rm -rf '{}' +
 
 COPY --from=build /cloudlfare-template /cloudlfare-template
 
