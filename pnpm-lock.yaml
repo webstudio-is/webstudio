@@ -498,6 +498,12 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.2.0(react@18.2.0)
+      worktop:
+        specifier: 0.8.0-next.18
+        version: 0.8.0-next.18
+      zod:
+        specifier: ^3.22.4
+        version: 3.22.4
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20240405.0
@@ -523,9 +529,6 @@ importers:
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
-      worktop:
-        specifier: 0.8.0-next.18
-        version: 0.8.0-next.18
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -13593,7 +13596,7 @@ packages:
   /mrmime@2.0.0:
     resolution: {integrity: sha512-eu38+hdgojoyq63s+yTpN4XMBdt5l8HhMhc4VKLO9KM5caLIBvUm4thi7fFaxyTmCKeNnXZ5pAlBwCUnhA09uw==}
     engines: {node: '>=10'}
-    dev: true
+    dev: false
 
   /ms@2.0.0:
     resolution: {integrity: sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A==}
@@ -14968,7 +14971,7 @@ packages:
   /regexparam@3.0.0:
     resolution: {integrity: sha512-RSYAtP31mvYLkAHrOlh25pCNQ5hWnT106VukGaaFfuJrZFkGRX5GhUAdPqpSDXxOhA2c4akmRuplv1mRqnBn6Q==}
     engines: {node: '>=8'}
-    dev: true
+    dev: false
 
   /regexpu-core@5.3.2:
     resolution: {integrity: sha512-RAM5FlZz+Lhmo7db9L298p2vHP5ZywrVXmVXpmAD9GuL5MPH6t9ROw1iA/wfHkQ76Qe7AaPF0nGuim96/IrQMQ==}
@@ -17021,7 +17024,7 @@ packages:
     dependencies:
       mrmime: 2.0.0
       regexparam: 3.0.0
-    dev: true
+    dev: false
 
   /wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0):
     resolution: {integrity: sha512-JlLuch+6DtaC5HGp8YD9Au++XvMv34g3ySdlB5SyPbaObELi8P9ZID5vgyf9AA75djzxL7cuNOk1YdKCJEuq0w==}

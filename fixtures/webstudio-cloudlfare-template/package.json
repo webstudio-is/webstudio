@@ -3,7 +3,7 @@
   "scripts": {
     "fixtures:link": "webstudio link --link 'https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93&'",
     "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "webstudio build --template internal --template cloudflare --preview && pnpm prettier --write ./app/ ./package.json",
+    "fixtures:build": "webstudio build --template internal --template saas-helpers --template cloudflare --preview && pnpm prettier --write ./app/ ./package.json",
     "build": "remix vite:build",
     "dev": "remix vite:dev",
     "typecheck": "tsc",
@@ -31,7 +31,9 @@
     "react-dom": "^18.2.0",
     "@remix-run/cloudflare": "^2.8.1",
     "@remix-run/cloudflare-pages": "^2.8.1",
-    "miniflare": "^3.20231030.4"
+    "miniflare": "^3.20231030.4",
+    "worktop": "0.8.0-next.18",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "webstudio": "workspace:*",
@@ -42,8 +44,7 @@
     "vite": "^5.2.8",
     "@cloudflare/workers-types": "^4.20240405.0",
     "vite-tsconfig-paths": "^4.2.1",
-    "wrangler": "^3.48.0",
-    "worktop": "0.8.0-next.18"
+    "wrangler": "^3.48.0"
   },
   "name": "tmp-remix-app",
   "version": "0.0.1",
