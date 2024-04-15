@@ -37,7 +37,7 @@ COPY --from=build /cloudlfare-template /cloudlfare-template
 WORKDIR /cloudlfare-template
 
 RUN \
-  pnpm webstudio build && \
+  pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false && \
   pnpm build && \
   NODE_ENV=production wrangler deploy \
   --name build \
