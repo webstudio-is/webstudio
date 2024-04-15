@@ -22,6 +22,7 @@ import {
   duplicatePage,
   $editingPagesItemId,
   $pageRootScope,
+  isPathAvailable,
 } from "./page-utils";
 import {
   $dataSourceVariables,
@@ -361,6 +362,87 @@ describe("isSlugAvailable", () => {
 
   test("empty folder slug can be defined multiple times", () => {
     expect(isSlugAvailable("", folders, "rootInstanceId")).toBe(true);
+  });
+});
+
+describe("isPathAvailable", () => {
+  const pages = createDefaultPages({
+    rootInstanceId: "rootInstanceId",
+    systemDataSourceId: "systemDataSourceId",
+    homePageId: "homePageId",
+  });
+  pages.folders.push({
+    id: "folderId1",
+    name: "Folder 1",
+    slug: "slug1",
+    children: ["pageId1"],
+  });
+  pages.folders.push({
+    id: "folderId2",
+    name: "Folder 2",
+    slug: "slug2",
+    children: ["pageId2"],
+  });
+  pages.folders.push({
+    id: "folderId3",
+    name: "Folder 3",
+    slug: "/",
+    children: ["pageId3"],
+  });
+  pages.pages.push({
+    id: "pageId1",
+    meta: {},
+    name: "Page 1",
+    path: "/page",
+    rootInstanceId: "rootInstanceId",
+    systemDataSourceId: "systemDataSourceId",
+    title: `"Page 1"`,
+  });
+  pages.pages.push({
+    id: "pageId2",
+    meta: {},
+    name: "Page 2",
+    path: "/page",
+    rootInstanceId: "rootInstanceId",
+    systemDataSourceId: "systemDataSourceId",
+    title: `"Page 2"`,
+  });
+  pages.pages.push({
+    id: "pageId3",
+    meta: {},
+    name: "Page 3",
+    path: "/page",
+    rootInstanceId: "rootInstanceId",
+    systemDataSourceId: "systemDataSourceId",
+    title: `"Page 3"`,
+  });
+
+  test("/slug2/page existing page", () => {
+    expect(
+      isPathAvailable(
+        pages,
+        { path: "/page", parentFolderId: "folderId2" },
+        "pageId2"
+      )
+    ).toBe(true);
+  });
+
+  test("/slug2/page new page", () => {
+    expect(
+      isPathAvailable(pages, { path: "/page", parentFolderId: "folderId2" })
+    ).toBe(false);
+  });
+
+  test("/slug2/page1 new page", () => {
+    expect(
+      isPathAvailable(pages, { path: "/page1", parentFolderId: "folderId2" })
+    ).toBe(true);
+  });
+
+  test("/page new page", () => {
+    expect(
+      isPathAvailable(pages, { path: "/page", parentFolderId: "folderId3" })
+    ).toBe(false);
   });
 });
 
