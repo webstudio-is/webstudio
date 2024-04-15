@@ -9,7 +9,7 @@ ENV CI=true
 ENV SKIP_INSTALL_SIMPLE_GIT_HOOKS=true
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
 
-RUN apk update && apk add curl rclone postgresql14-client --no-cache
+RUN apk update && apk add bash curl rclone postgresql14-client --no-cache
 
 COPY ./ /cli
 WORKDIR /cli
