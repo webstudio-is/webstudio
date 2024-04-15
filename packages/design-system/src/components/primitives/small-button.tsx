@@ -49,6 +49,7 @@ const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
   "&[data-focused=true], &:focus-visible": {
     borderRadius: theme.borderRadius[3],
     outline: `2px solid ${focusColors[variant]}`,
+    outlineOffset: -2,
     "&:disabled, &[data-disabled]": {
       outline: "none",
     },
@@ -57,8 +58,9 @@ const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
 
 const style = css({
   all: "unset",
-  width: theme.spacing[9],
-  height: theme.spacing[9],
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   "&:disabled, &[data-disabled]": {
     color: theme.colors.foregroundDisabled,
   },
@@ -68,15 +70,27 @@ const style = css({
       contrast: perVariantStyle("contrast"),
       destructive: perVariantStyle("destructive"),
     },
+    size: {
+      1: {
+        width: theme.spacing[9],
+        height: theme.spacing[9],
+      },
+      2: {
+        width: theme.spacing[12],
+        height: theme.spacing[12],
+      },
+    },
   },
   defaultVariants: {
     variant: "normal",
+    size: 1,
   },
 });
 
 type Props = {
   children: ReactNode;
   variant?: (typeof smallButtonVariants)[number];
+  size?: "1" | "2";
   "data-state"?: (typeof smallButtonStates)[number];
   "data-focused"?: boolean;
   css?: CSS;
@@ -84,13 +98,13 @@ type Props = {
 
 export const SmallButton = forwardRef(
   (
-    { variant, children, css, className, ...restProps }: Props,
+    { variant, size, children, css, className, ...restProps }: Props,
     ref: Ref<HTMLButtonElement>
   ) => {
     return (
       <button
         {...restProps}
-        className={style({ css, className, variant })}
+        className={style({ css, className, variant, size })}
         ref={ref}
       >
         {children}

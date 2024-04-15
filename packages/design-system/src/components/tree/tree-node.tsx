@@ -27,7 +27,7 @@ const ITEM_HEIGHT = 32;
 const ICONS_SIZE = 16;
 const ITEM_PADDING_LEFT = 8;
 // extra padding on the right to make sure scrollbar doesn't obscure anything
-const ITEM_PADDING_RIGHT = 14;
+const ITEM_PADDING_RIGHT = 8;
 
 export const getPlacementIndicatorAlignment = (depth: number) => {
   return depth * INDENT + ITEM_PADDING_LEFT;
@@ -52,7 +52,7 @@ const getItemButtonCssVars = ({
     };
   }
   return {
-    [itemButtonVars.paddingRight]: `${ITEM_PADDING_RIGHT}px`,
+    [itemButtonVars.paddingRight]: ITEM_PADDING_RIGHT,
   };
 };
 const ItemButton = styled("button", {
@@ -145,7 +145,7 @@ const getSuffixContainerCssVars = ({
 const SuffixContainer = styled(Flex, {
   position: "absolute",
   alignItems: "center",
-  right: `${ITEM_PADDING_RIGHT}px`,
+  right: ITEM_PADDING_RIGHT,
   top: 0,
   bottom: 0,
   defaultVariants: { align: "center" },
@@ -267,7 +267,7 @@ export const TreeItemBody = <Data extends { id: string }>({
   isExpanded,
   children,
   suffix,
-  suffixWidth = suffix ? theme.spacing[9] : "0px",
+  suffixWidth = suffix ? theme.spacing[12] : "0px",
   alwaysShowSuffix = false,
   forceFocus = false,
   selectionEvent = "click",
