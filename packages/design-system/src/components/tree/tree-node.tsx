@@ -207,7 +207,7 @@ const ItemContainer = styled(Flex, {
 });
 
 const useScrollIntoView = (
-  element: HTMLElement | null,
+  elementRef: { current: HTMLElement | null },
   {
     isDragging,
     isDropTarget,
@@ -218,8 +218,6 @@ const useScrollIntoView = (
   isDraggingRef.current = isDragging;
   const isDropTargetRef = useRef(isDropTarget);
   isDropTargetRef.current = isDropTarget;
-  const elementRef = useRef(element);
-  elementRef.current = element;
 
   // Scroll the selected button into view when selected from canvas.
   useEffect(() => {
@@ -317,7 +315,7 @@ export const TreeItemBody = <Data extends { id: string }>({
     itemSelector
   );
 
-  useScrollIntoView(itemButtonRef.current, {
+  useScrollIntoView(itemButtonRef, {
     isSelected,
     isDragging,
     isDropTarget,
