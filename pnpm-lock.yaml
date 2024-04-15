@@ -798,67 +798,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/cli
 
-  fixtures/webstudio-remix-vercel-form-filters:
-    dependencies:
-      '@remix-run/node':
-        specifier: ^2.8.1
-        version: 2.8.1(typescript@5.2.2)
-      '@remix-run/react':
-        specifier: ^2.8.1
-        version: 2.8.1(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2)
-      '@remix-run/server-runtime':
-        specifier: ^2.8.1
-        version: 2.8.1(typescript@5.2.2)
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../../packages/form-handlers
-      '@webstudio-is/image':
-        specifier: workspace:*
-        version: link:../../packages/image
-      '@webstudio-is/react-sdk':
-        specifier: workspace:*
-        version: link:../../packages/react-sdk
-      '@webstudio-is/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
-      '@webstudio-is/sdk-components-react':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react
-      '@webstudio-is/sdk-components-react-radix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-radix
-      '@webstudio-is/sdk-components-react-remix':
-        specifier: workspace:*
-        version: link:../../packages/sdk-components-react-remix
-      isbot:
-        specifier: ^3.6.8
-        version: 3.6.13
-      react:
-        specifier: ^18.2.0
-        version: 18.2.0
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.2.0(react@18.2.0)
-    devDependencies:
-      '@remix-run/dev':
-        specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1)(typescript@5.2.2)(vite@5.2.8)
-      '@types/react':
-        specifier: ^18.2.20
-        version: 18.2.21
-      '@types/react-dom':
-        specifier: ^18.2.7
-        version: 18.2.7
-      typescript:
-        specifier: 5.2.2
-        version: 5.2.2
-      vite:
-        specifier: ^5.2.8
-        version: 5.2.8
-      webstudio:
-        specifier: workspace:*
-        version: link:../../packages/cli
-
   packages/ai:
     dependencies:
       '@webstudio-is/css-data':
