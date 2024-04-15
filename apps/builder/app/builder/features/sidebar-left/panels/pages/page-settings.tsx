@@ -335,7 +335,7 @@ const PathField = ({
                     Path is a subset of the URL that looks like this:
                     &quot;/blog&quot;.
                   </Text>
-                  {allowDynamicData && isFeatureEnabled("cms") && (
+                  {allowDynamicData === false && isFeatureEnabled("cms") && (
                     <>
                       <Text>
                         To make the path dynamic and use it with CMS, you can
