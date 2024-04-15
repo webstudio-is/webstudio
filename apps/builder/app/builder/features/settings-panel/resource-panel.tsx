@@ -296,7 +296,7 @@ const $selectedInstanceScope = computed(
     if (values) {
       for (const [dataSourceId, value] of values) {
         if (hiddenDataSourceIds.has(dataSourceId)) {
-          // continue;
+          continue;
         }
         const dataSource = dataSources.get(dataSourceId);
         if (dataSource === undefined) {
