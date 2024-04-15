@@ -49,6 +49,7 @@ const createPages = () => {
 
   function f(id: string, children?: Array<Page | Folder>): Folder;
   function f(id: string, slug: string, children?: Array<Page | Folder>): Folder;
+  // @eslint-ignore-next-line func-style
   function f(id: string, slug?: unknown, children?: unknown) {
     if (Array.isArray(slug)) {
       children = slug;
