@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Testing Page</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import { html, render } from "https://esm.run/lit-html";
+
+      const params = new URLSearchParams(window.location.search);
+
+      const category = params.get("category");
+      const color = params.get("color");
+
+      // Define a template function
+      const myTemplate = (name) => html`
+        <form action="/" method="get">
+          <input name="category" type="text" value="shirts" />
+          <button type="submit">Submit</button>
+        </form>
+
+        <form action="/" method="get">
+          <input name="category" type="text" value="${category}" />
+          <input name="color" type="text" value="${color}" dirname="oppa" />
+          <button type="submit">Submit</button>
+        </form>
+
+        <form action="/?category=cocacola&color=red" method="get">
+          <input name="page" type="text" value="1" />
+          <button type="submit">Submit</button>
+        </form>
+      `;
+
+      // Render the template with some data
+      render(myTemplate("lit-html"), document.querySelector("#root"));
+    </script>
+  </body>
+</html>

@@ -510,7 +510,7 @@ importers:
         version: 4.20240405.0
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@types/node@18.17.1)(typescript@5.2.2)(vite@5.2.8)(wrangler@3.50.0)
+        version: 2.8.1(typescript@5.2.2)(vite@5.2.8)(wrangler@3.50.0)
       '@types/react':
         specifier: ^18.2.20
         version: 18.2.21
@@ -738,6 +738,67 @@ importers:
         version: link:../../packages/cli
 
   fixtures/webstudio-remix-vercel:
+    dependencies:
+      '@remix-run/node':
+        specifier: ^2.8.1
+        version: 2.8.1(typescript@5.2.2)
+      '@remix-run/react':
+        specifier: ^2.8.1
+        version: 2.8.1(react-dom@18.2.0)(react@18.2.0)(typescript@5.2.2)
+      '@remix-run/server-runtime':
+        specifier: ^2.8.1
+        version: 2.8.1(typescript@5.2.2)
+      '@webstudio-is/form-handlers':
+        specifier: workspace:*
+        version: link:../../packages/form-handlers
+      '@webstudio-is/image':
+        specifier: workspace:*
+        version: link:../../packages/image
+      '@webstudio-is/react-sdk':
+        specifier: workspace:*
+        version: link:../../packages/react-sdk
+      '@webstudio-is/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
+      '@webstudio-is/sdk-components-react':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react
+      '@webstudio-is/sdk-components-react-radix':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react-radix
+      '@webstudio-is/sdk-components-react-remix':
+        specifier: workspace:*
+        version: link:../../packages/sdk-components-react-remix
+      isbot:
+        specifier: ^3.6.8
+        version: 3.6.13
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
+    devDependencies:
+      '@remix-run/dev':
+        specifier: ^2.8.1
+        version: 2.8.1(@remix-run/serve@2.8.1)(typescript@5.2.2)(vite@5.2.8)
+      '@types/react':
+        specifier: ^18.2.20
+        version: 18.2.21
+      '@types/react-dom':
+        specifier: ^18.2.7
+        version: 18.2.7
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+      vite:
+        specifier: ^5.2.8
+        version: 5.2.8
+      webstudio:
+        specifier: workspace:*
+        version: link:../../packages/cli
+
+  fixtures/webstudio-remix-vercel-form-filters:
     dependencies:
       '@remix-run/node':
         specifier: ^2.8.1
@@ -6179,7 +6240,7 @@ packages:
       '@remix-run/serve': 2.8.1(typescript@5.2.2)
       '@remix-run/server-runtime': 2.8.1(typescript@5.2.2)
       '@types/mdx': 2.0.5
-      '@vanilla-extract/integration': 6.2.1(@types/node@18.17.1)
+      '@vanilla-extract/integration': 6.2.1
       arg: 5.0.2
       cacache: 17.1.4
       chalk: 4.1.2
@@ -6269,6 +6330,96 @@ packages:
       '@remix-run/server-runtime': 2.8.1(typescript@5.2.2)
       '@types/mdx': 2.0.5
       '@vanilla-extract/integration': 6.2.1(@types/node@18.17.1)
+      arg: 5.0.2
+      cacache: 17.1.4
+      chalk: 4.1.2
+      chokidar: 3.5.3
+      cross-spawn: 7.0.3
+      dotenv: 16.3.1
+      es-module-lexer: 1.5.0
+      esbuild: 0.20.2
+      esbuild-plugins-node-modules-polyfill: 1.6.3(esbuild@0.20.2)
+      execa: 5.1.1
+      exit-hook: 2.2.1
+      express: 4.18.2
+      fs-extra: 10.1.0
+      get-port: 5.1.1
+      gunzip-maybe: 1.4.2
+      jsesc: 3.0.2
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.debounce: 4.0.8
+      minimatch: 9.0.2
+      ora: 5.4.1
+      picocolors: 1.0.0
+      picomatch: 2.3.1
+      pidtree: 0.6.0
+      postcss: 8.4.38
+      postcss-discard-duplicates: 5.1.0(postcss@8.4.38)
+      postcss-load-config: 4.0.1(postcss@8.4.38)
+      postcss-modules: 6.0.0(postcss@8.4.38)
+      prettier: 2.8.7
+      pretty-ms: 7.0.1
+      react-refresh: 0.14.0
+      remark-frontmatter: 4.0.1
+      remark-mdx-frontmatter: 1.1.1
+      semver: 7.5.4
+      set-cookie-parser: 2.6.0
+      tar-fs: 2.1.1
+      tsconfig-paths: 4.1.2
+      typescript: 5.2.2
+      vite: 5.2.8
+      wrangler: 3.50.0(@cloudflare/workers-types@4.20240405.0)
+      ws: 7.5.9
+    transitivePeerDependencies:
+      - '@types/node'
+      - bluebird
+      - bufferutil
+      - less
+      - lightningcss
+      - sass
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - ts-node
+      - utf-8-validate
+    dev: true
+
+  /@remix-run/dev@2.8.1(typescript@5.2.2)(vite@5.2.8)(wrangler@3.50.0):
+    resolution: {integrity: sha512-qFt4jAsAJeIOyg6ngeSnTG/9Z5N9QJfeThP/8wRHc1crqYgTiEtcI3DZ8WlAXjVSF5emgn/ZZKqzLAI02OgMfQ==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+    peerDependencies:
+      '@remix-run/serve': ^2.8.1
+      typescript: ^5.1.0
+      vite: ^5.1.0
+      wrangler: ^3.28.2
+    peerDependenciesMeta:
+      '@remix-run/serve':
+        optional: true
+      typescript:
+        optional: true
+      vite:
+        optional: true
+      wrangler:
+        optional: true
+    dependencies:
+      '@babel/core': 7.22.9
+      '@babel/generator': 7.24.1
+      '@babel/parser': 7.24.1
+      '@babel/plugin-syntax-decorators': 7.24.1(@babel/core@7.22.9)
+      '@babel/plugin-syntax-jsx': 7.22.5(@babel/core@7.22.9)
+      '@babel/preset-typescript': 7.22.5(@babel/core@7.22.9)
+      '@babel/traverse': 7.24.1
+      '@babel/types': 7.24.0
+      '@mdx-js/mdx': 2.3.0
+      '@npmcli/package-json': 4.0.1
+      '@remix-run/node': 2.8.1(typescript@5.2.2)
+      '@remix-run/router': 1.15.3-pre.0
+      '@remix-run/server-runtime': 2.8.1(typescript@5.2.2)
+      '@types/mdx': 2.0.5
+      '@vanilla-extract/integration': 6.2.1
       arg: 5.0.2
       cacache: 17.1.4
       chalk: 4.1.2
@@ -8187,7 +8338,7 @@ packages:
       outdent: 0.8.0
     dev: true
 
-  /@vanilla-extract/integration@6.2.1(@types/node@18.17.1):
+  /@vanilla-extract/integration@6.2.1:
     resolution: {integrity: sha512-+xYJz07G7TFAMZGrOqArOsURG+xcYvqctujEkANjw2McCBvGEK505RxQqOuNiA9Mi9hgGdNp2JedSa94f3eoLg==}
     dependencies:
       '@babel/core': 7.22.9
@@ -8200,6 +8351,33 @@ packages:
       javascript-stringify: 2.1.0
       lodash: 4.17.21
       mlly: 1.2.0
+      outdent: 0.8.0
+      vite: 4.4.9(@types/node@18.17.1)
+      vite-node: 0.28.5
+    transitivePeerDependencies:
+      - '@types/node'
+      - less
+      - lightningcss
+      - sass
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+    dev: true
+
+  /@vanilla-extract/integration@6.2.1(@types/node@18.17.1):
+    resolution: {integrity: sha512-+xYJz07G7TFAMZGrOqArOsURG+xcYvqctujEkANjw2McCBvGEK505RxQqOuNiA9Mi9hgGdNp2JedSa94f3eoLg==}
+    dependencies:
+      '@babel/core': 7.22.9
+      '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.22.9)
+      '@vanilla-extract/babel-plugin-debug-ids': 1.0.2
+      '@vanilla-extract/css': 1.11.0
+      esbuild: 0.20.2
+      eval: 0.1.6
+      find-up: 5.0.0
+      javascript-stringify: 2.1.0
+      lodash: 4.17.21
+      mlly: 1.6.1
       outdent: 0.8.0
       vite: 4.4.9(@types/node@18.17.1)
       vite-node: 0.28.5(@types/node@18.17.1)
@@ -10990,7 +11168,7 @@ packages:
       foreground-child: 3.1.1
       jackspeak: 2.2.1
       minimatch: 9.0.2
-      minipass: 7.0.2
+      minipass: 7.0.4
       path-scurry: 1.10.1
 
   /glob@7.1.6:
@@ -13532,7 +13710,6 @@ packages:
   /minipass@7.0.4:
     resolution: {integrity: sha512-jYofLM5Dam9279rdkWzqHozUo4ybjdZmCsDHePy5V/PbBcVMiSZR97gmAy45aqi8CK1lG2ECd356FU86avfwUQ==}
     engines: {node: '>=16 || 14 >=14.17'}
-    dev: true
 
   /minizlib@2.1.2:
     resolution: {integrity: sha512-bAxsR8BVfj60DWXHE3u30oHzfl4G7khkSuPW+qvpd7jFRHm7dLxOjUk1EHACJ/hxLY8phGJ0YhYHZo7jil7Qdg==}
@@ -16715,7 +16892,7 @@ packages:
       vfile-message: 3.1.3
     dev: true
 
-  /vite-node@0.28.5(@types/node@18.17.1):
+  /vite-node@0.28.5:
     resolution: {integrity: sha512-LmXb9saMGlrMZbXTvOveJKwMTBTNUH66c8rJnQ0ZPNX+myPEol64+szRzXtV5ORb0Hb/91yq+/D3oERoyAt6LA==}
     engines: {node: '>=v14.16.0'}
     hasBin: true
@@ -16724,6 +16901,30 @@ packages:
       debug: 4.3.4
       mlly: 1.2.0
       pathe: 1.1.0
+      picocolors: 1.0.0
+      source-map: 0.6.1
+      source-map-support: 0.5.21
+      vite: 4.4.9(@types/node@18.17.1)
+    transitivePeerDependencies:
+      - '@types/node'
+      - less
+      - lightningcss
+      - sass
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+    dev: true
+
+  /vite-node@0.28.5(@types/node@18.17.1):
+    resolution: {integrity: sha512-LmXb9saMGlrMZbXTvOveJKwMTBTNUH66c8rJnQ0ZPNX+myPEol64+szRzXtV5ORb0Hb/91yq+/D3oERoyAt6LA==}
+    engines: {node: '>=v14.16.0'}
+    hasBin: true
+    dependencies:
+      cac: 6.7.14
+      debug: 4.3.4
+      mlly: 1.6.1
+      pathe: 1.1.2
       picocolors: 1.0.0
       source-map: 0.6.1
       source-map-support: 0.5.21
