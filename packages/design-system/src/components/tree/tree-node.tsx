@@ -231,7 +231,11 @@ const useScrollIntoView = (
         block: "nearest",
       });
     }
-  }, [isSelected]);
+  }, [
+    isSelected,
+    //only for the linter
+    elementRef,
+  ]);
 };
 
 export type TreeItemRenderProps<Data extends { id: string }> = {
