@@ -57,9 +57,6 @@ const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
 
 const style = css({
   all: "unset",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
   width: theme.spacing[9],
   height: theme.spacing[9],
   position: "relative",
