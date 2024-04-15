@@ -27,7 +27,7 @@ const ITEM_HEIGHT = 32;
 const ICONS_SIZE = 16;
 const ITEM_PADDING_LEFT = 8;
 // extra padding on the right to make sure scrollbar doesn't obscure anything
-const ITEM_PADDING_RIGHT = 8;
+const ITEM_PADDING_RIGHT = 14;
 
 export const getPlacementIndicatorAlignment = (depth: number) => {
   return depth * INDENT + ITEM_PADDING_LEFT;

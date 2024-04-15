@@ -49,7 +49,6 @@ const perVariantStyle = (variant: (typeof smallButtonVariants)[number]) => ({
   "&[data-focused=true], &:focus-visible": {
     borderRadius: theme.borderRadius[3],
     outline: `2px solid ${focusColors[variant]}`,
-    outlineOffset: -2,
     "&:disabled, &[data-disabled]": {
       outline: "none",
     },
@@ -61,6 +60,15 @@ const style = css({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
+  width: theme.spacing[9],
+  height: theme.spacing[9],
+  position: "relative",
+  // We want to bleed outside of the 16px icon size because its too small
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    inset: `-${theme.spacing[4]}`,
+  },
   "&:disabled, &[data-disabled]": {
     color: theme.colors.foregroundDisabled,
   },
@@ -70,27 +78,15 @@ const style = css({
       contrast: perVariantStyle("contrast"),
       destructive: perVariantStyle("destructive"),
     },
-    size: {
-      1: {
-        width: theme.spacing[9],
-        height: theme.spacing[9],
-      },
-      2: {
-        width: theme.spacing[12],
-        height: theme.spacing[12],
-      },
-    },
   },
   defaultVariants: {
     variant: "normal",
-    size: 1,
   },
 });
 
 type Props = {
   children: ReactNode;
   variant?: (typeof smallButtonVariants)[number];
-  size?: "1" | "2";
   "data-state"?: (typeof smallButtonStates)[number];
   "data-focused"?: boolean;
   css?: CSS;
@@ -98,13 +94,13 @@ type Props = {
 
 export const SmallButton = forwardRef(
   (
-    { variant, size, children, css, className, ...restProps }: Props,
+    { variant, children, css, className, ...restProps }: Props,
     ref: Ref<HTMLButtonElement>
   ) => {
     return (
       <button
         {...restProps}
-        className={style({ css, className, variant, size })}
+        className={style({ css, className, variant })}
         ref={ref}
       >
         {children}

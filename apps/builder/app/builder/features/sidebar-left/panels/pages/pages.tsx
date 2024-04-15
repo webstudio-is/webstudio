@@ -92,7 +92,6 @@ const ItemSuffix = ({
         onClick={() => onEdit(isEditing ? undefined : itemId)}
         ref={buttonRef}
         icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
-        //size="2"
         variant={isParentSelected ? "contrast" : "normal"}
       />
     </Tooltip>
