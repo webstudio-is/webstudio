@@ -277,6 +277,12 @@ const Player = ({
   }, [autoplay, status, renderer, onStatusChange]);
 
   useEffect(() => {
+    if (renderer !== "canvas") {
+      warmConnections();
+    }
+  }, [renderer]);
+
+  useEffect(() => {
     if (videoUrl === undefined) {
       return;
     }
@@ -413,11 +419,6 @@ export const Vimeo = forwardRef<Ref, Props>(
           ref={(value: Ref) => {
             if (ref !== null) {
               typeof ref === "function" ? ref(value) : (ref.current = value);
-            }
-          }}
-          onPointerOver={() => {
-            if (renderer !== "canvas") {
-              warmConnections();
             }
           }}
         >
