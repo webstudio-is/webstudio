@@ -14,8 +14,8 @@ export const VimeoSpinner = forwardRef<ElementRef<typeof defaultTag>, Props>(
   (props, ref) => {
     const vimeoContext = useContext(VimeoContext);
 
-    if (vimeoContext.status !== "initialized") {
-      return null;
+    if (vimeoContext.status !== "loading") {
+      return;
     }
 
     return <div {...props} ref={ref} />;

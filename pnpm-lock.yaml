@@ -1939,9 +1939,6 @@ importers:
       colord:
         specifier: ^2.9.3
         version: 2.9.3
-      shallow-equal:
-        specifier: ^3.1.0
-        version: 3.1.0
     devDependencies:
       '@jest/globals':
         specifier: ^29.7.0
