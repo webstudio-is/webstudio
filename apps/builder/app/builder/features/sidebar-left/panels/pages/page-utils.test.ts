@@ -46,16 +46,23 @@ const createPages = () => {
   });
 
   const { pages, folders } = data;
-  const f = (id: string, children: Array<Page | Folder>) => {
+
+  function f(id: string, children?: Array<Page | Folder>): Folder;
+  function f(id: string, slug: string, children?: Array<Page | Folder>): Folder;
+  function f(id: string, slug?: unknown, children?: unknown) {
+    if (Array.isArray(slug)) {
+      children = slug;
+      slug = id;
+    }
     const folder = {
       id,
       name: id,
-      slug: id,
-      children: register(children, false),
+      slug: slug ?? id,
+      children: register((children as Array<Page | Folder>) ?? [], false),
     };
 
     return folder;
-  };
+  }
 
   const p = (id: string, path: string): Page => {
     const page = {
@@ -98,11 +105,7 @@ const toMap = <T extends { id: string }>(list: T[]) =>
 
 describe("toTreeData", () => {
   test("initial pages always has home pages and a root folder", () => {
-    const pages = createDefaultPages({
-      rootInstanceId: "id",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
+    const { pages } = createPages();
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
       id: ROOT_FOLDER_ID,
@@ -116,7 +119,7 @@ describe("toTreeData", () => {
             meta: {},
             name: "Home",
             path: "",
-            rootInstanceId: "id",
+            rootInstanceId: "rootInstanceId",
             systemDataSourceId: "systemDataSourceId",
             title: `"Home"`,
           },
@@ -128,19 +131,9 @@ describe("toTreeData", () => {
   });
 
   test("add empty folder", () => {
-    const pages = createDefaultPages({
-      rootInstanceId: "id",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
-    pages.folders.push({
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: [],
-    });
-    const rootFolder = pages.folders.find(isRoot);
-    rootFolder?.children.push("folderId");
+    const { pages, register, f } = createPages();
+    register([f("folder", [])]);
+
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
       id: ROOT_FOLDER_ID,
@@ -154,7 +147,7 @@ describe("toTreeData", () => {
             meta: {},
             name: "Home",
             path: "",
-            rootInstanceId: "id",
+            rootInstanceId: "rootInstanceId",
             systemDataSourceId: "systemDataSourceId",
             title: `"Home"`,
           },
@@ -163,8 +156,8 @@ describe("toTreeData", () => {
         },
         {
           type: "folder",
-          id: "folderId",
-          name: "Folder",
+          id: "folder",
+          name: "folder",
           slug: "folder",
           children: [],
         },
@@ -173,28 +166,9 @@ describe("toTreeData", () => {
   });
 
   test("add a page inside a folder", () => {
-    const pages = createDefaultPages({
-      rootInstanceId: "id",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
-    pages.pages.push({
-      id: "pageId",
-      meta: {},
-      name: "Page",
-      path: "/page",
-      rootInstanceId: "id",
-      systemDataSourceId: "systemDataSourceId",
-      title: `"Page"`,
-    });
-    pages.folders.push({
-      id: "folderId",
-      name: "Folder",
-      slug: "folder",
-      children: ["pageId"],
-    });
-    const rootFolder = pages.folders.find(isRoot);
-    rootFolder?.children.push("folderId");
+    const { pages, register, f, p } = createPages();
+    register([f("folder", [p("page", "/page")])]);
+
     const tree = toTreeData(pages);
 
     expect(tree.root).toEqual({
@@ -209,7 +183,7 @@ describe("toTreeData", () => {
             meta: {},
             name: "Home",
             path: "",
-            rootInstanceId: "id",
+            rootInstanceId: "rootInstanceId",
             systemDataSourceId: "systemDataSourceId",
             title: `"Home"`,
           },
@@ -218,21 +192,21 @@ describe("toTreeData", () => {
         },
         {
           type: "folder",
-          id: "folderId",
-          name: "Folder",
+          id: "folder",
+          name: "folder",
           slug: "folder",
           children: [
             {
               type: "page",
-              id: "pageId",
+              id: "page",
               data: {
-                id: "pageId",
+                id: "page",
                 meta: {},
-                name: "Page",
+                name: "page",
                 path: "/page",
-                rootInstanceId: "id",
+                rootInstanceId: "rootInstanceId",
                 systemDataSourceId: "systemDataSourceId",
-                title: `"Page"`,
+                title: `"page"`,
               },
             },
           ],
@@ -242,25 +216,9 @@ describe("toTreeData", () => {
   });
 
   test("nest a folder", () => {
-    const pages = createDefaultPages({
-      rootInstanceId: "id",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
-    const rootFolder = pages.folders.find(isRoot);
-    rootFolder?.children.push("1");
-    pages.folders.push({
-      id: "1",
-      name: "Folder 1",
-      slug: "folder-1",
-      children: ["1-1"],
-    });
-    pages.folders.push({
-      id: "1-1",
-      name: "Folder 1-1",
-      slug: "folder-1-1",
-      children: [],
-    });
+    const { pages, register, f } = createPages();
+    register([f("1", [f("1-1")])]);
+
     const tree = toTreeData(pages);
     expect(tree.root).toEqual({
       type: "folder",
@@ -277,21 +235,21 @@ describe("toTreeData", () => {
             path: "",
             title: `"Home"`,
             meta: {},
-            rootInstanceId: "id",
+            rootInstanceId: "rootInstanceId",
             systemDataSourceId: "systemDataSourceId",
           },
         },
         {
           type: "folder",
           id: "1",
-          name: "Folder 1",
-          slug: "folder-1",
+          name: "1",
+          slug: "1",
           children: [
             {
               type: "folder",
               id: "1-1",
-              name: "Folder 1-1",
-              slug: "folder-1-1",
+              name: "1-1",
+              slug: "1-1",
               children: [],
             },
           ],
@@ -305,11 +263,7 @@ describe("reparentOrphansMutable", () => {
   // We must deal with the fact there can be an orphaned folder or page in a collaborative mode,
   // because user A can add a page to a folder while user B deletes the folder without receiving the create page yet.
   test("reparent orphans to the root", () => {
-    const pages = createDefaultPages({
-      rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
+    const { pages } = createPages();
     pages.pages.push({
       id: "pageId",
       meta: {},
@@ -338,11 +292,9 @@ describe("reparentOrphansMutable", () => {
 
 describe("cleanupChildRefsMutable", () => {
   test("cleanup refs", () => {
-    const { folders } = createDefaultPages({
-      rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
+    const {
+      pages: { folders },
+    } = createPages();
     folders.push({
       id: "folderId",
       name: "Folder",
@@ -362,58 +314,40 @@ describe("cleanupChildRefsMutable", () => {
 });
 
 describe("isSlugAvailable", () => {
-  const { folders } = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    systemDataSourceId: "systemDataSourceId",
-    homePageId: "homePageId",
-  });
-  folders.push({
-    id: "folderId1",
-    name: "Folder 1",
-    slug: "slug1",
-    children: ["folderId1-1"],
-  });
-  folders.push({
-    id: "folderId1-1",
-    name: "Folder 1-1",
-    slug: "slug1-1",
-    children: [],
-  });
-  folders.push({
-    id: "folderId2-1",
-    name: "Folder 2-1",
-    slug: "",
-    children: [],
-  });
-  folders.push({
-    id: "folderId2-2",
-    name: "Folder 2-2",
-    slug: "",
-    children: [],
-  });
+  const {
+    pages: { folders },
+    register,
+    f,
+  } = createPages();
+
+  register([
+    f("folder1", [f("folder1-1")]),
+    f("folder2-1", ""),
+    f("folder2-2", ""),
+  ]);
+
   const rootFolder = folders.find(isRoot)!;
-  rootFolder.children.push("folderId1");
 
   test("available in the root", () => {
-    expect(isSlugAvailable("slug", folders, rootFolder.id)).toBe(true);
+    expect(isSlugAvailable("folder", folders, rootFolder.id)).toBe(true);
   });
 
   test("not available in the root", () => {
-    expect(isSlugAvailable("slug1", folders, rootFolder.id)).toBe(false);
+    expect(isSlugAvailable("folder1", folders, rootFolder.id)).toBe(false);
   });
 
-  test("available in Folder 1", () => {
-    expect(isSlugAvailable("slug", folders, "folderId1")).toBe(true);
+  test("available in folder1", () => {
+    expect(isSlugAvailable("folder", folders, "folder1")).toBe(true);
   });
 
-  test("not available in Folder 1", () => {
-    expect(isSlugAvailable("slug1-1", folders, "folderId1")).toBe(false);
+  test("not available in folder1", () => {
+    expect(isSlugAvailable("folder1-1", folders, "folder1")).toBe(false);
   });
 
   test("existing folder can have a matching slug when its the same id/folder", () => {
-    expect(
-      isSlugAvailable("slug1-1", folders, "folderId1", "folderId1-1")
-    ).toBe(true);
+    expect(isSlugAvailable("folder1-1", folders, "folder1", "folder1-1")).toBe(
+      true
+    );
   });
 
   test("empty folder slug can be defined multiple times", () => {
@@ -462,22 +396,18 @@ describe("isPathAvailable", () => {
 
 describe("registerFolderChildMutable", () => {
   test("register a folder child in the root via fallback", () => {
-    const { folders } = createDefaultPages({
-      rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
+    const {
+      pages: { folders },
+    } = createPages();
     registerFolderChildMutable(folders, "folderId");
     const rootFolder = folders.find(isRoot);
     expect(rootFolder?.children).toEqual(["homePageId", "folderId"]);
   });
 
   test("register a folder child in a provided folder", () => {
-    const { folders } = createDefaultPages({
-      rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
+    const {
+      pages: { folders },
+    } = createPages();
     const folder = {
       id: "folderId",
       name: "Folder",
@@ -490,11 +420,9 @@ describe("registerFolderChildMutable", () => {
   });
 
   test("register in a provided folder & cleanup old refs", () => {
-    const { folders } = createDefaultPages({
-      rootInstanceId: "rootInstanceId",
-      systemDataSourceId: "systemDataSourceId",
-      homePageId: "homePageId",
-    });
+    const {
+      pages: { folders },
+    } = createPages();
     const folder = {
       id: "folderId",
       name: "Folder",
@@ -618,11 +546,7 @@ describe("filterSelfAndChildren", () => {
 });
 
 describe("getExistingRoutePaths", () => {
-  const pages = createDefaultPages({
-    rootInstanceId: "rootInstanceId",
-    systemDataSourceId: "systemDataSourceId",
-    homePageId: "homePageId",
-  });
+  const { pages } = createPages();
 
   test("gets all the route paths that exists in the project", () => {
     pages.pages.push({
