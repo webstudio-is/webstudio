@@ -144,12 +144,7 @@ export const Pages = z.object({
   compiler: CompilerSettings.optional(),
   redirects: z.array(PageRedirect).optional(),
   homePage: HomePage,
-  pages: z
-    .array(Page)
-    .refine(
-      (array) => new Set(array.map((page) => page.path)).size === array.length,
-      "All paths must be unique"
-    ),
+  pages: z.array(Page),
   folders: z
     .array(Folder)
     .refine((folders) => folders.length > 0, "Folders can't be empty"),
