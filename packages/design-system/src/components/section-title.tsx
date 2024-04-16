@@ -73,6 +73,7 @@ const chevronStyle = css({
   opacity: `var(${chevronOpacity}, 0)`,
   marginLeft: `-${theme.spacing[8]}`,
   transition: "transform 150ms, opacity 200ms",
+  color: theme.colors.backgroundIconSubtle,
   variants: {
     state: {
       open: {
