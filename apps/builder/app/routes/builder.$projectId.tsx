@@ -30,6 +30,8 @@ export const loader = async ({
   params,
   request,
 }: LoaderFunctionArgs): Promise<BuilderProps> => {
+  console.info("env", env.DEPLOYMENT_ENVIRONMENT);
+
   const context = await createContext(request);
 
   try {
