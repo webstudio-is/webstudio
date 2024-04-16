@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode, useState } from "react";
+import { useEffect, useRef, type ReactNode, useState, forwardRef } from "react";
 import {
   Annotation,
   EditorState,
@@ -140,7 +140,7 @@ type EditorContentProps = {
   onBlur?: (event: FocusEvent) => void;
 };
 
-const EditorContent = ({
+export const BaseCodeEditor = ({
   extensions,
   readOnly = false,
   autoFocus = false,
@@ -259,11 +259,30 @@ export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
   return <div className={editorDialogControlStyle()}>{children}</div>;
 };
 
+export const EditorDialogButton = forwardRef<HTMLButtonElement, {}>(
+  (_props, ref) => {
+    return (
+      <SmallIconButton
+        ref={ref}
+        icon={<MaximizeIcon />}
+        css={{
+          position: "absolute",
+          top: 6,
+          right: 4,
+          visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
+        }}
+      />
+    );
+  }
+);
+
 export const EditorDialog = ({
   title,
+  content,
   children,
 }: {
   title?: ReactNode;
+  content: ReactNode;
   children: ReactNode;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -272,17 +291,7 @@ export const EditorDialog = ({
   const padding = rawTheme.spacing[7];
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <SmallIconButton
-          icon={<MaximizeIcon />}
-          css={{
-            position: "absolute",
-            top: 6,
-            right: 4,
-            visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
-          }}
-        />
-      </DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
         // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
@@ -303,7 +312,7 @@ export const EditorDialog = ({
             boxSizing: "content-box",
           }}
         >
-          {children}
+          {content}
         </Grid>
         {/* Title is at the end intentionally,
          * to make the close button last in the tab order
@@ -340,11 +349,13 @@ export const CodeEditor = ({
 }: EditorContentProps & {
   title?: ReactNode;
 }) => {
-  const content = <EditorContent {...editorContentProps} />;
+  const content = <BaseCodeEditor {...editorContentProps} />;
   return (
     <EditorDialogControl>
       {content}
-      <EditorDialog title={title}>{content}</EditorDialog>
+      <EditorDialog title={title} content={content}>
+        <EditorDialogButton />
+      </EditorDialog>
     </EditorDialogControl>
   );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet } from "@codemirror/state";
@@ -31,7 +31,7 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
-import { CodeEditor } from "./code-editor";
+import { BaseCodeEditor, CodeEditor, EditorDialog } from "./code-editor";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -431,5 +431,32 @@ export const ExpressionEditor = ({
         onBlur={onBlur}
       />
     </div>
+  );
+};
+
+export const ValuePreviewDialog = ({
+  title,
+  value,
+  children,
+}: {
+  title?: ReactNode;
+  value: string;
+  children: ReactNode;
+}) => {
+  const extensions = useMemo(() => [javascript({})], []);
+  return (
+    <EditorDialog
+      title={title}
+      content={
+        <BaseCodeEditor
+          readOnly={true}
+          extensions={extensions}
+          value={value}
+          onChange={() => {}}
+        />
+      }
+    >
+      {children}
+    </EditorDialog>
   );
 };

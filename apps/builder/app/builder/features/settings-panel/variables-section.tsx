@@ -15,7 +15,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
+import { EyeconOpenIcon, MinusIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
@@ -34,7 +34,10 @@ import {
   CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import { formatValuePreview } from "~/builder/shared/expression-editor";
+import {
+  ValuePreviewDialog,
+  formatValuePreview,
+} from "~/builder/shared/expression-editor";
 import {
   VariablePopoverProvider,
   VariablePopoverTrigger,
@@ -179,29 +182,45 @@ const VariablesList = () => {
               index={index}
               label={<Label truncate>{label}</Label>}
               buttons={
-                <Tooltip
-                  content={
-                    variable.type === "parameter"
-                      ? "Variable is managed by the component and cannot be deleted"
-                      : usedVariables.has(variable.id)
-                      ? "Variable is used in bindings and cannot be deleted"
-                      : "Delete variable"
-                  }
-                  side="bottom"
-                >
-                  <SmallIconButton
-                    tabIndex={-1}
-                    // allow to delete only unused variables
-                    disabled={
-                      variable.type === "parameter" ||
-                      usedVariables.has(variable.id)
+                <>
+                  <Tooltip content="Inspect variable value" side="bottom">
+                    <ValuePreviewDialog
+                      title={`Inspect "${variable.name}" value`}
+                      value={JSON.stringify(value, null, 2)}
+                    >
+                      <SmallIconButton
+                        tabIndex={-1}
+                        aria-label="Inspect variable value"
+                        variant="normal"
+                        icon={<EyeconOpenIcon />}
+                        onClick={() => {}}
+                      />
+                    </ValuePreviewDialog>
+                  </Tooltip>
+                  <Tooltip
+                    content={
+                      variable.type === "parameter"
+                        ? "Variable is managed by the component and cannot be deleted"
+                        : usedVariables.has(variable.id)
+                        ? "Variable is used in bindings and cannot be deleted"
+                        : "Delete variable"
                     }
-                    aria-label="Delete variable"
-                    variant="destructive"
-                    icon={<MinusIcon />}
-                    onClick={() => deleteVariable(variable.id)}
-                  />
-                </Tooltip>
+                    side="bottom"
+                  >
+                    <SmallIconButton
+                      tabIndex={-1}
+                      // allow to delete only unused variables
+                      disabled={
+                        variable.type === "parameter" ||
+                        usedVariables.has(variable.id)
+                      }
+                      aria-label="Delete variable"
+                      variant="destructive"
+                      icon={<MinusIcon />}
+                      onClick={() => deleteVariable(variable.id)}
+                    />
+                  </Tooltip>
+                </>
               }
             />
           </VariablePopoverTrigger>
