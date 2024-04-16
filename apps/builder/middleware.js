@@ -249,6 +249,14 @@ const checkRateLimit = async (ctx, ratelimitName, key) => {
 /** @type {Hono<ContextEnv>} */
 const app = new Hono();
 
+app.get("/tmp/test", async (ctx) => {
+  // eslint-disable-next-line no-console
+  console.log(env(ctx));
+
+  return ctx.json({
+    ok: true,
+  });
+});
 // Debug route, to show current values, MUST BE ABOVE middlewares
 app.get("/rate-limit/debug", async (ctx) => {
   const rateLimits = getRateLimits(ctx);
