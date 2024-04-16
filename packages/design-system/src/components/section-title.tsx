@@ -13,13 +13,13 @@ import {
   createContext,
   useContext,
 } from "react";
+import { ChevronRightIcon } from "@webstudio-is/icons";
 import { theme, css, styled, type CSS } from "../stitches.config";
 import { Button } from "./button";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { Label, isLabelButton } from "./label";
 import { focusRingStyle } from "./focus-ring";
-import { ChevronRightIcon } from "@webstudio-is/icons";
-import { Flex } from "..";
+import { Flex } from "./flex";
 
 const buttonContentColor = "--ws-section-title-button-content-color";
 const labelTextColor = "--ws-section-title-label-content-color";
@@ -153,7 +153,7 @@ export const SectionTitle = forwardRef(
                   {children}
 
                   {finalDots.length > 0 && (
-                    <Flex>
+                    <Flex shrink={false}>
                       {finalDots.map((color) => (
                         <div key={color} className={dotStyle({ color })} />
                       ))}
