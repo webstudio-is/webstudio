@@ -23,6 +23,7 @@ import { ErrorMessage } from "~/shared/error";
 import { loginPath } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
 import env from "~/env/env.server";
+import { staticEnv } from "~/env/env.static.server";
 
 export { links };
 
@@ -30,6 +31,8 @@ export const loader = async ({
   params,
   request,
 }: LoaderFunctionArgs): Promise<BuilderProps> => {
+  console.info(staticEnv);
+
   const context = await createContext(request);
 
   try {
