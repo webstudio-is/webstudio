@@ -22,6 +22,7 @@ const env = {
 
   // Preview support
   BRANCH_NAME: process.env.BRANCH_NAME,
+  GITHUB_SHA: process.env.GITHUB_SHA,
 
   // Assets
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,

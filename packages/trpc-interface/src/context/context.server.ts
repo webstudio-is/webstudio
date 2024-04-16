@@ -47,6 +47,7 @@ type DeploymentContext = {
   env: {
     BUILDER_ORIGIN: string;
     BRANCH_NAME: string;
+    GITHUB_SHA: string | undefined;
   };
 };
 

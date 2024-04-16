@@ -14,6 +14,8 @@ import { ErrorMessage } from "~/shared/error";
 import { dashboardPath, isCanvas } from "~/shared/router-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  console.info("env", env);
+
   const url = new URL(request.url);
   // See remix.config.ts for the publicPath value
   const publicPath = "/build/";

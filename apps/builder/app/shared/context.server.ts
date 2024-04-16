@@ -63,6 +63,7 @@ const createDeploymentContext = (request: Request) => {
     env: {
       BUILDER_ORIGIN: `${getRequestOrigin(request)}`,
       BRANCH_NAME: env.BRANCH_NAME ?? "main",
+      GITHUB_SHA: env.GITHUB_SHA,
     },
   };
 
