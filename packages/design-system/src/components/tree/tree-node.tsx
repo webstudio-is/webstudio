@@ -52,7 +52,7 @@ const getItemButtonCssVars = ({
     };
   }
   return {
-    [itemButtonVars.paddingRight]: `${ITEM_PADDING_RIGHT}px`,
+    [itemButtonVars.paddingRight]: ITEM_PADDING_RIGHT,
   };
 };
 const ItemButton = styled("button", {
@@ -145,7 +145,7 @@ const getSuffixContainerCssVars = ({
 const SuffixContainer = styled(Flex, {
   position: "absolute",
   alignItems: "center",
-  right: `${ITEM_PADDING_RIGHT}px`,
+  right: ITEM_PADDING_RIGHT,
   top: 0,
   bottom: 0,
   defaultVariants: { align: "center" },
