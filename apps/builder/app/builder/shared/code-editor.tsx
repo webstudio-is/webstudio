@@ -259,7 +259,7 @@ export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
   return <div className={editorDialogControlStyle()}>{children}</div>;
 };
 
-export const EditorDialogButton = forwardRef<HTMLButtonElement, {}>(
+export const EditorDialogButton = forwardRef<HTMLButtonElement>(
   (_props, ref) => {
     return (
       <SmallIconButton
