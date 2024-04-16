@@ -15,6 +15,16 @@
   },
   "private": true,
   "sideEffects": false,
+  "name": "webstudio-cloudlfare-template",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@remix-run/react": "^2.8.1",
     "@remix-run/server-runtime": "^2.8.1",
@@ -29,14 +39,13 @@
     "isbot": "^4.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "worktop": "0.8.0-next.18",
+    "zod": "^3.22.4",
     "@remix-run/cloudflare": "^2.8.1",
     "@remix-run/cloudflare-pages": "^2.8.1",
-    "miniflare": "^3.20231030.4",
-    "worktop": "0.8.0-next.18",
-    "zod": "^3.22.4"
+    "webstudio": "workspace:*"
   },
   "devDependencies": {
-    "webstudio": "workspace:*",
     "@remix-run/dev": "^2.8.1",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
@@ -44,16 +53,7 @@
     "vite": "^5.2.8",
     "@cloudflare/workers-types": "^4.20240405.0",
     "vite-tsconfig-paths": "^4.2.1",
-    "wrangler": "^3.48.0"
-  },
-  "name": "tmp-remix-app",
-  "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
-  "keywords": [],
-  "author": "",
-  "license": "AGPL-3.0-or-later",
-  "engines": {
-    "node": ">=18.0.0"
+    "wrangler": "^3.48.0",
+    "miniflare": "^3.20231030.4"
   }
 }
