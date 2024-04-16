@@ -57,7 +57,7 @@ const style = css({
       },
     },
   },
-  defaultVariants: { size: 1 },
+  defaultVariants: { size: 2 },
 });
 
 export const NestedInputButton = forwardRef(

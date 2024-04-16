@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import {
-  DeprecatedIconButton,
   TreeItemLabel,
   TreeItemBody,
   TreeNode,
   type TreeItemRenderProps,
   type ItemSelector,
-  styled,
   Tooltip,
   Box,
   Button,
-  theme,
+  SmallIconButton,
 } from "@webstudio-is/design-system";
 import {
   ChevronRightIcon,
@@ -46,19 +44,6 @@ import { useMount } from "~/shared/hook-utils/use-mount";
 import { ROOT_FOLDER_ID, type Folder } from "@webstudio-is/sdk";
 import { atom } from "nanostores";
 import { isPathnamePattern } from "~/builder/shared/url-pattern";
-
-const MenuButton = styled(DeprecatedIconButton, {
-  color: theme.colors.hint,
-  "&:hover, &:focus-visible": { color: theme.colors.hiContrast },
-  variants: {
-    isParentSelected: {
-      true: {
-        color: theme.colors.loContrast,
-        "&:hover, &:focus-visible": { color: theme.colors.slate7 },
-      },
-    },
-  },
-});
 
 const ItemSuffix = ({
   isParentSelected,
@@ -101,14 +86,14 @@ const ItemSuffix = ({
 
   return (
     <Tooltip content={menuLabel} disableHoverableContent>
-      <MenuButton
+      <SmallIconButton
         aria-label={menuLabel}
-        isParentSelected={isParentSelected}
+        state={isParentSelected ? "open" : undefined}
         onClick={() => onEdit(isEditing ? undefined : itemId)}
         ref={buttonRef}
-      >
-        {isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
-      </MenuButton>
+        icon={isEditing ? <ChevronRightIcon /> : <EllipsesIcon />}
+        variant={isParentSelected ? "contrast" : "normal"}
+      />
     </Tooltip>
   );
 };

@@ -610,6 +610,7 @@ export const CssValueInput = ({
       {...getToggleButtonProps()}
       data-state={isOpen ? "open" : "closed"}
       tabIndex={-1}
+      size={size}
     />
   );
 
