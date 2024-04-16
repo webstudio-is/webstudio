@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet } from "@codemirror/state";
@@ -10,23 +10,14 @@ import {
   WidgetType,
   ViewPlugin,
   keymap,
-  drawSelection,
-  dropCursor,
   EditorView,
   tooltips,
 } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  syntaxHighlighting,
-  syntaxTree,
-} from "@codemirror/language";
+import { bracketMatching, syntaxTree } from "@codemirror/language";
 import {
   type Completion,
   type CompletionSource,
   autocompletion,
-  startCompletion,
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
@@ -373,12 +364,8 @@ export const ExpressionEditor = ({
 }) => {
   const extensions = useMemo(
     () => [
-      history(),
-      drawSelection(),
-      dropCursor(),
       bracketMatching(),
       closeBrackets(),
-      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       javascript({}),
       VariablesData.of({ scope, aliases }),
       // render autocomplete in body
@@ -390,22 +377,28 @@ export const ExpressionEditor = ({
         tooltipClass: () => autocompletionStyle.toString(),
       }),
       variables,
-      keymap.of([
-        ...closeBracketsKeymap,
-        ...defaultKeymap,
-        ...historyKeymap,
-        ...completionKeymap,
-        // use tab to trigger completion
-        {
-          key: "Tab",
-          preventDefault: true,
-          stopPropagation: true,
-          run: startCompletion,
-        },
-      ]),
+      keymap.of([...closeBracketsKeymap, ...completionKeymap]),
     ],
     [scope, aliases]
   );
+
+  // prevent clicking on autocomplete options propagating to body
+  // and closing dialogs and popovers
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest(".cm-tooltip-autocomplete")
+      ) {
+        event.stopPropagation();
+      }
+    };
+    const options = { capture: true };
+    document.addEventListener("pointerdown", handlePointerDown, options);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, options);
+    };
+  }, []);
 
   return (
     <div className={wrapperStyle.toString()}>

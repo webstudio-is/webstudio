@@ -5,7 +5,20 @@ import {
   StateEffect,
   type Extension,
 } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import {
+  EditorView,
+  drawSelection,
+  dropCursor,
+  keymap,
+} from "@codemirror/view";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import {
   theme,
   textVariants,
@@ -85,6 +98,38 @@ const editorContentStyle = css({
   },
 });
 
+// https://thememirror.net/clouds
+const highlightStyle = HighlightStyle.define([
+  {
+    tag: tags.comment,
+    color: "#BCC8BA",
+  },
+  {
+    tag: [tags.string, tags.special(tags.brace), tags.regexp],
+    color: "#5D90CD",
+  },
+  {
+    tag: [tags.number, tags.bool, tags.null],
+    color: "#46A609",
+  },
+  {
+    tag: tags.keyword,
+    color: "#AF956F",
+  },
+  {
+    tag: [tags.definitionKeyword, tags.modifier],
+    color: "#C52727",
+  },
+  {
+    tag: [tags.angleBracket, tags.tagName, tags.attributeName],
+    color: "#606060",
+  },
+  {
+    tag: tags.self,
+    color: "#000",
+  },
+]);
+
 type EditorContentProps = {
   extensions: Extension[];
   readOnly?: boolean;
@@ -141,6 +186,11 @@ const EditorContent = ({
     view.dispatch({
       effects: StateEffect.reconfigure.of([
         ...extensions,
+        history(),
+        drawSelection(),
+        dropCursor(),
+        syntaxHighlighting(highlightStyle, { fallback: true }),
+        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         EditorView.lineWrapping,
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
@@ -160,6 +210,11 @@ const EditorContent = ({
         EditorView.domEventHandlers({
           blur(event) {
             onBlurRef.current?.(event);
+          },
+          cut(event) {
+            // prevent catching cut by global copy paste
+            // with target outside of contenteditable
+            event.stopPropagation();
           },
         }),
       ]),
