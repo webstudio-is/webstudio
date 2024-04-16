@@ -13,6 +13,7 @@ concurrency:
 permissions:
   contents: read # to fetch code (actions/checkout)
   statuses: write # This is required for the GitHub Script createCommitStatus to work
+  packages: write
 
 jobs:
   build:
@@ -34,8 +35,12 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+          # username: ${{ secrets.DOCKERHUB_USER }}
+          # password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # To be able to pull image by branh name, sha, short sha and tag
       # i.e. olegisonen/webstudio:hello.staging
@@ -45,7 +50,7 @@ jobs:
         with:
           # TODO: create team someday on dockerhub
           images: |
-            olegisonen/webstudio
+            ghcr.io/webstudio-is/webstudio
           tags: |
             type=sha,format=long
             type=sha,format=short

@@ -14,13 +14,13 @@
   "dependencies": {
     "@remix-run/cloudflare": "^2.8.1",
     "@remix-run/cloudflare-pages": "^2.8.1",
-    "isbot": "^4.1.0",
-    "miniflare": "^3.20231030.4"
+    "isbot": "^4.1.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240405.0",
     "vite-tsconfig-paths": "^4.2.1",
-    "wrangler": "^3.48.0"
+    "wrangler": "^3.48.0",
+    "miniflare": "^3.20231030.4"
   },
   "engines": {
     "node": ">=18.0.0"
