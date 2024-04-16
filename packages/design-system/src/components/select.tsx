@@ -233,17 +233,13 @@ const SelectBase = <Option,>(
                     key={value ?? index}
                     value={value}
                     textValue={textValue ?? value}
-                    onMouseEnter={() => {
+                    onFocus={(event) => {
                       onItemHighlight?.(option);
                       setHighlightedItem(option);
                     }}
-                    onMouseLeave={() => {
-                      onItemHighlight?.();
+                    onBlur={(event) => {
+                      onItemHighlight?.(undefined);
                       setHighlightedItem(undefined);
-                    }}
-                    onFocus={() => {
-                      onItemHighlight?.(option);
-                      setHighlightedItem(option);
                     }}
                     {...rest}
                   >
