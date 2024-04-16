@@ -209,11 +209,13 @@ const walkSyntax = (
     }
     if (node.type === "Property") {
       // resolve other properties references
-      walkSyntax(
-        properties[node.name as keyof typeof properties].syntax,
-        enter,
-        parsedSyntaxes
-      );
+      if (node.name in properties) {
+        walkSyntax(
+          properties[node.name as Property].syntax,
+          enter,
+          parsedSyntaxes
+        );
+      }
       return;
     }
     enter(node);
