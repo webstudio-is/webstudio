@@ -429,18 +429,12 @@ export const Combobox = <Item,>({
 }: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
   const combobox = useCombobox<Item>(props);
 
-  const [description, setDescription] = useState<ReactNode>(() =>
-    getDescription?.(combobox.items[combobox.highlightedIndex])
-  );
-
   const descriptionItem =
     combobox.highlightedIndex === -1
       ? combobox.selectedItem
       : combobox.items[combobox.highlightedIndex];
 
-  useEffect(() => {
-    setDescription(getDescription?.(descriptionItem));
-  }, [descriptionItem, getDescription]);
+  const description = getDescription?.(descriptionItem);
 
   return (
     <ComboboxRoot open={combobox.isOpen}>
