@@ -427,31 +427,20 @@ export const Combobox = <Item,>({
   getDescription,
   ...props
 }: UseComboboxProps<Item> & Omit<ComponentProps<"input">, "value">) => {
-  const combobox = useCombobox<Item>({
-    ...props,
-    onItemHighlight: (item) => {
-      props.onItemHighlight?.(item);
-      setDescription(getDescription?.(item));
-    },
-  });
+  const combobox = useCombobox<Item>(props);
 
-  const [description, setDescription] = useState<ReactNode>(
+  const [description, setDescription] = useState<ReactNode>(() =>
     getDescription?.(combobox.items[combobox.highlightedIndex])
   );
 
+  const descriptionItem =
+    combobox.highlightedIndex === -1
+      ? combobox.selectedItem
+      : combobox.items[combobox.highlightedIndex];
+
   useEffect(() => {
-    // When nothing is selected and user has typed, we need to show the description of the highlighted item
-    if (combobox.selectedItem === null) {
-      setDescription(
-        getDescription?.(combobox.items[combobox.highlightedIndex])
-      );
-    }
-  }, [
-    combobox.items,
-    combobox.highlightedIndex,
-    combobox.selectedItem,
-    getDescription,
-  ]);
+    setDescription(getDescription?.(descriptionItem));
+  }, [descriptionItem, getDescription]);
 
   return (
     <ComboboxRoot open={combobox.isOpen}>
