@@ -23,44 +23,61 @@ WORKDIR /cloudlfare-template
 
 RUN \
   find . -name 'typescript@*' -type d -prune -exec rm -rf '{}' + && \
-  find . -name 'workerd*' -type f -prune -exec rm -rf '{}' + && \
+  # find . -name 'workerd*' -type f -prune -exec rm -rf '{}' + && \
   find . -name '@storybook*' -type d -prune -exec rm -rf '{}' + && \
   find . -name 'eslint@*' -type d -prune -exec rm -rf '{}' + && \
   find . -name '@types+node@*' -type d -prune -exec rm -rf '{}' + && \
-  find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' + && \
-  find . -name 'wrangler@*' -type d -prune -exec rm -rf '{}' +
+  find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' +
+  # find . -name 'wrangler@*' -type d -prune -exec rm -rf '{}' +
 
-
-FROM node:18.20-alpine3.18 as cloudflare-template
-
-ENV PNPM_HOME="/.pnpm/store"
-ENV PATH="$PNPM_HOME:$PATH"
 ENV COMPATIBILITY_DATE=2024-04-10
-
-RUN corepack enable pnpm && mkdir -p $PNPM_HOME
-
-RUN apk update && apk add bash curl rclone postgresql14-client --no-cache
-
-RUN pnpm i -g --prod zx && pnpm i -g --prod wrangler
-# && find / -name 'workerd*' -type f -prune -exec rm -rf '{}' +
-
-COPY --from=build /cloudlfare-template /cloudlfare-template
-
-WORKDIR /cloudlfare-template
 
 RUN \
   pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false && \
   pnpm build && \
-  NODE_ENV=production wrangler deploy \
+  NODE_ENV=production pnpm wrangler deploy \
   --name build \
-  --compatibility-date ${COMPATIBILITY_DATE} \
+  --compatibility-date '${COMPATIBILITY_DATE}' \
   --minify true \
   --logpush true \
   --dry-run \
   --outdir dist \
   './functions/[[path]].ts'
 
-# Clean up
 RUN rm -rf dist && rm -rf build && rm -rf .wrangler
+
+FROM node:18.20-alpine3.18 as cloudflare-template
+
+ENV PNPM_HOME="/.pnpm/store"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV COMPATIBILITY_DATE=2024-04-10
+ENV CI=true
+
+RUN \
+  corepack enable pnpm && mkdir -p $PNPM_HOME && \
+  apk update && apk add bash curl rclone postgresql14-client --no-cache && \
+  pnpm i -g --prod zx
+
+# && pnpm i -g --prod wrangler
+# && find / -name 'workerd*' -type f -prune -exec rm -rf '{}' +
+
+COPY --from=build /cloudlfare-template /cloudlfare-template
+
+WORKDIR /cloudlfare-template
+
+# RUN \
+#   pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false && \
+#   pnpm build && \
+#   NODE_ENV=production wrangler deploy \
+#   --name build \
+#   --compatibility-date ${COMPATIBILITY_DATE} \
+#   --minify true \
+#   --logpush true \
+#   --dry-run \
+#   --outdir dist \
+#   './functions/[[path]].ts'
+#
+# # Clean up
+# RUN rm -rf dist && rm -rf build && rm -rf .wrangler
 
 # TODO: Layered build, production deps only
