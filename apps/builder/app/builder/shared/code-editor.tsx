@@ -275,12 +275,17 @@ export const EditorDialogButton = forwardRef<HTMLButtonElement, {}>(
     );
   }
 );
+EditorDialogButton.displayName = "EditorDialogButton";
 
 export const EditorDialog = ({
+  open,
+  onOpenChange,
   title,
   content,
   children,
 }: {
+  open?: boolean;
+  onOpenChange?: (newOpen: boolean) => void;
   title?: ReactNode;
   content: ReactNode;
   children: ReactNode;
@@ -290,7 +295,7 @@ export const EditorDialog = ({
   const height = isExpanded ? "80vh" : "480px";
   const padding = rawTheme.spacing[7];
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
@@ -345,15 +350,24 @@ export const EditorDialog = ({
 
 export const CodeEditor = ({
   title,
+  open,
+  onOpenChange,
   ...editorContentProps
 }: EditorContentProps & {
   title?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (newOpen: boolean) => void;
 }) => {
   const content = <BaseCodeEditor {...editorContentProps} />;
   return (
     <EditorDialogControl>
       {content}
-      <EditorDialog title={title} content={content}>
+      <EditorDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={title}
+        content={content}
+      >
         <EditorDialogButton />
       </EditorDialog>
     </EditorDialogControl>

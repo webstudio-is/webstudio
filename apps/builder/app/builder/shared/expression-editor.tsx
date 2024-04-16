@@ -434,27 +434,40 @@ export const ExpressionEditor = ({
   );
 };
 
+// compute value as json lazily only when dialog is open
+// by spliting into separate component which is invoked
+// only when dialog content is rendered
+const ValuePreviewEditor = ({ value }: { value: unknown }) => {
+  const extensions = useMemo(() => [javascript({})], []);
+  return (
+    <BaseCodeEditor
+      readOnly={true}
+      extensions={extensions}
+      value={JSON.stringify(value, null, 2)}
+      onChange={() => {}}
+    />
+  );
+};
+
 export const ValuePreviewDialog = ({
   title,
   value,
   children,
+  open,
+  onOpenChange,
 }: {
   title?: ReactNode;
-  value: string;
+  value: unknown;
+  open?: boolean;
+  onOpenChange?: (newOpen: boolean) => void;
   children: ReactNode;
 }) => {
-  const extensions = useMemo(() => [javascript({})], []);
   return (
     <EditorDialog
+      open={open}
+      onOpenChange={onOpenChange}
       title={title}
-      content={
-        <BaseCodeEditor
-          readOnly={true}
-          extensions={extensions}
-          value={value}
-          onChange={() => {}}
-        />
-      }
+      content={<ValuePreviewEditor value={value} />}
     >
       {children}
     </EditorDialog>
