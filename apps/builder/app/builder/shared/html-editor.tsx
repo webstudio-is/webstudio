@@ -1,19 +1,11 @@
-import { forwardRef, useMemo, type ComponentProps } from "react";
+import { forwardRef, useMemo, type ComponentProps, useEffect } from "react";
 import {
   keymap,
-  drawSelection,
-  dropCursor,
   tooltips,
   highlightSpecialChars,
   highlightActiveLine,
 } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  indentOnInput,
-  syntaxHighlighting,
-} from "@codemirror/language";
+import { bracketMatching, indentOnInput } from "@codemirror/language";
 import {
   autocompletion,
   closeBrackets,
@@ -29,6 +21,8 @@ const autocompletionStyle = css({
     ...textVariants.mono,
     border: "none",
     backgroundColor: "transparent",
+    // override none set on body by radix popover
+    pointerEvents: "auto",
     "& ul": {
       minWidth: 160,
       maxWidth: 260,
@@ -48,7 +42,7 @@ const autocompletionStyle = css({
         color: theme.colors.foregroundMain,
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[3],
-        "&[aria-selected]": {
+        "&[aria-selected], &:hover": {
           color: theme.colors.foregroundMain,
           backgroundColor: theme.colors.backgroundItemMenuItemHover,
         },
@@ -81,11 +75,7 @@ export const HtmlEditor = forwardRef<
     () => [
       highlightActiveLine(),
       highlightSpecialChars(),
-      history(),
-      drawSelection(),
-      dropCursor(),
       indentOnInput(),
-      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       html({}),
       bracketMatching(),
       closeBrackets(),
@@ -95,16 +85,30 @@ export const HtmlEditor = forwardRef<
       autocompletion({
         icons: false,
         tooltipClass: () => autocompletionStyle.toString(),
+        closeOnBlur: false,
       }),
-      keymap.of([
-        ...closeBracketsKeymap,
-        ...defaultKeymap,
-        ...historyKeymap,
-        ...completionKeymap,
-      ]),
+      keymap.of([...closeBracketsKeymap, ...completionKeymap]),
     ],
     []
   );
+
+  // prevent clicking on autocomplete options propagating to body
+  // and closing dialogs and popovers
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest(".cm-tooltip-autocomplete")
+      ) {
+        event.stopPropagation();
+      }
+    };
+    const options = { capture: true };
+    document.addEventListener("pointerdown", handlePointerDown, options);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, options);
+    };
+  }, []);
 
   return (
     <div className={wrapperStyle()} ref={ref}>
