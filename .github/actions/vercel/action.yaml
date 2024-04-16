@@ -85,8 +85,6 @@ runs:
         vercel deploy \
         --prebuilt \
         --token ${{ inputs.vercel-token }} \
-        --meta GITHUB_SHA=${{ inputs.sha }} \
-        --meta GITHUB_REF_NAME=${{ inputs.ref-name }} \
         2> >(tee info.txt >&2) | tee domain.txt
 
         echo "domain=$(cat ./domain.txt)" >> $GITHUB_OUTPUT
