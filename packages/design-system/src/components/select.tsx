@@ -233,7 +233,7 @@ const SelectBase = <Option,>(
                     key={value ?? index}
                     value={value}
                     textValue={textValue ?? value}
-                    onFocus={(event) => {
+                    onFocus={() => {
                       onItemHighlight?.(option);
                       setHighlightedItem(option);
                     }}
