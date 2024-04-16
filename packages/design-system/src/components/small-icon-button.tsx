@@ -9,7 +9,6 @@ import {
   type ComponentProps,
   type ReactNode,
 } from "react";
-import type { CSS } from "../stitches.config";
 
 import { SmallButton, smallButtonVariants } from "./primitives/small-button";
 
@@ -24,13 +23,11 @@ export const smallIconButtonStates = ["open"] as const;
 
 type Props = {
   icon: ReactNode;
-  variant?: (typeof smallIconButtonVariants)[number];
   state?: (typeof smallIconButtonStates)[number];
   focused?: boolean;
-  css?: CSS;
   // might be set when <SmallIconButton> is asChild
   "data-state"?: (typeof smallIconButtonStates)[number];
-} & Omit<ComponentProps<"button">, "children">;
+} & Omit<ComponentProps<typeof SmallButton>, "children">;
 
 export const SmallIconButton = forwardRef(
   (
