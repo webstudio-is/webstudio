@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet } from "@codemirror/state";
@@ -31,7 +31,7 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
-import { CodeEditor } from "./code-editor";
+import { BaseCodeEditor, CodeEditor, EditorDialog } from "./code-editor";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -431,5 +431,45 @@ export const ExpressionEditor = ({
         onBlur={onBlur}
       />
     </div>
+  );
+};
+
+// compute value as json lazily only when dialog is open
+// by spliting into separate component which is invoked
+// only when dialog content is rendered
+const ValuePreviewEditor = ({ value }: { value: unknown }) => {
+  const extensions = useMemo(() => [javascript({})], []);
+  return (
+    <BaseCodeEditor
+      readOnly={true}
+      extensions={extensions}
+      value={JSON.stringify(value, null, 2)}
+      onChange={() => {}}
+    />
+  );
+};
+
+export const ValuePreviewDialog = ({
+  title,
+  value,
+  children,
+  open,
+  onOpenChange,
+}: {
+  title?: ReactNode;
+  value: unknown;
+  open?: boolean;
+  onOpenChange?: (newOpen: boolean) => void;
+  children: ReactNode;
+}) => {
+  return (
+    <EditorDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={title}
+      content={<ValuePreviewEditor value={value} />}
+    >
+      {children}
+    </EditorDialog>
   );
 };

@@ -59,6 +59,7 @@ import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
 import { useSideOffset } from "~/builder/shared/floating-panel";
 import {
   EditorDialog,
+  EditorDialogButton,
   EditorDialogControl,
 } from "~/builder/shared/code-editor";
 import { ResourceForm } from "./resource-panel";
@@ -209,13 +210,18 @@ const StringForm = forwardRef<
           value={value}
           onChange={setValue}
         />
-        <EditorDialog title={`Variable "${nameField.value || "Unnamed"}"`}>
-          <TextArea
-            grow={true}
-            id={valueId}
-            value={value}
-            onChange={setValue}
-          />
+        <EditorDialog
+          title={`Variable "${nameField.value || "Unnamed"}"`}
+          content={
+            <TextArea
+              grow={true}
+              id={valueId}
+              value={value}
+              onChange={setValue}
+            />
+          }
+        >
+          <EditorDialogButton />
         </EditorDialog>
       </EditorDialogControl>
     </Flex>
