@@ -1,4 +1,11 @@
-import { useEffect, useRef, type ReactNode, useState, forwardRef } from "react";
+import {
+  useEffect,
+  useRef,
+  type ReactNode,
+  useState,
+  forwardRef,
+  type ComponentProps,
+} from "react";
 import {
   Annotation,
   EditorState,
@@ -259,22 +266,24 @@ export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
   return <div className={editorDialogControlStyle()}>{children}</div>;
 };
 
-export const EditorDialogButton = forwardRef<HTMLButtonElement>(
-  (_props, ref) => {
-    return (
-      <SmallIconButton
-        ref={ref}
-        icon={<MaximizeIcon />}
-        css={{
-          position: "absolute",
-          top: 6,
-          right: 4,
-          visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
-        }}
-      />
-    );
-  }
-);
+export const EditorDialogButton = forwardRef<
+  HTMLButtonElement,
+  Partial<ComponentProps<typeof SmallIconButton>>
+>((props, ref) => {
+  return (
+    <SmallIconButton
+      {...props}
+      ref={ref}
+      icon={<MaximizeIcon />}
+      css={{
+        position: "absolute",
+        top: 6,
+        right: 4,
+        visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
+      }}
+    />
+  );
+});
 EditorDialogButton.displayName = "EditorDialogButton";
 
 export const EditorDialog = ({
