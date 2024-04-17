@@ -4,28 +4,22 @@ import {
   type TransformValue,
 } from "@webstudio-is/css-engine";
 import type {
-  Asset,
   Assets,
-  Breakpoint,
-  Instance,
-  StyleDecl,
-  StyleDeclKey,
-  StyleSourceSelection,
+  Breakpoints,
+  StyleSourceSelections,
+  Styles,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules, getStyleRules } from "./style-rules";
 
-type Data = {
-  assets: Asset[];
-  breakpoints: [Breakpoint["id"], Breakpoint][];
-  styles: [StyleDeclKey, StyleDecl][];
-  styleSourceSelections: [Instance["id"], StyleSourceSelection][];
+export type CssConfig = {
+  assets: Assets;
+  breakpoints: Breakpoints;
+  styles: Styles;
+  styleSourceSelections: StyleSourceSelections;
   componentMetas: Map<string, WsComponentMeta>;
-};
-
-type CssOptions = {
   assetBaseUrl: string;
   atomic: boolean;
 };
@@ -56,14 +50,15 @@ export const createImageValueTransformer =
     }
   };
 
-export const generateCss = (
-  data: Data,
-  { assetBaseUrl, atomic = false }: CssOptions
-) => {
-  const assets: Assets = new Map(data.assets.map((asset) => [asset.id, asset]));
-  const breakpoints = new Map(data.breakpoints);
-  const styles = new Map(data.styles);
-  const styleSourceSelections = new Map(data.styleSourceSelections);
+export const generateCss = ({
+  assets,
+  breakpoints,
+  styles,
+  styleSourceSelections,
+  componentMetas,
+  assetBaseUrl,
+  atomic,
+}: CssConfig) => {
   const classesMap = new Map<string, Array<string>>();
 
   const regularSheet = createRegularStyleSheet({ name: "ssr-regular" });
@@ -77,7 +72,7 @@ export const generateCss = (
     (atomicSheet ?? regularSheet).addMediaRule(breakpoint.id, breakpoint);
   }
 
-  for (const [component, meta] of data.componentMetas) {
+  for (const [component, meta] of componentMetas) {
     const presetStyle = meta.presetStyle;
     if (presetStyle === undefined) {
       continue;

@@ -7,30 +7,22 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import {
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { getAncestorInstanceSelector } from "~/shared/tree-utils";
-import { textEditingInstanceSelectorStore } from "~/shared/nano-states";
+import { $textEditingInstanceSelector } from "~/shared/nano-states";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { Fragment } from "react";
 
 export const Breadcrumbs = () => {
-  const instances = useStore(instancesStore);
-  const selectedInstanceSelector = useStore(selectedInstanceSelectorStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const instances = useStore($instances);
+  const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  const metas = useStore($registeredComponentMetas);
 
   return (
-    <Flex
-      align="center"
-      css={{
-        height: "100%",
-        color: theme.colors.hiContrast,
-        px: theme.spacing[3],
-      }}
-    >
+    <Flex align="center" css={{ height: "100%", px: theme.spacing[3] }}>
       {selectedInstanceSelector === undefined ? (
         <Text>No instance selected</Text>
       ) : (
@@ -55,17 +47,17 @@ export const Breadcrumbs = () => {
                     px: theme.spacing[5],
                     borderRadius: "100vh",
                     height: "100%",
+                    color: "inherit",
                   }}
                   key={instance.id}
                   onClick={() => {
-                    selectedInstanceSelectorStore.set(
+                    $selectedInstanceSelector.set(
                       getAncestorInstanceSelector(
                         selectedInstanceSelector,
                         instance.id
                       )
                     );
-                    textEditingInstanceSelectorStore.set(undefined);
-                    selectedStyleSourceSelectorStore.set(undefined);
+                    $textEditingInstanceSelector.set(undefined);
                   }}
                 >
                   {getInstanceLabel(instance, meta)}

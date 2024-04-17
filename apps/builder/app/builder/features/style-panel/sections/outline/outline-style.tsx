@@ -1,43 +1,53 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import {
-  Grid,
-  theme,
-  ToggleGroup,
-  ToggleGroupButton,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Grid, theme, Box } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import type { RenderCategoryProps } from "../../style-sections";
-import { toPascalCase } from "../../shared/keyword-utils";
+import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
-import { toValue } from "@webstudio-is/css-engine";
+import { declarationDescriptions } from "@webstudio-is/css-data";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 
 const property: StyleProperty = "outlineStyle";
-const outlineStyleValues = [
-  { value: "none", Icon: SmallXIcon },
-  { value: "solid", Icon: DashBorderIcon },
-  { value: "dashed", Icon: DashedBorderIcon },
-  { value: "dotted", Icon: DottedBorderIcon },
+
+const items = [
+  {
+    child: <SmallXIcon />,
+    title: "None",
+    description: declarationDescriptions["outlineStyle:none"],
+    value: "none",
+    propertyValues: "outline-style: none;",
+  },
+  {
+    child: <DashBorderIcon />,
+    title: "Solid",
+    description: declarationDescriptions["outlineStyle:solid"],
+    value: "solid",
+    propertyValues: "outline-style: solid;",
+  },
+  {
+    child: <DashedBorderIcon />,
+    title: "Dashed",
+    description: declarationDescriptions["outlineStyle:dashed"],
+    value: "dashed",
+    propertyValues: "outline-style: dashed;",
+  },
+  {
+    child: <DottedBorderIcon />,
+    title: "Dotted",
+    description: declarationDescriptions["outlineStyle:dotted"],
+    value: "dotted",
+    propertyValues: "outline-style: dotted;",
+  },
 ];
 
 export const OutlineStyle = (
-  props: Pick<
-    RenderCategoryProps,
-    "currentStyle" | "setProperty" | "deleteProperty"
-  >
+  props: Pick<SectionProps, "currentStyle" | "setProperty" | "deleteProperty">
 ) => {
-  const { currentStyle, setProperty, deleteProperty } = props;
-  const outlineStyleValue = toValue(
-    currentStyle["outlineStyle"]?.value ?? {
-      type: "keyword",
-      value: "none",
-    }
-  );
+  const { deleteProperty } = props;
 
   return (
     <Grid
@@ -52,26 +62,9 @@ export const OutlineStyle = (
         label={"Style"}
         onReset={() => deleteProperty(property)}
       />
-
-      <ToggleGroup
-        css={{
-          gridColumn: `span 2`,
-          justifySelf: "end",
-        }}
-        type="single"
-        value={outlineStyleValue}
-        onValueChange={(value) =>
-          setProperty(property)({ type: "keyword", value })
-        }
-      >
-        {outlineStyleValues.map(({ value, Icon }) => (
-          <Tooltip key={value} content={toPascalCase(value)}>
-            <ToggleGroupButton value={value}>
-              <Icon />
-            </ToggleGroupButton>
-          </Tooltip>
-        ))}
-      </ToggleGroup>
+      <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
+        <ToggleGroupControl {...props} items={items} property={property} />{" "}
+      </Box>
     </Grid>
   );
 };

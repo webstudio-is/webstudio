@@ -196,13 +196,13 @@ export const wrapEditableChildrenAroundDropTargetMutable = (
   };
 };
 
-export const reparentInstanceMutable = (
+export const getReparentDropTargetMutable = (
   instances: Instances,
   props: Props,
   metas: Map<string, WsComponentMeta>,
   instanceSelector: InstanceSelector,
   dropTarget: DroppableTarget
-) => {
+): undefined | DroppableTarget => {
   const [instanceId, parentInstanceId, grandparentInstanceId] =
     instanceSelector;
   const grandparentInstance =
@@ -230,7 +230,6 @@ export const reparentInstanceMutable = (
     ) ?? dropTarget;
   const [parentId] = dropTarget.parentSelector;
   const nextParent = instances.get(parentId);
-  const instance = instances.get(instanceId);
 
   // delect is target is one of own descendants
   // prevent reparenting to avoid infinite loop
@@ -241,11 +240,7 @@ export const reparentInstanceMutable = (
     }
   }
 
-  if (
-    prevParent === undefined ||
-    nextParent === undefined ||
-    instance === undefined
-  ) {
+  if (prevParent === undefined || nextParent === undefined) {
     return;
   }
 
@@ -267,12 +262,10 @@ export const reparentInstanceMutable = (
     nextPosition -= 1;
   }
 
-  const [child] = prevParent.children.splice(prevPosition, 1);
-  if (nextPosition === "end") {
-    nextParent.children.push(child);
-  } else {
-    nextParent.children.splice(nextPosition, 0, child);
-  }
+  return {
+    parentSelector: dropTarget.parentSelector,
+    position: nextPosition,
+  };
 };
 
 export const cloneStyles = (
@@ -322,48 +315,6 @@ export const findLocalStyleSourcesWithinInstances = (
   }
 
   return subtreeLocalStyleSourceIds;
-};
-
-export const insertInstancesMutable = (
-  instances: Instances,
-  props: Props,
-  metas: Map<string, WsComponentMeta>,
-  insertedInstances: Instance[],
-  children: Instance["children"],
-  dropTarget: DroppableTarget
-) => {
-  dropTarget =
-    getInstanceOrCreateFragmentIfNecessary(instances, dropTarget) ?? dropTarget;
-  dropTarget =
-    wrapEditableChildrenAroundDropTargetMutable(
-      instances,
-      props,
-      metas,
-      dropTarget
-    ) ?? dropTarget;
-  const [parentId] = dropTarget.parentSelector;
-  const parentInstance = instances.get(parentId);
-  if (parentInstance === undefined) {
-    return;
-  }
-
-  let treeRootInstanceId: undefined | Instance["id"] = undefined;
-  for (const instance of insertedInstances) {
-    if (treeRootInstanceId === undefined) {
-      treeRootInstanceId = instance.id;
-    }
-    instances.set(instance.id, instance);
-  }
-  if (treeRootInstanceId === undefined) {
-    return;
-  }
-
-  const { position } = dropTarget;
-  if (position === "end") {
-    parentInstance.children.push(...children);
-  } else {
-    parentInstance.children.splice(position, 0, ...children);
-  }
 };
 
 export const insertPropsCopyMutable = (

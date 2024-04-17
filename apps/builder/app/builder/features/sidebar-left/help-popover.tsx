@@ -11,8 +11,8 @@ import {
 import {
   DiscordIcon,
   GithubIcon,
-  TwitterIcon,
   Webstudio1cIcon,
+  XIcon,
   Youtube1cIcon,
 } from "@webstudio-is/icons";
 import { type ComponentProps } from "react";
@@ -33,7 +33,7 @@ export const HelpPopover = ({
           avoidCollisions
           sideOffset={0}
           // Height of the footer
-          collisionPadding={{ bottom: parseFloat(rawTheme.spacing[11]) }}
+          collisionPadding={{ bottom: Number.parseFloat(rawTheme.spacing[11]) }}
           side={side}
           // Sidebar has z-index 1, so we need to be above that using portal + same zindex
           css={{ zIndex: theme.zIndices[1] }}
@@ -55,32 +55,32 @@ export const HelpPopover = ({
               Learn with videos
             </Button>
             <Button
-              formAction="https://webstudio.is/blog"
+              formAction="https://docs.webstudio.is/"
               prefix={<Webstudio1cIcon />}
               color="gradient"
             >
-              Learn on our blog
+              Learn from docs
             </Button>
             <Button
               formAction="https://discord.gg/UNdyrDkq5r"
               prefix={<DiscordIcon />}
               color="primary"
             >
-              Chat with us on Discord
+              Join the Community
             </Button>
             <Button
               formAction="https://github.com/webstudio-is/webstudio-community/discussions"
               prefix={<GithubIcon />}
               color="dark"
             >
-              Join Github discussions
+              Discuss on GitHub
             </Button>
             <Button
-              formAction="https://twitter.com/getwebstudio"
-              prefix={<TwitterIcon />}
+              formAction="https://x.com/getwebstudio"
+              prefix={<XIcon />}
               color="dark"
             >
-              Follow us on Twitter
+              Follow us on X
             </Button>
           </Flex>
         </PopoverContent>

@@ -1,19 +1,19 @@
-import { redirect } from "@remix-run/node";
-import type { LoaderArgs } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import {
+  Links,
+  Meta,
   isRouteErrorResponse,
   useLoaderData,
   useRouteError,
 } from "@remix-run/react";
-import { type Params, Root } from "@webstudio-is/react-sdk";
-import env from "~/env/env.public.server";
-import { sentryException } from "~/shared/sentry";
+import type { Params } from "@webstudio-is/react-sdk";
+import { createImageLoader } from "@webstudio-is/image";
+import env from "~/env/env.server";
 import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { dashboardPath, isCanvas } from "~/shared/router-utils";
-import { createImageLoader } from "@webstudio-is/image";
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   // See remix.config.ts for the publicPath value
   const publicPath = "/build/";
@@ -40,7 +40,7 @@ export const loader = async ({ request }: LoaderArgs) => {
 export const ErrorBoundary = () => {
   const error = useRouteError();
 
-  sentryException({ error });
+  console.error({ error });
   const message = isRouteErrorResponse(error)
     ? error.data.message ?? error.data
     : error instanceof Error
@@ -64,9 +64,17 @@ const Outlet = () => {
  */
 
 const Content = () => {
-  // @todo This is non-standard for Remix, is there a better way?
-  // Maybe there is a way to tell remix to use the right outlet somehow and avoid passing it?
-  return <Root Outlet={Outlet} />;
+  return (
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <Meta />
+        <Links />
+      </head>
+      <Outlet />
+    </html>
+  );
 };
 
 export default Content;

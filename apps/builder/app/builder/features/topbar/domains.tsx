@@ -11,10 +11,7 @@ import {
   NestedInputButton,
   Separator,
 } from "@webstudio-is/design-system";
-import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import type { Project } from "@webstudio-is/project";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
-import { builderDomainsPath } from "~/shared/router-utils";
 import {
   AlertIcon,
   CheckCircleIcon,
@@ -23,14 +20,14 @@ import {
 } from "@webstudio-is/icons";
 import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
-import env from "~/shared/env";
 import { useCallback, useEffect, useState } from "react";
 import type { PublishStatus } from "@webstudio-is/prisma-client";
 // eslint-disable-next-line import/no-internal-modules
-import formatDistance from "date-fns/formatDistance";
+import { formatDistance } from "date-fns/formatDistance";
 import { Entri } from "./entri";
-
-const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
+import { trpcClient } from "~/shared/trpc/trpc-client";
+import { useStore } from "@nanostores/react";
+import { $publisherHost } from "~/shared/nano-states";
 
 export type Domain = {
   projectId: Project["id"];
@@ -212,21 +209,21 @@ const DomainItem = (props: {
     state: verifyState,
     data: verifyData,
     error: verifySystemError,
-  } = trpc.verify.useMutation();
+  } = trpcClient.domain.verify.useMutation();
 
   const {
     send: remove,
     state: removeState,
     data: removeData,
     error: removeSystemError,
-  } = trpc.remove.useMutation();
+  } = trpcClient.domain.remove.useMutation();
 
   const {
     send: updateStatus,
     state: updateStatusState,
     data: updateStatusData,
     error: updateStatusError,
-  } = trpc.updateStatus.useMutation();
+  } = trpcClient.domain.updateStatus.useMutation();
 
   const [isStatusLoading, setIsStatusLoading] = useState(true);
 
@@ -342,10 +339,9 @@ const DomainItem = (props: {
     domainUpdatedAt,
   ]);
 
+  const publisherHost = useStore($publisherHost);
   const cnameEntryName = getCname(props.projectDomain.domain.domain);
-  const cnameEntryValue = `${props.projectDomain.cname}.customers.${
-    env.PUBLISHER_HOST ?? "wstd.work"
-  }`;
+  const cnameEntryValue = `${props.projectDomain.cname}.customers.${publisherHost}`;
 
   const txtEntryName =
     cnameEntryName === "@"
@@ -387,6 +383,7 @@ const DomainItem = (props: {
           <Tooltip content={`Proceed to ${props.projectDomain.domain.domain}`}>
             <IconButton
               tabIndex={-1}
+              disabled={status !== "VERIFIED_ACTIVE"}
               onClick={(event) => {
                 const url = new URL(
                   `https://${props.projectDomain.domain.domain}`

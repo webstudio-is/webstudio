@@ -2,7 +2,7 @@ import type { Data } from "@webstudio-is/http-client";
 import { loadBuildById } from "@webstudio-is/project-build/index.server";
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
-import { findPageByIdOrPath } from "@webstudio-is/project-build";
+import { findPageByIdOrPath } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/prisma-client";
 import { db as domainDb } from "@webstudio-is/domain/index.server";
 
@@ -44,7 +44,7 @@ export const loadProductionCanvasData = async (
     )
   );
 
-  const page = findPageByIdOrPath(build.pages, "/");
+  const page = findPageByIdOrPath("/", build.pages);
 
   if (page === undefined) {
     throw new Error(`Page / not found`);

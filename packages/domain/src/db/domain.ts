@@ -96,17 +96,13 @@ export const create = async (
     throw new AuthorizationError("Project must have project userId defined");
   }
 
-  // Query amount of domains
-  const projectDomainsCount = await prisma.projectWithDomain.count({
-    where: {
-      userId: ownerId,
-    },
-  });
+  const totalDomainsCount = await countTotalDomains(ownerId);
 
-  if (projectDomainsCount >= props.maxDomainsAllowedPerUser) {
+  if (totalDomainsCount >= props.maxDomainsAllowedPerUser) {
     return {
       success: false,
-      error: "You have reached the maximum amount of domains allowed",
+      error:
+        "You have reached the maximum number of allowed domains. Please upgrade to the Pro plan or higher.",
     };
   }
 
@@ -329,4 +325,12 @@ export const updateStatus = async (
   });
 
   return { success: true, domain: updatedDomain };
+};
+
+export const countTotalDomains = async (userId: string): Promise<number> => {
+  return await prisma.projectWithDomain.count({
+    where: {
+      userId,
+    },
+  });
 };

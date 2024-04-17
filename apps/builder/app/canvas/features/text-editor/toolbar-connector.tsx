@@ -16,7 +16,7 @@ import { $getNearestNodeOfType } from "@lexical/utils";
 import { $patchStyleText } from "@lexical/selection";
 import { LinkNode } from "@lexical/link";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { textToolbarStore } from "~/shared/nano-states";
+import { $textToolbar } from "~/shared/nano-states";
 import { subscribeScrollState } from "~/canvas/shared/scroll-state";
 
 let activeEditor: undefined | LexicalEditor;
@@ -137,7 +137,7 @@ const ToolbarConnectorPluginInternal = ({
       const isSubscript = selection.hasFormat("subscript");
       const isLink = $isSelectedLink(selection);
       const isSpan = $getSpanNodes(selection).length !== 0;
-      textToolbarStore.set({
+      $textToolbar.set({
         selectionRect,
         isBold,
         isItalic,
@@ -147,7 +147,7 @@ const ToolbarConnectorPluginInternal = ({
         isSpan,
       });
     } else {
-      textToolbarStore.set(undefined);
+      $textToolbar.set(undefined);
     }
   }, []);
 
@@ -155,9 +155,9 @@ const ToolbarConnectorPluginInternal = ({
     return subscribeScrollState({
       onScrollStart: () => {
         // hide toolbar on scroll start preserving all data
-        const textToolbar = textToolbarStore.get();
+        const textToolbar = $textToolbar.get();
         if (textToolbar) {
-          textToolbarStore.set({
+          $textToolbar.set({
             ...textToolbar,
             selectionRect: undefined,
           });
@@ -165,9 +165,9 @@ const ToolbarConnectorPluginInternal = ({
       },
       onScrollEnd: () => {
         // restore toolbar with new position
-        const textToolbar = textToolbarStore.get();
+        const textToolbar = $textToolbar.get();
         if (textToolbar) {
-          textToolbarStore.set({
+          $textToolbar.set({
             ...textToolbar,
             selectionRect: getSelectionClienRect(),
           });
@@ -199,7 +199,7 @@ const ToolbarConnectorPluginInternal = ({
   useEffect(() => {
     // hide toolbar when editor is unmounted
     return () => {
-      textToolbarStore.set(undefined);
+      $textToolbar.set(undefined);
     };
   }, []);
 

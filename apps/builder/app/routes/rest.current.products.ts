@@ -1,4 +1,8 @@
-import { json, redirect, type LoaderArgs } from "@remix-run/server-runtime";
+import {
+  json,
+  redirect,
+  type LoaderFunctionArgs,
+} from "@remix-run/server-runtime";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
 import { prisma } from "@webstudio-is/prisma-client";
@@ -7,7 +11,7 @@ import { prisma } from "@webstudio-is/prisma-client";
  * Created for ebugging purposes, to check that payments and products are working
  * Showing current user's checkouts with products.
  */
-export const loader = async ({ request, params }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {

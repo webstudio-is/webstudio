@@ -39,7 +39,11 @@ export const toValue = (
     return value.value + (value.unit === "number" ? "" : value.unit);
   }
   if (value.type === "fontFamily") {
-    return value.value.join(", ");
+    const families = [];
+    for (const family of value.value) {
+      families.push(family.includes(" ") ? `"${family}"` : family);
+    }
+    return families.join(", ");
   }
   if (value.type === "var") {
     const fallbacks = [];
@@ -106,6 +110,15 @@ export const toValue = (
 
   if (value.type === "tuple") {
     return value.value.map((value) => toValue(value, transformValue)).join(" ");
+  }
+
+  if (value.type === "function") {
+    return `${value.name}(${toValue(value.args, transformValue)})`;
+  }
+
+  // https://www.w3.org/TR/css-variables-1/#guaranteed-invalid
+  if (value.type === "guaranteedInvalid") {
+    return "";
   }
 
   return captureError(new Error("Unknown value type"), value);

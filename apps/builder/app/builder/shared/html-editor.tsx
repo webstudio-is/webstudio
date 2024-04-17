@@ -1,20 +1,11 @@
-import { useMemo } from "react";
+import { forwardRef, useMemo, type ComponentProps, useEffect } from "react";
 import {
   keymap,
-  drawSelection,
-  dropCursor,
-  EditorView,
   tooltips,
   highlightSpecialChars,
   highlightActiveLine,
 } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import {
-  bracketMatching,
-  defaultHighlightStyle,
-  indentOnInput,
-  syntaxHighlighting,
-} from "@codemirror/language";
+import { bracketMatching, indentOnInput } from "@codemirror/language";
 import {
   autocompletion,
   closeBrackets,
@@ -23,13 +14,15 @@ import {
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
-import { CodeEditor } from "./code-editor";
+import { CodeEditor, getMinMaxHeightVars } from "./code-editor";
 
 const autocompletionStyle = css({
   "&.cm-tooltip.cm-tooltip-autocomplete": {
     ...textVariants.mono,
     border: "none",
     backgroundColor: "transparent",
+    // override none set on body by radix popover
+    pointerEvents: "auto",
     "& ul": {
       minWidth: 160,
       maxWidth: 260,
@@ -49,7 +42,7 @@ const autocompletionStyle = css({
         color: theme.colors.foregroundMain,
         padding: theme.spacing[3],
         borderRadius: theme.borderRadius[3],
-        "&[aria-selected]": {
+        "&[aria-selected], &:hover": {
           color: theme.colors.foregroundMain,
           backgroundColor: theme.colors.backgroundItemMenuItemHover,
         },
@@ -68,35 +61,21 @@ const autocompletionStyle = css({
 });
 
 const wrapperStyle = css({
-  "& .cm-content": {
-    // 1 line is 16px
-    // set min 10 lines and max 20 lines
-    minHeight: 160,
-    maxHeight: 320,
-  },
+  position: "relative",
+  // 1 line is 16px
+  // set min 10 lines and max 20 lines
+  ...getMinMaxHeightVars({ minHeight: "160px", maxHeight: "320px" }),
 });
 
-export const HtmlEditor = ({
-  readOnly = false,
-  value,
-  onChange,
-  onBlur,
-}: {
-  readOnly?: boolean;
-  value: string;
-  onChange: (newValue: string) => void;
-  onBlur?: () => void;
-}) => {
+export const HtmlEditor = forwardRef<
+  HTMLDivElement,
+  Omit<ComponentProps<typeof CodeEditor>, "extensions">
+>((props, ref) => {
   const extensions = useMemo(
     () => [
       highlightActiveLine(),
       highlightSpecialChars(),
-      history(),
-      drawSelection(),
-      dropCursor(),
       indentOnInput(),
-      EditorView.lineWrapping,
-      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
       html({}),
       bracketMatching(),
       closeBrackets(),
@@ -106,26 +85,36 @@ export const HtmlEditor = ({
       autocompletion({
         icons: false,
         tooltipClass: () => autocompletionStyle.toString(),
+        closeOnBlur: false,
       }),
-      keymap.of([
-        ...closeBracketsKeymap,
-        ...defaultKeymap,
-        ...historyKeymap,
-        ...completionKeymap,
-      ]),
+      keymap.of([...closeBracketsKeymap, ...completionKeymap]),
     ],
     []
   );
 
+  // prevent clicking on autocomplete options propagating to body
+  // and closing dialogs and popovers
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.closest(".cm-tooltip-autocomplete")
+      ) {
+        event.stopPropagation();
+      }
+    };
+    const options = { capture: true };
+    document.addEventListener("pointerdown", handlePointerDown, options);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, options);
+    };
+  }, []);
+
   return (
-    <div className={wrapperStyle.toString()}>
-      <CodeEditor
-        extensions={extensions}
-        readOnly={readOnly}
-        value={value}
-        onChange={onChange}
-        onBlur={onBlur}
-      />
+    <div className={wrapperStyle()} ref={ref}>
+      <CodeEditor {...props} extensions={extensions} />
     </div>
   );
-};
+});
+
+HtmlEditor.displayName = "HtmlEditor";

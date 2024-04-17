@@ -1,11 +1,9 @@
 import { z } from "zod";
-import { initTRPC } from "@trpc/server";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+
 import { db as projectDb } from "@webstudio-is/project/index.server";
 import { db } from "../db";
 import { createProductionBuild } from "@webstudio-is/project-build/index.server";
-
-const { router, procedure } = initTRPC.context<AppContext>().create();
+import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 
 export const domainRouter = router({
   getEntriToken: procedure.query(async ({ ctx }) => {
@@ -63,10 +61,11 @@ export const domainRouter = router({
 
         const result = deploymentTrpc.publish.mutate({
           // used to load build data from the builder see routes/rest.build.$buildId.ts
-          builderApiOrigin: env.BUILDER_ORIGIN,
+          builderOrigin: env.BUILDER_ORIGIN,
+          githubSha: env.GITHUB_SHA,
           buildId: build.id,
           // preview support
-          branchName: env.BRANCH_NAME,
+          branchName: env.GITHUB_REF_NAME,
           // action log helper (not used for deployment, but for action logs readablity)
           projectDomainName: project.domain,
         });
@@ -204,6 +203,21 @@ export const domainRouter = router({
         } as const;
       }
     }),
+
+  countTotalDomains: procedure.query(async ({ input, ctx }) => {
+    try {
+      if (ctx.authorization.userId === undefined) {
+        throw new Error("Not authorized");
+      }
+      const data = await db.countTotalDomains(ctx.authorization.userId);
+      return { success: true, data } as const;
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      } as const;
+    }
+  }),
 
   updateStatus: procedure
     .input(

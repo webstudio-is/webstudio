@@ -1,19 +1,16 @@
 import { type ComponentProps } from "react";
 import { useLoaderData, useRouteError } from "@remix-run/react";
-import type { LoaderArgs } from "@remix-run/node";
-import { redirect } from "@remix-run/node";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import { dashboardProjectRouter } from "@webstudio-is/dashboard/index.server";
 import { Dashboard } from "~/dashboard";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import { loginPath } from "~/shared/router-utils";
-import { sentryException } from "~/shared/sentry";
 import { ErrorMessage } from "~/shared/error";
 import { createContext } from "~/shared/context.server";
 import env from "~/env/env.server";
-
 export const loader = async ({
   request,
-}: LoaderArgs): Promise<ComponentProps<typeof Dashboard>> => {
+}: LoaderFunctionArgs): Promise<ComponentProps<typeof Dashboard>> => {
   const user = await findAuthenticatedUser(request);
 
   if (user === null) {
@@ -32,13 +29,9 @@ export const loader = async ({
     .createCaller(context)
     .findMany({ userId: user.id });
 
-  const projectIds = env.PROJECT_TEMPLATES;
-
   const projectTemplates = await dashboardProjectRouter
     .createCaller(context)
-    .findManyByIds({
-      projectIds,
-    });
+    .findManyByIds({ projectIds: env.PROJECT_TEMPLATES });
 
   const { userPlanFeatures } = context;
 
@@ -51,12 +44,14 @@ export const loader = async ({
     projects,
     projectTemplates,
     userPlanFeatures,
+    publisherHost: env.PUBLISHER_HOST,
+    imageBaseUrl: env.IMAGE_BASE_URL,
   };
 };
 
 export const ErrorBoundary = () => {
   const error = useRouteError();
-  sentryException({ error });
+  console.error({ error });
   const message = error instanceof Error ? error.message : String(error);
   return <ErrorMessage message={message} />;
 };

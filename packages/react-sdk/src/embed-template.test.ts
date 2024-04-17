@@ -51,6 +51,9 @@ test("generate data for embedding from instances and text", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -121,6 +124,9 @@ test("generate data for embedding from props", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -214,6 +220,9 @@ test("generate data for embedding from styles", () => {
         value: { type: "keyword", value: "black" },
       },
     ],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -292,6 +301,52 @@ test("generate data for embedding from props bound to data source variables", ()
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
+  });
+});
+
+test("generate variables with aliases instead of reference name", () => {
+  expect(
+    generateDataFromEmbedTemplate(
+      [
+        {
+          type: "instance",
+          component: "Box",
+          variables: {
+            myVar: { alias: "My Variable", initialValue: false },
+          },
+          children: [],
+        },
+      ],
+      new Map(),
+      defaultBreakpointId
+    )
+  ).toEqual({
+    children: [{ type: "id", value: expectString }],
+    instances: [
+      { type: "instance", id: expectString, component: "Box", children: [] },
+    ],
+    props: [],
+    dataSources: [
+      {
+        type: "variable",
+        id: expectString,
+        scopeInstanceId: expectString,
+        name: "My Variable",
+        value: {
+          type: "boolean",
+          value: false,
+        },
+      },
+    ],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -370,6 +425,9 @@ test("generate data for embedding from props with complex expressions", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -481,6 +539,9 @@ test("generate data for embedding from action props", () => {
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 
@@ -496,6 +557,12 @@ test("generate data for embedding from parameter props", () => {
             name: "myParameter",
             variableName: "parameterName",
           },
+          {
+            type: "parameter",
+            name: "anotherParameter",
+            variableName: "anotherParameterName",
+            variableAlias: "Another Parameter",
+          },
         ],
         children: [],
       },
@@ -505,6 +572,7 @@ test("generate data for embedding from parameter props", () => {
   );
   const instanceId = data.instances[0].id;
   const variableId = data.dataSources[0].id;
+  const anotherVariableId = data.dataSources[1].id;
   expect(data).toEqual({
     children: [{ type: "id", value: instanceId }],
     instances: [
@@ -523,6 +591,13 @@ test("generate data for embedding from parameter props", () => {
         type: "parameter",
         value: variableId,
       },
+      {
+        id: expectString,
+        instanceId,
+        name: "anotherParameter",
+        type: "parameter",
+        value: anotherVariableId,
+      },
     ],
     dataSources: [
       {
@@ -531,10 +606,69 @@ test("generate data for embedding from parameter props", () => {
         scopeInstanceId: instanceId,
         name: "parameterName",
       },
+      {
+        type: "parameter",
+        id: anotherVariableId,
+        scopeInstanceId: instanceId,
+        name: "Another Parameter",
+      },
     ],
     styleSourceSelections: [],
     styleSources: [],
     styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
+  });
+});
+
+test("generate data for embedding from instance child bound to variables", () => {
+  expect(
+    generateDataFromEmbedTemplate(
+      [
+        {
+          type: "instance",
+          component: "Box",
+          variables: {
+            myValue: { initialValue: "text" },
+          },
+          children: [{ type: "expression", value: "myValue" }],
+        },
+      ],
+      new Map(),
+      defaultBreakpointId
+    )
+  ).toEqual({
+    children: [{ type: "id", value: expectString }],
+    instances: [
+      {
+        type: "instance",
+        id: expectString,
+        component: "Box",
+        children: [
+          {
+            type: "expression",
+            value: expect.stringMatching(/\$ws\$dataSource\$\w+/),
+          },
+        ],
+      },
+    ],
+    dataSources: [
+      {
+        type: "variable",
+        id: expectString,
+        scopeInstanceId: expectString,
+        name: "myValue",
+        value: { type: "string", value: "text" },
+      },
+    ],
+    props: [],
+    styleSourceSelections: [],
+    styleSources: [],
+    styles: [],
+    assets: [],
+    breakpoints: [],
+    resources: [],
   });
 });
 

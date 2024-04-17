@@ -16,6 +16,13 @@ export const parseIntermediateOrInvalidValue = (
 ): StyleValue => {
   const value = styleValue.value.trim();
 
+  if (property.startsWith("--")) {
+    return {
+      type: "unparsed",
+      value,
+    };
+  }
+
   // Try value with existing or fallback unit
   const unit = "unit" in styleValue ? styleValue.unit ?? "px" : "px";
   let styleInput = parseCssValue(property, `${value}${unit}`);

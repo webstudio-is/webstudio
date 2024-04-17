@@ -2,19 +2,22 @@ import { nanoid } from "nanoid";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { gfm } from "micromark-extension-gfm";
-import type { Breakpoint, Instance } from "@webstudio-is/sdk";
-import type { EmbedTemplateData } from "@webstudio-is/react-sdk";
+import type {
+  Breakpoint,
+  Instance,
+  WebstudioFragment,
+} from "@webstudio-is/sdk";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
   insertTemplateData,
 } from "../instance-utils";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedPageStore,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedPage,
 } from "../nano-states";
 import { isBaseBreakpoint } from "../breakpoints";
 
@@ -49,7 +52,7 @@ type Options = { generateId?: typeof nanoid };
 type Root = ReturnType<typeof fromMarkdown>;
 
 const toInstanceData = (
-  data: EmbedTemplateData,
+  data: WebstudioFragment,
   breakpointId: Breakpoint["id"],
   ast: { children: Root["children"] },
   options: Options = {}
@@ -188,20 +191,23 @@ export const parse = (clipboardData: string, options?: Options) => {
   if (ast.children.length === 0) {
     return;
   }
-  const breakpoints = breakpointsStore.get();
+  const breakpoints = $breakpoints.get();
   const breakpointValues = Array.from(breakpoints.values());
   const baseBreakpoint = breakpointValues.find(isBaseBreakpoint);
   if (baseBreakpoint === undefined) {
     return;
   }
-  const data: EmbedTemplateData = {
+  const data: WebstudioFragment = {
     children: [],
     instances: [],
     props: [],
+    breakpoints: [],
     styles: [],
     styleSources: [],
     styleSourceSelections: [],
     dataSources: [],
+    resources: [],
+    assets: [],
   };
   data.children = toInstanceData(data, baseBreakpoint.id, ast, options);
   return data;
@@ -209,11 +215,11 @@ export const parse = (clipboardData: string, options?: Options) => {
 
 export const onPaste = (clipboardData: string): boolean => {
   const data = parse(clipboardData);
-  const selectedPage = selectedPageStore.get();
+  const selectedPage = $selectedPage.get();
   if (data === undefined || selectedPage === undefined) {
     return false;
   }
-  const metas = registeredComponentMetasStore.get();
+  const metas = $registeredComponentMetas.get();
   const newInstances = new Map(
     data.instances.map((instance) => [instance.id, instance])
   );
@@ -221,12 +227,12 @@ export const onPaste = (clipboardData: string): boolean => {
     .filter((child) => child.type === "id")
     .map((child) => child.value);
   // paste to the root if nothing is selected
-  const instanceSelector = selectedInstanceSelectorStore.get() ?? [
+  const instanceSelector = $selectedInstanceSelector.get() ?? [
     selectedPage.rootInstanceId,
   ];
   const dropTarget = findClosestDroppableTarget(
     metas,
-    instancesStore.get(),
+    $instances.get(),
     instanceSelector,
     computeInstancesConstraints(metas, newInstances, rootInstanceIds)
   );

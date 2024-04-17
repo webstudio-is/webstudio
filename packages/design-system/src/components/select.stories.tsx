@@ -1,4 +1,4 @@
-import type { ComponentStory } from "@storybook/react";
+import type { StoryFn } from "@storybook/react";
 import { GapVerticalIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import { NestedIconLabel } from "./nested-icon-label";
@@ -8,7 +8,7 @@ export default {
   component: Select,
 };
 
-export const Simple: ComponentStory<typeof Select> = () => {
+export const Simple: StoryFn<typeof Select> = () => {
   const options = ["Apple", "Banana", "Orange"];
   const [value, setValue] = useState(options[0]);
   return (
@@ -16,7 +16,7 @@ export const Simple: ComponentStory<typeof Select> = () => {
   );
 };
 
-export const Placeholder: ComponentStory<typeof Select> = () => {
+export const Placeholder: StoryFn<typeof Select> = () => {
   return (
     <Select
       placeholder="Select fruit"
@@ -25,11 +25,11 @@ export const Placeholder: ComponentStory<typeof Select> = () => {
   );
 };
 
-export const Disabled: ComponentStory<typeof Select> = () => {
+export const Disabled: StoryFn<typeof Select> = () => {
   return <Select disabled options={["Apple", "Banana", "Orange"]} />;
 };
 
-export const FullWidth: ComponentStory<typeof Select> = () => {
+export const FullWidth: StoryFn<typeof Select> = () => {
   return (
     <div style={{ width: 200 }}>
       <Select
@@ -42,7 +42,7 @@ export const FullWidth: ComponentStory<typeof Select> = () => {
   );
 };
 
-export const WithNestedLabelIcon: ComponentStory<typeof Select> = () => {
+export const WithNestedLabelIcon: StoryFn<typeof Select> = () => {
   return (
     <Select
       prefix={
@@ -57,7 +57,7 @@ export const WithNestedLabelIcon: ComponentStory<typeof Select> = () => {
   );
 };
 
-export const WithComplexItems: ComponentStory<typeof Select> = () => {
+export const WithComplexItems: StoryFn<typeof Select> = () => {
   const items = {
     apple: { icon: "🍎" },
     banana: { icon: "🍌" },
@@ -82,7 +82,34 @@ export const WithComplexItems: ComponentStory<typeof Select> = () => {
   );
 };
 
-export const Boundaries: ComponentStory<typeof Select> = () => {
+export const WithDescriptions: StoryFn<typeof Select> = () => {
+  const options = [
+    { label: "Apple", description: "An apple fruit" },
+    { label: "Banana", description: "A banana fruit" },
+    { label: "Orange", description: "An orange fruit" },
+    { label: "Pear", description: "A pear fruit" },
+    { label: "Grape", description: "A grape fruit" },
+  ];
+  const [value, setValue] = useState<(typeof options)[number]>(options[0]);
+
+  return (
+    <Select
+      name="fruit"
+      options={options}
+      value={value}
+      getValue={(value) => value.label}
+      onChange={setValue}
+      getLabel={(option) => {
+        return option.label;
+      }}
+      getDescription={(option) => {
+        return option.description;
+      }}
+    />
+  );
+};
+
+export const Boundaries: StoryFn<typeof Select> = () => {
   const items = Array(100)
     .fill(0)
     .map((_, index) => `Item ${index}`);

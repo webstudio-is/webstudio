@@ -10,14 +10,13 @@ import { styled, theme } from "../stitches.config";
 export const PanelTabs = styled(Primitive.Root, {
   display: "flex",
   flexDirection: "column",
+  "&[hidden]": { display: "none" },
 });
 
 export const PanelTabsList = styled(Primitive.List, {
   display: "flex",
-  paddingRight: theme.spacing[5],
-  paddingLeft: theme.spacing[5],
-  paddingTop: theme.spacing[3],
-  paddingBottom: theme.spacing[3],
+  px: theme.spacing[5],
+  py: theme.spacing[3],
 });
 
 export const PanelTabsTrigger = styled(Primitive.Trigger, {
@@ -41,6 +40,8 @@ export const PanelTabsTrigger = styled(Primitive.Trigger, {
 });
 
 export const PanelTabsContent = styled(Primitive.Content, {
+  display: "grid",
+  minHeight: 0,
   "&:focus": { outline: "none" },
   "&[data-state=inactive]": { display: "none" },
 });

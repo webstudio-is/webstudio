@@ -1,5 +1,5 @@
 import { type SyntheticEvent, type KeyboardEvent, useRef } from "react";
-import { useEffectEvent } from "./effect-event";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 type UseClickAndHoldProps = {
   onStart: () => void;

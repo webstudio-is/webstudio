@@ -8,13 +8,12 @@ import {
   createScope,
   parseComponentName,
   getStyleDeclKey,
-  type Page,
 } from "@webstudio-is/sdk";
 import {
   type WsComponentMeta,
   generateCss,
   generateDataFromEmbedTemplate,
-  generatePageComponent,
+  generateWebstudioComponent,
   getIndexesWithinAncestors,
 } from "@webstudio-is/react-sdk";
 import * as baseMetasExports from "@webstudio-is/sdk-components-react/metas";
@@ -86,7 +85,7 @@ const Story = {
 ${css}
       \`}
       </style>
-      <Page params={{}} resources={{}} />
+      <Component />
     </>
   }
 }
@@ -146,22 +145,20 @@ export const generateStories = async () => {
         usedMetas.set(instance.component, meta);
       }
     }
-    const { cssText, classesMap } = generateCss(
-      {
-        assets: [],
-        breakpoints: [
-          [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
-        ],
-        styles: data.styles.map((item) => [getStyleDeclKey(item), item]),
-        styleSourceSelections: data.styleSourceSelections.map((item) => [
-          item.instanceId,
-          item,
-        ]),
-        componentMetas: usedMetas,
-      },
-      { assetBaseUrl: "/", atomic: true }
-    );
-    const scope = createScope(["Page", "Story", "props", "useState"]);
+    const { cssText, classesMap } = generateCss({
+      assets: new Map(),
+      breakpoints: new Map([
+        [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
+      ]),
+      styles: new Map(data.styles.map((item) => [getStyleDeclKey(item), item])),
+      styleSourceSelections: new Map(
+        data.styleSourceSelections.map((item) => [item.instanceId, item])
+      ),
+      componentMetas: usedMetas,
+      assetBaseUrl: "/",
+      atomic: true,
+    });
+    const scope = createScope(["Component", "Story", "props", "useState"]);
     let content = "";
     content += getStoriesImports({
       hasState: data.dataSources.some(
@@ -174,10 +171,12 @@ export const generateStories = async () => {
       components,
     });
     content += `\n`;
-    content += generatePageComponent({
+    content += generateWebstudioComponent({
       classesMap,
       scope,
-      page: { rootInstanceId } as Page,
+      name: `Component`,
+      rootInstanceId,
+      parameters: [],
       instances,
       props: new Map(data.props.map((prop) => [prop.id, prop])),
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),

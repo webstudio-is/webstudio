@@ -1,17 +1,20 @@
-import { matchSorter } from "match-sorter";
 import {
   Box,
   useCombobox,
-  Combobox,
+  ComboboxRoot,
   ComboboxContent,
   ComboboxAnchor,
   ComboboxListbox,
   ComboboxListboxItem,
+  ComboboxItemDescription,
+  ComboboxScrollArea,
   numericScrubControl,
   NestedInputButton,
   NestedIconLabel,
   InputField,
   handleNumericInputArrowKeys,
+  theme,
+  Flex,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -26,19 +29,45 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
+  type ComponentProps,
 } from "react";
 import { useUnitSelect } from "./unit-select";
 import { parseIntermediateOrInvalidValue } from "./parse-intermediate-or-invalid-value";
 import { toValue } from "@webstudio-is/css-engine";
 import { useDebouncedCallback } from "use-debounce";
 import type { StyleSource } from "../style-info";
-import { toPascalCase } from "../keyword-utils";
-import { isValidDeclaration } from "@webstudio-is/css-data";
 import {
-  selectedInstanceBrowserStyleStore,
-  selectedInstanceUnitSizesStore,
+  declarationDescriptions,
+  isValidDeclaration,
+  properties,
+} from "@webstudio-is/css-data";
+import {
+  $selectedInstanceBrowserStyle,
+  $selectedInstanceUnitSizes,
 } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
+
+// We need to enable scrub on properties that can have numeric value.
+const canBeNumber = (property: StyleProperty) => {
+  if (property in properties === false) {
+    return true;
+  }
+  const { unitGroups } = properties[property as keyof typeof properties];
+  return unitGroups.length !== 0;
+};
+
+// Subjective adjust ment based on how it feels on macbook/trackpad.
+// It won't be ideal for everyone with different input devices and preferences.
+// Ideally we also need some kind of acceleration setting with 1 value.
+const scrubUnitAcceleration = new Map<Unit, number>([
+  ["rem", 1 / 16],
+  ["em", 1 / 16],
+  ["%", 1 / 10],
+  ["dvw", 1 / 10],
+  ["dvh", 1 / 10],
+  ["number", 1 / 20],
+]);
 
 const useScrub = ({
   value,
@@ -76,14 +105,11 @@ const useScrub = ({
     const inputRefCurrent = inputRef.current;
     const scrubRefCurrent = scrubRef.current;
 
-    const { current } = valueRef;
-
     // Support only auto keyword to be scrubbable
     if (
-      (current.type !== "unit" &&
-        !(current.type === "keyword" && current.value === "auto")) ||
       inputRefCurrent === null ||
-      scrubRefCurrent === null
+      scrubRefCurrent === null ||
+      canBeNumber(property) === false
     ) {
       return;
     }
@@ -132,6 +158,11 @@ const useScrub = ({
     };
 
     return numericScrubControl(scrubRefCurrent, {
+      getAcceleration() {
+        if (valueRef.current.type === "unit") {
+          return scrubUnitAcceleration.get(valueRef.current.unit);
+        }
+      },
       // @todo: after this https://github.com/webstudio-is/webstudio/issues/564
       // we can switch back on using just initial value
       //
@@ -145,28 +176,18 @@ const useScrub = ({
         if (valueRef.current.type === "unit") {
           return valueRef.current.value;
         }
-
-        if (
-          valueRef.current.type === "keyword" &&
-          valueRef.current.value === "auto"
-        ) {
-          return 0;
-        }
+        return 0;
       },
       onStart() {
-        // for TS
-        if (valueRef.current.type !== "unit") {
-          return;
+        if (valueRef.current.type === "unit") {
+          unit = valueRef.current.unit;
         }
-
-        unit = valueRef.current.unit;
       },
       onValueInput(event) {
         // Moving focus to container of the input to hide the caret
         // (it makes text harder to read and may jump around as you scrub)
         scrubRef.current?.setAttribute("tabindex", "-1");
         scrubRef.current?.focus();
-
         const value = validateValue(event.value);
 
         onChangeRef.current(value);
@@ -183,7 +204,7 @@ const useScrub = ({
         inputRef.current?.focus();
         inputRef.current?.select();
       },
-      shouldHandleEvent: shouldHandleEvent,
+      shouldHandleEvent,
     });
   }, [shouldHandleEvent, property]);
 
@@ -199,14 +220,12 @@ const useHandleKeyDown =
     ignoreUpDownNumeric,
     value,
     onChange,
-    onChangeComplete,
     onKeyDown,
   }: {
     ignoreEnter: boolean;
     ignoreUpDownNumeric: boolean;
     value: CssValueInputValue;
     onChange: (value: CssValueInputValue) => void;
-    onChangeComplete: (value: CssValueInputValue) => void;
     onKeyDown: KeyboardEventHandler<HTMLInputElement>;
   }) =>
   (event: KeyboardEvent<HTMLInputElement>) => {
@@ -218,7 +237,7 @@ const useHandleKeyDown =
     // Do not prevent downshift behaviour on item select
     if (ignoreEnter === false) {
       if (event.key === "Enter") {
-        onChangeComplete(value);
+        onChange(value);
       }
     }
 
@@ -259,7 +278,10 @@ export type ChangeReason =
   | "keyword-select"
   | "scrub-end";
 
-type CssValueInputProps = {
+type CssValueInputProps = Pick<
+  ComponentProps<typeof InputField>,
+  "variant" | "size" | "autoFocus" | "disabled" | "fieldSizing" | "prefix"
+> & {
   styleSource: StyleSource;
   property: StyleProperty;
   value: StyleValue | undefined;
@@ -268,7 +290,6 @@ type CssValueInputProps = {
    * Selected item in the dropdown
    */
   keywords?: Array<KeywordValue>;
-  disabled?: boolean;
   onChange: (value: CssValueInputValue | undefined) => void;
   onChangeComplete: (event: {
     value: StyleValue;
@@ -277,7 +298,6 @@ type CssValueInputProps = {
   onHighlight: (value: StyleValue | undefined) => void;
   onAbort: () => void;
   icon?: ReactNode;
-  prefix?: ReactNode;
   showSuffix?: boolean;
 };
 
@@ -290,21 +310,12 @@ const itemToString = (item: CssValueInputValue | null) => {
   return item === null
     ? ""
     : item.type === "keyword"
-    ? toPascalCase(toValue(item))
+    ? // E.g. we want currentcolor to be lower case
+      toValue(item).toLocaleLowerCase()
     : item.type === "intermediate" || item.type === "unit"
     ? String(item.value)
     : toValue(item);
 };
-
-const match = <Item,>(
-  search: string,
-  items: Array<Item>,
-  itemToString: (item: Item | null) => string
-) =>
-  matchSorter(items, search, {
-    keys: [itemToString, (item) => itemToString(item).replace(/\s/g, "-")],
-  });
-
 /**
  * Common:
  * - Free text editing
@@ -337,6 +348,7 @@ const match = <Item,>(
  * - Evaluated math expression: "2px + 3em" (like CSS calc())
  */
 export const CssValueInput = ({
+  autoFocus,
   icon,
   prefix,
   showSuffix = true,
@@ -346,9 +358,16 @@ export const CssValueInput = ({
   onHighlight,
   onAbort,
   disabled,
+  fieldSizing,
+  variant,
+  size,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
+  // Used to show description
+  const [highlightedValue, setHighlighedValue] = useState<
+    StyleValue | undefined
+  >();
 
   const onChange = (input: string | undefined) => {
     if (input === undefined) {
@@ -396,11 +415,12 @@ export const CssValueInput = ({
     isOpen,
     highlightedIndex,
   } = useCombobox<CssValueInputValue>({
+    // Used for description to match the item when nothing is highlighted yet and value is still in non keyword mode
+    defaultHighlightedIndex: 0,
     items: keywords,
     value,
     selectedItem: props.value,
     itemToString,
-    match,
     onInputChange: (inputValue) => {
       onChange(inputValue);
     },
@@ -410,11 +430,13 @@ export const CssValueInput = ({
     onItemHighlight: (value) => {
       if (value == null) {
         onHighlight(undefined);
+        setHighlighedValue(undefined);
         return;
       }
 
       if (value.type !== "intermediate") {
         onHighlight(value);
+        setHighlighedValue(value);
       }
     },
   });
@@ -422,6 +444,7 @@ export const CssValueInput = ({
   const inputProps = getInputProps();
 
   const [isUnitsOpen, unitSelectElement] = useUnitSelect({
+    size,
     property,
     value,
     onChange: (unitOrKeyword) => {
@@ -442,7 +465,7 @@ export const CssValueInput = ({
         return;
       }
 
-      const unitSizes = selectedInstanceUnitSizesStore.get();
+      const unitSizes = $selectedInstanceUnitSizes.get();
 
       // Value not edited by the user, we need to convert it to the new unit
       if (value.type === "unit") {
@@ -465,7 +488,7 @@ export const CssValueInput = ({
 
       // value is a keyword or non numeric, try get browser style value and convert it
       if (value.type === "keyword" || value.type === "intermediate") {
-        const browserStyle = selectedInstanceBrowserStyleStore.get();
+        const browserStyle = $selectedInstanceBrowserStyle.get();
         const browserPropertyValue = browserStyle?.[property];
         const propertyValue =
           browserPropertyValue?.type === "unit"
@@ -566,9 +589,8 @@ export const CssValueInput = ({
       isUnitsOpen || (isOpen && !menuProps.empty && highlightedIndex !== -1),
     // Do not change the number value on the arrow up/down if any menu is opened
     ignoreUpDownNumeric: isUnitsOpen || isOpen,
-    onChangeComplete: (value) => onChangeComplete(value, "enter"),
+    onChange: (value) => onChangeComplete(value, "enter"),
     value,
-    onChange: props.onChange,
     onKeyDown: inputProps.onKeyDown,
   });
 
@@ -588,6 +610,7 @@ export const CssValueInput = ({
       {...getToggleButtonProps()}
       data-state={isOpen ? "open" : "closed"}
       tabIndex={-1}
+      size={size}
     />
   );
 
@@ -599,21 +622,41 @@ export const CssValueInput = ({
 
   const suffix =
     showSuffix === false ? null : (
-      <Box ref={suffixRef}>
+      <Flex align="center" ref={suffixRef}>
         {isUnitValue
           ? unitSelectElement
           : isKeywordValue
           ? keywordButtonElement
           : null}
-      </Box>
+      </Flex>
     );
 
+  let description;
+  // When user hovers or focuses an item in the combobox list we want to show the description of the item and otherwise show the description of the current value
+  const valueForDescription =
+    highlightedValue?.type === "keyword"
+      ? highlightedValue
+      : props.value?.type === "keyword"
+      ? props.value
+      : items[0]?.type === "keyword"
+      ? items[0]
+      : undefined;
+  if (valueForDescription) {
+    const key = `${property}:${toValue(
+      valueForDescription
+    )}` as keyof typeof declarationDescriptions;
+    description = declarationDescriptions[key];
+  }
+
   return (
-    <Combobox>
+    <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <InputField
+            size={size}
+            variant={variant}
             disabled={disabled}
+            fieldSizing={fieldSizing}
             {...inputProps}
             onFocus={() => {
               const isFocused = document.activeElement === inputRef.current;
@@ -621,32 +664,40 @@ export const CssValueInput = ({
                 inputRef.current?.select();
               }
             }}
+            autoFocus={autoFocus}
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
-            containerRef={scrubRef}
+            containerRef={disabled ? undefined : scrubRef}
             inputRef={inputRef}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
             suffix={suffix}
-            css={{ cursor: "default" }}
+            css={{ cursor: "default", minWidth: "2em" }}
           />
         </ComboboxAnchor>
         {isOpen && (
           <ComboboxContent align="start" sideOffset={2} collisionPadding={10}>
             <ComboboxListbox {...menuProps}>
-              {items.map((item, index) => (
-                <ComboboxListboxItem
-                  {...getItemProps({ item, index })}
-                  key={index}
-                >
-                  {itemToString(item)}
-                </ComboboxListboxItem>
-              ))}
+              <ComboboxScrollArea>
+                {items.map((item, index) => (
+                  <ComboboxListboxItem
+                    {...getItemProps({ item, index })}
+                    key={index}
+                  >
+                    {itemToString(item)}
+                  </ComboboxListboxItem>
+                ))}
+              </ComboboxScrollArea>
+              {description && (
+                <ComboboxItemDescription>
+                  <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+                </ComboboxItemDescription>
+              )}
             </ComboboxListbox>
           </ComboboxContent>
         )}
       </Box>
-    </Combobox>
+    </ComboboxRoot>
   );
 };

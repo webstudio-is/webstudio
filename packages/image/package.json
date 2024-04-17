@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/image",
-  "version": "0.123.0",
+  "version": "0.144.0",
   "description": "Image optimization",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -21,8 +21,11 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
     "@storybook/react": "^7.4.0",
     "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/project-build",
-  "version": "0.123.0",
+  "version": "0.144.0",
   "description": "Webstudio Project Build",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,35 +9,24 @@
   "type": "module",
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts",
-      "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js"
+      "webstudio": "./src/index.ts"
     },
     "./index.server": {
-      "webstudio": "./src/index.server.ts",
-      "types": "./lib/types/index.server.d.ts",
-      "import": "./lib/index.server.js"
+      "webstudio": "./src/index.server.ts"
     }
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "sideEffects": false,
   "scripts": {
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm test",
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
-    "dts": "tsc --project tsconfig.dts.json"
+    "checks": "pnpm typecheck && pnpm test"
   },
   "dependencies": {
     "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "nanoid": "^5.0.1",
-    "zod": "^3.21.4"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

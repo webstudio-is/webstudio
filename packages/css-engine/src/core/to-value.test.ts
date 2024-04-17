@@ -51,7 +51,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
       type: "fontFamily",
       value: ["Courier New"],
     });
-    expect(value).toBe("Courier New, monospace");
+    expect(value).toBe('"Courier New", monospace');
   });
 
   test("Transform font family value to override default fallback", () => {
@@ -69,7 +69,7 @@ describe("Convert WS CSS Values to native CSS strings", () => {
         }
       }
     );
-    expect(value).toBe("Courier New");
+    expect(value).toBe('"Courier New"');
   });
 
   test("array", () => {
@@ -132,6 +132,34 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     expect(value).toBe("10px 20px 30px 40px");
   });
 
+  test("function", () => {
+    const translate3D = toValue({
+      type: "function",
+      name: "translate3d",
+      args: {
+        type: "keyword",
+        value: "42px, -62px, -135px",
+      },
+    });
+
+    const dropShadowValue = toValue({
+      type: "function",
+      name: "drop-shadow",
+      args: {
+        type: "tuple",
+        value: [
+          { type: "unit", value: 10, unit: "px" },
+          { type: "unit", value: 10, unit: "px" },
+          { type: "unit", value: 10, unit: "px" },
+          { type: "keyword", value: "red" },
+        ],
+      },
+    });
+
+    expect(translate3D).toBe("translate3d(42px, -62px, -135px)");
+    expect(dropShadowValue).toBe("drop-shadow(10px 10px 10px red)");
+  });
+
   test("sanitize url", () => {
     const assets = new Map<string, { path: string }>([
       ["1234567890", { path: `fo"o\\o.png` }],
@@ -166,5 +194,12 @@ describe("Convert WS CSS Values to native CSS strings", () => {
     );
 
     expect(value).toMatchInlineSnapshot(`"url("fo\\"o\\\\o.png")"`);
+  });
+
+  test("guaranteed-invalid", () => {
+    const value = toValue({
+      type: "guaranteedInvalid",
+    });
+    expect(value).toBe("");
   });
 });

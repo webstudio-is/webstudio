@@ -97,15 +97,22 @@ const viewPortStyle = css({
 type ScrollAreaProps = {
   css?: CSS;
   direction?: "vertical" | "horizontal" | "both";
+  className?: string;
 } & Pick<ComponentProps<"div">, "onScroll" | "children">;
 
 export const ScrollArea = forwardRef(
   (
-    { children, css, onScroll, direction = "vertical" }: ScrollAreaProps,
+    {
+      children,
+      css,
+      className,
+      onScroll,
+      direction = "vertical",
+    }: ScrollAreaProps,
     ref: Ref<HTMLDivElement>
   ) => {
     return (
-      <ScrollAreaRoot scrollHideDelay={0} css={css}>
+      <ScrollAreaRoot scrollHideDelay={0} css={css} className={className}>
         <Viewport
           ref={ref}
           className={viewPortStyle({ direction })}

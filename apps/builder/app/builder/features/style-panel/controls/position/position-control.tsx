@@ -4,10 +4,10 @@ import {
   TupleValueItem,
 } from "@webstudio-is/css-engine";
 import { Flex, Grid, PositionGrid } from "@webstudio-is/design-system";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import { styleConfigByName } from "../../shared/configs";
 import { getStyleSource } from "../../shared/style-info";
-import { CssValueInputContainer } from "./css-value-input-container";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 import type { SetValue } from "../../shared/use-style-data";
 import { NonResetablePropertyName } from "../../shared/property-name";
 
@@ -49,8 +49,9 @@ export const PositionControl = ({
   property,
   setProperty,
   deleteProperty,
+  isAdvanced,
 }: ControlProps) => {
-  const { label, items } = styleConfigByName(property);
+  const { items } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
   const value = toTuple(styleInfo?.value);
   const styleSource = getStyleSource(styleInfo);
@@ -107,13 +108,13 @@ export const PositionControl = ({
           />
 
           <CssValueInputContainer
-            label={label}
             property={property}
             styleSource={styleSource}
             keywords={keywords}
             value={value.value[0]}
             setValue={setValueX}
             deleteProperty={deleteProperty}
+            disabled={isAdvanced}
           />
 
           <NonResetablePropertyName
@@ -124,13 +125,13 @@ export const PositionControl = ({
           />
 
           <CssValueInputContainer
-            label={label}
             property={property}
             styleSource={styleSource}
             keywords={keywords}
             value={value.value[1]}
             setValue={setValueY}
             deleteProperty={deleteProperty}
+            disabled={isAdvanced}
           />
         </Grid>
       </Flex>

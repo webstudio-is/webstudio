@@ -1,14 +1,20 @@
 import { useStore } from "@nanostores/react";
 import { atom } from "nanostores";
-import { Flex, rawTheme, Tooltip } from "@webstudio-is/design-system";
+import {
+  Flex,
+  rawTheme,
+  Text,
+  theme,
+  Tooltip,
+} from "@webstudio-is/design-system";
 import { OfflineIcon } from "@webstudio-is/icons";
 import { useEffect } from "react";
 import { queueStatus } from "~/builder/shared/sync";
 
-const isOnlineStore = atom(false);
+const $isOnline = atom(false);
 
 const subscribeIsOnline = () => {
-  const handle = () => isOnlineStore.set(navigator.onLine);
+  const handle = () => $isOnline.set(navigator.onLine);
   addEventListener("offline", handle);
   addEventListener("online", handle);
   return () => {
@@ -19,7 +25,7 @@ const subscribeIsOnline = () => {
 
 export const SyncStatus = () => {
   const statusObject = useStore(queueStatus);
-  const isOnline = useStore(isOnlineStore);
+  const isOnline = useStore($isOnline);
   useEffect(subscribeIsOnline, []);
 
   if (
@@ -30,41 +36,47 @@ export const SyncStatus = () => {
     return null;
   }
 
+  const containerProps = {
+    align: "center" as const,
+    justify: "center" as const,
+    css: { height: theme.spacing["15"] },
+  };
+
   if (statusObject.status === "failed") {
     return (
-      <Flex align="center" justify="center">
-        <Tooltip
-          variant="wrapped"
-          content={
-            <>
-              {isOnline ? (
-                <>
-                  Experiencing connectivity issues. Your changes will be synced
-                  with Webstudio once resolved.
-                </>
-              ) : (
-                <>
-                  Offline changes will be synced with Webstudio once you go
-                  online.
-                  <br />
-                  Please check your internet connection.
-                </>
-              )}
-            </>
-          }
-        >
+      <Tooltip
+        variant="wrapped"
+        content={
+          <Text>
+            {isOnline ? (
+              <>
+                Experiencing connectivity issues. Your changes will be synced
+                with Webstudio once resolved.
+              </>
+            ) : (
+              <>
+                Offline changes will be synced with Webstudio once you go
+                online.
+                <br />
+                Please check your internet connection.
+              </>
+            )}
+          </Text>
+        }
+      >
+        <Flex {...containerProps}>
           <OfflineIcon
             aria-label={`Sync status: failed`}
             color={rawTheme.colors.foregroundDestructive}
           />
-        </Tooltip>
-      </Flex>
+        </Flex>
+      </Tooltip>
     );
   }
 
   if (statusObject.status === "fatal") {
     return (
-      <Flex align="center" justify="center">
+      <Flex {...containerProps}>
         <Tooltip variant="wrapped" content={<>{statusObject.error}</>}>
           <OfflineIcon
             aria-label={`Sync status: fatal`}

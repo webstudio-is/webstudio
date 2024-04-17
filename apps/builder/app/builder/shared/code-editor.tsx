@@ -1,17 +1,62 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode, useState, forwardRef } from "react";
 import {
   Annotation,
   EditorState,
   StateEffect,
   type Extension,
 } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
-import { theme, textVariants, css } from "@webstudio-is/design-system";
+import {
+  EditorView,
+  drawSelection,
+  dropCursor,
+  keymap,
+} from "@codemirror/view";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
+import {
+  theme,
+  textVariants,
+  css,
+  SmallIconButton,
+  rawTheme,
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  Grid,
+  DialogTitle,
+  Button,
+  DialogClose,
+  Flex,
+} from "@webstudio-is/design-system";
+import { CrossIcon, MaximizeIcon, MinimizeIcon } from "@webstudio-is/icons";
 
 const ExternalChange = Annotation.define<boolean>();
 
-const rootStyle = css({
+const minHeightVar = "--ws-code-editor-min-height";
+const maxHeightVar = "--ws-code-editor-max-height";
+
+export const getMinMaxHeightVars = ({
+  minHeight,
+  maxHeight,
+}: {
+  minHeight: string;
+  maxHeight: string;
+}) => ({
+  [minHeightVar]: minHeight,
+  [maxHeightVar]: maxHeight,
+});
+
+const editorContentStyle = css({
   ...textVariants.mono,
+  // fit editor into parent if stretched
+  display: "flex",
+  minHeight: 0,
   boxSizing: "border-box",
   color: theme.colors.foregroundMain,
   borderRadius: theme.borderRadius[4],
@@ -25,32 +70,85 @@ const rootStyle = css({
     borderColor: theme.colors.borderFocus,
     outline: `1px solid ${theme.colors.borderFocus}`,
   },
+  '&[data-invalid="true"]': {
+    borderColor: theme.colors.borderDestructiveMain,
+    outlineColor: theme.colors.borderDestructiveMain,
+  },
   "& .cm-focused": {
     outline: "none",
   },
+  // fix scrolls appear on mount
+  "& .cm-scroller": {
+    overflowX: "hidden",
+  },
   "& .cm-content": {
     padding: 0,
+    // makes sure you can click to focus when editor content is smaller than the container
+    minHeight: "100%",
   },
   "& .cm-line": {
     padding: 0,
   },
+  "& .cm-editor": {
+    width: "100%",
+    // avoid modifying height in .cm-content
+    // because it breaks scroll events and makes scrolling laggy
+    minHeight: `var(${minHeightVar}, auto)`,
+    maxHeight: `var(${maxHeightVar}, none)`,
+  },
 });
 
-export const CodeEditor = ({
-  extensions,
-  readOnly = false,
-  autoFocus = false,
-  value,
-  onChange,
-  onBlur,
-}: {
+// https://thememirror.net/clouds
+const highlightStyle = HighlightStyle.define([
+  {
+    tag: tags.comment,
+    color: "#BCC8BA",
+  },
+  {
+    tag: [tags.string, tags.special(tags.brace), tags.regexp],
+    color: "#5D90CD",
+  },
+  {
+    tag: [tags.number, tags.bool, tags.null],
+    color: "#46A609",
+  },
+  {
+    tag: tags.keyword,
+    color: "#AF956F",
+  },
+  {
+    tag: [tags.definitionKeyword, tags.modifier],
+    color: "#C52727",
+  },
+  {
+    tag: [tags.angleBracket, tags.tagName, tags.attributeName],
+    color: "#606060",
+  },
+  {
+    tag: tags.self,
+    color: "#000",
+  },
+]);
+
+type EditorContentProps = {
   extensions: Extension[];
   readOnly?: boolean;
   autoFocus?: boolean;
+  invalid?: boolean;
   value: string;
   onChange: (newValue: string) => void;
-  onBlur?: () => void;
-}) => {
+  onBlur?: (event: FocusEvent) => void;
+};
+
+export const BaseCodeEditor = ({
+  extensions,
+  readOnly = false,
+  autoFocus = false,
+  invalid = false,
+  value,
+  onChange,
+  onBlur,
+}: EditorContentProps) => {
   const editorRef = useRef<null | HTMLDivElement>(null);
   const viewRef = useRef<undefined | EditorView>();
 
@@ -88,6 +186,12 @@ export const CodeEditor = ({
     view.dispatch({
       effects: StateEffect.reconfigure.of([
         ...extensions,
+        history(),
+        drawSelection(),
+        dropCursor(),
+        syntaxHighlighting(highlightStyle, { fallback: true }),
+        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        EditorView.lineWrapping,
         EditorView.editable.of(readOnly === false),
         EditorState.readOnly.of(readOnly === true),
         // https://github.com/uiwjs/react-codemirror/blob/5d7a37245ce70e61f215b77dc42a7eaf295c46e7/core/src/useCodeMirror.ts#L57-L70
@@ -104,8 +208,13 @@ export const CodeEditor = ({
           }
         }),
         EditorView.domEventHandlers({
-          blur: () => {
-            onBlurRef.current?.();
+          blur(event) {
+            onBlurRef.current?.(event);
+          },
+          cut(event) {
+            // prevent catching cut by global copy paste
+            // with target outside of contenteditable
+            event.stopPropagation();
           },
         }),
       ]),
@@ -130,5 +239,137 @@ export const CodeEditor = ({
     });
   }, [value]);
 
-  return <div className={rootStyle.toString()} ref={editorRef}></div>;
+  return (
+    <div
+      className={editorContentStyle()}
+      data-invalid={invalid}
+      ref={editorRef}
+    />
+  );
+};
+
+const editorDialogControlStyle = css({
+  position: "relative",
+  "&:hover": {
+    "--ws-code-editor-maximize-icon-visibility": "visible",
+  },
+});
+
+export const EditorDialogControl = ({ children }: { children: ReactNode }) => {
+  return <div className={editorDialogControlStyle()}>{children}</div>;
+};
+
+export const EditorDialogButton = forwardRef<HTMLButtonElement>(
+  (_props, ref) => {
+    return (
+      <SmallIconButton
+        ref={ref}
+        icon={<MaximizeIcon />}
+        css={{
+          position: "absolute",
+          top: 6,
+          right: 4,
+          visibility: `var(--ws-code-editor-maximize-icon-visibility, hidden)`,
+        }}
+      />
+    );
+  }
+);
+EditorDialogButton.displayName = "EditorDialogButton";
+
+export const EditorDialog = ({
+  open,
+  onOpenChange,
+  title,
+  content,
+  children,
+}: {
+  open?: boolean;
+  onOpenChange?: (newOpen: boolean) => void;
+  title?: ReactNode;
+  content: ReactNode;
+  children: ReactNode;
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const width = isExpanded ? "80vw" : "640px";
+  const height = isExpanded ? "80vh" : "480px";
+  const padding = rawTheme.spacing[7];
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent
+        // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
+        // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
+        css={{
+          maxWidth: "none",
+          maxHeight: "none",
+          zIndex: theme.zIndices[1],
+        }}
+        overlayCss={{ zIndex: theme.zIndices[1] }}
+      >
+        <Grid
+          align="stretch"
+          css={{
+            padding,
+            width,
+            height,
+            overflow: "hidden",
+            boxSizing: "content-box",
+          }}
+        >
+          {content}
+        </Grid>
+        {/* Title is at the end intentionally,
+         * to make the close button last in the tab order
+         */}
+        <DialogTitle
+          suffix={
+            <Flex gap="1">
+              <Button
+                color="ghost"
+                prefix={isExpanded ? <MinimizeIcon /> : <MaximizeIcon />}
+                aria-label="Expand"
+                onClick={() => setIsExpanded(isExpanded ? false : true)}
+              />
+              <DialogClose asChild>
+                <Button
+                  color="ghost"
+                  prefix={<CrossIcon />}
+                  aria-label="Close"
+                />
+              </DialogClose>
+            </Flex>
+          }
+        >
+          {title}
+        </DialogTitle>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export const CodeEditor = ({
+  title,
+  open,
+  onOpenChange,
+  ...editorContentProps
+}: EditorContentProps & {
+  title?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (newOpen: boolean) => void;
+}) => {
+  const content = <BaseCodeEditor {...editorContentProps} />;
+  return (
+    <EditorDialogControl>
+      {content}
+      <EditorDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title={title}
+        content={content}
+      >
+        <EditorDialogButton />
+      </EditorDialog>
+    </EditorDialogControl>
+  );
 };

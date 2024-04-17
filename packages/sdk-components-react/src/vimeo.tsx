@@ -8,19 +8,14 @@ import { colord } from "colord";
 import {
   forwardRef,
   useState,
-  useRef,
   useEffect,
   type ElementRef,
   type ComponentProps,
   useContext,
   createContext,
   type ContextType,
-  useMemo,
 } from "react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
-import { shallowEqual } from "shallow-equal";
-
-const defaultTag = "div";
 
 // https://developer.vimeo.com/player/sdk/embed
 type VimeoPlayerOptions = {
@@ -67,7 +62,7 @@ type VimeoPlayerOptions = {
   transparent?: boolean;
 };
 
-const getUrl = (options: VimeoPlayerOptions) => {
+const getVideoUrl = (options: VimeoOptions) => {
   if (options.url === undefined) {
     return;
   }
@@ -83,30 +78,43 @@ const getUrl = (options: VimeoPlayerOptions) => {
     return;
   }
 
-  let option: keyof VimeoPlayerOptions;
+  const optionsMap = {
+    showPortrait: "portrait",
+    showByline: "byline",
+    showTitle: "title",
+    controlsColor: "color",
+    showControls: "controls",
+    interactiveParams: "interactive_params",
+    backgroundMode: "background",
+    doNotTrack: "dnt",
+  } as const;
+
+  let option: keyof VimeoOptions;
   for (option in options) {
     const value = options[option];
     if (option === "url" || value === undefined) {
       continue;
     }
-    url.searchParams.append(option, value.toString());
+    const mappedOption =
+      optionsMap[option as keyof typeof optionsMap] ?? option;
+    url.searchParams.append(mappedOption, value.toString());
   }
 
-  // We always set autoplay to true because we have a button that starts the video
+  // We always set autoplay to true because we render the iframe only after user hits Webstudio play button.
   url.searchParams.set("autoplay", "true");
 
   // Vimeo needs a hex color value without the hash
-  if (typeof options.color === "string") {
-    const color = colord(options.color).toHex().replace("#", "");
+  if (typeof options.controlsColor === "string") {
+    const color = colord(options.controlsColor).toHex().replace("#", "");
     url.searchParams.set("color", color);
   }
 
   // Portrait option won't work if at title is not set to true
-  if (options.portrait) {
+  if (options.showPortrait) {
     url.searchParams.set("title", "true");
   }
   // Byline won't show up if portrait and title is not set to true
-  if (options.byline) {
+  if (options.showByline) {
     url.searchParams.set("portrait", "true");
     url.searchParams.set("title", "true");
   }
@@ -119,7 +127,7 @@ const preconnect = (url: string) => {
   link.rel = "preconnect";
   link.href = url;
   link.crossOrigin = "true";
-  document.head.append(link);
+  document.head.appendChild(link);
 };
 
 let warmed = false;
@@ -135,54 +143,22 @@ const warmConnections = () => {
   if (warmed) {
     return;
   }
+
+  if (window.matchMedia("(hover: none)").matches) {
+    // Useless on touch devices
+    return;
+  }
+
   preconnect(PLAYER_CDN);
   preconnect(IFRAME_CDN);
   preconnect(IMAGE_CDN);
   warmed = true;
 };
 
-const createPlayer = (
-  parent: Element,
-  options: VimeoPlayerOptions,
-  callback: () => void
-) => {
-  const url = getUrl(options);
-  if (url === undefined) {
-    return;
-  }
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute(
-    "allow",
-    "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;"
-  );
-  iframe.setAttribute("frameborder", "0");
-  iframe.setAttribute("allowfullscreen", "true");
-  iframe.setAttribute("src", url);
-  iframe.setAttribute(
-    "style",
-    "position: absolute; width: 100%; height: 100%; opacity: 0; transition: opacity 1s;"
-  );
-
-  // Show iframe only once it's loaded to avoid weird flashes.
-  iframe.addEventListener(
-    "load",
-    () => {
-      iframe.style.opacity = "1";
-      callback();
-    },
-    { once: true }
-  );
-  parent.appendChild(iframe);
-
-  return () => {
-    iframe.parentElement?.removeChild(iframe);
-  };
-};
-
 const getVideoId = (url: string) => {
   try {
     const parsedUrl = new URL(url);
-    const id = parsedUrl.pathname.split("/")[1];
+    const id = parsedUrl.pathname.split("/")[2];
     if (id === "" || id == null) {
       return;
     }
@@ -191,14 +167,15 @@ const getVideoId = (url: string) => {
   } catch {}
 };
 
-const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
+const loadPreviewImageUrl = async (videoUrl: string) => {
   const videoId = getVideoId(videoUrl);
   // API is the video-id based
   // http://vimeo.com/api/v2/video/364402896.json
   const apiUrl = `https://vimeo.com/api/v2/video/${videoId}.json`;
 
   // Now fetch the JSON that locates our placeholder from vimeo's JSON API
-  const response = (await (await fetch(apiUrl)).json())[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const response = ((await (await fetch(apiUrl)).json()) as any)[0];
 
   // Extract the image id, e.g. 819916979, from a URL like:
   // thumbnail_large: "https://i.vimeocdn.com/video/819916979_640.jpg"
@@ -213,63 +190,6 @@ const loadPreviewImage = async (element: HTMLElement, videoUrl: string) => {
   return imageUrl;
 };
 
-type PlayerStatus = "initial" | "initialized" | "ready";
-
-const useVimeo = ({
-  options,
-  renderer,
-  showPreview,
-}: {
-  options: VimeoPlayerOptions;
-  showPreview?: boolean;
-  renderer: ContextType<typeof ReactSdkContext>["renderer"];
-}) => {
-  const [playerStatus, setPlayerStatus] = useState<PlayerStatus>("initial");
-  const elementRef = useRef<ElementRef<typeof defaultTag> | null>(null);
-  const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
-
-  useEffect(() => {
-    setPlayerStatus(
-      options.autoplay && renderer !== "canvas" ? "initialized" : "initial"
-    );
-  }, [options.autoplay, renderer]);
-
-  useEffect(() => {
-    if (
-      elementRef.current === null ||
-      playerStatus === "ready" ||
-      options.url === undefined
-    ) {
-      return;
-    }
-    if (showPreview) {
-      loadPreviewImage(elementRef.current, options.url).then(
-        setPreviewImageUrl
-      );
-      return;
-    }
-    setPreviewImageUrl(undefined);
-  }, [renderer, showPreview, options.url, playerStatus]);
-
-  const optionsRef = useRef(options);
-  const stableOptions = useMemo(() => {
-    if (shallowEqual(options, optionsRef.current) === false) {
-      optionsRef.current = options;
-    }
-    return optionsRef.current;
-  }, [options]);
-
-  useEffect(() => {
-    if (elementRef.current === null || playerStatus === "initial") {
-      return;
-    }
-    return createPlayer(elementRef.current, stableOptions, () => {
-      setPlayerStatus("ready");
-    });
-  }, [stableOptions, playerStatus]);
-  return { previewImageUrl, playerStatus, setPlayerStatus, elementRef };
-};
-
 export type VimeoOptions = Omit<
   VimeoPlayerOptions,
   | "dnt"
@@ -281,8 +201,10 @@ export type VimeoOptions = Omit<
   | "title"
   | "portrait"
 > & {
-  /** Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower. */
+  /** Not a Vimeo attribute: Whether the preview image should be loaded from Vimeo API. Ideally don't use it, because it will show up with some delay and will make your project feel slower. */
   showPreview?: boolean;
+  /** Not a Vimeo attribute: Loading attribute for the iframe allows to eager or lazy load the source */
+  loading?: "eager" | "lazy";
   /** Whether to prevent the player from tracking session data, including cookies. Keep in mind that setting this argument to true also blocks video stats. */
   doNotTrack?: VimeoPlayerOptions["dnt"];
   /** Key-value pairs representing dynamic parameters that are utilized on interactive videos with live elements, such as title=my-video,subtitle=interactive. */
@@ -302,6 +224,121 @@ export type VimeoOptions = Omit<
   showPortrait?: VimeoPlayerOptions["portrait"];
 };
 
+const EmptyState = () => {
+  return (
+    <div
+      style={{
+        display: "flex",
+        width: "100%",
+        height: "100%",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "1.2em",
+      }}
+    >
+      {
+        'Open the "Settings" panel and paste a video URL, e.g. https://vimeo.com/831343124.'
+      }
+    </div>
+  );
+};
+
+type PlayerStatus = "initial" | "loading" | "ready";
+
+type PlayerProps = Pick<
+  VimeoOptions,
+  "loading" | "autoplay" | "showPreview"
+> & {
+  videoUrl: string;
+  status: PlayerStatus;
+  renderer: ContextType<typeof ReactSdkContext>["renderer"];
+  previewImageUrl?: URL;
+  onStatusChange: (status: PlayerStatus) => void;
+  onPreviewImageUrlChange: (url?: URL) => void;
+};
+
+const Player = ({
+  status,
+  loading,
+  videoUrl,
+  previewImageUrl,
+  autoplay,
+  renderer,
+  showPreview,
+  onStatusChange,
+  onPreviewImageUrlChange,
+}: PlayerProps) => {
+  const [opacity, setOpacity] = useState(0);
+
+  useEffect(() => {
+    if (autoplay && renderer !== "canvas" && status === "initial") {
+      onStatusChange("loading");
+    }
+  }, [autoplay, status, renderer, onStatusChange]);
+
+  useEffect(() => {
+    if (renderer !== "canvas") {
+      warmConnections();
+    }
+  }, [renderer]);
+
+  useEffect(() => {
+    if (videoUrl === undefined) {
+      return;
+    }
+
+    if (showPreview === false) {
+      onPreviewImageUrlChange(undefined);
+      return;
+    }
+
+    if (previewImageUrl === undefined) {
+      loadPreviewImageUrl(videoUrl)
+        .then(onPreviewImageUrlChange)
+        .catch(() => {
+          console.error(`Could not load preview image for ${videoUrl}`);
+        });
+    }
+  }, [onPreviewImageUrlChange, showPreview, videoUrl, previewImageUrl]);
+
+  if (renderer === "canvas" || status === "initial") {
+    return;
+  }
+
+  return (
+    <iframe
+      src={videoUrl}
+      loading={loading}
+      allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture;"
+      allowFullScreen
+      style={{
+        position: "absolute",
+        width: "100%",
+        height: "100%",
+        opacity,
+        transition: "opacity 1s",
+        border: "none",
+      }}
+      onLoad={() => {
+        onStatusChange("ready");
+        setOpacity(1);
+      }}
+    />
+  );
+};
+
+export const VimeoContext = createContext<{
+  previewImageUrl?: URL;
+  onInitPlayer: () => void;
+  status: PlayerStatus;
+}>({
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  onInitPlayer: () => {},
+  status: "initial",
+});
+
+const defaultTag = "div";
+
 type Props = Omit<ComponentProps<typeof defaultTag>, keyof VimeoOptions> &
   VimeoOptions;
 type Ref = ElementRef<typeof defaultTag>;
@@ -310,6 +347,7 @@ export const Vimeo = forwardRef<Ref, Props>(
   (
     {
       url,
+      loading = "lazy",
       autoplay = false,
       autopause = true,
       backgroundMode = false,
@@ -337,43 +375,41 @@ export const Vimeo = forwardRef<Ref, Props>(
     },
     ref
   ) => {
+    const [status, setStatus] = useState<PlayerStatus>("initial");
+    const [previewImageUrl, setPreviewImageUrl] = useState<URL>();
     const { renderer } = useContext(ReactSdkContext);
-    const { previewImageUrl, playerStatus, setPlayerStatus, elementRef } =
-      useVimeo({
-        renderer,
-        showPreview,
-        options: {
-          url,
-          autoplay,
-          autopause,
-          keyboard,
-          loop,
-          muted,
-          pip,
-          playsinline,
-          quality,
-          responsive,
-          speed,
-          transparent,
-          portrait: showPortrait,
-          byline: showByline,
-          title: showTitle,
-          color: controlsColor,
-          controls: showControls,
-          interactive_params: interactiveParams,
-          background: backgroundMode,
-          dnt: doNotTrack,
-        },
-      });
+    const videoUrl = getVideoUrl({
+      url,
+      autoplay,
+      autopause,
+      backgroundMode,
+      showControls,
+      controlsColor,
+      doNotTrack,
+      interactiveParams,
+      keyboard,
+      loop,
+      muted,
+      pip,
+      playsinline,
+      quality,
+      responsive,
+      speed,
+      texttrack,
+      showTitle,
+      transparent,
+      showPortrait,
+      autopip,
+    });
 
     return (
       <VimeoContext.Provider
         value={{
-          status: playerStatus,
+          status,
           previewImageUrl,
           onInitPlayer() {
             if (renderer !== "canvas") {
-              setPlayerStatus("initialized");
+              setStatus("loading");
             }
           },
         }}
@@ -381,18 +417,29 @@ export const Vimeo = forwardRef<Ref, Props>(
         <div
           {...rest}
           ref={(value: Ref) => {
-            elementRef.current = value;
             if (ref !== null) {
               typeof ref === "function" ? ref(value) : (ref.current = value);
             }
           }}
-          onPointerOver={() => {
-            if (renderer !== "canvas") {
-              warmConnections();
-            }
-          }}
         >
-          {url === undefined ? <EmptyState /> : children}
+          {videoUrl === undefined ? (
+            <EmptyState />
+          ) : (
+            <>
+              {children}
+              <Player
+                autoplay={autoplay}
+                videoUrl={videoUrl}
+                previewImageUrl={previewImageUrl}
+                loading={loading}
+                showPreview={showPreview}
+                renderer={renderer}
+                status={status}
+                onStatusChange={setStatus}
+                onPreviewImageUrlChange={setPreviewImageUrl}
+              />
+            </>
+          )}
         </div>
       </VimeoContext.Provider>
     );
@@ -400,32 +447,3 @@ export const Vimeo = forwardRef<Ref, Props>(
 );
 
 Vimeo.displayName = "Vimeo";
-
-const EmptyState = () => {
-  return (
-    <div
-      style={{
-        display: "flex",
-        width: "100%",
-        height: "100%",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "1.2em",
-      }}
-    >
-      {
-        'Open the "Settings" panel and paste a video URL, e.g. https://vimeo.com/831343124.'
-      }
-    </div>
-  );
-};
-
-export const VimeoContext = createContext<{
-  previewImageUrl?: URL;
-  onInitPlayer: () => void;
-  status: PlayerStatus;
-}>({
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  onInitPlayer: () => {},
-  status: "initial",
-});

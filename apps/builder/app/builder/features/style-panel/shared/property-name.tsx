@@ -11,6 +11,7 @@ import {
   type TooltipProps,
   Text,
   ScrollArea,
+  Kbd,
 } from "@webstudio-is/design-system";
 import { ResetIcon } from "@webstudio-is/icons";
 import type {
@@ -21,18 +22,19 @@ import type {
 } from "@webstudio-is/sdk";
 import { toProperty } from "@webstudio-is/css-engine";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedBreakpointStore,
-  selectedInstanceStore,
-  selectedStyleSourceStore,
-  styleSourcesStore,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
+  $selectedBreakpoint,
+  $selectedInstance,
+  $selectedStyleSource,
+  $styleSources,
 } from "~/shared/nano-states";
 import {
   type StyleInfo,
   getStyleSource,
   type StyleValueInfo,
+  getPriorityStyleSource,
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { getInstanceLabel } from "~/shared/instance-utils";
@@ -125,7 +127,7 @@ const getDescription = (properties: StyleProperty[]) => {
   return propertyDescriptions[property as keyof typeof propertyDescriptions];
 };
 
-const TooltipContent = ({
+export const TooltipContent = ({
   title,
   description,
   scrollableContent,
@@ -140,13 +142,13 @@ const TooltipContent = ({
   style: StyleInfo;
   onReset?: undefined | (() => void);
 }) => {
-  const breakpoints = useStore(breakpointsStore);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
-  const instances = useStore(instancesStore);
-  const styleSources = useStore(styleSourcesStore);
-  const instance = useStore(selectedInstanceStore);
-  const metas = useStore(registeredComponentMetasStore);
-  const selectedStyleSource = useStore(selectedStyleSourceStore);
+  const breakpoints = useStore($breakpoints);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
+  const instances = useStore($instances);
+  const styleSources = useStore($styleSources);
+  const instance = useStore($selectedInstance);
+  const metas = useStore($registeredComponentMetas);
+  const selectedStyleSource = useStore($selectedStyleSource);
 
   const descriptionWithFallback = description ?? getDescription(properties);
 
@@ -269,8 +271,13 @@ const TooltipContent = ({
         onReset !== undefined && (
           <Button
             color="dark"
-            prefix={<ResetIcon />}
-            css={{ flexGrow: 1 }}
+            prefix={
+              <Flex justify="end">
+                <ResetIcon />
+              </Flex>
+            }
+            suffix={<Kbd value={["option", "click"]} />}
+            css={{ gridTemplateColumns: "2fr 3fr 1fr" }}
             onClick={onReset}
           >
             Reset value
@@ -371,8 +378,17 @@ const PropertyNameInternal = ({
   onReset,
   disabled,
 }: PropertyNameInternalProps) => {
-  // When we have multiple properties, they must be originating from the same source, so we can just use one.
   const property = properties[0];
+
+  // When there are multiple properties. We need to make a consolidated choice.
+  // As we can't show multiple badges in the property name.
+  // Eg: flex-grow, flex-shrink, flex-basis
+  // All three managed by single section. If flex-basis is set, but if we pick only flex-grow from the three.
+  // The section does't show the badge. So, we need to pick the one which is being used.
+
+  const styleSourcesList = properties.map((property) =>
+    getStyleSource(style[property])
+  );
 
   return (
     <Flex align="center">
@@ -390,7 +406,9 @@ const PropertyNameInternal = ({
               color={
                 onReset === undefined
                   ? "default"
-                  : getStyleSource(style[property])
+                  : styleSourcesList.length === 0
+                  ? "default"
+                  : getPriorityStyleSource(styleSourcesList)
               }
               truncate
               disabled={disabled}

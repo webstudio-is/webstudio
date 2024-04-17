@@ -14,6 +14,8 @@
  * });
  */
 
+import { clamp } from "@react-aria/utils";
+
 export type NumericScrubDirection = "horizontal" | "vertical";
 
 export type NumericScrubValue = number;
@@ -26,9 +28,11 @@ export type NumericScrubCallback = (event: {
 
 export type NumericScrubOptions = {
   inverse?: boolean;
+  getAcceleration?: () => number | undefined;
   minValue?: NumericScrubValue;
   maxValue?: NumericScrubValue;
-  getInitialValue: () => number | undefined;
+  distanceThreshold?: number;
+  getInitialValue: () => number;
   onStart?: () => void;
   getValue?: (
     state: NumericScrubState,
@@ -45,7 +49,7 @@ export type NumericScrubOptions = {
 type NumericScrubState = {
   value: number;
   cursor?: SVGElement;
-  direction: string;
+  direction: NumericScrubDirection;
   timerId?: ReturnType<typeof window.setTimeout>;
   status: "idle" | "scrubbing";
 };
@@ -56,17 +60,13 @@ const getValueDefault = (
   {
     minValue = Number.MIN_SAFE_INTEGER,
     maxValue = Number.MAX_SAFE_INTEGER,
+    getAcceleration = () => 1,
   }: NumericScrubOptions
 ) => {
   // toFixed is needed to fix `1.3 - 1 = 0.30000000000000004`
-  const value = Number((state.value + movement).toFixed(2));
-  if (value < minValue) {
-    return minValue;
-  }
-  if (state.value > maxValue) {
-    return maxValue;
-  }
-  return value;
+  const acceleration = getAcceleration() ?? 1;
+  const value = Number((state.value + movement * acceleration).toFixed(2));
+  return clamp(value, minValue, maxValue);
 };
 
 export const numericScrubControl = (
@@ -78,6 +78,7 @@ export const numericScrubControl = (
     onStart,
     getValue = getValueDefault,
     direction = "horizontal",
+    distanceThreshold = 3,
     onValueInput,
     onValueChange,
     onStatusChange,
@@ -88,7 +89,7 @@ export const numericScrubControl = (
     // We will read value lazyly in a moment it will be used to avoid having outdated value
     value: -1,
     cursor: undefined,
-    direction: direction,
+    direction,
     timerId: undefined,
     status: "idle",
   };
@@ -106,7 +107,6 @@ export const numericScrubControl = (
     }
 
     clearTimeout(state.timerId);
-
     exitPointerLock?.();
     exitPointerLock = undefined;
     if (originalUserSelect) {
@@ -133,7 +133,8 @@ export const numericScrubControl = (
 
     switch (type) {
       case "pointerup": {
-        const shouldComponentUpdate = Boolean(state.cursor);
+        const shouldComponentUpdate =
+          Boolean(state.cursor) && state.status === "scrubbing";
         cleanup();
         if (shouldComponentUpdate) {
           onValueChange?.({
@@ -155,27 +156,13 @@ export const numericScrubControl = (
         if (event.pressure === 0 || event.button !== 0) {
           break;
         }
-        const value = getInitialValue();
-
-        // We don't support scrub on non unit values
-        // Its highly unlikely that the value here will be undefined, as useScrub tries to not create scrub on non unit values
-        // but having that we use lazy getInitialValue() and vanilla js events it's possible.
-        if (value === undefined) {
-          return;
-        }
 
         onStart?.();
-
-        state.value = value;
-
+        state.value = getInitialValue();
         state.timerId = setTimeout(() => {
           exitPointerLock?.();
-
           exitPointerLock = requestPointerLock(state, event, targetNode);
         }, 150);
-
-        state.status = "scrubbing";
-        onStatusChange?.("scrubbing");
 
         targetNode.addEventListener("pointermove", handleEvent);
         originalUserSelect =
@@ -189,6 +176,19 @@ export const numericScrubControl = (
           break;
         }
         state.value = nextValue;
+
+        if (state.status !== "scrubbing") {
+          const initialValue = getInitialValue();
+          // If the value is not changing enough, we don't want to start scrubbing.
+          if (Math.abs(initialValue - nextValue) < distanceThreshold) {
+            return;
+          }
+          // We need to reset the value to the initial so that the actual value starts from the initial value
+          // when we start calling onValueInput.
+          state.value = initialValue;
+          state.status = "scrubbing";
+          onStatusChange?.("scrubbing");
+        }
         onValueInput?.({
           target: targetNode,
           value: state.value,
@@ -267,7 +267,7 @@ const requestPointerLock = (
     }`;
     state.cursor = cursorNode;
     if (state.cursor) {
-      targetNode.ownerDocument.documentElement.append(state.cursor);
+      targetNode.ownerDocument.documentElement.appendChild(state.cursor);
     }
     return () => {
       if (state.cursor) {

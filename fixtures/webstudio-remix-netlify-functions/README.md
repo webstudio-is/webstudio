@@ -10,12 +10,11 @@ pnpm dev
 
 ```bash
 # Terminal 2
-pnpm webstudio link
-# add following link https://webstudio-builder-git-main-getwebstudio.vercel.app/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93
+pnpm fixtures:link
 
-pnpm webstudio sync && pnpm prettier --write ./.webstudio/
+pnpm fixtures:sync
 # data.json generated
 
-pnpm webstudio build --preview && pnpm prettier --write ./app/ ./package.json
+pnpm fixtures:build
 # exec `pnpm run dev` to see result
 ```

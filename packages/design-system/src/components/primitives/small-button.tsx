@@ -59,6 +59,13 @@ const style = css({
   all: "unset",
   width: theme.spacing[9],
   height: theme.spacing[9],
+  position: "relative",
+  // We want to bleed outside of the 16px icon size because its too small
+  "&::after": {
+    content: '""',
+    position: "absolute",
+    inset: `-${theme.spacing[4]}`,
+  },
   "&:disabled, &[data-disabled]": {
     color: theme.colors.foregroundDisabled,
   },

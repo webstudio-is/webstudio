@@ -54,6 +54,18 @@ const RgbValue = z.object({
 });
 export type RgbValue = z.infer<typeof RgbValue>;
 
+export type FunctionValue = z.infer<typeof FunctionValue>;
+
+export const FunctionValue: z.ZodType<{
+  type: "function";
+  name: string;
+  args: StyleValue;
+}> = z.object({
+  type: z.literal("function"),
+  name: z.string(),
+  args: z.lazy(() => StyleValue),
+});
+
 export const ImageValue = z.object({
   type: z.literal("image"),
   value: z.union([
@@ -67,6 +79,13 @@ export const ImageValue = z.object({
 });
 
 export type ImageValue = z.infer<typeof ImageValue>;
+
+// initial value of custom properties
+// https://www.w3.org/TR/css-variables-1/#guaranteed-invalid
+export const GuaranteedInvalidValue = z.object({
+  type: z.literal("guaranteedInvalid"),
+});
+export type GuaranteedInvalidValue = z.infer<typeof GuaranteedInvalidValue>;
 
 // We want to be able to render the invalid value
 // and show it is invalid visually, without saving it to the db
@@ -87,6 +106,7 @@ export const TupleValueItem = z.union([
   KeywordValue,
   UnparsedValue,
   RgbValue,
+  FunctionValue,
 ]);
 export type TupleValueItem = z.infer<typeof TupleValueItem>;
 
@@ -105,6 +125,7 @@ const LayerValueItem = z.union([
   ImageValue,
   TupleValue,
   InvalidValue,
+  FunctionValue,
 ]);
 
 export type LayerValueItem = z.infer<typeof LayerValueItem>;
@@ -127,6 +148,8 @@ const ValidStaticStyleValue = z.union([
   RgbValue,
   UnparsedValue,
   TupleValue,
+  FunctionValue,
+  GuaranteedInvalidValue,
 ]);
 
 export type ValidStaticStyleValue = z.infer<typeof ValidStaticStyleValue>;
@@ -149,7 +172,9 @@ export const isValidStaticStyleValue = (
     staticStyleValue.type === "fontFamily" ||
     staticStyleValue.type === "rgb" ||
     staticStyleValue.type === "unparsed" ||
-    staticStyleValue.type === "tuple"
+    staticStyleValue.type === "tuple" ||
+    staticStyleValue.type === "function" ||
+    staticStyleValue.type === "guaranteedInvalid"
   );
 };
 

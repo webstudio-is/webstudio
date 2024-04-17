@@ -1,5 +1,11 @@
-import type { Ref, ComponentProps, ReactNode, ReactElement } from "react";
-import { Fragment, forwardRef, useEffect } from "react";
+import type { Ref, ComponentProps, ReactNode } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
+import {
+  autoUpdate,
+  getOverflowAncestors,
+  type ReferenceElement,
+} from "@floating-ui/dom";
+
 import { styled } from "../stitches.config";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
@@ -9,9 +15,11 @@ import type { CSS } from "../stitches.config";
 import { theme } from "../stitches.config";
 import { disableCanvasPointerEvents } from "../utilities";
 
+export const TooltipProvider = TooltipPrimitive.TooltipProvider;
+
 export type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root> &
   Omit<ComponentProps<typeof Content>, "content"> & {
-    children: ReactElement;
+    children: ReactNode;
     content: ReactNode;
     delayDuration?: number;
     disableHoverableContent?: boolean;
@@ -84,7 +92,7 @@ export const Tooltip = forwardRef(
       }
     }, [open]);
 
-    if (!content) {
+    if (content == null) {
       return children;
     }
 
@@ -120,34 +128,104 @@ export const Tooltip = forwardRef(
   }
 );
 
+const isReferenceElement = (value: unknown): value is ReferenceElement => {
+  return value instanceof Element || value instanceof Window;
+};
+
 Tooltip.displayName = "Tooltip";
 
 export const InputErrorsTooltip = ({
   errors,
   children,
+  side,
+  css,
   ...rest
 }: Omit<TooltipProps, "content"> & {
   errors?: string[];
   children: ComponentProps<typeof Tooltip>["children"];
+  side?: ComponentProps<typeof Tooltip>["side"];
 }) => {
   const content = errors?.map((error, index) => (
-    <Fragment key={index}>
-      {index > 0 && <br />}
-      {error}
-    </Fragment>
+    <Text key={index}>{error}</Text>
   ));
+
+  const ref = useRef<HTMLDivElement>();
+  // Use collision boundary to hide tooltips if original element out of visible area in the scroll viewport
+  const [collisionBoundary, setCollisionBoundary] = useState<
+    | {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      }
+    | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (ref.current != null) {
+      const ancestors = getOverflowAncestors(ref.current, [], false);
+      if (ancestors.length === 2) {
+        // Only window and window viewport - do nothing
+        return;
+      }
+
+      const nearestScrollableElement = ancestors[0];
+
+      if (
+        nearestScrollableElement instanceof HTMLElement &&
+        isReferenceElement(ancestors[1])
+      ) {
+        // Track collision boundary size/position changes
+        const cleanup = autoUpdate(
+          ancestors[1],
+          nearestScrollableElement,
+          () => {
+            const rect = nearestScrollableElement.getBoundingClientRect();
+
+            setCollisionBoundary((prev) => {
+              const newY = rect.y;
+              const newHeight = rect.height;
+
+              if (prev?.y === newY && prev.height === newHeight) {
+                return prev;
+              }
+
+              const next = {
+                x: 0,
+                width: window.visualViewport?.width ?? 100000,
+                y: newY,
+                height: newHeight,
+              };
+
+              return next;
+            });
+          }
+        );
+
+        return cleanup;
+      }
+    }
+  }, []);
+
+  // We intentionally always pass non empty content to avoid optimization inside Tooltip
+  // where it renders {children} directly if content is empty.
+  // If this optimization accur, the input will remount which will cause focus loss
+  // and current value loss.
   return (
-    // We intentionally always pass non empty content to avoid optimization inside Tooltip
-    // where it renders {children} directly if content is empty.
-    // If this optimization accur, the input will remount which will cause focus loss
-    // and current value loss.
-    <Tooltip
-      {...rest}
-      content={content ?? " "}
-      open={errors !== undefined && errors.length !== 0}
-      side="right"
-    >
-      {children}
-    </Tooltip>
+    <>
+      <Box ref={ref as never} css={{ display: "contents" }}></Box>
+      <Tooltip
+        {...rest}
+        collisionBoundary={collisionBoundary as never}
+        collisionPadding={-8}
+        hideWhenDetached={true}
+        content={content ?? " "}
+        open={errors !== undefined && errors.length !== 0}
+        side={side ?? "right"}
+        css={css}
+      >
+        {children}
+      </Tooltip>
+    </>
   );
 };

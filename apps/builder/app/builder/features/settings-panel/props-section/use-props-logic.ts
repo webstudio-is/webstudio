@@ -3,13 +3,14 @@ import type { Instance, Prop } from "@webstudio-is/sdk";
 import {
   type PropMeta,
   showAttribute,
-  decodeDataSourceVariable,
+  textContentAttribute,
+  collectionComponent,
 } from "@webstudio-is/react-sdk";
 import type { PropValue } from "../shared";
 import { useStore } from "@nanostores/react";
 import {
-  $dataSources,
-  registeredComponentPropsMetasStore,
+  $registeredComponentMetas,
+  $registeredComponentPropsMetas,
 } from "~/shared/nano-states";
 
 type PropOrName = { prop?: Prop; propName: string };
@@ -17,7 +18,6 @@ export type PropAndMeta = {
   prop?: Prop;
   propName: string;
   meta: PropMeta;
-  readOnly: boolean;
 };
 export type NameAndLabel = { name: string; label?: string };
 
@@ -132,9 +132,11 @@ const systemPropsMeta: { name: string; meta: PropMeta }[] = [
     meta: {
       label: "Show",
       required: false,
-      defaultValue: true,
       control: "boolean",
       type: "boolean",
+      defaultValue: true,
+      description:
+        "Removes the instance from the DOM. Breakpoints have no effect on this setting.",
     },
   },
 ];
@@ -146,10 +148,10 @@ export const usePropsLogic = ({
   updateProp,
   deleteProp,
 }: UsePropsLogicInput) => {
-  const meta = useStore(registeredComponentPropsMetasStore).get(
+  const instanceMeta = useStore($registeredComponentMetas).get(
     instance.component
   );
-  const dataSources = useStore($dataSources);
+  const meta = useStore($registeredComponentPropsMetas).get(instance.component);
 
   if (meta === undefined) {
     throw new Error(`Could not get meta for component "${instance.component}"`);
@@ -165,20 +167,6 @@ export const usePropsLogic = ({
 
   const initialPropsNames = new Set(meta.initialProps ?? []);
 
-  /**
-   * make sure expression can be edited if consists only of single variable
-   */
-  const isReadOnly = (prop?: Prop) => {
-    if (prop?.type !== "expression") {
-      return false;
-    }
-    const potentialVariableId = decodeDataSourceVariable(prop.value);
-    return (
-      potentialVariableId === undefined ||
-      dataSources.get(potentialVariableId)?.type !== "variable"
-    );
-  };
-
   const systemProps: PropAndMeta[] = systemPropsMeta.map(({ name, meta }) => {
     let saved = getAndDelete<Prop>(unprocessedSaved, name);
     if (saved === undefined && meta.defaultValue !== undefined) {
@@ -190,9 +178,32 @@ export const usePropsLogic = ({
       prop: saved,
       propName: name,
       meta,
-      readOnly: isReadOnly(saved),
     };
   });
+  const canHaveTextContent =
+    instanceMeta?.type === "container" &&
+    instance.component !== collectionComponent;
+  const hasNoChildren = instance.children.length === 0;
+  const hasOnlyTextChild =
+    instance.children.length === 1 && instance.children[0].type === "text";
+  const hasOnlyExpressionChild =
+    instance.children.length === 1 &&
+    instance.children[0].type === "expression";
+  if (
+    canHaveTextContent &&
+    (hasNoChildren || hasOnlyTextChild || hasOnlyExpressionChild)
+  ) {
+    systemProps.push({
+      propName: textContentAttribute,
+      meta: {
+        label: "Text Content",
+        required: false,
+        control: "textContent",
+        type: "string",
+        defaultValue: "",
+      },
+    });
+  }
 
   const initialProps: PropAndMeta[] = [];
   for (const name of initialPropsNames) {
@@ -200,7 +211,6 @@ export const usePropsLogic = ({
     const known = getAndDelete(unprocessedKnown, name);
 
     if (known === undefined) {
-      // eslint-disable-next-line no-console
       console.error(
         `The prop "${name}" is defined in meta.initialProps but not in meta.props`
       );
@@ -226,7 +236,6 @@ export const usePropsLogic = ({
       prop,
       propName: name,
       meta: known,
-      readOnly: isReadOnly(prop),
     });
   }
 
@@ -237,29 +246,22 @@ export const usePropsLogic = ({
       continue;
     }
 
-    let known = getAndDelete(unprocessedKnown, prop.name);
-
-    // @todo:
-    //   if meta is undefined, this means it's a "custom attribute"
-    //   but because custom attributes not implemented yet,
-    //   we'll show it as a regular optional prop for now
-    if (known === undefined) {
-      known = getDefaultMetaForType(prop.type);
-    }
+    const meta =
+      getAndDelete(unprocessedKnown, prop.name) ??
+      getDefaultMetaForType("string");
 
     addedProps.push({
       prop,
       propName: prop.name,
-      meta: known,
-      readOnly: isReadOnly(prop),
+      meta,
     });
   }
 
   const handleAdd = (propName: string) => {
-    const propMeta = unprocessedKnown.get(propName);
-    if (propMeta === undefined) {
-      throw new Error(`Attempting to add a prop not lised in availableProps`);
-    }
+    const propMeta =
+      unprocessedKnown.get(propName) ??
+      // In case of custom property/attribute we get a string.
+      getDefaultMetaForType("string");
     const prop = getStartingProp(instance.id, propMeta, propName);
     if (prop) {
       updateProp(prop);

@@ -238,11 +238,13 @@ export const getImageAttributes = (props: {
   quality: string | number | undefined;
   loader: ImageLoader;
   optimize: boolean;
-}): {
-  src: string;
-  srcSet?: string;
-  sizes?: string;
-} | null => {
+}):
+  | {
+      src: string;
+      srcSet?: string;
+      sizes?: string;
+    }
+  | undefined => {
   const width = getInt(props.width);
   const quality = Math.max(
     Math.min(getInt(props.quality) ?? DEFAULT_QUALITY, 100),
@@ -279,6 +281,4 @@ export const getImageAttributes = (props: {
 
     return resAttrs;
   }
-
-  return null;
 };

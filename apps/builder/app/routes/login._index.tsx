@@ -1,10 +1,10 @@
 import type { ComponentProps } from "react";
 import {
-  type LoaderArgs,
+  type LoaderFunctionArgs,
   type TypedResponse,
   redirect,
   json,
-} from "@remix-run/node";
+} from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
 import { findAuthenticatedUser } from "~/services/auth.server";
 import env from "~/env/env.server";
@@ -21,7 +21,9 @@ const comparePathnames = (pathnameOrUrlA: string, pathnameOrUrlB: string) => {
 
 export const loader = async ({
   request,
-}: LoaderArgs): Promise<TypedResponse<ComponentProps<typeof Login>>> => {
+}: LoaderFunctionArgs): Promise<
+  TypedResponse<ComponentProps<typeof Login>>
+> => {
   const user = await findAuthenticatedUser(request);
 
   const url = new URL(request.url);

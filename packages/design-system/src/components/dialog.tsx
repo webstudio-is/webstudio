@@ -8,6 +8,7 @@ import * as Primitive from "@radix-ui/react-dialog";
 import { css, theme, keyframes, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
 import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
+import { Flex } from "./flex";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -36,7 +37,11 @@ export const DialogContent = forwardRef(
   ) => {
     return (
       <Primitive.Portal>
-        <Primitive.Overlay className={overlayStyle({ css: overlayCss })} />
+        <Primitive.Overlay
+          className={overlayStyle({
+            css: { zIndex: css?.zIndex, ...overlayCss },
+          })}
+        />
         <Primitive.Content
           className={contentStyle({ className, css })}
           {...props}
@@ -53,22 +58,42 @@ DialogContent.displayName = "DialogContent";
 export const DialogTitle = ({
   children,
   closeLabel = "Close dialog",
+  suffix,
 }: {
   children: ReactNode;
+  suffix?: ReactNode;
   closeLabel?: string;
 }) => (
   <TitleSlot>
     <PanelTitle
       suffix={
-        <Primitive.Close asChild>
-          <CloseButton aria-label={closeLabel} />
-        </Primitive.Close>
+        suffix ?? (
+          <DialogClose asChild>
+            <CloseButton aria-label={closeLabel} />
+          </DialogClose>
+        )
       }
     >
       <Primitive.Title className={titleStyle()}>{children}</Primitive.Title>
     </PanelTitle>
   </TitleSlot>
 );
+
+export const DialogActions = ({ children }: { children: ReactNode }) => {
+  return (
+    <Flex
+      gap="1"
+      css={{
+        padding: theme.spacing["9"],
+        paddingTop: theme.spacing["5"],
+        // Making sure the tab order is the last item first.
+        flexFlow: "row-reverse",
+      }}
+    >
+      {children}
+    </Flex>
+  );
+};
 
 // Styles specific to dialog
 // (as opposed to be common for all floating panels)

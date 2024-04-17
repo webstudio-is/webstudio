@@ -2,7 +2,7 @@ import type { InvalidValue, RgbValue } from "@webstudio-is/css-engine";
 import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
 import { TextArea, textVariants } from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../../controls";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -93,7 +93,6 @@ export const BackgroundGradient = (
       autoGrow
       maxRows={4}
       name="description"
-      disabled={props.disabled}
       value={textAreaValue ?? ""}
       state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
       onChange={handleChange}

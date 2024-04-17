@@ -9,7 +9,6 @@
  * - Click to toggle select/unselect
  * - Double click to edit name
  * - Local source can only be disabled, nothing else should be possible
- * - Hit Backspace to delete the last Source item when you are in the input
  */
 
 import { nanoid } from "nanoid";
@@ -17,7 +16,7 @@ import {
   Box,
   ComboboxListbox,
   ComboboxListboxItem,
-  Combobox,
+  ComboboxRoot,
   ComboboxAnchor,
   ComboboxContent,
   DeprecatedTextFieldInput,
@@ -32,8 +31,10 @@ import {
   rawTheme,
   theme,
   styled,
+  Flex,
+  ComboboxScrollArea,
 } from "@webstudio-is/design-system";
-import { CheckMarkIcon, DotIcon } from "@webstudio-is/icons";
+import { CheckMarkIcon, DotIcon, LocalStyleIcon } from "@webstudio-is/icons";
 import {
   forwardRef,
   useState,
@@ -134,7 +135,6 @@ const TextFieldBase: ForwardRefRenderFunction<
     items: value,
     onSort,
   });
-
   return (
     <TextFieldContainer
       {...focusProps}
@@ -145,10 +145,29 @@ const TextFieldBase: ForwardRefRenderFunction<
       }
       onKeyDown={onKeyDown}
     >
+      {/* We want input to be the first element in DOM so it receives the focus first */}
+      {editingItemId === undefined && (
+        <DeprecatedTextFieldInput
+          {...textFieldProps}
+          css={{
+            color: theme.colors.hiContrast,
+            fontVariantNumeric: "tabular-nums",
+            fontFamily: theme.fonts.sans,
+            fontSize: theme.deprecatedFontSize[3],
+            lineHeight: 1,
+            order: 1,
+          }}
+          value={label}
+          type={type}
+          onClick={onClick}
+          ref={mergeRefs(internalInputRef, inputRef ?? null)}
+          spellCheck={false}
+          aria-label="New Style Source Input"
+        />
+      )}
       {value.map((item) => (
         <StyleSource
           key={item.id}
-          label={item.label}
           menuItems={renderStyleSourceMenuItems(item)}
           id={item.id}
           selected={item.id === selectedItemSelector?.styleSourceId}
@@ -175,28 +194,17 @@ const TextFieldBase: ForwardRefRenderFunction<
             onEditItem?.();
             onChangeItem?.({ ...item, label });
           }}
-        />
+        >
+          {item.source === "local" ? (
+            <Flex align="center" justify="center">
+              <LocalStyleIcon />
+            </Flex>
+          ) : (
+            item.label
+          )}
+        </StyleSource>
       ))}
       {placementIndicator}
-      {/* We want input to be the first element in DOM so it receives the focus first */}
-      {editingItemId === undefined && (
-        <DeprecatedTextFieldInput
-          {...textFieldProps}
-          css={{
-            color: theme.colors.hiContrast,
-            fontVariantNumeric: "tabular-nums",
-            fontFamily: theme.fonts.sans,
-            fontSize: theme.deprecatedFontSize[3],
-            lineHeight: 1,
-          }}
-          value={label}
-          type={type}
-          onClick={onClick}
-          ref={mergeRefs(internalInputRef, inputRef ?? null)}
-          spellCheck={false}
-          aria-label="New Style Source Input"
-        />
-      )}
     </TextFieldContainer>
   );
 };
@@ -228,6 +236,9 @@ type StyleSourceInputProps<Item extends IntermediateItem> = {
 
 const newItemId = "__NEW__";
 
+// Maximum amount of tokens we show in the combobox
+const maxSuggestedTokens = 50;
+
 const matchOrSuggestToCreate = (
   search: string,
   items: IntermediateItem[],
@@ -255,7 +266,9 @@ const matchOrSuggestToCreate = (
     });
   }
   // skip already added values
-  return matched.filter((item) => item.isAdded === false).slice(0, 5);
+  return matched
+    .filter((item) => item.isAdded === false)
+    .slice(0, maxSuggestedTokens);
 };
 
 const markAddedValues = <Item extends IntermediateItem>(
@@ -285,6 +298,7 @@ const renderMenuItems = (props: {
 }) => {
   return (
     <>
+      <DropdownMenuLabel>{props.item.label}</DropdownMenuLabel>
       {props.item.source !== "local" && (
         <DropdownMenuItem onSelect={() => props.onEdit?.(props.item.id)}>
           Edit Name
@@ -384,6 +398,18 @@ const renderMenuItems = (props: {
           </Fragment>
         );
       })}
+
+      <DropdownMenuSeparator />
+      {props.item.source === "local" && (
+        <DropdownMenuItem hint>
+          Style instances without creating a token or override a token locally.
+        </DropdownMenuItem>
+      )}
+      {props.item.source === "token" && (
+        <DropdownMenuItem hint>
+          Reuse styles across multiple instances by creating a token.
+        </DropdownMenuItem>
+      )}
     </>
   );
 };
@@ -429,7 +455,20 @@ export const StyleSourceInput = (
     },
   });
 
-  const inputProps = getInputProps();
+  const inputProps = getInputProps({
+    onKeyDown(event) {
+      if (
+        event.key === "Backspace" &&
+        label === "" &&
+        props.editingItemId === undefined
+      ) {
+        const item = value[value.length - 2];
+        if (item) {
+          props.onRemoveItem?.(item.id);
+        }
+      }
+    },
+  });
 
   let hasNewTokenItem = false;
   let hasGlobalTokenItem = false;
@@ -438,7 +477,7 @@ export const StyleSourceInput = (
   const states = props.componentStates ?? [];
 
   return (
-    <Combobox>
+    <ComboboxRoot open={isOpen}>
       <Box {...getComboboxProps()}>
         <ComboboxAnchor>
           <TextField
@@ -474,74 +513,76 @@ export const StyleSourceInput = (
         </ComboboxAnchor>
         <ComboboxContent align="start" sideOffset={5}>
           <ComboboxListbox {...getMenuProps()}>
-            {isOpen &&
-              items.map((item, index) => {
-                if (item.source === "local") {
-                  return;
-                }
+            <ComboboxScrollArea>
+              {isOpen &&
+                items.map((item, index) => {
+                  if (item.source === "local") {
+                    return;
+                  }
 
-                if (item.id === newItemId) {
-                  hasNewTokenItem = true;
+                  if (item.id === newItemId) {
+                    hasNewTokenItem = true;
+                    return (
+                      <Fragment key={index}>
+                        <ComboboxLabel>New Token</ComboboxLabel>
+                        <ComboboxListboxItem
+                          {...getItemProps({ item, index })}
+                          selectable={false}
+                        >
+                          <div>
+                            Create{" "}
+                            <StyleSourceBadge source="token">
+                              {item.label}
+                            </StyleSourceBadge>
+                          </div>
+                        </ComboboxListboxItem>
+                      </Fragment>
+                    );
+                  }
+
+                  let label = null;
+                  if (item.source === "token" && hasGlobalTokenItem === false) {
+                    hasGlobalTokenItem = true;
+                    label = (
+                      <>
+                        {hasNewTokenItem && <ComboboxSeparator />}
+                        <ComboboxLabel>Global Tokens</ComboboxLabel>
+                      </>
+                    );
+                  }
+
+                  if (
+                    item.source === "componentToken" &&
+                    hasComponentTokenItem === false
+                  ) {
+                    hasComponentTokenItem = true;
+                    label = (
+                      <>
+                        {(hasNewTokenItem || hasGlobalTokenItem) && (
+                          <ComboboxSeparator />
+                        )}
+                        <ComboboxLabel>Component Tokens</ComboboxLabel>
+                      </>
+                    );
+                  }
                   return (
                     <Fragment key={index}>
-                      <ComboboxLabel>New Token</ComboboxLabel>
+                      {label}
                       <ComboboxListboxItem
                         {...getItemProps({ item, index })}
                         selectable={false}
                       >
-                        <div>
-                          Create{" "}
-                          <StyleSourceBadge source="token">
-                            {item.label}
-                          </StyleSourceBadge>
-                        </div>
+                        <StyleSourceBadge source={item.source}>
+                          {item.label}
+                        </StyleSourceBadge>
                       </ComboboxListboxItem>
                     </Fragment>
                   );
-                }
-
-                let label = null;
-                if (item.source === "token" && hasGlobalTokenItem === false) {
-                  hasGlobalTokenItem = true;
-                  label = (
-                    <>
-                      {hasNewTokenItem && <ComboboxSeparator />}
-                      <ComboboxLabel>Global Tokens</ComboboxLabel>
-                    </>
-                  );
-                }
-
-                if (
-                  item.source === "componentToken" &&
-                  hasComponentTokenItem === false
-                ) {
-                  hasComponentTokenItem = true;
-                  label = (
-                    <>
-                      {(hasNewTokenItem || hasGlobalTokenItem) && (
-                        <ComboboxSeparator />
-                      )}
-                      <ComboboxLabel>Component Tokens</ComboboxLabel>
-                    </>
-                  );
-                }
-                return (
-                  <Fragment key={index}>
-                    {label}
-                    <ComboboxListboxItem
-                      {...getItemProps({ item, index })}
-                      selectable={false}
-                    >
-                      <StyleSourceBadge source={item.source}>
-                        {item.label}
-                      </StyleSourceBadge>
-                    </ComboboxListboxItem>
-                  </Fragment>
-                );
-              })}
+                })}
+            </ComboboxScrollArea>
           </ComboboxListbox>
         </ComboboxContent>
       </Box>
-    </Combobox>
+    </ComboboxRoot>
   );
 };

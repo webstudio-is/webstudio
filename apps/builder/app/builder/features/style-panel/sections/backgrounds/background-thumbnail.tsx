@@ -1,20 +1,17 @@
 import { useStore } from "@nanostores/react";
 import type { Assets } from "@webstudio-is/sdk";
-import {
-  Image as WebstudioImage,
-  createImageLoader,
-} from "@webstudio-is/image";
+import { Image as WebstudioImage } from "@webstudio-is/image";
 import { styled, theme } from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
+import { $assets, $imageLoader } from "~/shared/nano-states";
 import type { StyleInfo } from "../../shared/style-info";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
-import env from "~/shared/env";
 import { layeredBackgroundProps } from "./background-layers";
 import { toValue } from "@webstudio-is/css-engine";
 import { toPascalCase } from "../../shared/keyword-utils";
 
 const Thumbnail = styled("div", {
   borderRadius: 2,
+  borderWidth: 0,
   width: theme.spacing[10],
   height: theme.spacing[10],
 });
@@ -85,7 +82,8 @@ export const getLayerName = (layerStyle: StyleInfo, assets: Assets) => {
 };
 
 export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
-  const assets = useStore(assetsStore);
+  const assets = useStore($assets);
+  const imageLoader = useStore($imageLoader);
   const backgroundImageStyle = props.layerStyle.backgroundImage?.value;
 
   if (
@@ -97,12 +95,10 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
       return null;
     }
 
-    const loader = createImageLoader({ imageBaseUrl: env.IMAGE_BASE_URL });
-
     return (
       <StyledWebstudioImage
         key={asset.id}
-        loader={loader}
+        loader={imageLoader}
         src={asset.name}
         width={theme.spacing[10]}
         optimize={true}

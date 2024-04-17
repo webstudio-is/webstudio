@@ -3,12 +3,13 @@ import {
   theme,
   css,
   Flex,
-  Text,
   Toolbar,
   ToolbarToggleGroup,
+  ToolbarButton,
+  Text,
 } from "@webstudio-is/design-system";
 import type { Project } from "@webstudio-is/project";
-import { selectedPageStore } from "~/shared/nano-states";
+import { $pages, $selectedPage } from "~/shared/nano-states";
 import { PreviewButton } from "./preview";
 import { ShareButton } from "./share";
 import { PublishButton } from "./publish";
@@ -19,6 +20,33 @@ import {
   BreakpointsPopover,
 } from "../breakpoints";
 import { ViewMode } from "./view-mode";
+import { $activeSidebarPanel } from "~/builder/shared/nano-states";
+import { AddressBarPopover } from "../address-bar";
+
+const PagesButton = () => {
+  const page = useStore($selectedPage);
+  if (page === undefined) {
+    return;
+  }
+
+  return (
+    <ToolbarButton
+      css={{
+        px: theme.spacing[9],
+        maxWidth: theme.spacing[24],
+      }}
+      aria-label="Toggle Pages"
+      onClick={() => {
+        $activeSidebarPanel.set(
+          $activeSidebarPanel.get() === "pages" ? "none" : "pages"
+        );
+      }}
+      tabIndex={0}
+    >
+      <Text truncate>{page.name}</Text>
+    </ToolbarButton>
+  );
+};
 
 const topbarContainerStyle = css({
   display: "flex",
@@ -36,27 +64,30 @@ type TopbarProps = {
 };
 
 export const Topbar = ({ gridArea, project, hasProPlan }: TopbarProps) => {
-  const page = useStore(selectedPageStore);
-
+  const pages = useStore($pages);
   return (
     <nav className={topbarContainerStyle({ css: { gridArea } })}>
       <Flex grow={false} shrink={false}>
         <Menu />
       </Flex>
-      <Flex
-        css={{ px: theme.spacing[9], maxWidth: theme.spacing[24] }}
-        align="center"
-      >
-        <Text variant="labelsTitleCase" color="contrast" truncate>
-          {page?.name ?? ""}
-        </Text>
-      </Flex>
-      <Flex css={{ minWidth: theme.spacing[23] }}>
-        <BreakpointsPopover />
-      </Flex>
-      <Flex grow align="center" justify="center">
-        <BreakpointsSelectorContainer />
-      </Flex>
+
+      {/* prevent rendering when data is not loaded */}
+      {pages && (
+        <>
+          <Flex align="center">
+            <PagesButton />
+            <AddressBarPopover />
+          </Flex>
+          <Flex css={{ minWidth: theme.spacing[23] }}>
+            <BreakpointsPopover />
+          </Flex>
+          <Flex grow></Flex>
+          <Flex align="center" justify="center">
+            <BreakpointsSelectorContainer />
+          </Flex>
+        </>
+      )}
+      <Flex grow></Flex>
       <Toolbar>
         <ToolbarToggleGroup
           type="single"

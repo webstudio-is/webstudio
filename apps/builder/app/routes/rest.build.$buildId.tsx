@@ -1,7 +1,6 @@
-import { json, type LoaderArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import type { Data } from "@webstudio-is/http-client";
 import { db as projectDb } from "@webstudio-is/project/index.server";
-import { sentryException } from "~/shared/sentry";
 import { loadProductionCanvasData } from "~/shared/db";
 import { createContext } from "~/shared/context.server";
 import { getUserById, type User } from "~/shared/db/user.server";
@@ -9,7 +8,7 @@ import { getUserById, type User } from "~/shared/db/user.server";
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<
+}: LoaderFunctionArgs): Promise<
   Data & { user: { email: User["email"] } | undefined } & {
     projectDomain: string;
   }
@@ -47,7 +46,7 @@ export const loader = async ({
       throw error;
     }
 
-    sentryException({ error });
+    console.error({ error });
 
     // We have no idea what happened, so we'll return a 500 error.
     throw json(error instanceof Error ? error.message : String(error), {

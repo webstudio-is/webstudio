@@ -6,13 +6,13 @@ import {
   getPresetStyleRule,
 } from "~/builder/features/style-panel/shared/style-info";
 import {
-  breakpointsStore,
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedPageStore,
-  stylesIndexStore,
+  $breakpoints,
+  $instances,
+  $registeredComponentMetas,
+  $selectedPage,
+  $stylesIndex,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import { $selectedBreakpoint } from "~/shared/nano-states";
 import { subscribe } from "~/shared/pubsub";
 import htmlTags, { type htmlTags as HtmlTags } from "html-tags";
 
@@ -56,11 +56,11 @@ const isSelectorSupported = (selector: string) => {
 };
 
 const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
-  const metas = registeredComponentMetasStore.get();
-  const breakpoints = breakpointsStore.get();
-  const selectedBreakpoint = selectedBreakpointStore.get();
-  const { stylesByInstanceId } = stylesIndexStore.get();
-  const instances = instancesStore.get();
+  const metas = $registeredComponentMetas.get();
+  const breakpoints = $breakpoints.get();
+  const selectedBreakpoint = $selectedBreakpoint.get();
+  const { stylesByInstanceId } = $stylesIndex.get();
+  const instances = $instances.get();
   const selectedBreakpointId = selectedBreakpoint?.id;
 
   if (selectedBreakpointId === undefined) {
@@ -106,7 +106,7 @@ const getInstanceSize = (instanceId: string, tagName: HtmlTags | undefined) => {
 const MAX_SIZE_TO_USE_OPTIMIZATION = 50;
 
 const recalculate = () => {
-  const rootInstanceId = selectedPageStore.get()?.rootInstanceId;
+  const rootInstanceId = $selectedPage.get()?.rootInstanceId;
 
   // Below algorithm quickly finds the common ancestor of all elements with an instanceId.
   // However, for a large number of elements, it's more efficient to calculate from the root.
@@ -184,6 +184,7 @@ const recalculate = () => {
     if (element.tagName === "HTML") {
       continue;
     }
+
     // All children are absolute or fixed
     if (value === 0) {
       elementsToRecalculate.push(element);
@@ -208,7 +209,8 @@ const recalculate = () => {
     const elementInstanceId = element.getAttribute(idAttribute);
 
     if (elementInstanceId === null) {
-      throw new Error(`Element ${idAttribute} has no instance id`);
+      // Not a webstudio controlled element, like popover portal
+      continue;
     }
 
     const tagName = element.tagName.toLowerCase();

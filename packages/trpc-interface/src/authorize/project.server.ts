@@ -51,21 +51,10 @@ export const hasProjectPermit = async (
       return true;
     }
 
-    // Allow load webstudiois for clone
-    // @todo Rethink permissions for this use-case
-    // The plan is to make new permission for projects which are allowed to be publicly clonable by anyone
-    // https://github.com/webstudio-is/webstudio/issues/1038
-    if (
-      props.permit === "view" &&
-      props.projectId === "62154aaef0cb0860ccf85d6e"
-    ) {
-      return true;
-    }
+    const isInMarketplace =
+      context.authorization.marketplaceProjectIds.includes(props.projectId);
 
-    if (
-      props.permit === "view" &&
-      context.authorization.projectTemplates.includes(props.projectId)
-    ) {
+    if (props.permit === "view" && isInMarketplace) {
       return true;
     }
 
@@ -121,8 +110,7 @@ export const hasProjectPermit = async (
   } finally {
     const diff = Date.now() - start;
 
-    // eslint-disable-next-line no-console
-    console.log(`hasProjectPermit execution ${diff}ms`);
+    console.info(`hasProjectPermit execution ${diff}ms`);
   }
 };
 
@@ -161,7 +149,6 @@ export const getProjectPermit = async <T extends AuthPermit>(
   } finally {
     const diff = Date.now() - start;
 
-    // eslint-disable-next-line no-console
-    console.log(`getProjectPermit execution ${diff}ms`);
+    console.info(`getProjectPermit execution ${diff}ms`);
   }
 };

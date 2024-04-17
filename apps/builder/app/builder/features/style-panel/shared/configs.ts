@@ -1,41 +1,11 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { keywordValues, properties } from "@webstudio-is/css-data";
+import { keywordValues } from "@webstudio-is/css-data";
 import { humanizeString } from "~/shared/string-utils";
-import {
-  type IconRecords,
-  JustifyItemsStartIcon,
-  JustifyItemsEndIcon,
-  JustifyItemsCenterIcon,
-  ACStartIcon,
-  ACEndIcon,
-  ACCenterIcon,
-  ACStretchIcon,
-  ACSpaceAroundIcon,
-  ACSpaceBetweenIcon,
-  AIStartIcon,
-  AIEndIcon,
-  AICenterIcon,
-  AIBaselineIcon,
-  AIStretchIcon,
-  ArrowRightIcon,
-  ArrowDownIcon,
-  NoWrapIcon,
-  WrapIcon,
-  JCStartIcon,
-  JCEndIcon,
-  JCCenterIcon,
-  JCSpaceBetweenIcon,
-  JCSpaceAroundIcon,
-  GapHorizontalIcon,
-  GapVerticalIcon,
-} from "@webstudio-is/icons";
-import type { AppliesTo } from "./dependencies";
 import type * as Controls from "../controls";
 
 type BaseStyleConfig = {
   label: string;
   property: StyleProperty;
-  appliesTo: AppliesTo;
 };
 
 export type Control = keyof typeof Controls;
@@ -87,7 +57,6 @@ export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
   const result = {
     label,
     property,
-    appliesTo: properties[property].appliesTo,
     control: getControl(property),
     items: keywords.map((keyword) => ({ label: keyword, name: keyword })),
   };
@@ -95,163 +64,4 @@ export const styleConfigByName = (propertyName: StyleProperty): StyleConfig => {
   styleConfigCache.set(propertyName, result);
 
   return result;
-};
-
-export const iconConfigs: IconRecords = {
-  // layout
-  alignContent: {
-    start: ACStartIcon,
-    end: ACEndIcon,
-    center: ACCenterIcon,
-    stretch: ACStretchIcon,
-    "space-around": ACSpaceAroundIcon,
-    "space-between": ACSpaceBetweenIcon,
-  },
-  alignItems: {
-    start: AIStartIcon,
-    end: AIEndIcon,
-    center: AICenterIcon,
-    baseline: AIBaselineIcon,
-    stretch: AIStretchIcon,
-  },
-  flexDirection: {
-    row: ArrowRightIcon,
-    column: ArrowDownIcon,
-  },
-  flexWrap: {
-    nowrap: NoWrapIcon,
-    wrap: WrapIcon,
-  },
-  justifyContent: {
-    start: JCStartIcon,
-    center: JCCenterIcon,
-    end: JCEndIcon,
-    "space-between": JCSpaceBetweenIcon,
-    "space-around": JCSpaceAroundIcon,
-  },
-  justifyItems: {
-    normal: JustifyItemsStartIcon,
-    start: JustifyItemsStartIcon,
-    end: JustifyItemsEndIcon,
-    center: JustifyItemsCenterIcon,
-  },
-  rowGap: {
-    normal: GapVerticalIcon,
-  },
-  columnGap: {
-    normal: GapHorizontalIcon,
-  },
-  // // flex child
-  // flexShrink: {
-  //   normal: ColumnGapIcon,
-  // },
-  // flexGrow: {
-  //   normal: ColumnGapIcon,
-  // },
-  // flexBasis: {
-  //   normal: ColumnGapIcon,
-  // },
-  // // grid child
-  // alignSelf: {
-  //   normal: ColumnGapIcon,
-  // },
-  // order: {
-  //   normal: ColumnGapIcon,
-  // },
-  // justifySelf: {
-  //   normal: ColumnGapIcon,
-  // },
-  // // size
-  // width: {
-  //   normal: ColumnGapIcon,
-  // },
-  // height: {
-  //   normal: ColumnGapIcon,
-  // },
-  // minWidth: {
-  //   normal: ColumnGapIcon,
-  // },
-  // minHeight: {
-  //   normal: ColumnGapIcon,
-  // },
-  // maxWidth: {
-  //   normal: ColumnGapIcon,
-  // },
-  // maxHeight: {
-  //   normal: ColumnGapIcon,
-  // },
-  // overflow: {
-  //   normal: ColumnGapIcon,
-  // },
-  // objectFit: {
-  //   normal: ColumnGapIcon,
-  // },
-  // // position
-  // position: {
-  //   normal: ColumnGapIcon,
-  // },
-  // float: {
-  //   normal: ColumnGapIcon,
-  // },
-  // // typography
-  // fontFamily: {
-  //   normal: ColumnGapIcon,
-  // },
-  // fontWeight: {
-  //   normal: ColumnGapIcon,
-  // },
-  // fontSize: {
-  //   normal: ColumnGapIcon,
-  // },
-  // lineHeight: {
-  //   normal: ColumnGapIcon,
-  // },
-  // color: {
-  //   normal: ColumnGapIcon,
-  // },
-  // textAlign: {
-  //   normal: ColumnGapIcon,
-  // },
-  // fontStyle: {
-  //   normal: ColumnGapIcon,
-  // },
-  // textDecorationColor: {
-  //   normal: ColumnGapIcon,
-  // },
-  // textDecorationLine: {
-  //   normal: ColumnGapIcon,
-  // },
-  // textDecorationStyle: {
-  //   normal: ColumnGapIcon,
-  // },
-  // textIndent: {
-  //   normal: ColumnGapIcon,
-  // },
-  // letterSpacing: {
-  //   normal: ColumnGapIcon,
-  // },
-  // columnCount: {
-  //   normal: ColumnGapIcon,
-  // },
-  // columnRuleStyle: {
-  //   normal: ColumnGapIcon,
-  // },
-  // columnRuleWidth: {
-  //   normal: ColumnGapIcon,
-  // },
-  // columnRuleColor: {
-  //   normal: ColumnGapIcon,
-  // },
-  // textTransform: {
-  //   normal: ColumnGapIcon,
-  // },
-  // direction: {
-  //   normal: ColumnGapIcon,
-  // },
-  // whiteSpace: {
-  //   normal: ColumnGapIcon,
-  // },
-  // textShadow: {
-  //   normal: ColumnGapIcon,
-  // },
 };

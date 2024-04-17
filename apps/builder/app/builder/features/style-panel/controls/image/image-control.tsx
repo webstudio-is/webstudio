@@ -1,16 +1,16 @@
 import { useStore } from "@nanostores/react";
 import { Button } from "@webstudio-is/design-system";
-import { assetsStore } from "~/shared/nano-states";
+import { $assets } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 
 export const ImageControl = ({
   property,
   currentStyle,
   setProperty,
 }: ControlProps) => {
-  const assets = useStore(assetsStore);
+  const assets = useStore($assets);
   const styleValue = currentStyle[property]?.value;
 
   if (styleValue === undefined) {

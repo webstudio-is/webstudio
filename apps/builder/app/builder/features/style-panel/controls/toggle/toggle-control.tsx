@@ -1,149 +1,70 @@
-import {
-  Flex,
-  ToggleGroup,
-  ToggleGroupButton,
-} from "@webstudio-is/design-system";
-import type { StyleInfo, StyleSource } from "../../shared/style-info";
-import { useState, type ReactElement } from "react";
+import { ToggleButton } from "@webstudio-is/design-system";
+import { styleConfigByName } from "../../shared/configs";
 import { PropertyTooltip } from "../../shared/property-name";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type { ControlProps } from "../types";
+import { getStyleSource } from "../../shared/style-info";
+import type { IconComponent } from "@webstudio-is/icons";
+import { AdvancedValueTooltip } from "../advanced-value-tooltip";
+import { toKebabCase } from "../../shared/keyword-utils";
 
-export type ToggleGroupControlProps = {
-  style: StyleInfo;
-  styleSource?: StyleSource;
-  value: string;
-  items: {
-    child: JSX.Element;
-    title: string;
-    description: string;
-    value: string;
-    propertyValues: string | string[];
-  }[];
-  onValueChange?: (value: string) => void;
-  onReset?: () => void;
-  properties?: StyleProperty[] | undefined;
+type Item = {
+  name: string;
+  label: string;
+  icon: IconComponent;
 };
 
-const ToggleGroupButtonWithTooltip = ({
-  title,
-  propertyValues,
-  description,
-  children,
-  value,
-  onReset,
-  tooltipOpen,
-  onTooltipOpenChange,
-  onMouseEnter,
-  style,
-  properties,
-}: {
-  title: string;
-  value: string;
-  propertyValues: string | string[];
-  description: React.ReactNode;
-  children: ReactElement;
-  onReset?: () => void;
-  tooltipOpen: boolean;
-  onTooltipOpenChange: (open: boolean) => void;
-  onMouseEnter: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  style: StyleInfo;
-  properties?: StyleProperty[] | undefined;
+export const ToggleControl = ({
+  property,
+  currentStyle,
+  setProperty,
+  deleteProperty,
+  items,
+  isAdvanced,
+}: Omit<ControlProps, "items"> & {
+  items: [Item, Item];
 }) => {
-  const scrollableContent = Array.isArray(propertyValues)
-    ? propertyValues.map((propertyValue) => (
-        <div key={propertyValue}>{propertyValue}</div>
-      ))
-    : propertyValues;
+  const { label } = styleConfigByName(property);
+  const styleValue = currentStyle[property]?.value;
+
+  if (styleValue?.type !== "keyword") {
+    return;
+  }
+
+  // First item is the pressed state
+  const isPressed = items[0].name === styleValue.value ? true : false;
+  const currentItem = items.find((item) => item.name === styleValue.value);
+  const Icon = currentItem?.icon ?? items[0].icon;
+  isAdvanced = isAdvanced ?? currentItem === undefined;
 
   return (
-    <PropertyTooltip
-      open={tooltipOpen}
-      onOpenChange={onTooltipOpenChange}
-      title={title}
-      scrollableContent={scrollableContent}
-      description={description}
-      properties={properties ?? []}
-      style={style}
-      onReset={onReset}
+    <AdvancedValueTooltip
+      isAdvanced={isAdvanced}
+      property={property}
+      value={styleValue.value}
+      currentStyle={currentStyle}
+      deleteProperty={deleteProperty}
     >
-      <ToggleGroupButton
-        onMouseEnter={onMouseEnter}
-        value={value}
-        onClick={(event) => {
-          if (event.altKey) {
-            onReset?.();
-          }
-        }}
+      <PropertyTooltip
+        title={label}
+        scrollableContent={`${toKebabCase(property)}: ${styleValue.value};`}
+        properties={[property]}
+        style={currentStyle}
+        onReset={() => deleteProperty(property)}
       >
-        <Flex>{children}</Flex>
-      </ToggleGroupButton>
-    </PropertyTooltip>
-  );
-};
-
-// @todo refactor this control to follow the standard interface we otherwise have for all controls
-export const ToggleGroupControl = ({
-  styleSource,
-  value = "",
-  items = [],
-  onValueChange,
-  onReset,
-  style,
-  properties,
-}: ToggleGroupControlProps) => {
-  // Issue: The tooltip's grace area is too big and overlaps with nearby buttons,
-  // preventing the tooltip from changing when the buttons are hovered over in certain cases.
-  // To solve issue and allow tooltips to change on button hover,
-  // we close the button tooltip in the ToggleGroupButton.onMouseEnter handler.
-  // onMouseEnter used to preserve default hovering behavior on tooltip.
-  const [openTootips, setOpenTooltips] = useState(() =>
-    Array.from(items, () => false)
-  );
-
-  return (
-    <ToggleGroup
-      color={styleSource}
-      type="single"
-      value={value}
-      onValueChange={onValueChange}
-      css={{ width: "fit-content" }}
-    >
-      {items.map(
-        (
-          { child, title, value: itemValue, description, propertyValues },
-          index
-        ) => {
-          return (
-            <ToggleGroupButtonWithTooltip
-              key={index}
-              style={style}
-              title={title}
-              propertyValues={propertyValues}
-              properties={itemValue === value ? properties : []}
-              description={description}
-              value={itemValue}
-              onReset={itemValue === value ? onReset : undefined}
-              tooltipOpen={openTootips[index]}
-              onTooltipOpenChange={(open) => {
-                setOpenTooltips((openTooltips) => {
-                  const newOpenTooltips = [...openTooltips];
-                  newOpenTooltips[index] = open;
-                  return newOpenTooltips;
-                });
-              }}
-              onMouseEnter={(event) => {
-                setOpenTooltips((openTooltips) => {
-                  return openTooltips.map((openTooltip, i) =>
-                    i !== index ? false : openTooltip
-                  );
-                });
-              }}
-            >
-              {child}
-            </ToggleGroupButtonWithTooltip>
-          );
-        }
-      )}
-    </ToggleGroup>
+        <ToggleButton
+          disabled={isAdvanced}
+          pressed={isPressed}
+          onPressedChange={(isPressed) => {
+            setProperty(property)({
+              type: "keyword",
+              value: isPressed ? items[0].name : items[1].name,
+            });
+          }}
+          variant={getStyleSource(currentStyle[property])}
+        >
+          <Icon />
+        </ToggleButton>
+      </PropertyTooltip>
+    </AdvancedValueTooltip>
   );
 };

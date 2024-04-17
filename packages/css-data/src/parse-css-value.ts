@@ -11,7 +11,7 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 
-const cssTryParseValue = (input: string) => {
+export const cssTryParseValue = (input: string) => {
   try {
     const ast = csstree.parse(input, { context: "value" });
     return ast;

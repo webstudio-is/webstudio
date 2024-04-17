@@ -1,5 +1,4 @@
 import type { CssValueInputValue } from "./css-value-input";
-import { toPascalCase } from "../keyword-utils";
 import {
   keywordValues,
   properties,
@@ -15,6 +14,10 @@ const preferedSorting = [
   ...units.percentage,
   "em",
   "rem",
+  "svw",
+  "svh",
+  "lvw",
+  "lvh",
   "dvw",
   "dvh",
   ...units.length,
@@ -27,7 +30,16 @@ const preferedSorting = [
   ...units.time,
 ];
 
-const visibleLengthUnits = ["px", "em", "rem", "dvw", "dvh"] as const;
+const initialLengthUnits = [
+  "px",
+  "em",
+  "rem",
+  "ch",
+  "svw",
+  "svh",
+  "lvw",
+  "lvh",
+] as const;
 
 export const buildOptions = (
   property: string,
@@ -40,6 +52,10 @@ export const buildOptions = (
       : undefined;
 
   const options: UnitOption[] = [];
+
+  if (property in properties === false) {
+    return options;
+  }
   const { unitGroups } = properties[property as keyof typeof properties];
 
   for (const unitGroup of unitGroups) {
@@ -53,12 +69,12 @@ export const buildOptions = (
     }
 
     const visibleUnits =
-      unitGroup === "length" ? visibleLengthUnits : units[unitGroup];
+      unitGroup === "length" ? initialLengthUnits : units[unitGroup];
     for (const unit of visibleUnits) {
       options.push({
         id: unit,
         type: "unit",
-        label: unit.toLocaleUpperCase(),
+        label: unit,
       });
     }
   }
@@ -89,10 +105,7 @@ export const buildOptions = (
     options.push({
       id: unit,
       type: "unit",
-      label:
-        unit === "number"
-          ? nestedSelectButtonUnitless
-          : unit.toLocaleUpperCase(),
+      label: unit === "number" ? nestedSelectButtonUnitless : unit,
     });
   }
 
@@ -125,7 +138,7 @@ export const buildOptions = (
   for (const keyword of webstudioKeywords) {
     options.push({
       id: keyword,
-      label: toPascalCase(keyword),
+      label: keyword,
       type: "keyword",
     });
   }
@@ -136,7 +149,7 @@ export const buildOptions = (
   ) {
     options.push({
       id: value.value,
-      label: toPascalCase(value.value),
+      label: value.value,
       type: "keyword",
     });
   }

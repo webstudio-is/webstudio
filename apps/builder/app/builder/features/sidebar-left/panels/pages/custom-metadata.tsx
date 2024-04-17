@@ -1,3 +1,5 @@
+import { useId } from "react";
+import { useStore } from "@nanostores/react";
 import {
   Button,
   Grid,
@@ -9,7 +11,14 @@ import {
   theme,
 } from "@webstudio-is/design-system";
 import { DeleteIcon, PlusIcon } from "@webstudio-is/icons";
-import { useId } from "react";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { isLiteralExpression } from "@webstudio-is/sdk";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
+import { computeExpression } from "~/shared/nano-states";
+import { $pageRootScope } from "./page-utils";
 
 type Meta = {
   property: string;
@@ -21,7 +30,7 @@ type CustomMetadataProps = {
   onChange: (value: Meta[]) => void;
 };
 
-const PropertyContent = (props: {
+const MetadataItem = (props: {
   property: string;
   content: string;
   onDelete: () => void;
@@ -29,6 +38,9 @@ const PropertyContent = (props: {
 }) => {
   const propertyId = useId();
   const contentId = useId();
+  const { variableValues, scope, aliases } = useStore($pageRootScope);
+
+  const content = computeExpression(props.content, variableValues);
 
   return (
     <Grid
@@ -48,7 +60,6 @@ const PropertyContent = (props: {
       <InputErrorsTooltip errors={undefined}>
         <InputField
           css={{ gridArea: "property-input" }}
-          tabIndex={1}
           id={propertyId}
           property="path"
           value={props.property}
@@ -60,20 +71,40 @@ const PropertyContent = (props: {
       <Label htmlFor={contentId} css={{ gridArea: "content" }}>
         Content
       </Label>
-      <InputErrorsTooltip errors={undefined}>
-        <InputField
-          css={{
-            gridArea: "content-input",
-          }}
-          tabIndex={1}
-          id={contentId}
-          property="path"
-          value={props.content}
-          onChange={(event) => {
-            props.onChange(props.property, event.target.value);
-          }}
-        />
-      </InputErrorsTooltip>
+      <BindingControl>
+        {isFeatureEnabled("cms") && (
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isLiteralExpression(props.content) ? "default" : "bound"}
+            value={props.content}
+            onChange={(value) => {
+              props.onChange(props.property, value);
+            }}
+            onRemove={(evaluatedValue) => {
+              props.onChange(props.property, JSON.stringify(evaluatedValue));
+            }}
+          />
+        )}
+        <InputErrorsTooltip errors={undefined}>
+          <InputField
+            css={{
+              gridArea: "content-input",
+            }}
+            disabled={isLiteralExpression(props.content) === false}
+            color={typeof content !== "string" ? "error" : undefined}
+            id={contentId}
+            property="path"
+            value={content}
+            onChange={(event) => {
+              props.onChange(
+                props.property,
+                JSON.stringify(event.target.value)
+              );
+            }}
+          />
+        </InputErrorsTooltip>
+      </BindingControl>
       <Grid
         css={{
           gridArea: "button",
@@ -135,7 +166,7 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
       <div />
       <Grid gap={3}>
         {props.customMetas.map((meta, index) => (
-          <PropertyContent
+          <MetadataItem
             key={index}
             property={meta.property}
             content={meta.content}
@@ -162,7 +193,7 @@ export const CustomMetadata = (props: CustomMetadataProps) => {
           onClick={() => {
             const newCustomMetas = [
               ...props.customMetas,
-              { property: "", content: "" },
+              { property: "", content: `""` },
             ];
             props.onChange(newCustomMetas);
           }}

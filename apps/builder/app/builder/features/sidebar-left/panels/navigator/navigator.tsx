@@ -1,14 +1,10 @@
-import { ListNestedIcon } from "@webstudio-is/icons";
-import { Navigator } from "../../navigator";
-import type { TabName } from "../../types";
-
-type TabContentProps = {
-  onSetActiveTab: (tabName: TabName) => void;
-};
+import { NavigatorIcon } from "@webstudio-is/icons";
+import { NavigatorContent } from "./navigator-content";
+import type { TabContentProps } from "../../types";
 
 export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   return (
-    <Navigator
+    <NavigatorContent
       onClose={() => {
         onSetActiveTab("none");
       }}
@@ -16,4 +12,6 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   );
 };
 
-export const icon = <ListNestedIcon />;
+export const Icon = NavigatorIcon;
+
+export const label = "Navigator";

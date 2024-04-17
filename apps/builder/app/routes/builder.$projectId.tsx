@@ -4,10 +4,15 @@ import {
   isRouteErrorResponse,
 } from "@remix-run/react";
 import type { ShouldRevalidateFunction } from "@remix-run/react";
-import { redirect, type LoaderArgs, json } from "@remix-run/node";
+import {
+  type LoaderFunctionArgs,
+  redirect,
+  json,
+} from "@remix-run/server-runtime";
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
-import { db as domainDb } from "@webstudio-is/domain/index.server";
 import { db } from "@webstudio-is/project/index.server";
+import { db as authDb } from "@webstudio-is/authorization-token/index.server";
+
 import {
   AuthorizationError,
   authorizeProject,
@@ -15,16 +20,20 @@ import {
 import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
-import { sentryException } from "~/shared/sentry";
 import { loginPath } from "~/shared/router-utils";
 import { type BuilderProps, Builder, links } from "~/builder";
+import env from "~/env/env.server";
+import { staticEnv } from "~/env/env.static.server";
 
 export { links };
 
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<BuilderProps> => {
+}: LoaderFunctionArgs): Promise<BuilderProps> => {
+  // TODO: remove after release 17 apr 2024
+  console.info({ staticEnv });
+
   const context = await createContext(request);
 
   try {
@@ -56,39 +65,45 @@ export const loader = async ({
 
     const assets = await loadAssetsByProject(project.id, context);
 
-    const currentProjectDomainsResult = await domainDb.findMany(
-      { projectId: project.id },
-      context
-    );
-
-    const domains = currentProjectDomainsResult.success
-      ? currentProjectDomainsResult.data
-          .filter((projectDomain) => projectDomain.verified)
-          .filter((projectDomain) => projectDomain.domain.status === "ACTIVE")
-          .map((projectDomain) => projectDomain.domain.domain)
-      : [];
-
     const end = Date.now();
 
     const diff = end - start;
 
     // we need to log timings to figure out how to speed up loading
-    // eslint-disable-next-line no-console
-    console.log(`Project ${project.id} is loaded in ${diff}ms`);
+
+    console.info(`Project ${project.id} is loaded in ${diff}ms`);
 
     const authToken = url.searchParams.get("authToken") ?? undefined;
+
+    const authTokenPermissions =
+      authPermit !== "own" && authToken !== undefined
+        ? await authDb.getTokenPermissions(
+            {
+              projectId: project.id,
+              token: authToken,
+            },
+            context
+          )
+        : authDb.tokenDefaultPermissions;
 
     const { userPlanFeatures } = context;
     if (userPlanFeatures === undefined) {
       throw new Error("User plan features are not defined");
     }
 
+    if (project.userId === null) {
+      throw new AuthorizationError("Project must have project userId defined");
+    }
+
+    const publisherHost = env.PUBLISHER_HOST;
     return {
       project,
-      domains,
+      publisherHost,
+      imageBaseUrl: env.IMAGE_BASE_URL,
       build: devBuild,
       assets: assets.map((asset) => [asset.id, asset]),
       authToken,
+      authTokenPermissions,
       authPermit,
       userPlanFeatures,
     };
@@ -116,7 +131,7 @@ export const loader = async ({
 
 export const ErrorBoundary = () => {
   const error = useRouteError();
-  sentryException({ error });
+  console.error({ error });
   const message = isRouteErrorResponse(error)
     ? error.data.message ?? error.data
     : error instanceof Error

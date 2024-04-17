@@ -1,5 +1,5 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { Grid, theme } from "@webstudio-is/design-system";
 import { SelectControl, TextControl } from "../../controls";
@@ -8,7 +8,14 @@ import { styleConfigByName } from "../../shared/configs";
 import { PositionControl } from "./position-control";
 import { useParentStyle } from "../../parent-style";
 
-const properties: StyleProperty[] = ["position"];
+export const properties = [
+  "position",
+  "zIndex",
+  "top",
+  "right",
+  "bottom",
+  "left",
+] satisfies Array<StyleProperty>;
 
 const positionControlVisibleProperties = [
   "relative",
@@ -19,12 +26,12 @@ const positionControlVisibleProperties = [
 
 const zIndexParents = ["flex", "grid", "inline-flex", "inline-grid"] as const;
 
-export const PositionSection = ({
+export const Section = ({
   setProperty,
   deleteProperty,
   currentStyle,
   createBatchUpdate,
-}: RenderCategoryProps) => {
+}: SectionProps) => {
   const parentStyle = useParentStyle();
 
   const positionValue = currentStyle.position?.value;

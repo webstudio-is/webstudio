@@ -40,7 +40,9 @@ const LinkStory = () => (
         <Link href="" underline="none">
           None
         </Link>
-        <Link href="">Hover</Link>
+        <Link href="" underline="hover">
+          Hover
+        </Link>
         <Link href="" underline="always">
           Always
         </Link>

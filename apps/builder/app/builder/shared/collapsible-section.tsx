@@ -44,7 +44,7 @@ type CollapsibleSectionBaseProps = {
   onOpenChange: (value: boolean) => void;
 };
 
-export const CollapsibleSectionBase = ({
+export const CollapsibleSectionRoot = ({
   label,
   trigger,
   children,
@@ -90,7 +90,7 @@ export const CollapsibleSection = (props: CollapsibleSectionProps) => {
   const { label, trigger, children, fullWidth } = props;
   const [isOpen, setIsOpen] = useOpenState(props);
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       label={label}
       trigger={trigger}
       fullWidth={fullWidth}
@@ -98,7 +98,7 @@ export const CollapsibleSection = (props: CollapsibleSectionProps) => {
       onOpenChange={setIsOpen}
     >
       {children}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };
 
@@ -125,7 +125,7 @@ export const CollapsibleSectionWithAddButton = ({
   const isOpenFinal = isOpen && isEmpty === false;
 
   return (
-    <CollapsibleSectionBase
+    <CollapsibleSectionRoot
       label={label}
       fullWidth={false}
       isOpen={isOpenFinal}
@@ -155,6 +155,6 @@ export const CollapsibleSectionWithAddButton = ({
       }
     >
       {children}
-    </CollapsibleSectionBase>
+    </CollapsibleSectionRoot>
   );
 };

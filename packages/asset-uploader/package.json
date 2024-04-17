@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/asset-uploader",
-  "version": "0.123.0",
+  "version": "0.144.0",
   "description": "Webstudio Asset Uploader",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,10 +8,7 @@
   "scripts": {
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm test",
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
-    "dts": "tsc --project tsconfig.dts.json"
+    "checks": "pnpm typecheck && pnpm test"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.0.0",
@@ -33,24 +30,16 @@
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.2.2",
-    "zod": "^3.21.4"
+    "zod": "^3.22.4"
   },
   "exports": {
     ".": {
-      "webstudio": "./src/index.ts",
-      "types": "./lib/types/index.d.ts",
-      "import": "./lib/index.js"
+      "webstudio": "./src/index.ts"
     },
     "./index.server": {
-      "webstudio": "./src/index.server.ts",
-      "types": "./lib/types/index.server.d.ts",
-      "import": "./lib/index.server.js"
+      "webstudio": "./src/index.server.ts"
     }
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "private": true,
   "sideEffects": false

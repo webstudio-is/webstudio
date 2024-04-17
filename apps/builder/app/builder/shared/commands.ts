@@ -1,23 +1,22 @@
 import { createCommandsEmitter, type Command } from "~/shared/commands-emitter";
 import {
-  $dataSources,
   $isPreviewMode,
-  editingItemIdStore,
-  instancesStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
-  textEditingInstanceSelectorStore,
+  $editingItemSelector,
+  $instances,
+  $selectedInstanceSelector,
+  $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import {
   $breakpointsMenuView,
   selectBreakpointByOrder,
 } from "~/shared/breakpoints";
 import {
-  deleteInstance,
+  deleteInstanceMutable,
   findAvailableDataSources,
-  getInstancesSlice,
-  insertInstancesSliceCopy,
+  extractWebstudioFragment,
+  insertWebstudioFragmentCopy,
   isInstanceDetachable,
+  updateWebstudioData,
 } from "~/shared/instance-utils";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import { serverSyncStore } from "~/shared/sync";
@@ -30,15 +29,17 @@ const makeBreakpointCommand = <CommandName extends string>(
   number: number
 ): Command<CommandName> => ({
   name,
-  defaultHotkeys: [`meta+${number}`, `ctrl+${number}`],
+  defaultHotkeys: [`${number}`],
+  disableHotkeyOnFormTags: true,
+  disableHotkeyOnContentEditable: true,
   handler: () => {
     selectBreakpointByOrder(number);
   },
 });
 
 const deleteSelectedInstance = () => {
-  const textEditingInstanceSelector = textEditingInstanceSelectorStore.get();
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const textEditingInstanceSelector = $textEditingInstanceSelector.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
   // cannot delete instance while editing
   if (textEditingInstanceSelector) {
     return;
@@ -50,7 +51,7 @@ const deleteSelectedInstance = () => {
     return;
   }
   let newSelectedInstanceSelector: undefined | InstanceSelector;
-  const instances = instancesStore.get();
+  const instances = $instances.get();
   const [selectedInstanceId, parentInstanceId] = selectedInstanceSelector;
   const parentInstance = instances.get(parentInstanceId);
   if (parentInstance) {
@@ -70,10 +71,11 @@ const deleteSelectedInstance = () => {
       newSelectedInstanceSelector = selectedInstanceSelector.slice(1);
     }
   }
-  if (deleteInstance(selectedInstanceSelector)) {
-    selectedInstanceSelectorStore.set(newSelectedInstanceSelector);
-    selectedStyleSourceSelectorStore.set(undefined);
-  }
+  updateWebstudioData((data) => {
+    if (deleteInstanceMutable(data, selectedInstanceSelector)) {
+      $selectedInstanceSelector.set(newSelectedInstanceSelector);
+    }
+  });
 };
 
 export const { emitCommand, subscribeCommands } = createCommandsEmitter({
@@ -120,7 +122,6 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
     },
     {
       name: "openBreakpointsMenu",
-      defaultHotkeys: ["meta+b", "ctrl+b"],
       handler: () => {
         $breakpointsMenuView.set("initial");
       },
@@ -164,11 +165,12 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "duplicateInstance",
       defaultHotkeys: ["meta+d", "ctrl+d"],
       handler: () => {
-        const instanceSelector = selectedInstanceSelectorStore.get();
+        const instanceSelector = $selectedInstanceSelector.get();
         if (instanceSelector === undefined) {
           return;
         }
-        if (isInstanceDetachable(instanceSelector) === false) {
+        const instances = $instances.get();
+        if (isInstanceDetachable(instances, instanceSelector) === false) {
           toast.error(
             "This instance can not be moved outside of its parent component."
           );
@@ -182,33 +184,39 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         // so clipboard always have at least two level instance selector
         const [targetInstanceId, parentInstanceId] = instanceSelector;
         const parentInstanceSelector = instanceSelector.slice(1);
-        const slice = getInstancesSlice(targetInstanceId);
-        insertInstancesSliceCopy({
-          slice,
-          availableDataSources: findAvailableDataSources(
-            $dataSources.get(),
-            parentInstanceSelector
-          ),
-          beforeTransactionEnd: (rootInstanceId, draft) => {
-            const parentInstance = draft.instances.get(parentInstanceId);
-            if (parentInstance === undefined) {
-              return;
-            }
-            // put after current instance
-            const indexWithinChildren = parentInstance.children.findIndex(
-              (child) => child.type === "id" && child.value === targetInstanceId
-            );
-            const position = indexWithinChildren + 1;
-            parentInstance.children.splice(position, 0, {
-              type: "id",
-              value: rootInstanceId,
-            });
-            // select new instance
-            selectedInstanceSelectorStore.set([
-              rootInstanceId,
-              ...parentInstanceSelector,
-            ]);
-          },
+        updateWebstudioData((data) => {
+          const fragment = extractWebstudioFragment(data, targetInstanceId);
+          const { newInstanceIds } = insertWebstudioFragmentCopy({
+            data,
+            fragment,
+            availableDataSources: findAvailableDataSources(
+              data.dataSources,
+              data.instances,
+              parentInstanceSelector
+            ),
+          });
+          const newRootInstanceId = newInstanceIds.get(targetInstanceId);
+          if (newRootInstanceId === undefined) {
+            return;
+          }
+          const parentInstance = data.instances.get(parentInstanceId);
+          if (parentInstance === undefined) {
+            return;
+          }
+          // put after current instance
+          const indexWithinChildren = parentInstance.children.findIndex(
+            (child) => child.type === "id" && child.value === targetInstanceId
+          );
+          const position = indexWithinChildren + 1;
+          parentInstance.children.splice(position, 0, {
+            type: "id",
+            value: newRootInstanceId,
+          });
+          // select new instance
+          $selectedInstanceSelector.set([
+            newRootInstanceId,
+            ...parentInstanceSelector,
+          ]);
         });
       },
     },
@@ -216,12 +224,11 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       name: "editInstanceLabel",
       defaultHotkeys: ["meta+e", "ctrl+e"],
       handler: () => {
-        const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+        const selectedInstanceSelector = $selectedInstanceSelector.get();
         if (selectedInstanceSelector === undefined) {
           return;
         }
-        const [targetInstanceId] = selectedInstanceSelector;
-        editingItemIdStore.set(targetInstanceId);
+        $editingItemSelector.set(selectedInstanceSelector);
       },
     },
 

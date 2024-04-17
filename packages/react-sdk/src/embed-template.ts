@@ -2,6 +2,7 @@ import { z } from "zod";
 import { nanoid } from "nanoid";
 import { titleCase } from "title-case";
 import { noCase } from "change-case";
+import type { Simplify } from "type-fest";
 import type {
   Instance,
   Prop,
@@ -10,10 +11,13 @@ import type {
   StyleDecl,
   Breakpoint,
   DataSource,
+  WebstudioFragment,
+} from "@webstudio-is/sdk";
+import {
+  encodeDataSourceVariable,
+  transpileExpression,
 } from "@webstudio-is/sdk";
 import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
-import type { Simplify } from "type-fest";
-import { encodeDataSourceVariable, validateExpression } from "./expression";
 import type { WsComponentMeta } from "./components/component-meta";
 
 const EmbedTemplateText = z.object({
@@ -23,7 +27,15 @@ const EmbedTemplateText = z.object({
 
 type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;
 
+const EmbedTemplateExpression = z.object({
+  type: z.literal("expression"),
+  value: z.string(),
+});
+
+type EmbedTemplateExpression = z.infer<typeof EmbedTemplateExpression>;
+
 const EmbedTemplateVariable = z.object({
+  alias: z.optional(z.string()),
   initialValue: z.unknown(),
 });
 
@@ -64,6 +76,7 @@ export const EmbedTemplateProp = z.union([
     type: z.literal("parameter"),
     name: z.string(),
     variableName: z.string(),
+    variableAlias: z.optional(z.string()),
   }),
   z.object({
     type: z.literal("action"),
@@ -104,7 +117,9 @@ export type EmbedTemplateInstance = {
   props?: EmbedTemplateProp[];
   tokens?: string[];
   styles?: EmbedTemplateStyleDecl[];
-  children: Array<EmbedTemplateInstance | EmbedTemplateText>;
+  children: Array<
+    EmbedTemplateInstance | EmbedTemplateText | EmbedTemplateExpression
+  >;
 };
 
 export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
@@ -122,7 +137,9 @@ export const EmbedTemplateInstance: z.ZodType<EmbedTemplateInstance> = z.lazy(
 );
 
 export const WsEmbedTemplate = z.lazy(() =>
-  z.array(z.union([EmbedTemplateInstance, EmbedTemplateText]))
+  z.array(
+    z.union([EmbedTemplateInstance, EmbedTemplateText, EmbedTemplateExpression])
+  )
 );
 
 export type WsEmbedTemplate = z.infer<typeof WsEmbedTemplate>;
@@ -171,7 +188,7 @@ const createInstancesFromTemplate = (
             type: "variable",
             id: generateId(),
             scopeInstanceId: instanceId,
-            name,
+            name: variable.alias ?? name,
             value: getVariablValue(variable.initialValue),
           });
         }
@@ -189,8 +206,9 @@ const createInstancesFromTemplate = (
               name: prop.name,
               type: "expression",
               // replace all references with variable names
-              value: validateExpression(prop.code, {
-                transformIdentifier: (ref) => {
+              value: transpileExpression({
+                expression: prop.code,
+                replaceVariable: (ref) => {
                   const id = dataSourceByRef.get(ref)?.id ?? ref;
                   return encodeDataSourceVariable(id);
                 },
@@ -212,12 +230,12 @@ const createInstancesFromTemplate = (
                   type: "execute",
                   args,
                   // replace all references with variable names
-                  code: validateExpression(value.code, {
-                    effectful: true,
-                    transformIdentifier: (ref) => {
+                  code: transpileExpression({
+                    expression: value.code,
+                    replaceVariable: (ref) => {
                       // bypass arguments without changes
                       if (args.includes(ref)) {
-                        return ref;
+                        return;
                       }
                       const id = dataSourceByRef.get(ref)?.id ?? ref;
                       return encodeDataSourceVariable(id);
@@ -236,7 +254,7 @@ const createInstancesFromTemplate = (
               type: "parameter",
               id: dataSourceId,
               scopeInstanceId: instanceId,
-              name: prop.variableName,
+              name: prop.variableAlias ?? prop.variableName,
             });
             props.push({
               id: propId,
@@ -344,6 +362,20 @@ const createInstancesFromTemplate = (
         value: item.value,
       });
     }
+
+    if (item.type === "expression") {
+      parentChildren.push({
+        type: "expression",
+        // replace all references with variable names
+        value: transpileExpression({
+          expression: item.value,
+          replaceVariable: (ref) => {
+            const id = dataSourceByRef.get(ref)?.id ?? ref;
+            return encodeDataSourceVariable(id);
+          },
+        }),
+      });
+    }
   }
   return parentChildren;
 };
@@ -353,7 +385,7 @@ export const generateDataFromEmbedTemplate = (
   metas: Map<Instance["component"], WsComponentMeta>,
   defaultBreakpointId: Breakpoint["id"],
   generateId: () => string = nanoid
-) => {
+): WebstudioFragment => {
   const instances: Instance[] = [];
   const props: Prop[] = [];
   const dataSourceByRef = new Map<string, DataSource>();
@@ -382,12 +414,11 @@ export const generateDataFromEmbedTemplate = (
     styleSourceSelections,
     styleSources,
     styles,
+    assets: [],
+    breakpoints: [],
+    resources: [],
   };
 };
-
-export type EmbedTemplateData = ReturnType<
-  typeof generateDataFromEmbedTemplate
->;
 
 const namespaceEmbedTemplateComponents = (
   template: WsEmbedTemplate,
@@ -396,6 +427,9 @@ const namespaceEmbedTemplateComponents = (
 ): WsEmbedTemplate => {
   return template.map((item) => {
     if (item.type === "text") {
+      return item;
+    }
+    if (item.type === "expression") {
       return item;
     }
     if (item.type === "instance") {

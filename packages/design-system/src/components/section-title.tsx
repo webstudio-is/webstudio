@@ -13,13 +13,17 @@ import {
   createContext,
   useContext,
 } from "react";
+import { ChevronRightIcon } from "@webstudio-is/icons";
 import { theme, css, styled, type CSS } from "../stitches.config";
 import { Button } from "./button";
 import { ArrowFocus } from "./primitives/arrow-focus";
 import { Label, isLabelButton } from "./label";
+import { focusRingStyle } from "./focus-ring";
+import { Flex } from "./flex";
 
 const buttonContentColor = "--ws-section-title-button-content-color";
 const labelTextColor = "--ws-section-title-label-content-color";
+const chevronOpacity = "--ws-section-title-chevron-display";
 
 const StyledButton = styled(Button, {});
 
@@ -49,15 +53,9 @@ const labelContainerStyle = css({
 });
 
 const titleButtonStyle = css(titleButtonLayoutStyle, {
-  "&:focus-visible::before": {
-    content: "''",
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: theme.spacing[2],
-    right: theme.spacing[2],
-    borderRadius: theme.borderRadius[4],
-    border: `2px solid ${theme.colors.borderFocus}`,
+  "&:focus-visible": focusRingStyle(),
+  "&:hover": {
+    [chevronOpacity]: 1,
   },
 });
 
@@ -71,8 +69,19 @@ const invisibleSuffixStyle = css({
   visibility: "hidden",
 });
 
-const dotsSlotStyle = css({
-  display: "flex",
+const chevronStyle = css({
+  opacity: `var(${chevronOpacity}, 0)`,
+  marginLeft: `-${theme.spacing[8]}`,
+  transition: "transform 150ms, opacity 200ms",
+  color: theme.colors.backgroundIconSubtle,
+  variants: {
+    state: {
+      open: {
+        transform: "rotate(90deg)",
+      },
+      closed: {},
+    },
+  },
 });
 
 const dotStyle = css({
@@ -121,7 +130,8 @@ export const SectionTitle = forwardRef(
       <context.Provider value={{ state }}>
         <ArrowFocus
           render={({ handleKeyDown }) => (
-            <div
+            <Flex
+              align="center"
               className={containerStyle({ className, css })}
               data-state={state}
               onKeyDown={handleKeyDown}
@@ -131,7 +141,9 @@ export const SectionTitle = forwardRef(
                 data-state={state}
                 ref={ref}
                 {...props}
-              ></button>
+              >
+                <ChevronRightIcon className={chevronStyle({ state })} />
+              </button>
 
               {/*
                 If the label is itself a button, we don't want to nest a button inside another button.
@@ -142,11 +154,11 @@ export const SectionTitle = forwardRef(
                   {children}
 
                   {finalDots.length > 0 && (
-                    <div className={dotsSlotStyle()}>
+                    <Flex shrink={false}>
                       {finalDots.map((color) => (
                         <div key={color} className={dotStyle({ color })} />
                       ))}
-                    </div>
+                    </Flex>
                   )}
 
                   {suffix && (
@@ -157,7 +169,7 @@ export const SectionTitle = forwardRef(
               </div>
 
               {suffix && <div className={suffixSlotStyle()}>{suffix}</div>}
-            </div>
+            </Flex>
           )}
         />
       </context.Provider>

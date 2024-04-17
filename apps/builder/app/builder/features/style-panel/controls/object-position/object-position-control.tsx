@@ -1,7 +1,7 @@
 import { Flex, IconButton, theme } from "@webstudio-is/design-system";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { MenuIcon } from "@webstudio-is/icons";
+import { EllipsesIcon } from "@webstudio-is/icons";
 import { PositionControl } from "../position/position-control";
 
 export const ObjectPositionControl = ({
@@ -9,6 +9,7 @@ export const ObjectPositionControl = ({
   currentStyle,
   setProperty,
   deleteProperty,
+  isAdvanced,
 }: ControlProps) => {
   return (
     <Flex justify="end">
@@ -21,12 +22,13 @@ export const ObjectPositionControl = ({
               currentStyle={currentStyle}
               setProperty={setProperty}
               deleteProperty={deleteProperty}
+              isAdvanced={isAdvanced}
             />
           </Flex>
         }
       >
         <IconButton>
-          <MenuIcon />
+          <EllipsesIcon />
         </IconButton>
       </FloatingPanel>
     </Flex>

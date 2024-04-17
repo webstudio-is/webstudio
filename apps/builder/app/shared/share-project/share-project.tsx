@@ -18,9 +18,20 @@ import {
   Text,
   InputField,
   PopoverPortal,
+  Link,
+  buttonStyle,
+  IconButton,
+  Checkbox,
+  Grid,
 } from "@webstudio-is/design-system";
-import { CopyIcon, MenuIcon, PlusIcon, HelpIcon } from "@webstudio-is/icons";
-import { Fragment, useState, type ComponentProps } from "react";
+import {
+  CopyIcon,
+  EllipsesIcon,
+  PlusIcon,
+  HelpIcon,
+} from "@webstudio-is/icons";
+import { Fragment, useState, type ComponentProps, type ReactNode } from "react";
+import { useIds } from "../form-utils";
 
 const Item = (props: ComponentProps<typeof Flex>) => (
   <Flex
@@ -33,14 +44,16 @@ const Item = (props: ComponentProps<typeof Flex>) => (
 
 type PermissionProps = {
   title: string;
-  info: string;
+  info: ReactNode;
   checked: boolean;
+  disabled?: boolean;
   onCheckedChange: (checked: boolean) => void;
 };
 const Permission = ({
   title,
   info,
   checked,
+  disabled = false,
   onCheckedChange,
 }: PermissionProps) => {
   const id = useId();
@@ -54,8 +67,15 @@ const Permission = ({
 
   return (
     <Flex align="center" gap="1">
-      <Switch checked={checked} id={id} onCheckedChange={onCheckedChange} />
-      <Label htmlFor={id}>{title}</Label>
+      <Switch
+        disabled={disabled}
+        checked={checked}
+        id={id}
+        onCheckedChange={onCheckedChange}
+      />
+      <Label disabled={disabled} htmlFor={id}>
+        {title}
+      </Label>
       <Tooltip content={tooltipContent} variant="wrapped">
         <HelpIcon color={rawTheme.colors.foregroundSubtle} tabIndex={0} />
       </Tooltip>
@@ -64,27 +84,21 @@ const Permission = ({
 };
 
 type MenuProps = {
-  relation: Relation;
   name: string;
+  value: LinkOptions;
   hasProPlan: boolean;
-  onChangePermission: (relation: Relation) => void;
-  onChangeName: (name: string) => void;
+  onChange: (value: LinkOptions) => void;
   onDelete: () => void;
 };
 
-const Menu = ({
-  hasProPlan,
-  relation,
-  name,
-  onChangePermission,
-  onChangeName,
-  onDelete,
-}: MenuProps) => {
+const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
+  const ids = useIds(["name", "canClone", "canCopy"]);
   const [isOpen, setIsOpen] = useState(false);
   const [customLinkName, setCustomLinkName] = useState<string>(name);
+
   const handleCheckedChange = (relation: Relation) => (checked: boolean) => {
     if (checked) {
-      onChangePermission(relation);
+      onChange({ ...value, relation });
     }
   };
 
@@ -93,7 +107,7 @@ const Menu = ({
       return;
     }
 
-    onChangeName(customLinkName);
+    onChange({ ...value, name: customLinkName });
     setIsOpen(false);
   };
 
@@ -101,7 +115,7 @@ const Menu = ({
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
-          prefix={<MenuIcon />}
+          prefix={<EllipsesIcon />}
           color="ghost"
           aria-label="Menu Button for options"
         ></Button>
@@ -115,8 +129,9 @@ const Menu = ({
           sideOffset={0}
         >
           <Item>
-            <Label>Name</Label>
+            <Label htmlFor={ids.name}>Name</Label>
             <InputField
+              id={ids.name}
               color={customLinkName.length === 0 ? "error" : undefined}
               value={customLinkName}
               onChange={(event) => setCustomLinkName(event.target.value.trim())}
@@ -125,7 +140,7 @@ const Menu = ({
                   saveCustomLinkName();
                 }
               }}
-              onBlur={() => onChangeName(customLinkName)}
+              onBlur={() => onChange({ ...value, name: customLinkName })}
               placeholder="Share Project"
               name="Name"
               autoFocus
@@ -135,42 +150,123 @@ const Menu = ({
           <Item>
             <Label>Permissions</Label>
             <Permission
-              checked={relation === "viewers"}
+              checked={value.relation === "viewers"}
               onCheckedChange={handleCheckedChange("viewers")}
               title="View"
-              info="Recipients can only view the project"
+              //info="Recipients can view, copy instances and clone the project"
+              info={
+                <Flex direction="column">
+                  Recipients can view, copy instances and clone the project.
+                  {hasProPlan !== true && (
+                    <>
+                      <br />
+                      <br />
+                      Upgrade to a Pro account to set additional permissions.
+                      <br /> <br />
+                      <Link
+                        className={buttonStyle({ color: "gradient" })}
+                        color="contrast"
+                        underline="none"
+                        href="https://webstudio.is/pricing"
+                        target="_blank"
+                      >
+                        Upgrade
+                      </Link>
+                    </>
+                  )}
+                </Flex>
+              }
             />
-            {/*
-           Hide temporarily until we have a way to allow edit content but not edit tree, etc.
 
-          <Permission
-            onCheckedChange={handleCheckedChange("editors")}
-            checked={relation === "editors"}
-            title="Edit Content"
-            info="Recipients can view the project and edit content like text and images, but they will not be able to change the styles or structure of your project."
-          />
-          */}
+            <Grid
+              css={{
+                ml: theme.spacing[6],
+              }}
+            >
+              <Grid
+                gap={1}
+                flow={"column"}
+                css={{
+                  alignItems: "center",
+                  justifyContent: "start",
+                }}
+              >
+                <Checkbox
+                  disabled={hasProPlan !== true}
+                  checked={value.canClone}
+                  onCheckedChange={(canClone) => {
+                    onChange({ ...value, canClone: Boolean(canClone) });
+                  }}
+                  id={ids.canClone}
+                />
+                <Label htmlFor={ids.canClone} disabled={hasProPlan !== true}>
+                  Can clone
+                </Label>
+              </Grid>
+              <Grid
+                gap={1}
+                flow={"column"}
+                css={{
+                  alignItems: "center",
+                  justifyContent: "start",
+                }}
+              >
+                <Checkbox
+                  disabled={hasProPlan !== true}
+                  checked={value.canCopy}
+                  onCheckedChange={(canCopy) => {
+                    onChange({ ...value, canCopy: Boolean(canCopy) });
+                  }}
+                  id={ids.canCopy}
+                />
+                <Label htmlFor={ids.canCopy} disabled={hasProPlan !== true}>
+                  Can copy
+                </Label>
+              </Grid>
+            </Grid>
+
             <Permission
               onCheckedChange={handleCheckedChange("builders")}
-              checked={relation === "builders"}
+              checked={value.relation === "builders"}
               title="Build"
               info="Recipients can make any changes but can not publish the project."
             />
 
-            {hasProPlan && (
-              <Permission
-                onCheckedChange={handleCheckedChange("administrators")}
-                checked={relation === "administrators"}
-                title="Admin"
-                info="Recipients can make any changes and can also publish the project."
-              />
-            )}
+            <Permission
+              disabled={hasProPlan !== true}
+              onCheckedChange={handleCheckedChange("administrators")}
+              checked={value.relation === "administrators"}
+              title="Admin"
+              info={
+                <Flex direction="column">
+                  Recipients can make any changes and can also publish the
+                  project.
+                  {hasProPlan !== true && (
+                    <>
+                      <br />
+                      <br />
+                      Upgrade to a Pro account to share with Admin permissions.
+                      <br /> <br />
+                      <Link
+                        className={buttonStyle({ color: "gradient" })}
+                        color="contrast"
+                        underline="none"
+                        href="https://webstudio.is/pricing"
+                        target="_blank"
+                      >
+                        Upgrade
+                      </Link>
+                    </>
+                  )}
+                </Flex>
+              }
+            />
           </Item>
           <Separator />
           <Item>
             {/* @todo need a menu item that looks like one from dropdown but without DropdownMenu */}
             <Button
-              color="destructive"
+              color="neutral-destructive"
               onClick={() => {
                 onDelete();
               }}
@@ -199,11 +295,13 @@ export type LinkOptions = {
   token: string;
   name: string;
   relation: Relation;
+  canCopy: boolean;
+  canClone: boolean;
 };
 
-type SharedLinkItemType = LinkOptions & {
-  onChangeRelation: (permission: Relation) => void;
-  onChangeName: (name: string) => void;
+type SharedLinkItemType = {
+  value: LinkOptions;
+  onChange: (value: LinkOptions) => void;
   onDelete: () => void;
   builderUrl: (props: {
     authToken: string;
@@ -213,40 +311,48 @@ type SharedLinkItemType = LinkOptions & {
 };
 
 const SharedLinkItem = ({
-  token,
-  name,
-  relation,
-  onChangeRelation,
-  onChangeName,
+  value,
+  onChange,
   onDelete,
   builderUrl,
   hasProPlan,
 }: SharedLinkItemType) => {
-  const [currentName, setCurrentName] = useState(name);
+  const [currentName, setCurrentName] = useState(value.name);
+  const [isCopied, setIsCopied] = useState(false);
 
   return (
     <Box className={itemStyle()}>
       <Label css={{ flexGrow: 1 }}>{currentName}</Label>
-      <Button
-        prefix={<CopyIcon />}
-        onClick={() => {
-          navigator.clipboard.writeText(
-            builderUrl({
-              authToken: token,
-              mode: relation === "viewers" ? "preview" : "edit",
-            })
-          );
+      <Tooltip
+        content={isCopied ? "Copied" : "Copy link"}
+        open={isCopied === true ? true : undefined}
+        onOpenChange={(isOpen) => {
+          if (isOpen === false) {
+            setIsCopied(false);
+          }
         }}
       >
-        Copy link
-      </Button>
+        <IconButton
+          aria-label="Copy link"
+          onClick={() => {
+            navigator.clipboard.writeText(
+              builderUrl({
+                authToken: value.token,
+                mode: value.relation === "viewers" ? "preview" : "edit",
+              })
+            );
+            setIsCopied(true);
+          }}
+        >
+          <CopyIcon aria-hidden />
+        </IconButton>
+      </Tooltip>
       <Menu
         name={currentName}
-        relation={relation}
-        onChangePermission={onChangeRelation}
-        onChangeName={(name) => {
-          setCurrentName(name);
-          onChangeName(name);
+        value={value}
+        onChange={(value) => {
+          setCurrentName(value.name);
+          onChange(value);
         }}
         onDelete={onDelete}
         hasProPlan={hasProPlan}
@@ -294,19 +400,14 @@ export const ShareProject = ({
   const items = links.map((link) => (
     <Fragment key={link.token}>
       <SharedLinkItem
-        onChangeRelation={(relation) => {
-          onChange({ ...link, relation });
-        }}
-        onChangeName={(name) => {
-          onChange({ ...link, name });
+        onChange={(value) => {
+          onChange(value);
         }}
         onDelete={() => {
           onDelete(link);
         }}
         builderUrl={builderUrl}
-        name={link.name}
-        relation={link.relation}
-        token={link.token}
+        value={link}
         hasProPlan={hasProPlan}
       />
       <Separator />

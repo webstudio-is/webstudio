@@ -1,6 +1,6 @@
 import { atom, computed } from "nanostores";
 import type { Instance, Instances } from "@webstudio-is/sdk";
-import { instancesStore } from "./instances";
+import { $instances } from "./instances";
 import type { InstanceSelector } from "../tree-utils";
 
 export type TextToolbarState = {
@@ -13,7 +13,7 @@ export type TextToolbarState = {
   isSpan: boolean;
 };
 
-export const textToolbarStore = atom<undefined | TextToolbarState>(undefined);
+export const $textToolbar = atom<undefined | TextToolbarState>(undefined);
 
 type InstanceOutline = {
   instanceId: Instance["id"];
@@ -38,21 +38,21 @@ const getInstanceOutlineAndInstance = (
   };
 };
 
-export const selectedInstanceOutlineStore = atom<undefined | InstanceOutline>(
+export const $selectedInstanceOutline = atom<undefined | InstanceOutline>(
   undefined
 );
 
-export const selectedInstanceOutlineAndInstanceStore = computed(
-  [instancesStore, selectedInstanceOutlineStore],
+export const $selectedInstanceOutlineAndInstance = computed(
+  [$instances, $selectedInstanceOutline],
   getInstanceOutlineAndInstance
 );
 
-export const hoveredInstanceOutlineStore = atom<undefined | InstanceOutline>(
+export const $hoveredInstanceOutline = atom<undefined | InstanceOutline>(
   undefined
 );
 
-export const hoveredInstanceOutlineAndInstanceStore = computed(
-  [instancesStore, hoveredInstanceOutlineStore],
+export const $hoveredInstanceOutlineAndInstance = computed(
+  [$instances, $hoveredInstanceOutline],
   getInstanceOutlineAndInstance
 );
 
@@ -63,9 +63,9 @@ export const $collaborativeInstanceSelector = atom<
 export const $collaborativeInstanceRect = atom<undefined | DOMRect>(undefined);
 
 export const synchronizedCanvasStores = [
-  ["textToolbar", textToolbarStore],
-  ["selectedInstanceOutline", selectedInstanceOutlineStore],
-  ["hoveredInstanceOutline", hoveredInstanceOutlineStore],
+  ["textToolbar", $textToolbar],
+  ["selectedInstanceOutline", $selectedInstanceOutline],
+  ["hoveredInstanceOutline", $hoveredInstanceOutline],
   ["$collaborativeInstanceSelector", $collaborativeInstanceSelector],
   ["$collaborativeInstanceRect", $collaborativeInstanceRect],
 ] as const;

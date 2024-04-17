@@ -6,9 +6,15 @@ import {
   BorderRadiusTopRightIcon,
   BorderRadiusBottomLeftIcon,
 } from "@webstudio-is/icons";
-
-import type { RenderCategoryProps } from "../../style-sections";
+import type { SectionProps } from "../shared/section";
 import { BorderProperty } from "./border-property";
+
+export const properties = [
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius",
+] satisfies Array<StyleProperty>;
 
 const borderPropertyOptions = {
   borderTopLeftRadius: {
@@ -27,7 +33,7 @@ const borderPropertyOptions = {
 
 export const BorderRadius = (
   props: Pick<
-    RenderCategoryProps,
+    SectionProps,
     "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
   >
 ) => {

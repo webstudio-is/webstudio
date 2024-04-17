@@ -1,104 +1,105 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { toValue } from "@webstudio-is/css-engine";
-import {
-  Grid,
-  theme,
-  ToggleGroup,
-  ToggleGroupButton,
-  Tooltip,
-} from "@webstudio-is/design-system";
+import { Box, Grid } from "@webstudio-is/design-system";
 import {
   DashBorderIcon,
   DashedBorderIcon,
   DottedBorderIcon,
   SmallXIcon,
 } from "@webstudio-is/icons";
-import { toPascalCase } from "../../shared/keyword-utils";
 import { PropertyName } from "../../shared/property-name";
-import type { RenderCategoryProps } from "../../style-sections";
-import { deleteAllProperties, setAllProperties } from "./border-utils";
+import type { SectionProps } from "../shared/section";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
+import {
+  declarationDescriptions,
+  propertyDescriptions,
+} from "@webstudio-is/css-data";
+import {
+  deleteAllProperties,
+  setAllProperties,
+  rowCss,
+  isAdvancedValue,
+} from "./utils";
 
-const borderStyleProperties: StyleProperty[] = [
+export const properties: StyleProperty[] = [
   "borderTopStyle",
   "borderRightStyle",
   "borderLeftStyle",
   "borderBottomStyle",
-];
+] satisfies Array<StyleProperty>;
 
-const borderStyleValues = [
-  { value: "none", Icon: SmallXIcon },
-  { value: "solid", Icon: DashBorderIcon },
-  { value: "dashed", Icon: DashedBorderIcon },
-  { value: "dotted", Icon: DottedBorderIcon },
-] as const;
+const items = [
+  {
+    child: <SmallXIcon />,
+    title: "None",
+    description: declarationDescriptions["borderBlockStyle:none"],
+    value: "none",
+    propertyValues: "border-style: none;",
+  },
+  {
+    child: <DashBorderIcon />,
+    title: "Solid",
+    description: declarationDescriptions["borderBlockStyle:solid"],
+    value: "solid",
+    propertyValues: "border-style: solid;",
+  },
+  {
+    child: <DashedBorderIcon />,
+    title: "Dashed",
+    description: declarationDescriptions["borderBlockStyle:dashed"],
+    value: "dashed",
+    propertyValues: "border-style: dashed;",
+  },
+  {
+    child: <DottedBorderIcon />,
+    title: "Dotted",
+    description: declarationDescriptions["borderBlockStyle:dotted"],
+    value: "dotted",
+    propertyValues: "border-style: dotted;",
+  },
+];
 
 export const BorderStyle = (
   props: Pick<
-    RenderCategoryProps,
+    SectionProps,
     "currentStyle" | "setProperty" | "deleteProperty" | "createBatchUpdate"
   >
 ) => {
-  /**
-   * We do not use shorthand properties such as borderWidth or borderRadius in our code.
-   * However, in the UI, we can display a single field, and in that case, we can use any property
-   * from the shorthand property set and pass it instead.
-   **/
-  const firstPropertyName = borderStyleProperties[0];
+  // We do not use shorthand properties such as borderWidth or borderRadius in our code.
+  // However, in the UI, we can display a single field, and in that case, we can use any property
+  // from the shorthand property set and pass it instead.
+  const firstPropertyName = properties[0];
 
   const deleteBorderProperties = deleteAllProperties(
-    borderStyleProperties,
+    properties,
     props.createBatchUpdate
   );
 
   const setBorderProperties = setAllProperties(
-    borderStyleProperties,
+    properties,
     props.createBatchUpdate
   )(firstPropertyName);
 
-  const firstPropertyValue = toValue(
-    props.currentStyle[firstPropertyName]?.value ?? {
-      type: "keyword",
-      value: "none",
-    }
-  );
+  const handleDelete = () => deleteBorderProperties(firstPropertyName);
 
   return (
-    <Grid
-      css={{
-        gridTemplateColumns: `1fr ${theme.spacing[20]} ${theme.spacing[12]}`,
-      }}
-      gap={2}
-    >
+    <Grid css={rowCss}>
       <PropertyName
         style={props.currentStyle}
-        properties={borderStyleProperties}
-        label={"Style"}
-        description="Sets the style of the border"
-        onReset={() => deleteBorderProperties(firstPropertyName)}
+        properties={properties}
+        label="Style"
+        description={propertyDescriptions.borderBlockStyle}
+        onReset={handleDelete}
       />
-
-      <ToggleGroup
-        css={{
-          gridColumn: `span 2`,
-          justifySelf: "end",
-        }}
-        type="single"
-        value={firstPropertyValue}
-        onValueChange={(value) => {
-          setBorderProperties({
-            type: "keyword",
-            value,
-          });
-        }}
-      >
-        {borderStyleValues.map(({ value, Icon }) => (
-          <Tooltip key={value} content={toPascalCase(value)}>
-            <ToggleGroupButton value={value}>
-              <Icon />
-            </ToggleGroupButton>
-          </Tooltip>
-        ))}
-      </ToggleGroup>
+      <Box css={{ gridColumn: `span 2`, justifySelf: "end" }}>
+        <ToggleGroupControl
+          {...props}
+          items={items}
+          property={firstPropertyName}
+          deleteProperty={handleDelete}
+          setProperty={() => setBorderProperties}
+          isAdvanced={isAdvancedValue(properties, props.currentStyle)}
+        />
+      </Box>
     </Grid>
   );
 };

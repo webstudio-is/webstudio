@@ -313,7 +313,7 @@ app.use("*", async (ctx, next) => {
   ctx.set(
     "skipRateLimit",
     url.pathname.startsWith("/asset/") ||
-      url.pathname.startsWith("/build/") ||
+      url.pathname.startsWith("/assets/") ||
       url.pathname.endsWith(".ico")
   );
   return next();
@@ -401,7 +401,6 @@ app.onError(async (err, ctx) => {
     return err.getResponse();
   }
 
-  // eslint-disable-next-line no-console
   console.error(err.stack ?? err);
 
   return ctx.json({ cause: err.cause, message: err.message });
@@ -424,7 +423,6 @@ if (process.env.NODE_ENV !== "production") {
 
     importedModule.then(({ serve }) => {
       serve({ ...app, port: 3002 }, (info) => {
-        // eslint-disable-next-line no-console
         console.info(`Listening on http://localhost:${info.port}`);
       });
     });

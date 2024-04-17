@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/icons",
-  "version": "0.123.0",
+  "version": "0.144.0",
   "description": "Webstudio Icons",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -16,14 +16,19 @@
     "storybook:build": "storybook build"
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
+    "@storybook/react": "^7.4.0",
     "@svgo/jsx": "^0.4.2",
+    "@types/node": "^18.17.1",
     "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "svgo": "^3.0.2",
-    "tsx": "^3.12.8",
+    "tsx": "^4.7.2",
     "typescript": "5.2.2"
   },
   "peerDependencies": {

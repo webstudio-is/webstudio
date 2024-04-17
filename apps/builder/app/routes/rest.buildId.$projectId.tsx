@@ -1,12 +1,11 @@
-import { json, type LoaderArgs } from "@remix-run/node";
+import { json, type LoaderFunctionArgs } from "@remix-run/server-runtime";
 import { db as projectDb } from "@webstudio-is/project/index.server";
-import { sentryException } from "~/shared/sentry";
 import { createContext } from "~/shared/context.server";
 
 export const loader = async ({
   params,
   request,
-}: LoaderArgs): Promise<{ buildId: string | null }> => {
+}: LoaderFunctionArgs): Promise<{ buildId: string | null }> => {
   try {
     const projectId = params.projectId;
 
@@ -29,7 +28,7 @@ export const loader = async ({
       throw error;
     }
 
-    sentryException({ error });
+    console.error({ error });
 
     // We have no idea what happened, so we'll return a 500 error.
     throw json(error instanceof Error ? error.message : String(error), {

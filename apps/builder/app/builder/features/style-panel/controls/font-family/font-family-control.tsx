@@ -1,6 +1,6 @@
 import { DeprecatedTextField } from "@webstudio-is/design-system";
 import { FontsManager } from "~/builder/shared/fonts-manager";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { useState } from "react";
 import { toValue } from "@webstudio-is/css-engine";
@@ -29,7 +29,8 @@ export const FontFamilyControl = ({
       onOpenChange={setIsOpen}
     >
       <DeprecatedTextField
-        defaultValue={toValue(value)}
+        // Replacing the quotes just to make it look cleaner in the UI
+        defaultValue={toValue(value).replace(/"/, "")}
         state={isOpen ? "active" : undefined}
       />
     </FloatingPanel>

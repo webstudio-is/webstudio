@@ -35,9 +35,6 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
-# turbo
-.turbo
-
 # data
 /data
 *.db
@@ -56,3 +53,6 @@ tsconfig.tsbuildinfo
 # to save thunder https://marketplace.visualstudio.com/items?itemName=rangav.vscode-thunder-client files
 .thunder
 .env*.local
+
+# wrangler builds
+dist

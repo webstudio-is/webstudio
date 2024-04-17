@@ -1,46 +1,60 @@
 /* eslint-disable camelcase */
 import {
-  type V2_ServerRuntimeMetaFunction,
+  type ServerRuntimeMetaFunction as MetaFunction,
   type LinksFunction,
   type LinkDescriptor,
-  type ActionArgs,
-  type LoaderArgs,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  type HeadersFunction,
   json,
+  redirect,
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
-import type { Page as PageType, ProjectMeta } from "@webstudio-is/sdk";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
-  fontAssets,
-  pageData,
-  user,
-  projectId,
-  pagesPaths,
-  formsProperties,
   Page,
-  imageAssets,
-  getRemixParams,
+  favIconAsset,
+  socialImageAsset,
+  pageFontAssets,
+  pageBackgroundImageAssets,
 } from "../__generated__/[radix]._index";
-import { loadResources } from "../__generated__/[radix]._index.server";
-import css from "../__generated__/index.css";
+import {
+  formsProperties,
+  loadResources,
+  getPageMeta,
+  getRemixParams,
+  projectId,
+  user,
+  projectMeta,
+} from "../__generated__/[radix]._index.server";
+
+import css from "../__generated__/index.css?url";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
 
-export type PageData = {
-  project?: ProjectMeta;
-  page: PageType;
-};
-
-export const loader = async (arg: LoaderArgs) => {
+export const loader = async (arg: LoaderFunctionArgs) => {
+  const url = new URL(arg.request.url);
   const params = getRemixParams(arg.params);
-  const resources = await loadResources({ params });
+  const system = {
+    params,
+    search: Object.fromEntries(url.searchParams),
+  };
+  const resources = await loadResources({ system });
+  const pageMeta = getPageMeta({ system, resources });
+
+  if (pageMeta.redirect) {
+    const status =
+      pageMeta.status === 301 || pageMeta.status === 302
+        ? pageMeta.status
+        : 302;
+    return redirect(pageMeta.redirect, status);
+  }
 
   const host =
     arg.request.headers.get("x-forwarded-host") ||
     arg.request.headers.get("host") ||
     "";
 
-  const url = new URL(arg.request.url);
   url.host = host;
   url.protocol = "https";
 
@@ -52,102 +66,107 @@ export const loader = async (arg: LoaderArgs) => {
       host,
       url: url.href,
       excludeFromSearch: arg.context.EXCLUDE_FROM_SEARCH,
-      params,
+      system,
       resources,
+      pageMeta,
+      projectMeta,
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
-    { headers: { "Cache-Control": "public, max-age=600" } }
+    {
+      status: pageMeta.status,
+      headers: {
+        "Cache-Control": "public, max-age=600",
+        "x-ws-language": pageMeta.language ?? "en",
+      },
+    }
   );
 };
 
-export const headers = () => {
+export const headers: HeadersFunction = ({ loaderHeaders }) => {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
+    "x-ws-language": loaderHeaders.get("x-ws-language") ?? "",
   };
 };
 
-export const meta: V2_ServerRuntimeMetaFunction<typeof loader> = ({ data }) => {
-  const { page, project } = pageData;
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const metas: ReturnType<MetaFunction> = [];
+  if (data === undefined) {
+    return metas;
+  }
+  const { pageMeta, projectMeta } = data;
 
-  const metas: ReturnType<V2_ServerRuntimeMetaFunction> = [];
-
-  if (data?.url) {
+  if (data.url) {
     metas.push({
       property: "og:url",
       content: data.url,
     });
   }
 
-  if (page.title) {
-    metas.push({ title: page.title });
+  if (pageMeta.title) {
+    metas.push({ title: pageMeta.title });
 
     metas.push({
       property: "og:title",
-      content: page.title,
+      content: pageMeta.title,
     });
   }
 
   metas.push({ property: "og:type", content: "website" });
 
-  const origin = `https://${data?.host}`;
+  const origin = `https://${data.host}`;
 
-  if (project?.siteName) {
+  if (projectMeta?.siteName) {
     metas.push({
       property: "og:site_name",
-      content: project.siteName,
+      content: projectMeta.siteName,
     });
     metas.push({
       "script:ld+json": {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: project.siteName,
+        name: projectMeta.siteName,
         url: origin,
       },
     });
   }
 
-  if (page.meta.excludePageFromSearch || data?.excludeFromSearch) {
+  if (pageMeta.excludePageFromSearch || data.excludeFromSearch) {
     metas.push({
       name: "robots",
       content: "noindex, nofollow",
     });
   }
 
-  if (page.meta.description) {
+  if (pageMeta.description) {
     metas.push({
       name: "description",
-      content: page.meta.description,
+      content: pageMeta.description,
     });
     metas.push({
       property: "og:description",
-      content: page.meta.description,
+      content: pageMeta.description,
     });
   }
 
-  if (page.meta.socialImageAssetId) {
-    const imageAsset = imageAssets.find(
-      (asset) => asset.id === page.meta.socialImageAssetId
-    );
-
-    if (imageAsset) {
-      metas.push({
-        property: "og:image",
-        content: `https://${data?.host}${imageLoader({
-          src: imageAsset.name,
-          // Do not transform social image (not enough information do we need to do this)
-          format: "raw",
-        })}`,
-      });
-    }
+  if (socialImageAsset) {
+    metas.push({
+      property: "og:image",
+      content: `https://${data.host}${imageLoader({
+        src: socialImageAsset.name,
+        // Do not transform social image (not enough information do we need to do this)
+        format: "raw",
+      })}`,
+    });
+  } else if (pageMeta.socialImageUrl) {
+    metas.push({
+      property: "og:image",
+      content: pageMeta.socialImageUrl,
+    });
   }
 
-  for (const customMeta of page.meta.custom ?? []) {
-    if (customMeta.property.trim().length === 0) {
-      continue;
-    }
-    metas.push(customMeta);
-  }
+  metas.push(...pageMeta.custom);
 
   return metas;
 };
@@ -160,25 +179,17 @@ export const links: LinksFunction = () => {
     href: css,
   });
 
-  const { project } = pageData;
-
-  if (project?.faviconAssetId) {
-    const imageAsset = imageAssets.find(
-      (asset) => asset.id === project.faviconAssetId
-    );
-
-    if (imageAsset) {
-      result.push({
-        rel: "icon",
-        href: imageLoader({
-          src: imageAsset.name,
-          width: 128,
-          quality: 100,
-          format: "auto",
-        }),
-        type: undefined,
-      });
-    }
+  if (favIconAsset) {
+    result.push({
+      rel: "icon",
+      href: imageLoader({
+        src: favIconAsset.name,
+        width: 128,
+        quality: 100,
+        format: "auto",
+      }),
+      type: undefined,
+    });
   } else {
     result.push({
       rel: "icon",
@@ -193,17 +204,21 @@ export const links: LinksFunction = () => {
     });
   }
 
-  for (const asset of fontAssets) {
-    if (asset.type === "font") {
-      result.push({
-        rel: "preload",
-        href: assetBaseUrl + asset.name,
-        as: "font",
-        crossOrigin: "anonymous",
-        // @todo add mimeType
-        // type: asset.mimeType,
-      });
-    }
+  for (const asset of pageFontAssets) {
+    result.push({
+      rel: "preload",
+      href: `${assetBaseUrl}${asset.name}`,
+      as: "font",
+      crossOrigin: "anonymous",
+    });
+  }
+
+  for (const backgroundImageAsset of pageBackgroundImageAssets) {
+    result.push({
+      rel: "preload",
+      href: `${assetBaseUrl}${backgroundImageAsset.name}`,
+      as: "image",
+    });
   }
 
   return result;
@@ -225,7 +240,7 @@ const getMethod = (value: string | undefined) => {
   }
 };
 
-export const action = async ({ request, context }: ActionArgs) => {
+export const action = async ({ request, context }: ActionFunctionArgs) => {
   const formData = await request.formData();
 
   const formId = getFormId(formData);
@@ -290,17 +305,17 @@ export const action = async ({ request, context }: ActionArgs) => {
 };
 
 const Outlet = () => {
-  const { params, resources } = useLoaderData<typeof loader>();
+  const { system, resources } = useLoaderData<typeof loader>();
   return (
     <ReactSdkContext.Provider
       value={{
         imageLoader,
         assetBaseUrl,
         imageBaseUrl,
-        pagesPaths,
+        resources,
       }}
     >
-      <Page params={params} resources={resources} />
+      <Page system={system} />
     </ReactSdkContext.Provider>
   );
 };

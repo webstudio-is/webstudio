@@ -18,7 +18,7 @@ import type {
 import { popularityIndex } from "../src/popularity-index";
 import * as customData from "../src/custom-data";
 
-const units = {
+const units: Record<customData.UnitGroup, Array<string>> = {
   number: [],
   // consider % as unit
   percentage: ["%"],
@@ -78,7 +78,7 @@ const convertToStyleValue = (
   node: CssNode,
   property: string,
   value: string,
-  unitGroups: Set<string>
+  unitGroups: Set<customData.UnitGroup>
 ): undefined | UnitValue | KeywordValue | UnparsedValue => {
   if (node?.type === "Identifier") {
     return {
@@ -123,7 +123,7 @@ const convertToStyleValue = (
 const parseInitialValue = (
   property: string,
   value: string,
-  unitGroups: Set<string>
+  unitGroups: Set<customData.UnitGroup>
 ): StyleValue => {
   // Our default values hardcoded because no single standard
   if (property in normalizedValues) {
@@ -209,11 +209,13 @@ const walkSyntax = (
     }
     if (node.type === "Property") {
       // resolve other properties references
-      walkSyntax(
-        properties[node.name as keyof typeof properties].syntax,
-        enter,
-        parsedSyntaxes
-      );
+      if (node.name in properties) {
+        walkSyntax(
+          properties[node.name as Property].syntax,
+          enter,
+          parsedSyntaxes
+        );
+      }
       return;
     }
     enter(node);
@@ -308,7 +310,7 @@ let property: Property;
 for (property in filteredProperties) {
   const config = filteredProperties[property];
   // collect node types to improve parsing of css values
-  const unitGroups = new Set<string>();
+  const unitGroups = new Set<customData.UnitGroup>();
   walkSyntax(config.syntax, (node) => {
     if (node.type === "Type") {
       if (node.name === "integer" || node.name === "number") {
@@ -316,8 +318,8 @@ for (property in filteredProperties) {
         return;
       }
       // type names match unit groups
-      if (units[node.name]) {
-        unitGroups.add(node.name);
+      if (node.name in units) {
+        unitGroups.add(node.name as customData.UnitGroup);
         return;
       }
     }

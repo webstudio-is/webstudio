@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import {
   copywriter,
   operations,
@@ -40,7 +40,7 @@ export const config = {
   maxDuration: 180, // seconds
 };
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // @todo Reinstate isFeatureEnabled('ai')
 
   if (env.OPENAI_KEY === undefined) {

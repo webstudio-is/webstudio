@@ -1,4 +1,4 @@
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { z } from "zod";
 
 const zTranscription = z.object({
@@ -6,7 +6,7 @@ const zTranscription = z.object({
 });
 
 // @todo: move to AI package
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // @todo: validate request
   const formData = await request.formData();
   formData.append("model", "whisper-1");
@@ -25,7 +25,6 @@ export const action = async ({ request }: ActionArgs) => {
   if (response.ok === false) {
     const message = await response.text();
 
-    // eslint-disable-next-line no-console
     console.error("ERROR", response.status, message);
 
     return {
@@ -41,7 +40,6 @@ export const action = async ({ request }: ActionArgs) => {
   const data = zTranscription.safeParse(await response.json());
 
   if (data.success === false) {
-    // eslint-disable-next-line no-console
     console.error("ERROR openai transcriptions", data.error);
   }
 

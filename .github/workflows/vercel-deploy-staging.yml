@@ -1,0 +1,75 @@
+name: Vercel Deploy Staging
+
+on:
+  push:
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: vercel-deploy-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+  statuses: write # This is required for the GitHub Script createCommitStatus to work
+
+jobs:
+  deployment:
+    # Execute development and staging on staging branches
+    # Execute only development on all other branches
+    strategy:
+      matrix:
+        environment:
+          - staging
+          - development
+        is-staging:
+          - ${{ endsWith(github.ref_name, '.staging') }}
+        exclude:
+          - environment: staging
+            is-staging: false
+
+    environment:
+      name: ${{ matrix.environment }}
+
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v2.2.4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+          cache: pnpm
+
+      - uses: ./.github/actions/vercel
+        id: vercel
+        name: Deploy to Vercel
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          ref-name: ${{ github.ref_name }}
+          sha: ${{ github.sha }}
+          environment: ${{ matrix.environment }}
+
+      - name: Debug Vercel Outputs
+        run: |
+          echo "domain=${{ steps.vercel.outputs.domain }}"
+          echo "inspect-url=${{ steps.vercel.outputs.inspect-url }}"
+          echo "alias=${{ steps.vercel.outputs.alias }}"
+
+      - uses: ./.github/actions/add-status
+        with:
+          title: "⏰ [${{ matrix.environment }}] Vercel Inspection"
+          description: "[${{ matrix.environment }}] Vercel logs"
+          url: "${{ steps.vercel.outputs.inspect-url }}"
+
+      - uses: ./.github/actions/add-status
+        with:
+          title: "⭐ [${{ matrix.environment }}] Apps Webstudio URL"
+          description: "[${{ matrix.environment }}] Site url"
+          url: "https://${{ steps.vercel.outputs.alias }}.${{ matrix.environment }}.webstudio.is"

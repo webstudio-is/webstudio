@@ -4,7 +4,6 @@ import { GitHubStrategy, type GitHubProfile } from "remix-auth-github";
 import { GoogleStrategy, type GoogleProfile } from "remix-auth-google";
 import * as db from "~/shared/db";
 import { sessionStorage } from "~/services/session.server";
-import { sentryException } from "~/shared/sentry";
 import { AUTH_PROVIDERS } from "~/shared/session";
 import { authCallbackPath } from "~/shared/router-utils";
 import { getUserById, type User } from "~/shared/db/user.server";
@@ -25,7 +24,7 @@ const strategyCallback = async ({
     return user;
   } catch (error) {
     if (error instanceof Error) {
-      sentryException({
+      console.error({
         error,
         extras: {
           loginMethod: AUTH_PROVIDERS.LOGIN_DEV,
@@ -77,7 +76,7 @@ if (env.DEV_LOGIN === "true") {
           return user;
         } catch (error) {
           if (error instanceof Error) {
-            sentryException({
+            console.error({
               error,
               extras: {
                 loginMethod: AUTH_PROVIDERS.LOGIN_DEV,

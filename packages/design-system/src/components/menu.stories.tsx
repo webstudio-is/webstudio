@@ -18,7 +18,7 @@ import {
 } from "./dropdown-menu";
 import {
   useCombobox,
-  Combobox,
+  ComboboxRoot,
   ComboboxContent,
   ComboboxAnchor,
   ComboboxListbox,
@@ -39,7 +39,7 @@ import { Button } from "./button";
 import {
   ChevronDownIcon,
   TrashIcon,
-  MenuIcon,
+  EllipsesIcon,
   DotIcon,
 } from "@webstudio-is/icons";
 import { useState } from "react";
@@ -55,7 +55,7 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
   return (
     <DropdownMenu defaultOpen>
       <DropdownMenuTrigger asChild>
-        <Button prefix={<MenuIcon />} />
+        <Button prefix={<EllipsesIcon />} />
       </DropdownMenuTrigger>
       <DropdownMenuContent width="regular">
         <DropdownMenuLabel>Not choosable</DropdownMenuLabel>
@@ -131,7 +131,8 @@ const DropdownDemo = ({ withIndicator }: { withIndicator: boolean }) => {
             </DropdownMenuRadioGroup>
           </>
         )}
-
+        <DropdownMenuSeparator />
+        <DropdownMenuItem hint>Hint</DropdownMenuItem>
         <DropdownMenuArrow />
       </DropdownMenuContent>
     </DropdownMenu>
@@ -145,6 +146,7 @@ const ComboboxDemo = () => {
   const [selectedItem, onItemSelect] = useState<Fruit>();
 
   const {
+    isOpen,
     items,
     getInputProps,
     getComboboxProps,
@@ -175,7 +177,7 @@ const ComboboxDemo = () => {
   const longItems = items.filter((item) => item === "Banana");
 
   return (
-    <Combobox>
+    <ComboboxRoot open={isOpen}>
       <div {...getComboboxProps()}>
         <ComboboxAnchor>
           <DeprecatedTextField
@@ -208,7 +210,7 @@ const ComboboxDemo = () => {
           </ComboboxListbox>
         </ComboboxContent>
       </div>
-    </Combobox>
+    </ComboboxRoot>
   );
 };
 

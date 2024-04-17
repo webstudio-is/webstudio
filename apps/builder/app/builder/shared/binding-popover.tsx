@@ -1,11 +1,27 @@
-import { forwardRef, useMemo, useRef, useState } from "react";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { DotIcon, PlusIcon, TrashIcon } from "@webstudio-is/icons";
+import {
+  type ButtonHTMLAttributes,
+  type RefObject,
+  forwardRef,
+  useMemo,
+  useRef,
+  useState,
+  createContext,
+  useContext,
+  type ReactNode,
+} from "react";
+import {
+  DotIcon,
+  InfoCircleIcon,
+  PlusIcon,
+  ResetIcon,
+  TrashIcon,
+} from "@webstudio-is/icons";
 import {
   Box,
   Button,
   CssValueListArrowFocus,
   CssValueListItem,
+  Flex,
   FloatingPanelPopover,
   FloatingPanelPopoverClose,
   FloatingPanelPopoverContent,
@@ -15,11 +31,18 @@ import {
   Label,
   ScrollArea,
   SmallIconButton,
+  Text,
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { validateExpression } from "@webstudio-is/react-sdk";
+import {
+  decodeDataSourceVariable,
+  getExpressionIdentifiers,
+  lintExpression,
+} from "@webstudio-is/sdk";
 import { ExpressionEditor, formatValuePreview } from "./expression-editor";
+import { useSideOffset } from "./floating-panel";
+import { $dataSourceVariables } from "~/shared/nano-states";
 
 export const evaluateExpressionWithinScope = (
   expression: string,
@@ -38,79 +61,38 @@ export const evaluateExpressionWithinScope = (
   }
 };
 
-/**
- * execute valid expression without scope
- * to check any variable usage
- */
-export const isLiteralExpression = (expression: string) => {
-  try {
-    const fn = new Function(`return (${expression})`);
-    fn();
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const getUsedIdentifiers = (expression: string) => {
-  const identifiers = new Set<string>();
-  // prevent parsing empty expression
-  if (expression === "") {
-    return identifiers;
-  }
-  // avoid parsing error
-  try {
-    validateExpression(expression, {
-      transformIdentifier: (identifier) => {
-        identifiers.add(identifier);
-        return identifier;
-      },
-    });
-  } catch {
-    //
-  }
-  return identifiers;
-};
-
 const BindingPanel = ({
   scope,
   aliases,
-  error,
+  valueError,
   value,
   onChange,
-  onPotentialErrorChange,
-  onValidate,
+  onSave,
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
-  error: undefined | string;
+  valueError?: string;
   value: string;
-  onChange: (newValue: string) => void;
-  onPotentialErrorChange: (error: string) => void;
-  onValidate: () => void;
+  onChange: () => void;
+  onSave: (value: string, invalid: boolean) => void;
 }) => {
   const [expression, setExpression] = useState(value);
-  const usedIdentifiers = useMemo(() => getUsedIdentifiers(value), [value]);
+  const usedIdentifiers = useMemo(
+    () => getExpressionIdentifiers(value),
+    [value]
+  );
+  const [errors, setErrors] = useState<string[]>([]);
+  const [touched, setTouched] = useState(false);
+  const scopeEntries = Object.entries(scope);
 
   const updateExpression = (newExpression: string) => {
     setExpression(newExpression);
-    try {
-      if (newExpression.trim().length === 0) {
-        throw Error("Cannot use empty expression");
-      }
-      // update value only when expression is valid
-      validateExpression(newExpression, {
-        transformIdentifier: (identifier) => {
-          if (aliases.has(identifier) === false) {
-            throw Error(`Unknown variable "${identifier}"`);
-          }
-          return identifier;
-        },
-      });
-      onChange(newExpression);
-    } catch (error) {
-      onPotentialErrorChange((error as Error).message);
-    }
+    onChange();
+    const diagnostics = lintExpression({
+      expression: newExpression,
+      availableVariables: new Set(aliases.keys()),
+    });
+    setErrors(diagnostics.map((diagnostic) => diagnostic.message));
   };
 
   return (
@@ -121,9 +103,27 @@ const BindingPanel = ({
         width: theme.spacing[30],
       }}
     >
-      <Box css={{ padding: `${theme.spacing[5]} 0` }}>
+      <Box css={{ paddingBottom: theme.spacing[5] }}>
+        <Flex gap="1" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+          <Text variant="labelsSentenceCase">Variables</Text>
+          <Tooltip
+            variant="wrapped"
+            content={
+              "Click on the available variables in this scope to insert them into the Expression Editor."
+            }
+          >
+            <InfoCircleIcon tabIndex={0} />
+          </Tooltip>
+        </Flex>
+        {scopeEntries.length === 0 && (
+          <Flex justify="center" align="center" css={{ py: theme.spacing[5] }}>
+            <Text variant="labelsSentenceCase" align="center">
+              No variables available
+            </Text>
+          </Flex>
+        )}
         <CssValueListArrowFocus>
-          {Object.entries(scope).map(([identifier, value], index) => {
+          {scopeEntries.map(([identifier, value], index) => {
             const name = aliases.get(identifier);
             const label =
               value === undefined
@@ -139,24 +139,60 @@ const BindingPanel = ({
                 active={usedIdentifiers.has(identifier)}
                 // convert variable to expression
                 onClick={() => {
-                  setExpression(identifier);
-                  onChange(identifier);
+                  updateExpression(identifier);
+                  onSave(identifier, false);
                 }}
               />
             );
           })}
         </CssValueListArrowFocus>
       </Box>
+      <Flex gap="1" css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+        <Text variant="labelsSentenceCase">Expression Editor</Text>
+        <Tooltip
+          variant="wrapped"
+          content={
+            <Text>
+              Use JavaScript syntax to access variables along with comparison
+              and arithmetic operators.
+              <br />
+              Use the dot notation to access nested object values:
+              <Text variant="mono">Variable.nested.value</Text>
+            </Text>
+          }
+        >
+          <InfoCircleIcon tabIndex={0} />
+        </Tooltip>
+      </Flex>
       <Box css={{ padding: `0 ${theme.spacing[9]} ${theme.spacing[9]}` }}>
-        <InputErrorsTooltip errors={error ? [error] : undefined}>
+        <InputErrorsTooltip
+          errors={
+            touched && errors.length > 0
+              ? errors
+              : valueError
+              ? [valueError]
+              : undefined
+          }
+        >
           <div>
             <ExpressionEditor
               scope={scope}
               aliases={aliases}
+              color={
+                errors.length > 0 || valueError !== undefined
+                  ? "error"
+                  : undefined
+              }
               autoFocus={true}
               value={expression}
-              onChange={updateExpression}
-              onBlur={onValidate}
+              onChange={(value) => {
+                updateExpression(value);
+                setTouched(false);
+              }}
+              onBlur={() => {
+                onSave(expression, errors.length > 0);
+                setTouched(true);
+              }}
             />
           </div>
         </InputErrorsTooltip>
@@ -165,107 +201,212 @@ const BindingPanel = ({
   );
 };
 
-const BindingButton = forwardRef<HTMLButtonElement>((props, ref) => (
-  <SmallIconButton
-    ref={ref}
-    css={{
-      position: "absolute",
-      top: 0,
-      left: 0,
-      boxSizing: "border-box",
-      padding: 2,
-      transform: "translate(-50%, -50%) scale(1)",
-      transition: "transform 60ms",
-      "--dot-display": "block",
-      "--plus-display": "none",
-      "&:hover, &[aria-expanded=true]": {
-        transform: `translate(-50%, -50%) scale(1.5)`,
-        "--dot-display": "none",
-        "--plus-display": "block",
-      },
-    }}
-    {...props}
-    icon={
-      <Box
+const bindingOpacityProperty = "--ws-binding-opacity";
+
+export const BindingControl = ({ children }: { children: ReactNode }) => {
+  return (
+    <Box
+      css={{
+        position: "relative",
+        "&:hover": { [bindingOpacityProperty]: 1 },
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
+
+export type BindingVariant = "default" | "bound" | "overwritten";
+
+const BindingButton = forwardRef<
+  HTMLButtonElement,
+  ButtonHTMLAttributes<HTMLButtonElement> & {
+    variant: BindingVariant;
+    error?: string;
+    value: string;
+  }
+>(({ variant, error, value, ...props }, ref) => {
+  const expanded = props["aria-expanded"];
+  const overwrittenMessage =
+    variant === "overwritten" ? (
+      <Flex direction="column" gap="2" css={{ maxWidth: theme.spacing[28] }}>
+        <Text>Bound variable is overwritten with temporary value</Text>
+        <Button
+          color="dark"
+          prefix={<ResetIcon />}
+          css={{ flexGrow: 1 }}
+          onClick={() => {
+            const potentialVariableId = decodeDataSourceVariable(value);
+            const dataSourceVariables = new Map($dataSourceVariables.get());
+            if (potentialVariableId !== undefined) {
+              dataSourceVariables.delete(potentialVariableId);
+              $dataSourceVariables.set(dataSourceVariables);
+            }
+          }}
+        >
+          Reset value
+        </Button>
+      </Flex>
+    ) : undefined;
+  const tooltipContent = error ?? overwrittenMessage;
+  return (
+    // prevent giving content to tooltip when popover is open
+    // to avoid button remounting and popover flickering
+    // when switch between valid and error value
+    <Tooltip content={expanded ? undefined : tooltipContent} delayDuration={0}>
+      <SmallIconButton
+        ref={ref}
+        data-variant={variant}
         css={{
-          width: 12,
-          height: 12,
-          borderRadius: "50%",
-          backgroundColor: "#834DF4",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          // hide by default
+          opacity: `var(${bindingOpacityProperty}, 0)`,
+          position: "absolute",
+          top: 0,
+          left: 0,
+          boxSizing: "border-box",
+          padding: 2,
+          transform: "translate(-50%, -50%) scale(1)",
+          transition: "transform 60ms, opacity 0ms 60ms",
+          // https://easings.net/#easeInOutSine
+          transitionTimingFunction: "cubic-bezier(0.37, 0, 0.63, 1)",
+          "--dot-display": "block",
+          "--plus-display": "none",
+          "&[data-variant=bound], &[data-variant=overwritten]": {
+            opacity: 1,
+          },
+          "&:hover, &:focus-visible, &[aria-expanded=true]": {
+            // always show when interacted with
+            opacity: 1,
+            transform: `translate(-50%, -50%) scale(1.5)`,
+            "--dot-display": "none",
+            "--plus-display": "block",
+          },
         }}
-      >
-        <DotIcon
-          size={14}
-          fill="white"
-          style={{ display: `var(--dot-display)` }}
-        />
-        <PlusIcon
-          size={10}
-          fill="white"
-          style={{ display: `var(--plus-display)` }}
-        />
-      </Box>
-    }
-  />
-));
+        {...props}
+        icon={
+          <Box
+            css={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              backgroundColor: theme.colors.backgroundStyleSourceToken,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              "&[data-variant=bound]": {
+                backgroundColor: theme.colors.backgroundStyleSourceLocal,
+              },
+              "&[data-variant=overwritten]": {
+                backgroundColor: theme.colors.borderOverwrittenMain,
+              },
+              "&[data-variant=error]": {
+                backgroundColor: theme.colors.backgroundDestructiveMain,
+              },
+            }}
+            data-variant={error ? "error" : variant}
+          >
+            <DotIcon
+              size={14}
+              fill="white"
+              style={{ display: `var(--dot-display)` }}
+            />
+            <PlusIcon
+              size={10}
+              fill="white"
+              style={{ display: `var(--plus-display)` }}
+            />
+          </Box>
+        }
+      />
+    </Tooltip>
+  );
+});
 BindingButton.displayName = "BindingButton";
+
+const BindingPopoverContext = createContext<{
+  containerRef?: RefObject<HTMLElement>;
+  side?: "left" | "right";
+}>({});
+
+export const BindingPopoverProvider = BindingPopoverContext.Provider;
 
 export const BindingPopover = ({
   scope,
   aliases,
+  variant,
+  validate,
   value,
   onChange,
   onRemove,
 }: {
   scope: Record<string, unknown>;
   aliases: Map<string, string>;
-  acceptableType?: "text" | "any";
+  variant: BindingVariant;
+  validate?: (value: unknown) => undefined | string;
   value: string;
   onChange: (newValue: string) => void;
   onRemove: (evaluatedValue: unknown) => void;
 }) => {
-  const [open, onOpenChange] = useState(false);
-  const [error, setError] = useState<undefined | string>();
-  const potentialError = useRef<undefined | string>();
+  const { side = "left", containerRef } = useContext(BindingPopoverContext);
+  const [isOpen, onOpenChange] = useState(false);
+  const [triggerRef, sideOffset] = useSideOffset({
+    side,
+    isOpen,
+    containerRef,
+  });
+  const hasUnsavedChange = useRef<boolean>(false);
+  const preventedClosing = useRef<boolean>(false);
 
-  if (isFeatureEnabled("bindings") === false) {
-    return;
-  }
+  const valueError = validate?.(evaluateExpressionWithinScope(value, scope));
   return (
     <FloatingPanelPopover
       modal
-      open={open}
+      open={isOpen}
       onOpenChange={(newOpen) => {
-        if (potentialError.current) {
-          setError(potentialError.current);
-        } else {
-          onOpenChange(newOpen);
+        // handle special case for popover close
+        if (newOpen === false) {
+          // prevent saving when changes are not saved or validated
+          if (hasUnsavedChange.current) {
+            // schedule closing after saving
+            preventedClosing.current = true;
+            return;
+          }
+          preventedClosing.current = false;
         }
+        onOpenChange(newOpen);
       }}
     >
-      <FloatingPanelPopoverTrigger asChild>
-        <BindingButton />
+      <FloatingPanelPopoverTrigger asChild ref={triggerRef}>
+        <BindingButton variant={variant} error={valueError} value={value} />
       </FloatingPanelPopoverTrigger>
-      <FloatingPanelPopoverContent side="top" align="start">
+      <FloatingPanelPopoverContent
+        sideOffset={sideOffset}
+        side={side}
+        align="start"
+      >
         <BindingPanel
           scope={scope}
           aliases={aliases}
-          error={error}
+          valueError={valueError}
           value={value}
-          onChange={(newValue) => {
-            potentialError.current = undefined;
-            setError(undefined);
-            onChange(newValue);
+          onChange={() => {
+            hasUnsavedChange.current = true;
           }}
-          onPotentialErrorChange={(error) => {
-            potentialError.current = error;
-          }}
-          onValidate={() => {
-            if (potentialError.current) {
-              setError(potentialError.current);
+          onSave={(value, invalid) => {
+            // avoid saving without changes
+            if (hasUnsavedChange.current === false) {
+              return;
+            }
+            // let user see the error and let close popover after
+            hasUnsavedChange.current = false;
+            if (invalid) {
+              return;
+            }
+            // save value and close popover
+            onChange(value);
+            if (preventedClosing.current) {
+              preventedClosing.current = false;
+              onOpenChange(false);
             }
           }}
         />
@@ -279,15 +420,17 @@ export const BindingPopover = ({
                   aria-label="Reset binding"
                   prefix={<TrashIcon />}
                   color="ghost"
-                  onClick={() => {
-                    // reset error, inline variables and close dialog
-                    potentialError.current = undefined;
-                    setError(undefined);
+                  disabled={variant === "default"}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    // inline variables and close dialog
                     const evaluatedValue = evaluateExpressionWithinScope(
                       value,
                       scope
                     );
                     onRemove(evaluatedValue);
+                    preventedClosing.current = false;
+                    hasUnsavedChange.current = false;
                     onOpenChange(false);
                   }}
                 />

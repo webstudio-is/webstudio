@@ -5,7 +5,6 @@ export default () => {
   return client.$transaction(async (prisma) => {
     const usersCount = await prisma.user.count();
 
-    // eslint-disable-next-line no-console
-    console.log("Example noop migration test", { usersCount });
+    console.info("Example noop migration test", { usersCount });
   });
 };

@@ -95,6 +95,7 @@ type Props = ComponentProps<typeof ItemButton> & {
   id: string;
   index: number;
   hidden?: boolean;
+  draggable?: boolean;
   label: React.ReactElement;
   thumbnail?: React.ReactElement;
   buttons?: React.ReactElement;
@@ -112,9 +113,9 @@ const ItemWrapper = styled("div", {
   "&:hover, &[data-active=true]": {
     [`& ${ItemButton}`]: {
       backgroundColor: theme.colors.backgroundHover,
-    },
-    [`& ${DragHandleIconStyled}`]: {
-      visibility: "visible",
+      [`&[data-draggable=true] ${DragHandleIconStyled}`]: {
+        visibility: "visible",
+      },
     },
   },
 });
@@ -136,6 +137,7 @@ export const CssValueListItem = forwardRef(
       index,
       id,
       hidden,
+      draggable,
       "data-state": dataState,
       ...rest
     }: Props,
@@ -167,6 +169,7 @@ export const CssValueListItem = forwardRef(
             <ItemButton
               ref={ref}
               data-id={id}
+              data-draggable={draggable}
               data-focused={focused}
               data-state={state ?? dataState}
               data-active={active}

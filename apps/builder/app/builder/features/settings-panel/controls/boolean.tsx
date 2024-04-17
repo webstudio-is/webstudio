@@ -1,14 +1,18 @@
 import { useStore } from "@nanostores/react";
-import { Box, Grid, Switch, theme, useId } from "@webstudio-is/design-system";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import { Grid, Switch, theme, useId } from "@webstudio-is/design-system";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  getLabel,
   Label,
   RemovePropButton,
   $selectedInstanceScope,
   updateExpressionValue,
+  useBindingState,
 } from "../shared";
+import { humanizeString } from "~/shared/string-utils";
 
 export const BooleanControl = ({
   meta,
@@ -16,14 +20,17 @@ export const BooleanControl = ({
   propName,
   computedValue,
   deletable,
-  readOnly,
   onChange,
   onDelete,
-}: ControlProps<"boolean", "boolean" | "expression">) => {
+}: ControlProps<"boolean">) => {
   const id = useId();
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <Grid
@@ -37,13 +44,17 @@ export const BooleanControl = ({
       align="center"
       gap="2"
     >
-      <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-        {getLabel(meta, propName)}
+      <Label
+        htmlFor={id}
+        description={meta.description}
+        readOnly={overwritable === false}
+      >
+        {label}
       </Label>
-      <Box css={{ position: "relative" }}>
+      <BindingControl>
         <Switch
           id={id}
-          disabled={readOnly}
+          disabled={overwritable === false}
           checked={Boolean(computedValue ?? false)}
           onCheckedChange={(value) => {
             if (prop?.type === "expression") {
@@ -56,6 +67,12 @@ export const BooleanControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "boolean") {
+              return `${label} expects a boolean value`;
+            }
+          }}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
@@ -64,7 +81,7 @@ export const BooleanControl = ({
             onChange({ type: "boolean", value: Boolean(evaluatedValue) })
           }
         />
-      </Box>
+      </BindingControl>
       {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
   );

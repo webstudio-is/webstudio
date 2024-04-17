@@ -5,7 +5,7 @@ import type {
   RgbValue,
   UnparsedValue,
 } from "@webstudio-is/css-engine";
-import { parseCssValue } from "../parse-css-value";
+import { parseCssValue, cssTryParseValue } from "../parse-css-value";
 
 export const gradientNames = [
   "conic-gradient",
@@ -38,15 +38,6 @@ export const parseBackground = (
   };
 };
 
-const cssTreeTryParseValue = (input: string) => {
-  try {
-    const ast = csstree.parse(input, { context: "value" });
-    return ast;
-  } catch {
-    return undefined;
-  }
-};
-
 export const backgroundToLonghand = (
   background: string
 ): {
@@ -70,7 +61,7 @@ export const backgroundToLonghand = (
       : tokenStream;
   }
 
-  const cssAst = cssTreeTryParseValue(tokenStream);
+  const cssAst = cssTryParseValue(tokenStream);
 
   if (cssAst === undefined) {
     return {

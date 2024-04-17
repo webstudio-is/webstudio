@@ -3,6 +3,7 @@
 import { nanoid } from "nanoid";
 import {
   type Build as DbBuild,
+  type $Enums,
   prisma,
   Prisma,
 } from "@webstudio-is/prisma-client";
@@ -11,21 +12,25 @@ import {
   authorizeProject,
   type AppContext,
 } from "@webstudio-is/trpc-interface/index.server";
-import type { Build } from "../types";
-import { Pages, type Deployment, Resource } from "@webstudio-is/sdk";
 import {
-  createInitialBreakpoints,
-  parseBreakpoints,
-  serializeBreakpoints,
-} from "./breakpoints";
-import { parseStyles } from "./styles";
-import { parseStyleSources } from "./style-sources";
-import { parseStyleSourceSelections } from "./style-source-selections";
-import { parseProps } from "./props";
-import { parseDataSources } from "./data-sources";
-import { parseInstances, serializeInstances } from "./instances";
-import { parseDeployment, serializeDeployment } from "./deployment";
+  type Deployment,
+  type Resource,
+  type StyleSource,
+  type Prop,
+  type DataSource,
+  type Instance,
+  type Breakpoint,
+  Pages,
+  initialBreakpoints,
+} from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
+import type { Build } from "../types";
+import { parseStyles } from "./styles";
+import { parseStyleSourceSelections } from "./style-source-selections";
+import { parseDeployment, serializeDeployment } from "./deployment";
+import { parsePages, serializePages } from "./pages";
+import { createDefaultPages } from "../shared/pages-utils";
+import type { MarketplaceProduct } from "..";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -41,21 +46,22 @@ export const serializeData = <Type extends { id: string }>(
   return JSON.stringify(dataSourcesList);
 };
 
+export const parseConfig = <Type>(string: string): Type => {
+  return JSON.parse(string);
+};
+
+export const serializeConfig = <Type>(data: Type) => {
+  return JSON.stringify(data);
+};
+
 const parseBuild = async (build: DbBuild): Promise<Build> => {
-  // eslint-disable-next-line no-console
   console.time("parseBuild");
   try {
-    const pages = JSON.parse(build.pages) as Pages;
-    const breakpoints = Array.from(parseBreakpoints(build.breakpoints));
+    const pages = parsePages(build.pages);
     const styles = Array.from(parseStyles(build.styles));
-    const styleSources = Array.from(parseStyleSources(build.styleSources));
     const styleSourceSelections = Array.from(
       parseStyleSourceSelections(build.styleSourceSelections)
     );
-    const props = Array.from(parseProps(build.props));
-    const dataSources = Array.from(parseDataSources(build.dataSources));
-    const instances = Array.from(parseInstances(build.instances));
-
     const deployment = parseDeployment(build.deployment);
 
     const result: Build = {
@@ -65,20 +71,21 @@ const parseBuild = async (build: DbBuild): Promise<Build> => {
       createdAt: build.createdAt.toISOString(),
       updatedAt: build.updatedAt.toISOString(),
       pages,
-      breakpoints,
+      breakpoints: Array.from(parseData<Breakpoint>(build.breakpoints)),
       styles,
-      styleSources,
+      styleSources: Array.from(parseData<StyleSource>(build.styleSources)),
       styleSourceSelections,
-      props,
-      dataSources,
+      props: Array.from(parseData<Prop>(build.props)),
+      dataSources: Array.from(parseData<DataSource>(build.dataSources)),
       resources: Array.from(parseData<Resource>(build.resources)),
-      instances,
+      instances: Array.from(parseData<Instance>(build.instances)),
       deployment,
-    } satisfies Data["build"];
-
+      marketplaceProduct: parseConfig<MarketplaceProduct>(
+        build.marketplaceProduct
+      ),
+    } satisfies Data["build"] & { marketplaceProduct: MarketplaceProduct };
     return result;
   } finally {
-    // eslint-disable-next-line no-console
     console.timeEnd("parseBuild");
   }
 };
@@ -111,6 +118,34 @@ export const loadBuildByProjectId = async (
   return parseBuild(build);
 };
 
+export const loadProdBuildByProjectId = async (
+  projectId: Build["projectId"],
+  where: {
+    marketplaceApprovalStatus?: $Enums.MarketplaceApprovalStatus;
+  }
+): Promise<Build> => {
+  const projectData = await prisma.project.findUnique({
+    where: {
+      ...where,
+      id_isDeleted: { id: projectId, isDeleted: false },
+    },
+    select: {
+      latestBuild: {
+        select: {
+          build: true,
+        },
+      },
+    },
+  });
+
+  const build = projectData?.latestBuild?.build;
+  if (build === undefined) {
+    throw new Error("Prod build not found");
+  }
+
+  return parseBuild(build);
+};
+
 const createNewPageInstances = (): Build["instances"] => {
   const instanceId = nanoid();
   return [
@@ -124,6 +159,19 @@ const createNewPageInstances = (): Build["instances"] => {
       },
     ],
   ];
+};
+
+const createInitialBreakpoints = (): [Breakpoint["id"], Breakpoint][] => {
+  return initialBreakpoints.map((breakpoint) => {
+    const id = nanoid();
+    return [
+      id,
+      {
+        ...breakpoint,
+        id,
+      },
+    ];
+  });
 };
 
 /*
@@ -149,26 +197,31 @@ export const createBuild = async (
 
   const newInstances = createNewPageInstances();
   const [rootInstanceId] = newInstances[0];
+  const systemDataSource: DataSource = {
+    id: nanoid(),
+    scopeInstanceId: rootInstanceId,
+    name: "system",
+    type: "parameter",
+  };
 
-  const newPages = Pages.parse({
-    meta: {},
-    homePage: {
-      id: nanoid(),
-      name: "Home",
-      path: "",
-      title: "Home",
-      meta: {},
+  const defaultPages = Pages.parse(
+    createDefaultPages({
       rootInstanceId,
-    },
-    pages: [],
-  } satisfies Pages);
+      systemDataSourceId: systemDataSource.id,
+    })
+  );
 
   await client.build.create({
     data: {
       projectId: props.projectId,
-      pages: JSON.stringify(newPages),
-      breakpoints: serializeBreakpoints(new Map(createInitialBreakpoints())),
-      instances: serializeInstances(new Map(newInstances)),
+      pages: serializePages(defaultPages),
+      breakpoints: serializeData<Breakpoint>(
+        new Map(createInitialBreakpoints())
+      ),
+      instances: serializeData<Instance>(new Map(newInstances)),
+      dataSources: serializeData<DataSource>(
+        new Map([[systemDataSource.id, systemDataSource]])
+      ),
     },
   });
 };

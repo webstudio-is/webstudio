@@ -1,3 +1,4 @@
+// DEPRECATED: use parseData and serializeData from build.ts
 import type {
   StyleSourceSelections,
   StyleSourceSelection,

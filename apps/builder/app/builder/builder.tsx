@@ -1,6 +1,5 @@
 import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
-import { useUnmount } from "react-use";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Asset } from "@webstudio-is/sdk";
@@ -8,14 +7,19 @@ import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
+import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
 import { useSyncServer } from "./shared/sync/sync-server";
-import { SidebarLeft, Navigator } from "./features/sidebar-left";
+import {
+  SidebarLeft,
+  NavigatorContent,
+  useNavigatorLayout,
+} from "./features/sidebar-left";
 import { Inspector } from "./features/inspector";
 import { Topbar } from "./features/topbar";
-import builderStyles from "./builder.css";
+import builderStyles from "./builder.css?url";
 // eslint-disable-next-line import/no-internal-modules
-import prismStyles from "prismjs/themes/prism-solarizedlight.min.css";
+import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { Footer } from "./features/footer";
 import {
   CanvasIframe,
@@ -23,33 +27,40 @@ import {
   Workspace,
 } from "./features/workspace";
 import {
-  assetsStore,
+  $assets,
   $authPermit,
   $authToken,
-  breakpointsStore,
-  dataSourcesStore,
-  instancesStore,
+  $breakpoints,
+  $dataSources,
+  $instances,
   $isPreviewMode,
-  pagesStore,
-  projectStore,
-  propsStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
-  $domains,
+  $pages,
+  $project,
+  $props,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
   $resources,
   subscribeResources,
+  $marketplaceProduct,
+  $authTokenPermissions,
+  $publisherHost,
+  $imageLoader,
 } from "~/shared/nano-states";
-import { type Settings, useClientSettings } from "./shared/client-settings";
+import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
 import { useCopyPaste } from "~/shared/copy-paste";
 import { BlockingAlerts } from "./features/blocking-alerts";
 import { useSyncPageUrl } from "~/shared/pages";
-import { useMount } from "~/shared/hook-utils/use-mount";
+import { useMount, useUnmount } from "~/shared/hook-utils/use-mount";
 import { subscribeCommands } from "~/builder/shared/commands";
 import { AiCommandBar } from "./features/ai/ai-command-bar";
-import { ProjectSettings } from "./features/seo/project-settings";
+import { ProjectSettings } from "./features/project-settings";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
+import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
+import { CloneProjectDialog } from "~/shared/clone-project";
+import type { TokenPermissions } from "@webstudio-is/authorization-token";
+import { useToastErrors } from "~/shared/error/toast-error";
 
 registerContainers();
 
@@ -61,15 +72,8 @@ export const links = () => {
   ];
 };
 
-const useNavigatorLayout = () => {
-  // We need to render the detached state only once the setting was actually loaded from local storage.
-  // Otherwise we may show the detached state because its the default and then hide it immediately.
-  const [clientSettings, _, isLoaded] = useClientSettings();
-  return isLoaded ? clientSettings.navigatorLayout : "undocked";
-};
-
 const useSetWindowTitle = () => {
-  const project = useStore(projectStore);
+  const project = useStore($project);
   useEffect(() => {
     document.title = `${project?.title} | Webstudio`;
   }, [project?.title]);
@@ -77,14 +81,14 @@ const useSetWindowTitle = () => {
 
 type SidePanelProps = {
   children: JSX.Element | Array<JSX.Element>;
-  isPreviewMode: boolean;
+  isPreviewMode?: boolean;
   css?: CSS;
   gridArea: "inspector" | "sidebar" | "navigator";
 };
 
 const SidePanel = ({
   children,
-  isPreviewMode,
+  isPreviewMode = false,
   gridArea,
   css,
 }: SidePanelProps) => {
@@ -103,7 +107,8 @@ const SidePanel = ({
         height: "100%",
         ...css,
         "&:last-of-type": {
-          borderLeft: `1px solid  ${theme.colors.borderMain}`,
+          // Ensure content still has full width, avoid subpixels give layout round numbers
+          boxShadow: `inset 1px 0 0 0 ${theme.colors.borderMain}`,
         },
       }}
     >
@@ -203,7 +208,7 @@ const NavigatorPanel = ({
   navigatorLayout,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
-    return null;
+    return;
   }
 
   return (
@@ -215,7 +220,7 @@ const NavigatorPanel = ({
           height: "100%",
         }}
       >
-        <Navigator isClosable={false} />
+        <NavigatorContent isClosable={false} />
       </Box>
     </SidePanel>
   );
@@ -223,49 +228,58 @@ const NavigatorPanel = ({
 
 export type BuilderProps = {
   project: Project;
-  domains: string[];
+  publisherHost: string;
+  imageBaseUrl: string;
   build: Build;
   assets: [Asset["id"], Asset][];
   authToken?: string;
   authPermit: AuthPermit;
+  authTokenPermissions: TokenPermissions;
   userPlanFeatures: UserPlanFeatures;
 };
 
 export const Builder = ({
   project,
-  domains,
+  publisherHost,
+  imageBaseUrl,
   build,
   assets,
   authToken,
   authPermit,
   userPlanFeatures,
+  authTokenPermissions,
 }: BuilderProps) => {
   useMount(() => {
     // additional data stores
-    projectStore.set(project);
-    $domains.set(domains);
+    $project.set(project);
+    $publisherHost.set(publisherHost);
+    $imageLoader.set(createImageLoader({ imageBaseUrl }));
     $authPermit.set(authPermit);
     $authToken.set(authToken);
+    $userPlanFeatures.set(userPlanFeatures);
+    $authTokenPermissions.set(authTokenPermissions);
 
     // set initial containers value
-    assetsStore.set(new Map(assets));
-    instancesStore.set(new Map(build.instances));
-    dataSourcesStore.set(new Map(build.dataSources));
+    $assets.set(new Map(assets));
+    $instances.set(new Map(build.instances));
+    $dataSources.set(new Map(build.dataSources));
     $resources.set(new Map(build.resources));
     // props should be after data sources to compute logic
-    propsStore.set(new Map(build.props));
-    pagesStore.set(build.pages);
-    styleSourcesStore.set(new Map(build.styleSources));
-    styleSourceSelectionsStore.set(new Map(build.styleSourceSelections));
-    breakpointsStore.set(new Map(build.breakpoints));
-    stylesStore.set(new Map(build.styles));
+    $props.set(new Map(build.props));
+    $pages.set(build.pages);
+    $styleSources.set(new Map(build.styleSources));
+    $styleSourceSelections.set(new Map(build.styleSourceSelections));
+    $breakpoints.set(new Map(build.breakpoints));
+    $styles.set(new Map(build.styles));
+    $marketplaceProduct.set(build.marketplaceProduct);
   });
 
+  useToastErrors();
   useEffect(subscribeCommands, []);
   useEffect(subscribeResources, []);
 
   useUnmount(() => {
-    pagesStore.set(undefined);
+    $pages.set(undefined);
   });
 
   useSyncPageUrl();
@@ -283,7 +297,7 @@ export const Builder = ({
     authPermit,
     version: build.version,
   });
-
+  const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
   const { onRef: onRefReadCanvas, onTransitionEnd } = useReadCanvasRect();
   // We need to initialize this in both canvas and builder,
@@ -331,7 +345,7 @@ export const Builder = ({
           </Workspace>
           <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
-        <SidePanel gridArea="sidebar" isPreviewMode={isPreviewMode}>
+        <SidePanel gridArea="sidebar">
           <SidebarLeft publish={publish} />
         </SidePanel>
         <NavigatorPanel
@@ -347,6 +361,11 @@ export const Builder = ({
         </SidePanel>
         {isPreviewMode === false && <Footer />}
         <BlockingAlerts />
+        <CloneProjectDialog
+          isOpen={isCloneDialogOpen}
+          onOpenChange={$isCloneDialogOpen.set}
+          project={project}
+        />
       </ChromeWrapper>
     </TooltipProvider>
   );

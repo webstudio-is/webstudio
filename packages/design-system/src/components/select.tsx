@@ -5,7 +5,10 @@ import {
   type ComponentProps,
   useMemo,
   forwardRef,
+  useState,
 } from "react";
+import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
+import { rawTheme, styled, theme } from "../stitches.config";
 import {
   menuCss,
   menuItemCss,
@@ -15,10 +18,17 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
-import { styled, theme } from "../stitches.config";
-import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 
-export const SelectContent = styled(Primitive.Content, menuCss);
+export const SelectContent = styled(Primitive.Content, menuCss, {
+  "&[data-side=top]": {
+    "--ws-select-description-display-top": "block",
+    "--ws-select-description-order": 0,
+  },
+  "&[data-side=bottom]": {
+    "--ws-select-description-display-bottom": "block",
+    "--ws-select-description-order": 2,
+  },
+});
 
 export const SelectViewport = Primitive.Viewport;
 
@@ -28,11 +38,7 @@ export const SelectSeparator = styled(Primitive.Separator, separatorCss);
 
 export const SelectGroup = Primitive.Group;
 
-const StyledItem = styled(Primitive.Item, menuItemCss, {
-  // we don't want to transform text using CSS in case of the Select,
-  // we want getLabel to handle it
-  textTransform: "none",
-});
+const StyledItem = styled(Primitive.Item, menuItemCss);
 
 const StyledIndicator = styled(Primitive.ItemIndicator, menuItemIndicatorCss);
 
@@ -75,6 +81,42 @@ export const SelectItem = forwardRef(SelectItemBase);
 
 export type SelectOption = string;
 
+const Description = styled("div", menuItemCss);
+
+// Note this only works in combination with position: popper on Content component, because only popper exposes data-side attribute
+export const SelectItemDescription = ({
+  children,
+  style,
+  ...props
+}: ComponentProps<typeof Description>) => {
+  return (
+    <>
+      <SelectSeparator
+        style={{
+          display: `var(--ws-select-description-display-bottom, none)`,
+          order: "var(--ws-select-description-order)",
+        }}
+      />
+      <Description
+        {...props}
+        hint
+        style={{
+          ...style,
+          order: "var(--ws-select-description-order)",
+        }}
+      >
+        {children}
+      </Description>
+      <SelectSeparator
+        style={{
+          display: `var(--ws-select-description-display-top, none)`,
+          order: "var(--ws-select-description-order)",
+        }}
+      />
+    </>
+  );
+};
+
 type TriggerPassThroughProps = Omit<
   ComponentProps<typeof Primitive.Trigger>,
   "onChange" | "value" | "defaultValue" | "asChild" | "prefix"
@@ -91,13 +133,17 @@ export type SelectProps<Option = SelectOption> = {
   onOpenChange?: (open: boolean) => void;
   placeholder?: string;
   children?: ReactNode;
+  getDescription?: (option: Option) => ReactNode | undefined;
+  getItemProps?: (
+    option: Option
+  ) => Omit<ComponentProps<typeof SelectItem>, "children" | "value">;
 } & (Option extends string
   ? {
-      getLabel?: (option: Option) => string | undefined;
+      getLabel?: (option: Option) => ReactNode | undefined;
       getValue?: (option: Option) => string | undefined;
     }
   : {
-      getLabel: (option: Option) => string | undefined;
+      getLabel: (option: Option) => ReactNode | undefined;
       getValue: (option: Option) => string | undefined;
     }) &
   TriggerPassThroughProps;
@@ -107,7 +153,7 @@ const defaultGetValue = (option: unknown) => {
     return option;
   }
   throw new Error(
-    `Cannot automatically convert ${typeof option} to string. Provide a getValue/getLabel`
+    `Cannot automatically convert ${typeof option} to string. Provide a getValue/getLabel/getDescription`
   );
 };
 
@@ -123,6 +169,8 @@ const SelectBase = <Option,>(
     open,
     getLabel = defaultGetValue,
     getValue = defaultGetValue,
+    getDescription,
+    getItemProps,
     name,
     children,
     prefix,
@@ -137,6 +185,13 @@ const SelectBase = <Option,>(
     }
     return map;
   }, [options, getValue]);
+
+  const [highlightedItem, setHighlightedItem] = useState<Option>();
+
+  const itemForDescription = highlightedItem ?? value ?? defaultValue;
+  const description = itemForDescription
+    ? getDescription?.(itemForDescription)
+    : undefined;
 
   return (
     <Primitive.Root
@@ -160,34 +215,47 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent css={{ zIndex: props.css?.zIndex ?? 0 }}>
-          <SelectScrollUpButton>
+        <SelectContent
+          position="popper"
+          css={{ zIndex: props.css?.zIndex ?? 0 }}
+        >
+          <SelectScrollUpButton css={{ order: 1 }}>
             <ChevronUpIcon />
           </SelectScrollUpButton>
-          <SelectViewport>
+
+          <SelectViewport style={{ order: 1, maxHeight: rawTheme.spacing[34] }}>
             {children ||
-              options.map((option) => (
-                <SelectItem
-                  key={getValue(option)}
-                  value={getValue(option) ?? ""}
-                  textValue={getLabel(option)}
-                  onMouseEnter={() => {
-                    onItemHighlight?.(option);
-                  }}
-                  onMouseLeave={() => {
-                    onItemHighlight?.();
-                  }}
-                  onFocus={() => {
-                    onItemHighlight?.(option);
-                  }}
-                >
-                  {getLabel(option)}
-                </SelectItem>
-              ))}
+              options.map((option, index) => {
+                const value = getValue(option) ?? "";
+                const { textValue, ...rest } = getItemProps?.(option) ?? {};
+                return (
+                  <SelectItem
+                    key={value ?? index}
+                    value={value}
+                    textValue={textValue ?? value}
+                    onFocus={() => {
+                      onItemHighlight?.(option);
+                      setHighlightedItem(option);
+                    }}
+                    onBlur={(event) => {
+                      onItemHighlight?.(undefined);
+                      setHighlightedItem(undefined);
+                    }}
+                    {...rest}
+                  >
+                    {getLabel(option)}
+                  </SelectItem>
+                );
+              })}
           </SelectViewport>
-          <SelectScrollDownButton>
+
+          <SelectScrollDownButton css={{ order: 2 }}>
             <ChevronDownIcon />
           </SelectScrollDownButton>
+
+          {description && (
+            <SelectItemDescription>{description}</SelectItemDescription>
+          )}
         </SelectContent>
       </Primitive.Portal>
     </Primitive.Root>

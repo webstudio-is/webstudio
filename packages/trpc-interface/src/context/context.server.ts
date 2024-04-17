@@ -15,9 +15,9 @@ type AuthorizationContext = {
   authToken: string | undefined;
 
   /**
-   * project list serves as a template and is accessible to everyone.
+   * Projects approved for the marketplace are available to everyone.
    */
-  projectTemplates: string[];
+  marketplaceProjectIds: Array<string>;
 
   /**
    * Allow service 2 service communications to skip authorization for view calls
@@ -46,15 +46,33 @@ type DeploymentContext = {
   deploymentTrpc: TrpcInterfaceClient["deployment"];
   env: {
     BUILDER_ORIGIN: string;
-    BRANCH_NAME: string;
+    GITHUB_REF_NAME: string;
+    GITHUB_SHA: string | undefined;
   };
 };
 
 type UserPlanFeatures = {
   allowShareAdminLinks: boolean;
+  allowDynamicData: boolean;
   maxDomainsAllowedPerUser: number;
   hasSubscription: boolean;
-  hasProPlan: boolean;
+} & (
+  | {
+      hasProPlan: true;
+      planName: string;
+    }
+  | { hasProPlan: false }
+);
+
+// No strings except planName - no secrets
+({}) as Omit<UserPlanFeatures, "planName"> satisfies Record<
+  string,
+  boolean | number
+>;
+
+type TrpcCache = {
+  setMaxAge: (path: string, value: number) => void;
+  getMaxAge: (path: string) => number | undefined;
 };
 
 /**
@@ -68,4 +86,5 @@ export type AppContext = {
   deployment: DeploymentContext;
   entri: EntriContext;
   userPlanFeatures: UserPlanFeatures | undefined;
+  trpcCache: TrpcCache;
 };

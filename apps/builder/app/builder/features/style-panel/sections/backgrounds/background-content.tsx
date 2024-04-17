@@ -31,7 +31,7 @@ import {
 import { FloatingPanelProvider } from "~/builder/shared/floating-panel";
 import { useRef, useState } from "react";
 import { BackgroundSize } from "./background-size";
-import { ToggleGroupControl } from "../../controls/toggle/toggle-control";
+import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import {
   RepeatGridIcon,
   RepeatColumnIcon,
@@ -112,11 +112,12 @@ const Spacer = styled("div", {
 export const BackgroundContent = (props: BackgroundContentProps) => {
   const setProperty = safeSetProperty(props.setProperty);
   const deleteProperty = safeDeleteProperty(props.deleteProperty);
+  const { currentStyle } = props;
 
   const elementRef = useRef<HTMLDivElement>(null);
   const [imageGradientToggle, setImageGradientToggle] = useState<
     "image" | "gradient"
-  >(() => detectImageOrGradientToggle(props.currentStyle));
+  >(() => detectImageOrGradientToggle(currentStyle));
 
   return (
     <>
@@ -157,7 +158,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           {imageGradientToggle === "image" && (
             <>
               <NonResetablePropertyName
-                style={props.currentStyle}
+                style={currentStyle}
                 properties={["backgroundImage"]}
                 label="Image"
               />
@@ -166,7 +167,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                 <ImageControl
                   setProperty={setProperty}
                   deleteProperty={deleteProperty}
-                  currentStyle={props.currentStyle}
+                  currentStyle={currentStyle}
                   property="backgroundImage"
                 />
               </FloatingPanelProvider>
@@ -176,7 +177,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           {imageGradientToggle === "gradient" && (
             <Flex css={{ gridColumn: "span 2" }} direction="column">
               <NonResetablePropertyName
-                style={props.currentStyle}
+                style={currentStyle}
                 description={
                   <>
                     Paste a CSS gradient, for example:
@@ -196,14 +197,14 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
               <BackgroundGradient
                 setProperty={setProperty}
                 deleteProperty={deleteProperty}
-                currentStyle={props.currentStyle}
+                currentStyle={currentStyle}
                 setBackgroundColor={props.setBackgroundColor}
               />
             </Flex>
           )}
 
           <NonResetablePropertyName
-            style={props.currentStyle}
+            style={currentStyle}
             properties={["backgroundClip"]}
             label="Clip"
           />
@@ -211,12 +212,12 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           <SelectControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
+            currentStyle={currentStyle}
             property="backgroundClip"
           />
 
           <NonResetablePropertyName
-            style={props.currentStyle}
+            style={currentStyle}
             properties={["backgroundOrigin"]}
             label="Origin"
           />
@@ -224,7 +225,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           <SelectControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
+            currentStyle={currentStyle}
             property="backgroundOrigin"
           />
         </Grid>
@@ -234,7 +235,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         <BackgroundSize
           setProperty={setProperty}
           deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
+          currentStyle={currentStyle}
         />
 
         <Spacer />
@@ -242,7 +243,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         <PositionControl
           setProperty={setProperty}
           deleteProperty={deleteProperty}
-          currentStyle={props.currentStyle}
+          currentStyle={currentStyle}
           property="backgroundPosition"
         />
 
@@ -257,22 +258,17 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           {imageGradientToggle === "image" && (
             <>
               <NonResetablePropertyName
-                style={props.currentStyle}
+                style={currentStyle}
                 properties={["backgroundRepeat"]}
                 label="Repeat"
               />
 
               <Flex css={{ justifySelf: "end" }}>
                 <ToggleGroupControl
-                  style={props.currentStyle}
-                  styleSource={"default"}
-                  onValueChange={(value) =>
-                    setProperty("backgroundRepeat")({
-                      type: "keyword",
-                      value,
-                    })
-                  }
-                  value={toValue(props.currentStyle.backgroundRepeat?.value)}
+                  currentStyle={currentStyle}
+                  setProperty={setProperty}
+                  deleteProperty={deleteProperty}
+                  property="backgroundRepeat"
                   items={[
                     {
                       child: <CrossSmallIcon />,
@@ -313,7 +309,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           )}
 
           <NonResetablePropertyName
-            style={props.currentStyle}
+            style={currentStyle}
             properties={["backgroundAttachment"]}
             label="Attachment"
           />
@@ -321,7 +317,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           <Flex css={{ justifySelf: "end" }}>
             <ToggleGroup
               type="single"
-              value={toValue(props.currentStyle.backgroundAttachment?.value)}
+              value={toValue(currentStyle.backgroundAttachment?.value)}
               onValueChange={(value) => {
                 setProperty("backgroundAttachment")({
                   type: "keyword",
@@ -339,7 +335,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           </Flex>
 
           <NonResetablePropertyName
-            style={props.currentStyle}
+            style={currentStyle}
             properties={["backgroundBlendMode"]}
             label="Blend mode"
           />
@@ -347,7 +343,7 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           <SelectControl
             setProperty={setProperty}
             deleteProperty={deleteProperty}
-            currentStyle={props.currentStyle}
+            currentStyle={currentStyle}
             property="backgroundBlendMode"
           />
         </Grid>

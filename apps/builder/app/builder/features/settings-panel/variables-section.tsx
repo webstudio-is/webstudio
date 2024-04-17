@@ -1,9 +1,15 @@
+import { useRef, useState } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
   Button,
   CssValueListArrowFocus,
   CssValueListItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
   Flex,
   Label,
   SectionTitle,
@@ -11,17 +17,17 @@ import {
   SectionTitleLabel,
   SmallIconButton,
   Text,
-  Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { MinusIcon, PlusIcon } from "@webstudio-is/icons";
+import { EllipsesIcon, PlusIcon } from "@webstudio-is/icons";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
-  validateExpression,
-} from "@webstudio-is/react-sdk";
+  getExpressionIdentifiers,
+} from "@webstudio-is/sdk";
 import {
   $dataSources,
+  $instances,
   $props,
   $resources,
   $selectedInstanceSelector,
@@ -29,11 +35,17 @@ import {
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import {
-  CollapsibleSectionBase,
+  CollapsibleSectionRoot,
   useOpenState,
 } from "~/builder/shared/collapsible-section";
-import { formatValuePreview } from "~/builder/shared/expression-editor";
-import { VariablePopoverTrigger } from "./variable-popover";
+import {
+  ValuePreviewDialog,
+  formatValuePreview,
+} from "~/builder/shared/expression-editor";
+import {
+  VariablePopoverProvider,
+  VariablePopoverTrigger,
+} from "./variable-popover";
 
 /**
  * find variables defined specifically on this selected instance
@@ -66,64 +78,80 @@ const $instanceVariableValues = computed(
 /**
  * find variables used in
  *
+ * instance children
  * expression prop
  * action prop
  * url resource field
  * header resource field
  * body resource fiel
  */
-const $usedVariables = computed([$props, $resources], (props, resources) => {
-  const usedVariables = new Set<DataSource["id"]>();
-  const collectExpressionVariables = (expression: string) => {
-    try {
-      validateExpression(expression, {
-        // parse any expression
-        effectful: true,
-        transformIdentifier: (identifier) => {
-          const id = decodeDataSourceVariable(identifier);
-          if (id !== undefined) {
-            usedVariables.add(id);
-          }
-          return identifier;
-        },
-      });
-    } catch {
-      // empty block
-    }
-  };
-  for (const resource of resources.values()) {
-    collectExpressionVariables(resource.url);
-    for (const { value } of resource.headers) {
-      collectExpressionVariables(value);
-    }
-    if (resource.body) {
-      collectExpressionVariables(resource.body);
-    }
-  }
-  for (const prop of props.values()) {
-    if (prop.type === "expression") {
-      collectExpressionVariables(prop.value);
-    }
-    if (prop.type === "action") {
-      for (const value of prop.value) {
-        collectExpressionVariables(value.code);
+const $usedVariables = computed(
+  [$instances, $props, $resources],
+  (instances, props, resources) => {
+    const usedVariables = new Set<DataSource["id"]>();
+    const collectExpressionVariables = (expression: string) => {
+      const identifiers = getExpressionIdentifiers(expression);
+      for (const identifier of identifiers) {
+        const id = decodeDataSourceVariable(identifier);
+        if (id !== undefined) {
+          usedVariables.add(id);
+        }
+      }
+    };
+    for (const instance of instances.values()) {
+      for (const child of instance.children) {
+        if (child.type === "expression") {
+          collectExpressionVariables(child.value);
+        }
       }
     }
+    for (const resource of resources.values()) {
+      collectExpressionVariables(resource.url);
+      for (const { value } of resource.headers) {
+        collectExpressionVariables(value);
+      }
+      if (resource.body) {
+        collectExpressionVariables(resource.body);
+      }
+    }
+    for (const prop of props.values()) {
+      if (prop.type === "expression") {
+        collectExpressionVariables(prop.value);
+      }
+      if (prop.type === "action") {
+        for (const value of prop.value) {
+          collectExpressionVariables(value.code);
+        }
+      }
+    }
+    return usedVariables;
   }
-  return usedVariables;
-});
+);
 
 const deleteVariable = (variableId: DataSource["id"]) => {
-  serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-    dataSources.delete(variableId);
-  });
+  serverSyncStore.createTransaction(
+    [$dataSources, $resources],
+    (dataSources, resources) => {
+      const dataSource = dataSources.get(variableId);
+      if (dataSource === undefined) {
+        return;
+      }
+      dataSources.delete(variableId);
+      if (dataSource.type === "resource") {
+        resources.delete(dataSource.resourceId);
+      }
+    }
+  );
 };
 
 const EmptyVariables = () => {
   return (
     <Flex direction="column" css={{ gap: theme.spacing[5] }}>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
-        <Text variant="labelsSentenceCase">No variables yet</Text>
+        <Text variant="labelsSentenceCase" align="center">
+          No variables created
+          <br /> on this instance
+        </Text>
       </Flex>
       <Flex justify="center" align="center" css={{ height: theme.spacing[13] }}>
         <VariablePopoverTrigger>
@@ -131,6 +159,76 @@ const EmptyVariables = () => {
         </VariablePopoverTrigger>
       </Flex>
     </Flex>
+  );
+};
+
+const VariablesItem = ({
+  variable,
+  index,
+  value,
+  isUsedVariable,
+}: {
+  variable: DataSource;
+  index: number;
+  value: unknown;
+  isUsedVariable: boolean;
+}) => {
+  const label =
+    value === undefined
+      ? variable.name
+      : `${variable.name}: ${formatValuePreview(value)}`;
+  const [inspectDialogOpen, setInspectDialogOpen] = useState(false);
+  return (
+    <VariablePopoverTrigger key={variable.id} variable={variable}>
+      <CssValueListItem
+        id={variable.id}
+        index={index}
+        label={<Label truncate>{label}</Label>}
+        buttons={
+          <>
+            <ValuePreviewDialog
+              open={inspectDialogOpen}
+              onOpenChange={setInspectDialogOpen}
+              title={`Inspect "${variable.name}" value`}
+              value={value}
+            >
+              {undefined}
+            </ValuePreviewDialog>
+            <DropdownMenu modal>
+              <DropdownMenuTrigger asChild>
+                {/* a11y is completely broken here
+                  focus is not restored to button invoker
+                  @todo fix it eventually and consider restoring from closed value preview dialog
+              */}
+                <SmallIconButton
+                  tabIndex={-1}
+                  aria-label="Open variable menu"
+                  icon={<EllipsesIcon />}
+                  onClick={() => {}}
+                />
+              </DropdownMenuTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuContent
+                  css={{ width: theme.spacing[28] }}
+                  onCloseAutoFocus={(event) => event.preventDefault()}
+                >
+                  <DropdownMenuItem onSelect={() => setInspectDialogOpen(true)}>
+                    Inspect
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    // allow to delete only unused variables
+                    disabled={variable.type === "parameter" || isUsedVariable}
+                    onSelect={() => deleteVariable(variable.id)}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenuPortal>
+            </DropdownMenu>
+          </>
+        }
+      />
+    </VariablePopoverTrigger>
   );
 };
 
@@ -147,36 +245,14 @@ const VariablesList = () => {
     <CssValueListArrowFocus>
       {availableVariables.map((variable, index) => {
         const value = variableValues.get(variable.id);
-        const label =
-          value === undefined
-            ? variable.name
-            : `${variable.name}: ${formatValuePreview(value)}`;
-        // user should be able to create and delete
-        const deletable =
-          variable.type === "variable" || variable.type === "resource";
         return (
-          <VariablePopoverTrigger key={variable.id} variable={variable}>
-            <CssValueListItem
-              id={variable.id}
-              index={index}
-              label={<Label truncate>{label}</Label>}
-              buttons={
-                <Tooltip content="Delete variable" side="bottom">
-                  <SmallIconButton
-                    tabIndex={-1}
-                    // allow to delete only unused variables
-                    disabled={
-                      deletable === false || usedVariables.has(variable.id)
-                    }
-                    aria-label="Delete variable"
-                    variant="destructive"
-                    icon={<MinusIcon />}
-                    onClick={() => deleteVariable(variable.id)}
-                  />
-                </Tooltip>
-              }
-            />
-          </VariablePopoverTrigger>
+          <VariablesItem
+            key={variable.id}
+            value={value}
+            variable={variable}
+            index={index}
+            isUsedVariable={usedVariables.has(variable.id)}
+          />
         );
       })}
     </CssValueListArrowFocus>
@@ -184,40 +260,43 @@ const VariablesList = () => {
 };
 
 export const VariablesSection = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useOpenState({
     label: "variables",
     isOpenDefault: true,
   });
   return (
-    <CollapsibleSectionBase
-      label="Variables"
-      fullWidth={true}
-      isOpen={isOpen}
-      onOpenChange={setIsOpen}
-      trigger={
-        <SectionTitle
-          suffix={
-            <VariablePopoverTrigger>
-              <SectionTitleButton
-                prefix={<PlusIcon />}
-                // open panel when add new varable
-                onClick={() => {
-                  if (isOpen === false) {
-                    setIsOpen(true);
-                  }
-                }}
-              />
-            </VariablePopoverTrigger>
-          }
-        >
-          <SectionTitleLabel>Variables</SectionTitleLabel>
-        </SectionTitle>
-      }
-    >
-      {/* prevent applyig gap to list items */}
-      <div>
-        <VariablesList />
-      </div>
-    </CollapsibleSectionBase>
+    <VariablePopoverProvider value={{ containerRef }}>
+      <CollapsibleSectionRoot
+        label="Variables"
+        fullWidth={true}
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        trigger={
+          <SectionTitle
+            suffix={
+              <VariablePopoverTrigger>
+                <SectionTitleButton
+                  prefix={<PlusIcon />}
+                  // open panel when add new varable
+                  onClick={() => {
+                    if (isOpen === false) {
+                      setIsOpen(true);
+                    }
+                  }}
+                />
+              </VariablePopoverTrigger>
+            }
+          >
+            <SectionTitleLabel>Variables</SectionTitleLabel>
+          </SectionTitle>
+        }
+      >
+        {/* prevent applyig gap to list items */}
+        <div ref={containerRef}>
+          <VariablesList />
+        </div>
+      </CollapsibleSectionRoot>
+    </VariablePopoverProvider>
   );
 };

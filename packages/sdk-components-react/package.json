@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk-components-react",
-  "version": "0.123.0",
+  "version": "0.144.0",
   "description": "Webstudio default library for react",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -35,11 +35,12 @@
   "scripts": {
     "dev": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib --watch",
     "build": "rm -rf lib && esbuild src/components.ts src/metas.ts src/props.ts --outdir=lib --bundle --format=esm --packages=external",
-    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.tsx' && prettier --write \"**/*.props.ts\"",
+    "build:args": "NODE_OPTIONS=--conditions=webstudio generate-arg-types './src/*.tsx !./src/*.stories.tsx !./src/*.ws.ts' && prettier --write \"**/*.props.ts\"",
     "dts": "tsc --project tsconfig.dts.json",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
-    "storybook:dev": "storybook dev -p 6006",
+    "storybook:dev": "storybook dev -p 6006 --static-dir=./public",
     "storybook:build": "storybook build"
   },
   "peerDependencies": {
@@ -51,16 +52,22 @@
     "@webstudio-is/icons": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
-    "colord": "^2.9.3",
-    "shallow-equal": "^3.1.0"
+    "colord": "^2.9.3"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
     "@storybook/react": "^7.4.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.2",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
     "@webstudio-is/generate-arg-types": "workspace:*",
+    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "jest-environment-jsdom": "^29.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "typescript": "5.2.2"

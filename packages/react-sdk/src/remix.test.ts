@@ -33,6 +33,7 @@ test("convert named groups to remix route", () => {
 
 test("generate remix params for static pathname", () => {
   expect("\n" + generateRemixParams("/blog/my-post")).toEqual(`
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   return params
 }
@@ -41,6 +42,7 @@ export const getRemixParams = ({ ...params }: Params): Params => {
 
 test("generate remix params converter with wildcard", () => {
   expect("\n" + generateRemixParams("/blog/*")).toEqual(`
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   params[0] = params["*"]
   delete params["*"]
@@ -51,6 +53,7 @@ export const getRemixParams = ({ ...params }: Params): Params => {
 
 test("generate remix params converter with named group and * modifier", () => {
   expect("\n" + generateRemixParams("/blog/:name*")).toEqual(`
+type Params = Record<string, string | undefined>;
 export const getRemixParams = ({ ...params }: Params): Params => {
   params["name"] = params["*"]
   delete params["*"]

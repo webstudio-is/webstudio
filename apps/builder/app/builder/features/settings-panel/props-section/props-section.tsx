@@ -1,174 +1,134 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@nanostores/react";
 import type { Instance } from "@webstudio-is/sdk";
-import {
-  theme,
-  useCombobox,
-  Combobox,
-  ComboboxContent,
-  ComboboxAnchor,
-  ComboboxListbox,
-  ComboboxListboxItem,
-  Separator,
-  Flex,
-  InputField,
-  NestedInputButton,
-} from "@webstudio-is/design-system";
+import { theme, Combobox, Separator, Flex } from "@webstudio-is/design-system";
 import {
   $propValuesByInstanceSelector,
-  propsIndexStore,
-  propsStore,
-  selectedInstanceSelectorStore,
+  $propsIndex,
+  $props,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { CollapsibleSectionWithAddButton } from "~/builder/shared/collapsible-section";
-import {
-  useStyleData,
-  type SetProperty as SetCssProperty,
-} from "~/builder/features/style-panel/shared/use-style-data";
 import { renderControl } from "../controls/combined";
 import {
   usePropsLogic,
   type NameAndLabel,
   type PropAndMeta,
 } from "./use-props-logic";
-import { Row, getLabel } from "../shared";
+import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
+import { matchSorter } from "match-sorter";
 
 const itemToString = (item: NameAndLabel | null) =>
-  item ? getLabel(item, item.name) : "";
+  item?.label || item?.name || "";
 
-const PropsCombobox = ({
-  items,
-  onItemSelect,
-}: {
-  items: NameAndLabel[];
-  onItemSelect: (item: NameAndLabel) => void;
-}) => {
-  const [inputValue, setInputValue] = useState("");
-
-  const combobox = useCombobox<NameAndLabel>({
-    items,
-    itemToString,
-    onItemSelect,
-    selectedItem: undefined,
-
-    // this weird handling of value is needed to work around a limitation in useCombobox
-    // where it doesn't allow to leave both `value` and `selectedItem` empty/uncontrolled
-    value: { name: "", label: inputValue },
-    onInputChange: (value) => setInputValue(value ?? ""),
+const matchOrSuggestToCreate = (
+  search: string,
+  items: Array<NameAndLabel>,
+  itemToString: (item: NameAndLabel) => string
+): Array<NameAndLabel> => {
+  const matched = matchSorter(items, search, {
+    keys: [itemToString],
   });
 
-  return (
-    <Combobox>
-      <div {...combobox.getComboboxProps()}>
-        <ComboboxAnchor>
-          <InputField
-            autoFocus
-            {...combobox.getInputProps()}
-            placeholder="New Property"
-            suffix={<NestedInputButton {...combobox.getToggleButtonProps()} />}
-          />
-        </ComboboxAnchor>
-        <ComboboxContent align="end" sideOffset={5}>
-          <ComboboxListbox {...combobox.getMenuProps()}>
-            {combobox.isOpen &&
-              combobox.items.map((item, index) => (
-                <ComboboxListboxItem
-                  key={item.name}
-                  selectable={false}
-                  {...combobox.getItemProps({ item, index })}
-                >
-                  {itemToString(item)}
-                </ComboboxListboxItem>
-              ))}
-          </ComboboxListbox>
-        </ComboboxContent>
-      </div>
-    </Combobox>
-  );
+  if (
+    search.trim() !== "" &&
+    itemToString(matched[0]).toLocaleLowerCase() !==
+      search.toLocaleLowerCase().trim()
+  ) {
+    matched.unshift({
+      name: search.trim(),
+      label: `Create "${search.trim()}"`,
+    });
+  }
+  return matched;
 };
 
 const renderProperty = (
-  {
-    propsLogic: logic,
-    propValues,
-    setCssProperty,
-    component,
+  { propsLogic: logic, propValues, component, instanceId }: PropsSectionProps,
+  { prop, propName, meta }: PropAndMeta,
+  { deletable, autoFocus }: { deletable?: boolean; autoFocus?: boolean } = {}
+) =>
+  renderControl({
+    autoFocus,
+    key: propName,
     instanceId,
-  }: PropsSectionProps,
-  { prop, propName, meta, readOnly }: PropAndMeta,
-  deletable?: boolean
-) => (
-  // fix the issue with changing type while binding expression
-  // old prop value is getting preserved in useLocalValue and saved into variable
-  // when unmount to reproduce try to edit body id prop
-  // and then bind json variable to it
-  <Fragment key={(prop?.type ?? "") + propName}>
-    {renderControl({
-      key: propName,
-      instanceId,
-      meta,
-      prop,
-      computedValue: propValues.get(propName),
-      propName,
-      readOnly,
-      deletable: deletable ?? false,
-      onDelete: () => {
-        if (prop) {
-          logic.handleDelete(prop);
-        }
-      },
-      onChange: (propValue, asset) => {
-        logic.handleChange({ prop, propName }, propValue);
+    meta,
+    prop,
+    computedValue: propValues.get(propName) ?? meta.defaultValue,
+    propName,
+    deletable: deletable ?? false,
+    onDelete: () => {
+      if (prop) {
+        logic.handleDelete(prop);
+      }
+    },
+    onChange: (propValue, asset) => {
+      logic.handleChange({ prop, propName }, propValue);
 
-        // @todo: better way to do this?
-        if (
-          component === "Image" &&
-          propName === "src" &&
-          asset &&
-          "width" in asset.meta &&
-          "height" in asset.meta
-        ) {
-          logic.handleChangeByPropName("width", {
-            value: asset.meta.width,
-            type: "number",
-          });
-          logic.handleChangeByPropName("height", {
-            value: asset.meta.height,
-            type: "number",
-          });
+      // @todo: better way to do this?
+      if (
+        component === "Image" &&
+        propName === "src" &&
+        asset &&
+        "width" in asset.meta &&
+        "height" in asset.meta
+      ) {
+        logic.handleChangeByPropName("width", {
+          value: asset.meta.width,
+          type: "number",
+        });
+        logic.handleChangeByPropName("height", {
+          value: asset.meta.height,
+          type: "number",
+        });
+      }
+    },
+  });
 
-          setCssProperty("height")({
-            type: "keyword",
-            value: "fit-content",
-          });
-        }
-      },
-    })}
-  </Fragment>
-);
+const forbiddenProperties = new Set(["style"]);
 
-const AddPropertyForm = ({
+const AddProperty = ({
   availableProps,
   onPropSelected,
 }: {
   availableProps: NameAndLabel[];
   onPropSelected: (propName: string) => void;
-}) => (
-  <Flex css={{ height: theme.spacing[13] }} direction="column" justify="center">
-    <PropsCombobox
-      items={availableProps}
-      onItemSelect={(item) => onPropSelected(item.name)}
-    />
-  </Flex>
-);
+}) => {
+  const [value, setValue] = useState("");
+  return (
+    <Flex
+      css={{ height: theme.spacing[13] }}
+      direction="column"
+      justify="center"
+    >
+      <Combobox<NameAndLabel>
+        autoFocus
+        placeholder="Find or create a property"
+        // @todo add descriptions
+        items={availableProps}
+        itemToString={itemToString}
+        onItemSelect={(item) => {
+          if (forbiddenProperties.has(item.name)) {
+            return;
+          }
+          onPropSelected(item.name);
+        }}
+        match={matchOrSuggestToCreate}
+        value={{ name: "", label: value }}
+        onInputChange={(value) => {
+          setValue(value ?? "");
+        }}
+      />
+    </Flex>
+  );
+};
 
 type PropsSectionProps = {
   propsLogic: ReturnType<typeof usePropsLogic>;
   propValues: Map<string, unknown>;
   component: Instance["component"];
   instanceId: string;
-  setCssProperty: SetCssProperty;
 };
 
 // A UI componet with minimum logic that can be demoed in Storybook etc.
@@ -182,7 +142,7 @@ export const PropsSection = (props: PropsSectionProps) => {
 
   return (
     <>
-      <Row css={{ py: theme.spacing[5] }}>
+      <Row css={{ py: theme.spacing[3] }}>
         {logic.systemProps.map((item) => renderProperty(props, item))}
       </Row>
 
@@ -193,9 +153,9 @@ export const PropsSection = (props: PropsSectionProps) => {
         onAdd={() => setAddingProp(true)}
         hasItems={hasItems}
       >
-        <Flex gap="2" direction="column">
+        <Flex gap="1" direction="column">
           {addingProp && (
-            <AddPropertyForm
+            <AddProperty
               availableProps={logic.availableProps}
               onPropSelected={(propName) => {
                 setAddingProp(false);
@@ -203,7 +163,12 @@ export const PropsSection = (props: PropsSectionProps) => {
               }}
             />
           )}
-          {logic.addedProps.map((item) => renderProperty(props, item, true))}
+          {logic.addedProps.map((item, index) =>
+            renderProperty(props, item, {
+              deletable: true,
+              autoFocus: index === 0,
+            })
+          )}
           {logic.initialProps.map((item) => renderProperty(props, item))}
         </Flex>
       </CollapsibleSectionWithAddButton>
@@ -216,12 +181,9 @@ export const PropsSectionContainer = ({
 }: {
   selectedInstance: Instance;
 }) => {
-  const { setProperty: setCssProperty } = useStyleData({
-    selectedInstance: instance,
-  });
-  const { propsByInstanceId } = useStore(propsIndexStore);
+  const { propsByInstanceId } = useStore($propsIndex);
   const propValuesByInstanceSelector = useStore($propValuesByInstanceSelector);
-  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const instanceSelector = useStore($selectedInstanceSelector);
   const propValues = propValuesByInstanceSelector.get(
     JSON.stringify(instanceSelector)
   );
@@ -231,14 +193,14 @@ export const PropsSectionContainer = ({
     props: propsByInstanceId.get(instance.id) ?? [],
 
     updateProp: (update) => {
-      const { propsByInstanceId } = propsIndexStore.get();
+      const { propsByInstanceId } = $propsIndex.get();
       const instanceProps = propsByInstanceId.get(instance.id) ?? [];
       // Fixing a bug that caused some props to be duplicated on unmount by removing duplicates.
       // see for details https://github.com/webstudio-is/webstudio/pull/2170
       const duplicateProps = instanceProps
         .filter((prop) => prop.id !== update.id)
         .filter((prop) => prop.name === update.name);
-      serverSyncStore.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([$props], (props) => {
         for (const prop of duplicateProps) {
           props.delete(prop.id);
         }
@@ -247,7 +209,7 @@ export const PropsSectionContainer = ({
     },
 
     deleteProp: (propId) => {
-      serverSyncStore.createTransaction([propsStore], (props) => {
+      serverSyncStore.createTransaction([$props], (props) => {
         props.delete(propId);
       });
     },
@@ -265,7 +227,6 @@ export const PropsSectionContainer = ({
       propValues={propValues ?? new Map()}
       component={instance.component}
       instanceId={instance.id}
-      setCssProperty={setCssProperty}
     />
   );
 };

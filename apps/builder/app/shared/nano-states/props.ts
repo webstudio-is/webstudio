@@ -1,18 +1,23 @@
-import { computed } from "nanostores";
+import { atom, computed } from "nanostores";
+import type {
+  Resource,
+  DataSource,
+  Instance,
+  Prop,
+  ResourceRequest,
+} from "@webstudio-is/sdk";
 import {
-  createScope,
-  type Resource,
-  type DataSource,
-  type Instance,
-  type Page,
-  type Prop,
+  decodeDataSourceVariable,
+  encodeDataSourceVariable,
+  transpileExpression,
 } from "@webstudio-is/sdk";
 import {
   collectionComponent,
-  encodeDataSourceVariable,
-  generateDataSources,
   normalizeProps,
+  portalComponent,
+  textContentAttribute,
 } from "@webstudio-is/react-sdk";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $instances } from "./instances";
 import {
   $dataSourceVariables,
@@ -33,108 +38,136 @@ export const getIndexedInstanceId = (
   index: number
 ) => `${instanceId}[${index}]`;
 
+/**
+ * (arg1) => {
+ * let $ws$dataSource$id = _getVariable('id')
+ * $ws$dataSource$id = $ws$dataSource$id + arg1
+ * _setVariable('id', $ws$dataSource$id)
+ * }
+ */
+const generateAction = (prop: Extract<Prop, { type: "action" }>) => {
+  const getters = new Set<DataSource["id"]>();
+  const setters = new Set<DataSource["id"]>();
+  // important to fallback to empty argumets to render empty function
+  let args: string[] = [];
+  let assignersCode = "";
+  for (const value of prop.value) {
+    args = value.args;
+    assignersCode += transpileExpression({
+      expression: value.code,
+      executable: true,
+      replaceVariable: (identifier, assignee) => {
+        if (args?.includes(identifier)) {
+          return;
+        }
+        const depId = decodeDataSourceVariable(identifier);
+        if (depId) {
+          getters.add(depId);
+          if (assignee) {
+            setters.add(depId);
+          }
+        }
+      },
+    });
+    assignersCode += `\n`;
+  }
+  let gettersCode = "";
+  for (const dataSourceId of getters) {
+    const valueName = encodeDataSourceVariable(dataSourceId);
+    gettersCode += `let ${valueName} = _getVariable("${dataSourceId}")\n`;
+  }
+  let settersCode = "";
+  for (const dataSourceId of setters) {
+    const valueName = encodeDataSourceVariable(dataSourceId);
+    settersCode += `_setVariable("${dataSourceId}", ${valueName})\n`;
+  }
+  let generated = "";
+  generated += `return (${args.join(", ")}) => {\n`;
+  generated += gettersCode;
+  generated += assignersCode;
+  generated += settersCode;
+  generated += `}`;
+  return generated;
+};
+
+const getAction = (
+  prop: Extract<Prop, { type: "action" }>,
+  values: Map<string, unknown>
+) => {
+  const generatedAction = generateAction(prop);
+  try {
+    const executeFn = new Function(
+      "_getVariable",
+      "_setVariable",
+      generatedAction
+    );
+    const getVariable = (id: string) => {
+      return values.get(id);
+    };
+    const setVariable = (id: string, value: unknown) => {
+      const dataSourceVariables = new Map($dataSourceVariables.get());
+      dataSourceVariables.set(id, value);
+      $dataSourceVariables.set(dataSourceVariables);
+    };
+    return executeFn(getVariable, setVariable);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 // result of executing generated code
 // includes variables, computed expressions and action callbacks
 const $dataSourcesLogic = computed(
-  [$dataSources, $dataSourceVariables, $resourceValues, $props],
-  (dataSources, dataSourceVariables, resourceValues, props) => {
-    const scope = createScope(["_getVariable", "_setVariable", "_output"]);
-    const { body, output } = generateDataSources({
-      scope,
-      dataSources,
-      props,
-    });
-    let generatedCode = "";
+  [$dataSources, $dataSourceVariables, $resourceValues],
+  (dataSources, dataSourceVariables, resourceValues) => {
+    const values = new Map<string, unknown>();
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
-        const initialValue = JSON.stringify(dataSource.value.value);
-        // save variables to generate header and footer depending on environment
-        const valueName = scope.getName(dataSourceId, dataSource.name);
-        const setterName = scope.getName(
-          `set$${dataSourceId}`,
-          `set$${dataSource.name}`
+        values.set(
+          dataSourceId,
+          dataSourceVariables.get(dataSourceId) ?? dataSource.value.value
         );
-        generatedCode += `let ${valueName} = _getVariable("${dataSourceId}") ?? ${initialValue};\n`;
-        generatedCode += `let ${setterName} = (value) => _setVariable("${dataSourceId}", value);\n`;
       }
       if (dataSource.type === "parameter") {
-        const variableName = scope.getName(dataSourceId, dataSource.name);
-        generatedCode += `let ${variableName} = _getVariable("${dataSourceId}");\n`;
+        values.set(dataSourceId, dataSourceVariables.get(dataSourceId));
       }
       if (dataSource.type === "resource") {
-        const variableName = scope.getName(dataSourceId, dataSource.name);
-        generatedCode += `let ${variableName} = _getResource("${dataSource.resourceId}");\n`;
+        values.set(dataSourceId, resourceValues.get(dataSource.resourceId));
       }
     }
-    generatedCode += body;
-    generatedCode += `let _output = new Map();\n`;
-    for (const [dataSourceId, variableName] of output) {
-      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
-    }
-    for (const [dataSourceId, dataSource] of dataSources) {
-      const variableName = scope.getName(dataSourceId, dataSource.name);
-      generatedCode += `_output.set('${dataSourceId}', ${variableName})\n`;
-    }
-    generatedCode += `return _output\n`;
-
-    try {
-      const executeFn = new Function(
-        "_getVariable",
-        "_getResource",
-        "_setVariable",
-        generatedCode
-      );
-      const getVariable = (id: string) => {
-        return dataSourceVariables.get(id);
-      };
-      const getResource = (id: string) => {
-        return resourceValues.get(id);
-      };
-      const setVariable = (id: string, value: unknown) => {
-        const dataSourceVariables = new Map($dataSourceVariables.get());
-        dataSourceVariables.set(id, value);
-        $dataSourceVariables.set(dataSourceVariables);
-      };
-      return executeFn(getVariable, getResource, setVariable);
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
-    }
-    return new Map();
+    return values;
   }
 );
 
-const computeExpression = (
+export const computeExpression = (
   expression: string,
   variables: Map<DataSource["id"], unknown>
 ) => {
-  let code = "";
-  for (const [id, value] of variables) {
-    // @todo pass dedicated map of variables without actions
-    // skip actions
-    if (typeof value === "function") {
-      continue;
-    }
-    const identifier = encodeDataSourceVariable(id);
-    code += `const ${identifier} = ${JSON.stringify(value)};\n`;
-  }
-  code += `return (${expression})`;
   try {
-    const result = new Function(code)();
+    const usedVariables = new Map();
+    const transpiled = transpileExpression({
+      expression,
+      executable: true,
+      replaceVariable: (identifier) => {
+        const id = decodeDataSourceVariable(identifier);
+        if (id) {
+          usedVariables.set(identifier, id);
+        }
+      },
+    });
+    let code = "";
+    // add only used variables in expression and get values
+    // from variables map without additional serializing of these values
+    for (const [identifier, id] of usedVariables) {
+      code += `let ${identifier} = _variables.get("${id}");\n`;
+    }
+    code += `return (${transpiled})`;
+    const result = new Function("_variables", code)(variables);
     return result;
   } catch {
     // empty block
   }
 };
-
-const $pagesMap = computed($pages, (pages): Map<string, Page> => {
-  if (pages === undefined) {
-    return new Map();
-  }
-  return new Map(
-    [pages.homePage, ...pages.pages].map((page) => [page.id, page])
-  );
-});
 
 /**
  * compute prop values within context of instance ancestors
@@ -149,15 +182,16 @@ export const $propValuesByInstanceSelector = computed(
     $selectedPage,
     $dataSourcesLogic,
     $params,
-    $pagesMap,
+    $pages,
     $assets,
   ],
   (instances, props, page, dataSourcesLogic, params, pages, assets) => {
-    const values = new Map<string, unknown>(dataSourcesLogic);
+    const variableValues = new Map<string, unknown>(dataSourcesLogic);
 
     let propsList = Array.from(props.values());
+
     // ignore asset and page props when params is not provided
-    if (params) {
+    if (params && pages) {
       // use whole props list to let access hash props from other pages and instances
       propsList = normalizeProps({
         props: propsList,
@@ -195,14 +229,14 @@ export const $propValuesByInstanceSelector = computed(
             continue;
           }
           if (prop.type === "expression") {
-            const value = computeExpression(prop.value, values);
+            const value = computeExpression(prop.value, variableValues);
             if (value !== undefined) {
               propValues.set(prop.name, value);
             }
             continue;
           }
           if (prop.type === "action") {
-            const action = values.get(prop.id);
+            const action = getAction(prop, variableValues);
             if (typeof action === "function") {
               propValues.set(prop.name, action);
             }
@@ -225,7 +259,7 @@ export const $propValuesByInstanceSelector = computed(
         const itemVariableId = parameters.get("item");
         if (Array.isArray(data) && itemVariableId !== undefined) {
           data.forEach((item, index) => {
-            values.set(itemVariableId, item);
+            variableValues.set(itemVariableId, item);
             for (const child of instance.children) {
               if (child.type === "id") {
                 const indexId = getIndexedInstanceId(instanceId, index);
@@ -237,6 +271,16 @@ export const $propValuesByInstanceSelector = computed(
         return;
       }
       for (const child of instance.children) {
+        // plain text can be edited from props panel
+        if (child.type === "text" && instance.children.length === 1) {
+          propValues.set(textContentAttribute, child.value);
+        }
+        if (child.type === "expression") {
+          const value = computeExpression(child.value, variableValues);
+          if (value !== undefined) {
+            propValues.set(textContentAttribute, value);
+          }
+        }
         if (child.type === "id") {
           traverseInstances([child.value, ...instanceSelector]);
         }
@@ -292,7 +336,7 @@ export const $variableValuesByInstanceSelector = computed(
         return;
       }
 
-      const variableValues = new Map<string, unknown>(parentVariableValues);
+      let variableValues = new Map<string, unknown>(parentVariableValues);
       variableValuesByInstanceSelector.set(
         JSON.stringify(instanceSelector),
         variableValues
@@ -300,21 +344,32 @@ export const $variableValuesByInstanceSelector = computed(
       const variables = variablesByInstanceId.get(instanceId);
       if (variables) {
         for (const variable of variables) {
+          if (
+            variable.id === page.systemDataSourceId &&
+            isFeatureEnabled("filters") === false
+          ) {
+            continue;
+          }
           if (variable.type === "variable") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value ?? variable.value.value);
           }
           if (variable.type === "parameter") {
             const value = dataSourceVariables.get(variable.id);
-            if (value !== undefined) {
-              variableValues.set(variable.id, value);
+            variableValues.set(variable.id, value);
+            if (
+              variable.id === page.systemDataSourceId &&
+              value === undefined
+            ) {
+              variableValues.set(variable.id, {
+                params: {},
+                search: {},
+              });
             }
           }
           if (variable.type === "resource") {
             const value = resourceValues.get(variable.resourceId);
-            if (value !== undefined) {
-              variableValues.set(variable.id, value);
-            }
+            variableValues.set(variable.id, value);
           }
         }
       }
@@ -349,7 +404,12 @@ export const $variableValuesByInstanceSelector = computed(
       if (instance.component === collectionComponent) {
         const data = propValues.get("data");
         const itemVariableId = parameters.get("item");
-        if (Array.isArray(data) && itemVariableId !== undefined) {
+        if (itemVariableId === undefined) {
+          return;
+        }
+        // prevent accessing item from collection
+        variableValues.delete(itemVariableId);
+        if (Array.isArray(data)) {
           data.forEach((item, index) => {
             const itemVariableValues = new Map(variableValues);
             itemVariableValues.set(itemVariableId, item);
@@ -365,6 +425,10 @@ export const $variableValuesByInstanceSelector = computed(
           });
         }
         return;
+      }
+      // reset values for slot children to let slots behave as isolated components
+      if (instance.component === portalComponent) {
+        variableValues = new Map();
       }
       for (const child of instance.children) {
         if (child.type === "id") {
@@ -396,48 +460,81 @@ const $loaderVariableValues = computed(
   }
 );
 
+const computeResource = (
+  resource: Resource,
+  values: Map<DataSource["id"], unknown>
+): ResourceRequest => {
+  const request: ResourceRequest = {
+    id: resource.id,
+    name: resource.name,
+    url: computeExpression(resource.url, values),
+    method: resource.method,
+    headers: resource.headers.map(({ name, value }) => ({
+      name,
+      value: computeExpression(value, values),
+    })),
+  };
+  if (resource.body !== undefined) {
+    request.body = computeExpression(resource.body, values);
+  }
+  return request;
+};
+
 const $computedResources = computed(
   [$resources, $loaderVariableValues],
   (resources, values) => {
-    const computedResources: Resource[] = [];
+    const computedResources: ResourceRequest[] = [];
     for (const resource of resources.values()) {
-      const data: Resource = {
-        id: resource.id,
-        name: resource.name,
-        url: computeExpression(resource.url, values),
-        method: resource.method,
-        headers: resource.headers.map(({ name, value }) => ({
-          name,
-          value: computeExpression(value, values),
-        })),
-      };
-      if (resource.body !== undefined) {
-        data.body = computeExpression(resource.body, values);
-      }
-      computedResources.push(data);
+      computedResources.push(computeResource(resource, values));
     }
     return computedResources;
   }
 );
 
-let timeoutId: undefined | NodeJS.Timeout;
-const scheduleLoading = (callback: () => Promise<void>) => {
-  clearTimeout(timeoutId);
-  timeoutId = setTimeout(callback, 1000);
-};
-const loadResources = async (resourceRequests: Resource[]) => {
+const $resourcesLoadingCount = atom(0);
+export const $areResourcesLoading = computed(
+  $resourcesLoadingCount,
+  (resourcesLoadingCount) => resourcesLoadingCount > 0
+);
+
+const loadResources = async (resourceRequests: ResourceRequest[]) => {
+  $resourcesLoadingCount.set($resourcesLoadingCount.get() + 1);
   const response = await fetch(restResourcesLoader(), {
     method: "POST",
     body: JSON.stringify(resourceRequests),
   });
+  $resourcesLoadingCount.set($resourcesLoadingCount.get() - 1);
   if (response.ok === false) {
-    return;
+    return new Map<Resource["id"], unknown>();
   }
-  const result: [Resource["id"], unknown][] = await response.json();
-  return result;
+  return new Map<Resource["id"], unknown>(await response.json());
 };
 
 const cacheByKeys = new Map<string, unknown>();
+
+const $invalidator = atom(0);
+
+export const getComputedResource = (resourceId: Resource["id"]) => {
+  const resources = $resources.get();
+  const resource = resources.get(resourceId);
+  if (resource === undefined) {
+    return;
+  }
+  const values = $loaderVariableValues.get();
+  return computeResource(resource, values);
+};
+
+// bump index of resource to invaldate cache entry
+export const invalidateResource = (resourceId: Resource["id"]) => {
+  const request = getComputedResource(resourceId);
+  if (request === undefined) {
+    return;
+  }
+  const cacheKey = JSON.stringify(request);
+  cacheByKeys.delete(cacheKey);
+  // trigger invalidation
+  $invalidator.set($invalidator.get() + 1);
+};
 
 /**
  * subscribe to all resources changes
@@ -445,50 +542,43 @@ const cacheByKeys = new Map<string, unknown>();
  * and store in cache
  */
 export const subscribeResources = () => {
-  return $computedResources.subscribe((computedResources) => {
-    const matched = new Map<Resource["id"], unknown>();
-    const missing = new Map<Resource["id"], Resource>();
+  // subscribe changing resources or global invalidation
+  return computed(
+    [$computedResources, $invalidator],
+    (computedResources, invalidator) =>
+      [computedResources, invalidator] as const
+  ).subscribe(async ([computedResources]) => {
+    const matched = new Map<Resource["id"], ResourceRequest>();
+    const missing = new Map<Resource["id"], ResourceRequest>();
     for (const request of computedResources) {
-      const key = JSON.stringify(request);
-      if (cacheByKeys.has(key)) {
+      const cacheKey = JSON.stringify(request);
+      if (cacheByKeys.has(cacheKey)) {
         matched.set(request.id, request);
       } else {
         missing.set(request.id, request);
       }
     }
 
-    // update cached resource values
-    if (matched.size !== 0) {
-      const newResourceValues = new Map();
-      for (const [id, request] of matched) {
-        const response = cacheByKeys.get(JSON.stringify(request));
-        newResourceValues.set(id, response);
-      }
-      $resourceValues.set(newResourceValues);
-    }
-
     if (missing.size === 0) {
       return;
     }
 
-    // load missing resource values
-    scheduleLoading(async () => {
-      // preset undefined to prevent loading already requested data
-      for (const request of missing.values()) {
-        cacheByKeys.set(JSON.stringify(request), undefined);
-      }
-      const result = await loadResources(Array.from(missing.values()));
-      if (result === undefined) {
-        return;
-      }
-      const newResourceValues = new Map($resourceValues.get());
-      for (const [id, response] of result) {
-        newResourceValues.set(id, response);
-        // save in cache
-        const request = missing.get(id);
-        cacheByKeys.set(JSON.stringify(request), response);
-      }
-      $resourceValues.set(newResourceValues);
-    });
+    // preset undefined to prevent loading already requested data
+    for (const request of missing.values()) {
+      const cacheKey = JSON.stringify(request);
+      cacheByKeys.set(cacheKey, undefined);
+    }
+
+    const result = await loadResources(Array.from(missing.values()));
+    const newResourceValues = new Map();
+    for (const request of computedResources) {
+      const cacheKey = JSON.stringify(request);
+      // read from cache or store in cache
+      const response = result.get(request.id) ?? cacheByKeys.get(cacheKey);
+      cacheByKeys.set(cacheKey, response);
+      newResourceValues.set(request.id, response);
+    }
+    // update resource values only when new resources are loaded
+    $resourceValues.set(newResourceValues);
   });
 };

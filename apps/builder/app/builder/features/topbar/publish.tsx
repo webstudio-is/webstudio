@@ -23,12 +23,16 @@ import {
   theme,
   TextArea,
   Link,
+  PanelBanner,
+  buttonStyle,
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
-import { useIsPublishDialogOpen } from "../../shared/nano-states";
+import {
+  $userPlanFeatures,
+  useIsPublishDialogOpen,
+} from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
-import { getPublishedUrl } from "~/shared/router-utils";
-import { $authPermit } from "~/shared/nano-states";
+import { $authPermit, $publishedUrl } from "~/shared/nano-states";
 import {
   Domains,
   getPublishStatusAndText,
@@ -43,13 +47,9 @@ import {
   AlertIcon,
   CopyIcon,
 } from "@webstudio-is/icons";
-import { createTrpcFetchProxy } from "~/shared/remix/trpc-remix-proxy";
-import { builderDomainsPath } from "~/shared/router-utils";
-import type { DomainRouter } from "@webstudio-is/domain/index.server";
 import { AddDomain } from "./add-domain";
 import { humanizeString } from "~/shared/string-utils";
-
-const trpc = createTrpcFetchProxy<DomainRouter>(builderDomainsPath);
+import { trpcClient } from "~/shared/trpc/trpc-client";
 
 type ProjectData =
   | {
@@ -80,12 +80,13 @@ const ChangeProjectDomain = ({
   isPublishing,
 }: ChangeProjectDomainProps) => {
   const id = useId();
+  const publishedUrl = useStore($publishedUrl);
 
   const {
     send: updateProjectDomain,
     state: updateProjectDomainState,
     error: updateProjectSystemError,
-  } = trpc.updateProjectDomain.useMutation();
+  } = trpcClient.domain.updateProjectDomain.useMutation();
 
   const [domain, setDomain] = useState(project.domain);
   const [error, setError] = useState<string>();
@@ -106,8 +107,6 @@ const ChangeProjectDomain = ({
   useEffect(() => {
     refreshProject();
   }, [refreshProject]);
-
-  const publishedUrl = new URL(getPublishedUrl(project.domain));
 
   const handleUpdateProjectDomain = () => {
     const validationResult = validateProjectDomain(domain);
@@ -139,12 +138,12 @@ const ChangeProjectDomain = ({
       ? getPublishStatusAndText(project.latestBuild)
       : {
           statusText: "Not published",
-          status: "PENDING",
+          status: "PENDING" as const,
         };
 
   return (
     <CollapsibleDomainSection
-      title={publishedUrl.host}
+      title={new URL(publishedUrl).host}
       suffix={
         <Grid flow="column">
           <Tooltip content={error !== undefined ? error : statusText}>
@@ -168,12 +167,12 @@ const ChangeProjectDomain = ({
               )}
             </Flex>
           </Tooltip>
-
-          <Tooltip content={`Proceed to ${publishedUrl.href}`}>
+          <Tooltip content={`Proceed to ${publishedUrl}`}>
             <IconButton
               tabIndex={-1}
+              disabled={error !== undefined || status !== "PUBLISHED"}
               onClick={(event) => {
-                window.open(publishedUrl.href, "_blank");
+                window.open(publishedUrl, "_blank");
                 event.preventDefault();
               }}
             >
@@ -187,7 +186,7 @@ const ChangeProjectDomain = ({
         <Grid gap={1}>
           <Label htmlFor={id}>Domain:</Label>
           <InputField
-            variant="mono"
+            text="mono"
             id={id}
             placeholder="Domain"
             value={domain}
@@ -249,7 +248,7 @@ const Publish = ({
     state: publishState,
     data: publishData,
     error: publishSystemError,
-  } = trpc.publish.useMutation();
+  } = trpcClient.domain.publish.useMutation();
 
   useEffect(() => {
     if (isPublishing) {
@@ -346,6 +345,19 @@ const ErrorText = ({ children }: { children: string }) => (
   </Flex>
 );
 
+const useCanAddDomain = () => {
+  const { load, data } = trpcClient.domain.countTotalDomains.useQuery();
+  const { maxDomainsAllowedPerUser, hasProPlan } = useStore($userPlanFeatures);
+  useEffect(() => {
+    load();
+  }, [load]);
+  const withinFreeLimit = data
+    ? data.success && data.data < maxDomainsAllowedPerUser
+    : true;
+  const canAddDomain = hasProPlan || withinFreeLimit;
+  return { canAddDomain, maxDomainsAllowedPerUser };
+};
+
 const Content = (props: {
   projectId: Project["id"];
   onExportClick: () => void;
@@ -356,14 +368,14 @@ const Content = (props: {
     load: domainRefresh,
     state: domainState,
     error: domainSystemError,
-  } = trpc.findMany.useQuery();
+  } = trpcClient.domain.findMany.useQuery();
 
   const {
     load: projectLoad,
     data: projectData,
     state: projectState,
     error: projectSystemError,
-  } = trpc.project.useQuery();
+  } = trpcClient.domain.project.useQuery();
 
   useEffect(() => {
     projectLoad({ projectId: props.projectId });
@@ -408,9 +420,33 @@ const Content = (props: {
     setIsPublishing(hasPendingState);
   }, [hasPendingState, setIsPublishing]);
 
+  const { canAddDomain, maxDomainsAllowedPerUser } = useCanAddDomain();
+
   return (
     <>
       <ScrollArea>
+        {canAddDomain === false && (
+          <PanelBanner>
+            <Text variant="regularBold">Free domains limit reached</Text>
+            <Text variant="regular">
+              You have reached the limit of {maxDomainsAllowedPerUser} custom
+              domains on your account.{" "}
+              <Text variant="regularBold" inline>
+                Upgrade to a Pro account
+              </Text>{" "}
+              to add unlimited domains.
+            </Text>
+            <Link
+              className={buttonStyle({ color: "gradient" })}
+              color="contrast"
+              underline="none"
+              href="https://webstudio.is/pricing"
+              target="_blank"
+            >
+              Upgrade
+            </Link>
+          </PanelBanner>
+        )}
         {projectSystemError !== undefined && (
           <ErrorText>{projectSystemError}</ErrorText>
         )}
@@ -554,7 +590,7 @@ const ExportContent = () => {
         <Flex gap={2}>
           <InputField
             css={{ flex: 1 }}
-            variant="mono"
+            text="mono"
             readOnly
             value={npxCommand}
           />
@@ -678,7 +714,11 @@ export const PublishButton = ({ projectId }: PublishProps) => {
   return (
     <FloatingPanelPopover modal open={isOpen} onOpenChange={handleOpenChange}>
       <FloatingPanelAnchor>
-        <Tooltip side="bottom" content={tooltipContent}>
+        <Tooltip
+          side="bottom"
+          content={tooltipContent ?? "Publish to Webstudio Cloud"}
+          sideOffset={Number.parseFloat(rawTheme.spacing[5])}
+        >
           <FloatingPanelPopoverTrigger asChild>
             <Button disabled={isPublishEnabled === false} color="positive">
               Publish
@@ -688,7 +728,7 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       </FloatingPanelAnchor>
 
       <FloatingPanelPopoverContent
-        sideOffset={parseFloat(rawTheme.spacing[8])}
+        sideOffset={Number.parseFloat(rawTheme.spacing[8])}
         css={{
           zIndex: theme.zIndices[1],
           width: theme.spacing[33],

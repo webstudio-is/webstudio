@@ -1,23 +1,20 @@
 import { ImageIcon } from "@webstudio-is/icons";
-import { Flex } from "@webstudio-is/design-system";
 import { ImageManager } from "~/builder/shared/image-manager";
-import type { TabName } from "../../types";
-import { Header, CloseButton } from "../../header";
+import type { TabContentProps } from "../../types";
+import { Header, CloseButton, Root } from "../../shared/panel";
 
-export const TabContent = ({
-  onSetActiveTab,
-}: {
-  onSetActiveTab: (tabName: TabName) => void;
-}) => {
+export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
   return (
-    <Flex direction="column" css={{ height: "100%" }}>
+    <Root>
       <Header
         title="Assets"
         suffix={<CloseButton onClick={() => onSetActiveTab("none")} />}
       />
       <ImageManager />
-    </Flex>
+    </Root>
   );
 };
 
-export const icon = <ImageIcon />;
+export const Icon = ImageIcon;
+
+export const label = "Assets";

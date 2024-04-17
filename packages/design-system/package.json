@@ -1,15 +1,12 @@
 {
   "name": "@webstudio-is/design-system",
-  "version": "0.123.0",
+  "version": "0.144.0",
   "description": "Webstudio Design System",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
   "type": "module",
   "scripts": {
-    "dev": "pnpm build --watch",
-    "build": "rm -rf lib && esbuild 'src/**/*.ts' 'src/**/*.tsx' --outdir=lib",
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
-    "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
@@ -18,6 +15,9 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@storybook/addon-actions": "^7.4.0",
+    "@storybook/addon-essentials": "^7.4.0",
+    "@storybook/addon-links": "^7.4.0",
     "@storybook/react": "^7.4.0",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/react": "^18.2.21",
@@ -27,14 +27,16 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tsx": "^3.12.8",
-    "typescript": "5.2.2"
+    "tsx": "^4.7.2",
+    "typescript": "5.2.2",
+    "zod": "^3.22.4"
   },
   "peerDependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "dependencies": {
+    "@floating-ui/dom": "^1.5.3",
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-accessible-icon": "^1.0.3",
     "@radix-ui/react-avatar": "^1.0.4",
@@ -52,6 +54,7 @@
     "@radix-ui/react-scroll-area": "^1.0.5",
     "@radix-ui/react-select": "^2.0.0",
     "@radix-ui/react-separator": "^1.0.3",
+    "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-switch": "^1.0.3",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
@@ -69,20 +72,15 @@
     "downshift": "^6.1.7",
     "immer": "^10.0.3",
     "match-sorter": "^6.3.1",
+    "react-field-sizing-content": "^1.0.0",
     "react-hot-toast": "^2.4.1",
     "token-transformer": "^0.0.28",
     "use-debounce": "^9.0.4",
     "warn-once": "^0.1.1"
   },
   "exports": {
-    "webstudio": "./src/index.ts",
-    "import": "./lib/index.js",
-    "types": "./lib/types/index.d.ts"
+    "webstudio": "./src/index.ts"
   },
-  "files": [
-    "lib/*",
-    "!*.{test,stories}.*"
-  ],
   "license": "AGPL-3.0-or-later",
   "private": true,
   "sideEffects": false

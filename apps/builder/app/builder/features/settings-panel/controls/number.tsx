@@ -1,16 +1,20 @@
 import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
-import { Box, InputField } from "@webstudio-is/design-system";
-import { BindingPopover } from "~/builder/shared/binding-popover";
+import { InputField } from "@webstudio-is/design-system";
+import {
+  BindingControl,
+  BindingPopover,
+} from "~/builder/shared/binding-popover";
 import {
   type ControlProps,
-  getLabel,
   useLocalValue,
   ResponsiveLayout,
   Label,
   updateExpressionValue,
   $selectedInstanceScope,
+  useBindingState,
 } from "../shared";
+import { humanizeString } from "~/shared/string-utils";
 
 export const NumberControl = ({
   meta,
@@ -19,9 +23,8 @@ export const NumberControl = ({
   computedValue,
   onChange,
   deletable,
-  readOnly,
   onDelete,
-}: ControlProps<"number", "number" | "expression">) => {
+}: ControlProps<"number">) => {
   const id = useId();
 
   const [isInvalid, setIsInvalid] = useState(false);
@@ -42,24 +45,32 @@ export const NumberControl = ({
     }
   );
 
+  const label = humanizeString(meta.label || propName);
   const { scope, aliases } = useStore($selectedInstanceScope);
   const expression =
     prop?.type === "expression" ? prop.value : JSON.stringify(computedValue);
+  const { overwritable, variant } = useBindingState(
+    prop?.type === "expression" ? prop.value : undefined
+  );
 
   return (
     <ResponsiveLayout
       label={
-        <Label htmlFor={id} description={meta.description} readOnly={readOnly}>
-          {getLabel(meta, propName)}
+        <Label
+          htmlFor={id}
+          description={meta.description}
+          readOnly={overwritable === false}
+        >
+          {label}
         </Label>
       }
       deletable={deletable}
       onDelete={onDelete}
     >
-      <Box css={{ position: "relative" }}>
+      <BindingControl>
         <InputField
           id={id}
-          disabled={readOnly}
+          disabled={overwritable === false}
           type="number"
           value={localValue.value}
           color={isInvalid ? "error" : undefined}
@@ -77,6 +88,12 @@ export const NumberControl = ({
         <BindingPopover
           scope={scope}
           aliases={aliases}
+          validate={(value) => {
+            if (value !== undefined && typeof value !== "number") {
+              return `${label} expects a number value`;
+            }
+          }}
+          variant={variant}
           value={expression}
           onChange={(newExpression) =>
             onChange({ type: "expression", value: newExpression })
@@ -89,7 +106,7 @@ export const NumberControl = ({
             });
           }}
         />
-      </Box>
+      </BindingControl>
     </ResponsiveLayout>
   );
 };

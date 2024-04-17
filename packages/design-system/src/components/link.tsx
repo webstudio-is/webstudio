@@ -60,6 +60,6 @@ export const Link = styled("a", {
   defaultVariants: {
     variant: "regular",
     color: "main",
-    underline: "hover",
+    underline: "always",
   },
 });

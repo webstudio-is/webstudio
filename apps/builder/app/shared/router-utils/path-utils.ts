@@ -1,7 +1,5 @@
 import type { AUTH_PROVIDERS } from "~/shared/session";
 import type { Project } from "@webstudio-is/project";
-import type { ThemeSetting } from "~/shared/theme";
-import env from "~/shared/env";
 import { $authToken } from "../nano-states";
 
 const searchParams = (params: Record<string, string | undefined | null>) => {
@@ -73,8 +71,21 @@ export const builderDomainsPath = (method: string) => {
   }`;
 };
 
-export const dashboardProjectPath = (method: string) =>
-  `/dashboard/projects/${method}`;
+export const projectsPath = (
+  method: string,
+  { authToken }: { authToken?: string } = {}
+) => {
+  const path = `/rest/projects/${method}`;
+  if (authToken === undefined) {
+    return path;
+  }
+  const urlSearchParams = new URLSearchParams();
+  urlSearchParams.set("authToken", authToken);
+  return path + `?${urlSearchParams.toString()}`;
+};
+
+export const dashboardProjectsPath = (method: string) =>
+  `${dashboardPath()}/projects/${method}`;
 
 export const authorizationTokenPath = (method: string) =>
   `/rest/authorization-token/${method}`;
@@ -122,9 +133,6 @@ export const restAssetsUploadPath = ({ name }: { name: string }) => {
   return `/rest/assets/${name}`;
 };
 
-export const restThemePath = ({ setting }: { setting: ThemeSetting }) =>
-  `/rest/theme/${setting}`;
-
 export const restPatchPath = (props: { authToken?: string }) => {
   const urlSearchParams = new URLSearchParams();
   if (props.authToken !== undefined) {
@@ -146,20 +154,10 @@ export const getBuildUrl = ({ project }: { project: Project }) => {
   return `/?${searchParams.toString()}`;
 };
 
-export const getPublishedUrl = (domain: string) => {
-  const protocol = typeof location === "object" ? location.protocol : "https:";
-
-  const publisherHost = env.PUBLISHER_HOST ?? "";
-
-  // We use location.host to get the hostname and port in development mode and to not break local testing.
-  const localhost = typeof location === "object" ? location.host : "";
-
-  const host = publisherHost || env.BUILDER_HOST || localhost;
-
-  return `${protocol}//${domain}.${host}`;
-};
-
 export const restAi = (subEndpoint?: "detect" | "audio/transcriptions") =>
   typeof subEndpoint === "string" ? `/rest/ai/${subEndpoint}` : "/rest/ai";
 
 export const restResourcesLoader = () => `/rest/resources-loader`;
+
+export const marketplacePath = (method: string) =>
+  `/builder/marketplace/${method}`;

@@ -19,7 +19,8 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
       describe: "[Experimental] Use preview version of the project",
     })
     .option("template", {
-      type: "string",
+      type: "array",
+      string: true,
       describe: `Template to use for the build [choices: ${PROJECT_TEMPALTES.join(
         ", "
       )}]`,

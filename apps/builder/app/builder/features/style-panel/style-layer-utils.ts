@@ -3,7 +3,7 @@ import type {
   LayersValue,
   StyleProperty,
 } from "@webstudio-is/css-engine";
-import type { RenderCategoryProps } from "./style-sections";
+import type { SectionProps } from "./sections";
 import type { StyleInfo } from "./shared/style-info";
 import type { CreateBatchUpdate } from "./shared/use-style-data";
 
@@ -11,12 +11,16 @@ export const deleteLayer = (
   property: StyleProperty,
   index: number,
   layers: LayersValue,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   const batch = createBatchUpdate();
-  const layer = layers.value[index];
+  const value = layers.value[index];
 
-  if (layer.type !== "tuple" && layer.type !== "unparsed") {
+  if (
+    value.type !== "tuple" &&
+    value.type !== "function" &&
+    value.type !== "unparsed"
+  ) {
     return;
   }
   const newLayers = [...layers.value];
@@ -38,18 +42,18 @@ export const hideLayer = (
   property: StyleProperty,
   index: number,
   layers: LayersValue,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   const batch = createBatchUpdate();
-  const layer = layers.value[index];
+  const value = layers.value[index];
 
-  if (layer.type !== "tuple" && layer.type !== "unparsed") {
+  if (value.type !== "tuple" && value.type !== "unparsed") {
     return;
   }
   const newLayers = [...layers.value];
   newLayers.splice(index, 1, {
-    ...layer,
-    hidden: layer.hidden !== true,
+    ...value,
+    hidden: value.hidden !== true,
   });
   batch.setProperty(property)({
     type: "layers",
@@ -61,11 +65,11 @@ export const hideLayer = (
 
 export const addLayer = (
   property: StyleProperty,
-  layerValue: LayersValue | InvalidValue,
+  value: LayersValue | InvalidValue,
   style: StyleInfo,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
-  if (layerValue.type === "invalid") {
+  if (value.type === "invalid") {
     return;
   }
 
@@ -74,11 +78,11 @@ export const addLayer = (
   // Initially its none, so we can just set it.
   if (layers?.type === "layers") {
     // Adding layers we had before
-    layerValue.value = [...layerValue.value, ...layers.value];
+    value.value = [...value.value, ...layers.value];
   }
 
   const batch = createBatchUpdate();
-  batch.setProperty(property)(layerValue);
+  batch.setProperty(property)(value);
   batch.publish();
 };
 
@@ -87,12 +91,15 @@ export const updateLayer = (
   newValue: LayersValue,
   layers: LayersValue,
   index: number,
-  createBatchUpdate: RenderCategoryProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   const batch = createBatchUpdate();
-  const layer = layers.value[index];
-
-  if (layer.type !== "tuple" && layer.type !== "unparsed") {
+  const value = layers.value[index];
+  if (
+    value.type !== "tuple" &&
+    value.type !== "function" &&
+    value.type !== "unparsed"
+  ) {
     return;
   }
   const newLayers = [...layers.value];
@@ -131,15 +138,12 @@ export const swapLayers = (
   }
 
   const newValue = [...value.value];
-
   newValue.splice(oldIndex, 1);
-
   newValue.splice(newIndex, 0, value.value[oldIndex]);
 
   batch.setProperty(property)({
     ...value,
     value: newValue,
   });
-
   batch.publish();
 };

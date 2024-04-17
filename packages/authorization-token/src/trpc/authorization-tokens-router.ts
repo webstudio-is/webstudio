@@ -1,9 +1,6 @@
 import { z } from "zod";
-import { initTRPC } from "@trpc/server";
-import type { AppContext } from "@webstudio-is/trpc-interface/index.server";
+import { router, procedure } from "@webstudio-is/trpc-interface/index.server";
 import { db } from "../db";
-
-const { router, procedure } = initTRPC.context<AppContext>().create();
 
 const TokenProjectRelation = z.enum([
   "viewers",
@@ -60,15 +57,19 @@ export const authorizationTokenRouter = router({
         token: z.string(),
         name: z.string(),
         relation: TokenProjectRelation,
+        canClone: z.boolean(),
+        canCopy: z.boolean(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       return await db.update(
+        input.projectId,
         {
-          projectId: input.projectId,
           token: input.token,
           name: input.name,
           relation: input.relation,
+          canClone: input.canClone,
+          canCopy: input.canCopy,
         },
         ctx
       );

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import {
   commandDetect,
   createGptModel,
@@ -16,7 +16,7 @@ export const RequestParamsSchema = z.object({
   prompt: z.string().max(1200),
 });
 
-export const action = async ({ request }: ActionArgs) => {
+export const action = async ({ request }: ActionFunctionArgs) => {
   // @todo Reinstate isFeatureEnabled('ai')
 
   if (env.OPENAI_KEY === undefined) {

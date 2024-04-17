@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { useBeforeUnload } from "react-use";
 import { atom } from "nanostores";
 import { Project } from "@webstudio-is/project";
 import type { Build } from "@webstudio-is/project-build";
@@ -172,7 +171,8 @@ const syncServer = async function () {
         );
 
         if (response.ok) {
-          const result = await response.json();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const result = (await response.json()) as any;
           if (result.status === "ok") {
             details.version += 1;
             // stop retrying and wait next transactions
@@ -226,14 +226,14 @@ const syncServer = async function () {
           // It's usually ok to be here, probably restorable with retries
           const text = await response.text();
           // To investigate some strange errors we have seen
-          // eslint-disable-next-line no-console
+
           console.info(`Non ok respone: ${text}`);
         }
       } catch (e) {
         if (navigator.onLine) {
           // ERR_CONNECTION_REFUSED or like, probably restorable with retries
           // anyway lets's log it
-          // eslint-disable-next-line no-console
+
           console.info(e instanceof Error ? e.message : JSON.stringify(e));
         }
       }
@@ -311,10 +311,15 @@ export const useSyncServer = ({
     authPermit,
   });
 
-  useBeforeUnload(
-    () =>
-      queueStatus.get().status !== "idle" &&
-      queueStatus.get().status !== "fatal",
-    "You have unsaved changes. Are you sure you want to leave?"
-  );
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      const { status } = queueStatus.get();
+      if (status === "idle" || status === "fatal") {
+        return;
+      }
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 };

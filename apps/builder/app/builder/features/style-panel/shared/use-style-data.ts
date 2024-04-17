@@ -4,15 +4,16 @@ import {
   type Breakpoint,
   type Instance,
   getStyleDeclKey,
+  StyleDecl,
 } from "@webstudio-is/sdk";
 import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
 import {
-  selectedBreakpointStore,
-  selectedOrLastStyleSourceSelectorStore,
-  selectedStyleSourceStore,
-  styleSourceSelectionsStore,
-  styleSourcesStore,
-  stylesStore,
+  $selectedBreakpoint,
+  $selectedOrLastStyleSourceSelector,
+  $selectedStyleSource,
+  $styleSourceSelections,
+  $styleSources,
+  $styles,
 } from "~/shared/nano-states";
 import { useStyleInfo } from "./style-info";
 import { serverSyncStore } from "~/shared/sync";
@@ -36,11 +37,7 @@ type StyleUpdates = {
   state: undefined | string;
 };
 
-type UseStyleData = {
-  selectedInstance: Instance;
-};
-
-export type StyleUpdateOptions = { isEphemeral: boolean };
+export type StyleUpdateOptions = { isEphemeral?: boolean; listed?: boolean };
 
 export type SetValue = (
   style: StyleValue,
@@ -60,15 +57,19 @@ export type CreateBatchUpdate = () => {
   publish: (options?: StyleUpdateOptions) => void;
 };
 
-export const useStyleData = ({ selectedInstance }: UseStyleData) => {
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
+export const useStyleData = (selectedInstance: Instance) => {
+  const selectedBreakpoint = useStore($selectedBreakpoint);
 
   const currentStyle = useStyleInfo();
 
   const publishUpdates = useCallback(
-    (type: "update" | "preview", updates: StyleUpdates["updates"]) => {
-      const selectedStyleSource = selectedStyleSourceStore.get();
-      const styleSourceSelector = selectedOrLastStyleSourceSelectorStore.get();
+    (
+      type: "update" | "preview",
+      updates: StyleUpdates["updates"],
+      options: StyleUpdateOptions
+    ) => {
+      const selectedStyleSource = $selectedStyleSource.get();
+      const styleSourceSelector = $selectedOrLastStyleSourceSelector.get();
 
       if (
         updates.length === 0 ||
@@ -86,9 +87,11 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
             ephemeralStyles.push({
               instanceId: selectedInstance.id,
               breakpointId: selectedBreakpoint.id,
+              styleSourceId: styleSourceSelector.styleSourceId,
               state: styleSourceSelector.state,
               property: update.property,
               value: update.value,
+              listed: options.listed,
             });
           }
         }
@@ -98,7 +101,7 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
 
       $ephemeralStyles.set([]);
       serverSyncStore.createTransaction(
-        [styleSourceSelectionsStore, styleSourcesStore, stylesStore],
+        [$styleSourceSelections, $styleSources, $styles],
         (styleSourceSelections, styleSources, styles) => {
           const instanceId = selectedInstance.id;
           const breakpointId = selectedBreakpoint.id;
@@ -119,12 +122,13 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
 
           for (const update of updates) {
             if (update.operation === "set") {
-              const styleDecl = {
+              const styleDecl: StyleDecl = {
                 breakpointId,
                 styleSourceId: styleSourceSelector.styleSourceId,
                 state: styleSourceSelector.state,
                 property: update.property,
                 value: update.value,
+                listed: options.listed,
               };
               styles.set(getStyleDeclKey(styleDecl), styleDecl);
             }
@@ -147,12 +151,12 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
 
   const setProperty = useCallback<SetProperty>(
     (property) => {
-      return (value, options = { isEphemeral: false }) => {
+      return (value, options: StyleUpdateOptions = { isEphemeral: false }) => {
         if (value.type !== "invalid") {
           const updates = [{ operation: "set" as const, property, value }];
           const type = options.isEphemeral ? "preview" : "update";
 
-          publishUpdates(type, updates);
+          publishUpdates(type, updates, options);
         }
       };
     },
@@ -160,10 +164,13 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
   );
 
   const deleteProperty = useCallback(
-    (property: StyleProperty, options = { isEphemeral: false }) => {
+    (
+      property: StyleProperty,
+      options: StyleUpdateOptions = { isEphemeral: false }
+    ) => {
       const updates = [{ operation: "delete" as const, property }];
       const type = options.isEphemeral ? "preview" : "update";
-      publishUpdates(type, updates);
+      publishUpdates(type, updates, options);
     },
     [publishUpdates]
   );
@@ -186,12 +193,12 @@ export const useStyleData = ({ selectedInstance }: UseStyleData) => {
       updates.push({ operation: "delete", property });
     };
 
-    const publish = (options = { isEphemeral: false }) => {
+    const publish = (options: StyleUpdateOptions = { isEphemeral: false }) => {
       if (!updates.length) {
         return;
       }
       const type = options.isEphemeral ? "preview" : "update";
-      publishUpdates(type, updates);
+      publishUpdates(type, updates, options);
       updates = [];
     };
 

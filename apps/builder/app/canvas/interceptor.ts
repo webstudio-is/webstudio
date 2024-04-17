@@ -1,5 +1,6 @@
-import { findPageByIdOrPath } from "@webstudio-is/project-build";
-import { $isPreviewMode, pagesStore } from "~/shared/nano-states";
+import { findPageByIdOrPath } from "@webstudio-is/sdk";
+import { matchPathnamePattern } from "~/builder/shared/url-pattern";
+import { $isPreviewMode, $pages, updateSystem } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
@@ -12,7 +13,7 @@ const isAbsoluteUrl = (href: string) => {
 };
 
 const handleLinkClick = (element: HTMLAnchorElement) => {
-  const pages = pagesStore.get();
+  const pages = $pages.get();
   const href = element.getAttribute("href");
   if (href === null || pages === undefined) {
     return;
@@ -24,7 +25,18 @@ const handleLinkClick = (element: HTMLAnchorElement) => {
   }
 
   const pageHref = new URL(href, "https://any-valid.url");
-  const page = findPageByIdOrPath(pages, pageHref.pathname);
+  for (const page of [pages.homePage, ...pages.pages]) {
+    // URL always parses root page as /
+    // but webstudio stores home page as empty string
+    const params = matchPathnamePattern(page.path || "/", pageHref.pathname);
+    if (params) {
+      const search = Object.fromEntries(pageHref.searchParams);
+      switchPage(page.id, pageHref.hash);
+      updateSystem(page, { params, search });
+      break;
+    }
+  }
+  const page = findPageByIdOrPath(pageHref.pathname, pages);
   if (page) {
     switchPage(page.id, pageHref.hash);
     return;
@@ -43,6 +55,11 @@ export const subscribeInterceptedEvents = () => {
         if ($isPreviewMode.get()) {
           handleLinkClick(a);
         }
+      }
+      // prevent invoking submit with buttons in canvas mode
+      // because form with prevented submit still invokes validation
+      if (event.target.closest("button") && $isPreviewMode.get() === false) {
+        event.preventDefault();
       }
     }
   };

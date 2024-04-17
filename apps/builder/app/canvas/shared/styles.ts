@@ -1,5 +1,4 @@
-import { useContext, useEffect, useMemo } from "react";
-import { useIsomorphicLayoutEffect } from "react-use";
+import { useContext, useEffect, useLayoutEffect, useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import type { Assets, Instance, StyleDecl } from "@webstudio-is/sdk";
@@ -16,14 +15,15 @@ import {
   type StyleValue,
   type StyleProperty,
   isValidStaticStyleValue,
+  type VarValue,
 } from "@webstudio-is/css-engine";
 import {
-  assetsStore,
-  breakpointsStore,
+  $assets,
+  $breakpoints,
   $isPreviewMode,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
-  selectedStyleSourceSelectorStore,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
+  $selectedStyleState,
 } from "~/shared/nano-states";
 import {
   type StyleRule,
@@ -33,6 +33,7 @@ import {
   compareMedia,
 } from "@webstudio-is/css-engine";
 import { $ephemeralStyles } from "../stores";
+import { resetInert, setInert } from "./inert";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const helpersSheet = createRegularStyleSheet({ name: "helpers" });
@@ -116,17 +117,35 @@ const subscribePreviewMode = () => {
 const subscribeEphemeralStyle = (params: Params) => {
   // track custom properties added on previous ephemeral styles change
   const addedCustomProperties = new Set<string>();
+
   return $ephemeralStyles.subscribe((ephemeralStyles) => {
+    if (ephemeralStyles.length > 0) {
+      setInert();
+    } else {
+      resetInert();
+    }
+
     // track custom properties not set on this change
     const deletedCustomProperties = new Set(addedCustomProperties);
 
-    const assets = assetsStore.get();
+    const assets = $assets.get();
     const transformer = createImageValueTransformer(assets, {
       assetBaseUrl: params.assetBaseUrl,
     });
+
     for (const styleDecl of ephemeralStyles) {
-      const { instanceId, breakpointId, state, property, value } = styleDecl;
-      const customProperty = `--${toVarNamespace(instanceId, property)}`;
+      const {
+        instanceId,
+        breakpointId,
+        state,
+        property,
+        value,
+        styleSourceId,
+      } = styleDecl;
+      const customProperty = `--${
+        toVarValue(styleSourceId, property, value)?.value ?? "invalid-property"
+      }`;
+
       document.body.style.setProperty(
         customProperty,
         toValue(value, transformer)
@@ -141,14 +160,32 @@ const subscribeEphemeralStyle = (params: Params) => {
         assets,
         params,
       });
-      // this is possible on newly created instances,
-      // properties are not yet defined in the style.
-      if (rule.styleMap.has(property) === false) {
-        const varValue = toVarValue(instanceId, property, value);
-        if (varValue) {
-          rule.styleMap.set(property, varValue);
-        }
+
+      const propertyValue = rule.styleMap.get(property);
+
+      const varValue = toVarValue(styleSourceId, property, value);
+
+      if (varValue === undefined) {
+        continue;
       }
+
+      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
+      if (property === "backgroundClip") {
+        continue;
+      }
+
+      // Variable names are equal, no need to update
+      if (
+        propertyValue?.type === "var" &&
+        propertyValue.value === varValue.value
+      ) {
+        continue;
+      }
+
+      // this is possible on newly created instances, or
+      // in case of property variable defined on the other style source
+      // or properties are not yet defined in the style.
+      rule.styleMap.set(property, varValue);
     }
 
     for (const property of deletedCustomProperties) {
@@ -167,11 +204,11 @@ export const useManageDesignModeStyles = (params: Params) => {
 };
 
 export const GlobalStyles = ({ params }: { params: Params }) => {
-  const breakpoints = useStore(breakpointsStore);
-  const assets = useStore(assetsStore);
-  const metas = useStore(registeredComponentMetasStore);
+  const breakpoints = useStore($breakpoints);
+  const assets = useStore($assets);
+  const metas = useStore($registeredComponentMetas);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     const sortedBreakpoints = Array.from(breakpoints.values()).sort(
       compareMedia
     );
@@ -181,16 +218,16 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
     userSheet.render();
   }, [breakpoints]);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     fontsAndDefaultsSheet.clear();
     addGlobalRules(fontsAndDefaultsSheet, {
       assets,
       assetBaseUrl: params.assetBaseUrl,
     });
     fontsAndDefaultsSheet.render();
-  }, [assets]);
+  }, [assets, params.assetBaseUrl]);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     presetSheet.clear();
     for (const [component, meta] of metas) {
       const presetStyle = meta.presetStyle;
@@ -212,10 +249,10 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
 // to quickly pass the values over CSS variable witout rerendering the components tree.
 // Results in values like this: `var(--namespace, staticValue)`
 const toVarValue = (
-  instanceId: Instance["id"],
+  styleSourceId: StyleDecl["styleSourceId"],
   styleProperty: StyleProperty,
   styleValue: StyleValue
-): undefined | StyleValue => {
+): undefined | VarValue => {
   if (styleValue.type === "var") {
     return styleValue;
   }
@@ -223,7 +260,7 @@ const toVarValue = (
   if (isValidStaticStyleValue(styleValue)) {
     return {
       type: "var",
-      value: toVarNamespace(instanceId, styleProperty),
+      value: `${styleProperty}-${styleSourceId}`,
       fallbacks: [styleValue],
     };
   }
@@ -263,18 +300,18 @@ const getOrCreateRule = ({
 };
 
 const useSelectedState = (instanceId: Instance["id"]) => {
-  const selectedStateStore = useMemo(() => {
+  const $selectedState = useMemo(() => {
     return computed(
-      [selectedInstanceSelectorStore, selectedStyleSourceSelectorStore],
-      (selectedInstanceSelector, selectedStyleSourceSelector) => {
+      [$selectedInstanceSelector, $selectedStyleState],
+      (selectedInstanceSelector, selectedStyleState) => {
         if (selectedInstanceSelector?.[0] !== instanceId) {
           return;
         }
-        return selectedStyleSourceSelector?.state;
+        return selectedStyleState;
       }
     );
   }, [instanceId]);
-  const selectedState = useStore(selectedStateStore);
+  const selectedState = useStore($selectedState);
   return selectedState;
 };
 
@@ -286,13 +323,13 @@ export const useCssRules = ({
   instanceStyles: StyleDecl[];
 }) => {
   const params = useContext(ReactSdkContext);
-  const breakpoints = useStore(breakpointsStore);
+  const breakpoints = useStore($breakpoints);
   const selectedState = useSelectedState(instanceId);
 
-  useIsomorphicLayoutEffect(() => {
+  useLayoutEffect(() => {
     // expect assets to be up to date by the time styles are changed
     // to avoid all styles rerendering when assets are changed
-    const assets = assetsStore.get();
+    const assets = $assets.get();
 
     // find all instance rules and collect rendered properties
     const deletedPropertiesByRule = new Map<
@@ -314,7 +351,7 @@ export const useCssRules = ({
     });
 
     for (const styleDecl of orderedStyles) {
-      const { breakpointId, state, property, value } = styleDecl;
+      const { breakpointId, state, property, value, styleSourceId } = styleDecl;
 
       // create new rule or use cached one
       const rule = getOrCreateRule({
@@ -340,7 +377,7 @@ export const useCssRules = ({
       if (property === "backgroundClip") {
         rule.styleMap.set(property, value);
       } else {
-        const varValue = toVarValue(instanceId, property, value);
+        const varValue = toVarValue(styleSourceId, property, value);
         if (varValue) {
           rule.styleMap.set(property, varValue);
         }
@@ -355,9 +392,5 @@ export const useCssRules = ({
     }
 
     userSheet.render();
-  }, [instanceId, selectedState, instanceStyles, breakpoints]);
-};
-
-const toVarNamespace = (id: string, property: string) => {
-  return `${property}-${id}`;
+  }, [instanceId, selectedState, instanceStyles, breakpoints, params]);
 };

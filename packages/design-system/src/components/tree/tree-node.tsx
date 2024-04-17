@@ -5,6 +5,7 @@ import {
   useState,
   forwardRef,
   type ForwardRefRenderFunction,
+  type MouseEvent,
 } from "react";
 import {
   ChevronFilledDownIcon,
@@ -13,7 +14,7 @@ import {
 import { Box } from "../box";
 import { Flex } from "../flex";
 import { Text } from "../text";
-import { styled } from "../../stitches.config";
+import { styled, type CSS } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 import {
   type ItemId,
@@ -51,7 +52,7 @@ const getItemButtonCssVars = ({
     };
   }
   return {
-    [itemButtonVars.paddingRight]: `${ITEM_PADDING_RIGHT}px`,
+    [itemButtonVars.paddingRight]: ITEM_PADDING_RIGHT,
   };
 };
 const ItemButton = styled("button", {
@@ -72,15 +73,24 @@ const ItemButton = styled("button", {
   position: "relative",
 });
 
+const nestingLinesVisibilityVar = "--ws-tree-node-nesting-lines-visibility";
+
+export const showNestingLineVars = () => ({
+  [nestingLinesVisibilityVar]: "visible",
+});
+
 const NestingLine = styled(Box, {
+  visibility: `var(${nestingLinesVisibilityVar}, hidden)`,
   width: Math.ceil(INDENT / 2),
   marginRight: Math.floor(INDENT / 2),
   height: ITEM_HEIGHT,
   borderRight: "solid",
   borderRightWidth: 1,
-  borderColor: theme.colors.slate9,
+  borderColor: theme.colors.borderItemChildLine,
   variants: {
-    isSelected: { true: { borderColor: theme.colors.blue7 } },
+    isSelected: {
+      true: { borderColor: theme.colors.borderItemChildLineCurrent },
+    },
   },
 });
 
@@ -97,7 +107,7 @@ const NestingLines = ({
         <NestingLine key={index} isSelected={isSelected} />
       ))}
     </>
-  ) : null;
+  ) : undefined;
 
 const CollapsibleTrigger = styled("button", {
   all: "unset",
@@ -137,7 +147,7 @@ const getSuffixContainerCssVars = ({
 const SuffixContainer = styled(Flex, {
   position: "absolute",
   alignItems: "center",
-  right: `${ITEM_PADDING_RIGHT}px`,
+  right: ITEM_PADDING_RIGHT,
   top: 0,
   bottom: 0,
   defaultVariants: { align: "center" },
@@ -148,13 +158,14 @@ const SuffixContainer = styled(Flex, {
   pointerEvents: `var(${suffixContainerVars.pointerEvents})`,
 });
 
-const hoverStyle = {
+const hoverStyle: CSS = {
   content: "''",
   position: "absolute",
   left: 2,
   right: 2,
   height: ITEM_HEIGHT,
-  border: `solid ${theme.colors.blue10}`,
+  borderStyle: "solid",
+  borderColor: theme.colors.borderFocus,
   borderWidth: 2,
   borderRadius: theme.borderRadius[6],
   pointerEvents: "none",
@@ -162,7 +173,7 @@ const hoverStyle = {
 };
 
 const ItemContainer = styled(Flex, {
-  color: theme.colors.hiContrast,
+  color: theme.colors.foregroundMain,
   alignItems: "center",
   position: "relative",
   ...getItemButtonCssVars({ suffixVisible: false }),
@@ -170,10 +181,15 @@ const ItemContainer = styled(Flex, {
 
   variants: {
     isSelected: {
-      true: { color: theme.colors.loContrast, bc: theme.colors.blue10 },
+      true: {
+        color: theme.colors.foregroundContrastMain,
+        bc: theme.colors.backgroundItemCurrent,
+      },
     },
     parentIsSelected: {
-      true: { bc: theme.colors.blue4 },
+      true: {
+        bc: theme.colors.backgroundItemCurrentChild,
+      },
     },
     suffixVisible: {
       true: {
@@ -199,7 +215,7 @@ const ItemContainer = styled(Flex, {
 });
 
 const useScrollIntoView = (
-  element: HTMLElement | null,
+  elementRef: { current: HTMLElement | null },
   {
     isDragging,
     isDropTarget,
@@ -210,8 +226,6 @@ const useScrollIntoView = (
   isDraggingRef.current = isDragging;
   const isDropTargetRef = useRef(isDropTarget);
   isDropTargetRef.current = isDropTarget;
-  const elementRef = useRef(element);
-  elementRef.current = element;
 
   // Scroll the selected button into view when selected from canvas.
   useEffect(() => {
@@ -225,7 +239,11 @@ const useScrollIntoView = (
         block: "nearest",
       });
     }
-  }, [isSelected]);
+  }, [
+    isSelected,
+    //only for the linter
+    elementRef,
+  ]);
 };
 
 export type TreeItemRenderProps<Data extends { id: string }> = {
@@ -235,7 +253,7 @@ export type TreeItemRenderProps<Data extends { id: string }> = {
   dropTargetItemSelector?: ItemSelector;
   parentIsSelected?: boolean;
   isSelected?: boolean;
-  onSelect?: (itemSelector: ItemSelector) => void;
+  onSelect?: (itemSelector: ItemSelector, all?: boolean) => void;
   level: number;
   isAlwaysExpanded: boolean;
   shouldRenderExpandButton: boolean;
@@ -296,7 +314,10 @@ export const TreeItemBody = <Data extends { id: string }>({
       return {};
     }
     return selectionEvent === "click"
-      ? { handleClick: () => onSelect(itemSelector) }
+      ? {
+          handleClick: (event: MouseEvent) =>
+            onSelect(itemSelector, event.altKey),
+        }
       : { handleFocus: () => onSelect(itemSelector) };
   }, [selectionEvent, onSelect, itemSelector]);
 
@@ -306,7 +327,7 @@ export const TreeItemBody = <Data extends { id: string }>({
     itemSelector
   );
 
-  useScrollIntoView(itemButtonRef.current, {
+  useScrollIntoView(itemButtonRef, {
     isSelected,
     isDragging,
     isDropTarget,
@@ -379,6 +400,8 @@ export const TreeItemLabelBase: ForwardRefRenderFunction<
         truncate
         css={{
           ml: prefix ? theme.spacing[3] : 0,
+          flexBasis: 0,
+          flexGrow: 1,
         }}
         {...restProps}
       >

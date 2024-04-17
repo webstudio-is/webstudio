@@ -45,11 +45,12 @@ export const menuItemIndicatorCss = css({
 export const MenuItemIndicator = styled("span", menuItemIndicatorCss);
 
 const itemMargin = theme.spacing[3];
-export const menuItemCss = css(textVariants.labelsTitleCase, {
+export const menuItemCss = css({
   outline: "none",
   cursor: "default",
   position: "relative",
   display: "flex",
+  order: 1,
   alignItems: "center",
   color: theme.colors.foregroundMain,
   mx: itemMargin,
@@ -64,6 +65,10 @@ export const menuItemCss = css(textVariants.labelsTitleCase, {
     color: theme.colors.foregroundDisabled,
   },
   variants: {
+    text: {
+      title: textVariants.labelsTitleCase,
+      sentence: textVariants.labelsSentenceCase,
+    },
     withIndicator: {
       true: {
         paddingLeft: `calc(${theme.spacing[3]} + ${indicatorSize} + ${theme.spacing[3]})`,
@@ -74,7 +79,26 @@ export const menuItemCss = css(textVariants.labelsTitleCase, {
         color: theme.colors.foregroundDestructive,
       },
     },
+    hint: {
+      true: {
+        ...textVariants.labelsSentenceCase,
+        px: theme.spacing[5],
+        background: theme.colors.backgroundMenuHint,
+        borderRadius: theme.borderRadius[2],
+        overflow: "hidden",
+        "&::before": {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          content: '""',
+          width: 2,
+          height: "100%",
+          background: theme.colors.backgroundGradientVertical,
+        },
+      },
+    },
   },
+  defaultVariants: { text: "title" },
 });
 
 // To use outside of any menu context, e.g. in a Popover

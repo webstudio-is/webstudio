@@ -1,10 +1,11 @@
 import { z } from "zod";
 import {
-  mergeRouters,
   router,
   procedure,
-  projectRouter as baseProjectRouter,
-} from "@webstudio-is/project/index.server";
+  mergeRouters,
+} from "@webstudio-is/trpc-interface/index.server";
+import { projectRouter as baseProjectRouter } from "@webstudio-is/project/index.server";
+
 import { db } from "../db";
 
 const projectRouter = router({

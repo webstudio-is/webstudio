@@ -1,93 +1,143 @@
 {
   "build": {
-    "id": "c8c21b00-1c66-4fb1-903d-5fd207fe24a2",
+    "id": "ef8d4686-96a0-4f84-84e7-3e9e63cd593f",
     "projectId": "cddc1d44-af37-4cb6-a430-d300cf6f932d",
-    "version": 228,
-    "createdAt": "2023-12-26T09:13:01.469Z",
-    "updatedAt": "2023-12-26T09:13:01.469Z",
+    "version": 247,
+    "createdAt": "2024-02-01T08:34:52.398Z",
+    "updatedAt": "2024-02-01T08:34:52.398Z",
     "pages": {
       "meta": {
         "siteName": "KittyGuardedZone",
         "faviconAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
         "code": "<script>console.log('KittyGuardedZone')</script>\n"
       },
+      "settings": {
+        "atomicStyles": true
+      },
       "homePage": {
         "id": "7Db64ZXgYiRqKSQNR-qTQ",
         "name": "Home",
-        "title": "The Ultimate Cat Protection Zone",
+        "title": "\"The Ultimate Cat Protection Zone\"",
         "meta": {
-          "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+          "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
           "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
           "custom": [
             {
               "property": "fb:app_id",
-              "content": "app_id_app_id_app_id"
+              "content": "\"app_id_app_id_app_id\""
             }
           ]
         },
         "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
-        "path": ""
+        "path": "",
+        "systemDataSourceId": "ram6PSGTMg41lcfdoUGrV"
       },
       "pages": [
         {
           "id": "xfvB4UThQXmQ_OubPYrkg",
           "name": "radix excluded from the search",
-          "title": "Radix Revelations: Unraveling the Feline Mystique",
+          "title": "\"Radix Revelations: Unraveling the Feline Mystique\"",
           "meta": {
-            "description": "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
-            "excludePageFromSearch": true,
+            "description": "\"Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.\"",
+            "excludePageFromSearch": "true",
             "socialImageAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10"
           },
           "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
-          "path": "/radix"
+          "path": "/radix",
+          "systemDataSourceId": "WihU_iOb3p4rS3nJD6NvB"
         },
         {
           "id": "szYLvBduHPmbtqQKCDY0b",
           "name": "RouteWithSymbols",
-          "title": "RouteWithSymbols",
+          "title": "\"RouteWithSymbols\"",
           "meta": {
-            "description": ""
+            "description": "\"\""
           },
           "rootInstanceId": "EDEfpMPRqDejthtwkH7ws",
-          "path": "/_route_with_symbols_"
+          "path": "/_route_with_symbols_",
+          "systemDataSourceId": "_8Ok9oPHB3wlwjhX7Mlai"
         },
         {
           "id": "U1tRJl2ERr8_OFe0g9cN_",
           "name": "form",
-          "title": "form",
+          "title": "\"form\"",
           "meta": {
-            "description": ""
+            "description": "\"\""
           },
           "rootInstanceId": "a-4nDFkaWy4px1fn38XWJ",
-          "path": "/form"
+          "path": "/form",
+          "systemDataSourceId": "FNmfYcbf2VF3yudEbZwzx"
         },
         {
           "id": "-J9I4Oo6mONfQlf_3-OqG",
           "name": "heading-with-id",
-          "title": "heading-with-id",
+          "title": "\"heading-with-id\"",
           "meta": {
-            "description": ""
+            "description": "\"\""
           },
           "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
-          "path": "/heading-with-id"
+          "path": "/heading-with-id",
+          "systemDataSourceId": "YR7MLRg2bNHQqYgUhm27J"
         },
         {
           "id": "TS39WeBd0Qr3QgbSlzdf2",
           "name": "resources",
-          "title": "resources",
+          "title": "\"resources\"",
           "meta": {
-            "description": "",
-            "excludePageFromSearch": false,
+            "description": "\"\"",
+            "excludePageFromSearch": "false",
             "socialImageAssetId": "",
             "custom": [
               {
                 "property": "",
-                "content": ""
+                "content": "\"\""
               }
             ]
           },
           "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
-          "path": "/resources"
+          "path": "/resources",
+          "systemDataSourceId": "wTJbVXFa4Mul6Qg5ZcooO"
+        },
+        {
+          "id": "Pnz-BxUm6XmvFygk_XdEy",
+          "name": "Nested Page",
+          "title": "\"Nested Page\"",
+          "meta": {
+            "description": "\"\"",
+            "excludePageFromSearch": "false",
+            "socialImageAssetId": "",
+            "custom": [
+              {
+                "property": "",
+                "content": "\"\""
+              }
+            ]
+          },
+          "rootInstanceId": "L0ZXd5F9xk9Rsl9ORzIkJ",
+          "path": "/nested-page",
+          "systemDataSourceId": "X05l8b5NS4KvFRiiloGqF"
+        }
+      ],
+      "folders": [
+        {
+          "id": "root",
+          "name": "Root",
+          "slug": "",
+          "children": [
+            "7Db64ZXgYiRqKSQNR-qTQ",
+            "xfvB4UThQXmQ_OubPYrkg",
+            "szYLvBduHPmbtqQKCDY0b",
+            "U1tRJl2ERr8_OFe0g9cN_",
+            "-J9I4Oo6mONfQlf_3-OqG",
+            "TS39WeBd0Qr3QgbSlzdf2",
+            "42cWhASQ3tTtKDnsvzhUF"
+          ]
+        },
+        {
+          "id": "42cWhASQ3tTtKDnsvzhUF",
+          "name": "Nested",
+          "slug": "nested",
+          "children": ["Pnz-BxUm6XmvFygk_XdEy"]
         }
       ]
     },
@@ -2181,6 +2231,69 @@
           "scopeInstanceId": "WGSZGPAhyIuWhM1DJ7HbZ",
           "name": "collectionItem"
         }
+      ],
+      [
+        "ram6PSGTMg41lcfdoUGrV",
+        {
+          "id": "ram6PSGTMg41lcfdoUGrV",
+          "scopeInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "WihU_iOb3p4rS3nJD6NvB",
+        {
+          "id": "WihU_iOb3p4rS3nJD6NvB",
+          "scopeInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "_8Ok9oPHB3wlwjhX7Mlai",
+        {
+          "id": "_8Ok9oPHB3wlwjhX7Mlai",
+          "scopeInstanceId": "EDEfpMPRqDejthtwkH7ws",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "FNmfYcbf2VF3yudEbZwzx",
+        {
+          "id": "FNmfYcbf2VF3yudEbZwzx",
+          "scopeInstanceId": "a-4nDFkaWy4px1fn38XWJ",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "YR7MLRg2bNHQqYgUhm27J",
+        {
+          "id": "YR7MLRg2bNHQqYgUhm27J",
+          "scopeInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "wTJbVXFa4Mul6Qg5ZcooO",
+        {
+          "id": "wTJbVXFa4Mul6Qg5ZcooO",
+          "scopeInstanceId": "AWY2qZfpbykoiWELeJhse",
+          "name": "system",
+          "type": "parameter"
+        }
+      ],
+      [
+        "X05l8b5NS4KvFRiiloGqF",
+        {
+          "id": "X05l8b5NS4KvFRiiloGqF",
+          "scopeInstanceId": "L0ZXd5F9xk9Rsl9ORzIkJ",
+          "name": "system",
+          "type": "parameter"
+        }
       ]
     ],
     "resources": [
@@ -3208,107 +3321,162 @@
           "component": "HtmlEmbed",
           "children": []
         }
+      ],
+      [
+        "L0ZXd5F9xk9Rsl9ORzIkJ",
+        {
+          "type": "instance",
+          "id": "L0ZXd5F9xk9Rsl9ORzIkJ",
+          "component": "Body",
+          "children": [
+            {
+              "type": "id",
+              "value": "VFPjLwt6Caq4l9PPJSiyI"
+            }
+          ]
+        }
+      ],
+      [
+        "VFPjLwt6Caq4l9PPJSiyI",
+        {
+          "type": "instance",
+          "id": "VFPjLwt6Caq4l9PPJSiyI",
+          "component": "Heading",
+          "children": [
+            {
+              "type": "text",
+              "value": "Nested page"
+            }
+          ]
+        }
       ]
     ],
     "deployment": {
       "domains": [],
       "projectDomain": "webstudio-fixture-project-a-0su3o"
-    }
+    },
+    "marketplaceProduct": {}
   },
   "page": {
     "id": "7Db64ZXgYiRqKSQNR-qTQ",
     "name": "Home",
-    "title": "The Ultimate Cat Protection Zone",
+    "title": "\"The Ultimate Cat Protection Zone\"",
     "meta": {
-      "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+      "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
       "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
       "custom": [
         {
           "property": "fb:app_id",
-          "content": "app_id_app_id_app_id"
+          "content": "\"app_id_app_id_app_id\""
         }
       ]
     },
     "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
-    "path": ""
+    "path": "",
+    "systemDataSourceId": "ram6PSGTMg41lcfdoUGrV"
   },
   "pages": [
     {
       "id": "7Db64ZXgYiRqKSQNR-qTQ",
       "name": "Home",
-      "title": "The Ultimate Cat Protection Zone",
+      "title": "\"The Ultimate Cat Protection Zone\"",
       "meta": {
-        "description": "Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.",
+        "description": "\"Dive into the world of felines and discover why some whiskers are best left untouched. From intriguing cat behaviors to protective measures, \\nKittyGuardedZone is your go-to hub for all things 'hands-off' in the cat realm.\"",
         "socialImageAssetId": "cd939c56-bcdd-4e64-bd9c-567a9bccd3da",
         "custom": [
           {
             "property": "fb:app_id",
-            "content": "app_id_app_id_app_id"
+            "content": "\"app_id_app_id_app_id\""
           }
         ]
       },
       "rootInstanceId": "On9cvWCxr5rdZtY9O1Bv0",
-      "path": ""
+      "path": "",
+      "systemDataSourceId": "ram6PSGTMg41lcfdoUGrV"
     },
     {
       "id": "xfvB4UThQXmQ_OubPYrkg",
       "name": "radix excluded from the search",
-      "title": "Radix Revelations: Unraveling the Feline Mystique",
+      "title": "\"Radix Revelations: Unraveling the Feline Mystique\"",
       "meta": {
-        "description": "Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.",
-        "excludePageFromSearch": true,
+        "description": "\"Delve deep into the radix roots of feline behaviors. At KittyNoTouchy, we dissect the core essence, or 'radix', of what makes cats the enigmatic creatures they are. Join us as we explore the radix of their instincts, habits, and quirks.\"",
+        "excludePageFromSearch": "true",
         "socialImageAssetId": "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10"
       },
       "rootInstanceId": "uKWGyE9JY3cPwY-xI9vk6",
-      "path": "/radix"
+      "path": "/radix",
+      "systemDataSourceId": "WihU_iOb3p4rS3nJD6NvB"
     },
     {
       "id": "szYLvBduHPmbtqQKCDY0b",
       "name": "RouteWithSymbols",
-      "title": "RouteWithSymbols",
+      "title": "\"RouteWithSymbols\"",
       "meta": {
-        "description": ""
+        "description": "\"\""
       },
       "rootInstanceId": "EDEfpMPRqDejthtwkH7ws",
-      "path": "/_route_with_symbols_"
+      "path": "/_route_with_symbols_",
+      "systemDataSourceId": "_8Ok9oPHB3wlwjhX7Mlai"
     },
     {
       "id": "U1tRJl2ERr8_OFe0g9cN_",
       "name": "form",
-      "title": "form",
+      "title": "\"form\"",
       "meta": {
-        "description": ""
+        "description": "\"\""
       },
       "rootInstanceId": "a-4nDFkaWy4px1fn38XWJ",
-      "path": "/form"
+      "path": "/form",
+      "systemDataSourceId": "FNmfYcbf2VF3yudEbZwzx"
     },
     {
       "id": "-J9I4Oo6mONfQlf_3-OqG",
       "name": "heading-with-id",
-      "title": "heading-with-id",
+      "title": "\"heading-with-id\"",
       "meta": {
-        "description": ""
+        "description": "\"\""
       },
       "rootInstanceId": "O-ljaGZQ0iRNTlEshMkgE",
-      "path": "/heading-with-id"
+      "path": "/heading-with-id",
+      "systemDataSourceId": "YR7MLRg2bNHQqYgUhm27J"
     },
     {
       "id": "TS39WeBd0Qr3QgbSlzdf2",
       "name": "resources",
-      "title": "resources",
+      "title": "\"resources\"",
       "meta": {
-        "description": "",
-        "excludePageFromSearch": false,
+        "description": "\"\"",
+        "excludePageFromSearch": "false",
         "socialImageAssetId": "",
         "custom": [
           {
             "property": "",
-            "content": ""
+            "content": "\"\""
           }
         ]
       },
       "rootInstanceId": "AWY2qZfpbykoiWELeJhse",
-      "path": "/resources"
+      "path": "/resources",
+      "systemDataSourceId": "wTJbVXFa4Mul6Qg5ZcooO"
+    },
+    {
+      "id": "Pnz-BxUm6XmvFygk_XdEy",
+      "name": "Nested Page",
+      "title": "\"Nested Page\"",
+      "meta": {
+        "description": "\"\"",
+        "excludePageFromSearch": "false",
+        "socialImageAssetId": "",
+        "custom": [
+          {
+            "property": "",
+            "content": "\"\""
+          }
+        ]
+      },
+      "rootInstanceId": "L0ZXd5F9xk9Rsl9ORzIkJ",
+      "path": "/nested-page",
+      "systemDataSourceId": "X05l8b5NS4KvFRiiloGqF"
     }
   ],
   "assets": [

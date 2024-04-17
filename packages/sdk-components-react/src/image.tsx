@@ -37,7 +37,12 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ loading = "lazy", ...props }, ref) => {
-    const { imageLoader, assetBaseUrl } = useContext(ReactSdkContext);
+    const { imageLoader, renderer, assetBaseUrl } = useContext(ReactSdkContext);
+
+    if (renderer === "canvas") {
+      // With disabled cache and loading lazy, chrome may not render the image at all
+      loading = "eager";
+    }
 
     if (
       props.src === undefined ||

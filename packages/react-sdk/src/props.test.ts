@@ -2,6 +2,27 @@ import { test, expect } from "@jest/globals";
 import type { Prop } from "@webstudio-is/sdk";
 import { normalizeProps } from "./props";
 
+const pagesBase = {
+  meta: {},
+  homePage: {
+    id: "home",
+    path: "/",
+    name: "Home",
+    title: "Home",
+    rootInstanceId: "instance-1",
+    meta: {},
+  },
+  pages: [],
+  folders: [
+    {
+      id: "root",
+      name: "Root",
+      slug: "",
+      children: [],
+    },
+  ],
+};
+
 test("normalize asset prop into string", () => {
   expect(
     normalizeProps({
@@ -31,7 +52,7 @@ test("normalize asset prop into string", () => {
           },
         ],
       ]),
-      pages: new Map(),
+      pages: pagesBase,
     })
   ).toEqual([
     {
@@ -53,24 +74,25 @@ test("normalize page prop with path into string", () => {
           instanceId: "instance1",
           name: "href",
           type: "page",
-          value: "page1Id",
+          value: "page1",
         },
       ],
       assetBaseUrl: "",
       assets: new Map(),
-      pages: new Map([
-        [
-          "page1Id",
+      pages: {
+        ...pagesBase,
+        pages: [
           {
-            id: "page1Id",
-            path: "page1",
-            rootInstanceId: "",
-            name: "",
-            title: "",
+            id: "page1",
+            path: "/page1",
+            name: "Page",
+            title: "Page",
+            rootInstanceId: "instance-1",
             meta: {},
           },
         ],
-      ]),
+        folders: [],
+      },
     })
   ).toEqual([
     {
@@ -91,44 +113,57 @@ test("normalize page prop with path and hash into string", () => {
     type: "string",
     value: "my anchor",
   };
-  expect(
-    normalizeProps({
-      props: [
-        {
-          id: "prop1",
+  const result = normalizeProps({
+    props: [
+      {
+        id: "prop1",
+        instanceId: "instance1",
+        name: "href",
+        type: "page",
+        value: {
+          pageId: "page1",
           instanceId: "instance1",
-          name: "href",
-          type: "page",
-          value: {
-            pageId: "page1Id",
-            instanceId: "instance1",
-          },
         },
-        idProp,
+      },
+      idProp,
+    ],
+    assetBaseUrl: "",
+    assets: new Map(),
+    pages: {
+      ...pagesBase,
+      pages: [
+        {
+          id: "page1",
+          path: "/page1",
+          name: "Page",
+          title: "Page",
+          rootInstanceId: "instance-1",
+          meta: {},
+        },
       ],
-      assetBaseUrl: "",
-      assets: new Map(),
-      pages: new Map([
-        [
-          "page1Id",
-          {
-            id: "page1Id",
-            path: "page1",
-            rootInstanceId: "",
-            name: "",
-            title: "",
-            meta: {},
-          },
-        ],
-      ]),
-    })
-  ).toEqual([
+      folders: [
+        {
+          id: "root",
+          name: "Root",
+          slug: "",
+          children: ["folder"],
+        },
+        {
+          id: "folder",
+          name: "Folder",
+          slug: "folder",
+          children: ["page1"],
+        },
+      ],
+    },
+  });
+  expect(result).toEqual([
     {
       id: "prop1",
       instanceId: "instance1",
       name: "href",
       type: "string",
-      value: "/page1#my%20anchor",
+      value: "/folder/page1#my%20anchor",
     },
     idProp,
   ]);

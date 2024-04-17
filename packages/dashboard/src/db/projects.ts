@@ -8,6 +8,9 @@ export const findMany = async (userId: string, context: AppContext) => {
       userId,
       isDeleted: false,
     },
+    include: {
+      previewImageAsset: true,
+    },
     orderBy: [
       {
         createdAt: "desc",
@@ -35,6 +38,9 @@ export const findManyByIds = async (
         in: projectIds,
       },
       isDeleted: false,
+    },
+    include: {
+      previewImageAsset: true,
     },
     orderBy: [
       {

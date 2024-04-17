@@ -89,12 +89,18 @@ export const EnhancedTooltip = forwardRef(
 
     // We debounce blur/focus events in a single function, to skip fast `blur/focus` which can occur during select menu hovers
     const handleFocusEventsDebounced = useDebouncedCallback(
-      (eventType: "focus" | "blur") => {
+      (eventType: "focus" | "blur" | "mouseLeave") => {
         if (eventType === "blur") {
           isFocusedRef.current = false;
           allowOpenRef.current = true;
           setOpen(false);
           showTooltipDelayed.cancel();
+          return;
+        }
+
+        if (eventType === "mouseLeave") {
+          allowOpenRef.current = true;
+          isFocusedRef.current = true;
           return;
         }
 
@@ -122,6 +128,20 @@ export const EnhancedTooltip = forwardRef(
       },
       onKeyDown: () => {
         handleDisableOpen();
+      },
+      /*
+        When onKeyDown or onPointerDown events occur, the tooltips are disabled.
+        Inorder not to show them when the drag operation is under progress.
+        However, there is a scenario in which users press keyDown,
+        drag the mouse, and leaves the icon and then leaves the drag on the input. (e.g., columnGap and rowGap handlers).
+        In this case, it is necessary to reset and enable the tooltips to appear again when
+        users hover over the icon after completing the drag operation. Without this reset,
+        the tooltips may not appear if the icon is revisited following a keyDown and drag operation.
+        Because showTooltipDelayed.cancel() is called in handleDisableOpen, or onKeyDown and onPointerDown events.
+      */
+      onMouseLeave: (event: React.MouseEvent<HTMLElement>) => {
+        handleFocusEventsDebounced("mouseLeave");
+        event.preventDefault();
       },
     };
 

@@ -24,12 +24,14 @@ import {
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
 import { InfoCircleIcon } from "@webstudio-is/icons";
-import type { DeleteProperty } from "../../shared/use-style-data";
+import type {
+  DeleteProperty,
+  StyleUpdateOptions,
+} from "../../shared/use-style-data";
 import { type IntermediateStyleValue } from "../../shared/css-value-input";
 import { TransitionProperty } from "./transition-property";
 import { TransitionTiming } from "./transition-timing";
-import { CssValueInputContainer } from "../../controls/position/css-value-input-container";
-import { styleConfigByName } from "../../shared/configs";
+import { CssValueInputContainer } from "../../shared/css-value-input";
 
 type TransitionContentProps = {
   index: number;
@@ -51,24 +53,10 @@ export const TransitionContent = ({
   >({ type: "intermediate", value: transition });
 
   const { property, timing, delay, duration } =
-    useMemo<ExtractedTransitionProperties>(() => {
-      setIntermediateValue({ type: "intermediate", value: transition });
-      return extractTransitionProperties(layer);
-    }, [layer, transition]);
-
-  const transitionDurationConfig = styleConfigByName("transitionDuration");
-  const transitionDurationKeywords = transitionDurationConfig.items.map(
-    (item) => ({
-      type: "keyword" as const,
-      value: item.name,
-    })
-  );
-
-  const transitionDelayConfig = styleConfigByName("transitionDelay");
-  const transitionDelayKeywords = transitionDelayConfig.items.map((item) => ({
-    type: "keyword" as const,
-    value: item.name,
-  }));
+    useMemo<ExtractedTransitionProperties>(
+      () => extractTransitionProperties(layer),
+      [layer]
+    );
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -95,13 +83,15 @@ export const TransitionContent = ({
     setIntermediateValue(undefined);
   };
 
-  const handlePropertyUpdate = (params: ExtractedTransitionProperties) => {
+  const handlePropertyUpdate = (
+    params: ExtractedTransitionProperties,
+    options: StyleUpdateOptions = { isEphemeral: false }
+  ) => {
     const value: Array<UnitValue | KeywordValue> = Object.values({
       ...{ property, duration, delay, timing },
       ...params,
     }).filter<UnitValue | KeywordValue>(
-      (item): item is UnitValue | KeywordValue =>
-        item !== null && item !== undefined
+      (item): item is UnitValue | KeywordValue => item != null
     );
     const newLayer: TupleValue = { type: "tuple", value };
 
@@ -110,7 +100,9 @@ export const TransitionContent = ({
       value: toValue(newLayer),
     });
 
-    onEditLayer(index, { type: "layers", value: [newLayer] });
+    if (options.isEphemeral === false) {
+      onEditLayer(index, { type: "layers", value: [newLayer] });
+    }
   };
 
   return (
@@ -153,19 +145,18 @@ export const TransitionContent = ({
         <CssValueInputContainer
           key={"transitionDuration"}
           property={"transitionDuration"}
-          label={transitionDurationConfig.label}
           styleSource="local"
           /* Browser default for transition-duration */
           value={duration ?? { type: "unit", value: 0, unit: "ms" }}
-          keywords={transitionDurationKeywords}
+          keywords={[]}
           deleteProperty={() => {
             handlePropertyUpdate({ duration });
           }}
-          setValue={(value) => {
+          setValue={(value, options) => {
             if (value === undefined) {
               return;
             }
-            handlePropertyUpdate({ duration: value });
+            handlePropertyUpdate({ duration: value }, options);
           }}
         />
 
@@ -194,14 +185,13 @@ export const TransitionContent = ({
           styleSource="local"
           /* Browser default for transition-delay */
           value={delay ?? { type: "unit", value: 0, unit: "ms" }}
-          label={transitionDurationConfig.label}
-          keywords={transitionDelayKeywords}
+          keywords={[]}
           deleteProperty={() => handlePropertyUpdate({ delay })}
-          setValue={(value) => {
+          setValue={(value, options) => {
             if (value === undefined) {
               return;
             }
-            handlePropertyUpdate({ delay: value });
+            handlePropertyUpdate({ delay: value }, options);
           }}
         />
 

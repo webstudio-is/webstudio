@@ -2,12 +2,14 @@ import { describe, expect, test } from "@jest/globals";
 import type { Instance } from "@webstudio-is/sdk";
 import * as baseMetas from "@webstudio-is/sdk-components-react/metas";
 import {
-  instancesStore,
-  registeredComponentMetasStore,
-  selectedInstanceSelectorStore,
+  $instances,
+  $pages,
+  $registeredComponentMetas,
+  $selectedInstanceSelector,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { emitCommand } from "./commands";
+import { createDefaultPages } from "@webstudio-is/project-build";
 
 registerContainers();
 
@@ -20,6 +22,8 @@ const createInstancePair = (
 };
 
 const metas = new Map(Object.entries(baseMetas));
+
+$pages.set(createDefaultPages({ rootInstanceId: "", systemDataSourceId: "" }));
 
 describe("deleteInstance", () => {
   // body
@@ -40,11 +44,11 @@ describe("deleteInstance", () => {
   ]);
 
   test("delete selected instance and select next one", () => {
-    registeredComponentMetasStore.set(metas);
-    selectedInstanceSelectorStore.set(["child2", "parent", "body"]);
-    instancesStore.set(threeChildInstances);
+    $registeredComponentMetas.set(metas);
+    $selectedInstanceSelector.set(["child2", "parent", "body"]);
+    $instances.set(threeChildInstances);
     emitCommand("deleteInstance");
-    expect(selectedInstanceSelectorStore.get()).toEqual([
+    expect($selectedInstanceSelector.get()).toEqual([
       "child3",
       "parent",
       "body",
@@ -52,11 +56,11 @@ describe("deleteInstance", () => {
   });
 
   test("delete selected instance and select previous one", () => {
-    registeredComponentMetasStore.set(metas);
-    selectedInstanceSelectorStore.set(["child3", "parent", "body"]);
-    instancesStore.set(threeChildInstances);
+    $registeredComponentMetas.set(metas);
+    $selectedInstanceSelector.set(["child3", "parent", "body"]);
+    $instances.set(threeChildInstances);
     emitCommand("deleteInstance");
-    expect(selectedInstanceSelectorStore.get()).toEqual([
+    expect($selectedInstanceSelector.get()).toEqual([
       "child2",
       "parent",
       "body",
@@ -64,12 +68,12 @@ describe("deleteInstance", () => {
   });
 
   test("delete selected instance and select parent one", () => {
-    selectedInstanceSelectorStore.set(["child1", "parent", "body"]);
-    registeredComponentMetasStore.set(metas);
+    $selectedInstanceSelector.set(["child1", "parent", "body"]);
+    $registeredComponentMetas.set(metas);
     // body
     //   parent
     //     child1
-    instancesStore.set(
+    $instances.set(
       new Map([
         createInstancePair("body", "Body", [{ type: "id", value: "parent" }]),
         createInstancePair("parent", "Box", [{ type: "id", value: "child1" }]),
@@ -77,6 +81,6 @@ describe("deleteInstance", () => {
       ])
     );
     emitCommand("deleteInstance");
-    expect(selectedInstanceSelectorStore.get()).toEqual(["parent", "body"]);
+    expect($selectedInstanceSelector.get()).toEqual(["parent", "body"]);
   });
 });

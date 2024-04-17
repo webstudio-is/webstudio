@@ -1,12 +1,11 @@
-import type { ActionArgs } from "@remix-run/node";
+import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { Asset } from "@webstudio-is/sdk";
 import { uploadFile } from "@webstudio-is/asset-uploader/index.server";
 import type { ActionData } from "~/builder/shared/assets";
-import { sentryException } from "~/shared/sentry";
 import { createAssetClient } from "~/shared/asset-client";
 
 export const action = async (
-  props: ActionArgs
+  props: ActionFunctionArgs
 ): Promise<ActionData | Array<Asset> | undefined> => {
   const { request, params } = props;
 
@@ -27,7 +26,7 @@ export const action = async (
     }
   } catch (error) {
     if (error instanceof Error) {
-      sentryException({ error });
+      console.error({ error });
       return {
         errors: error.message,
       };

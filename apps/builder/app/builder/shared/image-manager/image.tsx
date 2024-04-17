@@ -1,12 +1,9 @@
-import { useMemo } from "react";
+import { useStore } from "@nanostores/react";
 import { styled } from "@webstudio-is/design-system";
-import {
-  Image as WebstudioImage,
-  createImageLoader,
-} from "@webstudio-is/image";
-import env from "~/shared/env";
+import { Image as WebstudioImage } from "@webstudio-is/image";
 import type { AssetContainer } from "../assets";
 import brokenImage from "~/shared/images/broken-image-placeholder.svg";
+import { $imageLoader } from "~/shared/nano-states";
 
 type ImageProps = {
   assetContainer: AssetContainer;
@@ -43,14 +40,11 @@ const StyledWebstudioImage = styled(WebstudioImage, {
 export const Image = ({ assetContainer, alt, width }: ImageProps) => {
   const { asset } = assetContainer;
   const optimize = assetContainer.status === "uploaded";
+  const imageLoader = useStore($imageLoader);
 
   // Avoid image flickering on switching from preview to asset (during upload)
   // Possible optimisation, we can set it to "sync" only if asset.path has changed or add isNew prop to UploadedAssetContainer
   const decoding = "sync";
-
-  const loader = useMemo(() => {
-    return createImageLoader({ imageBaseUrl: env.IMAGE_BASE_URL });
-  }, []);
 
   const src =
     assetContainer.status === "uploading"
@@ -60,7 +54,7 @@ export const Image = ({ assetContainer, alt, width }: ImageProps) => {
   return (
     <StyledWebstudioImage
       key={asset.id}
-      loader={loader}
+      loader={imageLoader}
       decoding={decoding}
       src={src}
       width={width}

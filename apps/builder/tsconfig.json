@@ -2,7 +2,6 @@
   "extends": "@webstudio-is/tsconfig/base.json",
   "include": [
     "app",
-    "remix.env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "../../@types/**/*.d.ts",
@@ -10,6 +9,7 @@
   ],
 
   "compilerOptions": {
+    "types": ["@remix-run/node", "vite/client"],
     "paths": {
       "~/*": ["app/*"]
     },

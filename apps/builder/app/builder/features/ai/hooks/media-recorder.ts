@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useEffectEvent } from "./effect-event";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 // https://github.com/openai/whisper/discussions/870
 const DEFAULT_OPTIONS: MediaRecorderOptions = {

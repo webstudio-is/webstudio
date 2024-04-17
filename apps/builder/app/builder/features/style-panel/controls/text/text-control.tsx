@@ -2,7 +2,7 @@ import {
   CssValueInput,
   type IntermediateStyleValue,
 } from "../../shared/css-value-input";
-import type { ControlProps } from "../../style-sections";
+import type { ControlProps } from "../types";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import { Box } from "@webstudio-is/design-system";
@@ -16,7 +16,7 @@ export const TextControl = ({
   setProperty,
   deleteProperty,
   icon,
-  disabled,
+  isAdvanced,
 }: ControlProps & { icon?: JSX.Element }) => {
   const { items: defaultItems } = styleConfigByName(property);
   const styleInfo = currentStyle[property];
@@ -31,7 +31,7 @@ export const TextControl = ({
   return (
     <Box>
       <CssValueInput
-        disabled={disabled}
+        disabled={isAdvanced}
         styleSource={getStyleSource(styleInfo)}
         icon={icon}
         property={property}

@@ -7,7 +7,7 @@ import type {
   DeleteProperty,
   SetProperty,
 } from "../../shared/use-style-data";
-import { BordersSection } from "./borders";
+import { Section } from "./borders";
 setEnv("*");
 
 const styleInfoInitial: StyleInfo = {
@@ -80,12 +80,11 @@ export const Borders = () => {
 
   return (
     <Panel>
-      <BordersSection
+      <Section
         currentStyle={styleInfo}
         setProperty={setProperty}
         deleteProperty={deleteProperty}
         createBatchUpdate={createBatchUpdate}
-        category="borders"
       />
     </Panel>
   );
@@ -93,5 +92,5 @@ export const Borders = () => {
 
 export default {
   title: "Style/Borders",
-  component: BordersSection,
+  component: Section,
 };

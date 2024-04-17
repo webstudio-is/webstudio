@@ -8,15 +8,7 @@ import type {
 } from "@webstudio-is/css-engine";
 import { animatableProperties } from "../";
 import { isTimingFunction } from "./transition-property-extractor";
-
-const cssTreeTryParseValue = (input: string) => {
-  try {
-    const ast = csstree.parse(input, { context: "value" });
-    return ast;
-  } catch {
-    return undefined;
-  }
-};
+import { cssTryParseValue } from "../parse-css-value";
 
 type AnimatableProperty = (typeof animatableProperties)[number];
 export const isAnimatableProperty = (
@@ -41,7 +33,7 @@ export const parseTransition = (
       : tokenStream;
   }
 
-  const cssAst = cssTreeTryParseValue(tokenStream);
+  const cssAst = cssTryParseValue(tokenStream);
 
   if (cssAst === undefined) {
     return {

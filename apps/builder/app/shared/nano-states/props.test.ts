@@ -1,11 +1,17 @@
-import { expect, test } from "@jest/globals";
+import { beforeEach, expect, test } from "@jest/globals";
 import { cleanStores } from "nanostores";
-import type { Instance, Page } from "@webstudio-is/sdk";
-import { collectionComponent } from "@webstudio-is/react-sdk";
+import { createDefaultPages } from "@webstudio-is/project-build";
+import { setEnv } from "@webstudio-is/feature-flags";
+import type { Instance } from "@webstudio-is/sdk";
+import {
+  collectionComponent,
+  textContentAttribute,
+} from "@webstudio-is/react-sdk";
 import { $instances } from "./instances";
 import {
   $propValuesByInstanceSelector,
   $variableValuesByInstanceSelector,
+  computeExpression,
 } from "./props";
 import { $pages, $selectedPageId } from "./pages";
 import {
@@ -14,8 +20,11 @@ import {
   $dataSources,
   $props,
   $resourceValues,
+  $resources,
 } from "./nano-states";
 import { $params } from "~/canvas/stores";
+
+setEnv("*");
 
 const getIdValuePair = <T extends { id: string }>(item: T) =>
   [item.id, item] as const;
@@ -30,12 +39,24 @@ const setBoxInstance = (id: Instance["id"]) => {
 };
 
 const selectPageRoot = (rootInstanceId: Instance["id"]) => {
-  $pages.set({
-    homePage: { id: "pageId", rootInstanceId, path: "/my-page" } as Page,
-    pages: [],
+  const defaultPages = createDefaultPages({
+    homePageId: "pageId",
+    homePagePath: "/my-page",
+    rootInstanceId,
+    systemDataSourceId: "systemId",
   });
-  $selectedPageId.set("pageId");
+  $pages.set(defaultPages);
+  $selectedPageId.set(defaultPages.homePage.id);
 };
+
+beforeEach(() => {
+  $instances.set(new Map());
+  $props.set(new Map());
+  $resources.set(new Map());
+  $dataSources.set(new Map());
+  $dataSourceVariables.set(new Map());
+  $resourceValues.set(new Map());
+});
 
 test("collect prop values", () => {
   setBoxInstance("box");
@@ -106,6 +127,14 @@ test("compute expression prop values", () => {
         type: "expression",
         value: `$ws$dataSource$var2 + ' World!'`,
       },
+      {
+        id: "prop3",
+        name: "third",
+        instanceId: "box",
+        type: "expression",
+        // do not fail when access fields of undefined
+        value: `$ws$dataSource$var1.second.third || "something"`,
+      },
     ])
   );
   expect(
@@ -114,6 +143,7 @@ test("compute expression prop values", () => {
     new Map<string, unknown>([
       ["first", 3],
       ["second", "Hello World!"],
+      ["third", "something"],
     ])
   );
 
@@ -124,6 +154,7 @@ test("compute expression prop values", () => {
     new Map<string, unknown>([
       ["first", 6],
       ["second", "Hello World!"],
+      ["third", "something"],
     ])
   );
 
@@ -418,6 +449,104 @@ test("compute props bound to resource variables", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
+test("compute instance text content when plain text", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [
+          { type: "id", value: "plainBox" },
+          { type: "id", value: "richBox" },
+        ],
+      },
+      {
+        id: "plainBox",
+        type: "instance",
+        component: "Box",
+        children: [{ type: "text", value: "plain" }],
+      },
+      {
+        id: "richBox",
+        type: "instance",
+        component: "Box",
+        children: [
+          { type: "text", value: "plain" },
+          { type: "id", value: "bold" },
+        ],
+      },
+      {
+        id: "bold",
+        type: "instance",
+        component: "Bold",
+        children: [{ type: "text", value: "bold" }],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [JSON.stringify(["body"]), new Map<string, unknown>()],
+      [
+        JSON.stringify(["plainBox", "body"]),
+        new Map<string, unknown>([[textContentAttribute, "plain"]]),
+      ],
+      [JSON.stringify(["richBox", "body"]), new Map<string, unknown>()],
+      [
+        JSON.stringify(["bold", "richBox", "body"]),
+        new Map<string, unknown>([[textContentAttribute, "bold"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
+test("compute instance text content bound to expression", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [{ type: "id", value: "expressionBox" }],
+      },
+      {
+        id: "expressionBox",
+        type: "instance",
+        component: "Box",
+        children: [
+          { type: "expression", value: `"Hello " + $ws$dataSource$world` },
+        ],
+      },
+    ])
+  );
+  $dataSources.set(
+    toMap([
+      {
+        id: "world",
+        scopeInstanceId: "body",
+        name: "world",
+        type: "variable",
+        value: { type: "string", value: "world" },
+      },
+    ])
+  );
+  selectPageRoot("body");
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [JSON.stringify(["body"]), new Map<string, unknown>()],
+      [
+        JSON.stringify(["expressionBox", "body"]),
+        new Map<string, unknown>([[textContentAttribute, "Hello world"]]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
 test("compute variable values for root", () => {
   $instances.set(
     toMap([{ id: "body", type: "instance", component: "Body", children: [] }])
@@ -638,4 +767,172 @@ test("compute resource variable values", () => {
   );
 
   cleanStores($variableValuesByInstanceSelector);
+});
+
+test("stop variables lookup outside of slots", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [{ type: "id", value: "slot" }],
+      },
+      {
+        id: "slot",
+        type: "instance",
+        component: "Slot",
+        children: [{ type: "id", value: "box" }],
+      },
+      { id: "box", type: "instance", component: "Box", children: [] },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "bodyVariable",
+        scopeInstanceId: "body",
+        type: "variable",
+        name: "",
+        value: { type: "string", value: "body" },
+      },
+      {
+        id: "slotVariable",
+        scopeInstanceId: "slot",
+        type: "variable",
+        name: "",
+        value: { type: "string", value: "slot" },
+      },
+      {
+        id: "boxVariable",
+        scopeInstanceId: "box",
+        type: "variable",
+        name: "",
+        value: { type: "string", value: "box" },
+      },
+    ])
+  );
+  $props.set(new Map());
+
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([["bodyVariable", "body"]]),
+      ],
+      [
+        JSON.stringify(["slot", "body"]),
+        new Map<string, unknown>([
+          ["bodyVariable", "body"],
+          ["slotVariable", "slot"],
+        ]),
+      ],
+      [
+        JSON.stringify(["box", "slot", "body"]),
+        new Map<string, unknown>([["boxVariable", "box"]]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
+
+test("compute parameter and resource variables without values to make it available in scope", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "parameterVariableId",
+        scopeInstanceId: "body",
+        name: "parameterName",
+        type: "parameter",
+      },
+      {
+        id: "resourceVariableId",
+        scopeInstanceId: "body",
+        name: "resourceName",
+        type: "resource",
+        resourceId: "resourceId",
+      },
+    ])
+  );
+  $props.set(new Map());
+
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([
+          ["parameterVariableId", undefined],
+          ["resourceVariableId", undefined],
+        ]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
+
+test("prefill default system variable value", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [],
+      },
+    ])
+  );
+  selectPageRoot("body");
+  $dataSources.set(
+    toMap([
+      {
+        id: "systemId",
+        scopeInstanceId: "body",
+        name: "system",
+        type: "parameter",
+      },
+    ])
+  );
+  $props.set(new Map());
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([["systemId", { params: {}, search: {} }]]),
+      ],
+    ])
+  );
+
+  $dataSourceVariables.set(
+    new Map([["systemId", { params: { slug: "my-post" }, search: {} }]])
+  );
+  expect($variableValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([
+          ["systemId", { params: { slug: "my-post" }, search: {} }],
+        ]),
+      ],
+    ])
+  );
+
+  cleanStores($variableValuesByInstanceSelector);
+});
+
+test("compute expression when invalid syntax", () => {
+  expect(computeExpression("https://github.com", new Map())).toEqual(undefined);
 });

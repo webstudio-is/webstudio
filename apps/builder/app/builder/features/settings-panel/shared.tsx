@@ -1,17 +1,21 @@
-import { computed } from "nanostores";
+import { atom, computed, type ReadableAtom } from "nanostores";
+import { useStore } from "@nanostores/react";
+import { useDebouncedCallback } from "use-debounce";
 import {
   type ComponentPropsWithoutRef,
   type ReactNode,
   useRef,
   useState,
   useEffect,
+  useMemo,
+  type ComponentProps,
 } from "react";
 import equal from "fast-deep-equal";
+import type { PropMeta } from "@webstudio-is/react-sdk";
 import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
-  type PropMeta,
-} from "@webstudio-is/react-sdk";
+} from "@webstudio-is/sdk";
 import type { Prop, Asset } from "@webstudio-is/sdk";
 import { HelpIcon, SubtractIcon } from "@webstudio-is/icons";
 import {
@@ -24,16 +28,15 @@ import {
   Grid,
   Text,
   theme,
-  type CSS,
   rawTheme,
 } from "@webstudio-is/design-system";
-import { humanizeString } from "~/shared/string-utils";
 import {
   $dataSourceVariables,
   $dataSources,
   $selectedInstanceSelector,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
+import type { BindingVariant } from "~/builder/shared/binding-popover";
 
 export type PropValue =
   | { type: "number"; value: number }
@@ -52,26 +55,19 @@ type PropMetaByControl<Control> = Control extends string
   ? Extract<PropMeta, { control: Control }>
   : never;
 
-type PropByType<Type> = Type extends string
-  ? Extract<Prop, { type: Type }>
-  : never;
-
-export type ControlProps<Control, PropType> = {
+export type ControlProps<Control> = {
   instanceId: string;
   meta: PropMetaByControl<Control>;
   // prop is optional because we don't have it when an intial prop is not set
   // and we don't want to show user something like a 0 for number when it's in fact not set to any value
-  prop: PropByType<PropType> | undefined;
+  prop: Prop | undefined;
   propName: string;
   computedValue: unknown;
   deletable: boolean;
-  readOnly: boolean;
   onChange: (value: PropValue, asset?: Asset) => void;
   onDelete: () => void;
+  autoFocus?: boolean;
 };
-
-export const getLabel = (meta: { label?: string }, fallback: string) =>
-  meta.label || humanizeString(fallback);
 
 export const RemovePropButton = (props: { onClick: () => void }) => (
   <SmallIconButton icon={<SubtractIcon />} variant="destructive" {...props} />
@@ -139,7 +135,7 @@ export const Label = ({
   }
 
   return (
-    <Flex align="center" css={{ gap: theme.spacing[3] }}>
+    <Flex align="center" css={{ gap: theme.spacing[3], width: "100%" }}>
       {label}
       {readOnly && (
         <Tooltip
@@ -157,7 +153,8 @@ export const Label = ({
 
 export const useLocalValue = <Type,>(
   savedValue: Type,
-  onSave: (value: Type) => void
+  onSave: (value: Type) => void,
+  { autoSave = true } = {}
 ) => {
   const isEditingRef = useRef(false);
   const localValueRef = useRef(savedValue);
@@ -175,16 +172,27 @@ export const useLocalValue = <Type,>(
     }
   };
 
+  const saveDebounced = useDebouncedCallback(save, 500);
+
   const setLocalValue = (value: Type) => {
     isEditingRef.current = true;
     localValueRef.current = value;
     setRefresh((refresh) => refresh + 1);
+    if (autoSave) {
+      saveDebounced();
+    }
   };
 
   // onBlur will not trigger if control is unmounted when props panel is closed or similar.
   // So we're saving at the unmount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => save, []);
+  // store save in ref to access latest saved value from render
+  // instead of stale one
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    // access ref in the moment of unmount
+    return () => saveRef.current();
+  }, []);
 
   useEffect(() => {
     // Update local value if saved value changes and control is not in edit mode.
@@ -242,7 +250,7 @@ export const VerticalLayout = ({
       {label}
       {deletable && <RemovePropButton onClick={onDelete} />}
     </Grid>
-    {children}
+    <Box css={{ py: theme.spacing[2] }}>{children}</Box>
   </Box>
 );
 
@@ -290,8 +298,11 @@ export const ResponsiveLayout = ({
   );
 };
 
-export const Row = ({ children, css }: { children: ReactNode; css?: CSS }) => (
-  <Flex css={{ px: theme.spacing[9], ...css }} gap="2" direction="column">
+export const Row = ({
+  children,
+  css,
+}: Pick<ComponentProps<typeof Flex>, "css" | "children">) => (
+  <Flex css={{ px: theme.spacing[9], ...css }} direction="column">
     {children}
   </Flex>
 );
@@ -336,4 +347,41 @@ export const updateExpressionValue = (expression: string, value: unknown) => {
     dataSourceVariables.set(dataSourceId, value);
     $dataSourceVariables.set(dataSourceVariables);
   }
+};
+
+export const useBindingState = (expression: undefined | string) => {
+  const $bindingState = useMemo((): ReadableAtom<{
+    overwritable: boolean;
+    variant: BindingVariant;
+  }> => {
+    if (expression === undefined) {
+      // value is not bound to expression and can be updated
+      return atom({ overwritable: true, variant: "default" });
+    }
+    // try to extract variable id from expression
+    const potentialVariableId = decodeDataSourceVariable(expression);
+    if (potentialVariableId === undefined) {
+      // expression is complex and cannot be updated
+      return atom({ overwritable: false, variant: "bound" });
+    }
+    return computed(
+      [$dataSources, $dataSourceVariables],
+      (dataSources, dataSourceVariables) => {
+        const dataSource = dataSources.get(potentialVariableId);
+        // resources and parameters cannot be updated
+        if (dataSource?.type !== "variable") {
+          return { overwritable: false, variant: "bound" };
+        }
+        const variableId = potentialVariableId;
+        return {
+          overwritable: true,
+          variant:
+            dataSourceVariables.get(variableId) === undefined
+              ? "bound"
+              : "overwritten",
+        };
+      }
+    );
+  }, [expression]);
+  return useStore($bindingState);
 };

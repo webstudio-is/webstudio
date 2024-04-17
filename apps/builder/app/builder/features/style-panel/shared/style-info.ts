@@ -19,17 +19,17 @@ import type {
 } from "@webstudio-is/sdk";
 import {
   type StyleSourceSelector,
-  instancesStore,
-  selectedInstanceSelectorStore,
-  selectedInstanceIntanceToTagStore,
-  stylesIndexStore,
-  selectedOrLastStyleSourceSelectorStore,
-  breakpointsStore,
-  styleSourceSelectionsStore,
-  registeredComponentMetasStore,
+  $instances,
+  $selectedInstanceSelector,
+  $selectedInstanceIntanceToTag,
+  $stylesIndex,
+  $selectedOrLastStyleSourceSelector,
+  $breakpoints,
+  $styleSourceSelections,
+  $registeredComponentMetas,
   $selectedInstanceStates,
 } from "~/shared/nano-states";
-import { selectedBreakpointStore } from "~/shared/nano-states";
+import { $selectedBreakpoint } from "~/shared/nano-states";
 import type { InstanceSelector } from "~/shared/tree-utils";
 import type { WsComponentMeta } from "@webstudio-is/react-sdk";
 
@@ -65,6 +65,8 @@ type SourceProperties = {
  * For some cases we are encouraging to use custom defaults, than
  * `initial` values provided by browsers. This helps in controlling the behaviour
  * of such properties
+ *
+ * @todo override in generated properties
  */
 const CUSTOM_DEFAULT_VALUES: Partial<Record<StyleProperty, StyleValue>> = {
   outlineWidth: { value: 0, type: "unit", unit: "px" },
@@ -158,7 +160,8 @@ export const getStyleSource = (
   return "default";
 };
 
-const styleProperties = Object.keys(properties) as StyleProperty[];
+const propertyNames = Object.keys(properties) as StyleProperty[];
+
 const inheritableProperties = new Set<string>();
 for (const [property, value] of Object.entries(properties)) {
   if (value.inherited) {
@@ -494,19 +497,18 @@ const useStyleInfoByInstanceAndStyleSource = (
   instanceSelector: InstanceSelector | undefined,
   styleSourceSelector: StyleSourceSelector | undefined
 ) => {
-  const breakpoints = useStore(breakpointsStore);
-  const selectedBreakpoint = useStore(selectedBreakpointStore);
+  const breakpoints = useStore($breakpoints);
+  const selectedBreakpoint = useStore($selectedBreakpoint);
   const selectedBreakpointId = selectedBreakpoint?.id;
 
-  // We do not move selectedInstanceIntanceToTagStore out of here as it contains ascendants of selected element
+  // We do not move $selectedInstanceIntanceToTag out of here as it contains ascendants of selected element
   // And we do not gonna iterate over children
-  const instanceToTag = useStore(selectedInstanceIntanceToTagStore);
+  const instanceToTag = useStore($selectedInstanceIntanceToTag);
 
-  const instances = useStore(instancesStore);
-  const metas = useStore(registeredComponentMetasStore);
-  const { stylesByInstanceId, stylesByStyleSourceId } =
-    useStore(stylesIndexStore);
-  const styleSourceSelections = useStore(styleSourceSelectionsStore);
+  const instances = useStore($instances);
+  const metas = useStore($registeredComponentMetas);
+  const { stylesByInstanceId, stylesByStyleSourceId } = useStore($stylesIndex);
+  const styleSourceSelections = useStore($styleSourceSelections);
   const selectedInstanceStates = useStore($selectedInstanceStates);
   const activeStates = useMemo(() => {
     const activeStates = new Set(selectedInstanceStates);
@@ -685,14 +687,29 @@ const useStyleInfoByInstanceAndStyleSource = (
     return style;
   }, [instanceSelector, instanceToTag]);
 
+  const allPropertyNames = useMemo(() => {
+    const [selectedInstanceId] = instanceSelector ?? [];
+    const all: Set<StyleProperty> = new Set(propertyNames);
+    const styles = stylesByInstanceId.get(selectedInstanceId);
+    if (styles) {
+      for (const styleDecl of styles) {
+        if (all.has(styleDecl.property) === false) {
+          all.add(styleDecl.property);
+        }
+      }
+    }
+    return Array.from(all);
+  }, [instanceSelector, stylesByInstanceId]);
+
   const styleInfoData = useMemo(() => {
     const styleInfoData: StyleInfo = {};
-    for (const property of styleProperties) {
+    for (const property of allPropertyNames) {
       // temporary solution until we start computing all styles from data
       const htmlValue = htmlStyle?.[property];
-      const defaultValue =
-        CUSTOM_DEFAULT_VALUES[property] ??
-        properties[property as keyof typeof properties].initial;
+      const defaultValue = CUSTOM_DEFAULT_VALUES[property] ??
+        properties[property as keyof typeof properties]?.initial ?? {
+          type: "guaranteedInvalid",
+        };
       const preset = presetStyle?.[property];
       const inherited = inheritedInfo[property];
       const cascaded = cascadedInfo[property];
@@ -713,6 +730,7 @@ const useStyleInfoByInstanceAndStyleSource = (
         htmlValue;
       const inheritedValue = inherited?.value;
       const value = ownValue ?? inheritedValue ?? defaultValue;
+
       if (value) {
         if (property === "color") {
           const ownColor =
@@ -765,15 +783,16 @@ const useStyleInfoByInstanceAndStyleSource = (
     nextSourceInfo,
     previousSourceInfo,
     selectedStyle,
+    allPropertyNames,
   ]);
 
   return styleInfoData;
 };
 
 export const useStyleInfo = () => {
-  const instanceSelector = useStore(selectedInstanceSelectorStore);
+  const instanceSelector = useStore($selectedInstanceSelector);
 
-  const styleSourceSelector = useStore(selectedOrLastStyleSourceSelectorStore);
+  const styleSourceSelector = useStore($selectedOrLastStyleSourceSelector);
 
   return useStyleInfoByInstanceAndStyleSource(
     instanceSelector,
@@ -784,7 +803,7 @@ export const useStyleInfo = () => {
 const isAncestorOrSelfOfSelectedInstance = (
   instanceSelector: InstanceSelector
 ) => {
-  const selectedInstanceSelector = selectedInstanceSelectorStore.get();
+  const selectedInstanceSelector = $selectedInstanceSelector.get();
 
   if (selectedInstanceSelector === undefined) {
     return false;
@@ -808,17 +827,16 @@ const isAncestorOrSelfOfSelectedInstance = (
 export const useStyleInfoByInstanceId = (
   instanceSelector: InstanceSelector | undefined
 ) => {
-  const styleSourceSelections = useStore(styleSourceSelectionsStore);
+  const styleSourceSelections = useStore($styleSourceSelections);
 
   if (
     instanceSelector !== undefined &&
     isAncestorOrSelfOfSelectedInstance(instanceSelector) === false
   ) {
-    // eslint-disable-next-line no-console
     console.error(
       `The style works correctly only on ancestors of the selected element,
        as our style data only includes information about these ancestors.
-       See selectedInstanceIntanceToTagStore for details.`
+       See $selectedInstanceIntanceToTag for details.`
     );
   }
 
@@ -841,5 +859,44 @@ export const useStyleInfoByInstanceId = (
   return useStyleInfoByInstanceAndStyleSource(
     instanceSelector,
     lastStyleSource
+  );
+};
+
+export const getPriorityStyleSource = (
+  styleSources: StyleSource[]
+): StyleSource => {
+  const customOrder: StyleSource[] = [
+    "overwritten",
+    "local",
+    "remote",
+    "preset",
+    "default",
+  ];
+
+  for (const style of customOrder) {
+    if (styleSources.includes(style)) {
+      return style;
+    }
+  }
+
+  return "default";
+};
+
+/**
+ * Has any value defined on that particular instance,
+ * excluding preset and inherited values.
+ */
+export const hasInstanceValue = (
+  currentStyle: StyleInfo,
+  property: StyleProperty
+) => {
+  const info = currentStyle[property];
+  return Boolean(
+    info?.cascaded ??
+      info?.local ??
+      info?.stateful ??
+      info?.stateless ??
+      info?.nextSource?.value ??
+      info?.previousSource?.value
   );
 };
