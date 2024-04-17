@@ -14,7 +14,7 @@ import {
 import { Box } from "../box";
 import { Flex } from "../flex";
 import { Text } from "../text";
-import { styled } from "../../stitches.config";
+import { styled, type CSS } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 import {
   type ItemId,
@@ -86,9 +86,11 @@ const NestingLine = styled(Box, {
   height: ITEM_HEIGHT,
   borderRight: "solid",
   borderRightWidth: 1,
-  borderColor: theme.colors.slate9,
+  borderColor: theme.colors.borderItemChildLine,
   variants: {
-    isSelected: { true: { borderColor: theme.colors.blue7 } },
+    isSelected: {
+      true: { borderColor: theme.colors.borderItemChildLineCurrent },
+    },
   },
 });
 
@@ -156,13 +158,14 @@ const SuffixContainer = styled(Flex, {
   pointerEvents: `var(${suffixContainerVars.pointerEvents})`,
 });
 
-const hoverStyle = {
+const hoverStyle: CSS = {
   content: "''",
   position: "absolute",
   left: 2,
   right: 2,
   height: ITEM_HEIGHT,
-  border: `solid ${theme.colors.blue10}`,
+  borderStyle: "solid",
+  borderColor: theme.colors.borderFocus,
   borderWidth: 2,
   borderRadius: theme.borderRadius[6],
   pointerEvents: "none",
@@ -170,7 +173,7 @@ const hoverStyle = {
 };
 
 const ItemContainer = styled(Flex, {
-  color: theme.colors.hiContrast,
+  color: theme.colors.foregroundMain,
   alignItems: "center",
   position: "relative",
   ...getItemButtonCssVars({ suffixVisible: false }),
@@ -178,10 +181,15 @@ const ItemContainer = styled(Flex, {
 
   variants: {
     isSelected: {
-      true: { color: theme.colors.loContrast, bc: theme.colors.blue10 },
+      true: {
+        color: theme.colors.foregroundContrastMain,
+        bc: theme.colors.backgroundItemCurrent,
+      },
     },
     parentIsSelected: {
-      true: { bc: theme.colors.blue4 },
+      true: {
+        bc: theme.colors.backgroundItemCurrentChild,
+      },
     },
     suffixVisible: {
       true: {

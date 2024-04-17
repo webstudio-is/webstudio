@@ -30,7 +30,7 @@ const baseStyle = css({
   variants: {
     variant: {
       default: {
-        outline: `1px solid ${theme.colors.backgroundInfoMain}`,
+        outline: `1px solid ${theme.colors.backgroundItemCurrent}`,
         outlineOffset: -1,
       },
       collaboration: {
