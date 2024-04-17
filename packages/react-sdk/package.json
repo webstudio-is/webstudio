@@ -15,20 +15,20 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "strip-indent": "^4.0.0",
     "type-fest": "^4.3.1",
-    "typescript": "5.2.2",
+    "typescript": "5.4.5",
     "zod": "^3.22.4"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "zod": "^3.19.1"
   },
   "dependencies": {

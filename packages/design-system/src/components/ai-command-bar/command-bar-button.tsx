@@ -11,7 +11,7 @@ const RoundedButton = styled(Button, {
 
 export const CommandBarButton = forwardRef(
   ({ children, ...props }: CommandButtonProps, ref: Ref<HTMLButtonElement>) => {
-    return <RoundedButton ref={ref} {...props} prefix={children} />;
+    return <RoundedButton {...props} prefix={children} ref={ref as null} />;
   }
 );
 

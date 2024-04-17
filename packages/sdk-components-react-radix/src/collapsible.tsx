@@ -4,15 +4,17 @@
 import {
   type ReactNode,
   type ForwardRefExoticComponent,
-  type ComponentPropsWithRef,
   forwardRef,
   Children,
+  type ComponentProps,
+  type RefAttributes,
 } from "react";
 import { Root, Trigger, Content } from "@radix-ui/react-collapsible";
 import { type Hook, getClosestInstance } from "@webstudio-is/react-sdk";
 
 export const Collapsible: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof Root>, "defaultOpen" | "asChild">
+  Omit<ComponentProps<typeof Root>, "defaultOpen" | "asChild"> &
+    RefAttributes<HTMLDivElement>
 > = Root;
 
 /**
@@ -34,7 +36,8 @@ export const CollapsibleTrigger = forwardRef<
 });
 
 export const CollapsibleContent: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof Content>, "asChild">
+  Omit<ComponentProps<typeof Content>, "asChild"> &
+    RefAttributes<HTMLDivElement>
 > = Content;
 
 /* BUILDER HOOKS */

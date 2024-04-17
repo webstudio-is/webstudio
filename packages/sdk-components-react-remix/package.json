@@ -42,8 +42,8 @@
   },
   "peerDependencies": {
     "@remix-run/react": "^1.19.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "dependencies": {
     "@webstudio-is/form-handlers": "workspace:*",
@@ -54,12 +54,12 @@
   "devDependencies": {
     "@remix-run/react": "^2.8.1",
     "@types/node": "^18.17.1",
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "typescript": "5.2.2"
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "typescript": "5.4.5"
   }
 }

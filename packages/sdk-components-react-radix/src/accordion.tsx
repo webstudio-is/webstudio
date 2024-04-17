@@ -4,8 +4,9 @@
 import {
   type ComponentPropsWithoutRef,
   type ForwardRefExoticComponent,
-  type ComponentPropsWithRef,
   forwardRef,
+  type ComponentProps,
+  type RefAttributes,
 } from "react";
 import {
   Root,
@@ -42,15 +43,18 @@ export const AccordionItem = forwardRef<
 });
 
 export const AccordionHeader: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof Header>, "asChild">
+  Omit<ComponentProps<typeof Header>, "asChild"> &
+    RefAttributes<HTMLHeadingElement>
 > = Header;
 
 export const AccordionTrigger: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof Trigger>, "asChild">
+  Omit<ComponentProps<typeof Trigger>, "asChild"> &
+    RefAttributes<HTMLButtonElement>
 > = Trigger;
 
 export const AccordionContent: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof Content>, "asChild">
+  Omit<ComponentProps<typeof Content>, "asChild"> &
+    RefAttributes<HTMLDivElement>
 > = Content;
 
 /* BUILDER HOOKS */
