@@ -31,7 +31,8 @@ export const loader = async ({
   params,
   request,
 }: LoaderFunctionArgs): Promise<BuilderProps> => {
-  console.info(staticEnv);
+  // TODO: remove after release 17 apr 2024
+  console.info({ staticEnv });
 
   const context = await createContext(request);
 
