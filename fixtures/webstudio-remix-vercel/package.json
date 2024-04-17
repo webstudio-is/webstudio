@@ -22,14 +22,14 @@
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
     "isbot": "^3.6.8",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.8.1",
-    "@types/react": "^18.2.20",
-    "@types/react-dom": "^18.2.7",
-    "typescript": "5.2.2",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
+    "typescript": "5.4.5",
     "vite": "^5.2.8",
     "webstudio": "workspace:*"
   },

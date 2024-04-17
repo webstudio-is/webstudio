@@ -28,7 +28,7 @@ export const AiCommandBarButton = forwardRef<
   HTMLButtonElement,
   CommandButtonProps
 >((props, ref) => {
-  return <AiCommandBarButtonStyled ref={ref} {...props} />;
+  return <AiCommandBarButtonStyled {...props} ref={ref} />;
 });
 
 AiCommandBarButton.displayName = "AiCommandBarButton";

@@ -44,8 +44,8 @@
     "storybook:build": "storybook build"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "dependencies": {
     "@react-aria/utils": "^3.21.0",
@@ -61,15 +61,15 @@
     "@storybook/react": "^7.4.0",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.2",
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "jest-environment-jsdom": "^29.7.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "typescript": "5.2.2"
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
+    "typescript": "5.4.5"
   }
 }
