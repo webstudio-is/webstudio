@@ -578,6 +578,16 @@
           "value": "#d3d3d3",
           "type": "color",
           "description": "The hover state on menu item components."
+        },
+        "current-component": {
+          "value": "{background.success.main}",
+          "type": "color",
+          "description": "For the components / currently slots"
+        },
+        "current-component-child": {
+          "value": "{background.success.notification}",
+          "type": "color",
+          "description": "For component/slot children"
         }
       },
       "tooltip": {
@@ -1489,6 +1499,8 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }
