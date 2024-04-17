@@ -21,19 +21,19 @@
     "@storybook/react": "^7.4.0",
     "@svgo/jsx": "^0.4.2",
     "@types/node": "^18.17.1",
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.2.70",
+    "@types/react-dom": "^18.2.25",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "svgo": "^3.0.2",
     "tsx": "^4.7.2",
-    "typescript": "5.2.2"
+    "typescript": "5.4.5"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "18.3.0-canary-14898b6a9-20240318",
+    "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "exports": {
     ".": {

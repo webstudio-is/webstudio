@@ -12,7 +12,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240405.0",
     "@webstudio-is/tsconfig": "workspace:*",
-    "typescript": "5.2.2",
+    "typescript": "5.4.5",
     "wrangler": "^3.48.0"
   }
 }
