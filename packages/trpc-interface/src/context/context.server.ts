@@ -46,7 +46,8 @@ type DeploymentContext = {
   deploymentTrpc: TrpcInterfaceClient["deployment"];
   env: {
     BUILDER_ORIGIN: string;
-    BRANCH_NAME: string;
+    GITHUB_REF_NAME: string;
+    GITHUB_SHA: string | undefined;
   };
 };
 

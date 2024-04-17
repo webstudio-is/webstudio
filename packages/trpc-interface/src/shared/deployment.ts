@@ -4,7 +4,9 @@ import { router, procedure } from "./trpc";
 const PublishInput = z.object({
   // used to load build data from the builder see routes/rest.build.$buildId.ts
   buildId: z.string(),
-  builderApiOrigin: z.string(),
+  builderOrigin: z.string(),
+  githubSha: z.string().optional(),
+
   // preview support
   branchName: z.string(),
   // action log helper (not used for deployment, but for action logs readablity)

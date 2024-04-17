@@ -8,6 +8,7 @@ import {
   getUserPlanFeatures,
 } from "./db/user-plan-features.server";
 import { getAllApprovedProjectIds } from "./marketplace/db.server";
+import { staticEnv } from "~/env/env.static.server";
 
 const createAuthorizationContext = async (
   request: Request
@@ -62,7 +63,8 @@ const createDeploymentContext = (request: Request) => {
     deploymentTrpc: trpcSharedClient.deployment,
     env: {
       BUILDER_ORIGIN: `${getRequestOrigin(request)}`,
-      BRANCH_NAME: env.BRANCH_NAME ?? "main",
+      GITHUB_REF_NAME: staticEnv.GITHUB_REF_NAME ?? "undefined",
+      GITHUB_SHA: staticEnv.GITHUB_SHA ?? undefined,
     },
   };
 

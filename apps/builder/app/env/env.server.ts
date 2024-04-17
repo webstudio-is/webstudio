@@ -20,9 +20,6 @@ const env = {
 
   PORT: process.env.PORT,
 
-  // Preview support
-  BRANCH_NAME: process.env.BRANCH_NAME,
-
   // Assets
   MAX_UPLOAD_SIZE: process.env.MAX_UPLOAD_SIZE,
   MAX_ASSETS_PER_PROJECT: process.env.MAX_ASSETS_PER_PROJECT,
@@ -108,9 +105,6 @@ if (process.env.VERCEL !== undefined) {
   }
   if (env.DEPLOYMENT_URL === undefined) {
     env.DEPLOYMENT_URL = process.env.VERCEL_URL;
-  }
-  if (env.BRANCH_NAME === undefined) {
-    env.BRANCH_NAME = process.env.VERCEL_GIT_COMMIT_REF;
   }
 }
 
