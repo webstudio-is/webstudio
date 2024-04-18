@@ -767,7 +767,7 @@ const FormFields = ({
          */}
         <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
           <Grid gap={2}>
-            <Label sectionTitle>Search</Label>
+            <Label text="title">Search</Label>
             <Text color="subtle">
               Optimize the way this page appears in search engine results pages.
             </Text>
@@ -961,7 +961,7 @@ const FormFields = ({
          * ----------------------========<<<Social Sharing>>>>========----------------------
          */}
         <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-          <Label htmlFor={fieldIds.socialImageAssetId} sectionTitle>
+          <Label htmlFor={fieldIds.socialImageAssetId} text="title">
             Social Image
           </Label>
           <Text color="subtle">

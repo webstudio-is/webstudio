@@ -58,7 +58,7 @@ const StyledLabel = styled(RadixLabel, {
         color: theme.colors.foregroundMain,
         "&:hover": {
           px: theme.spacing[3],
-          mx: `calc(${theme.spacing[3]} * -1)`,
+          mx: `calc(-${theme.spacing[3]})`,
           backgroundColor: theme.colors.backgroundHover,
         },
       },
@@ -104,20 +104,20 @@ const StyledLabel = styled(RadixLabel, {
         flexGrow: 1,
       },
     },
-    sectionTitle: {
-      true: textVariants.titles,
-      false: textVariants.labelsSentenceCase,
+    text: {
+      title: textVariants.titles,
+      sentence: textVariants.labelsSentenceCase,
     },
   },
 
   defaultVariants: {
-    sectionTitle: false,
+    text: "sentence",
   },
 });
 
 type Props = {
   color?: (typeof labelColors)[number];
-  sectionTitle?: boolean;
+  text?: "title" | "sentence";
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;
