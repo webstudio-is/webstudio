@@ -1,4 +1,9 @@
-import { useState, type ReactElement, type ReactNode } from "react";
+import {
+  useState,
+  type ReactElement,
+  type ReactNode,
+  type ComponentProps,
+} from "react";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import { propertyDescriptions } from "@webstudio-is/css-data";
@@ -359,7 +364,7 @@ export const PropertyTooltip = ({
   );
 };
 
-type PropertyNameInternalProps = {
+type PropertyNameProps = {
   style: StyleInfo;
   properties: StyleProperty[];
   label: string | ReactElement;
@@ -367,17 +372,19 @@ type PropertyNameInternalProps = {
   description?: ReactNode;
   onReset?: () => void;
   disabled?: boolean;
+  text?: ComponentProps<typeof Label>["text"];
 };
 
-const PropertyNameInternal = ({
+export const PropertyName = ({
   style,
   title,
   description,
   properties,
   label,
+  text,
   onReset,
   disabled,
-}: PropertyNameInternalProps) => {
+}: PropertyNameProps) => {
   const property = properties[0];
 
   // When there are multiple properties. We need to make a consolidated choice.
@@ -412,6 +419,7 @@ const PropertyNameInternal = ({
               }
               truncate
               disabled={disabled}
+              text={text}
             >
               {label}
             </Label>
@@ -423,33 +431,6 @@ const PropertyNameInternal = ({
     </Flex>
   );
 };
-
-type PropertyNameProps = {
-  style: StyleInfo;
-  properties: StyleProperty[];
-  label: string | ReactElement;
-  title?: string;
-  description?: ReactNode;
-  onReset: () => void;
-};
-
-export const PropertyName = ({
-  style,
-  title,
-  description,
-  properties,
-  label,
-  onReset,
-}: PropertyNameProps) => (
-  <PropertyNameInternal
-    style={style}
-    title={title}
-    description={description}
-    properties={properties}
-    label={label}
-    onReset={onReset}
-  />
-);
 
 type NonResetablePropertyNameProps = {
   style: StyleInfo;
@@ -473,7 +454,7 @@ export const NonResetablePropertyName = ({
   label,
   disabled,
 }: NonResetablePropertyNameProps) => (
-  <PropertyNameInternal
+  <PropertyName
     style={style}
     title={title}
     description={description}

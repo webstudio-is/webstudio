@@ -124,6 +124,7 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
                 label={toKebabCase(styleConfigByName(property).property)}
                 properties={[property]}
                 style={currentStyle}
+                text="mono"
                 onReset={() => deleteProperty(property)}
               />
               <Text>:</Text>

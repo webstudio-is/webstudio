@@ -102,6 +102,7 @@ const StyledLabel = styled(RadixLabel, {
     text: {
       title: textVariants.titles,
       sentence: textVariants.labelsSentenceCase,
+      mono: textVariants.mono,
     },
   },
 
@@ -112,7 +113,7 @@ const StyledLabel = styled(RadixLabel, {
 
 type Props = {
   color?: (typeof labelColors)[number];
-  text?: "title" | "sentence";
+  text?: "title" | "sentence" | "mono";
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;
