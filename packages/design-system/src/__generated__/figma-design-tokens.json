@@ -560,12 +560,12 @@
       },
       "item": {
         "current": {
-          "value": "#096cff",
+          "value": "#e1f0ff",
           "type": "color",
           "description": "color for current item in the navigator item, menu item, pages panel item components"
         },
         "current-child": {
-          "value": "#e1f0ff",
+          "value": "#fff",
           "type": "color",
           "description": "color for child of current item in the navigator item, pages panel item components"
         },
@@ -578,16 +578,6 @@
           "value": "#d3d3d3",
           "type": "color",
           "description": "The hover state on menu item components."
-        },
-        "current-component": {
-          "value": "{background.success.main}",
-          "type": "color",
-          "description": "For the components / currently slots"
-        },
-        "current-component-child": {
-          "value": "{background.success.notification}",
-          "type": "color",
-          "description": "For component/slot children"
         }
       },
       "tooltip": {
@@ -1103,6 +1093,10 @@
         "value": "#ff22ae",
         "type": "color",
         "description": "The inverse color of our primary blue, when we want a contrasting highlight."
+      },
+      "reusable": {
+        "value": "#834df4",
+        "type": "color"
       }
     },
     "Brand": {
