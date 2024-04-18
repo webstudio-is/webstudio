@@ -1,4 +1,3 @@
-import { findPageByIdOrPath } from "@webstudio-is/sdk";
 import { matchPathnamePattern } from "~/builder/shared/url-pattern";
 import { $isPreviewMode, $pages, updateSystem } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
@@ -12,34 +11,28 @@ const isAbsoluteUrl = (href: string) => {
   }
 };
 
-const handleLinkClick = (element: HTMLAnchorElement) => {
+const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   const pages = $pages.get();
-  const href = element.getAttribute("href");
-  if (href === null || pages === undefined) {
+  if (pages === undefined) {
     return;
   }
-
-  if (isAbsoluteUrl(href)) {
-    window.open(href, "_blank");
-    return;
-  }
-
   const pageHref = new URL(href, "https://any-valid.url");
   for (const page of [pages.homePage, ...pages.pages]) {
     // URL always parses root page as /
     // but webstudio stores home page as empty string
     const params = matchPathnamePattern(page.path || "/", pageHref.pathname);
     if (params) {
+      // populate search params with form data values if available
+      if (formData) {
+        for (const [key, value] of formData?.entries()) {
+          pageHref.searchParams.set(key, value.toString());
+        }
+      }
       const search = Object.fromEntries(pageHref.searchParams);
       switchPage(page.id, pageHref.hash);
       updateSystem(page, { params, search });
       break;
     }
-  }
-  const page = findPageByIdOrPath(pageHref.pathname, pages);
-  if (page) {
-    switchPage(page.id, pageHref.hash);
-    return;
   }
 };
 
@@ -53,7 +46,13 @@ export const subscribeInterceptedEvents = () => {
       if (a) {
         event.preventDefault();
         if ($isPreviewMode.get()) {
-          handleLinkClick(a);
+          // use attribute instead of a.href to get raw unresolved value
+          const href = a.getAttribute("href") ?? "";
+          if (isAbsoluteUrl(href)) {
+            window.open(href, "_blank");
+          } else {
+            switchPageAndUpdateSystem(href);
+          }
         }
       }
       // prevent invoking submit with buttons in canvas mode
@@ -63,10 +62,24 @@ export const subscribeInterceptedEvents = () => {
       }
     }
   };
+
   const handleSubmit = (event: SubmitEvent) => {
+    if ($isPreviewMode.get()) {
+      const form =
+        event.target instanceof HTMLFormElement ? event.target : undefined;
+      if (form === undefined) {
+        return;
+      }
+      // use attribute instead of form.action to get raw unresolved value
+      const action = form.getAttribute("action") ?? "";
+      if (form.method === "get" && isAbsoluteUrl(action) === false) {
+        switchPageAndUpdateSystem(action, new FormData(form));
+      }
+    }
     // prevent submitting the form when clicking a button type submit
     event.preventDefault();
   };
+
   const handleKeydown = (event: KeyboardEvent) => {
     if ($isPreviewMode.get()) {
       return;
