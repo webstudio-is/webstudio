@@ -6,7 +6,7 @@
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "size-test": "rm -rf ./public && remix build && size-limit",
-    "fixtures:link": "webstudio link --link 'https://main.development.webstudio.is/builder/0d856812-61d8-4014-a20a-82e01c0eb8ee?authToken=d225fafb-4f20-4340-9359-c21df7c49a3f'",
+    "fixtures:link": "webstudio link --link \"https://main.development.webstudio.is/builder/0d856812-61d8-4014-a20a-82e01c0eb8ee?authToken=d225fafb-4f20-4340-9359-c21df7c49a3f\"",
     "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
     "fixtures:build": "webstudio build --template internal --template ./custom-template --template ./custom-template-stage --preview && pnpm prettier --write ./app/ ./package.json"
   },
