@@ -17,7 +17,10 @@ ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 RUN pnpm install --ignore-scripts
 RUN pnpm --filter 'webstudio-cloudlfare-template^...' run build
-RUN pnpm --filter 'webstudio-cloudlfare-template' deploy /cloudlfare-template
+RUN pnpm --dir=fixtures/webstudio-cloudlfare-template webstudio build \
+    --template internal --template saas-helpers --template cloudflare --assets false
+RUN pnpm --dir=fixtures/webstudio-cloudlfare-template build && \
+RUN pnpm --filter 'webstudio-cloudlfare-template' --prod deploy /cloudlfare-template
 
 WORKDIR /cloudlfare-template
 
@@ -32,10 +35,7 @@ RUN \
 
 ENV COMPATIBILITY_DATE=2024-04-10
 
-RUN \
-  pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false && \
-  pnpm build && \
-  NODE_ENV=production pnpm wrangler deploy \
+RUN NODE_ENV=production pnpm wrangler deploy \
   --name build \
   --compatibility-date '${COMPATIBILITY_DATE}' \
   --minify true \
