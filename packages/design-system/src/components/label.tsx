@@ -28,7 +28,7 @@ const StyledLabel = styled(RadixLabel, {
 
   boxSizing: "border-box",
   flexShrink: 0,
-  py: theme.spacing[2],
+  py: theme.spacing[1],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
   transition: "200ms color, 200ms background-color",
@@ -55,10 +55,9 @@ const StyledLabel = styled(RadixLabel, {
     },
     color: {
       default: {
+        px: theme.spacing[2],
         color: theme.colors.foregroundMain,
         "&:hover": {
-          px: theme.spacing[2],
-          mx: `calc(-${theme.spacing[2]})`,
           backgroundColor: theme.colors.backgroundHover,
         },
       },
