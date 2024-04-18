@@ -72,10 +72,10 @@ const LabelContainer = styled(
       },
       variant: {
         default: {
-          backgroundColor: theme.colors.backgroundItemCurrent,
+          backgroundColor: theme.colors.backgroundPrimary,
         },
         component: {
-          backgroundColor: theme.colors.backgroundSuccessMain,
+          backgroundColor: theme.colors.foregroundReusable,
         },
       },
     },

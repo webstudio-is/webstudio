@@ -14,7 +14,7 @@ import {
 import { Box } from "../box";
 import { Flex } from "../flex";
 import { Text } from "../text";
-import { styled, type CSS } from "../../stitches.config";
+import { rawTheme, styled, type CSS } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 import {
   type ItemId,
@@ -172,8 +172,10 @@ const hoverStyle: CSS = {
   boxSizing: "border-box",
 };
 
+const itemContainerColor = "--ws-tree-node-item-container-color";
+
 const ItemContainer = styled(Flex, {
-  color: theme.colors.foregroundMain,
+  color: `var(${itemContainerColor}, ${theme.colors.foregroundMain})`,
   alignItems: "center",
   position: "relative",
   ...getItemButtonCssVars({ suffixVisible: false }),
@@ -182,7 +184,6 @@ const ItemContainer = styled(Flex, {
   variants: {
     isSelected: {
       true: {
-        color: theme.colors.foregroundContrastMain,
         bc: theme.colors.backgroundItemCurrent,
       },
     },
@@ -346,7 +347,9 @@ export const TreeItemBody = <Data extends { id: string }>({
       suffixVisible={alwaysShowSuffix || focusTarget !== undefined}
       onFocus={updateFocusTarget}
       onBlur={updateFocusTarget}
-      css={{ [suffixWidthVar]: suffixWidth }}
+      css={{
+        [suffixWidthVar]: suffixWidth,
+      }}
     >
       <ItemButton
         type="button"
@@ -471,7 +474,15 @@ export const TreeNode = <Data extends { id: string }>({
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
   return (
-    <div data-drop-target-id={itemData.id}>
+    <div
+      data-drop-target-id={itemData.id}
+      style={{
+        [itemContainerColor]:
+          itemData.component === "Slot"
+            ? rawTheme.colors.foregroundReusable
+            : undefined,
+      }}
+    >
       {/* optionally prevent rendering root item */}
       {itemIsHidden === false &&
         renderItem({

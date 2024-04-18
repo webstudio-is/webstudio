@@ -27,10 +27,11 @@ const baseStyle = css({
   pointerEvents: "none",
   top: 0,
   left: 0,
+  borderWidth: 1,
   variants: {
     variant: {
       default: {
-        outline: `1px solid ${theme.colors.backgroundItemCurrent}`,
+        outline: `1px solid ${theme.colors.backgroundPrimary}`,
         outlineOffset: -1,
       },
       collaboration: {
@@ -40,7 +41,7 @@ const baseStyle = css({
         animation: `2s ${angleKeyframes} linear infinite`,
       },
       component: {
-        outline: `1px solid ${theme.colors.backgroundSuccessMain}`,
+        outline: `1px solid ${theme.colors.foregroundReusable}`,
         outlineOffset: -1,
       },
     },
