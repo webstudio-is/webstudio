@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Box, Flex, Text, theme } from "@webstudio-is/design-system";
+import { Box, Flex, Text } from "@webstudio-is/design-system";
 import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
