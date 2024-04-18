@@ -19,7 +19,7 @@ RUN pnpm install --ignore-scripts
 RUN pnpm --filter 'webstudio-cloudlfare-template^...' run build
 RUN pnpm --dir=fixtures/webstudio-cloudlfare-template webstudio build \
     --template internal --template saas-helpers --template cloudflare --assets false
-RUN pnpm --dir=fixtures/webstudio-cloudlfare-template build && \
+RUN pnpm --dir=fixtures/webstudio-cloudlfare-template build
 RUN pnpm --filter 'webstudio-cloudlfare-template' --prod deploy /cloudlfare-template
 
 WORKDIR /cloudlfare-template
