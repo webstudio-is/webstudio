@@ -2,6 +2,7 @@ import { useStore } from "@nanostores/react";
 import {
   $hoveredInstanceOutlineAndInstance,
   $hoveredInstanceSelector,
+  $instances,
   $selectedInstanceSelector,
   $textEditingInstanceSelector,
 } from "~/shared/nano-states";
@@ -10,8 +11,10 @@ import { Outline } from "./outline";
 import { Label } from "./label";
 import { applyScale } from "./apply-scale";
 import { $scale } from "~/builder/shared/nano-states";
+import { findClosestSlot } from "~/shared/instance-utils";
 
 export const HoveredInstanceOutline = () => {
+  const instances = useStore($instances);
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
   const hoveredInstanceSelector = useStore($hoveredInstanceSelector);
   const outline = useStore($hoveredInstanceOutlineAndInstance);
@@ -23,16 +26,27 @@ export const HoveredInstanceOutline = () => {
     hoveredInstanceSelector
   );
 
-  if (outline === undefined || isHoveringSelectedInstance || isEditingText) {
-    return null;
+  if (
+    outline === undefined ||
+    isHoveringSelectedInstance ||
+    isEditingText ||
+    hoveredInstanceSelector === undefined
+  ) {
+    return;
   }
+
+  const variant = findClosestSlot(instances, hoveredInstanceSelector)
+    ? "slot"
+    : "default";
   const rect = applyScale(outline.rect, scale);
+
   return (
-    <Outline
-      rect={rect}
-      variant={outline.instance.component === "Slot" ? "component" : "default"}
-    >
-      <Label instance={outline.instance} instanceRect={rect} />
+    <Outline rect={rect} variant={variant}>
+      <Label
+        variant={variant}
+        instance={outline.instance}
+        instanceRect={rect}
+      />
     </Outline>
   );
 };

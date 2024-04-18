@@ -6,6 +6,7 @@ import {
   forwardRef,
   type ForwardRefRenderFunction,
   type MouseEvent,
+  type ComponentProps,
 } from "react";
 import {
   ChevronFilledDownIcon,
@@ -14,7 +15,7 @@ import {
 import { Box } from "../box";
 import { Flex } from "../flex";
 import { Text } from "../text";
-import { rawTheme, styled, type CSS } from "../../stitches.config";
+import { styled, type CSS } from "../../stitches.config";
 import { theme } from "../../stitches.config";
 import {
   type ItemId,
@@ -172,7 +173,11 @@ const hoverStyle: CSS = {
   boxSizing: "border-box",
 };
 
-const itemContainerColor = "--ws-tree-node-item-container-color";
+const itemContainerColor: string = "--ws-tree-node-item-container-color";
+
+export const getNodeVars = ({ color }: { color: string }) => ({
+  [itemContainerColor]: color,
+});
 
 const ItemContainer = styled(Flex, {
   color: `var(${itemContainerColor}, ${theme.colors.foregroundMain})`,
@@ -419,6 +424,7 @@ export const TreeItemLabel = forwardRef(TreeItemLabelBase);
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
   getItemChildren: (itemSelector: ItemSelector) => Data[];
+  getItemProps?: (itemData: Data) => ComponentProps<"div"> | undefined;
   isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
@@ -456,6 +462,7 @@ export const TreeNode = <Data extends { id: string }>({
     dropTargetItemSelector,
     renderItem,
     getItemChildren,
+    getItemProps,
     isItemHidden,
   } = commonProps;
 
@@ -474,15 +481,7 @@ export const TreeNode = <Data extends { id: string }>({
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
   return (
-    <div
-      data-drop-target-id={itemData.id}
-      style={{
-        [itemContainerColor]:
-          itemData.component === "Slot"
-            ? rawTheme.colors.foregroundReusable
-            : undefined,
-      }}
-    >
+    <div data-drop-target-id={itemData.id} {...getItemProps?.(itemData)}>
       {/* optionally prevent rendering root item */}
       {itemIsHidden === false &&
         renderItem({
