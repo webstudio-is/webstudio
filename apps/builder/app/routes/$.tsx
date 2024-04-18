@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import {
   Links,
@@ -7,11 +8,12 @@ import {
   useRouteError,
 } from "@remix-run/react";
 import type { Params } from "@webstudio-is/react-sdk";
+import { Body } from "@webstudio-is/sdk-components-react-remix";
 import { createImageLoader } from "@webstudio-is/image";
 import env from "~/env/env.server";
-import { Canvas } from "~/canvas";
 import { ErrorMessage } from "~/shared/error";
 import { dashboardPath, isCanvas } from "~/shared/router-utils";
+import { ClientOnly } from "~/shared/client-only";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -50,12 +52,21 @@ export const ErrorBoundary = () => {
   return <ErrorMessage message={message} />;
 };
 
+const Canvas = lazy(async () => {
+  const { Canvas } = await import("~/canvas/index.client");
+  return { default: Canvas };
+});
+
 const Outlet = () => {
   const { params } = useLoaderData<typeof loader>();
   const imageLoader = createImageLoader({
     imageBaseUrl: params.imageBaseUrl,
   });
-  return <Canvas params={params} imageLoader={imageLoader} />;
+  return (
+    <ClientOnly fallback={<Body />}>
+      <Canvas params={params} imageLoader={imageLoader} />
+    </ClientOnly>
+  );
 };
 
 /**
