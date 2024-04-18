@@ -611,7 +611,7 @@
       },
       "style-source": {
         "token": {
-          "value": "#834df4",
+          "value": "{foreground.reusable}",
           "type": "color",
           "description": "Style sources that are tokens"
         },
