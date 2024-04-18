@@ -29,6 +29,7 @@ const StyledLabel = styled(RadixLabel, {
   boxSizing: "border-box",
   flexShrink: 0,
   py: theme.spacing[1],
+  px: theme.spacing[2],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
   transition: "200ms color, 200ms background-color",
@@ -57,13 +58,10 @@ const StyledLabel = styled(RadixLabel, {
       default: {
         color: theme.colors.foregroundMain,
         "&:hover": {
-          px: theme.spacing[3],
-          mx: `calc(${theme.spacing[3]} * -1)`,
           backgroundColor: theme.colors.backgroundHover,
         },
       },
       preset: {
-        px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundPresetMain,
         color: theme.colors.foregroundMain,
         "&:hover": {
@@ -71,7 +69,6 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       local: {
-        px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundLocalMain,
         color: theme.colors.foregroundLocalMain,
         "&:hover": {
@@ -79,7 +76,6 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       overwritten: {
-        px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundOverwrittenMain,
         color: theme.colors.foregroundOverwrittenMain,
         "&:hover": {
@@ -87,7 +83,6 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       remote: {
-        px: theme.spacing[3],
         backgroundColor: theme.colors.backgroundRemoteMain,
         color: theme.colors.foregroundRemoteMain,
         "&:hover": {
@@ -104,20 +99,20 @@ const StyledLabel = styled(RadixLabel, {
         flexGrow: 1,
       },
     },
-    sectionTitle: {
-      true: textVariants.titles,
-      false: textVariants.labelsSentenceCase,
+    text: {
+      title: textVariants.titles,
+      sentence: textVariants.labelsSentenceCase,
     },
   },
 
   defaultVariants: {
-    sectionTitle: false,
+    text: "sentence",
   },
 });
 
 type Props = {
   color?: (typeof labelColors)[number];
-  sectionTitle?: boolean;
+  text?: "title" | "sentence";
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;

@@ -184,7 +184,7 @@ export const SectionTitleLabel = forwardRef(
       css,
       children,
       ...props
-    }: Omit<ComponentProps<typeof Label>, "truncate" | "sectionTitle">,
+    }: Omit<ComponentProps<typeof Label>, "truncate" | "text">,
     ref: Ref<HTMLLabelElement>
   ) => {
     const { state } = useContext(context);
@@ -198,7 +198,7 @@ export const SectionTitleLabel = forwardRef(
     return (
       <Label
         truncate
-        sectionTitle
+        text="title"
         {...props}
         color={color}
         css={{

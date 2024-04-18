@@ -63,7 +63,7 @@ const LabelStory: ComponentStory<typeof Label> = ({
       <StorySection title="Section title">
         <StoryGrid horizontal>
           {colors.map((color) => (
-            <Label key={color} color={color} sectionTitle>
+            <Label key={color} color={color} text="title">
               {color}
             </Label>
           ))}
