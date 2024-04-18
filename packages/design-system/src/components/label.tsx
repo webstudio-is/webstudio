@@ -29,6 +29,7 @@ const StyledLabel = styled(RadixLabel, {
   boxSizing: "border-box",
   flexShrink: 0,
   py: theme.spacing[1],
+  px: theme.spacing[2],
   border: "1px solid transparent",
   borderRadius: theme.borderRadius[3],
   transition: "200ms color, 200ms background-color",
@@ -55,14 +56,12 @@ const StyledLabel = styled(RadixLabel, {
     },
     color: {
       default: {
-        px: theme.spacing[2],
         color: theme.colors.foregroundMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundHover,
         },
       },
       preset: {
-        px: theme.spacing[2],
         backgroundColor: theme.colors.backgroundPresetMain,
         color: theme.colors.foregroundMain,
         "&:hover": {
@@ -70,7 +69,6 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       local: {
-        px: theme.spacing[2],
         backgroundColor: theme.colors.backgroundLocalMain,
         color: theme.colors.foregroundLocalMain,
         "&:hover": {
@@ -78,7 +76,6 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       overwritten: {
-        px: theme.spacing[2],
         backgroundColor: theme.colors.backgroundOverwrittenMain,
         color: theme.colors.foregroundOverwrittenMain,
         "&:hover": {
@@ -86,7 +83,6 @@ const StyledLabel = styled(RadixLabel, {
         },
       },
       remote: {
-        px: theme.spacing[2],
         backgroundColor: theme.colors.backgroundRemoteMain,
         color: theme.colors.foregroundRemoteMain,
         "&:hover": {
