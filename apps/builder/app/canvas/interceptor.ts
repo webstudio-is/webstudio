@@ -24,7 +24,7 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
     if (params) {
       // populate search params with form data values if available
       if (formData) {
-        for (const [key, value] of formData?.entries()) {
+        for (const [key, value] of formData.entries()) {
           pageHref.searchParams.set(key, value.toString());
         }
       }
