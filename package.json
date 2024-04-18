@@ -68,8 +68,7 @@
       "@types/react": "^18.2.70",
       "@types/react-dom": "^18.2.25",
       "react": "18.3.0-canary-14898b6a9-20240318",
-      "react-dom": "18.3.0-canary-14898b6a9-20240318",
-      "typescript": "5.4.5"
+      "react-dom": "18.3.0-canary-14898b6a9-20240318"
     },
     "patchedDependencies": {
       "@stitches/react@1.3.1-1": "patches/@stitches__react@1.3.1-1.patch",
