@@ -1,9 +1,20 @@
-import { type ReactNode, useState, useEffect } from "react";
+import { type ReactNode, useSyncExternalStore } from "react";
 
-export const ClientOnly = ({ children }: { children: ReactNode }) => {
-  const [rendered, setRendered] = useState(false);
-  useEffect(() => setRendered(true), []);
-  if (rendered) {
-    return children;
+export const ClientOnly = ({
+  fallback,
+  children,
+}: {
+  fallback?: ReactNode;
+  children: ReactNode;
+}) => {
+  // https://tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store
+  const isServer = useSyncExternalStore(
+    () => () => {},
+    () => false,
+    () => true
+  );
+  if (isServer) {
+    return fallback;
   }
+  return children;
 };

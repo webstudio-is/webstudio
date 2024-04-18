@@ -1,19 +1,23 @@
 import { useMemo, useEffect, useState } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
-import type { Instance, Instances } from "@webstudio-is/sdk";
+import type { Instances } from "@webstudio-is/sdk";
 import {
   type Params,
   type Components,
   createElementsTree,
   coreMetas,
   corePropsMetas,
-  WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 import * as baseComponents from "@webstudio-is/sdk-components-react";
+import * as baseComponentMetas from "@webstudio-is/sdk-components-react/metas";
+import * as baseComponentPropsMetas from "@webstudio-is/sdk-components-react/props";
 import * as remixComponents from "@webstudio-is/sdk-components-react-remix";
+import * as remixComponentMetas from "@webstudio-is/sdk-components-react-remix/metas";
+import * as remixComponentPropsMetas from "@webstudio-is/sdk-components-react-remix/props";
 import * as radixComponents from "@webstudio-is/sdk-components-react-radix";
+import * as radixComponentMetas from "@webstudio-is/sdk-components-react-radix/metas";
+import * as radixComponentPropsMetas from "@webstudio-is/sdk-components-react-radix/props";
 import { hooks as radixComponentHooks } from "@webstudio-is/sdk-components-react-radix/hooks";
 import { ErrorMessage } from "~/shared/error";
 import { $publisher, publish } from "~/shared/pubsub";
@@ -130,42 +134,6 @@ const DesignMode = ({ params }: { params: Params }) => {
   return null;
 };
 
-const fetchAndRegisterLibraries = async () => {
-  const response = await fetch("/metas.json");
-  type Library = {
-    metas: Record<Instance["component"], WsComponentMeta>;
-    propsMetas: Record<Instance["component"], WsComponentPropsMeta>;
-  };
-  const data: {
-    base: Library;
-    remix: Library;
-    radix: Library;
-  } = await response.json();
-
-  registerComponentLibrary({
-    components: {},
-    metas: coreMetas,
-    propsMetas: corePropsMetas,
-  });
-  registerComponentLibrary({
-    components: baseComponents,
-    metas: data.base.metas,
-    propsMetas: data.base.propsMetas,
-  });
-  registerComponentLibrary({
-    components: remixComponents,
-    metas: data.remix.metas,
-    propsMetas: data.remix.propsMetas,
-  });
-  registerComponentLibrary({
-    namespace: "@webstudio-is/sdk-components-react-radix",
-    components: radixComponents,
-    metas: data.radix.metas,
-    propsMetas: data.radix.propsMetas,
-    hooks: radixComponentHooks,
-  });
-};
-
 type CanvasProps = {
   params: Params;
   imageLoader: ImageLoader;
@@ -176,7 +144,28 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
   const isPreviewMode = useStore($isPreviewMode);
 
   useMount(() => {
-    fetchAndRegisterLibraries();
+    registerComponentLibrary({
+      components: {},
+      metas: coreMetas,
+      propsMetas: corePropsMetas,
+    });
+    registerComponentLibrary({
+      components: baseComponents,
+      metas: baseComponentMetas,
+      propsMetas: baseComponentPropsMetas,
+    });
+    registerComponentLibrary({
+      components: remixComponents,
+      metas: remixComponentMetas,
+      propsMetas: remixComponentPropsMetas,
+    });
+    registerComponentLibrary({
+      namespace: "@webstudio-is/sdk-components-react-radix",
+      components: radixComponents,
+      metas: radixComponentMetas,
+      propsMetas: radixComponentPropsMetas,
+      hooks: radixComponentHooks,
+    });
   });
 
   useMount(() => {
