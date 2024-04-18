@@ -16,7 +16,7 @@ ENV PNPM_HOME="/.pnpm/store"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable pnpm && mkdir -p $PNPM_HOME
 RUN pnpm install --ignore-scripts
-RUN pnpm -r --filter './packages/*' run build
+RUN pnpm --filter 'webstudio-cloudlfare-template^...' run build
 RUN pnpm --filter 'webstudio-cloudlfare-template' deploy /cloudlfare-template
 
 WORKDIR /cloudlfare-template

@@ -1,3 +1,4 @@
+import { lazy } from "react";
 import {
   useLoaderData,
   useRouteError,
@@ -9,6 +10,7 @@ import {
   redirect,
   json,
 } from "@remix-run/server-runtime";
+
 import { loadBuildByProjectId } from "@webstudio-is/project-build/index.server";
 import { db } from "@webstudio-is/project/index.server";
 import { db as authDb } from "@webstudio-is/authorization-token/index.server";
@@ -21,11 +23,22 @@ import { loadAssetsByProject } from "@webstudio-is/asset-uploader/index.server";
 import { createContext } from "~/shared/context.server";
 import { ErrorMessage } from "~/shared/error";
 import { loginPath } from "~/shared/router-utils";
-import { type BuilderProps, Builder, links } from "~/builder";
+import type { BuilderProps } from "~/builder/index.client";
 import env from "~/env/env.server";
 import { staticEnv } from "~/env/env.static.server";
 
-export { links };
+import builderStyles from "~/builder/builder.css?url";
+// eslint-disable-next-line import/no-internal-modules
+import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
+import { ClientOnly } from "~/shared/client-only";
+
+// Can cause FOUC because of remix-island, be very accurate adding anything here
+export const links = () => {
+  return [
+    { rel: "stylesheet", href: builderStyles },
+    { rel: "stylesheet", href: prismStyles },
+  ];
+};
 
 export const loader = async ({
   params,
@@ -141,10 +154,19 @@ export const ErrorBoundary = () => {
   return <ErrorMessage message={message} />;
 };
 
+const Builder = lazy(async () => {
+  const { Builder } = await import("~/builder/index.client");
+  return { default: Builder };
+});
+
 export const BuilderRoute = () => {
   const data = useLoaderData<BuilderProps>();
 
-  return <Builder {...data} />;
+  return (
+    <ClientOnly>
+      <Builder {...data} />
+    </ClientOnly>
+  );
 };
 
 /**

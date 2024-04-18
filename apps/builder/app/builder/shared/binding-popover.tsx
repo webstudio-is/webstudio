@@ -257,6 +257,7 @@ const BindingButton = forwardRef<
       <SmallIconButton
         ref={ref}
         data-variant={variant}
+        bleed={false}
         css={{
           // hide by default
           opacity: `var(${bindingOpacityProperty}, 0)`,
