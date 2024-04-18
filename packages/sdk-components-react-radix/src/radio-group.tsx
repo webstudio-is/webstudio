@@ -1,17 +1,18 @@
 import {
   type ForwardRefExoticComponent,
-  type ComponentPropsWithRef,
+  type ComponentProps,
+  type RefAttributes,
 } from "react";
 import { Root, Item, Indicator } from "@radix-ui/react-radio-group";
 
 export const RadioGroup: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Root>
+  ComponentProps<typeof Root> & RefAttributes<HTMLDivElement>
 > = Root;
 
 export const RadioGroupItem: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Item>
+  ComponentProps<typeof Item> & RefAttributes<HTMLButtonElement>
 > = Item;
 
 export const RadioGroupIndicator: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Indicator>
+  ComponentProps<typeof Indicator> & RefAttributes<HTMLSpanElement>
 > = Indicator;

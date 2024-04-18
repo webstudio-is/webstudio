@@ -3,9 +3,10 @@
 
 import {
   type ForwardRefExoticComponent,
-  type ComponentPropsWithRef,
+  type ComponentProps,
   type ComponentPropsWithoutRef,
   forwardRef,
+  type RefAttributes,
 } from "react";
 import {
   Root,
@@ -29,7 +30,7 @@ export const Select = forwardRef<
 });
 
 export const SelectTrigger: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Trigger>
+  ComponentProps<typeof Trigger> & RefAttributes<HTMLButtonElement>
 > = Trigger;
 
 export const SelectValue = forwardRef<
@@ -53,19 +54,19 @@ export const SelectContent = forwardRef<
 });
 
 export const SelectViewport: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Viewport>
+  ComponentProps<typeof Viewport> & RefAttributes<HTMLDivElement>
 > = Viewport;
 
 export const SelectItem: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Item>
+  ComponentProps<typeof Item> & RefAttributes<HTMLDivElement>
 > = Item;
 
 export const SelectItemIndicator: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof ItemIndicator>
+  ComponentProps<typeof ItemIndicator> & RefAttributes<HTMLSpanElement>
 > = ItemIndicator;
 
 export const SelectItemText: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof ItemText>
+  ComponentProps<typeof ItemText> & RefAttributes<HTMLSpanElement>
 > = ItemText;
 
 /* BUILDER HOOKS */

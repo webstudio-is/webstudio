@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { Box, Flex, theme } from "@webstudio-is/design-system";
+import { Box, Flex, Text } from "@webstudio-is/design-system";
 import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
 import type { StyleProperty } from "@webstudio-is/css-engine";
@@ -126,7 +126,7 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
                 style={currentStyle}
                 onReset={() => deleteProperty(property)}
               />
-              <Box css={{ p: theme.spacing[2], pt: 0 }}>:</Box>
+              <Text>:</Text>
               <CssValueInputContainer
                 variant="chromeless"
                 size="1"

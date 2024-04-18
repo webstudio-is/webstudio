@@ -5,6 +5,7 @@ import {
   type ForwardRefExoticComponent,
   type ComponentPropsWithRef,
   forwardRef,
+  type ComponentProps,
 } from "react";
 import { Root, Indicator } from "@radix-ui/react-checkbox";
 
@@ -18,5 +19,5 @@ export const Checkbox = forwardRef<
 });
 
 export const CheckboxIndicator: ForwardRefExoticComponent<
-  ComponentPropsWithRef<typeof Indicator>
+  ComponentProps<typeof Indicator> & React.RefAttributes<HTMLSpanElement>
 > = Indicator;

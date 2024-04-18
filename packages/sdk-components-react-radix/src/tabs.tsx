@@ -4,8 +4,9 @@
 import {
   type ComponentPropsWithoutRef,
   type ForwardRefExoticComponent,
-  type ComponentPropsWithRef,
   forwardRef,
+  type ComponentProps,
+  type RefAttributes,
 } from "react";
 import { Root, List, Trigger, Content } from "@radix-ui/react-tabs";
 import {
@@ -15,7 +16,8 @@ import {
 } from "@webstudio-is/react-sdk";
 
 export const Tabs: ForwardRefExoticComponent<
-  Omit<ComponentPropsWithRef<typeof Root>, "asChild" | "defaultValue">
+  Omit<ComponentProps<typeof Root>, "asChild" | "defaultValue"> &
+    RefAttributes<HTMLDivElement>
 > = Root;
 
 export const TabsList = List;

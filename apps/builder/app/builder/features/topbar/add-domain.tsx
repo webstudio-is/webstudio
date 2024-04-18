@@ -89,7 +89,7 @@ export const AddDomain = ({
       >
         {isOpen && (
           <>
-            <Label htmlFor={id} sectionTitle>
+            <Label htmlFor={id} text="title">
               New Domain
             </Label>
             <InputField

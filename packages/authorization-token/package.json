@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/authorization-token",
-  "version": "0.144.0",
+  "version": "0.145.0",
   "description": "Webstudio Authorization Token",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -18,7 +18,7 @@
   "devDependencies": {
     "@types/uuid": "^8.3.4",
     "@webstudio-is/tsconfig": "workspace:*",
-    "typescript": "5.2.2"
+    "typescript": "5.4.5"
   },
   "exports": {
     ".": {

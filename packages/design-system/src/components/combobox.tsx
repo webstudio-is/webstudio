@@ -173,11 +173,11 @@ export const ComboboxContent = forwardRef(
     return (
       <Portal>
         <StyledPopoverContent
-          ref={forwardRef}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
           }}
           {...props}
+          ref={forwardRef}
         />
       </Portal>
     );
