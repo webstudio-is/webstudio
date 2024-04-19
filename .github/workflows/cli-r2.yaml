@@ -20,8 +20,6 @@ jobs:
     environment:
       name: "staging"
 
-    timeout-minutes: 20
-
     runs-on: ubuntu-latest
 
     steps:
@@ -36,17 +34,14 @@ jobs:
           node-version: "18.x"
           cache: pnpm
 
-      - name: pnpm deploy cloudflare template
-        run: |
-          echo "${{ github.workspace }}"
-          echo -------
-          pwd
-          echo --INSTALL--
-          pnpm install --ignore-scripts
-          echo --BUILD--
-          pnpm --filter 'webstudio-cloudlfare-template^...' run build
-          echo --DEPLOY--
-          pnpm --filter 'webstudio-cloudlfare-template' deploy "${{ github.workspace }}/../cloudlfare-template"
+      - name: pnpm instal
+        run: pnpm install --ignore-scripts
+
+      - name: pnpm build
+        run: pnpm --filter 'webstudio-cloudlfare-template^...' run build
+
+      - name: pnpm deploy
+        run: pnpm --filter 'webstudio-cloudlfare-template' deploy "${{ github.workspace }}/../cloudlfare-template"
 
       - name: cleanup cloudflare template
         run: |
@@ -64,17 +59,49 @@ jobs:
 
       - name: Copy artifact
         run: |
+          ls -la
+
           # For staging
           rclone copy -P -M \
             --no-check-dest \
-            cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
+            ./cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst"
 
           # For production
           rclone copy -P -M \
             --no-check-dest \
-            cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst
+            ./cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst"
 
         working-directory: ${{ github.workspace }}/..
+        env:
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
+          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.RCLONE_CONFIG_R2_ENDPOINT }}
+          RCLONE_CONFIG_R2_PROVIDER: ${{ secrets.RCLONE_CONFIG_R2_PROVIDER }}
+          RCLONE_CONFIG_R2_TYPE: ${{ secrets.RCLONE_CONFIG_R2_TYPE }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.RCLONE_CONFIG_R2_SECRET_ACCESS_KEY }}
+          ARTEFACT_BUCKET_NAME: ${{ secrets.ARTEFACT_BUCKET_NAME }}
+
+  checks:
+    environment:
+      name: "staging"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: pnpm/action-setup@v2.2.4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+
+      - name: Copy atrifact via http
+        run: curl -o cloudlfare-template.tar.zst https://https://pub-b6187a0708c7470fa0b77502cc450dcc.r2.dev/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
+
+      - name: Copy atrifact via rclone
+        run: |
+          rclone copy -P -M \
+          --no-check-dest \
+          r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst cloudlfare-template-r.tar.zst
         env:
           RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
           RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
