@@ -1,4 +1,4 @@
-name: CLI Docker
+name: CLI R2
 
 on:
   push:
