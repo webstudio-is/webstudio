@@ -67,12 +67,12 @@ jobs:
           ls -la
 
           # For staging
-          rclone copyto -P -M -vv \
+          rclone copyto -P -M \
             --no-check-dest \
             cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst"
 
           # For production
-          rclone copyto -P -M -vv \
+          rclone copyto -P -M \
             --no-check-dest \
             cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst"
 
