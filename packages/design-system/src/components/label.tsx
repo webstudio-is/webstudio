@@ -15,6 +15,7 @@ export const labelColors = [
   "local",
   "overwritten",
   "remote",
+  "code",
 ] as const;
 
 const StyledLabel = styled(RadixLabel, {
@@ -87,6 +88,12 @@ const StyledLabel = styled(RadixLabel, {
         color: theme.colors.foregroundRemoteMain,
         "&:hover": {
           backgroundColor: theme.colors.backgroundRemoteHover,
+        },
+      },
+      code: {
+        color: theme.colors.foregroundLocalMain,
+        "&:hover": {
+          backgroundColor: theme.colors.backgroundHover,
         },
       },
     },

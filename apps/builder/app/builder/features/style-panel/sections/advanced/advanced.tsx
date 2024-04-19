@@ -127,6 +127,7 @@ export const Section = ({
                 properties={[property]}
                 style={currentStyle}
                 text="mono"
+                color="code"
                 onReset={() => deleteProperty(property)}
               />
               <Text>:</Text>

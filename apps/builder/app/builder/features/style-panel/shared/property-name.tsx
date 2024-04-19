@@ -364,7 +364,10 @@ export const PropertyTooltip = ({
   );
 };
 
-type PropertyNameProps = {
+type PropertyNameProps = Pick<
+  ComponentProps<typeof Label>,
+  "text" | "color"
+> & {
   style: StyleInfo;
   properties: StyleProperty[];
   label: string | ReactElement;
@@ -372,7 +375,6 @@ type PropertyNameProps = {
   description?: ReactNode;
   onReset?: () => void;
   disabled?: boolean;
-  text?: ComponentProps<typeof Label>["text"];
 };
 
 export const PropertyName = ({
@@ -382,6 +384,7 @@ export const PropertyName = ({
   properties,
   label,
   text,
+  color,
   onReset,
   disabled,
 }: PropertyNameProps) => {
@@ -397,6 +400,13 @@ export const PropertyName = ({
     getStyleSource(style[property])
   );
 
+  const styleSource =
+    onReset === undefined
+      ? "default"
+      : styleSourcesList.length === 0
+      ? "default"
+      : getPriorityStyleSource(styleSourcesList);
+
   return (
     <Flex align="center">
       <PropertyTooltip
@@ -410,13 +420,7 @@ export const PropertyName = ({
         <Flex shrink gap={1} align="center">
           {typeof label === "string" && property ? (
             <Label
-              color={
-                onReset === undefined
-                  ? "default"
-                  : styleSourcesList.length === 0
-                  ? "default"
-                  : getPriorityStyleSource(styleSourcesList)
-              }
+              color={color && styleSource === "default" ? color : styleSource}
               truncate
               disabled={disabled}
               text={text}
