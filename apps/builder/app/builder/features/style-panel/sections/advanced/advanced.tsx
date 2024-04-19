@@ -80,7 +80,6 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
     return props.deleteProperty(property, options);
   };
   const setProperty: SetProperty = (property) => {
-    setAddingProp(undefined);
     if (propertyNames.includes(property) === false) {
       recentProperties.add(property);
     }
@@ -103,6 +102,7 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
           onSelect={(value) => {
             if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
+              setAddingProp(property);
               setProperty(property)(
                 { type: "guaranteedInvalid" },
                 { listed: true }
@@ -129,10 +129,17 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
               />
               <Text>:</Text>
               <CssValueInputContainer
+                inputRef={(input) => {
+                  // We need to focus the added property value and reset the addingProp state.
+                  if (input && addingProp === property) {
+                    input.focus();
+                    setAddingProp(undefined);
+                  }
+                }}
                 variant="chromeless"
                 size="1"
                 fieldSizing="content"
-                autoFocus={addingProp !== undefined && index === 0}
+                //autoFocus={addingProp !== undefined && index === 0}
                 property={property}
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
