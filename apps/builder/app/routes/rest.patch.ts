@@ -1,4 +1,4 @@
-import { applyPatches } from "immer";
+import { applyPatches, enableMapSet, enablePatches } from "immer";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { SyncItem } from "immerhin";
 import { prisma } from "@webstudio-is/prisma-client";
@@ -46,6 +46,9 @@ type PatchData = {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  enableMapSet();
+  enablePatches();
+
   try {
     const {
       buildId,
