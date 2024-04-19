@@ -65,12 +65,12 @@ jobs:
           curl https://rclone.org/install.sh | sudo bash
 
           # For staging
-          rclone copy -P -M \
+          rclone copy -P -M -vv \
             --no-check-dest \
             ./cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst"
 
           # For production
-          rclone copy -P -M \
+          rclone copy -P -M -vv \
             --no-check-dest \
             ./cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst"
 
