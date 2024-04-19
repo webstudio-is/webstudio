@@ -177,6 +177,7 @@ export { UploadIcon } from "./upload";
 export { VideoIcon } from "./video";
 export { ViewportIcon } from "./viewport";
 export { VimeoIcon } from "./vimeo";
+export { WebhookFormIcon } from "./webhook-form";
 export { Webstudio1cIcon } from "./webstudio-1c";
 export { WebstudioIcon } from "./webstudio";
 export { WrapIcon } from "./wrap";

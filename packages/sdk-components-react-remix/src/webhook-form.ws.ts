@@ -5,10 +5,13 @@ import {
   showAttribute,
 } from "@webstudio-is/react-sdk";
 import { props } from "./__generated__/server-form.props";
+import { WebhookFormIcon } from "@webstudio-is/icons/svg";
 
 export const meta: WsComponentMeta = {
   ...baseMeta,
-  label: "Form",
+  label: "Webhook Form",
+  order: 1,
+  icon: WebhookFormIcon,
   states: [
     { selector: "[data-state=error]", label: "Error" },
     { selector: "[data-state=success]", label: "Success" },
