@@ -50,23 +50,23 @@ jobs:
 
       # Minimize artefact size due to frequent downloads on each publish.
       # Consider removing large dev dependencies.
-      - name: minimize size of artefact
-        run: |
-          find . -name 'typescript@*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@storybook*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name 'eslint@*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@types+node@*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@types+node*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@typescript-eslint+eslint-plugin*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@cloudflare+workers-types*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@typescript-eslint+scope-manager*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name 'eslint-plugin-*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name 'puppeteer-core*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@jest*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@jspm+core*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@eslint*' -type d -prune -exec rm -rf '{}' +
-        working-directory: ${{ github.workspace }}/../cloudlfare-template
+      # - name: minimize size of artefact
+      #   run: |
+      #     find . -name 'typescript@*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@storybook*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name 'eslint@*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@types+node@*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@types+node*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@typescript-eslint+eslint-plugin*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@cloudflare+workers-types*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@typescript-eslint+scope-manager*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name 'eslint-plugin-*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name 'puppeteer-core*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@jest*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@jspm+core*' -type d -prune -exec rm -rf '{}' + && \
+      #     find . -name '@eslint*' -type d -prune -exec rm -rf '{}' +
+      #   working-directory: ${{ github.workspace }}/../cloudlfare-template
 
       - name: Make archive
         run: |
