@@ -46,7 +46,7 @@ jobs:
           echo --BUILD--
           pnpm --filter 'webstudio-cloudlfare-template^...' run build
           echo --DEPLOY--
-          pnpm --filter 'webstudio-cloudlfare-template' deploy '${{ runner.temp }}/cloudlfare-template'
+          pnpm --filter 'webstudio-cloudlfare-template' deploy ../cloudlfare-template
 
       - name: cleanup cloudflare template
         run: |
