@@ -1,0 +1,125 @@
+name: CLI R2
+
+on:
+  push:
+    branches:
+      - "*.staging"
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: vercel-cli-r2-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+  statuses: write # This is required for the GitHub Script createCommitStatus to work
+  packages: write
+
+jobs:
+  build:
+    env:
+      COMPATIBILITY_DATE: 2024-04-10
+
+    environment:
+      name: "staging"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v2.2.4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+          cache: pnpm
+
+      - name: pnpm instal
+        run: pnpm install --ignore-scripts
+
+      - name: pnpm build
+        run: pnpm --filter 'webstudio-cloudlfare-template^...' run build
+
+      # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
+      # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
+      # TODO: Minimize artefact size due to frequent downloads on each publish.
+      - name: pnpm deploy
+        run: pnpm --filter 'webstudio-cloudlfare-template' deploy "${{ github.workspace }}/../cloudlfare-template"
+
+      - name: Make archive
+        run: |
+          tar --use-compress-program="zstd -19" -cf cloudlfare-template.tar.zst cloudlfare-template
+        working-directory: ${{ github.workspace }}/..
+
+      - name: Copy artifact
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+
+          ls -la
+
+          # For staging
+          rclone copyto -P -M \
+            --no-check-dest \
+            cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst"
+
+          # For production
+          rclone copyto -P -M \
+            --no-check-dest \
+            cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst"
+
+        working-directory: ${{ github.workspace }}/..
+        env:
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
+          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.RCLONE_CONFIG_R2_ENDPOINT }}
+          RCLONE_CONFIG_R2_PROVIDER: ${{ secrets.RCLONE_CONFIG_R2_PROVIDER }}
+          RCLONE_CONFIG_R2_TYPE: ${{ secrets.RCLONE_CONFIG_R2_TYPE }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.RCLONE_CONFIG_R2_SECRET_ACCESS_KEY }}
+          ARTEFACT_BUCKET_NAME: ${{ secrets.ARTEFACT_BUCKET_NAME }}
+
+  checks:
+    environment:
+      name: "staging"
+
+    runs-on: ubuntu-latest
+
+    needs: build
+
+    steps:
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: "9"
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+
+      - name: Copy atrifact via http
+        run: curl -o cloudlfare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
+
+      - name: Extract archive
+        run: tar --use-compress-program="zstd -d" -xf cloudlfare-template.tar.zst -C .
+
+      - name: Webstudio Build
+        run: pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false
+        working-directory: ${{ github.workspace }}/cloudlfare-template
+
+      - name: Remix Build
+        run: pnpm build
+        working-directory: ${{ github.workspace }}/cloudlfare-template
+
+      - name: WRANGLER Build
+        run: |
+          NODE_ENV=production pnpm wrangler deploy \
+          --name build \
+          --compatibility-date '${COMPATIBILITY_DATE}' \
+          --minify true \
+          --logpush true \
+          --dry-run \
+          --outdir dist \
+          './functions/[[path]].ts'
+
+        working-directory: ${{ github.workspace }}/cloudlfare-template
