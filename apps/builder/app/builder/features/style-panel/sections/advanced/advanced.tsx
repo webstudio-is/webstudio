@@ -58,7 +58,7 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
     }
 
     return [
-      ...recent.current,
+      ...Array.from(recent.current).reverse(),
       ...Array.from(names)
         .filter((name) => recent.current.has(name) === false)
         .reverse(),
@@ -70,7 +70,11 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
 // Only here to keep the same section module interface
 export const properties = [];
 
-export const Section = ({ currentStyle, ...props }: SectionProps) => {
+export const Section = ({
+  currentStyle,
+  setProperty,
+  ...props
+}: SectionProps) => {
   const [addingProp, setAddingProp] = useState<StyleProperty | "">();
   const { propertyNames, recentProperties } = usePropertyNames(currentStyle);
   const deleteProperty: DeleteProperty = (property, options) => {
@@ -79,12 +83,7 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
     }
     return props.deleteProperty(property, options);
   };
-  const setProperty: SetProperty = (property) => {
-    if (propertyNames.includes(property) === false) {
-      recentProperties.add(property);
-    }
-    return props.setProperty(property);
-  };
+
   return (
     <CollapsibleSection
       label="Advanced"
@@ -107,6 +106,9 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
                 { type: "guaranteedInvalid" },
                 { listed: true }
               );
+              if (propertyNames.includes(property) === false) {
+                recentProperties.add(property);
+              }
             }
           }}
         />
