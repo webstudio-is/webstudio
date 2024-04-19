@@ -41,9 +41,11 @@ jobs:
           echo $HOME
           echo -------
           pwd
-          echo -------
+          echo --INSTALL--
           pnpm install --ignore-scripts
+          echo --BUILD--
           pnpm --filter 'webstudio-cloudlfare-template^...' run build
+          echo --DEPLOY--
           pnpm --filter 'webstudio-cloudlfare-template' deploy '${{ runner.temp }}/cloudlfare-template'
 
       - name: cleanup cloudflare template
