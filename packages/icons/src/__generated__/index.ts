@@ -177,6 +177,7 @@ export * from "./upload";
 export * from "./video";
 export * from "./viewport";
 export * from "./vimeo";
+export * from "./webhook-form";
 export * from "./webstudio-1c";
 export * from "./webstudio";
 export * from "./wrap";
