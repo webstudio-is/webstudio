@@ -241,6 +241,7 @@ const SelectBase = <Option,>(
                       onItemHighlight?.(undefined);
                       setHighlightedItem(undefined);
                     }}
+                    text="sentence"
                     {...rest}
                   >
                     {getLabel(option)}
