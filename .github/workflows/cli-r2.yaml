@@ -62,7 +62,7 @@ jobs:
 
       - name: Copy artifact
         run: |
-          curl https://rclone.org/install.sh | bash
+          curl https://rclone.org/install.sh | sudo bash
 
           # For staging
           rclone copy -P -M \
@@ -100,7 +100,7 @@ jobs:
           node-version: "18.x"
 
       - name: Copy atrifact via http
-        run: curl -o cloudlfare-template.tar.zst https://pub-b6187a0708c7470fa0b77502cc450dcc.r2.dev/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
+        run: curl -o cloudlfare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
 
       - name: Extract archive
         run: tar --use-compress-program="zstd -d" -xf cloudlfare-template.tar.zst -C .
