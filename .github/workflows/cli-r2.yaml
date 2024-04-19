@@ -38,7 +38,7 @@ jobs:
 
       - name: pnpm deploy cloudflare template
         run: |
-          echo $HOME
+          echo "${{ github.workspace }}"
           echo -------
           pwd
           echo --INSTALL--
@@ -46,7 +46,7 @@ jobs:
           echo --BUILD--
           pnpm --filter 'webstudio-cloudlfare-template^...' run build
           echo --DEPLOY--
-          pnpm --filter 'webstudio-cloudlfare-template' deploy ../cloudlfare-template
+          pnpm --filter 'webstudio-cloudlfare-template' deploy "${{ github.workspace }}/../cloudlfare-template"
 
       - name: cleanup cloudflare template
         run: |
@@ -55,12 +55,12 @@ jobs:
           find . -name 'eslint@*' -type d -prune -exec rm -rf '{}' + && \
           find . -name '@types+node@*' -type d -prune -exec rm -rf '{}' + && \
           find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' +
-        working-directory: ${{ runner.temp }}/cloudlfare-template
+        working-directory: ${{ github.workspace }}/../cloudlfare-template
 
       - name: Make archive
         run: |
           tar --use-compress-program="zstd -19" -cf cloudlfare-template.tar.zst cloudlfare-template
-        working-directory: ${{ runner.temp }}
+        working-directory: ${{ github.workspace }}/..
 
       - name: Copy artifact
         run: |
@@ -74,7 +74,7 @@ jobs:
             --no-check-dest \
             cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst
 
-        working-directory: ${{ runner.temp }}
+        working-directory: ${{ github.workspace }}/..
         env:
           RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
           RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
