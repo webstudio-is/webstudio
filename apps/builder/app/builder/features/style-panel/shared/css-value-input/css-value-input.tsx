@@ -283,6 +283,7 @@ type CssValueInputProps = Pick<
   ComponentProps<typeof InputField>,
   | "variant"
   | "size"
+  | "text"
   | "autoFocus"
   | "disabled"
   | "fieldSizing"
@@ -368,6 +369,7 @@ export const CssValueInput = ({
   fieldSizing,
   variant,
   size,
+  text,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -681,6 +683,7 @@ export const CssValueInput = ({
             prefix={finalPrefix}
             suffix={suffix}
             css={{ cursor: "default", minWidth: "2em" }}
+            text={text}
           />
         </ComboboxAnchor>
         {isOpen && (
