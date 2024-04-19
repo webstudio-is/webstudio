@@ -94,6 +94,8 @@ jobs:
 
     steps:
       - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: "9"
 
       - uses: actions/setup-node@v3
         with:
