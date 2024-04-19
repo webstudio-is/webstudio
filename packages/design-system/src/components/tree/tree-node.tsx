@@ -6,6 +6,7 @@ import {
   forwardRef,
   type ForwardRefRenderFunction,
   type MouseEvent,
+  type ComponentProps,
 } from "react";
 import {
   ChevronFilledDownIcon,
@@ -172,8 +173,14 @@ const hoverStyle: CSS = {
   boxSizing: "border-box",
 };
 
+const itemContainerColor: string = "--ws-tree-node-item-container-color";
+
+export const getNodeVars = ({ color }: { color: string }) => ({
+  [itemContainerColor]: color,
+});
+
 const ItemContainer = styled(Flex, {
-  color: theme.colors.foregroundMain,
+  color: `var(${itemContainerColor}, ${theme.colors.foregroundMain})`,
   alignItems: "center",
   position: "relative",
   ...getItemButtonCssVars({ suffixVisible: false }),
@@ -182,7 +189,6 @@ const ItemContainer = styled(Flex, {
   variants: {
     isSelected: {
       true: {
-        color: theme.colors.foregroundContrastMain,
         bc: theme.colors.backgroundItemCurrent,
       },
     },
@@ -346,7 +352,9 @@ export const TreeItemBody = <Data extends { id: string }>({
       suffixVisible={alwaysShowSuffix || focusTarget !== undefined}
       onFocus={updateFocusTarget}
       onBlur={updateFocusTarget}
-      css={{ [suffixWidthVar]: suffixWidth }}
+      css={{
+        [suffixWidthVar]: suffixWidth,
+      }}
     >
       <ItemButton
         type="button"
@@ -416,6 +424,7 @@ export const TreeItemLabel = forwardRef(TreeItemLabelBase);
 export type TreeNodeProps<Data extends { id: ItemId }> = {
   itemData: Data;
   getItemChildren: (itemSelector: ItemSelector) => Data[];
+  getItemProps?: (itemData: Data) => ComponentProps<"div"> | undefined;
   isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
@@ -453,6 +462,7 @@ export const TreeNode = <Data extends { id: string }>({
     dropTargetItemSelector,
     renderItem,
     getItemChildren,
+    getItemProps,
     isItemHidden,
   } = commonProps;
 
@@ -471,7 +481,7 @@ export const TreeNode = <Data extends { id: string }>({
   const shouldRenderExpandButton = isExpandable && isAlwaysExpanded === false;
 
   return (
-    <div data-drop-target-id={itemData.id}>
+    <div data-drop-target-id={itemData.id} {...getItemProps?.(itemData)}>
       {/* optionally prevent rendering root item */}
       {itemIsHidden === false &&
         renderItem({

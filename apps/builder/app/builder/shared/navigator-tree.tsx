@@ -127,7 +127,7 @@ export const NavigatorTree = () => {
   }, []);
 
   if (rootInstance === undefined) {
-    return null;
+    return;
   }
 
   return (

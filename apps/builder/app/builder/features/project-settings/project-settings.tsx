@@ -80,7 +80,7 @@ export const ProjectSettingsView = ({
                         "&:hover": focusOutline,
                         "&[aria-current=true]": {
                           background: theme.colors.backgroundItemCurrent,
-                          color: theme.colors.foregroundContrastMain,
+                          color: theme.colors.foregroundMain,
                         },
                       }}
                       align="center"

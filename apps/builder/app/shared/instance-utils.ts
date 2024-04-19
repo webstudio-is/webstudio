@@ -1486,3 +1486,15 @@ export const insertWebstudioFragmentCopy = ({
 
   return newDataIds;
 };
+
+export const findClosestSlot = (
+  instances: Instances,
+  instanceSelector: InstanceSelector
+) => {
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance?.component === "Slot") {
+      return instance;
+    }
+  }
+};

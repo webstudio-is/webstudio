@@ -7,6 +7,7 @@ import {
   INDENT,
   type TreeItemRenderProps,
   showNestingLineVars,
+  type TreeNodeProps,
 } from "./tree-node";
 import {
   useHold,
@@ -38,6 +39,7 @@ export type TreeProps<Data extends { id: string }> = {
   canLeaveParent: (itemSelector: ItemSelector) => boolean;
   findClosestDroppableIndex: (itemSelector: ItemSelector) => number;
   getItemChildren: (itemSelector: ItemSelector) => Data[];
+  getItemProps?: TreeNodeProps<Data>["getItemProps"];
   isItemHidden: (itemSelector: ItemSelector) => boolean;
   renderItem: (props: TreeItemRenderProps<Data>) => React.ReactNode;
 
@@ -74,6 +76,7 @@ export const Tree = <Data extends { id: string }>({
   canLeaveParent,
   findClosestDroppableIndex,
   getItemChildren,
+  getItemProps,
   isItemHidden,
   renderItem,
   onSelect,
@@ -302,6 +305,7 @@ export const Tree = <Data extends { id: string }>({
         <TreeNode
           renderItem={renderItem}
           getItemChildren={getItemChildren}
+          getItemProps={getItemProps}
           isItemHidden={isItemHidden}
           onSelect={onSelect}
           onHover={onHover}

@@ -560,12 +560,12 @@
       },
       "item": {
         "current": {
-          "value": "#096cff",
+          "value": "#e1f0ff",
           "type": "color",
           "description": "color for current item in the navigator item, menu item, pages panel item components"
         },
         "current-child": {
-          "value": "#e1f0ff",
+          "value": "{background.panel}",
           "type": "color",
           "description": "color for child of current item in the navigator item, pages panel item components"
         },
@@ -611,7 +611,7 @@
       },
       "style-source": {
         "token": {
-          "value": "#834df4",
+          "value": "{foreground.reusable}",
           "type": "color",
           "description": "Style sources that are tokens"
         },
@@ -1093,6 +1093,10 @@
         "value": "#ff22ae",
         "type": "color",
         "description": "The inverse color of our primary blue, when we want a contrasting highlight."
+      },
+      "reusable": {
+        "value": "#834df4",
+        "type": "color"
       }
     },
     "Brand": {
@@ -1489,6 +1493,8 @@
   },
   "$themes": [],
   "$metadata": {
-    "tokenSetOrder": ["global"]
+    "tokenSetOrder": [
+      "global"
+    ]
   }
 }

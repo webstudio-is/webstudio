@@ -8,6 +8,8 @@ import {
   type TreeItemRenderProps,
   styled,
   theme,
+  getNodeVars,
+  rawTheme,
 } from "@webstudio-is/design-system";
 import type { Instance } from "@webstudio-is/sdk";
 import { collectionComponent } from "@webstudio-is/react-sdk";
@@ -149,6 +151,13 @@ export const InstanceTree = (
       {...props}
       canLeaveParent={canLeaveParent}
       getItemChildren={getItemChildren}
+      getItemProps={(itemData) => {
+        if (itemData.component === "Slot") {
+          return {
+            style: getNodeVars({ color: rawTheme.colors.foregroundReusable }),
+          };
+        }
+      }}
       renderItem={renderItem}
       editingItemId={editingItemSelector?.[0]}
     />

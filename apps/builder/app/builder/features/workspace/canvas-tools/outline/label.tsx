@@ -72,10 +72,10 @@ const LabelContainer = styled(
       },
       variant: {
         default: {
-          backgroundColor: theme.colors.backgroundItemCurrent,
+          backgroundColor: theme.colors.backgroundPrimary,
         },
-        component: {
-          backgroundColor: theme.colors.backgroundSuccessMain,
+        slot: {
+          backgroundColor: theme.colors.foregroundReusable,
         },
       },
     },
@@ -86,21 +86,20 @@ const LabelContainer = styled(
 type LabelProps = {
   instance: { label?: string; component: Instance["component"] };
   instanceRect: Rect;
+  variant?: "default" | "slot";
 };
 
-export const Label = ({ instance, instanceRect }: LabelProps) => {
+export const Label = ({ instance, instanceRect, variant }: LabelProps) => {
   const [labelRef, position] = useLabelPosition(instanceRect);
   const metas = useStore($registeredComponentMetas);
   const meta = metas.get(instance.component);
+
   if (meta === undefined) {
     return <></>;
   }
+
   return (
-    <LabelContainer
-      position={position}
-      variant={instance.component === "Slot" ? "component" : "default"}
-      ref={labelRef}
-    >
+    <LabelContainer position={position} variant={variant} ref={labelRef}>
       <MetaIcon size="1em" icon={meta.icon} />
       {getInstanceLabel(instance, meta)}
     </LabelContainer>
