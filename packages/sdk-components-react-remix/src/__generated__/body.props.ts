@@ -2,24 +2,11 @@ import type { PropMeta } from "@webstudio-is/react-sdk";
 
 export const props: Record<string, PropMeta> = {
   about: { required: false, control: "text", type: "string" },
-  acceptCharset: {
-    required: false,
-    control: "text",
-    type: "string",
-    description: "List of supported charsets.",
-  },
   accessKey: {
     required: false,
     control: "text",
     type: "string",
     description: "Keyboard shortcut to activate or add focus to the element.",
-  },
-  action: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "The URI of a program that processes the information submitted via the form.",
   },
   "aria-activedescendant": {
     description:
@@ -407,13 +394,6 @@ export const props: Record<string, PropMeta> = {
     description:
       "Sets whether input is automatically capitalized when entered by user.",
   },
-  autoComplete: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Indicates whether controls in this form can by default have their valuesautomatically completed by the browser.",
-  },
   autoCorrect: { required: false, control: "text", type: "string" },
   autoFocus: {
     required: false,
@@ -459,18 +439,6 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description: "Defines whether the element can be dragged.",
-  },
-  encType: {
-    description:
-      "`<form encType>` - enhancing beyond the normal string type and limiting\nto the built-in browser supported values",
-    required: false,
-    control: "radio",
-    type: "string",
-    options: [
-      "application/x-www-form-urlencoded",
-      "multipart/form-data",
-      "text/plain",
-    ],
   },
   hidden: {
     required: false,
@@ -521,29 +489,7 @@ export const props: Record<string, PropMeta> = {
     type: "string",
     description: "Defines the language used in the element.",
   },
-  method: {
-    required: false,
-    control: "select",
-    type: "string",
-    options: ["get", "post", "put", "patch", "delete"],
-    description:
-      "Defines which HTTP method to use when submitting the form. Can be GET (default) or POST.",
-  },
-  name: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "This name is important when submitting form data to the server, as it identifies the data associated with the input. When multiple inputs share the same name attribute, they are treated as part of the same group (e.g., radio buttons or checkboxes).",
-  },
   nonce: { required: false, control: "text", type: "string" },
-  noValidate: {
-    required: false,
-    control: "boolean",
-    type: "boolean",
-    description:
-      "This attribute indicates that the form shouldn't be validated when submitted.",
-  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
@@ -593,13 +539,6 @@ export const props: Record<string, PropMeta> = {
     type: "number",
     description:
       "Overrides the browser's default tab order and follows the one specified instead.",
-  },
-  target: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Specifies where to open the linked document (in the case of an <a> element) or where to display the response received (in the case of a <form> element)",
   },
   title: {
     required: false,

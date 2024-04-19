@@ -461,8 +461,6 @@ export const props: Record<string, PropMeta> = {
     description: "Defines whether the element can be dragged.",
   },
   encType: {
-    description:
-      "`<form encType>` - enhancing beyond the normal string type and limiting\nto the built-in browser supported values",
     required: false,
     control: "radio",
     type: "string",
@@ -471,6 +469,8 @@ export const props: Record<string, PropMeta> = {
       "multipart/form-data",
       "text/plain",
     ],
+    description:
+      "Defines the content type of the form data when themethod is POST.",
   },
   hidden: {
     required: false,
@@ -523,9 +523,8 @@ export const props: Record<string, PropMeta> = {
   },
   method: {
     required: false,
-    control: "select",
+    control: "text",
     type: "string",
-    options: ["get", "post", "put", "patch", "delete"],
     description:
       "Defines which HTTP method to use when submitting the form. Can be GET (default) or POST.",
   },
@@ -576,6 +575,15 @@ export const props: Record<string, PropMeta> = {
     control: "boolean",
     type: "boolean",
     description: "Indicates whether spell checking is allowed for the element.",
+  },
+  state: {
+    description:
+      "Use this property to reveal the Success and Error states on the canvas so they can be styled. The Initial state is displayed when the page first opens. The Success and Error states are displayed depending on whether the Form submits successfully or unsuccessfully.",
+    required: false,
+    control: "radio",
+    type: "string",
+    defaultValue: "initial",
+    options: ["initial", "success", "error"],
   },
   suppressContentEditableWarning: {
     required: false,
