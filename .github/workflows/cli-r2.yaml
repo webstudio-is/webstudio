@@ -17,6 +17,9 @@ permissions:
 
 jobs:
   build:
+    env:
+      COMPATIBILITY_DATE: 2024-04-10
+
     environment:
       name: "staging"
 
@@ -59,7 +62,7 @@ jobs:
 
       - name: Copy artifact
         run: |
-          ls -la
+          curl https://rclone.org/install.sh | bash
 
           # For staging
           rclone copy -P -M \
@@ -97,16 +100,26 @@ jobs:
       - name: Copy atrifact via http
         run: curl -o cloudlfare-template.tar.zst https://https://pub-b6187a0708c7470fa0b77502cc450dcc.r2.dev/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
 
-      - name: Copy atrifact via rclone
+      - name: Extract archive
+        run: tar --use-compress-program="zstd -d" -xf cloudlfare-template.tar.zst -C .
+
+      - name: Webstudio Build
+        run: pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false
+        working-directory: ${{ github.workspace }}/cloudlfare-template
+
+      - name: Remix Build
+        run: pnpm build
+        working-directory: ${{ github.workspace }}/cloudlfare-template
+
+      - name: WRANGLER Build
         run: |
-          rclone copy -P -M \
-          --no-check-dest \
-          r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst ./cloudlfare-template-r.tar.zst
-        env:
-          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
-          RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
-          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.RCLONE_CONFIG_R2_ENDPOINT }}
-          RCLONE_CONFIG_R2_PROVIDER: ${{ secrets.RCLONE_CONFIG_R2_PROVIDER }}
-          RCLONE_CONFIG_R2_TYPE: ${{ secrets.RCLONE_CONFIG_R2_TYPE }}
-          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.RCLONE_CONFIG_R2_SECRET_ACCESS_KEY }}
-          ARTEFACT_BUCKET_NAME: ${{ secrets.ARTEFACT_BUCKET_NAME }}
+          NODE_ENV=production pnpm wrangler deploy \
+          --name build \
+          --compatibility-date '${COMPATIBILITY_DATE}' \
+          --minify true \
+          --logpush true \
+          --dry-run \
+          --outdir dist \
+          './functions/[[path]].ts'
+
+        working-directory: ${{ github.workspace }}/cloudlfare-template
