@@ -72,7 +72,9 @@ export const subscribeInterceptedEvents = () => {
       }
       // use attribute instead of form.action to get raw unresolved value
       const action = form.getAttribute("action") ?? "";
-      if (form.method === "get" && isAbsoluteUrl(action) === false) {
+      // lower case just for safety
+      const method = form.method.toLowerCase();
+      if (method === "get" && isAbsoluteUrl(action) === false) {
         switchPageAndUpdateSystem(action, new FormData(form));
       }
     }
