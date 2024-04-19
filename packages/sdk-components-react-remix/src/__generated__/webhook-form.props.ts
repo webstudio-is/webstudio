@@ -488,7 +488,7 @@ export const props: Record<string, PropMeta> = {
   },
   inputMode: {
     description:
-      "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
+      "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see {@link https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute}",
     required: false,
     control: "select",
     type: "string",
@@ -505,7 +505,7 @@ export const props: Record<string, PropMeta> = {
   },
   is: {
     description:
-      "Specify that a standard HTML element should behave like a defined custom built-in element\n@see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is",
+      "Specify that a standard HTML element should behave like a defined custom built-in element\n@see {@link https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is}",
     required: false,
     control: "text",
     type: "string",
@@ -542,13 +542,6 @@ export const props: Record<string, PropMeta> = {
     type: "boolean",
     description:
       "This attribute indicates that the form shouldn't be validated when submitted.",
-  },
-  placeholder: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Provides a hint to the user of what can be entered in the field.",
   },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },

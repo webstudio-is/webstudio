@@ -4,11 +4,12 @@ import {
   type WsComponentPropsMeta,
   showAttribute,
 } from "@webstudio-is/react-sdk";
-import { props } from "./__generated__/server-form.props";
+import { props } from "./__generated__/webhook-form.props";
 import { WebhookFormIcon } from "@webstudio-is/icons/svg";
 
 export const meta: WsComponentMeta = {
   ...baseMeta,
+  category: "data",
   label: "Webhook Form",
   description: "Collect user data and send it to any webhook.",
   order: 1,
