@@ -64,12 +64,12 @@ jobs:
           # For staging
           rclone copy -P -M \
             --no-check-dest \
-            ./cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst"
+            ./cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst"
 
           # For production
           rclone copy -P -M \
             --no-check-dest \
-            ./cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst"
+            ./cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst"
 
         working-directory: ${{ github.workspace }}/..
         env:
@@ -101,7 +101,7 @@ jobs:
         run: |
           rclone copy -P -M \
           --no-check-dest \
-          r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst cloudlfare-template-r.tar.zst
+          r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst ./cloudlfare-template-r.tar.zst
         env:
           RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
           RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
