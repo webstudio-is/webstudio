@@ -7,7 +7,7 @@ on:
 
 # cancel in-progress runs on new commits to same PR (gitub.event.number)
 concurrency:
-  group: vercel-deploy-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  group: vercel-cli-r2-${{ github.workflow }}-${{ github.event.number || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -38,6 +38,10 @@ jobs:
 
       - name: pnpm deploy cloudflare template
         run: |
+          echo $HOME
+          echo -------
+          pwd
+          echo -------
           pnpm install --ignore-scripts
           pnpm --filter 'webstudio-cloudlfare-template^...' run build
           pnpm --filter 'webstudio-cloudlfare-template' deploy '${{ runner.temp }}/cloudlfare-template'
