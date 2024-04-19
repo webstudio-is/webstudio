@@ -43,16 +43,29 @@ jobs:
       - name: pnpm build
         run: pnpm --filter 'webstudio-cloudlfare-template^...' run build
 
+      # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
+      # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
       - name: pnpm deploy
         run: pnpm --filter 'webstudio-cloudlfare-template' deploy "${{ github.workspace }}/../cloudlfare-template"
 
-      - name: cleanup cloudflare template
+      # Minimize artefact size due to frequent downloads on each publish.
+      # Consider removing large dev dependencies.
+      - name: minimize size of artefact
         run: |
           find . -name 'typescript@*' -type d -prune -exec rm -rf '{}' + && \
           find . -name '@storybook*' -type d -prune -exec rm -rf '{}' + && \
           find . -name 'eslint@*' -type d -prune -exec rm -rf '{}' + && \
           find . -name '@types+node@*' -type d -prune -exec rm -rf '{}' + && \
-          find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' +
+          find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@types+node*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@typescript-eslint+eslint-plugin*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@cloudflare+workers-types*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@typescript-eslint+scope-manager*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name 'eslint-plugin-*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name 'puppeteer-core*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@jest*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@jspm+core*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@eslint*' -type d -prune -exec rm -rf '{}' +
         working-directory: ${{ github.workspace }}/../cloudlfare-template
 
       - name: Make archive
