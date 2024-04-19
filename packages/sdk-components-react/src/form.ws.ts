@@ -26,41 +26,6 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 0,
-  template: [
-    {
-      type: "instance",
-      component: "Form",
-      children: [
-        {
-          type: "instance",
-          component: "Label",
-          children: [{ type: "text", value: "Name" }],
-        },
-        {
-          type: "instance",
-          component: "Input",
-          props: [{ type: "string", name: "name", value: "name" }],
-          children: [],
-        },
-        {
-          type: "instance",
-          component: "Label",
-          children: [{ type: "text", value: "Email" }],
-        },
-        {
-          type: "instance",
-          component: "Input",
-          props: [{ type: "string", name: "name", value: "email" }],
-          children: [],
-        },
-        {
-          type: "instance",
-          component: "Button",
-          children: [{ type: "text", value: "Submit" }],
-        },
-      ],
-    },
-  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {
