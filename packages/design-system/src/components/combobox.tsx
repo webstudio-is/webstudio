@@ -453,9 +453,9 @@ export const Combobox = <Item,>({
                 combobox.items.map((item, index) => {
                   return (
                     <ComboboxListboxItem
-                      key={index}
                       selectable={false}
                       {...combobox.getItemProps({ item, index })}
+                      key={index}
                     >
                       {props.itemToString(item)}
                     </ComboboxListboxItem>

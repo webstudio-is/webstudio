@@ -131,10 +131,11 @@ export const FontsManager = ({ value, onChange }: FontsManagerProps) => {
   });
 
   const renderItem = (item: Item, index: number) => {
-    const itemProps = getItemProps({ index });
+    const { key, ...itemProps } = getItemProps({ index });
     return (
       <DeprecatedListItem
         {...itemProps}
+        key={key}
         prefix={itemProps.current ? <CheckMarkIcon /> : undefined}
         suffix={item.type === "uploaded" ? renderMenu(index) : undefined}
       >
