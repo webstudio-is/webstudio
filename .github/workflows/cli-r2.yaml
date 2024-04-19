@@ -1,0 +1,79 @@
+name: CLI Docker
+
+on:
+  push:
+    branches:
+      - "*.staging"
+
+# cancel in-progress runs on new commits to same PR (gitub.event.number)
+concurrency:
+  group: vercel-deploy-${{ github.workflow }}-${{ github.event.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+  statuses: write # This is required for the GitHub Script createCommitStatus to work
+  packages: write
+
+jobs:
+  build:
+    environment:
+      name: "staging"
+
+    timeout-minutes: 20
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v2.2.4
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18.x"
+          cache: pnpm
+
+      - name: pnpm deploy cloudflare template
+        run: |
+          pnpm install --ignore-scripts
+          pnpm --filter 'webstudio-cloudlfare-template^...' run build
+          pnpm --filter 'webstudio-cloudlfare-template' deploy '${{ runner.temp }}/cloudlfare-template'
+
+      - name: cleanup cloudflare template
+        run: |
+          find . -name 'typescript@*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@storybook*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name 'eslint@*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@types+node@*' -type d -prune -exec rm -rf '{}' + && \
+          find . -name '@cloudflare+workers-types@*' -type d -prune -exec rm -rf '{}' +
+        working-directory: ${{ runner.temp }}/cloudlfare-template
+
+      - name: Make archive
+        run: |
+          tar --use-compress-program="zstd -19" -cf cloudlfare-template.tar.zst cloudlfare-template
+        working-directory: ${{ runner.temp }}
+
+      - name: Copy artifact
+        run: |
+          # For staging
+          rclone copy -P -M \
+            --no-check-dest \
+            cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
+
+          # For production
+          rclone copy -P -M \
+            --no-check-dest \
+            cloudlfare-template.tar.zst "r2:/${process.env.ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst
+
+        working-directory: ${{ runner.temp }}
+        env:
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
+          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.RCLONE_CONFIG_R2_ENDPOINT }}
+          RCLONE_CONFIG_R2_PROVIDER: ${{ secrets.RCLONE_CONFIG_R2_PROVIDER }}
+          RCLONE_CONFIG_R2_TYPE: ${{ secrets.RCLONE_CONFIG_R2_TYPE }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.RCLONE_CONFIG_R2_SECRET_ACCESS_KEY }}
+          ARTEFACT_BUCKET_NAME: ${{ secrets.ARTEFACT_BUCKET_NAME }}
