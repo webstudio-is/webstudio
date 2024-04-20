@@ -66,6 +66,6 @@ export const BackgroundContentStory = () => {
 };
 
 export default {
-  title: "Style/Background",
+  title: "Style Panel/Background",
   component: BackgroundContent,
 };

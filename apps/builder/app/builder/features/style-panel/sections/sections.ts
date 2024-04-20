@@ -38,11 +38,3 @@ export const sections = new Map<
   ["outline", outline],
   ["advanced", advanced],
 ]);
-
-export const sectionsProperties = new Set<StyleProperty>([]);
-
-for (const { properties } of sections.values()) {
-  for (const property of properties) {
-    sectionsProperties.add(property);
-  }
-}

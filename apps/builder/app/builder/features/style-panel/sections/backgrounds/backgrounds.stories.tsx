@@ -1,6 +1,5 @@
 import type { LayersValue } from "@webstudio-is/css-engine";
 import { styled, theme } from "@webstudio-is/design-system";
-import { setEnv } from "@webstudio-is/feature-flags";
 import { useRef, useState } from "react";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -9,8 +8,6 @@ import type {
   SetProperty,
 } from "../../shared/use-style-data";
 import { Section } from "./backgrounds";
-
-setEnv("*");
 
 const backgroundImageStyle: LayersValue = {
   type: "layers",
@@ -139,6 +136,6 @@ export const Backgrounds = () => {
 };
 
 export default {
-  title: "Style/Background",
+  title: "Style Panel/Background",
   component: Section,
 };

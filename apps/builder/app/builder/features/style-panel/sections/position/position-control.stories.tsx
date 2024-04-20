@@ -117,6 +117,6 @@ export const PositionControlComponent = (
 };
 
 export default {
-  title: "Position/Control",
+  title: "Style Panel/Position",
   component: PositionControlComponent,
 } as Meta<typeof PositionControlComponent>;

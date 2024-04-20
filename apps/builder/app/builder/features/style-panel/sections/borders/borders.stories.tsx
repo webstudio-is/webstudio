@@ -1,5 +1,4 @@
 import { styled, theme } from "@webstudio-is/design-system";
-import { setEnv } from "@webstudio-is/feature-flags";
 import { useRef, useState } from "react";
 import type { StyleInfo } from "../../shared/style-info";
 import type {
@@ -8,7 +7,6 @@ import type {
   SetProperty,
 } from "../../shared/use-style-data";
 import { Section } from "./borders";
-setEnv("*");
 
 const styleInfoInitial: StyleInfo = {
   borderTopColor: {
@@ -91,6 +89,6 @@ export const Borders = () => {
 };
 
 export default {
-  title: "Style/Borders",
+  title: "Style Panel/Borders",
   component: Section,
 };

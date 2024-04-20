@@ -22,7 +22,7 @@ export const PositionLayoutComponent = (
 );
 
 export default {
-  title: "Position/Layout",
+  title: "Style Panel/Position",
   component: PositionLayoutComponent,
 
   argTypes: {
