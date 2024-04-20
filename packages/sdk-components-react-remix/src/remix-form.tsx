@@ -12,7 +12,11 @@ export const RemixForm = forwardRef<
       method?: Lowercase<NonNullable<FormProps["method"]>>;
     }
 >((props, ref) => {
-  return <Form {...props} ref={ref} />;
+  // remix casts action to relative url
+  if (props.action === "" || props.action?.startsWith("/")) {
+    return <Form {...props} ref={ref} />;
+  }
+  return <form {...props} ref={ref} />;
 });
 
 RemixForm.displayName = "Form";
