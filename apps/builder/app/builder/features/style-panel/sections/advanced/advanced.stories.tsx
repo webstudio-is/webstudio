@@ -1,7 +1,3 @@
-import type {
-  CreateBatchUpdate,
-  DeleteProperty,
-} from "../../shared/use-style-data";
 import { Section } from "./advanced";
 
 const currentStyle = {
