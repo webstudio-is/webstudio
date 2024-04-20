@@ -43,6 +43,15 @@ jobs:
       - name: pnpm build
         run: pnpm --filter 'webstudio-cloudlfare-template^...' run build
 
+      - name: Webstudio Build
+        run: pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false
+        working-directory: ${{ github.workspace }}/fixtures/webstudio-cloudlfare-template
+
+      - name: Remix Build
+        run: pnpm build
+        working-directory: ${{ github.workspace }}/fixtures/webstudio-cloudlfare-template
+
+
       # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
       # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
       # TODO: Minimize artefact size due to frequent downloads on each publish.
@@ -102,14 +111,6 @@ jobs:
 
       - name: Extract archive
         run: tar --use-compress-program="zstd -d" -xf cloudlfare-template.tar.zst -C .
-
-      - name: Webstudio Build
-        run: pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false
-        working-directory: ${{ github.workspace }}/cloudlfare-template
-
-      - name: Remix Build
-        run: pnpm build
-        working-directory: ${{ github.workspace }}/cloudlfare-template
 
       - name: WRANGLER Build
         run: |
