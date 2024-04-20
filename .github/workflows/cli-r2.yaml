@@ -51,12 +51,8 @@ jobs:
         run: pnpm build
         working-directory: ${{ github.workspace }}/fixtures/webstudio-cloudlfare-template
 
-
-      # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
-      # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
-      # TODO: Minimize artefact size due to frequent downloads on each publish.
       - name: pnpm deploy
-        run: pnpm --filter 'webstudio-cloudlfare-template' deploy "${{ github.workspace }}/../cloudlfare-template"
+        run: pnpm --filter 'webstudio-cloudlfare-template' --prod deploy "${{ github.workspace }}/../cloudlfare-template"
 
       - name: Make archive
         run: |
