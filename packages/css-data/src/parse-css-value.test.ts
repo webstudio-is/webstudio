@@ -107,22 +107,19 @@ describe("Parse CSS value", () => {
 
   describe("Tuples", () => {
     test("backgroundPosition", () => {
-      expect(parseCssValue("backgroundPosition", "left top"))
-        .toMatchInlineSnapshot(`
-{
-  "type": "tuple",
-  "value": [
-    {
-      "type": "keyword",
-      "value": "left",
-    },
-    {
-      "type": "keyword",
-      "value": "top",
-    },
-  ],
-}
-`);
+      expect(parseCssValue("backgroundPosition", "left top")).toEqual({
+        type: "tuple",
+        value: [
+          {
+            type: "keyword",
+            value: "left",
+          },
+          {
+            type: "keyword",
+            value: "top",
+          },
+        ],
+      });
     });
   });
 
