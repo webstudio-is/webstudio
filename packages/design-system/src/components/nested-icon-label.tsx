@@ -38,6 +38,12 @@ const colors = {
     backgroundHover: theme.colors.backgroundRemoteHover,
     icon: theme.colors.foregroundRemoteMain,
   },
+  code: {
+    border: "transparent",
+    background: "transparent",
+    backgroundHover: theme.colors.backgroundHover,
+    icon: theme.colors.foregroundIconMain,
+  },
 } as const;
 
 const perColorStyle = (color: (typeof labelColors)[number]) => ({
@@ -70,6 +76,7 @@ const style = css({
       local: perColorStyle("local"),
       overwritten: perColorStyle("overwritten"),
       remote: perColorStyle("remote"),
+      code: perColorStyle("code"),
     },
   },
   defaultVariants: { color: "default" },

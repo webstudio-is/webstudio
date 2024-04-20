@@ -20,7 +20,7 @@ import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { sectionsProperties } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
-import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
+import type { DeleteProperty } from "../../shared/use-style-data";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
@@ -58,7 +58,7 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
     }
 
     return [
-      ...recent.current,
+      ...Array.from(recent.current).reverse(),
       ...Array.from(names)
         .filter((name) => recent.current.has(name) === false)
         .reverse(),
@@ -70,7 +70,11 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
 // Only here to keep the same section module interface
 export const properties = [];
 
-export const Section = ({ currentStyle, ...props }: SectionProps) => {
+export const Section = ({
+  currentStyle,
+  setProperty,
+  ...props
+}: SectionProps) => {
   const [addingProp, setAddingProp] = useState<StyleProperty | "">();
   const { propertyNames, recentProperties } = usePropertyNames(currentStyle);
   const deleteProperty: DeleteProperty = (property, options) => {
@@ -79,13 +83,7 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
     }
     return props.deleteProperty(property, options);
   };
-  const setProperty: SetProperty = (property) => {
-    setAddingProp(undefined);
-    if (propertyNames.includes(property) === false) {
-      recentProperties.add(property);
-    }
-    return props.setProperty(property);
-  };
+
   return (
     <CollapsibleSection
       label="Advanced"
@@ -103,10 +101,14 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
           onSelect={(value) => {
             if (value in propertiesData || value.startsWith("--")) {
               const property = value as StyleProperty;
+              setAddingProp(property);
               setProperty(property)(
                 { type: "guaranteedInvalid" },
                 { listed: true }
               );
+              if (propertyNames.includes(property) === false) {
+                recentProperties.add(property);
+              }
             }
           }}
         />
@@ -124,14 +126,23 @@ export const Section = ({ currentStyle, ...props }: SectionProps) => {
                 label={toKebabCase(styleConfigByName(property).property)}
                 properties={[property]}
                 style={currentStyle}
+                text="mono"
+                color="code"
                 onReset={() => deleteProperty(property)}
               />
               <Text>:</Text>
               <CssValueInputContainer
+                inputRef={(input) => {
+                  // We need to focus the added property value and reset the addingProp state.
+                  if (input && addingProp === property) {
+                    input.focus();
+                    setAddingProp(undefined);
+                  }
+                }}
                 variant="chromeless"
                 size="1"
+                text="mono"
                 fieldSizing="content"
-                autoFocus={addingProp !== undefined && index === 0}
                 property={property}
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}

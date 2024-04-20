@@ -15,6 +15,7 @@ export const labelColors = [
   "local",
   "overwritten",
   "remote",
+  "code",
 ] as const;
 
 const StyledLabel = styled(RadixLabel, {
@@ -89,6 +90,12 @@ const StyledLabel = styled(RadixLabel, {
           backgroundColor: theme.colors.backgroundRemoteHover,
         },
       },
+      code: {
+        color: theme.colors.foregroundLocalMain,
+        "&:hover": {
+          backgroundColor: theme.colors.backgroundHover,
+        },
+      },
     },
     truncate: {
       true: {
@@ -102,6 +109,7 @@ const StyledLabel = styled(RadixLabel, {
     text: {
       title: textVariants.titles,
       sentence: textVariants.labelsSentenceCase,
+      mono: textVariants.mono,
     },
   },
 
@@ -112,7 +120,7 @@ const StyledLabel = styled(RadixLabel, {
 
 type Props = {
   color?: (typeof labelColors)[number];
-  text?: "title" | "sentence";
+  text?: "title" | "sentence" | "mono";
   disabled?: boolean;
   truncate?: boolean;
   children: ReactNode;

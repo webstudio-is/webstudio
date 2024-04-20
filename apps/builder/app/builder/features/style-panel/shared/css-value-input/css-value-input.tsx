@@ -47,6 +47,7 @@ import {
   $selectedInstanceUnitSizes,
 } from "~/shared/nano-states";
 import { convertUnits } from "./convert-units";
+import { mergeRefs } from "@react-aria/utils";
 
 // We need to enable scrub on properties that can have numeric value.
 const canBeNumber = (property: StyleProperty) => {
@@ -280,7 +281,14 @@ export type ChangeReason =
 
 type CssValueInputProps = Pick<
   ComponentProps<typeof InputField>,
-  "variant" | "size" | "autoFocus" | "disabled" | "fieldSizing" | "prefix"
+  | "variant"
+  | "size"
+  | "text"
+  | "autoFocus"
+  | "disabled"
+  | "fieldSizing"
+  | "prefix"
+  | "inputRef"
 > & {
   styleSource: StyleSource;
   property: StyleProperty;
@@ -361,6 +369,7 @@ export const CssValueInput = ({
   fieldSizing,
   variant,
   size,
+  text,
   ...props
 }: CssValueInputProps) => {
   const value = props.intermediateValue ?? props.value ?? initialValue;
@@ -668,12 +677,13 @@ export const CssValueInput = ({
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             containerRef={disabled ? undefined : scrubRef}
-            inputRef={inputRef}
+            inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
             suffix={suffix}
             css={{ cursor: "default", minWidth: "2em" }}
+            text={text}
           />
         </ComboboxAnchor>
         {isOpen && (
