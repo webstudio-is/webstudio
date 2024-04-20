@@ -95,7 +95,7 @@ export const Section = ({
     }
     return props.deleteProperty(property, options);
   };
-  console.log(currentStyle);
+
   return (
     <CollapsibleSection
       label="Advanced"

@@ -40,7 +40,9 @@ const currentStyle = {
 } as const;
 
 export const Advanced = () => {
-  return <Section currentStyle={currentStyle} {...({} as any)} />;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const props = {} as any;
+  return <Section currentStyle={currentStyle} {...props} />;
 };
 
 export default {
