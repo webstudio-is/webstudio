@@ -75,7 +75,7 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
         .filter((name) => recent.current.has(name) === false)
         .reverse(),
     ];
-  }, [styles, currentStyle]);
+  }, [styles, currentStyle, baseProperties]);
   return { propertyNames, recentProperties: recent.current };
 };
 
