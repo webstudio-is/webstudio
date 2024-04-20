@@ -34,19 +34,22 @@ export const isValidDeclaration = (
 
   const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
 
-  const isValidDeclaration = matchResult.matched != null;
+  let isValidDeclaration = matchResult.matched != null;
 
-  // @todo remove after fix https://github.com/csstree/csstree/issues/246
-  if (isValidDeclaration && typeof CSSStyleValue !== "undefined") {
+  // @todo remove after csstree fixes
+  // - https://github.com/csstree/csstree/issues/246
+  // - https://github.com/csstree/csstree/issues/164
+  if (typeof CSSStyleValue !== "undefined") {
     try {
       CSSStyleValue.parse(cssPropertyName, value);
+      isValidDeclaration = true;
     } catch {
       warnOnce(
         true,
         `Css property "${property}" with value "${value}" is invalid according to CSSStyleValue.parse
           but valid according to csstree.lexer.matchProperty.`
       );
-      return false;
+      isValidDeclaration = false;
     }
   }
 
@@ -66,7 +69,7 @@ export const parseCssValue = (
     return invalidValue;
   }
 
-  if (!isValidDeclaration(property, input)) {
+  if (isValidDeclaration(property, input) === false) {
     return invalidValue;
   }
 
