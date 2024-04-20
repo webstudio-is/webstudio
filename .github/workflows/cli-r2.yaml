@@ -41,43 +41,35 @@ jobs:
         run: pnpm install --ignore-scripts
 
       - name: pnpm build
-        run: pnpm --filter 'webstudio-cloudlfare-template^...' run build
+        run: pnpm --filter 'webstudio-cloudflare-template^...' run build
 
       # Ideally, execute 'pnpm deploy --prod', but @remix-run/dev doesn't support this flag.
       # Despite being listed as a dependency, @remix-run/dev does not install the remix cli.
       # TODO: Minimize artefact size due to frequent downloads on each publish.
       - name: pnpm deploy
-        run: pnpm --filter 'webstudio-cloudlfare-template' deploy "${{ github.workspace }}/../cloudlfare-template"
+        run: pnpm --filter 'webstudio-cloudflare-template' deploy "${{ github.workspace }}/../cloudflare-template"
 
       - name: Make archive
         run: |
-          tar --use-compress-program="zstd -19" -cf cloudlfare-template.tar.zst cloudlfare-template
+          tar --use-compress-program="zstd -19" -cf cloudflare-template.tar.zst cloudflare-template
         working-directory: ${{ github.workspace }}/..
 
       - name: Copy artifact
         run: |
-          curl https://rclone.org/install.sh | sudo bash
-
-          ls -la
-
           # For staging
-          rclone copyto -P -M \
-            --no-check-dest \
-            cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst"
+          aws s3 cp cloudflare-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/cloudflare-template/${{ github.ref_name }}.tar.zst"
 
-          # For production
-          rclone copyto -P -M \
-            --no-check-dest \
-            cloudlfare-template.tar.zst "r2:/${ARTEFACT_BUCKET_NAME}/public/cloudlfare-template/${{ github.sha }}.tar.zst"
+          # For production can be cached forever
+          aws s3 cp \
+          --metadata-directive REPLACE --cache-control "public,max-age=31536102,immutable" \
+          cloudflare-template.tar.zst "s3://${ARTEFACT_BUCKET_NAME}/public/cloudflare-template/${{ github.sha }}.tar.zst"
 
         working-directory: ${{ github.workspace }}/..
         env:
-          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.RCLONE_CONFIG_R2_ACCESS_KEY_ID }}
-          RCLONE_CONFIG_R2_ACL: ${{ secrets.RCLONE_CONFIG_R2_ACL }}
-          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.RCLONE_CONFIG_R2_ENDPOINT }}
-          RCLONE_CONFIG_R2_PROVIDER: ${{ secrets.RCLONE_CONFIG_R2_PROVIDER }}
-          RCLONE_CONFIG_R2_TYPE: ${{ secrets.RCLONE_CONFIG_R2_TYPE }}
-          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.RCLONE_CONFIG_R2_SECRET_ACCESS_KEY }}
+          AWS_ENDPOINT_URL_S3: ${{ secrets.AWS_ENDPOINT_URL_S3 }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           ARTEFACT_BUCKET_NAME: ${{ secrets.ARTEFACT_BUCKET_NAME }}
 
   checks:
@@ -98,18 +90,18 @@ jobs:
           node-version: "18.x"
 
       - name: Copy atrifact via http
-        run: curl -o cloudlfare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudlfare-template/${{ github.ref_name }}.tar.zst
+        run: curl -o cloudflare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudflare-template/${{ github.ref_name }}.tar.zst
 
       - name: Extract archive
-        run: tar --use-compress-program="zstd -d" -xf cloudlfare-template.tar.zst -C .
+        run: tar --use-compress-program="zstd -d" -xf cloudflare-template.tar.zst -C .
 
       - name: Webstudio Build
         run: pnpm webstudio build --template internal --template saas-helpers --template cloudflare --assets false
-        working-directory: ${{ github.workspace }}/cloudlfare-template
+        working-directory: ${{ github.workspace }}/cloudflare-template
 
       - name: Remix Build
         run: pnpm build
-        working-directory: ${{ github.workspace }}/cloudlfare-template
+        working-directory: ${{ github.workspace }}/cloudflare-template
 
       - name: WRANGLER Build
         run: |
@@ -122,4 +114,4 @@ jobs:
           --outdir dist \
           './functions/[[path]].ts'
 
-        working-directory: ${{ github.workspace }}/cloudlfare-template
+        working-directory: ${{ github.workspace }}/cloudflare-template

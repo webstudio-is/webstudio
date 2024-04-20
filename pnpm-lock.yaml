@@ -455,7 +455,7 @@ importers:
         specifier: ^5.2.8
         version: 5.2.8(@types/node@18.17.1)
 
-  fixtures/webstudio-cloudlfare-template:
+  fixtures/webstudio-cloudflare-template:
     dependencies:
       '@remix-run/cloudflare':
         specifier: ^2.8.1
