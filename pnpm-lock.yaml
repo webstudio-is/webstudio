@@ -502,12 +502,12 @@ importers:
       react-dom:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
-      webstudio:
-        specifier: workspace:*
-        version: link:../../packages/cli
       worktop:
         specifier: 0.8.0-next.18
         version: 0.8.0-next.18
+      wrangler:
+        specifier: ^3.48.0
+        version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -536,9 +536,9 @@ importers:
       vite-tsconfig-paths:
         specifier: ^4.2.1
         version: 4.3.2(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))
-      wrangler:
-        specifier: ^3.48.0
-        version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
+      webstudio:
+        specifier: workspace:*
+        version: link:../../packages/cli
 
   fixtures/webstudio-custom-template:
     dependencies:
