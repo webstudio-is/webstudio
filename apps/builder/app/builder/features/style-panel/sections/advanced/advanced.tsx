@@ -143,7 +143,6 @@ export const Section = ({
                 size="1"
                 text="mono"
                 fieldSizing="content"
-                //autoFocus={addingProp !== undefined && index === 0}
                 property={property}
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
