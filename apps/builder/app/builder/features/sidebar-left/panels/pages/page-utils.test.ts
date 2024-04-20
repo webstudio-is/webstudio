@@ -630,8 +630,7 @@ describe("duplicate page", () => {
           type: "parameter",
         },
         {
-          // @todo remove cast after releasing system variable migration
-          id: newPage.systemDataSourceId!,
+          id: newPage.systemDataSourceId,
           scopeInstanceId: newPage.rootInstanceId,
           name: "system",
           type: "parameter",
@@ -691,6 +690,7 @@ describe("duplicate page", () => {
       title: `"My Title"`,
       meta: {},
       rootInstanceId: expect.not.stringMatching("body"),
+      systemDataSourceId: "pageSystem",
     });
   });
 
@@ -812,6 +812,12 @@ describe("duplicate page", () => {
           type: "variable",
           value: { type: "string", value: "value" },
         },
+        {
+          id: "systemId",
+          scopeInstanceId: "body",
+          name: "system",
+          type: "parameter",
+        },
       ])
     );
     $pages.set({
@@ -832,13 +838,15 @@ describe("duplicate page", () => {
           ],
         },
         rootInstanceId: "body",
-        systemDataSourceId: "system",
+        systemDataSourceId: "systemId",
       },
       pages: [],
       folders: [],
     });
     duplicatePage("pageId");
-    const [_oldDataSource, newDataSource] = $dataSources.get().values();
+    const [_oldDataSource, _systemDataSource, newDataSource] = $dataSources
+      .get()
+      .values();
     const newVariableName = encodeDataSourceVariable(newDataSource.id);
     expect(newVariableName).not.toEqual("$ws$dataSource$variableId");
     expect($pages.get()?.pages[0]).toEqual({
@@ -858,7 +866,7 @@ describe("duplicate page", () => {
         ],
       },
       rootInstanceId: expect.not.stringMatching("body"),
-      systemDataSourceId: expect.not.stringMatching("system"),
+      systemDataSourceId: expect.not.stringMatching("systemId"),
     });
   });
 });

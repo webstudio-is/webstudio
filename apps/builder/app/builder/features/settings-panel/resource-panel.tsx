@@ -265,7 +265,7 @@ const $hiddenDataSourceIds = computed(
         dataSourceIds.add(dataSource.id);
       }
     }
-    if (page?.systemDataSourceId && isFeatureEnabled("filters")) {
+    if (page && isFeatureEnabled("filters")) {
       dataSourceIds.delete(page.systemDataSourceId);
     }
     return dataSourceIds;

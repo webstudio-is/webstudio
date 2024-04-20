@@ -14,6 +14,7 @@ test("generate minimal static page meta factory", () => {
         name: "",
         path: "",
         rootInstanceId: "",
+        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {},
       },
@@ -53,6 +54,7 @@ test("generate complete static page meta factory", () => {
         name: "",
         path: "",
         rootInstanceId: "",
+        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {
           description: `"Page description"`,
@@ -111,6 +113,7 @@ test("generate asset url instead of id", () => {
         name: "",
         path: "",
         rootInstanceId: "",
+        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {
           socialImageUrl: `"https://my-image"`,
@@ -152,6 +155,7 @@ test("generate custom meta ignoring empty property name", () => {
         name: "",
         path: "",
         rootInstanceId: "",
+        systemDataSourceId: "",
         title: `"Page title"`,
         meta: {
           custom: [
@@ -200,6 +204,7 @@ test("generate page meta factory with variables", () => {
         name: "",
         path: "",
         rootInstanceId: "",
+        systemDataSourceId: "",
         title: `$ws$dataSource$variableId`,
         meta: {},
       },
@@ -296,6 +301,7 @@ test("generate page meta factory with resources", () => {
         name: "",
         path: "",
         rootInstanceId: "",
+        systemDataSourceId: "",
         title: `$ws$dataSource$resourceVariableId.data.title`,
         meta: {},
       },

@@ -64,8 +64,7 @@ const commonPageFields = {
       .optional(),
   }),
   rootInstanceId: z.string(),
-  // @todo make required after releasing migration
-  systemDataSourceId: z.optional(z.string()),
+  systemDataSourceId: z.string(),
 } as const;
 
 export const HomePagePath = z
