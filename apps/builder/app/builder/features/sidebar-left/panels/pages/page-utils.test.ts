@@ -630,8 +630,7 @@ describe("duplicate page", () => {
           type: "parameter",
         },
         {
-          // @todo remove cast after releasing system variable migration
-          id: newPage.systemDataSourceId!,
+          id: newPage.systemDataSourceId,
           scopeInstanceId: newPage.rootInstanceId,
           name: "system",
           type: "parameter",

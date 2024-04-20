@@ -73,7 +73,7 @@ export const tokenizePathnamePattern = (pathname: string) => {
 
 export const compilePathnamePattern = (
   tokens: Token[],
-  values: Record<string, string>
+  values: Record<string, undefined | string>
 ) => {
   let compiledPathname = "";
   for (const token of tokens) {

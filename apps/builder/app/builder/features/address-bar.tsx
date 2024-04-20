@@ -20,6 +20,7 @@ import {
   findParentFolderByChildId,
   ROOT_FOLDER_ID,
   getPagePath,
+  type System,
 } from "@webstudio-is/sdk";
 import {
   $dataSourceVariables,
@@ -47,15 +48,10 @@ const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
     .replace(/\/+/g, "/");
 });
 
-export type System = {
-  params: Record<string, string>;
-  search: Record<string, string>;
-};
-
 const $selectedPagePathParams = computed(
   [$selectedPage, $dataSourceVariables],
   (selectedPage, dataSourceVariables) => {
-    if (selectedPage?.systemDataSourceId === undefined) {
+    if (selectedPage === undefined) {
       return {};
     }
     const system = dataSourceVariables.get(selectedPage.systemDataSourceId) as
