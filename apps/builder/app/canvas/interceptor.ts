@@ -101,7 +101,7 @@ export const subscribeInterceptedEvents = () => {
       }
       // use attribute instead of form.action to get raw unresolved value
       // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-fs-action
-      let action = form.getAttribute("action") ?? "";
+      const action = form.getAttribute("action") ?? "";
       // lower case just for safety
       const method = form.method.toLowerCase();
       if (method === "get" && isAbsoluteUrl(action) === false) {
