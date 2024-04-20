@@ -18,7 +18,7 @@ import {
 } from "../../shared/style-info";
 import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
-import { sectionsProperties } from "../sections";
+import { sections } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
 import type { DeleteProperty } from "../../shared/use-style-data";
 
@@ -40,13 +40,25 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
   const styles = useInstanceStyles(selectedInstanceSelector?.[0]);
   // Ordererd recent properties for sorting.
   const recent = useRef<Set<StyleProperty>>(new Set());
+
+  const baseProperties = useMemo(() => {
+    // All properties used by the panels except the advanced panel
+    const base = new Set<StyleProperty>([]);
+    for (const { properties } of sections.values()) {
+      for (const property of properties) {
+        base.add(property);
+      }
+    }
+    return base;
+  }, []);
+
   const propertyNames = useMemo(() => {
     const names = new Set(initialPropertyNames);
     let property: StyleProperty;
     for (property in currentStyle) {
       if (
         hasInstanceValue(currentStyle, property) &&
-        sectionsProperties.has(property) === false
+        baseProperties.has(property) === false
       ) {
         names.add(property);
       }
@@ -63,7 +75,7 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
         .filter((name) => recent.current.has(name) === false)
         .reverse(),
     ];
-  }, [styles, currentStyle]);
+  }, [styles, currentStyle, baseProperties]);
   return { propertyNames, recentProperties: recent.current };
 };
 
