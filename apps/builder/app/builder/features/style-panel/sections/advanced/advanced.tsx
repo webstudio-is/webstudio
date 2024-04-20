@@ -20,7 +20,7 @@ import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { sectionsProperties } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
-import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
+import type { DeleteProperty } from "../../shared/use-style-data";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare

@@ -677,7 +677,7 @@ export const CssValueInput = ({
             onBlur={handleOnBlur}
             onKeyDown={handleKeyDown}
             containerRef={disabled ? undefined : scrubRef}
-            inputRef={mergeRefs(inputRef, props.inputRef)}
+            inputRef={mergeRefs(inputRef, props.inputRef ?? null)}
             name={property}
             color={value.type === "invalid" ? "error" : undefined}
             prefix={finalPrefix}
