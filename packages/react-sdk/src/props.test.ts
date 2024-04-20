@@ -1,8 +1,8 @@
 import { test, expect } from "@jest/globals";
-import type { Prop } from "@webstudio-is/sdk";
+import type { Pages, Prop } from "@webstudio-is/sdk";
 import { normalizeProps } from "./props";
 
-const pagesBase = {
+const pagesBase: Pages = {
   meta: {},
   homePage: {
     id: "home",
@@ -10,6 +10,7 @@ const pagesBase = {
     name: "Home",
     title: "Home",
     rootInstanceId: "instance-1",
+    systemDataSourceId: "",
     meta: {},
   },
   pages: [],
@@ -88,6 +89,7 @@ test("normalize page prop with path into string", () => {
             name: "Page",
             title: "Page",
             rootInstanceId: "instance-1",
+            systemDataSourceId: "",
             meta: {},
           },
         ],
@@ -138,6 +140,7 @@ test("normalize page prop with path and hash into string", () => {
           name: "Page",
           title: "Page",
           rootInstanceId: "instance-1",
+          systemDataSourceId: "",
           meta: {},
         },
       ],

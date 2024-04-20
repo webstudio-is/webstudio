@@ -470,12 +470,10 @@ export const duplicatePage = (pageId: Page["id"]) => {
       availableDataSources: new Set(),
     });
     const newRootInstanceId = newInstanceIds.get(page.rootInstanceId);
-    const newSystemDataSourceId = newDataSourceIds.get(page.systemDataSourceId);
+    const newSystemDataSourceId =
+      newDataSourceIds.get(page.systemDataSourceId) ?? page.systemDataSourceId;
 
-    if (
-      newRootInstanceId === undefined ||
-      newSystemDataSourceId === undefined
-    ) {
+    if (newRootInstanceId === undefined) {
       return;
     }
     const newPage = {
