@@ -20,21 +20,13 @@ export const cssTryParseValue = (input: string) => {
   }
 };
 
+// Because csstree parser has bugs we use CSSStyleValue to validate css properties if available
+// and fall back to csstree.
 export const isValidDeclaration = (
   property: string,
   value: string
 ): boolean => {
-  const ast = cssTryParseValue(value);
-
-  if (ast == null) {
-    return false;
-  }
-
   const cssPropertyName = hyphenate(property);
-
-  const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
-
-  let isValidDeclaration = matchResult.matched != null;
 
   // @todo remove after csstree fixes
   // - https://github.com/csstree/csstree/issues/246
@@ -42,18 +34,26 @@ export const isValidDeclaration = (
   if (typeof CSSStyleValue !== "undefined") {
     try {
       CSSStyleValue.parse(cssPropertyName, value);
-      isValidDeclaration = true;
+      return true;
     } catch {
       warnOnce(
         true,
         `Css property "${property}" with value "${value}" is invalid according to CSSStyleValue.parse
           but valid according to csstree.lexer.matchProperty.`
       );
-      isValidDeclaration = false;
+      return false;
     }
   }
 
-  return isValidDeclaration;
+  const ast = cssTryParseValue(value);
+
+  if (ast == null) {
+    return false;
+  }
+
+  const matchResult = csstree.lexer.matchProperty(cssPropertyName, ast);
+
+  return matchResult.matched != null;
 };
 
 export const parseCssValue = (
