@@ -1,5 +1,16 @@
-import { matchPathnamePattern } from "~/builder/shared/url-pattern";
-import { $isPreviewMode, $pages, updateSystem } from "~/shared/nano-states";
+import type { System } from "@webstudio-is/sdk";
+import {
+  compilePathnamePattern,
+  matchPathnamePattern,
+  tokenizePathnamePattern,
+} from "~/builder/shared/url-pattern";
+import {
+  $dataSourceVariables,
+  $isPreviewMode,
+  $pages,
+  $selectedPage,
+  updateSystem,
+} from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
@@ -11,10 +22,28 @@ const isAbsoluteUrl = (href: string) => {
   }
 };
 
+const getSelectedPagePathname = () => {
+  const page = $selectedPage.get();
+  const dataSourceVariables = $dataSourceVariables.get();
+  if (page) {
+    const system = dataSourceVariables.get(page.systemDataSourceId) as
+      | undefined
+      | System;
+    const tokens = tokenizePathnamePattern(page.path);
+    return compilePathnamePattern(tokens, system?.params ?? {});
+  }
+};
+
 const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   const pages = $pages.get();
   if (pages === undefined) {
     return;
+  }
+  if (href === "") {
+    const pathname = getSelectedPagePathname();
+    if (pathname) {
+      href = pathname;
+    }
   }
   const pageHref = new URL(href, "https://any-valid.url");
   for (const page of [pages.homePage, ...pages.pages]) {
@@ -71,7 +100,8 @@ export const subscribeInterceptedEvents = () => {
         return;
       }
       // use attribute instead of form.action to get raw unresolved value
-      const action = form.getAttribute("action") ?? "";
+      // https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#dom-fs-action
+      let action = form.getAttribute("action") ?? "";
       // lower case just for safety
       const method = form.method.toLowerCase();
       if (method === "get" && isAbsoluteUrl(action) === false) {
