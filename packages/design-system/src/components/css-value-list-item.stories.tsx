@@ -1,3 +1,4 @@
+import { useState, type ComponentProps, type ReactNode } from "react";
 import { css, styled, theme } from "../stitches.config";
 import {
   CssValueListArrowFocus,
@@ -10,7 +11,6 @@ import {
   EyeconClosedIcon,
   SubtractIcon,
 } from "@webstudio-is/icons";
-import * as React from "react";
 import { SmallIconButton } from "./small-icon-button";
 import {
   FloatingPanelPopover,
@@ -49,14 +49,14 @@ const Panel = styled("div", {
 
 const ListItem = (props: {
   hidden: boolean;
-  labelColor: "default" | "preset" | "local" | "overwritten" | "remote";
+  labelColor: ComponentProps<typeof Label>["color"];
   state: undefined | "open";
   active: boolean;
   focused: undefined | boolean;
-  label?: React.ReactNode;
+  label?: ReactNode;
   index: number;
 }) => {
-  const [pressed, onPressedChange] = React.useState(false);
+  const [pressed, onPressedChange] = useState(false);
 
   return (
     <CssValueListItem
@@ -100,7 +100,7 @@ export const Declarative = (props: {
   focused: boolean;
   labelColor: "default";
 }) => {
-  const [pressed, onPressedChange] = React.useState(false);
+  const [pressed, onPressedChange] = useState(false);
 
   return (
     <Panel>
