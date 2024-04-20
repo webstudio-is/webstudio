@@ -43,13 +43,13 @@ const usePropertyNames = (currentStyle: StyleInfo) => {
 
   const baseProperties = useMemo(() => {
     // All properties used by the panels except the advanced panel
-    const baseProperties = new Set<StyleProperty>([]);
+    const base = new Set<StyleProperty>([]);
     for (const { properties } of sections.values()) {
       for (const property of properties) {
-        baseProperties.add(property);
+        base.add(property);
       }
     }
-    return baseProperties;
+    return base;
   }, []);
 
   const propertyNames = useMemo(() => {
