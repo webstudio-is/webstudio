@@ -27,6 +27,7 @@ import {
   ProjectNewRedirectPath,
   DataSource,
   isLiteralExpression,
+  type System,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -99,7 +100,6 @@ import {
   isPathAvailable,
 } from "./page-utils";
 import { Form } from "./form";
-import type { System } from "~/builder/features/address-bar";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
