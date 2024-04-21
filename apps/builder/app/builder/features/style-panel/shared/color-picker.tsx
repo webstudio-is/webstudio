@@ -82,6 +82,7 @@ const styleValueToRgbaColor = (value: CssColorPickerValueInput): RgbaColor => {
 };
 
 const getEyeDropper = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Constructor = (window as any).EyeDropper;
   if (Constructor === undefined) {
     return;
