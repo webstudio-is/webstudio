@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import {
   prisma,
   type Project,
@@ -128,7 +127,7 @@ export const create = async (
     },
   });
 
-  const txtRecord = uuid();
+  const txtRecord = crypto.randomUUID();
 
   // Create project domain relation
   await prisma.projectDomain.create({

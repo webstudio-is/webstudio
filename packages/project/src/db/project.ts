@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import { prisma, Prisma } from "@webstudio-is/prisma-client";
 import { cloneAssets } from "@webstudio-is/asset-uploader/index.server";
 import {
@@ -53,7 +52,7 @@ export const create = async (
     throw new Error("The user must be authenticated to create a project");
   }
 
-  const projectId = uuid();
+  const projectId = crypto.randomUUID();
   await authorizeProject.registerProjectOwner({ projectId }, context);
 
   const project = await prisma.$transaction(async (client) => {
@@ -165,7 +164,7 @@ export const clone = async (
     throw new Error("The user must be authenticated to clone the project");
   }
 
-  const newProjectId = uuid();
+  const newProjectId = crypto.randomUUID();
   await authorizeProject.registerProjectOwner(
     { projectId: newProjectId },
     context

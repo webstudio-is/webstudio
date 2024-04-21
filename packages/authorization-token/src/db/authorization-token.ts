@@ -1,4 +1,3 @@
-import { v4 as uuid } from "uuid";
 import {
   prisma,
   type AuthorizationToken,
@@ -65,7 +64,7 @@ export type TokenPermissions = typeof tokenDefaultPermissions;
 
 export const getTokenPermissions = async (
   props: { projectId: Project["id"]; token: AuthorizationToken["token"] },
-  context: AppContext
+  _context: AppContext
 ): Promise<TokenPermissions> => {
   const dbToken = await prisma.authorizationToken.findUnique({
     where: {
@@ -101,7 +100,7 @@ export const create = async (
   },
   context: AppContext
 ) => {
-  const tokenId = uuid();
+  const tokenId = crypto.randomUUID();
 
   // Only owner of the project can create authorization tokens
   const canCreateToken = await authorizeProject.hasProjectPermit(
