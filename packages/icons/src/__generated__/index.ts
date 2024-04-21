@@ -91,6 +91,7 @@ export * from "./extension";
 export * from "./external-link";
 export * from "./eyecon-closed";
 export * from "./eyecon-open";
+export * from "./eyedropper";
 export * from "./folder";
 export * from "./footer";
 export * from "./form-text-area";

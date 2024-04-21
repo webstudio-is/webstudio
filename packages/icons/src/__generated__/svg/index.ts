@@ -91,6 +91,7 @@ export { ExtensionIcon } from "./extension";
 export { ExternalLinkIcon } from "./external-link";
 export { EyeconClosedIcon } from "./eyecon-closed";
 export { EyeconOpenIcon } from "./eyecon-open";
+export { EyedropperIcon } from "./eyedropper";
 export { FolderIcon } from "./folder";
 export { FooterIcon } from "./footer";
 export { FormTextAreaIcon } from "./form-text-area";
