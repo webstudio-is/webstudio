@@ -120,7 +120,6 @@
     "untruncate-json": "^0.0.1",
     "urlpattern-polyfill": "^9.0.0",
     "use-debounce": "^9.0.4",
-    "uuid": "^9.0.0",
     "warn-once": "^0.1.1",
     "zod": "^3.22.4"
   },
@@ -139,7 +138,6 @@
     "@types/prismjs": "^1.26.0",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
-    "@types/uuid": "^8.3.4",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",

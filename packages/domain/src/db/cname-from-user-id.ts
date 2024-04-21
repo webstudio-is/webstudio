@@ -1,5 +1,3 @@
-import { webcrypto as crypto } from "node:crypto";
-
 export const cnameFromUserId = async (userId: string) => {
   const vowels = ["a", "e", "i", "o", "u"];
   const consonants = [

@@ -369,9 +369,6 @@ importers:
       use-debounce:
         specifier: ^9.0.4
         version: 9.0.4(react@18.3.0-canary-14898b6a9-20240318)
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
       warn-once:
         specifier: ^0.1.1
         version: 0.1.1
@@ -421,9 +418,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.2.25
         version: 18.2.25
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../../packages/jest-config
@@ -923,16 +917,10 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
       zod:
         specifier: ^3.22.4
         version: 3.22.4
     devDependencies:
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -1394,16 +1382,10 @@ importers:
       '@webstudio-is/trpc-interface':
         specifier: workspace:*
         version: link:../trpc-interface
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
       zod:
         specifier: ^3.22.4
         version: 3.22.4
     devDependencies:
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -1755,16 +1737,10 @@ importers:
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
       zod:
         specifier: ^3.22.4
         version: 3.22.4
     devDependencies:
-      '@types/uuid':
-        specifier: ^8.3.4
-        version: 8.3.4
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -2180,9 +2156,6 @@ importers:
       ts-custom-error:
         specifier: ^3.3.1
         version: 3.3.1
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.0
       zod:
         specifier: ^3.22.4
         version: 3.22.4
@@ -5008,9 +4981,6 @@ packages:
 
   '@types/unist@3.0.0':
     resolution: {integrity: sha512-MFETx3tbTjE7Uk6vvnWINA/1iJ7LuMdO4fcq8UfF0pRbj01aGLduVvQcRyswuACJdpnHgg8E3rQLhaRdNEJS0w==}
-
-  '@types/uuid@8.3.4':
-    resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
 
   '@types/yargs-parser@21.0.0':
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -9712,10 +9682,6 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
-    hasBin: true
-
-  uuid@9.0.0:
-    resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
 
   uuid@9.0.1:
@@ -14466,8 +14432,6 @@ snapshots:
   '@types/unist@2.0.6': {}
 
   '@types/unist@3.0.0': {}
-
-  '@types/uuid@8.3.4': {}
 
   '@types/yargs-parser@21.0.0': {}
 
@@ -20377,8 +20341,6 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@8.3.2: {}
-
-  uuid@9.0.0: {}
 
   uuid@9.0.1: {}
 

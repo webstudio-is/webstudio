@@ -15,7 +15,6 @@
     "@trpc/server": "^10.38.1",
     "@webstudio-is/prisma-client": "workspace:*",
     "ts-custom-error": "^3.3.1",
-    "uuid": "^9.0.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
