@@ -74,11 +74,5 @@ module.exports = {
         "unicorn/filename-case": "off",
       },
     },
-    {
-      files: ["**/cli/**/*.{js,ts,tsx}"],
-      rules: {
-        "no-console": "off",
-      },
-    },
   ],
 };
