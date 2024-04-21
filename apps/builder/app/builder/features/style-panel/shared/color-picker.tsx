@@ -17,6 +17,8 @@ import {
   useDisableCanvasPointerEvents,
   css,
   InputField,
+  IconButton,
+  Grid,
 } from "@webstudio-is/design-system";
 import { toValue } from "@webstudio-is/css-engine";
 import { theme } from "@webstudio-is/design-system";
@@ -24,6 +26,7 @@ import type { StyleSource } from "./style-info";
 import { CssValueInput } from "./css-value-input";
 import type { IntermediateStyleValue } from "./css-value-input/css-value-input";
 import { ColorThumb } from "./color-thumb";
+import { EyedropperIcon } from "@webstudio-is/icons";
 
 // To support color names
 extend([namesPlugin]);
@@ -76,6 +79,34 @@ const styleValueToRgbaColor = (value: CssColorPickerValueInput): RgbaColor => {
     b: color.b,
     a: color.a,
   };
+};
+
+const getEyeDropper = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Constructor = (window as any).EyeDropper;
+  if (Constructor === undefined) {
+    return;
+  }
+  const eyeDropper = new Constructor();
+  return (callback: (rgb: string) => void) => {
+    eyeDropper.open().then((result: { sRGBHex: string }) => {
+      callback(result.sRGBHex);
+    });
+  };
+};
+
+const EyeDropper = ({ onChange }: { onChange: (rgb: string) => void }) => {
+  const open = getEyeDropper();
+  return (
+    <IconButton
+      disabled={open === undefined}
+      onClick={() => {
+        open?.(onChange);
+      }}
+    >
+      <EyedropperIcon />
+    </IconButton>
+  );
 };
 
 export type CssColorPickerValueInput =
@@ -175,10 +206,19 @@ export const ColorPicker = ({
   const parsedColor = colord(rgbValue);
   const currentHex = parsedColor.toHex();
 
-  const onComplete = useDebouncedCallback(
-    (value: RgbValue) => onChangeComplete({ value }),
-    500
-  );
+  const handleComplete = (value: string | RgbValue) => {
+    if (typeof value === "string") {
+      const color = colord(value);
+      if (color.isValid()) {
+        onChangeComplete({ value: colorResultToRgbValue(color.toRgb()) });
+      }
+      return;
+    }
+
+    onChangeComplete({ value });
+  };
+
+  const handleCompleteDebounced = useDebouncedCallback(handleComplete, 500);
 
   const prefix = (
     <Popover modal open={displayColorPicker} onOpenChange={handleOpenChange}>
@@ -202,22 +242,21 @@ export const ColorPicker = ({
           onChange={(newValue) => {
             const color = fixColor(newValue);
             onChange(color);
-            // debounced
-            onComplete(color);
+            handleCompleteDebounced(color);
           }}
         />
-        <InputField
-          key={currentHex}
-          defaultValue={currentHex.slice(1)}
-          onChange={(event) => {
-            const value = event.target.value.trim();
-            const hex = value.startsWith("#") ? value : `#${value}`;
-            const color = colord(hex);
-            if (color.isValid()) {
-              onComplete(colorResultToRgbValue(color.toRgb()));
-            }
-          }}
-        />
+        <Grid css={{ gridTemplateColumns: "auto 1fr" }} gap="1">
+          <EyeDropper onChange={handleComplete} />
+          <InputField
+            key={currentHex}
+            defaultValue={currentHex.slice(1)}
+            onChange={(event) => {
+              const value = event.target.value.trim();
+              const hex = value.startsWith("#") ? value : `#${value}`;
+              handleComplete(hex);
+            }}
+          />
+        </Grid>
       </PopoverContent>
     </Popover>
   );
