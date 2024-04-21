@@ -13,7 +13,7 @@
     "dts": "tsc --project tsconfig.dts.json"
   },
   "devDependencies": {
-    "@types/node": "^18.17.1",
+    "@types/node": "^20.12.7",
     "@webstudio-is/tsconfig": "workspace:*"
   },
   "exports": {

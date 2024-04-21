@@ -52,7 +52,7 @@
     "@remix-run/node": "^2.8.1",
     "@remix-run/react": "^2.8.1",
     "@remix-run/server-runtime": "^2.8.1",
-    "@types/node": "^18.17.1",
+    "@types/node": "^20.12.7",
     "@types/prompts": "^2.4.5",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
