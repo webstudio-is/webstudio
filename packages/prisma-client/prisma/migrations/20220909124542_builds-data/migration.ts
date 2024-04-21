@@ -1,5 +1,4 @@
 import { PrismaClient, Prisma } from "./client";
-import { v4 as uuid } from "uuid";
 import { z } from "zod";
 
 const TreeHistorySchema = z.array(z.string());
@@ -46,7 +45,7 @@ export default () => {
 
         const pages = PagesSchema.parse({
           homePage: {
-            id: uuid(),
+            id: crypto.randomUUID(),
             name: "Home",
             path: "",
             title: "Home",
