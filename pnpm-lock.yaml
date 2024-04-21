@@ -41,7 +41,7 @@ importers:
         version: 0.20.2
       jest:
         specifier: ^29.7.0
-        version: 29.7.0(@types/node@18.17.1)
+        version: 29.7.0(@types/node@20.12.7)
       nano-staged:
         specifier: ^0.8.0
         version: 0.8.0
@@ -68,7 +68,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.2.8
-        version: 5.2.8(@types/node@18.17.1)
+        version: 5.2.8(@types/node@20.12.7)
 
   apps/builder:
     dependencies:
@@ -387,7 +387,7 @@ importers:
         version: 29.7.0
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@storybook/addon-actions':
         specifier: ^7.4.0
         version: 7.4.0(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -453,7 +453,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.2.8
-        version: 5.2.8(@types/node@18.17.1)
+        version: 5.2.8(@types/node@20.12.7)
 
   fixtures/webstudio-cloudflare-template:
     dependencies:
@@ -517,7 +517,7 @@ importers:
         version: 4.20240405.0
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -532,10 +532,10 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.2.8
-        version: 5.2.8(@types/node@18.17.1)
+        version: 5.2.8(@types/node@20.12.7)
       vite-tsconfig-paths:
         specifier: ^4.2.1
-        version: 4.3.2(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))
+        version: 4.3.2(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -593,7 +593,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -605,7 +605,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.2.8
-        version: 5.2.8(@types/node@18.17.1)
+        version: 5.2.8(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -617,7 +617,7 @@ importers:
         version: 2.3.1
       '@netlify/remix-edge-adapter':
         specifier: 3.2.0
-        version: 3.2.0(@remix-run/server-runtime@2.8.1(typescript@5.4.5))(vite@5.2.8(@types/node@18.17.1))
+        version: 3.2.0(@remix-run/server-runtime@2.8.1(typescript@5.4.5))(vite@5.2.8(@types/node@20.12.7))
       '@remix-run/node':
         specifier: ^2.8.1
         version: 2.8.1(typescript@5.4.5)
@@ -660,7 +660,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -672,7 +672,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.2.8
-        version: 5.2.8(@types/node@18.17.1)
+        version: 5.2.8(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -684,7 +684,7 @@ importers:
         version: 2.6.0
       '@netlify/remix-adapter':
         specifier: ^2.3.0
-        version: 2.3.0(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))
+        version: 2.3.0(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))
       '@remix-run/node':
         specifier: ^2.8.1
         version: 2.8.1(typescript@5.4.5)
@@ -727,7 +727,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -739,7 +739,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.2.8
-        version: 5.2.8(@types/node@18.17.1)
+        version: 5.2.8(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -788,7 +788,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -800,7 +800,7 @@ importers:
         version: 5.4.5
       vite:
         specifier: ^5.2.8
-        version: 5.2.8(@types/node@18.17.1)
+        version: 5.2.8(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -900,8 +900,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../jest-config
@@ -999,10 +999,10 @@ importers:
     devDependencies:
       '@netlify/remix-adapter':
         specifier: ^2.3.0
-        version: 2.3.0(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))
+        version: 2.3.0(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))
       '@netlify/remix-edge-adapter':
         specifier: 3.2.0
-        version: 3.2.0(@remix-run/server-runtime@2.8.1(typescript@5.4.5))(vite@5.2.8(@types/node@18.17.1))
+        version: 3.2.0(@remix-run/server-runtime@2.8.1(typescript@5.4.5))(vite@5.2.8(@types/node@20.12.7))
       '@remix-run/cloudflare':
         specifier: ^2.8.1
         version: 2.8.1(@cloudflare/workers-types@4.20240405.0)(typescript@5.4.5)
@@ -1011,7 +1011,7 @@ importers:
         version: 2.8.1(@cloudflare/workers-types@4.20240405.0)(typescript@5.4.5)
       '@remix-run/dev':
         specifier: ^2.8.1
-        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@remix-run/node':
         specifier: ^2.8.1
         version: 2.8.1(typescript@5.4.5)
@@ -1022,8 +1022,8 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1(typescript@5.4.5)
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@types/prompts':
         specifier: ^2.4.5
         version: 2.4.5
@@ -1050,7 +1050,7 @@ importers:
         version: 5.4.5
       vite-tsconfig-paths:
         specifier: ^4.3.2
-        version: 4.3.2(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))
+        version: 4.3.2(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -1095,8 +1095,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../jest-config
@@ -1414,8 +1414,8 @@ importers:
   packages/error-utils:
     devDependencies:
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
@@ -1564,8 +1564,8 @@ importers:
         specifier: ^0.4.2
         version: 0.4.2
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -1711,8 +1711,8 @@ importers:
         specifier: ^5.12.1
         version: 5.12.1(prisma@5.12.1)
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@types/prompts':
         specifier: ^2.4.5
         version: 2.4.5
@@ -1923,8 +1923,8 @@ importers:
         version: 5.0.2
     devDependencies:
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@webstudio-is/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
@@ -1961,7 +1961,7 @@ importers:
         version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
       '@testing-library/jest-dom':
         specifier: ^6.4.2
-        version: 6.4.2(@jest/globals@29.7.0)(jest@29.7.0(@types/node@18.17.1))
+        version: 6.4.2(@jest/globals@29.7.0)(jest@29.7.0(@types/node@20.12.7))
       '@testing-library/react':
         specifier: ^14.2.2
         version: 14.2.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -2054,8 +2054,8 @@ importers:
         specifier: ^7.4.0
         version: 7.4.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -2112,8 +2112,8 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -2158,13 +2158,13 @@ importers:
         version: 7.4.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.4.5)
       '@storybook/react-vite':
         specifier: ^7.4.0
-        version: 7.4.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(rollup@4.14.0)(typescript@5.4.5)(vite@4.4.9(@types/node@18.17.1))
+        version: 7.4.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(rollup@4.14.0)(typescript@5.4.5)(vite@4.4.9(@types/node@20.12.7))
       storybook:
         specifier: ^7.4.0
         version: 7.4.0
       vite:
         specifier: ^4.4.9
-        version: 4.4.9(@types/node@18.17.1)
+        version: 4.4.9(@types/node@20.12.7)
 
   packages/trpc-interface:
     dependencies:
@@ -2191,8 +2191,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0
       '@types/node':
-        specifier: ^18.17.1
-        version: 18.17.1
+        specifier: ^20.12.7
+        version: 20.12.7
       '@webstudio-is/jest-config':
         specifier: workspace:*
         version: link:../jest-config
@@ -4957,6 +4957,9 @@ packages:
 
   '@types/node@18.17.1':
     resolution: {integrity: sha512-xlR1jahfizdplZYRU59JlUx9uzF1ARa8jbhM11ccpCJya8kvos5jwdm2ZAgxSCwOl0fq21svP18EVwPBXMQudw==}
+
+  '@types/node@20.12.7':
+    resolution: {integrity: sha512-wq0cICSkRLVaf3UGLMGItu/PtdY7oaXaI/RVU+xliKVOtRna3PRY57ZDfztpDL0n11vfymMUnXv8QwYCO7L1wg==}
 
   '@types/normalize-package-data@2.4.1':
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
@@ -9531,6 +9534,9 @@ packages:
   unbox-primitive@1.0.2:
     resolution: {integrity: sha512-61pPlCD9h51VoreyJ0BReideM3MDKMKnh6+V9L08331ipq6Q8OFXZYiqP6n/tbHx4s5I9uRhcye6BrbkizkBDw==}
 
+  undici-types@5.26.5:
+    resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
+
   undici@5.28.4:
     resolution: {integrity: sha512-72RFADWFqKmUb2hmmvNODKL3p9hcB6Gt2DOQMis1SEBaV6a4MH8soBvzg+95CYhCKPFedut2JY9bMfrDl9D23g==}
     engines: {node: '>=14.0'}
@@ -11282,7 +11288,7 @@ snapshots:
   '@jest/console@29.7.0':
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       chalk: 4.1.2
       jest-message-util: 29.7.0
       jest-util: 29.7.0
@@ -11295,14 +11301,14 @@ snapshots:
       '@jest/test-result': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       ci-info: 3.8.0
       exit: 0.1.2
       graceful-fs: 4.2.10
       jest-changed-files: 29.7.0
-      jest-config: 29.7.0(@types/node@18.17.1)
+      jest-config: 29.7.0(@types/node@20.12.7)
       jest-haste-map: 29.7.0
       jest-message-util: 29.7.0
       jest-regex-util: 29.6.3
@@ -11327,7 +11333,7 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       jest-mock: 29.7.0
 
   '@jest/expect-utils@29.7.0':
@@ -11345,7 +11351,7 @@ snapshots:
     dependencies:
       '@jest/types': 29.6.3
       '@sinonjs/fake-timers': 10.3.0
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       jest-message-util: 29.7.0
       jest-mock: 29.7.0
       jest-util: 29.7.0
@@ -11367,7 +11373,7 @@ snapshots:
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
       '@jridgewell/trace-mapping': 0.3.18
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       chalk: 4.1.2
       collect-v8-coverage: 1.0.1
       exit: 0.1.2
@@ -11437,17 +11443,17 @@ snapshots:
       '@jest/schemas': 29.6.3
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  '@joshwooding/vite-plugin-react-docgen-typescript@0.2.1(typescript@5.4.5)(vite@4.4.9(@types/node@18.17.1))':
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.2.1(typescript@5.4.5)(vite@4.4.9(@types/node@20.12.7))':
     dependencies:
       glob: 7.2.3
       glob-promise: 4.2.2(glob@7.2.3)
       magic-string: 0.27.0
       react-docgen-typescript: 2.2.2(typescript@5.4.5)
-      vite: 4.4.9(@types/node@18.17.1)
+      vite: 4.4.9(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.4.5
 
@@ -11708,22 +11714,22 @@ snapshots:
 
   '@netlify/node-cookies@0.1.0': {}
 
-  '@netlify/remix-adapter@2.3.0(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))':
+  '@netlify/remix-adapter@2.3.0(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))':
     dependencies:
       '@netlify/functions': 2.6.0
       '@remix-run/node': 2.8.1(typescript@5.4.5)
       isbot: 4.4.0
     optionalDependencies:
-      vite: 5.2.8(@types/node@18.17.1)
+      vite: 5.2.8(@types/node@20.12.7)
     transitivePeerDependencies:
       - typescript
 
-  '@netlify/remix-edge-adapter@3.2.0(@remix-run/server-runtime@2.8.1(typescript@5.4.5))(vite@5.2.8(@types/node@18.17.1))':
+  '@netlify/remix-edge-adapter@3.2.0(@remix-run/server-runtime@2.8.1(typescript@5.4.5))(vite@5.2.8(@types/node@20.12.7))':
     dependencies:
       '@netlify/remix-runtime': 2.2.0(@remix-run/server-runtime@2.8.1(typescript@5.4.5))
       isbot: 4.4.0
     optionalDependencies:
-      vite: 5.2.8(@types/node@18.17.1)
+      vite: 5.2.8(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@remix-run/server-runtime'
 
@@ -12889,7 +12895,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
-  '@remix-run/dev@2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@18.17.1)(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))':
+  '@remix-run/dev@2.8.1(@remix-run/serve@2.8.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))':
     dependencies:
       '@babel/core': 7.22.9
       '@babel/generator': 7.24.1
@@ -12905,7 +12911,7 @@ snapshots:
       '@remix-run/router': 1.15.3-pre.0
       '@remix-run/server-runtime': 2.8.1(typescript@5.4.5)
       '@types/mdx': 2.0.5
-      '@vanilla-extract/integration': 6.2.1(@types/node@18.17.1)
+      '@vanilla-extract/integration': 6.2.1(@types/node@20.12.7)
       arg: 5.0.2
       cacache: 17.1.4
       chalk: 4.1.2
@@ -12947,7 +12953,7 @@ snapshots:
     optionalDependencies:
       '@remix-run/serve': 2.8.1(typescript@5.4.5)
       typescript: 5.4.5
-      vite: 5.2.8(@types/node@18.17.1)
+      vite: 5.2.8(@types/node@20.12.7)
       wrangler: 3.50.0(@cloudflare/workers-types@4.20240405.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -13687,7 +13693,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@storybook/builder-vite@7.4.0(typescript@5.4.5)(vite@4.4.9(@types/node@18.17.1))':
+  '@storybook/builder-vite@7.4.0(typescript@5.4.5)(vite@4.4.9(@types/node@20.12.7))':
     dependencies:
       '@storybook/channels': 7.4.0
       '@storybook/client-logger': 7.4.0
@@ -13708,7 +13714,7 @@ snapshots:
       remark-external-links: 8.0.0
       remark-slug: 6.1.0
       rollup: 3.29.0
-      vite: 4.4.9(@types/node@18.17.1)
+      vite: 4.4.9(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -14036,19 +14042,19 @@ snapshots:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@storybook/react-vite@7.4.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(rollup@4.14.0)(typescript@5.4.5)(vite@4.4.9(@types/node@18.17.1))':
+  '@storybook/react-vite@7.4.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(rollup@4.14.0)(typescript@5.4.5)(vite@4.4.9(@types/node@20.12.7))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.2.1(typescript@5.4.5)(vite@4.4.9(@types/node@18.17.1))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.2.1(typescript@5.4.5)(vite@4.4.9(@types/node@20.12.7))
       '@rollup/pluginutils': 5.0.2(rollup@4.14.0)
-      '@storybook/builder-vite': 7.4.0(typescript@5.4.5)(vite@4.4.9(@types/node@18.17.1))
+      '@storybook/builder-vite': 7.4.0(typescript@5.4.5)(vite@4.4.9(@types/node@20.12.7))
       '@storybook/react': 7.4.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(typescript@5.4.5)
-      '@vitejs/plugin-react': 3.1.0(vite@4.4.9(@types/node@18.17.1))
+      '@vitejs/plugin-react': 3.1.0(vite@4.4.9(@types/node@20.12.7))
       ast-types: 0.14.2
       magic-string: 0.30.1
       react: 18.2.0
       react-docgen: 6.0.0-alpha.3
       react-dom: 18.2.0(react@18.2.0)
-      vite: 4.4.9(@types/node@18.17.1)
+      vite: 4.4.9(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@preact/preset-vite'
       - encoding
@@ -14204,7 +14210,7 @@ snapshots:
       lz-string: 1.5.0
       pretty-format: 27.5.1
 
-  '@testing-library/jest-dom@6.4.2(@jest/globals@29.7.0)(jest@29.7.0(@types/node@18.17.1))':
+  '@testing-library/jest-dom@6.4.2(@jest/globals@29.7.0)(jest@29.7.0(@types/node@20.12.7))':
     dependencies:
       '@adobe/css-tools': 4.3.3
       '@babel/runtime': 7.22.3
@@ -14216,7 +14222,7 @@ snapshots:
       redent: 3.0.0
     optionalDependencies:
       '@jest/globals': 29.7.0
-      jest: 29.7.0(@types/node@18.17.1)
+      jest: 29.7.0(@types/node@20.12.7)
 
   '@testing-library/react-hooks@8.0.1(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react-test-renderer@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
@@ -14278,17 +14284,17 @@ snapshots:
   '@types/body-parser@1.19.2':
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/connect@3.4.35':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/cookie@0.6.0': {}
 
   '@types/cross-spawn@6.0.2':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/css-tree@2.3.1(patch_hash=ac22lciodhaj6xmoeignv36gyq)': {}
 
@@ -14318,7 +14324,7 @@ snapshots:
 
   '@types/express-serve-static-core@4.17.35':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
       '@types/send': 0.17.1
@@ -14334,16 +14340,16 @@ snapshots:
 
   '@types/fontkit@2.0.3':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/graceful-fs@4.1.5':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/hast@2.3.4':
     dependencies:
@@ -14365,7 +14371,7 @@ snapshots:
 
   '@types/jsdom@20.0.1':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       '@types/tough-cookie': 4.0.5
       parse5: 7.1.2
 
@@ -14403,12 +14409,16 @@ snapshots:
 
   '@types/node-fetch@2.6.4':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       form-data: 3.0.1
 
   '@types/node@16.18.11': {}
 
   '@types/node@18.17.1': {}
+
+  '@types/node@20.12.7':
+    dependencies:
+      undici-types: 5.26.5
 
   '@types/normalize-package-data@2.4.1': {}
 
@@ -14418,7 +14428,7 @@ snapshots:
 
   '@types/prompts@2.4.5':
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       kleur: 3.0.3
 
   '@types/prop-types@15.7.5': {}
@@ -14441,13 +14451,13 @@ snapshots:
   '@types/send@0.17.1':
     dependencies:
       '@types/mime': 1.3.2
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/serve-static@1.15.2':
     dependencies:
       '@types/http-errors': 2.0.1
       '@types/mime': 3.0.1
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
 
   '@types/stack-utils@2.0.1': {}
 
@@ -14623,7 +14633,7 @@ snapshots:
       media-query-parser: 2.0.2
       outdent: 0.8.0
 
-  '@vanilla-extract/integration@6.2.1(@types/node@18.17.1)':
+  '@vanilla-extract/integration@6.2.1(@types/node@20.12.7)':
     dependencies:
       '@babel/core': 7.22.9
       '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.22.9)
@@ -14636,8 +14646,8 @@ snapshots:
       lodash: 4.17.21
       mlly: 1.2.0
       outdent: 0.8.0
-      vite: 4.4.9(@types/node@18.17.1)
-      vite-node: 0.28.5(@types/node@18.17.1)
+      vite: 4.4.9(@types/node@20.12.7)
+      vite-node: 0.28.5(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -14658,14 +14668,14 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@vitejs/plugin-react@3.1.0(vite@4.4.9(@types/node@18.17.1))':
+  '@vitejs/plugin-react@3.1.0(vite@4.4.9(@types/node@20.12.7))':
     dependencies:
       '@babel/core': 7.22.9
       '@babel/plugin-transform-react-jsx-self': 7.22.5(@babel/core@7.22.9)
       '@babel/plugin-transform-react-jsx-source': 7.22.5(@babel/core@7.22.9)
       magic-string: 0.27.0
       react-refresh: 0.14.0
-      vite: 4.4.9(@types/node@18.17.1)
+      vite: 4.4.9(@types/node@20.12.7)
     transitivePeerDependencies:
       - supports-color
 
@@ -15448,13 +15458,13 @@ snapshots:
 
   core-util-is@1.0.3: {}
 
-  create-jest@29.7.0(@types/node@18.17.1):
+  create-jest@29.7.0(@types/node@20.12.7):
     dependencies:
       '@jest/types': 29.6.3
       chalk: 4.1.2
       exit: 0.1.2
       graceful-fs: 4.2.10
-      jest-config: 29.7.0(@types/node@18.17.1)
+      jest-config: 29.7.0(@types/node@20.12.7)
       jest-util: 29.7.0
       prompts: 2.4.2
     transitivePeerDependencies:
@@ -17018,7 +17028,7 @@ snapshots:
       '@jest/expect': 29.7.0
       '@jest/test-result': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       chalk: 4.1.2
       co: 4.6.0
       dedent: 1.3.0
@@ -17038,16 +17048,16 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-cli@29.7.0(@types/node@18.17.1):
+  jest-cli@29.7.0(@types/node@20.12.7):
     dependencies:
       '@jest/core': 29.7.0
       '@jest/test-result': 29.7.0
       '@jest/types': 29.6.3
       chalk: 4.1.2
-      create-jest: 29.7.0(@types/node@18.17.1)
+      create-jest: 29.7.0(@types/node@20.12.7)
       exit: 0.1.2
       import-local: 3.1.0
-      jest-config: 29.7.0(@types/node@18.17.1)
+      jest-config: 29.7.0(@types/node@20.12.7)
       jest-util: 29.7.0
       jest-validate: 29.7.0
       yargs: 17.7.2
@@ -17057,7 +17067,7 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest-config@29.7.0(@types/node@18.17.1):
+  jest-config@29.7.0(@types/node@20.12.7):
     dependencies:
       '@babel/core': 7.22.9
       '@jest/test-sequencer': 29.7.0
@@ -17082,7 +17092,7 @@ snapshots:
       slash: 3.0.0
       strip-json-comments: 3.1.1
     optionalDependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -17112,7 +17122,7 @@ snapshots:
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
       '@types/jsdom': 20.0.1
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       jest-mock: 29.7.0
       jest-util: 29.7.0
       jsdom: 20.0.3
@@ -17126,7 +17136,7 @@ snapshots:
       '@jest/environment': 29.7.0
       '@jest/fake-timers': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       jest-mock: 29.7.0
       jest-util: 29.7.0
 
@@ -17136,7 +17146,7 @@ snapshots:
     dependencies:
       '@jest/types': 29.6.3
       '@types/graceful-fs': 4.1.5
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.10
@@ -17175,7 +17185,7 @@ snapshots:
   jest-mock@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       jest-util: 29.7.0
 
   jest-pnp-resolver@1.2.3(jest-resolve@29.7.0):
@@ -17210,7 +17220,7 @@ snapshots:
       '@jest/test-result': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       chalk: 4.1.2
       emittery: 0.13.1
       graceful-fs: 4.2.10
@@ -17238,7 +17248,7 @@ snapshots:
       '@jest/test-result': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       chalk: 4.1.2
       cjs-module-lexer: 1.2.2
       collect-v8-coverage: 1.0.1
@@ -17284,7 +17294,7 @@ snapshots:
   jest-util@29.7.0:
     dependencies:
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       chalk: 4.1.2
       ci-info: 3.8.0
       graceful-fs: 4.2.10
@@ -17303,7 +17313,7 @@ snapshots:
     dependencies:
       '@jest/test-result': 29.7.0
       '@jest/types': 29.6.3
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.13.1
@@ -17312,17 +17322,17 @@ snapshots:
 
   jest-worker@29.7.0:
     dependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
-  jest@29.7.0(@types/node@18.17.1):
+  jest@29.7.0(@types/node@20.12.7):
     dependencies:
       '@jest/core': 29.7.0
       '@jest/types': 29.6.3
       import-local: 3.1.0
-      jest-cli: 29.7.0(@types/node@18.17.1)
+      jest-cli: 29.7.0(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -20155,6 +20165,8 @@ snapshots:
       has-symbols: 1.0.3
       which-boxed-primitive: 1.0.2
 
+  undici-types@5.26.5: {}
+
   undici@5.28.4:
     dependencies:
       '@fastify/busboy': 2.1.1
@@ -20411,7 +20423,7 @@ snapshots:
       unist-util-stringify-position: 3.0.3
       vfile-message: 3.1.3
 
-  vite-node@0.28.5(@types/node@18.17.1):
+  vite-node@0.28.5(@types/node@20.12.7):
     dependencies:
       cac: 6.7.14
       debug: 4.3.4
@@ -20420,7 +20432,7 @@ snapshots:
       picocolors: 1.0.0
       source-map: 0.6.1
       source-map-support: 0.5.21
-      vite: 4.4.9(@types/node@18.17.1)
+      vite: 4.4.9(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -20431,33 +20443,33 @@ snapshots:
       - supports-color
       - terser
 
-  vite-tsconfig-paths@4.3.2(typescript@5.4.5)(vite@5.2.8(@types/node@18.17.1)):
+  vite-tsconfig-paths@4.3.2(typescript@5.4.5)(vite@5.2.8(@types/node@20.12.7)):
     dependencies:
       debug: 4.3.4
       globrex: 0.1.2
       tsconfck: 3.0.3(typescript@5.4.5)
     optionalDependencies:
-      vite: 5.2.8(@types/node@18.17.1)
+      vite: 5.2.8(@types/node@20.12.7)
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  vite@4.4.9(@types/node@18.17.1):
+  vite@4.4.9(@types/node@20.12.7):
     dependencies:
       esbuild: 0.20.2
       postcss: 8.4.27
       rollup: 3.29.0
     optionalDependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       fsevents: 2.3.3
 
-  vite@5.2.8(@types/node@18.17.1):
+  vite@5.2.8(@types/node@20.12.7):
     dependencies:
       esbuild: 0.20.2
       postcss: 8.4.38
       rollup: 4.14.0
     optionalDependencies:
-      '@types/node': 18.17.1
+      '@types/node': 20.12.7
       fsevents: 2.3.3
 
   vue@3.3.4:

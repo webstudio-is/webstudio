@@ -26,7 +26,7 @@
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@types/fontkit": "^2.0.3",
-    "@types/node": "^18.17.1",
+    "@types/node": "^20.12.7",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "typescript": "5.4.5",
