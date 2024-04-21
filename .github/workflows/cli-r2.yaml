@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: "20.x"
           cache: pnpm
 
       - name: pnpm instal
@@ -87,7 +87,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: "18.x"
+          node-version: "20.x"
 
       - name: Copy atrifact via http
         run: curl -o cloudflare-template.tar.zst ${{ secrets.ARTEFACT_BUCKET_URL }}/public/cloudflare-template/${{ github.ref_name }}.tar.zst

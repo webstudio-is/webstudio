@@ -34,7 +34,7 @@
     "webstudio": "workspace:*"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "name": "webstudio-remix-vercel",
   "version": "0.0.1",
