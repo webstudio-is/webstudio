@@ -4,10 +4,10 @@
   },
 
   "functions": {
-    "timeout-fun/*": {
+    "/timeout-fun": {
       "maxDuration": 30
     },
-    "timeout-fun": {
+    "*": {
       "maxDuration": 30
     }
   }
