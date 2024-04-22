@@ -1,11 +1,13 @@
 import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
+import { Body } from "@webstudio-is/sdk-components-react-remix";
+import { db } from "@webstudio-is/project/index.server";
 
 export default function Logout() {
   return <h1>HELLO</h1>;
 }
 // https://vercel.com/docs/functions/runtimes#max-duration
 export const loader = async ({ request }: ActionFunctionArgs) => {
-  await new Promise((resolve) => setTimeout(resolve, 20000));
+  console.info("db", db, Body);
   return json({});
 };
 
