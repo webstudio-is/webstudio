@@ -1,22 +1,5 @@
 {
   "git": {
     "deploymentEnabled": false
-  },
-
-  "framework": "remix",
-
-  "functions": {
-    "/timeout-fun": {
-      "maxDuration": 30
-    },
-    "*": {
-      "maxDuration": 30
-    },
-    "app/routes/timeout-fun": {
-      "maxDuration": 30
-    },
-    "app/routes/**/*": {
-      "maxDuration": 30
-    }
   }
 }
