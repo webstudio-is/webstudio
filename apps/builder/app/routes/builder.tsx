@@ -20,4 +20,6 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 
 export default Root;
 
-export const config = {};
+export const config = {
+  maxDuration: 20, // seconds
+};

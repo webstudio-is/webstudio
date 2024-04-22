@@ -57,4 +57,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   );
 };
 
-export const config = {};
+export const config = {
+  maxDuration: 20, // seconds
+};

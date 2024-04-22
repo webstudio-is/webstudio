@@ -10,4 +10,6 @@ export const loader = async ({ request }: ActionFunctionArgs) => {
   await authenticator.logout(request, { redirectTo: loginPath({}) });
 };
 
-export const config = {};
+export const config = {
+  maxDuration: 20, // seconds
+};

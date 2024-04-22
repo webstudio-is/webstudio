@@ -17,4 +17,6 @@ export const ErrorBoundary = () => <CatchAllErrorBoundary />;
 const Content = () => <CatchAllContnet />;
 export default Content;
 
-export const config = {};
+export const config = {
+  maxDuration: 20, // seconds
+};
