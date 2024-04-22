@@ -11,7 +11,3 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     failureRedirect: loginPath({ returnTo }),
   });
 };
-
-export const config = {
-  maxDuration: 20, // seconds
-};
