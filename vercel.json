@@ -1,5 +1,14 @@
 {
   "git": {
     "deploymentEnabled": false
+  },
+
+  "functions": {
+    "timeout-fun/*": {
+      "maxDuration": 30
+    },
+    "timeout-fun": {
+      "maxDuration": 30
+    }
   }
 }
