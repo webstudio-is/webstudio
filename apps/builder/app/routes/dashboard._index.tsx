@@ -62,3 +62,7 @@ const DashboardRoute = () => {
 };
 
 export default DashboardRoute;
+
+export const config = {
+  maxDuration: 30,
+};
