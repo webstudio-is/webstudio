@@ -335,7 +335,3 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return { errors: e instanceof Error ? e.message : JSON.stringify(e) };
   }
 };
-
-export const config = {
-  maxDuration: 20, // seconds
-};

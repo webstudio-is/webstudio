@@ -16,7 +16,3 @@ export const loader = (args: LoaderFunctionArgs) => catchAllloader(args);
 export const ErrorBoundary = () => <CatchAllErrorBoundary />;
 const Content = () => <CatchAllContnet />;
 export default Content;
-
-export const config = {
-  maxDuration: 30,
-};

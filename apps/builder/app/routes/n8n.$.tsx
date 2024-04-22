@@ -130,7 +130,3 @@ export const ErrorBoundary = () => {
 
   return <div style={{ whiteSpace: "pre-wrap" }}>{String(error)}</div>;
 };
-
-export const config = {
-  maxDuration: 20, // seconds
-};

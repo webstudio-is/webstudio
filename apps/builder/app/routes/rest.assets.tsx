@@ -58,7 +58,3 @@ export const action = async (props: ActionFunctionArgs) => {
     }
   }
 };
-
-export const config = {
-  maxDuration: 20, // seconds
-};
