@@ -9,7 +9,3 @@ export default function Logout() {
 export const loader = async ({ request }: ActionFunctionArgs) => {
   await authenticator.logout(request, { redirectTo: loginPath({}) });
 };
-
-export const config = {
-  maxDuration: 20, // seconds
-};

@@ -56,7 +56,3 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     createReadableStreamFromReadable(createReadStream(filePath))
   );
 };
-
-export const config = {
-  maxDuration: 20, // seconds
-};
