@@ -336,6 +336,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 };
 
+// Reduces Vercel function size from 29MB to 9MB for unknown reasons; effective when used in limited files.
 export const config = {
-  maxDuration: 20, // seconds
+  maxDuration: 30, // seconds
 };
