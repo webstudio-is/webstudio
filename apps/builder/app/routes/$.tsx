@@ -89,3 +89,7 @@ const Content = () => {
 };
 
 export default Content;
+
+export const config = {
+  maxDuration: 30,
+};
