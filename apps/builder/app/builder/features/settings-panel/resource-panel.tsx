@@ -544,8 +544,10 @@ export const ResourceForm = forwardRef<
           <InputErrorsTooltip
             errors={urlField.error ? [urlField.error] : undefined}
           >
-            <InputField
+            <TextArea
+              grow
               id={urlId}
+              rows={1}
               // expressions with variables cannot be edited
               disabled={isLiteralExpression(urlField.value) === false}
               color={urlField.error ? "error" : undefined}
@@ -553,8 +555,7 @@ export const ResourceForm = forwardRef<
                 evaluateExpressionWithinScope(urlField.value, scope)
               )}
               // update text value as string literal
-              onChange={(event) => {
-                const value = event.target.value;
+              onChange={(value) => {
                 const curl = parseCurl(value);
                 if (curl) {
                   // update all feilds when curl is paste into url field
