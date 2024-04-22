@@ -60,3 +60,7 @@ const LoginRoute = () => {
 };
 
 export default LoginRoute;
+
+export const config = {
+  maxDuration: 30,
+};
