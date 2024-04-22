@@ -54,3 +54,5 @@ export const loader = async ({
     });
   }
 };
+
+export const config = {};

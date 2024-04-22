@@ -65,3 +65,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   return json(userCheckoutsWithProducts);
 };
+
+export const config = {};

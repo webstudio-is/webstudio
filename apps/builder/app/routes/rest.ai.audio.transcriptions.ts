@@ -45,3 +45,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
   return data;
 };
+
+export const config = {};

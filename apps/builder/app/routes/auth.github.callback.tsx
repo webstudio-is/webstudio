@@ -23,3 +23,5 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     failureRedirect: loginPath({}),
   });
 };
+
+export const config = {};

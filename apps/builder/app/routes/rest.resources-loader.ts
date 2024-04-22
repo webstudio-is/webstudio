@@ -14,3 +14,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   });
   return output;
 };
+
+export const config = {};

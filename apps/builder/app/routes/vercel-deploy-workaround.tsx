@@ -24,3 +24,5 @@ export const links: LinksFunction = () => {
 };
 
 export default Root;
+
+export const config = {};

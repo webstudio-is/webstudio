@@ -33,3 +33,5 @@ export const action = async (
     }
   }
 };
+
+export const config = {};

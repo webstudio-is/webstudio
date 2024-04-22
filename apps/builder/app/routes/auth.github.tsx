@@ -38,3 +38,5 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     }
   }
 };
+
+export const config = {};

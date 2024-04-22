@@ -6,3 +6,5 @@ export const meta: MetaFunction = () => {
 };
 
 export default Root;
+
+export const config = {};

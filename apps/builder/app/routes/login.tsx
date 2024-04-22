@@ -7,6 +7,4 @@ export const meta: MetaFunction = () => {
 
 export default Root;
 
-export const config = {
-  maxDuration: 20, // seconds
-};
+export const config = {};
