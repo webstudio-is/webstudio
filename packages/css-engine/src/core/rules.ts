@@ -64,7 +64,7 @@ export class NestingRule {
     indent?: number;
     transformValue?: TransformValue;
   }) {
-    let cached = this.#cache.get(breakpoint);
+    const cached = this.#cache.get(breakpoint);
     // invalidate cache when indent and value transformer are changed
     if (
       cached &&
