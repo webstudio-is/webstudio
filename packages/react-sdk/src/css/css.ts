@@ -6,6 +6,8 @@ import {
 import type {
   Assets,
   Breakpoints,
+  StyleDecl,
+  StyleSource,
   StyleSourceSelections,
   Styles,
 } from "@webstudio-is/sdk";
@@ -88,9 +90,11 @@ export const generateCss = ({
   const imageValueTransformer = createImageValueTransformer(assets, {
     assetBaseUrl,
   });
+  regularSheet.setTransformer(imageValueTransformer);
+  atomicSheet?.setTransformer(imageValueTransformer);
 
-  for (const { breakpointId, instanceId, state, style } of styleRules) {
-    if (atomicSheet) {
+  if (atomicSheet) {
+    for (const { breakpointId, instanceId, state, style } of styleRules) {
       const { classes } = atomicSheet.addStyleRule(
         { breakpoint: breakpointId, style },
         state,
@@ -100,17 +104,48 @@ export const generateCss = ({
         ...(classesMap.get(instanceId) ?? []),
         ...classes,
       ]);
-      continue;
     }
-    regularSheet.addStyleRule(
-      { breakpoint: breakpointId, style },
-      `[${idAttribute}="${instanceId}"]${state ?? ""}`,
-      imageValueTransformer
+
+    return {
+      cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
+      classesMap,
+    };
+  }
+
+  // @todo write declarations into mixins instead of map
+  const stylesByStyleSourceId = new Map<StyleSource["id"], StyleDecl[]>();
+  for (const styleDecl of styles.values()) {
+    const { styleSourceId } = styleDecl;
+    let styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
+    if (styleSourceStyles === undefined) {
+      styleSourceStyles = [];
+      stylesByStyleSourceId.set(styleSourceId, styleSourceStyles);
+    }
+    styleSourceStyles.push(styleDecl);
+  }
+
+  for (const { instanceId, values } of styleSourceSelections.values()) {
+    const rule = regularSheet.addNestingRule(
+      `[${idAttribute}="${instanceId}"]`
     );
+    for (const styleSourceId of values) {
+      const styles = stylesByStyleSourceId.get(styleSourceId);
+      if (styles === undefined) {
+        continue;
+      }
+      for (const { breakpointId, state, property, value } of styles) {
+        rule.setDeclaration({
+          breakpoint: breakpointId,
+          selector: state ?? "",
+          property,
+          value,
+        });
+      }
+    }
   }
 
   return {
-    cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
+    cssText: regularSheet.cssText,
     classesMap,
   };
 };
