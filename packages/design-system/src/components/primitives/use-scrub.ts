@@ -7,11 +7,13 @@ import { unstable_batchedUpdates as unstableBatchedUpdates } from "react-dom";
 
 export const useScrub = ({
   value,
+  distanceThreshold,
   onChange,
   onChangeComplete,
   shouldHandleEvent,
 }: {
   value: NumericScrubValue;
+  distanceThreshold?: number;
   onChange: (value: NumericScrubValue) => void;
   onChangeComplete?: (value: NumericScrubValue) => void;
   shouldHandleEvent?: (node: EventTarget) => boolean;
@@ -41,6 +43,7 @@ export const useScrub = ({
     }
 
     return numericScrubControl(scrubRefCurrent, {
+      distanceThreshold,
       getInitialValue: () => {
         return valueRef.current;
       },
@@ -66,7 +69,7 @@ export const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEventRef.current,
     });
-  }, []);
+  }, [distanceThreshold]);
 
   return { scrubRef, inputRef };
 };

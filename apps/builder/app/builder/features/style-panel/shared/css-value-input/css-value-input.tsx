@@ -159,6 +159,7 @@ const useScrub = ({
     };
 
     return numericScrubControl(scrubRefCurrent, {
+      distanceThreshold: 2,
       getAcceleration() {
         if (valueRef.current.type === "unit") {
           return scrubUnitAcceleration.get(valueRef.current.unit);

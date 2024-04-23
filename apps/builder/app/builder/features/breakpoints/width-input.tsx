@@ -45,6 +45,7 @@ const useEnhancedInput = ({
   };
 
   const { scrubRef, inputRef } = useScrub({
+    distanceThreshold: 2,
     value,
     onChange: handleChange,
     onChangeComplete: handleChangeComplete,
