@@ -2,6 +2,7 @@ import type { Style } from "../schema";
 import {
   FontFaceRule,
   MediaRule,
+  MixinRule,
   NestingRule,
   PlaintextRule,
   type FontFaceOptions,
@@ -20,6 +21,7 @@ export class StyleSheet {
   #cssText = "";
   #mediaRules: Map<string, MediaRule> = new Map();
   #plainRules: Map<string, PlaintextRule> = new Map();
+  #mixinRules: Map<string, MixinRule> = new Map();
   #nestingRules: Map<string, NestingRule> = new Map();
   #fontFaceRules: Array<FontFaceRule> = [];
   #transformValue?: TransformValue;
@@ -61,10 +63,19 @@ export class StyleSheet {
     this.#isDirty = true;
     return this.#plainRules.set(cssText, new PlaintextRule(cssText));
   }
+  addMixinRule(name: string) {
+    let rule = this.#mixinRules.get(name);
+    if (rule === undefined) {
+      rule = new MixinRule();
+      this.#mixinRules.set(name, rule);
+      this.#isDirty = true;
+    }
+    return rule;
+  }
   addNestingRule(selector: string) {
     let rule = this.#nestingRules.get(selector);
     if (rule === undefined) {
-      rule = new NestingRule(selector);
+      rule = new NestingRule(selector, this.#mixinRules);
       this.#nestingRules.set(selector, rule);
       this.#isDirty = true;
     }
@@ -100,6 +111,10 @@ export class StyleSheet {
       if (cssText !== "") {
         css.push(cssText);
       }
+    }
+    // reset invalidation from mixins after rendering
+    for (const rule of this.#mixinRules.values()) {
+      rule.clearBreakpoints();
     }
     this.#cssText = css.join("\n");
     return this.#cssText;
