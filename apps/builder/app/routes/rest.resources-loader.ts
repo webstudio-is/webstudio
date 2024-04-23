@@ -8,6 +8,7 @@ import {
 import { loader as siteMapLoader } from "../shared/$resources/sitemap.xml.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  // Hope Remix will have customFetch by default, see https://kit.svelte.dev/docs/load#making-fetch-requests
   const customFetch: typeof fetch = (input, init) => {
     if (typeof input !== "string") {
       return fetch(input, init);
