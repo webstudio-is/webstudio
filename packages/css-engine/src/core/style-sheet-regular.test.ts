@@ -1,6 +1,7 @@
 import { describe, beforeEach, test, expect } from "@jest/globals";
 import type { StyleSheetRegular } from "./style-sheet-regular";
 import { createRegularStyleSheet } from "./create-style-sheet";
+import type { TransformValue } from "./to-value";
 
 const style0 = {
   display: { type: "keyword", value: "block" },
@@ -20,6 +21,203 @@ const style2 = {
 
 const mediaRuleOptions1 = { minWidth: 300 } as const;
 const mediaId1 = "1";
+
+describe("nesting rule", () => {
+  const transformValue: TransformValue = (styleValue) => {
+    if (styleValue.type === "keyword") {
+      return {
+        type: "keyword",
+        value: styleValue.value.toUpperCase(),
+      };
+    }
+  };
+
+  test("generate rules for breakpoint", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "height",
+      value: { type: "keyword", value: "auto" },
+    });
+    rule.setDeclaration({
+      breakpoint: "small",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "transparent" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto;
+  height: auto
+}"
+`);
+    expect(rule.generateRules({ breakpoint: "small" })).toMatchInlineSnapshot(`
+".instance {
+  color: transparent
+}"
+`);
+  });
+
+  test("generated nested rules", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "height",
+      value: { type: "keyword", value: "auto" },
+    });
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: ":hover",
+      property: "color",
+      value: { type: "keyword", value: "transparent" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto;
+  height: auto
+}
+.instance:hover {
+  color: transparent
+}"
+`);
+  });
+
+  test("sort nested rules without state first", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: ":hover",
+      property: "color",
+      value: { type: "keyword", value: "transparent" },
+    });
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto
+}
+.instance:hover {
+  color: transparent
+}"
+`);
+  });
+
+  test("customize indentation", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base", indent: 4 }))
+      .toMatchInlineSnapshot(`
+"    .instance {
+      width: auto
+    }"
+`);
+  });
+
+  test("customize value transformer", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base", transformValue }))
+      .toMatchInlineSnapshot(`
+".instance {
+  width: AUTO
+}"
+`);
+  });
+
+  test("invalidate cache", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto
+}"
+`);
+    // invalidate by set declaration
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "height",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto;
+  height: auto
+}"
+`);
+    // invalidate by delete declaration
+    rule.deleteDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "height",
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto
+}"
+`);
+    // invalidate by indent
+    expect(rule.generateRules({ breakpoint: "base", indent: 2 }))
+      .toMatchInlineSnapshot(`
+"  .instance {
+    width: auto
+  }"
+`);
+    // invalidate by transform value
+    expect(
+      rule.generateRules({ breakpoint: "base", indent: 2, transformValue })
+    ).toMatchInlineSnapshot(`
+"  .instance {
+    width: AUTO
+  }"
+`);
+  });
+
+  test("generate breakpoint without declarations", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    expect(rule.generateRules({ breakpoint: "base" })).toEqual("");
+  });
+});
 
 describe("Style Sheet Regular", () => {
   let sheet: StyleSheetRegular;
@@ -554,5 +752,36 @@ describe("Style Sheet Regular", () => {
         }
       }"
     `);
+  });
+
+  test("render nesting rules", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("base", {});
+    sheet.addMediaRule("small", { minWidth: 768 });
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "small",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    expect(sheet.cssText).toMatchInlineSnapshot(`
+"@media all {
+  .instance {
+    color: red
+  }
+}
+@media all and (min-width: 768px) {
+  .instance {
+    color: blue
+  }
+}"
+`);
   });
 });

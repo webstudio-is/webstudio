@@ -2,12 +2,14 @@ import type { Style } from "../schema";
 import {
   FontFaceRule,
   MediaRule,
+  NestingRule,
   PlaintextRule,
   type FontFaceOptions,
   type MediaRuleOptions,
 } from "./rules";
 import { compareMedia } from "./compare-media";
 import { StyleElement } from "./style-element";
+import type { TransformValue } from "./to-value";
 
 export type CssRule = {
   style: Style;
@@ -18,16 +20,22 @@ export class StyleSheet {
   #cssText = "";
   #mediaRules: Map<string, MediaRule> = new Map();
   #plainRules: Map<string, PlaintextRule> = new Map();
+  #nestingRules: Map<string, NestingRule> = new Map();
   #fontFaceRules: Array<FontFaceRule> = [];
+  #transformValue?: TransformValue;
   #isDirty = false;
   #element: StyleElement;
   constructor(element: StyleElement) {
     this.#element = element;
   }
+  setTransformer(transformValue: TransformValue) {
+    this.#transformValue = transformValue;
+    this.#isDirty = true;
+  }
   addMediaRule(id: string, options?: MediaRuleOptions) {
     let mediaRule = this.#mediaRules.get(id);
     if (mediaRule === undefined) {
-      mediaRule = new MediaRule(options);
+      mediaRule = new MediaRule(id, options);
       this.#mediaRules.set(id, mediaRule);
       this.#isDirty = true;
       return mediaRule;
@@ -53,6 +61,15 @@ export class StyleSheet {
     this.#isDirty = true;
     return this.#plainRules.set(cssText, new PlaintextRule(cssText));
   }
+  addNestingRule(selector: string) {
+    let rule = this.#nestingRules.get(selector);
+    if (rule === undefined) {
+      rule = new NestingRule(selector);
+      this.#nestingRules.set(selector, rule);
+      this.#isDirty = true;
+    }
+    return rule;
+  }
   addFontFaceRule(options: FontFaceOptions) {
     this.#isDirty = true;
     return this.#fontFaceRules.push(new FontFaceRule(options));
@@ -76,7 +93,10 @@ export class StyleSheet {
       (ruleA, ruleB) => compareMedia(ruleA.options, ruleB.options)
     );
     for (const mediaRule of sortedMediaRules) {
-      const { cssText } = mediaRule;
+      const cssText = mediaRule.generateRule({
+        nestingRules: Array.from(this.#nestingRules.values()),
+        transformValue: this.#transformValue,
+      });
       if (cssText !== "") {
         css.push(cssText);
       }
