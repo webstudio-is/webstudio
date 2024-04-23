@@ -1,11 +1,7 @@
 import { expect, test } from "@jest/globals";
-import stripIndent from "strip-indent";
 import type { Page } from "./schema/pages";
 import { createScope } from "./scope";
 import { generateResourcesLoader } from "./resources-generator";
-
-const clear = (input: string) =>
-  stripIndent(input).trimStart().replace(/ +$/, "");
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -35,30 +31,45 @@ test("generate resources loader", () => {
         },
       ]),
     })
-  ).toEqual(
-    clear(`
-      import { loadResource, type System } from "@webstudio-is/sdk";
-      export const loadResources = async (_props: { system: System }) => {
-      const [
-      variableName,
-      ] = await Promise.all([
-      loadResource({
-      id: "resourceId",
-      name: "resourceName",
-      url: "https://my-json.com",
-      method: "post",
-      headers: [
-      { name: "Content-Type", value: "application/json" },
-      ],
-      body: { body: true },
-      }),
-      ])
-      return {
-      variableName,
-      } as Record<string, unknown>
+  ).toMatchInlineSnapshot(`
+"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
+import { sitemap } from "./[sitemap.xml]";
+export const loadResources = async (_props: { system: System }) => {
+
+    const customFetch: typeof fetch = (input, init) => {
+      if (typeof input !== "string") {
+        return fetch(input, init);
       }
-    `)
-  );
+
+      if (isLocalResource(input, "sitemap.xml")) {
+        // @todo: dynamic import sitemap ???
+        const response = new Response(JSON.stringify(sitemap));
+        response.headers.set('content-type',  'application/json; charset=utf-8');
+        return Promise.resolve(response);
+      }
+
+      return fetch(input, init);
+    };
+    const [
+variableName,
+] = await Promise.all([
+loadResource(customFetch, {
+id: "resourceId",
+name: "resourceName",
+url: "https://my-json.com",
+method: "post",
+headers: [
+{ name: "Content-Type", value: "application/json" },
+],
+body: { body: true },
+}),
+])
+return {
+variableName,
+} as Record<string, unknown>
+}
+"
+`);
 });
 
 test("generate variable and use in resources loader", () => {
@@ -97,35 +108,51 @@ test("generate variable and use in resources loader", () => {
               value: `"Token " + $ws$dataSource$variableTokenId`,
             },
           ],
+
           body: `{ body: true }`,
         },
       ]),
     })
-  ).toEqual(
-    clear(`
-      import { loadResource, type System } from "@webstudio-is/sdk";
-      export const loadResources = async (_props: { system: System }) => {
-      let AccessToken = "my-token"
-      const [
-      variableName,
-      ] = await Promise.all([
-      loadResource({
-      id: "resourceId",
-      name: "resourceName",
-      url: "https://my-json.com/",
-      method: "post",
-      headers: [
-      { name: "Authorization", value: "Token " + AccessToken },
-      ],
-      body: { body: true },
-      }),
-      ])
-      return {
-      variableName,
-      } as Record<string, unknown>
+  ).toMatchInlineSnapshot(`
+"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
+import { sitemap } from "./[sitemap.xml]";
+export const loadResources = async (_props: { system: System }) => {
+let AccessToken = "my-token"
+
+    const customFetch: typeof fetch = (input, init) => {
+      if (typeof input !== "string") {
+        return fetch(input, init);
       }
-    `)
-  );
+
+      if (isLocalResource(input, "sitemap.xml")) {
+        // @todo: dynamic import sitemap ???
+        const response = new Response(JSON.stringify(sitemap));
+        response.headers.set('content-type',  'application/json; charset=utf-8');
+        return Promise.resolve(response);
+      }
+
+      return fetch(input, init);
+    };
+    const [
+variableName,
+] = await Promise.all([
+loadResource(customFetch, {
+id: "resourceId",
+name: "resourceName",
+url: "https://my-json.com/",
+method: "post",
+headers: [
+{ name: "Authorization", value: "Token " + AccessToken },
+],
+body: { body: true },
+}),
+])
+return {
+variableName,
+} as Record<string, unknown>
+}
+"
+`);
 });
 
 test("generate system variable and use in resources loader", () => {
@@ -162,31 +189,46 @@ test("generate system variable and use in resources loader", () => {
         },
       ]),
     })
-  ).toEqual(
-    clear(`
-      import { loadResource, type System } from "@webstudio-is/sdk";
-      export const loadResources = async (_props: { system: System }) => {
-      const system = _props.system
-      const [
-      variableName,
-      ] = await Promise.all([
-      loadResource({
-      id: "resourceId",
-      name: "resourceName",
-      url: "https://my-json.com/" + system?.params?.slug,
-      method: "post",
-      headers: [
-      { name: "Content-Type", value: "application/json" },
-      ],
-      body: { body: true },
-      }),
-      ])
-      return {
-      variableName,
-      } as Record<string, unknown>
+  ).toMatchInlineSnapshot(`
+"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
+import { sitemap } from "./[sitemap.xml]";
+export const loadResources = async (_props: { system: System }) => {
+const system = _props.system
+
+    const customFetch: typeof fetch = (input, init) => {
+      if (typeof input !== "string") {
+        return fetch(input, init);
       }
-    `)
-  );
+
+      if (isLocalResource(input, "sitemap.xml")) {
+        // @todo: dynamic import sitemap ???
+        const response = new Response(JSON.stringify(sitemap));
+        response.headers.set('content-type',  'application/json; charset=utf-8');
+        return Promise.resolve(response);
+      }
+
+      return fetch(input, init);
+    };
+    const [
+variableName,
+] = await Promise.all([
+loadResource(customFetch, {
+id: "resourceId",
+name: "resourceName",
+url: "https://my-json.com/" + system?.params?.slug,
+method: "post",
+headers: [
+{ name: "Content-Type", value: "application/json" },
+],
+body: { body: true },
+}),
+])
+return {
+variableName,
+} as Record<string, unknown>
+}
+"
+`);
 });
 
 test("generate empty resources loader", () => {
@@ -197,15 +239,14 @@ test("generate empty resources loader", () => {
       dataSources: new Map(),
       resources: new Map(),
     })
-  ).toEqual(
-    clear(`
-      import { loadResource, type System } from "@webstudio-is/sdk";
-      export const loadResources = async (_props: { system: System }) => {
-      return {
-      } as Record<string, unknown>
-      }
-    `)
-  );
+  ).toMatchInlineSnapshot(`
+"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
+export const loadResources = async (_props: { system: System }) => {
+return {
+} as Record<string, unknown>
+}
+"
+`);
 });
 
 test("prevent generating unused variables", () => {
@@ -225,7 +266,7 @@ test("prevent generating unused variables", () => {
       resources: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, type System } from "@webstudio-is/sdk";
+"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
 export const loadResources = async (_props: { system: System }) => {
 return {
 } as Record<string, unknown>
@@ -253,7 +294,7 @@ test("prevent generating unused system variable", () => {
       resources: new Map(),
     })
   ).toMatchInlineSnapshot(`
-"import { loadResource, type System } from "@webstudio-is/sdk";
+"import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
 export const loadResources = async (_props: { system: System }) => {
 return {
 } as Record<string, unknown>
