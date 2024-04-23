@@ -204,7 +204,7 @@ export const AddressBarPopover = () => {
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent
-          css={{ zIndex: theme.zIndices[1], padding: 0 }}
+          css={{ padding: 0 }}
           sideOffset={0}
           collisionPadding={4}
           align="start"

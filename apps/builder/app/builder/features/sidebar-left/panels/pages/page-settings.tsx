@@ -701,7 +701,6 @@ const FormFields = ({
             <Grid gap={1}>
               <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
               <Select
-                css={{ zIndex: theme.zIndices[1] }}
                 options={pages.folders}
                 getValue={(folder) => folder.id}
                 getLabel={(folder) => folder.name}

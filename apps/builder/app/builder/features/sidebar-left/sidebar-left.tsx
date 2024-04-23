@@ -162,7 +162,6 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         <SidebarTabsContent
           value={activeTab === "none" ? "" : activeTab}
           css={{
-            zIndex: theme.zIndices[1],
             width: theme.spacing[30],
             // We need the node to be rendered but hidden
             // to keep receiving the drag events.

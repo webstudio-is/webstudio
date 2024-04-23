@@ -160,7 +160,6 @@ export const SectionRedirects = () => {
           <InputErrorsTooltip
             errors={oldPathErrors.length > 0 ? oldPathErrors : undefined}
             side="top"
-            css={{ zIndex: theme.zIndices["1"] }}
           >
             <InputField
               ref={oldPathRef}
@@ -180,7 +179,7 @@ export const SectionRedirects = () => {
             placeholder="301"
             options={["301", "302"]}
             value={httpStatus ?? "301"}
-            css={{ zIndex: theme.zIndices["1"], width: theme.spacing[18] }}
+            css={{ width: theme.spacing[18] }}
             onChange={(value) => {
               setHttpStatus(value as PageRedirect["status"]);
             }}
@@ -191,7 +190,6 @@ export const SectionRedirects = () => {
           <InputErrorsTooltip
             errors={newPathErrors.length > 0 ? newPathErrors : undefined}
             side="top"
-            css={{ zIndex: theme.zIndices["2"] }}
           >
             <InputField
               type="text"

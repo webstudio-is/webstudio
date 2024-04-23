@@ -629,7 +629,6 @@ const ExportContent = () => {
 
         <Select
           fullWidth
-          css={{ zIndex: theme.zIndices[2] }}
           value={deployTarget}
           options={Object.keys(deployTargets)}
           getLabel={(value) => humanizeString(value)}
@@ -730,7 +729,6 @@ export const PublishButton = ({ projectId }: PublishProps) => {
       <FloatingPanelPopoverContent
         sideOffset={Number.parseFloat(rawTheme.spacing[8])}
         css={{
-          zIndex: theme.zIndices[1],
           width: theme.spacing[33],
           maxWidth: theme.spacing[33],
           marginRight: theme.spacing[3],

@@ -35,8 +35,6 @@ export const HelpPopover = ({
           // Height of the footer
           collisionPadding={{ bottom: Number.parseFloat(rawTheme.spacing[11]) }}
           side={side}
-          // Sidebar has z-index 1, so we need to be above that using portal + same zindex
-          css={{ zIndex: theme.zIndices[1] }}
         >
           <Flex
             as="form"

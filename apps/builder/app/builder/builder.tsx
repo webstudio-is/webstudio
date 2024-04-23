@@ -334,13 +334,13 @@ export const Builder = ({
           </Workspace>
           <AiCommandBar isPreviewMode={isPreviewMode} />
         </Main>
-        <SidePanel gridArea="sidebar">
-          <SidebarLeft publish={publish} />
-        </SidePanel>
         <NavigatorPanel
           isPreviewMode={isPreviewMode}
           navigatorLayout={navigatorLayout}
         />
+        <SidePanel gridArea="sidebar">
+          <SidebarLeft publish={publish} />
+        </SidePanel>
         <SidePanel
           gridArea="inspector"
           isPreviewMode={isPreviewMode}

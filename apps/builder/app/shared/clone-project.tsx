@@ -74,7 +74,7 @@ const CloneProjectView = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent css={{ zIndex: theme.zIndices[1] }}>
+      <DialogContent>
         <form
           onSubmit={(event) => {
             event.preventDefault();

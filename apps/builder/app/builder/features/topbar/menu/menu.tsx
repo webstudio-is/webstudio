@@ -78,7 +78,6 @@ export const Menu = () => {
       <MenuButton />
       <DropdownMenuPortal>
         <DropdownMenuContent
-          css={{ zIndex: theme.zIndices[1] }}
           sideOffset={4}
           collisionPadding={4}
           width="regular"

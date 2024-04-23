@@ -118,7 +118,7 @@ const BreakpointEditorItem = ({
           <Flex gap="2" css={{ width: theme.spacing[26] }}>
             <Select
               name="type"
-              css={{ zIndex: theme.zIndices[1], width: theme.spacing[21] }}
+              css={{ width: theme.spacing[21] }}
               options={["maxWidth", "minWidth"]}
               getLabel={(option) =>
                 option === "maxWidth" ? "Max Width" : "Min Width"
