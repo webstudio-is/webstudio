@@ -159,6 +159,7 @@ const useScrub = ({
     };
 
     return numericScrubControl(scrubRefCurrent, {
+      distanceThreshold: 2,
       getAcceleration() {
         if (valueRef.current.type === "unit") {
           return scrubUnitAcceleration.get(valueRef.current.unit);
@@ -548,7 +549,6 @@ export const CssValueInput = ({
 
   const [scrubRef, inputRef] = useScrub({
     value,
-    distanceThreshold: 2,
     property,
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete(value, "scrub-end"),
