@@ -304,9 +304,9 @@ export const EditorDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         resize="auto"
-        css={{
-          width: 640,
-          height: 480,
+        style={{
+          width: isExpanded ? "100vw" : 640,
+          height: isExpanded ? "100vh" : 480,
         }}
         onInteractOutside={(event) => {
           event.preventDefault();
