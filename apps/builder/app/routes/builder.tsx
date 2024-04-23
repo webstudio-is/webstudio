@@ -19,3 +19,8 @@ export const shouldRevalidate: ShouldRevalidateFunction = ({
 };
 
 export default Root;
+
+// Reduces Vercel function size from 29MB to 9MB for unknown reasons; effective when used in limited files.
+export const config = {
+  maxDuration: 30,
+};
