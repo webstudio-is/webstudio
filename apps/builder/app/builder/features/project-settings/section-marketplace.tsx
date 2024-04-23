@@ -187,7 +187,6 @@ export const SectionMarketplace = () => {
       <Grid gap={1} css={sectionSpacing}>
         <Label htmlFor={ids.category}>Category</Label>
         <Select
-          css={{ zIndex: theme.zIndices[1] }}
           options={Array.from(marketplaceCategories.keys())}
           getLabel={(category: MarketplaceProduct["category"]) =>
             marketplaceCategories.get(category)?.label

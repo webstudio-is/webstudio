@@ -215,10 +215,7 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent
-          position="popper"
-          css={{ zIndex: props.css?.zIndex ?? 0 }}
-        >
+        <SelectContent position="popper">
           <SelectScrollUpButton css={{ order: 1 }}>
             <ChevronUpIcon />
           </SelectScrollUpButton>

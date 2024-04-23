@@ -125,7 +125,6 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
           css={{
             padding: 0,
             width: theme.spacing[24],
-            zIndex: theme.zIndices[1],
           }}
           sideOffset={0}
         >

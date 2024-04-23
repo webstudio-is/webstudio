@@ -1,9 +1,4 @@
-import {
-  styled,
-  keyframes,
-  Collapsible,
-  Flex,
-} from "@webstudio-is/design-system";
+import { styled, Collapsible, Flex } from "@webstudio-is/design-system";
 import { theme } from "@webstudio-is/design-system";
 import { useRef } from "react";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
@@ -16,29 +11,6 @@ const CollapsibleRoot = styled(Collapsible.Root, {
   display: "flex",
   flexDirection: "column",
   marginLeft: 1,
-  zIndex: -1,
-});
-
-const openKeyframes = keyframes({
-  from: {
-    opacity: 0.5,
-    transform: `translateX(-${theme.spacing[30]})`,
-  },
-  to: {
-    transform: "translateX(0)",
-    opacity: 1,
-  },
-});
-
-const closeKeyframes = keyframes({
-  from: {
-    transform: "translateX(0)",
-    opacity: 1,
-  },
-  to: {
-    opacity: 0.2,
-    transform: `translateX(-${theme.spacing[30]})`,
-  },
 });
 
 const CollapsibleContent = styled(Collapsible.Content, {
@@ -46,12 +18,6 @@ const CollapsibleContent = styled(Collapsible.Content, {
   flexGrow: "1",
   display: "flex",
   flexDirection: "column",
-  '&[data-state="open"]': {
-    animation: `${openKeyframes} 200ms ${theme.easing.easeOutQuart}`,
-  },
-  '&[data-state="closed"]': {
-    animation: `${closeKeyframes} 200ms ${theme.easing.easeOutQuart}`,
-  },
 });
 
 export const ExtendedPanel = ({

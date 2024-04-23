@@ -14,8 +14,6 @@ import {
   ComboboxListbox,
   ComboboxListboxItem,
   ComboboxSeparator,
-  theme,
-  css,
   NestedInputButton,
   Tooltip,
   Text,
@@ -47,8 +45,6 @@ const commonPropertiesSet = new Set<AnimatableProperties>([
 const filteredPropertiesSet = new Set<AnimatableProperties>(
   animatableProperties.filter((item) => commonPropertiesSet.has(item) === false)
 );
-
-const comboBoxStyles = css({ zIndex: theme.zIndices[1] });
 
 export const TransitionProperty = ({
   property,
@@ -159,11 +155,7 @@ export const TransitionProperty = ({
               suffix={<NestedInputButton {...getToggleButtonProps()} />}
             />
           </ComboboxAnchor>
-          <ComboboxContent
-            align="end"
-            sideOffset={5}
-            className={comboBoxStyles()}
-          >
+          <ComboboxContent align="end" sideOffset={5}>
             <ComboboxListbox {...getMenuProps()}>
               <ComboboxScrollArea>
                 {isOpen && (

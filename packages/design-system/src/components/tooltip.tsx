@@ -31,7 +31,6 @@ const Content = styled(TooltipPrimitive.Content, {
   color: theme.colors.loContrast,
   borderRadius: theme.borderRadius[7],
   padding: theme.spacing[5],
-  zIndex: theme.zIndices[1],
   position: "relative",
 
   variants: {

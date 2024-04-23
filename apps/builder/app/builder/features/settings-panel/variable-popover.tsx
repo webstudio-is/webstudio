@@ -432,7 +432,6 @@ const VariablePanel = forwardRef<
     <Flex direction="column" gap="1">
       <Label>Type</Label>
       <Select
-        css={{ zIndex: theme.zIndices[1] }}
         options={Array.from(typeOptions.keys())}
         getLabel={(option: VariableType) => typeOptions.get(option)?.label}
         getItemProps={(option) => ({
@@ -555,12 +554,6 @@ export const VariablePopoverTrigger = forwardRef<
         sideOffset={sideOffsset}
         side="left"
         align="start"
-        css={{
-          // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
-          // For a panel to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
-          // After layout is fixed, this prop should be removed.
-          zIndex: theme.zIndices[1],
-        }}
       >
         <ScrollArea
           css={{

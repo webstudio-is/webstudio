@@ -27,21 +27,15 @@ export const DialogContent = forwardRef(
       children,
       className,
       css,
-      overlayCss,
       ...props
     }: ComponentProps<typeof Primitive.Content> & {
       css?: CSS;
-      overlayCss?: CSS;
     },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
     return (
       <Primitive.Portal>
-        <Primitive.Overlay
-          className={overlayStyle({
-            css: { zIndex: css?.zIndex, ...overlayCss },
-          })}
-        />
+        <Primitive.Overlay className={overlayStyle()} />
         <Primitive.Content
           className={contentStyle({ className, css })}
           {...props}

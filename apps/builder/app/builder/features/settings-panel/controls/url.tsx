@@ -363,7 +363,6 @@ const BasePage = ({ prop, onChange }: BaseControlProps) => {
           onChange={(id) => onChange({ type: "page", value: id })}
           placeholder="Choose page"
           fullWidth
-          css={{ zIndex: theme.zIndices[1] }}
         >
           {Array.from(pageSelectOptions).map(([folderId, { name, pages }]) => {
             return (

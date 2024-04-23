@@ -307,14 +307,10 @@ export const EditorDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
-        // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
           maxWidth: "none",
           maxHeight: "none",
-          zIndex: theme.zIndices[1],
         }}
-        overlayCss={{ zIndex: theme.zIndices[1] }}
         onInteractOutside={(event) => {
           event.preventDefault();
         }}

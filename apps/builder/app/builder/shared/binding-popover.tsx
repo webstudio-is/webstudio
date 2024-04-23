@@ -384,12 +384,6 @@ export const BindingPopover = ({
         sideOffset={sideOffset}
         side={side}
         align="start"
-        css={{
-          // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
-          // For a panel to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
-          // After layout is fixed, this prop should be removed.
-          zIndex: theme.zIndices[1],
-        }}
       >
         <BindingPanel
           scope={scope}

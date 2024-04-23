@@ -29,7 +29,6 @@ export const SelectControl = ({
 
   return (
     <Select
-      css={{ zIndex: theme.zIndices[1] }}
       disabled={isAdvanced}
       // Show empty field instead of radix placeholder like css value input does.
       placeholder=""

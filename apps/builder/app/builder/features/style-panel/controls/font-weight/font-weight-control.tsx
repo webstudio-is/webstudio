@@ -1,4 +1,4 @@
-import { Select, theme } from "@webstudio-is/design-system";
+import { Select } from "@webstudio-is/design-system";
 import { type FontWeight, fontWeights } from "@webstudio-is/fonts";
 import { toValue } from "@webstudio-is/css-engine";
 import { useMemo } from "react";
@@ -113,7 +113,6 @@ export const FontWeightControl = ({
 
   return (
     <Select
-      css={{ zIndex: theme.zIndices[1] }}
       disabled={isAdvanced}
       // show empty field instead of radix placeholder
       // like css value input does

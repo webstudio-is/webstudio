@@ -168,7 +168,6 @@ const FormFields = ({
             <Label htmlFor={fieldIds.parentFolderId}>Parent Folder</Label>
             <Select
               tabIndex={1}
-              css={{ zIndex: theme.zIndices[1] }}
               options={filterSelfAndChildren(folderId, pages.folders)}
               getValue={(folder) => folder.id}
               getLabel={(folder) => folder.name}
@@ -544,7 +543,7 @@ const DeleteConfirmationDialog = ({
         }
       }}
     >
-      <DialogContent css={{ zIndex: theme.zIndices[1] }}>
+      <DialogContent>
         <Flex gap="3" direction="column" css={{ padding: theme.spacing[9] }}>
           <Text>{`Delete folder "${folder.name}" including all of its pages?`}</Text>
           <Flex direction="rowReverse" gap="2">

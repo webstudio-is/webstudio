@@ -39,15 +39,11 @@ export const ProjectSettingsView = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
-        // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
-        // For a dialog to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
         css={{
           width: `calc(${leftPanelWidth} + ${rightPanelWidth})`,
           maxWidth: "none",
           height: theme.spacing[35],
-          zIndex: theme.zIndices[1],
         }}
-        overlayCss={{ zIndex: theme.zIndices[1] }}
       >
         <Flex grow>
           <List asChild>
