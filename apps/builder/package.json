@@ -54,6 +54,7 @@
     "@upstash/ratelimit": "^0.4.4",
     "@vercel/edge": "^1.1.0",
     "@vercel/kv": "^0.2.3",
+    "@vercel/remix": "2.8.1-patch.2",
     "@webstudio-is/ai": "workspace:*",
     "@webstudio-is/asset-uploader": "workspace:*",
     "@webstudio-is/authorization-token": "workspace:*",
