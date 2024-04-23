@@ -443,7 +443,7 @@ export const ResourceForm = forwardRef<
         return "URL is required";
       }
       try {
-        new URL(evaluatedValue);
+        // new URL(evaluatedValue);
       } catch {
         return "URL is invalid";
       }

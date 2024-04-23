@@ -43,3 +43,12 @@ export type ResourceRequest = z.infer<typeof ResourceRequest>;
 export const Resources = z.map(ResourceId, Resource);
 
 export type Resources = z.infer<typeof Resources>;
+
+const LOCAL_RESOURCE_PREFIX = "$resources";
+
+/**
+ * Prevents fetch cycles by prefixing local resources.
+ */
+export const isLocalResource = (pathname: string, resourceName: string) =>
+  pathname.split("/").filter(Boolean).join("/") ===
+  `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;

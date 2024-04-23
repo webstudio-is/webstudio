@@ -1,3 +1,4 @@
+import { executeExpression } from "./expression";
 import type { Folder, Page, Pages } from "./schema/pages";
 
 export const ROOT_FOLDER_ID = "root";
@@ -72,4 +73,19 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
   }
 
   return paths.reverse().join("/").replace(/\/+/g, "/");
+};
+
+export const getStaticSiteMapXml = (pages: Page[], updatedAt: string) => {
+  return (
+    pages
+      // ignore pages with excludePageFromSearch bound to variables
+      // because there is no data from cms available at build time
+      .filter(
+        (page) => executeExpression(page.meta.excludePageFromSearch) !== true
+      )
+      .map((page) => ({
+        path: page.path,
+        lastModified: updatedAt.split("T")[0],
+      }))
+  );
 };
