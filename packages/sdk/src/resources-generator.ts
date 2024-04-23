@@ -31,7 +31,7 @@ export const generateResourcesLoader = ({
       // call resource by bound variable name
       const resourceName = scope.getName(resource.id, dataSource.name);
       generatedOutput += `${resourceName},\n`;
-      generatedLoaders += `loadResource({\n`;
+      generatedLoaders += `loadResource(customFetch, {\n`;
       generatedLoaders += `id: "${resource.id}",\n`;
       generatedLoaders += `name: ${JSON.stringify(resource.name)},\n`;
       const url = generateExpression({
@@ -86,10 +86,31 @@ export const generateResourcesLoader = ({
   }
 
   let generated = "";
-  generated += `import { loadResource, type System } from "@webstudio-is/sdk";\n`;
+  generated += `import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";\n`;
+
+  if (hasResources) {
+    generated += `import { sitemap } from "./[sitemap.xml]";\n`;
+  }
+
   generated += `export const loadResources = async (_props: { system: System }) => {\n`;
   generated += generatedVariables;
   if (hasResources) {
+    generated += `
+    const customFetch: typeof fetch = (input, init) => {
+      if (typeof input !== "string") {
+        return fetch(input, init);
+      }
+
+      if (isLocalResource(input, "sitemap.xml")) {
+        // @todo: dynamic import sitemap ???
+        const response = new Response(JSON.stringify(sitemap));
+        response.headers.set('content-type',  'application/json; charset=utf-8');
+        return Promise.resolve(response);
+      }
+
+      return fetch(input, init);
+    };
+    `;
     generated += `const [\n`;
     generated += generatedOutput;
     generated += `] = await Promise.all([\n`;

@@ -3,8 +3,34 @@
 
 import type { ProjectMeta, PageMeta } from "@webstudio-is/sdk";
 import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
+import { sitemap } from "./[sitemap.xml]";
 export const loadResources = async (_props: { system: System }) => {
-  return {} as Record<string, unknown>;
+  const customFetch: typeof fetch = (input, init) => {
+    if (typeof input !== "string") {
+      return fetch(input, init);
+    }
+
+    if (isLocalResource(input, "sitemap.xml")) {
+      // @todo: dynamic import sitemap ???
+      const response = new Response(JSON.stringify(sitemap));
+      response.headers.set("content-type", "application/json; charset=utf-8");
+      return Promise.resolve(response);
+    }
+
+    return fetch(input, init);
+  };
+  const [sitemapxml_1] = await Promise.all([
+    loadResource(customFetch, {
+      id: "Y_ZBU-mHnSXigZ1IXI02s",
+      name: "sitemap.xml",
+      url: "/$resources/sitemap.xml",
+      method: "get",
+      headers: [],
+    }),
+  ]);
+  return {
+    sitemapxml_1,
+  } as Record<string, unknown>;
 };
 
 export const getPageMeta = ({
@@ -18,7 +44,7 @@ export const getPageMeta = ({
     title: "Untitled",
     description: "",
     excludePageFromSearch: false,
-    language: "ru",
+    language: "",
     socialImageAssetId: undefined,
     socialImageUrl: "",
     status: 200,
