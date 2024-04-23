@@ -78,7 +78,7 @@ export const numericScrubControl = (
     onStart,
     getValue = getValueDefault,
     direction = "horizontal",
-    distanceThreshold = 3,
+    distanceThreshold = 0,
     onValueInput,
     onValueChange,
     onStatusChange,
