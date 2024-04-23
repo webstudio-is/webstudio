@@ -1,6 +1,6 @@
 import { useId } from "react";
 import { useStore } from "@nanostores/react";
-import { Select } from "@webstudio-is/design-system";
+import { Select, theme } from "@webstudio-is/design-system";
 import { humanizeString } from "~/shared/string-utils";
 import {
   BindingControl,
@@ -69,6 +69,7 @@ export const SelectControl = ({
               onChange({ type: "string", value });
             }
           }}
+          css={{ zIndex: theme.zIndices[1] }}
         />
         <BindingPopover
           scope={scope}

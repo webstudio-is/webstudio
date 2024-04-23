@@ -629,7 +629,7 @@ const ExportContent = () => {
 
         <Select
           fullWidth
-          css={{ zIndex: theme.zIndices[2] }}
+          css={{ zIndex: theme.zIndices[1] }}
           value={deployTarget}
           options={Object.keys(deployTargets)}
           getLabel={(value) => humanizeString(value)}

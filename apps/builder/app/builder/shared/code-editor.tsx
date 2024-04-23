@@ -304,7 +304,7 @@ export const EditorDialog = ({
   const height = isExpanded ? "80vh" : "480px";
   const padding = rawTheme.spacing[7];
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
         // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
@@ -315,6 +315,9 @@ export const EditorDialog = ({
           zIndex: theme.zIndices[1],
         }}
         overlayCss={{ zIndex: theme.zIndices[1] }}
+        onInteractOutside={(event) => {
+          event.preventDefault();
+        }}
       >
         <Grid
           align="stretch"

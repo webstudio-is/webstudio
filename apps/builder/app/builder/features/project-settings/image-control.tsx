@@ -10,7 +10,6 @@ export const ImageControl = (props: {
   return (
     <FloatingPanel
       title="Images"
-      zIndex={1}
       content={
         <ImageManager
           onChange={(asset) => {

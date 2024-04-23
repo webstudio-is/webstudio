@@ -92,10 +92,6 @@ type FloatingPanelProps = {
   children: JSX.Element;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
-  // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
-  // For a panel to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
-  // After layout is fixed, this prop should be removed.
-  zIndex?: 1;
 };
 
 const contentStyle = css({
@@ -108,7 +104,6 @@ export const FloatingPanel = ({
   children,
   open,
   onOpenChange,
-  zIndex,
 }: FloatingPanelProps) => {
   const { isOpen, handleOpenChange, triggerRef, sideOffset } = useLogic(
     open,
@@ -126,7 +121,10 @@ export const FloatingPanel = ({
         align="start"
         className={contentStyle({
           css: {
-            zIndex: zIndex ? theme.zIndices[zIndex] : undefined,
+            // Left Aside panels (e.g., Pages, Components) use zIndex: theme.zIndices[1].
+            // For a panel to appear above these panels, both overlay and content should also have zIndex: theme.zIndices[1].
+            // After layout is fixed, this prop should be removed.
+            zIndex: theme.zIndices[1],
           },
         })}
       >

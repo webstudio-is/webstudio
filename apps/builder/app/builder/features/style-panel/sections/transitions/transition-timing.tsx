@@ -69,6 +69,7 @@ export const TransitionTiming = ({
         </Tooltip>
       </Flex>
       <Select
+        css={{ zIndex: theme.zIndices[1] }}
         options={options}
         value={value}
         onChange={(value) => {

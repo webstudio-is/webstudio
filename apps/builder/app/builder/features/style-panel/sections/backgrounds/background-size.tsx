@@ -79,6 +79,7 @@ export const BackgroundSize = (
         />
 
         <Select
+          css={{ zIndex: theme.zIndices[1] }}
           // show empty field instead of radix placeholder
           // like css value input does
           placeholder=""
