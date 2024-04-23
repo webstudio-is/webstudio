@@ -548,6 +548,7 @@ export const CssValueInput = ({
 
   const [scrubRef, inputRef] = useScrub({
     value,
+    distanceThreshold: 2,
     property,
     onChange: props.onChange,
     onChangeComplete: (value) => onChangeComplete(value, "scrub-end"),
