@@ -3,6 +3,12 @@ import { prisma } from "@webstudio-is/prisma-client";
 import { parsePages } from "@webstudio-is/project-build/index.server";
 import { getStaticSiteMapXml } from "@webstudio-is/sdk";
 
+/**
+ * This should be a route in SvelteKit, as it can be fetched server-side without an actual HTTP request.
+ * Consider moving it to routes if Remix supports similar functionality in the future.
+ * Note: Fetching own routes using request.origin is prohibited on Cloudflare Workers.
+ * Note: We are not moving this to routes to avoid generating an additional 30MB function on deploy.
+ */
 export const loader = async ({ request }: { request: Request }) => {
   const referer = request.headers.get("referer");
 
