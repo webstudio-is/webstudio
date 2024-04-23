@@ -219,6 +219,108 @@ describe("nesting rule", () => {
   });
 });
 
+describe("mixin rule", () => {
+  test("compose rules from multiple mixins", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    const localMixin = sheet.addMixinRule("local");
+    const tokenMixin = sheet.addMixinRule("token");
+    rule.applyMixins(["token", "local"]);
+    localMixin.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "fit-content" },
+    });
+    tokenMixin.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    tokenMixin.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "height",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: fit-content;
+  height: auto
+}"
+`);
+  });
+
+  test("generate nested selector", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    const localMixin = sheet.addMixinRule("local");
+    const tokenMixin = sheet.addMixinRule("token");
+    rule.applyMixins(["token", "local"]);
+    localMixin.setDeclaration({
+      breakpoint: "base",
+      selector: ":hover",
+      property: "width",
+      value: { type: "keyword", value: "fit-content" },
+    });
+    tokenMixin.setDeclaration({
+      breakpoint: "base",
+      selector: ":hover",
+      property: "height",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance:hover {
+  height: auto;
+  width: fit-content
+}"
+`);
+  });
+
+  test("invalidate cache after applying mixins", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    const localMixin = sheet.addMixinRule("local");
+    localMixin.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(
+      `""`
+    );
+    rule.applyMixins(["local"]);
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto
+}"
+`);
+  });
+
+  test("invalidate cache after updating mixin declaration", () => {
+    const sheet = createRegularStyleSheet();
+    const rule = sheet.addNestingRule(".instance");
+    const localMixin = sheet.addMixinRule("local");
+    rule.applyMixins(["local"]);
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(
+      `""`
+    );
+    localMixin.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+".instance {
+  width: auto
+}"
+`);
+  });
+});
+
 describe("Style Sheet Regular", () => {
   let sheet: StyleSheetRegular;
 
@@ -771,6 +873,39 @@ describe("Style Sheet Regular", () => {
       property: "color",
       value: { type: "keyword", value: "red" },
     });
+    expect(sheet.cssText).toMatchInlineSnapshot(`
+"@media all {
+  .instance {
+    color: red
+  }
+}
+@media all and (min-width: 768px) {
+  .instance {
+    color: blue
+  }
+}"
+`);
+  });
+
+  test("render mixin rules", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("base", {});
+    sheet.addMediaRule("small", { minWidth: 768 });
+    const mixin = sheet.addMixinRule("local");
+    mixin.setDeclaration({
+      breakpoint: "small",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    mixin.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    const rule = sheet.addNestingRule(".instance");
+    rule.applyMixins(["local"]);
     expect(sheet.cssText).toMatchInlineSnapshot(`
 "@media all {
   .instance {

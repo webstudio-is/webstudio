@@ -6,8 +6,6 @@ import {
 import type {
   Assets,
   Breakpoints,
-  StyleDecl,
-  StyleSource,
   StyleSourceSelections,
   Styles,
 } from "@webstudio-is/sdk";
@@ -112,36 +110,21 @@ export const generateCss = ({
     };
   }
 
-  // @todo write declarations into mixins instead of map
-  const stylesByStyleSourceId = new Map<StyleSource["id"], StyleDecl[]>();
   for (const styleDecl of styles.values()) {
-    const { styleSourceId } = styleDecl;
-    let styleSourceStyles = stylesByStyleSourceId.get(styleSourceId);
-    if (styleSourceStyles === undefined) {
-      styleSourceStyles = [];
-      stylesByStyleSourceId.set(styleSourceId, styleSourceStyles);
-    }
-    styleSourceStyles.push(styleDecl);
+    const rule = regularSheet.addMixinRule(styleDecl.styleSourceId);
+    rule.setDeclaration({
+      breakpoint: styleDecl.breakpointId,
+      selector: styleDecl.state ?? "",
+      property: styleDecl.property,
+      value: styleDecl.value,
+    });
   }
 
   for (const { instanceId, values } of styleSourceSelections.values()) {
     const rule = regularSheet.addNestingRule(
       `[${idAttribute}="${instanceId}"]`
     );
-    for (const styleSourceId of values) {
-      const styles = stylesByStyleSourceId.get(styleSourceId);
-      if (styles === undefined) {
-        continue;
-      }
-      for (const { breakpointId, state, property, value } of styles) {
-        rule.setDeclaration({
-          breakpoint: breakpointId,
-          selector: state ?? "",
-          property,
-          value,
-        });
-      }
-    }
+    rule.applyMixins(values);
   }
 
   return {
