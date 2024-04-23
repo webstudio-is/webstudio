@@ -31,7 +31,6 @@ import {
   textVariants,
   css,
   SmallIconButton,
-  rawTheme,
   Dialog,
   DialogTrigger,
   DialogContent,
@@ -300,16 +299,14 @@ export const EditorDialog = ({
   children: ReactNode;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const width = isExpanded ? "80vw" : "640px";
-  const height = isExpanded ? "80vh" : "480px";
-  const padding = rawTheme.spacing[7];
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
+        resize="auto"
         css={{
-          maxWidth: "none",
-          maxHeight: "none",
+          width: 640,
+          height: 480,
         }}
         onInteractOutside={(event) => {
           event.preventDefault();
@@ -318,9 +315,8 @@ export const EditorDialog = ({
         <Grid
           align="stretch"
           css={{
-            padding,
-            width,
-            height,
+            padding: theme.spacing[7],
+            height: "100%",
             overflow: "hidden",
             boxSizing: "content-box",
           }}

@@ -27,9 +27,11 @@ export const DialogContent = forwardRef(
       children,
       className,
       css,
+      resize,
       ...props
     }: ComponentProps<typeof Primitive.Content> & {
       css?: CSS;
+      resize?: "auto";
     },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
@@ -37,7 +39,7 @@ export const DialogContent = forwardRef(
       <Primitive.Portal>
         <Primitive.Overlay className={overlayStyle()} />
         <Primitive.Content
-          className={contentStyle({ className, css })}
+          className={contentStyle({ className, css, resize })}
           {...props}
           ref={forwardedRef}
         >
@@ -113,10 +115,19 @@ const contentStyle = css(floatingPanelStyle, {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: "min-content",
-  minWidth: theme.spacing[30],
-  maxWidth: theme.spacing[35],
-  maxHeight: "85vh",
+  minWidth: theme.spacing[33],
+  minHeight: theme.spacing[30],
+  maxWidth: "calc(100vw - 40px)",
+  maxHeight: "calc(100vh - 40px)",
   animation: `${contentShow} 150ms ${theme.easing.easeOut}`,
+  overflow: "hidden",
+  variants: {
+    resize: {
+      auto: {
+        resize: "auto",
+      },
+    },
+  },
 });
 
 const titleStyle = css({
