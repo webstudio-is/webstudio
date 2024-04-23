@@ -69,7 +69,7 @@ export const useScrub = ({
       },
       shouldHandleEvent: shouldHandleEventRef.current,
     });
-  }, []);
+  }, [distanceThreshold]);
 
   return { scrubRef, inputRef };
 };
