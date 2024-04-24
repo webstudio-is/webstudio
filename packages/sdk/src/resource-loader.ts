@@ -1,6 +1,9 @@
 import type { ResourceRequest } from "./schema/resources";
 
-export const loadResource = async (resourceData: ResourceRequest) => {
+export const loadResource = async (
+  customFetch: typeof fetch,
+  resourceData: ResourceRequest
+) => {
   const { url, method, headers, body } = resourceData;
   const requestHeaders = new Headers(
     headers.map(({ name, value }): [string, string] => [name, value])
@@ -20,7 +23,7 @@ export const loadResource = async (resourceData: ResourceRequest) => {
   try {
     // cloudflare workers fail when fetching url contains spaces
     // even though new URL suppose to trim them on parsing by spec
-    const response = await fetch(url.trim(), requestInit);
+    const response = await customFetch(url.trim(), requestInit);
     let data;
     if (
       response.ok &&

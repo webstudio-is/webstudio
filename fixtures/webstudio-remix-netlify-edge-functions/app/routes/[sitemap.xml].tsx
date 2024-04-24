@@ -7,7 +7,7 @@ export const loader = (arg: LoaderFunctionArgs) => {
     arg.request.headers.get("host") ||
     "";
 
-  const urls = sitemap.pages.map((page) => {
+  const urls = sitemap.map((page) => {
     const url = new URL(`https://${host}${page.path}`);
 
     return `
