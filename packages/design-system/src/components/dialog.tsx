@@ -69,7 +69,6 @@ const useDraggable = ({
   };
 
   const handleDrag: DragEventHandler = (event) => {
-    event.preventDefault();
     if (
       event.pageX <= 0 ||
       event.pageY <= 0 ||
