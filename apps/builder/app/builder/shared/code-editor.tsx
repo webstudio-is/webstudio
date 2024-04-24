@@ -303,7 +303,6 @@ export const EditorDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        draggable
         resize="auto"
         width={640}
         height={480}
@@ -328,8 +327,15 @@ export const EditorDialog = ({
          * to make the close button last in the tab order
          */}
         <DialogTitle
+          draggable
           suffix={
-            <Flex gap="1">
+            <Flex
+              gap="1"
+              onMouseDown={(event) => {
+                // Prevent dragging dialog
+                event.preventDefault();
+              }}
+            >
               <Button
                 color="ghost"
                 prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}

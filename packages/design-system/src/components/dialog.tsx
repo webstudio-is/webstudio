@@ -13,6 +13,7 @@ import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
 import { useDisableCanvasPointerEvents } from "../utilities";
 import type { CSSProperties } from "@stitches/react";
+import { mergeRefs } from "@react-aria/utils";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -34,7 +35,6 @@ if (placeholderImage) {
 }
 
 type UseDraggableProps = {
-  isDraggable?: boolean;
   isMaximized?: boolean;
   width?: number;
   height?: number;
@@ -43,7 +43,6 @@ type UseDraggableProps = {
 };
 
 const useDraggable = ({
-  isDraggable = false,
   isMaximized = false,
   width,
   height,
@@ -56,13 +55,17 @@ const useDraggable = ({
   }>();
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
+  const draggableRef = useRef<HTMLDivElement | null>(null);
 
   const handleDragStart: DragEventHandler = (event) => {
+    const target = draggableRef.current;
+    if (target === null) {
+      return;
+    }
     disableCanvasPointerEvents();
     if (placeholderImage) {
       event.dataTransfer.setDragImage(placeholderImage, 0, 0);
     }
-    const target = event.target as HTMLElement;
     const rect = target.getBoundingClientRect();
     target.style.left = `${rect.left}px`;
     target.style.top = `${rect.top}px`;
@@ -74,10 +77,13 @@ const useDraggable = ({
   };
 
   const handleDrag: DragEventHandler = (event) => {
+    const target = draggableRef.current;
+
     if (
       event.pageX <= 0 ||
       event.pageY <= 0 ||
-      initialDataRef.current === undefined
+      initialDataRef.current === undefined ||
+      target === null
     ) {
       return;
     }
@@ -89,7 +95,6 @@ const useDraggable = ({
     let top = Math.max(rect.y - movementY, 0);
     // We want some part of the dialog to be visible but otherwise let it go off screen.
     top = Math.min(top, window.innerHeight - 40);
-    const target = event.target as HTMLElement;
     target.style.left = `${left}px`;
     target.style.top = `${top}px`;
   };
@@ -116,8 +121,8 @@ const useDraggable = ({
     onDragStart: handleDragStart,
     onDrag: handleDrag,
     onDragEnd: enableCanvasPointerEvents,
-    draggable: isDraggable,
     style,
+    draggableRef,
   };
 };
 
@@ -128,7 +133,6 @@ export const DialogContent = forwardRef(
       className,
       css,
       resize,
-      isDraggable,
       isMaximized,
       width,
       height,
@@ -142,8 +146,7 @@ export const DialogContent = forwardRef(
       },
     forwardedRef: Ref<HTMLDivElement>
   ) => {
-    const draggableProps = useDraggable({
-      isDraggable,
+    const { draggableRef, ...draggableProps } = useDraggable({
       width,
       height,
       minWidth,
@@ -154,10 +157,10 @@ export const DialogContent = forwardRef(
       <Primitive.Portal>
         <Primitive.Overlay className={overlayStyle()} />
         <Primitive.Content
-          className={contentStyle({ className, css, resize, isDraggable })}
+          className={contentStyle({ className, css, resize })}
           {...draggableProps}
           {...props}
-          ref={forwardedRef}
+          ref={mergeRefs(forwardedRef, draggableRef)}
         >
           {children}
         </Primitive.Content>
@@ -171,13 +174,14 @@ export const DialogTitle = ({
   children,
   closeLabel = "Close dialog",
   suffix,
-}: {
-  children: ReactNode;
+  ...rest
+}: ComponentProps<typeof PanelTitle> & {
   suffix?: ReactNode;
   closeLabel?: string;
 }) => (
   <TitleSlot>
     <PanelTitle
+      {...rest}
       suffix={
         suffix ?? (
           <DialogClose asChild>
