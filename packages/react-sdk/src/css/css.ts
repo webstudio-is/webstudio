@@ -88,9 +88,11 @@ export const generateCss = ({
   const imageValueTransformer = createImageValueTransformer(assets, {
     assetBaseUrl,
   });
+  regularSheet.setTransformer(imageValueTransformer);
+  atomicSheet?.setTransformer(imageValueTransformer);
 
-  for (const { breakpointId, instanceId, state, style } of styleRules) {
-    if (atomicSheet) {
+  if (atomicSheet) {
+    for (const { breakpointId, instanceId, state, style } of styleRules) {
       const { classes } = atomicSheet.addStyleRule(
         { breakpoint: breakpointId, style },
         state,
@@ -100,17 +102,33 @@ export const generateCss = ({
         ...(classesMap.get(instanceId) ?? []),
         ...classes,
       ]);
-      continue;
     }
-    regularSheet.addStyleRule(
-      { breakpoint: breakpointId, style },
-      `[${idAttribute}="${instanceId}"]${state ?? ""}`,
-      imageValueTransformer
+
+    return {
+      cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
+      classesMap,
+    };
+  }
+
+  for (const styleDecl of styles.values()) {
+    const rule = regularSheet.addMixinRule(styleDecl.styleSourceId);
+    rule.setDeclaration({
+      breakpoint: styleDecl.breakpointId,
+      selector: styleDecl.state ?? "",
+      property: styleDecl.property,
+      value: styleDecl.value,
+    });
+  }
+
+  for (const { instanceId, values } of styleSourceSelections.values()) {
+    const rule = regularSheet.addNestingRule(
+      `[${idAttribute}="${instanceId}"]`
     );
+    rule.applyMixins(values);
   }
 
   return {
-    cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
+    cssText: regularSheet.cssText,
     classesMap,
   };
 };
