@@ -33,7 +33,7 @@ export const patchDomEvents = () => {
   const domContentLoadedEvent = new Event("DOMContentLoaded");
   const windowLoadEvent = new Event("load");
 
-  window.addEventListener = (type: string, listener: any, options?: any) => {
+  window.addEventListener = (type: any, listener: any, options?: any) => {
     if (type === "DOMContentLoaded") {
       eventListenerTasks.push(() =>
         listener.call(window, domContentLoadedEvent)
@@ -50,7 +50,7 @@ export const patchDomEvents = () => {
     }
   };
 
-  document.addEventListener = (type: string, listener: any, options: never) => {
+  document.addEventListener = (type: any, listener: any, options: any) => {
     if (type === "DOMContentLoaded") {
       // We store the listener to execute it later
       eventListenerTasks.push(() =>
