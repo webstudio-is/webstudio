@@ -329,15 +329,17 @@ export const EditorDialog = ({
         <DialogTitle
           draggable
           suffix={
-            <Flex gap="1">
+            <Flex
+              gap="1"
+              onMouseDown={(event) => {
+                // Prevent dragging dialog
+                event.preventDefault();
+              }}
+            >
               <Button
                 color="ghost"
                 prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
                 aria-label="Expand"
-                onMouseDown={(event) => {
-                  // Prevent dragging dialog
-                  event.preventDefault();
-                }}
                 onClick={() => setIsMaximized(isMaximized ? false : true)}
               />
               <DialogClose asChild>
@@ -345,10 +347,6 @@ export const EditorDialog = ({
                   color="ghost"
                   prefix={<CrossIcon />}
                   aria-label="Close"
-                  onMouseDown={(event) => {
-                    // Prevent dragging dialog
-                    event.preventDefault();
-                  }}
                 />
               </DialogClose>
             </Flex>
