@@ -35,6 +35,7 @@ export const parseCurl = (curl: string): undefined | CurlRequest => {
     alias: {
       X: ["request"],
       H: ["header"],
+      d: ["data"],
     },
     string: ["request", "data"],
     array: ["header", "H"],

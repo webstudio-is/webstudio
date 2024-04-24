@@ -88,6 +88,14 @@ test("support text body", () => {
     headers: [],
     body: `{"param":"value"}`,
   });
+  expect(
+    parseCurl(`curl https://my-url/hello-world -d '{"param":"value"}'`)
+  ).toEqual({
+    url: "https://my-url/hello-world",
+    method: "post",
+    headers: [],
+    body: `{"param":"value"}`,
+  });
 });
 
 test("support text body with explicit method", () => {
