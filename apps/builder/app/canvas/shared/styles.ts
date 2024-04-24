@@ -169,11 +169,6 @@ const subscribeEphemeralStyle = (params: Params) => {
         continue;
       }
 
-      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
-      if (property === "backgroundClip") {
-        continue;
-      }
-
       // Variable names are equal, no need to update
       if (
         propertyValue?.type === "var" &&
@@ -371,16 +366,9 @@ export const useCssRules = ({
         deletedProperties.delete(property);
       }
 
-      // We don't want to wrap backgroundClip into a var, because it's not supported by CSS variables
-      // It's fine because we don't need to update it dynamically via CSS variables during preview changes
-      // we renrender it anyway when CSS update happens
-      if (property === "backgroundClip") {
-        rule.styleMap.set(property, value);
-      } else {
-        const varValue = toVarValue(styleSourceId, property, value);
-        if (varValue) {
-          rule.styleMap.set(property, varValue);
-        }
+      const varValue = toVarValue(styleSourceId, property, value);
+      if (varValue) {
+        rule.styleMap.set(property, varValue);
       }
     }
 
