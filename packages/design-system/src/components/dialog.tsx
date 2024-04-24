@@ -11,6 +11,7 @@ import { css, theme, keyframes, type CSS } from "../stitches.config";
 import { PanelTitle } from "./panel-title";
 import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
+import { useDisableCanvasPointerEvents } from "../utilities";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -48,8 +49,11 @@ const useDraggable = ({
     point: { x: number; y: number };
     rect: DOMRect;
   }>();
+  const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
+    useDisableCanvasPointerEvents();
 
-  const onDragStart: DragEventHandler = (event) => {
+  const handleDragStart: DragEventHandler = (event) => {
+    disableCanvasPointerEvents();
     if (placeholderImage) {
       event.dataTransfer.setDragImage(placeholderImage, 0, 0);
     }
@@ -64,7 +68,7 @@ const useDraggable = ({
     };
   };
 
-  const onDrag: DragEventHandler = (event) => {
+  const handleDrag: DragEventHandler = (event) => {
     event.preventDefault();
     if (
       event.pageX <= 0 ||
@@ -87,8 +91,9 @@ const useDraggable = ({
   };
 
   return {
-    onDragStart,
-    onDrag,
+    onDragStart: handleDragStart,
+    onDrag: handleDrag,
+    onDragEnd: enableCanvasPointerEvents,
     draggable: isDraggable,
     style: isMaximized
       ? {
