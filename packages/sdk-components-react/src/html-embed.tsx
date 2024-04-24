@@ -51,6 +51,61 @@ const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
 
 type ScriptTask = () => Promise<void>;
 
+const isDOMContentLoaded = () => {
+  return (
+    document.readyState === "complete" || document.readyState === "interactive"
+  );
+};
+
+const domContentLoadedEventListeners: Array<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (this: Document, ev: Event) => any
+> = [];
+
+let domContentLoadedPatched = false;
+
+const patchDomContentLoaded = () => {
+  // If original event is not fired yet, do nothing as it can cause serious side effects.
+  if (isDOMContentLoaded() === false) {
+    console.error("DOMContentLoaded event has not been fired yet");
+    return;
+  }
+
+  if (domContentLoadedPatched) {
+    return;
+  }
+
+  domContentLoadedPatched = true;
+
+  console.info("Patching DOMContentLoaded event listener");
+
+  const originalAddEventListener = document.addEventListener;
+
+  document.addEventListener = (
+    type: string,
+    listener: never,
+    options: never
+  ) => {
+    if (type === "DOMContentLoaded") {
+      // We store the listener to execute it later
+      domContentLoadedEventListeners.push(listener);
+      // We do not call original event listeners as everything is already loaded and orinal event is not going to be fired.
+    } else {
+      // For all other events, use the original method
+      originalAddEventListener.call(document, type, listener, options);
+    }
+  };
+};
+
+const executeDOMContentLoadedEventListeners = () => {
+  const event = new Event("DOMContentLoaded");
+  for (const listener of domContentLoadedEventListeners) {
+    console.info("Executing DOMContentLoaded event listener");
+    listener.call(document, event);
+  }
+  domContentLoadedEventListeners.length = 0;
+};
+
 /**
  * We want to execute scripts from all embeds sequentially to preserve execution order.
  */
@@ -67,6 +122,9 @@ const processSyncTasks = async (syncTasks: ScriptTask[]) => {
     return;
   }
 
+  patchDomContentLoaded();
+
+  console.info("Start processing sync tasks");
   processing = true;
 
   while (syncTasksQueue.length > 0) {
@@ -74,7 +132,10 @@ const processSyncTasks = async (syncTasks: ScriptTask[]) => {
     await task();
   }
 
+  executeDOMContentLoadedEventListeners();
+
   processing = false;
+  console.info("Stop processing sync tasks");
 };
 
 // Inspiration https://ghinda.net/article/script-tags
