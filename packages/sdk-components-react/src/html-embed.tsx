@@ -10,14 +10,13 @@ import {
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
+import { executeDomEvents, patchDomEvents } from "./html-embed-patchers";
 
 export const __testing__ = {
   scriptTestIdPrefix: "client-",
 };
 
-const insertScript = (
-  sourceScript: HTMLScriptElement
-): Promise<HTMLScriptElement> => {
+const insertScript = (sourceScript: HTMLScriptElement): Promise<void> => {
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
     const hasSrc = sourceScript.hasAttribute("src");
@@ -35,7 +34,7 @@ const insertScript = (
 
     if (hasSrc) {
       script.addEventListener("load", () => {
-        resolve(script);
+        resolve();
       });
       script.addEventListener("error", reject);
     } else {
@@ -46,21 +45,54 @@ const insertScript = (
 
     // Run the callback immediately for inline scripts.
     if (hasSrc === false) {
-      resolve(script);
+      resolve();
     }
   });
 };
 
-type ScriptTask = () => Promise<HTMLScriptElement>;
+type ScriptTask = () => Promise<void>;
+
+/**
+ * We want to execute scripts from all embeds sequentially to preserve execution order.
+ */
+const syncTasksQueue: ScriptTask[] = [];
+let processing = false;
+
+const processSyncTasks = async (syncTasks: ScriptTask[]) => {
+  syncTasksQueue.push(...syncTasks);
+
+  // await 1 tick so tasks from all HTMLEmbeds are added to the queue
+  await Promise.resolve();
+
+  if (processing) {
+    return;
+  }
+
+  patchDomEvents();
+
+  console.info("Start processing sync tasks");
+  processing = true;
+
+  while (syncTasksQueue.length > 0) {
+    const task = syncTasksQueue.shift()!;
+    await task();
+  }
+
+  executeDomEvents();
+
+  processing = false;
+  console.info("Stop processing sync tasks");
+};
 
 // Inspiration https://ghinda.net/article/script-tags
-const execute = async (container: HTMLElement) => {
+const execute = (container: HTMLElement) => {
   const scripts = container.querySelectorAll("script");
   const syncTasks: Array<ScriptTask> = [];
   const asyncTasks: Array<ScriptTask> = [];
 
   scripts.forEach((script) => {
     const tasks = script.hasAttribute("async") ? asyncTasks : syncTasks;
+
     tasks.push(() => {
       return insertScript(script);
     });
@@ -71,10 +103,7 @@ const execute = async (container: HTMLElement) => {
     task();
   }
 
-  // Insert the script tags sequentially to preserve execution order.
-  for (const task of syncTasks) {
-    await task();
-  }
+  processSyncTasks(syncTasks);
 };
 
 type ChildProps = {
