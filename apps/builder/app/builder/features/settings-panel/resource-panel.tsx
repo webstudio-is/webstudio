@@ -12,6 +12,7 @@ import type { DataSource, Resource } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   isLiteralExpression,
+  isLocalResource,
 } from "@webstudio-is/sdk";
 import {
   Box,
@@ -445,6 +446,10 @@ export const ResourceForm = forwardRef<
       try {
         new URL(evaluatedValue);
       } catch {
+        if (isLocalResource(evaluatedValue, "sitemap.xml")) {
+          return;
+        }
+
         return "URL is invalid";
       }
     },

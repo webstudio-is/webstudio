@@ -223,6 +223,15 @@ html {
     display: block;
     height: auto;
   }
+  div:where([data-ws-component="Text"]) {
+    box-sizing: border-box;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    outline-width: 1px;
+    min-height: 1em;
+  }
 }
 @media all {
   .c11x2bo2 {
@@ -409,5 +418,20 @@ html {
   }
   .c15iig68 {
     flex-basis: 0px;
+  }
+  .c1cymde0 {
+    color: rgba(36, 12, 233, 1);
+  }
+  .c1mhrh2o {
+    margin-left: 20px;
+  }
+  .c15pkvqb {
+    color: rgba(8, 137, 17, 1);
+  }
+  .cjqm8t8 {
+    font-weight: 600;
+  }
+  .c12yyvw2 {
+    color: rgba(208, 24, 79, 1);
   }
 }

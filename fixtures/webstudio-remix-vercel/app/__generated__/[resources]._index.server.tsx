@@ -2,10 +2,25 @@
 /* This is a auto generated file for building the project */
 
 import type { ProjectMeta, PageMeta } from "@webstudio-is/sdk";
-import { loadResource, type System } from "@webstudio-is/sdk";
+import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
+import { sitemap } from "./[sitemap.xml]";
 export const loadResources = async (_props: { system: System }) => {
+  const customFetch: typeof fetch = (input, init) => {
+    if (typeof input !== "string") {
+      return fetch(input, init);
+    }
+
+    if (isLocalResource(input, "sitemap.xml")) {
+      // @todo: dynamic import sitemap ???
+      const response = new Response(JSON.stringify(sitemap));
+      response.headers.set("content-type", "application/json; charset=utf-8");
+      return Promise.resolve(response);
+    }
+
+    return fetch(input, init);
+  };
   const [list_1] = await Promise.all([
-    loadResource({
+    loadResource(customFetch, {
       id: "1vX6SQdaCjJN6MvJlG_cQ",
       name: "list",
       url: "https://gist.githubusercontent.com/TrySound/56507c301ec85669db5f1541406a9259/raw/a49548730ab592c86b9e7781f5b29beec4765494/collection.json",

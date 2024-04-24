@@ -43,10 +43,10 @@ import {
   findTreeInstanceIds,
   getPagePath,
   parseComponentName,
-  executeExpression,
   generateFormsProperties,
   generateResourcesLoader,
   generatePageMeta,
+  getStaticSiteMapXml,
 } from "@webstudio-is/sdk";
 import type { Data } from "@webstudio-is/http-client";
 import { createImageLoader } from "@webstudio-is/image";
@@ -682,19 +682,7 @@ export const projectMeta: ProjectMeta =
     join(generatedDir, "[sitemap.xml].ts"),
     `
       export const sitemap = ${JSON.stringify(
-        {
-          pages: siteData.pages
-            // ignore pages with excludePageFromSearch bound to variables
-            // because there is no data from cms available at build time
-            .filter(
-              (page) =>
-                executeExpression(page.meta.excludePageFromSearch) !== true
-            )
-            .map((page) => ({
-              path: page.path,
-              lastModified: siteData.build.updatedAt,
-            })),
-        },
+        getStaticSiteMapXml(siteData.pages, siteData.build.updatedAt),
         null,
         2
       )};
