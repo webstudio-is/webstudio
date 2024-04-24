@@ -55,7 +55,7 @@ const useDraggable = ({
   }>();
   const { enableCanvasPointerEvents, disableCanvasPointerEvents } =
     useDisableCanvasPointerEvents();
-  const draggableRef = useRef<HTMLElement | null>(null);
+  const draggableRef = useRef<HTMLDivElement | null>(null);
 
   const handleDragStart: DragEventHandler = (event) => {
     const target = draggableRef.current;
