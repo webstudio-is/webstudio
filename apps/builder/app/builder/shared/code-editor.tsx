@@ -307,6 +307,7 @@ export const EditorDialog = ({
         resize="auto"
         width={640}
         height={480}
+        minHeight={240}
         isMaximized={isMaximized}
         onInteractOutside={(event) => {
           event.preventDefault();

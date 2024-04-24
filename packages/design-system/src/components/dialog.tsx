@@ -12,6 +12,7 @@ import { PanelTitle } from "./panel-title";
 import { floatingPanelStyle, CloseButton, TitleSlot } from "./floating-panel";
 import { Flex } from "./flex";
 import { useDisableCanvasPointerEvents } from "../utilities";
+import type { CSSProperties } from "@stitches/react";
 
 export const Dialog = Primitive.Root;
 export const DialogTrigger = Primitive.Trigger;
@@ -37,6 +38,8 @@ type UseDraggableProps = {
   isMaximized?: boolean;
   width?: number;
   height?: number;
+  minWidth?: number;
+  minHeight?: number;
 };
 
 const useDraggable = ({
@@ -44,6 +47,8 @@ const useDraggable = ({
   isMaximized = false,
   width,
   height,
+  minHeight,
+  minWidth,
 }: UseDraggableProps) => {
   const initialDataRef = useRef<{
     point: { x: number; y: number };
@@ -89,21 +94,26 @@ const useDraggable = ({
     target.style.top = `${top}px`;
   };
 
+  const style: CSSProperties = isMaximized
+    ? {
+        ...centeredContent,
+        width: "100vw",
+        height: "100vh",
+      }
+    : {
+        width,
+        height,
+      };
+
+  if (minWidth !== undefined) style.minWidth = minWidth;
+  if (minHeight !== undefined) style.minHeight = minHeight;
+
   return {
     onDragStart: handleDragStart,
     onDrag: handleDrag,
     onDragEnd: enableCanvasPointerEvents,
     draggable: isDraggable,
-    style: isMaximized
-      ? {
-          ...centeredContent,
-          width: "100vw",
-          height: "100vh",
-        }
-      : {
-          width,
-          height,
-        },
+    style,
   };
 };
 
@@ -118,6 +128,8 @@ export const DialogContent = forwardRef(
       isMaximized,
       width,
       height,
+      minWidth,
+      minHeight,
       ...props
     }: ComponentProps<typeof Primitive.Content> &
       UseDraggableProps & {
@@ -130,6 +142,8 @@ export const DialogContent = forwardRef(
       isDraggable,
       width,
       height,
+      minWidth,
+      minHeight,
       isMaximized,
     });
     return (
@@ -208,7 +222,7 @@ const contentShow = keyframes({
   to: { opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
 });
 
-const centeredContent = {
+const centeredContent: CSSProperties = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
@@ -219,7 +233,6 @@ const contentStyle = css(floatingPanelStyle, {
   position: "fixed",
   width: "min-content",
   minWidth: theme.spacing[33],
-  minHeight: theme.spacing[30],
   maxWidth: "calc(100vw - 40px)",
   maxHeight: "calc(100vh - 40px)",
   userSelect: "none",
