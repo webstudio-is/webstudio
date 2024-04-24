@@ -31,7 +31,6 @@ import {
   textVariants,
   css,
   SmallIconButton,
-  rawTheme,
   Dialog,
   DialogTrigger,
   DialogContent,
@@ -299,18 +298,17 @@ export const EditorDialog = ({
   content: ReactNode;
   children: ReactNode;
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const width = isExpanded ? "80vw" : "640px";
-  const height = isExpanded ? "80vh" : "480px";
-  const padding = rawTheme.spacing[7];
+  const [isMaximized, setIsMaximized] = useState(false);
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={false}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent
-        css={{
-          maxWidth: "none",
-          maxHeight: "none",
-        }}
+        draggable
+        resize="auto"
+        width={640}
+        height={480}
+        minHeight={240}
+        isMaximized={isMaximized}
         onInteractOutside={(event) => {
           event.preventDefault();
         }}
@@ -318,9 +316,8 @@ export const EditorDialog = ({
         <Grid
           align="stretch"
           css={{
-            padding,
-            width,
-            height,
+            padding: theme.spacing[7],
+            height: "100%",
             overflow: "hidden",
             boxSizing: "content-box",
           }}
@@ -335,9 +332,9 @@ export const EditorDialog = ({
             <Flex gap="1">
               <Button
                 color="ghost"
-                prefix={isExpanded ? <MinimizeIcon /> : <MaximizeIcon />}
+                prefix={isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
                 aria-label="Expand"
-                onClick={() => setIsExpanded(isExpanded ? false : true)}
+                onClick={() => setIsMaximized(isMaximized ? false : true)}
               />
               <DialogClose asChild>
                 <Button
