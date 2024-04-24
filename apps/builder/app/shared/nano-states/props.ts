@@ -559,10 +559,6 @@ export const subscribeResources = () => {
       }
     }
 
-    if (missing.size === 0) {
-      return;
-    }
-
     // preset undefined to prevent loading already requested data
     for (const request of missing.values()) {
       const cacheKey = JSON.stringify(request);

@@ -625,7 +625,18 @@ export const VariablePopoverTrigger = forwardRef<
                       prefix={<RefreshIcon />}
                       color="ghost"
                       disabled={areResourcesLoading}
-                      onClick={() => invalidateResource(variable.resourceId)}
+                      onClick={() => {
+                        if (panelRef.current) {
+                          if (panelRef.current.allErrorsVisible === false) {
+                            panelRef.current.showAllErrors();
+                            return;
+                          }
+                          if (panelRef.current.valid) {
+                            panelRef.current.save();
+                          }
+                        }
+                        invalidateResource(variable.resourceId);
+                      }}
                     />
                   </Tooltip>
                 </>
