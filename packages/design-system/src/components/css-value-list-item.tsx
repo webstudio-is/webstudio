@@ -57,7 +57,7 @@ const ItemButton = styled("button", {
   alignItems: "center",
   justifyContent: "start",
   userSelect: "none",
-  backgroundColor: theme.colors.backgroundPanel,
+  backgroundColor: "inherit",
   padding: 0,
 
   paddingRight: sharedPaddingRight,
