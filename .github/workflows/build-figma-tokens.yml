@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # We don't need a token to push from an action,
           # but we need it if want the commit to trigger other workflows as normal
