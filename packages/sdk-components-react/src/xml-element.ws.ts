@@ -45,7 +45,7 @@ const presetStyle = {
 } satisfies PresetStyle<"div" | "ul">;
 
 export const meta: WsComponentMeta = {
-  category: "general",
+  category: "xml",
   order: 6,
   type: "container",
   icon: XIcon,

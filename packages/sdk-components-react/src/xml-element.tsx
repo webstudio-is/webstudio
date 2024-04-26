@@ -26,6 +26,7 @@ export const XmlElement = forwardRef<ElementRef<"ul">, Props>(
     );
 
     const elementName = name.replaceAll(/[^\p{L}]+/gu, "");
+
     return (
       <div style={{ display: isTextChild ? "flex" : "contents" }} {...props}>
         <div {...{ [componentAttribute]: attrValue }}>
