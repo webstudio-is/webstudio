@@ -17,6 +17,13 @@ export const propsToArgTypes = (
       .filter(([propName]) => propName.startsWith("data-ws-") === false)
       // Exclude props that are in the exclude list
       .filter(([propName]) => exclude.includes(propName) === false)
+      .map(([propName, propItem]) => {
+        // Remove @see and @deprecated from description also {@link ...} is removed as it always go after @see
+        propItem.description = propItem.description
+          .split("\n@see")[0]
+          .split("\n@deprecated")[0];
+        return [propName, propItem] as const;
+      })
       .reduce(
         (result, current) => {
           const [propName, prop] = current;
