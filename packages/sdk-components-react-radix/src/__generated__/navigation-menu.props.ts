@@ -32,14 +32,14 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-braillelabel": {
     description:
-      "Defines a string value that labels the current element, which is intended to be converted into Braille.\n@see aria-label.",
+      "Defines a string value that labels the current element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-brailleroledescription": {
     description:
-      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.\n@see aria-roledescription.",
+      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
@@ -47,42 +47,41 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   "aria-busy": { required: false, control: "boolean", type: "boolean" },
   "aria-checked": {
     description:
-      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.\n@see aria-pressed\n@see aria-selected.',
+      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colcount": {
     description:
-      "Defines the total number of columns in a table, grid, or treegrid.\n@see aria-colindex.",
+      "Defines the total number of columns in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindex": {
     description:
-      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.\n@see aria-colcount\n@see aria-colspan.",
+      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindextext": {
-    description:
-      "Defines a human readable text alternative of aria-colindex.\n@see aria-rowindextext.",
+    description: "Defines a human readable text alternative of aria-colindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colspan": {
     description:
-      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-colindex\n@see aria-rowspan.",
+      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-controls": {
     description:
-      "Identifies the element (or elements) whose contents or presence are controlled by the current element.\n@see aria-owns.",
+      "Identifies the element (or elements) whose contents or presence are controlled by the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -96,35 +95,35 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-describedby": {
     description:
-      "Identifies the element (or elements) that describes the object.\n@see aria-labelledby",
+      "Identifies the element (or elements) that describes the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-description": {
     description:
-      "Defines a string value that describes or annotates the current element.\n@see related aria-describedby.",
+      "Defines a string value that describes or annotates the current element.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-details": {
     description:
-      "Identifies the element that provides a detailed, extended description for the object.\n@see aria-describedby.",
+      "Identifies the element that provides a detailed, extended description for the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-disabled": {
     description:
-      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n@see aria-hidden\n@see aria-readonly.",
+      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-dropeffect": {
     description:
-      "Indicates what functions can be performed when a dragged object is released on the drop target.\n@deprecated in ARIA 1.1",
+      "Indicates what functions can be performed when a dragged object is released on the drop target.",
     required: false,
     control: "select",
     type: "string",
@@ -132,7 +131,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-errormessage": {
     description:
-      "Identifies the element that provides an error message for the object.\n@see aria-invalid\n@see aria-describedby.",
+      "Identifies the element that provides an error message for the object.",
     required: false,
     control: "text",
     type: "string",
@@ -153,7 +152,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-grabbed": {
     description:
-      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.\n@deprecated in ARIA 1.1',
+      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.',
     required: false,
     control: "boolean",
     type: "boolean",
@@ -167,14 +166,14 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-hidden": {
     description:
-      "Indicates whether the element is exposed to an accessibility API.\n@see aria-disabled.",
+      "Indicates whether the element is exposed to an accessibility API.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-invalid": {
     description:
-      "Indicates the entered value does not conform to the format expected by the application.\n@see aria-errormessage.",
+      "Indicates the entered value does not conform to the format expected by the application.",
     required: false,
     control: "text",
     type: "string",
@@ -195,7 +194,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-labelledby": {
     description:
-      "Identifies the element (or elements) that labels the current element.\n@see aria-describedby.",
+      "Identifies the element (or elements) that labels the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -237,7 +236,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-owns": {
     description:
-      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.\n@see aria-controls.",
+      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.",
     required: false,
     control: "text",
     type: "string",
@@ -251,28 +250,27 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-posinset": {
     description:
-      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-setsize.",
+      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-pressed": {
-    description:
-      'Indicates the current "pressed" state of toggle buttons.\n@see aria-checked\n@see aria-selected.',
+    description: 'Indicates the current "pressed" state of toggle buttons.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-readonly": {
     description:
-      "Indicates that the element is not editable, but is otherwise operable.\n@see aria-disabled.",
+      "Indicates that the element is not editable, but is otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-relevant": {
     description:
-      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.\n@see aria-atomic.",
+      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.",
     required: false,
     control: "select",
     type: "string",
@@ -305,42 +303,40 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   "aria-rowcount": {
     description:
-      "Defines the total number of rows in a table, grid, or treegrid.\n@see aria-rowindex.",
+      "Defines the total number of rows in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindex": {
     description:
-      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.\n@see aria-rowcount\n@see aria-rowspan.",
+      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindextext": {
-    description:
-      "Defines a human readable text alternative of aria-rowindex.\n@see aria-colindextext.",
+    description: "Defines a human readable text alternative of aria-rowindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-rowspan": {
     description:
-      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-rowindex\n@see aria-colspan.",
+      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-selected": {
-    description:
-      'Indicates the current "selected" state of various widgets.\n@see aria-checked\n@see aria-pressed.',
+    description: 'Indicates the current "selected" state of various widgets.',
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-setsize": {
     description:
-      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-posinset.",
+      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
@@ -366,8 +362,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
     type: "number",
   },
   "aria-valuenow": {
-    description:
-      "Defines the current value for a range widget.\n@see aria-valuetext.",
+    description: "Defines the current value for a range widget.",
     required: false,
     control: "number",
     type: "number",
@@ -455,7 +450,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   inputMode: {
     description:
-      "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
+      "Hints at the type of data that might be entered by the user while editing the element or its contents",
     required: false,
     control: "select",
     type: "string",
@@ -472,7 +467,7 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
   },
   is: {
     description:
-      "Specify that a standard HTML element should behave like a defined custom built-in element\n@see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is",
+      "Specify that a standard HTML element should behave like a defined custom built-in element",
     required: false,
     control: "text",
     type: "string",
@@ -489,13 +484,6 @@ export const propsNavigationMenu: Record<string, PropMeta> = {
     description: "Defines the language used in the element.",
   },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Provides a hint to the user of what can be entered in the field.",
-  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
@@ -616,14 +604,14 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-braillelabel": {
     description:
-      "Defines a string value that labels the current element, which is intended to be converted into Braille.\n@see aria-label.",
+      "Defines a string value that labels the current element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-brailleroledescription": {
     description:
-      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.\n@see aria-roledescription.",
+      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
@@ -631,42 +619,41 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   "aria-busy": { required: false, control: "boolean", type: "boolean" },
   "aria-checked": {
     description:
-      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.\n@see aria-pressed\n@see aria-selected.',
+      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colcount": {
     description:
-      "Defines the total number of columns in a table, grid, or treegrid.\n@see aria-colindex.",
+      "Defines the total number of columns in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindex": {
     description:
-      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.\n@see aria-colcount\n@see aria-colspan.",
+      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindextext": {
-    description:
-      "Defines a human readable text alternative of aria-colindex.\n@see aria-rowindextext.",
+    description: "Defines a human readable text alternative of aria-colindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colspan": {
     description:
-      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-colindex\n@see aria-rowspan.",
+      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-controls": {
     description:
-      "Identifies the element (or elements) whose contents or presence are controlled by the current element.\n@see aria-owns.",
+      "Identifies the element (or elements) whose contents or presence are controlled by the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -680,35 +667,35 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-describedby": {
     description:
-      "Identifies the element (or elements) that describes the object.\n@see aria-labelledby",
+      "Identifies the element (or elements) that describes the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-description": {
     description:
-      "Defines a string value that describes or annotates the current element.\n@see related aria-describedby.",
+      "Defines a string value that describes or annotates the current element.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-details": {
     description:
-      "Identifies the element that provides a detailed, extended description for the object.\n@see aria-describedby.",
+      "Identifies the element that provides a detailed, extended description for the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-disabled": {
     description:
-      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n@see aria-hidden\n@see aria-readonly.",
+      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-dropeffect": {
     description:
-      "Indicates what functions can be performed when a dragged object is released on the drop target.\n@deprecated in ARIA 1.1",
+      "Indicates what functions can be performed when a dragged object is released on the drop target.",
     required: false,
     control: "select",
     type: "string",
@@ -716,7 +703,7 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-errormessage": {
     description:
-      "Identifies the element that provides an error message for the object.\n@see aria-invalid\n@see aria-describedby.",
+      "Identifies the element that provides an error message for the object.",
     required: false,
     control: "text",
     type: "string",
@@ -737,7 +724,7 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-grabbed": {
     description:
-      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.\n@deprecated in ARIA 1.1',
+      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.',
     required: false,
     control: "boolean",
     type: "boolean",
@@ -751,14 +738,14 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-hidden": {
     description:
-      "Indicates whether the element is exposed to an accessibility API.\n@see aria-disabled.",
+      "Indicates whether the element is exposed to an accessibility API.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-invalid": {
     description:
-      "Indicates the entered value does not conform to the format expected by the application.\n@see aria-errormessage.",
+      "Indicates the entered value does not conform to the format expected by the application.",
     required: false,
     control: "text",
     type: "string",
@@ -779,7 +766,7 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-labelledby": {
     description:
-      "Identifies the element (or elements) that labels the current element.\n@see aria-describedby.",
+      "Identifies the element (or elements) that labels the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -829,7 +816,7 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-owns": {
     description:
-      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.\n@see aria-controls.",
+      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.",
     required: false,
     control: "text",
     type: "string",
@@ -843,28 +830,27 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-posinset": {
     description:
-      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-setsize.",
+      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-pressed": {
-    description:
-      'Indicates the current "pressed" state of toggle buttons.\n@see aria-checked\n@see aria-selected.',
+    description: 'Indicates the current "pressed" state of toggle buttons.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-readonly": {
     description:
-      "Indicates that the element is not editable, but is otherwise operable.\n@see aria-disabled.",
+      "Indicates that the element is not editable, but is otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-relevant": {
     description:
-      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.\n@see aria-atomic.",
+      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.",
     required: false,
     control: "select",
     type: "string",
@@ -897,42 +883,40 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   "aria-rowcount": {
     description:
-      "Defines the total number of rows in a table, grid, or treegrid.\n@see aria-rowindex.",
+      "Defines the total number of rows in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindex": {
     description:
-      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.\n@see aria-rowcount\n@see aria-rowspan.",
+      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindextext": {
-    description:
-      "Defines a human readable text alternative of aria-rowindex.\n@see aria-colindextext.",
+    description: "Defines a human readable text alternative of aria-rowindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-rowspan": {
     description:
-      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-rowindex\n@see aria-colspan.",
+      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-selected": {
-    description:
-      'Indicates the current "selected" state of various widgets.\n@see aria-checked\n@see aria-pressed.',
+    description: 'Indicates the current "selected" state of various widgets.',
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-setsize": {
     description:
-      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-posinset.",
+      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
@@ -958,8 +942,7 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
     type: "number",
   },
   "aria-valuenow": {
-    description:
-      "Defines the current value for a range widget.\n@see aria-valuetext.",
+    description: "Defines the current value for a range widget.",
     required: false,
     control: "number",
     type: "number",
@@ -1039,7 +1022,7 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   inputMode: {
     description:
-      "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
+      "Hints at the type of data that might be entered by the user while editing the element or its contents",
     required: false,
     control: "select",
     type: "string",
@@ -1056,7 +1039,7 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
   },
   is: {
     description:
-      "Specify that a standard HTML element should behave like a defined custom built-in element\n@see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is",
+      "Specify that a standard HTML element should behave like a defined custom built-in element",
     required: false,
     control: "text",
     type: "string",
@@ -1073,13 +1056,6 @@ export const propsNavigationMenuList: Record<string, PropMeta> = {
     description: "Defines the language used in the element.",
   },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Provides a hint to the user of what can be entered in the field.",
-  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
@@ -1186,14 +1162,14 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-braillelabel": {
     description:
-      "Defines a string value that labels the current element, which is intended to be converted into Braille.\n@see aria-label.",
+      "Defines a string value that labels the current element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-brailleroledescription": {
     description:
-      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.\n@see aria-roledescription.",
+      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
@@ -1201,42 +1177,41 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   "aria-busy": { required: false, control: "boolean", type: "boolean" },
   "aria-checked": {
     description:
-      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.\n@see aria-pressed\n@see aria-selected.',
+      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colcount": {
     description:
-      "Defines the total number of columns in a table, grid, or treegrid.\n@see aria-colindex.",
+      "Defines the total number of columns in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindex": {
     description:
-      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.\n@see aria-colcount\n@see aria-colspan.",
+      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindextext": {
-    description:
-      "Defines a human readable text alternative of aria-colindex.\n@see aria-rowindextext.",
+    description: "Defines a human readable text alternative of aria-colindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colspan": {
     description:
-      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-colindex\n@see aria-rowspan.",
+      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-controls": {
     description:
-      "Identifies the element (or elements) whose contents or presence are controlled by the current element.\n@see aria-owns.",
+      "Identifies the element (or elements) whose contents or presence are controlled by the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -1250,35 +1225,35 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-describedby": {
     description:
-      "Identifies the element (or elements) that describes the object.\n@see aria-labelledby",
+      "Identifies the element (or elements) that describes the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-description": {
     description:
-      "Defines a string value that describes or annotates the current element.\n@see related aria-describedby.",
+      "Defines a string value that describes or annotates the current element.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-details": {
     description:
-      "Identifies the element that provides a detailed, extended description for the object.\n@see aria-describedby.",
+      "Identifies the element that provides a detailed, extended description for the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-disabled": {
     description:
-      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n@see aria-hidden\n@see aria-readonly.",
+      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-dropeffect": {
     description:
-      "Indicates what functions can be performed when a dragged object is released on the drop target.\n@deprecated in ARIA 1.1",
+      "Indicates what functions can be performed when a dragged object is released on the drop target.",
     required: false,
     control: "select",
     type: "string",
@@ -1286,7 +1261,7 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-errormessage": {
     description:
-      "Identifies the element that provides an error message for the object.\n@see aria-invalid\n@see aria-describedby.",
+      "Identifies the element that provides an error message for the object.",
     required: false,
     control: "text",
     type: "string",
@@ -1307,7 +1282,7 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-grabbed": {
     description:
-      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.\n@deprecated in ARIA 1.1',
+      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.',
     required: false,
     control: "boolean",
     type: "boolean",
@@ -1321,14 +1296,14 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-hidden": {
     description:
-      "Indicates whether the element is exposed to an accessibility API.\n@see aria-disabled.",
+      "Indicates whether the element is exposed to an accessibility API.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-invalid": {
     description:
-      "Indicates the entered value does not conform to the format expected by the application.\n@see aria-errormessage.",
+      "Indicates the entered value does not conform to the format expected by the application.",
     required: false,
     control: "text",
     type: "string",
@@ -1349,7 +1324,7 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-labelledby": {
     description:
-      "Identifies the element (or elements) that labels the current element.\n@see aria-describedby.",
+      "Identifies the element (or elements) that labels the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -1399,7 +1374,7 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-owns": {
     description:
-      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.\n@see aria-controls.",
+      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.",
     required: false,
     control: "text",
     type: "string",
@@ -1413,28 +1388,27 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-posinset": {
     description:
-      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-setsize.",
+      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-pressed": {
-    description:
-      'Indicates the current "pressed" state of toggle buttons.\n@see aria-checked\n@see aria-selected.',
+    description: 'Indicates the current "pressed" state of toggle buttons.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-readonly": {
     description:
-      "Indicates that the element is not editable, but is otherwise operable.\n@see aria-disabled.",
+      "Indicates that the element is not editable, but is otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-relevant": {
     description:
-      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.\n@see aria-atomic.",
+      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.",
     required: false,
     control: "select",
     type: "string",
@@ -1467,42 +1441,40 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   "aria-rowcount": {
     description:
-      "Defines the total number of rows in a table, grid, or treegrid.\n@see aria-rowindex.",
+      "Defines the total number of rows in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindex": {
     description:
-      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.\n@see aria-rowcount\n@see aria-rowspan.",
+      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindextext": {
-    description:
-      "Defines a human readable text alternative of aria-rowindex.\n@see aria-colindextext.",
+    description: "Defines a human readable text alternative of aria-rowindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-rowspan": {
     description:
-      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-rowindex\n@see aria-colspan.",
+      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-selected": {
-    description:
-      'Indicates the current "selected" state of various widgets.\n@see aria-checked\n@see aria-pressed.',
+    description: 'Indicates the current "selected" state of various widgets.',
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-setsize": {
     description:
-      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-posinset.",
+      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
@@ -1528,8 +1500,7 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
     type: "number",
   },
   "aria-valuenow": {
-    description:
-      "Defines the current value for a range widget.\n@see aria-valuetext.",
+    description: "Defines the current value for a range widget.",
     required: false,
     control: "number",
     type: "number",
@@ -1609,7 +1580,7 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   inputMode: {
     description:
-      "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
+      "Hints at the type of data that might be entered by the user while editing the element or its contents",
     required: false,
     control: "select",
     type: "string",
@@ -1626,7 +1597,7 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
   },
   is: {
     description:
-      "Specify that a standard HTML element should behave like a defined custom built-in element\n@see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is",
+      "Specify that a standard HTML element should behave like a defined custom built-in element",
     required: false,
     control: "text",
     type: "string",
@@ -1643,13 +1614,6 @@ export const propsNavigationMenuViewport: Record<string, PropMeta> = {
     description: "Defines the language used in the element.",
   },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Provides a hint to the user of what can be entered in the field.",
-  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
@@ -1756,14 +1720,14 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-braillelabel": {
     description:
-      "Defines a string value that labels the current element, which is intended to be converted into Braille.\n@see aria-label.",
+      "Defines a string value that labels the current element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-brailleroledescription": {
     description:
-      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.\n@see aria-roledescription.",
+      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
@@ -1771,42 +1735,41 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   "aria-busy": { required: false, control: "boolean", type: "boolean" },
   "aria-checked": {
     description:
-      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.\n@see aria-pressed\n@see aria-selected.',
+      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colcount": {
     description:
-      "Defines the total number of columns in a table, grid, or treegrid.\n@see aria-colindex.",
+      "Defines the total number of columns in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindex": {
     description:
-      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.\n@see aria-colcount\n@see aria-colspan.",
+      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindextext": {
-    description:
-      "Defines a human readable text alternative of aria-colindex.\n@see aria-rowindextext.",
+    description: "Defines a human readable text alternative of aria-colindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colspan": {
     description:
-      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-colindex\n@see aria-rowspan.",
+      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-controls": {
     description:
-      "Identifies the element (or elements) whose contents or presence are controlled by the current element.\n@see aria-owns.",
+      "Identifies the element (or elements) whose contents or presence are controlled by the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -1820,35 +1783,35 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-describedby": {
     description:
-      "Identifies the element (or elements) that describes the object.\n@see aria-labelledby",
+      "Identifies the element (or elements) that describes the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-description": {
     description:
-      "Defines a string value that describes or annotates the current element.\n@see related aria-describedby.",
+      "Defines a string value that describes or annotates the current element.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-details": {
     description:
-      "Identifies the element that provides a detailed, extended description for the object.\n@see aria-describedby.",
+      "Identifies the element that provides a detailed, extended description for the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-disabled": {
     description:
-      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n@see aria-hidden\n@see aria-readonly.",
+      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-dropeffect": {
     description:
-      "Indicates what functions can be performed when a dragged object is released on the drop target.\n@deprecated in ARIA 1.1",
+      "Indicates what functions can be performed when a dragged object is released on the drop target.",
     required: false,
     control: "select",
     type: "string",
@@ -1856,7 +1819,7 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-errormessage": {
     description:
-      "Identifies the element that provides an error message for the object.\n@see aria-invalid\n@see aria-describedby.",
+      "Identifies the element that provides an error message for the object.",
     required: false,
     control: "text",
     type: "string",
@@ -1877,7 +1840,7 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-grabbed": {
     description:
-      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.\n@deprecated in ARIA 1.1',
+      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.',
     required: false,
     control: "boolean",
     type: "boolean",
@@ -1891,14 +1854,14 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-hidden": {
     description:
-      "Indicates whether the element is exposed to an accessibility API.\n@see aria-disabled.",
+      "Indicates whether the element is exposed to an accessibility API.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-invalid": {
     description:
-      "Indicates the entered value does not conform to the format expected by the application.\n@see aria-errormessage.",
+      "Indicates the entered value does not conform to the format expected by the application.",
     required: false,
     control: "text",
     type: "string",
@@ -1919,7 +1882,7 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-labelledby": {
     description:
-      "Identifies the element (or elements) that labels the current element.\n@see aria-describedby.",
+      "Identifies the element (or elements) that labels the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -1969,7 +1932,7 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-owns": {
     description:
-      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.\n@see aria-controls.",
+      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.",
     required: false,
     control: "text",
     type: "string",
@@ -1983,28 +1946,27 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-posinset": {
     description:
-      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-setsize.",
+      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-pressed": {
-    description:
-      'Indicates the current "pressed" state of toggle buttons.\n@see aria-checked\n@see aria-selected.',
+    description: 'Indicates the current "pressed" state of toggle buttons.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-readonly": {
     description:
-      "Indicates that the element is not editable, but is otherwise operable.\n@see aria-disabled.",
+      "Indicates that the element is not editable, but is otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-relevant": {
     description:
-      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.\n@see aria-atomic.",
+      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.",
     required: false,
     control: "select",
     type: "string",
@@ -2037,42 +1999,40 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   "aria-rowcount": {
     description:
-      "Defines the total number of rows in a table, grid, or treegrid.\n@see aria-rowindex.",
+      "Defines the total number of rows in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindex": {
     description:
-      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.\n@see aria-rowcount\n@see aria-rowspan.",
+      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindextext": {
-    description:
-      "Defines a human readable text alternative of aria-rowindex.\n@see aria-colindextext.",
+    description: "Defines a human readable text alternative of aria-rowindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-rowspan": {
     description:
-      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-rowindex\n@see aria-colspan.",
+      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-selected": {
-    description:
-      'Indicates the current "selected" state of various widgets.\n@see aria-checked\n@see aria-pressed.',
+    description: 'Indicates the current "selected" state of various widgets.',
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-setsize": {
     description:
-      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-posinset.",
+      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
@@ -2098,8 +2058,7 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
     type: "number",
   },
   "aria-valuenow": {
-    description:
-      "Defines the current value for a range widget.\n@see aria-valuetext.",
+    description: "Defines the current value for a range widget.",
     required: false,
     control: "number",
     type: "number",
@@ -2186,7 +2145,7 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   inputMode: {
     description:
-      "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
+      "Hints at the type of data that might be entered by the user while editing the element or its contents",
     required: false,
     control: "select",
     type: "string",
@@ -2203,7 +2162,7 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
   },
   is: {
     description:
-      "Specify that a standard HTML element should behave like a defined custom built-in element\n@see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is",
+      "Specify that a standard HTML element should behave like a defined custom built-in element",
     required: false,
     control: "text",
     type: "string",
@@ -2220,13 +2179,6 @@ export const propsNavigationMenuContent: Record<string, PropMeta> = {
     description: "Defines the language used in the element.",
   },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Provides a hint to the user of what can be entered in the field.",
-  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
@@ -2333,14 +2285,14 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-braillelabel": {
     description:
-      "Defines a string value that labels the current element, which is intended to be converted into Braille.\n@see aria-label.",
+      "Defines a string value that labels the current element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-brailleroledescription": {
     description:
-      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.\n@see aria-roledescription.",
+      "Defines a human-readable, author-localized abbreviated description for the role of an element, which is intended to be converted into Braille.",
     required: false,
     control: "text",
     type: "string",
@@ -2348,42 +2300,41 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   "aria-busy": { required: false, control: "boolean", type: "boolean" },
   "aria-checked": {
     description:
-      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.\n@see aria-pressed\n@see aria-selected.',
+      'Indicates the current "checked" state of checkboxes, radio buttons, and other widgets.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colcount": {
     description:
-      "Defines the total number of columns in a table, grid, or treegrid.\n@see aria-colindex.",
+      "Defines the total number of columns in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindex": {
     description:
-      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.\n@see aria-colcount\n@see aria-colspan.",
+      "Defines an element's column index or position with respect to the total number of columns within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-colindextext": {
-    description:
-      "Defines a human readable text alternative of aria-colindex.\n@see aria-rowindextext.",
+    description: "Defines a human readable text alternative of aria-colindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-colspan": {
     description:
-      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-colindex\n@see aria-rowspan.",
+      "Defines the number of columns spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-controls": {
     description:
-      "Identifies the element (or elements) whose contents or presence are controlled by the current element.\n@see aria-owns.",
+      "Identifies the element (or elements) whose contents or presence are controlled by the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -2397,35 +2348,35 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-describedby": {
     description:
-      "Identifies the element (or elements) that describes the object.\n@see aria-labelledby",
+      "Identifies the element (or elements) that describes the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-description": {
     description:
-      "Defines a string value that describes or annotates the current element.\n@see related aria-describedby.",
+      "Defines a string value that describes or annotates the current element.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-details": {
     description:
-      "Identifies the element that provides a detailed, extended description for the object.\n@see aria-describedby.",
+      "Identifies the element that provides a detailed, extended description for the object.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-disabled": {
     description:
-      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.\n@see aria-hidden\n@see aria-readonly.",
+      "Indicates that the element is perceivable but disabled, so it is not editable or otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-dropeffect": {
     description:
-      "Indicates what functions can be performed when a dragged object is released on the drop target.\n@deprecated in ARIA 1.1",
+      "Indicates what functions can be performed when a dragged object is released on the drop target.",
     required: false,
     control: "select",
     type: "string",
@@ -2433,7 +2384,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-errormessage": {
     description:
-      "Identifies the element that provides an error message for the object.\n@see aria-invalid\n@see aria-describedby.",
+      "Identifies the element that provides an error message for the object.",
     required: false,
     control: "text",
     type: "string",
@@ -2454,7 +2405,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-grabbed": {
     description:
-      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.\n@deprecated in ARIA 1.1',
+      'Indicates an element\'s "grabbed" state in a drag-and-drop operation.',
     required: false,
     control: "boolean",
     type: "boolean",
@@ -2468,14 +2419,14 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-hidden": {
     description:
-      "Indicates whether the element is exposed to an accessibility API.\n@see aria-disabled.",
+      "Indicates whether the element is exposed to an accessibility API.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-invalid": {
     description:
-      "Indicates the entered value does not conform to the format expected by the application.\n@see aria-errormessage.",
+      "Indicates the entered value does not conform to the format expected by the application.",
     required: false,
     control: "text",
     type: "string",
@@ -2496,7 +2447,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-labelledby": {
     description:
-      "Identifies the element (or elements) that labels the current element.\n@see aria-describedby.",
+      "Identifies the element (or elements) that labels the current element.",
     required: false,
     control: "text",
     type: "string",
@@ -2546,7 +2497,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-owns": {
     description:
-      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.\n@see aria-controls.",
+      "Identifies an element (or elements) in order to define a visual, functional, or contextual parent/child relationship\nbetween DOM elements where the DOM hierarchy cannot be used to represent the relationship.",
     required: false,
     control: "text",
     type: "string",
@@ -2560,28 +2511,27 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-posinset": {
     description:
-      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-setsize.",
+      "Defines an element's number or position in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-pressed": {
-    description:
-      'Indicates the current "pressed" state of toggle buttons.\n@see aria-checked\n@see aria-selected.',
+    description: 'Indicates the current "pressed" state of toggle buttons.',
     required: false,
     control: "text",
     type: "string",
   },
   "aria-readonly": {
     description:
-      "Indicates that the element is not editable, but is otherwise operable.\n@see aria-disabled.",
+      "Indicates that the element is not editable, but is otherwise operable.",
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-relevant": {
     description:
-      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.\n@see aria-atomic.",
+      "Indicates what notifications the user agent will trigger when the accessibility tree within a live region is modified.",
     required: false,
     control: "select",
     type: "string",
@@ -2614,42 +2564,40 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   "aria-rowcount": {
     description:
-      "Defines the total number of rows in a table, grid, or treegrid.\n@see aria-rowindex.",
+      "Defines the total number of rows in a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindex": {
     description:
-      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.\n@see aria-rowcount\n@see aria-rowspan.",
+      "Defines an element's row index or position with respect to the total number of rows within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-rowindextext": {
-    description:
-      "Defines a human readable text alternative of aria-rowindex.\n@see aria-colindextext.",
+    description: "Defines a human readable text alternative of aria-rowindex.",
     required: false,
     control: "text",
     type: "string",
   },
   "aria-rowspan": {
     description:
-      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.\n@see aria-rowindex\n@see aria-colspan.",
+      "Defines the number of rows spanned by a cell or gridcell within a table, grid, or treegrid.",
     required: false,
     control: "number",
     type: "number",
   },
   "aria-selected": {
-    description:
-      'Indicates the current "selected" state of various widgets.\n@see aria-checked\n@see aria-pressed.',
+    description: 'Indicates the current "selected" state of various widgets.',
     required: false,
     control: "boolean",
     type: "boolean",
   },
   "aria-setsize": {
     description:
-      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.\n@see aria-posinset.",
+      "Defines the number of items in the current set of listitems or treeitems. Not required if all elements in the set are present in the DOM.",
     required: false,
     control: "number",
     type: "number",
@@ -2675,8 +2623,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
     type: "number",
   },
   "aria-valuenow": {
-    description:
-      "Defines the current value for a range widget.\n@see aria-valuetext.",
+    description: "Defines the current value for a range widget.",
     required: false,
     control: "number",
     type: "number",
@@ -2756,7 +2703,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   inputMode: {
     description:
-      "Hints at the type of data that might be entered by the user while editing the element or its contents\n@see https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute",
+      "Hints at the type of data that might be entered by the user while editing the element or its contents",
     required: false,
     control: "select",
     type: "string",
@@ -2773,7 +2720,7 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
   },
   is: {
     description:
-      "Specify that a standard HTML element should behave like a defined custom built-in element\n@see https://html.spec.whatwg.org/multipage/custom-elements.html#attr-is",
+      "Specify that a standard HTML element should behave like a defined custom built-in element",
     required: false,
     control: "text",
     type: "string",
@@ -2790,13 +2737,6 @@ export const propsNavigationMenuItem: Record<string, PropMeta> = {
     description: "Defines the language used in the element.",
   },
   nonce: { required: false, control: "text", type: "string" },
-  placeholder: {
-    required: false,
-    control: "text",
-    type: "string",
-    description:
-      "Provides a hint to the user of what can be entered in the field.",
-  },
   prefix: { required: false, control: "text", type: "string" },
   property: { required: false, control: "text", type: "string" },
   radioGroup: { required: false, control: "text", type: "string" },
