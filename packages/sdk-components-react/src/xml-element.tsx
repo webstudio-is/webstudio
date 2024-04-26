@@ -20,13 +20,9 @@ export const XmlElement = forwardRef<ElementRef<"div">, Props>(
     return (
       <div style={{ display: isTextChild ? "flex" : "contents" }} {...props}>
         <div style={{ color: "rgb(16, 23, 233)" }}>&lt;{elementName}&gt;</div>
-        {isTextChild ? (
-          <span ref={ref}>{children}</span>
-        ) : (
-          <div ref={ref} style={{ marginLeft: "1rem" }}>
-            {children}
-          </div>
-        )}
+        <div ref={ref} style={{ marginLeft: isTextChild ? 0 : "1rem" }}>
+          {children}
+        </div>
         <div style={{ color: "rgb(16, 23, 233)" }}>&lt;/{elementName}&gt;</div>
       </div>
     );
