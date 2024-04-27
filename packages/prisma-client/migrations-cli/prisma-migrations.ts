@@ -7,7 +7,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
-import { prisma } from "../src";
+import { prisma } from "../src/prisma";
 import { UserError } from "./errors";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
