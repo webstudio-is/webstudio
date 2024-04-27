@@ -91,7 +91,7 @@ export const CodeEditor = forwardRef<
 >(({ lang, ...props }, ref) => {
   const extensions = useMemo(
     () => (lang === "html" ? getHtmlExtensions() : []),
-    []
+    [lang]
   );
 
   // prevent clicking on autocomplete options propagating to body
