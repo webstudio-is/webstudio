@@ -99,6 +99,23 @@ export class NestingRule {
     this.#declarations.delete(getDeclarationKey(declaration));
     this.#cache.delete(declaration.breakpoint);
   }
+  getDeclarations() {
+    // apply mixins first and then merge added declarations
+    const declarations = new Map<string, Declaration>();
+    for (const mixin of this.#mixins) {
+      const rule = this.#mixinRules.get(mixin);
+      if (rule === undefined) {
+        continue;
+      }
+      for (const declaration of rule.getDeclarations()) {
+        declarations.set(getDeclarationKey(declaration), declaration);
+      }
+    }
+    for (const declaration of this.#declarations.values()) {
+      declarations.set(getDeclarationKey(declaration), declaration);
+    }
+    return declarations.values();
+  }
   generateRules({
     breakpoint,
     indent = 0,
@@ -108,15 +125,11 @@ export class NestingRule {
     indent?: number;
     transformValue?: TransformValue;
   }) {
-    const mixinRules: MixinRule[] = [];
     for (const mixin of this.#mixins) {
       const rule = this.#mixinRules.get(mixin);
       // invalidate cache when mixin is changed
       if (rule?.isDirtyBreakpoint(breakpoint)) {
         this.#cache.delete(breakpoint);
-      }
-      if (rule) {
-        mixinRules.push(rule);
       }
     }
 
@@ -131,17 +144,7 @@ export class NestingRule {
     }
     const spaces = " ".repeat(indent);
     const linesBySelector = new Map<string, string>();
-    // apply mixins first and then merge added declarations
-    const declarations = new Map<string, Declaration>();
-    for (const rule of mixinRules) {
-      for (const declaration of rule.getDeclarations()) {
-        declarations.set(getDeclarationKey(declaration), declaration);
-      }
-    }
-    for (const declaration of this.#declarations.values()) {
-      declarations.set(getDeclarationKey(declaration), declaration);
-    }
-    for (const declaration of declarations.values()) {
+    for (const declaration of this.getDeclarations()) {
       // generate declarations only for specified breakpoint
       if (declaration.breakpoint !== breakpoint) {
         continue;
@@ -321,6 +324,10 @@ export class MediaRule {
       if (generatedRule !== "") {
         rules.push(generatedRule);
       }
+    }
+    // avoid rendering empty media queries
+    if (rules.length === 0) {
+      return "";
     }
     let conditionText = "";
     const { minWidth, maxWidth } = this.options;
