@@ -359,7 +359,7 @@ export const EditorDialog = ({
   );
 };
 
-export const BaseCodeEditor = ({
+export const CodeEditorBase = ({
   title,
   open,
   onOpenChange,

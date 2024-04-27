@@ -14,7 +14,7 @@ import {
 } from "@codemirror/autocomplete";
 import { html } from "@codemirror/lang-html";
 import { theme, textVariants, css } from "@webstudio-is/design-system";
-import { BaseCodeEditor, getMinMaxHeightVars } from "./base-code-editor";
+import { CodeEditorBase, getMinMaxHeightVars } from "./code-editor-base";
 
 const autocompletionStyle = css({
   "&.cm-tooltip.cm-tooltip-autocomplete": {
@@ -87,7 +87,7 @@ const getHtmlExtensions = () => [
 
 export const CodeEditor = forwardRef<
   HTMLDivElement,
-  Omit<ComponentProps<typeof BaseCodeEditor>, "extensions"> & { lang?: "html" }
+  Omit<ComponentProps<typeof CodeEditorBase>, "extensions"> & { lang?: "html" }
 >(({ lang, ...props }, ref) => {
   const extensions = useMemo(
     () => (lang === "html" ? getHtmlExtensions() : []),
@@ -114,7 +114,7 @@ export const CodeEditor = forwardRef<
 
   return (
     <div className={wrapperStyle()} ref={ref}>
-      <BaseCodeEditor {...props} extensions={extensions} />
+      <CodeEditorBase {...props} extensions={extensions} />
     </div>
   );
 });
