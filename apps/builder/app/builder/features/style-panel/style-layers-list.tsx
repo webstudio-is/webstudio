@@ -1,4 +1,8 @@
-import type { LayersValue, StyleProperty } from "@webstudio-is/css-engine";
+import type {
+  LayersValue,
+  StyleProperty,
+  TupleValue,
+} from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
   Flex,
@@ -26,19 +30,19 @@ export type LayerProps<T> = {
   disabled?: boolean;
   onLayerHide: (index: number) => void;
   onDeleteLayer: (index: number) => void;
-  onEditLayer: (index: number, layers: LayersValue) => void;
+  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
   createBatchUpdate: CreateBatchUpdate;
   deleteProperty: DeleteProperty;
 };
 
-type LayerListProperties<T> = SectionProps & {
+type LayerListProperties<T, K> = SectionProps & {
   disabled?: boolean;
   property: StyleProperty;
-  layers: LayersValue;
+  layers: K;
   renderLayer: (props: LayerProps<T>) => JSX.Element;
 };
 
-export const LayersList = <T,>({
+export const LayersList = <T, K extends TupleValue | LayersValue>({
   property,
   layers,
   disabled,
@@ -46,7 +50,7 @@ export const LayersList = <T,>({
   renderLayer,
   createBatchUpdate,
   deleteProperty,
-}: LayerListProperties<T>) => {
+}: LayerListProperties<T, K>) => {
   const layersCount = getLayerCount(property, currentStyle);
 
   const sortableItems = useMemo(
@@ -70,11 +74,20 @@ export const LayersList = <T,>({
   };
 
   const handleHideLayer = (index: number) => {
+    if (layers.type === "tuple") {
+      return;
+    }
     return hideLayer(property, index, layers, createBatchUpdate);
   };
 
-  const onEditLayer = (index: number, newLayers: LayersValue) => {
-    return updateLayer(property, newLayers, layers, index, createBatchUpdate);
+  const onEditLayer = (index: number, newLayers: K) => {
+    return updateLayer<K>(
+      property,
+      newLayers,
+      layers,
+      index,
+      createBatchUpdate
+    );
   };
 
   return (

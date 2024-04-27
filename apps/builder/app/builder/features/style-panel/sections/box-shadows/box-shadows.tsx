@@ -4,7 +4,11 @@ import {
   SectionTitleLabel,
 } from "@webstudio-is/design-system";
 import { PlusIcon } from "@webstudio-is/icons";
-import type { StyleProperty, TupleValue } from "@webstudio-is/css-engine";
+import type {
+  LayersValue,
+  StyleProperty,
+  TupleValue,
+} from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
@@ -68,7 +72,7 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList<TupleValue>
+        <LayersList<TupleValue, LayersValue>
           property={property}
           layers={value}
           {...props}

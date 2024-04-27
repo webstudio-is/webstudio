@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, test } from "@jest/globals";
-import type {
-  LayersValue,
-  StyleProperty,
-  StyleValue,
-  TupleValue,
+import {
+  type LayersValue,
+  type StyleProperty,
+  type StyleValue,
+  type TupleValue,
 } from "@webstudio-is/css-engine";
 import type { CreateBatchUpdate } from "./shared/use-style-data";
 import {
