@@ -37,7 +37,7 @@ const presetStyle = {
 
 export const meta: WsComponentMeta = {
   category: "general",
-  type: "container",
+  type: "embed",
   label: "Code Text",
   description:
     "Use this component when you want to display code as text on the page.",
@@ -49,6 +49,13 @@ export const meta: WsComponentMeta = {
 };
 
 export const propsMeta: WsComponentPropsMeta = {
-  props,
-  initialProps: ["id", "className", "lang"],
+  props: {
+    ...props,
+    code: {
+      required: true,
+      control: "codetext",
+      type: "string",
+    },
+  },
+  initialProps: ["id", "className", "lang", "code"],
 };

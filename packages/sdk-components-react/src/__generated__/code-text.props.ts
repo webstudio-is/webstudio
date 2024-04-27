@@ -399,6 +399,7 @@ export const props: Record<string, PropMeta> = {
   },
   autoSave: { required: false, control: "text", type: "string" },
   className: { required: false, control: "text", type: "string" },
+  code: { required: false, control: "text", type: "string" },
   color: {
     required: false,
     control: "color",
