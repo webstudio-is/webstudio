@@ -31,7 +31,7 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
-import { BaseCodeEditor, CodeEditor, EditorDialog } from "./code-editor";
+import { BaseCodeEditor, EditorDialog } from "./base-code-editor";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -402,7 +402,7 @@ export const ExpressionEditor = ({
 
   return (
     <div className={wrapperStyle.toString()}>
-      <CodeEditor
+      <BaseCodeEditor
         extensions={extensions}
         invalid={color === "error"}
         readOnly={readOnly}

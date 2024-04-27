@@ -1,10 +1,10 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { HtmlEditor as HtmlEditorComponent } from "./html-editor";
+import { CodeEditor as CodeEditorComponent } from "./code-editor";
 
 export default {
   title: "Builder/Html Editor",
-  component: HtmlEditorComponent,
+  component: CodeEditorComponent,
 } satisfies Meta;
 
 const initialHtml = `
@@ -18,9 +18,9 @@ const initialHtml = `
 
 const HtmlStory = () => {
   const [value, setValue] = useState(initialHtml);
-  return <HtmlEditorComponent value={value} onChange={setValue} />;
+  return <CodeEditorComponent value={value} onChange={setValue} />;
 };
 
-export const HtmlEditor: StoryObj = {
+export const CodeEditor: StoryObj = {
   render: () => <HtmlStory />,
 };

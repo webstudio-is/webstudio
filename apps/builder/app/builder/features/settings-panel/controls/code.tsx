@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { HtmlEditor } from "~/builder/shared/html-editor";
+import { CodeEditor } from "~/builder/shared/code-editor";
 import {
   BindingControl,
   BindingPopover,
@@ -84,18 +84,21 @@ export const CodeControl = ({
   deletable,
   onChange,
   onDelete,
-}: ControlProps<"code">) => {
+}: ControlProps<"code"> | ControlProps<"codetext">) => {
   const [error, setError] = useState<Error>();
   const metaOverride = {
     ...meta,
     control: "text" as const,
   };
+  const lang = meta.control === "code" ? "html" : undefined;
   const localValue = useLocalValue(String(computedValue ?? ""), (value) => {
-    const error = validateHtml(value);
-    setError(error);
+    if (lang === "html") {
+      const error = validateHtml(value);
+      setError(error);
 
-    if (error) {
-      return;
+      if (error) {
+        return;
+      }
     }
 
     if (prop?.type === "expression") {
@@ -142,10 +145,11 @@ export const CodeControl = ({
       onDelete={onDelete}
     >
       <BindingControl>
-        <HtmlEditor
+        <CodeEditor
+          lang={lang}
           title={
             <Flex gap="1" align="center">
-              <Text variant="labelsTitleCase">HTML Code Editor</Text>
+              <Text variant="labelsTitleCase">Code Editor</Text>
               {errorInfo}
             </Flex>
           }

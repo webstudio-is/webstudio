@@ -45,6 +45,10 @@ export const renderControl = ({
     return <CodeControl key={key} meta={meta} prop={prop} {...rest} />;
   }
 
+  if (meta.control === "codetext") {
+    return <CodeControl key={key} meta={meta} prop={prop} {...rest} />;
+  }
+
   if (meta.control === "color") {
     return (
       <TextControl
