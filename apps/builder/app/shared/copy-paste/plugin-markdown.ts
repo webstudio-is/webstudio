@@ -113,8 +113,11 @@ const toInstanceData = (
       });
     }
     if (child.type === "inlineCode") {
-      instance.children.push({
-        type: "text",
+      props.push({
+        id: generateId(),
+        type: "string",
+        name: "code",
+        instanceId,
         value: child.value,
       });
       const styleSourceId = generateId();
@@ -128,8 +131,11 @@ const toInstanceData = (
       });
     }
     if (child.type === "code") {
-      instance.children.push({
-        type: "text",
+      props.push({
+        id: generateId(),
+        type: "string",
+        name: "code",
+        instanceId,
         value: child.value,
       });
       if (child.lang) {

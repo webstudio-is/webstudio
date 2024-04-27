@@ -37,33 +37,33 @@ const Page = ({}: { system: any }) => {
             <Text
               data-ws-id="FD1zWHCq5TVsTSBKWbtV3"
               data-ws-component="Text"
-              className="c1cymde0"
+              className="cwnydv4"
             >
               {"<url>"}
             </Text>
             <Box
               data-ws-id="eSgI63Vtow0HYHYWUXn3U"
               data-ws-component="Box"
-              className="c1mhrh2o c1b095zn"
+              className="cnvcd8b cxb89wn"
             >
               <Text
                 data-ws-id="YT4punX-Bdhl0Dw8l6kum"
                 data-ws-component="Text"
-                className="c15pkvqb"
+                className="c1s70es7"
               >
                 {"<loc>"}
               </Text>
               <Text
                 data-ws-id="85KbQ_KRH5fQsA0pDR9G9"
                 data-ws-component="Text"
-                className="cjqm8t8"
+                className="c5fu8k4"
               >
                 {origin + url?.path}
               </Text>
               <Text
                 data-ws-id="qdI0BY3e4j8USqw370Qrs"
                 data-ws-component="Text"
-                className="c15pkvqb"
+                className="c1s70es7"
               >
                 {"</loc>"}
               </Text>
@@ -71,26 +71,26 @@ const Page = ({}: { system: any }) => {
             <Box
               data-ws-id="rRH1A7WUjY-_pfauYCmKU"
               data-ws-component="Box"
-              className="c1mhrh2o c1b095zn"
+              className="cnvcd8b cxb89wn"
             >
               <Text
                 data-ws-id="6NZJcVjrr4WHS6eqNG1SF"
                 data-ws-component="Text"
-                className="c12yyvw2"
+                className="cgkkof0"
               >
                 {"<lastmod>"}
               </Text>
               <Text
                 data-ws-id="i0u7W1XIPYHdwcD4bmm4Z"
                 data-ws-component="Text"
-                className="cjqm8t8"
+                className="c5fu8k4"
               >
                 {url?.lastModified}
               </Text>
               <Text
                 data-ws-id="NR5D_PEUVi_P7Agy2g1Zr"
                 data-ws-component="Text"
-                className="c12yyvw2"
+                className="cgkkof0"
               >
                 {"</lastmod>"}
               </Text>
@@ -98,7 +98,7 @@ const Page = ({}: { system: any }) => {
             <Text
               data-ws-id="Q1mx0RlJAIT37qXjHlt95"
               data-ws-component="Text"
-              className="c1cymde0"
+              className="cwnydv4"
             >
               {"</url>"}
             </Text>

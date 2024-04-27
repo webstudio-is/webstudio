@@ -1,18 +1,20 @@
 import {
   createRegularStyleSheet,
-  createAtomicStyleSheet,
+  generateAtomic,
+  type NestingRule,
   type TransformValue,
 } from "@webstudio-is/css-engine";
 import type {
   Assets,
   Breakpoints,
+  Instance,
   StyleSourceSelections,
   Styles,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../props";
 import { addGlobalRules } from "./global-rules";
-import { getPresetStyleRules, getStyleRules } from "./style-rules";
+import { getPresetStyleRules } from "./style-rules";
 
 export type CssConfig = {
   assets: Assets;
@@ -59,17 +61,12 @@ export const generateCss = ({
   assetBaseUrl,
   atomic,
 }: CssConfig) => {
-  const classesMap = new Map<string, Array<string>>();
+  const sheet = createRegularStyleSheet({ name: "ssr" });
 
-  const regularSheet = createRegularStyleSheet({ name: "ssr-regular" });
-  const atomicSheet = atomic
-    ? createAtomicStyleSheet({ name: "ssr-atomic" })
-    : undefined;
-
-  addGlobalRules(regularSheet, { assets, assetBaseUrl });
+  addGlobalRules(sheet, { assets, assetBaseUrl });
 
   for (const breakpoint of breakpoints.values()) {
-    (atomicSheet ?? regularSheet).addMediaRule(breakpoint.id, breakpoint);
+    sheet.addMediaRule(breakpoint.id, breakpoint);
   }
 
   for (const [component, meta] of componentMetas) {
@@ -79,39 +76,17 @@ export const generateCss = ({
     }
     const rules = getPresetStyleRules(component, presetStyle);
     for (const [selector, style] of rules) {
-      regularSheet.addStyleRule({ style }, selector);
+      sheet.addStyleRule({ style }, selector);
     }
   }
-
-  const styleRules = getStyleRules(styles, styleSourceSelections);
 
   const imageValueTransformer = createImageValueTransformer(assets, {
     assetBaseUrl,
   });
-  regularSheet.setTransformer(imageValueTransformer);
-  atomicSheet?.setTransformer(imageValueTransformer);
-
-  if (atomicSheet) {
-    for (const { breakpointId, instanceId, state, style } of styleRules) {
-      const { classes } = atomicSheet.addStyleRule(
-        { breakpoint: breakpointId, style },
-        state,
-        imageValueTransformer
-      );
-      classesMap.set(instanceId, [
-        ...(classesMap.get(instanceId) ?? []),
-        ...classes,
-      ]);
-    }
-
-    return {
-      cssText: regularSheet.cssText + (atomicSheet?.cssText ?? ""),
-      classesMap,
-    };
-  }
+  sheet.setTransformer(imageValueTransformer);
 
   for (const styleDecl of styles.values()) {
-    const rule = regularSheet.addMixinRule(styleDecl.styleSourceId);
+    const rule = sheet.addMixinRule(styleDecl.styleSourceId);
     rule.setDeclaration({
       breakpoint: styleDecl.breakpointId,
       selector: styleDecl.state ?? "",
@@ -120,15 +95,21 @@ export const generateCss = ({
     });
   }
 
+  const instanceByRule = new Map<NestingRule, Instance["id"]>();
   for (const { instanceId, values } of styleSourceSelections.values()) {
-    const rule = regularSheet.addNestingRule(
-      `[${idAttribute}="${instanceId}"]`
-    );
+    const rule = sheet.addNestingRule(`[${idAttribute}="${instanceId}"]`);
     rule.applyMixins(values);
+    instanceByRule.set(rule, instanceId);
   }
 
+  if (atomic) {
+    return generateAtomic(sheet, {
+      getKey: (rule) => instanceByRule.get(rule) ?? "",
+      transformValue: imageValueTransformer,
+    });
+  }
   return {
-    cssText: regularSheet.cssText,
-    classesMap,
+    cssText: sheet.cssText,
+    classesMap: new Map<string, Array<string>>(),
   };
 };
