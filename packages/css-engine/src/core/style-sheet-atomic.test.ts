@@ -1,58 +1,53 @@
-import { describe, beforeEach, test, expect } from "@jest/globals";
-import type { StyleSheetAtomic } from "./style-sheet-atomic";
-import { createAtomicStyleSheet } from "./create-style-sheet";
+import { describe, test, expect } from "@jest/globals";
+import { createRegularStyleSheet } from "./create-style-sheet";
 
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId0 = "0";
 
 describe("Style Sheet Atomic", () => {
-  let sheet: StyleSheetAtomic;
-
-  const reset = () => {
-    sheet = createAtomicStyleSheet();
-  };
-
-  beforeEach(reset);
-
-  test("use default media rule when there is no matching one registered", () => {
-    sheet.addStyleRule({
-      style: { display: { type: "keyword", value: "block" } },
+  test("use matching media rule", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("x");
+    const rule = sheet.addNestingRule("");
+    rule.setDeclaration({
       breakpoint: "x",
+      selector: "",
+      property: "display",
+      value: { type: "keyword", value: "block" },
     });
-    expect(sheet.cssText).toMatchInlineSnapshot(`
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+      .toMatchInlineSnapshot(`
 "@media all {
-  .c19k25ej {
+  .ccqp4le {
     display: block
   }
-}"
-`);
-    sheet.addStyleRule({
-      style: { color: { type: "keyword", value: "red" } },
-      breakpoint: "x",
-    });
-    expect(sheet.cssText).toMatchInlineSnapshot(`
-"@media all {
-  .c19k25ej {
-    display: block
-  }
-  .cs9ip66 {
+  .cen0ymu {
     color: red
   }
 }"
 `);
   });
 
-  test("use state suffix", () => {
-    sheet.addStyleRule(
-      {
-        style: { display: { type: "keyword", value: "block" } },
-        breakpoint: "x",
-      },
-      ":hover"
-    );
-    expect(sheet.cssText).toMatchInlineSnapshot(`
+  test("use nested selector", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("x");
+    const rule = sheet.addNestingRule("");
+    rule.setDeclaration({
+      breakpoint: "x",
+      selector: ":hover",
+      property: "display",
+      value: { type: "keyword", value: "block" },
+    });
+    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+      .toMatchInlineSnapshot(`
 "@media all {
-  .cmyojan:hover {
+  .c143pt9k:hover {
     display: block
   }
 }"
@@ -60,71 +55,122 @@ describe("Style Sheet Atomic", () => {
   });
 
   test("added classes", () => {
-    const { classes } = sheet.addStyleRule({
-      style: { display: { type: "keyword", value: "block" } },
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("x");
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
       breakpoint: "x",
+      selector: "",
+      property: "display",
+      value: { type: "keyword", value: "block" },
     });
-    expect(classes).toEqual(["c19k25ej"]);
+    const instances = new Map([[rule, "instanceId"]]);
+    const { classesMap } = sheet.generateAtomic({
+      getKey: (rule) => instances.get(rule) ?? "",
+    });
+    expect(classesMap.get("instanceId")).toEqual(["ccqp4le"]);
   });
 
   test("rule with multiple properties", () => {
+    const sheet = createRegularStyleSheet();
     sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule({
-      style: {
-        display: { type: "keyword", value: "block" },
-        color: { type: "keyword", value: "red" },
-      },
-      breakpoint: "0",
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: mediaId0,
+      selector: "",
+      property: "display",
+      value: { type: "keyword", value: "block" },
     });
-    expect(sheet.cssText).toMatchInlineSnapshot(`
+    rule.setDeclaration({
+      breakpoint: mediaId0,
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+      .toMatchInlineSnapshot(`
 "@media all and (min-width: 0px) {
-  .cusz56a {
+  .c1qg54vh {
     display: block
   }
-  .cswg5vq {
+  .ckgcokb {
     color: red
   }
 }"
 `);
   });
 
-  test("add style rule to an existing media rule", () => {
-    sheet.addMediaRule(mediaId0, mediaRuleOptions0);
-    sheet.addStyleRule({
-      style: {
-        display: { type: "keyword", value: "block" },
-        color: { type: "keyword", value: "red" },
-      },
-      breakpoint: "0",
+  test("share atomic rules", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("x");
+    const rule1 = sheet.addNestingRule("1");
+    rule1.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "display",
+      value: { type: "keyword", value: "block" },
     });
-    expect(sheet.cssText).toMatchInlineSnapshot(`
-"@media all and (min-width: 0px) {
-  .cusz56a {
+    rule1.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "red" },
+    });
+    const rule2 = sheet.addNestingRule("2");
+    rule2.setDeclaration({
+      breakpoint: "x",
+      selector: "",
+      property: "display",
+      value: { type: "keyword", value: "block" },
+    });
+    const instances = new Map([
+      [rule1, "1"],
+      [rule2, "2"],
+    ]);
+    const { cssText, classesMap } = sheet.generateAtomic({
+      getKey: (rule) => instances.get(rule) ?? "",
+    });
+    expect(cssText).toMatchInlineSnapshot(`
+"@media all {
+  .ccqp4le {
     display: block
   }
-  .cswg5vq {
+  .cen0ymu {
     color: red
   }
 }"
 `);
-    sheet.addStyleRule({
-      style: {
-        // It should prevent duplicates
-        display: { type: "keyword", value: "block" },
-        color: { type: "keyword", value: "green" },
-      },
-      breakpoint: "0",
+    expect(classesMap.get("1")).toEqual(["ccqp4le", "cen0ymu"]);
+    expect(classesMap.get("2")).toEqual(["ccqp4le"]);
+  });
+
+  test("distinct similar declarations from different breakpoints", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("a");
+    sheet.addMediaRule("b");
+    const rule1 = sheet.addNestingRule("1");
+    rule1.setDeclaration({
+      breakpoint: "a",
+      selector: "",
+      property: "display",
+      value: { type: "keyword", value: "block" },
     });
-    expect(sheet.cssText).toMatchInlineSnapshot(`
-"@media all and (min-width: 0px) {
-  .cusz56a {
+    rule1.setDeclaration({
+      breakpoint: "b",
+      selector: "",
+      property: "display",
+      value: { type: "keyword", value: "block" },
+    });
+    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+      .toMatchInlineSnapshot(`
+"@media all {
+  .cumb2su {
     display: block
   }
-  .cswg5vq {
-    color: red
-  }
-  .c8jb4vi {
-    color: green
+}
+@media all {
+  .c1u3btle {
+    display: block
   }
 }"
 `);

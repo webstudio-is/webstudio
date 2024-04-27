@@ -1,12 +1,9 @@
-import type {
-  StyleSheetAtomic,
-  StyleSheetRegular,
-} from "@webstudio-is/css-engine";
+import type { StyleSheetRegular } from "@webstudio-is/css-engine";
 import type { Assets, FontAsset } from "@webstudio-is/sdk";
 import { getFontFaces } from "@webstudio-is/fonts";
 
 export const addGlobalRules = (
-  sheet: StyleSheetRegular | StyleSheetAtomic,
+  sheet: StyleSheetRegular,
   { assets, assetBaseUrl }: { assets: Assets; assetBaseUrl: string }
 ) => {
   // @todo we need to figure out all global resets while keeping
