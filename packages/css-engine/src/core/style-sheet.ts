@@ -22,7 +22,7 @@ export class StyleSheet {
   #mediaRules: Map<string, MediaRule> = new Map();
   #plainRules: Map<string, PlaintextRule> = new Map();
   #mixinRules: Map<string, MixinRule> = new Map();
-  #nestingRules: Map<string, NestingRule> = new Map();
+  nestingRules: Map<string, NestingRule> = new Map();
   #fontFaceRules: Array<FontFaceRule> = [];
   #transformValue?: TransformValue;
   #isDirty = false;
@@ -73,10 +73,10 @@ export class StyleSheet {
     return rule;
   }
   addNestingRule(selector: string) {
-    let rule = this.#nestingRules.get(selector);
+    let rule = this.nestingRules.get(selector);
     if (rule === undefined) {
       rule = new NestingRule(selector, this.#mixinRules);
-      this.#nestingRules.set(selector, rule);
+      this.nestingRules.set(selector, rule);
       this.#isDirty = true;
     }
     return rule;
@@ -88,7 +88,13 @@ export class StyleSheet {
   markAsDirty() {
     this.#isDirty = true;
   }
-  get cssText() {
+  generateWith({
+    nestingRules,
+    transformValue,
+  }: {
+    nestingRules: NestingRule[];
+    transformValue?: TransformValue;
+  }) {
     if (this.#isDirty === false) {
       return this.#cssText;
     }
@@ -105,8 +111,8 @@ export class StyleSheet {
     );
     for (const mediaRule of sortedMediaRules) {
       const cssText = mediaRule.generateRule({
-        nestingRules: Array.from(this.#nestingRules.values()),
-        transformValue: this.#transformValue,
+        nestingRules,
+        transformValue,
       });
       if (cssText !== "") {
         css.push(cssText);
@@ -118,6 +124,12 @@ export class StyleSheet {
     }
     this.#cssText = css.join("\n");
     return this.#cssText;
+  }
+  get cssText() {
+    return this.generateWith({
+      nestingRules: Array.from(this.nestingRules.values()),
+      transformValue: this.#transformValue,
+    });
   }
   clear() {
     this.#mediaRules.clear();

@@ -50,24 +50,24 @@ const Page = ({}: { system: any }) => {
     <Body
       data-ws-id="On9cvWCxr5rdZtY9O1Bv0"
       data-ws-component="Body"
-      className="c1wfdiy8 cg4dwmz c1psdgn0 ciwrswx"
+      className="c198lioj cr65sqc c1ucc9vx c1dhla2v"
     >
       <Heading
         data-ws-id="nVMWvMsaLCcb0o1wuNQgg"
         data-ws-component="Heading"
-        className="cr3bcad"
+        className="c1knjlal"
       >
         {"DO NOT TOUCH THIS PROJECT, IT'S USED FOR FIXTURES"}
       </Heading>
       <Box
         data-ws-id="f0kF-WmL7DQg7MSyRvqY1"
         data-ws-component="Box"
-        className="ct8bqew c18lita3 c1ac63p"
+        className="c13v7j50 c1ubj2iz clu0378"
       >
         <Box
           data-ws-id="5XDbqPrZDeCwq4YJ3CHsc"
           data-ws-component="Box"
-          className="cdojbwh c4wr6vh cn27x24 cl3i1h5"
+          className="c15heboa c1njwnl4 cxq4cho cn5joda"
         >
           <Heading
             data-ws-id="oLXYe1UQiVMhVnZGvJSMr"
@@ -109,7 +109,7 @@ const Page = ({}: { system: any }) => {
             data-ws-id="9I4GRU1sev48hREkQcKQ-"
             data-ws-component="Link"
             href={"/_route_with_symbols_"}
-            className="cnpb7qg"
+            className="ch2exr5"
           >
             {"Symbols in path"}
           </Link>
@@ -117,7 +117,7 @@ const Page = ({}: { system: any }) => {
             data-ws-id="81ejLVXyFEV1SxiJrWhyw"
             data-ws-component="Link"
             href={"/heading-with-id#my-heading"}
-            className="cnpb7qg"
+            className="ch2exr5"
           >
             {"Link to instance"}
           </Link>
@@ -125,7 +125,7 @@ const Page = ({}: { system: any }) => {
         <Box
           data-ws-id="qPnkiFGDj8dITWb1kmpGl"
           data-ws-component="Box"
-          className="cdojbwh c4wr6vh cn27x24 cl3i1h5"
+          className="c15heboa c1njwnl4 cxq4cho cn5joda"
         >
           <Image
             data-ws-id="pX1ovPI7NdC0HRjkw6Kpw"
@@ -133,7 +133,7 @@ const Page = ({}: { system: any }) => {
             src={
               "/assets/_937084ed-a798-49fe-8664-df93a2af605e_uiBk3o6UWdqolyakMvQJ9.jpeg"
             }
-            className="c1arp7pb"
+            className="czgliev"
           />
         </Box>
       </Box>

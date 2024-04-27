@@ -919,4 +919,24 @@ describe("Style Sheet Regular", () => {
 }"
 `);
   });
+
+  test("avoid rendering empty media queries", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("base", {});
+    sheet.addMediaRule("small", { minWidth: 768 });
+    const rule = sheet.addNestingRule(".instance");
+    rule.setDeclaration({
+      breakpoint: "base",
+      selector: "",
+      property: "color",
+      value: { type: "keyword", value: "blue" },
+    });
+    expect(sheet.cssText).toMatchInlineSnapshot(`
+"@media all {
+  .instance {
+    color: blue
+  }
+}"
+`);
+  });
 });

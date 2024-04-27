@@ -57,8 +57,9 @@ test("generate css for one instance with two tokens", () => {
 }"
 `);
   expect(atomicCssText).toMatchInlineSnapshot(`
-"html {margin: 0; display: grid; min-height: 100%}@media all {
-  .c10nxgm2 {
+"html {margin: 0; display: grid; min-height: 100%}
+@media all {
+  .cawkhls {
     color: red
   }
 }"
@@ -66,7 +67,7 @@ test("generate css for one instance with two tokens", () => {
   expect(classesMap).toMatchInlineSnapshot(`
 Map {
   "box" => [
-    "c10nxgm2",
+    "cawkhls",
   ],
 }
 `);
