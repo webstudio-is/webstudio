@@ -15,7 +15,7 @@ const Placeholder = ({
 }) => {
   return (
     <code {...rest} style={{ padding: 20 }} ref={innerRef}>
-      Open the "Settings" panel to edit the code.
+      {`Open the "Settings" panel to edit the code.`}
     </code>
   );
 };
