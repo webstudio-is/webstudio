@@ -1,5 +1,6 @@
 import {
   createRegularStyleSheet,
+  generateAtomic,
   type NestingRule,
   type TransformValue,
 } from "@webstudio-is/css-engine";
@@ -102,8 +103,9 @@ export const generateCss = ({
   }
 
   if (atomic) {
-    return sheet.generateAtomic({
+    return generateAtomic(sheet, {
       getKey: (rule) => instanceByRule.get(rule) ?? "",
+      transformValue: imageValueTransformer,
     });
   }
   return {

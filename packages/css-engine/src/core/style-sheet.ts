@@ -1,4 +1,3 @@
-import hash from "@emotion/hash";
 import type { Style } from "../schema";
 import {
   FontFaceRule,
@@ -11,7 +10,7 @@ import {
 } from "./rules";
 import { compareMedia } from "./compare-media";
 import { StyleElement } from "./style-element";
-import { toValue, type TransformValue } from "./to-value";
+import type { TransformValue } from "./to-value";
 
 export type CssRule = {
   style: Style;
@@ -23,7 +22,7 @@ export class StyleSheet {
   #mediaRules: Map<string, MediaRule> = new Map();
   #plainRules: Map<string, PlaintextRule> = new Map();
   #mixinRules: Map<string, MixinRule> = new Map();
-  #nestingRules: Map<string, NestingRule> = new Map();
+  nestingRules: Map<string, NestingRule> = new Map();
   #fontFaceRules: Array<FontFaceRule> = [];
   #transformValue?: TransformValue;
   #isDirty = false;
@@ -74,10 +73,10 @@ export class StyleSheet {
     return rule;
   }
   addNestingRule(selector: string) {
-    let rule = this.#nestingRules.get(selector);
+    let rule = this.nestingRules.get(selector);
     if (rule === undefined) {
       rule = new NestingRule(selector, this.#mixinRules);
-      this.#nestingRules.set(selector, rule);
+      this.nestingRules.set(selector, rule);
       this.#isDirty = true;
     }
     return rule;
@@ -89,7 +88,13 @@ export class StyleSheet {
   markAsDirty() {
     this.#isDirty = true;
   }
-  #generateWith(nestingRules: NestingRule[]) {
+  generateWith({
+    nestingRules,
+    transformValue,
+  }: {
+    nestingRules: NestingRule[];
+    transformValue?: TransformValue;
+  }) {
     if (this.#isDirty === false) {
       return this.#cssText;
     }
@@ -107,7 +112,7 @@ export class StyleSheet {
     for (const mediaRule of sortedMediaRules) {
       const cssText = mediaRule.generateRule({
         nestingRules,
-        transformValue: this.#transformValue,
+        transformValue,
       });
       if (cssText !== "") {
         css.push(cssText);
@@ -120,38 +125,11 @@ export class StyleSheet {
     this.#cssText = css.join("\n");
     return this.#cssText;
   }
-  generateAtomic(options: { getKey: (rule: NestingRule) => string }) {
-    const atomicRules = new Map<string, NestingRule>();
-    const classesMap = new Map<string, string[]>();
-    for (const rule of this.#nestingRules.values()) {
-      const groupKey = options.getKey(rule);
-      const classList: string[] = [];
-      // convert each declaration into separate rule
-      for (const declaration of rule.getDeclarations()) {
-        const atomicHash = hash(
-          declaration.breakpoint +
-            declaration.selector +
-            declaration.property +
-            toValue(declaration.value, this.#transformValue)
-        );
-        // "c" makes sure hash always starts with a letter.
-        const className = `c${atomicHash}`;
-        // reuse atomic rules
-        let atomicRule = atomicRules.get(atomicHash);
-        if (atomicRule === undefined) {
-          atomicRule = new NestingRule(`.${className}`, this.#mixinRules);
-          atomicRule.setDeclaration(declaration);
-          atomicRules.set(atomicHash, atomicRule);
-        }
-        classList.push(className);
-      }
-      classesMap.set(groupKey, classList);
-    }
-    const cssText = this.#generateWith(Array.from(atomicRules.values()));
-    return { cssText, classesMap };
-  }
   get cssText() {
-    return this.#generateWith(Array.from(this.#nestingRules.values()));
+    return this.generateWith({
+      nestingRules: Array.from(this.nestingRules.values()),
+      transformValue: this.#transformValue,
+    });
   }
   clear() {
     this.#mediaRules.clear();

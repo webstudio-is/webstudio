@@ -1,5 +1,6 @@
 import { describe, test, expect } from "@jest/globals";
 import { createRegularStyleSheet } from "./create-style-sheet";
+import { generateAtomic } from "./atomic";
 
 const mediaRuleOptions0 = { minWidth: 0 } as const;
 const mediaId0 = "0";
@@ -21,7 +22,7 @@ describe("Style Sheet Atomic", () => {
       property: "color",
       value: { type: "keyword", value: "red" },
     });
-    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+    expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
       .toMatchInlineSnapshot(`
 "@media all {
   .ccqp4le {
@@ -44,7 +45,7 @@ describe("Style Sheet Atomic", () => {
       property: "display",
       value: { type: "keyword", value: "block" },
     });
-    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+    expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
       .toMatchInlineSnapshot(`
 "@media all {
   .c143pt9k:hover {
@@ -65,7 +66,7 @@ describe("Style Sheet Atomic", () => {
       value: { type: "keyword", value: "block" },
     });
     const instances = new Map([[rule, "instanceId"]]);
-    const { classesMap } = sheet.generateAtomic({
+    const { classesMap } = generateAtomic(sheet, {
       getKey: (rule) => instances.get(rule) ?? "",
     });
     expect(classesMap.get("instanceId")).toEqual(["ccqp4le"]);
@@ -87,7 +88,7 @@ describe("Style Sheet Atomic", () => {
       property: "color",
       value: { type: "keyword", value: "red" },
     });
-    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+    expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
       .toMatchInlineSnapshot(`
 "@media all and (min-width: 0px) {
   .c1qg54vh {
@@ -127,7 +128,7 @@ describe("Style Sheet Atomic", () => {
       [rule1, "1"],
       [rule2, "2"],
     ]);
-    const { cssText, classesMap } = sheet.generateAtomic({
+    const { cssText, classesMap } = generateAtomic(sheet, {
       getKey: (rule) => instances.get(rule) ?? "",
     });
     expect(cssText).toMatchInlineSnapshot(`
@@ -161,7 +162,7 @@ describe("Style Sheet Atomic", () => {
       property: "display",
       value: { type: "keyword", value: "block" },
     });
-    expect(sheet.generateAtomic({ getKey: () => "" }).cssText)
+    expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
       .toMatchInlineSnapshot(`
 "@media all {
   .cumb2su {
