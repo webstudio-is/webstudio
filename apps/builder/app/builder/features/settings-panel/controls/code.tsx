@@ -70,8 +70,17 @@ const validateHtml = (value: string): Error | undefined => {
   const div = document.createElement("div");
   div.innerHTML = value;
   const expected = div.innerHTML;
-  // We don't need to show error for unnecessary whitespace.
-  if (value.replace(/\s/g, "") !== expected.replace(/\s/g, "")) {
+  const clean = (value: string) => {
+    return (
+      value
+        // We don't need to show error for unnecessary whitespace.
+        .replace(/\s/g, "")
+        // innerHTML will convert all boolean attributes to attr="" and this will always result in mismatch
+        // lets ignore those cases
+        .replace('=""', "")
+    );
+  };
+  if (clean(value) !== clean(expected)) {
     return { message: "Invalid HTML detected", value, expected };
   }
 };
