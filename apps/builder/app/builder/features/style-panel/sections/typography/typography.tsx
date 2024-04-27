@@ -4,7 +4,6 @@ import {
   EnhancedTooltip,
   theme,
   IconButton,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import { toValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "../shared/section";
@@ -36,8 +35,8 @@ import {
 } from "@webstudio-is/icons";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { type StyleInfo } from "../../shared/style-info";
-import { CollapsibleSection, getDots } from "../../shared/collapsible-section";
+import { getStyleSourceColor, type StyleInfo } from "../../shared/style-info";
+import { CollapsibleSection } from "../../shared/collapsible-section";
 import { forwardRef, type ComponentProps } from "react";
 
 export const properties = [
@@ -317,25 +316,31 @@ const AdvancedOptionsButton = forwardRef<
   ComponentProps<typeof IconButton> & {
     currentStyle: StyleInfo;
     properties: StyleProperty[];
+    onReset: () => void;
     /** https://www.radix-ui.com/docs/primitives/components/collapsible#trigger */
     "data-state"?: "open" | "closed";
   }
->(({ currentStyle, properties, ...rest }, ref) => {
-  const dots = getDots(currentStyle, properties);
-  const finalDots = rest["data-state"] === "open" ? [] : dots ?? [];
-  const dotColors = {
-    local: rawTheme.colors.foregroundLocalFlexUi,
-    overwritten: rawTheme.colors.foregroundOverwrittenFlexUi,
-    remote: rawTheme.colors.foregroundRemoteFlexUi,
-  };
-
-  const colors = finalDots.map((dot) => dotColors[dot]);
-
+>(({ currentStyle, properties, onReset, onClick, ...rest }, ref) => {
+  const styleSourceColor = getStyleSourceColor({
+    properties,
+    currentStyle,
+  });
   return (
     <Flex>
       <EnhancedTooltip content="More typography options">
-        <IconButton {...rest} ref={ref}>
-          <EllipsesIcon colors={colors} />
+        <IconButton
+          {...rest}
+          onClick={(event) => {
+            if (event.altKey) {
+              onReset();
+              return;
+            }
+            onClick?.(event);
+          }}
+          variant={styleSourceColor}
+          ref={ref}
+        >
+          <EllipsesIcon />
         </IconButton>
       </EnhancedTooltip>
     </Flex>
@@ -344,13 +349,14 @@ const AdvancedOptionsButton = forwardRef<
 AdvancedOptionsButton.displayName = "AdvancedOptionsButton";
 
 export const TypographySectionAdvancedPopover = (props: SectionProps) => {
-  const { deleteProperty, setProperty, currentStyle } = props;
+  const { deleteProperty, setProperty, createBatchUpdate, currentStyle } =
+    props;
   const properties = {
     whiteSpace: "whiteSpace",
     direction: "direction",
     hyphens: "hyphens",
     textOverflow: "textOverflow",
-  } as const;
+  } as const; // in Record<StyleProperty, StyleProperty>//{ [key: StyleProperty]: StyleProperty }  { [key in StyleProperty]: string };
 
   return (
     <FloatingPanel
@@ -473,6 +479,13 @@ export const TypographySectionAdvancedPopover = (props: SectionProps) => {
       <AdvancedOptionsButton
         currentStyle={currentStyle}
         properties={Object.values(properties)}
+        onReset={() => {
+          const batch = createBatchUpdate();
+          Object.values(properties).forEach((property) => {
+            batch.deleteProperty(property);
+          });
+          batch.publish();
+        }}
       />
     </FloatingPanel>
   );
