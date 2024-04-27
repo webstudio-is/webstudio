@@ -1,12 +1,18 @@
 import type { StyleProperty } from "@webstudio-is/css-engine";
-import { Grid, Separator, styled } from "@webstudio-is/design-system";
+import {
+  Flex,
+  Grid,
+  IconButton,
+  Separator,
+  styled,
+} from "@webstudio-is/design-system";
 import { styleConfigByName } from "../../shared/configs";
 import type { SectionProps } from "../shared/section";
 import { PropertyName } from "../../shared/property-name";
 import {
+  PositionControl,
   SelectControl,
   TextControl,
-  ObjectPositionControl,
   type ControlProps,
 } from "../../controls";
 import {
@@ -14,10 +20,13 @@ import {
   EyeconClosedIcon,
   ScrollIcon,
   AutoScrollIcon,
+  EllipsesIcon,
 } from "@webstudio-is/icons";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { theme } from "@webstudio-is/design-system";
 import { ToggleGroupControl } from "../../controls/toggle-group/toggle-group-control";
+import { getStyleSourceColor } from "../../shared/style-info";
+import { FloatingPanel } from "~/builder/shared/floating-panel";
 
 const SizeProperty = ({
   property,
@@ -41,6 +50,50 @@ const SizeProperty = ({
         deleteProperty={deleteProperty}
       />
     </Grid>
+  );
+};
+
+const ObjectPosition = ({
+  property,
+  currentStyle,
+  setProperty,
+  deleteProperty,
+  isAdvanced,
+}: ControlProps) => {
+  const styleSourceColor = getStyleSourceColor({
+    properties: [property],
+    currentStyle,
+  });
+
+  return (
+    <Flex justify="end">
+      <FloatingPanel
+        title="Object Position"
+        content={
+          <Flex css={{ px: theme.spacing[9], py: theme.spacing[5] }}>
+            <PositionControl
+              property={property}
+              currentStyle={currentStyle}
+              setProperty={setProperty}
+              deleteProperty={deleteProperty}
+              isAdvanced={isAdvanced}
+            />
+          </Flex>
+        }
+      >
+        <IconButton
+          variant={styleSourceColor}
+          onClick={(event) => {
+            if (event.altKey) {
+              event.preventDefault();
+              deleteProperty(property);
+            }
+          }}
+        >
+          <EllipsesIcon />
+        </IconButton>
+      </FloatingPanel>
+    </Flex>
   );
 };
 
@@ -192,7 +245,7 @@ export const Section = ({
           style={currentStyle}
           onReset={() => deleteProperty("objectPosition")}
         />
-        <ObjectPositionControl
+        <ObjectPosition
           property="objectPosition"
           currentStyle={currentStyle}
           setProperty={setProperty}

@@ -39,7 +39,7 @@ import {
   type StyleInfo,
   getStyleSource,
   type StyleValueInfo,
-  getPriorityStyleSource,
+  getStyleSourceColor,
 } from "./style-info";
 import { humanizeString } from "~/shared/string-utils";
 import { getInstanceLabel } from "~/shared/instance-utils";
@@ -369,7 +369,7 @@ type PropertyNameProps = Pick<
   "text" | "color"
 > & {
   style: StyleInfo;
-  properties: StyleProperty[];
+  properties: Array<StyleProperty>;
   label: string | ReactElement;
   title?: string;
   description?: ReactNode;
@@ -389,24 +389,12 @@ export const PropertyName = ({
   disabled,
 }: PropertyNameProps) => {
   const property = properties[0];
-
-  // When there are multiple properties. We need to make a consolidated choice.
-  // As we can't show multiple badges in the property name.
-  // Eg: flex-grow, flex-shrink, flex-basis
-  // All three managed by single section. If flex-basis is set, but if we pick only flex-grow from the three.
-  // The section does't show the badge. So, we need to pick the one which is being used.
-
-  const styleSourcesList = properties.map((property) =>
-    getStyleSource(style[property])
-  );
-
-  const styleSource =
-    onReset === undefined
-      ? "default"
-      : styleSourcesList.length === 0
-      ? "default"
-      : getPriorityStyleSource(styleSourcesList);
-
+  const styleSourceColor = onReset
+    ? getStyleSourceColor({
+        properties,
+        currentStyle: style,
+      })
+    : "default";
   return (
     <Flex align="center">
       <PropertyTooltip
@@ -420,7 +408,11 @@ export const PropertyName = ({
         <Flex shrink gap={1} align="center">
           {typeof label === "string" && property ? (
             <Label
-              color={color && styleSource === "default" ? color : styleSource}
+              color={
+                color && styleSourceColor === "default"
+                  ? color
+                  : styleSourceColor
+              }
               truncate
               disabled={disabled}
               text={text}

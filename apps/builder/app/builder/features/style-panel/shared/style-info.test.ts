@@ -29,10 +29,12 @@ import {
   getInheritedInfo,
   getNextSourceInfo,
   getPreviousSourceInfo,
-  getPriorityStyleSource,
+  __testing__,
   getStyleSource,
   useStyleInfo,
 } from "./style-info";
+
+const { getPriorityStyleSource } = __testing__;
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item]));
