@@ -60,7 +60,7 @@ import {
   loadJSONFile,
   isFileExists,
 } from "./fs-utils";
-import type * as sharedConstants from "~/constants.mjs";
+import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
 
 const limit = pLimit(10);
 
@@ -491,13 +491,11 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating routes and pages";
 
-  const routeTemplatePath = normalize(
-    join(cwd(), "__templates__", "route-template.tsx")
-  );
+  const routeTemplatePath = normalize(join(cwd(), "app/routes/template.tsx"));
 
   const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
 
-  await rm(dirname(routeTemplatePath), { recursive: true });
+  await rm(routeTemplatePath);
 
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
     const scope = createScope([

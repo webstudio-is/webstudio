@@ -61,7 +61,6 @@
     "@webstudio-is/tsconfig": "workspace:*",
     "tsx": "^4.7.2",
     "typescript": "5.4.5",
-    "vite-tsconfig-paths": "^4.3.2",
     "wrangler": "^3.48.0"
   }
 }

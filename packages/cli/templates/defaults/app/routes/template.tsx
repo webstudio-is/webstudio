@@ -18,7 +18,7 @@ import {
   socialImageAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
-} from "../../../__generated__/_index";
+} from "../../../../__generated__/_index";
 import {
   formsProperties,
   loadResources,
@@ -27,10 +27,10 @@ import {
   projectId,
   user,
   projectMeta,
-} from "../../../__generated__/_index.server";
+} from "../../../../__generated__/_index.server";
 
 import css from "../__generated__/index.css?url";
-import { assetBaseUrl, imageBaseUrl, imageLoader } from "~/constants.mjs";
+import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 
 export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);
