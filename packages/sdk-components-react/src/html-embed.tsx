@@ -115,8 +115,8 @@ type ChildProps = {
 const Placeholder = (props: ChildProps) => {
   const { code, innerRef, ...rest } = props;
   return (
-    <div ref={innerRef} {...rest} style={{ padding: "20px" }}>
-      {'Open the "Settings" panel to insert HTML code'}
+    <div ref={innerRef} {...rest} style={{ padding: 20 }}>
+      {'Open the "Settings" panel to insert HTML code.'}
     </div>
   );
 };

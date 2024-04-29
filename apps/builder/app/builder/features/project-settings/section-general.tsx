@@ -19,7 +19,7 @@ import type { ProjectMeta, CompilerSettings } from "@webstudio-is/sdk";
 import { useState } from "react";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
-import { HtmlEditor } from "~/builder/shared/html-editor";
+import { CodeEditor } from "~/builder/shared/code-editor";
 
 const imgStyle = css({
   width: 72,
@@ -112,7 +112,7 @@ export const SectionGeneral = () => {
           Custom code and scripts will be added at the end of the &lt;head&gt;
           tag to every page across the published project.
         </Text>
-        <HtmlEditor value={meta.code ?? ""} onChange={handleSave("code")} />
+        <CodeEditor value={meta.code ?? ""} onChange={handleSave("code")} />
       </Grid>
 
       <Separator />

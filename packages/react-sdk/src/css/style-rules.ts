@@ -19,6 +19,8 @@ type StyleRule = {
 /**
  * Merge styles from different style sources
  * and group by instance and breakpoint
+ *
+ * @deprecated
  */
 export const getStyleRules = (
   styles: Styles,

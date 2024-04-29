@@ -61,7 +61,7 @@ import {
   EditorDialog,
   EditorDialogButton,
   EditorDialogControl,
-} from "~/builder/shared/code-editor";
+} from "~/builder/shared/code-editor-base";
 import { ResourceForm } from "./resource-panel";
 import { generateCurl } from "./curl";
 
