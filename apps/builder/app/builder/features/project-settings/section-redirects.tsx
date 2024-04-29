@@ -89,6 +89,10 @@ export const SectionRedirects = () => {
         If the new path doesn't exist, it's not a valid redirect.
       */
 
+      if (newPath === "/") {
+        return [];
+      }
+
       if (newPath.startsWith("/") === true) {
         if (existingPaths.has(newPath) === false) {
           return ["This path doesn't exist in the project"];

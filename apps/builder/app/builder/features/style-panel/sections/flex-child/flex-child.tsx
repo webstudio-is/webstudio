@@ -16,7 +16,7 @@ import {
   GrowIcon,
   OrderFirstIcon,
   OrderLastIcon,
-  MenuEllipsesIcon,
+  EllipsesIcon,
 } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { CollapsibleSection } from "../../shared/collapsible-section";
@@ -297,7 +297,7 @@ const FlexChildSectionSizingPopover = ({
       }
     >
       <Flex>
-        <MenuEllipsesIcon />
+        <EllipsesIcon />
       </Flex>
     </FloatingPanel>
   );
@@ -399,7 +399,7 @@ const FlexChildSectionOrderPopover = (props: SectionProps) => {
       }
     >
       <Flex>
-        <MenuEllipsesIcon />
+        <EllipsesIcon />
       </Flex>
     </FloatingPanel>
   );

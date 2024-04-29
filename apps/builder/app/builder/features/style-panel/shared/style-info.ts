@@ -862,9 +862,7 @@ export const useStyleInfoByInstanceId = (
   );
 };
 
-export const getPriorityStyleSource = (
-  styleSources: StyleSource[]
-): StyleSource => {
+const getPriorityStyleSource = (styleSources: StyleSource[]): StyleSource => {
   const customOrder: StyleSource[] = [
     "overwritten",
     "local",
@@ -880,6 +878,28 @@ export const getPriorityStyleSource = (
   }
 
   return "default";
+};
+
+export const getStyleSourceColor = ({
+  properties,
+  currentStyle,
+}: {
+  properties: Array<StyleProperty>;
+  currentStyle: StyleInfo;
+}) => {
+  // When there are multiple properties. We need to make a consolidated choice.
+  // As we can't show multiple badges in the property name.
+  // Eg: flex-grow, flex-shrink, flex-basis
+  // All three managed by single section. If flex-basis is set, but if we pick only flex-grow from the three.
+  // The section does't show the badge. So, we need to pick the one which is being used.
+
+  const styleSourcesList = properties.map((property) =>
+    getStyleSource(currentStyle[property])
+  );
+
+  return styleSourcesList.length === 0
+    ? "default"
+    : getPriorityStyleSource(styleSourcesList);
 };
 
 /**
@@ -899,4 +919,8 @@ export const hasInstanceValue = (
       info?.nextSource?.value ??
       info?.previousSource?.value
   );
+};
+
+export const __testing__ = {
+  getPriorityStyleSource,
 };

@@ -50,6 +50,14 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             if (category === "hidden") {
               return false;
             }
+
+            if (
+              isFeatureEnabled("xmlElement") === false &&
+              category === "xml"
+            ) {
+              return false;
+            }
+
             return true;
           })
           .map((category) => (
