@@ -5,7 +5,7 @@ import {
   type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
 
-import { props } from "./__generated__/xml-element.props";
+import { props } from "./__generated__/xml-node.props";
 
 export const meta: WsComponentMeta = {
   category: "xml",
