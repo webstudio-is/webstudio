@@ -22,7 +22,6 @@ export * from "./cross";
 export * from "./magnifying-glass";
 export * from "./cross-small";
 export * from "./cross-large";
-export * from "./ellipses";
 export * from "./text-align-center";
 export * from "./text-align-justify";
 export * from "./text-align-right";

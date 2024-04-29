@@ -5,6 +5,5 @@ export * from "./menu/menu-control";
 export * from "./font-family/font-family-control";
 export * from "./font-weight/font-weight-control";
 export * from "./image/image-control";
-export * from "./object-position/object-position-control";
 export * from "./position/position-control";
 export type { ControlProps } from "./types";
