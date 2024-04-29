@@ -16,9 +16,6 @@
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
-    "paths": {
-      "~/*": ["./app/*"]
-    },
     "customConditions": ["webstudio"],
 
     // Remix takes care of building everything in `remix build`.

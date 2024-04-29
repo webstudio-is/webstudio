@@ -52,7 +52,6 @@
     "typescript": "5.4.5",
     "vite": "^5.2.8",
     "@cloudflare/workers-types": "^4.20240405.0",
-    "vite-tsconfig-paths": "^4.2.1",
     "wrangler": "^3.48.0",
     "miniflare": "^3.20231030.4"
   }

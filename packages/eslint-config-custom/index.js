@@ -74,5 +74,11 @@ module.exports = {
         "unicorn/filename-case": "off",
       },
     },
+    {
+      files: ["**/packages/cli/**"],
+      rules: {
+        "import/no-internal-modules": "off",
+      },
+    },
   ],
 };
