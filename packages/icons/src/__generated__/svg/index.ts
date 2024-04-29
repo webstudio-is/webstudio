@@ -183,4 +183,5 @@ export { Webstudio1cIcon } from "./webstudio-1c";
 export { WebstudioIcon } from "./webstudio";
 export { WrapIcon } from "./wrap";
 export { XIcon } from "./x";
+export { XmlIcon } from "./xml";
 export { Youtube1cIcon } from "./youtube-1c";
