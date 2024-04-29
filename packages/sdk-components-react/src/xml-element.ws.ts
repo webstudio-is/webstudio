@@ -1,4 +1,4 @@
-import { XIcon } from "@webstudio-is/icons/svg";
+import { XmlIcon } from "@webstudio-is/icons/svg";
 
 import {
   type WsComponentMeta,
@@ -11,7 +11,7 @@ export const meta: WsComponentMeta = {
   category: "xml",
   order: 6,
   type: "container",
-  icon: XIcon,
+  icon: XmlIcon,
   stylable: false,
   description: "XmlElement",
 };
