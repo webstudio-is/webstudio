@@ -41,7 +41,7 @@ export const $imageLoader = atom<ImageLoader>(
   createImageLoader({ imageBaseUrl: "" })
 );
 
-export const $publishedUrl = computed(
+export const $publishedOrigin = computed(
   [$project, $publisherHost],
   (project, publisherHost) => `https://${project?.domain}.${publisherHost}`
 );
@@ -69,6 +69,9 @@ export const updateSystem = (page: Page, update: Partial<System>) => {
   const newSystem: System = {
     search: {},
     params: {},
+    url: {
+      origin: "",
+    },
     ...system,
     ...update,
   };

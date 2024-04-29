@@ -52,10 +52,10 @@ const PublishedLink = ({
   publisherHost: string;
   tabIndex: number;
 }) => {
-  const publishedUrl = `https://${domain}.${publisherHost}`;
+  const publishedOrigin = `https://${domain}.${publisherHost}`;
   return (
     <Link
-      href={publishedUrl}
+      href={publishedOrigin}
       target="_blank"
       rel="noreferrer"
       tabIndex={tabIndex}
@@ -63,7 +63,7 @@ const PublishedLink = ({
       underline="hover"
       css={truncate()}
     >
-      {new URL(publishedUrl).host}
+      {new URL(publishedOrigin).host}
     </Link>
   );
 };

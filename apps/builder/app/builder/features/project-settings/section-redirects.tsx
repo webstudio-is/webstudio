@@ -23,13 +23,13 @@ import {
 } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
-import { $pages, $publishedUrl } from "~/shared/nano-states";
+import { $pages, $publishedOrigin } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
 import { flushSync } from "react-dom";
 import { sectionSpacing } from "./utils";
 
 export const SectionRedirects = () => {
-  const publishedUrl = useStore($publishedUrl);
+  const publishedOrigin = useStore($publishedOrigin);
   const [redirects, setRedirects] = useState(
     () => $pages.get()?.redirects ?? []
   );
@@ -237,7 +237,7 @@ export const SectionRedirects = () => {
                             underline="hover"
                             href={new URL(
                               redirect.old,
-                              publishedUrl
+                              publishedOrigin
                             ).toString()}
                             css={truncate()}
                             target="_blank"
@@ -254,7 +254,7 @@ export const SectionRedirects = () => {
                             underline="hover"
                             href={new URL(
                               redirect.new,
-                              publishedUrl
+                              publishedOrigin
                             ).toString()}
                             css={truncate()}
                             target="_blank"

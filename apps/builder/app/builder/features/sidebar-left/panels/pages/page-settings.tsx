@@ -69,7 +69,7 @@ import {
   $dataSources,
   computeExpression,
   $dataSourceVariables,
-  $publishedUrl,
+  $publishedOrigin,
 } from "~/shared/nano-states";
 import {
   BindingControl,
@@ -566,10 +566,10 @@ const usePageUrl = (values: Values, systemDataSourceId?: DataSource["id"]) => {
       : (dataSourceVariables.get(systemDataSourceId) as System);
   const pathParams = storedSystem?.params ?? {};
 
-  const publishedUrl = useStore($publishedUrl);
+  const publishedOrigin = useStore($publishedOrigin);
   const tokens = tokenizePathnamePattern(path);
   const compiledPath = compilePathnamePattern(tokens, pathParams);
-  return `${publishedUrl}${compiledPath}`;
+  return `${publishedOrigin}${compiledPath}`;
 };
 
 const FormFields = ({

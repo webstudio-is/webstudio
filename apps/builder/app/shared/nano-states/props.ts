@@ -26,6 +26,7 @@ import {
   $assets,
   $resources,
   $resourceValues,
+  $publishedOrigin,
 } from "./nano-states";
 import { $selectedPage, $pages } from "./pages";
 import { groupBy } from "../array-utils";
@@ -299,6 +300,7 @@ export const $variableValuesByInstanceSelector = computed(
     $dataSources,
     $dataSourceVariables,
     $resourceValues,
+    $publishedOrigin,
   ],
   (
     instances,
@@ -306,7 +308,8 @@ export const $variableValuesByInstanceSelector = computed(
     page,
     dataSources,
     dataSourceVariables,
-    resourceValues
+    resourceValues,
+    publishedOrigin
   ) => {
     const propsByInstanceId = groupBy(
       props.values(),
@@ -364,6 +367,10 @@ export const $variableValuesByInstanceSelector = computed(
               variableValues.set(variable.id, {
                 params: {},
                 search: {},
+                // @todo: use same logic as usePageUrl from page-settings.tsx for the whole url
+                url: {
+                  origin: publishedOrigin,
+                },
               });
             }
           }
