@@ -9,8 +9,8 @@ type Props = {
   children: ReactNode;
 } & Record<typeof componentAttribute, string>;
 
-export const XmlElement = forwardRef<ElementRef<"div">, Props>(
-  ({ tag = "element", children, ...props }, ref) => {
+export const XmlNode = forwardRef<ElementRef<"div">, Props>(
+  ({ tag = "", children, ...props }, ref) => {
     const isTextChild = Children.toArray(children).every(
       (child) => typeof child === "string"
     );
@@ -33,4 +33,4 @@ export const XmlElement = forwardRef<ElementRef<"div">, Props>(
   }
 );
 
-XmlElement.displayName = "XmlElement";
+XmlNode.displayName = "XmlNode";
