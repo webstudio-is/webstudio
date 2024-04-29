@@ -26,7 +26,11 @@ import {
   serverSyncStore,
   useCanvasStore,
 } from "~/shared/sync";
-import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
+import {
+  useManageDesignModeStyles,
+  GlobalStyles,
+  subscribeStyles,
+} from "./shared/styles";
 import {
   WebstudioComponentCanvas,
   WebstudioComponentPreview,
@@ -172,6 +176,8 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
     // required to compute asset and page props for rendering
     $params.set(params);
   });
+
+  useEffect(subscribeStyles, []);
 
   useEffect(subscribeComponentHooks, []);
 

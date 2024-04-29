@@ -36,10 +36,8 @@ import {
   $selectedInstanceRenderState,
   $selectedInstanceSelector,
   $selectedPage,
-  useInstanceStyles,
 } from "~/shared/nano-states";
 import { $textEditingInstanceSelector } from "~/shared/nano-states";
-import { useCssRules } from "~/canvas/shared/styles";
 import {
   type InstanceSelector,
   areInstanceSelectorsEqual,
@@ -259,8 +257,6 @@ export const WebstudioComponentCanvas = forwardRef<
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const rootRef = useRef<null | HTMLDivElement>(null);
   const instanceId = instance.id;
-  const instanceStyles = useInstanceStyles(instanceId);
-  useCssRules({ instanceId: instance.id, instanceStyles });
   const instances = useStore($instances);
 
   const textEditingInstanceSelector = useStore($textEditingInstanceSelector);
@@ -413,8 +409,6 @@ export const WebstudioComponentPreview = forwardRef<
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
   const instances = useStore($instances);
-  const instanceStyles = useInstanceStyles(instance.id);
-  useCssRules({ instanceId: instance.id, instanceStyles });
   const { [showAttribute]: show = true, ...instanceProps } =
     useInstanceProps(instanceSelector);
   const props = {

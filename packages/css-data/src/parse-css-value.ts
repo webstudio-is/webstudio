@@ -36,11 +36,6 @@ export const isValidDeclaration = (
       CSSStyleValue.parse(cssPropertyName, value);
       return true;
     } catch {
-      warnOnce(
-        true,
-        `Css property "${property}" with value "${value}" is invalid according to CSSStyleValue.parse
-          but valid according to csstree.lexer.matchProperty.`
-      );
       return false;
     }
   }
