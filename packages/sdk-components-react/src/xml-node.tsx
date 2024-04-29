@@ -1,4 +1,3 @@
-import { componentAttribute } from "@webstudio-is/react-sdk";
 import { Children, forwardRef, type ElementRef, type ReactNode } from "react";
 
 export const defaultTag = "div";
@@ -7,7 +6,7 @@ export const defaultTag = "div";
 type Props = {
   tag: string;
   children: ReactNode;
-} & Record<typeof componentAttribute, string>;
+};
 
 export const XmlNode = forwardRef<ElementRef<"div">, Props>(
   ({ tag = "", children, ...props }, ref) => {
