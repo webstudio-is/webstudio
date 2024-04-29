@@ -63,20 +63,24 @@ const ErrorInfo = ({
 
 type Error = { message: string; value: string; expected: string };
 
+// The problem is to identify broken HTML and because browser is flexible and always tries to fix it we never
+// know if something is actually broken.
+// 1. Parse the HTML using DOM
+// 2. Get HTML via innerHTML
+// 3. Compare the original HTML with innerHTML
+// 4. We try to minimize the amount of false positives by removing
+//    - different amount of whitespace
+//    - unifying `boolean=""` is the same as `boolean`
 const validateHtml = (value: string): Error | undefined => {
-  // This is basically what browser does when innerHTML is set
-  // but isolated within temporary element
-  // so the result is correct markup
   const div = document.createElement("div");
   div.innerHTML = value;
   const expected = div.innerHTML;
   const clean = (value: string) => {
     return (
       value
-        // We don't need to show error for unnecessary whitespace.
+        // Compare without whitespace to avoid false positives
         .replace(/\s/g, "")
-        // innerHTML will convert all boolean attributes to attr="" and this will always result in mismatch
-        // lets ignore those cases
+        // normalize boolean attributes by turning `boolean=""` into `boolean`
         .replace('=""', "")
     );
   };
