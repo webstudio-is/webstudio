@@ -183,4 +183,5 @@ export * from "./webstudio-1c";
 export * from "./webstudio";
 export * from "./wrap";
 export * from "./x";
+export * from "./xml";
 export * from "./youtube-1c";
