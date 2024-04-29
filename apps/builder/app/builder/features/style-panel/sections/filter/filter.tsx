@@ -10,7 +10,11 @@ import {
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { PlusIcon } from "@webstudio-is/icons";
-import { FunctionValue, type StyleProperty } from "@webstudio-is/css-engine";
+import {
+  FunctionValue,
+  TupleValue,
+  type StyleProperty,
+} from "@webstudio-is/css-engine";
 import { getStyleSource } from "../../shared/style-info";
 import { LayersList } from "../../style-layers-list";
 import { FilterLayer } from "./filter-layer";
@@ -70,8 +74,8 @@ export const Section = (props: SectionProps) => {
         </SectionTitle>
       }
     >
-      {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList<FunctionValue>
+      {value?.type === "tuple" && value.value.length > 0 && (
+        <LayersList<FunctionValue, TupleValue>
           {...props}
           property={property}
           layers={value}

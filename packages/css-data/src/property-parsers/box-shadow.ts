@@ -26,7 +26,6 @@ export const parseBoxShadow = (
   }
 
   const cssAst = cssTryParseValue(tokenStream);
-
   if (cssAst === undefined) {
     return {
       type: "invalid",

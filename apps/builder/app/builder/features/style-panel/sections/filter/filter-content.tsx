@@ -1,4 +1,8 @@
-import type { InvalidValue, LayersValue } from "@webstudio-is/css-engine";
+import type {
+  InvalidValue,
+  LayersValue,
+  TupleValue,
+} from "@webstudio-is/css-engine";
 import {
   Flex,
   theme,
@@ -17,7 +21,7 @@ import type { DeleteProperty } from "../../shared/use-style-data";
 type FilterContentProps = {
   index: number;
   filter: string;
-  onEditLayer: (index: number, layers: LayersValue) => void;
+  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
   deleteProperty: DeleteProperty;
 };
 
@@ -98,10 +102,7 @@ export const FilterSectionContent = ({
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
         onChange={handleChange}
-        onBlur={handleComplete}
         onKeyDown={(event) => {
-          event.stopPropagation();
-
           if (event.key === "Enter") {
             handleComplete();
             // On pressing Enter, the textarea is creating a new line.
