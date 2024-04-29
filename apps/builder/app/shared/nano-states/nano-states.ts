@@ -66,12 +66,12 @@ export const updateSystem = (page: Page, update: Partial<System>) => {
   const system = dataSourceVariables.get(page.systemDataSourceId) as
     | undefined
     | System;
+
   const newSystem: System = {
     search: {},
     params: {},
-    url: {
-      origin: "",
-    },
+    // This value seems like doesn't matter
+    origin: "",
     ...system,
     ...update,
   };

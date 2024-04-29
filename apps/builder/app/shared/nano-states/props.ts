@@ -5,6 +5,7 @@ import type {
   Instance,
   Prop,
   ResourceRequest,
+  System,
 } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
@@ -364,14 +365,13 @@ export const $variableValuesByInstanceSelector = computed(
               variable.id === page.systemDataSourceId &&
               value === undefined
             ) {
-              variableValues.set(variable.id, {
+              const systemDefaultValue: System = {
                 params: {},
                 search: {},
-                // @todo: use same logic as usePageUrl from page-settings.tsx for the whole url
-                url: {
-                  origin: publishedOrigin,
-                },
-              });
+                origin: publishedOrigin,
+              };
+
+              variableValues.set(variable.id, systemDefaultValue);
             }
           }
           if (variable.type === "resource") {
