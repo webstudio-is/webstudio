@@ -22,10 +22,10 @@ import type {
   DeleteProperty,
 } from "./shared/use-style-data";
 
-export type LayerProps<T> = {
+export type LayerProps<LayerType> = {
   id: string;
   index: number;
-  layer: T;
+  layer: LayerType;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;
@@ -35,14 +35,17 @@ export type LayerProps<T> = {
   deleteProperty: DeleteProperty;
 };
 
-type LayerListProperties<T, K> = SectionProps & {
+type LayerListProperties<LayerType, PropertyValueType> = SectionProps & {
   disabled?: boolean;
   property: StyleProperty;
-  layers: K;
-  renderLayer: (props: LayerProps<T>) => JSX.Element;
+  layers: PropertyValueType;
+  renderLayer: (props: LayerProps<LayerType>) => JSX.Element;
 };
 
-export const LayersList = <T, K extends TupleValue | LayersValue>({
+export const LayersList = <
+  LayerType,
+  PropertyValueType extends TupleValue | LayersValue,
+>({
   property,
   layers,
   disabled,
@@ -50,7 +53,7 @@ export const LayersList = <T, K extends TupleValue | LayersValue>({
   renderLayer,
   createBatchUpdate,
   deleteProperty,
-}: LayerListProperties<T, K>) => {
+}: LayerListProperties<LayerType, PropertyValueType>) => {
   const layersCount = getLayerCount(property, currentStyle);
 
   const sortableItems = useMemo(
@@ -80,8 +83,8 @@ export const LayersList = <T, K extends TupleValue | LayersValue>({
     return hideLayer(property, index, layers, createBatchUpdate);
   };
 
-  const onEditLayer = (index: number, newLayers: K) => {
-    return updateLayer<K>(
+  const onEditLayer = (index: number, newLayers: PropertyValueType) => {
+    return updateLayer<PropertyValueType>(
       property,
       newLayers,
       layers,
@@ -109,7 +112,7 @@ export const LayersList = <T, K extends TupleValue | LayersValue>({
             createBatchUpdate,
             deleteProperty,
             onEditLayer,
-          } as LayerProps<T>);
+          } as LayerProps<LayerType>);
         })}
         {placementIndicator}
       </Flex>
