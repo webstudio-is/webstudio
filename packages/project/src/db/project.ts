@@ -170,6 +170,7 @@ export const clone = async (
     context
   );
 
+  console.info("START====================");
   const clonedProject = await prisma.$transaction(async (client) => {
     await cloneAssets(
       {
@@ -178,9 +179,10 @@ export const clone = async (
 
         // Permission check on newProjectId will fail until this transaction is committed.
         // We have to skip it, but it's ok because registerProjectOwner is right above
-        dontCheckEditPermission: true,
+        checkPermissions: false,
       },
-      context
+      context,
+      client
     );
 
     const clonedProject = await client.project.create({
@@ -208,6 +210,7 @@ export const clone = async (
 
     return clonedProject;
   });
+  console.info("END====================");
 
   return Project.parse(clonedProject);
 };

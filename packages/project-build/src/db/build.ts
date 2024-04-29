@@ -31,6 +31,7 @@ import { parseDeployment, serializeDeployment } from "./deployment";
 import { parsePages, serializePages } from "./pages";
 import { createDefaultPages } from "../shared/pages-utils";
 import type { MarketplaceProduct } from "..";
+import { z } from "zod";
 
 export const parseData = <Type extends { id: string }>(
   string: string
@@ -226,6 +227,11 @@ export const createBuild = async (
   });
 };
 
+const zBuildCloneResult = z
+  .array(z.object({ id: z.string() }))
+  .length(1)
+  .transform((result) => result[0]);
+
 export const cloneBuild = async (
   props: {
     fromProjectId: Build["projectId"];
@@ -234,32 +240,42 @@ export const cloneBuild = async (
   },
   _context: AppContext,
   client: Prisma.TransactionClient
-) => {
-  const build = await prisma.build.findFirst({
-    where: { projectId: props.fromProjectId, deployment: null },
-  });
+): Promise<{ id: string }> => {
+  const deployment = props.deployment
+    ? serializeDeployment(props.deployment)
+    : null;
 
-  if (build === null) {
-    throw new Error("Dev build not found");
-  }
+  const notCopiedFields = [
+    "id",
+    "createdAt",
+    "updatedAt",
+    "deployment",
+    "projectId",
+  ];
+  const fieldsToCopy = Object.keys(client.build.fields)
+    .filter((field) => notCopiedFields.includes(field) === false)
+    .map((field) => `"${field}"`)
+    .join(", ");
 
-  const data = {
-    ...build,
-    id: undefined,
-    createdAt: undefined,
-    updatedAt: undefined,
-    deployment: props.deployment
-      ? serializeDeployment(props.deployment)
-      : undefined,
-    projectId: props.toProjectId,
-  };
+  const selectQuery = Prisma.sql`
+    SELECT ${Prisma.raw(
+      fieldsToCopy
+    )}, uuid_generate_v4() as id, ${deployment} as deployment, ${
+      props.toProjectId
+    } as "projectId"
+    FROM "Build"
+    WHERE "projectId" = ${props.fromProjectId} AND "deployment" IS NULL`;
 
-  const result = await client.build.create({
-    data,
-    select: {
-      id: true,
-    },
-  });
+  const insertQuery = Prisma.sql`
+    INSERT INTO "Build"(${Prisma.raw(
+      fieldsToCopy
+    )}, "id", "deployment", "projectId")
+    ${selectQuery}
+    RETURNING "id"`;
+
+  const rawResult = await client.$queryRaw(insertQuery);
+
+  const result = zBuildCloneResult.parse(rawResult);
 
   return result;
 };
@@ -280,15 +296,13 @@ export const createProductionBuild = async (
     throw new AuthorizationError("You don't have access to build this project");
   }
 
-  return await prisma.$transaction(async (client) => {
-    return await cloneBuild(
-      {
-        fromProjectId: props.projectId,
-        toProjectId: props.projectId,
-        deployment: props.deployment,
-      },
-      context,
-      client
-    );
-  });
+  return await cloneBuild(
+    {
+      fromProjectId: props.projectId,
+      toProjectId: props.projectId,
+      deployment: props.deployment,
+    },
+    context,
+    prisma
+  );
 };
