@@ -170,7 +170,6 @@ export const clone = async (
     context
   );
 
-  console.info("START====================");
   const clonedProject = await prisma.$transaction(async (client) => {
     await cloneAssets(
       {
@@ -210,7 +209,6 @@ export const clone = async (
 
     return clonedProject;
   });
-  console.info("END====================");
 
   return Project.parse(clonedProject);
 };
