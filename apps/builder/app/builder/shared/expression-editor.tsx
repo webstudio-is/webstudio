@@ -31,7 +31,11 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
-import { CodeEditorBase, EditorDialog } from "./code-editor-base";
+import {
+  CodeEditorBase,
+  EditorContent,
+  EditorDialog,
+} from "./code-editor-base";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -440,7 +444,7 @@ export const ExpressionEditor = ({
 const ValuePreviewEditor = ({ value }: { value: unknown }) => {
   const extensions = useMemo(() => [javascript({})], []);
   return (
-    <CodeEditorBase
+    <EditorContent
       readOnly={true}
       extensions={extensions}
       value={JSON.stringify(value, null, 2)}
