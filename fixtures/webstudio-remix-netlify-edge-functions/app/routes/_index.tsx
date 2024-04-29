@@ -34,10 +34,22 @@ import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
 
 export const loader = async (arg: LoaderFunctionArgs) => {
   const url = new URL(arg.request.url);
+
+  const host =
+    arg.request.headers.get("x-forwarded-host") ||
+    arg.request.headers.get("host") ||
+    "";
+
+  url.host = host;
+  url.protocol = "https";
+
   const params = getRemixParams(arg.params);
   const system = {
     params,
     search: Object.fromEntries(url.searchParams),
+    url: {
+      origin: url.origin,
+    },
   };
   const resources = await loadResources({ system });
   const pageMeta = getPageMeta({ system, resources });
@@ -49,14 +61,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
         : 302;
     return redirect(pageMeta.redirect, status);
   }
-
-  const host =
-    arg.request.headers.get("x-forwarded-host") ||
-    arg.request.headers.get("host") ||
-    "";
-
-  url.host = host;
-  url.protocol = "https";
 
   // typecheck
   arg.context.EXCLUDE_FROM_SEARCH satisfies boolean;
