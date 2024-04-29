@@ -15,7 +15,11 @@ export const XmlElement = forwardRef<ElementRef<"div">, Props>(
       (child) => typeof child === "string"
     );
 
-    const elementName = tag.replaceAll(/[^\p{L}]+/gu, "");
+    const elementName = tag
+      // Must start from letter or underscore
+      .replace(/^[^\p{L}_]+/u, "")
+      // Clear all non letter, number, underscore, dot, and dash
+      .replaceAll(/[^\p{L}\p{N}\-._]+/gu, "");
 
     return (
       <div style={{ display: isTextChild ? "flex" : "contents" }} {...props}>
