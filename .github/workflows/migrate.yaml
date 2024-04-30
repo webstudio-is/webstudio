@@ -13,6 +13,10 @@ jobs:
       name: "postgres_development"
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
       - uses: ./.github/actions/migrate
         id: migrate
         name: Migrate
