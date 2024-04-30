@@ -41,7 +41,7 @@ export const $imageLoader = atom<ImageLoader>(
   createImageLoader({ imageBaseUrl: "" })
 );
 
-export const $publishedUrl = computed(
+export const $publishedOrigin = computed(
   [$project, $publisherHost],
   (project, publisherHost) => `https://${project?.domain}.${publisherHost}`
 );
@@ -66,9 +66,12 @@ export const updateSystem = (page: Page, update: Partial<System>) => {
   const system = dataSourceVariables.get(page.systemDataSourceId) as
     | undefined
     | System;
+
   const newSystem: System = {
     search: {},
     params: {},
+    // This value seems like doesn't matter
+    origin: "",
     ...system,
     ...update,
   };

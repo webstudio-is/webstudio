@@ -25,7 +25,7 @@ import {
 import {
   $dataSourceVariables,
   $pages,
-  $publishedUrl,
+  $publishedOrigin,
   $selectedPage,
   updateSystem,
 } from "~/shared/nano-states";
@@ -115,13 +115,13 @@ const useCopyUrl = (pageUrl: string) => {
 
 const AddressBar = () => {
   const id = useId();
-  const publishedUrl = useStore($publishedUrl);
+  const publishedOrigin = useStore($publishedOrigin);
   const path = useStore($selectedPagePath);
   const pathParams = useStore($selectedPagePathParams);
   const tokens = tokenizePathnamePattern(path);
   const compiledPath = compilePathnamePattern(tokens, pathParams ?? {});
   const { tooltipProps, buttonProps } = useCopyUrl(
-    `${publishedUrl}${compiledPath}`
+    `${publishedOrigin}${compiledPath}`
   );
 
   const errors = new Map<string, string>();
@@ -179,8 +179,8 @@ const AddressBar = () => {
 export const AddressBarPopover = () => {
   const [isOpen, setIsOpen] = useState(false);
   const path = useStore($selectedPagePath);
-  const publishedUrl = useStore($publishedUrl);
-  const { tooltipProps, buttonProps } = useCopyUrl(`${publishedUrl}${path}`);
+  const publishedOrigin = useStore($publishedOrigin);
+  const { tooltipProps, buttonProps } = useCopyUrl(`${publishedOrigin}${path}`);
 
   // show only copy button when path is static
   if (isPathnamePattern(path) === false) {

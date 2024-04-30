@@ -911,7 +911,12 @@ test("prefill default system variable value", () => {
     new Map([
       [
         JSON.stringify(["body"]),
-        new Map<string, unknown>([["systemId", { params: {}, search: {} }]]),
+        new Map<string, unknown>([
+          [
+            "systemId",
+            { params: {}, search: {}, origin: "https://undefined.wstd.work" },
+          ],
+        ]),
       ],
     ])
   );

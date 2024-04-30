@@ -16,6 +16,8 @@
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
+    "customConditions": ["webstudio"],
+
     // Remix takes care of building everything in `remix build`.
     "noEmit": true,
     "skipLibCheck": true

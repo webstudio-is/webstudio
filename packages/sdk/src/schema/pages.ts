@@ -3,6 +3,7 @@ import { z } from "zod";
 export type System = {
   params: Record<string, string | undefined>;
   search: Record<string, string | undefined>;
+  origin: string;
 };
 
 const MIN_TITLE_LENGTH = 2;

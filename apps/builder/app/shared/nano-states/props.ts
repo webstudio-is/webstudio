@@ -5,6 +5,7 @@ import type {
   Instance,
   Prop,
   ResourceRequest,
+  System,
 } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
@@ -26,6 +27,7 @@ import {
   $assets,
   $resources,
   $resourceValues,
+  $publishedOrigin,
 } from "./nano-states";
 import { $selectedPage, $pages } from "./pages";
 import { groupBy } from "../array-utils";
@@ -299,6 +301,7 @@ export const $variableValuesByInstanceSelector = computed(
     $dataSources,
     $dataSourceVariables,
     $resourceValues,
+    $publishedOrigin,
   ],
   (
     instances,
@@ -306,7 +309,8 @@ export const $variableValuesByInstanceSelector = computed(
     page,
     dataSources,
     dataSourceVariables,
-    resourceValues
+    resourceValues,
+    publishedOrigin
   ) => {
     const propsByInstanceId = groupBy(
       props.values(),
@@ -361,10 +365,13 @@ export const $variableValuesByInstanceSelector = computed(
               variable.id === page.systemDataSourceId &&
               value === undefined
             ) {
-              variableValues.set(variable.id, {
+              const systemDefaultValue: System = {
                 params: {},
                 search: {},
-              });
+                origin: publishedOrigin,
+              };
+
+              variableValues.set(variable.id, systemDefaultValue);
             }
           }
           if (variable.type === "resource") {
