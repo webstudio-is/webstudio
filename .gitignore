@@ -56,3 +56,6 @@ tsconfig.tsbuildinfo
 
 # wrangler builds
 dist
+
+# should be here otherwise if placed inside prisma-client pnpm deploy doesn't copy it
+packages/prisma-client/src/__generated__

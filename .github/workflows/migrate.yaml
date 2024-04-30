@@ -1,0 +1,20 @@
+name: Migrate
+
+on:
+  push:
+    branches:
+      - "migrate"
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: "postgres_development"
+
+    steps:
+      - uses: ./.github/actions/migrate
+        id: migrate
+        name: Migrate
+        with:
+          TEST_SECRET: ${{ secrets.TEST_SECRET }}

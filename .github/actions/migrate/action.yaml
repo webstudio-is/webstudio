@@ -1,0 +1,18 @@
+name: "MIGRATION"
+description: "Builds and deploy vercel project"
+
+inputs:
+  TEST_SECRET:
+    description: "TEST_SECRET for migrations"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - id: branch
+      run: |
+        echo "env: -${TEST_SECRET}-"
+        echo "env: -${{ inputs.TEST_SECRET }}-"
+      shell: bash
+      env:
+        TEST_SECRET: ${{ secrets.TEST_SECRET }}
