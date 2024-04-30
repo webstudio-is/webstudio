@@ -1,4 +1,4 @@
-import { prisma, type Prisma, type Project } from "@webstudio-is/prisma-client";
+import { Prisma, prisma, type Project } from "@webstudio-is/prisma-client";
 import {
   authorizeProject,
   type AppContext,
@@ -9,7 +9,7 @@ export const cloneAssets = async (
   {
     fromProjectId,
     toProjectId,
-    dontCheckEditPermission = false,
+    checkPermissions = true,
   }: {
     fromProjectId: Project["id"];
     toProjectId: Project["id"];
@@ -18,23 +18,23 @@ export const cloneAssets = async (
      * Don't use unless absolutely have to (e.g. because of transactions)
      * and unless it's obvious on the call project that permission is checked
      */
-    dontCheckEditPermission?: boolean;
+    checkPermissions?: boolean;
   },
   context: AppContext,
   client: Prisma.TransactionClient = prisma
 ) => {
-  const canView = await authorizeProject.hasProjectPermit(
-    { projectId: fromProjectId, permit: "view" },
-    context
-  );
-
-  if (canView === false) {
-    throw new AuthorizationError(
-      "You don't have access to this project assets"
+  if (checkPermissions) {
+    const canView = await authorizeProject.hasProjectPermit(
+      { projectId: fromProjectId, permit: "view" },
+      context
     );
-  }
 
-  if (dontCheckEditPermission === false) {
+    if (canView === false) {
+      throw new AuthorizationError(
+        "You don't have access to this project assets"
+      );
+    }
+
     const canEdit = await authorizeProject.hasProjectPermit(
       { projectId: toProjectId, permit: "edit" },
       context
@@ -47,15 +47,28 @@ export const cloneAssets = async (
     }
   }
 
-  const assets = await client.asset.findMany({
-    where: {
-      projectId: fromProjectId,
-      file: { status: "UPLOADED" },
-    },
-  });
+  const assetFields = Object.keys(client.asset.fields);
 
-  await client.asset.createMany({
-    // we intentionally keep old ids in order for all references in styles/props to work
-    data: assets.map((asset) => ({ ...asset, projectId: toProjectId })),
-  });
+  const assetFieldsFiltered = assetFields.filter(
+    (field) => field !== "projectId"
+  );
+
+  const selectQuery = Prisma.sql`
+    SELECT
+    ${Prisma.raw(
+      assetFieldsFiltered.map((field) => `a."${field}"`).join(", ")
+    )}, ${toProjectId} as "projectId"
+    FROM "Asset" a, "File" f
+    WHERE
+      a.name = f.name AND
+      f.status = 'UPLOADED' AND
+      a."projectId" = ${fromProjectId}`;
+
+  const insertQuery = Prisma.sql`
+    INSERT INTO "Asset"(${Prisma.raw(
+      assetFieldsFiltered.map((field) => `"${field}"`).join(", ")
+    )}, "projectId") ${selectQuery}
+  `;
+
+  await client.$executeRaw(insertQuery);
 };
