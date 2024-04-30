@@ -34,7 +34,7 @@ declare global {
     | undefined;
 }
 
-const logPrisma = process.env.NODE_ENV === "production";
+const logPrisma = true || process.env.NODE_ENV === "production";
 
 // this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
 // explanation here
