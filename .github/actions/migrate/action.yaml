@@ -12,7 +12,6 @@ runs:
     - id: branch
       run: |
         echo "env: -${TEST_SECRET}-"
-        echo "env: -${{ inputs.TEST_SECRET }}-"
       shell: bash
       env:
-        TEST_SECRET: ${{ secrets.TEST_SECRET }}
+        TEST_SECRET: ${{ inputs.TEST_SECRET }}
