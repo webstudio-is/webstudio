@@ -333,6 +333,12 @@ export const status = async () => {
   logger.info("");
 };
 
+export const pendingCount = async () => {
+  const status = await getStatus();
+
+  return status.pending.length;
+};
+
 // Silimar to https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-resolve
 export const resolve = async ({
   migrationName,

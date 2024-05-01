@@ -20,6 +20,12 @@ export default () => {
         url: process.env.DIRECT_URL,
       },
     },
+
+    transactionOptions: {
+      timeout: 10 * 60 * 1000,
+      maxWait: 5000,
+    },
+
     // Uncomment to see the queries in console as the migration runs
     log: ["query", "info", "warn", "error"],
   });
