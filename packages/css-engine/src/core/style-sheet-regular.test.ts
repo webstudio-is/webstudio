@@ -53,13 +53,13 @@ describe("nesting rule", () => {
       property: "color",
       value: { type: "keyword", value: "transparent" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto;
   height: auto
 }"
 `);
-    expect(rule.generateRules({ breakpoint: "small" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "small" })).toMatchInlineSnapshot(`
 ".instance {
   color: transparent
 }"
@@ -87,7 +87,7 @@ describe("nesting rule", () => {
       property: "color",
       value: { type: "keyword", value: "transparent" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto;
   height: auto
@@ -113,7 +113,7 @@ describe("nesting rule", () => {
       property: "width",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto
 }
@@ -132,7 +132,7 @@ describe("nesting rule", () => {
       property: "width",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base", indent: 4 }))
+    expect(rule.toString({ breakpoint: "base", indent: 4 }))
       .toMatchInlineSnapshot(`
 "    .instance {
       width: auto
@@ -149,7 +149,7 @@ describe("nesting rule", () => {
       property: "width",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base", transformValue }))
+    expect(rule.toString({ breakpoint: "base", transformValue }))
       .toMatchInlineSnapshot(`
 ".instance {
   width: AUTO
@@ -166,7 +166,7 @@ describe("nesting rule", () => {
       property: "width",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto
 }"
@@ -178,7 +178,7 @@ describe("nesting rule", () => {
       property: "height",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto;
   height: auto
@@ -190,22 +190,21 @@ describe("nesting rule", () => {
       selector: "",
       property: "height",
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto
 }"
 `);
     // invalidate by indent
-    expect(rule.generateRules({ breakpoint: "base", indent: 2 }))
+    expect(rule.toString({ breakpoint: "base", indent: 2 }))
       .toMatchInlineSnapshot(`
 "  .instance {
     width: auto
   }"
 `);
     // invalidate by transform value
-    expect(
-      rule.generateRules({ breakpoint: "base", indent: 2, transformValue })
-    ).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base", indent: 2, transformValue }))
+      .toMatchInlineSnapshot(`
 "  .instance {
     width: AUTO
   }"
@@ -215,7 +214,7 @@ describe("nesting rule", () => {
   test("generate breakpoint without declarations", () => {
     const sheet = createRegularStyleSheet();
     const rule = sheet.addNestingRule(".instance");
-    expect(rule.generateRules({ breakpoint: "base" })).toEqual("");
+    expect(rule.toString({ breakpoint: "base" })).toEqual("");
   });
 });
 
@@ -244,7 +243,7 @@ describe("mixin rule", () => {
       property: "height",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: fit-content;
   height: auto
@@ -270,7 +269,7 @@ describe("mixin rule", () => {
       property: "height",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance:hover {
   height: auto;
   width: fit-content
@@ -288,11 +287,9 @@ describe("mixin rule", () => {
       property: "width",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(
-      `""`
-    );
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`""`);
     rule.applyMixins(["local"]);
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto
 }"
@@ -304,16 +301,14 @@ describe("mixin rule", () => {
     const rule = sheet.addNestingRule(".instance");
     const localMixin = sheet.addMixinRule("local");
     rule.applyMixins(["local"]);
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(
-      `""`
-    );
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`""`);
     localMixin.setDeclaration({
       breakpoint: "base",
       selector: "",
       property: "width",
       value: { type: "keyword", value: "auto" },
     });
-    expect(rule.generateRules({ breakpoint: "base" })).toMatchInlineSnapshot(`
+    expect(rule.toString({ breakpoint: "base" })).toMatchInlineSnapshot(`
 ".instance {
   width: auto
 }"
@@ -816,6 +811,21 @@ describe("Style Sheet Regular", () => {
     const assets = new Map<string, { path: string }>([
       ["1234", { path: "foo.png" }],
     ]);
+    sheet.setTransformer((styleValue) => {
+      if (styleValue.type === "image" && styleValue.value.type === "asset") {
+        const asset = assets.get(styleValue.value.value);
+        if (asset === undefined) {
+          return { type: "keyword", value: "none" };
+        }
+        return {
+          type: "image",
+          value: {
+            type: "url",
+            url: asset.path,
+          },
+        };
+      }
+    });
     const rule = sheet.addStyleRule(
       {
         style: {
@@ -829,22 +839,7 @@ describe("Style Sheet Regular", () => {
         },
         breakpoint: "0",
       },
-      ".c",
-      (styleValue) => {
-        if (styleValue.type === "image" && styleValue.value.type === "asset") {
-          const asset = assets.get(styleValue.value.value);
-          if (asset === undefined) {
-            return { type: "keyword", value: "none" };
-          }
-          return {
-            type: "image",
-            value: {
-              type: "url",
-              url: asset.path,
-            },
-          };
-        }
-      }
+      ".c"
     );
     rule.styleMap.delete("display");
     expect(sheet.cssText).toMatchInlineSnapshot(`

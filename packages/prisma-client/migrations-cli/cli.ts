@@ -14,6 +14,7 @@ Commands:
   migrate              — Apply all pending migrations
   reset                — Clear the database and apply all migrations
   status               — Information about the state of the migrations
+  pending-count        — Get the number of pending migrations
   resolve <applied|rolled-back> <name> — Mark a failed migration as applied or rolled-back
 
 Arguments
@@ -62,6 +63,12 @@ const main = async () => {
 
   if (command === "status") {
     await commands.status();
+    return;
+  }
+
+  if (command === "pending-count") {
+    const count = await commands.pendingCount();
+    console.info("::pending-count::", count);
     return;
   }
 

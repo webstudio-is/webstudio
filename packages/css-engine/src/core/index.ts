@@ -1,6 +1,5 @@
 export type {
   NestingRule,
-  AnyRule,
   StyleRule,
   MediaRule,
   PlaintextRule,

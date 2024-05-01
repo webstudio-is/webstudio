@@ -1,0 +1,98 @@
+name: Migrate
+
+on:
+  push:
+    branches:
+      - "migrate"
+      - "main"
+      - "*.staging"
+
+# Pending if other migration from the same branch is running
+concurrency: migrate-${{ github.ref_name }}
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+  statuses: write # This is required for the GitHub Script createCommitStatus to work
+
+jobs:
+  migrate:
+    # This workflow is triggered only on pushes to the `main`, `*.staging` or 'migrate' branches.
+    # For `*.staging` and `migrate` it specifically checks if the commit message starts with `::migrate::`,
+    # indicating a migration-related change.
+    #
+    # Example usage:
+    #   Execute a commit with a migration flag using:
+    #   git commit --allow-empty -m "::migrate::test description"
+    # Note:
+    #   This setup is a temporary measure. The intention is to transition to a fully automated publish and release process via GitHub Actions in the future.
+    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.staging')) && startsWith(github.event.head_commit.message, '::migrate::'))
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ endsWith(github.ref_name, '.staging') && 'postgres_production' || 'postgres_development' }}
+
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: pnpm instal
+        run: pnpm install --ignore-scripts
+
+      - name: build prisma client
+        run: pnpm --filter '@webstudio-is/prisma-client...' run build
+
+      - name: execute migration
+        run: pnpm --filter '@webstudio-is/prisma-client' run migrations migrate
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+  # Prints pending migrations
+  pending:
+    if: always()
+
+    needs: [migrate]
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ endsWith(github.ref_name, '.staging') && 'postgres_production' || 'postgres_development' }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }} # HEAD commit instead of merge commit
+
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: pnpm instal
+        run: pnpm install --ignore-scripts
+
+      - name: build prisma client
+        run: pnpm --filter '@webstudio-is/prisma-client...' run build
+
+      - name: get pending
+        id: pending
+        run: |
+          echo "value=$(pnpm --filter '@webstudio-is/prisma-client' run migrations pending-count | grep ::pending-count::)" >> $GITHUB_OUTPUT
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - uses: ./.github/actions/add-status
+        with:
+          title: "⭕ Pending Migrations"
+          description: ${{ steps.pending.outputs.value }}
+          url: "https://webstudio.is"

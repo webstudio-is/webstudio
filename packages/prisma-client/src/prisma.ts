@@ -36,6 +36,26 @@ declare global {
 
 const logPrisma = process.env.NODE_ENV === "production";
 
+type PrismaClientOptions = {
+  datasourceUrl: string;
+  timeout?: number;
+  maxWait?: number;
+};
+
+export const createPrisma = ({
+  datasourceUrl,
+  timeout = 5000,
+  maxWait = 2000,
+}: PrismaClientOptions) => {
+  return new PrismaClient({
+    datasourceUrl,
+    transactionOptions: {
+      timeout,
+      maxWait,
+    },
+  });
+};
+
 // this fixes the issue with `warn(prisma-client) There are already 10 instances of Prisma Client actively running.`
 // explanation here
 // https://www.prisma.io/docs/guides/database/troubleshooting-orm/help-articles/nextjs-prisma-client-dev-practices

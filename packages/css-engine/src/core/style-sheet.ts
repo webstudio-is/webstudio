@@ -25,27 +25,23 @@ export class StyleSheet {
   nestingRules: Map<string, NestingRule> = new Map();
   #fontFaceRules: Array<FontFaceRule> = [];
   #transformValue?: TransformValue;
-  #isDirty = false;
   #element: StyleElement;
   constructor(element: StyleElement) {
     this.#element = element;
   }
   setTransformer(transformValue: TransformValue) {
     this.#transformValue = transformValue;
-    this.#isDirty = true;
   }
   addMediaRule(id: string, options?: MediaRuleOptions) {
     let mediaRule = this.#mediaRules.get(id);
     if (mediaRule === undefined) {
       mediaRule = new MediaRule(id, options);
       this.#mediaRules.set(id, mediaRule);
-      this.#isDirty = true;
       return mediaRule;
     }
 
     if (options) {
       mediaRule.options = options;
-      this.#isDirty = true;
     }
 
     if (mediaRule === undefined) {
@@ -60,7 +56,6 @@ export class StyleSheet {
     if (rule !== undefined) {
       return rule;
     }
-    this.#isDirty = true;
     return this.#plainRules.set(cssText, new PlaintextRule(cssText));
   }
   addMixinRule(name: string) {
@@ -68,7 +63,6 @@ export class StyleSheet {
     if (rule === undefined) {
       rule = new MixinRule();
       this.#mixinRules.set(name, rule);
-      this.#isDirty = true;
     }
     return rule;
   }
@@ -77,16 +71,11 @@ export class StyleSheet {
     if (rule === undefined) {
       rule = new NestingRule(selector, this.#mixinRules);
       this.nestingRules.set(selector, rule);
-      this.#isDirty = true;
     }
     return rule;
   }
   addFontFaceRule(options: FontFaceOptions) {
-    this.#isDirty = true;
     return this.#fontFaceRules.push(new FontFaceRule(options));
-  }
-  markAsDirty() {
-    this.#isDirty = true;
   }
   generateWith({
     nestingRules,
@@ -95,10 +84,6 @@ export class StyleSheet {
     nestingRules: NestingRule[];
     transformValue?: TransformValue;
   }) {
-    if (this.#isDirty === false) {
-      return this.#cssText;
-    }
-    this.#isDirty = false;
     const css: Array<string> = [];
 
     css.push(...this.#fontFaceRules.map((rule) => rule.cssText));
@@ -135,7 +120,6 @@ export class StyleSheet {
     this.#mediaRules.clear();
     this.#plainRules.clear();
     this.#fontFaceRules = [];
-    this.#isDirty = true;
   }
   render() {
     this.#element.mount();
