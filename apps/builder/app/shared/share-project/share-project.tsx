@@ -126,6 +126,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
             width: theme.spacing[24],
           }}
           sideOffset={0}
+          onInteractOutside={saveCustomLinkName}
         >
           <Item>
             <Label htmlFor={ids.name}>Name</Label>
