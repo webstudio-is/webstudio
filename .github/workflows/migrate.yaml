@@ -12,6 +12,7 @@ concurrency: migrate-${{ github.ref_name }}
 
 permissions:
   contents: read # to fetch code (actions/checkout)
+  statuses: write # This is required for the GitHub Script createCommitStatus to work
 
 jobs:
   migrate:
