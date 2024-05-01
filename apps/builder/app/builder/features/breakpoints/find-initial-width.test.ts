@@ -13,10 +13,10 @@ const breakpoints = [
 ];
 
 describe("Find initial width", () => {
-  test("base default", () => {
+  test("base default - using maximum available workspace while not entering any of the breakpoints", () => {
     expect(
       findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
-    ).toStrictEqual(992);
+    ).toStrictEqual(1000);
   });
 
   test("base while workspace is small", () => {
@@ -35,7 +35,7 @@ describe("Find initial width", () => {
     ];
     expect(
       findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
-    ).toStrictEqual(workspaceWidth);
+    ).toStrictEqual(1000);
   });
 
   test("base and max-width only", () => {
@@ -49,7 +49,7 @@ describe("Find initial width", () => {
     ];
     expect(
       findInitialWidth(breakpoints, breakpoints[0], workspaceWidth)
-    ).toStrictEqual(992);
+    ).toStrictEqual(1000);
   });
 
   test("base only", () => {

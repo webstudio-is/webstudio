@@ -1,6 +1,11 @@
 import { compareMedia } from "@webstudio-is/css-engine";
+import { b } from "@webstudio-is/react-sdk/css-normalize";
 import type { Breakpoint } from "@webstudio-is/sdk";
-import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
+import {
+  groupBreakpoints,
+  isBaseBreakpoint,
+  minCanvasWidth,
+} from "~/shared/breakpoints";
 
 const defaultWidth = 320;
 
@@ -20,21 +25,39 @@ export const findInitialWidth = (
     if (breakpoints.length === 1) {
       return workspaceWidth;
     }
-    const grouped = groupBreakpoints(breakpoints);
-    const baseIndex = grouped.findIndex(
-      ({ id }) => selectedBreakpoint.id === id
-    );
-    const next = grouped[baseIndex + 1];
-    if (next?.maxWidth !== undefined) {
-      return Math.max(next.maxWidth + 1, defaultWidth);
-    }
-    const prev = grouped[baseIndex - 1];
-    if (prev?.minWidth !== undefined) {
-      if (prev.minWidth < workspaceWidth) {
-        return Math.max(prev.minWidth - 1, defaultWidth);
+
+    const grouped = groupBreakpoints(breakpoints).filter(
+      ({ minWidth, maxWidth }) => {
+        if (minWidth && minWidth < workspaceWidth) {
+          return true;
+        }
+        if (maxWidth && maxWidth > minCanvasWidth) {
+          return true;
+        }
       }
-      return workspaceWidth;
-    }
+    );
+    let lowestMinWidth = grouped
+      .filter(({ minWidth }) => {
+        if (minWidth && minWidth < workspaceWidth) {
+          return true;
+        }
+      })
+      .at(-1)?.minWidth;
+    lowestMinWidth =
+      lowestMinWidth === undefined ? workspaceWidth : lowestMinWidth - 1;
+
+    let highestMaxWidth = grouped
+      .filter(({ maxWidth }) => {
+        if (maxWidth && maxWidth > minCanvasWidth) {
+          return true;
+        }
+      })
+      .at(0)?.maxWidth;
+
+    highestMaxWidth =
+      highestMaxWidth === undefined ? minCanvasWidth : highestMaxWidth + 1;
+
+    return Math.max(lowestMinWidth, highestMaxWidth);
   }
 
   if (selectedBreakpoint.minWidth !== undefined) {

@@ -55,7 +55,6 @@ export const useSetCanvasWidth = () => {
       if (workspaceRect === undefined) {
         return;
       }
-      unsubscribeRectStore?.();
       update();
     });
 
