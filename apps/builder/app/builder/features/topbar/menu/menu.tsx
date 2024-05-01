@@ -16,10 +16,10 @@ import {
   Kbd,
 } from "@webstudio-is/design-system";
 import {
-  useIsShareDialogOpen,
-  useIsPublishDialogOpen,
   $userPlanFeatures,
   $isCloneDialogOpen,
+  $isShareDialogOpen,
+  $isPublishDialogOpen,
 } from "~/builder/shared/nano-states";
 import { useClientSettings } from "~/builder/shared/client-settings";
 import { dashboardPath } from "~/shared/router-utils";
@@ -55,8 +55,6 @@ const ViewMenuItem = () => {
 
 export const Menu = () => {
   const navigate = useNavigate();
-  const [, setIsShareOpen] = useIsShareDialogOpen();
-  const [, setIsPublishOpen] = useIsPublishDialogOpen();
   const { hasProPlan } = useStore($userPlanFeatures);
   const authPermit = useStore($authPermit);
   const authTokenPermission = useStore($authTokenPermissions);
@@ -156,7 +154,7 @@ export const Menu = () => {
           >
             <DropdownMenuItem
               onSelect={() => {
-                setIsShareOpen(true);
+                $isShareDialogOpen.set(true);
               }}
               disabled={isShareEnabled === false}
             >
@@ -171,7 +169,7 @@ export const Menu = () => {
           >
             <DropdownMenuItem
               onSelect={() => {
-                setIsPublishOpen(true);
+                $isPublishDialogOpen.set(true);
               }}
               disabled={isPublishEnabled === false}
             >

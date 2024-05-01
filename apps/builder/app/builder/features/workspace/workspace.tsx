@@ -1,8 +1,8 @@
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
+  $canvasWidth,
   $scale,
-  useCanvasWidth,
   $workspaceRect,
 } from "~/builder/shared/nano-states";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
@@ -101,7 +101,7 @@ const useCanvasStyle = (
 ) => {
   const scale = useStore($scale);
   const workspaceRect = useStore($workspaceRect);
-  const [canvasWidth] = useCanvasWidth();
+  const canvasWidth = useStore($canvasWidth);
 
   return getCanvasStyle(initialBreakpoints, scale, workspaceRect, canvasWidth);
 };
@@ -111,7 +111,7 @@ const useOutlineStyle = (
 ) => {
   const scale = useStore($scale);
   const workspaceRect = useStore($workspaceRect);
-  const [canvasWidth] = useCanvasWidth();
+  const canvasWidth = useStore($canvasWidth);
   const style = getCanvasStyle(
     initialBreakpoints,
     100,

@@ -1,21 +1,12 @@
-import { atom, computed, type WritableAtom } from "nanostores";
-import { useStore } from "@nanostores/react";
+import { atom, computed } from "nanostores";
 import type { TabName } from "~/builder/features/sidebar-left/types";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 
-const useValue = <T>(atom: WritableAtom<T>) => {
-  const value = useStore(atom);
-  return [value, atom.set] as const;
-};
+export const $isShareDialogOpen = atom<boolean>(false);
 
-const $isShareDialogOpen = atom<boolean>(false);
-export const useIsShareDialogOpen = () => useValue($isShareDialogOpen);
-
-const $isPublishDialogOpen = atom<boolean>(false);
-export const useIsPublishDialogOpen = () => useValue($isPublishDialogOpen);
+export const $isPublishDialogOpen = atom<boolean>(false);
 
 export const $canvasWidth = atom<number | undefined>();
-export const useCanvasWidth = () => useValue($canvasWidth);
 
 export const $isCloneDialogOpen = atom<boolean>(false);
 

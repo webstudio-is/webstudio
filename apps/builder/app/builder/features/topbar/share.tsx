@@ -13,7 +13,7 @@ import {
 import type { Project } from "@webstudio-is/prisma-client";
 import { ShareProjectContainer } from "~/shared/share-project";
 import { $authPermit } from "~/shared/nano-states";
-import { useIsShareDialogOpen } from "~/builder/shared/nano-states";
+import { $isShareDialogOpen } from "~/builder/shared/nano-states";
 
 export const ShareButton = ({
   projectId,
@@ -22,7 +22,7 @@ export const ShareButton = ({
   projectId: Project["id"];
   hasProPlan: boolean;
 }) => {
-  const [isShareOpen, setIsShareOpen] = useIsShareDialogOpen();
+  const isShareDialogOpen = useStore($isShareDialogOpen);
   const authPermit = useStore($authPermit);
 
   const isShareDisabled = authPermit !== "own";
@@ -33,8 +33,10 @@ export const ShareButton = ({
   return (
     <FloatingPanelPopover
       modal
-      open={isShareOpen}
-      onOpenChange={setIsShareOpen}
+      open={isShareDialogOpen}
+      onOpenChange={(isOpen) => {
+        $isShareDialogOpen.set(isOpen);
+      }}
     >
       <FloatingPanelAnchor>
         <Tooltip

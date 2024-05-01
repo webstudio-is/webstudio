@@ -28,8 +28,8 @@ import {
 } from "@webstudio-is/design-system";
 import stripIndent from "strip-indent";
 import {
+  $isPublishDialogOpen,
   $userPlanFeatures,
-  useIsPublishDialogOpen,
 } from "../../shared/nano-states";
 import { validateProjectDomain, type Project } from "@webstudio-is/project";
 import { $authPermit, $publishedOrigin } from "~/shared/nano-states";
@@ -687,7 +687,7 @@ type PublishProps = {
 };
 
 export const PublishButton = ({ projectId }: PublishProps) => {
-  const [isOpen, setIsOpen] = useIsPublishDialogOpen();
+  const isPublishDialogOpen = useStore($isPublishDialogOpen);
   const authPermit = useStore($authPermit);
   const [dialogContentType, setDialogContentType] = useState<
     "publish" | "export"
@@ -707,11 +707,15 @@ export const PublishButton = ({ projectId }: PublishProps) => {
     if (isOpen === false) {
       setDialogContentType("publish");
     }
-    setIsOpen(isOpen);
+    $isPublishDialogOpen.set(isOpen);
   };
 
   return (
-    <FloatingPanelPopover modal open={isOpen} onOpenChange={handleOpenChange}>
+    <FloatingPanelPopover
+      modal
+      open={isPublishDialogOpen}
+      onOpenChange={handleOpenChange}
+    >
       <FloatingPanelAnchor>
         <Tooltip
           side="bottom"

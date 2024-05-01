@@ -11,13 +11,13 @@ import {
   useScrub,
   handleNumericInputArrowKeys,
 } from "@webstudio-is/design-system";
-import { useCanvasWidth } from "~/builder/shared/nano-states";
 import { $breakpoints, $isResizingCanvas } from "~/shared/nano-states";
 import {
   $selectedBreakpointId,
   $selectedBreakpoint,
 } from "~/shared/nano-states";
 import { useState, type KeyboardEvent, useEffect } from "react";
+import { $canvasWidth } from "~/builder/shared/nano-states";
 
 const useEnhancedInput = ({
   onChange,
@@ -85,12 +85,12 @@ const useEnhancedInput = ({
 
 export const WidthInput = ({ min }: { min: number }) => {
   const id = useId();
-  const [canvasWidth, setCanvasWidth] = useCanvasWidth();
+  const canvasWidth = useStore($canvasWidth);
   const selectedBreakpoint = useStore($selectedBreakpoint);
   const breakpoints = useStore($breakpoints);
 
   const onChange = (value: number) => {
-    setCanvasWidth(value);
+    $canvasWidth.set(value);
     const applicableBreakpoint = findApplicableMedia(
       Array.from(breakpoints.values()),
       value
