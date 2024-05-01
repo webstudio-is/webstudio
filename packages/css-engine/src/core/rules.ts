@@ -116,7 +116,7 @@ export class NestingRule {
     }
     return declarations.values();
   }
-  generateRules({
+  toString({
     breakpoint,
     indent = 0,
     transformValue,
@@ -173,31 +173,19 @@ export class NestingRule {
 }
 
 export class StylePropertyMap {
+  #cached: undefined | string;
   #styleMap: Map<StyleProperty, StyleValue | undefined> = new Map();
-  #isDirty = true;
-  #string = "";
   #indent = 0;
   #transformValue?: TransformValue;
-  #onChange?: () => void;
-  constructor(
-    style: Style,
-    transformValue?: TransformValue,
-    onChange?: () => void
-  ) {
-    this.#transformValue = transformValue;
-    this.#onChange = onChange;
+  constructor(style: Style) {
     let property: StyleProperty;
     for (property in style) {
       this.#styleMap.set(property, style[property]);
     }
   }
-  setTransformer(transformValue: TransformValue) {
-    this.#transformValue = transformValue;
-  }
   set(property: StyleProperty, value?: StyleValue) {
     this.#styleMap.set(property, value);
-    this.#isDirty = true;
-    this.#onChange?.();
+    this.#cached = undefined;
   }
   get(property: StyleProperty) {
     return this.#styleMap.get(property);
@@ -213,19 +201,24 @@ export class StylePropertyMap {
   }
   delete(property: StyleProperty) {
     this.#styleMap.delete(property);
-    this.#isDirty = true;
-    this.#onChange?.();
+    this.#cached = undefined;
   }
   clear() {
     this.#styleMap.clear();
-    this.#isDirty = true;
-    this.#onChange?.();
+    this.#cached = undefined;
   }
-  toString({ indent = 0 } = {}) {
-    if (this.#isDirty === false && indent === this.#indent) {
-      return this.#string;
+  toString({
+    indent = 0,
+    transformValue,
+  }: { indent?: number; transformValue?: TransformValue } = {}) {
+    // invalidate cache when indent is changed
+    if (
+      this.#cached &&
+      indent === this.#indent &&
+      transformValue === this.#transformValue
+    ) {
+      return this.#cached;
     }
-    this.#indent = indent;
     const block: Array<string> = [];
     const spaces = " ".repeat(indent);
     for (const [property, value] of this.#styleMap) {
@@ -233,41 +226,37 @@ export class StylePropertyMap {
         continue;
       }
       block.push(
-        `${spaces}${toProperty(property)}: ${toValue(
-          value,
-          this.#transformValue
-        )}`
+        `${spaces}${toProperty(property)}: ${toValue(value, transformValue)}`
       );
     }
-    this.#string = block.join(";\n");
-    this.#isDirty = false;
-    return this.#string;
+    this.#cached = block.join(";\n");
+    this.#indent = indent;
+    this.#transformValue = transformValue;
+    return this.#cached;
   }
 }
 
 export class StyleRule {
   styleMap;
   selectorText;
-  constructor(
-    selectorText: string,
-    style: StylePropertyMap | Style,
-    transformValue?: TransformValue,
-    onChange?: () => void
-  ) {
+  constructor(selectorText: string, style: StylePropertyMap | Style) {
     this.selectorText = selectorText;
     this.styleMap =
-      style instanceof StylePropertyMap
-        ? style
-        : new StylePropertyMap(style, transformValue, onChange);
+      style instanceof StylePropertyMap ? style : new StylePropertyMap(style);
   }
   get cssText() {
     return this.toString();
   }
-  toString(options = { indent: 0 }) {
-    const spaces = " ".repeat(options.indent);
-    return `${spaces}${this.selectorText} {\n${this.styleMap.toString({
-      indent: options.indent + 2,
-    })}\n${spaces}}`;
+  toString({
+    indent = 0,
+    transformValue,
+  }: { indent?: number; transformValue?: TransformValue } = {}) {
+    const spaces = " ".repeat(indent);
+    const content = this.styleMap.toString({
+      indent: indent + 2,
+      transformValue,
+    });
+    return `${spaces}${this.selectorText} {\n${content}\n${spaces}}`;
   }
 }
 
@@ -313,10 +302,10 @@ export class MediaRule {
     }
     const rules = [];
     for (const rule of this.rules.values()) {
-      rules.push(rule.toString({ indent: 2 }));
+      rules.push(rule.toString({ indent: 2, transformValue }));
     }
     for (const rule of nestingRules) {
-      const generatedRule = rule.generateRules({
+      const generatedRule = rule.toString({
         breakpoint: this.#name,
         indent: 2,
         transformValue,
@@ -345,10 +334,8 @@ export class MediaRule {
 
 export class PlaintextRule {
   cssText;
-  styleMap: StylePropertyMap;
   constructor(cssText: string) {
     this.cssText = cssText;
-    this.styleMap = new StylePropertyMap({});
   }
   toString() {
     return this.cssText;
@@ -364,17 +351,21 @@ export type FontFaceOptions = {
 };
 
 export class FontFaceRule {
-  options: FontFaceOptions;
+  #cached: undefined | string;
+  #options: FontFaceOptions;
   constructor(options: FontFaceOptions) {
-    this.options = options;
+    this.#options = options;
   }
   get cssText() {
     return this.toString();
   }
   toString() {
+    if (this.#cached) {
+      return this.#cached;
+    }
     const decls = [];
     const { fontFamily, fontStyle, fontWeight, fontDisplay, src } =
-      this.options;
+      this.#options;
     const value = toValue(
       { type: "fontFamily", value: [fontFamily] },
       // Avoids adding a fallback automatically which needs to happen for font family in general but not for font face.
@@ -385,8 +376,7 @@ export class FontFaceRule {
     decls.push(`font-weight: ${fontWeight}`);
     decls.push(`font-display: ${fontDisplay}`);
     decls.push(`src: ${src}`);
-    return `@font-face {\n  ${decls.join("; ")};\n}`;
+    this.#cached = `@font-face {\n  ${decls.join("; ")};\n}`;
+    return this.#cached;
   }
 }
-
-export type AnyRule = StyleRule | MediaRule | PlaintextRule | FontFaceRule;
