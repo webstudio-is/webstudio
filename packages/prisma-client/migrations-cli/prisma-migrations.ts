@@ -254,6 +254,9 @@ export const resetDatabase = async () => {
     await $`"prisma migrate diff --from-schema-datasource ${schemaFilePath} --to-empty --script`;
 
   await $({
+    env: process.env,
+    verbose: true,
+    cwd: prismaDir,
     input: sqlToDeleteEverything,
   })`prisma db execute --stdin --schema ${schemaFilePath}`;
 
@@ -262,14 +265,21 @@ export const resetDatabase = async () => {
 
 // https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-diff
 export const cliDiff = async () => {
-  const { stdout } =
-    await $`prisma migrate diff --from-schema-datasource ${schemaFilePath} --to-schema-datamodel ${schemaFilePath} --script`;
+  const { stdout } = await $({
+    env: process.env,
+    verbose: true,
+    cwd: prismaDir,
+  })`prisma migrate diff --from-schema-datasource ${schemaFilePath} --to-schema-datamodel ${schemaFilePath} --script`;
   return stdout;
 };
 
 // https://www.prisma.io/docs/reference/api-reference/command-reference#db-execute
 export const cliExecute = async (filePath: string) => {
-  await $`prisma db execute --file ${filePath} --schema ${schemaFilePath}`;
+  await $({
+    env: process.env,
+    verbose: true,
+    cwd: prismaDir,
+  })`prisma db execute --file ${filePath} --schema ${schemaFilePath}`;
 };
 
 export const generateMigrationClient = async (migrationName: string) => {
