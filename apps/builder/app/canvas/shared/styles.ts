@@ -1,7 +1,7 @@
 import { useContext, useEffect, useLayoutEffect, useMemo } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Assets, Instance, StyleDecl } from "@webstudio-is/sdk";
+import type { Instance, StyleDecl } from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -27,12 +27,11 @@ import {
 } from "~/shared/nano-states";
 import {
   type StyleRule,
-  type PlaintextRule,
   createRegularStyleSheet,
   toValue,
   compareMedia,
 } from "@webstudio-is/css-engine";
-import { $ephemeralStyles } from "../stores";
+import { $ephemeralStyles, $params } from "../stores";
 import { resetInert, setInert } from "./inert";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
@@ -114,7 +113,15 @@ const subscribePreviewMode = () => {
   };
 };
 
-const subscribeEphemeralStyle = (params: Params) => {
+// keep stable transformValue in store
+// to preserve cache in css engine
+const $transformValue = computed([$assets, $params], (assets, params) =>
+  createImageValueTransformer(assets, {
+    assetBaseUrl: params?.assetBaseUrl ?? "",
+  })
+);
+
+const subscribeEphemeralStyle = () => {
   // track custom properties added on previous ephemeral styles change
   const addedCustomProperties = new Set<string>();
 
@@ -128,10 +135,7 @@ const subscribeEphemeralStyle = (params: Params) => {
     // track custom properties not set on this change
     const deletedCustomProperties = new Set(addedCustomProperties);
 
-    const assets = $assets.get();
-    const transformer = createImageValueTransformer(assets, {
-      assetBaseUrl: params.assetBaseUrl,
-    });
+    const transformValue = $transformValue.get();
 
     for (const styleDecl of ephemeralStyles) {
       const {
@@ -148,7 +152,7 @@ const subscribeEphemeralStyle = (params: Params) => {
 
       document.body.style.setProperty(
         customProperty,
-        toValue(value, transformer)
+        toValue(value, transformValue)
       );
       addedCustomProperties.add(customProperty);
       deletedCustomProperties.delete(customProperty);
@@ -157,8 +161,6 @@ const subscribeEphemeralStyle = (params: Params) => {
         instanceId,
         breakpointId,
         state,
-        assets,
-        params,
       });
 
       const propertyValue = rule.styleMap.get(property);
@@ -189,12 +191,13 @@ const subscribeEphemeralStyle = (params: Params) => {
     }
 
     // rerender style rules if new vars added
+    userSheet.setTransformer($transformValue.get());
     userSheet.render();
   });
 };
 
-export const useManageDesignModeStyles = (params: Params) => {
-  useEffect(() => subscribeEphemeralStyle(params), [params]);
+export const useManageDesignModeStyles = () => {
+  useEffect(() => subscribeEphemeralStyle(), []);
   useEffect(subscribePreviewMode, []);
 };
 
@@ -210,6 +213,7 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
     for (const breakpoint of sortedBreakpoints) {
       userSheet.addMediaRule(breakpoint.id, breakpoint);
     }
+    userSheet.setTransformer($transformValue.get());
     userSheet.render();
   }, [breakpoints]);
 
@@ -261,20 +265,16 @@ const toVarValue = (
   }
 };
 
-const wrappedRulesMap = new Map<string, StyleRule | PlaintextRule>();
+const wrappedRulesMap = new Map<string, StyleRule>();
 
 const getOrCreateRule = ({
   instanceId,
   breakpointId,
   state = "",
-  assets,
-  params,
 }: {
   instanceId: string;
   breakpointId: string;
   state: undefined | string;
-  assets: Assets;
-  params: Params;
 }) => {
   const key = `${instanceId}:${breakpointId}:${state}`;
   let rule = wrappedRulesMap.get(key);
@@ -288,9 +288,6 @@ const getOrCreateRule = ({
     );
     wrappedRulesMap.set(key, rule);
   }
-  rule.styleMap.setTransformer(
-    createImageValueTransformer(assets, { assetBaseUrl: params.assetBaseUrl })
-  );
   return rule;
 };
 
@@ -322,15 +319,8 @@ export const useCssRules = ({
   const selectedState = useSelectedState(instanceId);
 
   useLayoutEffect(() => {
-    // expect assets to be up to date by the time styles are changed
-    // to avoid all styles rerendering when assets are changed
-    const assets = $assets.get();
-
     // find all instance rules and collect rendered properties
-    const deletedPropertiesByRule = new Map<
-      StyleRule | PlaintextRule,
-      Set<StyleProperty>
-    >();
+    const deletedPropertiesByRule = new Map<StyleRule, Set<StyleProperty>>();
     for (const [key, rule] of wrappedRulesMap) {
       if (key.startsWith(`${instanceId}:`)) {
         deletedPropertiesByRule.set(rule, new Set(rule.styleMap.keys()));
@@ -355,8 +345,6 @@ export const useCssRules = ({
         // render selected state as style without state
         // to show user preview
         state: selectedState === state ? undefined : state,
-        assets,
-        params,
       });
 
       // find existing declarations and exclude currently set properties
@@ -379,6 +367,7 @@ export const useCssRules = ({
       }
     }
 
+    userSheet.setTransformer($transformValue.get());
     userSheet.render();
   }, [instanceId, selectedState, instanceStyles, breakpoints, params]);
 };
