@@ -5,6 +5,12 @@ on:
     branches:
       - "migrate"
 
+# Pending if other migration from the same branch is running
+concurrency: migrate-${{ github.ref_name }}
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
@@ -12,13 +18,26 @@ jobs:
     environment:
       name: ${{ endsWith(github.ref_name, '.staging') && 'postgres_production' || 'postgres_development' }}
 
+    timeout-minutes: 20
+
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }} # HEAD commit instead of merge commit
 
-      - uses: ./.github/actions/migrate
-        id: migrate
-        name: Migrate
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
         with:
-          TEST_SECRET: ${{ secrets.TEST_SECRET }}
+          node-version: 20
+          cache: pnpm
+
+      - name: pnpm instal
+        run: pnpm install --ignore-scripts
+
+      - name: build prisma client
+        run: pnpm --filter '@webstudio-is/prisma-client...' run build
+
+      - name: execute migration
+        run: pnpm --filter '@webstudio-is/prisma-client' run migrations migrate
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
