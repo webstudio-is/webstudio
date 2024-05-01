@@ -23,13 +23,19 @@ const Placeholder = ({
 export const CodeText = forwardRef<
   ElementRef<typeof defaultTag>,
   ComponentProps<typeof defaultTag> & { code?: string }
->(({ code, ...props }, ref) => {
-  if (code === undefined || String(code).trim().length === 0) {
+>(({ code, children, ...props }, ref) => {
+  // We are supporting children here for historical reasons, because
+  // the first version of this component allowed using any components inside the CodeText
+  // and we didn't want to migrate them to use code, also it's not entirely possible.
+  if (
+    (children === undefined && code === undefined) ||
+    String(code).trim().length === 0
+  ) {
     return <Placeholder innerRef={ref} {...props} />;
   }
   return (
     <code {...props} ref={ref}>
-      {code}
+      {code ?? children}
     </code>
   );
 });
