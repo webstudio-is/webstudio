@@ -107,8 +107,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
       return;
     }
 
-    onChange({ ...value, name: customLinkName });
-    setIsOpen(false);
+    onChange({ ...value, name: customLinkName.trim() });
   };
 
   return (
@@ -127,6 +126,7 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
             width: theme.spacing[24],
           }}
           sideOffset={0}
+          onInteractOutside={saveCustomLinkName}
         >
           <Item>
             <Label htmlFor={ids.name}>Name</Label>
@@ -134,13 +134,14 @@ const Menu = ({ name, hasProPlan, value, onChange, onDelete }: MenuProps) => {
               id={ids.name}
               color={customLinkName.length === 0 ? "error" : undefined}
               value={customLinkName}
-              onChange={(event) => setCustomLinkName(event.target.value.trim())}
+              onChange={(event) => setCustomLinkName(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   saveCustomLinkName();
+                  setIsOpen(false);
                 }
               }}
-              onBlur={() => onChange({ ...value, name: customLinkName })}
+              onBlur={saveCustomLinkName}
               placeholder="Share Project"
               name="Name"
               autoFocus
@@ -432,12 +433,7 @@ export const ShareProject = ({
   );
 
   return (
-    <Flex
-      direction="column"
-      css={{
-        width: theme.spacing[33],
-      }}
-    >
+    <Flex direction="column" css={{ width: theme.spacing[33] }}>
       <Collapsible.Root open={items.length > 0}>
         <Collapsible.Content className={collapsibleStyle()}>
           {items}
