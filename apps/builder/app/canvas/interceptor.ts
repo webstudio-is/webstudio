@@ -1,4 +1,4 @@
-import type { System } from "@webstudio-is/sdk";
+import { getPagePath, type System } from "@webstudio-is/sdk";
 import {
   compilePathnamePattern,
   matchPathnamePattern,
@@ -47,9 +47,8 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   }
   const pageHref = new URL(href, "https://any-valid.url");
   for (const page of [pages.homePage, ...pages.pages]) {
-    // URL always parses root page as /
-    // but webstudio stores home page as empty string
-    const params = matchPathnamePattern(page.path || "/", pageHref.pathname);
+    const pagePath = getPagePath(page.id, pages);
+    const params = matchPathnamePattern(pagePath, pageHref.pathname);
     if (params) {
       // populate search params with form data values if available
       if (formData) {
