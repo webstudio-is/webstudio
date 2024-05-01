@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "migrate"
+      - "main"
+      - "*.staging"
 
 # Pending if other migration from the same branch is running
 concurrency: migrate-${{ github.ref_name }}
@@ -13,6 +15,8 @@ permissions:
 
 jobs:
   migrate:
+    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.staging')) && startsWith(github.event.head_commit.message, '::migrate::'))
+
     runs-on: ubuntu-latest
 
     environment:
