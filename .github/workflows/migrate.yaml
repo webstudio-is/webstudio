@@ -57,7 +57,10 @@ jobs:
 
   # Prints pending migrations
   pending:
+    if: always()
+
     needs: [migrate]
+
     runs-on: ubuntu-latest
 
     environment:
@@ -80,7 +83,15 @@ jobs:
       - name: build prisma client
         run: pnpm --filter '@webstudio-is/prisma-client...' run build
 
-      - name: execute migration
-        run: pnpm --filter '@webstudio-is/prisma-client' run migrations pending-count
+      - name: get pending
+        id: pending
+        run: |
+          echo "value=$(pnpm --filter '@webstudio-is/prisma-client' run migrations pending-count | grep ::pending-count::)" >> $GITHUB_OUTPUT
         env:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
+
+      - uses: ./.github/actions/add-status
+        with:
+          title: "Pending Migrations"
+          description: ${{ steps.pending.outputs.value }}
+          url: "https://webstudio.is"
