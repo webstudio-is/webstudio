@@ -93,6 +93,6 @@ jobs:
 
       - uses: ./.github/actions/add-status
         with:
-          title: "Pending Migrations"
+          title: "⭕ Pending Migrations"
           description: ${{ steps.pending.outputs.value }}
           url: "https://webstudio.is"
