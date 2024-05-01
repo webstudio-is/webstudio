@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: "postgres_development"
+      name: ${{ endsWith(github.ref_name, '.staging') && 'postgres_production' || 'postgres_development' }}
 
     steps:
       - uses: actions/checkout@v4
