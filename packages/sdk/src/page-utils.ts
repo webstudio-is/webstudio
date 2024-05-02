@@ -75,16 +75,17 @@ export const getPagePath = (id: Folder["id"] | Page["id"], pages: Pages) => {
   return paths.reverse().join("/").replace(/\/+/g, "/");
 };
 
-export const getStaticSiteMapXml = (pages: Page[], updatedAt: string) => {
+export const getStaticSiteMapXml = (pages: Pages, updatedAt: string) => {
+  const allPages = [pages.homePage, ...pages.pages];
   return (
-    pages
+    allPages
       // ignore pages with excludePageFromSearch bound to variables
       // because there is no data from cms available at build time
       .filter(
         (page) => executeExpression(page.meta.excludePageFromSearch) !== true
       )
       .map((page) => ({
-        path: page.path,
+        path: getPagePath(page.id, pages),
         lastModified: updatedAt.split("T")[0],
       }))
   );

@@ -680,7 +680,7 @@ export const projectMeta: ProjectMeta =
     join(generatedDir, "[sitemap.xml].ts"),
     `
       export const sitemap = ${JSON.stringify(
-        getStaticSiteMapXml(siteData.pages, siteData.build.updatedAt),
+        getStaticSiteMapXml(siteData.build.pages, siteData.build.updatedAt),
         null,
         2
       )};
