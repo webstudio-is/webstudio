@@ -1,7 +1,11 @@
-import { useContext, useEffect, useLayoutEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { Instance, StyleDecl } from "@webstudio-is/sdk";
+import {
+  getStyleDeclKey,
+  type StyleDecl,
+  type StyleSourceSelection,
+} from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -9,13 +13,12 @@ import {
   createImageValueTransformer,
   getPresetStyleRules,
   type Params,
-  ReactSdkContext,
 } from "@webstudio-is/react-sdk";
 import {
-  type StyleValue,
-  type StyleProperty,
-  isValidStaticStyleValue,
   type VarValue,
+  createRegularStyleSheet,
+  isValidStaticStyleValue,
+  toValue,
 } from "@webstudio-is/css-engine";
 import {
   $assets,
@@ -24,22 +27,32 @@ import {
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedStyleState,
+  $styleSourceSelections,
+  $styles,
 } from "~/shared/nano-states";
-import {
-  type StyleRule,
-  createRegularStyleSheet,
-  toValue,
-  compareMedia,
-} from "@webstudio-is/css-engine";
+import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles, $params } from "../stores";
 import { resetInert, setInert } from "./inert";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
+const stateSheet = createRegularStyleSheet({ name: "state-styles" });
 const helpersSheet = createRegularStyleSheet({ name: "helpers" });
 const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
 const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
+
+/**
+ * maintain order of rendered stylesheets
+ * should be invoked before any subscription
+ */
+export const mountStyles = () => {
+  fontsAndDefaultsSheet.render();
+  presetSheet.render();
+  userSheet.render();
+  stateSheet.render();
+  helpersSheet.render();
+};
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper
@@ -121,101 +134,118 @@ const $transformValue = computed([$assets, $params], (assets, params) =>
   })
 );
 
-const subscribeEphemeralStyle = () => {
-  // track custom properties added on previous ephemeral styles change
-  const addedCustomProperties = new Set<string>();
+const getEphemeralProperty = (styleDecl: StyleDecl) => {
+  const { styleSourceId, state = "", property } = styleDecl;
+  return `--${styleSourceId}-${state}-${property}`;
+};
 
-  return $ephemeralStyles.subscribe((ephemeralStyles) => {
-    if (ephemeralStyles.length > 0) {
-      setInert();
-    } else {
-      resetInert();
+// wrap normal style value with var(--namespace, value) to support ephemeral styles updates
+// between all token usages
+const toVarValue = (styleDecl: StyleDecl): undefined | VarValue => {
+  const { value } = styleDecl;
+  if (value.type === "var") {
+    return value;
+  }
+  // Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+  if (isValidStaticStyleValue(value)) {
+    return {
+      type: "var",
+      // var style value is relying on name without leading "--"
+      // escape complex selectors in state like ":hover"
+      // setProperty and removeProperty escape automatically
+      value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
+      fallbacks: [value],
+    };
+  }
+};
+
+/**
+ * track new or deleted styles and style source selections items
+ * and update style sheet accordingly
+ */
+export const subscribeStyles = () => {
+  let animationFrameId: undefined | number;
+
+  const renderUserSheetInTheNextFrame = () => {
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
     }
+    animationFrameId = requestAnimationFrame(() => {
+      userSheet.setTransformer($transformValue.get());
+      userSheet.render();
+    });
+  };
 
-    // track custom properties not set on this change
-    const deletedCustomProperties = new Set(addedCustomProperties);
-
-    const transformValue = $transformValue.get();
-
-    for (const styleDecl of ephemeralStyles) {
-      const {
-        instanceId,
-        breakpointId,
-        state,
-        property,
-        value,
-        styleSourceId,
-      } = styleDecl;
-      const customProperty = `--${
-        toVarValue(styleSourceId, property, value)?.value ?? "invalid-property"
-      }`;
-
-      document.body.style.setProperty(
-        customProperty,
-        toValue(value, transformValue)
-      );
-      addedCustomProperties.add(customProperty);
-      deletedCustomProperties.delete(customProperty);
-
-      const rule = getOrCreateRule({
-        instanceId,
-        breakpointId,
-        state,
-      });
-
-      const propertyValue = rule.styleMap.get(property);
-
-      const varValue = toVarValue(styleSourceId, property, value);
-
-      if (varValue === undefined) {
-        continue;
-      }
-
-      // Variable names are equal, no need to update
-      if (
-        propertyValue?.type === "var" &&
-        propertyValue.value === varValue.value
-      ) {
-        continue;
-      }
-
-      // this is possible on newly created instances, or
-      // in case of property variable defined on the other style source
-      // or properties are not yet defined in the style.
-      rule.styleMap.set(property, varValue);
+  const unsubscribeBreakpoints = $breakpoints.subscribe((breakpoints) => {
+    for (const breakpoint of breakpoints.values()) {
+      userSheet.addMediaRule(breakpoint.id, breakpoint);
     }
-
-    for (const property of deletedCustomProperties) {
-      document.body.style.removeProperty(property);
-      addedCustomProperties.delete(property);
-    }
-
-    // rerender style rules if new vars added
-    userSheet.setTransformer($transformValue.get());
-    userSheet.render();
+    renderUserSheetInTheNextFrame();
   });
+
+  // add/delete declarations in mixins
+  let prevStylesSet = new Set<StyleDecl>();
+  const unsubscribeStyles = $styles.subscribe((styles) => {
+    const stylesSet = new Set(styles.values());
+    const addedStyles = setDifference(stylesSet, prevStylesSet);
+    const deletedStyles = setDifference(prevStylesSet, stylesSet);
+    prevStylesSet = stylesSet;
+    // delete before adding declaraions by the same key
+    for (const styleDecl of deletedStyles) {
+      const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
+      rule.deleteDeclaration({
+        breakpoint: styleDecl.breakpointId,
+        selector: styleDecl.state ?? "",
+        property: styleDecl.property,
+      });
+    }
+    for (const styleDecl of addedStyles) {
+      const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
+      rule.setDeclaration({
+        breakpoint: styleDecl.breakpointId,
+        selector: styleDecl.state ?? "",
+        property: styleDecl.property,
+        value: toVarValue(styleDecl) ?? styleDecl.value,
+      });
+    }
+    renderUserSheetInTheNextFrame();
+  });
+
+  // apply mixins to nesting rules
+  let prevSelectionsSet = new Set<StyleSourceSelection>();
+  const unsubscribeStyleSourceSelections = $styleSourceSelections.subscribe(
+    (styleSourceSelections) => {
+      const selectionsSet = new Set(styleSourceSelections.values());
+      const addedSelections = setDifference(selectionsSet, prevSelectionsSet);
+      prevSelectionsSet = selectionsSet;
+      for (const { instanceId, values } of addedSelections) {
+        const selector = `[${idAttribute}="${instanceId}"]`;
+        const rule = userSheet.addNestingRule(selector);
+        rule.applyMixins(values);
+      }
+      renderUserSheetInTheNextFrame();
+    }
+  );
+
+  return () => {
+    unsubscribeBreakpoints();
+    unsubscribeStyles();
+    unsubscribeStyleSourceSelections();
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+  };
 };
 
 export const useManageDesignModeStyles = () => {
-  useEffect(() => subscribeEphemeralStyle(), []);
+  useEffect(subscribeStateStyles, []);
+  useEffect(subscribeEphemeralStyle, []);
   useEffect(subscribePreviewMode, []);
 };
 
 export const GlobalStyles = ({ params }: { params: Params }) => {
-  const breakpoints = useStore($breakpoints);
   const assets = useStore($assets);
   const metas = useStore($registeredComponentMetas);
-
-  useLayoutEffect(() => {
-    const sortedBreakpoints = Array.from(breakpoints.values()).sort(
-      compareMedia
-    );
-    for (const breakpoint of sortedBreakpoints) {
-      userSheet.addMediaRule(breakpoint.id, breakpoint);
-    }
-    userSheet.setTransformer($transformValue.get());
-    userSheet.render();
-  }, [breakpoints]);
 
   useLayoutEffect(() => {
     fontsAndDefaultsSheet.clear();
@@ -244,130 +274,159 @@ export const GlobalStyles = ({ params }: { params: Params }) => {
   return null;
 };
 
-// Wrapps a normal StyleValue into a VarStyleValue that uses the previous style value as a fallback and allows
-// to quickly pass the values over CSS variable witout rerendering the components tree.
-// Results in values like this: `var(--namespace, staticValue)`
-const toVarValue = (
-  styleSourceId: StyleDecl["styleSourceId"],
-  styleProperty: StyleProperty,
-  styleValue: StyleValue
-): undefined | VarValue => {
-  if (styleValue.type === "var") {
-    return styleValue;
-  }
-  // Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
-  if (isValidStaticStyleValue(styleValue)) {
+const $instanceStyles = computed(
+  [
+    $selectedInstanceSelector,
+    $selectedStyleState,
+    $breakpoints,
+    $styleSourceSelections,
+    $styles,
+  ],
+  (
+    selectedInstanceSelector,
+    selectedStyleState,
+    breakpoints,
+    styleSourceSelections,
+    styles
+  ) => {
+    if (
+      selectedInstanceSelector === undefined ||
+      selectedStyleState === undefined
+    ) {
+      return;
+    }
+    const [instanceId] = selectedInstanceSelector;
+    const styleSources = new Set(styleSourceSelections.get(instanceId)?.values);
+    const instanceStyles: StyleDecl[] = [];
+    for (const styleDecl of styles.values()) {
+      if (
+        styleDecl.state === selectedStyleState &&
+        styleSources.has(styleDecl.styleSourceId)
+      ) {
+        instanceStyles.push(styleDecl);
+      }
+    }
     return {
-      type: "var",
-      value: `${styleProperty}-${styleSourceId}`,
-      fallbacks: [styleValue],
+      instanceId,
+      breakpoints: Array.from(breakpoints.values()),
+      styles: instanceStyles,
     };
   }
-};
+);
 
-const wrappedRulesMap = new Map<string, StyleRule>();
-
-const getOrCreateRule = ({
-  instanceId,
-  breakpointId,
-  state = "",
-}: {
-  instanceId: string;
-  breakpointId: string;
-  state: undefined | string;
-}) => {
-  const key = `${instanceId}:${breakpointId}:${state}`;
-  let rule = wrappedRulesMap.get(key);
-  if (rule === undefined) {
-    rule = userSheet.addStyleRule(
-      {
-        breakpoint: breakpointId,
-        style: {},
-      },
-      `[${idAttribute}="${instanceId}"]${state}`
-    );
-    wrappedRulesMap.set(key, rule);
-  }
-  return rule;
-};
-
-const useSelectedState = (instanceId: Instance["id"]) => {
-  const $selectedState = useMemo(() => {
-    return computed(
-      [$selectedInstanceSelector, $selectedStyleState],
-      (selectedInstanceSelector, selectedStyleState) => {
-        if (selectedInstanceSelector?.[0] !== instanceId) {
-          return;
-        }
-        return selectedStyleState;
-      }
-    );
-  }, [instanceId]);
-  const selectedState = useStore($selectedState);
-  return selectedState;
-};
-
-export const useCssRules = ({
-  instanceId,
-  instanceStyles,
-}: {
-  instanceId: string;
-  instanceStyles: StyleDecl[];
-}) => {
-  const params = useContext(ReactSdkContext);
-  const breakpoints = useStore($breakpoints);
-  const selectedState = useSelectedState(instanceId);
-
-  useLayoutEffect(() => {
-    // find all instance rules and collect rendered properties
-    const deletedPropertiesByRule = new Map<StyleRule, Set<StyleProperty>>();
-    for (const [key, rule] of wrappedRulesMap) {
-      if (key.startsWith(`${instanceId}:`)) {
-        deletedPropertiesByRule.set(rule, new Set(rule.styleMap.keys()));
-      }
+/**
+ * render currently selected state styles as stateless
+ * in separate sheet and clear when state is not selected
+ */
+const subscribeStateStyles = () => {
+  return $instanceStyles.subscribe((instanceStyles) => {
+    if (instanceStyles === undefined) {
+      stateSheet.clear();
+      stateSheet.render();
+      return;
     }
-
-    // render styles without state first so state styles in preview
-    // could override them
-    const orderedStyles = instanceStyles.slice().sort((left, right) => {
-      const leftDirection = left.state === undefined ? -1 : 1;
-      const rightDirection = right.state === undefined ? -1 : 1;
-      return leftDirection - rightDirection;
-    });
-
-    for (const styleDecl of orderedStyles) {
-      const { breakpointId, state, property, value, styleSourceId } = styleDecl;
-
-      // create new rule or use cached one
-      const rule = getOrCreateRule({
-        instanceId,
-        breakpointId,
-        // render selected state as style without state
-        // to show user preview
-        state: selectedState === state ? undefined : state,
+    // reset state sheet on every update to avoid stale styles
+    stateSheet.clear();
+    const { instanceId, breakpoints, styles } = instanceStyles;
+    for (const breakpoint of breakpoints.values()) {
+      stateSheet.addMediaRule(breakpoint.id, breakpoint);
+    }
+    const selector = `[${idAttribute}="${instanceId}"]`;
+    const rule = stateSheet.addNestingRule(selector);
+    for (const styleDecl of styles) {
+      rule.setDeclaration({
+        breakpoint: styleDecl.breakpointId,
+        // render without state
+        selector: "",
+        property: styleDecl.property,
+        value: toVarValue(styleDecl) ?? styleDecl.value,
       });
+    }
+    stateSheet.setTransformer($transformValue.get());
+    stateSheet.render();
+  });
+};
 
-      // find existing declarations and exclude currently set properties
-      // to delete the rest later
-      const deletedProperties = deletedPropertiesByRule.get(rule);
-      if (deletedProperties) {
-        deletedProperties.delete(property);
-      }
+const subscribeEphemeralStyle = () => {
+  // track custom properties added on previous ephemeral update
+  const appliedEphemeralDeclarations = new Map<string, StyleDecl>();
 
-      const varValue = toVarValue(styleSourceId, property, value);
-      if (varValue) {
-        rule.styleMap.set(property, varValue);
+  return $ephemeralStyles.subscribe((ephemeralStyles) => {
+    const instanceSelector = $selectedInstanceSelector.get();
+    if (instanceSelector === undefined) {
+      return;
+    }
+    const [instanceId] = instanceSelector;
+
+    // reset ephemeral styles
+    if (ephemeralStyles.length === 0) {
+      resetInert();
+      for (const styleDecl of appliedEphemeralDeclarations.values()) {
+        // prematurely apply last known ephemeral update to user stylesheet
+        // to avoid lag because of delay between deleting ephemeral style
+        // and sending style patch (and rendering)
+        const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
+        mixinRule.setDeclaration({
+          breakpoint: styleDecl.breakpointId,
+          selector: styleDecl.state ?? "",
+          property: styleDecl.property,
+          value: toVarValue(styleDecl) ?? styleDecl.value,
+        });
+        document.body.style.removeProperty(getEphemeralProperty(styleDecl));
       }
+      userSheet.setTransformer($transformValue.get());
+      userSheet.render();
+      appliedEphemeralDeclarations.clear();
     }
 
-    // delete previously rendered properties when reset
-    for (const [styleRule, deletedProperties] of deletedPropertiesByRule) {
-      for (const property of deletedProperties) {
-        styleRule.styleMap.delete(property);
+    // add ephemeral styles
+    if (ephemeralStyles.length > 0) {
+      setInert();
+      const selector = `[${idAttribute}="${instanceId}"]`;
+      const rule = userSheet.addNestingRule(selector);
+      let ephemetalSheetUpdated = false;
+      for (const styleDecl of ephemeralStyles) {
+        // update custom property
+        document.body.style.setProperty(
+          getEphemeralProperty(styleDecl),
+          toValue(styleDecl.value, $transformValue.get())
+        );
+        // render temporary rule for instance with var()
+        // rendered with "all" breakpoint and without state
+        // to reflect changes in canvas without user interaction
+        const styleDeclKey = getStyleDeclKey(styleDecl);
+        if (appliedEphemeralDeclarations.has(styleDeclKey) === false) {
+          ephemetalSheetUpdated = true;
+          const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
+          mixinRule.setDeclaration({
+            breakpoint: styleDecl.breakpointId,
+            selector: styleDecl.state ?? "",
+            property: styleDecl.property,
+            value: toVarValue(styleDecl) ?? styleDecl.value,
+          });
+          // add local style source when missing to support
+          // ephemeral styles on newly created instances
+          rule.addMixin(styleDecl.styleSourceId);
+
+          // temporary render var() in state sheet as well
+          if (styleDecl.state !== undefined) {
+            const stateRule = stateSheet.addNestingRule(selector);
+            stateRule.setDeclaration({
+              breakpoint: styleDecl.breakpointId,
+              // render without state
+              selector: "",
+              property: styleDecl.property,
+              value: toVarValue(styleDecl) ?? styleDecl.value,
+            });
+          }
+        }
+        appliedEphemeralDeclarations.set(styleDeclKey, styleDecl);
+      }
+      // avoid stylesheet rerendering on every ephemeral update
+      if (ephemetalSheetUpdated) {
+        userSheet.render();
+        stateSheet.render();
       }
     }
-
-    userSheet.setTransformer($transformValue.get());
-    userSheet.render();
-  }, [instanceId, selectedState, instanceStyles, breakpoints, params]);
+  });
 };

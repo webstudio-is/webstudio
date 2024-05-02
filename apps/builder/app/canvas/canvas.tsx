@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useLayoutEffect } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import type { Instances } from "@webstudio-is/sdk";
@@ -26,7 +26,12 @@ import {
   serverSyncStore,
   useCanvasStore,
 } from "~/shared/sync";
-import { useManageDesignModeStyles, GlobalStyles } from "./shared/styles";
+import {
+  useManageDesignModeStyles,
+  GlobalStyles,
+  subscribeStyles,
+  mountStyles,
+} from "./shared/styles";
 import {
   WebstudioComponentCanvas,
   WebstudioComponentPreview,
@@ -116,7 +121,7 @@ const useElementsTree = (
   ]);
 };
 
-const DesignMode = ({ params }: { params: Params }) => {
+const DesignMode = () => {
   useManageDesignModeStyles();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
@@ -173,6 +178,12 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
     $params.set(params);
   });
 
+  useLayoutEffect(() => {
+    mountStyles();
+  }, []);
+
+  useEffect(subscribeStyles, []);
+
   useEffect(subscribeComponentHooks, []);
 
   useEffect(subscribeCommands, []);
@@ -227,9 +238,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && isInitialized && (
-        <DesignMode params={params} />
-      )}
+      {isPreviewMode === false && isInitialized && <DesignMode />}
     </>
   );
 };
