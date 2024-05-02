@@ -46,9 +46,7 @@ export const loader = async ({ request }: { request: Request }) => {
 
   const pages = parsePages(build.pages);
 
-  const allPages = [pages.homePage, ...pages.pages];
-
-  const siteMap = getStaticSiteMapXml(allPages, build.updatedAt.toISOString());
+  const siteMap = getStaticSiteMapXml(pages, build.updatedAt.toISOString());
 
   return json(siteMap);
 };
