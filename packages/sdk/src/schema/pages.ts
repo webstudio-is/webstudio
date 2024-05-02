@@ -129,8 +129,20 @@ export const ProjectNewRedirectPath = PagePath.or(
   }, "Must be a valid URL")
 );
 
+export const ProjectOldRedirectPath = PagePath.or(
+  z
+    .string()
+    .refine(
+      (path) =>
+        new RegExp(/^(?:\/[-_a-zA-Z0-9*:?\\\p{L}\\p{N}\\p{M}\\\/]+)+$/gmu).test(
+          path
+        ),
+      "Only a-z, 0-9, -, _, /, :, ?, * and non-latin characters are allowed"
+    )
+);
+
 export const PageRedirect = z.object({
-  old: PagePath,
+  old: ProjectOldRedirectPath,
   new: ProjectNewRedirectPath,
   status: z.enum(["301", "302"]).optional(),
 });

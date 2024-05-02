@@ -17,9 +17,9 @@ import {
 import { ArrowRightIcon, TrashIcon } from "@webstudio-is/icons";
 import { useState, type ChangeEvent, useRef } from "react";
 import {
-  PagePath,
   PageRedirect,
   ProjectNewRedirectPath,
+  ProjectOldRedirectPath,
 } from "@webstudio-is/sdk";
 import { useStore } from "@nanostores/react";
 import { getExistingRoutePaths } from "../sidebar-left/panels/pages/page-utils";
@@ -58,7 +58,7 @@ export const SectionRedirects = () => {
   };
 
   const validateOldPath = (oldPath: string): string[] => {
-    const oldPathValidationResult = PagePath.safeParse(oldPath);
+    const oldPathValidationResult = ProjectOldRedirectPath.safeParse(oldPath);
 
     if (oldPathValidationResult.success === true) {
       if (oldPath.startsWith("/") === true) {
