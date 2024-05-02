@@ -213,6 +213,9 @@ export const Tree = <Data extends { id: string }>({
     shiftDistanceThreshold: INDENT,
 
     elementToData: (element) => {
+      if (element.hasAttribute("contenteditable")) {
+        return false;
+      }
       const dragItemSelector = getItemSelectorFromElement(element);
       // tree root is not draggable
       if (dragItemSelector.length === 1) {
