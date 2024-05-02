@@ -14,7 +14,12 @@ import {
   getPresetStyleRules,
   type Params,
 } from "@webstudio-is/react-sdk";
-import { createRegularStyleSheet, toValue } from "@webstudio-is/css-engine";
+import {
+  type VarValue,
+  createRegularStyleSheet,
+  isValidStaticStyleValue,
+  toValue,
+} from "@webstudio-is/css-engine";
 import {
   $assets,
   $breakpoints,
@@ -31,12 +36,23 @@ import { resetInert, setInert } from "./inert";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const stateSheet = createRegularStyleSheet({ name: "state-styles" });
-const ephemeralSheet = createRegularStyleSheet({ name: "ephemeral-styles" });
 const helpersSheet = createRegularStyleSheet({ name: "helpers" });
 const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
 });
 const presetSheet = createRegularStyleSheet({ name: "preset-styles" });
+
+/**
+ * maintain order of rendered stylesheets
+ * should be invoked before any subscription
+ */
+export const mountStyles = () => {
+  fontsAndDefaultsSheet.render();
+  presetSheet.render();
+  userSheet.render();
+  stateSheet.render();
+  helpersSheet.render();
+};
 
 // Helper styles on for canvas in design mode
 // - Only instances that would collapse without helper should receive helper
@@ -118,6 +134,31 @@ const $transformValue = computed([$assets, $params], (assets, params) =>
   })
 );
 
+const getEphemeralProperty = (styleDecl: StyleDecl) => {
+  const { styleSourceId, state = "", property } = styleDecl;
+  return `--${styleSourceId}-${state}-${property}`;
+};
+
+// wrap normal style value with var(--namespace, value) to support ephemeral styles updates
+// between all token usages
+const toVarValue = (styleDecl: StyleDecl): undefined | VarValue => {
+  const { value } = styleDecl;
+  if (value.type === "var") {
+    return value;
+  }
+  // Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
+  if (isValidStaticStyleValue(value)) {
+    return {
+      type: "var",
+      // var style value is relying on name without leading "--"
+      // escape complex selectors in state like ":hover"
+      // setProperty and removeProperty escape automatically
+      value: CSS.escape(getEphemeralProperty(styleDecl).slice(2)),
+      fallbacks: [value],
+    };
+  }
+};
+
 /**
  * track new or deleted styles and style source selections items
  * and update style sheet accordingly
@@ -159,13 +200,12 @@ export const subscribeStyles = () => {
       });
     }
     for (const styleDecl of addedStyles) {
-      const { styleSourceId, property, value } = styleDecl;
-      const rule = userSheet.addMixinRule(styleSourceId);
+      const rule = userSheet.addMixinRule(styleDecl.styleSourceId);
       rule.setDeclaration({
         breakpoint: styleDecl.breakpointId,
         selector: styleDecl.state ?? "",
-        property,
-        value,
+        property: styleDecl.property,
+        value: toVarValue(styleDecl) ?? styleDecl.value,
       });
     }
     renderUserSheetInTheNextFrame();
@@ -291,7 +331,6 @@ const subscribeStateStyles = () => {
     for (const breakpoint of breakpoints.values()) {
       stateSheet.addMediaRule(breakpoint.id, breakpoint);
     }
-    ephemeralSheet.addMediaRule("base");
     const selector = `[${idAttribute}="${instanceId}"]`;
     const rule = stateSheet.addNestingRule(selector);
     for (const styleDecl of styles) {
@@ -300,7 +339,7 @@ const subscribeStateStyles = () => {
         // render without state
         selector: "",
         property: styleDecl.property,
-        value: styleDecl.value,
+        value: toVarValue(styleDecl) ?? styleDecl.value,
       });
     }
     stateSheet.setTransformer($transformValue.get());
@@ -323,41 +362,34 @@ const subscribeEphemeralStyle = () => {
     if (ephemeralStyles.length === 0) {
       resetInert();
       for (const styleDecl of appliedEphemeralDeclarations.values()) {
-        const { styleSourceId, breakpointId, state, property, value } =
-          styleDecl;
         // prematurely apply last known ephemeral update to user stylesheet
         // to avoid lag because of delay between deleting ephemeral style
         // and sending style patch (and rendering)
-        const rule = userSheet.addMixinRule(styleSourceId);
-        rule.setDeclaration({
-          breakpoint: breakpointId,
-          selector: state ?? "",
-          property,
-          value: value,
+        const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
+        mixinRule.setDeclaration({
+          breakpoint: styleDecl.breakpointId,
+          selector: styleDecl.state ?? "",
+          property: styleDecl.property,
+          value: toVarValue(styleDecl) ?? styleDecl.value,
         });
-        document.body.style.removeProperty(`--${property}-${styleSourceId}`);
+        document.body.style.removeProperty(getEphemeralProperty(styleDecl));
       }
       userSheet.setTransformer($transformValue.get());
       userSheet.render();
-      // remove temporary rules with var()
-      ephemeralSheet.clear();
-      ephemeralSheet.unmount();
       appliedEphemeralDeclarations.clear();
     }
 
     // add ephemeral styles
     if (ephemeralStyles.length > 0) {
       setInert();
-      ephemeralSheet.addMediaRule("base");
       const selector = `[${idAttribute}="${instanceId}"]`;
-      const ephemeralRule = ephemeralSheet.addNestingRule(selector);
+      const rule = userSheet.addNestingRule(selector);
       let ephemetalSheetUpdated = false;
       for (const styleDecl of ephemeralStyles) {
-        const { styleSourceId, property, value } = styleDecl;
         // update custom property
         document.body.style.setProperty(
-          `--${property}-${styleSourceId}`,
-          toValue(value, $transformValue.get())
+          getEphemeralProperty(styleDecl),
+          toValue(styleDecl.value, $transformValue.get())
         );
         // render temporary rule for instance with var()
         // rendered with "all" breakpoint and without state
@@ -365,22 +397,35 @@ const subscribeEphemeralStyle = () => {
         const styleDeclKey = getStyleDeclKey(styleDecl);
         if (appliedEphemeralDeclarations.has(styleDeclKey) === false) {
           ephemetalSheetUpdated = true;
-          ephemeralRule.setDeclaration({
-            breakpoint: "base",
-            selector: "",
-            property,
-            value: {
-              type: "var",
-              value: `${property}-${styleSourceId}`,
-              fallbacks: [],
-            },
+          const mixinRule = userSheet.addMixinRule(styleDecl.styleSourceId);
+          mixinRule.setDeclaration({
+            breakpoint: styleDecl.breakpointId,
+            selector: styleDecl.state ?? "",
+            property: styleDecl.property,
+            value: toVarValue(styleDecl) ?? styleDecl.value,
           });
+          // add local style source when missing to support
+          // ephemeral styles on newly created instances
+          rule.addMixin(styleDecl.styleSourceId);
+
+          // temporary render var() in state sheet as well
+          if (styleDecl.state !== undefined) {
+            const stateRule = stateSheet.addNestingRule(selector);
+            stateRule.setDeclaration({
+              breakpoint: styleDecl.breakpointId,
+              // render without state
+              selector: "",
+              property: styleDecl.property,
+              value: toVarValue(styleDecl) ?? styleDecl.value,
+            });
+          }
         }
         appliedEphemeralDeclarations.set(styleDeclKey, styleDecl);
       }
       // avoid stylesheet rerendering on every ephemeral update
       if (ephemetalSheetUpdated) {
-        ephemeralSheet.render();
+        userSheet.render();
+        stateSheet.render();
       }
     }
   });

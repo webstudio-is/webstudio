@@ -118,6 +118,8 @@ export class StyleSheet {
   }
   clear() {
     this.#mediaRules.clear();
+    this.#mixinRules.clear();
+    this.nestingRules.clear();
     this.#plainRules.clear();
     this.#fontFaceRules = [];
   }

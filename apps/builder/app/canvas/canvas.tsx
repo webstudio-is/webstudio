@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useLayoutEffect } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { useStore } from "@nanostores/react";
 import type { Instances } from "@webstudio-is/sdk";
@@ -30,6 +30,7 @@ import {
   useManageDesignModeStyles,
   GlobalStyles,
   subscribeStyles,
+  mountStyles,
 } from "./shared/styles";
 import {
   WebstudioComponentCanvas,
@@ -176,6 +177,10 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
     // required to compute asset and page props for rendering
     $params.set(params);
   });
+
+  useLayoutEffect(() => {
+    mountStyles();
+  }, []);
 
   useEffect(subscribeStyles, []);
 

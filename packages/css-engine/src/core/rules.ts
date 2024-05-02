@@ -72,7 +72,7 @@ export class MixinRule {
 export class NestingRule {
   #selector: string;
   #mixinRules = new Map<string, MixinRule>();
-  #mixins: string[] = [];
+  #mixins = new Set<string>();
   // use map to avoid duplicated properties
   #declarations = new Map<string, Declaration>();
   // cached generated rule by breakpoint
@@ -87,8 +87,12 @@ export class NestingRule {
   getSelector() {
     return this.#selector;
   }
+  addMixin(mixin: string) {
+    this.#mixins.add(mixin);
+    this.#cache.clear();
+  }
   applyMixins(mixins: string[]) {
-    this.#mixins = mixins;
+    this.#mixins = new Set(mixins);
     this.#cache.clear();
   }
   setDeclaration(declaration: Declaration) {
