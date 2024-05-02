@@ -120,7 +120,7 @@ const useElementsTree = (
   ]);
 };
 
-const DesignMode = ({ params }: { params: Params }) => {
+const DesignMode = () => {
   useManageDesignModeStyles();
   useDragAndDrop();
   // We need to initialize this in both canvas and builder,
@@ -233,9 +233,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
         // Call hooks after render to ensure effects are last.
         // Helps improve outline calculations as all styles are then applied.
       }
-      {isPreviewMode === false && isInitialized && (
-        <DesignMode params={params} />
-      )}
+      {isPreviewMode === false && isInitialized && <DesignMode />}
     </>
   );
 };

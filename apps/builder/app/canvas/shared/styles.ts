@@ -1,7 +1,11 @@
 import { useEffect, useLayoutEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import type { StyleDecl, StyleSourceSelection } from "@webstudio-is/sdk";
+import {
+  getStyleDeclKey,
+  type StyleDecl,
+  type StyleSourceSelection,
+} from "@webstudio-is/sdk";
 import {
   collapsedAttribute,
   idAttribute,
@@ -10,14 +14,7 @@ import {
   getPresetStyleRules,
   type Params,
 } from "@webstudio-is/react-sdk";
-import {
-  type StyleValue,
-  type StyleProperty,
-  type VarValue,
-  isValidStaticStyleValue,
-  createRegularStyleSheet,
-  toValue,
-} from "@webstudio-is/css-engine";
+import { createRegularStyleSheet, toValue } from "@webstudio-is/css-engine";
 import {
   $assets,
   $breakpoints,
@@ -34,6 +31,7 @@ import { resetInert, setInert } from "./inert";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const stateSheet = createRegularStyleSheet({ name: "state-styles" });
+const ephemeralSheet = createRegularStyleSheet({ name: "ephemeral-styles" });
 const helpersSheet = createRegularStyleSheet({ name: "helpers" });
 const fontsAndDefaultsSheet = createRegularStyleSheet({
   name: "fonts-and-defaults",
@@ -167,7 +165,7 @@ export const subscribeStyles = () => {
         breakpoint: styleDecl.breakpointId,
         selector: styleDecl.state ?? "",
         property,
-        value: toVarValue(styleSourceId, property, value) ?? value,
+        value,
       });
     }
     renderUserSheetInTheNextFrame();
@@ -199,73 +197,9 @@ export const subscribeStyles = () => {
   };
 };
 
-const subscribeEphemeralStyle = () => {
-  // track custom properties added on previous ephemeral update
-  const appliedEphemeralDeclarations = new Map<string, StyleDecl>();
-
-  return $ephemeralStyles.subscribe((ephemeralStyles) => {
-    if (ephemeralStyles.length > 0) {
-      setInert();
-    } else {
-      resetInert();
-    }
-
-    // track custom properties not set on this change
-    const finishedEphemeralDeclarations = new Map(appliedEphemeralDeclarations);
-
-    const transformValue = $transformValue.get();
-
-    for (const styleDecl of ephemeralStyles) {
-      const { styleSourceId, breakpointId, state, property, value } = styleDecl;
-      const key = `${styleSourceId}:${breakpointId}:${state ?? ""}:${property}`;
-      const customProperty = `--${
-        toVarValue(styleSourceId, property, value)?.value ?? "invalid-property"
-      }`;
-
-      document.body.style.setProperty(
-        customProperty,
-        toValue(value, transformValue)
-      );
-      appliedEphemeralDeclarations.set(key, styleDecl);
-      finishedEphemeralDeclarations.delete(key);
-
-      const rule = userSheet.addMixinRule(styleSourceId);
-      rule.setDeclaration({
-        breakpoint: breakpointId,
-        selector: state ?? "",
-        property,
-        value: toVarValue(styleSourceId, property, value) ?? value,
-      });
-    }
-
-    for (const styleDecl of finishedEphemeralDeclarations.values()) {
-      const { styleSourceId, breakpointId, state, property, value } = styleDecl;
-      const key = `${styleSourceId}:${breakpointId}:${state ?? ""}:${property}`;
-      appliedEphemeralDeclarations.delete(key);
-      document.body.style.removeProperty(property);
-      // prematurely apply last known ephemeral update to user stylesheet
-      // to avoid lag because of delay between deleting ephemeral style
-      // and sending style patch (and rendering)
-      const rule = userSheet.addMixinRule(styleSourceId);
-      rule.setDeclaration({
-        breakpoint: breakpointId,
-        selector: state ?? "",
-        property,
-        value: toVarValue(styleSourceId, property, value) ?? value,
-      });
-    }
-
-    // avoid rerendering stylesheet on every ephemeral update
-    if (finishedEphemeralDeclarations.size !== 0) {
-    userSheet.setTransformer($transformValue.get());
-      userSheet.render();
-    }
-  });
-};
-
 export const useManageDesignModeStyles = () => {
-  useEffect(subscribeEphemeralStyle, []);
   useEffect(subscribeStateStyles, []);
+  useEffect(subscribeEphemeralStyle, []);
   useEffect(subscribePreviewMode, []);
 };
 
@@ -322,11 +256,7 @@ const $instanceStyles = computed(
       return;
     }
     const [instanceId] = selectedInstanceSelector;
-    const selection = styleSourceSelections.get(instanceId);
-    if (selection === undefined) {
-      return;
-    }
-    const styleSources = new Set(selection.values);
+    const styleSources = new Set(styleSourceSelections.get(instanceId)?.values);
     const instanceStyles: StyleDecl[] = [];
     for (const styleDecl of styles.values()) {
       if (
@@ -339,7 +269,6 @@ const $instanceStyles = computed(
     return {
       instanceId,
       breakpoints: Array.from(breakpoints.values()),
-      styleSourceIds: selection.values,
       styles: instanceStyles,
     };
   }
@@ -349,53 +278,110 @@ const $instanceStyles = computed(
  * render currently selected state styles as stateless
  * in separate sheet and clear when state is not selected
  */
-export const subscribeStateStyles = () => {
+const subscribeStateStyles = () => {
   return $instanceStyles.subscribe((instanceStyles) => {
-    stateSheet.setTransformer($transformValue.get());
     if (instanceStyles === undefined) {
       stateSheet.clear();
       stateSheet.render();
       return;
     }
-    const { instanceId, breakpoints, styleSourceIds, styles } = instanceStyles;
+    // reset state sheet on every update to avoid stale styles
+    stateSheet.clear();
+    const { instanceId, breakpoints, styles } = instanceStyles;
     for (const breakpoint of breakpoints.values()) {
       stateSheet.addMediaRule(breakpoint.id, breakpoint);
     }
+    ephemeralSheet.addMediaRule("base");
+    const selector = `[${idAttribute}="${instanceId}"]`;
+    const rule = stateSheet.addNestingRule(selector);
     for (const styleDecl of styles) {
-      const { styleSourceId, property, value } = styleDecl;
-      const rule = stateSheet.addMixinRule(styleSourceId);
       rule.setDeclaration({
         breakpoint: styleDecl.breakpointId,
         // render without state
         selector: "",
-        property,
-        value: toVarValue(styleSourceId, property, value) ?? value,
+        property: styleDecl.property,
+        value: styleDecl.value,
       });
     }
-    const selector = `[${idAttribute}="${instanceId}"]`;
-    const rule = stateSheet.addNestingRule(selector);
-    rule.applyMixins(styleSourceIds);
+    stateSheet.setTransformer($transformValue.get());
     stateSheet.render();
   });
 };
 
-// Wrapps a normal StyleValue into a VarStyleValue that uses the previous style value as a fallback and allows
-// to quickly pass the values over CSS variable witout rerendering the components tree.
-// Results in values like this: `var(--namespace, staticValue)`
-const toVarValue = (
-  styleSourceId: StyleDecl["styleSourceId"],
-  styleProperty: StyleProperty,
-  styleValue: StyleValue
-): undefined | VarValue => {
-  if (styleValue.type === "var") {
-    return styleValue;
-  }
-  // Values like InvalidValue, UnsetValue, VarValue don't need to be wrapped
-  if (isValidStaticStyleValue(styleValue)) {
-    return {
-      type: "var",
-      value: `${styleProperty}-${styleSourceId}`,
-      fallbacks: [styleValue],
-    };
-  }
+const subscribeEphemeralStyle = () => {
+  // track custom properties added on previous ephemeral update
+  const appliedEphemeralDeclarations = new Map<string, StyleDecl>();
+
+  return $ephemeralStyles.subscribe((ephemeralStyles) => {
+    const instanceSelector = $selectedInstanceSelector.get();
+    if (instanceSelector === undefined) {
+      return;
+    }
+    const [instanceId] = instanceSelector;
+
+    // reset ephemeral styles
+    if (ephemeralStyles.length === 0) {
+      resetInert();
+      for (const styleDecl of appliedEphemeralDeclarations.values()) {
+        const { styleSourceId, breakpointId, state, property, value } =
+          styleDecl;
+        // prematurely apply last known ephemeral update to user stylesheet
+        // to avoid lag because of delay between deleting ephemeral style
+        // and sending style patch (and rendering)
+        const rule = userSheet.addMixinRule(styleSourceId);
+        rule.setDeclaration({
+          breakpoint: breakpointId,
+          selector: state ?? "",
+          property,
+          value: value,
+        });
+        document.body.style.removeProperty(`--${property}-${styleSourceId}`);
+      }
+      userSheet.setTransformer($transformValue.get());
+      userSheet.render();
+      // remove temporary rules with var()
+      ephemeralSheet.clear();
+      ephemeralSheet.unmount();
+      appliedEphemeralDeclarations.clear();
+    }
+
+    // add ephemeral styles
+    if (ephemeralStyles.length > 0) {
+      setInert();
+      ephemeralSheet.addMediaRule("base");
+      const selector = `[${idAttribute}="${instanceId}"]`;
+      const ephemeralRule = ephemeralSheet.addNestingRule(selector);
+      let ephemetalSheetUpdated = false;
+      for (const styleDecl of ephemeralStyles) {
+        const { styleSourceId, property, value } = styleDecl;
+        // update custom property
+        document.body.style.setProperty(
+          `--${property}-${styleSourceId}`,
+          toValue(value, $transformValue.get())
+        );
+        // render temporary rule for instance with var()
+        // rendered with "all" breakpoint and without state
+        // to reflect changes in canvas without user interaction
+        const styleDeclKey = getStyleDeclKey(styleDecl);
+        if (appliedEphemeralDeclarations.has(styleDeclKey) === false) {
+          ephemetalSheetUpdated = true;
+          ephemeralRule.setDeclaration({
+            breakpoint: "base",
+            selector: "",
+            property,
+            value: {
+              type: "var",
+              value: `${property}-${styleSourceId}`,
+              fallbacks: [],
+            },
+          });
+        }
+        appliedEphemeralDeclarations.set(styleDeclKey, styleDecl);
+      }
+      // avoid stylesheet rerendering on every ephemeral update
+      if (ephemetalSheetUpdated) {
+        ephemeralSheet.render();
+      }
+    }
+  });
 };
