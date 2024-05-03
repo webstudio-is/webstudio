@@ -80,7 +80,7 @@ export const SectionGeneral = () => {
           <Label htmlFor={siteNameId}>Site Name</Label>
           <Tooltip
             variant="wrapped"
-            content="Used in search results and social preview."
+            content="Used in search results and social previews."
           >
             <InfoCircleIcon tabIndex={0} />
           </Tooltip>
@@ -101,7 +101,7 @@ export const SectionGeneral = () => {
           <Label htmlFor={contactEmailId}>Contact Email</Label>
           <Tooltip
             variant="wrapped"
-            content="Used as email recipient when submit webhook form without action."
+            content="Used as the email recipient when submitting a webhook form without an action."
           >
             <InfoCircleIcon tabIndex={0} />
           </Tooltip>
