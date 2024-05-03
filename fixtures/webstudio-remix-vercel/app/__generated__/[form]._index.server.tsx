@@ -43,4 +43,4 @@ export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 
-export const customCode = "<script>console.log('KittyGuardedZone')</script>\n";
+export const customCode = "<script>console.log('KittyGuardedZone')</script>";

@@ -639,7 +639,7 @@ export const projectId = "${siteData.build.projectId}";
 export const user: { email: string | null } | undefined =
   ${JSON.stringify(siteData.user)};
 
-export const customCode = ${JSON.stringify(projectMeta?.code)};
+export const customCode = ${JSON.stringify(projectMeta?.code?.trim() ?? "")};
 `;
 
     /*
