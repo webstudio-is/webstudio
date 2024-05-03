@@ -167,9 +167,11 @@ export const SectionMarketplace = () => {
   };
 
   return (
-    <>
+    <Grid gap={2}>
+      <Text variant="titles" css={sectionSpacing}>
+        Marketplace
+      </Text>
       <Grid gap={1} css={sectionSpacing}>
-        <Text variant="titles">Marketplace</Text>
         <Label htmlFor={ids.name}>Product Name</Label>
         <InputErrorsTooltip errors={errors?.name}>
           <InputField
@@ -350,6 +352,6 @@ export const SectionMarketplace = () => {
           </Button>
         )}
       </Flex>
-    </>
+    </Grid>
   );
 };

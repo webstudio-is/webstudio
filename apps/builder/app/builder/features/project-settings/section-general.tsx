@@ -1,3 +1,4 @@
+import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
   Grid,
@@ -10,13 +11,15 @@ import {
   CheckboxAndLabel,
   Checkbox,
   css,
+  Flex,
+  Tooltip,
 } from "@webstudio-is/design-system";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 import { ImageControl } from "./image-control";
-import { $assets, $imageLoader, $pages } from "~/shared/nano-states";
 import { Image } from "@webstudio-is/image";
-import { useIds } from "~/shared/form-utils";
 import type { ProjectMeta, CompilerSettings } from "@webstudio-is/sdk";
-import { useState } from "react";
+import { $assets, $imageLoader, $pages } from "~/shared/nano-states";
+import { useIds } from "~/shared/form-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/builder/shared/code-editor";
@@ -32,6 +35,7 @@ const imgStyle = css({
 
 const defaultMetaSettings: ProjectMeta = {
   siteName: "",
+  contactEmail: "",
   faviconAssetId: "",
   code: "",
 };
@@ -40,7 +44,8 @@ export const SectionGeneral = () => {
   const [meta, setMeta] = useState(
     () => $pages.get()?.meta ?? defaultMetaSettings
   );
-  const ids = useIds(["siteName"]);
+  const siteNameId = useId();
+  const contactEmailId = useId();
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
@@ -65,18 +70,49 @@ export const SectionGeneral = () => {
   };
 
   return (
-    <>
+    <Grid gap={2}>
+      <Text variant="titles" css={sectionSpacing}>
+        General
+      </Text>
+
       <Grid gap={1} css={sectionSpacing}>
-        <Text variant="titles">General</Text>
-        <Label htmlFor={ids.siteName}>Site Name</Label>
+        <Flex gap={1} align="center">
+          <Label htmlFor={siteNameId}>Site Name</Label>
+          <Tooltip
+            variant="wrapped"
+            content="Used in search results and social preview."
+          >
+            <InfoCircleIcon tabIndex={0} />
+          </Tooltip>
+        </Flex>
         <InputField
-          id={ids.siteName}
+          id={siteNameId}
+          placeholder="Current Site Name"
+          autoFocus={true}
           value={meta.siteName ?? ""}
           onChange={(event) => {
             handleSave("siteName")(event.target.value);
           }}
-          placeholder="Current Site Name"
-          autoFocus
+        />
+      </Grid>
+
+      <Grid gap={1} css={sectionSpacing}>
+        <Flex gap={1} align="center">
+          <Label htmlFor={contactEmailId}>Contact Email</Label>
+          <Tooltip
+            variant="wrapped"
+            content="Used as email recipient when submit webhook form without action."
+          >
+            <InfoCircleIcon tabIndex={0} />
+          </Tooltip>
+        </Flex>
+        <InputField
+          id={contactEmailId}
+          placeholder="email@address.com"
+          value={meta.contactEmail ?? ""}
+          onChange={(event) => {
+            handleSave("contactEmail")(event.target.value);
+          }}
         />
       </Grid>
 
@@ -118,7 +154,7 @@ export const SectionGeneral = () => {
       <Separator />
 
       <CompilerSection />
-    </>
+    </Grid>
   );
 };
 

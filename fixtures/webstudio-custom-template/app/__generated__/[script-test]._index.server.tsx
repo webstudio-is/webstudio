@@ -37,9 +37,7 @@ export const getRemixParams = ({ ...params }: Params): Params => {
 
 export const projectId = "0d856812-61d8-4014-a20a-82e01c0eb8ee";
 
-export const user: { email: string | null } | undefined = {
-  email: "hello@webstudio.is",
-};
+export const contactEmail = "hello@webstudio.is";
 
 export const customCode =
   '<script>console.log(\'HELLO\')</script>\n<meta property="saas:test" content="test">';

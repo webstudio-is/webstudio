@@ -581,6 +581,8 @@ export const prebuild = async (options: {
     });
 
     const projectMeta = siteData.build.pages.meta;
+    const contactEmail: undefined | string =
+      projectMeta?.contactEmail ?? siteData.user?.email ?? undefined;
     const pageMeta = pageData.page.meta;
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
     const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
@@ -636,8 +638,7 @@ ${generateRemixParams(pageData.page.path)}
 
 export const projectId = "${siteData.build.projectId}";
 
-export const user: { email: string | null } | undefined =
-  ${JSON.stringify(siteData.user)};
+export const contactEmail = ${JSON.stringify(contactEmail)};
 
 export const customCode = ${JSON.stringify(projectMeta?.code?.trim() ?? "")};
 `;
