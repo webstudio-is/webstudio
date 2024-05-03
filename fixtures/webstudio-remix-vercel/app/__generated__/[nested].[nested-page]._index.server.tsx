@@ -37,8 +37,6 @@ export const getRemixParams = ({ ...params }: Params): Params => {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const user: { email: string | null } | undefined = {
-  email: "hello@webstudio.is",
-};
+export const contactEmail = "hello@webstudio.is";
 
 export const customCode = "<script>console.log('KittyGuardedZone')</script>";

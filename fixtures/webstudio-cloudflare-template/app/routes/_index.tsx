@@ -26,7 +26,7 @@ import {
   getPageMeta,
   getRemixParams,
   projectId,
-  user,
+  contactEmail,
 } from "../__generated__/_index.server";
 
 import css from "../__generated__/index.css?url";
@@ -255,9 +255,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
   // form properties are not defined when defaults are used
   const { action, method } = formProperties ?? {};
 
-  const email = user?.email;
-
-  if (email == null) {
+  if (contactEmail === undefined) {
     return { success: false };
   }
 
@@ -292,7 +290,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     action: action ?? null,
     method: getMethod(method),
     pageUrl: pageUrl.toString(),
-    toEmail: email,
+    toEmail: contactEmail,
     fromEmail: pageUrl.hostname + "@webstudio.email",
   } as const;
 

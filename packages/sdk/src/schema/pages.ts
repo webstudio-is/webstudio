@@ -108,6 +108,7 @@ const Page = z.object({
 const ProjectMeta = z.object({
   // All fields are optional to ensure consistency and allow for the addition of new fields without requiring migration
   siteName: z.string().optional(),
+  contactEmail: z.string().optional(),
   faviconAssetId: z.string().optional(),
   code: z.string().optional(),
 });

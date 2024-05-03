@@ -30,8 +30,6 @@ export const getRemixParams = ({ ...params }: Params): Params => {
 
 export const projectId = "project-id";
 
-export const user: { email: string | null } | undefined = {
-  email: "email@domain",
-};
+export const contactEmail: undefined | string = undefined;
 
 export const customCode = "";
