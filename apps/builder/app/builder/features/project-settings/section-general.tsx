@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { useId, useState } from "react";
 import { useStore } from "@nanostores/react";
 import {
@@ -13,6 +14,7 @@ import {
   css,
   Flex,
   Tooltip,
+  InputErrorsTooltip,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { ImageControl } from "./image-control";
@@ -40,12 +42,19 @@ const defaultMetaSettings: ProjectMeta = {
   code: "",
 };
 
+const Email = z.string().email();
+
 export const SectionGeneral = () => {
   const [meta, setMeta] = useState(
     () => $pages.get()?.meta ?? defaultMetaSettings
   );
   const siteNameId = useId();
   const contactEmailId = useId();
+  const contactEmailError =
+    (meta.contactEmail ?? "").trim().length === 0 ||
+    Email.safeParse(meta.contactEmail).success
+      ? undefined
+      : "Contact email is invalid.";
   const assets = useStore($assets);
   const asset = assets.get(meta.faviconAssetId ?? "");
   const favIconUrl = asset ? `${asset.name}` : undefined;
@@ -106,14 +115,19 @@ export const SectionGeneral = () => {
             <InfoCircleIcon tabIndex={0} />
           </Tooltip>
         </Flex>
-        <InputField
-          id={contactEmailId}
-          placeholder="email@address.com"
-          value={meta.contactEmail ?? ""}
-          onChange={(event) => {
-            handleSave("contactEmail")(event.target.value);
-          }}
-        />
+        <InputErrorsTooltip
+          errors={contactEmailError ? [contactEmailError] : undefined}
+        >
+          <InputField
+            id={contactEmailId}
+            color={contactEmailError ? "error" : undefined}
+            placeholder="email@address.com"
+            value={meta.contactEmail ?? ""}
+            onChange={(event) => {
+              handleSave("contactEmail")(event.target.value);
+            }}
+          />
+        </InputErrorsTooltip>
       </Grid>
 
       <Separator />
