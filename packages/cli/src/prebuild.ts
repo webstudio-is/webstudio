@@ -592,6 +592,8 @@ import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
 ${componentImports}
 
+export const siteName = ${JSON.stringify(projectMeta?.siteName)};
+
 export const favIconAsset: ImageAsset | undefined =
   ${JSON.stringify(favIconAsset)};
 
@@ -614,7 +616,7 @@ export { Page }
     const serverExports = `/* eslint-disable */
 /* This is a auto generated file for building the project */ \n
 
-import type { ProjectMeta, PageMeta } from "@webstudio-is/sdk";
+import type { PageMeta } from "@webstudio-is/sdk";
 ${generateResourcesLoader({
   scope,
   page: pageData.page,
@@ -637,8 +639,7 @@ export const projectId = "${siteData.build.projectId}";
 export const user: { email: string | null } | undefined =
   ${JSON.stringify(siteData.user)};
 
-export const projectMeta: ProjectMeta =
-  ${JSON.stringify(projectMeta)};
+export const customCode = ${JSON.stringify(projectMeta?.code?.trim() ?? "")};
 `;
 
     /*
