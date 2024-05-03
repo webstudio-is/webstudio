@@ -13,6 +13,8 @@ import {
   HtmlEmbed as HtmlEmbed,
 } from "@webstudio-is/sdk-components-react";
 
+export const siteName = "Fixture Site";
+
 export const favIconAsset: ImageAsset | undefined = {
   id: "cd1e9fad-8df1-45c6-800f-05fda2d2469f",
   name: "home_wsKvRSqvkajPPBeycZ-C8.svg",

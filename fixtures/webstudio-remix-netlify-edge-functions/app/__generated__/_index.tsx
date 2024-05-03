@@ -10,6 +10,8 @@ import {
   Text as Text,
 } from "@webstudio-is/sdk-components-react";
 
+export const siteName = "";
+
 export const favIconAsset: ImageAsset | undefined = undefined;
 
 export const socialImageAsset: ImageAsset | undefined = undefined;

@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
-import type { ProjectMeta, PageMeta } from "@webstudio-is/sdk";
+import type { PageMeta } from "@webstudio-is/sdk";
 import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
 export const loadResources = async (_props: { system: System }) => {
   return {} as Record<string, unknown>;
@@ -41,8 +41,4 @@ export const user: { email: string | null } | undefined = {
   email: "hello@webstudio.is",
 };
 
-export const projectMeta: ProjectMeta = {
-  siteName: "",
-  faviconAssetId: "",
-  code: "",
-};
+export const customCode = "";

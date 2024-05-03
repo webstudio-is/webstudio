@@ -4,6 +4,8 @@
 
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 
+export const siteName = "";
+
 export const favIconAsset: ImageAsset | undefined = undefined;
 
 export const socialImageAsset: ImageAsset | undefined = undefined;
