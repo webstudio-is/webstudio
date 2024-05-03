@@ -134,7 +134,7 @@ export const ProjectOldRedirectPath = PagePath.or(
     .string()
     .refine(
       (path) =>
-        new RegExp(/^(?:\/[-_a-zA-Z0-9*:?\\\p{L}\\p{N}\\p{M}\\\/]+)+$/gmu).test(
+        new RegExp(/^(?:\/[-_a-zA-Z0-9*:?\\\p{L}\\p{N}\\p{M}\\/]+)+$/gmu).test(
           path
         ),
       "Only a-z, 0-9, -, _, /, :, ?, * and non-latin characters are allowed"
