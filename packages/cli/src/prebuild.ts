@@ -582,7 +582,8 @@ export const prebuild = async (options: {
 
     const projectMeta = siteData.build.pages.meta;
     const contactEmail: undefined | string =
-      projectMeta?.contactEmail ?? siteData.user?.email ?? undefined;
+      // fallback to user email when contact email is empty string
+      projectMeta?.contactEmail || siteData.user?.email || undefined;
     const pageMeta = pageData.page.meta;
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
     const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
