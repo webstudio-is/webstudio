@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@webstudio-is/jsx-utils",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Utilities to convert JSX to Webstudio",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
