@@ -15,6 +15,7 @@ import {
   Flex,
   Tooltip,
   InputErrorsTooltip,
+  ProBadge,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon } from "@webstudio-is/icons";
 import { ImageControl } from "./image-control";
@@ -25,6 +26,7 @@ import { useIds } from "~/shared/form-utils";
 import { serverSyncStore } from "~/shared/sync";
 import { sectionSpacing } from "./utils";
 import { CodeEditor } from "~/builder/shared/code-editor";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 const imgStyle = css({
   width: 72,
@@ -45,6 +47,7 @@ const defaultMetaSettings: ProjectMeta = {
 const Email = z.string().email();
 
 export const SectionGeneral = () => {
+  const { allowContactEmail } = useStore($userPlanFeatures);
   const [meta, setMeta] = useState(
     () => $pages.get()?.meta ?? defaultMetaSettings
   );
@@ -114,6 +117,7 @@ export const SectionGeneral = () => {
           >
             <InfoCircleIcon tabIndex={0} />
           </Tooltip>
+          {allowContactEmail === false && <ProBadge>Pro</ProBadge>}
         </Flex>
         <InputErrorsTooltip
           errors={contactEmailError ? [contactEmailError] : undefined}
@@ -122,6 +126,7 @@ export const SectionGeneral = () => {
             id={contactEmailId}
             color={contactEmailError ? "error" : undefined}
             placeholder="email@address.com"
+            disabled={allowContactEmail === false}
             value={meta.contactEmail ?? ""}
             onChange={(event) => {
               handleSave("contactEmail")(event.target.value);

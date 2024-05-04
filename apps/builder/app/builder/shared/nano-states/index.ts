@@ -45,6 +45,7 @@ export const $activeSidebarPanel = atom<TabName>("none");
 export const $userPlanFeatures = atom<UserPlanFeatures>({
   allowShareAdminLinks: false,
   allowDynamicData: false,
+  allowContactEmail: false,
   maxDomainsAllowedPerUser: 5,
   hasSubscription: false,
   hasProPlan: false,
