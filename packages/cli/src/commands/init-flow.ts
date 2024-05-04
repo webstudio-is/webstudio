@@ -110,7 +110,8 @@ export const initFlow = async (
   if (shouldInstallDeps === true) {
     const spinner = ora().start();
     spinner.text = "Installing dependencies";
-    await $`npm install`;
+    // use --force flag to avoid failure when peer dependencies are mismatched
+    await $`npm install --force`;
     spinner.succeed("Installed dependencies");
   }
 
