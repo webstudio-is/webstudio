@@ -16,20 +16,17 @@
     ".": {
       "webstudio": "./src/components.ts",
       "types": "./lib/types/components.d.ts",
-      "import": "./lib/components.js",
-      "require": "./lib/components.js"
+      "import": "./lib/components.js"
     },
     "./metas": {
       "webstudio": "./src/metas.ts",
       "types": "./lib/types/metas.d.ts",
-      "import": "./lib/metas.js",
-      "require": "./lib/metas.js"
+      "import": "./lib/metas.js"
     },
     "./props": {
       "webstudio": "./src/props.ts",
       "types": "./lib/types/props.d.ts",
-      "import": "./lib/props.js",
-      "require": "./lib/props.js"
+      "import": "./lib/props.js"
     }
   },
   "scripts": {

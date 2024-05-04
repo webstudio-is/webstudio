@@ -26,8 +26,7 @@
   "exports": {
     "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js",
-    "require": "./lib/index.js"
+    "import": "./lib/index.js"
   },
   "files": [
     "lib/*",
