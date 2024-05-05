@@ -8,12 +8,6 @@ import type { SectionProps } from "./sections";
 import type { StyleInfo } from "./shared/style-info";
 import type { CreateBatchUpdate } from "./shared/use-style-data";
 
-const isLayersOrTuppleValue = (
-  value: TupleValue | LayersValue
-): value is LayersValue | TupleValue => {
-  return value.type === "layers" || value.type === "tuple";
-};
-
 export const deleteLayer = <T extends TupleValue | LayersValue>(
   property: StyleProperty,
   index: number,
@@ -34,10 +28,6 @@ export const deleteLayer = <T extends TupleValue | LayersValue>(
           type: "layers",
           value: newLayers as LayersValue["value"],
         };
-
-  if (isLayersOrTuppleValue(propertyValue) === false) {
-    return;
-  }
 
   if (newLayers.length === 0) {
     batch.deleteProperty(property);
@@ -86,10 +76,20 @@ export const addLayer = <T extends LayersValue | TupleValue>(
     return;
   }
 
-  const existingValues = getValue(property, style);
-  if (existingValues?.type === "layers" || existingValues?.type === "tuple") {
-    // Adding layers we had before
+  const existingValues = style[property]?.value;
+  if (
+    (property === "transition" || property === "boxShadow") &&
+    existingValues?.type === "layers"
+  ) {
     value.value = [...value.value, ...existingValues.value] as T["value"];
+  }
+
+  if (property === "filter" && existingValues?.type === "tuple") {
+    // Adding layers we had before
+    value.value = [
+      ...value.value,
+      ...(existingValues?.value || []),
+    ] as T["value"];
   }
 
   const batch = createBatchUpdate();
@@ -132,8 +132,8 @@ export const getLayerCount = (property: StyleProperty, style: StyleInfo) => {
 
 export const getValue = (property: StyleProperty, style: StyleInfo) => {
   const value = style[property]?.value;
-  return value?.type === "layers" ||
-    (value?.type === "tuple" && value.value.length > 0)
+  return (value?.type === "layers" || value?.type === "tuple") &&
+    value.value.length > 0
     ? value
     : undefined;
 };
