@@ -64,6 +64,7 @@ export const BoxShadowLayer = <T extends TupleValue>(props: LayerProps<T>) => {
           shadow={shadow}
           layer={layer}
           onEditLayer={props.onEditLayer}
+          deleteProperty={props.deleteProperty}
         />
       }
     >

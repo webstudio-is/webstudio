@@ -80,7 +80,6 @@ export const TransitionContent = ({
     }
 
     onEditLayer(index, layers);
-    setIntermediateValue(undefined);
   };
 
   const handlePropertyUpdate = (
