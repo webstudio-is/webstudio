@@ -35,7 +35,7 @@ import type { IntermediateStyleValue } from "../../shared/css-value-input";
 import { CssValueInputContainer } from "../../shared/css-value-input";
 import { toPascalCase } from "../../shared/keyword-utils";
 import { ColorControl } from "../../controls";
-import type { SetProperty } from "../../shared/use-style-data";
+import type { DeleteProperty, SetProperty } from "../../shared/use-style-data";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -66,6 +66,7 @@ type BoxShadowContentProps = {
   layer: TupleValue;
   shadow: string;
   onEditLayer: (index: number, layers: LayersValue) => void;
+  deleteProperty: DeleteProperty;
 };
 
 const convertValuesToTupple = (
@@ -90,6 +91,7 @@ export const BoxShadowContent = ({
   index,
   shadow,
   onEditLayer,
+  deleteProperty,
 }: BoxShadowContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -430,6 +432,16 @@ export const BoxShadowContent = ({
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               handleComplete();
+              event.preventDefault();
+            }
+
+            if (event.key === "Escape") {
+              if (intermediateValue === undefined) {
+                return;
+              }
+
+              deleteProperty("boxShadow", { isEphemeral: true });
+              setIntermediateValue(undefined);
               event.preventDefault();
             }
           }}
