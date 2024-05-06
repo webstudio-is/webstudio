@@ -8,9 +8,9 @@ import {
   type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
-  extractBoxShadowProperties,
-  parseBoxShadow,
-  type ExtractedBoxShadowProperties,
+  extractShadowProperties,
+  parseShadow,
+  type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -70,7 +70,7 @@ type BoxShadowContentProps = {
 };
 
 const convertValuesToTupple = (
-  values: Record<keyof ExtractedBoxShadowProperties, StyleValue | null>
+  values: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
 ): TupleValue => {
   return {
     type: "tuple",
@@ -96,9 +96,9 @@ export const BoxShadowContent = ({
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
-  const layerValues = useMemo<ExtractedBoxShadowProperties>(() => {
+  const layerValues = useMemo<ExtractedShadowProperties>(() => {
     setIntermediateValue({ type: "intermediate", value: shadow });
-    return extractBoxShadowProperties(layer);
+    return extractShadowProperties(layer);
   }, [layer, shadow]);
   const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
   const colorControlProp = color ?? {
@@ -120,7 +120,7 @@ export const BoxShadowContent = ({
     if (intermediateValue === undefined) {
       return;
     }
-    const layers = parseBoxShadow(intermediateValue.value);
+    const layers = parseShadow("boxShadow", intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
@@ -133,9 +133,9 @@ export const BoxShadowContent = ({
   };
 
   const handlePropertyChange = (
-    params: Partial<Record<keyof ExtractedBoxShadowProperties, StyleValue>>
+    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
   ) => {
-    const newLayer = convertValuesToTupple(Object.assign(layerValues, params));
+    const newLayer = convertValuesToTupple({ ...layerValues, ...params });
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),

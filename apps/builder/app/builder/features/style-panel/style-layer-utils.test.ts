@@ -14,7 +14,7 @@ import {
   updateLayer,
 } from "./style-layer-utils";
 import type { StyleInfo } from "./shared/style-info";
-import { parseBoxShadow } from "@webstudio-is/css-data";
+import { parseShadow } from "@webstudio-is/css-data";
 
 let styleInfo: StyleInfo = {};
 let published = false;
@@ -207,7 +207,10 @@ describe("boxShadowUtils", () => {
   test("adds layer to box-shadow proeprty", () => {
     addLayer(
       property,
-      parseBoxShadow(`box-shadow: 10px 10px 10px 0px rgba(0, 0, 0, 0.75)`),
+      parseShadow(
+        "boxShadow",
+        `box-shadow: 10px 10px 10px 0px rgba(0, 0, 0, 0.75)`
+      ),
       styleInfo,
       createBatchUpdate
     );
@@ -315,7 +318,8 @@ describe("boxShadowUtils", () => {
   test("swaps the layers using indexe's", () => {
     addLayer(
       property,
-      parseBoxShadow(
+      parseShadow(
+        "boxShadow",
         `box-shadow: 0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14);`
       ),
       styleInfo,
