@@ -28,6 +28,7 @@ import {
   DataSource,
   isLiteralExpression,
   type System,
+  documentTypes,
 } from "@webstudio-is/sdk";
 import {
   theme,
@@ -117,6 +118,7 @@ const fieldDefaultValues = {
   socialImageAssetId: "",
   status: `200`,
   redirect: `""`,
+  documentType: "html" as (typeof documentTypes)[number],
   customMetas: [
     {
       property: "",
@@ -188,6 +190,7 @@ const SharedPageValues = z.object({
   socialImageUrl: z.string().optional(),
   status: Status.optional(),
   redirect: z.optional(ProjectNewRedirectPath.or(EmptyString)),
+  documentType: z.optional(z.enum(documentTypes)),
   customMetas: z
     .array(
       z.object({
@@ -290,6 +293,7 @@ const toFormValues = (
     language: page.meta.language ?? fieldDefaultValues.language,
     status: page.meta.status ?? fieldDefaultValues.status,
     redirect: page.meta.redirect ?? fieldDefaultValues.redirect,
+    documentType: page.meta.documentType ?? fieldDefaultValues.documentType,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
   };
@@ -652,6 +656,7 @@ const FormFields = ({
                     css={{
                       overflowWrap: "anywhere",
                       wordBreak: "break-all",
+                      my: 2,
                     }}
                   >
                     “{values.name}” is the home page
@@ -664,11 +669,26 @@ const FormFields = ({
                     css={{
                       overflowWrap: "anywhere",
                       wordBreak: "break-all",
+                      my: 2,
                     }}
                     color="subtle"
                   >
                     Move this page to the “{toTreeData(pages).root.name}” folder
                     to set it as your home page
+                  </Text>
+                </>
+              ) : values.documentType === "xml" ? (
+                <>
+                  <HomeIcon color={rawTheme.colors.foregroundSubtle} />
+                  <Text
+                    css={{
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-all",
+                      my: 2,
+                    }}
+                    color="subtle"
+                  >
+                    XML pages cannot be set as the home page
                   </Text>
                 </>
               ) : (
@@ -755,6 +775,29 @@ const FormFields = ({
                   </Flex>
                 </PanelBanner>
               )}
+
+              {isFeatureEnabled("xmlElement") && (
+                <Grid gap={1}>
+                  <Label htmlFor={fieldIds.documentType}>Document Type</Label>
+                  <Select
+                    options={documentTypes}
+                    getValue={(docType: (typeof documentTypes)[number]) =>
+                      docType
+                    }
+                    getLabel={(docType: (typeof documentTypes)[number]) =>
+                      docType.toLocaleUpperCase()
+                    }
+                    value={values.documentType}
+                    disabled={values.isHomePage}
+                    onChange={(value) => {
+                      onChange({
+                        field: "documentType",
+                        value,
+                      });
+                    }}
+                  />
+                </Grid>
+              )}
             </>
           )}
         </Grid>
@@ -764,314 +807,321 @@ const FormFields = ({
         {/**
          * ----------------------========<<<Search Results>>>>========----------------------
          */}
-        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-          <Grid gap={2}>
-            <Label text="title">Search</Label>
-            <Text color="subtle">
-              Optimize the way this page appears in search engine results pages.
-            </Text>
-            <Grid gap={1}>
-              <Label>Search Result Preview</Label>
-              <Box
-                css={{
-                  padding: theme.spacing[5],
-                  background: theme.colors.white,
-                  borderRadius: theme.borderRadius[4],
-                  border: `1px solid ${theme.colors.borderMain}`,
-                }}
-              >
+        <fieldset
+          disabled={values.documentType === "xml"}
+          style={{ display: "contents" }}
+        >
+          <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+            <Grid gap={2}>
+              <Label text="title">Search</Label>
+              <Text color="subtle">
+                Optimize the way this page appears in search engine results
+                pages.
+              </Text>
+              <Grid gap={1}>
+                <Label>Search Result Preview</Label>
                 <Box
                   css={{
-                    transformOrigin: "top left",
-                    transform: "scale(0.667)",
-                    width: 600,
-                    height: 80,
+                    padding: theme.spacing[5],
+                    background: theme.colors.white,
+                    borderRadius: theme.borderRadius[4],
+                    border: `1px solid ${theme.colors.borderMain}`,
                   }}
                 >
-                  <SearchPreview
-                    siteName={pages?.meta?.siteName ?? ""}
-                    faviconUrl={faviconUrl}
-                    pageUrl={pageUrl}
-                    titleLink={title}
-                    snippet={description}
-                  />
+                  <Box
+                    css={{
+                      transformOrigin: "top left",
+                      transform: "scale(0.667)",
+                      width: 600,
+                      height: 80,
+                    }}
+                  >
+                    <SearchPreview
+                      siteName={pages?.meta?.siteName ?? ""}
+                      faviconUrl={faviconUrl}
+                      pageUrl={pageUrl}
+                      titleLink={title}
+                      snippet={description}
+                    />
+                  </Box>
                 </Box>
-              </Box>
+              </Grid>
             </Grid>
-          </Grid>
 
-          <Grid gap={1}>
-            <Label htmlFor={fieldIds.title}>Title</Label>
-            <BindingControl>
-              {isFeatureEnabled("cms") && (
-                <BindingPopover
-                  scope={scope}
-                  aliases={aliases}
-                  variant={
-                    isLiteralExpression(values.title) ? "default" : "bound"
-                  }
-                  value={values.title}
-                  onChange={(value) => {
-                    onChange({
-                      field: "title",
-                      value,
-                    });
-                  }}
-                  onRemove={(evaluatedValue) => {
-                    onChange({
-                      field: "title",
-                      value: JSON.stringify(evaluatedValue),
-                    });
-                  }}
-                />
-              )}
-              <InputErrorsTooltip errors={errors.title}>
-                <InputField
-                  color={errors.title && "error"}
-                  id={fieldIds.title}
-                  name="title"
-                  placeholder="My awesome project - About"
-                  disabled={isLiteralExpression(values.title) === false}
-                  value={title}
-                  onChange={(event) => {
-                    onChange({
-                      field: "title",
-                      value: JSON.stringify(event.target.value),
-                    });
-                  }}
-                />
-              </InputErrorsTooltip>
-            </BindingControl>
-          </Grid>
-
-          <Grid gap={1}>
-            <Label htmlFor={fieldIds.description}>Description</Label>
-            <BindingControl>
-              {isFeatureEnabled("cms") && (
-                <BindingPopover
-                  scope={scope}
-                  aliases={aliases}
-                  variant={
-                    isLiteralExpression(values.description)
-                      ? "default"
-                      : "bound"
-                  }
-                  value={values.description}
-                  onChange={(value) => {
-                    onChange({
-                      field: "description",
-                      value,
-                    });
-                  }}
-                  onRemove={(evaluatedValue) => {
-                    onChange({
-                      field: "description",
-                      value: JSON.stringify(evaluatedValue),
-                    });
-                  }}
-                />
-              )}
-              <InputErrorsTooltip errors={errors.description}>
-                <TextArea
-                  state={errors.description && "invalid"}
-                  id={fieldIds.description}
-                  name="description"
-                  disabled={isLiteralExpression(values.description) === false}
-                  value={description}
-                  onChange={(value) => {
-                    onChange({
-                      field: "description",
-                      value: JSON.stringify(value),
-                    });
-                  }}
-                  autoGrow
-                  maxRows={10}
-                />
-              </InputErrorsTooltip>
-            </BindingControl>
-            <BindingControl>
-              <Grid
-                flow={"column"}
-                gap={1}
-                justify={"start"}
-                align={"center"}
-                css={{ py: theme.spacing[2] }}
-              >
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.title}>Title</Label>
+              <BindingControl>
                 {isFeatureEnabled("cms") && (
                   <BindingPopover
                     scope={scope}
                     aliases={aliases}
                     variant={
-                      isLiteralExpression(values.excludePageFromSearch)
-                        ? "default"
-                        : "bound"
+                      isLiteralExpression(values.title) ? "default" : "bound"
                     }
-                    value={values.excludePageFromSearch}
+                    value={values.title}
                     onChange={(value) => {
                       onChange({
-                        field: "excludePageFromSearch",
+                        field: "title",
                         value,
                       });
                     }}
                     onRemove={(evaluatedValue) => {
                       onChange({
-                        field: "excludePageFromSearch",
+                        field: "title",
                         value: JSON.stringify(evaluatedValue),
                       });
                     }}
                   />
                 )}
-                <Checkbox
-                  id={fieldIds.excludePageFromSearch}
-                  disabled={
-                    isLiteralExpression(values.excludePageFromSearch) === false
+                <InputErrorsTooltip errors={errors.title}>
+                  <InputField
+                    color={errors.title && "error"}
+                    id={fieldIds.title}
+                    name="title"
+                    placeholder="My awesome project - About"
+                    disabled={isLiteralExpression(values.title) === false}
+                    value={title}
+                    onChange={(event) => {
+                      onChange({
+                        field: "title",
+                        value: JSON.stringify(event.target.value),
+                      });
+                    }}
+                  />
+                </InputErrorsTooltip>
+              </BindingControl>
+            </Grid>
+
+            <Grid gap={1}>
+              <Label htmlFor={fieldIds.description}>Description</Label>
+              <BindingControl>
+                {isFeatureEnabled("cms") && (
+                  <BindingPopover
+                    scope={scope}
+                    aliases={aliases}
+                    variant={
+                      isLiteralExpression(values.description)
+                        ? "default"
+                        : "bound"
+                    }
+                    value={values.description}
+                    onChange={(value) => {
+                      onChange({
+                        field: "description",
+                        value,
+                      });
+                    }}
+                    onRemove={(evaluatedValue) => {
+                      onChange({
+                        field: "description",
+                        value: JSON.stringify(evaluatedValue),
+                      });
+                    }}
+                  />
+                )}
+                <InputErrorsTooltip errors={errors.description}>
+                  <TextArea
+                    state={errors.description && "invalid"}
+                    id={fieldIds.description}
+                    name="description"
+                    disabled={isLiteralExpression(values.description) === false}
+                    value={description}
+                    onChange={(value) => {
+                      onChange({
+                        field: "description",
+                        value: JSON.stringify(value),
+                      });
+                    }}
+                    autoGrow
+                    maxRows={10}
+                  />
+                </InputErrorsTooltip>
+              </BindingControl>
+              <BindingControl>
+                <Grid
+                  flow={"column"}
+                  gap={1}
+                  justify={"start"}
+                  align={"center"}
+                  css={{ py: theme.spacing[2] }}
+                >
+                  {isFeatureEnabled("cms") && (
+                    <BindingPopover
+                      scope={scope}
+                      aliases={aliases}
+                      variant={
+                        isLiteralExpression(values.excludePageFromSearch)
+                          ? "default"
+                          : "bound"
+                      }
+                      value={values.excludePageFromSearch}
+                      onChange={(value) => {
+                        onChange({
+                          field: "excludePageFromSearch",
+                          value,
+                        });
+                      }}
+                      onRemove={(evaluatedValue) => {
+                        onChange({
+                          field: "excludePageFromSearch",
+                          value: JSON.stringify(evaluatedValue),
+                        });
+                      }}
+                    />
+                  )}
+                  <Checkbox
+                    id={fieldIds.excludePageFromSearch}
+                    disabled={
+                      isLiteralExpression(values.excludePageFromSearch) ===
+                      false
+                    }
+                    checked={excludePageFromSearch}
+                    onCheckedChange={() => {
+                      const newValue = !excludePageFromSearch;
+                      onChange({
+                        field: "excludePageFromSearch",
+                        value: newValue.toString(),
+                      });
+                    }}
+                  />
+
+                  <InputErrorsTooltip errors={errors.excludePageFromSearch}>
+                    <Label htmlFor={fieldIds.excludePageFromSearch}>
+                      Exclude this page from search results
+                    </Label>
+                  </InputErrorsTooltip>
+                </Grid>
+              </BindingControl>
+            </Grid>
+
+            {isFeatureEnabled("cms") && (
+              <LanguageField
+                errors={errors.language}
+                value={values.language}
+                onChange={(value) => onChange({ field: "language", value })}
+              />
+            )}
+          </Grid>
+
+          <Separator />
+
+          {/**
+           * ----------------------========<<<Social Sharing>>>>========----------------------
+           */}
+          <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
+            <Label htmlFor={fieldIds.socialImageAssetId} text="title">
+              Social Image
+            </Label>
+            <Text color="subtle">
+              This image appears when you share a link to this page on social
+              media sites. If no image is set here, the Social Image set in the
+              Project Settings will be used. The optimal dimensions for the
+              image are 1200x630 px or larger with a 1.91:1 aspect ratio.
+            </Text>
+            {isFeatureEnabled("cms") && (
+              <BindingControl>
+                <BindingPopover
+                  scope={scope}
+                  aliases={aliases}
+                  variant={
+                    isLiteralExpression(values.socialImageUrl)
+                      ? "default"
+                      : "bound"
                   }
-                  checked={excludePageFromSearch}
-                  onCheckedChange={() => {
-                    const newValue = !excludePageFromSearch;
+                  value={values.socialImageUrl}
+                  onChange={(value) => {
                     onChange({
-                      field: "excludePageFromSearch",
-                      value: newValue.toString(),
+                      field: "socialImageUrl",
+                      value,
+                    });
+                  }}
+                  onRemove={(evaluatedValue) => {
+                    onChange({
+                      field: "socialImageUrl",
+                      value: JSON.stringify(evaluatedValue),
                     });
                   }}
                 />
-
-                <InputErrorsTooltip errors={errors.excludePageFromSearch}>
-                  <Label htmlFor={fieldIds.excludePageFromSearch}>
-                    Exclude this page from search results
-                  </Label>
+                <InputErrorsTooltip errors={errors.socialImageUrl}>
+                  <InputField
+                    placeholder="https://www.url.com"
+                    disabled={
+                      isLiteralExpression(values.socialImageUrl) === false
+                    }
+                    color={errors.socialImageUrl && "error"}
+                    value={socialImageUrl}
+                    onChange={(event) => {
+                      onChange({
+                        field: "socialImageUrl",
+                        value: JSON.stringify(event.target.value),
+                      });
+                      onChange({ field: "socialImageAssetId", value: "" });
+                    }}
+                  />
                 </InputErrorsTooltip>
-              </Grid>
-            </BindingControl>
-          </Grid>
-
-          {isFeatureEnabled("cms") && (
-            <LanguageField
-              errors={errors.language}
-              value={values.language}
-              onChange={(value) => onChange({ field: "language", value })}
-            />
-          )}
-        </Grid>
-
-        <Separator />
-
-        {/**
-         * ----------------------========<<<Social Sharing>>>>========----------------------
-         */}
-        <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-          <Label htmlFor={fieldIds.socialImageAssetId} text="title">
-            Social Image
-          </Label>
-          <Text color="subtle">
-            This image appears when you share a link to this page on social
-            media sites. If no image is set here, the Social Image set in the
-            Project Settings will be used. The optimal dimensions for the image
-            are 1200x630 px or larger with a 1.91:1 aspect ratio.
-          </Text>
-          {isFeatureEnabled("cms") && (
-            <BindingControl>
-              <BindingPopover
-                scope={scope}
-                aliases={aliases}
-                variant={
-                  isLiteralExpression(values.socialImageUrl)
-                    ? "default"
-                    : "bound"
-                }
-                value={values.socialImageUrl}
-                onChange={(value) => {
+              </BindingControl>
+            )}
+            <Grid gap={1} flow={"column"}>
+              <ImageControl
+                onAssetIdChange={(socialImageAssetId) => {
                   onChange({
-                    field: "socialImageUrl",
-                    value,
+                    field: "socialImageAssetId",
+                    value: socialImageAssetId,
                   });
+                  onChange({ field: "socialImageUrl", value: "" });
                 }}
-                onRemove={(evaluatedValue) => {
+              >
+                <Button
+                  id={fieldIds.socialImageAssetId}
+                  css={{ justifySelf: "start" }}
+                  color="neutral"
+                >
+                  Choose Image From Assets
+                </Button>
+              </ImageControl>
+            </Grid>
+
+            {socialImageAsset?.type === "image" && (
+              <ImageInfo
+                asset={socialImageAsset}
+                onDelete={() => {
                   onChange({
-                    field: "socialImageUrl",
-                    value: JSON.stringify(evaluatedValue),
+                    field: "socialImageAssetId",
+                    value: "",
                   });
                 }}
               />
-              <InputErrorsTooltip errors={errors.socialImageUrl}>
-                <InputField
-                  placeholder="https://www.url.com"
-                  disabled={
-                    isLiteralExpression(values.socialImageUrl) === false
-                  }
-                  color={errors.socialImageUrl && "error"}
-                  value={socialImageUrl}
-                  onChange={(event) => {
-                    onChange({
-                      field: "socialImageUrl",
-                      value: JSON.stringify(event.target.value),
-                    });
-                    onChange({ field: "socialImageAssetId", value: "" });
-                  }}
-                />
-              </InputErrorsTooltip>
-            </BindingControl>
-          )}
-          <Grid gap={1} flow={"column"}>
-            <ImageControl
-              onAssetIdChange={(socialImageAssetId) => {
-                onChange({
-                  field: "socialImageAssetId",
-                  value: socialImageAssetId,
-                });
-                onChange({ field: "socialImageUrl", value: "" });
-              }}
-            >
-              <Button
-                id={fieldIds.socialImageAssetId}
-                css={{ justifySelf: "start" }}
-                color="neutral"
-              >
-                Choose Image From Assets
-              </Button>
-            </ImageControl>
+            )}
+            <div />
+            <SocialPreview
+              ogImageUrl={
+                socialImageAsset?.type === "image"
+                  ? socialImageAsset.name
+                  : socialImageUrl
+              }
+              ogUrl={pageUrl}
+              ogTitle={title}
+              ogDescription={description}
+            />
           </Grid>
 
-          {socialImageAsset?.type === "image" && (
-            <ImageInfo
-              asset={socialImageAsset}
-              onDelete={() => {
-                onChange({
-                  field: "socialImageAssetId",
-                  value: "",
-                });
-              }}
-            />
-          )}
-          <div />
-          <SocialPreview
-            ogImageUrl={
-              socialImageAsset?.type === "image"
-                ? socialImageAsset.name
-                : socialImageUrl
-            }
-            ogUrl={pageUrl}
-            ogTitle={title}
-            ogDescription={description}
-          />
-        </Grid>
+          <Separator />
 
-        <Separator />
-
-        <InputErrorsTooltip errors={errors.customMetas}>
-          <div>
-            <CustomMetadata
-              customMetas={values.customMetas}
-              onChange={(customMetas) => {
-                onChange({
-                  field: "customMetas",
-                  value: customMetas,
-                });
-              }}
-            />
-          </div>
-        </InputErrorsTooltip>
-        <Box css={{ height: theme.spacing[10] }} />
+          <InputErrorsTooltip errors={errors.customMetas}>
+            <div>
+              <CustomMetadata
+                customMetas={values.customMetas}
+                onChange={(customMetas) => {
+                  onChange({
+                    field: "customMetas",
+                    value: customMetas,
+                  });
+                }}
+              />
+            </div>
+          </InputErrorsTooltip>
+          <Box css={{ height: theme.spacing[10] }} />
+        </fieldset>
       </ScrollArea>
     </Grid>
   );
@@ -1299,6 +1349,10 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.customMetas !== undefined) {
       page.meta.custom = values.customMetas;
+    }
+
+    if (values.documentType !== undefined) {
+      page.meta.documentType = values.documentType;
     }
 
     if (values.parentFolderId !== undefined) {
