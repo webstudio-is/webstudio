@@ -42,6 +42,8 @@ export const PageTitle = z
     `Minimum ${MIN_TITLE_LENGTH} characters required`
   );
 
+export const documentTypes = ["html", "xml"] as const;
+
 const commonPageFields = {
   id: PageId,
   name: PageName,
@@ -55,6 +57,7 @@ const commonPageFields = {
     socialImageUrl: z.string().optional(),
     status: z.string().optional(),
     redirect: z.string().optional(),
+    documentType: z.optional(z.enum(documentTypes)),
     custom: z
       .array(
         z.object({
@@ -85,8 +88,8 @@ export const PagePath = z
   .refine((path) => path.endsWith("/") === false, "Can't end with a /")
   .refine((path) => path.includes("//") === false, "Can't contain repeating /")
   .refine(
-    (path) => /^[-_a-z0-9*:?\\/]*$/.test(path),
-    "Only a-z, 0-9, -, _, /, :, ? and * are allowed"
+    (path) => /^[-_a-z0-9*:?\\/.]*$/.test(path),
+    "Only a-z, 0-9, -, _, /, :, ?, . and * are allowed"
   )
   .refine(
     // We use /s for our system stuff like /s/css or /s/uploads

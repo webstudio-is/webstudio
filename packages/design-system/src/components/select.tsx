@@ -124,7 +124,7 @@ type TriggerPassThroughProps = Omit<
   Omit<ComponentProps<typeof SelectButton>, "onChange" | "value">;
 
 export type SelectProps<Option = SelectOption> = {
-  options: Option[];
+  options: readonly Option[];
   defaultValue?: Option;
   value?: Option;
   onChange?: (option: Option) => void;
