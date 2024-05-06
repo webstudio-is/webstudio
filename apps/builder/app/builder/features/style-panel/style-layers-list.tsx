@@ -26,6 +26,7 @@ export type LayerProps<LayerType> = {
   id: string;
   index: number;
   layer: LayerType;
+  label: string;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;

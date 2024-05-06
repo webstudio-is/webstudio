@@ -80,7 +80,7 @@ export const Section = (props: SectionProps) => {
           property={property}
           layers={value}
           renderLayer={(layerProps) => (
-            <FilterLayer {...layerProps} key={layerProps.index} />
+            <FilterLayer {...layerProps} key={layerProps.index} label={label} />
           )}
         />
       )}
