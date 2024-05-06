@@ -8,7 +8,7 @@ import { substituteVariables } from "./substitute";
 import warnOnce from "warn-once";
 import { parseCssValue } from "../parse-css-value";
 import { LayersValue, type StyleProperty } from "@webstudio-is/css-engine";
-import { parseBoxShadow } from "../property-parsers/box-shadow";
+import { parseShadow } from "../property-parsers/shadows";
 
 let unoLazy: UnoGenerator<Theme> | undefined = undefined;
 
@@ -142,7 +142,7 @@ const postprocessBorder = (styles: EmbedTemplateStyleDecl[]) => {
 const postprocessBoxShadows = (styles: EmbedTemplateStyleDecl[]) => {
   return styles.map((style) => {
     if (style.property === "boxShadow" && style.value.type === "unparsed") {
-      const shadowStyle = parseBoxShadow(style.value.value);
+      const shadowStyle = parseShadow("boxShadow", style.value.value);
       return {
         property: style.property,
         value: shadowStyle,

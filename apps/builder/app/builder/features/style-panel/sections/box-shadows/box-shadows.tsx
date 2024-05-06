@@ -18,7 +18,7 @@ import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
 import { BoxShadowLayer } from "./box-shadow-layer";
 import { addLayer } from "../../style-layer-utils";
-import { parseBoxShadow } from "@webstudio-is/css-data";
+import { parseShadow } from "@webstudio-is/css-data";
 
 export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
 
@@ -47,7 +47,7 @@ export const Section = (props: SectionProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseBoxShadow(INITIAL_BOX_SHADOW),
+                  parseShadow("boxShadow", INITIAL_BOX_SHADOW),
                   currentStyle,
                   props.createBatchUpdate
                 );
