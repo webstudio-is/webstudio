@@ -71,6 +71,7 @@ export class MixinRule {
  */
 export class NestingRule {
   #selector: string;
+  #descendentSuffix: string;
   #mixinRules = new Map<string, MixinRule>();
   #mixins = new Set<string>();
   // use map to avoid duplicated properties
@@ -80,12 +81,24 @@ export class NestingRule {
     string,
     { generated: string; indent: number; transformValue?: TransformValue }
   >();
-  constructor(selector: string, mixinRules: Map<string, MixinRule>) {
+  constructor(
+    mixinRules: Map<string, MixinRule>,
+    selector: string,
+    descendentSuffix: string
+  ) {
     this.#selector = selector;
+    this.#descendentSuffix = descendentSuffix;
     this.#mixinRules = mixinRules;
   }
   getSelector() {
     return this.#selector;
+  }
+  setSelector(selector: string) {
+    this.#selector = selector;
+    this.#cache.clear();
+  }
+  getDescendentSuffix() {
+    return this.#descendentSuffix;
   }
   addMixin(mixin: string) {
     this.#mixins.add(mixin);
@@ -154,7 +167,7 @@ export class NestingRule {
         continue;
       }
       const { selector: nestedSelector, property, value } = declaration;
-      const selector = `${this.#selector}${nestedSelector}`;
+      const selector = this.#selector + this.#descendentSuffix + nestedSelector;
       const lines = linesBySelector.get(selector) ?? "";
       const propertyString = toProperty(property);
       const valueString = toValue(value, transformValue);
