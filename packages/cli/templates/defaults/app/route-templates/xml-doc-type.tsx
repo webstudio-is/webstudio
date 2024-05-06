@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import {
-  type ServerRuntimeMetaFunction as MetaFunction,
   type LoaderFunctionArgs,
   type HeadersFunction,
   redirect,

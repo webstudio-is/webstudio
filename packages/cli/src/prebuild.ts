@@ -493,7 +493,7 @@ export const prebuild = async (options: {
 
   spinner.text = "Generating routes and pages";
 
-  // MARK: - Route templates
+  // MARK: - Route templates read
   const routeTemplatesDir = join(cwd(), "app/route-templates");
 
   const routeTemplatePath = normalize(
@@ -609,6 +609,7 @@ export const prebuild = async (options: {
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
     const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
 
+    // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
       /* This is a auto generated file for building the project */ \n
 
