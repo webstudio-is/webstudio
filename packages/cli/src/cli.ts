@@ -2,7 +2,7 @@ import { exit, argv } from "node:process";
 // eslint-disable-next-line import/no-internal-modules
 import { hideBin } from "yargs/helpers";
 import { GLOBAL_CONFIG_FILE } from "./config";
-import { ensureFileInPath } from "./fs-utils";
+import { createFileIfNotExists } from "./fs-utils";
 import { link, linkOptions } from "./commands/link";
 import { sync, syncOptions } from "./commands/sync";
 import { build, buildOptions } from "./commands/build";
@@ -13,7 +13,7 @@ import type { CommonYargsArgv } from "./commands/yargs-types";
 
 export const main = async () => {
   try {
-    await ensureFileInPath(GLOBAL_CONFIG_FILE, "{}");
+    await createFileIfNotExists(GLOBAL_CONFIG_FILE, "{}");
 
     const cmd: CommonYargsArgv = makeCLI(hideBin(argv))
       .strict()

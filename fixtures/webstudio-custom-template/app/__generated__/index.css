@@ -223,15 +223,6 @@ html {
     display: block;
     height: auto;
   }
-  div:where([data-ws-component="Text"]) {
-    box-sizing: border-box;
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    outline-width: 1px;
-    min-height: 1em;
-  }
 }
 @media all {
   .c12poxag {
@@ -418,20 +409,5 @@ html {
   }
   .cub4hpc {
     flex-basis: 0px;
-  }
-  .cwnydv4 {
-    color: rgba(36, 12, 233, 1);
-  }
-  .cnvcd8b {
-    margin-left: 20px;
-  }
-  .c1s70es7 {
-    color: rgba(8, 137, 17, 1);
-  }
-  .c5fu8k4 {
-    font-weight: 600;
-  }
-  .cgkkof0 {
-    color: rgba(208, 24, 79, 1);
   }
 }
