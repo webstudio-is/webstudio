@@ -65,14 +65,33 @@ const descendentMeta: WsComponentMeta = {
   type: "control",
   label: "Descendent",
   icon: EmbedIcon,
+  detachable: false,
 };
 
 const descendentPropsMeta: WsComponentPropsMeta = {
   props: {
     selector: {
       required: true,
-      control: "text",
       type: "string",
+      control: "select",
+      options: [
+        " p",
+        " h1",
+        " h2",
+        " h3",
+        " h4",
+        " h5",
+        " h6",
+        " :where(strong, b)",
+        " :where(em, i)",
+        " a",
+        " img",
+        " blockquote",
+        " code",
+        " :where(ul, ol)",
+        " li",
+        " hr",
+      ],
     },
   },
   initialProps: ["selector"],
