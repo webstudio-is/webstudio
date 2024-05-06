@@ -20,9 +20,20 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       // Clear all non letter, number, underscore, dot, and dash
       .replaceAll(/[^\p{L}\p{N}\-._]+/gu, "");
 
+    const attributes = Object.entries(props)
+      .filter(
+        ([key]) =>
+          key.startsWith("data-") === false && key.startsWith("aria-") === false
+      )
+      .filter(([key]) => key !== "tabIndex")
+      .filter(([, value]) => typeof value !== "function")
+      .map(([key, value]) => `${key}=${JSON.stringify(value)}`);
+
     return (
       <div style={{ display: isTextChild ? "flex" : "contents" }} {...props}>
-        <div style={{ color: "rgb(16, 23, 233)" }}>&lt;{elementName}&gt;</div>
+        <div style={{ color: "rgb(16, 23, 233)" }}>
+          &lt;{[elementName, ...attributes].join(" ")}&gt;
+        </div>
         <div ref={ref} style={{ marginLeft: isTextChild ? 0 : "1rem" }}>
           {children}
         </div>
