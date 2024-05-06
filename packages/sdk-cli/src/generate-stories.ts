@@ -130,6 +130,7 @@ export const generateStories = async () => {
           [instance.id, instance] satisfies [Instance["id"], Instance]
       ),
     ]);
+    const props = new Map(data.props.map((prop) => [prop.id, prop]));
     const components = new Set<Instance["component"]>();
     const usedMetas = new Map<Instance["component"], WsComponentMeta>();
     const bodyMeta = baseMetas.get("Body");
@@ -146,6 +147,8 @@ export const generateStories = async () => {
       }
     }
     const { cssText, classesMap } = generateCss({
+      instances,
+      props,
       assets: new Map(),
       breakpoints: new Map([
         [baseBreakpointId, { id: baseBreakpointId, label: "base" }],
@@ -178,7 +181,7 @@ export const generateStories = async () => {
       rootInstanceId,
       parameters: [],
       instances,
-      props: new Map(data.props.map((prop) => [prop.id, prop])),
+      props,
       dataSources: new Map(data.dataSources.map((prop) => [prop.id, prop])),
       indexesWithinAncestors: getIndexesWithinAncestors(usedMetas, instances, [
         rootInstanceId,
