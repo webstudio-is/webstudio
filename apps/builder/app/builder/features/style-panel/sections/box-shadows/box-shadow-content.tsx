@@ -8,9 +8,9 @@ import {
   type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
-  extractBoxShadowProperties,
+  extractShadowProperties,
   parseShadow,
-  type ExtractedBoxShadowProperties,
+  type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -70,7 +70,7 @@ type BoxShadowContentProps = {
 };
 
 const convertValuesToTupple = (
-  values: Partial<Record<keyof ExtractedBoxShadowProperties, StyleValue>>
+  values: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
 ): TupleValue => {
   return {
     type: "tuple",
@@ -96,9 +96,9 @@ export const BoxShadowContent = ({
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
-  const layerValues = useMemo<ExtractedBoxShadowProperties>(() => {
+  const layerValues = useMemo<ExtractedShadowProperties>(() => {
     setIntermediateValue({ type: "intermediate", value: shadow });
-    return extractBoxShadowProperties(layer);
+    return extractShadowProperties(layer);
   }, [layer, shadow]);
   const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
   const colorControlProp = color ?? {
@@ -133,7 +133,7 @@ export const BoxShadowContent = ({
   };
 
   const handlePropertyChange = (
-    params: Partial<Record<keyof ExtractedBoxShadowProperties, StyleValue>>
+    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
   ) => {
     const newLayer = convertValuesToTupple({ ...layerValues, ...params });
     setIntermediateValue({
