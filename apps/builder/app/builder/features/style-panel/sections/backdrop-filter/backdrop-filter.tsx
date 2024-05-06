@@ -1,6 +1,10 @@
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
-import type { StyleProperty } from "@webstudio-is/css-engine";
+import type {
+  FunctionValue,
+  StyleProperty,
+  TupleValue,
+} from "@webstudio-is/css-engine";
 import { useState } from "react";
 import {
   SectionTitle,
@@ -14,6 +18,8 @@ import { getDots } from "../../shared/collapsible-section";
 import { PlusIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
 import { parseFilter } from "@webstudio-is/css-data";
+import { LayersList } from "../../style-layers-list";
+import { FilterLayer } from "../filter/filter-layer";
 
 export const properties = ["backdropFilter"] satisfies Array<StyleProperty>;
 
@@ -68,7 +74,16 @@ export const Section = (props: SectionProps) => {
         </SectionTitle>
       }
     >
-      Testing
+      {value?.type === "tuple" && value.value.length > 0 && (
+        <LayersList<FunctionValue, TupleValue>
+          {...props}
+          property={property}
+          layers={value}
+          renderLayer={(layerProps) => (
+            <FilterLayer {...layerProps} key={layerProps.index} />
+          )}
+        />
+      )}
     </CollapsibleSectionRoot>
   );
 };
