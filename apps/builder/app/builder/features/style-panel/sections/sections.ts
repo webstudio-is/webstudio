@@ -13,6 +13,7 @@ import * as filter from "./filter/filter";
 import * as transitions from "./transitions/transitions";
 import * as outline from "./outline/outline";
 import * as advanced from "./advanced/advanced";
+import * as textShadows from "./text-shadows/text-shadows";
 import type { StyleProperty } from "@webstudio-is/css-engine";
 import type { SectionProps } from "./shared/section";
 
@@ -33,6 +34,7 @@ export const sections = new Map<
   ["backgrounds", backgrounds],
   ["borders", borders],
   ["boxShadows", boxShadows],
+  ["textShadows", textShadows],
   ["filter", filter],
   ["transitions", transitions],
   ["outline", outline],
