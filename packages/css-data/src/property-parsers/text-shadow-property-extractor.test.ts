@@ -23,8 +23,8 @@ describe("extractTextShadowProeprties", () => {
     expect(offsetY?.value).toBe(10);
     expect(offsetX?.value).toBe(5);
 
-    expect(color).toBeNull();
-    expect(blur).toBeNull();
+    expect(color).not.toBeDefined();
+    expect(blur).not.toBeDefined();
   });
 
   test("tokenize and extracts values from box-shadow: red 60px -16px;", () => {
@@ -36,6 +36,6 @@ describe("extractTextShadowProeprties", () => {
     expect(offsetX?.value).toBe(60);
     expect(offsetY?.value).toBe(-16);
     expect(color?.type).toBe("keyword");
-    expect(blur).toBeNull();
+    expect(blur).not.toBeDefined();
   });
 });

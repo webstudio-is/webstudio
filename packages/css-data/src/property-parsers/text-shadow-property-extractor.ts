@@ -19,17 +19,17 @@ import type {
 */
 
 export type ExtractedTextShadowProperties = {
-  color: RgbValue | KeywordValue | null;
-  offsetX: UnitValue | null;
-  offsetY: UnitValue | null;
-  blur: UnitValue | null;
+  color?: RgbValue | KeywordValue;
+  offsetX: UnitValue;
+  offsetY: UnitValue;
+  blur: UnitValue;
 };
 
 export const extractTextShadowProperties = (
   shadow: TupleValue
 ): ExtractedTextShadowProperties => {
   let properties = [...shadow.value];
-  let color: KeywordValue | RgbValue | null = null;
+  let color: KeywordValue | RgbValue | undefined = undefined;
 
   properties = properties.filter(
     (prop: TupleValueItem): prop is KeywordValue => {
@@ -47,7 +47,7 @@ export const extractTextShadowProperties = (
   );
 
   return {
-    color,
+    ...(color !== undefined && { color }),
     offsetX: offsetX ?? null,
     offsetY: offsetY ?? null,
     blur: blur ?? null,

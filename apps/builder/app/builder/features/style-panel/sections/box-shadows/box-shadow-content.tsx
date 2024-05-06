@@ -70,7 +70,7 @@ type BoxShadowContentProps = {
 };
 
 const convertValuesToTupple = (
-  values: Record<keyof ExtractedBoxShadowProperties, StyleValue | null>
+  values: Partial<Record<keyof ExtractedBoxShadowProperties, StyleValue>>
 ): TupleValue => {
   return {
     type: "tuple",
@@ -135,7 +135,7 @@ export const BoxShadowContent = ({
   const handlePropertyChange = (
     params: Partial<Record<keyof ExtractedBoxShadowProperties, StyleValue>>
   ) => {
-    const newLayer = convertValuesToTupple(Object.assign(layerValues, params));
+    const newLayer = convertValuesToTupple({ ...layerValues, ...params });
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),

@@ -19,20 +19,20 @@ import type {
 */
 
 export type ExtractedBoxShadowProperties = {
-  inset: KeywordValue | null;
-  color: RgbValue | KeywordValue | null;
-  offsetX: UnitValue | null;
-  offsetY: UnitValue | null;
-  blur: UnitValue | null;
-  spread: UnitValue | null;
+  inset?: KeywordValue | undefined;
+  color?: RgbValue | KeywordValue | undefined;
+  offsetX: UnitValue;
+  offsetY: UnitValue;
+  blur: UnitValue;
+  spread: UnitValue;
 };
 
 export const extractBoxShadowProperties = (
   shadow: TupleValue
 ): ExtractedBoxShadowProperties => {
   let properties = [...shadow.value];
-  let inset: KeywordValue | null = null;
-  let color: KeywordValue | RgbValue | null = null;
+  let inset: KeywordValue | undefined = undefined;
+  let color: KeywordValue | RgbValue | undefined = undefined;
 
   properties = properties.filter(
     (prop: TupleValueItem): prop is KeywordValue => {
@@ -55,11 +55,11 @@ export const extractBoxShadowProperties = (
   );
 
   return {
-    color,
-    inset,
-    offsetX: offsetX ?? null,
-    offsetY: offsetY ?? null,
-    blur: blur ?? null,
-    spread: spread ?? null,
+    ...(color !== undefined && { color }),
+    ...(inset !== undefined && { inset }),
+    offsetX,
+    offsetY,
+    blur,
+    spread,
   };
 };

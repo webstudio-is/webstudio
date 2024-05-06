@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import { extractBoxShadowProperties } from "./box-shadow-property-extractor";
-import { parseShadow } from ".";
+import { parseShadow } from "./shadows";
 import type { TupleValue } from "@webstudio-is/css-engine";
 
 describe("extractBoxShadowProperties", () => {
@@ -38,7 +38,7 @@ describe("extractBoxShadowProperties", () => {
       ],
     });
 
-    expect(inset).toBeNull();
+    expect(inset).not.toBeDefined();
     expect(blur).toBeDefined();
     expect(spread?.value).toBe(2);
     expect(color?.type).toBe("rgb");
@@ -70,7 +70,7 @@ describe("extractBoxShadowProperties", () => {
     });
 
     expect(inset).toBeDefined();
-    expect(spread).toBeNull();
+    expect(spread).not.toBeDefined();
     expect(offsetX?.value).toBe(5);
     expect(color?.type).toBe("keyword");
   });
