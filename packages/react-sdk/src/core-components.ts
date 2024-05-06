@@ -58,17 +58,17 @@ const collectionPropsMeta: WsComponentPropsMeta = {
   initialProps: ["data"],
 };
 
-export const descendentComponent = "ws:descendent";
+export const descendantComponent = "ws:descendant";
 
-const descendentMeta: WsComponentMeta = {
+const descendantMeta: WsComponentMeta = {
   category: "internal",
   type: "control",
-  label: "Descendent",
+  label: "Descendant",
   icon: EmbedIcon,
   detachable: false,
 };
 
-const descendentPropsMeta: WsComponentPropsMeta = {
+const descendantPropsMeta: WsComponentPropsMeta = {
   props: {
     selector: {
       required: true,
@@ -99,15 +99,15 @@ const descendentPropsMeta: WsComponentPropsMeta = {
 
 export const coreMetas = {
   [collectionComponent]: collectionMeta,
-  [descendentComponent]: descendentMeta,
+  [descendantComponent]: descendantMeta,
 };
 
 export const corePropsMetas = {
   [collectionComponent]: collectionPropsMeta,
-  [descendentComponent]: descendentPropsMeta,
+  [descendantComponent]: descendantPropsMeta,
 };
 
 // components with custom implementation
 // should not be imported as react component
 export const isCoreComponent = (component: string) =>
-  component === collectionComponent || component === descendentComponent;
+  component === collectionComponent || component === descendantComponent;

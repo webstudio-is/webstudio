@@ -27,7 +27,7 @@ import {
   collectionComponent,
   type AnyComponent,
   textContentAttribute,
-  descendentComponent,
+  descendantComponent,
 } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
@@ -329,7 +329,7 @@ export const WebstudioComponentCanvas = forwardRef<
     }
   }
 
-  if (instance.component === descendentComponent) {
+  if (instance.component === descendantComponent) {
     return <></>;
   }
 
@@ -453,7 +453,7 @@ export const WebstudioComponentPreview = forwardRef<
     }
   }
 
-  if (instance.component === descendentComponent) {
+  if (instance.component === descendantComponent) {
     return <></>;
   }
 

@@ -1,7 +1,7 @@
 import { expect, test } from "@jest/globals";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import { generateCss, type CssConfig } from "./css";
-import { descendentComponent } from "../core-components";
+import { descendantComponent } from "../core-components";
 
 const toMap = <T extends { id: string }>(list: T[]) =>
   new Map(list.map((item) => [item.id, item] as const));
@@ -89,7 +89,7 @@ test("generate descendant selector", () => {
       {
         id: "descendant",
         type: "instance",
-        component: descendentComponent,
+        component: descendantComponent,
         children: [],
       },
     ]),
