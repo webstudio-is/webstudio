@@ -118,7 +118,9 @@ export const generateCss = ({
   }
 
   const instanceByRule = new Map<NestingRule, Instance["id"]>();
-  for (let { instanceId, values } of styleSourceSelections.values()) {
+  for (const selection of styleSourceSelections.values()) {
+    let { instanceId } = selection;
+    const { values } = selection;
     let descendentSuffix = "";
     // render selector component as descendent selector
     const instance = instances.get(instanceId);
