@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, existsSync } from "node:fs";
 import { join } from "node:path";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
@@ -52,6 +52,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   }
   const fileUploadPath = env.FILE_UPLOAD_PATH;
   const filePath = join(process.cwd(), fileUploadPath, name);
+
+  if (existsSync(filePath) === false) {
+    throw new Response("Not found", {
+      status: 404,
+    });
+  }
+
   return new Response(
     createReadableStreamFromReadable(createReadStream(filePath))
   );
