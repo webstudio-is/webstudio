@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/css-engine";
 import {
   extractBoxShadowProperties,
-  parseBoxShadow,
+  parseShadow,
   type ExtractedBoxShadowProperties,
 } from "@webstudio-is/css-data";
 import {
@@ -120,7 +120,7 @@ export const BoxShadowContent = ({
     if (intermediateValue === undefined) {
       return;
     }
-    const layers = parseBoxShadow(intermediateValue.value);
+    const layers = parseShadow("boxShadow", intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
         type: "invalid",

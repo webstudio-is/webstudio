@@ -9,15 +9,23 @@ import type {
 } from "@webstudio-is/css-engine";
 import { cssTryParseValue } from "../parse-css-value";
 
-export const parseBoxShadow = (
-  boxShadow: string
+const ShadowProperties = {
+  boxShadow: { cleanupKeywords: ["box-shadow:"], propertyName: "box-shadow" },
+  textShadow: {
+    cleanupKeywords: ["text-shadow:"],
+    propertyName: "text-shadow",
+  },
+};
+
+export const parseShadow = (
+  property: keyof typeof ShadowProperties,
+  shadow: string
 ): LayersValue | InvalidValue => {
-  let tokenStream = boxShadow.trim();
+  let tokenStream = shadow.trim();
   tokenStream = tokenStream.endsWith(";")
     ? tokenStream.slice(0, -1)
     : tokenStream;
-
-  const cleanupKeywords = ["box-shadow:"];
+  const { cleanupKeywords, propertyName } = ShadowProperties[property];
 
   for (const cleanupKeyword of cleanupKeywords) {
     tokenStream = tokenStream.startsWith(cleanupKeyword)
@@ -29,15 +37,15 @@ export const parseBoxShadow = (
   if (cssAst === undefined) {
     return {
       type: "invalid",
-      value: boxShadow,
+      value: shadow,
     };
   }
 
-  const parsed = csstree.lexer.matchProperty("box-shadow", cssAst);
+  const parsed = csstree.lexer.matchProperty(propertyName, cssAst);
   if (parsed.error) {
     return {
       type: "invalid",
-      value: boxShadow,
+      value: shadow,
     };
   }
 
@@ -126,5 +134,5 @@ export const parseBoxShadow = (
         type: "layers",
         value: layers,
       }
-    : { type: "invalid", value: boxShadow };
+    : { type: "invalid", value: shadow };
 };

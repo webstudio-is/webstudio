@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parse shadows parses value and returns invalid when a invalid textShadow is passed: 
+      {
+        "type": "invalid",
+        "value": "10px 10px 5px foo",
+      }
+     1`] = `
+{
+  "type": "invalid",
+  "value": "10px 10px 5px foo",
+}
+`;

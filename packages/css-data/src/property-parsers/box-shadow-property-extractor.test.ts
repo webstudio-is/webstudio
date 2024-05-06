@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import { extractBoxShadowProperties } from "./box-shadow-property-extractor";
-import { parseBoxShadow } from ".";
+import { parseShadow } from ".";
 import type { TupleValue } from "@webstudio-is/css-engine";
 
 describe("extractBoxShadowProperties", () => {
@@ -126,7 +126,7 @@ describe("extractBoxShadowProperties", () => {
   });
 
   test("tokenize and extract values from 5em 5em 0em 5em inset #ffff", () => {
-    const layers = parseBoxShadow("5em 5em 0em 5em inset #ffff");
+    const layers = parseShadow("boxShadow", "5em 5em 0em 5em inset #ffff");
     if (layers.type === "invalid") {
       throw new Error(`Failed in parsing box-shadow string`);
     }
