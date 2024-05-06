@@ -1,4 +1,4 @@
-import { ListViewIcon } from "@webstudio-is/icons/svg";
+import { EmbedIcon, ListViewIcon } from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -58,10 +58,37 @@ const collectionPropsMeta: WsComponentPropsMeta = {
   initialProps: ["data"],
 };
 
+export const descendentComponent = "ws:descendent";
+
+const descendentMeta: WsComponentMeta = {
+  category: "internal",
+  type: "control",
+  label: "Descendent",
+  icon: EmbedIcon,
+};
+
+const descendentPropsMeta: WsComponentPropsMeta = {
+  props: {
+    selector: {
+      required: true,
+      control: "text",
+      type: "string",
+    },
+  },
+  initialProps: ["selector"],
+};
+
 export const coreMetas = {
   [collectionComponent]: collectionMeta,
+  [descendentComponent]: descendentMeta,
 };
 
 export const corePropsMetas = {
   [collectionComponent]: collectionPropsMeta,
+  [descendentComponent]: descendentPropsMeta,
 };
+
+// components with custom implementation
+// should not be imported as react component
+export const isCoreComponent = (component: string) =>
+  component === collectionComponent || component === descendentComponent;

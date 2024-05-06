@@ -175,3 +175,33 @@ test("distinct similar declarations from different breakpoints", () => {
 }"
 `);
 });
+
+test("support descendent suffix", () => {
+  const sheet = createRegularStyleSheet();
+  sheet.addMediaRule("x");
+  const rule1 = sheet.addNestingRule("instance");
+  rule1.setDeclaration({
+    breakpoint: "x",
+    selector: ":hover",
+    property: "display",
+    value: { type: "keyword", value: "block" },
+  });
+  const rule2 = sheet.addNestingRule("instance", " img");
+  rule2.setDeclaration({
+    breakpoint: "x",
+    selector: ":hover",
+    property: "display",
+    value: { type: "keyword", value: "block" },
+  });
+  expect(generateAtomic(sheet, { getKey: () => "" }).cssText)
+    .toMatchInlineSnapshot(`
+"@media all {
+  .c143pt9k:hover {
+    display: block
+  }
+  .cpdl2lp img:hover {
+    display: block
+  }
+}"
+`);
+});

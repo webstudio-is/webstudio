@@ -19,7 +19,7 @@ import {
   indexAttribute,
   showAttribute,
 } from "./props";
-import { collectionComponent } from "./core-components";
+import { collectionComponent, descendentComponent } from "./core-components";
 import type { IndexesWithinAncestors } from "./instance-utils";
 
 /**
@@ -251,6 +251,12 @@ export const generateJsxElement = ({
       generatedElement += children;
       generatedElement += `</${componentVariable}>\n`;
     }
+  }
+
+  // descendent component is used only for styling
+  // and should not be rendered
+  if (instance.component === descendentComponent) {
+    return "";
   }
 
   if (conditionValue) {
