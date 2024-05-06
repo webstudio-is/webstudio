@@ -14,7 +14,8 @@ describe("parse shadows", () => {
   });
 
   test("parses value and returns invalid when a invalid textShadow is passed", () => {
-    expect(parseShadow("textShadow", `10px 10px 5px foo`)).toMatchSnapshot(`
+    expect(parseShadow("textShadow", `10px 10px 5px foo`))
+      .toMatchInlineSnapshot(`
       {
         "type": "invalid",
         "value": "10px 10px 5px foo",
