@@ -96,7 +96,7 @@ const perColorStyle = (variant: ButtonColor) => ({
           ),
   },
 
-  "&[data-state=disabled]": {
+  "&:disabled:not([data-state=pending]), &[data-state=disabled]": {
     background: theme.colors.backgroundButtonDisabled,
     color: theme.colors.foregroundDisabled,
   },
