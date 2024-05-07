@@ -27,6 +27,7 @@ export type LayerProps<LayerType> = {
   index: number;
   layer: LayerType;
   label: string;
+  tooltip: JSX.Element;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;

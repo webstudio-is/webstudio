@@ -10,9 +10,7 @@ import { SubtractIcon } from "@webstudio-is/icons";
 import { useMemo } from "react";
 import { FunctionValue, toValue } from "@webstudio-is/css-engine";
 
-export const FilterLayer = <T extends FunctionValue>(
-  props: LayerProps<T> & { tooltip: JSX.Element }
-) => {
+export const FilterLayer = <T extends FunctionValue>(props: LayerProps<T>) => {
   const { index, id, layer, isHighlighted, onDeleteLayer, label } = props;
   const filter = useMemo(() => toValue(layer), [layer]);
 
