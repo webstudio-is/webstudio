@@ -1,9 +1,5 @@
 /* eslint-disable camelcase */
-import {
-  type LoaderFunctionArgs,
-  type HeadersFunction,
-  redirect,
-} from "@remix-run/server-runtime";
+import { type LoaderFunctionArgs, redirect } from "@remix-run/server-runtime";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { Page } from "../../../../__generated__/_index";
 import {
@@ -59,12 +55,7 @@ export const loader = async (arg: LoaderFunctionArgs) => {
     </ReactSdkContext.Provider>
   );
 
-  return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${text}`);
-};
-
-export const headers: HeadersFunction = ({ loaderHeaders }) => {
-  return {
-    "Cache-Control": "public, max-age=0, must-revalidate",
-    "Content-Type": "application/xml",
-  };
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?>\n${text}`, {
+    headers: { "Content-Type": "application/xml" },
+  });
 };
