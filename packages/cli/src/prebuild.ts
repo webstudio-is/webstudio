@@ -556,7 +556,7 @@ export const prebuild = async (options: {
     }
 
     let componentImports = "";
-    let passthroughComponents = "";
+    let xmlPresentationComponents = "";
 
     const pageData = siteDataByPage[pageId];
     const documentType = pageData.page.meta.documentType ?? "html";
@@ -580,18 +580,16 @@ export const prebuild = async (options: {
             // In case of xml it's the only component we are supporting
             componentImports = `import { XmlNode } from "@webstudio-is/sdk-components-react";\n`;
 
-            // Passthrough (render children) for all components except XmlNode
-            passthroughComponents += Array.from(componentsSet)
-              .filter(
-                ([shortName, component]) =>
-                  scope.getName(component, shortName) !== "XmlNode"
+            // Passthrough (render children) for Body, do not render all other components
+            xmlPresentationComponents += Array.from(componentsSet)
+              .map(([shortName, component]) =>
+                scope.getName(component, shortName)
               )
-              .map(
-                ([shortName, component]) =>
-                  `const ${scope.getName(
-                    component,
-                    shortName
-                  )} = (props: any) => props.children;`
+              .filter((scopedName) => scopedName !== "XmlNode")
+              .map((scopedName) =>
+                scopedName === "Body"
+                  ? `const ${scopedName} = (props: any) => props.children;`
+                  : `const ${scopedName} = () => null;`
               )
               .join("\n");
           }
@@ -666,7 +664,7 @@ export const prebuild = async (options: {
       export const pageBackgroundImageAssets: ImageAsset[] =
         ${JSON.stringify(pageBackgroundImageAssets)}
 
-      ${passthroughComponents}
+      ${xmlPresentationComponents}
 
       ${pageComponent}
 
