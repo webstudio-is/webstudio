@@ -7,7 +7,7 @@
     "build": "pnpm -r --filter='!./fixtures/*' build",
     "dts": "pnpm -r dts",
     "checks": "pnpm -r checks",
-    "dev": "pnpm --filter='apps/builder' --filter='packages/prisma-client/' --parallel --recursive dev",
+    "dev": "pnpm --filter='@webstudio-is/builder' --filter='@webstudio-is/prisma-client' --parallel --recursive dev",
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "storybook": "pnpm --parallel --recursive storybook:dev",
