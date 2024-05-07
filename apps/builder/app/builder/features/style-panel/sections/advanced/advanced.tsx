@@ -1,13 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { Box, Flex, Text } from "@webstudio-is/design-system";
-import {
-  parseFilter,
-  parseShadow,
-  parseTransition,
-  properties as propertiesData,
-} from "@webstudio-is/css-data";
+import { properties as propertiesData } from "@webstudio-is/css-data";
 import { useStore } from "@nanostores/react";
-import type { StyleProperty, StyleValue } from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import {
   $selectedInstanceSelector,
   useInstanceStyles,
@@ -25,10 +20,7 @@ import { Add } from "./add";
 import { CollapsibleSection } from "../../shared/collapsible-section";
 import { sections } from "../sections";
 import { toKebabCase } from "../../shared/keyword-utils";
-import type {
-  DeleteProperty,
-  StyleUpdateOptions,
-} from "../../shared/use-style-data";
+import type { DeleteProperty } from "../../shared/use-style-data";
 
 const allPropertyNames = Object.keys(propertiesData).sort(
   Intl.Collator().compare
@@ -105,39 +97,6 @@ export const Section = ({
     return props.deleteProperty(property, options);
   };
 
-  const handleSetPropertyValue = (
-    property: StyleProperty,
-    styleValue: StyleValue,
-    options?: StyleUpdateOptions
-  ) => {
-    let parsedValue: StyleValue | undefined = undefined;
-    if (styleValue.type === "unparsed") {
-      if (property === "filter" || property === "backdropFilter") {
-        parsedValue = parseFilter(styleValue.value);
-      }
-
-      if (property === "boxShadow" || property === "textShadow") {
-        parsedValue = parseShadow(property, styleValue.value);
-      }
-
-      if (property === "transition") {
-        parsedValue = parseTransition(styleValue.value);
-      }
-    }
-
-    if (parsedValue) {
-      return setProperty(property)(
-        parsedValue.type === "invalid"
-          ? { type: "guaranteedInvalid" }
-          : parsedValue,
-        {
-          ...options,
-          listed: true,
-        }
-      );
-    }
-  };
-
   return (
     <CollapsibleSection
       label="Advanced"
@@ -201,8 +160,11 @@ export const Section = ({
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
                 value={currentStyle[property]?.value}
-                setValue={(...params) =>
-                  handleSetPropertyValue(property, ...params)
+                setValue={(styleValue, options) =>
+                  setProperty(property)(styleValue, {
+                    ...options,
+                    listed: true,
+                  })
                 }
                 deleteProperty={deleteProperty}
               />
