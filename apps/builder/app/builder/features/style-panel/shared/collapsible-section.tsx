@@ -26,7 +26,7 @@ export const getDots = (
       style?.value.type === "unparsed" ||
       style?.value.type === "guaranteedInvalid"
     ) {
-      return undefined;
+      return;
     }
 
     const source = getStyleSource(style);
