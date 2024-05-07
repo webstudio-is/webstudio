@@ -112,7 +112,7 @@ const fieldDefaultValues = {
   isHomePage: false,
   title: `"Untitled"`,
   description: `""`,
-  excludePageFromSearch: `false`,
+  excludePageFromSearch: `true`,
   language: `""`,
   socialImageUrl: `""`,
   socialImageAssetId: "",
