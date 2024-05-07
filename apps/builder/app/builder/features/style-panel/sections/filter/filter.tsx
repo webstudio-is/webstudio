@@ -2,14 +2,16 @@ import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import { useState } from "react";
 import {
+  Flex,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
   Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
-import { PlusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import {
   FunctionValue,
   TupleValue,
@@ -80,7 +82,28 @@ export const Section = (props: SectionProps) => {
           property={property}
           layers={value}
           renderLayer={(layerProps) => (
-            <FilterLayer {...layerProps} key={layerProps.index} label={label} />
+            <FilterLayer
+              {...layerProps}
+              key={layerProps.index}
+              label={label}
+              tooltip={
+                <Tooltip
+                  content={
+                    <Flex gap="2" direction="column">
+                      <Text variant="regularBold">{label}</Text>
+                      <Text variant="monoBold">filter</Text>
+                      <Text>
+                        Applies graphical effects like
+                        <br />
+                        blur or color shift to an element
+                      </Text>
+                    </Flex>
+                  }
+                >
+                  <InfoCircleIcon />
+                </Tooltip>
+              }
+            />
           )}
         />
       )}

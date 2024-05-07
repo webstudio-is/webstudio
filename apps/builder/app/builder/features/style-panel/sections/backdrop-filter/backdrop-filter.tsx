@@ -11,11 +11,13 @@ import {
   SectionTitleButton,
   SectionTitleLabel,
   Tooltip,
+  Flex,
+  Text,
 } from "@webstudio-is/design-system";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import { getDots } from "../../shared/collapsible-section";
-import { PlusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
 import { parseFilter } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
@@ -80,7 +82,28 @@ export const Section = (props: SectionProps) => {
           property={property}
           layers={value}
           renderLayer={(layerProps) => (
-            <FilterLayer {...layerProps} key={layerProps.index} label={label} />
+            <FilterLayer
+              {...layerProps}
+              key={layerProps.index}
+              label={label}
+              tooltip={
+                <Tooltip
+                  content={
+                    <Flex gap="2" direction="column">
+                      <Text variant="regularBold">{label}</Text>
+                      <Text variant="monoBold">backdrop-filter</Text>
+                      <Text>
+                        Applies graphical effects like
+                        <br />
+                        blur or color shift to the area behind an element
+                      </Text>
+                    </Flex>
+                  }
+                >
+                  <InfoCircleIcon />
+                </Tooltip>
+              }
+            />
           )}
         />
       )}
