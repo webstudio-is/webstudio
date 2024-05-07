@@ -4,8 +4,7 @@
 import { Fragment, useState } from "react";
 import type { FontAsset, ImageAsset } from "@webstudio-is/sdk";
 import { useResource } from "@webstudio-is/react-sdk";
-import { Body as Body } from "@webstudio-is/sdk-components-react-remix";
-import { XmlNode as XmlNode } from "@webstudio-is/sdk-components-react";
+import { XmlNode } from "@webstudio-is/sdk-components-react";
 
 export const siteName = "Fixture Site";
 
@@ -27,6 +26,8 @@ export const socialImageAsset: ImageAsset | undefined = undefined;
 export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
+
+const Body = (props: any) => props.children;
 
 const Page = ({ system: system }: { system: any }) => {
   let sitemapxml = useResource("sitemapxml_1");

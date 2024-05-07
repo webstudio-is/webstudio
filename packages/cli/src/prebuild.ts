@@ -556,19 +556,52 @@ export const prebuild = async (options: {
     }
 
     let componentImports = "";
-
-    for (const [namespace, componentsSet] of namespaces.entries()) {
-      const specifiers = Array.from(componentsSet)
-        .map(
-          ([shortName, component]) =>
-            `${shortName} as ${scope.getName(component, shortName)}`
-        )
-        .join(", ");
-      componentImports += `import { ${specifiers} } from "${namespace}";\n`;
-    }
+    let passthroughComponents = "";
 
     const pageData = siteDataByPage[pageId];
     const documentType = pageData.page.meta.documentType ?? "html";
+
+    for (const [namespace, componentsSet] of namespaces.entries()) {
+      switch (documentType) {
+        case "html":
+          {
+            const specifiers = Array.from(componentsSet)
+              .map(
+                ([shortName, component]) =>
+                  `${shortName} as ${scope.getName(component, shortName)}`
+              )
+              .join(", ");
+            componentImports += `import { ${specifiers} } from "${namespace}";\n`;
+          }
+          break;
+
+        case "xml":
+          {
+            // In case of xml it's the only component we are supporting
+            componentImports = `import { XmlNode } from "@webstudio-is/sdk-components-react";\n`;
+
+            // Passthrough (render children) for all components except XmlNode
+            passthroughComponents += Array.from(componentsSet)
+              .filter(
+                ([shortName, component]) =>
+                  scope.getName(component, shortName) !== "XmlNode"
+              )
+              .map(
+                ([shortName, component]) =>
+                  `const ${scope.getName(
+                    component,
+                    shortName
+                  )} = (props: any) => props.children;`
+              )
+              .join("\n");
+          }
+          break;
+        default: {
+          documentType satisfies never;
+        }
+      }
+    }
+
     const pageFontAssets = fontAssetsByPage[pageId];
     const pageBackgroundImageAssets = backgroundImageAssetsByPage[pageId];
 
@@ -633,7 +666,7 @@ export const prebuild = async (options: {
       export const pageBackgroundImageAssets: ImageAsset[] =
         ${JSON.stringify(pageBackgroundImageAssets)}
 
-
+      ${passthroughComponents}
 
       ${pageComponent}
 
