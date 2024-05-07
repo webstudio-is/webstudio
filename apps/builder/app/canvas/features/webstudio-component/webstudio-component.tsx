@@ -27,6 +27,7 @@ import {
   collectionComponent,
   type AnyComponent,
   textContentAttribute,
+  descendentComponent,
 } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
@@ -328,6 +329,10 @@ export const WebstudioComponentCanvas = forwardRef<
     }
   }
 
+  if (instance.component === descendentComponent) {
+    return <></>;
+  }
+
   const Component =
     components.get(instance.component) ?? (StubComponent as AnyComponent);
 
@@ -446,6 +451,10 @@ export const WebstudioComponentPreview = forwardRef<
         );
       });
     }
+  }
+
+  if (instance.component === descendentComponent) {
+    return <></>;
   }
 
   const Component = components.get(instance.component);

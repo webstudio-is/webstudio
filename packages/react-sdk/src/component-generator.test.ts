@@ -7,7 +7,7 @@ import {
   type Prop,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "./props";
-import { collectionComponent } from "./core-components";
+import { collectionComponent, descendentComponent } from "./core-components";
 import {
   generateJsxChildren,
   generateJsxElement,
@@ -939,6 +939,33 @@ return <Body
 data-ws-id="body"
 data-ws-component="Body"
 data-data={UsedVariableName} />
+}
+"
+`);
+});
+
+test("avoid generating descendent component", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      instances: toMap([
+        createInstance("body", "Body", [{ type: "id", value: "selector" }]),
+        createInstance("descendent", descendentComponent, []),
+      ]),
+      dataSources: new Map(),
+      props: new Map(),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+"const Page = () => {
+return <Body
+data-ws-id="body"
+data-ws-component="Body">
+</Body>
 }
 "
 `);

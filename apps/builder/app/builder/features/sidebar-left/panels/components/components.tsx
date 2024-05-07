@@ -80,6 +80,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                       ) {
                         return;
                       }
+                      if (
+                        isFeatureEnabled("internalComponents") === false &&
+                        meta.category === "internal"
+                      ) {
+                        return;
+                      }
                       return (
                         <ListItem
                           asChild

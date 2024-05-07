@@ -13,12 +13,20 @@ export const generateAtomic = (sheet: StyleSheet, options: Options) => {
   const atomicRules = new Map<string, NestingRule>();
   const classesMap = new Map<string, string[]>();
   for (const rule of sheet.nestingRules.values()) {
+    const descendentSuffix = rule.getDescendentSuffix();
     const groupKey = getKey(rule);
-    const classList: string[] = [];
+    // a few rules can be in the same group
+    // when rule have descendent suffix
+    let classList = classesMap.get(groupKey);
+    if (classList === undefined) {
+      classList = [];
+      classesMap.set(groupKey, classList);
+    }
     // convert each declaration into separate rule
     for (const declaration of rule.getDeclarations()) {
       const atomicHash = hash(
-        declaration.breakpoint +
+        descendentSuffix +
+          declaration.breakpoint +
           declaration.selector +
           declaration.property +
           toValue(declaration.value, transformValue)
@@ -28,13 +36,16 @@ export const generateAtomic = (sheet: StyleSheet, options: Options) => {
       // reuse atomic rules
       let atomicRule = atomicRules.get(atomicHash);
       if (atomicRule === undefined) {
-        atomicRule = new NestingRule(`.${className}`, new Map());
+        atomicRule = new NestingRule(
+          new Map(),
+          `.${className}`,
+          descendentSuffix
+        );
         atomicRule.setDeclaration(declaration);
         atomicRules.set(atomicHash, atomicRule);
       }
       classList.push(className);
     }
-    classesMap.set(groupKey, classList);
   }
   const cssText = sheet.generateWith({
     nestingRules: Array.from(atomicRules.values()),
