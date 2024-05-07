@@ -83,6 +83,11 @@ export const Button = ({
             <ButtonComponent prefix={<TrashIcon />} color={color} disabled>
               {color} disabled
             </ButtonComponent>
+            <fieldset style={{ display: "contents" }} disabled>
+              <ButtonComponent prefix={<TrashIcon />} color={color}>
+                {color} disabled by fieldset
+              </ButtonComponent>
+            </fieldset>
           </StoryGrid>
         ))}
       </StoryGrid>
