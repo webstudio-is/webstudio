@@ -10,8 +10,10 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
-import { PlusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
 import { parseShadow } from "@webstudio-is/css-data";
 import { getDots } from "../../shared/collapsible-section";
@@ -81,6 +83,25 @@ export const Section = (props: SectionProps) => {
               {...layersProps}
               key={layersProps.index}
               label={label}
+              tooltip={
+                <Tooltip
+                  variant="wrapped"
+                  content={
+                    <Text>
+                      Paste a text-shadow CSS code
+                      <br />
+                      without the property name, for
+                      <br />
+                      example:
+                      <br />
+                      <br />
+                      0px 2px 5px rgba(0, 0, 0, 0.2)
+                    </Text>
+                  }
+                >
+                  <InfoCircleIcon />
+                </Tooltip>
+              }
             ></ShadowLayer>
           )}
         />

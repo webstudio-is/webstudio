@@ -25,8 +25,10 @@ import type {
 export type LayerProps<LayerType> = {
   id: string;
   index: number;
+  property: StyleProperty;
   layer: LayerType;
   label: string;
+  tooltip: JSX.Element;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;

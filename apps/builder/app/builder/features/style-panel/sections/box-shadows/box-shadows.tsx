@@ -2,8 +2,10 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
-import { PlusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import type {
   LayersValue,
   StyleProperty,
@@ -82,7 +84,26 @@ export const Section = (props: SectionProps) => {
                 key={layersProps.index}
                 {...layersProps}
                 label={label}
-              ></ShadowLayer>
+                tooltip={
+                  <Tooltip
+                    variant="wrapped"
+                    content={
+                      <Text>
+                        Paste a box-shadow CSS code
+                        <br />
+                        without the property name, for
+                        <br />
+                        example:
+                        <br />
+                        <br />
+                        0px 2px 5px 0px rgba(0, 0, 0, 0.2)
+                      </Text>
+                    }
+                  >
+                    <InfoCircleIcon />
+                  </Tooltip>
+                }
+              />
             );
           }}
         />

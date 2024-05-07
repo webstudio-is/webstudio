@@ -50,8 +50,17 @@ const useLayer = (layer: TupleValue) => {
 };
 
 export const ShadowLayer = <T extends TupleValue>(props: LayerProps<T>) => {
-  const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide, label } =
-    props;
+  const {
+    index,
+    id,
+    layer,
+    isHighlighted,
+    onDeleteLayer,
+    onLayerHide,
+    label,
+    tooltip,
+    property,
+  } = props;
   const properties = useLayer(layer);
   const { name, shadow, color } = properties;
 
@@ -61,8 +70,10 @@ export const ShadowLayer = <T extends TupleValue>(props: LayerProps<T>) => {
       content={
         <ShadowContent
           index={index}
+          property={property}
           shadow={shadow}
           layer={layer}
+          tooltip={tooltip}
           onEditLayer={props.onEditLayer}
           deleteProperty={props.deleteProperty}
         />
