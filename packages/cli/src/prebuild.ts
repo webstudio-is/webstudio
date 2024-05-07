@@ -496,12 +496,8 @@ export const prebuild = async (options: {
   // MARK: - Route templates read
   const routeTemplatesDir = join(cwd(), "app/route-templates");
 
-  const routeTemplatePath = normalize(
-    join(routeTemplatesDir, "html-doc-type.tsx")
-  );
-  const routeXmlTemplatePath = normalize(
-    join(routeTemplatesDir, "xml-doc-type.tsx")
-  );
+  const routeTemplatePath = normalize(join(routeTemplatesDir, "html.tsx"));
+  const routeXmlTemplatePath = normalize(join(routeTemplatesDir, "xml.tsx"));
   const implicitSiteMapXmlPath = normalize(
     join(routeTemplatesDir, "implicit-sitemap.tsx")
   );
