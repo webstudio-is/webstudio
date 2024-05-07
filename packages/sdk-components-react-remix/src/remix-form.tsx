@@ -13,7 +13,11 @@ export const RemixForm = forwardRef<
     }
 >((props, ref) => {
   // remix casts action to relative url
-  if (props.action === "" || props.action?.startsWith("/")) {
+  if (
+    props.action === undefined ||
+    props.action === "" ||
+    props.action?.startsWith("/")
+  ) {
     return <Form {...props} ref={ref} />;
   }
   return <form {...props} ref={ref} />;
