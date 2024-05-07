@@ -934,4 +934,33 @@ describe("Style Sheet Regular", () => {
 }"
 `);
   });
+
+  test("support descendent suffix", () => {
+    const sheet = createRegularStyleSheet();
+    sheet.addMediaRule("base", {});
+    const rule1 = sheet.addNestingRule(".instance");
+    rule1.setDeclaration({
+      breakpoint: "base",
+      selector: ":hover",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    const rule2 = sheet.addNestingRule(".instance", " img");
+    rule2.setDeclaration({
+      breakpoint: "base",
+      selector: ":hover",
+      property: "width",
+      value: { type: "keyword", value: "auto" },
+    });
+    expect(sheet.cssText).toMatchInlineSnapshot(`
+"@media all {
+  .instance:hover {
+    width: auto
+  }
+  .instance img:hover {
+    width: auto
+  }
+}"
+`);
+  });
 });

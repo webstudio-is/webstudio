@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect } from "react";
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
 import {
+  Instance,
   getStyleDeclKey,
   type StyleDecl,
   type StyleSourceSelection,
@@ -12,6 +13,7 @@ import {
   addGlobalRules,
   createImageValueTransformer,
   getPresetStyleRules,
+  descendentComponent,
   type Params,
 } from "@webstudio-is/react-sdk";
 import {
@@ -23,7 +25,9 @@ import {
 import {
   $assets,
   $breakpoints,
+  $instances,
   $isPreviewMode,
+  $props,
   $registeredComponentMetas,
   $selectedInstanceSelector,
   $selectedStyleState,
@@ -159,6 +163,42 @@ const toVarValue = (styleDecl: StyleDecl): undefined | VarValue => {
   }
 };
 
+const $descendentSelectors = computed(
+  [$instances, $props],
+  (instances, props) => {
+    const parentIdByInstanceId = new Map<Instance["id"], Instance["id"]>();
+    const descendentInstanceIds: Instance["id"][] = [];
+    for (const instance of instances.values()) {
+      if (instance.component === descendentComponent) {
+        descendentInstanceIds.push(instance.id);
+      }
+      for (const child of instance.children) {
+        if (child.type === "id") {
+          parentIdByInstanceId.set(child.value, instance.id);
+        }
+      }
+    }
+    const descendentSelectorByInstanceId = new Map<Instance["id"], string>();
+    for (const prop of props.values()) {
+      if (prop.name === "selector" && prop.type === "string") {
+        descendentSelectorByInstanceId.set(prop.instanceId, prop.value);
+      }
+    }
+    const descendentSelectors = new Map<Instance["id"], string>();
+    for (const instanceId of descendentInstanceIds) {
+      const parentId = parentIdByInstanceId.get(instanceId);
+      const selector = descendentSelectorByInstanceId.get(instanceId);
+      if (parentId && selector) {
+        descendentSelectors.set(
+          instanceId,
+          `[${idAttribute}="${parentId}"]${selector}`
+        );
+      }
+    }
+    return descendentSelectors;
+  }
+);
+
 /**
  * track new or deleted styles and style source selections items
  * and update style sheet accordingly
@@ -227,10 +267,31 @@ export const subscribeStyles = () => {
     }
   );
 
+  const unsubscribeDescendentSelectors = $descendentSelectors.subscribe(
+    (descendentSelectors) => {
+      let selectorsUpdated = false;
+      for (const [instanceId, descendentSelector] of descendentSelectors) {
+        // access descendent component rule
+        // and change its selector to parent id + selector prop
+        const key = `[${idAttribute}="${instanceId}"]`;
+        const rule = userSheet.addNestingRule(key);
+        // invalidate only when necessary
+        if (rule.getSelector() !== descendentSelector) {
+          selectorsUpdated = true;
+          rule.setSelector(descendentSelector);
+        }
+      }
+      if (selectorsUpdated) {
+        renderUserSheetInTheNextFrame();
+      }
+    }
+  );
+
   return () => {
     unsubscribeBreakpoints();
     unsubscribeStyles();
     unsubscribeStyleSourceSelections();
+    unsubscribeDescendentSelectors();
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
     }

@@ -8,16 +8,21 @@ import type {
   Assets,
   Breakpoints,
   Instance,
+  Instances,
+  Props,
   StyleSourceSelections,
   Styles,
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../props";
+import { descendentComponent } from "../core-components";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules } from "./style-rules";
 
 export type CssConfig = {
   assets: Assets;
+  instances: Instances;
+  props: Props;
   breakpoints: Breakpoints;
   styles: Styles;
   styleSourceSelections: StyleSourceSelections;
@@ -54,6 +59,8 @@ export const createImageValueTransformer =
 
 export const generateCss = ({
   assets,
+  instances,
+  props,
   breakpoints,
   styles,
   styleSourceSelections,
@@ -62,6 +69,21 @@ export const generateCss = ({
   atomic,
 }: CssConfig) => {
   const sheet = createRegularStyleSheet({ name: "ssr" });
+  const parentIdByInstanceId = new Map<Instance["id"], Instance["id"]>();
+  for (const instance of instances.values()) {
+    for (const child of instance.children) {
+      if (child.type === "id") {
+        parentIdByInstanceId.set(child.value, instance.id);
+      }
+    }
+  }
+
+  const descendentSelectorByInstanceId = new Map<Instance["id"], string>();
+  for (const prop of props.values()) {
+    if (prop.name === "selector" && prop.type === "string") {
+      descendentSelectorByInstanceId.set(prop.instanceId, prop.value);
+    }
+  }
 
   addGlobalRules(sheet, { assets, assetBaseUrl });
 
@@ -96,8 +118,24 @@ export const generateCss = ({
   }
 
   const instanceByRule = new Map<NestingRule, Instance["id"]>();
-  for (const { instanceId, values } of styleSourceSelections.values()) {
-    const rule = sheet.addNestingRule(`[${idAttribute}="${instanceId}"]`);
+  for (const selection of styleSourceSelections.values()) {
+    let { instanceId } = selection;
+    const { values } = selection;
+    let descendentSuffix = "";
+    // render selector component as descendent selector
+    const instance = instances.get(instanceId);
+    if (instance?.component === descendentComponent) {
+      const parentId = parentIdByInstanceId.get(instanceId);
+      const descendentSelector = descendentSelectorByInstanceId.get(instanceId);
+      if (parentId && descendentSelector) {
+        descendentSuffix = descendentSelector;
+        instanceId = parentId;
+      }
+    }
+    const rule = sheet.addNestingRule(
+      `[${idAttribute}="${instanceId}"]`,
+      descendentSuffix
+    );
     rule.applyMixins(values);
     instanceByRule.set(rule, instanceId);
   }

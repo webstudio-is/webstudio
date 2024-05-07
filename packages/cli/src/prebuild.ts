@@ -25,7 +25,7 @@ import {
   normalizeProps,
   generateRemixRoute,
   generateRemixParams,
-  collectionComponent,
+  isCoreComponent,
 } from "@webstudio-is/react-sdk";
 import type {
   Instance,
@@ -369,7 +369,7 @@ export const prebuild = async (options: {
 
     componentsByPage[page.id] = new Set();
     for (const [_instanceId, instance] of instances) {
-      if (instance.component === collectionComponent) {
+      if (isCoreComponent(instance.component)) {
         continue;
       }
       componentsByPage[page.id].add(instance.component);
@@ -477,6 +477,8 @@ export const prebuild = async (options: {
   spinner.text = "Generating css file";
 
   const { cssText, classesMap } = generateCss({
+    instances: new Map(siteData.build.instances),
+    props: new Map(siteData.build.props),
     assets,
     breakpoints: new Map(siteData.build?.breakpoints),
     styles: new Map(siteData.build?.styles),
