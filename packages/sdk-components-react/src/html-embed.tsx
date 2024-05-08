@@ -191,7 +191,7 @@ type HtmlEmbedProps = {
   executeScriptOnCanvas?: boolean;
   clientOnly?: boolean;
   // avoid builder passing it to dom
-  children: never;
+  children?: never;
 };
 
 export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
