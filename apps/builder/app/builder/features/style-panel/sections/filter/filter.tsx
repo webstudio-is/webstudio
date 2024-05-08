@@ -91,7 +91,7 @@ export const Section = (props: SectionProps) => {
               label={label}
               tooltip={
                 <Tooltip
-                  css={{ width: "208px" }}
+                  variant="wrapped"
                   content={
                     <Flex gap="2" direction="column">
                       <Text variant="regularBold">{label}</Text>
@@ -101,7 +101,7 @@ export const Section = (props: SectionProps) => {
                         element, for example:
                         <br />
                         <br />
-                        <Text variant="monoBold">{INITIAL_FILTER};</Text>
+                        <Text variant="monoBold">{INITIAL_FILTER}</Text>
                       </Text>
                     </Flex>
                   }

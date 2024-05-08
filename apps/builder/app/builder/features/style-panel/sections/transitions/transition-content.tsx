@@ -123,7 +123,7 @@ export const TransitionContent = ({
 
         <Flex align="center">
           <Tooltip
-            css={{ width: "208px" }}
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Duration</Text>
@@ -160,7 +160,7 @@ export const TransitionContent = ({
 
         <Flex align="center">
           <Tooltip
-            css={{ width: "208px" }}
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Delay</Text>
@@ -213,7 +213,6 @@ export const TransitionContent = ({
           <Flex align="center" gap="1">
             Code
             <Tooltip
-              css={{ width: "208px" }}
               variant="wrapped"
               content={
                 <Text>

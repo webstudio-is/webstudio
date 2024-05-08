@@ -88,7 +88,6 @@ export const Section = (props: SectionProps) => {
               label={label}
               tooltip={
                 <Tooltip
-                  css={{ width: "208px" }}
                   variant="wrapped"
                   content={
                     <Text>
