@@ -30,9 +30,12 @@ const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(false);
-  const layersStyleSource = getStyleSource(currentStyle[property]);
+  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
+  const sectionStyleSource =
+    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -64,7 +67,7 @@ export const Section = (props: SectionProps) => {
             properties={properties}
             description="Adds shadow effects around an element's frame."
             label={
-              <SectionTitleLabel color={layersStyleSource}>
+              <SectionTitleLabel color={sectionStyleSource}>
                 {label}
               </SectionTitleLabel>
             }

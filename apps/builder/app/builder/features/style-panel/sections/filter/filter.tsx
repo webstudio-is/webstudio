@@ -30,8 +30,11 @@ const INITIAL_FILTER = "blur(0px)";
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const layerStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
+  const sectionStyleSource =
+    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -41,7 +44,7 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, [property])}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <Tooltip content={"Add a filter"}>
               <SectionTitleButton
@@ -65,7 +68,7 @@ export const Section = (props: SectionProps) => {
             properties={properties}
             description="Filter effects allow you to apply graphical effects like blurring, color shifting, and more to elements."
             label={
-              <SectionTitleLabel color={layerStyleSource}>
+              <SectionTitleLabel color={sectionStyleSource}>
                 {label}
               </SectionTitleLabel>
             }
