@@ -25,6 +25,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "HtmlEmbed",
+      label: "Content Embed",
       children: [
         descendant("Paragraph", "p"),
         descendant("Heading 1", "h1"),

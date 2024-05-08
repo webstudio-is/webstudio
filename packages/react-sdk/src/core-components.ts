@@ -1,4 +1,4 @@
-import { EmbedIcon, ListViewIcon } from "@webstudio-is/icons/svg";
+import { ListViewIcon, PaintBrushIcon } from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -64,7 +64,7 @@ const descendantMeta: WsComponentMeta = {
   category: "internal",
   type: "control",
   label: "Descendant",
-  icon: EmbedIcon,
+  icon: PaintBrushIcon,
   detachable: false,
 };
 
