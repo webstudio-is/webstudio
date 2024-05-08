@@ -498,16 +498,13 @@ export const prebuild = async (options: {
 
   const routeTemplatePath = normalize(join(routeTemplatesDir, "html.tsx"));
   const routeXmlTemplatePath = normalize(join(routeTemplatesDir, "xml.tsx"));
-  const implicitSiteMapXmlPath = normalize(
-    join(routeTemplatesDir, "implicit-sitemap.tsx")
+  const defaultSiteMapXmlPath = normalize(
+    join(routeTemplatesDir, "default-sitemap.tsx")
   );
 
   const routeFileTemplate = await readFile(routeTemplatePath, "utf8");
   const routeXmlFileTemplate = await readFile(routeXmlTemplatePath, "utf8");
-  const implicitSiteMapTemplate = await readFile(
-    implicitSiteMapXmlPath,
-    "utf8"
-  );
+  const defaultSiteMapTemplate = await readFile(defaultSiteMapXmlPath, "utf8");
   await rm(routeTemplatesDir, { recursive: true, force: true });
 
   for (const [pageId, pageComponents] of Object.entries(componentsByPage)) {
@@ -735,13 +732,10 @@ export const prebuild = async (options: {
     );
   }
 
-  // MARK: - Implicit sitemap.xml
+  // MARK: - Default sitemap.xml
   await createFileIfNotExists(
     join(routesDir, "[sitemap.xml]._index.tsx"),
-    implicitSiteMapTemplate.replace(
-      /".*\/__generated__\//,
-      `"../__generated__/`
-    )
+    defaultSiteMapTemplate.replace(/".*\/__generated__\//, `"../__generated__/`)
   );
 
   await createFileIfNotExists(
