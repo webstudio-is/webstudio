@@ -3,7 +3,7 @@
 
 import type { PageMeta } from "@webstudio-is/sdk";
 import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./[sitemap.xml]";
+import { sitemap } from "./$resources.sitemap.xml";
 export const loadResources = async (_props: { system: System }) => {
   const customFetch: typeof fetch = (input, init) => {
     if (typeof input !== "string") {

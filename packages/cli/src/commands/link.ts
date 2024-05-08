@@ -9,7 +9,7 @@ import {
   jsonToGlobalConfig,
   type LocalConfig,
 } from "../config";
-import { ensureFileInPath } from "../fs-utils";
+import { createFileIfNotExists } from "../fs-utils";
 import type {
   CommonYargsArgv,
   StrictYargsOptionsToInterface,
@@ -72,7 +72,7 @@ export const link = async (
       projectId,
     };
 
-    await ensureFileInPath(
+    await createFileIfNotExists(
       join(cwd(), LOCAL_CONFIG_FILE),
       JSON.stringify(localConfig, null, 2)
     );
