@@ -92,11 +92,8 @@ export const Section = (props: SectionProps) => {
                   variant="wrapped"
                   content={
                     <Text>
-                      Paste a text-shadow CSS code
-                      <br />
-                      without the property name, for
-                      <br />
-                      example:
+                      Paste a text-shadow CSS code without the property name,
+                      for example:
                       <br />
                       <br />
                       <Text variant="monoBold">{INITIAL_TEXT_SHADOW}</Text>

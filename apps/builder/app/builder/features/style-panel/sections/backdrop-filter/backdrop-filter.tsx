@@ -98,7 +98,10 @@ export const Section = (props: SectionProps) => {
                       <Text variant="monoBold">backdrop-filter</Text>
                       <Text>
                         Applies graphical effects like blur or color shift to
-                        the area behind an element
+                        the area behind an element, for example:
+                        <br />
+                        <br />
+                        <Text variant="mono">{INITIAL_BACKDROP_FILTER}</Text>
                       </Text>
                     </Flex>
                   }

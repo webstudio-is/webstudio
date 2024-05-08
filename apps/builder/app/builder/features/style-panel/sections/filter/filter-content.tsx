@@ -1,6 +1,7 @@
 import type {
   InvalidValue,
   LayersValue,
+  StyleProperty,
   TupleValue,
 } from "@webstudio-is/css-engine";
 import {
@@ -18,6 +19,7 @@ import type { DeleteProperty } from "../../shared/use-style-data";
 type FilterContentProps = {
   index: number;
   filter: string;
+  property: StyleProperty;
   onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
   deleteProperty: DeleteProperty;
   tooltip: JSX.Element;
@@ -26,6 +28,7 @@ type FilterContentProps = {
 export const FilterSectionContent = ({
   index,
   filter,
+  property,
   onEditLayer,
   deleteProperty,
   tooltip,
@@ -101,7 +104,7 @@ export const FilterSectionContent = ({
               return;
             }
 
-            deleteProperty("filter", { isEphemeral: true });
+            deleteProperty(property, { isEphemeral: true });
             setIntermediateValue(undefined);
             event.preventDefault();
           }

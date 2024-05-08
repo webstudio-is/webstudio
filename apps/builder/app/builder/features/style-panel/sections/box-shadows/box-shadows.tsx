@@ -89,14 +89,12 @@ export const Section = (props: SectionProps) => {
                 label={label}
                 tooltip={
                   <Tooltip
+                    css={{ width: "208px" }}
                     variant="wrapped"
                     content={
                       <Text>
-                        Paste a box-shadow CSS code
-                        <br />
-                        without the property name, for
-                        <br />
-                        example:
+                        Paste a box-shadow CSS code without the property name,
+                        for example:
                         <br />
                         <br />
                         <Text variant="monoBold">{INITIAL_BOX_SHADOW}</Text>

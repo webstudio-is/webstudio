@@ -109,6 +109,7 @@ export const LayersList = <
             index,
             layer,
             disabled,
+            property,
             isHighlighted: dragItemId === id,
             onLayerHide: handleHideLayer,
             onDeleteLayer: handleDeleteLayer,

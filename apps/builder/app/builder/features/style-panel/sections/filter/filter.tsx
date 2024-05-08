@@ -98,7 +98,10 @@ export const Section = (props: SectionProps) => {
                       <Text variant="monoBold">filter</Text>
                       <Text>
                         Applies graphical effects like blur or color shift to an
-                        element
+                        element, for example:
+                        <br />
+                        <br />
+                        <Text variant="monoBold">{INITIAL_FILTER};</Text>
                       </Text>
                     </Flex>
                   }
