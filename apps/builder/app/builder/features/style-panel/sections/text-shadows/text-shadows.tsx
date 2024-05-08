@@ -1,10 +1,6 @@
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import {
   SectionTitle,
@@ -20,7 +16,7 @@ import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import { LayersList } from "../../style-layers-list";
-import { ShadowLayer } from "../../shared/shadow-layer";
+import { ShadowContent } from "../../shared/shadow-content";
 
 export const properties = ["textShadow"] satisfies Array<StyleProperty>;
 
@@ -77,37 +73,40 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList<TupleValue, LayersValue>
-          property={property}
-          layers={value}
+        <LayersList
           {...props}
-          renderLayer={(layersProps) => (
-            <ShadowLayer
-              {...layersProps}
-              key={layersProps.index}
-              label={label}
-              tooltip={
-                <Tooltip
-                  css={{ width: "208px" }}
-                  variant="wrapped"
-                  content={
-                    <Text>
-                      Paste a text-shadow CSS code
-                      <br />
-                      without the property name, for
-                      <br />
-                      example:
-                      <br />
-                      <br />
-                      <Text variant="monoBold">{INITIAL_TEXT_SHADOW}</Text>
-                    </Text>
-                  }
-                >
-                  <InfoCircleIcon />
-                </Tooltip>
-              }
-            />
-          )}
+          property={property}
+          value={value}
+          label={label}
+          deleteProperty={deleteProperty}
+          renderContent={(layerProps) => {
+            if (layerProps.layer.type !== "tuple") {
+              return <></>;
+            }
+
+            return (
+              <ShadowContent
+                {...layerProps}
+                layer={layerProps.layer}
+                tooltip={
+                  <Tooltip
+                    css={{ width: "208px" }}
+                    variant="wrapped"
+                    content={
+                      <Text>
+                        Paste a text-shadow CSS code without the property name,
+                        for example:
+                        <br /> <br />
+                        <Text variant="monoBold">{INITIAL_TEXT_SHADOW}</Text>
+                      </Text>
+                    }
+                  >
+                    <InfoCircleIcon />
+                  </Tooltip>
+                }
+              />
+            );
+          }}
         />
       )}
     </CollapsibleSectionRoot>

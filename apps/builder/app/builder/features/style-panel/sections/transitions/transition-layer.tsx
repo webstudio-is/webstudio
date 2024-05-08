@@ -7,9 +7,12 @@ import {
 import { SubtractIcon } from "@webstudio-is/icons";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { TransitionContent } from "./transition-content";
-import type { LayerProps } from "../../style-layers-list";
-import { TupleValue, toValue } from "@webstudio-is/css-engine";
+import { LayersValue, TupleValue, toValue } from "@webstudio-is/css-engine";
 import { findTimingFunctionFromValue } from "./transition-utils";
+import type {
+  CreateBatchUpdate,
+  DeleteProperty,
+} from "../../shared/use-style-data";
 
 const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
@@ -33,7 +36,20 @@ const useLayer = (layer: TupleValue) => {
   }, [layer]);
 };
 
-export const TransitionLayer = <T extends TupleValue>(props: LayerProps<T>) => {
+export const TransitionLayer = (props: {
+  id: string;
+  index: number;
+  layer: TupleValue;
+  label: string;
+  tooltip: JSX.Element;
+  isHighlighted: boolean;
+  disabled?: boolean;
+  onLayerHide: (index: number) => void;
+  onDeleteLayer: (index: number) => void;
+  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
+  createBatchUpdate: CreateBatchUpdate;
+  deleteProperty: DeleteProperty;
+}) => {
   const { id, index, layer, isHighlighted, onDeleteLayer, disabled } = props;
   const properties = useLayer(layer);
 

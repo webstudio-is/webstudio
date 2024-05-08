@@ -12,16 +12,12 @@ import {
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import {
-  FunctionValue,
-  TupleValue,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { type StyleProperty } from "@webstudio-is/css-engine";
 import { getStyleSource } from "../../shared/style-info";
 import { LayersList } from "../../style-layers-list";
-import { FilterLayer } from "./filter-layer";
 import { addLayer } from "../../style-layer-utils";
 import { parseFilter } from "@webstudio-is/css-data";
+import { FilterSectionContent } from "../../shared/filter-content";
 
 export const properties = ["filter"] satisfies Array<StyleProperty>;
 
@@ -80,34 +76,43 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "tuple" && value.value.length > 0 && (
-        <LayersList<FunctionValue, TupleValue>
+        <LayersList
           {...props}
           property={property}
-          layers={value}
-          renderLayer={(layerProps) => (
-            <FilterLayer
-              {...layerProps}
-              key={layerProps.index}
-              label={label}
-              tooltip={
-                <Tooltip
-                  css={{ width: "208px" }}
-                  content={
-                    <Flex gap="2" direction="column">
-                      <Text variant="regularBold">{label}</Text>
-                      <Text variant="monoBold">filter</Text>
-                      <Text>
-                        Applies graphical effects like blur or color shift to an
-                        element
-                      </Text>
-                    </Flex>
-                  }
-                >
-                  <InfoCircleIcon />
-                </Tooltip>
-              }
-            />
-          )}
+          value={value}
+          label={label}
+          deleteProperty={deleteProperty}
+          renderContent={(layerProps) => {
+            if (layerProps.layer.type !== "function") {
+              return <></>;
+            }
+
+            return (
+              <FilterSectionContent
+                {...layerProps}
+                layer={layerProps.layer}
+                tooltip={
+                  <Tooltip
+                    css={{ width: "208px" }}
+                    content={
+                      <Flex gap="2" direction="column">
+                        <Text variant="regularBold">{label}</Text>
+                        <Text variant="monoBold">filter</Text>
+                        <Text>
+                          Applies graphical effects like blur or color shift to
+                          an element, for example:
+                          <br /> <br />
+                          <Text variant="mono">{INITIAL_FILTER}</Text>
+                        </Text>
+                      </Flex>
+                    }
+                  >
+                    <InfoCircleIcon />
+                  </Tooltip>
+                }
+              />
+            );
+          }}
         />
       )}
     </CollapsibleSectionRoot>

@@ -60,9 +60,9 @@ import type { DeleteProperty, SetProperty } from "../shared/use-style-data";
 
 type ShadowContentProps = {
   index: number;
-  layer: TupleValue;
   property: StyleProperty;
-  shadow: string;
+  layer: TupleValue;
+  propertyValue: string;
   tooltip: JSX.Element;
   onEditLayer: (index: number, layers: LayersValue) => void;
   deleteProperty: DeleteProperty;
@@ -89,8 +89,8 @@ export const ShadowContent = ({
   layer,
   index,
   property,
+  propertyValue,
   tooltip,
-  shadow,
   onEditLayer,
   deleteProperty,
 }: ShadowContentProps) => {
@@ -98,9 +98,10 @@ export const ShadowContent = ({
     IntermediateStyleValue | InvalidValue | undefined
   >();
   const layerValues = useMemo<ExtractedShadowProperties>(() => {
-    setIntermediateValue({ type: "intermediate", value: shadow });
+    setIntermediateValue({ type: "intermediate", value: propertyValue });
     return extractShadowProperties(layer);
-  }, [layer, shadow]);
+  }, [layer, propertyValue]);
+
   const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
   const colorControlProp = color ?? {
     type: "rgb",
@@ -162,16 +163,14 @@ export const ShadowContent = ({
       >
         <Flex direction="column">
           <Tooltip
+            css={{ width: "208px" }}
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">X Offset</Text>
                 <Text variant="monoBold">offset-x</Text>
                 <Text>
-                  Sets the horizontal offset of the
-                  <br />
-                  shadow. Negative values place
-                  <br />
-                  the shadow to the left.
+                  Sets the horizontal offset of the shadow. Negative values
+                  place the shadow to the left.
                 </Text>
               </Flex>
             }
@@ -198,16 +197,14 @@ export const ShadowContent = ({
 
         <Flex direction="column">
           <Tooltip
+            css={{ width: "208px" }}
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Blur Radius</Text>
                 <Text variant="monoBold">blur-radius</Text>
                 <Text>
-                  The larger this value, the bigger
-                  <br />
-                  the blur, so the shadow becomes
-                  <br />
-                  bigger and lighter.
+                  The larger this value, the bigger the blur, so the shadow
+                  becomes bigger and lighter.
                 </Text>
               </Flex>
             }
@@ -234,15 +231,13 @@ export const ShadowContent = ({
 
         <Flex direction="column">
           <Tooltip
+            css={{ width: "208px" }}
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Y Offset</Text>
                 <Text variant="monoBold">offset-y</Text>
                 <Text>
-                  Sets the vertical offset of the
-                  <br />
-                  shadow. Negative values place
-                  <br />
+                  Sets the vertical offset of the shadow. Negative values place
                   the shadow above.
                 </Text>
               </Flex>
@@ -271,18 +266,14 @@ export const ShadowContent = ({
         {property === "boxShadow" ? (
           <Flex direction="column">
             <Tooltip
+              css={{ width: "208px" }}
               content={
                 <Flex gap="2" direction="column">
                   <Text variant="regularBold">Spread Radius</Text>
                   <Text variant="monoBold">spread-radius</Text>
                   <Text>
-                    Positive values will cause the
-                    <br />
-                    shadow to expand and grow
-                    <br />
-                    bigger, negative values will cause
-                    <br />
-                    the shadow to shrink.
+                    Positive values will cause the shadow to expand and grow
+                    bigger, negative values will cause the shadow to shrink.
                   </Text>
                 </Flex>
               }
@@ -320,15 +311,12 @@ export const ShadowContent = ({
       >
         <Flex direction="column">
           <Tooltip
+            css={{ width: "208px" }}
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Color</Text>
                 <Text variant="monoBold">color</Text>
-                <Text>
-                  Sets the shadow color and
-                  <br />
-                  opacity.
-                </Text>
+                <Text>Sets the shadow color and opacity.</Text>
               </Flex>
             }
           >
@@ -352,16 +340,14 @@ export const ShadowContent = ({
         {property === "boxShadow" ? (
           <Flex direction="column">
             <Tooltip
+              css={{ width: "208px" }}
               content={
                 <Flex gap="2" direction="column">
                   <Text variant="regularBold">Inset</Text>
                   <Text variant="monoBold">inset</Text>
                   <Text>
-                    Changes the shadow from
-                    <br />
-                    an outer shadow (outset) to an
-                    <br />
-                    inner shadow (inset).
+                    Changes the shadow from an outer shadow (outset) to an inner
+                    shadow (inset).
                   </Text>
                 </Flex>
               }
@@ -414,7 +400,7 @@ export const ShadowContent = ({
         <TextArea
           rows={3}
           name="description"
-          value={intermediateValue?.value ?? shadow ?? ""}
+          value={intermediateValue?.value ?? propertyValue ?? ""}
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
           state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
           onChange={handleChange}
@@ -429,7 +415,7 @@ export const ShadowContent = ({
                 return;
               }
 
-              deleteProperty("boxShadow", { isEphemeral: true });
+              deleteProperty(property, { isEphemeral: true });
               setIntermediateValue(undefined);
               event.preventDefault();
             }

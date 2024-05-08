@@ -1,8 +1,4 @@
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import {
@@ -95,7 +91,7 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList<TupleValue, LayersValue>
+        <LayersList
           property={property}
           layers={value}
           {...props}

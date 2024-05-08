@@ -6,11 +6,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
@@ -20,7 +16,7 @@ import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
 import { addLayer } from "../../style-layer-utils";
 import { parseShadow } from "@webstudio-is/css-data";
-import { ShadowLayer } from "../../shared/shadow-layer";
+import { ShadowContent } from "../../shared/shadow-content";
 
 export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
 
@@ -77,28 +73,30 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList<TupleValue, LayersValue>
-          property={property}
-          layers={value}
+        <LayersList
           {...props}
-          renderLayer={(layersProps) => {
+          property={property}
+          value={value}
+          label={label}
+          deleteProperty={deleteProperty}
+          renderContent={(layerProps) => {
+            if (layerProps.layer.type !== "tuple") {
+              return <></>;
+            }
+
             return (
-              <ShadowLayer
-                key={layersProps.index}
-                {...layersProps}
-                label={label}
+              <ShadowContent
+                {...layerProps}
+                layer={layerProps.layer}
                 tooltip={
                   <Tooltip
+                    css={{ width: "208px" }}
                     variant="wrapped"
                     content={
                       <Text>
-                        Paste a box-shadow CSS code
-                        <br />
-                        without the property name, for
-                        <br />
-                        example:
-                        <br />
-                        <br />
+                        Paste a box-shadow CSS code without the property name,
+                        for example:
+                        <br /> <br />
                         <Text variant="monoBold">{INITIAL_BOX_SHADOW}</Text>
                       </Text>
                     }
