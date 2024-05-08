@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useStore } from "@nanostores/react";
+import { matchSorter } from "match-sorter";
 import type { Instance } from "@webstudio-is/sdk";
 import { theme, Combobox, Separator, Flex } from "@webstudio-is/design-system";
+import { descendantComponent } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
   $propsIndex,
@@ -17,7 +19,6 @@ import {
 } from "./use-props-logic";
 import { Row } from "../shared";
 import { serverSyncStore } from "~/shared/sync";
-import { matchSorter } from "match-sorter";
 
 const itemToString = (item: NameAndLabel | null) =>
   item?.label || item?.name || "";
@@ -222,11 +223,16 @@ export const PropsSectionContainer = ({
   }
 
   return (
-    <PropsSection
-      propsLogic={logic}
-      propValues={propValues ?? new Map()}
-      component={instance.component}
-      instanceId={instance.id}
-    />
+    <fieldset
+      style={{ display: "contents" }}
+      disabled={instance.component === descendantComponent}
+    >
+      <PropsSection
+        propsLogic={logic}
+        propValues={propValues ?? new Map()}
+        component={instance.component}
+        instanceId={instance.id}
+      />
+    </fieldset>
   );
 };
