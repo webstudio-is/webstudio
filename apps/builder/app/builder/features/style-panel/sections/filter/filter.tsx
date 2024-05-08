@@ -91,14 +91,14 @@ export const Section = (props: SectionProps) => {
               label={label}
               tooltip={
                 <Tooltip
+                  css={{ width: "208px" }}
                   content={
                     <Flex gap="2" direction="column">
                       <Text variant="regularBold">{label}</Text>
                       <Text variant="monoBold">filter</Text>
                       <Text>
-                        Applies graphical effects like
-                        <br />
-                        blur or color shift to an element
+                        Applies graphical effects like blur or color shift to an
+                        element
                       </Text>
                     </Flex>
                   }

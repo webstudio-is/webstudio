@@ -32,8 +32,11 @@ const INITIAL_BACKDROP_FILTER = "blur(0px)";
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(false);
-  const layerStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
+  const sectionStyleSource =
+    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -67,7 +70,7 @@ export const Section = (props: SectionProps) => {
             properties={properties}
             description="Backdrop filters are similar to filters, but are applied to the area behind an element. This can be useful for creating frosted glass effects."
             label={
-              <SectionTitleLabel color={layerStyleSource}>
+              <SectionTitleLabel color={sectionStyleSource}>
                 {label}
               </SectionTitleLabel>
             }
@@ -88,14 +91,14 @@ export const Section = (props: SectionProps) => {
               label={label}
               tooltip={
                 <Tooltip
+                  css={{ width: "208px" }}
                   content={
                     <Flex gap="2" direction="column">
                       <Text variant="regularBold">{label}</Text>
                       <Text variant="monoBold">backdrop-filter</Text>
                       <Text>
-                        Applies graphical effects like
-                        <br />
-                        blur or color shift to the area behind an element
+                        Applies graphical effects like blur or color shift to
+                        the area behind an element
                       </Text>
                     </Flex>
                   }
