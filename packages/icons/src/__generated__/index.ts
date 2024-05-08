@@ -69,6 +69,7 @@ export * from "./cloud";
 export * from "./code-text";
 export * from "./collapsible";
 export * from "./commit";
+export * from "./content-embed";
 export * from "./content";
 export * from "./copy";
 export * from "./custom-code";

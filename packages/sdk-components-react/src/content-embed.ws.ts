@@ -1,4 +1,4 @@
-import { EmbedIcon } from "@webstudio-is/icons/svg";
+import { ContentEmbedIcon } from "@webstudio-is/icons/svg";
 import {
   WsEmbedTemplate,
   descendantComponent,
@@ -72,7 +72,7 @@ export const meta: WsComponentMeta = {
   category: "data",
   type: "control",
   label: "Content Embed",
-  icon: EmbedIcon,
+  icon: ContentEmbedIcon,
   order: 3,
   template: [
     {
