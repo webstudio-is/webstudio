@@ -1,17 +1,10 @@
 // eslint-disable-next-line import/no-internal-modules
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
-import { findAuthenticatedUser } from "~/services/auth.server";
 import { createContext } from "~/shared/context.server";
 import { appRouter } from "~/services/trcp-router.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const authenticatedUser = await findAuthenticatedUser(request);
-
-  if (authenticatedUser === null) {
-    throw new Error("Not authenticated");
-  }
-
   // https://trpc.io/docs/server/adapters/fetch
   const response = await fetchRequestHandler({
     req: request,
