@@ -36,7 +36,6 @@ export type LayerProps<LayerType> = {
   onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
   createBatchUpdate: CreateBatchUpdate;
   deleteProperty: DeleteProperty;
-  children: JSX.Element;
 };
 
 type LayerListProperties<LayerType, PropertyValueType> = SectionProps & {

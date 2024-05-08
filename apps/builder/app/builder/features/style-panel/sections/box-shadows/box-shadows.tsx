@@ -99,7 +99,7 @@ export const Section = (props: SectionProps) => {
                         example:
                         <br />
                         <br />
-                        0px 2px 5px 0px rgba(0, 0, 0, 0.2)
+                        <Text variant="monoBold">{INITIAL_BOX_SHADOW}</Text>
                       </Text>
                     }
                   >

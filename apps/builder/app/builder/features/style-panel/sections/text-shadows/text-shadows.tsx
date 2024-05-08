@@ -31,8 +31,11 @@ const INITIAL_TEXT_SHADOW = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(false);
-  const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
+  const sectionStyleSource =
+    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -64,7 +67,7 @@ export const Section = (props: SectionProps) => {
             properties={properties}
             description="Adds shadow effects around a text."
             label={
-              <SectionTitleLabel color={layersStyleSource}>
+              <SectionTitleLabel color={sectionStyleSource}>
                 {label}
               </SectionTitleLabel>
             }
@@ -85,6 +88,7 @@ export const Section = (props: SectionProps) => {
               label={label}
               tooltip={
                 <Tooltip
+                  css={{ width: "208px" }}
                   variant="wrapped"
                   content={
                     <Text>
@@ -95,14 +99,14 @@ export const Section = (props: SectionProps) => {
                       example:
                       <br />
                       <br />
-                      0px 2px 5px rgba(0, 0, 0, 0.2)
+                      <Text variant="monoBold">{INITIAL_TEXT_SHADOW}</Text>
                     </Text>
                   }
                 >
                   <InfoCircleIcon />
                 </Tooltip>
               }
-            ></ShadowLayer>
+            />
           )}
         />
       )}
