@@ -19,7 +19,17 @@ export const getDots = (
   const dots = new Set<"local" | "overwritten" | "remote">();
 
   for (const property of properties) {
-    const source = getStyleSource(currentStyle[property]);
+    const style = currentStyle[property];
+
+    // Unparsed values are not editable directly in the section, so we don't show the dot
+    if (
+      style?.value.type === "unparsed" ||
+      style?.value.type === "guaranteedInvalid"
+    ) {
+      return;
+    }
+
+    const source = getStyleSource(style);
     if (source === "local" || source === "overwritten" || source === "remote") {
       dots.add(source);
     }
