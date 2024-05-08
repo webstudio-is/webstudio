@@ -3,10 +3,7 @@ import {
   WsEmbedTemplate,
   descendantComponent,
   type WsComponentMeta,
-  type WsComponentPropsMeta,
 } from "@webstudio-is/react-sdk";
-import { div } from "@webstudio-is/react-sdk/css-normalize";
-import { props } from "./__generated__/content-embed.props";
 
 const descendant = (label: string, tag: string): WsEmbedTemplate[number] => {
   return {
@@ -19,18 +16,15 @@ const descendant = (label: string, tag: string): WsEmbedTemplate[number] => {
 };
 
 export const meta: WsComponentMeta = {
-  category: "general",
+  category: "data",
   type: "control",
   label: "Content Embed",
   icon: EmbedIcon,
-  presetStyle: {
-    div,
-  },
-  order: 8,
+  order: 3,
   template: [
     {
       type: "instance",
-      component: "ContentEmbed",
+      component: "HtmlEmbed",
       children: [
         descendant("Paragraph", "p"),
         descendant("Heading 1", "h1"),
@@ -51,16 +45,4 @@ export const meta: WsComponentMeta = {
       ],
     },
   ],
-};
-
-export const propsMeta: WsComponentPropsMeta = {
-  props: {
-    ...props,
-    html: {
-      required: true,
-      control: "code",
-      type: "string",
-    },
-  },
-  initialProps: ["id", "className"],
 };

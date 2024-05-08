@@ -10,7 +10,7 @@ export const collectionComponent = "ws:collection";
 
 const collectionMeta: WsComponentMeta = {
   category: "data",
-  order: 7,
+  order: 2,
   type: "container",
   label: "Collection",
   icon: ListViewIcon,

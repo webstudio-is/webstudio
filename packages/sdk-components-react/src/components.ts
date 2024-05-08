@@ -1,7 +1,6 @@
 export { Slot } from "./slot";
 export { Fragment } from "./fragment";
 export { HtmlEmbed } from "./html-embed";
-export { ContentEmbed } from "./content-embed";
 export { Body } from "./body";
 export { Box } from "./box";
 export { Text } from "./text";
