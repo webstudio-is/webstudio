@@ -87,7 +87,10 @@ export const addLayer = <T extends LayersValue | TupleValue>(
     value.value = [...value.value, ...existingValues.value] as T["value"];
   }
 
-  if (property === "filter" && existingValues?.type === "tuple") {
+  if (
+    (property === "filter" || property === "backdropFilter") &&
+    existingValues?.type === "tuple"
+  ) {
     value.value = [
       ...value.value,
       ...(existingValues?.value || []),
