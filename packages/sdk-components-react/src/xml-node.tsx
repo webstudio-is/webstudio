@@ -1,15 +1,46 @@
-import { Children, forwardRef, type ElementRef, type ReactNode } from "react";
+import {
+  idAttribute,
+  componentAttribute,
+  ReactSdkContext,
+} from "@webstudio-is/react-sdk";
+import {
+  Children,
+  createElement,
+  forwardRef,
+  useContext,
+  type ElementRef,
+  type ReactNode,
+} from "react";
 
 export const defaultTag = "div";
 
 // We don't want to enable all tags because Box is usually a container and we have specific components for many tags.
 type Props = {
   tag: string;
+  xmlns?: string;
   children: ReactNode;
+  // xxxAttribute is used for typings only
+  [idAttribute]: string;
+  [componentAttribute]: string;
 };
 
 export const XmlNode = forwardRef<ElementRef<"div">, Props>(
   ({ tag = "", children, ...props }, ref) => {
+    const { renderer } = useContext(ReactSdkContext);
+
+    const attributeEntries = Object.entries(props)
+      .filter(
+        ([key]) =>
+          key.startsWith("data-") === false && key.startsWith("aria-") === false
+      )
+      .filter(([key]) => key !== "tabIndex")
+      .filter(([, value]) => typeof value !== "function");
+
+    if (renderer === undefined) {
+      const attrProps = Object.fromEntries(attributeEntries);
+      return createElement(tag, attrProps, children);
+    }
+
     const isTextChild = Children.toArray(children).every(
       (child) => typeof child === "string"
     );
@@ -20,14 +51,9 @@ export const XmlNode = forwardRef<ElementRef<"div">, Props>(
       // Clear all non letter, number, underscore, dot, and dash
       .replaceAll(/[^\p{L}\p{N}\-._]+/gu, "");
 
-    const attributes = Object.entries(props)
-      .filter(
-        ([key]) =>
-          key.startsWith("data-") === false && key.startsWith("aria-") === false
-      )
-      .filter(([key]) => key !== "tabIndex")
-      .filter(([, value]) => typeof value !== "function")
-      .map(([key, value]) => `${key}=${JSON.stringify(value)}`);
+    const attributes = attributeEntries.map(
+      ([key, value]) => `${key}=${JSON.stringify(value)}`
+    );
 
     return (
       <div style={{ display: isTextChild ? "flex" : "contents" }} {...props}>
