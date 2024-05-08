@@ -10,6 +10,7 @@ import {
 } from "@webstudio-is/css-engine";
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
+import { parseFilter, parseShadow, parseTransition } from "./property-parsers";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -76,6 +77,18 @@ export const parseCssValue = (
       `Can't parse css property "${property}" with value "${input}"`
     );
     return invalidValue;
+  }
+
+  if (property === "filter" || property === "backdropFilter") {
+    return parseFilter(input);
+  }
+
+  if (property === "boxShadow" || property === "textShadow") {
+    return parseShadow(property, input);
+  }
+
+  if (property === "transition") {
+    return parseTransition(input);
   }
 
   if (
