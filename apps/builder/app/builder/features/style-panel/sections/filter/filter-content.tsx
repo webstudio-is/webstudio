@@ -7,12 +7,9 @@ import {
   Flex,
   theme,
   Label,
-  Tooltip,
-  Text,
   TextArea,
   textVariants,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import type { IntermediateStyleValue } from "../../shared/css-value-input";
 import { parseFilter } from "@webstudio-is/css-data";
@@ -23,6 +20,7 @@ type FilterContentProps = {
   filter: string;
   onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
   deleteProperty: DeleteProperty;
+  tooltip: JSX.Element;
 };
 
 export const FilterSectionContent = ({
@@ -30,6 +28,7 @@ export const FilterSectionContent = ({
   filter,
   onEditLayer,
   deleteProperty,
+  tooltip,
 }: FilterContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -73,21 +72,7 @@ export const FilterSectionContent = ({
       <Label>
         <Flex align={"center"} gap={1}>
           Code
-          <Tooltip
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Filters</Text>
-                <Text variant="monoBold">filter</Text>
-                <Text>
-                  Applies graphical effects like
-                  <br />
-                  blur or color shift to an element
-                </Text>
-              </Flex>
-            }
-          >
-            <InfoCircleIcon />
-          </Tooltip>
+          {tooltip}
         </Flex>
       </Label>
       {
