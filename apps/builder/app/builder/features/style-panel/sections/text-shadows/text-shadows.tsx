@@ -1,3 +1,11 @@
+import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
+import type { SectionProps } from "../shared/section";
+import type {
+  LayersValue,
+  StyleProperty,
+  TupleValue,
+} from "@webstudio-is/css-engine";
+import { useState } from "react";
 import {
   SectionTitle,
   SectionTitleButton,
@@ -6,31 +14,23 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
-import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
-import { useState } from "react";
+import { addLayer } from "../../style-layer-utils";
+import { parseShadow } from "@webstudio-is/css-data";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
-import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
-import { addLayer } from "../../style-layer-utils";
-import { parseShadow } from "@webstudio-is/css-data";
 import { ShadowLayer } from "../../shared/shadow-layer";
 
-export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
+export const properties = ["textShadow"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
-const label = "Box Shadows";
-const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
+const label = "Text Shadows";
+const INITIAL_TEXT_SHADOW = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
 export const Section = (props: SectionProps) => {
-  const { currentStyle, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(true);
+  const { currentStyle, createBatchUpdate, deleteProperty } = props;
+  const [isOpen, setIsOpen] = useState(false);
   const value = currentStyle[property]?.value;
   const sectionStyleSource =
     value?.type === "unparsed" || value?.type === "guaranteedInvalid"
@@ -45,16 +45,16 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, [property])}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
                 addLayer(
                   property,
-                  parseShadow("boxShadow", INITIAL_BOX_SHADOW),
+                  parseShadow("textShadow", INITIAL_TEXT_SHADOW),
                   currentStyle,
-                  props.createBatchUpdate
+                  createBatchUpdate
                 );
                 setIsOpen(true);
               }}
@@ -65,7 +65,7 @@ export const Section = (props: SectionProps) => {
             title={label}
             style={currentStyle}
             properties={properties}
-            description="Adds shadow effects around an element's frame."
+            description="Adds shadow effects around a text."
             label={
               <SectionTitleLabel color={sectionStyleSource}>
                 {label}
@@ -81,31 +81,29 @@ export const Section = (props: SectionProps) => {
           property={property}
           layers={value}
           {...props}
-          renderLayer={(layersProps) => {
-            return (
-              <ShadowLayer
-                key={layersProps.index}
-                {...layersProps}
-                label={label}
-                tooltip={
-                  <Tooltip
-                    variant="wrapped"
-                    content={
-                      <Text>
-                        Paste a box-shadow CSS code without the property name,
-                        for example:
-                        <br />
-                        <br />
-                        <Text variant="monoBold">{INITIAL_BOX_SHADOW}</Text>
-                      </Text>
-                    }
-                  >
-                    <InfoCircleIcon />
-                  </Tooltip>
-                }
-              />
-            );
-          }}
+          renderLayer={(layersProps) => (
+            <ShadowLayer
+              {...layersProps}
+              key={layersProps.index}
+              label={label}
+              tooltip={
+                <Tooltip
+                  variant="wrapped"
+                  content={
+                    <Text>
+                      Paste a text-shadow CSS code without the property name,
+                      for example:
+                      <br />
+                      <br />
+                      <Text variant="monoBold">{INITIAL_TEXT_SHADOW}</Text>
+                    </Text>
+                  }
+                >
+                  <InfoCircleIcon />
+                </Tooltip>
+              }
+            />
+          )}
         />
       )}
     </CollapsibleSectionRoot>

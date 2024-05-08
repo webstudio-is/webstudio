@@ -19,6 +19,7 @@ export const FilterLayer = <T extends FunctionValue>(props: LayerProps<T>) => {
       title={label}
       content={
         <FilterSectionContent
+          property={props.property}
           index={index}
           filter={filter}
           onEditLayer={props.onEditLayer}

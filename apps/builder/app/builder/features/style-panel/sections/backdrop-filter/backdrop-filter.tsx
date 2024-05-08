@@ -91,14 +91,19 @@ export const Section = (props: SectionProps) => {
               label={label}
               tooltip={
                 <Tooltip
-                  css={{ width: "208px" }}
+                  variant="wrapped"
                   content={
                     <Flex gap="2" direction="column">
                       <Text variant="regularBold">{label}</Text>
                       <Text variant="monoBold">backdrop-filter</Text>
                       <Text>
                         Applies graphical effects like blur or color shift to
-                        the area behind an element
+                        the area behind an element, for example:
+                        <br />
+                        <br />
+                        <Text variant="monoBold">
+                          {INITIAL_BACKDROP_FILTER}
+                        </Text>
                       </Text>
                     </Flex>
                   }

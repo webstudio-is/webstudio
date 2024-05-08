@@ -12,11 +12,11 @@ import {
 } from "@webstudio-is/icons";
 import { useMemo } from "react";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
-import { BoxShadowContent } from "./box-shadow-content";
 import { colord, type RgbaColor } from "colord";
 import { toValue } from "@webstudio-is/css-engine";
-import { ColorThumb } from "../../shared/color-thumb";
-import type { LayerProps } from "../../style-layers-list";
+import { ColorThumb } from "../shared/color-thumb";
+import type { LayerProps } from "../style-layers-list";
+import { ShadowContent } from "./shadow-content";
 
 const useLayer = (layer: TupleValue) => {
   return useMemo(() => {
@@ -49,20 +49,31 @@ const useLayer = (layer: TupleValue) => {
   }, [layer]);
 };
 
-export const BoxShadowLayer = <T extends TupleValue>(props: LayerProps<T>) => {
-  const { index, id, layer, isHighlighted, onDeleteLayer, onLayerHide } = props;
+export const ShadowLayer = <T extends TupleValue>(props: LayerProps<T>) => {
+  const {
+    index,
+    id,
+    layer,
+    isHighlighted,
+    onDeleteLayer,
+    onLayerHide,
+    label,
+    tooltip,
+    property,
+  } = props;
   const properties = useLayer(layer);
-
   const { name, shadow, color } = properties;
 
   return (
     <FloatingPanel
-      title="Box Shadow"
+      title={label}
       content={
-        <BoxShadowContent
+        <ShadowContent
           index={index}
+          property={property}
           shadow={shadow}
           layer={layer}
+          tooltip={tooltip}
           onEditLayer={props.onEditLayer}
           deleteProperty={props.deleteProperty}
         />

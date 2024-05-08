@@ -25,6 +25,7 @@ import type {
 export type LayerProps<LayerType> = {
   id: string;
   index: number;
+  property: StyleProperty;
   layer: LayerType;
   label: string;
   tooltip: JSX.Element;
@@ -108,6 +109,7 @@ export const LayersList = <
             index,
             layer,
             disabled,
+            property,
             isHighlighted: dragItemId === id,
             onLayerHide: handleHideLayer,
             onDeleteLayer: handleDeleteLayer,
