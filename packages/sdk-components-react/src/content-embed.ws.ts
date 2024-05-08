@@ -72,6 +72,8 @@ export const meta: WsComponentMeta = {
   category: "data",
   type: "control",
   label: "Content Embed",
+  description:
+    "Content Embed allows styling of HTML, which can be provided via the Code property statically or loaded dynamically from any Resource, for example, from a CMS.",
   icon: ContentEmbedIcon,
   order: 3,
   template: [
