@@ -36,7 +36,6 @@ export const sections = new Map<
   ["backgrounds", backgrounds],
   ["borders", borders],
   ["boxShadows", boxShadows],
-  ["textShadows", textShadows],
   ["filter", filter],
   ["backdropFilters", backdropFilter],
   ["transitions", transitions],
