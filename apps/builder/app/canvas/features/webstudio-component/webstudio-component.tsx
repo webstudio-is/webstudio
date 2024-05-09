@@ -251,7 +251,6 @@ const getTextContent = (instanceProps: Record<string, unknown>) => {
   return value as ReactNode;
 };
 
-// eslint-disable-next-line react/display-name
 export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
@@ -408,7 +407,6 @@ export const WebstudioComponentCanvas = forwardRef<
   );
 });
 
-// eslint-disable-next-line react/display-name
 export const WebstudioComponentPreview = forwardRef<
   HTMLElement,
   WebstudioComponentProps
