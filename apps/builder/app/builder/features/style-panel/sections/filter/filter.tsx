@@ -23,7 +23,7 @@ export const properties = ["filter"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
 const label = "Filters";
-const INITIAL_FILTER = "blur(0px)";
+const initialFilter = "blur(0px)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
@@ -50,7 +50,7 @@ export const Section = (props: SectionProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    parseFilter(INITIAL_FILTER),
+                    parseFilter(initialFilter),
                     currentStyle,
                     props.createBatchUpdate
                   );
@@ -93,7 +93,7 @@ export const Section = (props: SectionProps) => {
                 layer={layerProps.layer}
                 tooltip={
                   <Tooltip
-                    css={{ width: "208px" }}
+                    variant="wrapped"
                     content={
                       <Flex gap="2" direction="column">
                         <Text variant="regularBold">{label}</Text>
@@ -102,7 +102,7 @@ export const Section = (props: SectionProps) => {
                           Applies graphical effects like blur or color shift to
                           an element, for example:
                           <br /> <br />
-                          <Text variant="mono">{INITIAL_FILTER}</Text>
+                          <Text variant="mono">{initialFilter}</Text>
                         </Text>
                       </Flex>
                     }

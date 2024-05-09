@@ -47,6 +47,7 @@ export const TransitionTiming = ({
     <>
       <Flex align="center">
         <Tooltip
+          variant="wrapped"
           content={
             <Flex gap="2" direction="column">
               <Text variant="regularBold">Easing</Text>
@@ -54,13 +55,8 @@ export const TransitionTiming = ({
                 transition-timing-function
               </Text>
               <Text>
-                Affects the look and feel of the
-                <br />
-                animation by varying the speed
-                <br />
-                of the transition at different
-                <br />
-                points in its duration.
+                Affects the look and feel of the animation by varying the speed
+                of the transition at different points in its duration.
               </Text>
             </Flex>
           }

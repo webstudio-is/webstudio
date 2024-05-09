@@ -156,7 +156,11 @@ export const LayersList = ({
                 index={index}
                 label={<Label truncate>{name}</Label>}
                 hidden={layer.type === "tuple" && layer?.hidden}
-                thumbnail={<ColorThumb color={color} />}
+                thumbnail={
+                  property === "textShadow" || property === "boxShadow" ? (
+                    <ColorThumb color={color} />
+                  ) : undefined
+                }
                 buttons={
                   <>
                     {layer.type === "tuple" ? (

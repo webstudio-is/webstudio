@@ -22,11 +22,11 @@ export const properties = ["textShadow"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
 const label = "Text Shadows";
-const INITIAL_TEXT_SHADOW = "0px 2px 5px rgba(0, 0, 0, 0.2)";
+const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
   const sectionStyleSource =
     value?.type === "unparsed" || value?.type === "guaranteedInvalid"
@@ -48,7 +48,7 @@ export const Section = (props: SectionProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseShadow("textShadow", INITIAL_TEXT_SHADOW),
+                  parseShadow(property, initialTextShadow),
                   currentStyle,
                   createBatchUpdate
                 );
@@ -90,14 +90,13 @@ export const Section = (props: SectionProps) => {
                 layer={layerProps.layer}
                 tooltip={
                   <Tooltip
-                    css={{ width: "208px" }}
                     variant="wrapped"
                     content={
                       <Text>
                         Paste a text-shadow CSS code without the property name,
                         for example:
                         <br /> <br />
-                        <Text variant="monoBold">{INITIAL_TEXT_SHADOW}</Text>
+                        <Text variant="monoBold">{initialTextShadow}</Text>
                       </Text>
                     }
                   >

@@ -128,6 +128,7 @@ export const TransitionProperty = ({
     <>
       <Flex align="center">
         <Tooltip
+          variant="wrapped"
           content={
             <Flex gap="2" direction="column">
               <Text variant="regularBold">Property</Text>
@@ -135,9 +136,7 @@ export const TransitionProperty = ({
                 transition-property
               </Text>
               <Text>
-                Sets the CSS properties that will
-                <br />
-                be affected by the transition.
+                Sets the CSS properties that will be affected by the transition.
               </Text>
             </Flex>
           }

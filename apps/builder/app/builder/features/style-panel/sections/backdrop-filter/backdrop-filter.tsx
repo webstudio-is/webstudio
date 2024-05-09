@@ -23,11 +23,11 @@ export const properties = ["backdropFilter"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
 const label = "Backdrop Filters";
-const INITIAL_BACKDROP_FILTER = "blur(0px)";
+const initialBackdropFilter = "blur(0px)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
   const sectionStyleSource =
     value?.type === "unparsed" || value?.type === "guaranteedInvalid"
@@ -50,7 +50,7 @@ export const Section = (props: SectionProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    parseFilter(INITIAL_BACKDROP_FILTER),
+                    parseFilter(initialBackdropFilter),
                     currentStyle,
                     props.createBatchUpdate
                   );
@@ -93,7 +93,7 @@ export const Section = (props: SectionProps) => {
                 layer={layerProps.layer}
                 tooltip={
                   <Tooltip
-                    css={{ width: "208px" }}
+                    variant="wrapped"
                     content={
                       <Flex gap="2" direction="column">
                         <Text variant="regularBold">{label}</Text>
@@ -102,7 +102,7 @@ export const Section = (props: SectionProps) => {
                           Applies graphical effects like blur or color shift to
                           the area behind an element
                           <br /> <br />
-                          <Text variant="mono">{INITIAL_BACKDROP_FILTER}</Text>
+                          <Text variant="mono">{initialBackdropFilter}</Text>
                         </Text>
                       </Flex>
                     }

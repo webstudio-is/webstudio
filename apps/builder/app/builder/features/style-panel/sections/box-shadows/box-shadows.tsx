@@ -22,7 +22,7 @@ export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
 const label = "Box Shadows";
-const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
+const initialBoxShadow = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
@@ -41,14 +41,14 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, [property])}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
                 addLayer(
                   property,
-                  parseShadow("boxShadow", INITIAL_BOX_SHADOW),
+                  parseShadow(property, initialBoxShadow),
                   currentStyle,
                   props.createBatchUpdate
                 );
@@ -90,14 +90,13 @@ export const Section = (props: SectionProps) => {
                 layer={layerProps.layer}
                 tooltip={
                   <Tooltip
-                    css={{ width: "208px" }}
                     variant="wrapped"
                     content={
                       <Text>
                         Paste a box-shadow CSS code without the property name,
                         for example:
                         <br /> <br />
-                        <Text variant="monoBold">{INITIAL_BOX_SHADOW}</Text>
+                        <Text variant="monoBold">{initialBoxShadow}</Text>
                       </Text>
                     }
                   >
