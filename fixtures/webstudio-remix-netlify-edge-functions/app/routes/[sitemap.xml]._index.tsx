@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
-import { sitemap } from "../__generated__/[sitemap.xml]";
+import { sitemap } from "../__generated__/$resources.sitemap.xml";
 
 export const loader = (arg: LoaderFunctionArgs) => {
   const host =

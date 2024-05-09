@@ -123,6 +123,7 @@ export const TransitionContent = ({
 
         <Flex align="center">
           <Tooltip
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Duration</Text>
@@ -130,10 +131,8 @@ export const TransitionContent = ({
                   transition-duration
                 </Text>
                 <Text>
-                  Sets the length of time a
-                  <br />
-                  transition animation should take
-                  <br /> to complete.
+                  Sets the length of time a transition animation should take to
+                  complete.
                 </Text>
               </Flex>
             }
@@ -161,6 +160,7 @@ export const TransitionContent = ({
 
         <Flex align="center">
           <Tooltip
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Delay</Text>
@@ -168,9 +168,7 @@ export const TransitionContent = ({
                   transition-delay
                 </Text>
                 <Text>
-                  Specify the duration to wait
-                  <br />
-                  before the transition begins.
+                  Specify the duration to wait before the transition begins.
                 </Text>
               </Flex>
             }
@@ -218,14 +216,11 @@ export const TransitionContent = ({
               variant="wrapped"
               content={
                 <Text>
-                  Paste CSS code for a transition
-                  <br />
-                  or part of a transition, for
-                  <br />
+                  Paste CSS code for a transition or part of a transition, for
                   example:
                   <br />
                   <br />
-                  opacity 200ms ease;
+                  <Text variant="monoBold">opacity 200ms ease</Text>
                 </Text>
               }
             >

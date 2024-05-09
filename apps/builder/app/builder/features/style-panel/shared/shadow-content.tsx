@@ -163,7 +163,7 @@ export const ShadowContent = ({
       >
         <Flex direction="column">
           <Tooltip
-            css={{ width: "208px" }}
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">X Offset</Text>
@@ -197,7 +197,7 @@ export const ShadowContent = ({
 
         <Flex direction="column">
           <Tooltip
-            css={{ width: "208px" }}
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Blur Radius</Text>
@@ -231,7 +231,7 @@ export const ShadowContent = ({
 
         <Flex direction="column">
           <Tooltip
-            css={{ width: "208px" }}
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Y Offset</Text>
@@ -266,7 +266,7 @@ export const ShadowContent = ({
         {property === "boxShadow" ? (
           <Flex direction="column">
             <Tooltip
-              css={{ width: "208px" }}
+              variant="wrapped"
               content={
                 <Flex gap="2" direction="column">
                   <Text variant="regularBold">Spread Radius</Text>
@@ -311,7 +311,7 @@ export const ShadowContent = ({
       >
         <Flex direction="column">
           <Tooltip
-            css={{ width: "208px" }}
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Color</Text>
@@ -340,7 +340,7 @@ export const ShadowContent = ({
         {property === "boxShadow" ? (
           <Flex direction="column">
             <Tooltip
-              css={{ width: "208px" }}
+              variant="wrapped"
               content={
                 <Flex gap="2" direction="column">
                   <Text variant="regularBold">Inset</Text>

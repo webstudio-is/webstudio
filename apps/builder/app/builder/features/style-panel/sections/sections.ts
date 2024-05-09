@@ -32,6 +32,7 @@ export const sections = new Map<
   ["size", size],
   ["position", position],
   ["typography", typography],
+  ["textShadows", textShadows],
   ["backgrounds", backgrounds],
   ["borders", borders],
   ["boxShadows", boxShadows],
