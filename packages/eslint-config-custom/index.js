@@ -6,10 +6,8 @@ module.exports = {
   },
   extends: [
     "eslint:recommended",
-    "plugin:react/recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:react-hooks/recommended",
-    "plugin:react/jsx-runtime",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -19,16 +17,9 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  plugins: ["react", "@typescript-eslint", "unicorn", "import"],
-  settings: {
-    react: {
-      version: "detect",
-    },
-  },
+  plugins: ["@typescript-eslint", "unicorn", "import"],
   rules: {
     "no-console": ["error", { allow: ["info", "error"] }],
-    // It's too dumb to understand properly what's defined in ts
-    "react/prop-types": 0,
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": "off",
     "func-style": ["error", "expression", { allowArrowFunctions: true }],
