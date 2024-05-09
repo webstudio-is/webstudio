@@ -5,7 +5,6 @@ export const FontFormat = z.union([
   z.literal("ttf"),
   z.literal("woff"),
   z.literal("woff2"),
-  z.literal("otf"),
 ]);
 export type FontFormat = z.infer<typeof FontFormat>;
 
