@@ -1422,9 +1422,6 @@ importers:
       eslint-plugin-import:
         specifier: ^2.28.1
         version: 2.28.1(@typescript-eslint/parser@6.7.4(eslint@8.50.0)(typescript@5.4.5))(eslint@8.50.0)
-      eslint-plugin-react:
-        specifier: ^7.33.2
-        version: 7.33.2(eslint@8.50.0)
       eslint-plugin-react-hooks:
         specifier: ^4.6.0
         version: 4.6.0(eslint@8.50.0)
@@ -5342,9 +5339,6 @@ packages:
     resolution: {integrity: sha512-8UGn9O1FDVvMNB0UlLv4voxRMze7+FpHyF5mSMRjWHUMlpoDViniy05870VlxhfgTnLbpuwTzvD76MTtWxB/mQ==}
     engines: {node: '>= 0.4'}
 
-  array.prototype.tosorted@1.1.1:
-    resolution: {integrity: sha512-pZYPXPRl2PqWcsUs6LOMn+1f1532nEoPTYowBtqLwAW+W8vSVhkIGnmOX1t/UQjD6YGI0vcD2B1U7ZFGQH9jnQ==}
-
   arraybuffer.prototype.slice@1.0.1:
     resolution: {integrity: sha512-09x0ZWFEjj4WD8PDbykUwo3t9arLn8NIzmmYEJFpYekOAQjpkGSyrQhNoRTcwwcFRu+ycWF78QZ63oWTqSjBcw==}
     engines: {node: '>= 0.4'}
@@ -5376,9 +5370,6 @@ packages:
 
   async@3.2.4:
     resolution: {integrity: sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==}
-
-  asynciterator.prototype@1.0.0:
-    resolution: {integrity: sha512-wwHYEIS0Q80f5mosx3L/dfG5t5rjEa9Ft51GTaNt862EnpyGHpgz2RkZvLPp1oF5TnAiTohkEKVEu8pQPJI7Vg==}
 
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
@@ -6163,9 +6154,6 @@ packages:
   es-get-iterator@1.1.3:
     resolution: {integrity: sha512-sPZmqHBe6JIiTfN5q2pEi//TwxmAFHwj/XEuYjTuse78i8KxaqMTTzxPoFKuzRpDpTJ+0NAbpfenkmH2rePtuw==}
 
-  es-iterator-helpers@1.0.14:
-    resolution: {integrity: sha512-JgtVnwiuoRuzLvqelrvN3Xu7H9bu2ap/kQ2CrM62iidP8SKuD99rWU3CJy++s7IVL2qb/AjXPGR/E7i9ngd/Cw==}
-
   es-module-lexer@0.9.3:
     resolution: {integrity: sha512-1HQ2M2sPtxwnvOvT1ZClHyQDiggdNjURWpY2we6aMKCQiUVxTmVs2UYPLIrD84sS+kMdUwfBSylbJPwNnBrnHQ==}
 
@@ -6272,12 +6260,6 @@ packages:
     engines: {node: '>=10'}
     peerDependencies:
       eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0
-
-  eslint-plugin-react@7.33.2:
-    resolution: {integrity: sha512-73QQMKALArI8/7xGLNI/3LylrEYrlKZSb5C9+q3OtOewTnMQi5cT+aE9E41sLCmli3I9PGGmD1yiZydyo4FEPw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
 
   eslint-plugin-unicorn@48.0.1:
     resolution: {integrity: sha512-FW+4r20myG/DqFcCSzoumaddKBicIPeFnTrifon2mWIzlfyvzwyqZjqVP7m4Cqr/ZYisS2aiLghkUWaPg6vtCw==}
@@ -6892,10 +6874,6 @@ packages:
   is-arrayish@0.2.1:
     resolution: {integrity: sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==}
 
-  is-async-function@2.0.0:
-    resolution: {integrity: sha512-Y1JXKrfykRJGdlDwdKlLpLyMIiWqWvuSd17TvZk68PLAOGOoF4Xyav1z0Xhoi+gCYjZVeC5SI+hYFOfvXmGRCA==}
-    engines: {node: '>= 0.4'}
-
   is-bigint@1.0.4:
     resolution: {integrity: sha512-zB9CruMamjym81i2JZ3UMn54PKGsQzsJeo6xvN3HJJ4CAsQNB6iRutp2To77OfCNuoxspsIhzaPoO1zyCEhFOg==}
 
@@ -6946,9 +6924,6 @@ packages:
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
     engines: {node: '>=0.10.0'}
-
-  is-finalizationregistry@1.0.2:
-    resolution: {integrity: sha512-0by5vtUJs8iFQb5TYUHHPudOR+qXYIMKtiUzvLIZITZUjknFmziyBJuLhVRc+Ds0dREFlskDNJKYIdIzu/9pfw==}
 
   is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha512-zymm5+u+sCsSWyD9qNaejV3DFvhCKclKdizYaJUuHA83RLjb7nSuGnddCHGv0hk+KY7BMAlsWeK4Ueg6EV6XQg==}
@@ -7131,9 +7106,6 @@ packages:
   istanbul-reports@3.1.5:
     resolution: {integrity: sha512-nUsEMa9pBt/NOHqbcbeJEgqIlY/K7rVWUX6Lql2orY5e9roQOthbR3vtY4zzf2orPELg80fnxxk9zUyPlgwD1w==}
     engines: {node: '>=8'}
-
-  iterator.prototype@1.1.1:
-    resolution: {integrity: sha512-9E+nePc8C9cnQldmNl6bgpTY6zI4OPRZd97fhJ/iVZ1GifIUDVV5F6x1nEDqpe8KaMEZGT4xgrwKQDxXnjOIZQ==}
 
   jackspeak@2.2.1:
     resolution: {integrity: sha512-MXbxovZ/Pm42f6cDIDkl3xpwv1AGwObKwfmjs2nQePiy85tP3fatofl3FC1aBsOtP/6fq5SbtgHwWcMsLP+bDw==}
@@ -7362,10 +7334,6 @@ packages:
 
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
-
-  jsx-ast-utils@3.3.1:
-    resolution: {integrity: sha512-pxrjmNpeRw5wwVeWyEAk7QJu2GnBO3uzPFmHCKJJFPKK2Cy0cWL23krGtLdnMmbIi6/FjlrQpPyfQI19ByPOhQ==}
-    engines: {node: '>=4.0'}
 
   kind-of@6.0.3:
     resolution: {integrity: sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==}
@@ -8073,19 +8041,12 @@ packages:
     resolution: {integrity: sha512-1mxKf0e58bvyjSCtKYY4sRe9itRk3PJpquJOjeIkz885CczcI4IvJJDLPS72oowuSh+pBxUFROpX+TU++hxhZQ==}
     engines: {node: '>= 0.4'}
 
-  object.entries@1.1.6:
-    resolution: {integrity: sha512-leTPzo4Zvg3pmbQ3rDK69Rl8GQvIqMWubrkxONG9/ojtFE2rD9fjMKfSI5BxW3osRH1m6VdzmqK8oAY9aT4x5w==}
-    engines: {node: '>= 0.4'}
-
   object.fromentries@2.0.6:
     resolution: {integrity: sha512-VciD13dswC4j1Xt5394WR4MzmAQmlgN72phd/riNp9vtD7tp4QQWJ0R4wvclXcafgcYK8veHRed2W6XeGBvcfg==}
     engines: {node: '>= 0.4'}
 
   object.groupby@1.0.0:
     resolution: {integrity: sha512-70MWG6NfRH9GnbZOikuhPPYzpUpof9iW2J9E4dW7FXTqPNb6rllE6u39SKwwiNh8lCwX3DDb5OgcKGiEBrTTyw==}
-
-  object.hasown@1.1.2:
-    resolution: {integrity: sha512-B5UIT3J1W+WuWIU55h0mjlwaqxiE5vYENJXIXZ4VFe05pNYrkKuK0U/6aFcb0pKywYJh7IhfoqUfKVmrJJHZHw==}
 
   object.values@1.1.6:
     resolution: {integrity: sha512-FVVTkD1vENCsAcwNs9k6jea2uHC/X0+JcjG8YA60FN5CMaJmG95wT9jek/xX9nornqGRrBkKtzuAu2wuHpKqvw==}
@@ -8714,10 +8675,6 @@ packages:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==}
     engines: {node: '>=8'}
 
-  reflect.getprototypeof@1.0.4:
-    resolution: {integrity: sha512-ECkTw8TmJwW60lOTR+ZkODISW6RQ8+2CL3COqtiJKLd6MmB45hN51HprHFziKLGkAuTGQhBb91V8cy+KHlaCjw==}
-    engines: {node: '>= 0.4'}
-
   regenerate-unicode-properties@10.1.0:
     resolution: {integrity: sha512-d1VudCLoIGitcU/hEg2QqvyGZQmdC0Lf8BqdOMXGFSvJP4bNV1+XqbPQeHHLD51Jh4QJJ225dlIFvY4Ly6MXmQ==}
     engines: {node: '>=4'}
@@ -8861,10 +8818,6 @@ packages:
 
   resolve@1.22.8:
     resolution: {integrity: sha512-oKWePCxqpd6FlLvGV1VU0x7bkPmmCNolxzjMf4NczoDnQcIWrAF+cPtZn5i6n+RfD2d9i0tzpKnG6Yk168yIyw==}
-    hasBin: true
-
-  resolve@2.0.0-next.4:
-    resolution: {integrity: sha512-iMDbmAWtfU+MHpxt/I5iWI7cY6YVEZUQ3MBgPQ++XD1PELuJHIl82xBmObyP2KyQmkNB2dsqF7seoQQiAn5yDQ==}
     hasBin: true
 
   restore-cursor@3.1.0:
@@ -9182,9 +9135,6 @@ packages:
   string-width@6.1.0:
     resolution: {integrity: sha512-k01swCJAgQmuADB0YIc+7TuatfNvTBVOoaUWJjTB9R4VJzR5vNWzf5t42ESVZFPS8xTySF7CAdV4t/aaIm3UnQ==}
     engines: {node: '>=16'}
-
-  string.prototype.matchall@4.0.8:
-    resolution: {integrity: sha512-6zOCOcJ+RJAQshcTvXPHoxoQGONa3e/Lqx90wUA+wEzX78sg5Bo+1tQo4N0pohS0erG9qtCqJDjNCQBjeWVxyg==}
 
   string.prototype.trim@1.2.7:
     resolution: {integrity: sha512-p6TmeT1T3411M8Cgg9wBTMRtY2q9+PNy9EV1i2lIXUN/btt763oIfxwN3RR8VU6wHX8j/1CFy0L+YuThm6bgOg==}
@@ -9878,10 +9828,6 @@ packages:
 
   which-boxed-primitive@1.0.2:
     resolution: {integrity: sha512-bwZdv0AKLpplFY2KZRX6TvyuN7ojjr7lwkg6ml0roIy9YeuSr7JS372qlNW18UQYzgYK9ziGcerWqZOmEn9VNg==}
-
-  which-builtin-type@1.1.3:
-    resolution: {integrity: sha512-YmjsSMDBYsM1CaFiayOVT06+KJeXf0o5M/CAd4o1lTadFAtacTUM49zoYxr/oroopFDfhvN6iEcBxUyc3gvKmw==}
-    engines: {node: '>= 0.4'}
 
   which-collection@1.0.1:
     resolution: {integrity: sha512-W8xeTUwaln8i3K/cY1nGXzdnVZlidBcagyNFtBdD5kxnb4TvGKR7FfSIS3mYpwWS1QUCutfKz8IY8RjftB0+1A==}
@@ -14931,14 +14877,6 @@ snapshots:
       es-abstract: 1.22.1
       es-shim-unscopables: 1.0.0
 
-  array.prototype.tosorted@1.1.1:
-    dependencies:
-      call-bind: 1.0.2
-      define-properties: 1.2.0
-      es-abstract: 1.22.1
-      es-shim-unscopables: 1.0.0
-      get-intrinsic: 1.2.1
-
   arraybuffer.prototype.slice@1.0.1:
     dependencies:
       array-buffer-byte-length: 1.0.0
@@ -14976,10 +14914,6 @@ snapshots:
   async-limiter@1.0.1: {}
 
   async@3.2.4: {}
-
-  asynciterator.prototype@1.0.0:
-    dependencies:
-      has-symbols: 1.0.3
 
   asynckit@0.4.0: {}
 
@@ -15836,23 +15770,6 @@ snapshots:
       isarray: 2.0.5
       stop-iteration-iterator: 1.0.0
 
-  es-iterator-helpers@1.0.14:
-    dependencies:
-      asynciterator.prototype: 1.0.0
-      call-bind: 1.0.2
-      define-properties: 1.2.0
-      es-abstract: 1.22.1
-      es-set-tostringtag: 2.0.1
-      function-bind: 1.1.1
-      get-intrinsic: 1.2.1
-      globalthis: 1.0.3
-      has-property-descriptors: 1.0.0
-      has-proto: 1.0.1
-      has-symbols: 1.0.3
-      internal-slot: 1.0.5
-      iterator.prototype: 1.1.1
-      safe-array-concat: 1.0.0
-
   es-module-lexer@0.9.3: {}
 
   es-module-lexer@1.5.0: {}
@@ -15985,26 +15902,6 @@ snapshots:
   eslint-plugin-react-hooks@4.6.0(eslint@8.50.0):
     dependencies:
       eslint: 8.50.0
-
-  eslint-plugin-react@7.33.2(eslint@8.50.0):
-    dependencies:
-      array-includes: 3.1.6
-      array.prototype.flatmap: 1.3.1
-      array.prototype.tosorted: 1.1.1
-      doctrine: 2.1.0
-      es-iterator-helpers: 1.0.14
-      eslint: 8.50.0
-      estraverse: 5.3.0
-      jsx-ast-utils: 3.3.1
-      minimatch: 3.1.2
-      object.entries: 1.1.6
-      object.fromentries: 2.0.6
-      object.hasown: 1.1.2
-      object.values: 1.1.6
-      prop-types: 15.8.1
-      resolve: 2.0.0-next.4
-      semver: 6.3.1
-      string.prototype.matchall: 4.0.8
 
   eslint-plugin-unicorn@48.0.1(eslint@8.50.0):
     dependencies:
@@ -16783,10 +16680,6 @@ snapshots:
 
   is-arrayish@0.2.1: {}
 
-  is-async-function@2.0.0:
-    dependencies:
-      has-tostringtag: 1.0.0
-
   is-bigint@1.0.4:
     dependencies:
       has-bigints: 1.0.2
@@ -16827,10 +16720,6 @@ snapshots:
   is-element@0.1.0: {}
 
   is-extglob@2.1.1: {}
-
-  is-finalizationregistry@1.0.2:
-    dependencies:
-      call-bind: 1.0.2
 
   is-fullwidth-code-point@3.0.0: {}
 
@@ -16998,13 +16887,6 @@ snapshots:
     dependencies:
       html-escaper: 2.0.2
       istanbul-lib-report: 3.0.0
-
-  iterator.prototype@1.1.1:
-    dependencies:
-      define-properties: 1.2.0
-      get-intrinsic: 1.2.1
-      has-symbols: 1.0.3
-      reflect.getprototypeof: 1.0.4
 
   jackspeak@2.2.1:
     dependencies:
@@ -17449,11 +17331,6 @@ snapshots:
       universalify: 2.0.0
     optionalDependencies:
       graceful-fs: 4.2.10
-
-  jsx-ast-utils@3.3.1:
-    dependencies:
-      array-includes: 3.1.6
-      object.assign: 4.1.4
 
   kind-of@6.0.3: {}
 
@@ -18476,12 +18353,6 @@ snapshots:
       has-symbols: 1.0.3
       object-keys: 1.1.1
 
-  object.entries@1.1.6:
-    dependencies:
-      call-bind: 1.0.2
-      define-properties: 1.2.0
-      es-abstract: 1.22.1
-
   object.fromentries@2.0.6:
     dependencies:
       call-bind: 1.0.2
@@ -18494,11 +18365,6 @@ snapshots:
       define-properties: 1.2.0
       es-abstract: 1.22.1
       get-intrinsic: 1.2.1
-
-  object.hasown@1.1.2:
-    dependencies:
-      define-properties: 1.2.0
-      es-abstract: 1.22.1
 
   object.values@1.1.6:
     dependencies:
@@ -19220,15 +19086,6 @@ snapshots:
       indent-string: 4.0.0
       strip-indent: 3.0.0
 
-  reflect.getprototypeof@1.0.4:
-    dependencies:
-      call-bind: 1.0.2
-      define-properties: 1.2.0
-      es-abstract: 1.22.1
-      get-intrinsic: 1.2.1
-      globalthis: 1.0.3
-      which-builtin-type: 1.1.3
-
   regenerate-unicode-properties@10.1.0:
     dependencies:
       regenerate: 1.4.2
@@ -19397,12 +19254,6 @@ snapshots:
       supports-preserve-symlinks-flag: 1.0.0
 
   resolve@1.22.8:
-    dependencies:
-      is-core-module: 2.13.0
-      path-parse: 1.0.7
-      supports-preserve-symlinks-flag: 1.0.0
-
-  resolve@2.0.0-next.4:
     dependencies:
       is-core-module: 2.13.0
       path-parse: 1.0.7
@@ -19753,17 +19604,6 @@ snapshots:
       eastasianwidth: 0.2.0
       emoji-regex: 10.2.1
       strip-ansi: 7.1.0
-
-  string.prototype.matchall@4.0.8:
-    dependencies:
-      call-bind: 1.0.2
-      define-properties: 1.2.0
-      es-abstract: 1.22.1
-      get-intrinsic: 1.2.1
-      has-symbols: 1.0.3
-      internal-slot: 1.0.5
-      regexp.prototype.flags: 1.5.0
-      side-channel: 1.0.4
 
   string.prototype.trim@1.2.7:
     dependencies:
@@ -20529,21 +20369,6 @@ snapshots:
       is-number-object: 1.0.7
       is-string: 1.0.7
       is-symbol: 1.0.4
-
-  which-builtin-type@1.1.3:
-    dependencies:
-      function.prototype.name: 1.1.5
-      has-tostringtag: 1.0.0
-      is-async-function: 2.0.0
-      is-date-object: 1.0.5
-      is-finalizationregistry: 1.0.2
-      is-generator-function: 1.0.10
-      is-regex: 1.1.4
-      is-weakref: 1.0.2
-      isarray: 2.0.5
-      which-boxed-primitive: 1.0.2
-      which-collection: 1.0.1
-      which-typed-array: 1.1.11
 
   which-collection@1.0.1:
     dependencies:
