@@ -54,7 +54,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
             if (category === "hidden") {
               return false;
             }
-            // @todo: delete fully if after removing the flag
+            // @todo: delete full if block after removing the flag
             if (
               isFeatureEnabled("xmlElement") === false &&
               category === "xml"
