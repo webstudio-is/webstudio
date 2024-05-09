@@ -17,7 +17,7 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  plugins: ["@typescript-eslint", "unicorn", "import"],
+  plugins: ["@typescript-eslint", "unicorn"],
   rules: {
     "no-console": ["error", { allow: ["info", "error"] }],
     "no-unused-vars": "off",
@@ -29,24 +29,6 @@ module.exports = {
     radix: 2,
     "unicorn/filename-case": ["error", { case: "kebabCase" }],
     "unicorn/prefer-node-protocol": "error",
-    "import/no-internal-modules": [
-      "error",
-      {
-        allow: [
-          "**/server",
-          "@lexical/react/*",
-          "__generated__/*",
-          "react-hot-toast/headless",
-          "colord/plugins/*",
-          "react/*",
-          "react-dom/*",
-          "@fontsource/**",
-          "@fontsource-variable/**",
-          "@netlify/remix-adapter/**",
-          "@netlify/remix-edge-adapter/**",
-        ],
-      },
-    ],
     "no-restricted-syntax": [
       "error",
       {
@@ -63,12 +45,6 @@ module.exports = {
       files: ["**/app/routes/**/*.{ts,tsx}"],
       rules: {
         "unicorn/filename-case": "off",
-      },
-    },
-    {
-      files: ["**/packages/cli/**"],
-      rules: {
-        "import/no-internal-modules": "off",
       },
     },
   ],

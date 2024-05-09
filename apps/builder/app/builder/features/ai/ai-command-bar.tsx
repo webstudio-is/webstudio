@@ -1,4 +1,3 @@
-/* eslint-disable import/no-internal-modules */
 import { formatDistance } from "date-fns/formatDistance";
 import {
   AutogrowTextArea,

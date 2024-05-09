@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-internal-modules
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import { createContext } from "~/shared/context.server";

@@ -19,7 +19,6 @@ import {
   type LCPReportCallbackWithAttribution,
   type TTFBReportCallbackWithAttribution,
   type ReportOpts,
-  // eslint-disable-next-line import/no-internal-modules
 } from "web-vitals/attribution";
 
 const logEvent = (
