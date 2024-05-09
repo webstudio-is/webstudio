@@ -47,6 +47,7 @@ const htmlSample = `
 <h4>Heading 4</h4>
 <h5>Heading 5</h5>
 <h6>Heading 6</h6>
+<p><a href="#">Links</a> connect your content to relevant resources.</p>
 <p><strong>Bold text</strong> makes your important points stand out.</p>
 <p><em>Italic text</em> is great for emphasizing terms.</p>
 <ol>
