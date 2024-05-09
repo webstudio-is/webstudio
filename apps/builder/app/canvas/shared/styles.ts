@@ -13,7 +13,7 @@ import {
   addGlobalRules,
   createImageValueTransformer,
   getPresetStyleRules,
-  descendentComponent,
+  descendantComponent,
   type Params,
 } from "@webstudio-is/react-sdk";
 import {
@@ -163,14 +163,14 @@ const toVarValue = (styleDecl: StyleDecl): undefined | VarValue => {
   }
 };
 
-const $descendentSelectors = computed(
+const $descendantSelectors = computed(
   [$instances, $props],
   (instances, props) => {
     const parentIdByInstanceId = new Map<Instance["id"], Instance["id"]>();
-    const descendentInstanceIds: Instance["id"][] = [];
+    const descendantInstanceIds: Instance["id"][] = [];
     for (const instance of instances.values()) {
-      if (instance.component === descendentComponent) {
-        descendentInstanceIds.push(instance.id);
+      if (instance.component === descendantComponent) {
+        descendantInstanceIds.push(instance.id);
       }
       for (const child of instance.children) {
         if (child.type === "id") {
@@ -178,24 +178,24 @@ const $descendentSelectors = computed(
         }
       }
     }
-    const descendentSelectorByInstanceId = new Map<Instance["id"], string>();
+    const descendantSelectorByInstanceId = new Map<Instance["id"], string>();
     for (const prop of props.values()) {
       if (prop.name === "selector" && prop.type === "string") {
-        descendentSelectorByInstanceId.set(prop.instanceId, prop.value);
+        descendantSelectorByInstanceId.set(prop.instanceId, prop.value);
       }
     }
-    const descendentSelectors = new Map<Instance["id"], string>();
-    for (const instanceId of descendentInstanceIds) {
+    const descendantSelectors = new Map<Instance["id"], string>();
+    for (const instanceId of descendantInstanceIds) {
       const parentId = parentIdByInstanceId.get(instanceId);
-      const selector = descendentSelectorByInstanceId.get(instanceId);
+      const selector = descendantSelectorByInstanceId.get(instanceId);
       if (parentId && selector) {
-        descendentSelectors.set(
+        descendantSelectors.set(
           instanceId,
           `[${idAttribute}="${parentId}"]${selector}`
         );
       }
     }
-    return descendentSelectors;
+    return descendantSelectors;
   }
 );
 
@@ -267,18 +267,18 @@ export const subscribeStyles = () => {
     }
   );
 
-  const unsubscribeDescendentSelectors = $descendentSelectors.subscribe(
-    (descendentSelectors) => {
+  const unsubscribeDescendantSelectors = $descendantSelectors.subscribe(
+    (descendantSelectors) => {
       let selectorsUpdated = false;
-      for (const [instanceId, descendentSelector] of descendentSelectors) {
-        // access descendent component rule
+      for (const [instanceId, descendantSelector] of descendantSelectors) {
+        // access descendant component rule
         // and change its selector to parent id + selector prop
         const key = `[${idAttribute}="${instanceId}"]`;
         const rule = userSheet.addNestingRule(key);
         // invalidate only when necessary
-        if (rule.getSelector() !== descendentSelector) {
+        if (rule.getSelector() !== descendantSelector) {
           selectorsUpdated = true;
-          rule.setSelector(descendentSelector);
+          rule.setSelector(descendantSelector);
         }
       }
       if (selectorsUpdated) {
@@ -291,7 +291,7 @@ export const subscribeStyles = () => {
     unsubscribeBreakpoints();
     unsubscribeStyles();
     unsubscribeStyleSourceSelections();
-    unsubscribeDescendentSelectors();
+    unsubscribeDescendantSelectors();
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
     }

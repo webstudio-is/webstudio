@@ -58,6 +58,13 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               return false;
             }
 
+            if (
+              isFeatureEnabled("internalComponents") === false &&
+              category === "internal"
+            ) {
+              return;
+            }
+
             return true;
           })
           .map((category) => (
@@ -81,8 +88,8 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                         return;
                       }
                       if (
-                        isFeatureEnabled("internalComponents") === false &&
-                        meta.category === "internal"
+                        isFeatureEnabled("cms") === false &&
+                        component === "ContentEmbed"
                       ) {
                         return;
                       }

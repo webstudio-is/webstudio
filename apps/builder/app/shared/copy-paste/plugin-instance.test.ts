@@ -461,7 +461,7 @@ test("when paste into copied instance insert after it", () => {
   );
 });
 
-test("prevent pasting portal into own descendents", () => {
+test("prevent pasting portal into own descendants", () => {
   const instances = toMap([
     createInstance("body", "Body", [{ type: "id", value: "portal" }]),
     createInstance("portal", portalComponent, [
