@@ -562,6 +562,8 @@ export const VariablePopoverTrigger = forwardRef<
   const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
   const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<undefined | PanelApi>();
+  const resources = useStore($resources);
+
   const saveAndClose = () => {
     if (panelRef.current) {
       if (panelRef.current.allErrorsVisible === false) {
@@ -637,28 +639,32 @@ export const VariablePopoverTrigger = forwardRef<
         ) : (
           <FloatingPanelPopoverTitle
             actions={
-              variable.type === "resource" && (
+              variable?.type === "resource" && (
                 <>
-                  <Tooltip
-                    content="Copy resource as cURL command"
-                    side="bottom"
-                  >
-                    <Button
-                      aria-label="Copy resource as cURL command"
-                      prefix={<CopyIcon />}
-                      color="ghost"
-                      onClick={() => {
-                        const resourceRequest = getComputedResource(
-                          variable.resourceId
-                        );
-                        if (resourceRequest) {
-                          navigator.clipboard.writeText(
-                            generateCurl(resourceRequest)
+                  {isLocalResource(
+                    JSON.parse(resources.get(variable.resourceId)?.url ?? "")
+                  ) === false && (
+                    <Tooltip
+                      content="Copy resource as cURL command"
+                      side="bottom"
+                    >
+                      <Button
+                        aria-label="Copy resource as cURL command"
+                        prefix={<CopyIcon />}
+                        color="ghost"
+                        onClick={() => {
+                          const resourceRequest = getComputedResource(
+                            variable.resourceId
                           );
-                        }
-                      }}
-                    />
-                  </Tooltip>
+                          if (resourceRequest) {
+                            navigator.clipboard.writeText(
+                              generateCurl(resourceRequest)
+                            );
+                          }
+                        }}
+                      />
+                    </Tooltip>
+                  )}
                   <Tooltip content="Refresh resource data" side="bottom">
                     <Button
                       aria-label="Refresh resource data"
