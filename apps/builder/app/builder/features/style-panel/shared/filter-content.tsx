@@ -10,11 +10,14 @@ import {
   Label,
   TextArea,
   textVariants,
+  Separator,
+  Select,
 } from "@webstudio-is/design-system";
 import { useState } from "react";
 import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { parseFilter } from "@webstudio-is/css-data";
 import type { DeleteProperty } from "../shared/use-style-data";
+import { filterFunctions } from "../sections/filter/filter-utils";
 
 type FilterContentProps = {
   index: number;
@@ -26,6 +29,8 @@ type FilterContentProps = {
   deleteProperty: DeleteProperty;
 };
 
+type FilterFunction = keyof typeof filterFunctions;
+
 export const FilterSectionContent = ({
   index,
   property,
@@ -33,6 +38,7 @@ export const FilterSectionContent = ({
   onEditLayer,
   deleteProperty,
   tooltip,
+  layer,
 }: FilterContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -62,55 +68,68 @@ export const FilterSectionContent = ({
     onEditLayer(index, layers);
   };
 
-  return (
-    <Flex
-      direction="column"
-      css={{
-        px: theme.spacing[9],
-        paddingTop: theme.spacing[5],
-        paddingBottom: theme.spacing[9],
-        gap: theme.spacing[3],
-        minWidth: theme.spacing[30],
-      }}
-    >
-      <Label>
-        <Flex align={"center"} gap={1}>
-          Code
-          {tooltip}
-        </Flex>
-      </Label>
-      {
-        // @todo Replace the TextArea with code-editor.
-        // For more details, please refer to the issue
-        // https://github.com/webstudio-is/webstudio/issues/2977
-      }
-      <TextArea
-        rows={3}
-        name="description"
-        value={intermediateValue?.value ?? propertyValue ?? ""}
-        css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-        state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-        onChange={handleChange}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            handleComplete();
-            // On pressing Enter, the textarea is creating a new line.
-            // In-order to prevent it and update the content.
-            // We prevent the default behaviour
-            event.preventDefault();
-          }
+  const handleFilterFunctionChange = (value: FilterFunction) => {
+    console.log(value);
+  };
 
-          if (event.key === "Escape") {
-            if (intermediateValue === undefined) {
-              return;
+  return (
+    <Flex direction="column">
+      <Select
+        name="filterFunction"
+        options={Object.keys(filterFunctions) as FilterFunction[]}
+        value={layer.name as FilterFunction}
+        onChange={handleFilterFunctionChange}
+      />
+      <Separator css={{ gridAutoColumns: "span 2" }} />
+      <Flex
+        direction="column"
+        css={{
+          px: theme.spacing[9],
+          paddingTop: theme.spacing[5],
+          paddingBottom: theme.spacing[9],
+          gap: theme.spacing[3],
+          minWidth: theme.spacing[30],
+        }}
+      >
+        <Label>
+          <Flex align={"center"} gap={1}>
+            Code
+            {tooltip}
+          </Flex>
+        </Label>
+        {
+          // @todo Replace the TextArea with code-editor.
+          // For more details, please refer to the issue
+          // https://github.com/webstudio-is/webstudio/issues/2977
+        }
+        <TextArea
+          rows={3}
+          name="description"
+          value={intermediateValue?.value ?? propertyValue ?? ""}
+          css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
+          state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
+          onChange={handleChange}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              handleComplete();
+              // On pressing Enter, the textarea is creating a new line.
+              // In-order to prevent it and update the content.
+              // We prevent the default behaviour
+              event.preventDefault();
             }
 
-            deleteProperty(property, { isEphemeral: true });
-            setIntermediateValue(undefined);
-            event.preventDefault();
-          }
-        }}
-      />
+            if (event.key === "Escape") {
+              if (intermediateValue === undefined) {
+                return;
+              }
+
+              deleteProperty(property, { isEphemeral: true });
+              setIntermediateValue(undefined);
+              event.preventDefault();
+            }
+          }}
+        />
+      </Flex>
     </Flex>
   );
 };
