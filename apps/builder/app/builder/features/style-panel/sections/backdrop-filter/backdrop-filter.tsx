@@ -1,10 +1,6 @@
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
-import type {
-  FunctionValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import {
   SectionTitle,
@@ -21,17 +17,17 @@ import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import { addLayer } from "../../style-layer-utils";
 import { parseFilter } from "@webstudio-is/css-data";
 import { LayersList } from "../../style-layers-list";
-import { FilterLayer } from "../filter/filter-layer";
+import { FilterSectionContent } from "../../shared/filter-content";
 
 export const properties = ["backdropFilter"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
 const label = "Backdrop Filters";
-const INITIAL_BACKDROP_FILTER = "blur(0px)";
+const initialBackdropFilter = "blur(0px)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
   const sectionStyleSource =
     value?.type === "unparsed" || value?.type === "guaranteedInvalid"
@@ -54,7 +50,7 @@ export const Section = (props: SectionProps) => {
                 onClick={() => {
                   addLayer(
                     property,
-                    parseFilter(INITIAL_BACKDROP_FILTER),
+                    parseFilter(initialBackdropFilter),
                     currentStyle,
                     props.createBatchUpdate
                   );
@@ -80,39 +76,43 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "tuple" && value.value.length > 0 && (
-        <LayersList<FunctionValue, TupleValue>
+        <LayersList
           {...props}
           property={property}
-          layers={value}
-          renderLayer={(layerProps) => (
-            <FilterLayer
-              {...layerProps}
-              key={layerProps.index}
-              label={label}
-              tooltip={
-                <Tooltip
-                  variant="wrapped"
-                  content={
-                    <Flex gap="2" direction="column">
-                      <Text variant="regularBold">{label}</Text>
-                      <Text variant="monoBold">backdrop-filter</Text>
-                      <Text>
-                        Applies graphical effects like blur or color shift to
-                        the area behind an element, for example:
-                        <br />
-                        <br />
-                        <Text variant="monoBold">
-                          {INITIAL_BACKDROP_FILTER}
+          value={value}
+          label={label}
+          deleteProperty={deleteProperty}
+          renderContent={(layerProps) => {
+            if (layerProps.layer.type !== "function") {
+              return <></>;
+            }
+
+            return (
+              <FilterSectionContent
+                {...layerProps}
+                layer={layerProps.layer}
+                tooltip={
+                  <Tooltip
+                    variant="wrapped"
+                    content={
+                      <Flex gap="2" direction="column">
+                        <Text variant="regularBold">{label}</Text>
+                        <Text variant="monoBold">filter</Text>
+                        <Text>
+                          Applies graphical effects like blur or color shift to
+                          the area behind an element
+                          <br /> <br />
+                          <Text variant="mono">{initialBackdropFilter}</Text>
                         </Text>
-                      </Text>
-                    </Flex>
-                  }
-                >
-                  <InfoCircleIcon />
-                </Tooltip>
-              }
-            />
-          )}
+                      </Flex>
+                    }
+                  >
+                    <InfoCircleIcon />
+                  </Tooltip>
+                }
+              />
+            );
+          }}
         />
       )}
     </CollapsibleSectionRoot>

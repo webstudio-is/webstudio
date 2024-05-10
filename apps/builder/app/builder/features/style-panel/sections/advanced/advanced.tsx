@@ -30,7 +30,6 @@ const initialPropertyNames = new Set<StyleProperty>([
   "userSelect",
   "pointerEvents",
   "mixBlendMode",
-  "backdropFilter",
   "cursor",
   "opacity",
 ]);

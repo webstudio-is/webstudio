@@ -6,6 +6,7 @@ import {
   type TupleValue,
   KeywordValue,
   UnitValue,
+  type StyleProperty,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -23,7 +24,6 @@ import {
   parseTransition,
   type ExtractedTransitionProperties,
 } from "@webstudio-is/css-data";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import type {
   DeleteProperty,
   StyleUpdateOptions,
@@ -35,22 +35,26 @@ import { CssValueInputContainer } from "../../shared/css-value-input";
 
 type TransitionContentProps = {
   index: number;
+  property: StyleProperty;
   layer: TupleValue;
-  transition: string;
+  propertyValue: string;
+  tooltip: JSX.Element;
   onEditLayer: (index: number, layer: LayersValue) => void;
   deleteProperty: DeleteProperty;
 };
 
 export const TransitionContent = ({
   layer,
-  transition,
-  onEditLayer,
   index,
+  tooltip,
+  property: transitionPropertyKey,
+  onEditLayer,
+  propertyValue,
   deleteProperty,
 }: TransitionContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
-  >({ type: "intermediate", value: transition });
+  >({ type: "intermediate", value: propertyValue });
 
   const { property, timing, delay, duration } =
     useMemo<ExtractedTransitionProperties>(
@@ -212,20 +216,7 @@ export const TransitionContent = ({
         <Label>
           <Flex align="center" gap="1">
             Code
-            <Tooltip
-              variant="wrapped"
-              content={
-                <Text>
-                  Paste CSS code for a transition or part of a transition, for
-                  example:
-                  <br />
-                  <br />
-                  <Text variant="monoBold">opacity 200ms ease</Text>
-                </Text>
-              }
-            >
-              <InfoCircleIcon />
-            </Tooltip>
+            {tooltip}
           </Flex>
         </Label>
         <TextArea
@@ -249,7 +240,7 @@ export const TransitionContent = ({
                 return;
               }
 
-              deleteProperty("transition", { isEphemeral: true });
+              deleteProperty(transitionPropertyKey, { isEphemeral: true });
               setIntermediateValue(undefined);
               event.preventDefault();
             }

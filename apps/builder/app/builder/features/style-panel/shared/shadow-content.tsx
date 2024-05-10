@@ -60,9 +60,9 @@ import type { DeleteProperty, SetProperty } from "../shared/use-style-data";
 
 type ShadowContentProps = {
   index: number;
-  layer: TupleValue;
   property: StyleProperty;
-  shadow: string;
+  layer: TupleValue;
+  propertyValue: string;
   tooltip: JSX.Element;
   onEditLayer: (index: number, layers: LayersValue) => void;
   deleteProperty: DeleteProperty;
@@ -89,8 +89,8 @@ export const ShadowContent = ({
   layer,
   index,
   property,
+  propertyValue,
   tooltip,
-  shadow,
   onEditLayer,
   deleteProperty,
 }: ShadowContentProps) => {
@@ -98,9 +98,10 @@ export const ShadowContent = ({
     IntermediateStyleValue | InvalidValue | undefined
   >();
   const layerValues = useMemo<ExtractedShadowProperties>(() => {
-    setIntermediateValue({ type: "intermediate", value: shadow });
+    setIntermediateValue({ type: "intermediate", value: propertyValue });
     return extractShadowProperties(layer);
-  }, [layer, shadow]);
+  }, [layer, propertyValue]);
+
   const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
   const colorControlProp = color ?? {
     type: "rgb",
@@ -315,11 +316,7 @@ export const ShadowContent = ({
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Color</Text>
                 <Text variant="monoBold">color</Text>
-                <Text>
-                  Sets the shadow color and
-                  <br />
-                  opacity.
-                </Text>
+                <Text>Sets the shadow color and opacity.</Text>
               </Flex>
             }
           >
@@ -403,7 +400,7 @@ export const ShadowContent = ({
         <TextArea
           rows={3}
           name="description"
-          value={intermediateValue?.value ?? shadow ?? ""}
+          value={intermediateValue?.value ?? propertyValue ?? ""}
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
           state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
           onChange={handleChange}

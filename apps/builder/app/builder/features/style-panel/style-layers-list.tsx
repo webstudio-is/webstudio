@@ -1,11 +1,17 @@
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
+import {
+  toValue,
+  type FunctionValue,
+  type LayersValue,
+  type StyleProperty,
+  type TupleValue,
 } from "@webstudio-is/css-engine";
 import {
   CssValueListArrowFocus,
+  CssValueListItem,
   Flex,
+  Label,
+  SmallIconButton,
+  SmallToggleButton,
   useSortable,
 } from "@webstudio-is/design-system";
 import type { SectionProps } from "./sections";
@@ -17,46 +23,74 @@ import {
   updateLayer,
 } from "./style-layer-utils";
 import { useMemo } from "react";
-import type {
-  CreateBatchUpdate,
-  DeleteProperty,
-} from "./shared/use-style-data";
+import type { DeleteProperty } from "./shared/use-style-data";
+import { FloatingPanel } from "~/builder/shared/floating-panel";
+import {
+  EyeconClosedIcon,
+  EyeconOpenIcon,
+  SubtractIcon,
+} from "@webstudio-is/icons";
+import { ColorThumb } from "./shared/color-thumb";
+import { colord, type RgbaColor } from "colord";
 
-export type LayerProps<LayerType> = {
-  id: string;
-  index: number;
-  property: StyleProperty;
-  layer: LayerType;
+type LayerListProps = SectionProps & {
+  disabled?: boolean;
   label: string;
-  tooltip: JSX.Element;
-  isHighlighted: boolean;
-  disabled?: boolean;
-  onLayerHide: (index: number) => void;
-  onDeleteLayer: (index: number) => void;
-  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
-  createBatchUpdate: CreateBatchUpdate;
-  deleteProperty: DeleteProperty;
-};
-
-type LayerListProperties<LayerType, PropertyValueType> = SectionProps & {
-  disabled?: boolean;
   property: StyleProperty;
-  layers: PropertyValueType;
-  renderLayer: (props: LayerProps<LayerType>) => JSX.Element;
+  value: TupleValue | LayersValue;
+  renderContent: (props: {
+    index: number;
+    layer: TupleValue | FunctionValue;
+    property: StyleProperty;
+    propertyValue: string;
+    onDeleteLayer: (index: number) => void;
+    onEditLayer: (index: number, layers: TupleValue | LayersValue) => void;
+    deleteProperty: DeleteProperty;
+  }) => JSX.Element;
 };
 
-export const LayersList = <
-  LayerType,
-  PropertyValueType extends TupleValue | LayersValue,
->({
+const extractPropertiesFromLayer = (layer: TupleValue | FunctionValue) => {
+  if (layer.type === "function") {
+    return { name: toValue(layer), value: toValue(layer), color: undefined };
+  }
+
+  const name = [];
+  const shadow = [];
+  let color: RgbaColor | undefined;
+  for (const item of Object.values(layer.value)) {
+    if (item.type === "unit") {
+      const value = toValue(item);
+      name.push(value);
+      shadow.push(value);
+    }
+
+    if (item.type === "rgb") {
+      color = colord(toValue(item)).toRgb();
+      shadow.push(toValue(item));
+    }
+
+    if (item.type === "keyword") {
+      if (colord(item.value).isValid() === false) {
+        name.push(item.value);
+      } else {
+        color = colord(item.value).toRgb();
+      }
+      shadow.push(item.value);
+    }
+  }
+
+  return { name: name.join(" "), value: shadow.join(" "), color };
+};
+
+export const LayersList = ({
+  label,
   property,
-  layers,
-  disabled,
+  value,
   currentStyle,
-  renderLayer,
   createBatchUpdate,
+  renderContent,
   deleteProperty,
-}: LayerListProperties<LayerType, PropertyValueType>) => {
+}: LayerListProps) => {
   const layersCount = getLayerCount(property, currentStyle);
 
   const sortableItems = useMemo(
@@ -76,47 +110,87 @@ export const LayersList = <
   });
 
   const handleDeleteLayer = (index: number) => {
-    return deleteLayer(property, index, layers, createBatchUpdate);
+    return deleteLayer(property, index, value, createBatchUpdate);
   };
 
   const handleHideLayer = (index: number) => {
-    if (layers.type === "tuple") {
+    if (value.type === "tuple") {
       return;
     }
-    return hideLayer(property, index, layers, createBatchUpdate);
+    return hideLayer(property, index, value, createBatchUpdate);
   };
 
-  const onEditLayer = (index: number, newLayers: PropertyValueType) => {
-    return updateLayer<PropertyValueType>(
-      property,
-      newLayers,
-      layers,
-      index,
-      createBatchUpdate
-    );
+  const onEditLayer = (index: number, newLayers: TupleValue | LayersValue) => {
+    return updateLayer(property, newLayers, value, index, createBatchUpdate);
   };
 
   return (
     <CssValueListArrowFocus dragItemId={dragItemId}>
       <Flex direction="column" ref={sortableRefCallback}>
-        {layers.value.map((layer, index) => {
+        {value.value.map((layer, index) => {
           if (layer.type !== "tuple" && layer.type !== "function") {
-            return null;
+            return;
           }
           const id = String(index);
-          return renderLayer({
-            id,
-            index,
-            layer,
-            disabled,
-            property,
-            isHighlighted: dragItemId === id,
-            onLayerHide: handleHideLayer,
-            onDeleteLayer: handleDeleteLayer,
-            createBatchUpdate,
-            deleteProperty,
-            onEditLayer,
-          } as LayerProps<LayerType>);
+          const properties = extractPropertiesFromLayer(layer);
+          const { name, value, color } = properties;
+
+          return (
+            <FloatingPanel
+              key={index}
+              title={label}
+              content={renderContent({
+                index,
+                property,
+                layer,
+                onEditLayer,
+                propertyValue: value,
+                onDeleteLayer: handleDeleteLayer,
+                deleteProperty,
+              })}
+            >
+              <CssValueListItem
+                id={id}
+                draggable={true}
+                active={dragItemId === id}
+                index={index}
+                label={<Label truncate>{name}</Label>}
+                hidden={layer.type === "tuple" && layer?.hidden}
+                thumbnail={
+                  property === "textShadow" || property === "boxShadow" ? (
+                    <ColorThumb color={color} />
+                  ) : undefined
+                }
+                buttons={
+                  <>
+                    {layer.type === "tuple" ? (
+                      <SmallToggleButton
+                        variant="normal"
+                        pressed={layer?.hidden}
+                        disabled={false}
+                        tabIndex={-1}
+                        onPressedChange={() => handleHideLayer(index)}
+                        icon={
+                          layer?.hidden ? (
+                            <EyeconClosedIcon />
+                          ) : (
+                            <EyeconOpenIcon />
+                          )
+                        }
+                      />
+                    ) : undefined}
+                    <SmallIconButton
+                      variant="destructive"
+                      tabIndex={-1}
+                      disabled={layer.type === "tuple" && layer.hidden}
+                      icon={<SubtractIcon />}
+                      onClick={() => handleDeleteLayer(index)}
+                    />
+                  </>
+                }
+              />
+            </FloatingPanel>
+          );
         })}
         {placementIndicator}
       </Flex>

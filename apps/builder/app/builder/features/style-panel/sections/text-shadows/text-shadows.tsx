@@ -1,10 +1,6 @@
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { useState } from "react";
 import {
   SectionTitle,
@@ -20,17 +16,17 @@ import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import { LayersList } from "../../style-layers-list";
-import { ShadowLayer } from "../../shared/shadow-layer";
+import { ShadowContent } from "../../shared/shadow-content";
 
 export const properties = ["textShadow"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
 const label = "Text Shadows";
-const INITIAL_TEXT_SHADOW = "0px 2px 5px rgba(0, 0, 0, 0.2)";
+const initialTextShadow = "0px 2px 5px rgba(0, 0, 0, 0.2)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, createBatchUpdate, deleteProperty } = props;
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const value = currentStyle[property]?.value;
   const sectionStyleSource =
     value?.type === "unparsed" || value?.type === "guaranteedInvalid"
@@ -52,7 +48,7 @@ export const Section = (props: SectionProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseShadow("textShadow", INITIAL_TEXT_SHADOW),
+                  parseShadow(property, initialTextShadow),
                   currentStyle,
                   createBatchUpdate
                 );
@@ -77,33 +73,39 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList<TupleValue, LayersValue>
-          property={property}
-          layers={value}
+        <LayersList
           {...props}
-          renderLayer={(layersProps) => (
-            <ShadowLayer
-              {...layersProps}
-              key={layersProps.index}
-              label={label}
-              tooltip={
-                <Tooltip
-                  variant="wrapped"
-                  content={
-                    <Text>
-                      Paste a text-shadow CSS code without the property name,
-                      for example:
-                      <br />
-                      <br />
-                      <Text variant="monoBold">{INITIAL_TEXT_SHADOW}</Text>
-                    </Text>
-                  }
-                >
-                  <InfoCircleIcon />
-                </Tooltip>
-              }
-            />
-          )}
+          property={property}
+          value={value}
+          label={label}
+          deleteProperty={deleteProperty}
+          renderContent={(layerProps) => {
+            if (layerProps.layer.type !== "tuple") {
+              return <></>;
+            }
+
+            return (
+              <ShadowContent
+                {...layerProps}
+                layer={layerProps.layer}
+                tooltip={
+                  <Tooltip
+                    variant="wrapped"
+                    content={
+                      <Text>
+                        Paste a text-shadow CSS code without the property name,
+                        for example:
+                        <br /> <br />
+                        <Text variant="monoBold">{initialTextShadow}</Text>
+                      </Text>
+                    }
+                  >
+                    <InfoCircleIcon />
+                  </Tooltip>
+                }
+              />
+            );
+          }}
         />
       )}
     </CollapsibleSectionRoot>
