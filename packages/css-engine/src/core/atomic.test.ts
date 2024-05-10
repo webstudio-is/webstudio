@@ -176,7 +176,7 @@ test("distinct similar declarations from different breakpoints", () => {
 `);
 });
 
-test("support descendent suffix", () => {
+test("support descendant suffix", () => {
   const sheet = createRegularStyleSheet();
   sheet.addMediaRule("x");
   const rule1 = sheet.addNestingRule("instance");

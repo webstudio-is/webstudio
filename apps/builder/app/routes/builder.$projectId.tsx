@@ -28,7 +28,6 @@ import env from "~/env/env.server";
 import { staticEnv } from "~/env/env.static.server";
 
 import builderStyles from "~/builder/builder.css?url";
-// eslint-disable-next-line import/no-internal-modules
 import prismStyles from "prismjs/themes/prism-solarizedlight.min.css?url";
 import { ClientOnly } from "~/shared/client-only";
 

@@ -7,7 +7,7 @@ import {
   type Prop,
 } from "@webstudio-is/sdk";
 import { showAttribute } from "./props";
-import { collectionComponent, descendentComponent } from "./core-components";
+import { collectionComponent, descendantComponent } from "./core-components";
 import {
   generateJsxChildren,
   generateJsxElement,
@@ -944,7 +944,7 @@ data-data={UsedVariableName} />
 `);
 });
 
-test("avoid generating descendent component", () => {
+test("avoid generating descendant component", () => {
   expect(
     generateWebstudioComponent({
       classesMap: new Map(),
@@ -954,7 +954,7 @@ test("avoid generating descendent component", () => {
       parameters: [],
       instances: toMap([
         createInstance("body", "Body", [{ type: "id", value: "selector" }]),
-        createInstance("descendent", descendentComponent, []),
+        createInstance("descendant", descendantComponent, []),
       ]),
       dataSources: new Map(),
       props: new Map(),

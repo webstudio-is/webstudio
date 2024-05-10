@@ -15,7 +15,7 @@ import type {
 } from "@webstudio-is/sdk";
 import type { WsComponentMeta } from "../components/component-meta";
 import { idAttribute } from "../props";
-import { descendentComponent } from "../core-components";
+import { descendantComponent } from "../core-components";
 import { addGlobalRules } from "./global-rules";
 import { getPresetStyleRules } from "./style-rules";
 
@@ -78,10 +78,10 @@ export const generateCss = ({
     }
   }
 
-  const descendentSelectorByInstanceId = new Map<Instance["id"], string>();
+  const descendantSelectorByInstanceId = new Map<Instance["id"], string>();
   for (const prop of props.values()) {
     if (prop.name === "selector" && prop.type === "string") {
-      descendentSelectorByInstanceId.set(prop.instanceId, prop.value);
+      descendantSelectorByInstanceId.set(prop.instanceId, prop.value);
     }
   }
 
@@ -121,20 +121,20 @@ export const generateCss = ({
   for (const selection of styleSourceSelections.values()) {
     let { instanceId } = selection;
     const { values } = selection;
-    let descendentSuffix = "";
-    // render selector component as descendent selector
+    let descendantSuffix = "";
+    // render selector component as descendant selector
     const instance = instances.get(instanceId);
-    if (instance?.component === descendentComponent) {
+    if (instance?.component === descendantComponent) {
       const parentId = parentIdByInstanceId.get(instanceId);
-      const descendentSelector = descendentSelectorByInstanceId.get(instanceId);
-      if (parentId && descendentSelector) {
-        descendentSuffix = descendentSelector;
+      const descendantSelector = descendantSelectorByInstanceId.get(instanceId);
+      if (parentId && descendantSelector) {
+        descendantSuffix = descendantSelector;
         instanceId = parentId;
       }
     }
     const rule = sheet.addNestingRule(
       `[${idAttribute}="${instanceId}"]`,
-      descendentSuffix
+      descendantSuffix
     );
     rule.applyMixins(values);
     instanceByRule.set(rule, instanceId);

@@ -1,5 +1,4 @@
 import { exit, argv } from "node:process";
-// eslint-disable-next-line import/no-internal-modules
 import { hideBin } from "yargs/helpers";
 import { GLOBAL_CONFIG_FILE } from "./config";
 import { createFileIfNotExists } from "./fs-utils";

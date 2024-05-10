@@ -27,7 +27,7 @@ import {
   collectionComponent,
   type AnyComponent,
   textContentAttribute,
-  descendentComponent,
+  descendantComponent,
 } from "@webstudio-is/react-sdk";
 import {
   $propValuesByInstanceSelector,
@@ -251,7 +251,6 @@ const getTextContent = (instanceProps: Record<string, unknown>) => {
   return value as ReactNode;
 };
 
-// eslint-disable-next-line react/display-name
 export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
@@ -329,7 +328,7 @@ export const WebstudioComponentCanvas = forwardRef<
     }
   }
 
-  if (instance.component === descendentComponent) {
+  if (instance.component === descendantComponent) {
     return <></>;
   }
 
@@ -408,7 +407,6 @@ export const WebstudioComponentCanvas = forwardRef<
   );
 });
 
-// eslint-disable-next-line react/display-name
 export const WebstudioComponentPreview = forwardRef<
   HTMLElement,
   WebstudioComponentProps
@@ -453,7 +451,7 @@ export const WebstudioComponentPreview = forwardRef<
     }
   }
 
-  if (instance.component === descendentComponent) {
+  if (instance.component === descendantComponent) {
     return <></>;
   }
 

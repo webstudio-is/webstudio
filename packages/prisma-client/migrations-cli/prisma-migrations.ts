@@ -9,7 +9,6 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { createPrisma } from "../src/prisma";
 import { UserError } from "./errors";
-// eslint-disable-next-line import/no-internal-modules
 import { PrismaClient } from "../src/__generated__";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
