@@ -33,7 +33,7 @@ test("generate resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
 "import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./[sitemap.xml]";
+import { sitemap } from "./$resources.sitemap.xml";
 export const loadResources = async (_props: { system: System }) => {
 
     const customFetch: typeof fetch = (input, init) => {
@@ -115,7 +115,7 @@ test("generate variable and use in resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
 "import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./[sitemap.xml]";
+import { sitemap } from "./$resources.sitemap.xml";
 export const loadResources = async (_props: { system: System }) => {
 let AccessToken = "my-token"
 
@@ -191,7 +191,7 @@ test("generate system variable and use in resources loader", () => {
     })
   ).toMatchInlineSnapshot(`
 "import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./[sitemap.xml]";
+import { sitemap } from "./$resources.sitemap.xml";
 export const loadResources = async (_props: { system: System }) => {
 const system = _props.system
 

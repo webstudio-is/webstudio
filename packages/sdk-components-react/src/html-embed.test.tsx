@@ -5,7 +5,6 @@ import * as React from "react";
 // import ReactDOM from "react-dom";
 import ReactDOMServer from "react-dom/server";
 import { test, expect, describe } from "@jest/globals";
-// eslint-disable-next-line import/no-internal-modules
 import "@testing-library/jest-dom/jest-globals";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { __testing__, HtmlEmbed } from "./html-embed";

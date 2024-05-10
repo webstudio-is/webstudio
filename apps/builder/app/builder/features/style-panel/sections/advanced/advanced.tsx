@@ -37,6 +37,7 @@ const initialPropertyNames = new Set<StyleProperty>([
 
 const usePropertyNames = (currentStyle: StyleInfo) => {
   const selectedInstanceSelector = useStore($selectedInstanceSelector);
+  // @todo switch to style object model to show also inherited styles
   const styles = useInstanceStyles(selectedInstanceSelector?.[0]);
   // Ordererd recent properties for sorting.
   const recent = useRef<Set<StyleProperty>>(new Set());
@@ -159,12 +160,12 @@ export const Section = ({
                 styleSource={getStyleSource(currentStyle[property])}
                 keywords={keywords}
                 value={currentStyle[property]?.value}
-                setValue={(styleValue, options) => {
+                setValue={(styleValue, options) =>
                   setProperty(property)(styleValue, {
                     ...options,
                     listed: true,
-                  });
-                }}
+                  })
+                }
                 deleteProperty={deleteProperty}
               />
             </Flex>

@@ -13,9 +13,9 @@
   "private": true,
   "sideEffects": false,
   "dependencies": {
-    "@remix-run/node": "^2.8.1",
-    "@remix-run/react": "^2.8.1",
-    "@remix-run/server-runtime": "^2.8.1",
+    "@remix-run/node": "2.9.1",
+    "@remix-run/react": "2.9.1",
+    "@remix-run/server-runtime": "2.9.1",
     "@size-limit/file": "^9.0.0",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/image": "workspace:*",
@@ -31,12 +31,12 @@
     "web-vitals": "^3.5.2"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.8.1",
+    "@remix-run/dev": "2.9.1",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.4.5",
-    "webstudio": "workspace:*",
-    "vite": "^5.2.8"
+    "vite": "^5.2.11",
+    "webstudio": "workspace:*"
   },
   "engines": {
     "node": ">=20.0.0"

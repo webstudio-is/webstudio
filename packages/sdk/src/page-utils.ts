@@ -79,6 +79,7 @@ export const getStaticSiteMapXml = (pages: Pages, updatedAt: string) => {
   const allPages = [pages.homePage, ...pages.pages];
   return (
     allPages
+      .filter((page) => (page.meta.documentType ?? "html") === "html")
       // ignore pages with excludePageFromSearch bound to variables
       // because there is no data from cms available at build time
       .filter(

@@ -25,6 +25,7 @@ import {
   $registeredComponentMetas,
   $dragAndDropState,
   $inspectorLastInputTime,
+  $selectedPage,
 } from "~/shared/nano-states";
 import { NavigatorTree } from "~/builder/shared/navigator-tree";
 import type { Settings } from "~/builder/shared/client-settings";
@@ -82,6 +83,7 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   const [tab, setTab] = useState("style");
   const isDragging = useStore($isDragging);
   const metas = useStore($registeredComponentMetas);
+  const selectedPage = useStore($selectedPage);
 
   if (navigatorLayout === "docked" && isDragging) {
     return <NavigatorTree />;
@@ -101,7 +103,9 @@ export const Inspector = ({ navigatorLayout }: InspectorProps) => {
   }
 
   const meta = metas.get(selectedInstance.component);
-  const isStyleTabVisible = meta?.stylable ?? true;
+  const documentType = selectedPage?.meta.documentType ?? "html";
+
+  const isStyleTabVisible = documentType === "html" && (meta?.stylable ?? true);
 
   const availableTabs = [
     isStyleTabVisible ? "style" : undefined,

@@ -190,11 +190,14 @@ type HtmlEmbedProps = {
   code: string;
   executeScriptOnCanvas?: boolean;
   clientOnly?: boolean;
+  // avoid builder passing it to dom
+  children?: never;
 };
 
 export const HtmlEmbed = forwardRef<HTMLDivElement, HtmlEmbedProps>(
   (props, ref) => {
-    const { code, executeScriptOnCanvas, clientOnly, ...rest } = props;
+    const { code, executeScriptOnCanvas, clientOnly, children, ...rest } =
+      props;
     const { renderer } = useContext(ReactSdkContext);
 
     const isServer = useIsServer();

@@ -1,6 +1,6 @@
 {
   "name": "@webstudio-is/sdk",
-  "version": "0.145.0",
+  "version": "0.151.0",
   "description": "Webstudio project data schema",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -9,8 +9,7 @@
   "exports": {
     "webstudio": "./src/index.ts",
     "types": "./lib/types/index.d.ts",
-    "import": "./lib/index.js",
-    "require": "./lib/index.js"
+    "import": "./lib/index.js"
   },
   "files": [
     "lib/*",

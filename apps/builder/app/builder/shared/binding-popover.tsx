@@ -282,6 +282,9 @@ const BindingButton = forwardRef<
             "--dot-display": "none",
             "--plus-display": "block",
           },
+          "&:disabled": {
+            display: "none",
+          },
         }}
         {...props}
         icon={

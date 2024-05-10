@@ -3,14 +3,15 @@ import {
   type InvalidValue,
   type LayersValue,
   type RgbValue,
+  type StyleProperty,
   type StyleValue,
   type TupleValue,
   type UnitValue,
 } from "@webstudio-is/css-engine";
 import {
-  extractBoxShadowProperties,
-  parseBoxShadow,
-  type ExtractedBoxShadowProperties,
+  extractShadowProperties,
+  parseShadow,
+  type ExtractedShadowProperties,
 } from "@webstudio-is/css-data";
 import {
   Flex,
@@ -25,17 +26,13 @@ import {
   ToggleGroupButton,
   Tooltip,
 } from "@webstudio-is/design-system";
-import {
-  InfoCircleIcon,
-  ShadowInsetIcon,
-  ShadowNormalIcon,
-} from "@webstudio-is/icons";
+import { ShadowInsetIcon, ShadowNormalIcon } from "@webstudio-is/icons";
 import { useMemo, useState } from "react";
-import type { IntermediateStyleValue } from "../../shared/css-value-input";
-import { CssValueInputContainer } from "../../shared/css-value-input";
-import { toPascalCase } from "../../shared/keyword-utils";
-import { ColorControl } from "../../controls";
-import type { SetProperty } from "../../shared/use-style-data";
+import type { IntermediateStyleValue } from "../shared/css-value-input";
+import { CssValueInputContainer } from "../shared/css-value-input";
+import { toPascalCase } from "../shared/keyword-utils";
+import { ColorControl } from "../controls";
+import type { DeleteProperty, SetProperty } from "../shared/use-style-data";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -61,15 +58,18 @@ import type { SetProperty } from "../../shared/use-style-data";
   https://www.w3.org/TR/css-backgrounds-3/#propdef-border-top-width
 */
 
-type BoxShadowContentProps = {
+type ShadowContentProps = {
   index: number;
   layer: TupleValue;
+  property: StyleProperty;
   shadow: string;
+  tooltip: JSX.Element;
   onEditLayer: (index: number, layers: LayersValue) => void;
+  deleteProperty: DeleteProperty;
 };
 
 const convertValuesToTupple = (
-  values: Record<keyof ExtractedBoxShadowProperties, StyleValue | null>
+  values: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
 ): TupleValue => {
   return {
     type: "tuple",
@@ -85,18 +85,21 @@ const boxShadowInsetValues = [
   { value: "inset", Icon: ShadowInsetIcon },
 ] as const;
 
-export const BoxShadowContent = ({
+export const ShadowContent = ({
   layer,
   index,
+  property,
+  tooltip,
   shadow,
   onEditLayer,
-}: BoxShadowContentProps) => {
+  deleteProperty,
+}: ShadowContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
-  const layerValues = useMemo<ExtractedBoxShadowProperties>(() => {
+  const layerValues = useMemo<ExtractedShadowProperties>(() => {
     setIntermediateValue({ type: "intermediate", value: shadow });
-    return extractBoxShadowProperties(layer);
+    return extractShadowProperties(layer);
   }, [layer, shadow]);
   const { offsetX, offsetY, blur, spread, color, inset } = layerValues;
   const colorControlProp = color ?? {
@@ -118,7 +121,7 @@ export const BoxShadowContent = ({
     if (intermediateValue === undefined) {
       return;
     }
-    const layers = parseBoxShadow(intermediateValue.value);
+    const layers = parseShadow("boxShadow", intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
@@ -131,9 +134,9 @@ export const BoxShadowContent = ({
   };
 
   const handlePropertyChange = (
-    params: Partial<Record<keyof ExtractedBoxShadowProperties, StyleValue>>
+    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
   ) => {
-    const newLayer = convertValuesToTupple(Object.assign(layerValues, params));
+    const newLayer = convertValuesToTupple({ ...layerValues, ...params });
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),
@@ -159,16 +162,14 @@ export const BoxShadowContent = ({
       >
         <Flex direction="column">
           <Tooltip
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">X Offset</Text>
                 <Text variant="monoBold">offset-x</Text>
                 <Text>
-                  Sets the horizontal offset of the
-                  <br />
-                  shadow. Negative values place
-                  <br />
-                  the shadow to the left.
+                  Sets the horizontal offset of the shadow. Negative values
+                  place the shadow to the left.
                 </Text>
               </Flex>
             }
@@ -195,16 +196,14 @@ export const BoxShadowContent = ({
 
         <Flex direction="column">
           <Tooltip
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Blur Radius</Text>
                 <Text variant="monoBold">blur-radius</Text>
                 <Text>
-                  The larger this value, the bigger
-                  <br />
-                  the blur, so the shadow becomes
-                  <br />
-                  bigger and lighter.
+                  The larger this value, the bigger the blur, so the shadow
+                  becomes bigger and lighter.
                 </Text>
               </Flex>
             }
@@ -231,15 +230,13 @@ export const BoxShadowContent = ({
 
         <Flex direction="column">
           <Tooltip
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Y Offset</Text>
                 <Text variant="monoBold">offset-y</Text>
                 <Text>
-                  Sets the vertical offset of the
-                  <br />
-                  shadow. Negative values place
-                  <br />
+                  Sets the vertical offset of the shadow. Negative values place
                   the shadow above.
                 </Text>
               </Flex>
@@ -265,43 +262,41 @@ export const BoxShadowContent = ({
           />
         </Flex>
 
-        <Flex direction="column">
-          <Tooltip
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Spread Radius</Text>
-                <Text variant="monoBold">spread-radius</Text>
-                <Text>
-                  Positive values will cause the
-                  <br />
-                  shadow to expand and grow
-                  <br />
-                  bigger, negative values will cause
-                  <br />
-                  the shadow to shrink.
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ width: "fit-content" }}>Spread</Label>
-          </Tooltip>
-          <CssValueInputContainer
-            key="boxShadowSpread"
-            /*
+        {property === "boxShadow" ? (
+          <Flex direction="column">
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Flex gap="2" direction="column">
+                  <Text variant="regularBold">Spread Radius</Text>
+                  <Text variant="monoBold">spread-radius</Text>
+                  <Text>
+                    Positive values will cause the shadow to expand and grow
+                    bigger, negative values will cause the shadow to shrink.
+                  </Text>
+                </Flex>
+              }
+            >
+              <Label css={{ width: "fit-content" }}>Spread</Label>
+            </Tooltip>
+            <CssValueInputContainer
+              key="boxShadowSpread"
+              /*
               outline-offset is a fake property for validating box-shadow's spread.
             */
-            property="outlineOffset"
-            styleSource="local"
-            keywords={[]}
-            value={spread ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ spread: value })}
-            deleteProperty={() =>
-              handlePropertyChange({
-                spread: spread ?? undefined,
-              })
-            }
-          />
-        </Flex>
+              property="outlineOffset"
+              styleSource="local"
+              keywords={[]}
+              value={spread ?? { type: "unit", value: 0, unit: "px" }}
+              setValue={(value) => handlePropertyChange({ spread: value })}
+              deleteProperty={() =>
+                handlePropertyChange({
+                  spread: spread ?? undefined,
+                })
+              }
+            />
+          </Flex>
+        ) : null}
       </Grid>
 
       <Grid
@@ -315,6 +310,7 @@ export const BoxShadowContent = ({
       >
         <Flex direction="column">
           <Tooltip
+            variant="wrapped"
             content={
               <Flex gap="2" direction="column">
                 <Text variant="regularBold">Color</Text>
@@ -344,47 +340,47 @@ export const BoxShadowContent = ({
           />
         </Flex>
 
-        <Flex direction="column">
-          <Tooltip
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Inset</Text>
-                <Text variant="monoBold">inset</Text>
-                <Text>
-                  Changes the shadow from
-                  <br />
-                  an outer shadow (outset) to an
-                  <br />
-                  inner shadow (inset).
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ display: "inline" }}>Inset</Label>
-          </Tooltip>
-          <ToggleGroup
-            type="single"
-            value={inset?.value ?? "normal"}
-            defaultValue="inset"
-            onValueChange={(value) => {
-              if (value === "inset") {
-                handlePropertyChange({
-                  inset: { type: "keyword", value: "inset" },
-                });
-              } else {
-                handlePropertyChange({ inset: undefined });
+        {property === "boxShadow" ? (
+          <Flex direction="column">
+            <Tooltip
+              variant="wrapped"
+              content={
+                <Flex gap="2" direction="column">
+                  <Text variant="regularBold">Inset</Text>
+                  <Text variant="monoBold">inset</Text>
+                  <Text>
+                    Changes the shadow from an outer shadow (outset) to an inner
+                    shadow (inset).
+                  </Text>
+                </Flex>
               }
-            }}
-          >
-            {boxShadowInsetValues.map(({ value, Icon }) => (
-              <Tooltip key={value} content={toPascalCase(value)}>
-                <ToggleGroupButton value={value}>
-                  <Icon />
-                </ToggleGroupButton>
-              </Tooltip>
-            ))}
-          </ToggleGroup>
-        </Flex>
+            >
+              <Label css={{ display: "inline" }}>Inset</Label>
+            </Tooltip>
+            <ToggleGroup
+              type="single"
+              value={inset?.value ?? "normal"}
+              defaultValue="inset"
+              onValueChange={(value) => {
+                if (value === "inset") {
+                  handlePropertyChange({
+                    inset: { type: "keyword", value: "inset" },
+                  });
+                } else {
+                  handlePropertyChange({ inset: undefined });
+                }
+              }}
+            >
+              {boxShadowInsetValues.map(({ value, Icon }) => (
+                <Tooltip key={value} content={toPascalCase(value)}>
+                  <ToggleGroupButton value={value}>
+                    <Icon />
+                  </ToggleGroupButton>
+                </Tooltip>
+              ))}
+            </ToggleGroup>
+          </Flex>
+        ) : null}
       </Grid>
 
       <Separator css={{ gridColumn: "span 2" }} />
@@ -401,23 +397,7 @@ export const BoxShadowContent = ({
         <Label>
           <Flex align={"center"} gap={1}>
             Code
-            <Tooltip
-              variant="wrapped"
-              content={
-                <Text>
-                  Paste a box-shadow CSS code
-                  <br />
-                  without the property name, for
-                  <br />
-                  example:
-                  <br />
-                  <br />
-                  0px 2px 5px 0px rgba(0, 0, 0, 0.2)
-                </Text>
-              }
-            >
-              <InfoCircleIcon />
-            </Tooltip>
+            {tooltip}
           </Flex>
         </Label>
         <TextArea
@@ -430,6 +410,16 @@ export const BoxShadowContent = ({
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               handleComplete();
+              event.preventDefault();
+            }
+
+            if (event.key === "Escape") {
+              if (intermediateValue === undefined) {
+                return;
+              }
+
+              deleteProperty(property, { isEphemeral: true });
+              setIntermediateValue(undefined);
               event.preventDefault();
             }
           }}

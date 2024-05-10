@@ -22,7 +22,6 @@ import type { DomainStatus } from "@webstudio-is/prisma-client";
 import { CollapsibleDomainSection } from "./collapsible-domain-section";
 import { useCallback, useEffect, useState } from "react";
 import type { PublishStatus } from "@webstudio-is/prisma-client";
-// eslint-disable-next-line import/no-internal-modules
 import { formatDistance } from "date-fns/formatDistance";
 import { Entri } from "./entri";
 import { trpcClient } from "~/shared/trpc/trpc-client";

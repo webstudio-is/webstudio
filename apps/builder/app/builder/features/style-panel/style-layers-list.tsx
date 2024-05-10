@@ -25,7 +25,10 @@ import type {
 export type LayerProps<LayerType> = {
   id: string;
   index: number;
+  property: StyleProperty;
   layer: LayerType;
+  label: string;
+  tooltip: JSX.Element;
   isHighlighted: boolean;
   disabled?: boolean;
   onLayerHide: (index: number) => void;
@@ -106,6 +109,7 @@ export const LayersList = <
             index,
             layer,
             disabled,
+            property,
             isHighlighted: dragItemId === id,
             onLayerHide: handleHideLayer,
             onDeleteLayer: handleDeleteLayer,

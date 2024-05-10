@@ -31,6 +31,7 @@ const userPlanFeatures: UserPlanFeatures = {
   hasSubscription: false,
   allowShareAdminLinks: false,
   allowDynamicData: false,
+  allowContactEmail: false,
   maxDomainsAllowedPerUser: 5,
 };
 

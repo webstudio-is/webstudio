@@ -2,14 +2,16 @@ import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import type { SectionProps } from "../shared/section";
 import { useState } from "react";
 import {
+  Flex,
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
   Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
 import { getDots } from "../../shared/collapsible-section";
 import { PropertyName } from "../../shared/property-name";
-import { PlusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import {
   FunctionValue,
   TupleValue,
@@ -30,8 +32,11 @@ const INITIAL_FILTER = "blur(0px)";
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const layerStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
+  const sectionStyleSource =
+    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -41,7 +46,7 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, [property])}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <Tooltip content={"Add a filter"}>
               <SectionTitleButton
@@ -65,7 +70,7 @@ export const Section = (props: SectionProps) => {
             properties={properties}
             description="Filter effects allow you to apply graphical effects like blurring, color shifting, and more to elements."
             label={
-              <SectionTitleLabel color={layerStyleSource}>
+              <SectionTitleLabel color={sectionStyleSource}>
                 {label}
               </SectionTitleLabel>
             }
@@ -80,7 +85,31 @@ export const Section = (props: SectionProps) => {
           property={property}
           layers={value}
           renderLayer={(layerProps) => (
-            <FilterLayer {...layerProps} key={layerProps.index} />
+            <FilterLayer
+              {...layerProps}
+              key={layerProps.index}
+              label={label}
+              tooltip={
+                <Tooltip
+                  variant="wrapped"
+                  content={
+                    <Flex gap="2" direction="column">
+                      <Text variant="regularBold">{label}</Text>
+                      <Text variant="monoBold">filter</Text>
+                      <Text>
+                        Applies graphical effects like blur or color shift to an
+                        element, for example:
+                        <br />
+                        <br />
+                        <Text variant="monoBold">{INITIAL_FILTER}</Text>
+                      </Text>
+                    </Flex>
+                  }
+                >
+                  <InfoCircleIcon />
+                </Tooltip>
+              }
+            />
           )}
         />
       )}

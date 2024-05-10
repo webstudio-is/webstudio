@@ -1,4 +1,4 @@
-import { ensureFolderExists, isFileExists } from "../fs-utils";
+import { createFolderIfNotExists, isFileExists } from "../fs-utils";
 import { chdir, cwd } from "node:process";
 import { join } from "node:path";
 import ora from "ora";
@@ -43,7 +43,7 @@ export const initFlow = async (
       if (folderName === undefined) {
         throw new Error("Folder name is required");
       }
-      await ensureFolderExists(join(cwd(), folderName));
+      await createFolderIfNotExists(join(cwd(), folderName));
       chdir(join(cwd(), folderName));
     }
 

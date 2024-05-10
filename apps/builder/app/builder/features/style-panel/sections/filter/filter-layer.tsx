@@ -11,18 +11,20 @@ import { useMemo } from "react";
 import { FunctionValue, toValue } from "@webstudio-is/css-engine";
 
 export const FilterLayer = <T extends FunctionValue>(props: LayerProps<T>) => {
-  const { index, id, layer, isHighlighted, onDeleteLayer } = props;
+  const { index, id, layer, isHighlighted, onDeleteLayer, label } = props;
   const filter = useMemo(() => toValue(layer), [layer]);
 
   return (
     <FloatingPanel
-      title="Filter"
+      title={label}
       content={
         <FilterSectionContent
+          property={props.property}
           index={index}
           filter={filter}
           onEditLayer={props.onEditLayer}
           deleteProperty={props.deleteProperty}
+          tooltip={props.tooltip}
         />
       }
     >

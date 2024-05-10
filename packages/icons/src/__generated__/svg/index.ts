@@ -69,6 +69,7 @@ export { CloudIcon } from "./cloud";
 export { CodeTextIcon } from "./code-text";
 export { CollapsibleIcon } from "./collapsible";
 export { CommitIcon } from "./commit";
+export { ContentEmbedIcon } from "./content-embed";
 export { ContentIcon } from "./content";
 export { CopyIcon } from "./copy";
 export { CustomCodeIcon } from "./custom-code";

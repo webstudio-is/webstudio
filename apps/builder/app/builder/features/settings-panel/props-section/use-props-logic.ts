@@ -151,11 +151,12 @@ export const usePropsLogic = ({
   const instanceMeta = useStore($registeredComponentMetas).get(
     instance.component
   );
-  const meta = useStore($registeredComponentPropsMetas).get(instance.component);
-
-  if (meta === undefined) {
-    throw new Error(`Could not get meta for component "${instance.component}"`);
-  }
+  const meta = useStore($registeredComponentPropsMetas).get(
+    instance.component
+  ) ?? {
+    props: {},
+    initialProps: [],
+  };
 
   const savedProps = props;
 

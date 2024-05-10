@@ -1,18 +1,16 @@
 import type {
   InvalidValue,
   LayersValue,
+  StyleProperty,
   TupleValue,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
   theme,
   Label,
-  Tooltip,
-  Text,
   TextArea,
   textVariants,
 } from "@webstudio-is/design-system";
-import { InfoCircleIcon } from "@webstudio-is/icons";
 import { useState } from "react";
 import type { IntermediateStyleValue } from "../../shared/css-value-input";
 import { parseFilter } from "@webstudio-is/css-data";
@@ -21,15 +19,19 @@ import type { DeleteProperty } from "../../shared/use-style-data";
 type FilterContentProps = {
   index: number;
   filter: string;
+  property: StyleProperty;
   onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
   deleteProperty: DeleteProperty;
+  tooltip: JSX.Element;
 };
 
 export const FilterSectionContent = ({
   index,
   filter,
+  property,
   onEditLayer,
   deleteProperty,
+  tooltip,
 }: FilterContentProps) => {
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
@@ -73,21 +75,7 @@ export const FilterSectionContent = ({
       <Label>
         <Flex align={"center"} gap={1}>
           Code
-          <Tooltip
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Filters</Text>
-                <Text variant="monoBold">filter</Text>
-                <Text>
-                  Applies graphical effects like
-                  <br />
-                  blur or color shift to an element
-                </Text>
-              </Flex>
-            }
-          >
-            <InfoCircleIcon />
-          </Tooltip>
+          {tooltip}
         </Flex>
       </Label>
       {
@@ -116,7 +104,7 @@ export const FilterSectionContent = ({
               return;
             }
 
-            deleteProperty("filter", { isEphemeral: true });
+            deleteProperty(property, { isEphemeral: true });
             setIntermediateValue(undefined);
             event.preventDefault();
           }

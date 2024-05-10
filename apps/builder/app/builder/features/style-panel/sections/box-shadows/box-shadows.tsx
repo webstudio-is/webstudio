@@ -2,8 +2,10 @@ import {
   SectionTitle,
   SectionTitleButton,
   SectionTitleLabel,
+  Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
-import { PlusIcon } from "@webstudio-is/icons";
+import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
 import type {
   LayersValue,
   StyleProperty,
@@ -16,9 +18,9 @@ import { PropertyName } from "../../shared/property-name";
 import { getStyleSource } from "../../shared/style-info";
 import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
-import { BoxShadowLayer } from "./box-shadow-layer";
 import { addLayer } from "../../style-layer-utils";
-import { parseBoxShadow } from "@webstudio-is/css-data";
+import { parseShadow } from "@webstudio-is/css-data";
+import { ShadowLayer } from "../../shared/shadow-layer";
 
 export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
 
@@ -29,8 +31,11 @@ const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
+  const sectionStyleSource =
+    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle[property]);
 
   return (
     <CollapsibleSectionRoot
@@ -47,7 +52,7 @@ export const Section = (props: SectionProps) => {
               onClick={() => {
                 addLayer(
                   property,
-                  parseBoxShadow(INITIAL_BOX_SHADOW),
+                  parseShadow("boxShadow", INITIAL_BOX_SHADOW),
                   currentStyle,
                   props.createBatchUpdate
                 );
@@ -57,12 +62,12 @@ export const Section = (props: SectionProps) => {
           }
         >
           <PropertyName
-            title="Box Shadows"
+            title={label}
             style={currentStyle}
             properties={properties}
             description="Adds shadow effects around an element's frame."
             label={
-              <SectionTitleLabel color={layersStyleSource}>
+              <SectionTitleLabel color={sectionStyleSource}>
                 {label}
               </SectionTitleLabel>
             }
@@ -76,9 +81,31 @@ export const Section = (props: SectionProps) => {
           property={property}
           layers={value}
           {...props}
-          renderLayer={(layersProps) => (
-            <BoxShadowLayer key={layersProps.index} {...layersProps} />
-          )}
+          renderLayer={(layersProps) => {
+            return (
+              <ShadowLayer
+                key={layersProps.index}
+                {...layersProps}
+                label={label}
+                tooltip={
+                  <Tooltip
+                    variant="wrapped"
+                    content={
+                      <Text>
+                        Paste a box-shadow CSS code without the property name,
+                        for example:
+                        <br />
+                        <br />
+                        <Text variant="monoBold">{INITIAL_BOX_SHADOW}</Text>
+                      </Text>
+                    }
+                  >
+                    <InfoCircleIcon />
+                  </Tooltip>
+                }
+              />
+            );
+          }}
         />
       )}
     </CollapsibleSectionRoot>

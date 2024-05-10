@@ -9,7 +9,6 @@ import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
 import { createPrisma } from "../src/prisma";
 import { UserError } from "./errors";
-// eslint-disable-next-line import/no-internal-modules
 import { PrismaClient } from "../src/__generated__";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -250,11 +249,13 @@ export const generateMigrationName = (baseName: string) => {
 };
 
 export const resetDatabase = async () => {
-  const { stdout: sqlToDeleteEverything } =
-    await $`"prisma migrate diff --from-schema-datasource ${schemaFilePath} --to-empty --script`;
+  const { stdout: sqlToDeleteEverything } = await $({
+    cwd: prismaDir,
+  })`"prisma migrate diff --from-schema-datasource ${schemaFilePath} --to-empty --script`;
 
   await $({
     input: sqlToDeleteEverything,
+    cwd: prismaDir,
   })`prisma db execute --stdin --schema ${schemaFilePath}`;
 
   await context.prisma.$executeRaw`DROP TABLE IF EXISTS _prisma_migrations`;
@@ -262,14 +263,17 @@ export const resetDatabase = async () => {
 
 // https://www.prisma.io/docs/reference/api-reference/command-reference#migrate-diff
 export const cliDiff = async () => {
-  const { stdout } =
-    await $`prisma migrate diff --from-schema-datasource ${schemaFilePath} --to-schema-datamodel ${schemaFilePath} --script`;
+  const { stdout } = await $({
+    cwd: prismaDir,
+  })`prisma migrate diff --from-schema-datasource ${schemaFilePath} --to-schema-datamodel ${schemaFilePath} --script`;
   return stdout;
 };
 
 // https://www.prisma.io/docs/reference/api-reference/command-reference#db-execute
 export const cliExecute = async (filePath: string) => {
-  await $`prisma db execute --file ${filePath} --schema ${schemaFilePath}`;
+  await $({
+    cwd: prismaDir,
+  })`prisma db execute --file ${filePath} --schema ${schemaFilePath}`;
 };
 
 export const generateMigrationClient = async (migrationName: string) => {
@@ -293,5 +297,7 @@ export const generateMigrationClient = async (migrationName: string) => {
   }
 
   // https://www.prisma.io/docs/reference/api-reference/command-reference#generate
-  await $`prisma generate --schema ${schemaPath}`;
+  await $({
+    cwd: prismaDir,
+  })`prisma generate --schema ${schemaPath}`;
 };

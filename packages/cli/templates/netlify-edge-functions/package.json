@@ -3,7 +3,7 @@
     "start": "netlify serve"
   },
   "dependencies": {
-    "@netlify/edge-functions": "^2.3.1",
-    "@netlify/remix-edge-adapter": "3.2.0"
+    "@netlify/edge-functions": "^2.6.0",
+    "@netlify/remix-edge-adapter": "^3.2.2"
   }
 }

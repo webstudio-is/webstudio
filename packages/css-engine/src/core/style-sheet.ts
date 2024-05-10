@@ -66,11 +66,12 @@ export class StyleSheet {
     }
     return rule;
   }
-  addNestingRule(selector: string) {
-    let rule = this.nestingRules.get(selector);
+  addNestingRule(selector: string, descendantSuffix: string = "") {
+    const key = selector + descendantSuffix;
+    let rule = this.nestingRules.get(key);
     if (rule === undefined) {
-      rule = new NestingRule(selector, this.#mixinRules);
-      this.nestingRules.set(selector, rule);
+      rule = new NestingRule(this.#mixinRules, selector, descendantSuffix);
+      this.nestingRules.set(key, rule);
     }
     return rule;
   }
@@ -118,6 +119,8 @@ export class StyleSheet {
   }
   clear() {
     this.#mediaRules.clear();
+    this.#mixinRules.clear();
+    this.nestingRules.clear();
     this.#plainRules.clear();
     this.#fontFaceRules = [];
   }

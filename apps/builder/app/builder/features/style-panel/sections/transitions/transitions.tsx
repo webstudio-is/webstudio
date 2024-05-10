@@ -32,8 +32,11 @@ const INITIAL_TRANSITION = "opacity 200ms ease";
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
   const [isOpen, setIsOpen] = useState(true);
-  const layersStyleSource = getStyleSource(currentStyle[property]);
   const value = currentStyle[property]?.value;
+  const sectionStyleSource =
+    value?.type === "unparsed" || value?.type === "guaranteedInvalid"
+      ? undefined
+      : getStyleSource(currentStyle[property]);
 
   const selectedOrLastStyleSourceSelector = useStore(
     $selectedOrLastStyleSourceSelector
@@ -82,7 +85,7 @@ export const Section = (props: SectionProps) => {
             description="Animate the transition between states on this instance."
             properties={properties}
             label={
-              <SectionTitleLabel color={layersStyleSource}>
+              <SectionTitleLabel color={sectionStyleSource}>
                 {label}
               </SectionTitleLabel>
             }

@@ -9,7 +9,7 @@ import {
 } from "@webstudio-is/http-client";
 import pc from "picocolors";
 
-import { ensureFileInPath, isFileExists } from "../fs-utils";
+import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import {
   GLOBAL_CONFIG_FILE,
   LOCAL_CONFIG_FILE,
@@ -118,7 +118,7 @@ export const sync = async (
   spinner.text = "Saving project data to config file";
 
   const localBuildFilePath = join(cwd(), LOCAL_DATA_FILE);
-  await ensureFileInPath(localBuildFilePath);
+  await createFileIfNotExists(localBuildFilePath);
   await writeFile(localBuildFilePath, JSON.stringify(project, null, 2), "utf8");
 
   spinner.succeed("Project data synced successfully");

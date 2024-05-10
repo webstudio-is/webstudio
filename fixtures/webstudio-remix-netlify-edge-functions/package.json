@@ -10,11 +10,11 @@
     "fixtures:build": "webstudio build --template internal --template netlify-edge-functions --preview && pnpm prettier --write ./app/ ./package.json"
   },
   "dependencies": {
-    "@netlify/edge-functions": "^2.3.1",
-    "@netlify/remix-edge-adapter": "3.2.0",
-    "@remix-run/node": "^2.8.1",
-    "@remix-run/react": "^2.8.1",
-    "@remix-run/server-runtime": "^2.8.1",
+    "@netlify/edge-functions": "^2.6.0",
+    "@netlify/remix-edge-adapter": "^3.2.2",
+    "@remix-run/node": "2.9.1",
+    "@remix-run/react": "2.9.1",
+    "@remix-run/server-runtime": "2.9.1",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -29,12 +29,12 @@
   "private": true,
   "sideEffects": false,
   "devDependencies": {
-    "@remix-run/dev": "^2.8.1",
+    "@remix-run/dev": "2.9.1",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.4.5",
-    "webstudio": "workspace:*",
-    "vite": "^5.2.8"
+    "vite": "^5.2.11",
+    "webstudio": "workspace:*"
   },
   "engines": {
     "node": ">=20.0.0"

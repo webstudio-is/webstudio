@@ -7,7 +7,6 @@ import type {
   inferRouterInputs,
   inferRouterOutputs,
 } from "@trpc/server";
-// eslint-disable-next-line import/no-internal-modules
 import { createRecursiveProxy } from "@trpc/server/shared";
 import { useMemo, useState } from "react";
 import { $authToken } from "../nano-states";

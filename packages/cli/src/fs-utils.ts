@@ -16,10 +16,13 @@ export const isFileExists = async (filePath: string) => {
   }
 };
 
-export const ensureFileInPath = async (filePath: string, content?: string) => {
+export const createFileIfNotExists = async (
+  filePath: string,
+  content?: string
+) => {
   const dir = dirname(filePath);
 
-  await ensureFolderExists(dir);
+  await createFolderIfNotExists(dir);
 
   try {
     await access(filePath, constants.F_OK);
@@ -28,7 +31,7 @@ export const ensureFileInPath = async (filePath: string, content?: string) => {
   }
 };
 
-export const ensureFolderExists = async (folderPath: string) => {
+export const createFolderIfNotExists = async (folderPath: string) => {
   try {
     await access(folderPath, constants.F_OK);
   } catch {

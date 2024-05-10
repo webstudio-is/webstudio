@@ -89,7 +89,7 @@ export const generateResourcesLoader = ({
   generated += `import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";\n`;
 
   if (hasResources) {
-    generated += `import { sitemap } from "./[sitemap.xml]";\n`;
+    generated += `import { sitemap } from "./$resources.sitemap.xml";\n`;
   }
 
   generated += `export const loadResources = async (_props: { system: System }) => {\n`;

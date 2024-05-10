@@ -1,10 +1,21 @@
 import { describe, expect, test } from "@jest/globals";
 
-import { parseBoxShadow } from "./box-shadow";
+import { parseShadow } from "./shadows";
 
-describe("parseBoxShadow", () => {
-  test("parses value and returns invalid when used a invalid color", () => {
-    expect(parseBoxShadow(`10px 10px 5px foo`)).toMatchInlineSnapshot(`
+describe("parse shadows", () => {
+  test("parses value and returns invalid when used a invalid boxShadow is passed", () => {
+    expect(parseShadow("boxShadow", `10px 10px 5px foo`))
+      .toMatchInlineSnapshot(`
+      {
+        "type": "invalid",
+        "value": "10px 10px 5px foo",
+      }
+    `);
+  });
+
+  test("parses value and returns invalid when a invalid textShadow is passed", () => {
+    expect(parseShadow("textShadow", `10px 10px 5px foo`))
+      .toMatchInlineSnapshot(`
       {
         "type": "invalid",
         "value": "10px 10px 5px foo",
@@ -13,7 +24,7 @@ describe("parseBoxShadow", () => {
   });
 
   test("throws error when passed a value without a unit", () => {
-    expect(parseBoxShadow(`10 10px 5px red`)).toMatchInlineSnapshot(`
+    expect(parseShadow("boxShadow", `10 10px 5px red`)).toMatchInlineSnapshot(`
       {
         "type": "invalid",
         "value": "10 10px 5px red",
@@ -21,8 +32,44 @@ describe("parseBoxShadow", () => {
     `);
   });
 
+  test("parses values and returns a layer when a valid textShadow is passes", () => {
+    expect(parseShadow("textShadow", "text-shadow: 1px 1px 2px black;"))
+      .toMatchInlineSnapshot(`
+{
+  "type": "layers",
+  "value": [
+    {
+      "type": "tuple",
+      "value": [
+        {
+          "type": "unit",
+          "unit": "px",
+          "value": 1,
+        },
+        {
+          "type": "unit",
+          "unit": "px",
+          "value": 1,
+        },
+        {
+          "type": "unit",
+          "unit": "px",
+          "value": 2,
+        },
+        {
+          "type": "keyword",
+          "value": "black",
+        },
+      ],
+    },
+  ],
+}
+`);
+  });
+
   test("inset and color values can be interchanged", () => {
-    expect(parseBoxShadow(`inset 10px 10px 5px black;`)).toMatchInlineSnapshot(`
+    expect(parseShadow("boxShadow", `inset 10px 10px 5px black;`))
+      .toMatchInlineSnapshot(`
       {
         "type": "layers",
         "value": [
@@ -60,7 +107,7 @@ describe("parseBoxShadow", () => {
   });
 
   test("parses value when inset is used but missing blur-radius", () => {
-    expect(parseBoxShadow(`box-shadow: inset 5em 1em gold`))
+    expect(parseShadow("boxShadow", `box-shadow: inset 5em 1em gold`))
       .toMatchInlineSnapshot(`
       {
         "type": "layers",
@@ -94,7 +141,7 @@ describe("parseBoxShadow", () => {
   });
 
   test("parses value when offsetX and offsetY are used", () => {
-    expect(parseBoxShadow(`box-shadow: 60px -16px teal;`))
+    expect(parseShadow("boxShadow", `box-shadow: 60px -16px teal;`))
       .toMatchInlineSnapshot(`
       {
         "type": "layers",
@@ -125,7 +172,8 @@ describe("parseBoxShadow", () => {
 
   test("parses value from figma", () => {
     expect(
-      parseBoxShadow(
+      parseShadow(
+        "boxShadow",
         "box-shadow: 0 60px 80px rgba(0,0,0,0.60), 0 45px 26px rgba(0,0,0,0.14);"
       )
     ).toMatchInlineSnapshot(`
@@ -193,11 +241,14 @@ describe("parseBoxShadow", () => {
 
   test(`parses multiple layers of box-shadow property`, () => {
     expect(
-      parseBoxShadow(`box-shadow:
+      parseShadow(
+        "boxShadow",
+        `box-shadow:
     0 0 5px rgba(0, 0, 0, 0.2),
     inset 0 0 10px rgba(0, 0, 0, 0.3),
     0 0 15px rgba(0, 0, 0, 0.4);
-  `)
+  `
+      )
     ).toMatchInlineSnapshot(`
       {
         "type": "layers",

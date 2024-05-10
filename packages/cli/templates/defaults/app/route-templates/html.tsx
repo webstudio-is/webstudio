@@ -14,20 +14,20 @@ import { ReactSdkContext } from "@webstudio-is/react-sdk";
 import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
 import {
   Page,
+  siteName,
   favIconAsset,
   socialImageAsset,
   pageFontAssets,
   pageBackgroundImageAssets,
-} from "../__generated__/[sitemap-html]._index";
+} from "../../../../__generated__/_index";
 import {
   formsProperties,
   loadResources,
   getPageMeta,
   getRemixParams,
   projectId,
-  user,
-  projectMeta,
-} from "../__generated__/[sitemap-html]._index.server";
+  contactEmail,
+} from "../../../../__generated__/_index.server";
 
 import css from "../__generated__/index.css?url";
 import { assetBaseUrl, imageBaseUrl, imageLoader } from "../constants.mjs";
@@ -70,7 +70,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
       system,
       resources,
       pageMeta,
-      projectMeta,
     },
     // No way for current information to change, so add cache for 10 minutes
     // In case of CRM Data, this should be set to 0
@@ -96,7 +95,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (data === undefined) {
     return metas;
   }
-  const { pageMeta, projectMeta } = data;
+  const { pageMeta } = data;
 
   if (data.url) {
     metas.push({
@@ -118,16 +117,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
   const origin = `https://${data.host}`;
 
-  if (projectMeta?.siteName) {
+  if (siteName) {
     metas.push({
       property: "og:site_name",
-      content: projectMeta.siteName,
+      content: siteName,
     });
     metas.push({
       "script:ld+json": {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        name: projectMeta.siteName,
+        name: siteName,
         url: origin,
       },
     });
@@ -256,9 +255,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
   // form properties are not defined when defaults are used
   const { action, method } = formProperties ?? {};
 
-  const email = user?.email;
-
-  if (email == null) {
+  if (contactEmail === undefined) {
     return { success: false };
   }
 
@@ -293,7 +290,7 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
     action: action ?? null,
     method: getMethod(method),
     pageUrl: pageUrl.toString(),
-    toEmail: email,
+    toEmail: contactEmail,
     fromEmail: pageUrl.hostname + "@webstudio.email",
   } as const;
 

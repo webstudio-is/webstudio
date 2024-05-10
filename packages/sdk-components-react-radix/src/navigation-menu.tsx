@@ -1,4 +1,3 @@
-/* eslint-disable react/display-name */
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import {
   getClosestInstance,

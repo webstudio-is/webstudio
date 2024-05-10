@@ -101,6 +101,9 @@ export const $propsIndex = computed($props, (props) => {
 
 export const $styles = atom<Styles>(new Map());
 
+/**
+ * @deprecated
+ */
 export const useInstanceStyles = (instanceId: undefined | Instance["id"]) => {
   const instance$styles = useMemo(() => {
     return shallowComputed([$stylesIndex], (stylesIndex) => {

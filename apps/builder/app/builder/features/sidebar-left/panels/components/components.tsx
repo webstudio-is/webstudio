@@ -22,13 +22,17 @@ import {
   useDraggable,
 } from "./use-draggable";
 import { MetaIcon } from "~/builder/shared/meta-icon";
-import { $registeredComponentMetas } from "~/shared/nano-states";
+import { $registeredComponentMetas, $selectedPage } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
+  const selectedPage = useStore($selectedPage);
+
+  const documentType = selectedPage?.meta.documentType ?? "html";
+
   const { metaByCategory, componentNamesByMeta } = useMemo(
     () => getMetaMaps(metaByComponentName),
     [metaByComponentName]
@@ -51,9 +55,18 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
               return false;
             }
 
+            // Only xml category is allowed for xml document type
+            if (documentType === "xml") {
+              return category === "xml";
+            }
+            // Hide xml category for non-xml document types
+            if (category === "xml") {
+              return false;
+            }
+
             if (
-              isFeatureEnabled("xmlElement") === false &&
-              category === "xml"
+              isFeatureEnabled("internalComponents") === false &&
+              category === "internal"
             ) {
               return false;
             }
@@ -77,6 +90,12 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                       if (
                         isFeatureEnabled("filters") === false &&
                         component === "RemixForm"
+                      ) {
+                        return;
+                      }
+                      if (
+                        isFeatureEnabled("cms") === false &&
+                        component === "ContentEmbed"
                       ) {
                         return;
                       }

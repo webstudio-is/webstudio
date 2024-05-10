@@ -1,9 +1,9 @@
 /* eslint-disable */
 /* This is a auto generated file for building the project */
 
-import type { ProjectMeta, PageMeta } from "@webstudio-is/sdk";
+import type { PageMeta } from "@webstudio-is/sdk";
 import { loadResource, isLocalResource, type System } from "@webstudio-is/sdk";
-import { sitemap } from "./[sitemap.xml]";
+import { sitemap } from "./$resources.sitemap.xml";
 export const loadResources = async (_props: { system: System }) => {
   const customFetch: typeof fetch = (input, init) => {
     if (typeof input !== "string") {
@@ -63,12 +63,6 @@ export const getRemixParams = ({ ...params }: Params): Params => {
 
 export const projectId = "cddc1d44-af37-4cb6-a430-d300cf6f932d";
 
-export const user: { email: string | null } | undefined = {
-  email: "hello@webstudio.is",
-};
+export const contactEmail = "hello@webstudio.is";
 
-export const projectMeta: ProjectMeta = {
-  siteName: "KittyGuardedZone",
-  faviconAssetId: "88d5e2ff-b8f2-4899-aaf8-dde4ade6da10",
-  code: "<script>console.log('KittyGuardedZone')</script>\n",
-};
+export const customCode = "<script>console.log('KittyGuardedZone')</script>";
