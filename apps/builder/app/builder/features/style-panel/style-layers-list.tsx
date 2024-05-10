@@ -178,7 +178,7 @@ export const LayersList = ({
                           )
                         }
                       />
-                    ) : null}
+                    ) : undefined}
                     <SmallIconButton
                       variant="destructive"
                       tabIndex={-1}
