@@ -59,6 +59,4 @@ export const isLocalResource = (pathname: string, resourceName?: string) => {
   return segments.join("/") === `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;
 };
 
-export const sitemapResourceUrl = () => {
-  return `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;
-};
+export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;

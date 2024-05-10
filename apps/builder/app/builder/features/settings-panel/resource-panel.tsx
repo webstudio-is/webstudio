@@ -643,7 +643,7 @@ export const SystemResourceForm = forwardRef<
   const localResources = [
     {
       label: "Sitemap",
-      value: JSON.stringify(sitemapResourceUrl()),
+      value: JSON.stringify(sitemapResourceUrl),
       description: "Resource that loads the sitemap data of the current site.",
     },
   ];

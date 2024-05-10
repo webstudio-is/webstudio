@@ -446,7 +446,7 @@ const VariablePanel = forwardRef<
             {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
           </Flex>
         ),
-        description: "A System Resource is a configuration for system data.",
+        description: "A System Resource is a configuration for Webstudio data.",
       },
     ],
   ]);
