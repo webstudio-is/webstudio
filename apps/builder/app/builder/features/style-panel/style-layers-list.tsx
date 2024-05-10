@@ -129,7 +129,7 @@ export const LayersList = ({
       <Flex direction="column" ref={sortableRefCallback}>
         {value.value.map((layer, index) => {
           if (layer.type !== "tuple" && layer.type !== "function") {
-            return null;
+            return;
           }
           const id = String(index);
           const properties = extractPropertiesFromLayer(layer);
@@ -178,7 +178,7 @@ export const LayersList = ({
                           )
                         }
                       />
-                    ) : null}
+                    ) : undefined}
                     <SmallIconButton
                       variant="destructive"
                       tabIndex={-1}

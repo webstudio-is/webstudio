@@ -1,7 +1,6 @@
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import { vitePlugin as remix } from "@remix-run/dev";
-// eslint-disable-next-line import/no-internal-modules
 import { vercelPreset } from "@vercel/remix/vite";
 
 const isStorybook = process.argv[1]?.includes("storybook") ?? false;

@@ -77,16 +77,13 @@ export const addLayer = <T extends LayersValue | TupleValue>(
   }
 
   const existingValues = style[property]?.value;
-  // Transitions come's with a default property of tuple. Which needs to be overwritten
-  // Because, we handle transitions using layers in the project. So, we merge the values
-  // only if the existing value is a layer or the value is overwritten a layer is created.
-  if (
-    (property === "transition" || property === "boxShadow") &&
-    existingValues?.type === "layers"
-  ) {
+  if (existingValues?.type === "layers") {
     value.value = [...value.value, ...existingValues.value] as T["value"];
   }
 
+  // Transitions come's with a default property of tuple. Which needs to be overwritten
+  // Because, we handle transitions, box-shadow and text-shadows etc using layers in the project.
+  // So, we merge the values of the new layer with the existing layer is tuple and the property is filter or backdropFilter
   if (
     (property === "filter" || property === "backdropFilter") &&
     existingValues?.type === "tuple"

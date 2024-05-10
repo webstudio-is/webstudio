@@ -13,7 +13,6 @@ export const SheetClose = Dialog.DialogClose;
 export const SheetTitle = Dialog.DialogTitle;
 export const SheetDescription = Dialog.DialogDescription;
 
-// eslint-disable-next-line react/display-name
 export const SheetContent = forwardRef<
   ElementRef<"div">,
   ComponentPropsWithoutRef<typeof Dialog.DialogContent> & {

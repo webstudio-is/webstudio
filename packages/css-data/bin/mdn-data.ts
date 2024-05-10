@@ -1,4 +1,3 @@
-/* eslint-disable import/no-internal-modules */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

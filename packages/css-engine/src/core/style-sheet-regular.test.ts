@@ -935,7 +935,7 @@ describe("Style Sheet Regular", () => {
 `);
   });
 
-  test("support descendent suffix", () => {
+  test("support descendant suffix", () => {
     const sheet = createRegularStyleSheet();
     sheet.addMediaRule("base", {});
     const rule1 = sheet.addNestingRule(".instance");

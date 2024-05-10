@@ -1,4 +1,4 @@
-import { EmbedIcon, ListViewIcon } from "@webstudio-is/icons/svg";
+import { ListViewIcon, PaintBrushIcon } from "@webstudio-is/icons/svg";
 import type {
   WsComponentMeta,
   WsComponentPropsMeta,
@@ -10,7 +10,7 @@ export const collectionComponent = "ws:collection";
 
 const collectionMeta: WsComponentMeta = {
   category: "data",
-  order: 7,
+  order: 2,
   type: "container",
   label: "Collection",
   icon: ListViewIcon,
@@ -58,21 +58,40 @@ const collectionPropsMeta: WsComponentPropsMeta = {
   initialProps: ["data"],
 };
 
-export const descendentComponent = "ws:descendent";
+export const descendantComponent = "ws:descendant";
 
-const descendentMeta: WsComponentMeta = {
+const descendantMeta: WsComponentMeta = {
   category: "internal",
   type: "control",
-  label: "Descendent",
-  icon: EmbedIcon,
+  label: "Descendant",
+  icon: PaintBrushIcon,
+  detachable: false,
 };
 
-const descendentPropsMeta: WsComponentPropsMeta = {
+const descendantPropsMeta: WsComponentPropsMeta = {
   props: {
     selector: {
       required: true,
-      control: "text",
       type: "string",
+      control: "select",
+      options: [
+        " p",
+        " h1",
+        " h2",
+        " h3",
+        " h4",
+        " h5",
+        " h6",
+        " :where(strong, b)",
+        " :where(em, i)",
+        " a",
+        " img",
+        " blockquote",
+        " code",
+        " :where(ul, ol)",
+        " li",
+        " hr",
+      ],
     },
   },
   initialProps: ["selector"],
@@ -80,15 +99,15 @@ const descendentPropsMeta: WsComponentPropsMeta = {
 
 export const coreMetas = {
   [collectionComponent]: collectionMeta,
-  [descendentComponent]: descendentMeta,
+  [descendantComponent]: descendantMeta,
 };
 
 export const corePropsMetas = {
   [collectionComponent]: collectionPropsMeta,
-  [descendentComponent]: descendentPropsMeta,
+  [descendantComponent]: descendantPropsMeta,
 };
 
 // components with custom implementation
 // should not be imported as react component
 export const isCoreComponent = (component: string) =>
-  component === collectionComponent || component === descendentComponent;
+  component === collectionComponent || component === descendantComponent;

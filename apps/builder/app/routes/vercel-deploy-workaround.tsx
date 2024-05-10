@@ -4,7 +4,6 @@ import { Root } from "~/shared/remix/root";
 import interFont from "@fontsource-variable/inter/index.css?url";
 import manropeVariableFont from "@fontsource-variable/manrope/index.css?url";
 import robotoMonoFont from "@fontsource/roboto-mono/index.css?url";
-// eslint-disable-next-line import/no-internal-modules
 import appCss from "../shared/app.css?url";
 
 /**
