@@ -33,7 +33,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { transpileExpression } from "@webstudio-is/sdk";
+import { isLocalResource, transpileExpression } from "@webstudio-is/sdk";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
@@ -62,7 +62,7 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
-import { ResourceForm } from "./resource-panel";
+import { ResourceForm, SystemResourceForm } from "./resource-panel";
 import { generateCurl } from "./curl";
 
 /**
@@ -108,6 +108,7 @@ type VariableType =
   | "boolean"
   | "json"
   | "resource"
+  | "system-resource"
   | "parameter";
 
 type PanelApi = ComposedFields & {
@@ -359,6 +360,7 @@ const VariablePanel = forwardRef<
   }
 >(({ variable }, ref) => {
   const { allowDynamicData } = useStore($userPlanFeatures);
+  const resources = useStore($resources);
 
   const nameField = useField({
     initialValue: variable?.name ?? "",
@@ -383,10 +385,18 @@ const VariablePanel = forwardRef<
     </Flex>
   );
 
-  const [type, setType] = useState<VariableType>(() => {
+  const [variableType, setVariableType] = useState<VariableType>(() => {
+    if (
+      variable?.type === "resource" &&
+      isLocalResource(JSON.parse(resources.get(variable.resourceId)?.url ?? ""))
+    ) {
+      return "system-resource";
+    }
+
     if (variable?.type === "parameter" || variable?.type === "resource") {
       return variable.type;
     }
+
     if (variable?.type === "variable") {
       const type = variable.value.type;
       if (type === "string" || type === "number" || type === "boolean") {
@@ -427,7 +437,20 @@ const VariablePanel = forwardRef<
           "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
       },
     ],
+    [
+      "system-resource",
+      {
+        label: (
+          <Flex direction="row" gap="2" align="center">
+            System Resource
+            {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+          </Flex>
+        ),
+        description: "A System Resource is a configuration for Webstudio data.",
+      },
+    ],
   ]);
+
   const typeFieldElement = (
     <Flex direction="column" gap="1">
       <Label>Type</Label>
@@ -444,13 +467,13 @@ const VariablePanel = forwardRef<
             </Box>
           );
         }}
-        value={type}
-        onChange={setType}
+        value={variableType}
+        onChange={setVariableType}
       />
     </Flex>
   );
 
-  if (type === "parameter") {
+  if (variableType === "parameter") {
     return (
       <>
         {nameFieldElement}
@@ -458,7 +481,7 @@ const VariablePanel = forwardRef<
       </>
     );
   }
-  if (type === "string") {
+  if (variableType === "string") {
     return (
       <>
         {nameFieldElement}
@@ -467,7 +490,7 @@ const VariablePanel = forwardRef<
       </>
     );
   }
-  if (type === "number") {
+  if (variableType === "number") {
     return (
       <>
         {nameFieldElement}
@@ -476,7 +499,7 @@ const VariablePanel = forwardRef<
       </>
     );
   }
-  if (type === "boolean") {
+  if (variableType === "boolean") {
     return (
       <>
         {nameFieldElement}
@@ -485,7 +508,7 @@ const VariablePanel = forwardRef<
       </>
     );
   }
-  if (type === "json") {
+  if (variableType === "json") {
     return (
       <>
         {nameFieldElement}
@@ -494,7 +517,8 @@ const VariablePanel = forwardRef<
       </>
     );
   }
-  if (type === "resource") {
+
+  if (variableType === "resource") {
     return (
       <>
         {nameFieldElement}
@@ -503,6 +527,22 @@ const VariablePanel = forwardRef<
       </>
     );
   }
+
+  if (variableType === "system-resource") {
+    return (
+      <>
+        {nameFieldElement}
+        {typeFieldElement}
+        <SystemResourceForm
+          ref={ref}
+          variable={variable}
+          nameField={nameField}
+        />
+      </>
+    );
+  }
+
+  variableType satisfies never;
 });
 VariablePanel.displayName = "VariablePanel";
 
@@ -522,6 +562,8 @@ export const VariablePopoverTrigger = forwardRef<
   const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
   const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<undefined | PanelApi>();
+  const resources = useStore($resources);
+
   const saveAndClose = () => {
     if (panelRef.current) {
       if (panelRef.current.allErrorsVisible === false) {
@@ -597,28 +639,32 @@ export const VariablePopoverTrigger = forwardRef<
         ) : (
           <FloatingPanelPopoverTitle
             actions={
-              variable.type === "resource" && (
+              variable?.type === "resource" && (
                 <>
-                  <Tooltip
-                    content="Copy resource as cURL command"
-                    side="bottom"
-                  >
-                    <Button
-                      aria-label="Copy resource as cURL command"
-                      prefix={<CopyIcon />}
-                      color="ghost"
-                      onClick={() => {
-                        const resourceRequest = getComputedResource(
-                          variable.resourceId
-                        );
-                        if (resourceRequest) {
-                          navigator.clipboard.writeText(
-                            generateCurl(resourceRequest)
+                  {isLocalResource(
+                    JSON.parse(resources.get(variable.resourceId)?.url ?? "")
+                  ) === false && (
+                    <Tooltip
+                      content="Copy resource as cURL command"
+                      side="bottom"
+                    >
+                      <Button
+                        aria-label="Copy resource as cURL command"
+                        prefix={<CopyIcon />}
+                        color="ghost"
+                        onClick={() => {
+                          const resourceRequest = getComputedResource(
+                            variable.resourceId
                           );
-                        }
-                      }}
-                    />
-                  </Tooltip>
+                          if (resourceRequest) {
+                            navigator.clipboard.writeText(
+                              generateCurl(resourceRequest)
+                            );
+                          }
+                        }}
+                      />
+                    </Tooltip>
+                  )}
                   <Tooltip content="Refresh resource data" side="bottom">
                     <Button
                       aria-label="Refresh resource data"

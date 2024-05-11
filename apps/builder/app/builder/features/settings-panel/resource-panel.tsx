@@ -12,7 +12,7 @@ import type { DataSource, Resource } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
   isLiteralExpression,
-  isLocalResource,
+  sitemapResourceUrl,
 } from "@webstudio-is/sdk";
 import {
   Box,
@@ -446,10 +446,6 @@ export const ResourceForm = forwardRef<
       try {
         new URL(evaluatedValue);
       } catch {
-        if (isLocalResource(evaluatedValue, "sitemap.xml")) {
-          return;
-        }
-
         return "URL is invalid";
       }
     },
@@ -630,3 +626,96 @@ export const ResourceForm = forwardRef<
   );
 });
 ResourceForm.displayName = "ResourceForm";
+
+export const SystemResourceForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
+  const resources = useStore($resources);
+
+  const resource =
+    variable?.type === "resource"
+      ? resources.get(variable.resourceId)
+      : undefined;
+
+  const method = "get";
+
+  const localResources = [
+    {
+      label: "Sitemap",
+      value: JSON.stringify(sitemapResourceUrl),
+      description: "Resource that loads the sitemap data of the current site.",
+    },
+  ];
+
+  const [localResource, setLocalResource] = useState(() => {
+    return (
+      localResources.find(
+        (localResource) => localResource.value === resource?.url
+      ) ?? localResources[0]
+    );
+  });
+
+  const form = composeFields(nameField);
+
+  useImperativeHandle(ref, () => ({
+    ...form,
+    save: () => {
+      const instanceSelector = $selectedInstanceSelector.get();
+      if (instanceSelector === undefined) {
+        return;
+      }
+      const [instanceId] = instanceSelector;
+
+      const newResource: Resource = {
+        id: resource?.id ?? nanoid(),
+        name: nameField.value,
+        url: localResource.value,
+        method,
+        headers: [],
+      };
+
+      const newVariable: DataSource = {
+        id: variable?.id ?? nanoid(),
+        // preserve existing instance scope when edit
+        scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
+        name: nameField.value,
+        type: "resource",
+        resourceId: newResource.id,
+      };
+
+      serverSyncStore.createTransaction(
+        [$dataSources, $resources],
+        (dataSources, resources) => {
+          dataSources.set(newVariable.id, newVariable);
+          resources.set(newResource.id, newResource);
+        }
+      );
+    },
+  }));
+
+  const resourceId = useId();
+
+  return (
+    <>
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Label htmlFor={resourceId}>Resource</Label>
+        <Select
+          options={localResources}
+          getLabel={(option) => option.label}
+          getValue={(option) => option.value}
+          getDescription={(option) => {
+            return (
+              <Box css={{ width: theme.spacing[25] }}>
+                {option?.description}
+              </Box>
+            );
+          }}
+          value={localResource}
+          onChange={setLocalResource}
+        />
+      </Flex>
+    </>
+  );
+});
+SystemResourceForm.displayName = "ResourceForm";

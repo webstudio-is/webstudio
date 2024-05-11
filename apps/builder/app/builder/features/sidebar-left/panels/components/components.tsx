@@ -57,7 +57,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
 
             // Only xml category is allowed for xml document type
             if (documentType === "xml") {
-              return category === "xml";
+              return category === "xml" || category === "data";
             }
             // Hide xml category for non-xml document types
             if (category === "xml") {
@@ -81,8 +81,16 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                   wrap="wrap"
                   css={{ px: theme.spacing[9], overflow: "auto" }}
                 >
-                  {(metaByCategory.get(category) ?? []).map(
-                    (meta: WsComponentMeta, index) => {
+                  {(metaByCategory.get(category) ?? [])
+                    .filter((meta: WsComponentMeta) => {
+                      if (documentType === "xml" && meta.category === "data") {
+                        return (
+                          componentNamesByMeta.get(meta) === "ws:collection"
+                        );
+                      }
+                      return true;
+                    })
+                    .map((meta: WsComponentMeta, index) => {
                       const component = componentNamesByMeta.get(meta);
                       if (component === undefined) {
                         return;
@@ -123,8 +131,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                           />
                         </ListItem>
                       );
-                    }
-                  )}
+                    })}
                   {dragCard}
                 </Flex>
               </List>
