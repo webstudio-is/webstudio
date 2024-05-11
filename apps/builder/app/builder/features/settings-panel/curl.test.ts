@@ -1,5 +1,5 @@
 import { expect, test } from "@jest/globals";
-import { generateCurl, parseCurl } from "./curl";
+import { generateCurl, parseCurl, type CurlRequest } from "./curl";
 
 test("support url", () => {
   const result = {
@@ -126,6 +126,10 @@ test("support json body", () => {
   });
 });
 
+test("avoid failing on syntax error", () => {
+  expect(parseCurl("curl \\")).toEqual(undefined);
+});
+
 test("generate curl with json body", () => {
   expect(
     generateCurl({
@@ -168,4 +172,25 @@ test("generate curl without body", () => {
 "curl "https://my-url.com" \\
   --request post"
 `);
+});
+
+test("multiline graphql is idempotent", () => {
+  const request: CurlRequest = {
+    url: "https://eu-central-1-shared-euc1-02.cdn.hygraph.com/content/clorhpxi8qx7r01t6hfp1b5f6/master",
+    method: "post",
+    headers: [{ name: "Content-Type", value: "application/json" }],
+    body: {
+      query: `
+        query Posts {
+          posts {
+            slug
+            title
+            updatedAt
+            excerpt
+          }
+        }
+      `,
+    },
+  };
+  expect(parseCurl(generateCurl(request))).toEqual(request);
 });
