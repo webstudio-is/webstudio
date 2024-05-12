@@ -14,15 +14,9 @@ import {
   computeExpression,
 } from "./props";
 import { $pages, $selectedPageId } from "./pages";
-import {
-  $assets,
-  $dataSourceVariables,
-  $dataSources,
-  $props,
-  $resourceValues,
-  $resources,
-} from "./nano-states";
+import { $assets, $dataSources, $props, $resources } from "./nano-states";
 import { $params } from "~/canvas/stores";
+import { $dataSourceVariables, $resourceValues } from "./variables";
 
 setEnv("*");
 
@@ -929,7 +923,14 @@ test("prefill default system variable value", () => {
       [
         JSON.stringify(["body"]),
         new Map<string, unknown>([
-          ["systemId", { params: { slug: "my-post" }, search: {} }],
+          [
+            "systemId",
+            {
+              params: { slug: "my-post" },
+              search: {},
+              origin: "https://undefined.wstd.work",
+            },
+          ],
         ]),
       ],
     ])

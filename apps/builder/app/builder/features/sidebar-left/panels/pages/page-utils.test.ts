@@ -983,9 +983,22 @@ test("page root scope should prefill default system variable value", () => {
   expect($pageRootScope.get()).toEqual({
     aliases: new Map([["$ws$dataSource$systemId", "system"]]),
     scope: {
-      $ws$dataSource$systemId: { params: {}, search: {} },
+      $ws$dataSource$systemId: {
+        origin: "https://undefined.wstd.work",
+        params: {},
+        search: {},
+      },
     },
-    variableValues: new Map([["systemId", { params: {}, search: {} }]]),
+    variableValues: new Map([
+      [
+        "systemId",
+        {
+          params: {},
+          search: {},
+          origin: "https://undefined.wstd.work",
+        },
+      ],
+    ]),
   });
 
   $dataSourceVariables.set(
@@ -994,10 +1007,21 @@ test("page root scope should prefill default system variable value", () => {
   expect($pageRootScope.get()).toEqual({
     aliases: new Map([["$ws$dataSource$systemId", "system"]]),
     scope: {
-      $ws$dataSource$systemId: { params: { slug: "my-post" }, search: {} },
+      $ws$dataSource$systemId: {
+        params: { slug: "my-post" },
+        search: {},
+        origin: "https://undefined.wstd.work",
+      },
     },
     variableValues: new Map([
-      ["systemId", { params: { slug: "my-post" }, search: {} }],
+      [
+        "systemId",
+        {
+          params: { slug: "my-post" },
+          search: {},
+          origin: "https://undefined.wstd.work",
+        },
+      ],
     ]),
   });
 });

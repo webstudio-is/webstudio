@@ -20,20 +20,18 @@ import {
 } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $instances } from "./instances";
-import {
-  $dataSourceVariables,
-  $dataSources,
-  $props,
-  $assets,
-  $resources,
-  $resourceValues,
-  $publishedOrigin,
-} from "./nano-states";
+import { $dataSources, $props, $assets, $resources } from "./nano-states";
 import { $selectedPage, $pages } from "./pages";
 import { groupBy } from "../array-utils";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
+import {
+  $dataSourceVariables,
+  $resourceValues,
+  $selectedPageDefaultSystem,
+  mergeSystem,
+} from "./variables";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
@@ -301,7 +299,7 @@ export const $variableValuesByInstanceSelector = computed(
     $dataSources,
     $dataSourceVariables,
     $resourceValues,
-    $publishedOrigin,
+    $selectedPageDefaultSystem,
   ],
   (
     instances,
@@ -310,7 +308,7 @@ export const $variableValuesByInstanceSelector = computed(
     dataSources,
     dataSourceVariables,
     resourceValues,
-    publishedOrigin
+    defaultSystem
   ) => {
     const propsByInstanceId = groupBy(
       props.values(),
@@ -361,17 +359,11 @@ export const $variableValuesByInstanceSelector = computed(
           if (variable.type === "parameter") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value);
-            if (
-              variable.id === page.systemDataSourceId &&
-              value === undefined
-            ) {
-              const systemDefaultValue: System = {
-                params: {},
-                search: {},
-                origin: publishedOrigin,
-              };
-
-              variableValues.set(variable.id, systemDefaultValue);
+            if (variable.id === page.systemDataSourceId) {
+              variableValues.set(
+                variable.id,
+                mergeSystem(defaultSystem, value as undefined | System)
+              );
             }
           }
           if (variable.type === "resource") {

@@ -1,3 +1,4 @@
+import { shallowEqual } from "shallow-equal";
 import type { ExoticComponent } from "react";
 import { atom } from "nanostores";
 import {
@@ -12,10 +13,10 @@ import {
 import type { Instance } from "@webstudio-is/sdk";
 import { decodeDataSourceVariable } from "@webstudio-is/sdk";
 import type { InstanceSelector } from "../tree-utils";
-import { $dataSourceVariables, $dataSources, $props } from "./nano-states";
+import { $dataSources, $props } from "./nano-states";
 import { $instances, $selectedInstanceSelector } from "./instances";
 import { $selectedPage } from "./pages";
-import { shallowEqual } from "shallow-equal";
+import { $dataSourceVariables } from "./variables";
 
 const createHookContext = (): HookContext => {
   const metas = $registeredComponentMetas.get();
