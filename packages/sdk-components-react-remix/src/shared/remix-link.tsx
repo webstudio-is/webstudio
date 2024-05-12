@@ -17,13 +17,14 @@ type Props = Omit<ComponentPropsWithoutRef<typeof Link>, "target"> & {
 export const wrapLinkComponent = (BaseLink: typeof Link) => {
   const Component = forwardRef<HTMLAnchorElement, Props>((props, ref) => {
     const { assetBaseUrl, renderer } = useContext(ReactSdkContext);
-    const href = props.href;
+    // cast to string when invalid value type is provided with binding
+    const href = String(props.href ?? "");
 
     // use remix link for home page and all relative urls
     // ignore asset paths which can be relative too
     if (
       href === "" ||
-      (href?.startsWith("/") && href.startsWith(assetBaseUrl) === false)
+      (href.startsWith("/") && href.startsWith(assetBaseUrl) === false)
     ) {
       // remix links behave in unexpected way when delete in content editable
       // always render simple <a> in canvas and preview

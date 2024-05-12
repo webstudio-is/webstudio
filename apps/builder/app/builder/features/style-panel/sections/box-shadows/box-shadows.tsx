@@ -6,11 +6,7 @@ import {
   Text,
 } from "@webstudio-is/design-system";
 import { InfoCircleIcon, PlusIcon } from "@webstudio-is/icons";
-import type {
-  LayersValue,
-  StyleProperty,
-  TupleValue,
-} from "@webstudio-is/css-engine";
+import type { StyleProperty } from "@webstudio-is/css-engine";
 import { CollapsibleSectionRoot } from "~/builder/shared/collapsible-section";
 import { useState } from "react";
 import { getDots } from "../../shared/collapsible-section";
@@ -20,13 +16,13 @@ import type { SectionProps } from "../shared/section";
 import { LayersList } from "../../style-layers-list";
 import { addLayer } from "../../style-layer-utils";
 import { parseShadow } from "@webstudio-is/css-data";
-import { ShadowLayer } from "../../shared/shadow-layer";
+import { ShadowContent } from "../../shared/shadow-content";
 
 export const properties = ["boxShadow"] satisfies Array<StyleProperty>;
 
 const property: StyleProperty = properties[0];
 const label = "Box Shadows";
-const INITIAL_BOX_SHADOW = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
+const initialBoxShadow = "0px 2px 5px 0px rgba(0, 0, 0, 0.2)";
 
 export const Section = (props: SectionProps) => {
   const { currentStyle, deleteProperty } = props;
@@ -45,14 +41,14 @@ export const Section = (props: SectionProps) => {
       onOpenChange={setIsOpen}
       trigger={
         <SectionTitle
-          dots={getDots(currentStyle, [property])}
+          dots={getDots(currentStyle, properties)}
           suffix={
             <SectionTitleButton
               prefix={<PlusIcon />}
               onClick={() => {
                 addLayer(
                   property,
-                  parseShadow("boxShadow", INITIAL_BOX_SHADOW),
+                  parseShadow(property, initialBoxShadow),
                   currentStyle,
                   props.createBatchUpdate
                 );
@@ -77,16 +73,21 @@ export const Section = (props: SectionProps) => {
       }
     >
       {value?.type === "layers" && value.value.length > 0 && (
-        <LayersList<TupleValue, LayersValue>
-          property={property}
-          layers={value}
+        <LayersList
           {...props}
-          renderLayer={(layersProps) => {
+          property={property}
+          value={value}
+          label={label}
+          deleteProperty={deleteProperty}
+          renderContent={(layerProps) => {
+            if (layerProps.layer.type !== "tuple") {
+              return <></>;
+            }
+
             return (
-              <ShadowLayer
-                key={layersProps.index}
-                {...layersProps}
-                label={label}
+              <ShadowContent
+                {...layerProps}
+                layer={layerProps.layer}
                 tooltip={
                   <Tooltip
                     variant="wrapped"
@@ -94,9 +95,8 @@ export const Section = (props: SectionProps) => {
                       <Text>
                         Paste a box-shadow CSS code without the property name,
                         for example:
-                        <br />
-                        <br />
-                        <Text variant="monoBold">{INITIAL_BOX_SHADOW}</Text>
+                        <br /> <br />
+                        <Text variant="monoBold">{initialBoxShadow}</Text>
                       </Text>
                     }
                   >

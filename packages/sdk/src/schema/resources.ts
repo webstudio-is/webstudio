@@ -49,6 +49,14 @@ const LOCAL_RESOURCE_PREFIX = "$resources";
 /**
  * Prevents fetch cycles by prefixing local resources.
  */
-export const isLocalResource = (pathname: string, resourceName: string) =>
-  pathname.split("/").filter(Boolean).join("/") ===
-  `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;
+export const isLocalResource = (pathname: string, resourceName?: string) => {
+  const segments = pathname.split("/").filter(Boolean);
+
+  if (resourceName === undefined) {
+    return segments[0] === LOCAL_RESOURCE_PREFIX;
+  }
+
+  return segments.join("/") === `${LOCAL_RESOURCE_PREFIX}/${resourceName}`;
+};
+
+export const sitemapResourceUrl = `/${LOCAL_RESOURCE_PREFIX}/sitemap.xml`;

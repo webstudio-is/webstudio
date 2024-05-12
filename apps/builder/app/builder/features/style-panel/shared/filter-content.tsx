@@ -1,6 +1,6 @@
 import type {
+  FunctionValue,
   InvalidValue,
-  LayersValue,
   StyleProperty,
   TupleValue,
 } from "@webstudio-is/css-engine";
@@ -12,23 +12,24 @@ import {
   textVariants,
 } from "@webstudio-is/design-system";
 import { useState } from "react";
-import type { IntermediateStyleValue } from "../../shared/css-value-input";
+import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { parseFilter } from "@webstudio-is/css-data";
-import type { DeleteProperty } from "../../shared/use-style-data";
+import type { DeleteProperty } from "../shared/use-style-data";
 
 type FilterContentProps = {
   index: number;
-  filter: string;
   property: StyleProperty;
-  onEditLayer: (index: number, layers: LayersValue | TupleValue) => void;
-  deleteProperty: DeleteProperty;
+  layer: FunctionValue;
+  propertyValue: string;
   tooltip: JSX.Element;
+  onEditLayer: (index: number, layers: TupleValue) => void;
+  deleteProperty: DeleteProperty;
 };
 
 export const FilterSectionContent = ({
   index,
-  filter,
   property,
+  propertyValue,
   onEditLayer,
   deleteProperty,
   tooltip,
@@ -86,7 +87,7 @@ export const FilterSectionContent = ({
       <TextArea
         rows={3}
         name="description"
-        value={intermediateValue?.value ?? filter ?? ""}
+        value={intermediateValue?.value ?? propertyValue ?? ""}
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
         state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
         onChange={handleChange}

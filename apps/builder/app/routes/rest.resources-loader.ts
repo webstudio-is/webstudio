@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ActionFunctionArgs } from "@remix-run/server-runtime";
+import { json, type ActionFunctionArgs } from "@remix-run/server-runtime";
 import {
   loadResource,
   isLocalResource,
@@ -21,9 +21,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     return fetch(input, init);
   };
 
-  const computedResources = z
+  const requestJson = await request.json();
+
+  const computedResourcesParsed = z
     .array(ResourceRequest)
-    .parse(await request.json());
+    .safeParse(requestJson);
+
+  if (computedResourcesParsed.success === false) {
+    console.error(
+      "computedResources.parse",
+      computedResourcesParsed.error.toString()
+    );
+    console.error("data:", requestJson);
+
+    throw json(computedResourcesParsed.error, {
+      status: 400,
+    });
+  }
+
+  const computedResources = computedResourcesParsed.data;
+
   const responses = await Promise.all(
     computedResources.map((resource) => loadResource(customFetch, resource))
   );
