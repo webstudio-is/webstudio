@@ -1,10 +1,2 @@
-export {
-  formToEmail,
-  formIdFieldName,
-  formHiddenFieldPrefix,
-  getFormId,
-  type EmailInfo,
-  type FormInfo,
-} from "./shared";
-export { mailchannelsHandler } from "./mailchanels";
+export { formIdFieldName, getFormId } from "./shared";
 export { n8nHandler } from "./n8n";
