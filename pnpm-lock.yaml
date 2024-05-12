@@ -1459,25 +1459,6 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
 
-  packages/form-handlers-mailchannels-test:
-    dependencies:
-      '@webstudio-is/form-handlers':
-        specifier: workspace:*
-        version: link:../form-handlers
-    devDependencies:
-      '@cloudflare/workers-types':
-        specifier: ^4.20240405.0
-        version: 4.20240405.0
-      '@webstudio-is/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      typescript:
-        specifier: 5.4.5
-        version: 5.4.5
-      wrangler:
-        specifier: ^3.48.0
-        version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
-
   packages/generate-arg-types:
     dependencies:
       '@webstudio-is/html-data':
@@ -13941,7 +13922,7 @@ snapshots:
 
   '@swc/helpers@0.4.14':
     dependencies:
-      tslib: 2.6.0
+      tslib: 2.6.2
 
   '@swc/helpers@0.4.36':
     dependencies:
