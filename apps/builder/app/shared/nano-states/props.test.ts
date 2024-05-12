@@ -541,6 +541,53 @@ test("compute instance text content bound to expression", () => {
   cleanStores($propValuesByInstanceSelector);
 });
 
+test("use default system values in props", () => {
+  $instances.set(
+    toMap([
+      {
+        id: "body",
+        type: "instance",
+        component: "Body",
+        children: [],
+      },
+    ])
+  );
+  $dataSources.set(
+    toMap([
+      {
+        id: "systemId",
+        scopeInstanceId: "body",
+        name: "system",
+        type: "parameter",
+      },
+    ])
+  );
+  $props.set(
+    toMap([
+      {
+        id: "1",
+        instanceId: "body",
+        name: "data-origin",
+        type: "expression",
+        value: `$ws$dataSource$systemId.origin`,
+      },
+    ])
+  );
+  selectPageRoot("body");
+  expect($propValuesByInstanceSelector.get()).toEqual(
+    new Map([
+      [
+        JSON.stringify(["body"]),
+        new Map<string, unknown>([
+          ["data-origin", "https://undefined.wstd.work"],
+        ]),
+      ],
+    ])
+  );
+
+  cleanStores($propValuesByInstanceSelector);
+});
+
 test("compute variable values for root", () => {
   $instances.set(
     toMap([{ id: "body", type: "instance", component: "Body", children: [] }])

@@ -118,8 +118,14 @@ const getAction = (
 // result of executing generated code
 // includes variables, computed expressions and action callbacks
 const $dataSourcesLogic = computed(
-  [$dataSources, $dataSourceVariables, $resourceValues],
-  (dataSources, dataSourceVariables, resourceValues) => {
+  [
+    $dataSources,
+    $dataSourceVariables,
+    $resourceValues,
+    $selectedPage,
+    $selectedPageDefaultSystem,
+  ],
+  (dataSources, dataSourceVariables, resourceValues, page, defaultSystem) => {
     const values = new Map<string, unknown>();
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
@@ -129,7 +135,11 @@ const $dataSourcesLogic = computed(
         );
       }
       if (dataSource.type === "parameter") {
-        values.set(dataSourceId, dataSourceVariables.get(dataSourceId));
+        let value = dataSourceVariables.get(dataSourceId);
+        if (dataSource.id === page?.systemDataSourceId) {
+          value = mergeSystem(defaultSystem, value as undefined | System);
+        }
+        values.set(dataSourceId, value);
       }
       if (dataSource.type === "resource") {
         values.set(dataSourceId, resourceValues.get(dataSource.resourceId));
