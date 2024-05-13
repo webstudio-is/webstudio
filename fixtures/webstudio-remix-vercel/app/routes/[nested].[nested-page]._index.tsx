@@ -244,7 +244,12 @@ const getMethod = (value: string | undefined) => {
   }
 };
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
+export const action = async ({
+  request,
+  context,
+}: ActionFunctionArgs): Promise<
+  { success: true } | { success: false; errors: string[] }
+> => {
   try {
     const formData = await request.formData();
 
@@ -308,13 +313,10 @@ export const action = async ({ request, context }: ActionFunctionArgs) => {
   } catch (error) {
     console.error(error);
 
-    return json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 200 }
-    );
+    return {
+      success: false,
+      errors: [error instanceof Error ? error.message : "Unknown error"],
+    };
   }
 };
 
