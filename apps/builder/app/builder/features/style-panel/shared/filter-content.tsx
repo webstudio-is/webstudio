@@ -1,8 +1,8 @@
-import type {
-  FunctionValue,
-  InvalidValue,
-  StyleProperty,
-  TupleValue,
+import {
+  type InvalidValue,
+  type StyleProperty,
+  type TupleValue,
+  type FunctionValue,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -12,9 +12,13 @@ import {
   textVariants,
   Separator,
   Select,
+  Grid,
 } from "@webstudio-is/design-system";
-import { useState } from "react";
-import type { IntermediateStyleValue } from "../shared/css-value-input";
+import { useMemo, useState } from "react";
+import {
+  CssValueInputContainer,
+  type IntermediateStyleValue,
+} from "../shared/css-value-input";
 import { parseFilter } from "@webstudio-is/css-data";
 import type { DeleteProperty } from "../shared/use-style-data";
 import { filterFunctions } from "../sections/filter/filter-utils";
@@ -31,6 +35,9 @@ type FilterContentProps = {
 
 type FilterFunction = keyof typeof filterFunctions;
 
+const isFilterFunction = (value: string): value is FilterFunction =>
+  Object.keys(filterFunctions).includes(value);
+
 export const FilterSectionContent = ({
   index,
   property,
@@ -43,6 +50,24 @@ export const FilterSectionContent = ({
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
+
+  const parsedFilterValue = useMemo<
+    | {
+        name: FilterFunction;
+        value: TupleValue;
+      }
+    | undefined
+  >(() => {
+    setIntermediateValue({ type: "intermediate", value: propertyValue });
+    if (isFilterFunction(layer.name) === true && layer.args.type === "tuple") {
+      return {
+        name: layer.name,
+        value: layer.args,
+      };
+    }
+
+    return;
+  }, [layer, propertyValue]);
 
   const handleChange = (value: string) => {
     setIntermediateValue({
@@ -74,12 +99,54 @@ export const FilterSectionContent = ({
 
   return (
     <Flex direction="column">
-      <Select
-        name="filterFunction"
-        options={Object.keys(filterFunctions) as FilterFunction[]}
-        value={layer.name as FilterFunction}
-        onChange={handleFilterFunctionChange}
-      />
+      {/* Invalid filter property */}
+      {parsedFilterValue !== undefined ? (
+        <Flex direction="column" css={{ px: theme.spacing[9] }}>
+          <Grid
+            gap="2"
+            css={{
+              marginTop: theme.spacing[5],
+              paddingBottom: theme.spacing[5],
+              gridTemplateColumns: "1fr 3fr",
+              alignItems: "center",
+            }}
+          >
+            <Label>Function</Label>
+            <Select
+              name="filterFunction"
+              options={Object.keys(filterFunctions) as FilterFunction[]}
+              value={parsedFilterValue.name}
+              onChange={handleFilterFunctionChange}
+            />
+          </Grid>
+          <Grid
+            gap="2"
+            css={{
+              marginTop: theme.spacing[5],
+              paddingBottom: theme.spacing[5],
+              gridTemplateColumns: "1fr 3fr",
+              alignItems: "center",
+            }}
+          >
+            <Label>Value</Label>
+            <CssValueInputContainer
+              key="functionValue"
+              property="outlineOffset"
+              styleSource="local"
+              value={
+                parsedFilterValue.value.value?.[0] ?? {
+                  type: "unit",
+                  value: 0,
+                  unit: "px",
+                }
+              }
+              keywords={[]}
+              setValue={(value) => console.log(`setValue`, value)}
+              deleteProperty={() => console.log(`deleteProperty`)}
+            />
+          </Grid>
+        </Flex>
+      ) : undefined}
       <Separator css={{ gridAutoColumns: "span 2" }} />
       <Flex
         direction="column"
