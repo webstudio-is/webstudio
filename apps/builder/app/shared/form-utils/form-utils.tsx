@@ -16,6 +16,9 @@ export type Field<Type> = {
   onBlur: () => void;
 };
 
+/**
+ * @deprecated switch to useFormField or any other native validation
+ */
 export const useField = <Type,>({
   initialValue,
   validate,
@@ -51,6 +54,9 @@ export type ComposedFields = {
   showAllErrors: () => void;
 };
 
+/**
+ * @deprecated switch to useFormField or any other native validation
+ */
 export const composeFields = (
   // allow passing fields with more tight types
   // by ensuring their onChange will not refine
