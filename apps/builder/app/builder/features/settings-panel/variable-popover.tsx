@@ -105,31 +105,34 @@ const NameField = ({
   );
 };
 
-const ParameterForm = forwardRef<HTMLFormElement, { variable?: DataSource }>(
-  ({ variable }, ref) => {
-    return (
-      <Form
-        ref={ref}
-        onSubmit={(event) => {
-          const formData = new FormData(event.currentTarget);
-          const name = String(formData.get("name"));
-          // only existing parameter variables can be renamed
-          if (variable === undefined) {
-            return;
-          }
-          serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-            dataSources.set(variable.id, { ...variable, name });
-          });
-        }}
-      >
-        <NameField
-          defaultValue={variable?.name ?? ""}
-          onBlur={(event) => event.target.form?.requestSubmit()}
-        />
-      </Form>
-    );
+const ParameterForm = forwardRef<
+  HTMLFormElement,
+  {
+    variable?: DataSource;
   }
-);
+>(({ variable }, ref) => {
+  return (
+    <Form
+      ref={ref}
+      onSubmit={(event) => {
+        const formData = new FormData(event.currentTarget);
+        const name = String(formData.get("name"));
+        // only existing parameter variables can be renamed
+        if (variable === undefined) {
+          return;
+        }
+        serverSyncStore.createTransaction([$dataSources], (dataSources) => {
+          dataSources.set(variable.id, { ...variable, name });
+        });
+      }}
+    >
+      <NameField
+        defaultValue={variable?.name ?? ""}
+        onBlur={(event) => event.target.form?.requestSubmit()}
+      />
+    </Form>
+  );
+});
 ParameterForm.displayName = "ParameterForm";
 
 /**
