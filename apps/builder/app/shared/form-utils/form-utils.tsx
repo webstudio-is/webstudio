@@ -3,6 +3,7 @@ import type {
   FocusEvent,
   FormEvent,
   InvalidEvent,
+  KeyboardEvent,
   ReactNode,
 } from "react";
 import { forwardRef, useEffect, useRef, useState } from "react";
@@ -96,6 +97,18 @@ export const useFormField = ({
     },
     onInvalid: (event: InvalidEvent<HTMLInputElement>) => {
       setError(event.target.validationMessage);
+    },
+    onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
+      const input = event.currentTarget;
+      // reset on escape when default value is different
+      if (event.key === "Escape" && input.value !== input.defaultValue) {
+        // prevent propagating escape to dialog or popover
+        event.stopPropagation();
+        input.value = input.defaultValue;
+        // revalidate after reset
+        setError("");
+        input.setCustomValidity(validate(input.value));
+      }
     },
   };
   return {

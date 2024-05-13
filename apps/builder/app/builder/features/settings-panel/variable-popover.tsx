@@ -14,6 +14,7 @@ import {
   useContext,
   useCallback,
   type FocusEvent,
+  type KeyboardEvent,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
