@@ -8,6 +8,7 @@ import {
   $createLineBreakNode,
   $getSelection,
   $isRangeSelection,
+  type EditorState,
 } from "lexical";
 import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -15,7 +16,6 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
 import { createRegularStyleSheet } from "@webstudio-is/css-engine";
@@ -30,6 +30,7 @@ import {
   $convertTextToLexical,
 } from "./interop";
 import { colord } from "colord";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 const BindInstanceToNodePlugin = ({ refs }: { refs: Refs }) => {
   const [editor] = useLexicalComposerContext();
@@ -109,6 +110,29 @@ const CaretColorPlugin = () => {
       };
     }
   }, [caretClassName, editor]);
+
+  return null;
+};
+
+const OnChangeOnBlurPlugin = ({
+  onChange,
+}: {
+  onChange: (editorState: EditorState) => void;
+}) => {
+  const [editor] = useLexicalComposerContext();
+  const handleChange = useEffectEvent(onChange);
+
+  useEffect(() => {
+    const handleBlur = () => {
+      handleChange(editor.getEditorState());
+    };
+
+    // https://github.com/facebook/lexical/blob/867d449b2a6497ff9b1fbdbd70724c74a1044d8b/packages/lexical-react/src/LexicalNodeEventPlugin.ts#L59C12-L67C8
+    return editor.registerRootListener((rootElement, prevRootElement) => {
+      rootElement?.addEventListener("blur", handleBlur);
+      prevRootElement?.removeEventListener("blur", handleBlur);
+    });
+  }, [editor, handleChange]);
 
   return null;
 };
@@ -266,8 +290,8 @@ export const TextEditor = ({
       />
       <LinkPlugin />
       <HistoryPlugin />
-      <OnChangePlugin
-        ignoreSelectionChange={true}
+
+      <OnChangeOnBlurPlugin
         onChange={(editorState) => {
           editorState.read(() => {
             const treeRootInstance = instances.get(rootInstanceSelector[0]);
