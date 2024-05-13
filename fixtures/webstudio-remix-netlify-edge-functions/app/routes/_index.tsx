@@ -267,7 +267,10 @@ export const action = async ({
 
     const submitTime = parseInt(formBotValue, 16);
     // 5 minutes
-    if (Math.abs(Date.now() - submitTime) > 1000 * 60 * 5) {
+    if (
+      Number.isNaN(submitTime) ||
+      Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
+    ) {
       throw new Error(`Form bot value invalid ${formBotValue}`);
     }
 
