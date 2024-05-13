@@ -13,6 +13,7 @@ import {
   createContext,
   useContext,
   useCallback,
+  type FocusEvent,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
@@ -71,7 +72,13 @@ import {
 import { ResourceForm, SystemResourceForm } from "./resource-panel";
 import { generateCurl } from "./curl";
 
-const NameField = ({ defaultValue }: { defaultValue: string }) => {
+const NameField = ({
+  defaultValue,
+  onBlur,
+}: {
+  defaultValue: string;
+  onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
+}) => {
   const nameId = useId();
   const { ref, error, props } = useFormField({
     defaultValue,
@@ -91,6 +98,7 @@ const NameField = ({ defaultValue }: { defaultValue: string }) => {
           color={error ? "error" : undefined}
           defaultValue={defaultValue}
           {...props}
+          onBlur={onBlur ?? props.onBlur}
         />
       </InputErrorsTooltip>
     </Grid>
@@ -114,7 +122,10 @@ const ParameterForm = forwardRef<HTMLFormElement, { variable?: DataSource }>(
           });
         }}
       >
-        <NameField defaultValue={variable?.name ?? ""} />
+        <NameField
+          defaultValue={variable?.name ?? ""}
+          onBlur={(event) => event.target.form?.requestSubmit()}
+        />
       </Form>
     );
   }

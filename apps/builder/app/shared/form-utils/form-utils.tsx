@@ -110,6 +110,7 @@ export const useFormField = ({
  * supports submit on enter
  * avoids submitting when invalid
  * resets attempts
+ * disables native tooltips
  * does not affect layout
  */
 export const Form = forwardRef<
@@ -121,6 +122,7 @@ export const Form = forwardRef<
       ref={ref}
       // exclude from the flow
       style={{ display: "contents" }}
+      noValidate={true}
       onSubmit={(event) => {
         event.preventDefault();
         if (event.currentTarget.checkValidity() === false) {
