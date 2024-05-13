@@ -6,6 +6,7 @@ import {
   $selectedInstanceSelector,
   $selectedPageId,
   $instances,
+  $dataSources,
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { createDefaultPages } from "@webstudio-is/project-build";
@@ -25,6 +26,19 @@ $instances.set(
 $selectedPageId.set("home");
 $pages.set(
   createDefaultPages({ rootInstanceId: "root", systemDataSourceId: "system" })
+);
+$dataSources.set(
+  new Map([
+    [
+      "systemId",
+      {
+        id: "systemId",
+        scopeInstanceId: "root",
+        name: "system",
+        type: "parameter",
+      },
+    ],
+  ])
 );
 
 export const VariablesSection: StoryObj = {

@@ -4,6 +4,7 @@ import {
   type ReactNode,
   type Ref,
   type RefObject,
+  type ForwardedRef,
   forwardRef,
   useId,
   useState,
@@ -11,6 +12,7 @@ import {
   useRef,
   createContext,
   useContext,
+  useCallback,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
@@ -22,6 +24,7 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
   FloatingPanelPopoverTrigger,
+  Grid,
   InputErrorsTooltip,
   InputField,
   Label,
@@ -53,6 +56,9 @@ import {
   type Field,
   composeFields,
   type ComposedFields,
+  useFormField,
+  Form,
+  checkCanRequestSubmit,
 } from "~/shared/form-utils";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import { BindingPopoverProvider } from "~/builder/shared/binding-popover";
@@ -64,6 +70,56 @@ import {
 } from "~/builder/shared/code-editor-base";
 import { ResourceForm, SystemResourceForm } from "./resource-panel";
 import { generateCurl } from "./curl";
+
+const NameField = ({ defaultValue }: { defaultValue: string }) => {
+  const nameId = useId();
+  const { ref, error, props } = useFormField({
+    defaultValue,
+    validate: useCallback(
+      (value: string) => (value.trim().length === 0 ? "Name is required" : ""),
+      []
+    ),
+  });
+  return (
+    <Grid gap={1}>
+      <Label htmlFor={nameId}>Name</Label>
+      <InputErrorsTooltip errors={error ? [error] : undefined}>
+        <InputField
+          inputRef={ref}
+          name="name"
+          id={nameId}
+          color={error ? "error" : undefined}
+          defaultValue={defaultValue}
+          {...props}
+        />
+      </InputErrorsTooltip>
+    </Grid>
+  );
+};
+
+const ParameterForm = forwardRef<HTMLFormElement, { variable?: DataSource }>(
+  ({ variable }, ref) => {
+    return (
+      <Form
+        ref={ref}
+        onSubmit={(event) => {
+          const formData = new FormData(event.currentTarget);
+          const name = String(formData.get("name"));
+          // only existing parameter variables can be renamed
+          if (variable === undefined) {
+            return;
+          }
+          serverSyncStore.createTransaction([$dataSources], (dataSources) => {
+            dataSources.set(variable.id, { ...variable, name });
+          });
+        }}
+      >
+        <NameField defaultValue={variable?.name ?? ""} />
+      </Form>
+    );
+  }
+);
+ParameterForm.displayName = "ParameterForm";
 
 /**
  * convert value expression to js value
@@ -114,28 +170,6 @@ type VariableType =
 type PanelApi = ComposedFields & {
   save: () => void;
 };
-
-const ParameterForm = forwardRef<
-  undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
-  const form = composeFields(nameField);
-  useImperativeHandle(ref, () => ({
-    ...form,
-    save: () => {
-      // only existing parameter variables can be renamed
-      if (variable === undefined) {
-        return;
-      }
-      const name = nameField.value;
-      serverSyncStore.createTransaction([$dataSources], (dataSources) => {
-        dataSources.set(variable.id, { ...variable, name });
-      });
-    },
-  }));
-  return <></>;
-});
-ParameterForm.displayName = "ParameterForm";
 
 const useValuePanelRef = ({
   ref,
@@ -356,9 +390,11 @@ JsonForm.displayName = "JsonForm";
 const VariablePanel = forwardRef<
   undefined | PanelApi,
   {
+    formRef: ForwardedRef<HTMLFormElement>;
     variable?: DataSource;
+    onSubmit: () => void;
   }
->(({ variable }, ref) => {
+>(({ formRef, variable, onSubmit }, ref) => {
   const { allowDynamicData } = useStore($userPlanFeatures);
   const resources = useStore($resources);
 
@@ -474,63 +510,58 @@ const VariablePanel = forwardRef<
   );
 
   if (variableType === "parameter") {
-    return (
-      <>
-        {nameFieldElement}
-        <ParameterForm ref={ref} variable={variable} nameField={nameField} />
-      </>
-    );
+    return <ParameterForm ref={formRef} variable={variable} />;
   }
   if (variableType === "string") {
     return (
-      <>
+      <Form onSubmit={onSubmit}>
         {nameFieldElement}
         {typeFieldElement}
         <StringForm ref={ref} variable={variable} nameField={nameField} />
-      </>
+      </Form>
     );
   }
   if (variableType === "number") {
     return (
-      <>
+      <Form onSubmit={onSubmit}>
         {nameFieldElement}
         {typeFieldElement}
         <NumberForm ref={ref} variable={variable} nameField={nameField} />
-      </>
+      </Form>
     );
   }
   if (variableType === "boolean") {
     return (
-      <>
+      <Form onSubmit={onSubmit}>
         {nameFieldElement}
         {typeFieldElement}
         <BooleanForm ref={ref} variable={variable} nameField={nameField} />
-      </>
+      </Form>
     );
   }
   if (variableType === "json") {
     return (
-      <>
+      <Form onSubmit={onSubmit}>
         {nameFieldElement}
         {typeFieldElement}
         <JsonForm ref={ref} variable={variable} nameField={nameField} />
-      </>
+      </Form>
     );
   }
 
   if (variableType === "resource") {
     return (
-      <>
+      <Form onSubmit={onSubmit}>
         {nameFieldElement}
         {typeFieldElement}
         <ResourceForm ref={ref} variable={variable} nameField={nameField} />
-      </>
+      </Form>
     );
   }
 
   if (variableType === "system-resource") {
     return (
-      <>
+      <Form onSubmit={onSubmit}>
         {nameFieldElement}
         {typeFieldElement}
         <SystemResourceForm
@@ -538,7 +569,7 @@ const VariablePanel = forwardRef<
           variable={variable}
           nameField={nameField}
         />
-      </>
+      </Form>
     );
   }
 
@@ -563,8 +594,15 @@ export const VariablePopoverTrigger = forwardRef<
   const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<undefined | PanelApi>();
   const resources = useStore($resources);
+  const form = useRef<HTMLFormElement>(null);
 
   const saveAndClose = () => {
+    if (form.current) {
+      if (checkCanRequestSubmit(form.current) === false) {
+        return;
+      }
+      form.current.requestSubmit();
+    }
     if (panelRef.current) {
       if (panelRef.current.allErrorsVisible === false) {
         panelRef.current.showAllErrors();
@@ -615,22 +653,16 @@ export const VariablePopoverTrigger = forwardRef<
               pb: theme.spacing[9],
             }}
           >
-            <form
-              // exclude from the flow
-              style={{ display: "contents" }}
-              onSubmit={(event) => {
-                event.preventDefault();
-                saveAndClose();
-              }}
+            <BindingPopoverProvider
+              value={{ containerRef: bindingPopoverContainerRef }}
             >
-              {/* submit is not triggered when press enter on input without submit button */}
-              <button style={{ display: "none" }}>submit</button>
-              <BindingPopoverProvider
-                value={{ containerRef: bindingPopoverContainerRef }}
-              >
-                <VariablePanel ref={panelRef} variable={variable} />
-              </BindingPopoverProvider>
-            </form>
+              <VariablePanel
+                ref={panelRef}
+                variable={variable}
+                formRef={form}
+                onSubmit={saveAndClose}
+              />
+            </BindingPopoverProvider>
           </Flex>
         </ScrollArea>
         {/* put after content to avoid auto focusing "Close" button */}
