@@ -5,6 +5,7 @@ import {
   type Ref,
   type RefObject,
   type ForwardedRef,
+  type FocusEvent,
   forwardRef,
   useId,
   useState,
@@ -13,8 +14,6 @@ import {
   createContext,
   useContext,
   useCallback,
-  type FocusEvent,
-  type KeyboardEvent,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
