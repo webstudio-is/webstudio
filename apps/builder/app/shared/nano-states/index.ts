@@ -4,4 +4,5 @@ export * from "./instances";
 export * from "./props";
 export * from "./canvas";
 export * from "./pages";
+export * from "./variables";
 export * from "./components";
