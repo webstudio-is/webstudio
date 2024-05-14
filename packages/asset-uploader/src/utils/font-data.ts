@@ -11,11 +11,12 @@ import {
 // @todo sumbit this to definitely typed, they are not up to date
 declare module "fontkit" {
   export interface Font {
-    type: string;
-    getName: (name: string) => string;
     variationAxes: VariationAxes;
   }
 }
+
+// same default fontkit uses internally
+const defaultLanguage = "en";
 
 export const parseSubfamily = (subfamily: string) => {
   const subfamilyLow = subfamily.toLowerCase();
@@ -68,10 +69,15 @@ type FontData = FontDataStatic | FontDataVariable;
 
 export const getFontData = (data: Uint8Array): FontData => {
   const font = createFontKit(data as Buffer);
+  if (font.type !== "TTF" && font.type !== "WOFF" && font.type !== "WOFF2") {
+    throw Error(`Unsupported font type ${font.type}`);
+  }
   const format = font.type.toLowerCase() as FontData["format"];
-  const originalFamily = font.getName("fontFamily");
+  const originalFamily = font.getName("fontFamily", defaultLanguage) ?? "";
   const subfamily =
-    font.getName("preferredSubfamily") ?? font.getName("fontSubfamily");
+    font.getName("preferredSubfamily", defaultLanguage) ??
+    font.getName("fontSubfamily", defaultLanguage) ??
+    "";
   const family = normalizeFamily(originalFamily, subfamily);
   const isVariable = Object.keys(font.variationAxes).length !== 0;
 

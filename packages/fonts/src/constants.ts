@@ -13,7 +13,6 @@ export const FONT_FORMATS: Map<FontFormat, string> = new Map([
   ["woff", "woff"],
   ["woff2", "woff2"],
   ["ttf", "truetype"],
-  ["otf", "opentype"],
 ]);
 
 export const FONT_MIME_TYPES = Array.from(FONT_FORMATS.keys())

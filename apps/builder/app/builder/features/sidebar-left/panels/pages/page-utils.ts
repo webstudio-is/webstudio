@@ -15,6 +15,7 @@ import {
   decodeDataSourceVariable,
   encodeDataSourceVariable,
   transpileExpression,
+  type System,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {
@@ -27,9 +28,12 @@ import {
   $dataSourceVariables,
   $dataSources,
   $pages,
+  $publishedOrigin,
   $resourceValues,
   $selectedInstanceSelector,
   $selectedPageId,
+  getPageDefaultSystem,
+  mergeSystem,
 } from "~/shared/nano-states";
 
 type TreePage = {
@@ -345,9 +349,22 @@ const $editingPage = computed(
   }
 );
 
+const $editingPagePath = computed($editingPage, (page) => page?.path);
+
+const $editingPageDefaultSystem = computed(
+  [$publishedOrigin, $editingPagePath],
+  (origin, path) => getPageDefaultSystem({ origin, path })
+);
+
 const $pageRootVariableValues = computed(
-  [$editingPage, $dataSources, $dataSourceVariables, $resourceValues],
-  (page, dataSources, dataSourceVariables, resourceValues) => {
+  [
+    $editingPage,
+    $dataSources,
+    $dataSourceVariables,
+    $resourceValues,
+    $editingPageDefaultSystem,
+  ],
+  (page, dataSources, dataSourceVariables, resourceValues, defaultSystem) => {
     const variableValues = new Map<string, unknown>();
     if (page === undefined) {
       return variableValues;
@@ -363,11 +380,11 @@ const $pageRootVariableValues = computed(
       if (variable.type === "parameter") {
         const value = dataSourceVariables.get(variable.id);
         variableValues.set(variable.id, value);
-        if (variable.id === page.systemDataSourceId && value === undefined) {
-          variableValues.set(variable.id, {
-            params: {},
-            search: {},
-          });
+        if (variable.id === page.systemDataSourceId) {
+          variableValues.set(
+            variable.id,
+            mergeSystem(defaultSystem, value as undefined | System)
+          );
         }
       }
       if (variable.type === "resource") {

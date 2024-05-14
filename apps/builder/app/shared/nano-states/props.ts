@@ -20,20 +20,18 @@ import {
 } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { $instances } from "./instances";
-import {
-  $dataSourceVariables,
-  $dataSources,
-  $props,
-  $assets,
-  $resources,
-  $resourceValues,
-  $publishedOrigin,
-} from "./nano-states";
+import { $dataSources, $props, $assets, $resources } from "./nano-states";
 import { $selectedPage, $pages } from "./pages";
 import { groupBy } from "../array-utils";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
+import {
+  $dataSourceVariables,
+  $resourceValues,
+  $selectedPageDefaultSystem,
+  mergeSystem,
+} from "./variables";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
@@ -120,8 +118,14 @@ const getAction = (
 // result of executing generated code
 // includes variables, computed expressions and action callbacks
 const $dataSourcesLogic = computed(
-  [$dataSources, $dataSourceVariables, $resourceValues],
-  (dataSources, dataSourceVariables, resourceValues) => {
+  [
+    $dataSources,
+    $dataSourceVariables,
+    $resourceValues,
+    $selectedPage,
+    $selectedPageDefaultSystem,
+  ],
+  (dataSources, dataSourceVariables, resourceValues, page, defaultSystem) => {
     const values = new Map<string, unknown>();
     for (const [dataSourceId, dataSource] of dataSources) {
       if (dataSource.type === "variable") {
@@ -131,7 +135,11 @@ const $dataSourcesLogic = computed(
         );
       }
       if (dataSource.type === "parameter") {
-        values.set(dataSourceId, dataSourceVariables.get(dataSourceId));
+        let value = dataSourceVariables.get(dataSourceId);
+        if (dataSource.id === page?.systemDataSourceId) {
+          value = mergeSystem(defaultSystem, value as undefined | System);
+        }
+        values.set(dataSourceId, value);
       }
       if (dataSource.type === "resource") {
         values.set(dataSourceId, resourceValues.get(dataSource.resourceId));
@@ -301,7 +309,7 @@ export const $variableValuesByInstanceSelector = computed(
     $dataSources,
     $dataSourceVariables,
     $resourceValues,
-    $publishedOrigin,
+    $selectedPageDefaultSystem,
   ],
   (
     instances,
@@ -310,7 +318,7 @@ export const $variableValuesByInstanceSelector = computed(
     dataSources,
     dataSourceVariables,
     resourceValues,
-    publishedOrigin
+    defaultSystem
   ) => {
     const propsByInstanceId = groupBy(
       props.values(),
@@ -361,17 +369,11 @@ export const $variableValuesByInstanceSelector = computed(
           if (variable.type === "parameter") {
             const value = dataSourceVariables.get(variable.id);
             variableValues.set(variable.id, value);
-            if (
-              variable.id === page.systemDataSourceId &&
-              value === undefined
-            ) {
-              const systemDefaultValue: System = {
-                params: {},
-                search: {},
-                origin: publishedOrigin,
-              };
-
-              variableValues.set(variable.id, systemDefaultValue);
+            if (variable.id === page.systemDataSourceId) {
+              variableValues.set(
+                variable.id,
+                mergeSystem(defaultSystem, value as undefined | System)
+              );
             }
           }
           if (variable.type === "resource") {

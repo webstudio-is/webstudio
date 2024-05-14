@@ -11,21 +11,21 @@
     "checks": "pnpm typecheck && pnpm test"
   },
   "dependencies": {
-    "@aws-crypto/sha256-js": "^5.0.0",
-    "@smithy/signature-v4": "^2.0.2",
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@smithy/signature-v4": "^2.3.0",
     "@webstudio-is/fonts": "workspace:*",
     "@webstudio-is/prisma-client": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
     "@webstudio-is/trpc-interface": "workspace:*",
     "fontkit": "^2.0.2",
-    "image-size": "^1.0.2",
+    "image-size": "^1.1.1",
     "immer": "^10.0.3",
     "nanoid": "^5.0.1",
     "warn-once": "^0.1.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@types/fontkit": "^2.0.3",
+    "@types/fontkit": "^2.0.7",
     "@types/node": "^20.12.7",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
