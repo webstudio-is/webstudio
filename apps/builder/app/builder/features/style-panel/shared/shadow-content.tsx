@@ -180,9 +180,7 @@ export const ShadowContent = ({
           </Tooltip>
           <CssValueInputContainer
             key="boxShadowOffsetX"
-            /*
-          outline-offset is a fake property for validating box-shadow's offsetX.
-        */
+            // outline-offset is a fake property for validating box-shadow's offsetX.
             property="outlineOffset"
             styleSource="local"
             keywords={[]}
@@ -214,9 +212,7 @@ export const ShadowContent = ({
           </Tooltip>
           <CssValueInputContainer
             key="boxShadowOffsetY"
-            /*
-          outline-offset is a fake property for validating box-shadow's offsetY.
-        */
+            // outline-offset is a fake property for validating box-shadow's offsetY.
             property="outlineOffset"
             styleSource="local"
             keywords={[]}
@@ -248,9 +244,7 @@ export const ShadowContent = ({
           </Tooltip>
           <CssValueInputContainer
             key="boxShadowBlur"
-            /*
-          border-top-width is a fake property for validating box-shadow's blur.
-        */
+            // border-top-width is a fake property for validating box-shadow's blur.
             property="borderTopWidth"
             styleSource="local"
             keywords={[]}
@@ -283,9 +277,7 @@ export const ShadowContent = ({
             </Tooltip>
             <CssValueInputContainer
               key="boxShadowSpread"
-              /*
-              outline-offset is a fake property for validating box-shadow's spread.
-          */
+              // outline-offset is a fake property for validating box-shadow's spread.
               property="outlineOffset"
               styleSource="local"
               keywords={[]}
