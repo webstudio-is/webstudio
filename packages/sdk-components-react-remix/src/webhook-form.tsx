@@ -110,6 +110,7 @@ export const WebhookForm = forwardRef<
       const hiddenInput = document.createElement("input");
       hiddenInput.type = "hidden";
       hiddenInput.name = formBotFieldName;
+      // Non-numeric values are utilized for logging purposes.
       hiddenInput.value = isJSDom() ? "jsdom" : Date.now().toString(16);
       event.currentTarget.appendChild(hiddenInput);
     };

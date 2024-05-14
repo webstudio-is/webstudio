@@ -266,7 +266,10 @@ export const action = async ({
     }
 
     const submitTime = parseInt(formBotValue, 16);
-    // 5 minutes
+    // Assumes that the difference between the server time and the form submission time,
+    // including any client-server time drift, is within a 5-minute range.
+    // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
+    // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
     if (
       Number.isNaN(submitTime) ||
       Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
