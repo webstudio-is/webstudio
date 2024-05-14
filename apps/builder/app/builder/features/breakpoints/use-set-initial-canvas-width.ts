@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
 import {
