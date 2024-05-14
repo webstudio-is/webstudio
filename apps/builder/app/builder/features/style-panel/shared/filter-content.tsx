@@ -3,6 +3,8 @@ import {
   type StyleProperty,
   type TupleValue,
   type FunctionValue,
+  toValue,
+  StyleValue,
 } from "@webstudio-is/css-engine";
 import {
   Flex,
@@ -14,7 +16,7 @@ import {
   Select,
   Grid,
 } from "@webstudio-is/design-system";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CssValueInputContainer,
   type IntermediateStyleValue,
@@ -50,23 +52,24 @@ export const FilterSectionContent = ({
   const [intermediateValue, setIntermediateValue] = useState<
     IntermediateStyleValue | InvalidValue | undefined
   >();
+  const [filterFunction, setFilterFunction] = useState<
+    FilterFunction | undefined
+  >(undefined);
+  const [filterFunctionValue, setFilterFunctionValue] = useState<
+    StyleValue | undefined
+  >(undefined);
 
-  const parsedFilterValue = useMemo<
-    | {
-        name: FilterFunction;
-        value: TupleValue;
-      }
-    | undefined
-  >(() => {
-    setIntermediateValue({ type: "intermediate", value: propertyValue });
-    if (isFilterFunction(layer.name) === true && layer.args.type === "tuple") {
-      return {
-        name: layer.name,
-        value: layer.args,
-      };
+  useEffect(() => {
+    if (isFilterFunction(layer.name) === false || layer.args.type !== "tuple") {
+      return;
     }
 
-    return;
+    setFilterFunction(layer.name);
+    setFilterFunctionValue(layer.args.value[0]);
+    setIntermediateValue({
+      type: "intermediate",
+      value: propertyValue,
+    });
   }, [layer, propertyValue]);
 
   const handleChange = (value: string) => {
@@ -76,49 +79,49 @@ export const FilterSectionContent = ({
     });
   };
 
-  const handleComplete = () => {
-    if (intermediateValue === undefined) {
-      return;
-    }
+  const parseFilterAndUpdate = (filterValue: string) => {
+    const layers = parseFilter(filterValue);
+    setIntermediateValue({
+      type: layers.type === "invalid" ? "invalid" : "intermediate",
+      value: filterValue,
+    });
 
-    const layers = parseFilter(intermediateValue.value);
     if (layers.type === "invalid") {
-      setIntermediateValue({
-        type: "invalid",
-        value: intermediateValue.value,
-      });
       return;
     }
 
     onEditLayer(index, layers);
   };
 
-  const handleFilterFunctionChange = (value: FilterFunction) => {
-    console.log(value);
+  const handleFilterFunctionChange = (filterName: FilterFunction) => {
+    const filterValue = `${filterName}(${toValue(filterFunctionValue)})`;
+    setFilterFunction(filterName);
+    parseFilterAndUpdate(filterValue);
   };
 
   return (
     <Flex direction="column">
-      {/* Invalid filter property */}
-      {parsedFilterValue !== undefined ? (
-        <Flex direction="column" css={{ px: theme.spacing[9] }}>
-          <Grid
-            gap="2"
-            css={{
-              marginTop: theme.spacing[5],
-              paddingBottom: theme.spacing[5],
-              gridTemplateColumns: "1fr 3fr",
-              alignItems: "center",
-            }}
-          >
-            <Label>Function</Label>
-            <Select
-              name="filterFunction"
-              options={Object.keys(filterFunctions) as FilterFunction[]}
-              value={parsedFilterValue.name}
-              onChange={handleFilterFunctionChange}
-            />
-          </Grid>
+      <Flex direction="column" css={{ px: theme.spacing[9] }}>
+        <Grid
+          gap="2"
+          css={{
+            marginTop: theme.spacing[5],
+            paddingBottom: theme.spacing[5],
+            gridTemplateColumns: "1fr 3fr",
+            alignItems: "center",
+          }}
+        >
+          <Label>Function</Label>
+          <Select
+            name="filterFunction"
+            placeholder="Select Filter"
+            options={Object.keys(filterFunctions) as FilterFunction[]}
+            value={filterFunction}
+            onChange={handleFilterFunctionChange}
+          />
+        </Grid>
+
+        {filterFunction !== "drop-shadow" ? (
           <Grid
             gap="2"
             css={{
@@ -134,19 +137,19 @@ export const FilterSectionContent = ({
               property="outlineOffset"
               styleSource="local"
               value={
-                parsedFilterValue.value.value?.[0] ?? {
+                filterFunctionValue ?? {
                   type: "unit",
                   value: 0,
                   unit: "px",
                 }
               }
               keywords={[]}
-              setValue={(value) => console.log(`setValue`, value)}
-              deleteProperty={() => console.log(`deleteProperty`)}
+              setValue={(value) => setFilterFunctionValue(value)}
+              deleteProperty={() => {}}
             />
           </Grid>
-        </Flex>
-      ) : undefined}
+        ) : undefined}
+      </Flex>
       <Separator css={{ gridAutoColumns: "span 2" }} />
       <Flex
         direction="column"
@@ -164,21 +167,20 @@ export const FilterSectionContent = ({
             {tooltip}
           </Flex>
         </Label>
-        {
-          // @todo Replace the TextArea with code-editor.
-          // For more details, please refer to the issue
-          // https://github.com/webstudio-is/webstudio/issues/2977
-        }
         <TextArea
           rows={3}
           name="description"
-          value={intermediateValue?.value ?? propertyValue ?? ""}
+          value={intermediateValue?.value ?? ""}
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
           state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
           onChange={handleChange}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
-              handleComplete();
+              if (intermediateValue === undefined) {
+                return;
+              }
+
+              parseFilterAndUpdate(intermediateValue.value);
               // On pressing Enter, the textarea is creating a new line.
               // In-order to prevent it and update the content.
               // We prevent the default behaviour
@@ -189,7 +191,7 @@ export const FilterSectionContent = ({
               if (intermediateValue === undefined) {
                 return;
               }
-
+              // @todo: Delete might delete the total code instead of just the layer
               deleteProperty(property, { isEphemeral: true });
               setIntermediateValue(undefined);
               event.preventDefault();
