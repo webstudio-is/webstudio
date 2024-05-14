@@ -6,6 +6,7 @@ import type {
   Unit,
 } from "@webstudio-is/css-engine";
 import { cssTryParseValue, isValidDeclaration } from "../parse-css-value";
+import { colord } from "colord";
 
 /*
   https://github.com/webstudio-is/webstudio/issues/1016
@@ -80,6 +81,21 @@ export const parseFilter = (input: string): TupleValue | InvalidValue => {
               tuple.push({
                 type: "keyword",
                 value: arg.value,
+              });
+            }
+
+            if (arg.type === "Function" || arg.type === "Hash") {
+              const colorValue = colord(csstree.generate(arg));
+              if (!colorValue.isValid()) {
+                return;
+              }
+              const rgb = colorValue.toRgb();
+              tuple.push({
+                type: "rgb",
+                alpha: rgb.a,
+                r: rgb.r,
+                g: rgb.g,
+                b: rgb.b,
               });
             }
           }
