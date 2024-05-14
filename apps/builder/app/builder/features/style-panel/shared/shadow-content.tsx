@@ -154,11 +154,12 @@ export const ShadowContent = ({
   return (
     <Flex direction="column">
       <Grid
-        columns={2}
         gap="2"
         css={{
-          paddingTop: theme.spacing[5],
           px: theme.spacing[9],
+          marginTop: theme.spacing[5],
+          gridTemplateColumns:
+            property === "boxShadow" ? "1fr 1fr" : "1fr 1fr 1fr",
         }}
       >
         <Flex direction="column">
@@ -180,8 +181,8 @@ export const ShadowContent = ({
           <CssValueInputContainer
             key="boxShadowOffsetX"
             /*
-              outline-offset is a fake property for validating box-shadow's offsetX.
-            */
+          outline-offset is a fake property for validating box-shadow's offsetX.
+        */
             property="outlineOffset"
             styleSource="local"
             keywords={[]}
@@ -190,40 +191,6 @@ export const ShadowContent = ({
             deleteProperty={() =>
               handlePropertyChange({
                 offsetX: offsetX ?? undefined,
-              })
-            }
-          />
-        </Flex>
-
-        <Flex direction="column">
-          <Tooltip
-            variant="wrapped"
-            content={
-              <Flex gap="2" direction="column">
-                <Text variant="regularBold">Blur Radius</Text>
-                <Text variant="monoBold">blur-radius</Text>
-                <Text>
-                  The larger this value, the bigger the blur, so the shadow
-                  becomes bigger and lighter.
-                </Text>
-              </Flex>
-            }
-          >
-            <Label css={{ width: "fit-content" }}>Blur</Label>
-          </Tooltip>
-          <CssValueInputContainer
-            key="boxShadowBlur"
-            /*
-              border-top-width is a fake property for validating box-shadow's blur.
-            */
-            property="borderTopWidth"
-            styleSource="local"
-            keywords={[]}
-            value={blur ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ blur: value })}
-            deleteProperty={() =>
-              handlePropertyChange({
-                blur: blur ?? undefined,
               })
             }
           />
@@ -248,8 +215,8 @@ export const ShadowContent = ({
           <CssValueInputContainer
             key="boxShadowOffsetY"
             /*
-              outline-offset is a fake property for validating box-shadow's offsetY.
-            */
+          outline-offset is a fake property for validating box-shadow's offsetY.
+        */
             property="outlineOffset"
             styleSource="local"
             keywords={[]}
@@ -258,6 +225,40 @@ export const ShadowContent = ({
             deleteProperty={() =>
               handlePropertyChange({
                 offsetY: offsetY ?? undefined,
+              })
+            }
+          />
+        </Flex>
+
+        <Flex direction="column">
+          <Tooltip
+            variant="wrapped"
+            content={
+              <Flex gap="2" direction="column">
+                <Text variant="regularBold">Blur Radius</Text>
+                <Text variant="monoBold">blur-radius</Text>
+                <Text>
+                  The larger this value, the bigger the blur, so the shadow
+                  becomes bigger and lighter.
+                </Text>
+              </Flex>
+            }
+          >
+            <Label css={{ width: "fit-content" }}>Blur</Label>
+          </Tooltip>
+          <CssValueInputContainer
+            key="boxShadowBlur"
+            /*
+          border-top-width is a fake property for validating box-shadow's blur.
+        */
+            property="borderTopWidth"
+            styleSource="local"
+            keywords={[]}
+            value={blur ?? { type: "unit", value: 0, unit: "px" }}
+            setValue={(value) => handlePropertyChange({ blur: value })}
+            deleteProperty={() =>
+              handlePropertyChange({
+                blur: blur ?? undefined,
               })
             }
           />
@@ -284,7 +285,7 @@ export const ShadowContent = ({
               key="boxShadowSpread"
               /*
               outline-offset is a fake property for validating box-shadow's spread.
-            */
+          */
               property="outlineOffset"
               styleSource="local"
               keywords={[]}
@@ -306,7 +307,7 @@ export const ShadowContent = ({
           px: theme.spacing[9],
           marginTop: theme.spacing[5],
           paddingBottom: theme.spacing[5],
-          gridTemplateColumns: "3fr 1fr",
+          ...(property === "boxShadow" && { gridTemplateColumns: "3fr 1fr" }),
         }}
       >
         <Flex direction="column">
