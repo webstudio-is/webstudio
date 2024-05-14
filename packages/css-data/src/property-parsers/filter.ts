@@ -86,17 +86,16 @@ export const parseFilter = (input: string): TupleValue | InvalidValue => {
 
             if (arg.type === "Function" || arg.type === "Hash") {
               const colorValue = colord(csstree.generate(arg));
-              if (!colorValue.isValid()) {
-                return;
+              if (colorValue.isValid() === true) {
+                const rgb = colorValue.toRgb();
+                tuple.push({
+                  type: "rgb",
+                  alpha: rgb.a,
+                  r: rgb.r,
+                  g: rgb.g,
+                  b: rgb.b,
+                });
               }
-              const rgb = colorValue.toRgb();
-              tuple.push({
-                type: "rgb",
-                alpha: rgb.a,
-                r: rgb.r,
-                g: rgb.g,
-                b: rgb.b,
-              });
             }
           }
 
