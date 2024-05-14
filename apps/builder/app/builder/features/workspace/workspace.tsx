@@ -11,7 +11,7 @@ import { CanvasTools } from "./canvas-tools";
 import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";
 import type { Breakpoint } from "@webstudio-is/sdk";
-import { findInitialWidth } from "../breakpoints/find-initial-width";
+import { calcCanvasWidth } from "../breakpoints/calc-canvas-width";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 
 const workspaceStyle = css({
@@ -61,7 +61,7 @@ const getCanvasInitialMaxWidth = (
     breakpointsArray.find(isBaseBreakpoint) ?? initialBreakpoints[0]?.[1];
 
   if (initialSelectedBreakpoint) {
-    const initialWidth = findInitialWidth(
+    const initialWidth = calcCanvasWidth(
       [...new Map(initialBreakpoints).values()],
       initialSelectedBreakpoint,
       Number.POSITIVE_INFINITY

@@ -1,8 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import { $workspaceRect, $canvasWidth } from "~/builder/shared/nano-states";
-import { $breakpoints, $selectedBreakpoint } from "~/shared/nano-states";
-import { findInitialWidth } from "./find-initial-width";
+import {
+  $breakpoints,
+  $isPreviewMode,
+  $selectedBreakpoint,
+} from "~/shared/nano-states";
+import { calcCanvasWidth } from "./calc-canvas-width";
+import { isBaseBreakpoint } from "~/shared/breakpoints";
 
 // Fixes initial canvas width jump on wide screens.
 // Calculate canvas width during SSR based on known initial width for wide screens.
@@ -14,13 +19,42 @@ export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
     return false;
   }
 
-  const width = findInitialWidth(
+  const width = calcCanvasWidth(
     Array.from(breakpoints.values()),
     breakpoint,
     workspaceRect.width
   );
 
   $canvasWidth.set(width);
+  return true;
+};
+
+// @todo merge with calcCanvasWidth and add tests
+const checkIfCustomCanvasWidth = (
+  currentWidth: number,
+  selectedBreakpoint: Breakpoint,
+  breakpoints: Array<Breakpoint>
+) => {
+  const hasMinWidth = breakpoints.some((b) => b.minWidth !== undefined);
+
+  if (hasMinWidth === false && isBaseBreakpoint(selectedBreakpoint)) {
+    return false;
+  }
+
+  for (const breakpoint of breakpoints) {
+    if (
+      breakpoint.minWidth !== undefined &&
+      currentWidth === breakpoint.minWidth
+    ) {
+      return false;
+    }
+    if (
+      breakpoint.maxWidth !== undefined &&
+      currentWidth === breakpoint.maxWidth + 1
+    ) {
+      return false;
+    }
+  }
   return true;
 };
 
@@ -38,15 +72,30 @@ export const useSetCanvasWidth = () => {
       const breakpointValues = Array.from(breakpoints.values());
       const selectedBreakpoint = $selectedBreakpoint.get();
 
-      // When there is selected breakpoint, we want to find the lowest possible size
-      // that is bigger than all max breakpoints and smaller than all min breakpoints.
+      // When there is selected breakpoint, we want to find the smallest possible size
+      // that is bigger than any max-width breakpoints and smaller than any min-width breakpoints.
+      // When on base breakpoint it will be the biggest possible but smaller than the workspace.
       if (selectedBreakpoint) {
-        const width = findInitialWidth(
+        const currentWidth = $canvasWidth.get();
+        let nextWidth = calcCanvasWidth(
           breakpointValues,
           selectedBreakpoint,
           workspaceRect.width
         );
-        $canvasWidth.set(width);
+
+        if (currentWidth !== undefined) {
+          const isCustomCanvasWidth = checkIfCustomCanvasWidth(
+            currentWidth,
+            selectedBreakpoint,
+            breakpointValues
+          );
+
+          if (isCustomCanvasWidth) {
+            nextWidth = currentWidth;
+          }
+        }
+
+        $canvasWidth.set(nextWidth);
       }
     };
 
@@ -57,10 +106,16 @@ export const useSetCanvasWidth = () => {
       }
       update();
     });
+    const unsubscribeIsPreviewMode = $isPreviewMode.listen((isPreviewMode) => {
+      if (isPreviewMode) {
+        update();
+      }
+    });
 
     return () => {
       unsubscribeBreakpointStore();
-      unsubscribeRectStore?.();
+      unsubscribeRectStore();
+      unsubscribeIsPreviewMode();
     };
   }, []);
 };

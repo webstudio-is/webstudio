@@ -1,5 +1,4 @@
 import { compareMedia } from "@webstudio-is/css-engine";
-import { b } from "@webstudio-is/react-sdk/css-normalize";
 import type { Breakpoint } from "@webstudio-is/sdk";
 import {
   groupBreakpoints,
@@ -12,7 +11,7 @@ const defaultWidth = 320;
 // Find a canvas width that is within the selected breakpoint's range, but is at it's minimum.
 // Goal is to allow user to consistently know the direction they want to resize to after they switched to a breakpoint.
 // In this case they will want to always increase the width after switching.
-export const findInitialWidth = (
+export const calcCanvasWidth = (
   breakpoints: Array<Breakpoint>,
   selectedBreakpoint: Breakpoint,
   workspaceWidth: number
