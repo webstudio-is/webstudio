@@ -1,5 +1,7 @@
 const formHiddenFieldPrefix = "ws--form";
 export const formIdFieldName = `${formHiddenFieldPrefix}-id`;
+// Used for simlpe protection against non js bots
+export const formBotFieldName = `${formHiddenFieldPrefix}-bot`;
 
 // Input data common for all handlers
 export type FormInfo = {
@@ -31,14 +33,6 @@ export const getFormEntries = (formData: FormData): [string, string][] =>
       ? [[key, value]]
       : []
   );
-
-export const getFormId = (formData: FormData) => {
-  for (const [key, value] of formData.entries()) {
-    if (key === formIdFieldName && typeof value === "string") {
-      return value;
-    }
-  }
-};
 
 const getDomain = (url: string) => {
   try {

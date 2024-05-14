@@ -5,7 +5,7 @@ import {
   getFormEntries,
   getErrors,
   getResponseBody,
-  getFormId,
+  formIdFieldName,
 } from "./shared";
 
 const getAuth = (hookUrl: string) => {
@@ -40,7 +40,7 @@ export const n8nHandler = async ({
     headers["Authorization"] = `Basic ${btoa([username, password].join(":"))}`;
   }
 
-  const formId = getFormId(formInfo.formData);
+  const formId = formInfo.formData.get(formIdFieldName);
 
   if (formId === undefined) {
     return { success: false, errors: ["No form id in FormData"] };
