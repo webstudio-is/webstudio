@@ -64,7 +64,7 @@ export const formatValuePreview = (value: unknown) => {
     return value.toString();
   }
   if (value === undefined) {
-    return "undefined";
+    return "";
   }
   if (value === null) {
     return "null";

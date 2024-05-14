@@ -1,5 +1,5 @@
 import type { ResourceRequest } from "@webstudio-is/sdk";
-import { parseArgsStringToArgv } from "string-argv";
+import arrgv from "arrgv";
 import { parse as parseArgs } from "ultraflag";
 
 /*
@@ -24,10 +24,18 @@ const getMethod = (value: string): ResourceRequest["method"] => {
   }
 };
 
-type CurlRequest = Pick<ResourceRequest, "url" | "method" | "headers" | "body">;
+export type CurlRequest = Pick<
+  ResourceRequest,
+  "url" | "method" | "headers" | "body"
+>;
 
 export const parseCurl = (curl: string): undefined | CurlRequest => {
-  const argv = parseArgsStringToArgv(curl);
+  let argv;
+  try {
+    argv = arrgv(curl);
+  } catch {
+    return;
+  }
   if (argv.length === 0) {
     return;
   }

@@ -37,6 +37,9 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ loading = "lazy", ...props }, ref) => {
+    // cast to string when invalid value type is provided with binding
+    const src = String(props.src ?? "");
+
     const { imageLoader, renderer, assetBaseUrl } = useContext(ReactSdkContext);
 
     if (renderer === "canvas") {
@@ -44,16 +47,13 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
       loading = "eager";
     }
 
-    if (
-      props.src === undefined ||
-      props.src.startsWith(assetBaseUrl) === false
-    ) {
+    if (src.startsWith(assetBaseUrl) === false) {
       return (
         <img
-          key={props.src}
+          key={src}
           loading={loading}
           {...props}
-          src={props.src || imagePlaceholderSvg}
+          src={src || imagePlaceholderSvg}
           ref={ref}
         />
       );
@@ -61,7 +61,7 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
 
     // webstudio pass resolved assetBaseUrl + asset.name
     // trim assetBaseUrl and pass only asset.name to image loader
-    const src = props.src.slice(assetBaseUrl.length);
+    const assetName = src.slice(assetBaseUrl.length);
 
     return (
       <WebstudioImage
@@ -74,11 +74,11 @@ export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
          * In non-builder mode, key on images are usually also a good idea,
          * prevents showing outdated images on route change.
          **/
-        key={src}
+        key={assetName}
         loading={loading}
         {...props}
         loader={imageLoader}
-        src={src}
+        src={assetName}
         ref={ref}
       />
     );

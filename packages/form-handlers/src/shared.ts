@@ -1,4 +1,4 @@
-export const formHiddenFieldPrefix = "ws--form";
+const formHiddenFieldPrefix = "ws--form";
 export const formIdFieldName = `${formHiddenFieldPrefix}-id`;
 
 // Input data common for all handlers
