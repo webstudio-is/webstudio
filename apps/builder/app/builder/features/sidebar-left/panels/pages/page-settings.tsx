@@ -50,6 +50,7 @@ import {
   Link,
   buttonStyle,
   PanelBanner,
+  css,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -576,6 +577,14 @@ const usePageUrl = (values: Values, systemDataSourceId?: DataSource["id"]) => {
   return `${publishedOrigin}${compiledPath}`;
 };
 
+const fieldsetStyle = css({
+  all: "unset",
+  display: "block",
+  "&:disabled": {
+    opacity: 0.4,
+  },
+});
+
 const FormFields = ({
   systemDataSourceId,
   autoSelect,
@@ -809,7 +818,7 @@ const FormFields = ({
          */}
         <fieldset
           disabled={values.documentType === "xml"}
-          style={{ display: "contents" }}
+          className={fieldsetStyle()}
         >
           <Grid gap={2} css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
             <Grid gap={2}>
