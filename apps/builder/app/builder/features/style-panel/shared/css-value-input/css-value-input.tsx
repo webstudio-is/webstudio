@@ -660,7 +660,7 @@ export const CssValueInput = ({
 
   return (
     <ComboboxRoot open={isOpen}>
-      <Box {...getComboboxProps()}>
+      <Box {...getComboboxProps()} css={{ width: "100%" }}>
         <ComboboxAnchor>
           <InputField
             size={size}
