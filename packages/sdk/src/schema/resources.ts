@@ -18,6 +18,7 @@ const Header = z.object({
 export const Resource = z.object({
   id: ResourceId,
   name: z.string(),
+  control: z.optional(z.union([z.literal("system"), z.literal("graphql")])),
   method: Method,
   // expression
   url: z.string(),
