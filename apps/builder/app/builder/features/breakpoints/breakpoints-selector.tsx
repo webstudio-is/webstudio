@@ -8,7 +8,6 @@ import {
   ToolbarToggleGroup,
   ToolbarToggleItem,
   Tooltip,
-  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { AlertIcon, BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
