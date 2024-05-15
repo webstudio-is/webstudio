@@ -74,7 +74,7 @@ const Menu = ({
       <DropdownMenuPortal>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>
-            {user.username ? user.username : ""}
+            {user.username ?? "James Bond"}
             <Text>{user.email}</Text>
           </DropdownMenuLabel>
           {userPlanFeatures.hasSubscription && (
