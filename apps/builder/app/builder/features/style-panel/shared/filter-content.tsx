@@ -89,7 +89,7 @@ export const FilterSectionContent = ({
         name="description"
         value={intermediateValue?.value ?? propertyValue ?? ""}
         css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-        state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
+        color={intermediateValue?.type === "invalid" ? "error" : undefined}
         onChange={handleChange}
         onKeyDown={(event) => {
           if (event.key === "Enter") {

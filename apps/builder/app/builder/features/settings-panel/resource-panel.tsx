@@ -375,7 +375,7 @@ const BodyField = ({
               maxRows={10}
               // expressions with variables cannot be edited
               disabled={isBound}
-              state={bodyField.error ? "invalid" : undefined}
+              color={bodyField.error ? "error" : undefined}
               value={String(evaluatedBodyValue ?? "")}
               // update text value as string literal
               onChange={(newValue) =>
