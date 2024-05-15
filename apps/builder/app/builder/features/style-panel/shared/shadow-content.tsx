@@ -3,7 +3,6 @@ import {
   type InvalidValue,
   type LayersValue,
   type RgbValue,
-  type StyleProperty,
   type StyleValue,
   type TupleValue,
   type UnitValue,
@@ -60,12 +59,13 @@ import type { DeleteProperty, SetProperty } from "../shared/use-style-data";
 
 type ShadowContentProps = {
   index: number;
-  property: StyleProperty;
+  property: "boxShadow" | "textShadow";
   layer: TupleValue;
   propertyValue: string;
   tooltip: JSX.Element;
   onEditLayer: (index: number, layers: LayersValue) => void;
   deleteProperty: DeleteProperty;
+  hideCodeEditor?: boolean;
 };
 
 const convertValuesToTupple = (
@@ -91,6 +91,7 @@ export const ShadowContent = ({
   property,
   propertyValue,
   tooltip,
+  hideCodeEditor,
   onEditLayer,
   deleteProperty,
 }: ShadowContentProps) => {
@@ -122,7 +123,7 @@ export const ShadowContent = ({
     if (intermediateValue === undefined) {
       return;
     }
-    const layers = parseShadow("boxShadow", intermediateValue.value);
+    const layers = parseShadow(property, intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
@@ -373,48 +374,54 @@ export const ShadowContent = ({
         ) : null}
       </Grid>
 
-      <Separator css={{ gridColumn: "span 2" }} />
-      <Flex
-        direction="column"
-        css={{
-          px: theme.spacing[9],
-          paddingTop: theme.spacing[5],
-          paddingBottom: theme.spacing[9],
-          gap: theme.spacing[3],
-          minWidth: theme.spacing[30],
-        }}
-      >
-        <Label>
-          <Flex align={"center"} gap={1}>
-            Code
-            {tooltip}
-          </Flex>
-        </Label>
-        <TextArea
-          rows={3}
-          name="description"
-          value={intermediateValue?.value ?? propertyValue ?? ""}
-          css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-          state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-          onChange={handleChange}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              handleComplete();
-              event.preventDefault();
-            }
-
-            if (event.key === "Escape") {
-              if (intermediateValue === undefined) {
-                return;
+      {hideCodeEditor === false ? (
+        <>
+          <Separator css={{ gridColumn: "span 2" }} />
+          <Flex
+            direction="column"
+            css={{
+              px: theme.spacing[9],
+              paddingTop: theme.spacing[5],
+              paddingBottom: theme.spacing[9],
+              gap: theme.spacing[3],
+              minWidth: theme.spacing[30],
+            }}
+          >
+            <Label>
+              <Flex align={"center"} gap={1}>
+                Code
+                {tooltip}
+              </Flex>
+            </Label>
+            <TextArea
+              rows={3}
+              name="description"
+              value={intermediateValue?.value ?? propertyValue ?? ""}
+              css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
+              state={
+                intermediateValue?.type === "invalid" ? "invalid" : undefined
               }
+              onChange={handleChange}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleComplete();
+                  event.preventDefault();
+                }
 
-              deleteProperty(property, { isEphemeral: true });
-              setIntermediateValue(undefined);
-              event.preventDefault();
-            }
-          }}
-        />
-      </Flex>
+                if (event.key === "Escape") {
+                  if (intermediateValue === undefined) {
+                    return;
+                  }
+
+                  deleteProperty(property, { isEphemeral: true });
+                  setIntermediateValue(undefined);
+                  event.preventDefault();
+                }
+              }}
+            />
+          </Flex>
+        </>
+      ) : undefined}
     </Flex>
   );
 };

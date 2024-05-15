@@ -23,7 +23,20 @@ import {
 } from "../shared/css-value-input";
 import { parseFilter } from "@webstudio-is/css-data";
 import type { DeleteProperty } from "../shared/use-style-data";
-import { filterFunctions } from "../sections/filter/filter-utils";
+import { ShadowContent } from "./shadow-content";
+
+const filterFunctions = {
+  blur: "0px",
+  brightness: "0%",
+  contrast: "0%",
+  "drop-shadow": "0px 2px 5px rgba(0, 0, 0, 0.2)",
+  grayscale: "0%",
+  "hue-rotate": "0deg",
+  invert: "0%",
+  opacity: "0%",
+  saturate: "0%",
+  sepia: "0%",
+} as const;
 
 type FilterContentProps = {
   index: number;
@@ -72,20 +85,8 @@ export const FilterSectionContent = ({
     });
   }, [layer, propertyValue]);
 
-  const handleChange = (value: string) => {
-    setIntermediateValue({
-      type: "intermediate",
-      value,
-    });
-  };
-
-  const parseFilterAndUpdate = (filterValue: string) => {
+  const updateFilter = (filterValue: string) => {
     const layers = parseFilter(filterValue);
-    setIntermediateValue({
-      type: layers.type === "invalid" ? "invalid" : "intermediate",
-      value: filterValue,
-    });
-
     if (layers.type === "invalid") {
       return;
     }
@@ -94,9 +95,14 @@ export const FilterSectionContent = ({
   };
 
   const handleFilterFunctionChange = (filterName: FilterFunction) => {
-    const filterValue = `${filterName}(${toValue(filterFunctionValue)})`;
+    const defaultFilterValue = filterFunctions[filterName];
     setFilterFunction(filterName);
-    parseFilterAndUpdate(filterValue);
+    updateFilter(`${filterName}(${defaultFilterValue})`);
+  };
+
+  const handleFilterFunctionValueChange = (value: StyleValue) => {
+    setFilterFunctionValue(value);
+    updateFilter(`${filterFunction}(${toValue(value)})`);
   };
 
   return (
@@ -116,11 +122,10 @@ export const FilterSectionContent = ({
             name="filterFunction"
             placeholder="Select Filter"
             options={Object.keys(filterFunctions) as FilterFunction[]}
-            value={filterFunction}
+            value={filterFunction ?? "blur"}
             onChange={handleFilterFunctionChange}
           />
         </Grid>
-
         {filterFunction !== "drop-shadow" ? (
           <Grid
             gap="2"
@@ -144,12 +149,31 @@ export const FilterSectionContent = ({
                 }
               }
               keywords={[]}
-              setValue={(value) => setFilterFunctionValue(value)}
-              deleteProperty={() => {}}
+              setValue={handleFilterFunctionValueChange}
+              deleteProperty={deleteProperty}
             />
           </Grid>
         ) : undefined}
       </Flex>
+      {/* function args are always a tuple. This is just to satisfy the type checker */}
+
+      {filterFunction === "drop-shadow" && layer.args.type === "tuple" ? (
+        <ShadowContent
+          index={index}
+          // text-shaodw and drop-shaodow accepts the same args so we can use the same component
+          // and pass the args as value and property
+          property="textShadow"
+          layer={layer.args}
+          tooltip={<></>}
+          propertyValue={toValue(layer.args)}
+          onEditLayer={(_, dropShadowLayers) => {
+            updateFilter(`drop-shadow(${toValue(dropShadowLayers)})`);
+          }}
+          deleteProperty={() => {}}
+          hideCodeEditor={true}
+        />
+      ) : undefined}
+
       <Separator css={{ gridAutoColumns: "span 2" }} />
       <Flex
         direction="column"
@@ -173,14 +197,15 @@ export const FilterSectionContent = ({
           value={intermediateValue?.value ?? ""}
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
           state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-          onChange={handleChange}
+          onChange={(value) => {
+            setIntermediateValue({
+              type: "intermediate",
+              value,
+            });
+          }}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              if (intermediateValue === undefined) {
-                return;
-              }
-
-              parseFilterAndUpdate(intermediateValue.value);
+            if (event.key === "Enter" && intermediateValue !== undefined) {
+              updateFilter(intermediateValue.value);
               // On pressing Enter, the textarea is creating a new line.
               // In-order to prevent it and update the content.
               // We prevent the default behaviour
@@ -188,9 +213,6 @@ export const FilterSectionContent = ({
             }
 
             if (event.key === "Escape") {
-              if (intermediateValue === undefined) {
-                return;
-              }
               // @todo: Delete might delete the total code instead of just the layer
               deleteProperty(property, { isEphemeral: true });
               setIntermediateValue(undefined);

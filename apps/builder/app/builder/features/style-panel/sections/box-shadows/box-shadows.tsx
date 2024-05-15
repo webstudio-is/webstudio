@@ -88,6 +88,7 @@ export const Section = (props: SectionProps) => {
               <ShadowContent
                 {...layerProps}
                 layer={layerProps.layer}
+                property={property}
                 tooltip={
                   <Tooltip
                     variant="wrapped"
