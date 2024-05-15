@@ -1,17 +1,21 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
   EnhancedTooltip,
+  Flex,
   Text,
   Toolbar,
   ToolbarToggleGroup,
   ToolbarToggleItem,
+  Tooltip,
+  theme,
 } from "@webstudio-is/design-system";
-import { BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
+import { AlertIcon, BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
 import { $selectedBreakpointId } from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
+import { useWindowResizeDebounced } from "~/shared/dom-hooks";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {
@@ -44,6 +48,47 @@ const getTooltipContent = (breakpoint: Breakpoint) => {
       </Text>
     );
   }
+};
+
+// When browser zoom is used we can't guarantee that the displayed selected breakpoint is actually matching the media query on the canvas.
+// Actual media query will vary unpredictably, sometimes resulting in 1 px difference and we better warn user they are zooming.
+const ZoomWarning = () => {
+  const [zoom, setZoom] = useState<number>();
+
+  const updateZoom = () => {
+    setZoom(window.outerWidth / window.innerWidth);
+  };
+
+  useWindowResizeDebounced(updateZoom);
+
+  if (zoom === undefined) {
+    updateZoom();
+    return;
+  }
+
+  if (zoom === 1) {
+    return;
+  }
+
+  return (
+    <Tooltip
+      variant="wrapped"
+      content={`Your browser is at ${zoom.toFixed(
+        2
+      )} zoom level, and this may result in a mismatch between the breakpoints on the left and the actual media query on the canvas.`}
+    >
+      <Flex
+        align="center"
+        css={{
+          px: theme.spacing[5],
+          height: "100%",
+          color: theme.colors.backgroundAlertMain,
+        }}
+      >
+        <AlertIcon />
+      </Flex>
+    </Tooltip>
+  );
 };
 
 type BreakpointsSelector = {
@@ -80,7 +125,7 @@ export const BreakpointsSelector = ({
               <EnhancedTooltip
                 key={breakpoint.id}
                 content={getTooltipContent(breakpoint)}
-                css={{ maxWidth: 240 }}
+                variant="wrapped"
               >
                 <ToolbarToggleItem
                   variant="subtle"
@@ -111,6 +156,7 @@ export const BreakpointsSelector = ({
           breakpoints={breakpoints}
         />
       </ToolbarToggleGroup>
+      <ZoomWarning />
     </Toolbar>
   );
 };
