@@ -11,7 +11,11 @@ import {
 } from "@remix-run/server-runtime";
 import { useLoaderData } from "@remix-run/react";
 import { ReactSdkContext } from "@webstudio-is/react-sdk";
-import { n8nHandler, getFormId } from "@webstudio-is/form-handlers";
+import {
+  n8nHandler,
+  formIdFieldName,
+  formBotFieldName,
+} from "@webstudio-is/form-handlers";
 import {
   Page,
   siteName,
@@ -240,66 +244,86 @@ const getMethod = (value: string | undefined) => {
   }
 };
 
-export const action = async ({ request, context }: ActionFunctionArgs) => {
-  const formData = await request.formData();
-
-  const formId = getFormId(formData);
-  if (formId === undefined) {
-    // We're throwing rather than returning { success: false }
-    // because this isn't supposed to happen normally: bug or malicious user
-    throw json("Form not found", { status: 404 });
-  }
-
-  const formProperties = formsProperties.get(formId);
-
-  // form properties are not defined when defaults are used
-  const { action, method } = formProperties ?? {};
-
-  if (contactEmail === undefined) {
-    return { success: false };
-  }
-
-  // wrapped in try/catch just in cases new URL() throws
-  // (should not happen)
-  let pageUrl: URL;
+export const action = async ({
+  request,
+  context,
+}: ActionFunctionArgs): Promise<
+  { success: true } | { success: false; errors: string[] }
+> => {
   try {
-    pageUrl = new URL(request.url);
-    pageUrl.host = getRequestHost(request);
-  } catch {
-    return { success: false };
-  }
+    const formData = await request.formData();
 
-  if (action !== undefined) {
-    try {
-      // Test that action is full URL
-      new URL(action);
-    } catch {
-      return json(
-        {
-          success: false,
-          error: "Invalid action URL, must be valid http/https protocol",
-        },
-        { status: 200 }
-      );
+    const formId = formData.get(formIdFieldName);
+
+    if (formId == null || typeof formId !== "string") {
+      throw new Error("No form id in FormData");
     }
+
+    const formBotValue = formData.get(formBotFieldName);
+
+    if (formBotValue == null || typeof formBotValue !== "string") {
+      throw new Error("Form bot field not found");
+    }
+
+    const submitTime = parseInt(formBotValue, 16);
+    // Assumes that the difference between the server time and the form submission time,
+    // including any client-server time drift, is within a 5-minute range.
+    // Note: submitTime might be NaN because formBotValue can be any string used for logging purposes.
+    // Example: `formBotValue: jsdom`, or `formBotValue: headless-env`
+    if (
+      Number.isNaN(submitTime) ||
+      Math.abs(Date.now() - submitTime) > 1000 * 60 * 5
+    ) {
+      throw new Error(`Form bot value invalid ${formBotValue}`);
+    }
+
+    const formProperties = formsProperties.get(formId);
+
+    // form properties are not defined when defaults are used
+    const { action, method } = formProperties ?? {};
+
+    if (contactEmail === undefined) {
+      throw new Error("Contact email not found");
+    }
+
+    const pageUrl = new URL(request.url);
+    pageUrl.host = getRequestHost(request);
+
+    if (action !== undefined) {
+      try {
+        // Test that action is full URL
+        new URL(action);
+      } catch {
+        throw new Error(
+          "Invalid action URL, must be valid http/https protocol"
+        );
+      }
+    }
+
+    const formInfo = {
+      formData,
+      projectId,
+      action: action ?? null,
+      method: getMethod(method),
+      pageUrl: pageUrl.toString(),
+      toEmail: contactEmail,
+      fromEmail: pageUrl.hostname + "@webstudio.email",
+    } as const;
+
+    const result = await n8nHandler({
+      formInfo,
+      hookUrl: context.N8N_FORM_EMAIL_HOOK,
+    });
+
+    return result;
+  } catch (error) {
+    console.error(error);
+
+    return {
+      success: false,
+      errors: [error instanceof Error ? error.message : "Unknown error"],
+    };
   }
-
-  const formInfo = {
-    formData,
-    projectId,
-    action: action ?? null,
-    method: getMethod(method),
-    pageUrl: pageUrl.toString(),
-    toEmail: contactEmail,
-    fromEmail: pageUrl.hostname + "@webstudio.email",
-  } as const;
-
-  const result = await n8nHandler({
-    formInfo,
-    hookUrl: context.N8N_FORM_EMAIL_HOOK,
-  });
-
-  return result;
 };
 
 const Outlet = () => {
