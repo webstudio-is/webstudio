@@ -930,7 +930,7 @@ const FormFields = ({
                 )}
                 <InputErrorsTooltip errors={errors.description}>
                   <TextArea
-                    state={errors.description && "invalid"}
+                    color={errors.description ? "error" : undefined}
                     id={fieldIds.description}
                     name="description"
                     disabled={isLiteralExpression(values.description) === false}

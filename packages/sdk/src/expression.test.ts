@@ -8,6 +8,8 @@ import {
   lintExpression,
   transpileExpression,
   getExpressionIdentifiers,
+  parseObjectExpression,
+  generateObjectExpression,
 } from "./expression";
 
 describe("lint expression", () => {
@@ -319,6 +321,57 @@ describe("transpile expression", () => {
       errorString = (error as Error).message;
     }
     expect(errorString).toEqual(`Unexpected token (1:0) in ""`);
+  });
+});
+
+describe("object expression transformations", () => {
+  test("parse object expression", () => {
+    expect(parseObjectExpression(`{ a: 0, b: "", c: $c + 1 }`)).toEqual(
+      new Map([
+        ["a", `0`],
+        ["b", `""`],
+        ["c", `$c + 1`],
+      ])
+    );
+  });
+
+  test("parse unsupported syntax", () => {
+    expect(parseObjectExpression(``)).toEqual(new Map());
+    expect(parseObjectExpression(`0`)).toEqual(new Map());
+    expect(parseObjectExpression(`{ a: 0, ...spread }`)).toEqual(
+      new Map([["a", "0"]])
+    );
+    expect(parseObjectExpression(`{ a: 0, [b]: 0 }`)).toEqual(
+      new Map([["a", "0"]])
+    );
+    expect(parseObjectExpression(`{ "a-b": 0 }`)).toEqual(
+      new Map([["a-b", "0"]])
+    );
+  });
+
+  test("generate object expression", () => {
+    expect(
+      generateObjectExpression(
+        new Map([
+          ["a", `0`],
+          ["b-c", `""`],
+          ["d", `$d`],
+        ])
+      )
+    ).toMatchInlineSnapshot(`
+    "{
+      "a": 0,
+      "b-c": "",
+      "d": $d,
+    }"
+    `);
+  });
+
+  test("generate empty object expression", () => {
+    expect(generateObjectExpression(new Map())).toMatchInlineSnapshot(`
+    "{
+    }"
+    `);
   });
 });
 
