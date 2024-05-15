@@ -151,7 +151,7 @@ const UrlField = ({
 };
 
 const validateHeaderName = (value: string) =>
-  value.trim().length === 0 ? "Header name is required" : undefined;
+  value.trim().length === 0 ? "Header name is required" : "";
 
 const validateHeaderValue = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -161,36 +161,41 @@ const validateHeaderValue = (value: string, scope: Record<string, unknown>) => {
   if (evaluatedValue.length === 0) {
     return "Header value is required";
   }
+  return "";
 };
 
 const HeaderPair = ({
-  editorAliases,
-  editorScope,
+  aliases,
+  scope,
   name,
   value,
   onChange,
   onDelete,
 }: {
-  editorAliases: Map<string, string>;
-  editorScope: Record<string, unknown>;
+  aliases: Map<string, string>;
+  scope: Record<string, unknown>;
   name: string;
   value: string;
   onChange: (name: string, value: string) => void;
   onDelete: () => void;
 }) => {
   const nameId = useId();
-  const valueId = useId();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [nameError, setNameError] = useState("");
+  // revalidate and hide error message
+  // until validity is checks again
+  useEffect(() => {
+    nameRef.current?.setCustomValidity(validateHeaderName(name));
+    setNameError("");
+  }, [name]);
 
-  // temporary fields to validate name and value only onBlur
-  // invalid headers will be removed on save
-  const nameField = useField({
-    initialValue: name,
-    validate: validateHeaderName,
-  });
-  const valueField = useField({
-    initialValue: value,
-    validate: (value) => validateHeaderValue(value, editorScope),
-  });
+  const valueId = useId();
+  const valueRef = useRef<HTMLInputElement>(null);
+  const [valueError, setValueError] = useState("");
+  useEffect(() => {
+    valueRef.current?.setCustomValidity(validateHeaderValue(value, scope));
+    setValueError("");
+  }, [value, scope]);
 
   return (
     <Grid
@@ -207,19 +212,21 @@ const HeaderPair = ({
       <Label htmlFor={nameId} css={{ gridArea: "name" }}>
         Name
       </Label>
-      <InputErrorsTooltip
-        errors={nameField.error ? [nameField.error] : undefined}
-      >
+      <InputErrorsTooltip errors={nameError ? [nameError] : undefined}>
         <InputField
+          inputRef={nameRef}
+          name="header-name"
           css={{ gridArea: "name-input" }}
           id={nameId}
-          color={nameField.error ? "error" : undefined}
+          color={nameError ? "error" : undefined}
           value={name}
-          onChange={(event) => {
-            nameField.onChange(event.target.value);
-            onChange(event.target.value, value);
-          }}
-          onBlur={nameField.onBlur}
+          onChange={(event) => onChange(event.target.value, value)}
+          // can't use event.currentTarget because InputField
+          // binds focus events to container instead of input
+          onBlur={() => nameRef.current?.checkValidity()}
+          onInvalid={(event) =>
+            setNameError(event.currentTarget.validationMessage)
+          }
         />
       </InputErrorsTooltip>
       <Label htmlFor={valueId} css={{ gridArea: "value" }}>
@@ -227,38 +234,34 @@ const HeaderPair = ({
       </Label>
       <Box css={{ gridArea: "value-input", position: "relative" }}>
         <BindingControl>
-          <InputErrorsTooltip
-            errors={valueField.error ? [valueField.error] : undefined}
-          >
+          <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
             <InputField
+              inputRef={valueRef}
+              name="header-value"
               id={valueId}
               // expressions with variables cannot be edited
               disabled={isLiteralExpression(value) === false}
-              color={valueField.error ? "error" : undefined}
-              value={String(evaluateExpressionWithinScope(value, editorScope))}
+              color={valueError ? "error" : undefined}
+              value={String(evaluateExpressionWithinScope(value, scope))}
               // update text value as string literal
-              onChange={(event) => {
-                valueField.onChange(JSON.stringify(event.target.value));
-                onChange(name, JSON.stringify(event.target.value));
-              }}
-              onBlur={valueField.onBlur}
+              onChange={(event) =>
+                onChange(name, JSON.stringify(event.target.value))
+              }
+              onBlur={() => valueRef.current?.checkValidity()}
+              onInvalid={(event) =>
+                setValueError(event.currentTarget.validationMessage)
+              }
             />
           </InputErrorsTooltip>
           <BindingPopover
-            scope={editorScope}
-            aliases={editorAliases}
+            scope={scope}
+            aliases={aliases}
             variant={isLiteralExpression(value) ? "default" : "bound"}
             value={value}
-            onChange={(newValue) => {
-              valueField.onChange(newValue);
-              valueField.onBlur();
-              onChange(name, newValue);
-            }}
-            onRemove={(evaluatedValue) => {
-              valueField.onChange(JSON.stringify(evaluatedValue));
-              valueField.onBlur();
-              onChange(name, JSON.stringify(evaluatedValue));
-            }}
+            onChange={(newValue) => onChange(name, newValue)}
+            onRemove={(evaluatedValue) =>
+              onChange(name, JSON.stringify(evaluatedValue))
+            }
           />
         </BindingControl>
       </Box>
@@ -300,13 +303,13 @@ const HeaderPair = ({
 };
 
 const Headers = ({
-  editorScope,
-  editorAliases,
+  scope,
+  aliases,
   headers,
   onChange,
 }: {
-  editorAliases: Map<string, string>;
-  editorScope: Record<string, unknown>;
+  scope: Record<string, unknown>;
+  aliases: Map<string, string>;
   headers: Resource["headers"];
   onChange: (headers: Resource["headers"]) => void;
 }) => {
@@ -315,8 +318,8 @@ const Headers = ({
       {headers.map((header, index) => (
         <HeaderPair
           key={index}
-          editorScope={editorScope}
-          editorAliases={editorAliases}
+          scope={scope}
+          aliases={aliases}
           name={header.name}
           value={header.value}
           onChange={(name, value) => {
@@ -534,10 +537,9 @@ export const ResourceForm = forwardRef<
   const [method, setMethod] = useState<Resource["method"]>(
     resource?.method ?? "get"
   );
-  const headersField = useField<Resource["headers"]>({
-    initialValue: resource?.headers ?? [],
-    validate: (_value) => undefined,
-  });
+  const [headers, setHeaders] = useState<Resource["headers"]>(
+    resource?.headers ?? []
+  );
   const bodyField = useField<undefined | string>({
     initialValue: resource?.body,
     validate: (value) => {
@@ -555,7 +557,7 @@ export const ResourceForm = forwardRef<
     },
   });
 
-  const form = composeFields(nameField, headersField, bodyField);
+  const form = composeFields(nameField, bodyField);
   const formAccessorRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({
     isValid() {
@@ -595,24 +597,12 @@ export const ResourceForm = forwardRef<
         return;
       }
       const [instanceId] = instanceSelector;
-      const newHeaders = headersField.value.flatMap((header) => {
-        // exclude invalid headers
-        if (
-          validateHeaderName(header.name) !== undefined ||
-          validateHeaderValue(header.value, scope) !== undefined
-        ) {
-          return [];
-        }
-        return [header];
-      });
-      // clear invalid headers on save
-      headersField.onChange(newHeaders);
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name: nameField.value,
         url,
         method,
-        headers: newHeaders,
+        headers,
         body: bodyField.value,
       };
       const newVariable: DataSource = {
@@ -645,7 +635,7 @@ export const ResourceForm = forwardRef<
           // update all feilds when curl is paste into url field
           setUrl(JSON.stringify(curl.url));
           setMethod(curl.method);
-          headersField.onChange(
+          setHeaders(
             curl.headers.map((header) => ({
               name: header.name,
               value: JSON.stringify(header.value),
@@ -654,7 +644,7 @@ export const ResourceForm = forwardRef<
           bodyField.onChange(JSON.stringify(curl.body));
         }}
       />
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      <Grid gap={1}>
         <Label>Method</Label>
         <Select<Resource["method"]>
           options={["get", "post", "put", "delete"]}
@@ -662,22 +652,22 @@ export const ResourceForm = forwardRef<
           value={method}
           onChange={(newValue) => setMethod(newValue)}
         />
-      </Flex>
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+      </Grid>
+      <Grid gap={1}>
         <Label>Headers</Label>
         <Headers
-          editorScope={scope}
-          editorAliases={aliases}
-          headers={headersField.value}
-          onChange={headersField.onChange}
+          scope={scope}
+          aliases={aliases}
+          headers={headers}
+          onChange={setHeaders}
         />
-      </Flex>
+      </Grid>
       {method !== "get" && (
         <BodyField
           editorScope={scope}
           editorAliases={aliases}
           contentType={
-            headersField.value.find(
+            headers.find(
               (header) => header.name.toLowerCase() === "content-type"
             )?.value
           }
