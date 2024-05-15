@@ -14,16 +14,16 @@ import { isBaseBreakpoint } from "~/shared/breakpoints";
 export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
   const workspaceRect = $workspaceRect.get();
   const breakpoints = $breakpoints.get();
-  const breakpoint = breakpoints.get(breakpointId);
-  if (workspaceRect === undefined || breakpoint === undefined) {
+  const selectedBreakpoint = breakpoints.get(breakpointId);
+  if (workspaceRect === undefined || selectedBreakpoint === undefined) {
     return false;
   }
 
-  const width = calcCanvasWidth(
-    Array.from(breakpoints.values()),
-    breakpoint,
-    workspaceRect.width
-  );
+  const width = calcCanvasWidth({
+    breakpoints: Array.from(breakpoints.values()),
+    selectedBreakpoint,
+    workspaceWidth: workspaceRect.width,
+  });
 
   $canvasWidth.set(width);
   return true;
@@ -69,7 +69,6 @@ export const useSetCanvasWidth = () => {
       if (workspaceRect === undefined || breakpoints.size === 0) {
         return;
       }
-      const breakpointValues = Array.from(breakpoints.values());
       const selectedBreakpoint = $selectedBreakpoint.get();
 
       // When there is selected breakpoint, we want to find the smallest possible size
@@ -77,11 +76,12 @@ export const useSetCanvasWidth = () => {
       // When on base breakpoint it will be the biggest possible but smaller than the workspace.
       if (selectedBreakpoint) {
         const currentWidth = $canvasWidth.get();
-        let nextWidth = calcCanvasWidth(
-          breakpointValues,
+        const breakpointValues = Array.from(breakpoints.values());
+        let nextWidth = calcCanvasWidth({
+          breakpoints: breakpointValues,
           selectedBreakpoint,
-          workspaceRect.width
-        );
+          workspaceWidth: workspaceRect.width,
+        });
 
         if (currentWidth !== undefined) {
           const isCustomCanvasWidth = checkIfCustomCanvasWidth(

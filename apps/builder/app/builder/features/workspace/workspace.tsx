@@ -56,16 +56,16 @@ const useMeasureWorkspace = () => {
 const getCanvasInitialMaxWidth = (
   initialBreakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
-  const breakpointsArray = [...new Map(initialBreakpoints).values()];
-  const initialSelectedBreakpoint =
-    breakpointsArray.find(isBaseBreakpoint) ?? initialBreakpoints[0]?.[1];
+  const breakpoints = Array.from(new Map(initialBreakpoints).values());
+  const selectedBreakpoint =
+    breakpoints.find(isBaseBreakpoint) ?? initialBreakpoints[0]?.[1];
 
-  if (initialSelectedBreakpoint) {
-    const initialWidth = calcCanvasWidth(
-      [...new Map(initialBreakpoints).values()],
-      initialSelectedBreakpoint,
-      Number.POSITIVE_INFINITY
-    );
+  if (selectedBreakpoint) {
+    const initialWidth = calcCanvasWidth({
+      breakpoints,
+      selectedBreakpoint,
+      workspaceWidth: Number.POSITIVE_INFINITY,
+    });
     return initialWidth;
   }
 };
