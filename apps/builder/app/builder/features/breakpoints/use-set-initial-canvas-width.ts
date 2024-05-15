@@ -7,7 +7,6 @@ import {
   $selectedBreakpoint,
 } from "~/shared/nano-states";
 import { calcCanvasWidth } from "./calc-canvas-width";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
 
 // Fixes initial canvas width jump on wide screens.
 // Calculate canvas width during SSR based on known initial width for wide screens.
@@ -29,35 +28,6 @@ export const setInitialCanvasWidth = (breakpointId: Breakpoint["id"]) => {
   return true;
 };
 
-// @todo merge with calcCanvasWidth and add tests
-const checkIfCustomCanvasWidth = (
-  currentWidth: number,
-  selectedBreakpoint: Breakpoint,
-  breakpoints: Array<Breakpoint>
-) => {
-  const hasMinWidth = breakpoints.some((b) => b.minWidth !== undefined);
-
-  if (hasMinWidth === false && isBaseBreakpoint(selectedBreakpoint)) {
-    return false;
-  }
-
-  for (const breakpoint of breakpoints) {
-    if (
-      breakpoint.minWidth !== undefined &&
-      currentWidth === breakpoint.minWidth
-    ) {
-      return false;
-    }
-    if (
-      breakpoint.maxWidth !== undefined &&
-      currentWidth === breakpoint.maxWidth + 1
-    ) {
-      return false;
-    }
-  }
-  return true;
-};
-
 /**
  *  Update canvas width initially and on breakpoint change
  **/
@@ -75,26 +45,13 @@ export const useSetCanvasWidth = () => {
       // that is bigger than any max-width breakpoints and smaller than any min-width breakpoints.
       // When on base breakpoint it will be the biggest possible but smaller than the workspace.
       if (selectedBreakpoint) {
-        const currentWidth = $canvasWidth.get();
-        const breakpointValues = Array.from(breakpoints.values());
-        let nextWidth = calcCanvasWidth({
-          breakpoints: breakpointValues,
+        const canvasWidth = $canvasWidth.get();
+        const nextWidth = calcCanvasWidth({
+          breakpoints: Array.from(breakpoints.values()),
           selectedBreakpoint,
           workspaceWidth: workspaceRect.width,
+          canvasWidth,
         });
-
-        if (currentWidth !== undefined) {
-          const isCustomCanvasWidth = checkIfCustomCanvasWidth(
-            currentWidth,
-            selectedBreakpoint,
-            breakpointValues
-          );
-
-          if (isCustomCanvasWidth) {
-            nextWidth = currentWidth;
-          }
-        }
-
         $canvasWidth.set(nextWidth);
       }
     };

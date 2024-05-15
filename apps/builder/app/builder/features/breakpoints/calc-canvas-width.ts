@@ -8,6 +8,42 @@ import {
 
 const defaultWidth = 320;
 
+// We want to know if user resized the canvas to a custom value.
+const isCustomCanvasWidth = (
+  breakpoints: Array<Breakpoint>,
+  selectedBreakpoint: Breakpoint,
+  canvasWidth?: number
+) => {
+  if (canvasWidth === undefined) {
+    return false;
+  }
+  const hasMinWidth = breakpoints.some(
+    (breakpoint) => breakpoint.minWidth !== undefined
+  );
+
+  // Only in case of base breakpoint and whithout min-width breakpoint, we ignore the custom width,
+  // because we want it to go full viewport width
+  if (isBaseBreakpoint(selectedBreakpoint) && hasMinWidth === false) {
+    return false;
+  }
+
+  for (const breakpoint of breakpoints) {
+    if (
+      breakpoint.minWidth !== undefined &&
+      canvasWidth === breakpoint.minWidth
+    ) {
+      return false;
+    }
+    if (
+      breakpoint.maxWidth !== undefined &&
+      canvasWidth === breakpoint.maxWidth + 1
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
 // Find a canvas width that is within the selected breakpoint's range, but is at it's minimum.
 // Goal is to allow user to consistently know the direction they want to resize to after they switched to a breakpoint.
 // In this case they will want to always increase the width after switching.
@@ -15,11 +51,18 @@ export const calcCanvasWidth = ({
   breakpoints,
   selectedBreakpoint,
   workspaceWidth,
+  canvasWidth,
 }: {
   breakpoints: Array<Breakpoint>;
   selectedBreakpoint: Breakpoint;
   workspaceWidth: number;
+  canvasWidth?: number;
 }) => {
+  // When user has resized the canvas to a custom value, we want to keep it.
+  if (isCustomCanvasWidth(breakpoints, selectedBreakpoint, canvasWidth)) {
+    return canvasWidth;
+  }
+
   // Finding the canvas width when user selects base breakpoint is a bit more complicated.
   // We want to find the lowest possible size that is bigger than all max breakpoints and smaller than all min breakpoints.
   // Note: it is still possible to get intersecting min and max breakpoints.
