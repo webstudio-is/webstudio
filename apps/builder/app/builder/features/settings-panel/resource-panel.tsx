@@ -2,9 +2,11 @@ import { computed } from "nanostores";
 import { nanoid } from "nanoid";
 import {
   forwardRef,
+  useEffect,
   useId,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { useStore } from "@nanostores/react";
@@ -51,7 +53,102 @@ import {
   composeFields,
 } from "~/shared/form-utils";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
-import { parseCurl } from "./curl";
+import { parseCurl, type CurlRequest } from "./curl";
+
+const validateUrl = (value: string, scope: Record<string, unknown>) => {
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  if (typeof evaluatedValue !== "string") {
+    return "URL expects a string";
+  }
+  if (evaluatedValue.length === 0) {
+    return "URL is required";
+  }
+  try {
+    new URL(evaluatedValue);
+  } catch {
+    return "URL is invalid";
+  }
+  return "";
+};
+
+const UrlField = ({
+  scope,
+  aliases,
+  value,
+  onChange,
+  onCurlPaste,
+}: {
+  aliases: Map<string, string>;
+  scope: Record<string, unknown>;
+  value: string;
+  onChange: (value: string) => void;
+  onCurlPaste: (curl: CurlRequest) => void;
+}) => {
+  const urlId = useId();
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const [error, setError] = useState("");
+  // revalidate and hide error message
+  // until validity is checks again
+  useEffect(() => {
+    ref.current?.setCustomValidity(validateUrl(value, scope));
+    setError("");
+  }, [value, scope]);
+  return (
+    <Grid gap={1}>
+      <Label
+        htmlFor={urlId}
+        css={{ display: "flex", alignItems: "center", gap: theme.spacing[3] }}
+      >
+        URL
+        <Tooltip
+          content="You can paste a URL or cURL. cURL is a format that can be executed directly in your terminal because it contains the entire Resource configuration."
+          variant="wrapped"
+          disableHoverableContent={true}
+        >
+          <InfoCircleIcon tabIndex={0} />
+        </Tooltip>
+      </Label>
+      <BindingControl>
+        <InputErrorsTooltip errors={error ? [error] : undefined}>
+          <TextArea
+            ref={ref}
+            name="url"
+            id={urlId}
+            rows={1}
+            grow={true}
+            // expressions with variables cannot be edited
+            disabled={isLiteralExpression(value) === false}
+            color={error ? "error" : undefined}
+            value={String(evaluateExpressionWithinScope(value, scope))}
+            onChange={(value) => {
+              const curl = parseCurl(value);
+              if (curl) {
+                onCurlPaste(curl);
+              } else {
+                // update text value as string literal
+                onChange(JSON.stringify(value));
+              }
+            }}
+            onBlur={(event) => event.currentTarget.checkValidity()}
+            onInvalid={(event) =>
+              setError(event.currentTarget.validationMessage)
+            }
+          />
+        </InputErrorsTooltip>
+        <BindingPopover
+          scope={scope}
+          aliases={aliases}
+          variant={isLiteralExpression(value) ? "default" : "bound"}
+          value={value}
+          onChange={onChange}
+          onRemove={(evaluatedValue) =>
+            onChange(JSON.stringify(evaluatedValue))
+          }
+        />
+      </BindingControl>
+    </Grid>
+  );
+};
 
 const validateHeaderName = (value: string) =>
   value.trim().length === 0 ? "Header name is required" : undefined;
@@ -433,23 +530,7 @@ export const ResourceForm = forwardRef<
       ? resources.get(variable.resourceId)
       : undefined;
 
-  const urlField = useField<string>({
-    initialValue: resource?.url ?? `""`,
-    validate: (value) => {
-      const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-      if (typeof evaluatedValue !== "string") {
-        return "URL expects a string";
-      }
-      if (evaluatedValue.length === 0) {
-        return "URL is required";
-      }
-      try {
-        new URL(evaluatedValue);
-      } catch {
-        return "URL is invalid";
-      }
-    },
-  });
+  const [url, setUrl] = useState(resource?.url ?? `""`);
   const [method, setMethod] = useState<Resource["method"]>(
     resource?.method ?? "get"
   );
@@ -474,9 +555,40 @@ export const ResourceForm = forwardRef<
     },
   });
 
-  const form = composeFields(nameField, urlField, headersField, bodyField);
+  const form = composeFields(nameField, headersField, bodyField);
+  const formAccessorRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({
-    ...form,
+    isValid() {
+      const formElement = formAccessorRef.current?.form;
+      return form.isValid() && formElement?.checkValidity() === true;
+    },
+    areAllErrorsVisible() {
+      const formElement = formAccessorRef.current?.form;
+      // check all errors in form fields are visible
+      if (formElement) {
+        for (const element of formElement.elements) {
+          if (
+            element instanceof HTMLInputElement ||
+            element instanceof HTMLTextAreaElement
+          ) {
+            // field is invalid and the error is not visible
+            if (
+              element.validity.valid === false &&
+              // rely on data-color=error convention in webstudio design system
+              element.getAttribute("data-color") !== "error"
+            ) {
+              return false;
+            }
+          }
+        }
+      }
+      return form.areAllErrorsVisible();
+    },
+    showAllErrors() {
+      const formElement = formAccessorRef.current?.form;
+      formElement?.checkValidity();
+      form.showAllErrors();
+    },
     save: () => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
@@ -498,7 +610,7 @@ export const ResourceForm = forwardRef<
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name: nameField.value,
-        url: urlField.value,
+        url,
         method,
         headers: newHeaders,
         body: bodyField.value,
@@ -521,77 +633,27 @@ export const ResourceForm = forwardRef<
     },
   }));
 
-  const urlId = useId();
-
   return (
     <>
-      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-        <Label
-          htmlFor={urlId}
-          css={{ display: "flex", alignItems: "center", gap: theme.spacing[3] }}
-        >
-          URL
-          <Tooltip
-            content={
-              "You can paste a URL or cURL. cURL is a format that can be executed directly in your terminal because it contains the entire Resource configuration."
-            }
-            variant="wrapped"
-            disableHoverableContent={true}
-          >
-            <InfoCircleIcon tabIndex={0} />
-          </Tooltip>
-        </Label>
-        <BindingControl>
-          <InputErrorsTooltip
-            errors={urlField.error ? [urlField.error] : undefined}
-          >
-            <TextArea
-              grow
-              id={urlId}
-              rows={1}
-              // expressions with variables cannot be edited
-              disabled={isLiteralExpression(urlField.value) === false}
-              color={urlField.error ? "error" : undefined}
-              value={String(
-                evaluateExpressionWithinScope(urlField.value, scope)
-              )}
-              // update text value as string literal
-              onChange={(value) => {
-                const curl = parseCurl(value);
-                if (curl) {
-                  // update all feilds when curl is paste into url field
-                  urlField.onChange(JSON.stringify(curl.url));
-                  setMethod(curl.method);
-                  headersField.onChange(
-                    curl.headers.map((header) => ({
-                      name: header.name,
-                      value: JSON.stringify(header.value),
-                    }))
-                  );
-                  bodyField.onChange(JSON.stringify(curl.body));
-                } else {
-                  urlField.onChange(JSON.stringify(value));
-                }
-              }}
-              onBlur={urlField.onBlur}
-            />
-          </InputErrorsTooltip>
-          <BindingPopover
-            scope={scope}
-            aliases={aliases}
-            variant={isLiteralExpression(urlField.value) ? "default" : "bound"}
-            value={urlField.value}
-            onChange={(value) => {
-              urlField.onChange(value);
-              urlField.onBlur();
-            }}
-            onRemove={(evaluatedValue) => {
-              urlField.onChange(JSON.stringify(evaluatedValue));
-              urlField.onBlur();
-            }}
-          />
-        </BindingControl>
-      </Flex>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
+      <UrlField
+        scope={scope}
+        aliases={aliases}
+        value={url}
+        onChange={setUrl}
+        onCurlPaste={(curl) => {
+          // update all feilds when curl is paste into url field
+          setUrl(JSON.stringify(curl.url));
+          setMethod(curl.method);
+          headersField.onChange(
+            curl.headers.map((header) => ({
+              name: header.name,
+              value: JSON.stringify(header.value),
+            }))
+          );
+          bodyField.onChange(JSON.stringify(curl.body));
+        }}
+      />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label>Method</Label>
         <Select<Resource["method"]>

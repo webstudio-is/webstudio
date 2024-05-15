@@ -579,11 +579,11 @@ export const VariablePopoverTrigger = forwardRef<
 
   const saveAndClose = () => {
     if (panelRef.current) {
-      if (panelRef.current.allErrorsVisible === false) {
+      if (panelRef.current.areAllErrorsVisible() === false) {
         panelRef.current.showAllErrors();
         return;
       }
-      if (panelRef.current.valid) {
+      if (panelRef.current.isValid()) {
         panelRef.current.save();
       }
     }
@@ -686,11 +686,13 @@ export const VariablePopoverTrigger = forwardRef<
                       disabled={areResourcesLoading}
                       onClick={() => {
                         if (panelRef.current) {
-                          if (panelRef.current.allErrorsVisible === false) {
+                          if (
+                            panelRef.current.areAllErrorsVisible() === false
+                          ) {
                             panelRef.current.showAllErrors();
                             return;
                           }
-                          if (panelRef.current.valid) {
+                          if (panelRef.current.isValid()) {
                             panelRef.current.save();
                           }
                         }
