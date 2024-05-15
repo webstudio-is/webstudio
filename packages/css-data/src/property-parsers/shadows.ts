@@ -86,17 +86,16 @@ export const parseShadow = (
 
             if (item.type === "Function" || item.type === "Hash") {
               const colorValue = colord(csstree.generate(item));
-              if (!colorValue.isValid()) {
-                return;
+              if (colorValue.isValid() === true) {
+                const rgb = colorValue.toRgb();
+                shadow.push({
+                  type: "rgb",
+                  alpha: rgb.a,
+                  r: rgb.r,
+                  g: rgb.g,
+                  b: rgb.b,
+                });
               }
-              const rgb = colorValue.toRgb();
-              shadow.push({
-                type: "rgb",
-                alpha: rgb.a,
-                r: rgb.r,
-                g: rgb.g,
-                b: rgb.b,
-              });
             }
 
             if (item.type === "Dimension") {

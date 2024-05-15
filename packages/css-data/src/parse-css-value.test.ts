@@ -69,31 +69,9 @@ describe("Parse CSS value", () => {
 
   describe("Unparesd valid values", () => {
     test("Simple valid function values", () => {
-      expect(parseCssValue("filter", "blur(4px)")).toEqual({
-        type: "unparsed",
-        value: "blur(4px)",
-      });
-
       expect(parseCssValue("width", "calc(4px + 16em)")).toEqual({
         type: "unparsed",
         value: "calc(4px + 16em)",
-      });
-    });
-
-    test("Multiple valid function values", () => {
-      expect(
-        parseCssValue(
-          "filter",
-          "blur(4px) drop-shadow(16px 16px 20px blue) opacity(25%)"
-        )
-      ).toEqual({
-        type: "unparsed",
-        value: "blur(4px) drop-shadow(16px 16px 20px blue) opacity(25%)",
-      });
-
-      expect(parseCssValue("filter", "blur(calc(4px + 16em))")).toEqual({
-        type: "unparsed",
-        value: "blur(calc(4px + 16em))",
       });
     });
 

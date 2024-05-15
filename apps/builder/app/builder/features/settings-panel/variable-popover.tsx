@@ -33,7 +33,11 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import { isLocalResource, transpileExpression } from "@webstudio-is/sdk";
+import {
+  executeExpression,
+  isLocalResource,
+  transpileExpression,
+} from "@webstudio-is/sdk";
 import type { DataSource } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
@@ -388,7 +392,9 @@ const VariablePanel = forwardRef<
   const [variableType, setVariableType] = useState<VariableType>(() => {
     if (
       variable?.type === "resource" &&
-      isLocalResource(JSON.parse(resources.get(variable.resourceId)?.url ?? ""))
+      isLocalResource(
+        String(executeExpression(resources.get(variable.resourceId)?.url) ?? "")
+      )
     ) {
       return "system-resource";
     }
@@ -642,7 +648,11 @@ export const VariablePopoverTrigger = forwardRef<
               variable?.type === "resource" && (
                 <>
                   {isLocalResource(
-                    JSON.parse(resources.get(variable.resourceId)?.url ?? "")
+                    String(
+                      executeExpression(
+                        resources.get(variable.resourceId)?.url
+                      ) ?? ""
+                    )
                   ) === false && (
                     <Tooltip
                       content="Copy resource as cURL command"
