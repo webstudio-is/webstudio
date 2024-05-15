@@ -18,6 +18,7 @@ import {
   Button,
   ProBadge,
   DropdownMenuSeparator,
+  Text,
 } from "@webstudio-is/design-system";
 import { useNavigate } from "@remix-run/react";
 import { logoutPath, userPlanSubscriptionPath } from "~/shared/router-utils";
@@ -43,7 +44,7 @@ const Menu = ({
   userPlanFeatures: UserPlanFeatures;
 }) => {
   const navigate = useNavigate();
-  const title = user?.username ?? user?.email ?? undefined;
+  const nameOrEmail = user.username ?? user.email ?? undefined;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -58,8 +59,8 @@ const Menu = ({
 
             <Avatar
               src={user?.image || undefined}
-              fallback={getAvatarLetter(title)}
-              alt={title || "User Avatar"}
+              fallback={getAvatarLetter(nameOrEmail)}
+              alt={nameOrEmail || "User Avatar"}
             />
 
             <ChevronDownIcon
@@ -72,7 +73,10 @@ const Menu = ({
       </DropdownMenuTrigger>
       <DropdownMenuPortal>
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{title}</DropdownMenuLabel>
+          <DropdownMenuLabel>
+            {user.username ? user.username : ""}
+            <Text>{user.email}</Text>
+          </DropdownMenuLabel>
           {userPlanFeatures.hasSubscription && (
             <DropdownMenuItem
               onSelect={() => navigate(userPlanSubscriptionPath())}
