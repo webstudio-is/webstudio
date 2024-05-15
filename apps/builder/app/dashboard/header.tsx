@@ -36,6 +36,8 @@ const getAvatarLetter = (title?: string) => {
   return (title || "X").charAt(0).toLocaleUpperCase();
 };
 
+const defaultUserName = "James Bond";
+
 const Menu = ({
   user,
   userPlanFeatures,
@@ -44,7 +46,7 @@ const Menu = ({
   userPlanFeatures: UserPlanFeatures;
 }) => {
   const navigate = useNavigate();
-  const nameOrEmail = user.username ?? user.email ?? undefined;
+  const nameOrEmail = user.username ?? user.email ?? defaultUserName;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -60,7 +62,7 @@ const Menu = ({
             <Avatar
               src={user?.image || undefined}
               fallback={getAvatarLetter(nameOrEmail)}
-              alt={nameOrEmail || "User Avatar"}
+              alt={nameOrEmail}
             />
 
             <ChevronDownIcon
@@ -74,7 +76,7 @@ const Menu = ({
       <DropdownMenuPortal>
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>
-            {user.username ?? "James Bond"}
+            {user.username ?? defaultUserName}
             <Text>{user.email}</Text>
           </DropdownMenuLabel>
           {userPlanFeatures.hasSubscription && (
