@@ -235,6 +235,62 @@ export const transpileExpression = ({
   return expression;
 };
 
+/**
+ * parse object expression into key value map
+ * where each value is expression
+ */
+export const parseObjectExpression = (expression: string) => {
+  const map = new Map<string, string>();
+  let root;
+  try {
+    root = parseExpressionAt(expression, 0, { ecmaVersion: "latest" });
+  } catch (error) {
+    return map;
+  }
+  if (root.type !== "ObjectExpression") {
+    return map;
+  }
+  for (const property of root.properties) {
+    if (property.type === "SpreadElement") {
+      continue;
+    }
+    if (property.computed) {
+      continue;
+    }
+    let key;
+    if (property.key.type === "Identifier") {
+      key = property.key.name;
+    } else if (
+      property.key.type === "Literal" &&
+      typeof property.key.value === "string"
+    ) {
+      key = property.key.value;
+    } else {
+      continue;
+    }
+    const valueExpression = expression.slice(
+      property.value.start,
+      property.value.end
+    );
+    map.set(key, valueExpression);
+  }
+  return map;
+};
+
+/**
+ * generate key value map into object expression
+ * after updating individual value expressions
+ */
+export const generateObjectExpression = (map: Map<string, string>) => {
+  let generated = "{\n";
+  for (const [key, valueExpression] of map) {
+    const keyExpression = JSON.stringify(key);
+    generated += `  ${keyExpression}: ${valueExpression},\n`;
+  }
+  generated += `}`;
+  return generated;
+};
+
 const dataSourceVariablePrefix = "$ws$dataSource$";
 
 // data source id is generated with nanoid which has "-" in alphabeta
