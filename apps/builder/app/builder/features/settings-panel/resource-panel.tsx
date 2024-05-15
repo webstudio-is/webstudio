@@ -670,6 +670,7 @@ export const SystemResourceForm = forwardRef<
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
         name: nameField.value,
+        control: "system",
         url: localResource.value,
         method,
         headers: [],
