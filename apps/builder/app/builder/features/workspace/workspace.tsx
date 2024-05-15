@@ -64,7 +64,8 @@ const getCanvasInitialMaxWidth = (
     const initialWidth = calcCanvasWidth({
       breakpoints,
       selectedBreakpoint,
-      workspaceWidth: Number.POSITIVE_INFINITY,
+      // Just some reasonable initial guess, will be overwritten later as soon as detected.
+      workspaceWidth: 2000,
     });
     return initialWidth;
   }
