@@ -2,7 +2,6 @@ import { computed } from "nanostores";
 import { nanoid } from "nanoid";
 import {
   forwardRef,
-  useCallback,
   useEffect,
   useId,
   useImperativeHandle,
@@ -56,6 +55,22 @@ import {
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
 import { parseCurl, type CurlRequest } from "./curl";
 
+const validateUrl = (value: string, scope: Record<string, unknown>) => {
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  if (typeof evaluatedValue !== "string") {
+    return "URL expects a string";
+  }
+  if (evaluatedValue.length === 0) {
+    return "URL is required";
+  }
+  try {
+    new URL(evaluatedValue);
+  } catch {
+    return "URL is invalid";
+  }
+  return "";
+};
+
 const UrlField = ({
   scope,
   aliases,
@@ -72,30 +87,12 @@ const UrlField = ({
   const urlId = useId();
   const ref = useRef<HTMLTextAreaElement>(null);
   const [error, setError] = useState("");
-  const validate = useCallback(
-    (value: string) => {
-      const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-      if (typeof evaluatedValue !== "string") {
-        return "URL expects a string";
-      }
-      if (evaluatedValue.length === 0) {
-        return "URL is required";
-      }
-      try {
-        new URL(evaluatedValue);
-      } catch {
-        return "URL is invalid";
-      }
-      return "";
-    },
-    [scope]
-  );
   // revalidate and hide error message
   // until validity is checks again
   useEffect(() => {
-    ref.current?.setCustomValidity(validate(value));
+    ref.current?.setCustomValidity(validateUrl(value, scope));
     setError("");
-  }, [value, validate]);
+  }, [value, scope]);
   return (
     <Grid gap={1}>
       <Label
