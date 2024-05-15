@@ -49,9 +49,9 @@ export const Demo = () => {
           <TextArea value={value} onChange={setValue} />
         </StoryGrid>
       </StorySection>
-      <StorySection title="Invalid">
+      <StorySection title="Error">
         <StoryGrid css={{ width: 200 }}>
-          <TextArea value={value} onChange={setValue} state="invalid" />
+          <TextArea value={value} onChange={setValue} color="error" />
         </StoryGrid>
       </StorySection>
       <StorySection title="Disabled">
@@ -59,14 +59,9 @@ export const Demo = () => {
           <TextArea value={value} onChange={setValue} disabled />
         </StoryGrid>
       </StorySection>
-      <StorySection title="Disabled invalid">
+      <StorySection title="Disabled error">
         <StoryGrid css={{ width: 200 }}>
-          <TextArea
-            value={value}
-            onChange={setValue}
-            state="invalid"
-            disabled
-          />
+          <TextArea value={value} onChange={setValue} color="error" disabled />
         </StoryGrid>
       </StorySection>
       <StorySection title="Focused (initialy)">
