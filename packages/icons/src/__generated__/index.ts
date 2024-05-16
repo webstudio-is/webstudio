@@ -173,6 +173,7 @@ export * from "./tabs";
 export * from "./text-align-left";
 export * from "./text-italic";
 export * from "./text";
+export * from "./time";
 export * from "./tooltip";
 export * from "./trigger";
 export * from "./upload";

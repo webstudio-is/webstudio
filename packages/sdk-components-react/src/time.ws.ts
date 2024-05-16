@@ -1,4 +1,4 @@
-import { TextIcon } from "@webstudio-is/icons/svg";
+import { TimeIcon } from "@webstudio-is/icons/svg";
 
 import {
   defaultStates,
@@ -21,7 +21,7 @@ export const meta: WsComponentMeta = {
   label: "Time",
   description:
     "Converts machine-readable date and time to a human-readable format.",
-  icon: TextIcon,
+  icon: TimeIcon,
   states: defaultStates,
   presetStyle,
   order: 0,

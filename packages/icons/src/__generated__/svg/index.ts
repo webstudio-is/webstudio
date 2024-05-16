@@ -173,6 +173,7 @@ export { TabsIcon } from "./tabs";
 export { TextAlignLeftIcon } from "./text-align-left";
 export { TextItalicIcon } from "./text-italic";
 export { TextIcon } from "./text";
+export { TimeIcon } from "./time";
 export { TooltipIcon } from "./tooltip";
 export { TriggerIcon } from "./trigger";
 export { UploadIcon } from "./upload";
