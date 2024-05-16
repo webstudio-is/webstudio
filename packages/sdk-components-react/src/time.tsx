@@ -290,6 +290,7 @@ export type TimeProps = {
 };
 
 const INITIAL_DATE_STRING = "dateTime attribute is not set";
+const INVALID_DATE_STRING = "";
 
 const DEFAULT_LANGUAGE = "en";
 const DEFAULT_COUNTRY = "GB";
@@ -347,7 +348,8 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
       timeStyle: timeStyleOrUndefined(timeStyle),
     };
 
-    const datetimeString = datetime === null ? "" : datetime.toString();
+    const datetimeString =
+      datetime === null ? INVALID_DATE_STRING : datetime.toString();
 
     const date = new Date(datetimeString);
     const isValidDate = !Number.isNaN(date.getTime());
