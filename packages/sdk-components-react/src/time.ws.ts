@@ -12,13 +12,12 @@ import { time } from "@webstudio-is/react-sdk/css-normalize";
 import { props } from "./__generated__/time.props";
 
 const presetStyle = {
-  time: [...time],
+  time,
 } satisfies PresetStyle<"time">;
 
 export const meta: WsComponentMeta = {
   category: "data",
   type: "container",
-  label: "Time",
   description:
     "Converts machine-readable date and time to a human-readable format.",
   icon: TimeIcon,
