@@ -352,7 +352,7 @@ export const Time = React.forwardRef<React.ElementRef<"time">, TimeProps>(
       datetime === null ? INVALID_DATE_STRING : datetime.toString();
 
     const date = new Date(datetimeString);
-    const isValidDate = !Number.isNaN(date.getTime());
+    const isValidDate = false === Number.isNaN(date.getTime());
 
     let formattedDate = datetimeString;
 

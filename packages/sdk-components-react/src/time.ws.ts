@@ -23,7 +23,7 @@ export const meta: WsComponentMeta = {
   icon: TimeIcon,
   states: defaultStates,
   presetStyle,
-  order: 0,
+  order: 4,
 };
 
 export const propsMeta: WsComponentPropsMeta = {
