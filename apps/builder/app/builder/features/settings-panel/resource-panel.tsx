@@ -8,12 +8,15 @@ import {
   useMemo,
   useRef,
   useState,
+  type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
 import type { DataSource, Resource } from "@webstudio-is/sdk";
 import {
   encodeDataSourceVariable,
+  generateObjectExpression,
   isLiteralExpression,
+  parseObjectExpression,
   sitemapResourceUrl,
 } from "@webstudio-is/sdk";
 import {
@@ -53,7 +56,51 @@ import {
   composeFields,
 } from "~/shared/form-utils";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
+import {
+  EditorDialog,
+  EditorDialogButton,
+  EditorDialogControl,
+} from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
+
+export const composeWithNativeForm = (
+  formAccessorRef: RefObject<HTMLInputElement>,
+  form: ComposedFields
+): ComposedFields => {
+  return {
+    isValid() {
+      const formElement = formAccessorRef.current?.form;
+      return form.isValid() && formElement?.checkValidity() === true;
+    },
+    areAllErrorsVisible() {
+      const formElement = formAccessorRef.current?.form;
+      // check all errors in form fields are visible
+      if (formElement) {
+        for (const element of formElement.elements) {
+          if (
+            element instanceof HTMLInputElement ||
+            element instanceof HTMLTextAreaElement
+          ) {
+            // field is invalid and the error is not visible
+            if (
+              element.validity.valid === false &&
+              // rely on data-color=error convention in webstudio design system
+              element.getAttribute("data-color") !== "error"
+            ) {
+              return false;
+            }
+          }
+        }
+      }
+      return form.areAllErrorsVisible();
+    },
+    showAllErrors() {
+      const formElement = formAccessorRef.current?.form;
+      formElement?.checkValidity();
+      form.showAllErrors();
+    },
+  };
+};
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -82,7 +129,7 @@ const UrlField = ({
   scope: Record<string, unknown>;
   value: string;
   onChange: (value: string) => void;
-  onCurlPaste: (curl: CurlRequest) => void;
+  onCurlPaste?: (curl: CurlRequest) => void;
 }) => {
   const urlId = useId();
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -122,7 +169,7 @@ const UrlField = ({
             value={String(evaluateExpressionWithinScope(value, scope))}
             onChange={(value) => {
               const curl = parseCurl(value);
-              if (curl) {
+              if (curl && onCurlPaste) {
                 onCurlPaste(curl);
               } else {
                 // update text value as string literal
@@ -314,39 +361,42 @@ const Headers = ({
   onChange: (headers: Resource["headers"]) => void;
 }) => {
   return (
-    <Grid gap={3}>
-      {headers.map((header, index) => (
-        <HeaderPair
-          key={index}
-          scope={scope}
-          aliases={aliases}
-          name={header.name}
-          value={header.value}
-          onChange={(name, value) => {
-            const newHeaders = [...headers];
-            newHeaders[index] = { name, value };
+    <Grid gap={1}>
+      <Label>Headers</Label>
+      <Grid gap={3}>
+        {headers.map((header, index) => (
+          <HeaderPair
+            key={index}
+            scope={scope}
+            aliases={aliases}
+            name={header.name}
+            value={header.value}
+            onChange={(name, value) => {
+              const newHeaders = [...headers];
+              newHeaders[index] = { name, value };
+              onChange(newHeaders);
+            }}
+            onDelete={() => {
+              const newHeaders = [...headers];
+              newHeaders.splice(index, 1);
+              onChange(newHeaders);
+            }}
+          />
+        ))}
+        <Button
+          type="button"
+          color="neutral"
+          css={{ justifySelf: "center" }}
+          prefix={<PlusIcon />}
+          onClick={() => {
+            // use empty string expression as default
+            const newHeaders = [...headers, { name: "", value: `""` }];
             onChange(newHeaders);
           }}
-          onDelete={() => {
-            const newHeaders = [...headers];
-            newHeaders.splice(index, 1);
-            onChange(newHeaders);
-          }}
-        />
-      ))}
-      <Button
-        type="button"
-        color="neutral"
-        css={{ justifySelf: "center" }}
-        prefix={<PlusIcon />}
-        onClick={() => {
-          // use empty string expression as default
-          const newHeaders = [...headers, { name: "", value: `""` }];
-          onChange(newHeaders);
-        }}
-      >
-        Add another header pair
-      </Button>
+        >
+          Add another header pair
+        </Button>
+      </Grid>
     </Grid>
   );
 };
@@ -411,6 +461,24 @@ const $selectedInstanceScope = computed(
     return { scope, aliases };
   }
 );
+
+const useScope = ({ variable }: { variable?: DataSource }) => {
+  const { scope: scopeWithCurrentVariable, aliases } = useStore(
+    $selectedInstanceScope
+  );
+  const currentVariableId = variable?.id;
+  // prevent showing currently edited variable in suggestions
+  // to avoid cirular dependeny
+  const scope = useMemo(() => {
+    if (currentVariableId === undefined) {
+      return scopeWithCurrentVariable;
+    }
+    const newScope: Record<string, unknown> = { ...scopeWithCurrentVariable };
+    delete newScope[encodeDataSourceVariable(currentVariableId)];
+    return newScope;
+  }, [scopeWithCurrentVariable, currentVariableId]);
+  return { scope, aliases };
+};
 
 const BodyField = ({
   editorAliases,
@@ -512,20 +580,7 @@ export const ResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource; nameField: Field<string> }
 >(({ variable, nameField }, ref) => {
-  const { scope: scopeWithCurrentVariable, aliases } = useStore(
-    $selectedInstanceScope
-  );
-  const currentVariableId = variable?.id;
-  // prevent showing currently edited variable in suggestions
-  // to avoid cirular dependeny
-  const scope = useMemo(() => {
-    if (currentVariableId === undefined) {
-      return scopeWithCurrentVariable;
-    }
-    const newScope: Record<string, unknown> = { ...scopeWithCurrentVariable };
-    delete newScope[encodeDataSourceVariable(currentVariableId)];
-    return newScope;
-  }, [scopeWithCurrentVariable, currentVariableId]);
+  const { scope, aliases } = useScope({ variable });
 
   const resources = useStore($resources);
   const resource =
@@ -557,40 +612,13 @@ export const ResourceForm = forwardRef<
     },
   });
 
-  const form = composeFields(nameField, bodyField);
   const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(
+    formAccessorRef,
+    composeFields(nameField, bodyField)
+  );
   useImperativeHandle(ref, () => ({
-    isValid() {
-      const formElement = formAccessorRef.current?.form;
-      return form.isValid() && formElement?.checkValidity() === true;
-    },
-    areAllErrorsVisible() {
-      const formElement = formAccessorRef.current?.form;
-      // check all errors in form fields are visible
-      if (formElement) {
-        for (const element of formElement.elements) {
-          if (
-            element instanceof HTMLInputElement ||
-            element instanceof HTMLTextAreaElement
-          ) {
-            // field is invalid and the error is not visible
-            if (
-              element.validity.valid === false &&
-              // rely on data-color=error convention in webstudio design system
-              element.getAttribute("data-color") !== "error"
-            ) {
-              return false;
-            }
-          }
-        }
-      }
-      return form.areAllErrorsVisible();
-    },
-    showAllErrors() {
-      const formElement = formAccessorRef.current?.form;
-      formElement?.checkValidity();
-      form.showAllErrors();
-    },
+    ...form,
     save: () => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
@@ -653,15 +681,12 @@ export const ResourceForm = forwardRef<
           onChange={(newValue) => setMethod(newValue)}
         />
       </Grid>
-      <Grid gap={1}>
-        <Label>Headers</Label>
-        <Headers
-          scope={scope}
-          aliases={aliases}
-          headers={headers}
-          onChange={setHeaders}
-        />
-      </Grid>
+      <Headers
+        scope={scope}
+        aliases={aliases}
+        headers={headers}
+        onChange={setHeaders}
+      />
       {method !== "get" && (
         <BodyField
           editorScope={scope}
@@ -771,4 +796,188 @@ export const SystemResourceForm = forwardRef<
     </>
   );
 });
-SystemResourceForm.displayName = "ResourceForm";
+SystemResourceForm.displayName = "SystemResourceForm";
+
+export const GraphqlResourceForm = forwardRef<
+  undefined | PanelApi,
+  { variable?: DataSource; nameField: Field<string> }
+>(({ variable, nameField }, ref) => {
+  const { scope, aliases } = useScope({ variable });
+
+  const resources = useStore($resources);
+  const resource =
+    variable?.type === "resource"
+      ? resources.get(variable.resourceId)
+      : undefined;
+
+  const [url, setUrl] = useState(resource?.url ?? `""`);
+  const [headers, setHeaders] = useState(
+    resource?.headers ?? [
+      { name: "Content-Type", value: JSON.stringify("application/json") },
+    ]
+  );
+
+  const [bodyExpressions] = useState(() =>
+    parseObjectExpression(resource?.body ?? "")
+  );
+  const queryId = useId();
+  const [query, setQuery] = useState(
+    () =>
+      evaluateExpressionWithinScope(bodyExpressions.get("query") ?? "", {}) ??
+      ""
+  );
+  const [variables, setVariables] = useState(
+    () => bodyExpressions.get("variables") ?? "{}"
+  );
+  const [isVariablesLiteral, setIsVariablesLiteral] = useState(() =>
+    isLiteralExpression(variables)
+  );
+  const [variablesError, setVariablesError] = useState("");
+  const variablesRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const evaluatedValue = evaluateExpressionWithinScope(variables, scope);
+    variablesRef.current?.setCustomValidity(
+      typeof evaluatedValue === "object" && evaluatedValue !== null
+        ? ""
+        : "Expected valid JSON object in GraphQL variables"
+    );
+    setVariablesError("");
+  }, [variables, scope]);
+
+  const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(formAccessorRef, composeFields(nameField));
+  useImperativeHandle(ref, () => ({
+    ...form,
+    save: () => {
+      const instanceSelector = $selectedInstanceSelector.get();
+      if (instanceSelector === undefined) {
+        return;
+      }
+      const body = generateObjectExpression(
+        new Map([
+          ["query", JSON.stringify(query)],
+          ["variables", variables],
+        ])
+      );
+      const [instanceId] = instanceSelector;
+      const newResource: Resource = {
+        id: resource?.id ?? nanoid(),
+        name: nameField.value,
+        control: "graphql",
+        url,
+        method: "post",
+        headers,
+        body,
+      };
+      const newVariable: DataSource = {
+        id: variable?.id ?? nanoid(),
+        // preserve existing instance scope when edit
+        scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
+        name: nameField.value,
+        type: "resource",
+        resourceId: newResource.id,
+      };
+      serverSyncStore.createTransaction(
+        [$dataSources, $resources],
+        (dataSources, resources) => {
+          dataSources.set(newVariable.id, newVariable);
+          resources.set(newResource.id, newResource);
+        }
+      );
+    },
+  }));
+
+  return (
+    <>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
+      <UrlField scope={scope} aliases={aliases} value={url} onChange={setUrl} />
+
+      <Grid gap={1}>
+        <Label htmlFor={queryId}>Query</Label>
+        <EditorDialogControl>
+          <TextArea
+            name="query"
+            id={queryId}
+            rows={3}
+            maxRows={10}
+            autoGrow={true}
+            value={query}
+            onChange={setQuery}
+          />
+          <EditorDialog
+            title="GraphQL Query"
+            content={<TextArea grow={true} value={query} onChange={setQuery} />}
+          >
+            <EditorDialogButton />
+          </EditorDialog>
+        </EditorDialogControl>
+      </Grid>
+
+      <Grid gap={1}>
+        <Label>GraphQL Variables</Label>
+        {/* use invisible text input to reflect expression editor in form
+            type=hidden does not emit invalid event */}
+        <input
+          ref={variablesRef}
+          style={{ display: "none" }}
+          type="text"
+          name="variables"
+          data-color={variablesError ? "error" : undefined}
+          value={variables}
+          onChange={() => {}}
+          onInvalid={(event) =>
+            setVariablesError(event.currentTarget.validationMessage)
+          }
+        />
+        <BindingControl>
+          <InputErrorsTooltip
+            errors={variablesError ? [variablesError] : undefined}
+          >
+            {/* wrap with div to position error tooltip */}
+            <div>
+              <ExpressionEditor
+                color={variablesError ? "error" : undefined}
+                readOnly={isVariablesLiteral === false}
+                value={
+                  isVariablesLiteral
+                    ? variables
+                    : JSON.stringify(
+                        evaluateExpressionWithinScope(variables, scope),
+                        null,
+                        2
+                      ) ?? ""
+                }
+                onChange={(value) => {
+                  setVariables(value);
+                }}
+                onBlur={() => variablesRef.current?.checkValidity()}
+              />
+            </div>
+          </InputErrorsTooltip>
+          <BindingPopover
+            scope={scope}
+            aliases={aliases}
+            variant={isVariablesLiteral ? "default" : "bound"}
+            value={variables}
+            onChange={(value) => {
+              setVariables(value);
+              setIsVariablesLiteral(isLiteralExpression(value));
+            }}
+            onRemove={(evaluatedValue) => {
+              setVariables(JSON.stringify(evaluatedValue));
+              setIsVariablesLiteral(true);
+            }}
+          />
+        </BindingControl>
+      </Grid>
+
+      <Headers
+        scope={scope}
+        aliases={aliases}
+        headers={headers}
+        onChange={setHeaders}
+      />
+    </>
+  );
+});
+GraphqlResourceForm.displayName = "GraphqlResourceForm";
