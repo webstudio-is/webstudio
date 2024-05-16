@@ -62,7 +62,11 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
-import { ResourceForm, SystemResourceForm } from "./resource-panel";
+import {
+  GraphqlResourceForm,
+  ResourceForm,
+  SystemResourceForm,
+} from "./resource-panel";
 import { generateCurl } from "./curl";
 
 /**
@@ -103,13 +107,14 @@ const parseJsonValue = (code: string) => {
 };
 
 type VariableType =
+  | "parameter"
   | "string"
   | "number"
   | "boolean"
   | "json"
   | "resource"
-  | "system-resource"
-  | "parameter";
+  | "graphql-resource"
+  | "system-resource";
 
 const TypeField = ({
   value,
@@ -151,6 +156,18 @@ const TypeField = ({
       label: (
         <Flex direction="row" gap="2" align="center">
           Resource
+          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+        </Flex>
+      ),
+      description:
+        "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
+    },
+    {
+      value: "graphql-resource",
+      disabled: allowDynamicData === false,
+      label: (
+        <Flex direction="row" gap="2" align="center">
+          GraphQL
           {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
         </Flex>
       ),
@@ -471,6 +488,9 @@ const VariablePanel = forwardRef<
       if (resource?.control === "system") {
         return "system-resource";
       }
+      if (resource?.control === "graphql") {
+        return "graphql-resource";
+      }
       return "resource";
     }
     if (variable?.type === "parameter") {
@@ -537,6 +557,20 @@ const VariablePanel = forwardRef<
         {nameFieldElement}
         <TypeField value={variableType} onChange={setVariableType} />
         <ResourceForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+
+  if (variableType === "graphql-resource") {
+    return (
+      <>
+        {nameFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
+        <GraphqlResourceForm
+          ref={ref}
+          variable={variable}
+          nameField={nameField}
+        />
       </>
     );
   }
