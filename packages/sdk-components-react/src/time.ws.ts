@@ -1,4 +1,4 @@
-import { TimeIcon } from "@webstudio-is/icons/svg";
+import { CalendarIcon } from "@webstudio-is/icons/svg";
 
 import {
   defaultStates,
@@ -20,7 +20,7 @@ export const meta: WsComponentMeta = {
   type: "container",
   description:
     "Converts machine-readable date and time to a human-readable format.",
-  icon: TimeIcon,
+  icon: CalendarIcon,
   states: defaultStates,
   presetStyle,
   order: 4,
