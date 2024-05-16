@@ -50,13 +50,20 @@ const getTooltipContent = (breakpoint: Breakpoint) => {
   }
 };
 
+// Source https://github.com/tombigel/detect-zoom/blob/master/detect-zoom.js
+// Won't work with devtools open
+// Won't work in firefox, workaround is too crazy
+const detectZoom = () => {
+  return Math.round((window.outerWidth / window.innerWidth) * 100) / 100;
+};
+
 // When browser zoom is used we can't guarantee that the displayed selected breakpoint is actually matching the media query on the canvas.
 // Actual media query will vary unpredictably, sometimes resulting in 1 px difference and we better warn user they are zooming.
 const ZoomWarning = () => {
   const [zoom, setZoom] = useState<number>();
 
   const updateZoom = () => {
-    setZoom(window.outerWidth / window.innerWidth);
+    setZoom(detectZoom());
   };
 
   useWindowResizeDebounced(updateZoom);
