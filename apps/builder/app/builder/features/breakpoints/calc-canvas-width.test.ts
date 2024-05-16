@@ -88,7 +88,7 @@ describe("base breakpoint", () => {
     ).toStrictEqual(workspaceWidth);
   });
 
-  test("workspace is small", () => {
+  test("workspace is smaller than the base breakpoint range, so we need to use minimum available", () => {
     expect(
       calcCanvasWidth({
         breakpoints,

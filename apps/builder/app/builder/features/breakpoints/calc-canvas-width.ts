@@ -74,9 +74,11 @@ export const calcCanvasWidth = ({
 
     const grouped = groupBreakpoints(breakpoints).filter(
       ({ minWidth, maxWidth }) => {
+        // We don't want to grow the canvas beyond the workspace width.
         if (minWidth && minWidth < workspaceWidth) {
           return true;
         }
+        // Max width can not be smaller than the minimum canvas width.
         if (maxWidth && maxWidth > minCanvasWidth) {
           return true;
         }
