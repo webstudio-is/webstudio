@@ -83,21 +83,14 @@ export const calcCanvasWidth = ({
       }
     );
     let lowestMinWidth = grouped
-      .filter(({ minWidth }) => {
-        if (minWidth && minWidth < workspaceWidth) {
-          return true;
-        }
-      })
+      .filter(({ minWidth }) => minWidth !== undefined)
       .at(-1)?.minWidth;
+
     lowestMinWidth =
       lowestMinWidth === undefined ? workspaceWidth : lowestMinWidth - 1;
 
     let highestMaxWidth = grouped
-      .filter(({ maxWidth }) => {
-        if (maxWidth && maxWidth > minCanvasWidth) {
-          return true;
-        }
-      })
+      .filter(({ maxWidth }) => maxWidth !== undefined)
       .at(0)?.maxWidth;
 
     highestMaxWidth =
