@@ -1,8 +1,8 @@
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
+  $canvasWidth,
   $scale,
-  useCanvasWidth,
   $workspaceRect,
 } from "~/builder/shared/nano-states";
 import { $selectedInstanceSelector } from "~/shared/nano-states";
@@ -11,7 +11,7 @@ import { CanvasTools } from "./canvas-tools";
 import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";
 import type { Breakpoint } from "@webstudio-is/sdk";
-import { findInitialWidth } from "../breakpoints/find-initial-width";
+import { calcCanvasWidth } from "../breakpoints/calc-canvas-width";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 
 const workspaceStyle = css({
@@ -20,6 +20,9 @@ const workspaceStyle = css({
   position: "relative",
   // Prevent scrollIntoView from scrolling the whole page
   overflow: "clip",
+  // This spacing is needed to still be able to grab the canvas edge, otherwise you will always drag
+  // the browser window instead of the canvas.
+  px: theme.spacing[5],
 });
 
 const canvasContainerStyle = css({
@@ -53,16 +56,17 @@ const useMeasureWorkspace = () => {
 const getCanvasInitialMaxWidth = (
   initialBreakpoints: [Breakpoint["id"], Breakpoint][]
 ) => {
-  const breakpointsArray = [...new Map(initialBreakpoints).values()];
-  const initialSelectedBreakpoint =
-    breakpointsArray.find(isBaseBreakpoint) ?? initialBreakpoints[0]?.[1];
+  const breakpoints = Array.from(new Map(initialBreakpoints).values());
+  const selectedBreakpoint =
+    breakpoints.find(isBaseBreakpoint) ?? initialBreakpoints[0]?.[1];
 
-  if (initialSelectedBreakpoint) {
-    const initialWidth = findInitialWidth(
-      [...new Map(initialBreakpoints).values()],
-      initialSelectedBreakpoint,
-      Number.POSITIVE_INFINITY
-    );
+  if (selectedBreakpoint) {
+    const initialWidth = calcCanvasWidth({
+      breakpoints,
+      selectedBreakpoint,
+      // Just some reasonable initial guess, will be overwritten later as soon as detected.
+      workspaceWidth: 2000,
+    });
     return initialWidth;
   }
 };
@@ -98,7 +102,7 @@ const useCanvasStyle = (
 ) => {
   const scale = useStore($scale);
   const workspaceRect = useStore($workspaceRect);
-  const [canvasWidth] = useCanvasWidth();
+  const canvasWidth = useStore($canvasWidth);
 
   return getCanvasStyle(initialBreakpoints, scale, workspaceRect, canvasWidth);
 };
@@ -108,7 +112,7 @@ const useOutlineStyle = (
 ) => {
   const scale = useStore($scale);
   const workspaceRect = useStore($workspaceRect);
-  const [canvasWidth] = useCanvasWidth();
+  const canvasWidth = useStore($canvasWidth);
   const style = getCanvasStyle(
     initialBreakpoints,
     100,
