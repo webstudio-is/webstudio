@@ -50,12 +50,7 @@ import {
   BindingPopover,
   evaluateExpressionWithinScope,
 } from "~/builder/shared/binding-popover";
-import {
-  type Field,
-  type ComposedFields,
-  useField,
-  composeFields,
-} from "~/shared/form-utils";
+import { type ComposedFields, composeFields } from "~/shared/form-utils";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
 import {
   EditorDialog,
@@ -481,61 +476,86 @@ const useScope = ({ variable }: { variable?: DataSource }) => {
   return { scope, aliases };
 };
 
-const BodyField = ({
-  editorAliases,
-  editorScope,
-  contentType,
-  bodyField,
-}: {
-  editorAliases: Map<string, string>;
-  editorScope: Record<string, unknown>;
-  contentType?: string;
-  bodyField: Field<undefined | string>;
-}) => {
-  const evaluatedBodyValue =
-    bodyField.value === undefined
-      ? undefined
-      : evaluateExpressionWithinScope(bodyField.value, editorScope);
-  const evaluatedContentType = contentType
-    ? evaluateExpressionWithinScope(contentType, editorScope)
-    : undefined;
-  const isBound =
-    bodyField.value !== undefined &&
-    isLiteralExpression(bodyField.value) === false;
-  const isJsonBody = String(evaluatedContentType ?? "") === "application/json";
+type PanelApi = ComposedFields & {
+  save: () => void;
+};
 
-  const [localValue, setLocalValue] = useState<undefined | string>();
+const validateBody = (
+  value: string,
+  contentType: unknown,
+  scope: Record<string, unknown>
+) => {
+  // skip empty expressions
+  if (value === "") {
+    return "";
+  }
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  if (contentType === "application/json") {
+    return typeof evaluatedValue === "object" && evaluatedValue !== null
+      ? ""
+      : "Expected valid JSON object in body";
+  } else {
+    return typeof evaluatedValue === "string" ? "" : "Expected string in body";
+  }
+};
+
+const BodyField = ({
+  scope,
+  aliases,
+  contentType,
+  value,
+  onChange,
+}: {
+  aliases: Map<string, string>;
+  scope: Record<string, unknown>;
+  contentType: unknown;
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  const [isBodyLiteral, setIsBodyLiteral] = useState(
+    () => value === "" || isLiteralExpression(value)
+  );
+  const [bodyError, setBodyError] = useState("");
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    bodyRef.current?.setCustomValidity(validateBody(value, contentType, scope));
+    setBodyError("");
+  }, [value, contentType, scope]);
 
   return (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+    <Grid gap={1}>
       <Label>Body</Label>
+      <textarea
+        ref={bodyRef}
+        style={{ display: "none" }}
+        name="body"
+        data-color={bodyError ? "error" : undefined}
+        value={value}
+        onChange={() => {}}
+        onInvalid={(event) =>
+          setBodyError(event.currentTarget.validationMessage)
+        }
+      />
       <BindingControl>
-        <InputErrorsTooltip
-          errors={bodyField.error ? [bodyField.error] : undefined}
-        >
-          {isJsonBody ? (
+        <InputErrorsTooltip errors={bodyError ? [bodyError] : undefined}>
+          {contentType === "application/json" ? (
             // wrap with div to position error tooltip
             <div>
               <ExpressionEditor
-                color={bodyField.error ? "error" : undefined}
+                color={bodyError ? "error" : undefined}
                 // expressions with variables cannot be edited
-                readOnly={
-                  localValue === undefined && isBound && bodyField.valid
-                }
+                readOnly={isBodyLiteral === false}
                 value={
-                  localValue ??
-                  JSON.stringify(evaluatedBodyValue, null, 2) ??
-                  bodyField.value ??
-                  ""
+                  isBodyLiteral
+                    ? value
+                    : JSON.stringify(
+                        evaluateExpressionWithinScope(value, scope),
+                        null,
+                        2
+                      ) ?? ""
                 }
-                onChange={(value) => {
-                  setLocalValue(value);
-                  bodyField.onChange(value);
-                }}
-                onBlur={() => {
-                  setLocalValue(undefined);
-                  bodyField.onBlur();
-                }}
+                onChange={onChange}
+                onBlur={() => bodyRef.current?.checkValidity()}
               />
             </div>
           ) : (
@@ -543,39 +563,36 @@ const BodyField = ({
               autoGrow={true}
               maxRows={10}
               // expressions with variables cannot be edited
-              disabled={isBound}
-              color={bodyField.error ? "error" : undefined}
-              value={String(evaluatedBodyValue ?? "")}
+              disabled={isBodyLiteral === false}
+              color={bodyError ? "error" : undefined}
+              value={String(evaluateExpressionWithinScope(value, scope) ?? "")}
               // update text value as string literal
-              onChange={(newValue) =>
-                bodyField.onChange(JSON.stringify(newValue))
-              }
-              onBlur={bodyField.onBlur}
+              onChange={(newValue) => onChange(JSON.stringify(newValue))}
+              onBlur={() => bodyRef.current?.checkValidity()}
             />
           )}
         </InputErrorsTooltip>
         <BindingPopover
-          scope={editorScope}
-          aliases={editorAliases}
-          variant={isBound ? "bound" : "default"}
-          value={bodyField.value ?? ""}
+          scope={scope}
+          aliases={aliases}
+          variant={isBodyLiteral ? "default" : "bound"}
+          value={value}
           onChange={(value) => {
-            bodyField.onChange(value);
-            bodyField.onBlur();
+            onChange(value);
+            setIsBodyLiteral(isLiteralExpression(value));
           }}
           onRemove={(evaluatedValue) => {
-            bodyField.onChange(JSON.stringify(evaluatedValue));
-            bodyField.onBlur();
+            onChange(JSON.stringify(evaluatedValue));
+            setIsBodyLiteral(true);
           }}
         />
       </BindingControl>
-    </Flex>
+    </Grid>
   );
 };
 
-type PanelApi = ComposedFields & {
-  save: () => void;
-};
+const isContentTypeHeader = (header: Resource["headers"][number]) =>
+  header.name.toLowerCase() === "content-type";
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
@@ -596,25 +613,15 @@ export const ResourceForm = forwardRef<
   const [headers, setHeaders] = useState<Resource["headers"]>(
     resource?.headers ?? []
   );
-  const bodyField = useField<undefined | string>({
-    initialValue: resource?.body,
-    validate: (value) => {
-      // skip empty expressions
-      if (value === undefined) {
-        return;
-      }
-      const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-      const isString = typeof evaluatedValue === "string";
-      const isJson =
-        typeof evaluatedValue === "object" && evaluatedValue !== null;
-      if (isString === false && isJson === false) {
-        return "Body expects a string or json";
-      }
-    },
-  });
+  const [body, setBody] = useState(() => resource?.body);
+
+  const contentType = headers.find(isContentTypeHeader)?.value;
+  const evaluatedContentType = contentType
+    ? evaluateExpressionWithinScope(contentType, scope)
+    : undefined;
 
   const formAccessorRef = useRef<HTMLInputElement>(null);
-  const form = composeWithNativeForm(formAccessorRef, composeFields(bodyField));
+  const form = composeWithNativeForm(formAccessorRef, composeFields());
   useImperativeHandle(ref, () => ({
     ...form,
     save: () => {
@@ -631,7 +638,7 @@ export const ResourceForm = forwardRef<
         url,
         method,
         headers,
-        body: bodyField.value,
+        body,
       };
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
@@ -669,7 +676,7 @@ export const ResourceForm = forwardRef<
               value: JSON.stringify(header.value),
             }))
           );
-          bodyField.onChange(JSON.stringify(curl.body));
+          setBody(JSON.stringify(curl.body));
         }}
       />
       <Grid gap={1}>
@@ -689,14 +696,33 @@ export const ResourceForm = forwardRef<
       />
       {method !== "get" && (
         <BodyField
-          editorScope={scope}
-          editorAliases={aliases}
-          contentType={
-            headers.find(
-              (header) => header.name.toLowerCase() === "content-type"
-            )?.value
-          }
-          bodyField={bodyField}
+          scope={scope}
+          aliases={aliases}
+          contentType={evaluatedContentType}
+          value={body ?? ""}
+          onChange={(newBody) => {
+            const evaluatedValue = evaluateExpressionWithinScope(
+              newBody,
+              scope
+            );
+            // automatically add Content-Type: application/json header
+            // when value is object
+            if (
+              typeof evaluatedValue === "object" &&
+              evaluatedValue !== null &&
+              evaluatedContentType !== "application/json"
+            ) {
+              setHeaders((prevHeaders) => {
+                const newHeaders = prevHeaders.filter(isContentTypeHeader);
+                newHeaders.push({
+                  name: "Content-Type",
+                  value: JSON.stringify("application/json"),
+                });
+                return newHeaders;
+              });
+            }
+            setBody(newBody);
+          }}
         />
       )}
     </>
@@ -950,9 +976,7 @@ export const GraphqlResourceForm = forwardRef<
                         2
                       ) ?? ""
                 }
-                onChange={(value) => {
-                  setVariables(value);
-                }}
+                onChange={setVariables}
                 onBlur={() => variablesRef.current?.checkValidity()}
               />
             </div>
