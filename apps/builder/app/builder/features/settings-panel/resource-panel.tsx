@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { computed } from "nanostores";
 import { nanoid } from "nanoid";
 import {
@@ -578,8 +579,8 @@ type PanelApi = ComposedFields & {
 
 export const ResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
+  { variable?: DataSource }
+>(({ variable }, ref) => {
   const { scope, aliases } = useScope({ variable });
 
   const resources = useStore($resources);
@@ -613,10 +614,7 @@ export const ResourceForm = forwardRef<
   });
 
   const formAccessorRef = useRef<HTMLInputElement>(null);
-  const form = composeWithNativeForm(
-    formAccessorRef,
-    composeFields(nameField, bodyField)
-  );
+  const form = composeWithNativeForm(formAccessorRef, composeFields(bodyField));
   useImperativeHandle(ref, () => ({
     ...form,
     save: () => {
@@ -624,10 +622,12 @@ export const ResourceForm = forwardRef<
       if (instanceSelector === undefined) {
         return;
       }
+      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
+      const name = z.string().parse(formData.get("name"));
       const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
-        name: nameField.value,
+        name,
         url,
         method,
         headers,
@@ -637,7 +637,7 @@ export const ResourceForm = forwardRef<
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
         scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
-        name: nameField.value,
+        name,
         type: "resource",
         resourceId: newResource.id,
       };
@@ -706,8 +706,8 @@ ResourceForm.displayName = "ResourceForm";
 
 export const SystemResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
+  { variable?: DataSource }
+>(({ variable }, ref) => {
   const resources = useStore($resources);
 
   const resource =
@@ -733,7 +733,8 @@ export const SystemResourceForm = forwardRef<
     );
   });
 
-  const form = composeFields(nameField);
+  const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(formAccessorRef, composeFields());
 
   useImperativeHandle(ref, () => ({
     ...form,
@@ -742,26 +743,25 @@ export const SystemResourceForm = forwardRef<
       if (instanceSelector === undefined) {
         return;
       }
+      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
+      const name = z.string().parse(formData.get("name"));
       const [instanceId] = instanceSelector;
-
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
-        name: nameField.value,
+        name,
         control: "system",
         url: localResource.value,
         method,
         headers: [],
       };
-
       const newVariable: DataSource = {
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
         scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
-        name: nameField.value,
+        name,
         type: "resource",
         resourceId: newResource.id,
       };
-
       serverSyncStore.createTransaction(
         [$dataSources, $resources],
         (dataSources, resources) => {
@@ -776,6 +776,7 @@ export const SystemResourceForm = forwardRef<
 
   return (
     <>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={resourceId}>Resource</Label>
         <Select
@@ -800,8 +801,8 @@ SystemResourceForm.displayName = "SystemResourceForm";
 
 export const GraphqlResourceForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
+  { variable?: DataSource }
+>(({ variable }, ref) => {
   const { scope, aliases } = useScope({ variable });
 
   const resources = useStore($resources);
@@ -845,7 +846,7 @@ export const GraphqlResourceForm = forwardRef<
   }, [variables, scope]);
 
   const formAccessorRef = useRef<HTMLInputElement>(null);
-  const form = composeWithNativeForm(formAccessorRef, composeFields(nameField));
+  const form = composeWithNativeForm(formAccessorRef, composeFields());
   useImperativeHandle(ref, () => ({
     ...form,
     save: () => {
@@ -853,6 +854,8 @@ export const GraphqlResourceForm = forwardRef<
       if (instanceSelector === undefined) {
         return;
       }
+      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
+      const name = z.string().parse(formData.get("name"));
       const body = generateObjectExpression(
         new Map([
           ["query", JSON.stringify(query)],
@@ -862,7 +865,7 @@ export const GraphqlResourceForm = forwardRef<
       const [instanceId] = instanceSelector;
       const newResource: Resource = {
         id: resource?.id ?? nanoid(),
-        name: nameField.value,
+        name,
         control: "graphql",
         url,
         method: "post",
@@ -873,7 +876,7 @@ export const GraphqlResourceForm = forwardRef<
         id: variable?.id ?? nanoid(),
         // preserve existing instance scope when edit
         scopeInstanceId: variable?.scopeInstanceId ?? instanceId,
-        name: nameField.value,
+        name,
         type: "resource",
         resourceId: newResource.id,
       };
