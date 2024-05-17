@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { nanoid } from "nanoid";
 import { useStore } from "@nanostores/react";
 import {
@@ -11,6 +12,7 @@ import {
   useRef,
   createContext,
   useContext,
+  useEffect,
 } from "react";
 import { mergeRefs } from "@react-aria/utils";
 import { CopyIcon, RefreshIcon } from "@webstudio-is/icons";
@@ -50,7 +52,6 @@ import {
 import { serverSyncStore } from "~/shared/sync";
 import {
   useField,
-  type Field,
   composeFields,
   type ComposedFields,
 } from "~/shared/form-utils";
@@ -66,8 +67,41 @@ import {
   GraphqlResourceForm,
   ResourceForm,
   SystemResourceForm,
+  composeWithNativeForm,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
+
+const validateName = (value: string) =>
+  value.trim().length === 0 ? "Name is required" : "";
+
+const NameField = ({ defaultValue }: { defaultValue: string }) => {
+  const ref = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState("");
+  const nameId = useId();
+  useEffect(() => {
+    ref.current?.setCustomValidity(validateName(defaultValue));
+  }, [defaultValue]);
+  return (
+    <Grid gap={1}>
+      <Label htmlFor={nameId}>Name</Label>
+      <InputErrorsTooltip errors={error ? [error] : undefined}>
+        <InputField
+          inputRef={ref}
+          name="name"
+          id={nameId}
+          color={error ? "error" : undefined}
+          defaultValue={defaultValue}
+          onChange={(event) => {
+            event.target.setCustomValidity(validateName(event.target.value));
+            setError("");
+          }}
+          onBlur={() => ref.current?.checkValidity()}
+          onInvalid={(event) => setError(event.currentTarget.validationMessage)}
+        />
+      </InputErrorsTooltip>
+    </Grid>
+  );
+};
 
 /**
  * convert value expression to js value
@@ -215,9 +249,10 @@ type PanelApi = ComposedFields & {
 
 const ParameterForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
-  const form = composeFields(nameField);
+  { variable?: DataSource }
+>(({ variable }, ref) => {
+  const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(formAccessorRef, composeFields());
   useImperativeHandle(ref, () => ({
     ...form,
     save: () => {
@@ -225,13 +260,18 @@ const ParameterForm = forwardRef<
       if (variable === undefined) {
         return;
       }
-      const name = nameField.value;
+      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
+      const name = z.string().parse(formData.get("name"));
       serverSyncStore.createTransaction([$dataSources], (dataSources) => {
         dataSources.set(variable.id, { ...variable, name });
       });
     },
   }));
-  return <></>;
+  return (
+    <>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
+    </>
+  );
 });
 ParameterForm.displayName = "ParameterForm";
 
@@ -239,13 +279,13 @@ const useValuePanelRef = ({
   ref,
   variable,
   form,
-  name,
+  formAccessorRef,
   variableValue,
 }: {
   ref: Ref<undefined | PanelApi>;
   variable?: DataSource;
   form: ComposedFields;
-  name: string;
+  formAccessorRef: RefObject<HTMLInputElement>;
   variableValue: Extract<DataSource, { type: "variable" }>["value"];
 }) => {
   useImperativeHandle(ref, () => ({
@@ -259,6 +299,8 @@ const useValuePanelRef = ({
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
       const scopeInstanceId = variable?.scopeInstanceId ?? instanceId;
+      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
+      const name = z.string().parse(formData.get("name"));
       serverSyncStore.createTransaction(
         [$dataSources, $resources],
         (dataSources, resources) => {
@@ -281,57 +323,65 @@ const useValuePanelRef = ({
 
 const StringForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
+  {
+    variable?: DataSource;
+  }
+>(({ variable }, ref) => {
   const [value, setValue] = useState(
     variable?.type === "variable" && variable.value.type === "string"
       ? variable.value.value
       : ""
   );
-  const form = composeFields(nameField);
+  const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(formAccessorRef, composeFields());
   useValuePanelRef({
     ref,
     variable,
     form,
-    name: nameField.value,
+    formAccessorRef,
     variableValue: { type: "string", value },
   });
   const valueId = useId();
   return (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-      <Label htmlFor={valueId}>Value</Label>
-      <EditorDialogControl>
-        <TextArea
-          rows={1}
-          maxRows={10}
-          autoGrow={true}
-          id={valueId}
-          value={value}
-          onChange={setValue}
-        />
-        <EditorDialog
-          title={`Variable "${nameField.value || "Unnamed"}"`}
-          content={
-            <TextArea
-              grow={true}
-              id={valueId}
-              value={value}
-              onChange={setValue}
-            />
-          }
-        >
-          <EditorDialogButton />
-        </EditorDialog>
-      </EditorDialogControl>
-    </Flex>
+    <>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Label htmlFor={valueId}>Value</Label>
+        <EditorDialogControl>
+          <TextArea
+            rows={1}
+            maxRows={10}
+            autoGrow={true}
+            id={valueId}
+            value={value}
+            onChange={setValue}
+          />
+          <EditorDialog
+            title="Variable value"
+            content={
+              <TextArea
+                grow={true}
+                id={valueId}
+                value={value}
+                onChange={setValue}
+              />
+            }
+          >
+            <EditorDialogButton />
+          </EditorDialog>
+        </EditorDialogControl>
+      </Flex>
+    </>
   );
 });
 StringForm.displayName = "StringForm";
 
 const NumberForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
+  {
+    variable?: DataSource;
+  }
+>(({ variable }, ref) => {
   const valueField = useField<number | string>({
     initialValue:
       variable?.type === "variable" && variable.value.type === "number"
@@ -345,72 +395,87 @@ const NumberForm = forwardRef<
       return Number.isNaN(number) ? "Invalid number" : undefined;
     },
   });
-  const form = composeFields(nameField, valueField);
+  const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(
+    formAccessorRef,
+    composeFields(valueField)
+  );
   useValuePanelRef({
     ref,
     variable,
     form,
-    name: nameField.value,
+    formAccessorRef,
     variableValue: { type: "number", value: Number(valueField.value) },
   });
   const valueId = useId();
   return (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-      <Label htmlFor={valueId}>Value</Label>
-      <InputErrorsTooltip
-        errors={valueField.error ? [valueField.error] : undefined}
-      >
-        <InputField
-          id={valueId}
-          type="number"
-          color={valueField.error ? "error" : undefined}
-          value={valueField.value}
-          onChange={(event) => {
-            valueField.onChange(
-              Number.isNaN(event.target.valueAsNumber)
-                ? event.target.value
-                : event.target.valueAsNumber
-            );
-          }}
-          onBlur={valueField.onBlur}
-        />
-      </InputErrorsTooltip>
-    </Flex>
+    <>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Label htmlFor={valueId}>Value</Label>
+        <InputErrorsTooltip
+          errors={valueField.error ? [valueField.error] : undefined}
+        >
+          <InputField
+            id={valueId}
+            type="number"
+            color={valueField.error ? "error" : undefined}
+            value={valueField.value}
+            onChange={(event) => {
+              valueField.onChange(
+                Number.isNaN(event.target.valueAsNumber)
+                  ? event.target.value
+                  : event.target.valueAsNumber
+              );
+            }}
+            onBlur={valueField.onBlur}
+          />
+        </InputErrorsTooltip>
+      </Flex>
+    </>
   );
 });
 NumberForm.displayName = "NumberForm";
 
 const BooleanForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
+  {
+    variable?: DataSource;
+  }
+>(({ variable }, ref) => {
   const [value, setValue] = useState(
     variable?.type === "variable" && variable.value.type === "boolean"
       ? variable.value.value
       : false
   );
-  const form = composeFields(nameField);
+  const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(formAccessorRef, composeFields());
   useValuePanelRef({
     ref,
     variable,
     form,
-    name: nameField.value,
+    formAccessorRef,
     variableValue: { type: "boolean", value },
   });
   const valueId = useId();
   return (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-      <Label htmlFor={valueId}>Value</Label>
-      <Switch id={valueId} checked={value} onCheckedChange={setValue} />
-    </Flex>
+    <>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Label htmlFor={valueId}>Value</Label>
+        <Switch id={valueId} checked={value} onCheckedChange={setValue} />
+      </Flex>
+    </>
   );
 });
 BooleanForm.displayName = "BooleanForm";
 
 const JsonForm = forwardRef<
   undefined | PanelApi,
-  { variable?: DataSource; nameField: Field<string> }
->(({ variable, nameField }, ref) => {
+  {
+    variable?: DataSource;
+  }
+>(({ variable }, ref) => {
   const valueField = useField<string>({
     initialValue:
       variable?.type === "variable" &&
@@ -419,34 +484,41 @@ const JsonForm = forwardRef<
         : ``,
     validate: (value) => parseJsonValue(value).error,
   });
-  const form = composeFields(nameField, valueField);
+  const formAccessorRef = useRef<HTMLInputElement>(null);
+  const form = composeWithNativeForm(
+    formAccessorRef,
+    composeFields(valueField)
+  );
   useValuePanelRef({
     ref,
     variable,
     form,
-    name: nameField.value,
+    formAccessorRef,
     variableValue: {
       type: "json",
       value: parseJsonValue(valueField.value).value,
     },
   });
   return (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-      <Label>Value</Label>
-      <InputErrorsTooltip
-        errors={valueField.error ? [valueField.error] : undefined}
-      >
-        {/* use div to position tooltip */}
-        <div>
-          <ExpressionEditor
-            color={valueField.error ? "error" : undefined}
-            value={valueField.value}
-            onChange={valueField.onChange}
-            onBlur={valueField.onBlur}
-          />
-        </div>
-      </InputErrorsTooltip>
-    </Flex>
+    <>
+      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
+      <Flex direction="column" css={{ gap: theme.spacing[3] }}>
+        <Label>Value</Label>
+        <InputErrorsTooltip
+          errors={valueField.error ? [valueField.error] : undefined}
+        >
+          {/* use div to position tooltip */}
+          <div>
+            <ExpressionEditor
+              color={valueField.error ? "error" : undefined}
+              value={valueField.value}
+              onChange={valueField.onChange}
+              onBlur={valueField.onBlur}
+            />
+          </div>
+        </InputErrorsTooltip>
+      </Flex>
+    </>
   );
 });
 JsonForm.displayName = "JsonForm";
@@ -458,29 +530,6 @@ const VariablePanel = forwardRef<
   }
 >(({ variable }, ref) => {
   const resources = useStore($resources);
-
-  const nameField = useField({
-    initialValue: variable?.name ?? "",
-    validate: (value) =>
-      value.trim().length === 0 ? "Name is required" : undefined,
-  });
-  const nameId = useId();
-  const nameFieldElement = (
-    <Flex direction="column" css={{ gap: theme.spacing[3] }}>
-      <Label htmlFor={nameId}>Name</Label>
-      <InputErrorsTooltip
-        errors={nameField.error ? [nameField.error] : undefined}
-      >
-        <InputField
-          id={nameId}
-          color={nameField.error ? "error" : undefined}
-          value={nameField.value}
-          onChange={(event) => nameField.onChange(event.target.value)}
-          onBlur={nameField.onBlur}
-        />
-      </InputErrorsTooltip>
-    </Flex>
-  );
 
   const [variableType, setVariableType] = useState<VariableType>(() => {
     if (variable?.type === "resource") {
@@ -509,44 +558,44 @@ const VariablePanel = forwardRef<
   if (variableType === "parameter") {
     return (
       <>
-        {nameFieldElement}
-        <ParameterForm ref={ref} variable={variable} nameField={nameField} />
+        <NameField defaultValue={variable?.name ?? ""} />
+        <ParameterForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "string") {
     return (
       <>
-        {nameFieldElement}
+        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
-        <StringForm ref={ref} variable={variable} nameField={nameField} />
+        <StringForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "number") {
     return (
       <>
-        {nameFieldElement}
+        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
-        <NumberForm ref={ref} variable={variable} nameField={nameField} />
+        <NumberForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "boolean") {
     return (
       <>
-        {nameFieldElement}
+        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
-        <BooleanForm ref={ref} variable={variable} nameField={nameField} />
+        <BooleanForm ref={ref} variable={variable} />
       </>
     );
   }
   if (variableType === "json") {
     return (
       <>
-        {nameFieldElement}
+        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
-        <JsonForm ref={ref} variable={variable} nameField={nameField} />
+        <JsonForm ref={ref} variable={variable} />
       </>
     );
   }
@@ -554,9 +603,9 @@ const VariablePanel = forwardRef<
   if (variableType === "resource") {
     return (
       <>
-        {nameFieldElement}
+        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
-        <ResourceForm ref={ref} variable={variable} nameField={nameField} />
+        <ResourceForm ref={ref} variable={variable} />
       </>
     );
   }
@@ -564,13 +613,9 @@ const VariablePanel = forwardRef<
   if (variableType === "graphql-resource") {
     return (
       <>
-        {nameFieldElement}
+        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
-        <GraphqlResourceForm
-          ref={ref}
-          variable={variable}
-          nameField={nameField}
-        />
+        <GraphqlResourceForm ref={ref} variable={variable} />
       </>
     );
   }
@@ -578,13 +623,9 @@ const VariablePanel = forwardRef<
   if (variableType === "system-resource") {
     return (
       <>
-        {nameFieldElement}
+        <NameField defaultValue={variable?.name ?? ""} />
         <TypeField value={variableType} onChange={setVariableType} />
-        <SystemResourceForm
-          ref={ref}
-          variable={variable}
-          nameField={nameField}
-        />
+        <SystemResourceForm ref={ref} variable={variable} />
       </>
     );
   }
