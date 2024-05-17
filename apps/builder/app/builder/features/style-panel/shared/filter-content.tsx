@@ -232,8 +232,8 @@ export const FilterSectionContent = ({
           layer={layer.args}
           tooltip={<></>}
           propertyValue={toValue(layer.args)}
-          onEditLayer={(_, dropShadowLayers) =>
-            handleComplete(`drop-shadow(${toValue(dropShadowLayers)})`)
+          onEditLayer={(_, dropShadowLayers, options) =>
+            handleComplete(`drop-shadow(${toValue(dropShadowLayers)})`, options)
           }
           deleteProperty={() => {}}
           hideCodeEditor={true}
