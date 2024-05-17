@@ -101,7 +101,7 @@ const useCopyUrl = (pageUrl: string) => {
   };
 };
 
-const AddressBar = forwardRef<HTMLFormElement, {}>((_props, ref) => {
+const AddressBar = forwardRef<HTMLFormElement, unknown>((_props, ref) => {
   const publishedOrigin = useStore($publishedOrigin);
   const path = useStore($selectedPagePath);
   const [pathParams, setPathParams] = useState(
