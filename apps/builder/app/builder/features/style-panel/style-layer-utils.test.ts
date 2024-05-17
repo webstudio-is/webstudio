@@ -309,7 +309,9 @@ describe("boxShadowUtils", () => {
       ],
     };
 
-    updateLayer(property, newLayer, oldLayers, 0, createBatchUpdate);
+    updateLayer(property, newLayer, oldLayers, 0, createBatchUpdate, {
+      isEphemeral: false,
+    });
     const boxShadow = styleInfo["boxShadow"]?.value as LayersValue;
     expect(boxShadow).toBeDefined();
     expect(boxShadow.value[0]).toBe(newLayer.value[0]);

@@ -82,7 +82,11 @@ type FilterContentProps = {
   layer: FunctionValue;
   propertyValue: string;
   tooltip: JSX.Element;
-  onEditLayer: (index: number, layers: TupleValue) => void;
+  onEditLayer: (
+    index: number,
+    layers: TupleValue,
+    options: StyleUpdateOptions
+  ) => void;
   deleteProperty: DeleteProperty;
 };
 
@@ -146,19 +150,20 @@ export const FilterSectionContent = ({
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     setFilterFunctionValue(value);
-    if (options.isEphemeral === false) {
-      handleComplete(`${filterFunction}(${toValue(value)})`);
-    }
+    handleComplete(`${filterFunction}(${toValue(value)})`, options);
   };
 
-  const handleComplete = (value: string) => {
+  const handleComplete = (
+    value: string,
+    options: StyleUpdateOptions = { isEphemeral: false }
+  ) => {
     const layers = parseFilter(value);
     if (layers.type === "invalid") {
       setIntermediateValue({ type: "invalid", value });
       return;
     }
 
-    onEditLayer(index, layers);
+    onEditLayer(index, layers, options);
   };
 
   return (

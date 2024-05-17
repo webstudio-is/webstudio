@@ -6,7 +6,10 @@ import type {
 } from "@webstudio-is/css-engine";
 import type { SectionProps } from "./sections";
 import type { StyleInfo } from "./shared/style-info";
-import type { CreateBatchUpdate } from "./shared/use-style-data";
+import type {
+  CreateBatchUpdate,
+  StyleUpdateOptions,
+} from "./shared/use-style-data";
 
 export const deleteLayer = <T extends TupleValue | LayersValue>(
   property: StyleProperty,
@@ -104,7 +107,8 @@ export const updateLayer = <T extends LayersValue | TupleValue>(
   newValue: T,
   oldValue: T,
   index: number,
-  createBatchUpdate: SectionProps["createBatchUpdate"]
+  createBatchUpdate: SectionProps["createBatchUpdate"],
+  options: StyleUpdateOptions
 ) => {
   const batch = createBatchUpdate();
   const newLayers = [...oldValue.value];
@@ -122,7 +126,7 @@ export const updateLayer = <T extends LayersValue | TupleValue>(
         };
 
   batch.setProperty(property)(newPropertyValue);
-  batch.publish();
+  batch.publish(options);
 };
 
 export const getLayerCount = (property: StyleProperty, style: StyleInfo) => {

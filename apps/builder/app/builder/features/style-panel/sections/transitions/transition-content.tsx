@@ -39,7 +39,11 @@ type TransitionContentProps = {
   layer: TupleValue;
   propertyValue: string;
   tooltip: JSX.Element;
-  onEditLayer: (index: number, layer: LayersValue) => void;
+  onEditLayer: (
+    index: number,
+    layer: LayersValue,
+    options: StyleUpdateOptions
+  ) => void;
   deleteProperty: DeleteProperty;
 };
 
@@ -83,7 +87,7 @@ export const TransitionContent = ({
       return;
     }
 
-    onEditLayer(index, layers);
+    onEditLayer(index, layers, { isEphemeral: false });
   };
 
   const handlePropertyUpdate = (
@@ -103,9 +107,7 @@ export const TransitionContent = ({
       value: toValue(newLayer),
     });
 
-    if (options.isEphemeral === false) {
-      onEditLayer(index, { type: "layers", value: [newLayer] });
-    }
+    onEditLayer(index, { type: "layers", value: [newLayer] }, options);
   };
 
   return (

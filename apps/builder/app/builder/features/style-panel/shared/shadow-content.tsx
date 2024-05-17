@@ -31,7 +31,11 @@ import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
 import { toPascalCase } from "../shared/keyword-utils";
 import { ColorControl } from "../controls";
-import type { DeleteProperty, SetProperty } from "../shared/use-style-data";
+import type {
+  DeleteProperty,
+  SetProperty,
+  StyleUpdateOptions,
+} from "../shared/use-style-data";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -63,7 +67,11 @@ type ShadowContentProps = {
   layer: TupleValue;
   propertyValue: string;
   tooltip: JSX.Element;
-  onEditLayer: (index: number, layers: LayersValue) => void;
+  onEditLayer: (
+    index: number,
+    layers: LayersValue,
+    options: StyleUpdateOptions
+  ) => void;
   deleteProperty: DeleteProperty;
   hideCodeEditor?: boolean;
 };
@@ -132,18 +140,19 @@ export const ShadowContent = ({
       return;
     }
 
-    onEditLayer(index, layers);
+    onEditLayer(index, layers, { isEphemeral: false });
   };
 
   const handlePropertyChange = (
-    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
+    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>,
+    options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     const newLayer = convertValuesToTupple({ ...layerValues, ...params });
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),
     });
-    onEditLayer(index, { type: "layers", value: [newLayer] });
+    onEditLayer(index, { type: "layers", value: [newLayer] }, options);
   };
 
   const colorControlCallback: SetProperty = () => {
@@ -186,7 +195,9 @@ export const ShadowContent = ({
             styleSource="local"
             keywords={[]}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ offsetX: value })}
+            setValue={(value, options) =>
+              handlePropertyChange({ offsetX: value }, options)
+            }
             deleteProperty={() =>
               handlePropertyChange({
                 offsetX: offsetX ?? undefined,
@@ -218,7 +229,9 @@ export const ShadowContent = ({
             styleSource="local"
             keywords={[]}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ offsetY: value })}
+            setValue={(value, options) =>
+              handlePropertyChange({ offsetY: value }, options)
+            }
             deleteProperty={() =>
               handlePropertyChange({
                 offsetY: offsetY ?? undefined,
@@ -250,7 +263,9 @@ export const ShadowContent = ({
             styleSource="local"
             keywords={[]}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ blur: value })}
+            setValue={(value, options) =>
+              handlePropertyChange({ blur: value }, options)
+            }
             deleteProperty={() =>
               handlePropertyChange({
                 blur: blur ?? undefined,
@@ -283,7 +298,9 @@ export const ShadowContent = ({
               styleSource="local"
               keywords={[]}
               value={spread ?? { type: "unit", value: 0, unit: "px" }}
-              setValue={(value) => handlePropertyChange({ spread: value })}
+              setValue={(value, options) =>
+                handlePropertyChange({ spread: value }, options)
+              }
               deleteProperty={() =>
                 handlePropertyChange({
                   spread: spread ?? undefined,
@@ -409,10 +426,6 @@ export const ShadowContent = ({
                 }
 
                 if (event.key === "Escape") {
-                  if (intermediateValue === undefined) {
-                    return;
-                  }
-
                   deleteProperty(property, { isEphemeral: true });
                   setIntermediateValue(undefined);
                   event.preventDefault();
