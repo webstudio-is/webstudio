@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
   EnhancedTooltip,
@@ -12,10 +12,14 @@ import {
 } from "@webstudio-is/design-system";
 import { AlertIcon, BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
-import { $selectedBreakpointId } from "~/shared/nano-states";
+import {
+  $selectedBreakpoint,
+  $selectedBreakpointId,
+} from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
-import { useWindowResizeDebounced } from "~/shared/dom-hooks";
+import { $canvasWidth } from "~/builder/shared/nano-states";
+import { useDebouncedCallback } from "use-debounce";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {
@@ -50,32 +54,62 @@ const getTooltipContent = (breakpoint: Breakpoint) => {
   }
 };
 
+// We are testing a specific canvas width using matchMedia to see if a CSS breakpoint would apply.
+// This is needed because browser zoom can cause a mismatch between the actual media query and the displayed breakpoint.
+const breakpointMatchesMediaQuery = (
+  breakpoint?: Breakpoint,
+  canvasWidth?: number
+) => {
+  if (
+    canvasWidth === undefined ||
+    (breakpoint?.minWidth === undefined && breakpoint?.maxWidth === undefined)
+  ) {
+    // We don't know in this case if there is a mismatch, so we say it's fine.
+    return true;
+  }
+
+  const iframe = document.createElement("iframe");
+  iframe.style.visibility = "hidden";
+  iframe.style.top = "-100000px";
+  iframe.style.width = `${canvasWidth}px`;
+  document.body.appendChild(iframe);
+  const queryList = iframe.contentWindow?.matchMedia(
+    `(${breakpoint.minWidth ? "min" : "max"}-width: ${canvasWidth}px)`
+  );
+  // For some reason we don't get the same results if delete the iframe immediately.
+  requestAnimationFrame(() => {
+    document.body.removeChild(iframe);
+  });
+  return queryList?.matches ?? false;
+};
+
 // When browser zoom is used we can't guarantee that the displayed selected breakpoint is actually matching the media query on the canvas.
 // Actual media query will vary unpredictably, sometimes resulting in 1 px difference and we better warn user they are zooming.
 const ZoomWarning = () => {
-  const [zoom, setZoom] = useState<number>();
+  const [matches, setMatches] = useState(true);
+  const setMatchesDebounced = useDebouncedCallback((canvasWidth) => {
+    const matches = breakpointMatchesMediaQuery(
+      $selectedBreakpoint.get(),
+      canvasWidth
+    );
+    setMatches(matches);
+  }, 1000);
 
-  const updateZoom = () => {
-    setZoom(window.outerWidth / window.innerWidth);
-  };
+  useEffect(() => {
+    const unsubscribe = $canvasWidth.listen(setMatchesDebounced);
+    return () => {
+      unsubscribe();
+    };
+  });
 
-  useWindowResizeDebounced(updateZoom);
-
-  if (zoom === undefined) {
-    updateZoom();
-    return;
-  }
-
-  if (zoom === 1) {
+  if (matches === true) {
     return;
   }
 
   return (
     <Tooltip
       variant="wrapped"
-      content={`Your browser is at ${zoom.toFixed(
-        2
-      )} zoom level, and this may result in a mismatch between the breakpoints on the left and the actual media query on the canvas.`}
+      content={`Your browser zoom is causing a mismatch between breakpoints and the actual media query on the canvas.`}
     >
       <Flex
         align="center"
