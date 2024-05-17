@@ -26,13 +26,18 @@ const gridStyle = css({
   resize: "vertical",
   overflow: "auto",
   width: "100%",
-
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
     outline: `1px solid ${theme.colors.borderFocus}`,
   },
+  "&:has([data-color=error])": {
+    borderColor: theme.colors.borderDestructiveMain,
+    "&:focus-within": {
+      outlineColor: theme.colors.borderDestructiveMain,
+    },
+  },
   "&:has(textarea:disabled)": {
-    background: theme.colors.backgroundInputDisabled,
+    backgroundColor: theme.colors.backgroundInputDisabled,
   },
   variants: {
     grow: {
@@ -43,14 +48,6 @@ const gridStyle = css({
     variant: {
       regular: textVariants.regular,
       mono: textVariants.mono,
-    },
-    state: {
-      invalid: {
-        color: theme.colors.foregroundDestructive,
-        "&:not(:disabled):not(:focus-within)": {
-          borderColor: theme.colors.borderDestructiveMain,
-        },
-      },
     },
   },
   defaultVariants: {
@@ -100,7 +97,7 @@ type Props = Omit<
   css?: CSS;
   rows?: number;
   maxRows?: number;
-  state?: "invalid";
+  color?: "error";
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
@@ -116,7 +113,7 @@ export const TextArea = forwardRef(
       className,
       rows = 3,
       maxRows,
-      state,
+      color,
       value,
       onChange,
       grow,
@@ -147,7 +144,6 @@ export const TextArea = forwardRef(
     return (
       <Grid
         className={gridStyle({
-          state,
           grow: grow || autoGrow,
           variant,
           css: { height, minHeight, maxHeight },
@@ -175,7 +171,6 @@ export const TextArea = forwardRef(
           <div
             className={commonStyle({
               css: { visibility: "hidden", ...css },
-              state,
               className,
               variant,
             })}
@@ -187,10 +182,10 @@ export const TextArea = forwardRef(
             spellCheck={false}
             className={textAreaStyle({
               css,
-              state,
               className,
               variant,
             })}
+            data-color={color}
             onChange={(event) => setTextValue(event.target.value)}
             value={textValue}
             rows={rows}

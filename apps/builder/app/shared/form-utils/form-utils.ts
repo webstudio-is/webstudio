@@ -39,8 +39,8 @@ export const useField = <Type>({
 };
 
 export type ComposedFields = {
-  valid: boolean;
-  allErrorsVisible: boolean;
+  isValid: () => boolean;
+  areAllErrorsVisible: () => boolean;
   showAllErrors: () => void;
 };
 
@@ -50,8 +50,8 @@ export const composeFields = (
   ...fields: Omit<Field<unknown>, "onChange">[]
 ): ComposedFields => {
   return {
-    valid: fields.every((field) => field.valid),
-    allErrorsVisible: fields.every((field) => field.isErrorVisible),
+    isValid: () => fields.every((field) => field.valid),
+    areAllErrorsVisible: () => fields.every((field) => field.isErrorVisible),
     showAllErrors: () => {
       for (const field of fields) {
         field.onBlur();

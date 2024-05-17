@@ -51,6 +51,7 @@ export const nav = baseStyle;
 export const section = baseStyle;
 export const form = baseStyle;
 export const label = baseStyle;
+export const time = baseStyle;
 
 export const h1 = baseStyle;
 export const h2 = baseStyle;

@@ -22,6 +22,7 @@ import {
   FloatingPanelPopoverContent,
   FloatingPanelPopoverTitle,
   FloatingPanelPopoverTrigger,
+  Grid,
   InputErrorsTooltip,
   InputField,
   Label,
@@ -33,12 +34,7 @@ import {
   Tooltip,
   theme,
 } from "@webstudio-is/design-system";
-import {
-  executeExpression,
-  isLocalResource,
-  transpileExpression,
-} from "@webstudio-is/sdk";
-import type { DataSource } from "@webstudio-is/sdk";
+import { type DataSource, transpileExpression } from "@webstudio-is/sdk";
 import {
   ExpressionEditor,
   formatValue,
@@ -66,7 +62,11 @@ import {
   EditorDialogButton,
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
-import { ResourceForm, SystemResourceForm } from "./resource-panel";
+import {
+  GraphqlResourceForm,
+  ResourceForm,
+  SystemResourceForm,
+} from "./resource-panel";
 import { generateCurl } from "./curl";
 
 /**
@@ -107,13 +107,107 @@ const parseJsonValue = (code: string) => {
 };
 
 type VariableType =
+  | "parameter"
   | "string"
   | "number"
   | "boolean"
   | "json"
   | "resource"
-  | "system-resource"
-  | "parameter";
+  | "graphql-resource"
+  | "system-resource";
+
+const TypeField = ({
+  value,
+  onChange,
+}: {
+  value: VariableType;
+  onChange: (value: VariableType) => void;
+}) => {
+  const { allowDynamicData } = useStore($userPlanFeatures);
+  const optionsList: Array<{
+    value: VariableType;
+    disabled?: boolean;
+    label: ReactNode;
+    description: string;
+  }> = [
+    {
+      value: "string",
+      label: "String",
+      description: "Any alphanumeric text.",
+    },
+    {
+      value: "number",
+      label: "Number",
+      description: "Any number, can be used in math expressions.",
+    },
+    {
+      value: "boolean",
+      label: "Boolean",
+      description: "A boolean is a true/false switch.",
+    },
+    {
+      value: "json",
+      label: "JSON",
+      description: "Any JSON value",
+    },
+    {
+      value: "resource",
+      disabled: allowDynamicData === false,
+      label: (
+        <Flex direction="row" gap="2" align="center">
+          Resource
+          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+        </Flex>
+      ),
+      description:
+        "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
+    },
+    {
+      value: "graphql-resource",
+      disabled: allowDynamicData === false,
+      label: (
+        <Flex direction="row" gap="2" align="center">
+          GraphQL
+          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+        </Flex>
+      ),
+      description:
+        "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
+    },
+    {
+      value: "system-resource",
+      disabled: allowDynamicData === false,
+      label: (
+        <Flex direction="row" gap="2" align="center">
+          System Resource
+          {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
+        </Flex>
+      ),
+      description: "A System Resource is a configuration for Webstudio data.",
+    },
+  ];
+  const options = new Map(optionsList.map((option) => [option.value, option]));
+
+  return (
+    <Grid gap="1">
+      <Label>Type</Label>
+      <Select
+        options={Array.from(options.keys())}
+        getLabel={(option: VariableType) => options.get(option)?.label}
+        getItemProps={(option) => ({
+          disabled: options.get(option)?.disabled,
+        })}
+        getDescription={(option) => (
+          <Box css={{ width: theme.spacing[25] }}>
+            {options.get(option)?.description}
+          </Box>
+        )}
+        value={value}
+        onChange={onChange}
+      />
+    </Grid>
+  );
+};
 
 type PanelApi = ComposedFields & {
   save: () => void;
@@ -363,7 +457,6 @@ const VariablePanel = forwardRef<
     variable?: DataSource;
   }
 >(({ variable }, ref) => {
-  const { allowDynamicData } = useStore($userPlanFeatures);
   const resources = useStore($resources);
 
   const nameField = useField({
@@ -390,19 +483,19 @@ const VariablePanel = forwardRef<
   );
 
   const [variableType, setVariableType] = useState<VariableType>(() => {
-    if (
-      variable?.type === "resource" &&
-      isLocalResource(
-        String(executeExpression(resources.get(variable.resourceId)?.url) ?? "")
-      )
-    ) {
-      return "system-resource";
+    if (variable?.type === "resource") {
+      const resource = resources.get(variable.resourceId);
+      if (resource?.control === "system") {
+        return "system-resource";
+      }
+      if (resource?.control === "graphql") {
+        return "graphql-resource";
+      }
+      return "resource";
     }
-
-    if (variable?.type === "parameter" || variable?.type === "resource") {
+    if (variable?.type === "parameter") {
       return variable.type;
     }
-
     if (variable?.type === "variable") {
       const type = variable.value.type;
       if (type === "string" || type === "number" || type === "boolean") {
@@ -412,72 +505,6 @@ const VariablePanel = forwardRef<
     }
     return "string";
   });
-
-  const typeOptions: Map<
-    VariableType,
-    { label: ReactNode; description: string }
-  > = new Map([
-    ["string", { label: "String", description: "Any alphanumeric text." }],
-    [
-      "number",
-      {
-        label: "Number",
-        description: "Any number, can be used in math expressions.",
-      },
-    ],
-    [
-      "boolean",
-      { label: "Boolean", description: "A boolean is a true/false switch." },
-    ],
-    ["json", { label: "JSON", description: "Any JSON value" }],
-    [
-      "resource",
-      {
-        label: (
-          <Flex direction="row" gap="2" align="center">
-            Resource
-            {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
-          </Flex>
-        ),
-        description:
-          "A Resource is a configuration for secure data fetching. You can safely use secrets in any field.",
-      },
-    ],
-    [
-      "system-resource",
-      {
-        label: (
-          <Flex direction="row" gap="2" align="center">
-            System Resource
-            {allowDynamicData === false && <ProBadge>Pro</ProBadge>}
-          </Flex>
-        ),
-        description: "A System Resource is a configuration for Webstudio data.",
-      },
-    ],
-  ]);
-
-  const typeFieldElement = (
-    <Flex direction="column" gap="1">
-      <Label>Type</Label>
-      <Select
-        options={Array.from(typeOptions.keys())}
-        getLabel={(option: VariableType) => typeOptions.get(option)?.label}
-        getItemProps={(option) => ({
-          disabled: option === "resource" && allowDynamicData === false,
-        })}
-        getDescription={(option) => {
-          return (
-            <Box css={{ width: theme.spacing[25] }}>
-              {typeOptions.get(option)?.description}
-            </Box>
-          );
-        }}
-        value={variableType}
-        onChange={setVariableType}
-      />
-    </Flex>
-  );
 
   if (variableType === "parameter") {
     return (
@@ -491,7 +518,7 @@ const VariablePanel = forwardRef<
     return (
       <>
         {nameFieldElement}
-        {typeFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
         <StringForm ref={ref} variable={variable} nameField={nameField} />
       </>
     );
@@ -500,7 +527,7 @@ const VariablePanel = forwardRef<
     return (
       <>
         {nameFieldElement}
-        {typeFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
         <NumberForm ref={ref} variable={variable} nameField={nameField} />
       </>
     );
@@ -509,7 +536,7 @@ const VariablePanel = forwardRef<
     return (
       <>
         {nameFieldElement}
-        {typeFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
         <BooleanForm ref={ref} variable={variable} nameField={nameField} />
       </>
     );
@@ -518,7 +545,7 @@ const VariablePanel = forwardRef<
     return (
       <>
         {nameFieldElement}
-        {typeFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
         <JsonForm ref={ref} variable={variable} nameField={nameField} />
       </>
     );
@@ -528,8 +555,22 @@ const VariablePanel = forwardRef<
     return (
       <>
         {nameFieldElement}
-        {typeFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
         <ResourceForm ref={ref} variable={variable} nameField={nameField} />
+      </>
+    );
+  }
+
+  if (variableType === "graphql-resource") {
+    return (
+      <>
+        {nameFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
+        <GraphqlResourceForm
+          ref={ref}
+          variable={variable}
+          nameField={nameField}
+        />
       </>
     );
   }
@@ -538,7 +579,7 @@ const VariablePanel = forwardRef<
     return (
       <>
         {nameFieldElement}
-        {typeFieldElement}
+        <TypeField value={variableType} onChange={setVariableType} />
         <SystemResourceForm
           ref={ref}
           variable={variable}
@@ -572,11 +613,11 @@ export const VariablePopoverTrigger = forwardRef<
 
   const saveAndClose = () => {
     if (panelRef.current) {
-      if (panelRef.current.allErrorsVisible === false) {
+      if (panelRef.current.areAllErrorsVisible() === false) {
         panelRef.current.showAllErrors();
         return;
       }
-      if (panelRef.current.valid) {
+      if (panelRef.current.isValid()) {
         panelRef.current.save();
       }
     }
@@ -647,13 +688,9 @@ export const VariablePopoverTrigger = forwardRef<
             actions={
               variable?.type === "resource" && (
                 <>
-                  {isLocalResource(
-                    String(
-                      executeExpression(
-                        resources.get(variable.resourceId)?.url
-                      ) ?? ""
-                    )
-                  ) === false && (
+                  {/* allow to copy curl only for default resource control */}
+                  {resources.get(variable.resourceId)?.control ===
+                    undefined && (
                     <Tooltip
                       content="Copy resource as cURL command"
                       side="bottom"
@@ -683,11 +720,13 @@ export const VariablePopoverTrigger = forwardRef<
                       disabled={areResourcesLoading}
                       onClick={() => {
                         if (panelRef.current) {
-                          if (panelRef.current.allErrorsVisible === false) {
+                          if (
+                            panelRef.current.areAllErrorsVisible() === false
+                          ) {
                             panelRef.current.showAllErrors();
                             return;
                           }
-                          if (panelRef.current.valid) {
+                          if (panelRef.current.isValid()) {
                             panelRef.current.save();
                           }
                         }

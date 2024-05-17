@@ -1,7 +1,7 @@
 import { forwardRef, type ComponentProps } from "react";
 import { useStore } from "@nanostores/react";
 import { Flex, theme, ToolbarButton } from "@webstudio-is/design-system";
-import { $scale, useCanvasWidth } from "~/builder/shared/nano-states";
+import { $canvasWidth, $scale } from "~/builder/shared/nano-states";
 import { $selectedBreakpoint } from "~/shared/nano-states";
 
 const Value = ({
@@ -29,7 +29,7 @@ export const BreakpointsPopoverToolbarButton = forwardRef<
 >((props, ref) => {
   const scale = useStore($scale);
   const breakpoint = useStore($selectedBreakpoint);
-  const [canvasWidth] = useCanvasWidth();
+  const canvasWidth = useStore($canvasWidth);
   if (breakpoint === undefined || canvasWidth === undefined) {
     return null;
   }

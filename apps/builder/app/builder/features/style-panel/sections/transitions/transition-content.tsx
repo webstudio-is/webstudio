@@ -223,7 +223,7 @@ export const TransitionContent = ({
           rows={3}
           name="description"
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-          state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
+          color={intermediateValue?.type === "invalid" ? "error" : undefined}
           value={intermediateValue?.value ?? ""}
           onChange={handleChange}
           onBlur={handleComplete}

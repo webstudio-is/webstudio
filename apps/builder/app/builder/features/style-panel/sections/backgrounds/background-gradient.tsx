@@ -94,7 +94,7 @@ export const BackgroundGradient = (
       maxRows={4}
       name="description"
       value={textAreaValue ?? ""}
-      state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
+      color={intermediateValue?.type === "invalid" ? "error" : undefined}
       onChange={handleChange}
       onBlur={handleOnComplete}
       onKeyDown={(event) => {

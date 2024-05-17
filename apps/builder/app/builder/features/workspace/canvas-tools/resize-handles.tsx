@@ -4,6 +4,7 @@ import {
   css,
   disableCanvasPointerEvents,
   numericScrubControl,
+  rawTheme,
   theme,
 } from "@webstudio-is/design-system";
 import { useEffect, useRef } from "react";
@@ -18,7 +19,7 @@ import {
 const handlesContainerStyle = css({
   position: "absolute",
   top: 0,
-  width: 4,
+  width: theme.spacing[3],
   bottom: 0,
   cursor: "col-resize",
   pointerEvents: "auto",
@@ -32,15 +33,15 @@ const handlesContainerStyle = css({
   "& svg": {
     position: "absolute",
     top: "50%",
-    right: 0,
+    right: theme.spacing[3],
     transform: "translateX(100%)",
     color: theme.colors.foregroundSubtle,
   },
   "&[data-align=left]": {
-    left: 0,
+    left: `-${rawTheme.spacing[3]}`,
   },
   "&[data-align=right]": {
-    right: 0,
+    right: `-${rawTheme.spacing[3]}`,
   },
   "&[data-state=resizing]::before": {
     display: "none",
@@ -135,7 +136,6 @@ const useScrub = ({ side }: { side: "right" | "left" }) => {
 
     return () => {
       enableCanvasPointerEvents?.();
-
       disposeScrubControl();
     };
   }, [side]);

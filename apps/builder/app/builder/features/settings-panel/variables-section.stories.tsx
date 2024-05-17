@@ -9,6 +9,12 @@ import {
 } from "~/shared/nano-states";
 import { registerContainers } from "~/shared/sync";
 import { createDefaultPages } from "@webstudio-is/project-build";
+import { $userPlanFeatures } from "~/builder/shared/nano-states";
+
+$userPlanFeatures.set({
+  ...$userPlanFeatures.get(),
+  allowDynamicData: true,
+});
 
 export default {
   title: "Builder/Variables Section",

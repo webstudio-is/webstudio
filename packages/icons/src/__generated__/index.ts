@@ -47,6 +47,7 @@ export * from "./bp-star-off";
 export * from "./bp-star-on";
 export * from "./bug";
 export * from "./button-element";
+export * from "./calendar";
 export * from "./check-circle";
 export * from "./check-mark";
 export * from "./checkbox-checked-filled";
