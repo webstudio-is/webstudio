@@ -480,6 +480,25 @@ type PanelApi = ComposedFields & {
   save: () => void;
 };
 
+const validateBody = (
+  value: string,
+  contentType: unknown,
+  scope: Record<string, unknown>
+) => {
+  // skip empty expressions
+  if (value === "") {
+    return "";
+  }
+  const evaluatedValue = evaluateExpressionWithinScope(value, scope);
+  if (contentType === "application/json") {
+    return typeof evaluatedValue === "object" && evaluatedValue !== null
+      ? ""
+      : "Expected valid JSON object in body";
+  } else {
+    return typeof evaluatedValue === "string" ? "" : "Expected string in body";
+  }
+};
+
 const BodyField = ({
   scope,
   aliases,
@@ -499,22 +518,7 @@ const BodyField = ({
   const [bodyError, setBodyError] = useState("");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
-    // skip empty expressions
-    if (value === "") {
-      return;
-    }
-    const evaluatedValue = evaluateExpressionWithinScope(value, scope);
-    if (contentType === "application/json") {
-      bodyRef.current?.setCustomValidity(
-        typeof evaluatedValue === "object" && evaluatedValue !== null
-          ? ""
-          : "Expected valid JSON object in body"
-      );
-    } else {
-      bodyRef.current?.setCustomValidity(
-        typeof evaluatedValue === "string" ? "" : "Expected string in body"
-      );
-    }
+    bodyRef.current?.setCustomValidity(validateBody(value, contentType, scope));
     setBodyError("");
   }, [value, contentType, scope]);
 
@@ -578,9 +582,6 @@ const BodyField = ({
             setIsBodyLiteral(isLiteralExpression(value));
           }}
           onRemove={(evaluatedValue) => {
-            if (typeof evaluatedValue === "object" && evaluatedValue !== null) {
-              addJsonContentType();
-            }
             onChange(JSON.stringify(evaluatedValue));
             setIsBodyLiteral(true);
           }}
