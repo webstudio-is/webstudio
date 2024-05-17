@@ -97,7 +97,7 @@ export const Section = (props: SectionProps) => {
                     content={
                       <Flex gap="2" direction="column">
                         <Text variant="regularBold">{label}</Text>
-                        <Text variant="monoBold">filter</Text>
+                        <Text variant="monoBold">backdrop-filter</Text>
                         <Text>
                           Applies graphical effects like blur or color shift to
                           the area behind an element

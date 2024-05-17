@@ -99,7 +99,7 @@ export const ShadowContent = ({
   property,
   propertyValue,
   tooltip,
-  hideCodeEditor,
+  hideCodeEditor = false,
   onEditLayer,
   deleteProperty,
 }: ShadowContentProps) => {
@@ -156,8 +156,8 @@ export const ShadowContent = ({
   };
 
   const colorControlCallback: SetProperty = () => {
-    return (value) => {
-      handlePropertyChange({ color: value });
+    return (value, options) => {
+      handlePropertyChange({ color: value }, options);
     };
   };
 

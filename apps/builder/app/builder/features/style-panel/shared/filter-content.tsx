@@ -127,13 +127,6 @@ export const FilterSectionContent = ({
     });
   }, [layer, propertyValue]);
 
-  useEffect(() => {
-    const intermediateValue = `${filterFunction}(${toValue(
-      filterFunctionValue
-    )})`;
-    setIntermediateValue({ type: "intermediate", value: intermediateValue });
-  }, [filterFunction, filterFunctionValue]);
-
   const handleFilterFunctionChange = (filterName: FilterFunction) => {
     const defaultFilterValue = filterFunctions[filterName];
     setFilterFunction(filterName);
@@ -141,6 +134,7 @@ export const FilterSectionContent = ({
       defaultFilterValue.fakeProperty,
       defaultFilterValue.default
     );
+
     setFilterFunctionValue(functionValue);
     handleComplete(`${filterName}(${toValue(functionValue)})`);
   };
@@ -158,8 +152,12 @@ export const FilterSectionContent = ({
     options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     const layers = parseFilter(value);
+    setIntermediateValue({
+      type: layers.type === "invalid" ? "invalid" : "intermediate",
+      value,
+    });
+
     if (layers.type === "invalid") {
-      setIntermediateValue({ type: "invalid", value });
       return;
     }
 
@@ -232,9 +230,12 @@ export const FilterSectionContent = ({
           layer={layer.args}
           tooltip={<></>}
           propertyValue={toValue(layer.args)}
-          onEditLayer={(_, dropShadowLayers, options) =>
-            handleComplete(`drop-shadow(${toValue(dropShadowLayers)})`, options)
-          }
+          onEditLayer={(_, dropShadowLayers, options) => {
+            handleComplete(
+              `drop-shadow(${toValue(dropShadowLayers)})`,
+              options
+            );
+          }}
           deleteProperty={() => {}}
           hideCodeEditor={true}
         />
