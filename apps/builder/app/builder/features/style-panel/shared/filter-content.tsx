@@ -138,6 +138,7 @@ export const FilterSectionContent = ({
       defaultFilterValue.default
     );
     setFilterFunctionValue(functionValue);
+    handleComplete(`${filterName}(${toValue(functionValue)})`);
   };
 
   const handleFilterFunctionValueChange = (
