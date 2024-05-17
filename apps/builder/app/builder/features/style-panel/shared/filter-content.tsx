@@ -21,21 +21,59 @@ import {
   CssValueInputContainer,
   type IntermediateStyleValue,
 } from "../shared/css-value-input";
-import { parseFilter } from "@webstudio-is/css-data";
-import type { DeleteProperty } from "../shared/use-style-data";
+import { parseCssValue, parseFilter } from "@webstudio-is/css-data";
+import type {
+  DeleteProperty,
+  StyleUpdateOptions,
+} from "../shared/use-style-data";
 import { ShadowContent } from "./shadow-content";
 
+// filters can't be validated directly in the css-engine. Because, these are not properties
+// but functions that proeprties accept. So, we need to validate them manually using fake proeprties
+// which accepts the same values as the filter functions. This is a bit hacky but it works.
+//
+// https://developer.mozilla.org/en-US/docs/Web/CSS/opacity#syntax
+// number  | percentage
+//
+// https://developer.mozilla.org/en-US/docs/Web/CSS/outline-offset#syntax
+// length
+// https://developer.mozilla.org/en-US/docs/Web/CSS/rotate#formal_syntax
+// angle
+
 const filterFunctions = {
-  blur: "0px",
-  brightness: "0%",
-  contrast: "0%",
-  "drop-shadow": "0px 2px 5px rgba(0, 0, 0, 0.2)",
-  grayscale: "0%",
-  "hue-rotate": "0deg",
-  invert: "0%",
-  opacity: "0%",
-  saturate: "0%",
-  sepia: "0%",
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/blur#syntax
+  // length
+  blur: { default: "0px", fakeProperty: "outlineOffset" },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/brightness#formal_syntax
+  // number | percentage
+  brightness: { default: "0%", fakeProperty: "opacity" },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/contrast#formal_syntax
+  // number  | percentage
+  contrast: { default: "0%", fakeProperty: "opacity" },
+  // text-shaodw and drop-shaodow accepts the same args so we can use the same component
+  // and pass the args as value and property
+  "drop-shadow": {
+    default: "0px 2px 5px rgba(0, 0, 0, 0.2)",
+    fakeProperty: "textShadow",
+  },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/grayscale#syntax
+  // number  | percentage
+  grayscale: { default: "0%", fakeProperty: "opacity" },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/hue-rotate#syntax
+  // angle
+  "hue-rotate": { default: "0deg", fakeProperty: "rotate" },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/invert#syntax
+  // number  | percentage
+  invert: { default: "0%", fakeProperty: "opacity" },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/opacity#syntax
+  // number  | percentage
+  opacity: { default: "0%", fakeProperty: "opacity" },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/saturate#syntax
+  // number | percentage
+  saturate: { default: "0%", fakeProperty: "opacity" },
+  // https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/sepia#parameters
+  // number | percentage
+  sepia: { default: "0%", fakeProperty: "opacity" },
 } as const;
 
 type FilterContentProps = {
@@ -85,24 +123,41 @@ export const FilterSectionContent = ({
     });
   }, [layer, propertyValue]);
 
-  const updateFilter = (filterValue: string) => {
-    const layers = parseFilter(filterValue);
-    if (layers.type === "invalid") {
-      return;
-    }
-
-    onEditLayer(index, layers);
-  };
+  useEffect(() => {
+    const intermediateValue = `${filterFunction}(${toValue(
+      filterFunctionValue
+    )})`;
+    setIntermediateValue({ type: "intermediate", value: intermediateValue });
+  }, [filterFunction, filterFunctionValue]);
 
   const handleFilterFunctionChange = (filterName: FilterFunction) => {
     const defaultFilterValue = filterFunctions[filterName];
     setFilterFunction(filterName);
-    updateFilter(`${filterName}(${defaultFilterValue})`);
+    const functionValue = parseCssValue(
+      defaultFilterValue.fakeProperty,
+      defaultFilterValue.default
+    );
+    setFilterFunctionValue(functionValue);
   };
 
-  const handleFilterFunctionValueChange = (value: StyleValue) => {
+  const handleFilterFunctionValueChange = (
+    value: StyleValue,
+    options: StyleUpdateOptions = { isEphemeral: false }
+  ) => {
     setFilterFunctionValue(value);
-    updateFilter(`${filterFunction}(${toValue(value)})`);
+    if (options.isEphemeral === false) {
+      handleComplete(`${filterFunction}(${toValue(value)})`);
+    }
+  };
+
+  const handleComplete = (value: string) => {
+    const layers = parseFilter(value);
+    if (layers.type === "invalid") {
+      setIntermediateValue({ type: "invalid", value });
+      return;
+    }
+
+    onEditLayer(index, layers);
   };
 
   return (
@@ -117,7 +172,9 @@ export const FilterSectionContent = ({
             alignItems: "center",
           }}
         >
-          <Label>Function</Label>
+          <Flex align="center">
+            <Label>Function</Label>
+          </Flex>
           <Select
             name="filterFunction"
             placeholder="Select Filter"
@@ -136,10 +193,16 @@ export const FilterSectionContent = ({
               alignItems: "center",
             }}
           >
-            <Label>Value</Label>
+            <Flex align="center">
+              <Label>Value</Label>
+            </Flex>
             <CssValueInputContainer
               key="functionValue"
-              property="outlineOffset"
+              property={
+                filterFunction
+                  ? filterFunctions[filterFunction].fakeProperty
+                  : "outlineOffset"
+              }
               styleSource="local"
               value={
                 filterFunctionValue ?? {
@@ -155,20 +218,17 @@ export const FilterSectionContent = ({
           </Grid>
         ) : undefined}
       </Flex>
-      {/* function args are always a tuple. This is just to satisfy the type checker */}
 
       {filterFunction === "drop-shadow" && layer.args.type === "tuple" ? (
         <ShadowContent
           index={index}
-          // text-shaodw and drop-shaodow accepts the same args so we can use the same component
-          // and pass the args as value and property
           property="textShadow"
           layer={layer.args}
           tooltip={<></>}
           propertyValue={toValue(layer.args)}
-          onEditLayer={(_, dropShadowLayers) => {
-            updateFilter(`drop-shadow(${toValue(dropShadowLayers)})`);
-          }}
+          onEditLayer={(_, dropShadowLayers) =>
+            handleComplete(`drop-shadow(${toValue(dropShadowLayers)})`)
+          }
           deleteProperty={() => {}}
           hideCodeEditor={true}
         />
@@ -197,15 +257,12 @@ export const FilterSectionContent = ({
           value={intermediateValue?.value ?? ""}
           css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
           state={intermediateValue?.type === "invalid" ? "invalid" : undefined}
-          onChange={(value) => {
-            setIntermediateValue({
-              type: "intermediate",
-              value,
-            });
-          }}
+          onChange={(value) =>
+            setIntermediateValue({ type: "intermediate", value })
+          }
           onKeyDown={(event) => {
             if (event.key === "Enter" && intermediateValue !== undefined) {
-              updateFilter(intermediateValue.value);
+              handleComplete(intermediateValue.value);
               // On pressing Enter, the textarea is creating a new line.
               // In-order to prevent it and update the content.
               // We prevent the default behaviour
@@ -213,7 +270,6 @@ export const FilterSectionContent = ({
             }
 
             if (event.key === "Escape") {
-              // @todo: Delete might delete the total code instead of just the layer
               deleteProperty(property, { isEphemeral: true });
               setIntermediateValue(undefined);
               event.preventDefault();
