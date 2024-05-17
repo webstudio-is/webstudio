@@ -1,6 +1,12 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
-import { useEffect, useId, useState, type ComponentProps } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+} from "react";
 import {
   Flex,
   InputField,
@@ -61,24 +67,6 @@ const $selectedPagePathParams = computed(
   }
 );
 
-const updatePathParam = (name: string, value: string) => {
-  const pathParams = $selectedPagePathParams.get();
-  const path = $selectedPagePath.get();
-  const tokens = tokenizePathnamePattern(path);
-  // delete stale fields
-  const newParams: Record<string, string> = {};
-  for (const token of tokens) {
-    if (token.type === "param") {
-      newParams[token.name] = pathParams?.[token.name] ?? "";
-    }
-  }
-  newParams[name] = value;
-  const page = $selectedPage.get();
-  if (page) {
-    updateSystem(page, { params: newParams });
-  }
-};
-
 const useCopyUrl = (pageUrl: string) => {
   const [copyState, setCopyState] = useState<"copy" | "copied">("copy");
   // reset copied state after 2 seconds
@@ -113,13 +101,14 @@ const useCopyUrl = (pageUrl: string) => {
   };
 };
 
-const AddressBar = () => {
-  const id = useId();
+const AddressBar = forwardRef<HTMLFormElement, unknown>((_props, ref) => {
   const publishedOrigin = useStore($publishedOrigin);
   const path = useStore($selectedPagePath);
-  const pathParams = useStore($selectedPagePathParams);
+  const [pathParams, setPathParams] = useState(
+    () => $selectedPagePathParams.get() ?? {}
+  );
   const tokens = tokenizePathnamePattern(path);
-  const compiledPath = compilePathnamePattern(tokens, pathParams ?? {});
+  const compiledPath = compilePathnamePattern(tokens, pathParams);
   const { tooltipProps, buttonProps } = useCopyUrl(
     `${publishedOrigin}${compiledPath}`
   );
@@ -127,7 +116,7 @@ const AddressBar = () => {
   const errors = new Map<string, string>();
   for (const token of tokens) {
     if (token.type === "param") {
-      const value = (pathParams?.[token.name] ?? "").trim();
+      const value = (pathParams[token.name] ?? "").trim();
       if (value === "" && token.optional === false) {
         errors.set(token.name, `"${token.name}" is required`);
       }
@@ -141,46 +130,77 @@ const AddressBar = () => {
   }
 
   return (
-    <InputErrorsTooltip errors={Array.from(errors.values())}>
-      <Flex gap={1} css={{ padding: theme.spacing[5] }}>
-        <Flex align="center" gap={1} css={textVariants.mono}>
-          {tokens.map((token, index) => {
-            if (token.type === "fragment") {
-              return token.value;
-            }
-            if (token.type === "param") {
-              return (
-                <InputField
-                  key={index}
-                  fieldSizing="content"
-                  css={{ minWidth: theme.spacing[15] }}
-                  color={errors.has(token.name) ? "error" : undefined}
-                  id={`${id}-${token.name}`}
-                  placeholder={token.name}
-                  value={pathParams?.[token.name] ?? ""}
-                  onChange={(event) =>
-                    updatePathParam(token.name, event.target.value)
-                  }
-                />
-              );
-            }
-            token satisfies never;
-          })}
-        </Flex>
+    <form
+      ref={ref}
+      onSubmit={(event) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const path = $selectedPagePath.get();
+        const tokens = tokenizePathnamePattern(path);
+        // delete stale fields
+        const newParams: Record<string, string> = {};
+        for (const token of tokens) {
+          if (token.type === "param") {
+            newParams[token.name] = String(formData.get(token.name) ?? "");
+          }
+        }
+        const page = $selectedPage.get();
+        if (page) {
+          updateSystem(page, { params: newParams });
+        }
+      }}
+    >
+      {/* submit is not triggered when press enter on input without submit button */}
+      <button style={{ display: "none" }}>submit</button>
+      <InputErrorsTooltip errors={Array.from(errors.values())}>
+        <Flex gap={1} css={{ padding: theme.spacing[5] }}>
+          <Flex align="center" gap={1} css={textVariants.mono}>
+            {tokens.map((token, index) => {
+              if (token.type === "fragment") {
+                return token.value;
+              }
+              if (token.type === "param") {
+                return (
+                  <InputField
+                    key={index}
+                    name={token.name}
+                    fieldSizing="content"
+                    css={{ minWidth: theme.spacing[15] }}
+                    color={errors.has(token.name) ? "error" : undefined}
+                    placeholder={token.name}
+                    value={pathParams[token.name] ?? ""}
+                    onChange={(event) =>
+                      setPathParams((prevPathParams) => ({
+                        ...prevPathParams,
+                        [token.name]: event.target.value,
+                      }))
+                    }
+                  />
+                );
+              }
+              token satisfies never;
+            })}
+          </Flex>
 
-        <Tooltip {...tooltipProps}>
-          <IconButton {...buttonProps} disabled={errors.size > 0} />
-        </Tooltip>
-      </Flex>
-    </InputErrorsTooltip>
+          <Tooltip {...tooltipProps}>
+            <IconButton
+              {...buttonProps}
+              disabled={errors.size > 0}
+              type="button"
+            />
+          </Tooltip>
+        </Flex>
+      </InputErrorsTooltip>
+    </form>
   );
-};
+});
 
 export const AddressBarPopover = () => {
   const [isOpen, setIsOpen] = useState(false);
   const path = useStore($selectedPagePath);
   const publishedOrigin = useStore($publishedOrigin);
   const { tooltipProps, buttonProps } = useCopyUrl(`${publishedOrigin}${path}`);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // show only copy button when path is static
   if (isPathnamePattern(path) === false) {
@@ -196,7 +216,15 @@ export const AddressBarPopover = () => {
   }
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover
+      open={isOpen}
+      onOpenChange={(newIsOpen) => {
+        setIsOpen(newIsOpen);
+        if (newIsOpen === false) {
+          formRef.current?.requestSubmit();
+        }
+      }}
+    >
       <PopoverTrigger asChild>
         <ToolbarButton aria-label="Toggle dynamic page address" tabIndex={0}>
           <DynamicPageIcon />
@@ -209,7 +237,7 @@ export const AddressBarPopover = () => {
           collisionPadding={4}
           align="start"
         >
-          <AddressBar />
+          <AddressBar ref={formRef} />
         </PopoverContent>
       </PopoverPortal>
     </Popover>
