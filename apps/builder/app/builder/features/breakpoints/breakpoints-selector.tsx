@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Breakpoint, Breakpoints } from "@webstudio-is/sdk";
 import {
   EnhancedTooltip,
@@ -12,11 +12,14 @@ import {
 } from "@webstudio-is/design-system";
 import { AlertIcon, BpStarOffIcon, BpStarOnIcon } from "@webstudio-is/icons";
 import { CascadeIndicator } from "./cascade-indicator";
-import { $selectedBreakpointId } from "~/shared/nano-states";
+import {
+  $selectedBreakpoint,
+  $selectedBreakpointId,
+} from "~/shared/nano-states";
 import { groupBreakpoints, isBaseBreakpoint } from "~/shared/breakpoints";
 import { setInitialCanvasWidth } from "./use-set-initial-canvas-width";
-import { useStore } from "@nanostores/react";
 import { $canvasWidth } from "~/builder/shared/nano-states";
+import { useDebouncedCallback } from "use-debounce";
 
 const getTooltipContent = (breakpoint: Breakpoint) => {
   if (isBaseBreakpoint(breakpoint)) {
@@ -51,13 +54,15 @@ const getTooltipContent = (breakpoint: Breakpoint) => {
   }
 };
 
+// We are testing a specific canvas width using matchMedia to see if a CSS breakpoint would apply.
+// This is needed because browser zoom can cause a mismatch between the actual media query and the displayed breakpoint.
 const breakpointMatchesMediaQuery = (
-  breakpoint: Breakpoint,
+  breakpoint?: Breakpoint,
   canvasWidth?: number
 ) => {
   if (
     canvasWidth === undefined ||
-    (breakpoint.minWidth === undefined && breakpoint.maxWidth === undefined)
+    (breakpoint?.minWidth === undefined && breakpoint?.maxWidth === undefined)
   ) {
     // We don't know in this case if there is a mismatch, so we say it's fine.
     return true;
@@ -80,16 +85,22 @@ const breakpointMatchesMediaQuery = (
 
 // When browser zoom is used we can't guarantee that the displayed selected breakpoint is actually matching the media query on the canvas.
 // Actual media query will vary unpredictably, sometimes resulting in 1 px difference and we better warn user they are zooming.
-const ZoomWarning = ({
-  selectedBreakpoint,
-}: {
-  selectedBreakpoint: Breakpoint;
-}) => {
-  const canvasWidth = useStore($canvasWidth);
+const ZoomWarning = () => {
+  const [matches, setMatches] = useState(true);
+  const setMatchesDebounced = useDebouncedCallback((canvasWidth) => {
+    const matches = breakpointMatchesMediaQuery(
+      $selectedBreakpoint.get(),
+      canvasWidth
+    );
+    setMatches(matches);
+  }, 1000);
 
-  const matches = useMemo(() => {
-    return breakpointMatchesMediaQuery(selectedBreakpoint, canvasWidth);
-  }, [selectedBreakpoint, canvasWidth]);
+  useEffect(() => {
+    const unsubscribe = $canvasWidth.listen(setMatchesDebounced);
+    return () => {
+      unsubscribe();
+    };
+  });
 
   if (matches === true) {
     return;
@@ -179,7 +190,7 @@ export const BreakpointsSelector = ({
           breakpoints={breakpoints}
         />
       </ToolbarToggleGroup>
-      <ZoomWarning selectedBreakpoint={selectedBreakpoint} />
+      <ZoomWarning />
     </Toolbar>
   );
 };
