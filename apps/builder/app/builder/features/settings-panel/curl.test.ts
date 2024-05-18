@@ -12,9 +12,9 @@ test("support url", () => {
   expect(parseCurl(`curl 'https://my-url/hello-world'`)).toEqual(result);
 });
 
-test("support multiline", () => {
+test("support multiline command with backslashes", () => {
   expect(
-    parseCurl(`curl \
+    parseCurl(`curl \\
       'https://my-url/hello-world'
   `)
   ).toEqual({
@@ -114,9 +114,7 @@ test("support text body with explicit method", () => {
 test("support json body", () => {
   expect(
     parseCurl(
-      `curl https://my-url/hello-world \
-        --header 'content-type: application/json' \
-        --data '{"param":"value"}'`
+      `curl https://my-url/hello-world --header 'content-type: application/json' --data '{"param":"value"}'`
     )
   ).toEqual({
     url: "https://my-url/hello-world",

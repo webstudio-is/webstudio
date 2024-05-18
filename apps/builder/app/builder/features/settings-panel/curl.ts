@@ -30,6 +30,9 @@ export type CurlRequest = Pick<
 >;
 
 export const parseCurl = (curl: string): undefined | CurlRequest => {
+  // remove backslash followed by newline
+  // https://github.com/astur/arrgv/issues/3
+  curl = curl.replaceAll(/\\(?=\s)/g, "");
   let argv;
   try {
     argv = arrgv(curl);
