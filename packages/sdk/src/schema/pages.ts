@@ -48,6 +48,7 @@ const commonPageFields = {
   id: PageId,
   name: PageName,
   title: PageTitle,
+  history: z.optional(z.array(z.string())),
   meta: z.object({
     description: z.string().optional(),
     title: z.string().optional(),
