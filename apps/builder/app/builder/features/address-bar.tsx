@@ -237,7 +237,7 @@ const Suggestions = ({
       container.removeEventListener("focusout", handleFocusOut);
       container.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [containerRef]);
 
   if (isListOpen === false || list.length === 0) {
     return;
