@@ -23,7 +23,10 @@ import {
   updateLayer,
 } from "./style-layer-utils";
 import { useMemo } from "react";
-import type { DeleteProperty } from "./shared/use-style-data";
+import type {
+  DeleteProperty,
+  StyleUpdateOptions,
+} from "./shared/use-style-data";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import {
   EyeconClosedIcon,
@@ -44,7 +47,11 @@ type LayerListProps = SectionProps & {
     property: StyleProperty;
     propertyValue: string;
     onDeleteLayer: (index: number) => void;
-    onEditLayer: (index: number, layers: TupleValue | LayersValue) => void;
+    onEditLayer: (
+      index: number,
+      layers: TupleValue | LayersValue,
+      options: StyleUpdateOptions
+    ) => void;
     deleteProperty: DeleteProperty;
   }) => JSX.Element;
 };
@@ -120,8 +127,19 @@ export const LayersList = ({
     return hideLayer(property, index, value, createBatchUpdate);
   };
 
-  const onEditLayer = (index: number, newLayers: TupleValue | LayersValue) => {
-    return updateLayer(property, newLayers, value, index, createBatchUpdate);
+  const onEditLayer = (
+    index: number,
+    newLayers: TupleValue | LayersValue,
+    options: StyleUpdateOptions
+  ) => {
+    return updateLayer(
+      property,
+      newLayers,
+      value,
+      index,
+      createBatchUpdate,
+      options
+    );
   };
 
   return (

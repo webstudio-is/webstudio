@@ -28,7 +28,7 @@ export const parseFilter = (input: string): TupleValue | InvalidValue => {
   for (const cleanupKeyword of cleanupKeywords) {
     tokenStream = tokenStream.startsWith(cleanupKeyword)
       ? tokenStream.slice(cleanupKeyword.length).trim()
-      : tokenStream;
+      : tokenStream.trim();
   }
 
   const cssAst = cssTryParseValue(tokenStream);
@@ -39,7 +39,7 @@ export const parseFilter = (input: string): TupleValue | InvalidValue => {
     };
   }
 
-  const isValidFilterDecleration = isValidDeclaration("filter", input);
+  const isValidFilterDecleration = isValidDeclaration("filter", tokenStream);
   if (isValidFilterDecleration === false) {
     return {
       type: "invalid",

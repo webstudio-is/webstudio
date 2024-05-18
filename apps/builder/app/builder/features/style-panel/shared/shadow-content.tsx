@@ -3,7 +3,6 @@ import {
   type InvalidValue,
   type LayersValue,
   type RgbValue,
-  type StyleProperty,
   type StyleValue,
   type TupleValue,
   type UnitValue,
@@ -32,7 +31,11 @@ import type { IntermediateStyleValue } from "../shared/css-value-input";
 import { CssValueInputContainer } from "../shared/css-value-input";
 import { toPascalCase } from "../shared/keyword-utils";
 import { ColorControl } from "../controls";
-import type { DeleteProperty, SetProperty } from "../shared/use-style-data";
+import type {
+  DeleteProperty,
+  SetProperty,
+  StyleUpdateOptions,
+} from "../shared/use-style-data";
 
 /*
   When it comes to checking and validating individual CSS properties for the box-shadow,
@@ -60,12 +63,17 @@ import type { DeleteProperty, SetProperty } from "../shared/use-style-data";
 
 type ShadowContentProps = {
   index: number;
-  property: StyleProperty;
+  property: "boxShadow" | "textShadow";
   layer: TupleValue;
   propertyValue: string;
   tooltip: JSX.Element;
-  onEditLayer: (index: number, layers: LayersValue) => void;
+  onEditLayer: (
+    index: number,
+    layers: LayersValue,
+    options: StyleUpdateOptions
+  ) => void;
   deleteProperty: DeleteProperty;
+  hideCodeEditor?: boolean;
 };
 
 const convertValuesToTupple = (
@@ -91,6 +99,7 @@ export const ShadowContent = ({
   property,
   propertyValue,
   tooltip,
+  hideCodeEditor = false,
   onEditLayer,
   deleteProperty,
 }: ShadowContentProps) => {
@@ -122,7 +131,7 @@ export const ShadowContent = ({
     if (intermediateValue === undefined) {
       return;
     }
-    const layers = parseShadow("boxShadow", intermediateValue.value);
+    const layers = parseShadow(property, intermediateValue.value);
     if (layers.type === "invalid") {
       setIntermediateValue({
         type: "invalid",
@@ -131,23 +140,24 @@ export const ShadowContent = ({
       return;
     }
 
-    onEditLayer(index, layers);
+    onEditLayer(index, layers, { isEphemeral: false });
   };
 
   const handlePropertyChange = (
-    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>
+    params: Partial<Record<keyof ExtractedShadowProperties, StyleValue>>,
+    options: StyleUpdateOptions = { isEphemeral: false }
   ) => {
     const newLayer = convertValuesToTupple({ ...layerValues, ...params });
     setIntermediateValue({
       type: "intermediate",
       value: toValue(newLayer),
     });
-    onEditLayer(index, { type: "layers", value: [newLayer] });
+    onEditLayer(index, { type: "layers", value: [newLayer] }, options);
   };
 
   const colorControlCallback: SetProperty = () => {
-    return (value) => {
-      handlePropertyChange({ color: value });
+    return (value, options) => {
+      handlePropertyChange({ color: value }, options);
     };
   };
 
@@ -185,7 +195,9 @@ export const ShadowContent = ({
             styleSource="local"
             keywords={[]}
             value={offsetX ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ offsetX: value })}
+            setValue={(value, options) =>
+              handlePropertyChange({ offsetX: value }, options)
+            }
             deleteProperty={() =>
               handlePropertyChange({
                 offsetX: offsetX ?? undefined,
@@ -217,7 +229,9 @@ export const ShadowContent = ({
             styleSource="local"
             keywords={[]}
             value={offsetY ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ offsetY: value })}
+            setValue={(value, options) =>
+              handlePropertyChange({ offsetY: value }, options)
+            }
             deleteProperty={() =>
               handlePropertyChange({
                 offsetY: offsetY ?? undefined,
@@ -249,7 +263,9 @@ export const ShadowContent = ({
             styleSource="local"
             keywords={[]}
             value={blur ?? { type: "unit", value: 0, unit: "px" }}
-            setValue={(value) => handlePropertyChange({ blur: value })}
+            setValue={(value, options) =>
+              handlePropertyChange({ blur: value }, options)
+            }
             deleteProperty={() =>
               handlePropertyChange({
                 blur: blur ?? undefined,
@@ -282,7 +298,9 @@ export const ShadowContent = ({
               styleSource="local"
               keywords={[]}
               value={spread ?? { type: "unit", value: 0, unit: "px" }}
-              setValue={(value) => handlePropertyChange({ spread: value })}
+              setValue={(value, options) =>
+                handlePropertyChange({ spread: value }, options)
+              }
               deleteProperty={() =>
                 handlePropertyChange({
                   spread: spread ?? undefined,
@@ -373,48 +391,50 @@ export const ShadowContent = ({
         ) : null}
       </Grid>
 
-      <Separator css={{ gridColumn: "span 2" }} />
-      <Flex
-        direction="column"
-        css={{
-          px: theme.spacing[9],
-          paddingTop: theme.spacing[5],
-          paddingBottom: theme.spacing[9],
-          gap: theme.spacing[3],
-          minWidth: theme.spacing[30],
-        }}
-      >
-        <Label>
-          <Flex align={"center"} gap={1}>
-            Code
-            {tooltip}
-          </Flex>
-        </Label>
-        <TextArea
-          rows={3}
-          name="description"
-          value={intermediateValue?.value ?? propertyValue ?? ""}
-          css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
-          color={intermediateValue?.type === "invalid" ? "error" : undefined}
-          onChange={handleChange}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              handleComplete();
-              event.preventDefault();
-            }
-
-            if (event.key === "Escape") {
-              if (intermediateValue === undefined) {
-                return;
+      {hideCodeEditor === false ? (
+        <>
+          <Separator css={{ gridColumn: "span 2" }} />
+          <Flex
+            direction="column"
+            css={{
+              px: theme.spacing[9],
+              paddingTop: theme.spacing[5],
+              paddingBottom: theme.spacing[9],
+              gap: theme.spacing[3],
+              minWidth: theme.spacing[30],
+            }}
+          >
+            <Label>
+              <Flex align={"center"} gap={1}>
+                Code
+                {tooltip}
+              </Flex>
+            </Label>
+            <TextArea
+              rows={3}
+              name="description"
+              value={intermediateValue?.value ?? propertyValue ?? ""}
+              css={{ minHeight: theme.spacing[14], ...textVariants.mono }}
+              color={
+                intermediateValue?.type === "invalid" ? "error" : undefined
               }
+              onChange={handleChange}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleComplete();
+                  event.preventDefault();
+                }
 
-              deleteProperty(property, { isEphemeral: true });
-              setIntermediateValue(undefined);
-              event.preventDefault();
-            }
-          }}
-        />
-      </Flex>
+                if (event.key === "Escape") {
+                  deleteProperty(property, { isEphemeral: true });
+                  setIntermediateValue(undefined);
+                  event.preventDefault();
+                }
+              }}
+            />
+          </Flex>
+        </>
+      ) : undefined}
     </Flex>
   );
 };
