@@ -261,7 +261,7 @@ const Suggestions = ({
           type="button"
           role="option"
           tabIndex={-1}
-          css={{ textTransform: "none" }}
+          css={{ textTransform: "none", whiteSpace: "nowrap" }}
           onMouseEnter={(event) => {
             // select option on hover
             const options =
