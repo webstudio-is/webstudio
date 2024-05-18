@@ -1,4 +1,5 @@
 import { computed } from "nanostores";
+import { useStore } from "@nanostores/react";
 import type { Meta, StoryFn } from "@storybook/react";
 import { Box, Text, theme } from "@webstudio-is/design-system";
 import { AddressBarPopover } from "./address-bar";
@@ -9,7 +10,9 @@ import {
   $selectedPage,
   $selectedPageId,
 } from "~/shared/nano-states";
-import { useStore } from "@nanostores/react";
+import { registerContainers } from "~/shared/sync";
+
+registerContainers();
 
 $dataSources.set(
   new Map([
@@ -77,6 +80,20 @@ const SystemInspect = () => {
   );
 };
 
+const $selectedPageHistory = computed(
+  $selectedPage,
+  (page) => page?.history ?? []
+);
+
+const HistoryInspect = () => {
+  const history = useStore($selectedPageHistory);
+  return (
+    <Text variant="mono" css={{ whiteSpace: "pre" }}>
+      {JSON.stringify(history, null, 2)}
+    </Text>
+  );
+};
+
 export default {
   title: "Builder/Address Bar",
   component: AddressBarPopover,
@@ -94,5 +111,6 @@ export const AddressBar: StoryFn = () => (
       <AddressBarPopover />
     </Box>
     <SystemInspect />
+    <HistoryInspect />
   </>
 );

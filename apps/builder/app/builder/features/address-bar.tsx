@@ -1,12 +1,15 @@
 import { computed } from "nanostores";
 import { useStore } from "@nanostores/react";
+import { mergeRefs } from "@react-aria/utils";
 import {
   forwardRef,
   useEffect,
   useRef,
   useState,
   type ComponentProps,
+  type RefObject,
 } from "react";
+import { flushSync } from "react-dom";
 import {
   Flex,
   InputField,
@@ -20,6 +23,8 @@ import {
   PopoverPortal,
   PopoverContent,
   IconButton,
+  MenuItemButton,
+  MenuList,
 } from "@webstudio-is/design-system";
 import { CheckMarkIcon, CopyIcon, DynamicPageIcon } from "@webstudio-is/icons";
 import {
@@ -27,6 +32,7 @@ import {
   ROOT_FOLDER_ID,
   getPagePath,
   type System,
+  findPageByIdOrPath,
 } from "@webstudio-is/sdk";
 import {
   $dataSourceVariables,
@@ -38,8 +44,10 @@ import {
 import {
   compilePathnamePattern,
   isPathnamePattern,
+  matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
+import { serverSyncStore } from "~/shared/sync";
 
 const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
   if (pages === undefined || page === undefined) {
@@ -66,6 +74,30 @@ const $selectedPagePathParams = computed(
     return system?.params;
   }
 );
+
+const $selectedPageHistory = computed(
+  $selectedPage,
+  (page) => page?.history ?? []
+);
+
+/**
+ * put new path into the beginning of history
+ * and drop paths in the end when exceeded 20
+ */
+const savePathInHistory = (path: string, pageId: string) => {
+  serverSyncStore.createTransaction([$pages], (pages) => {
+    if (pages === undefined) {
+      return;
+    }
+    const page = findPageByIdOrPath(pageId, pages);
+    if (page === undefined) {
+      return;
+    }
+    const history = Array.from(page.history ?? []);
+    history.unshift(path);
+    page.history = Array.from(new Set(history)).slice(0, 20);
+  });
+};
 
 const useCopyUrl = (pageUrl: string) => {
   const [copyState, setCopyState] = useState<"copy" | "copied">("copy");
@@ -101,9 +133,166 @@ const useCopyUrl = (pageUrl: string) => {
   };
 };
 
-const AddressBar = forwardRef<HTMLFormElement, unknown>((_props, ref) => {
+const moveSelection = (menu: HTMLElement, diff: number) => {
+  const options = Array.from(menu.querySelectorAll("[role=option]"));
+  const index = options.findIndex((element) => element.ariaSelected === "true");
+  const newIndex = Math.max(-1, Math.min(index + diff, options.length - 1));
+  if (index >= 0) {
+    options[index].ariaSelected = null;
+  }
+  if (newIndex >= 0) {
+    options[newIndex].ariaSelected = "true";
+  }
+};
+
+/**
+ * Suggestions are opened whenever user
+ * - types in input
+ * - focuses input
+ * - press arrow down or arrow up
+ *
+ * and closed when
+ * - input is lost focus
+ * - escape or enter are pressed
+ *
+ * option selection is managed by arrow up, arrow down and hover
+ */
+const Suggestions = ({
+  containerRef,
+  options,
+  onSelect,
+}: {
+  containerRef: RefObject<HTMLFormElement>;
+  options: string[];
+  onSelect: (option: string) => void;
+}) => {
+  const list = options;
+
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [isListOpen, setIsListOpen] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container === null) {
+      return;
+    }
+    const handleInput = () => {
+      setIsListOpen(true);
+    };
+    let frameId: undefined | number;
+    const handleFocusIn = () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
+      setIsListOpen(true);
+    };
+    const handleFocusOut = () => {
+      frameId = requestAnimationFrame(() => {
+        setIsListOpen(false);
+      });
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowDown") {
+        // avoid moving cursor to the end
+        event.preventDefault();
+        // trigger menu with up and down like in chrome
+        if (menuRef.current === null) {
+          setIsListOpen(true);
+          return;
+        }
+        moveSelection(menuRef.current, +1);
+      }
+      if (event.key === "ArrowUp") {
+        // avoid moving cursor to the start
+        event.preventDefault();
+        if (menuRef.current === null) {
+          setIsListOpen(true);
+          return;
+        }
+        moveSelection(menuRef.current, -1);
+      }
+      if (event.key === "Escape" && menuRef.current) {
+        // avoid closing popovers and dialogs when list is open
+        event.stopPropagation();
+        setIsListOpen(false);
+      }
+      if (event.key === "Enter" && menuRef.current) {
+        const selected = menuRef.current?.querySelector(
+          "[role=option][aria-selected=true]"
+        );
+        if (selected instanceof HTMLElement) {
+          // avoid submitting form when item is selected
+          event.preventDefault();
+          selected.click();
+        }
+      }
+    };
+    container.addEventListener("input", handleInput);
+    container.addEventListener("focusin", handleFocusIn);
+    container.addEventListener("focusout", handleFocusOut);
+    container.addEventListener("keydown", handleKeyDown);
+    return () => {
+      container.removeEventListener("input", handleInput);
+      container.removeEventListener("focusin", handleFocusIn);
+      container.removeEventListener("focusout", handleFocusOut);
+      container.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [containerRef]);
+
+  if (isListOpen === false || list.length === 0) {
+    return;
+  }
+  return (
+    <MenuList
+      ref={menuRef}
+      role="listbox"
+      css={{
+        position: "absolute",
+        left: 0,
+        top: "calc(100% + 4px)",
+        minWidth: "100%",
+      }}
+      // close after selecting option
+      onClick={() => setIsListOpen(false)}
+    >
+      {list.map((option) => (
+        <MenuItemButton
+          key={option}
+          type="button"
+          role="option"
+          tabIndex={-1}
+          css={{ textTransform: "none", whiteSpace: "nowrap" }}
+          onMouseEnter={(event) => {
+            // select option on hover
+            const options =
+              menuRef.current?.querySelectorAll("[role=option]") ?? [];
+            for (const element of options) {
+              if (element.ariaSelected === "true") {
+                element.ariaSelected = null;
+              }
+              if (element === event.currentTarget) {
+                element.ariaSelected = "true";
+              }
+            }
+          }}
+          onClick={() => onSelect(option)}
+        >
+          {option}
+        </MenuItemButton>
+      ))}
+    </MenuList>
+  );
+};
+
+const AddressBar = forwardRef<
+  HTMLFormElement,
+  {
+    onSubmit: () => void;
+  }
+>(({ onSubmit }, ref) => {
   const publishedOrigin = useStore($publishedOrigin);
   const path = useStore($selectedPagePath);
+  const history = useStore($selectedPageHistory);
   const [pathParams, setPathParams] = useState(
     () => $selectedPagePathParams.get() ?? {}
   );
@@ -129,9 +318,12 @@ const AddressBar = forwardRef<HTMLFormElement, unknown>((_props, ref) => {
     }
   }
 
+  const containerRef = useRef<HTMLFormElement>(null);
+
   return (
     <form
-      ref={ref}
+      ref={mergeRefs(ref, containerRef)}
+      style={{ position: "relative" }}
       onSubmit={(event) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
@@ -145,13 +337,29 @@ const AddressBar = forwardRef<HTMLFormElement, unknown>((_props, ref) => {
           }
         }
         const page = $selectedPage.get();
-        if (page) {
-          updateSystem(page, { params: newParams });
+        if (page === undefined) {
+          return;
+        }
+        updateSystem(page, { params: newParams });
+        const compiledPath = compilePathnamePattern(tokens, newParams);
+        savePathInHistory(compiledPath, page.id);
+        if (errors.size === 0) {
+          onSubmit();
         }
       }}
     >
       {/* submit is not triggered when press enter on input without submit button */}
       <button style={{ display: "none" }}>submit</button>
+      <Suggestions
+        containerRef={containerRef}
+        options={history}
+        onSelect={(option) => {
+          flushSync(() => {
+            setPathParams(matchPathnamePattern(path, option) ?? {});
+          });
+          containerRef.current?.requestSubmit();
+        }}
+      />
       <InputErrorsTooltip errors={Array.from(errors.values())}>
         <Flex gap={1} css={{ padding: theme.spacing[5] }}>
           <Flex align="center" gap={1} css={textVariants.mono}>
@@ -219,10 +427,8 @@ export const AddressBarPopover = () => {
     <Popover
       open={isOpen}
       onOpenChange={(newIsOpen) => {
+        formRef.current?.requestSubmit();
         setIsOpen(newIsOpen);
-        if (newIsOpen === false) {
-          formRef.current?.requestSubmit();
-        }
       }}
     >
       <PopoverTrigger asChild>
@@ -237,7 +443,7 @@ export const AddressBarPopover = () => {
           collisionPadding={4}
           align="start"
         >
-          <AddressBar ref={formRef} />
+          <AddressBar ref={formRef} onSubmit={() => setIsOpen(false)} />
         </PopoverContent>
       </PopoverPortal>
     </Popover>
