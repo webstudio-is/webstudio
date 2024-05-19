@@ -22,6 +22,18 @@ ValueText.args = {
   value: { type: "unit", value: 100, unit: "px" },
 };
 
+const valueOptions = [
+  "0",
+  "10rem",
+  "100rem",
+  "100px",
+  "1000px",
+  "10000px",
+  "100000px",
+  "auto",
+  "revert-layer",
+];
+
 export default {
   title: "Space/ValueText",
   component: ValueText,
@@ -32,18 +44,9 @@ export default {
     },
     value: {
       control: "select",
-      options: Object.fromEntries(
-        [
-          "0",
-          "10rem",
-          "100rem",
-          "100px",
-          "1000px",
-          "10000px",
-          "100000px",
-          "auto",
-          "revert-layer",
-        ].map((value) => [value, parseCssValue("marginTop", value)])
+      options: valueOptions,
+      labels: Object.fromEntries(
+        valueOptions.map((value) => [value, parseCssValue("marginTop", value)])
       ),
     },
   },
