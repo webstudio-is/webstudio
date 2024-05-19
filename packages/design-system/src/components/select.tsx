@@ -6,6 +6,8 @@ import {
   useMemo,
   forwardRef,
   useState,
+  useEffect,
+  useRef,
 } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@webstudio-is/icons";
 import { rawTheme, styled, theme } from "../stitches.config";
@@ -18,6 +20,7 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
+import { useControllableState } from "@radix-ui/react-use-controllable-state";
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
   "&[data-side=top]": {
@@ -188,6 +191,27 @@ const SelectBase = <Option,>(
 
   const [highlightedItem, setHighlightedItem] = useState<Option>();
 
+  const [isOpen, setIsOpen] = useControllableState({
+    prop: open,
+    defaultProp: false,
+    onChange: onOpenChange,
+  });
+
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      const rect = contentRef.current.getBoundingClientRect();
+      contentRef.current.style.height = rect.height + "px";
+    }
+
+    return () => {
+      if (contentRef.current) {
+        contentRef.current.style.height = "";
+      }
+    };
+  }, [isOpen]);
+
   const itemForDescription = highlightedItem ?? value ?? defaultValue;
   const description = itemForDescription
     ? getDescription?.(itemForDescription)
@@ -206,8 +230,8 @@ const SelectBase = <Option,>(
           onChange?.(option);
         }
       }}
-      open={open}
-      onOpenChange={onOpenChange}
+      open={isOpen}
+      onOpenChange={setIsOpen}
     >
       <Primitive.Trigger ref={forwardedRef} {...props} asChild>
         <SelectButton prefix={prefix}>
@@ -215,7 +239,7 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent position="popper">
+        <SelectContent position="popper" updatePositionStrategy="optimized">
           <SelectScrollUpButton css={{ order: 1 }}>
             <ChevronUpIcon />
           </SelectScrollUpButton>
