@@ -32,7 +32,6 @@ import {
   ROOT_FOLDER_ID,
   getPagePath,
   type System,
-  findPageByIdOrPath,
 } from "@webstudio-is/sdk";
 import {
   $dataSourceVariables,
@@ -47,7 +46,7 @@ import {
   matchPathnamePattern,
   tokenizePathnamePattern,
 } from "~/builder/shared/url-pattern";
-import { serverSyncStore } from "~/shared/sync";
+import { savePathInHistory } from "~/shared/pages";
 
 const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
   if (pages === undefined || page === undefined) {
@@ -79,25 +78,6 @@ const $selectedPageHistory = computed(
   $selectedPage,
   (page) => page?.history ?? []
 );
-
-/**
- * put new path into the beginning of history
- * and drop paths in the end when exceeded 20
- */
-const savePathInHistory = (path: string, pageId: string) => {
-  serverSyncStore.createTransaction([$pages], (pages) => {
-    if (pages === undefined) {
-      return;
-    }
-    const page = findPageByIdOrPath(pageId, pages);
-    if (page === undefined) {
-      return;
-    }
-    const history = Array.from(page.history ?? []);
-    history.unshift(path);
-    page.history = Array.from(new Set(history)).slice(0, 20);
-  });
-};
 
 const useCopyUrl = (pageUrl: string) => {
   const [copyState, setCopyState] = useState<"copy" | "copied">("copy");
@@ -342,7 +322,7 @@ const AddressBar = forwardRef<
         }
         updateSystem(page, { params: newParams });
         const compiledPath = compilePathnamePattern(tokens, newParams);
-        savePathInHistory(compiledPath, page.id);
+        savePathInHistory(page.id, compiledPath);
         if (errors.size === 0) {
           onSubmit();
         }

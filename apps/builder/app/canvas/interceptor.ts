@@ -11,7 +11,7 @@ import {
   $selectedPage,
   updateSystem,
 } from "~/shared/nano-states";
-import { switchPage } from "~/shared/pages";
+import { savePathInHistory, switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
   try {
@@ -59,6 +59,7 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
       const search = Object.fromEntries(pageHref.searchParams);
       switchPage(page.id, pageHref.hash);
       updateSystem(page, { params, search });
+      savePathInHistory(page.id, pageHref.pathname);
       break;
     }
   }
