@@ -9,10 +9,9 @@ import {
   $isPreviewMode,
   $pages,
   $selectedPage,
-  savePathInHistory,
   updateSystem,
 } from "~/shared/nano-states";
-import { switchPage } from "~/shared/pages";
+import { savePathInHistory, switchPage } from "~/shared/pages";
 
 const isAbsoluteUrl = (href: string) => {
   try {
