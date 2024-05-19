@@ -13092,7 +13092,7 @@ snapshots:
       lodash: 4.17.21
       memoizerific: 1.11.3
       qs: 6.11.0
-      tiny-invariant: 1.3.3
+      tiny-invariant: 1.3.1
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
 
@@ -13722,7 +13722,7 @@ snapshots:
 
   '@vue/compiler-core@3.3.4':
     dependencies:
-      '@babel/parser': 7.24.5
+      '@babel/parser': 7.24.1
       '@vue/shared': 3.3.4
       estree-walker: 2.0.2
       source-map-js: 1.2.0
@@ -13734,7 +13734,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.3.4':
     dependencies:
-      '@babel/parser': 7.24.5
+      '@babel/parser': 7.24.1
       '@vue/compiler-core': 3.3.4
       '@vue/compiler-dom': 3.3.4
       '@vue/compiler-ssr': 3.3.4
@@ -13752,7 +13752,7 @@ snapshots:
 
   '@vue/reactivity-transform@3.3.4':
     dependencies:
-      '@babel/parser': 7.24.5
+      '@babel/parser': 7.24.1
       '@vue/compiler-core': 3.3.4
       '@vue/shared': 3.3.4
       estree-walker: 2.0.2
