@@ -1,4 +1,6 @@
+import { matchPathnameParams } from "@webstudio-is/sdk";
 import { URLPattern } from "urlpattern-polyfill";
+export { isPathnamePattern } from "@webstudio-is/sdk";
 
 const baseUrl = "http://url";
 
@@ -21,23 +23,12 @@ type Token =
   | { type: "fragment"; value: string }
   | { type: "param"; name: string; optional: boolean; splat: boolean };
 
-// /:slug -> { name: "slug", modifier: "" }
-// /:slug* -> { name: "slug", modifier: "*" }
-// /:slug? -> { name: "slug", modifier: "?" }
-// /* -> { wildcard: "*" }
-const tokenRegex = /:(?<name>\w+)(?<modifier>[?*]?)|(?<wildcard>(?<!:\w+)\*)/;
-// use separate regex from matchAll because regex.test is stateful when used with g flag
-const tokenRegexGlobal = new RegExp(tokenRegex.source, "g");
-
-export const isPathnamePattern = (pathname: string) =>
-  tokenRegex.test(pathname);
-
 export const tokenizePathnamePattern = (pathname: string) => {
   const tokens: Token[] = [];
   let lastCursor = 0;
   let lastWildcard = -1;
 
-  for (const match of pathname.matchAll(tokenRegexGlobal)) {
+  for (const match of matchPathnameParams(pathname)) {
     const cursor = match.index ?? 0;
     if (lastCursor < cursor) {
       tokens.push({
