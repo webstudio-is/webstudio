@@ -1,5 +1,6 @@
 import { executeExpression } from "./expression";
 import type { Folder, Page, Pages } from "./schema/pages";
+import { isPathnamePattern } from "./url-pattern";
 
 export const ROOT_FOLDER_ID = "root";
 
@@ -85,6 +86,7 @@ export const getStaticSiteMapXml = (pages: Pages, updatedAt: string) => {
       .filter(
         (page) => executeExpression(page.meta.excludePageFromSearch) !== true
       )
+      .filter((page) => false === isPathnamePattern(page.path))
       .map((page) => ({
         path: getPagePath(page.id, pages),
         lastModified: updatedAt.split("T")[0],

@@ -19,3 +19,4 @@ export * from "./expression";
 export * from "./forms-generator";
 export * from "./resources-generator";
 export * from "./page-meta-generator";
+export * from "./url-pattern";
