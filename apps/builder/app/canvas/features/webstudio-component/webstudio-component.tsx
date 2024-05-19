@@ -46,6 +46,7 @@ import {
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
+import { rawTheme, theme } from "@webstudio-is/design-system";
 
 const TextEditor = lazy(async () => {
   const { TextEditor } = await import("../text-editor");
@@ -100,19 +101,26 @@ const ContentEditable = ({
   return renderComponentWithRef(ref);
 };
 
-const StubComponent = forwardRef<HTMLDivElement, { children?: ReactNode }>(
-  (props, ref) => {
-    return (
-      <div
-        {...props}
-        ref={ref}
-        style={{ display: props.children ? "contents" : "block" }}
-      />
-    );
-  }
-);
+const MissingComponentStub = forwardRef<
+  HTMLDivElement,
+  { children?: ReactNode }
+>((props, ref) => {
+  return (
+    <div
+      {...props}
+      ref={ref}
+      style={{
+        padding: rawTheme.spacing[5],
+        border: `2px solid ${rawTheme.colors.borderDestructiveMain}`,
+        color: rawTheme.colors.foregroundDestructive,
+      }}
+    >
+      Component {props[componentAttribute as never]} does not exist
+    </div>
+  );
+});
 
-StubComponent.displayName = "StubComponent";
+MissingComponentStub.displayName = "MissingComponentStub";
 
 // this utility is temporary solution to compute instance selectors
 // for rich text subtree which cannot have slots so its safe to traverse ancestors
@@ -333,7 +341,8 @@ export const WebstudioComponentCanvas = forwardRef<
   }
 
   const Component =
-    components.get(instance.component) ?? (StubComponent as AnyComponent);
+    components.get(instance.component) ??
+    (MissingComponentStub as AnyComponent);
 
   const props: {
     [componentAttribute]: string;
