@@ -29,6 +29,7 @@ import {
   textContentAttribute,
   descendantComponent,
 } from "@webstudio-is/react-sdk";
+import { rawTheme } from "@webstudio-is/design-system";
 import {
   $propValuesByInstanceSelector,
   getIndexedInstanceId,
@@ -46,7 +47,6 @@ import {
 import { setDataCollapsed } from "~/canvas/collapsed";
 import { getIsVisuallyHidden } from "~/shared/visually-hidden";
 import { serverSyncStore } from "~/shared/sync";
-import { rawTheme, theme } from "@webstudio-is/design-system";
 
 const TextEditor = lazy(async () => {
   const { TextEditor } = await import("../text-editor");
