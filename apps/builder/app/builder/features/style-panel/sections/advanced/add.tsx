@@ -63,7 +63,7 @@ export const Add = ({
               item.value as keyof typeof propertyDescriptions
             ];
         }
-        return <Box css={{ width: theme.spacing[25] }}>{description}</Box>;
+        return <Box css={{ width: theme.spacing[28] }}>{description}</Box>;
       }}
       defaultHighlightedIndex={0}
     />

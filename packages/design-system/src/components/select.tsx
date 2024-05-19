@@ -18,6 +18,7 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
+import { Box } from "./box";
 
 export const SelectContent = styled(Primitive.Content, menuCss, {
   "&[data-side=top]": {
@@ -86,9 +87,11 @@ const Description = styled("div", menuItemCss);
 // Note this only works in combination with position: popper on Content component, because only popper exposes data-side attribute
 export const SelectItemDescription = ({
   children,
-  style,
-  ...props
-}: ComponentProps<typeof Description>) => {
+  descriptions,
+}: {
+  children: ReactNode;
+  descriptions: ReactNode[];
+}) => {
   return (
     <>
       <SelectSeparator
@@ -97,16 +100,38 @@ export const SelectItemDescription = ({
           order: "var(--ws-select-description-order)",
         }}
       />
+
       <Description
-        {...props}
+        css={{
+          display: "grid",
+        }}
         hint
         style={{
-          ...style,
           order: "var(--ws-select-description-order)",
         }}
       >
-        {children}
+        {descriptions.map((descr, index) => (
+          <Box
+            css={{
+              gridColumn: "1",
+              gridRow: "1",
+              visibility: "hidden",
+            }}
+            key={index}
+          >
+            {descr}
+          </Box>
+        ))}
+        <Box
+          css={{
+            gridColumn: "1",
+            gridRow: "1",
+          }}
+        >
+          {children}
+        </Box>
       </Description>
+
       <SelectSeparator
         style={{
           display: `var(--ws-select-description-display-top, none)`,
@@ -193,6 +218,8 @@ const SelectBase = <Option,>(
     ? getDescription?.(itemForDescription)
     : undefined;
 
+  const descriptions = options.map((option) => getDescription?.(option));
+
   return (
     <Primitive.Root
       name={name}
@@ -252,7 +279,9 @@ const SelectBase = <Option,>(
           </SelectScrollDownButton>
 
           {description && (
-            <SelectItemDescription>{description}</SelectItemDescription>
+            <SelectItemDescription descriptions={descriptions}>
+              {description}
+            </SelectItemDescription>
           )}
         </SelectContent>
       </Primitive.Portal>

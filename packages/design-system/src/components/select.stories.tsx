@@ -86,26 +86,33 @@ export const WithDescriptions: StoryFn<typeof Select> = () => {
   const options = [
     { label: "Apple", description: "An apple fruit" },
     { label: "Banana", description: "A banana fruit" },
-    { label: "Orange", description: "An orange fruit" },
+    {
+      label: "Orange",
+      description:
+        "An orange fruit An orange fruit An orange fruit An orange fruit",
+    },
     { label: "Pear", description: "A pear fruit" },
     { label: "Grape", description: "A grape fruit" },
   ];
   const [value, setValue] = useState<(typeof options)[number]>(options[0]);
 
   return (
-    <Select
-      name="fruit"
-      options={options}
-      value={value}
-      getValue={(value) => value.label}
-      onChange={setValue}
-      getLabel={(option) => {
-        return option.label;
-      }}
-      getDescription={(option) => {
-        return option.description;
-      }}
-    />
+    <>
+      <div style={{ height: "300px" }}></div>
+      <Select
+        name="fruit"
+        options={options}
+        value={value}
+        getValue={(value) => value.label}
+        onChange={setValue}
+        getLabel={(option) => {
+          return option.label;
+        }}
+        getDescription={(option) => {
+          return <div style={{ width: "150px" }}>{option.description}</div>;
+        }}
+      />
+    </>
   );
 };
 

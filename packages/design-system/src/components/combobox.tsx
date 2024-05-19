@@ -36,6 +36,7 @@ import {
 } from "./menu";
 import { ScrollArea } from "./scroll-area";
 import { Flex, InputField, NestedInputButton } from "..";
+import { Box } from "./box";
 
 export const ComboboxListbox = styled(
   "ul",
@@ -119,9 +120,11 @@ export const ComboboxListboxItem = forwardRef(ListboxItemBase);
 
 export const ComboboxItemDescription = ({
   children,
-  style,
-  ...props
-}: ComponentProps<typeof ListboxItem>) => {
+  descriptions,
+}: {
+  children: ReactNode;
+  descriptions: ReactNode[];
+}) => {
   return (
     <>
       <ComboboxSeparator
@@ -131,14 +134,34 @@ export const ComboboxItemDescription = ({
         }}
       />
       <ListboxItem
-        {...props}
+        css={{
+          display: "grid",
+        }}
         hint
         style={{
-          ...style,
           order: "var(--ws-combobox-description-order)",
         }}
       >
-        {children}
+        {descriptions.map((descr, index) => (
+          <Box
+            css={{
+              gridColumn: "1",
+              gridRow: "1",
+              visibility: "hidden",
+            }}
+            key={index}
+          >
+            {descr}
+          </Box>
+        ))}
+        <Box
+          css={{
+            gridColumn: "1",
+            gridRow: "1",
+          }}
+        >
+          {children}
+        </Box>
       </ListboxItem>
       <ComboboxSeparator
         style={{
@@ -435,6 +458,7 @@ export const Combobox = <Item,>({
       : combobox.items[combobox.highlightedIndex];
 
   const description = getDescription?.(descriptionItem);
+  const descriptions = combobox.items.map((item) => getDescription?.(item));
 
   return (
     <ComboboxRoot open={combobox.isOpen}>
@@ -463,7 +487,9 @@ export const Combobox = <Item,>({
                 })}
             </ComboboxScrollArea>
             {description && (
-              <ComboboxItemDescription>{description}</ComboboxItemDescription>
+              <ComboboxItemDescription descriptions={descriptions}>
+                {description}
+              </ComboboxItemDescription>
             )}
           </ComboboxListbox>
         </ComboboxContent>

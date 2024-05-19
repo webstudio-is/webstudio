@@ -15,6 +15,7 @@ import {
   handleNumericInputArrowKeys,
   theme,
   Flex,
+  styled,
 } from "@webstudio-is/design-system";
 import type {
   KeywordValue,
@@ -325,6 +326,9 @@ const itemToString = (item: CssValueInputValue | null) => {
     ? String(item.value)
     : toValue(item);
 };
+
+const Description = styled(Box, { width: theme.spacing[27] });
+
 /**
  * Common:
  * - Free text editing
@@ -651,12 +655,26 @@ export const CssValueInput = ({
       : items[0]?.type === "keyword"
       ? items[0]
       : undefined;
+
   if (valueForDescription) {
     const key = `${property}:${toValue(
       valueForDescription
     )}` as keyof typeof declarationDescriptions;
     description = declarationDescriptions[key];
   }
+
+  const descriptions = items
+    .map((item) =>
+      item.type === "keyword"
+        ? declarationDescriptions[
+            `${property}:${toValue(
+              item
+            )}` as keyof typeof declarationDescriptions
+          ]
+        : undefined
+    )
+    .filter(Boolean)
+    .map((descr) => <Description>{descr}</Description>);
 
   return (
     <ComboboxRoot open={isOpen}>
@@ -701,8 +719,8 @@ export const CssValueInput = ({
                 ))}
               </ComboboxScrollArea>
               {description && (
-                <ComboboxItemDescription>
-                  <Box css={{ width: theme.spacing[25] }}>{description}</Box>
+                <ComboboxItemDescription descriptions={descriptions}>
+                  <Description>{description}</Description>
                 </ComboboxItemDescription>
               )}
             </ComboboxListbox>
