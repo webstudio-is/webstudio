@@ -27,6 +27,9 @@ importers:
 
   .:
     devDependencies:
+      '@storybook/react':
+        specifier: ^8.0.5
+        version: 8.1.1(prettier@3.0.3)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
       '@types/css-tree':
         specifier: ^2.3.1
         version: 2.3.1(patch_hash=ac22lciodhaj6xmoeignv36gyq)
