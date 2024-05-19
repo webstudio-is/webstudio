@@ -111,7 +111,7 @@ const MissingComponentStub = forwardRef<
       ref={ref}
       style={{
         padding: rawTheme.spacing[5],
-        border: `2px solid ${rawTheme.colors.borderDestructiveMain}`,
+        border: `1px solid ${rawTheme.colors.borderDestructiveMain}`,
         color: rawTheme.colors.foregroundDestructive,
       }}
     >
