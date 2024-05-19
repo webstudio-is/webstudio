@@ -9,6 +9,7 @@ import {
   $isPreviewMode,
   $pages,
   $selectedPage,
+  savePathInHistory,
   updateSystem,
 } from "~/shared/nano-states";
 import { switchPage } from "~/shared/pages";
@@ -59,6 +60,7 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
       const search = Object.fromEntries(pageHref.searchParams);
       switchPage(page.id, pageHref.hash);
       updateSystem(page, { params, search });
+      savePathInHistory(page.id, pageHref.pathname);
       break;
     }
   }
