@@ -13,8 +13,4 @@ module.exports = {
       { title: key, url, expanded: false },
     ])
   ),
-  framework: {
-    name: "@storybook/react-vite",
-    options: {},
-  },
 };
