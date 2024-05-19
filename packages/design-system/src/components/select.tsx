@@ -20,9 +20,10 @@ import {
   MenuCheckedIcon,
 } from "./menu";
 import { SelectButton } from "./select-button";
+import { Box } from "./box";
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 
-export const SelectContent = styled(Primitive.Content, menuCss, {
+export const SelectContent = styled(Primitive.Content, {
   "&[data-side=top]": {
     "--ws-select-description-display-top": "block",
     "--ws-select-description-order": 0,
@@ -31,6 +32,11 @@ export const SelectContent = styled(Primitive.Content, menuCss, {
     "--ws-select-description-display-bottom": "block",
     "--ws-select-description-order": 2,
   },
+});
+
+const SelectViewportChild = styled(Box, menuCss, {
+  display: "flex",
+  flexDirection: "column",
 });
 
 export const SelectViewport = Primitive.Viewport;
@@ -200,20 +206,26 @@ const SelectBase = <Option,>(
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (contentRef.current) {
-      const rect = contentRef.current.getBoundingClientRect();
-      contentRef.current.style.height = rect.height + "px";
-    }
+    const timeoutID = setTimeout(() => {
+      if (contentRef.current) {
+        if (contentRef.current.dataset.side === "bottom") {
+          const rect = contentRef.current.getBoundingClientRect();
+          contentRef.current.style.maxHeight = rect.height + "px";
+        }
+      }
+    }, 0);
 
     return () => {
+      clearTimeout(timeoutID);
       if (contentRef.current) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        contentRef.current.style.height = "";
+        contentRef.current.style.maxHeight = "";
       }
     };
   }, [isOpen]);
 
   const itemForDescription = highlightedItem ?? value ?? defaultValue;
+
   const description = itemForDescription
     ? getDescription?.(itemForDescription)
     : undefined;
@@ -240,45 +252,48 @@ const SelectBase = <Option,>(
         </SelectButton>
       </Primitive.Trigger>
       <Primitive.Portal>
-        <SelectContent position="popper" updatePositionStrategy="optimized">
-          <SelectScrollUpButton css={{ order: 1 }}>
-            <ChevronUpIcon />
-          </SelectScrollUpButton>
+        <SelectContent position="popper" ref={contentRef}>
+          <SelectViewportChild>
+            <SelectScrollUpButton css={{ order: 1 }}>
+              <ChevronUpIcon />
+            </SelectScrollUpButton>
 
-          <SelectViewport style={{ order: 1, maxHeight: rawTheme.spacing[34] }}>
-            {children ||
-              options.map((option, index) => {
-                const value = getValue(option) ?? "";
-                const { textValue, ...rest } = getItemProps?.(option) ?? {};
-                return (
-                  <SelectItem
-                    key={value ?? index}
-                    value={value}
-                    textValue={textValue ?? value}
-                    onFocus={() => {
-                      onItemHighlight?.(option);
-                      setHighlightedItem(option);
-                    }}
-                    onBlur={(event) => {
-                      onItemHighlight?.(undefined);
-                      setHighlightedItem(undefined);
-                    }}
-                    text="sentence"
-                    {...rest}
-                  >
-                    {getLabel(option)}
-                  </SelectItem>
-                );
-              })}
-          </SelectViewport>
+            <SelectViewport
+              style={{ order: 1, maxHeight: rawTheme.spacing[34] }}
+            >
+              {children ||
+                options.map((option, index) => {
+                  const value = getValue(option) ?? "";
+                  const { textValue, ...rest } = getItemProps?.(option) ?? {};
+                  return (
+                    <SelectItem
+                      key={value ?? index}
+                      value={value}
+                      textValue={textValue ?? value}
+                      onFocus={() => {
+                        onItemHighlight?.(option);
+                        setHighlightedItem(option);
+                      }}
+                      onBlur={(event) => {
+                        onItemHighlight?.(undefined);
+                        setHighlightedItem(undefined);
+                      }}
+                      text="sentence"
+                      {...rest}
+                    >
+                      {getLabel(option)}
+                    </SelectItem>
+                  );
+                })}
+            </SelectViewport>
 
-          <SelectScrollDownButton css={{ order: 2 }}>
-            <ChevronDownIcon />
-          </SelectScrollDownButton>
-
-          {description && (
-            <SelectItemDescription>{description}</SelectItemDescription>
-          )}
+            <SelectScrollDownButton css={{ order: 2 }}>
+              <ChevronDownIcon />
+            </SelectScrollDownButton>
+            {description && (
+              <SelectItemDescription>{description}</SelectItemDescription>
+            )}
+          </SelectViewportChild>
         </SelectContent>
       </Primitive.Portal>
     </Primitive.Root>
