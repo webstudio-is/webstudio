@@ -207,6 +207,7 @@ const SelectBase = <Option,>(
 
     return () => {
       if (contentRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         contentRef.current.style.height = "";
       }
     };
