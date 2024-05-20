@@ -122,6 +122,20 @@ const MissingComponentStub = forwardRef<
 
 MissingComponentStub.displayName = "MissingComponentStub";
 
+const DroppableComponentStub = forwardRef<
+  HTMLDivElement,
+  { children?: ReactNode }
+>((props, ref) => {
+  return (
+    <div
+      {...props}
+      ref={ref}
+      style={{ display: props.children ? "contents" : "block" }}
+    />
+  );
+});
+DroppableComponentStub.displayName = "DroppableComponentStub";
+
 // this utility is temporary solution to compute instance selectors
 // for rich text subtree which cannot have slots so its safe to traverse ancestors
 // until editor instance is reached
@@ -308,6 +322,10 @@ export const WebstudioComponentCanvas = forwardRef<
     return <></>;
   }
 
+  let Component =
+    components.get(instance.component) ??
+    (MissingComponentStub as AnyComponent);
+
   if (instance.component === collectionComponent) {
     const data = instanceProps.data;
     // render stub component when no data or children
@@ -334,15 +352,12 @@ export const WebstudioComponentCanvas = forwardRef<
         );
       });
     }
+    Component = DroppableComponentStub as AnyComponent;
   }
 
   if (instance.component === descendantComponent) {
     return <></>;
   }
-
-  const Component =
-    components.get(instance.component) ??
-    (MissingComponentStub as AnyComponent);
 
   const props: {
     [componentAttribute]: string;
