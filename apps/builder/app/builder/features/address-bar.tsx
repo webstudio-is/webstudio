@@ -38,6 +38,7 @@ import {
   $pages,
   $publishedOrigin,
   $selectedPage,
+  $selectedPageDefaultSystem,
   updateSystem,
 } from "~/shared/nano-states";
 import {
@@ -62,15 +63,15 @@ const $selectedPagePath = computed([$selectedPage, $pages], (page, pages) => {
 });
 
 const $selectedPagePathParams = computed(
-  [$selectedPage, $dataSourceVariables],
-  (selectedPage, dataSourceVariables) => {
+  [$selectedPageDefaultSystem, $selectedPage, $dataSourceVariables],
+  (defaultSystem, selectedPage, dataSourceVariables) => {
     if (selectedPage === undefined) {
-      return {};
+      return defaultSystem.params;
     }
     const system = dataSourceVariables.get(selectedPage.systemDataSourceId) as
       | undefined
       | System;
-    return system?.params;
+    return system?.params ?? defaultSystem.params;
   }
 );
 

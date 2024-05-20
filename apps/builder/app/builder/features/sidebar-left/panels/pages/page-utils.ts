@@ -351,9 +351,11 @@ const $editingPage = computed(
 
 const $editingPagePath = computed($editingPage, (page) => page?.path);
 
+const $editingPageHistory = computed($editingPage, (page) => page?.history);
+
 const $editingPageDefaultSystem = computed(
-  [$publishedOrigin, $editingPagePath],
-  (origin, path) => getPageDefaultSystem({ origin, path })
+  [$publishedOrigin, $editingPagePath, $editingPageHistory],
+  (origin, path, history) => getPageDefaultSystem({ origin, path, history })
 );
 
 const $pageRootVariableValues = computed(
