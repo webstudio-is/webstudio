@@ -1,6 +1,9 @@
 import { atom, computed } from "nanostores";
 import type { DataSource, Page, Resource, System } from "@webstudio-is/sdk";
-import { tokenizePathnamePattern } from "~/builder/shared/url-pattern";
+import {
+  matchPathnamePattern,
+  tokenizePathnamePattern,
+} from "~/builder/shared/url-pattern";
 import { $publishedOrigin } from "./nano-states";
 import { $selectedPage } from "./pages";
 
@@ -13,9 +16,11 @@ export const $resourceValues = atom(new Map<Resource["id"], unknown>());
 export const getPageDefaultSystem = ({
   origin,
   path,
+  history,
 }: {
   origin: string;
   path?: string;
+  history?: string[];
 }) => {
   const defaultSystem: System = {
     params: {},
@@ -24,9 +29,16 @@ export const getPageDefaultSystem = ({
   };
   if (path) {
     const tokens = tokenizePathnamePattern(path);
+    // try to match the first item in history to let user
+    // see the page without manually entering params
+    // or selecting them in address bar
+    const matchedParams = history
+      ? matchPathnamePattern(path, history[0])
+      : undefined;
     for (const token of tokens) {
       if (token.type === "param") {
-        defaultSystem.params[token.name] = undefined;
+        defaultSystem.params[token.name] =
+          matchedParams?.[token.name] ?? undefined;
       }
     }
   }
@@ -35,9 +47,11 @@ export const getPageDefaultSystem = ({
 
 const $selectedPagePath = computed($selectedPage, (page) => page?.path);
 
+const $selectedPageHistory = computed($selectedPage, (page) => page?.history);
+
 export const $selectedPageDefaultSystem = computed(
-  [$publishedOrigin, $selectedPagePath],
-  (origin, path) => getPageDefaultSystem({ origin, path })
+  [$publishedOrigin, $selectedPagePath, $selectedPageHistory],
+  (origin, path, history) => getPageDefaultSystem({ origin, path, history })
 );
 
 export const mergeSystem = (left: System, right?: System): System => {
