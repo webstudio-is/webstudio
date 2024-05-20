@@ -151,6 +151,40 @@ const $unscopedVariableValues = computed(
   }
 );
 
+/**
+ * similar to above but should not depend on resource values
+ * because these values are used to load resources
+ * which result in updated resource values and may trigger
+ * circular updates
+ */
+const $loaderVariableValues = computed(
+  [
+    $dataSources,
+    $dataSourceVariables,
+    $selectedPage,
+    $selectedPageDefaultSystem,
+  ],
+  (dataSources, dataSourceVariables, page, defaultSystem) => {
+    const values = new Map<string, unknown>();
+    for (const [dataSourceId, dataSource] of dataSources) {
+      if (dataSource.type === "variable") {
+        values.set(
+          dataSourceId,
+          dataSourceVariables.get(dataSourceId) ?? dataSource.value.value
+        );
+      }
+      if (dataSource.type === "parameter") {
+        let value = dataSourceVariables.get(dataSourceId);
+        if (dataSource.id === page?.systemDataSourceId) {
+          value = mergeSystem(defaultSystem, value as undefined | System);
+        }
+        values.set(dataSourceId, value);
+      }
+    }
+    return values;
+  }
+);
+
 export const computeExpression = (
   expression: string,
   variables: Map<DataSource["id"], unknown>
@@ -452,25 +486,6 @@ export const $variableValuesByInstanceSelector = computed(
   }
 );
 
-// resource loader do not have an access to other resources
-const $loaderVariableValues = computed(
-  [$dataSources, $dataSourceVariables],
-  (dataSources, dataSourceVariables) => {
-    const variableValues = new Map<string, unknown>();
-    for (const variable of dataSources.values()) {
-      if (variable.type === "variable") {
-        const value = dataSourceVariables.get(variable.id);
-        variableValues.set(variable.id, value ?? variable.value.value);
-      }
-      if (variable.type === "parameter") {
-        const value = dataSourceVariables.get(variable.id);
-        variableValues.set(variable.id, value);
-      }
-    }
-    return variableValues;
-  }
-);
-
 const computeResource = (
   resource: Resource,
   values: Map<DataSource["id"], unknown>
@@ -492,7 +507,7 @@ const computeResource = (
 };
 
 const $computedResources = computed(
-  [$resources, $unscopedVariableValues],
+  [$resources, $loaderVariableValues],
   (resources, values) => {
     const computedResources: ResourceRequest[] = [];
     for (const resource of resources.values()) {
