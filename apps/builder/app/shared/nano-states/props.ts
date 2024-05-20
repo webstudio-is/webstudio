@@ -115,9 +115,11 @@ const getAction = (
   }
 };
 
-// result of executing generated code
-// includes variables, computed expressions and action callbacks
-const $dataSourcesLogic = computed(
+/**
+ * values of all variables without computing scope specifics like collections
+ * simplified version of variable values by instance selector
+ */
+const $unscopedVariableValues = computed(
   [
     $dataSources,
     $dataSourceVariables,
@@ -190,13 +192,13 @@ export const $propValuesByInstanceSelector = computed(
     $instances,
     $props,
     $selectedPage,
-    $dataSourcesLogic,
+    $unscopedVariableValues,
     $params,
     $pages,
     $assets,
   ],
-  (instances, props, page, dataSourcesLogic, params, pages, assets) => {
-    const variableValues = new Map<string, unknown>(dataSourcesLogic);
+  (instances, props, page, unscopedVariableValues, params, pages, assets) => {
+    const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
     let propsList = Array.from(props.values());
 
@@ -490,7 +492,7 @@ const computeResource = (
 };
 
 const $computedResources = computed(
-  [$resources, $loaderVariableValues],
+  [$resources, $unscopedVariableValues],
   (resources, values) => {
     const computedResources: ResourceRequest[] = [];
     for (const resource of resources.values()) {
