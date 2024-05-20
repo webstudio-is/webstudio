@@ -117,7 +117,11 @@ export const Complex = () => {
                 </ComboboxListboxItem>
               );
             })}
-            <ComboboxItemDescription>Description</ComboboxItemDescription>
+            <ComboboxItemDescription
+              descriptions={["Hello", "World", "Description"]}
+            >
+              Description
+            </ComboboxItemDescription>
           </ComboboxListbox>
         </ComboboxContent>
       </Flex>

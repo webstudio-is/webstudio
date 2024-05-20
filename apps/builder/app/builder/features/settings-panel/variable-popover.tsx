@@ -232,7 +232,7 @@ const TypeField = ({
           disabled: options.get(option)?.disabled,
         })}
         getDescription={(option) => (
-          <Box css={{ width: theme.spacing[25] }}>
+          <Box css={{ width: theme.spacing[27] }}>
             {options.get(option)?.description}
           </Box>
         )}

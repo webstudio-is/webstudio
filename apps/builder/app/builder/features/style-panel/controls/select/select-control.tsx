@@ -66,7 +66,7 @@ export const SelectControl = ({
         if (description === undefined) {
           return;
         }
-        return <Box css={{ width: theme.spacing[25] }}>{description}</Box>;
+        return <Box css={{ width: theme.spacing[26] }}>{description}</Box>;
       }}
       getItemProps={() => ({ text: "sentence" })}
     />
