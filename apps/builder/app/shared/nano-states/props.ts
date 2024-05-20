@@ -115,9 +115,11 @@ const getAction = (
   }
 };
 
-// result of executing generated code
-// includes variables, computed expressions and action callbacks
-const $dataSourcesLogic = computed(
+/**
+ * values of all variables without computing scope specifics like collections
+ * simplified version of variable values by instance selector
+ */
+const $unscopedVariableValues = computed(
   [
     $dataSources,
     $dataSourceVariables,
@@ -143,6 +145,40 @@ const $dataSourcesLogic = computed(
       }
       if (dataSource.type === "resource") {
         values.set(dataSourceId, resourceValues.get(dataSource.resourceId));
+      }
+    }
+    return values;
+  }
+);
+
+/**
+ * similar to above but should not depend on resource values
+ * because these values are used to load resources
+ * which result in updated resource values and may trigger
+ * circular updates
+ */
+const $loaderVariableValues = computed(
+  [
+    $dataSources,
+    $dataSourceVariables,
+    $selectedPage,
+    $selectedPageDefaultSystem,
+  ],
+  (dataSources, dataSourceVariables, page, defaultSystem) => {
+    const values = new Map<string, unknown>();
+    for (const [dataSourceId, dataSource] of dataSources) {
+      if (dataSource.type === "variable") {
+        values.set(
+          dataSourceId,
+          dataSourceVariables.get(dataSourceId) ?? dataSource.value.value
+        );
+      }
+      if (dataSource.type === "parameter") {
+        let value = dataSourceVariables.get(dataSourceId);
+        if (dataSource.id === page?.systemDataSourceId) {
+          value = mergeSystem(defaultSystem, value as undefined | System);
+        }
+        values.set(dataSourceId, value);
       }
     }
     return values;
@@ -190,13 +226,13 @@ export const $propValuesByInstanceSelector = computed(
     $instances,
     $props,
     $selectedPage,
-    $dataSourcesLogic,
+    $unscopedVariableValues,
     $params,
     $pages,
     $assets,
   ],
-  (instances, props, page, dataSourcesLogic, params, pages, assets) => {
-    const variableValues = new Map<string, unknown>(dataSourcesLogic);
+  (instances, props, page, unscopedVariableValues, params, pages, assets) => {
+    const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
     let propsList = Array.from(props.values());
 
@@ -447,25 +483,6 @@ export const $variableValuesByInstanceSelector = computed(
     };
     traverseInstances([page.rootInstanceId], new Map());
     return variableValuesByInstanceSelector;
-  }
-);
-
-// resource loader do not have an access to other resources
-const $loaderVariableValues = computed(
-  [$dataSources, $dataSourceVariables],
-  (dataSources, dataSourceVariables) => {
-    const variableValues = new Map<string, unknown>();
-    for (const variable of dataSources.values()) {
-      if (variable.type === "variable") {
-        const value = dataSourceVariables.get(variable.id);
-        variableValues.set(variable.id, value ?? variable.value.value);
-      }
-      if (variable.type === "parameter") {
-        const value = dataSourceVariables.get(variable.id);
-        variableValues.set(variable.id, value);
-      }
-    }
-    return variableValues;
   }
 );
 
