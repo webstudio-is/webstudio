@@ -76,6 +76,9 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+        // refocus editor on the next frame
+        // otherwise it sometimes is left on toolbar button
+        requestAnimationFrame(() => editor?.focus());
       },
     },
     {
@@ -83,6 +86,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+        requestAnimationFrame(() => editor?.focus());
       },
     },
     {
@@ -94,6 +98,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (hasSelectionFormat("subscript")) {
           editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "subscript");
         }
+        requestAnimationFrame(() => editor?.focus());
       },
     },
     {
@@ -105,6 +110,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         if (hasSelectionFormat("superscript")) {
           editor?.dispatchCommand(FORMAT_TEXT_COMMAND, "superscript");
         }
+        requestAnimationFrame(() => editor?.focus());
       },
     },
     {
@@ -116,6 +122,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
         } else {
           editor?.dispatchCommand(TOGGLE_LINK_COMMAND, "https://");
         }
+        requestAnimationFrame(() => editor?.focus());
       },
     },
     {
@@ -123,6 +130,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(TOGGLE_SPAN_COMMAND, undefined);
+        requestAnimationFrame(() => editor?.focus());
       },
     },
     {
@@ -130,6 +138,7 @@ export const { emitCommand, subscribeCommands } = createCommandsEmitter({
       handler: () => {
         const editor = getActiveEditor();
         editor?.dispatchCommand(CLEAR_FORMAT_COMMAND, undefined);
+        requestAnimationFrame(() => editor?.focus());
       },
     },
   ],
