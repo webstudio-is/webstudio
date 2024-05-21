@@ -1,16 +1,11 @@
-import * as parser from "@babel/parser";
-import type { ParseError } from "@babel/parser";
-import {
-  type JSXElement,
-  type JSXOpeningElement,
-  type JSXText,
-} from "@babel/types";
 import {
   WsEmbedTemplate,
   type EmbedTemplateProp,
 } from "@webstudio-is/react-sdk";
 import JSON5 from "json5";
 import type { JsonObject } from "type-fest";
+import type { JSXElement, JSXOpeningElement, JSXText } from "./parser";
+import { parseExpression } from "./parser";
 
 export const jsxToWSEmbedTemplate = async (
   code: string
@@ -20,28 +15,41 @@ export const jsxToWSEmbedTemplate = async (
   let ast;
 
   try {
-    ast = parser.parseExpression(code, {
-      plugins: ["jsx"],
-    });
+    ast = parseExpression(code);
   } catch (error) {
     if (
-      error &&
-      (error as ParseError).reasonCode === "UnwrappedAdjacentJSXElements"
+      error instanceof Error &&
+      error.message.includes(
+        "Adjacent JSX elements must be wrapped in an enclosing tag"
+      )
     ) {
-      code = `<Fragment>${code}</Fragment>`;
-      ast = parser.parseExpression(code, {
-        plugins: ["jsx"],
-      });
+      code = `<>${code}</>`;
+      ast = parseExpression(code);
+    }
+  }
+
+  const template: WsEmbedTemplate = [];
+  if (ast?.type === "JSXFragment") {
+    for (const child of ast.children) {
+      if (child.type === "JSXElement") {
+        const instance = await transform(child, code);
+        if (instance) {
+          template.push(instance);
+        }
+      }
     }
   }
 
   if (ast && ast.type === "JSXElement") {
-    const template = await transform(ast, code);
-    if (template !== null) {
-      // Validate template
-      WsEmbedTemplate.parse([template]);
-      return [template];
+    const instance = await transform(ast, code);
+    if (instance !== null) {
+      template.push(instance);
     }
+  }
+  if (template.length > 0) {
+    // Validate template
+    WsEmbedTemplate.parse(template);
+    return template;
   }
 
   throw new Error("JSX to Webstudio Embed Template produced an empty result");
@@ -144,7 +152,7 @@ const getProps = function getProps(
             value = parsed;
           }
         } catch (error) {
-          /**/
+          // empty block
         }
 
         return {

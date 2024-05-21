@@ -1611,12 +1611,6 @@ importers:
 
   packages/jsx-utils:
     dependencies:
-      '@babel/parser':
-        specifier: ^7.23.0
-        version: 7.23.0
-      '@babel/types':
-        specifier: 7.24.0
-        version: 7.24.0
       '@webstudio-is/css-data':
         specifier: workspace:*
         version: link:../css-data
@@ -1626,6 +1620,12 @@ importers:
       '@webstudio-is/sdk':
         specifier: workspace:*
         version: link:../sdk
+      acorn:
+        specifier: ^8.11.3
+        version: 8.11.3
+      acorn-jsx:
+        specifier: ^5.3.2
+        version: 5.3.2(acorn@8.11.3)
       json5:
         specifier: ^2.2.3
         version: 2.2.3
