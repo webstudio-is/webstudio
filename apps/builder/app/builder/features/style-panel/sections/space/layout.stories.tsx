@@ -1,4 +1,4 @@
-import type { ComponentMeta } from "@storybook/react";
+import type { Meta } from "@storybook/react";
 import type * as React from "react";
 import { SpaceLayout } from "./layout";
 
@@ -14,4 +14,4 @@ export const Layout = (
 export default {
   title: "Space/Layout",
   component: Layout,
-} as ComponentMeta<typeof Layout>;
+} as Meta<typeof Layout>;
