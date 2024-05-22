@@ -40,8 +40,8 @@ export const ListItem = ({
     state === "disabled"
       ? { "data-state": "disabled" }
       : state === "selected"
-      ? { "data-state": "selected" }
-      : undefined;
+        ? { "data-state": "selected" }
+        : undefined;
   const { pressProps } = usePress({
     onPress(event) {
       onSelect?.(event);

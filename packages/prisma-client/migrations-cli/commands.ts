@@ -75,8 +75,8 @@ const getStatus = async (): Promise<Status> => {
     const state = prismaMigrations.isAppliedMigration(migration)
       ? "applied"
       : prismaMigrations.isFailedMigration(migration)
-      ? "failed"
-      : "rolled-back";
+        ? "failed"
+        : "rolled-back";
 
     return { migration, state, fileState };
   });

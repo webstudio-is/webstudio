@@ -102,8 +102,8 @@ export const getPublishStatusAndText = ({
     status === "PUBLISHED"
       ? "Published"
       : status === "FAILED"
-      ? "Publish failed"
-      : "Publishing started";
+        ? "Publish failed"
+        : "Publishing started";
 
   const statusText = `${textStart} ${formatDistance(
     new Date(updatedAt),
@@ -183,8 +183,8 @@ const StatusIcon = (props: { projectDomain: Domain; isLoading: boolean }) => {
           color: props.isLoading
             ? theme.colors.foregroundDisabled
             : isVerifiedActive
-            ? theme.colors.foregroundSuccessText
-            : theme.colors.foregroundDestructive,
+              ? theme.colors.foregroundSuccessText
+              : theme.colors.foregroundDestructive,
         }}
       >
         <Icon />

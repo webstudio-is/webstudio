@@ -170,8 +170,8 @@ const BindingPanel = ({
             touched && errors.length > 0
               ? errors
               : valueError
-              ? [valueError]
-              : undefined
+                ? [valueError]
+                : undefined
           }
         >
           <div>

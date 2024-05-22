@@ -140,8 +140,8 @@ export const getPlacementNextTo = (
         ? "right"
         : "left"
       : isForward
-      ? "bottom"
-      : "top";
+        ? "bottom"
+        : "top";
 
   const getMargin = (distnaceToParentEdge: number) =>
     Math.min(padding * 2, Math.max(0, distnaceToParentEdge)) / 2;

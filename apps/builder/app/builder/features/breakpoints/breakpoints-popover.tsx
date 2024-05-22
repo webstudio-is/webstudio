@@ -170,8 +170,8 @@ export const BreakpointsPopover = () => {
                               {breakpoint.minWidth !== undefined
                                 ? `≥ ${breakpoint.minWidth} PX`
                                 : breakpoint.maxWidth !== undefined
-                                ? `≤ ${breakpoint.maxWidth} PX`
-                                : "All Sizes"}
+                                  ? `≤ ${breakpoint.maxWidth} PX`
+                                  : "All Sizes"}
                             </PopoverMenuItemRightSlot>
                           </MenuItemButton>
                         </ListItem>

@@ -66,8 +66,8 @@ const ItemSuffix = ({
         ? "Close page settings"
         : "Open page settings"
       : isEditing
-      ? "Close folder settings"
-      : "Open folder settings";
+        ? "Close folder settings"
+        : "Open folder settings";
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 

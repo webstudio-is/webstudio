@@ -172,8 +172,8 @@ export const FlexGrid = ({
             justifyContent === "space-between"
               ? 8
               : justifyContent === "space-around"
-              ? 14.5
-              : undefined
+                ? 14.5
+                : undefined
           ),
         }}
       >

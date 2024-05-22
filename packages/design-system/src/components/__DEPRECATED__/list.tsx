@@ -97,8 +97,8 @@ export const deprecatedFindNextListIndex = (
     direction === "next"
       ? currentIndex + 1
       : direction === "previous"
-      ? currentIndex - 1
-      : currentIndex;
+        ? currentIndex - 1
+        : currentIndex;
 
   if (nextIndex < 0) {
     return total - 1;
