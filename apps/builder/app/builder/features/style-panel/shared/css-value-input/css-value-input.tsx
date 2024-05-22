@@ -320,11 +320,11 @@ const itemToString = (item: CssValueInputValue | null) => {
   return item === null
     ? ""
     : item.type === "keyword"
-    ? // E.g. we want currentcolor to be lower case
-      toValue(item).toLocaleLowerCase()
-    : item.type === "intermediate" || item.type === "unit"
-    ? String(item.value)
-    : toValue(item);
+      ? // E.g. we want currentcolor to be lower case
+        toValue(item).toLocaleLowerCase()
+      : item.type === "intermediate" || item.type === "unit"
+        ? String(item.value)
+        : toValue(item);
 };
 
 const Description = styled(Box, { width: theme.spacing[27] });
@@ -640,8 +640,8 @@ export const CssValueInput = ({
         {isUnitValue
           ? unitSelectElement
           : isKeywordValue
-          ? keywordButtonElement
-          : null}
+            ? keywordButtonElement
+            : null}
       </Flex>
     );
 
@@ -651,10 +651,10 @@ export const CssValueInput = ({
     highlightedValue?.type === "keyword"
       ? highlightedValue
       : props.value?.type === "keyword"
-      ? props.value
-      : items[0]?.type === "keyword"
-      ? items[0]
-      : undefined;
+        ? props.value
+        : items[0]?.type === "keyword"
+          ? items[0]
+          : undefined;
 
   if (valueForDescription) {
     const key = `${property}:${toValue(

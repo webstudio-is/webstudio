@@ -147,8 +147,8 @@ export const ErrorBoundary = () => {
   const message = isRouteErrorResponse(error)
     ? error.data.message ?? error.data
     : error instanceof Error
-    ? error.message
-    : String(error);
+      ? error.message
+      : String(error);
 
   return <ErrorMessage message={message} />;
 };

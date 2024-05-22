@@ -115,8 +115,8 @@ const recalculate = () => {
     instanceIdSet.size < MAX_SIZE_TO_USE_OPTIMIZATION
       ? Array.from(instanceIdSet)
       : rootInstanceId !== undefined
-      ? [rootInstanceId]
-      : [];
+        ? [rootInstanceId]
+        : [];
 
   instanceIdSet.clear();
   if (instanceIds.length === 0) {

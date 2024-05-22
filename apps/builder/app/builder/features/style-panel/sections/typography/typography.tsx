@@ -181,8 +181,8 @@ export const TypographySectionAdvanced = (props: SectionProps) => {
           textAlignValue === "left"
             ? "start"
             : textAlignValue === "right"
-            ? "end"
-            : textAlignValue
+              ? "end"
+              : textAlignValue
         }
         items={[
           {

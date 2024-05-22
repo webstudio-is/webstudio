@@ -41,17 +41,16 @@ export interface CommonYargsOptions {
 
 export type CommonYargsArgv = Argv<CommonYargsOptions>;
 
-export type YargvToInterface<T> = T extends Argv<infer P>
-  ? ArgumentsCamelCase<P>
-  : never;
+export type YargvToInterface<T> =
+  T extends Argv<infer P> ? ArgumentsCamelCase<P> : never;
 
 // See http://stackoverflow.com/questions/51465182/how-to-remove-index-signature-using-mapped-types
 type RemoveIndex<T> = {
   [K in keyof T as string extends K
     ? never
     : number extends K
-    ? never
-    : K]: T[K];
+      ? never
+      : K]: T[K];
 };
 
 /**

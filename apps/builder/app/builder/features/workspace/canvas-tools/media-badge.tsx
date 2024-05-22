@@ -25,8 +25,8 @@ export const MediaBadge = () => {
     breakpoint.maxWidth !== undefined
       ? `@media (max-width: ${breakpoint.maxWidth}px)`
       : breakpoint.minWidth !== undefined
-      ? `@media (min-width: ${breakpoint.minWidth}px)`
-      : undefined;
+        ? `@media (min-width: ${breakpoint.minWidth}px)`
+        : undefined;
   if (media === undefined) {
     return null;
   }

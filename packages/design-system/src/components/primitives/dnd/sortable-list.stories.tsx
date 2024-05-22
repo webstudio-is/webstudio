@@ -187,8 +187,8 @@ export const SortableList = ({
                   ? "column-reverse"
                   : "column"
                 : reversed
-                ? "row-reverse"
-                : "row",
+                  ? "row-reverse"
+                  : "row",
             flexWrap: direction === "wrap" ? "wrap" : "none",
           }}
         >
