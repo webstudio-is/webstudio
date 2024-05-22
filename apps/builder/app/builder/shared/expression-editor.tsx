@@ -445,6 +445,9 @@ export const ExpressionEditor = ({
                   const [id, _name] = matchedAliases[0];
                   return id;
                 }
+                // replace variable with undefined
+                // only after paste or drop
+                // to avoid replacing with undefined while user is typing
                 if (lastChangeIsPasteOrDrop.current) {
                   return `undefined`;
                 }
