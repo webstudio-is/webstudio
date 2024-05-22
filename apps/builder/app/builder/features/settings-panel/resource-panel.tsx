@@ -50,7 +50,6 @@ import {
   BindingPopover,
   evaluateExpressionWithinScope,
 } from "~/builder/shared/binding-popover";
-import { type ComposedFields, composeFields } from "~/shared/form-utils";
 import { ExpressionEditor } from "~/builder/shared/expression-editor";
 import {
   EditorDialog,
@@ -59,14 +58,19 @@ import {
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
 
+export type ComposedFields = {
+  isValid: () => boolean;
+  areAllErrorsVisible: () => boolean;
+  showAllErrors: () => void;
+};
+
 export const composeWithNativeForm = (
-  formAccessorRef: RefObject<HTMLInputElement>,
-  form: ComposedFields
+  formAccessorRef: RefObject<HTMLInputElement>
 ): ComposedFields => {
   return {
     isValid() {
       const formElement = formAccessorRef.current?.form;
-      return form.isValid() && formElement?.checkValidity() === true;
+      return formElement?.checkValidity() === true;
     },
     areAllErrorsVisible() {
       const formElement = formAccessorRef.current?.form;
@@ -88,12 +92,11 @@ export const composeWithNativeForm = (
           }
         }
       }
-      return form.areAllErrorsVisible();
+      return true;
     },
     showAllErrors() {
       const formElement = formAccessorRef.current?.form;
       formElement?.checkValidity();
-      form.showAllErrors();
     },
   };
 };
@@ -621,9 +624,8 @@ export const ResourceForm = forwardRef<
     : undefined;
 
   const formAccessorRef = useRef<HTMLInputElement>(null);
-  const form = composeWithNativeForm(formAccessorRef, composeFields());
   useImperativeHandle(ref, () => ({
-    ...form,
+    ...composeWithNativeForm(formAccessorRef),
     save: () => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
@@ -760,10 +762,9 @@ export const SystemResourceForm = forwardRef<
   });
 
   const formAccessorRef = useRef<HTMLInputElement>(null);
-  const form = composeWithNativeForm(formAccessorRef, composeFields());
 
   useImperativeHandle(ref, () => ({
-    ...form,
+    ...composeWithNativeForm(formAccessorRef),
     save: () => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
@@ -872,7 +873,7 @@ export const GraphqlResourceForm = forwardRef<
   }, [variables, scope]);
 
   const formAccessorRef = useRef<HTMLInputElement>(null);
-  const form = composeWithNativeForm(formAccessorRef, composeFields());
+  const form = composeWithNativeForm(formAccessorRef);
   useImperativeHandle(ref, () => ({
     ...form,
     save: () => {
