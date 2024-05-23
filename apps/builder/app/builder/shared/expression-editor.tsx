@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet } from "@codemirror/state";
@@ -36,6 +36,7 @@ import {
   EditorContent,
   EditorDialog,
 } from "./code-editor-base";
+import { groupBy } from "~/shared/array-utils";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -366,6 +367,7 @@ export const ExpressionEditor = ({
   onChange: (newValue: string) => void;
   onBlur?: () => void;
 }) => {
+  const lastChangeIsPasteOrDrop = useRef(false);
   const extensions = useMemo(
     () => [
       bracketMatching(),
@@ -382,6 +384,14 @@ export const ExpressionEditor = ({
       }),
       variables,
       keymap.of([...closeBracketsKeymap, ...completionKeymap]),
+      EditorView.domEventHandlers({
+        drop() {
+          lastChangeIsPasteOrDrop.current = true;
+        },
+        paste() {
+          lastChangeIsPasteOrDrop.current = true;
+        },
+      }),
     ],
     [scope, aliases]
   );
@@ -413,6 +423,10 @@ export const ExpressionEditor = ({
         autoFocus={autoFocus}
         value={value}
         onChange={(value) => {
+          const aliasesByName = groupBy(
+            Array.from(aliases),
+            ([_id, name]) => name
+          );
           try {
             // replace unknown webstudio variables with undefined
             // to prevent invalid compilation
@@ -421,8 +435,20 @@ export const ExpressionEditor = ({
               replaceVariable: (identifier) => {
                 if (
                   decodeDataSourceVariable(identifier) &&
-                  aliases.has(identifier) === false
+                  aliases.has(identifier)
                 ) {
+                  return;
+                }
+                // prevent matching variables by unambiguous name
+                const matchedAliases = aliasesByName.get(identifier);
+                if (matchedAliases && matchedAliases.length === 1) {
+                  const [id, _name] = matchedAliases[0];
+                  return id;
+                }
+                // replace variable with undefined
+                // only after paste or drop
+                // to avoid replacing with undefined while user is typing
+                if (lastChangeIsPasteOrDrop.current) {
                   return `undefined`;
                 }
               },
@@ -430,6 +456,7 @@ export const ExpressionEditor = ({
           } catch {
             // empty block
           }
+          lastChangeIsPasteOrDrop.current = false;
           onChange(value);
         }}
         onBlur={onBlur}
