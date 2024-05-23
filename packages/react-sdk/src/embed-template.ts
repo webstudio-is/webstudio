@@ -361,6 +361,7 @@ const createInstancesFromTemplate = (
       parentChildren.push({
         type: "text",
         value: item.value,
+        placeholder: item.placeholder,
       });
     }
 
