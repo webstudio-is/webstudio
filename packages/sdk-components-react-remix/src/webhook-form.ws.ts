@@ -55,7 +55,7 @@ export const meta: WsComponentMeta = {
             {
               type: "instance",
               component: "Label",
-              children: [{ type: "text", value: "Name" }],
+              children: [{ type: "text", value: "Name", placeholder: true }],
             },
             {
               type: "instance",
@@ -66,7 +66,7 @@ export const meta: WsComponentMeta = {
             {
               type: "instance",
               component: "Label",
-              children: [{ type: "text", value: "Email" }],
+              children: [{ type: "text", value: "Email", placeholder: true }],
             },
             {
               type: "instance",
@@ -77,7 +77,7 @@ export const meta: WsComponentMeta = {
             {
               type: "instance",
               component: "Button",
-              children: [{ type: "text", value: "Submit" }],
+              children: [{ type: "text", value: "Submit", placeholder: true }],
             },
           ],
         },
@@ -94,7 +94,11 @@ export const meta: WsComponentMeta = {
             },
           ],
           children: [
-            { type: "text", value: "Thank you for getting in touch!" },
+            {
+              type: "text",
+              value: "Thank you for getting in touch!",
+              placeholder: true,
+            },
           ],
         },
 
@@ -109,7 +113,13 @@ export const meta: WsComponentMeta = {
               code: "formState === 'error'",
             },
           ],
-          children: [{ type: "text", value: "Sorry, something went wrong." }],
+          children: [
+            {
+              type: "text",
+              value: "Sorry, something went wrong.",
+              placeholder: true,
+            },
+          ],
         },
       ],
     },

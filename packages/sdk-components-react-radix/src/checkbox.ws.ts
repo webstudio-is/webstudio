@@ -126,7 +126,7 @@ export const metaCheckbox: WsComponentMeta = {
           component: "Text",
           label: "Checkbox Label",
           props: [{ name: "tag", type: "string", value: "span" }],
-          children: [{ type: "text", value: "Checkbox" }],
+          children: [{ type: "text", value: "Checkbox", placeholder: true }],
         },
       ],
     },

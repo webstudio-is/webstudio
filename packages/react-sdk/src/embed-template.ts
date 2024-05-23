@@ -23,6 +23,7 @@ import type { WsComponentMeta } from "./components/component-meta";
 const EmbedTemplateText = z.object({
   type: z.literal("text"),
   value: z.string(),
+  placeholder: z.boolean().optional(),
 });
 
 type EmbedTemplateText = z.infer<typeof EmbedTemplateText>;

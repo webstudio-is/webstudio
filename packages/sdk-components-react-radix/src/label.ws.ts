@@ -33,7 +33,7 @@ export const meta: WsComponentMeta = {
         tc.leading("none"),
         // We are not supporting peer like styles yet
       ].flat(),
-      children: [{ type: "text", value: "Form Label" }],
+      children: [{ type: "text", value: "Form Label", placeholder: true }],
     },
   ],
 };
