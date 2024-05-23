@@ -23,6 +23,19 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 2,
+  template: [
+    {
+      type: "instance",
+      component: "Paragraph",
+      children: [
+        {
+          type: "text",
+          value: "Paragraph text you can edit",
+          placeholder: true,
+        },
+      ],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

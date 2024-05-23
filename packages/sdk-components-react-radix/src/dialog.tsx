@@ -177,7 +177,7 @@ export const DialogTitle = forwardRef<
 >(({ tag: Tag = defaultTag, children, ...props }, ref) => (
   <DialogPrimitive.DialogTitle asChild>
     <Tag ref={ref} {...props}>
-      {children ?? "Heading title you can edit"}
+      {children}
     </Tag>
   </DialogPrimitive.DialogTitle>
 ));

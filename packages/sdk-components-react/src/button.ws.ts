@@ -28,6 +28,19 @@ export const meta: WsComponentMeta = {
     { selector: ":enabled", label: "Enabled" },
   ],
   order: 2,
+  template: [
+    {
+      type: "instance",
+      component: "Button",
+      children: [
+        {
+          type: "text",
+          value: "Button text you can edit",
+          placeholder: true,
+        },
+      ],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

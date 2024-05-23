@@ -69,6 +69,19 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 3,
+  template: [
+    {
+      type: "instance",
+      component: "Blockquote",
+      children: [
+        {
+          type: "text",
+          value: "Blockquote text you can edit",
+          placeholder: true,
+        },
+      ],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

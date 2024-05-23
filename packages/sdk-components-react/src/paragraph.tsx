@@ -7,7 +7,7 @@ export const Paragraph = forwardRef<
   ComponentProps<typeof defaultTag>
 >(({ children, ...props }, ref) => (
   <p {...props} ref={ref}>
-    {children ?? "Paragraph you can edit"}
+    {children}
   </p>
 ));
 

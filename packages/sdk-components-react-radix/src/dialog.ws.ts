@@ -202,7 +202,7 @@ export const metaDialog: WsComponentMeta = {
                       children: [
                         {
                           type: "text",
-                          value: "Dialog Title",
+                          value: "Dialog Title you can edit",
                           placeholder: true,
                         },
                       ],

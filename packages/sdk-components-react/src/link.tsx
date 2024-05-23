@@ -11,7 +11,7 @@ export const Link = forwardRef<HTMLAnchorElement, Props>(
   ({ children, ...props }, ref) => {
     return (
       <a {...props} href={props.href ?? "#"} ref={ref}>
-        {children ?? "Link text you can edit"}
+        {children}
       </a>
     );
   }
