@@ -275,6 +275,7 @@ export const generateJsxChildren = ({
   usedDataSources,
   indexesWithinAncestors,
   classesMap,
+  excludePlaceholders,
 }: {
   scope: Scope;
   children: Instance["children"];
@@ -284,10 +285,14 @@ export const generateJsxChildren = ({
   usedDataSources: DataSources;
   indexesWithinAncestors: IndexesWithinAncestors;
   classesMap?: Map<string, Array<string>>;
+  excludePlaceholders?: boolean;
 }) => {
   let generatedChildren = "";
   for (const child of children) {
     if (child.type === "text") {
+      if (excludePlaceholders && child.placeholder === true) {
+        continue;
+      }
       // instance text can contain newlines
       // convert them too <br> tag
       generatedChildren += child.value
@@ -329,6 +334,7 @@ export const generateJsxChildren = ({
           dataSources,
           usedDataSources,
           indexesWithinAncestors,
+          excludePlaceholders,
         }),
       });
       continue;

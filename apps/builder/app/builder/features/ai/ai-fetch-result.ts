@@ -295,17 +295,13 @@ const $jsx = computed(
       indexesWithinAncestors,
       children: generateJsxChildren({
         scope,
-        children: instance.children.filter((child) => {
-          if (child.type === "text" && child.placeholder === true) {
-            return false;
-          }
-          return true;
-        }),
+        children: instance.children,
         instances,
         props,
         dataSources,
         usedDataSources: new Map(),
         indexesWithinAncestors,
+        excludePlaceholders: true,
       }),
     });
 
