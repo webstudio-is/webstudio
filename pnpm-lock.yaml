@@ -1613,6 +1613,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      immer:
+        specifier: ^10.0.3
+        version: 10.0.3
       prisma:
         specifier: ^5.12.1
         version: 5.12.1

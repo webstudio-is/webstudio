@@ -1,42 +1,12 @@
-import { applyPatches, enableMapSet, enablePatches } from "immer";
+import { type Patch } from "immer";
 import type { ActionFunctionArgs } from "@remix-run/server-runtime";
 import type { SyncItem } from "immerhin";
-import { prisma } from "@webstudio-is/prisma-client";
-import {
-  Breakpoints,
-  Breakpoint,
-  Instances,
-  Instance,
-  Pages,
-  Props,
-  Prop,
-  DataSources,
-  DataSource,
-  StyleSourceSelections,
-  StyleSources,
-  StyleSource,
-  Styles,
-  Resources,
-  Resource,
-} from "@webstudio-is/sdk";
-import { type Build, MarketplaceProduct } from "@webstudio-is/project-build";
-import {
-  parsePages,
-  parseStyleSourceSelections,
-  parseStyles,
-  serializePages,
-  serializeStyleSourceSelections,
-  serializeStyles,
-  parseData,
-  serializeData,
-  parseConfig,
-  serializeConfig,
-} from "@webstudio-is/project-build/index.server";
+import { Prisma, prisma } from "@webstudio-is/prisma-client";
+import { type Build } from "@webstudio-is/project-build";
 import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
-import { db } from "@webstudio-is/project/index.server";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -46,9 +16,6 @@ type PatchData = {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  enableMapSet();
-  enablePatches();
-
   try {
     const {
       buildId,
@@ -78,129 +45,33 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw Error("You don't have edit access to this project");
     }
 
-    // await new Promise((r) => setTimeout(r, 10000));
+    const jsonFields = {
+      pages: "object",
+      instances: "map",
+      styleSourceSelections: "map",
+      styleSources: "map",
+      styles: "map",
+      props: "map",
+      dataSources: "map",
+      breakpoints: "map",
+      resources: "map",
 
-    const build = await prisma.build.findUnique({
-      where: { id_projectId: { projectId, id: buildId } },
-    });
-    if (build === null) {
-      throw Error(`Build ${buildId} not found`);
-    }
+      marketplaceProduct: "map",
+    } as const;
 
-    const serverVersion = build.version;
-    if (clientVersion !== serverVersion) {
-      // Check if a retry attempt is made with a previously successful transaction.
-      // This can occur if the connection was lost or an error occurred post-transaction completion,
-      // leaving the client in an erroneous state and prompting a retry.
-      if (lastTransactionId === build.lastTransactionId) {
-        return { status: "ok" };
-      }
+    const isJsonField = (
+      namespace: string
+    ): namespace is keyof typeof jsonFields => namespace in jsonFields;
 
-      return {
-        status: "version_mismatched",
-      };
-    }
+    const patchesByField: Partial<Record<keyof typeof jsonFields, Patch[]>> =
+      {};
 
-    const buildData: {
-      pages?: Pages;
-      breakpoints?: Breakpoints;
-      instances?: Instances;
-      props?: Props;
-      dataSources?: DataSources;
-      resources?: Resources;
-      styleSources?: StyleSources;
-      styleSourceSelections?: StyleSourceSelections;
-      styles?: Styles;
-      marketplaceProduct?: MarketplaceProduct;
-    } = {};
-
-    let previewImageAssetId: string | null | undefined = undefined;
-
-    // Used to optimize by validating only changed styles, as they accounted for 99% of validation time
-    const patchedStyleDeclKeysSet = new Set<string>();
+    let doSocialImageUpdate = false;
 
     for await (const transaction of transactions) {
       for await (const change of transaction.changes) {
         const { namespace, patches } = change;
         if (patches.length === 0) {
-          continue;
-        }
-
-        if (namespace === "pages") {
-          // lazily parse build data before patching
-          const pages = buildData.pages ?? parsePages(build.pages);
-          const currentSocialImageAssetId =
-            pages.homePage.meta.socialImageAssetId;
-          buildData.pages = applyPatches(pages, patches);
-          const newSocialImageAssetId =
-            buildData.pages.homePage.meta.socialImageAssetId;
-          if (currentSocialImageAssetId !== newSocialImageAssetId) {
-            previewImageAssetId = newSocialImageAssetId || null;
-          }
-          continue;
-        }
-
-        if (namespace === "instances") {
-          const instances =
-            buildData.instances ?? parseData<Instance>(build.instances);
-          buildData.instances = applyPatches(instances, patches);
-          continue;
-        }
-
-        if (namespace === "styleSourceSelections") {
-          const styleSourceSelections =
-            buildData.styleSourceSelections ??
-            parseStyleSourceSelections(build.styleSourceSelections);
-          buildData.styleSourceSelections = applyPatches(
-            styleSourceSelections,
-            patches
-          );
-          continue;
-        }
-
-        if (namespace === "styleSources") {
-          const styleSources =
-            buildData.styleSources ??
-            parseData<StyleSource>(build.styleSources);
-          buildData.styleSources = applyPatches(styleSources, patches);
-          continue;
-        }
-
-        if (namespace === "styles") {
-          // It's somehow implementation detail leak, as we use the fact that styles patches has ids in path
-          for (const patch of patches) {
-            patchedStyleDeclKeysSet.add(`${patch.path[0]}`);
-          }
-
-          const styles = buildData.styles ?? parseStyles(build.styles);
-          buildData.styles = applyPatches(styles, patches);
-          continue;
-        }
-
-        if (namespace === "props") {
-          const props = buildData.props ?? parseData<Prop>(build.props);
-          buildData.props = applyPatches(props, patches);
-          continue;
-        }
-
-        if (namespace === "dataSources") {
-          const dataSources =
-            buildData.dataSources ?? parseData<DataSource>(build.dataSources);
-          buildData.dataSources = applyPatches(dataSources, patches);
-          continue;
-        }
-
-        if (namespace === "resources") {
-          const resources =
-            buildData.resources ?? parseData<Resource>(build.resources);
-          buildData.resources = applyPatches(resources, patches);
-          continue;
-        }
-
-        if (namespace === "breakpoints") {
-          const breakpoints =
-            buildData.breakpoints ?? parseData<Breakpoint>(build.breakpoints);
-          buildData.breakpoints = applyPatches(breakpoints, patches);
           continue;
         }
 
@@ -213,125 +84,84 @@ export const action = async ({ request }: ActionFunctionArgs) => {
           continue;
         }
 
-        if (namespace === "marketplaceProduct") {
-          const marketplaceProduct =
-            buildData.marketplaceProduct ??
-            parseConfig<MarketplaceProduct>(build.marketplaceProduct);
-
-          buildData.marketplaceProduct = applyPatches(
-            marketplaceProduct,
-            patches
-          );
-
-          continue;
+        if (false === isJsonField(namespace)) {
+          return { errors: `Unknown namespace "${namespace}"` };
         }
 
-        return { errors: `Unknown namespace "${namespace}"` };
+        patchesByField[namespace] = [
+          ...(patchesByField[namespace] ?? []),
+          ...patches,
+        ];
+
+        if (namespace === "pages") {
+          doSocialImageUpdate = true;
+        }
       }
     }
 
-    // save build data when all patches applied
-    const dbBuildData: Parameters<typeof prisma.build.update>[0]["data"] = {
-      version: clientVersion + 1,
-      lastTransactionId,
-    };
+    const hasPatches = Object.keys(patchesByField).length > 0;
 
-    if (buildData.pages) {
-      // parse with zod before serialization to avoid saving invalid data
-      dbBuildData.pages = serializePages(Pages.parse(buildData.pages));
+    if (hasPatches === false) {
+      return { status: "ok" };
     }
 
-    if (buildData.breakpoints) {
-      dbBuildData.breakpoints = serializeData<Breakpoint>(
-        Breakpoints.parse(buildData.breakpoints)
-      );
-    }
+    const rawSet = Object.entries(patchesByField).map(
+      ([field, patches], index) =>
+        Prisma.sql`${Prisma.raw(`"${field}"`)} = patch_map(${Prisma.raw(`"${field}"`)}, ${jsonFields[field as keyof typeof jsonFields]}, ${JSON.stringify(patches)})`
+    );
 
-    if (buildData.instances) {
-      dbBuildData.instances = serializeData<Instance>(
-        Instances.parse(buildData.instances)
-      );
-    }
+    const updateQuery = Prisma.sql`
+      UPDATE "Build"
+      SET
+      ${Prisma.join(rawSet, ", ")},
+      "version" = ${clientVersion + 1},
+      "lastTransactionId" = ${lastTransactionId}
+      WHERE
+        id = ${buildId} AND
+        "projectId" = ${projectId} AND
+        "version" = ${clientVersion} AND
+        "lastTransactionId" != ${lastTransactionId} AND
+        "deployment" IS NULL
+    `;
 
-    if (buildData.props) {
-      dbBuildData.props = serializeData<Prop>(Props.parse(buildData.props));
-    }
+    const count = await prisma.$executeRaw(updateQuery);
 
-    if (buildData.dataSources) {
-      dbBuildData.dataSources = serializeData<DataSource>(
-        DataSources.parse(buildData.dataSources)
-      );
-    }
-
-    if (buildData.resources) {
-      dbBuildData.resources = serializeData<Resource>(
-        Resources.parse(buildData.resources)
-      );
-    }
-
-    if (buildData.styleSources) {
-      dbBuildData.styleSources = serializeData<StyleSource>(
-        StyleSources.parse(buildData.styleSources)
-      );
-    }
-    if (buildData.styleSourceSelections) {
-      dbBuildData.styleSourceSelections = serializeStyleSourceSelections(
-        StyleSourceSelections.parse(buildData.styleSourceSelections)
-      );
-    }
-
-    if (buildData.styles) {
-      // Optimize by validating only changed styles, as they accounted for 99% of validation time
-      const stylesToValidate: Styles = new Map();
-      for (const styleId of patchedStyleDeclKeysSet) {
-        const style = buildData.styles.get(styleId);
-        // In case of deletion style could be undefined
-        if (style === undefined) {
-          continue;
-        }
-
-        stylesToValidate.set(styleId, style);
-      }
-
-      Styles.parse(stylesToValidate);
-
-      dbBuildData.styles = serializeStyles(buildData.styles);
-    }
-
-    if (buildData.marketplaceProduct) {
-      dbBuildData.marketplaceProduct = serializeConfig<MarketplaceProduct>(
-        MarketplaceProduct.parse(buildData.marketplaceProduct)
-      );
-    }
-
-    const { count } = await prisma.build.updateMany({
-      data: dbBuildData,
-      where: {
-        projectId,
-        id: buildId,
-        version: clientVersion,
-      },
-    });
-
-    // ensure only build with client version is updated
-    // to avoid race conditions
     if (count === 0) {
-      // We don't validate if lastTransactionId matches the user's transaction ID here, as we've already done so earlier.
-      // Given the sequential nature of messages from a single client, this situation is deemed improbable.
+      const build = await prisma.build.findUnique({
+        select: { version: true, lastTransactionId: true },
+        where: { id_projectId: { projectId, id: buildId } },
+      });
+
+      if (build === null) {
+        throw Error(`Build ${buildId} not found`);
+      }
+
+      // Check if a retry attempt is made with a previously successful transaction.
+      // This can occur if the connection was lost or an error occurred post-transaction completion,
+      // leaving the client in an erroneous state and prompting a retry.
+      if (lastTransactionId === build.lastTransactionId) {
+        return { status: "ok" };
+      }
+
       return {
         status: "version_mismatched",
       };
     }
 
-    if (previewImageAssetId !== undefined) {
-      await db.project.updatePreviewImage(
-        { assetId: previewImageAssetId, projectId },
-        context
-      );
+    if (doSocialImageUpdate) {
+      const updateSocialImage = Prisma.sql`
+        UPDATE "Project"
+        SET "previewImageAssetId" = b.pages::json->'homePage'->'meta'->>'socialImageAssetId'
+        FROM "Build" b
+        WHERE "Project".id = b."projectId" AND
+        b.id = ${buildId}
+      `;
+      await prisma.$executeRaw(updateSocialImage);
     }
 
     return { status: "ok" };
   } catch (e) {
+    console.error(e);
     return { errors: e instanceof Error ? e.message : JSON.stringify(e) };
   }
 };

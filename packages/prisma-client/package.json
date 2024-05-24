@@ -13,6 +13,7 @@
     "generate": "PRISMA_BINARY_TARGET=${PRISMA_BINARY_TARGET:-'[\"native\"]'} prisma generate",
     "build:prod": "PRISMA_BINARY_TARGET='[\"rhel-openssl-3.0.x\"]' pnpm build",
     "dts": "tsc --declarationDir lib",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest ./src/patches.test.js",
     "migrations": "./migrations-cli/cli.ts"
   },
   "bin": {
@@ -22,6 +23,7 @@
     "@prisma/client": "^5.12.1",
     "@types/node": "^20.12.7",
     "@webstudio-is/tsconfig": "workspace:*",
+    "immer": "^10.0.3",
     "prisma": "^5.12.1",
     "tsx": "^4.7.2",
     "typescript": "5.4.5",
