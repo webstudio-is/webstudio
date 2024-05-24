@@ -33,6 +33,7 @@ const formatInsertionError = (component: string, meta: WsComponentMeta) => {
 };
 
 // Insert a component depending on currently selected instance.
+// Used for 1-click insert from the components panel.
 export const insert = (component: string) => {
   const selectedPage = $selectedPage.get();
   if (selectedPage === undefined) {
