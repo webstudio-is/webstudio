@@ -110,6 +110,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         Prisma.sql`${Prisma.raw(`"${field}"`)} = patch_map(${Prisma.raw(`"${field}"`)}, ${jsonFields[field as keyof typeof jsonFields]}, ${JSON.stringify(patches)})`
     );
 
+    // eslint-disable-next-line no-console
+    console.time("updateQueryPatch");
+
     const updateQuery = Prisma.sql`
       UPDATE "Build"
       SET
@@ -125,6 +128,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     `;
 
     const count = await prisma.$executeRaw(updateQuery);
+
+    // eslint-disable-next-line no-console
+    console.timeEnd("updateQueryPatch");
 
     if (count === 0) {
       const build = await prisma.build.findUnique({

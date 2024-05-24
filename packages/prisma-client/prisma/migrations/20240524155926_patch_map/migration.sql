@@ -1,3 +1,10 @@
+CREATE EXTENSION IF NOT EXISTS plv8;
+
+
+-- This code is copied from the source file prisma-client/src/patches.js
+CREATE OR REPLACE FUNCTION patch_map(data_str text, input_type text, patches_str text)
+RETURNS text AS $$
+
 /**
  * Simplified source of: https://github.com/immerjs/immer/blob/e2d222bd4fb26abded04075c936290715e9ee335/src/plugins/patches.ts#L214
  *
@@ -21,34 +28,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- */
-
-/**
- * This code is used inside a PostgreSQL function defined with PLV8.
- * It is wrapped with the following SQL command:
- *
- * CREATE OR REPLACE FUNCTION patch_map(data_str text, input_type text, patches_str text)
- * RETURNS text AS $$
- *
- * {{ CODE FROM THIS FILE }}
- *
- * let data = JSON.parse(data_str);
- *
- * if (input_type === 'map') {
- *   data = new Map(data.map((item) => [item.id, item]));
- * }
- *
- * const patches = JSON.parse(patches_str);
- *
- * const patched = applyPatches(data, patches);
- *
- * if (input_type === 'map') {
- *   return JSON.stringify(Array.from(patched.values()));
- * }
- *
- * return JSON.stringify(patched);
- *
- * $$ LANGUAGE plv8 IMMUTABLE PARALLEL SAFE;
  */
 
 /**
@@ -80,7 +59,7 @@ const get = (thing, prop) =>
  * @param {unknown} draft
  * @param {ReadonlyArray<Patch>} patches
  */
-export const applyPatches = (draft, patches) => {
+const applyPatches = (draft, patches) => {
   patches.forEach((patch) => {
     const { path, op } = patch;
 
@@ -142,3 +121,22 @@ export const applyPatches = (draft, patches) => {
 
   return draft;
 };
+
+
+let data = JSON.parse(data_str);
+
+if (input_type === 'map') {
+  data = new Map(data.map((item) => [item.id, item]));
+}
+
+const patches = JSON.parse(patches_str);
+
+const patched = applyPatches(data, patches);
+
+if (input_type === 'map') {
+  return JSON.stringify(Array.from(patched.values()));
+}
+
+return JSON.stringify(patched);
+
+$$ LANGUAGE plv8 IMMUTABLE PARALLEL SAFE;
