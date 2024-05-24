@@ -635,7 +635,7 @@ const MarketplaceSection = ({
             onChange({ field: "marketplaceInclude", value })
           }
         />
-        <Label htmlFor={excludeId}>Include this item in marketplace</Label>
+        <Label htmlFor={excludeId}>Include in the marketplace</Label>
       </Grid>
       <Grid gap={1}>
         <Label htmlFor={categoryId}>Category</Label>
@@ -671,7 +671,7 @@ const MarketplaceSection = ({
         />
       )}
       <Grid gap={1}>
-        <Label>Marketplace Item Preview</Label>
+        <Label>Marketplace Preview</Label>
         <Box
           css={{
             padding: theme.spacing[5],
