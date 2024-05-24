@@ -288,9 +288,6 @@ export const generateJsxChildren = ({
   let generatedChildren = "";
   for (const child of children) {
     if (child.type === "text") {
-      if (child.placeholder) {
-        continue;
-      }
       // instance text can contain newlines
       // convert them too <br> tag
       generatedChildren += child.value

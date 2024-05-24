@@ -295,7 +295,12 @@ const $jsx = computed(
       indexesWithinAncestors,
       children: generateJsxChildren({
         scope,
-        children: instance.children,
+        children: instance.children.filter((child) => {
+          if (child.type === "text" && child.placeholder === true) {
+            return false;
+          }
+          return true;
+        }),
         instances,
         props,
         dataSources,
