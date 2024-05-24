@@ -32,17 +32,30 @@
  *
  * {{ CODE FROM THIS FILE }}
  *
+ * let getKey = (item) => item.id;
+ *
+ * if (input_type === 'styles') {
+ *   getKey = (item) => `${item.styleSourceId}:${item.breakpointId}:${
+ *     item.property
+ *   }:${item.state == null ? "" : item.state}`
+ * }
+ *
+ * if (input_type === 'styleSourceSelections') {
+ *   getKey = (item) => item.instanceId;
+ * }
+ *
+ *
  * let data = JSON.parse(data_str);
  *
- * if (input_type === 'map') {
- *   data = new Map(data.map((item) => [item.id, item]));
+ * if (input_type !== 'object') {
+ *   data = new Map(data.map((item) => [getKey(item), item]));
  * }
  *
  * const patches = JSON.parse(patches_str);
  *
  * const patched = applyPatches(data, patches);
  *
- * if (input_type === 'map') {
+ * if (input_type !== 'object') {
  *   return JSON.stringify(Array.from(patched.values()));
  * }
  *

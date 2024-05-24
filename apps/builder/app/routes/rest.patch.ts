@@ -48,9 +48,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const jsonFields = {
       pages: "object",
       instances: "map",
-      styleSourceSelections: "map",
+      styleSourceSelections: "styleSourceSelections",
       styleSources: "map",
-      styles: "map",
+      styles: "styles",
       props: "map",
       dataSources: "map",
       breakpoints: "map",
