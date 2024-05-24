@@ -25,7 +25,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       version: clientVersion,
     }: PatchData = await request.json();
 
-    const version = new URL(request.url).searchParams.get("version");
+    const version = new URL(request.url).searchParams.get("client-version");
 
     if (publicStaticEnv.VERSION !== version) {
       return {
