@@ -123,7 +123,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         id = ${buildId} AND
         "projectId" = ${projectId} AND
         "version" = ${clientVersion} AND
-        "lastTransactionId" != ${lastTransactionId} AND
+        "lastTransactionId" IS DISTINCT FROM ${lastTransactionId} AND
         "deployment" IS NULL
     `;
 
