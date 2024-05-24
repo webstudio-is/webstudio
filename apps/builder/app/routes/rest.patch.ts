@@ -7,6 +7,7 @@ import { patchAssets } from "@webstudio-is/asset-uploader/index.server";
 import type { Project } from "@webstudio-is/project";
 import { authorizeProject } from "@webstudio-is/trpc-interface/index.server";
 import { createContext } from "~/shared/context.server";
+import { publicStaticEnv } from "~/env/env.static";
 
 type PatchData = {
   transactions: Array<SyncItem>;
@@ -23,6 +24,16 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       transactions,
       version: clientVersion,
     }: PatchData = await request.json();
+
+    const version = new URL(request.url).searchParams.get("version");
+
+    if (publicStaticEnv.VERSION !== version) {
+      return {
+        status: "version_mismatched",
+        errors: "The client and server versions do not match.",
+      };
+    }
+
     if (buildId === undefined) {
       return { errors: "Build id required" };
     }
