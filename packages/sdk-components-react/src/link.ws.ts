@@ -45,6 +45,19 @@ export const meta: WsComponentMeta = {
       label: "Current page",
     },
   ],
+  template: [
+    {
+      type: "instance",
+      component: "Link",
+      children: [
+        {
+          type: "text",
+          value: "Link text you can edit",
+          placeholder: true,
+        },
+      ],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

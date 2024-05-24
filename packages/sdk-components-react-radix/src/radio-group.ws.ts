@@ -77,7 +77,7 @@ const createRadioGroupItem = ({
     {
       type: "instance",
       component: "Text",
-      children: [{ type: "text", value: label }],
+      children: [{ type: "text", value: label, placeholder: true }],
     },
   ],
 });

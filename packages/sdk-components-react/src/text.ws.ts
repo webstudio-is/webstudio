@@ -29,6 +29,19 @@ export const meta: WsComponentMeta = {
   states: defaultStates,
   presetStyle,
   order: 0,
+  template: [
+    {
+      type: "instance",
+      component: "Text",
+      children: [
+        {
+          type: "text",
+          value: "The text you can edit",
+          placeholder: true,
+        },
+      ],
+    },
+  ],
 };
 
 export const propsMeta: WsComponentPropsMeta = {

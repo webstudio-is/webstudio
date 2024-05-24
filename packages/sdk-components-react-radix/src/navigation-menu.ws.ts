@@ -135,6 +135,7 @@ const navItem = (
               {
                 type: "text",
                 value: props.title,
+                placeholder: true,
               },
             ],
           },
@@ -154,6 +155,7 @@ const navItem = (
               {
                 type: "text",
                 value: props.description,
+                placeholder: true,
               },
             ],
           },
@@ -197,7 +199,7 @@ const menuItemLink = (props: {
               tc.noUnderline(),
               tc.text("current"),
             ].flat(),
-            children: [{ type: "text", value: props.title }],
+            children: [{ type: "text", value: props.title, placeholder: true }],
           },
         ],
       },
@@ -238,7 +240,9 @@ const menuItem = (props: {
               {
                 type: "instance",
                 component: "Text",
-                children: [{ type: "text", value: props.title }],
+                children: [
+                  { type: "text", value: props.title, placeholder: true },
+                ],
               },
               {
                 type: "instance",
@@ -368,6 +372,7 @@ export const metaNavigationMenu: WsComponentMeta = {
                     {
                       type: "text",
                       value: "",
+                      placeholder: true,
                     },
                   ],
                 },

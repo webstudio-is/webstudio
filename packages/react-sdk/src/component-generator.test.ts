@@ -431,6 +431,28 @@ test("generate jsx children with text", () => {
   );
 });
 
+test("exclude text placeholders", () => {
+  expect(
+    generateJsxChildren({
+      scope: createScope(),
+      children: [
+        { type: "text", value: "Text" },
+        { type: "text", value: "Placeholder text", placeholder: true },
+      ],
+      instances: new Map(),
+      props: new Map(),
+      dataSources: new Map(),
+      usedDataSources: new Map(),
+      indexesWithinAncestors: new Map(),
+      excludePlaceholders: true,
+    })
+  ).toEqual(
+    clear(`
+      {"Text"}
+    `)
+  );
+});
+
 test("generate jsx children with expression", () => {
   expect(
     generateJsxChildren({

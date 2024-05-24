@@ -301,6 +301,7 @@ const $jsx = computed(
         dataSources,
         usedDataSources: new Map(),
         indexesWithinAncestors,
+        excludePlaceholders: true,
       }),
     });
 

@@ -14,7 +14,7 @@ export const Text = forwardRef<ElementRef<typeof defaultTag>, Props>(
     const Tag = tag;
     return (
       <Tag {...props} ref={ref}>
-        {children ?? "The text you can edit"}
+        {children}
       </Tag>
     );
   }

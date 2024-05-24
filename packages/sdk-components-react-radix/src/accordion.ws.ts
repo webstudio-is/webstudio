@@ -156,7 +156,9 @@ export const metaAccordion: WsComponentMeta = {
           styles: accordionItemStyles,
           children: [
             createAccordionTrigger({
-              children: [{ type: "text", value: "Is it accessible?" }],
+              children: [
+                { type: "text", value: "Is it accessible?", placeholder: true },
+              ],
             }),
             {
               type: "instance",
@@ -166,6 +168,7 @@ export const metaAccordion: WsComponentMeta = {
                 {
                   type: "text",
                   value: "Yes. It adheres to the WAI-ARIA design pattern.",
+                  placeholder: true,
                 },
               ],
             },
@@ -178,7 +181,9 @@ export const metaAccordion: WsComponentMeta = {
           styles: accordionItemStyles,
           children: [
             createAccordionTrigger({
-              children: [{ type: "text", value: "Is it styled?" }],
+              children: [
+                { type: "text", value: "Is it styled?", placeholder: true },
+              ],
             }),
             {
               type: "instance",
@@ -189,6 +194,7 @@ export const metaAccordion: WsComponentMeta = {
                   type: "text",
                   value:
                     "Yes. It comes with default styles that matches the other components' aesthetic.",
+                  placeholder: true,
                 },
               ],
             },
@@ -201,7 +207,9 @@ export const metaAccordion: WsComponentMeta = {
           styles: accordionItemStyles,
           children: [
             createAccordionTrigger({
-              children: [{ type: "text", value: "Is it animated?" }],
+              children: [
+                { type: "text", value: "Is it animated?", placeholder: true },
+              ],
             }),
             {
               type: "instance",
@@ -212,6 +220,7 @@ export const metaAccordion: WsComponentMeta = {
                   type: "text",
                   value:
                     "Yes. It's animated by default, but you can disable it if you prefer.",
+                  placeholder: true,
                 },
               ],
             },
