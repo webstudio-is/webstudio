@@ -436,7 +436,7 @@ test("exclude text placeholders", () => {
     generateJsxChildren({
       scope: createScope(),
       children: [
-        { type: "text", value: "Some\ntext" },
+        { type: "text", value: "Text" },
         { type: "text", value: "Placeholder text", placeholder: true },
       ],
       instances: new Map(),
@@ -444,12 +444,11 @@ test("exclude text placeholders", () => {
       dataSources: new Map(),
       usedDataSources: new Map(),
       indexesWithinAncestors: new Map(),
+      excludePlaceholders: true,
     })
   ).toEqual(
     clear(`
-      {"Some"}
-      <br />
-      {"text"}
+      {"Text"}
     `)
   );
 });
