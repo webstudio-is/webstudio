@@ -30,7 +30,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     if (publicStaticEnv.VERSION !== version) {
       return {
         status: "version_mismatched",
-        errors: "The client and server versions do not match.",
+        errors: `The client and server versions do not match. ${version} != ${publicStaticEnv.VERSION}`,
       };
     }
 
