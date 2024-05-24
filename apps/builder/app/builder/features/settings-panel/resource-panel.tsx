@@ -9,7 +9,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type RefObject,
 } from "react";
 import { useStore } from "@nanostores/react";
 import type { DataSource, Resource } from "@webstudio-is/sdk";
@@ -57,49 +56,6 @@ import {
   EditorDialogControl,
 } from "~/builder/shared/code-editor-base";
 import { parseCurl, type CurlRequest } from "./curl";
-
-export type ComposedFields = {
-  isValid: () => boolean;
-  areAllErrorsVisible: () => boolean;
-  showAllErrors: () => void;
-};
-
-export const composeWithNativeForm = (
-  formAccessorRef: RefObject<HTMLInputElement>
-): ComposedFields => {
-  return {
-    isValid() {
-      const formElement = formAccessorRef.current?.form;
-      return formElement?.checkValidity() === true;
-    },
-    areAllErrorsVisible() {
-      const formElement = formAccessorRef.current?.form;
-      // check all errors in form fields are visible
-      if (formElement) {
-        for (const element of formElement.elements) {
-          if (
-            element instanceof HTMLInputElement ||
-            element instanceof HTMLTextAreaElement
-          ) {
-            // field is invalid and the error is not visible
-            if (
-              element.validity.valid === false &&
-              // rely on data-color=error convention in webstudio design system
-              element.getAttribute("data-color") !== "error"
-            ) {
-              return false;
-            }
-          }
-        }
-      }
-      return true;
-    },
-    showAllErrors() {
-      const formElement = formAccessorRef.current?.form;
-      formElement?.checkValidity();
-    },
-  };
-};
 
 const validateUrl = (value: string, scope: Record<string, unknown>) => {
   const evaluatedValue = evaluateExpressionWithinScope(value, scope);
@@ -479,8 +435,8 @@ const useScope = ({ variable }: { variable?: DataSource }) => {
   return { scope, aliases };
 };
 
-type PanelApi = ComposedFields & {
-  save: () => void;
+type PanelApi = {
+  save: (formData: FormData) => void;
 };
 
 const validateBody = (
@@ -623,15 +579,12 @@ export const ResourceForm = forwardRef<
     ? evaluateExpressionWithinScope(contentType, scope)
     : undefined;
 
-  const formAccessorRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({
-    ...composeWithNativeForm(formAccessorRef),
-    save: () => {
+    save: (formData) => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
         return;
       }
-      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
       const name = z.string().parse(formData.get("name"));
       const [instanceId] = instanceSelector;
       const newResource: Resource = {
@@ -662,7 +615,6 @@ export const ResourceForm = forwardRef<
 
   return (
     <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <UrlField
         scope={scope}
         aliases={aliases}
@@ -761,16 +713,12 @@ export const SystemResourceForm = forwardRef<
     );
   });
 
-  const formAccessorRef = useRef<HTMLInputElement>(null);
-
   useImperativeHandle(ref, () => ({
-    ...composeWithNativeForm(formAccessorRef),
-    save: () => {
+    save: (formData) => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
         return;
       }
-      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
       const name = z.string().parse(formData.get("name"));
       const [instanceId] = instanceSelector;
       const newResource: Resource = {
@@ -803,7 +751,6 @@ export const SystemResourceForm = forwardRef<
 
   return (
     <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={resourceId}>Resource</Label>
         <Select
@@ -872,16 +819,12 @@ export const GraphqlResourceForm = forwardRef<
     setVariablesError("");
   }, [variables, scope]);
 
-  const formAccessorRef = useRef<HTMLInputElement>(null);
-  const form = composeWithNativeForm(formAccessorRef);
   useImperativeHandle(ref, () => ({
-    ...form,
-    save: () => {
+    save: (formData) => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
         return;
       }
-      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
       const name = z.string().parse(formData.get("name"));
       const body = generateObjectExpression(
         new Map([
@@ -919,7 +862,6 @@ export const GraphqlResourceForm = forwardRef<
 
   return (
     <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <UrlField scope={scope} aliases={aliases} value={url} onChange={setUrl} />
 
       <Grid gap={1}>
