@@ -18,16 +18,9 @@ import { builderUrl } from "~/shared/router-utils";
 import { Card } from "./card";
 
 type TemplateData = {
-  socialImageAsset?: Asset;
-  socialImageUrl?: string;
   title?: string;
+  thumbnailAsset?: Asset;
   rootInstanceId: string;
-};
-
-// Special meta properties for the marketplace
-const marketplaceMeta = {
-  category: "ws:category",
-  title: "ws:title",
 };
 
 const getTemplatesDataByCategory = (data?: WebstudioData) => {
@@ -37,31 +30,30 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
     return templatesByCategory;
   }
 
-  // In the future we could support bindings in the store as well.
-  const variableValues = new Map();
   const pages = [data.pages.homePage, ...data.pages.pages];
 
   for (const page of pages) {
-    const excludePageFromSearch = computeExpression(
-      page.meta.excludePageFromSearch || "false",
-      variableValues
-    );
+    // @todo remove after all stores are migrated
+    const excludePageFromSearch =
+      computeExpression(
+        page.meta.excludePageFromSearch || "false",
+        new Map()
+      ) ?? true;
+    const include =
+      page.marketplace?.include ?? false === excludePageFromSearch ?? false;
     // We allow user to hide the page in the marketplace.
-    if (excludePageFromSearch) {
+    if (false === include) {
       continue;
     }
 
-    let category = page.meta.custom?.find(
-      ({ property }) => property === marketplaceMeta.category
-    )?.content;
-
-    if (category !== undefined) {
-      category = computeExpression(category, variableValues);
-    }
-
-    if (category === undefined) {
-      category = "Pages";
-    }
+    const categoryMeta = page.meta.custom?.find(
+      ({ property }) => property === "ws:category"
+    );
+    // @todo remove after all stores are migrated
+    const categoryFallback = String(
+      computeExpression(categoryMeta?.content ?? `""`, new Map())
+    );
+    const category = page.marketplace?.category ?? categoryFallback ?? "Pages";
 
     let templates = templatesByCategory.get(category);
     if (templates === undefined) {
@@ -69,27 +61,16 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
       templatesByCategory.set(category, templates);
     }
 
-    const socialImageUrl = page.meta.socialImageUrl
-      ? String(computeExpression(page.meta.socialImageUrl, variableValues))
-      : undefined;
     const socialImageAsset = page.meta.socialImageAssetId
       ? data.assets.get(page.meta.socialImageAssetId)
       : undefined;
-
-    let title = page.meta.custom?.find(
-      ({ property }) => property === marketplaceMeta.title
-    )?.content;
-    if (title !== undefined) {
-      title = computeExpression(title, variableValues);
-    }
-    if (title === undefined || title === "") {
-      title = computeExpression(page.title, variableValues);
-    }
+    const thumbnailImageAsset = page.marketplace?.thumbnailAssetId
+      ? data.assets.get(page.marketplace.thumbnailAssetId)
+      : undefined;
 
     templates.push({
-      title,
-      socialImageUrl,
-      socialImageAsset,
+      title: page.name,
+      thumbnailAsset: thumbnailImageAsset ?? socialImageAsset,
       rootInstanceId: page.rootInstanceId,
     });
   }
@@ -171,11 +152,8 @@ export const Templates = ({
                             }}
                           >
                             <Card
-                              image={
-                                templateData.socialImageAsset ??
-                                templateData.socialImageUrl
-                              }
                               title={templateData.title}
+                              image={templateData.thumbnailAsset}
                             />
                           </ListItem>
                         );

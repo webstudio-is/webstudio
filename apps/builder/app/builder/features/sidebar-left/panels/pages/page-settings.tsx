@@ -51,6 +51,7 @@ import {
   buttonStyle,
   PanelBanner,
   css,
+  Switch,
 } from "@webstudio-is/design-system";
 import {
   ChevronDoubleLeftIcon,
@@ -72,6 +73,7 @@ import {
   computeExpression,
   $dataSourceVariables,
   $publishedOrigin,
+  $project,
 } from "~/shared/nano-states";
 import {
   BindingControl,
@@ -105,6 +107,7 @@ import { Form } from "./form";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 import type { UserPlanFeatures } from "~/shared/db/user-plan-features.server";
 import { useUnmount } from "~/shared/hook-utils/use-mount";
+import { Card } from "../marketplace/card";
 
 const fieldDefaultValues = {
   name: "Untitled",
@@ -120,12 +123,10 @@ const fieldDefaultValues = {
   status: `200`,
   redirect: `""`,
   documentType: "html" as (typeof documentTypes)[number],
-  customMetas: [
-    {
-      property: "",
-      content: `""`,
-    },
-  ],
+  customMetas: [{ property: "", content: `""` }],
+  marketplaceInclude: false,
+  marketplaceCategory: "",
+  marketplaceThumbnailAssetId: "",
 };
 
 const fieldNames = Object.keys(
@@ -135,6 +136,15 @@ const fieldNames = Object.keys(
 type FieldName = (typeof fieldNames)[number];
 
 type Values = typeof fieldDefaultValues;
+
+type OnChange = (
+  event: {
+    [K in keyof Values]: {
+      field: K;
+      value: Values[K];
+    };
+  }[keyof Values]
+) => void;
 
 type Errors = {
   [fieldName in FieldName]?: string[];
@@ -297,6 +307,9 @@ const toFormValues = (
     documentType: page.meta.documentType ?? fieldDefaultValues.documentType,
     isHomePage,
     customMetas: page.meta.custom ?? fieldDefaultValues.customMetas,
+    marketplaceInclude: page.marketplace?.include ?? false,
+    marketplaceCategory: page.marketplace?.category ?? "",
+    marketplaceThumbnailAssetId: page.marketplace?.thumbnailAssetId ?? "",
   };
 };
 
@@ -585,6 +598,101 @@ const fieldsetStyle = css({
   },
 });
 
+const MarketplaceSection = ({
+  values,
+  onChange,
+}: {
+  values: Values;
+  onChange: OnChange;
+}) => {
+  const excludeId = useId();
+  const categoryId = useId();
+  const categoryMeta = values.customMetas.find(
+    ({ property }) => property === "ws:category"
+  );
+  // @todo remove after all stores are migrated
+  const categoryFallback = String(
+    computeExpression(categoryMeta?.content ?? `""`, new Map())
+  );
+  const category = values.marketplaceCategory ?? categoryFallback ?? "Pages";
+  const assets = useStore($assets);
+  const thumbnailAsset = assets.get(values.marketplaceThumbnailAssetId);
+  const thumnailFallbackAsset = assets.get(values.socialImageAssetId);
+  return (
+    <Grid gap={2} css={{ py: theme.spacing[5], px: theme.spacing[8] }}>
+      <Label text="title">Marketplace</Label>
+      <Grid
+        flow="column"
+        gap={1}
+        justify="start"
+        align="center"
+        css={{ py: theme.spacing[2] }}
+      >
+        <Switch
+          id={excludeId}
+          checked={values.marketplaceInclude}
+          onCheckedChange={(value) =>
+            onChange({ field: "marketplaceInclude", value })
+          }
+        />
+        <Label htmlFor={excludeId}>Include in the marketplace</Label>
+      </Grid>
+      <Grid gap={1}>
+        <Label htmlFor={categoryId}>Category</Label>
+        <InputField
+          id={categoryId}
+          name="marketplaceCategory"
+          value={values.marketplaceCategory}
+          onChange={(event) =>
+            onChange({
+              field: "marketplaceCategory",
+              value: event.target.value,
+            })
+          }
+        />
+      </Grid>
+      <Grid gap={1} flow="column">
+        <ImageControl
+          onAssetIdChange={(value) =>
+            onChange({ field: "marketplaceThumbnailAssetId", value })
+          }
+        >
+          <Button color="neutral" css={{ justifySelf: "start" }}>
+            Choose thumbnail from assets
+          </Button>
+        </ImageControl>
+      </Grid>
+      {thumbnailAsset?.type === "image" && (
+        <ImageInfo
+          asset={thumbnailAsset}
+          onDelete={() =>
+            onChange({ field: "marketplaceThumbnailAssetId", value: "" })
+          }
+        />
+      )}
+      <Grid gap={1}>
+        <Label>Marketplace Preview</Label>
+        <Box
+          css={{
+            padding: theme.spacing[5],
+            borderRadius: theme.borderRadius[4],
+            border: `1px solid ${theme.colors.borderMain}`,
+            justifySelf: "start",
+          }}
+        >
+          <Grid gap={1} css={{ width: theme.spacing[30] }}>
+            {category && <Label text="title">{category}</Label>}
+            <Card
+              title={values.name}
+              image={thumbnailAsset ?? thumnailFallbackAsset}
+            />
+          </Grid>
+        </Box>
+      </Grid>
+    </Grid>
+  );
+};
+
 const FormFields = ({
   systemDataSourceId,
   autoSelect,
@@ -596,15 +704,9 @@ const FormFields = ({
   autoSelect?: boolean;
   errors: Errors;
   values: Values;
-  onChange: (
-    event: {
-      [K in keyof Values]: {
-        field: K;
-        value: Values[K];
-      };
-    }[keyof Values]
-  ) => void;
+  onChange: OnChange;
 }) => {
+  const project = useStore($project);
   const fieldIds = useIds(fieldNames);
   const assets = useStore($assets);
   const pages = useStore($pages);
@@ -1129,8 +1231,18 @@ const FormFields = ({
               />
             </div>
           </InputErrorsTooltip>
-          <Box css={{ height: theme.spacing[10] }} />
         </fieldset>
+
+        {(project?.marketplaceApprovalStatus === "PENDING" ||
+          project?.marketplaceApprovalStatus === "APPROVED" ||
+          project?.marketplaceApprovalStatus === "REJECTED") && (
+          <>
+            <Separator />
+            <MarketplaceSection values={values} onChange={onChange} />
+          </>
+        )}
+
+        <Box css={{ height: theme.spacing[10] }} />
       </ScrollArea>
     </Grid>
   );
@@ -1366,6 +1478,21 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
 
     if (values.parentFolderId !== undefined) {
       registerFolderChildMutable(folders, page.id, values.parentFolderId);
+    }
+
+    if (values.marketplaceCategory !== undefined) {
+      page.marketplace ??= {};
+      page.marketplace.category =
+        values.marketplaceCategory.length > 0
+          ? values.marketplaceCategory
+          : undefined;
+    }
+    if (values.marketplaceThumbnailAssetId !== undefined) {
+      page.marketplace ??= {};
+      page.marketplace.thumbnailAssetId =
+        values.marketplaceThumbnailAssetId.length > 0
+          ? values.marketplaceThumbnailAssetId
+          : undefined;
     }
   };
 
