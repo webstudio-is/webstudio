@@ -12,33 +12,12 @@ import {
   Tooltip,
 } from "@webstudio-is/design-system";
 import { EllipsesIcon } from "@webstudio-is/icons";
-import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import type { Project } from "@webstudio-is/project";
 import { usePress } from "@react-aria/interactions";
 import { marketplaceCategories } from "@webstudio-is/project-build";
+import { mapGroupBy } from "~/shared/shim";
+import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 import { Card } from "./card";
-import {} from "@webstudio-is/feature-flags";
-
-const getItemsByCategory = (items: Array<MarketplaceOverviewItem> = []) => {
-  const itemsByCategory = new Map<
-    MarketplaceOverviewItem["category"],
-    Array<MarketplaceOverviewItem>
-  >();
-
-  for (const item of items) {
-    if (marketplaceCategories.has(item.category) === false) {
-      throw new Error(`Unknown category: ${item.category}`);
-    }
-    let categoryItems = itemsByCategory.get(item.category);
-    if (categoryItems === undefined) {
-      categoryItems = [];
-      itemsByCategory.set(item.category, categoryItems);
-    }
-    categoryItems.push(item);
-  }
-
-  return itemsByCategory;
-};
 
 const GalleryOverviewItem = ({
   item,
@@ -92,7 +71,10 @@ export const Overview = ({
   openAbout?: Project["id"];
   onOpenAbout: (projectId?: string) => void;
 }) => {
-  const itemsByCategory = useMemo(() => getItemsByCategory(items), [items]);
+  const itemsByCategory = useMemo(
+    () => mapGroupBy(items ?? [], (item) => item.category),
+    [items]
+  );
   const [selectedCategory, setSelectedCategory] =
     useState<MarketplaceOverviewItem["category"]>("sectionTemplates");
 

@@ -31,12 +31,12 @@ import {
   decodeDataSourceVariable,
   transpileExpression,
 } from "@webstudio-is/sdk";
+import { mapGroupBy } from "~/shared/shim";
 import {
   CodeEditorBase,
   EditorContent,
   EditorDialog,
 } from "./code-editor-base";
-import { groupBy } from "~/shared/array-utils";
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -423,7 +423,7 @@ export const ExpressionEditor = ({
         autoFocus={autoFocus}
         value={value}
         onChange={(value) => {
-          const aliasesByName = groupBy(
+          const aliasesByName = mapGroupBy(
             Array.from(aliases),
             ([_id, name]) => name
           );
