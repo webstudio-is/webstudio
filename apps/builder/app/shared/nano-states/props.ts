@@ -19,10 +19,10 @@ import {
   textContentAttribute,
 } from "@webstudio-is/react-sdk";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "./instances";
 import { $dataSources, $props, $assets, $resources } from "./nano-states";
 import { $selectedPage, $pages } from "./pages";
-import { groupBy } from "../array-utils";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
 import { restResourcesLoader } from "../router-utils";
@@ -247,7 +247,7 @@ export const $propValuesByInstanceSelector = computed(
       });
     }
     // collect props and group by instances
-    const propsByInstanceId = groupBy(propsList, (prop) => prop.instanceId);
+    const propsByInstanceId = mapGroupBy(propsList, (prop) => prop.instanceId);
 
     // traverse instances tree and compute props within each instance
     const propValuesByInstanceSelector = new Map<
@@ -356,12 +356,12 @@ export const $variableValuesByInstanceSelector = computed(
     resourceValues,
     defaultSystem
   ) => {
-    const propsByInstanceId = groupBy(
+    const propsByInstanceId = mapGroupBy(
       props.values(),
       (prop) => prop.instanceId
     );
 
-    const variablesByInstanceId = groupBy(
+    const variablesByInstanceId = mapGroupBy(
       dataSources.values(),
       (dataSource) => dataSource.scopeInstanceId
     );
