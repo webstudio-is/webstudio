@@ -277,7 +277,7 @@ const AddressBar = forwardRef<
   let history = useStore($selectedPageHistory);
   history = useMemo(() => {
     return history.filter((item) => matchPathnamePattern(path, item));
-  }, [history]);
+  }, [history, path]);
   const [pathParams, setPathParams] = useState(
     () => $selectedPagePathParams.get() ?? {}
   );
