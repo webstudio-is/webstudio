@@ -15,7 +15,6 @@
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@types/css-tree": "^2.3.1",
-    "@types/hyphenate-style-name": "^1.0.0",
     "@types/node": "^20.12.7",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -43,7 +42,6 @@
     "change-case": "^5.0.2",
     "colord": "^2.9.3",
     "css-tree": "^2.3.1",
-    "hyphenate-style-name": "^1.0.4",
     "openai": "^3.2.1",
     "warn-once": "^0.1.1"
   }
