@@ -1,12 +1,5 @@
-import { atom } from "nanostores";
-import {
-  extractWebstudioFragment,
-  findTargetAndInsertFragment,
-} from "~/shared/instance-utils";
 import type { WebstudioData } from "@webstudio-is/sdk";
 import type { BuildData } from "~/shared/marketplace/types";
-
-export const $activeProductData = atom<WebstudioData | undefined>();
 
 export const toWebstudioData = (data: BuildData): WebstudioData => ({
   pages: data.build.pages,
@@ -20,22 +13,3 @@ export const toWebstudioData = (data: BuildData): WebstudioData => ({
   breakpoints: new Map(data.build.breakpoints),
   styles: new Map(data.build.styles),
 });
-
-/**
- * Insert page as a template.
- * - Currently only supports inserting everything from the body
- * - Could be extended to support children of some other instance e.g. Marketplace Item
- */
-export const insert = ({
-  instanceId,
-  data,
-}: {
-  instanceId: string;
-  data: WebstudioData;
-}) => {
-  const fragment = extractWebstudioFragment(data, instanceId);
-  fragment.instances = fragment.instances.filter(
-    (instance) => instance.component !== "Body"
-  );
-  findTargetAndInsertFragment(fragment);
-};

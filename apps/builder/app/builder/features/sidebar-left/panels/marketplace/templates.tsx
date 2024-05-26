@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Button,
   Flex,
@@ -9,17 +10,67 @@ import {
   Link,
 } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
-import { insert } from "./utils";
+import {
+  ROOT_FOLDER_ID,
+  type Asset,
+  type Page,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
 import { computeExpression } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import type { Asset, WebstudioData } from "@webstudio-is/sdk";
-import { useMemo } from "react";
 import { builderUrl } from "~/shared/router-utils";
+import {
+  extractWebstudioFragment,
+  findTargetAndInsertFragment,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
+import { insertPageCopyMutable } from "~/shared/page-utils";
+import { switchPage } from "~/shared/pages";
 import { Card } from "./card";
+
+/**
+ * Insert page as a template.
+ * - Currently only supports inserting everything from the body
+ * - Could be extended to support children of some other instance e.g. Marketplace Item
+ */
+const insertSection = ({
+  data,
+  instanceId,
+}: {
+  data: WebstudioData;
+  instanceId: string;
+}) => {
+  const fragment = extractWebstudioFragment(data, instanceId);
+  fragment.instances = fragment.instances.filter(
+    (instance) => instance.component !== "Body"
+  );
+  findTargetAndInsertFragment(fragment);
+};
+
+const insertPage = ({
+  data: sourceData,
+  pageId,
+}: {
+  data: WebstudioData;
+  pageId: Page["id"];
+}) => {
+  let newPageId: undefined | Page["id"];
+  updateWebstudioData((targetData) => {
+    newPageId = insertPageCopyMutable({
+      source: { data: sourceData, pageId },
+      target: { data: targetData, folderId: ROOT_FOLDER_ID },
+    });
+  });
+  if (newPageId) {
+    switchPage(newPageId);
+  }
+};
 
 type TemplateData = {
   title?: string;
   thumbnailAsset?: Asset;
+  pageId: string;
   rootInstanceId: string;
 };
 
@@ -71,6 +122,7 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
     templates.push({
       title: page.name,
       thumbnailAsset: thumbnailImageAsset ?? socialImageAsset,
+      pageId: page.id,
       rootInstanceId: page.rootInstanceId,
     });
   }
@@ -80,11 +132,13 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
 export const Templates = ({
   name,
   projectId,
+  productCategory,
   data,
   onOpenChange,
 }: {
   name: string;
   projectId: string;
+  productCategory: MarketplaceProduct["category"];
   data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -145,10 +199,18 @@ export const Templates = ({
                             key={templateData.rootInstanceId}
                             index={index}
                             onSelect={() => {
-                              insert({
-                                instanceId: templateData.rootInstanceId,
-                                data,
-                              });
+                              if (productCategory === "sectionTemplates") {
+                                insertSection({
+                                  data,
+                                  instanceId: templateData.rootInstanceId,
+                                });
+                              }
+                              if (productCategory === "pageTemplates") {
+                                insertPage({
+                                  data,
+                                  pageId: templateData.pageId,
+                                });
+                              }
                             }}
                           >
                             <Card
