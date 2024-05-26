@@ -297,20 +297,28 @@ export const computeInstancesConstraints = (
 
 export const findClosestDroppableComponentIndex = ({
   metas,
-  componentSelector,
   constraints,
   instances,
   instanceSelector,
   allowInsertIntoTextContainer = true,
 }: {
   metas: Map<string, WsComponentMeta>;
-  componentSelector: string[];
   constraints: InsertConstraints;
   instances: Instances;
   instanceSelector: InstanceSelector;
   allowInsertIntoTextContainer?: boolean;
 }) => {
   const { requiredAncestors, invalidAncestors } = constraints;
+  const componentSelector: string[] = [];
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      componentSelector.push("Fragment");
+      continue;
+    }
+    // Collection produce fake instances and fragment does not have constraints.
+    componentSelector.push(instance.component);
+  }
 
   let containerIndex = -1;
   let requiredFound = false;
@@ -354,20 +362,9 @@ export const findClosestDroppableTarget = (
   instanceSelector: InstanceSelector,
   insertConstraints: InsertConstraints
 ): undefined | DroppableTarget => {
-  const componentSelector: string[] = [];
-  for (const instanceId of instanceSelector) {
-    const instance = instances.get(instanceId);
-    if (instance === undefined) {
-      componentSelector.push("Fragment");
-      continue;
-    }
-    // Collection produce fake instances and fragment does not have constraints.
-    componentSelector.push(instance.component);
-  }
   const droppableIndex = findClosestDroppableComponentIndex({
     metas,
     constraints: insertConstraints,
-    componentSelector,
     instances,
     instanceSelector,
     allowInsertIntoTextContainer: false,

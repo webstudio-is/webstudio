@@ -93,21 +93,8 @@ const findClosestDroppableInstanceSelector = (
     return;
   }
 
-  const componentSelector: string[] = [];
-  for (const instanceId of instanceSelector) {
-    const component = instances.get(instanceId)?.component;
-    // collection produce fake instances
-    // and fragment does not have constraints
-    if (component === undefined) {
-      componentSelector.push("Fragment");
-      continue;
-    }
-    componentSelector.push(component);
-  }
-
   const droppableIndex = findClosestDroppableComponentIndex({
     metas: $registeredComponentMetas.get(),
-    componentSelector,
     constraints: insertConstraints,
     instances: $instances.get(),
     instanceSelector,
