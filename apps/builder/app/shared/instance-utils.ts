@@ -295,11 +295,21 @@ export const computeInstancesConstraints = (
   };
 };
 
-export const findClosestDroppableComponentIndex = (
-  metas: Map<string, WsComponentMeta>,
-  componentSelector: string[],
-  constraints: InsertConstraints
-) => {
+export const findClosestDroppableComponentIndex = ({
+  metas,
+  componentSelector,
+  constraints,
+  instances,
+  instanceSelector,
+  allowInsertIntoTextContainer = true,
+}: {
+  metas: Map<string, WsComponentMeta>;
+  componentSelector: string[];
+  constraints: InsertConstraints;
+  instances: Instances;
+  instanceSelector: InstanceSelector;
+  allowInsertIntoTextContainer?: boolean;
+}) => {
   const { requiredAncestors, invalidAncestors } = constraints;
 
   let containerIndex = -1;
@@ -310,6 +320,18 @@ export const findClosestDroppableComponentIndex = (
       containerIndex = -1;
       requiredFound = false;
       continue;
+    }
+    if (allowInsertIntoTextContainer === false) {
+      const instance = instances.get(instanceSelector[index]);
+      if (instance !== undefined) {
+        const hasTextChild = instance.children.some(
+          (child) => child.type === "text"
+        );
+        if (hasTextChild) {
+          containerIndex = -1;
+          continue;
+        }
+      }
     }
     if (requiredAncestors.has(ancestorComponent) === true) {
       requiredFound = true;
@@ -334,24 +356,26 @@ export const findClosestDroppableTarget = (
 ): undefined | DroppableTarget => {
   const componentSelector: string[] = [];
   for (const instanceId of instanceSelector) {
-    const component = instances.get(instanceId)?.component;
-    // collection produce fake instances
-    // and fragment does not have constraints
-    if (component === undefined) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
       componentSelector.push("Fragment");
       continue;
     }
-    componentSelector.push(component);
+    // Collection produce fake instances and fragment does not have constraints.
+    componentSelector.push(instance.component);
   }
-
-  const droppableIndex = findClosestDroppableComponentIndex(
+  const droppableIndex = findClosestDroppableComponentIndex({
     metas,
+    constraints: insertConstraints,
     componentSelector,
-    insertConstraints
-  );
+    instances,
+    instanceSelector,
+    allowInsertIntoTextContainer: false,
+  });
   if (droppableIndex === -1) {
     return;
   }
+
   if (droppableIndex === 0) {
     return {
       parentSelector: instanceSelector,

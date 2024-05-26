@@ -105,11 +105,13 @@ const findClosestDroppableInstanceSelector = (
     componentSelector.push(component);
   }
 
-  const droppableIndex = findClosestDroppableComponentIndex(
-    $registeredComponentMetas.get(),
+  const droppableIndex = findClosestDroppableComponentIndex({
+    metas: $registeredComponentMetas.get(),
     componentSelector,
-    insertConstraints
-  );
+    constraints: insertConstraints,
+    instances: $instances.get(),
+    instanceSelector,
+  });
   if (droppableIndex === -1) {
     return;
   }

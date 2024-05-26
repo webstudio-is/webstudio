@@ -78,11 +78,13 @@ export const NavigatorTree = () => {
         }
         componentSelector.push(component);
       }
-      return findClosestDroppableComponentIndex(
+      return findClosestDroppableComponentIndex({
         metas,
         componentSelector,
-        insertConstraints
-      );
+        constraints: insertConstraints,
+        instances,
+        instanceSelector,
+      });
     },
     [instances, metas, insertConstraints]
   );
