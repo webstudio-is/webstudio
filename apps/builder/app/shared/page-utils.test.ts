@@ -1,6 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 import type { Project } from "@webstudio-is/project";
 import {
+  ROOT_FOLDER_ID,
   encodeDataSourceVariable,
   type DataSource,
   type Instance,
@@ -36,7 +37,6 @@ describe("insert page copy", () => {
   $project.set({ id: "projectId" } as Project);
 
   test("insert home page copy with new path and ids", () => {
-    const rootFolder = createRootFolder(["pageId"]);
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
@@ -61,12 +61,12 @@ describe("insert page copy", () => {
           systemDataSourceId: "systemId",
         },
         pages: [],
-        folders: [rootFolder],
+        folders: [createRootFolder(["pageId"])],
       },
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
-      target: { data, folderId: rootFolder.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
     });
     expect(data.pages.pages.length).toEqual(1);
     const newPage = data.pages.pages[0];
@@ -96,7 +96,6 @@ describe("insert page copy", () => {
   });
 
   test("deduplicate path for non-home page copy", () => {
-    const rootFolder = createRootFolder(["homePageId", "pageId"]);
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
@@ -131,12 +130,12 @@ describe("insert page copy", () => {
             systemDataSourceId: "systemId",
           },
         ],
-        folders: [rootFolder],
+        folders: [createRootFolder(["homePageId", "pageId"])],
       },
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
-      target: { data, folderId: rootFolder.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
     });
     expect(data.pages.pages.length).toEqual(2);
     const newPage = data.pages.pages[1];
@@ -144,7 +143,6 @@ describe("insert page copy", () => {
   });
 
   test("deduplicate wildcards in page copy", () => {
-    const rootFolder = createRootFolder(["homePageId", "page1Id", "page2Id"]);
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
@@ -190,16 +188,16 @@ describe("insert page copy", () => {
             systemDataSourceId: "systemId",
           },
         ],
-        folders: [rootFolder],
+        folders: [createRootFolder(["homePageId", "page1Id", "page2Id"])],
       },
     });
     insertPageCopyMutable({
       source: { data, pageId: "page1Id" },
-      target: { data, folderId: rootFolder.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
     });
     insertPageCopyMutable({
       source: { data, pageId: "page2Id" },
-      target: { data, folderId: rootFolder.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
     });
     expect(data.pages.pages.length).toEqual(4);
     const newPage1 = data.pages.pages[2];
@@ -209,7 +207,6 @@ describe("insert page copy", () => {
   });
 
   test("check full page path when duplicate inside a folder", () => {
-    const rootFolder = createRootFolder(["folderId"]);
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
@@ -245,7 +242,7 @@ describe("insert page copy", () => {
           },
         ],
         folders: [
-          rootFolder,
+          createRootFolder(["folderId"]),
           {
             id: "folderId",
             name: "Folder",
@@ -261,7 +258,7 @@ describe("insert page copy", () => {
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
-      target: { data, folderId: rootFolder.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
     });
     expect(data.pages.pages.length).toEqual(3);
     const nestedPage = data.pages.pages[1];
@@ -271,7 +268,6 @@ describe("insert page copy", () => {
   });
 
   test("replace variables in page copy meta", () => {
-    const rootFolder = createRootFolder(["pageId"]);
     const data = getWebstudioDataStub({
       instances: toMap<Instance>([
         { type: "instance", id: "bodyId", component: "Body", children: [] },
@@ -309,12 +305,12 @@ describe("insert page copy", () => {
           systemDataSourceId: "systemId",
         },
         pages: [],
-        folders: [rootFolder],
+        folders: [createRootFolder(["pageId"])],
       },
     });
     insertPageCopyMutable({
       source: { data, pageId: "pageId" },
-      target: { data, folderId: rootFolder.id },
+      target: { data, folderId: ROOT_FOLDER_ID },
     });
     expect(data.pages.pages.length).toEqual(1);
     const newPage = data.pages.pages[0];
