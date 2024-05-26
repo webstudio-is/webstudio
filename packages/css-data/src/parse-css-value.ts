@@ -1,9 +1,9 @@
 import { colord } from "colord";
 import * as csstree from "css-tree";
-import hyphenate from "hyphenate-style-name";
 import warnOnce from "warn-once";
 import {
   TupleValue,
+  hyphenateProperty,
   type StyleProperty,
   type StyleValue,
   type Unit,
@@ -27,7 +27,7 @@ export const isValidDeclaration = (
   property: string,
   value: string
 ): boolean => {
-  const cssPropertyName = hyphenate(property);
+  const cssPropertyName = hyphenateProperty(property);
 
   // @todo remove after csstree fixes
   // - https://github.com/csstree/csstree/issues/246
