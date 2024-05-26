@@ -72,6 +72,8 @@ const editorContentStyle = css({
   paddingBottom: 4,
   paddingRight: theme.spacing[2],
   paddingLeft: theme.spacing[3],
+  // required to support copying selected text
+  userSelect: "text",
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
     outline: `1px solid ${theme.colors.borderFocus}`,

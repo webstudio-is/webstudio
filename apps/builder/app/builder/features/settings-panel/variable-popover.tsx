@@ -66,8 +66,6 @@ import {
   GraphqlResourceForm,
   ResourceForm,
   SystemResourceForm,
-  composeWithNativeForm,
-  type ComposedFields,
 } from "./resource-panel";
 import { generateCurl } from "./curl";
 
@@ -206,53 +204,41 @@ const TypeField = ({
   );
 };
 
-type PanelApi = ComposedFields & {
-  save: () => void;
+type PanelApi = {
+  save: (formData: FormData) => void;
 };
 
 const ParameterForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
 >(({ variable }, ref) => {
-  const formAccessorRef = useRef<HTMLInputElement>(null);
   useImperativeHandle(ref, () => ({
-    ...composeWithNativeForm(formAccessorRef),
-    save: () => {
+    save: (formData) => {
       // only existing parameter variables can be renamed
       if (variable === undefined) {
         return;
       }
-      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
       const name = z.string().parse(formData.get("name"));
       serverSyncStore.createTransaction([$dataSources], (dataSources) => {
         dataSources.set(variable.id, { ...variable, name });
       });
     },
   }));
-  return (
-    <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
-    </>
-  );
+  return <></>;
 });
 ParameterForm.displayName = "ParameterForm";
 
 const useValuePanelRef = ({
   ref,
   variable,
-  form,
-  formAccessorRef,
   variableValue,
 }: {
   ref: Ref<undefined | PanelApi>;
   variable?: DataSource;
-  form: ComposedFields;
-  formAccessorRef: RefObject<HTMLInputElement>;
   variableValue: Extract<DataSource, { type: "variable" }>["value"];
 }) => {
   useImperativeHandle(ref, () => ({
-    ...form,
-    save: () => {
+    save: (formData) => {
       const instanceSelector = $selectedInstanceSelector.get();
       if (instanceSelector === undefined) {
         return;
@@ -261,7 +247,6 @@ const useValuePanelRef = ({
       const dataSourceId = variable?.id ?? nanoid();
       // preserve existing instance scope when edit
       const scopeInstanceId = variable?.scopeInstanceId ?? instanceId;
-      const formData = new FormData(formAccessorRef.current?.form ?? undefined);
       const name = z.string().parse(formData.get("name"));
       serverSyncStore.createTransaction(
         [$dataSources, $resources],
@@ -294,18 +279,14 @@ const StringForm = forwardRef<
       ? variable.value.value
       : ""
   );
-  const formAccessorRef = useRef<HTMLInputElement>(null);
   useValuePanelRef({
     ref,
     variable,
-    form: composeWithNativeForm(formAccessorRef),
-    formAccessorRef,
     variableValue: { type: "string", value },
   });
   const valueId = useId();
   return (
     <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={valueId}>Value</Label>
         <EditorDialogControl>
@@ -363,18 +344,14 @@ const NumberForm = forwardRef<
     valueRef.current?.setCustomValidity(validateNumberValue(value));
     setValueError("");
   }, [value]);
-  const formAccessorRef = useRef<HTMLInputElement>(null);
   useValuePanelRef({
     ref,
     variable,
-    form: composeWithNativeForm(formAccessorRef),
-    formAccessorRef,
     variableValue: { type: "number", value: Number(value) },
   });
   const valueId = useId();
   return (
     <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={valueId}>Value</Label>
         <InputErrorsTooltip errors={valueError ? [valueError] : undefined}>
@@ -409,18 +386,14 @@ const BooleanForm = forwardRef<
       ? variable.value.value
       : false
   );
-  const formAccessorRef = useRef<HTMLInputElement>(null);
   useValuePanelRef({
     ref,
     variable,
-    form: composeWithNativeForm(formAccessorRef),
-    formAccessorRef,
     variableValue: { type: "boolean", value },
   });
   const valueId = useId();
   return (
     <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <Flex direction="column" css={{ gap: theme.spacing[3] }}>
         <Label htmlFor={valueId}>Value</Label>
         <Switch
@@ -468,12 +441,9 @@ const JsonForm = forwardRef<
     valueRef.current?.setCustomValidity(validateJsonValue(value));
     setValueError("");
   }, [value]);
-  const formAccessorRef = useRef<HTMLInputElement>(null);
   useValuePanelRef({
     ref,
     variable,
-    form: composeWithNativeForm(formAccessorRef),
-    formAccessorRef,
     variableValue: {
       type: "json",
       value: parseJsonValue(value),
@@ -481,7 +451,6 @@ const JsonForm = forwardRef<
   });
   return (
     <>
-      <input ref={formAccessorRef} type="hidden" name="form-accessor" />
       <input
         ref={valueRef}
         style={{ display: "none" }}
@@ -629,6 +598,29 @@ const VariablePopoverContext = createContext<{
 
 export const VariablePopoverProvider = VariablePopoverContext.Provider;
 
+const areAllFormErrorsVisible = (form: null | HTMLFormElement) => {
+  if (form === null) {
+    return true;
+  }
+  // check all errors in form fields are visible
+  for (const element of form.elements) {
+    if (
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    ) {
+      // field is invalid and the error is not visible
+      if (
+        element.validity.valid === false &&
+        // rely on data-color=error convention in webstudio design system
+        element.getAttribute("data-color") !== "error"
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
 export const VariablePopoverTrigger = forwardRef<
   HTMLButtonElement,
   { variable?: DataSource; children: ReactNode }
@@ -639,30 +631,26 @@ export const VariablePopoverTrigger = forwardRef<
   const [triggerRef, sideOffsset] = useSideOffset({ isOpen, containerRef });
   const bindingPopoverContainerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<undefined | PanelApi>();
+  const formRef = useRef<HTMLFormElement>(null);
   const resources = useStore($resources);
 
-  const saveAndClose = () => {
-    if (panelRef.current) {
-      if (panelRef.current.areAllErrorsVisible() === false) {
-        panelRef.current.showAllErrors();
-        return;
-      }
-      if (panelRef.current.isValid()) {
-        panelRef.current.save();
-      }
-    }
-    setOpen(false);
-  };
   return (
     <FloatingPanelPopover
       modal
       open={isOpen}
       onOpenChange={(newOpen) => {
-        if (newOpen === false) {
-          saveAndClose();
+        if (newOpen) {
+          setOpen(true);
           return;
         }
-        setOpen(newOpen);
+        // attempt to save form on close
+        if (areAllFormErrorsVisible(formRef.current)) {
+          formRef.current?.requestSubmit();
+          setOpen(false);
+        } else {
+          formRef.current?.checkValidity();
+          // prevent closing when not all errors are shown to user
+        }
       }}
     >
       <FloatingPanelPopoverTrigger ref={mergeRefs(ref, triggerRef)} asChild>
@@ -693,16 +681,20 @@ export const VariablePopoverTrigger = forwardRef<
             }}
           >
             <form
+              ref={formRef}
               noValidate={true}
               // exclude from the flow
               style={{ display: "contents" }}
               onSubmit={(event) => {
                 event.preventDefault();
-                saveAndClose();
+                if (event.currentTarget.checkValidity()) {
+                  const formData = new FormData(event.currentTarget);
+                  panelRef.current?.save(formData);
+                }
               }}
             >
               {/* submit is not triggered when press enter on input without submit button */}
-              <button style={{ display: "none" }}>submit</button>
+              <button hidden></button>
               <BindingPopoverProvider
                 value={{ containerRef: bindingPopoverContainerRef }}
               >
@@ -750,18 +742,10 @@ export const VariablePopoverTrigger = forwardRef<
                       color="ghost"
                       disabled={areResourcesLoading}
                       onClick={() => {
-                        if (panelRef.current) {
-                          if (
-                            panelRef.current.areAllErrorsVisible() === false
-                          ) {
-                            panelRef.current.showAllErrors();
-                            return;
-                          }
-                          if (panelRef.current.isValid()) {
-                            panelRef.current.save();
-                          }
+                        formRef.current?.requestSubmit();
+                        if (formRef.current?.checkValidity()) {
+                          invalidateResource(variable.resourceId);
                         }
-                        invalidateResource(variable.resourceId);
                       }}
                     />
                   </Tooltip>

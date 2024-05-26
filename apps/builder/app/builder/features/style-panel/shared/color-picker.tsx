@@ -109,6 +109,84 @@ const EyeDropper = ({ onChange }: { onChange: (rgb: string) => void }) => {
   );
 };
 
+const normalizeHex = (value: string) => {
+  const trimmed = value.trim();
+  const hex = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+  return hex;
+};
+
+/**
+ * Keep content in separate component
+ * to reset local state on outside changes
+ * local state makes all changes less laggy
+ */
+const ColorPickerPopoverContent = ({
+  value,
+  onChange,
+  onChangeComplete,
+}: {
+  value: CssColorPickerValueInput;
+  onChange: (value: CssColorPickerValueInput | undefined) => void;
+  onChangeComplete: (event: {
+    value: RgbValue | KeywordValue | InvalidValue;
+  }) => void;
+}) => {
+  const [hex, setHex] = useState(() =>
+    colord(styleValueToRgbaColor(value)).toHex()
+  );
+  const normalizedHex = normalizeHex(hex);
+  const handleCompleteDebounced = useDebouncedCallback(
+    (newValue: RgbValue) => onChangeComplete({ value: newValue }),
+    500
+  );
+  /**
+   * By default, the color can be transparent, but if the user chooses a color from the picker,
+   * we must set alpha = 1 otherwise all selected colors will be transparent.
+   */
+  const fixColor = (color: RgbaColor) => {
+    if (value.type === "keyword" && value.value === "transparent") {
+      color = { ...color, a: 1 };
+    }
+    return color;
+  };
+  return (
+    <>
+      <RgbaColorPicker
+        className={colorfulStyles.toString()}
+        color={colord(normalizedHex).toRgb()}
+        onChange={(newRgb) => {
+          const fixedRgb = fixColor(newRgb);
+          setHex(colord(fixedRgb).toHex());
+          const newValue = colorResultToRgbValue(fixedRgb);
+          onChange(newValue);
+          handleCompleteDebounced(newValue);
+        }}
+      />
+      <Grid css={{ gridTemplateColumns: "auto 1fr" }} gap="1">
+        <EyeDropper
+          onChange={(newHex) => {
+            setHex(newHex);
+            const newValue = colorResultToRgbValue(colord(newHex).toRgb());
+            onChangeComplete({ value: newValue });
+          }}
+        />
+        <InputField
+          value={hex}
+          onChange={(event) => {
+            setHex(event.target.value);
+            const color = colord(normalizeHex(event.target.value));
+            if (color.isValid()) {
+              const newValue = colorResultToRgbValue(color.toRgb());
+              onChange(newValue);
+              handleCompleteDebounced(newValue);
+            }
+          }}
+        />
+      </Grid>
+    </>
+  );
+};
+
 export type CssColorPickerValueInput =
   | RgbValue
   | KeywordValue
@@ -175,20 +253,6 @@ export const ColorPicker = ({
     };
   }
 
-  /**
-   * By default, the color can be transparent, but if the user chooses a color from the picker,
-   * we must set alpha = 1 otherwise all selected colors will be transparent.
-   */
-  const fixColor = (color: RgbaColor) => {
-    if (
-      currentValue.type === "keyword" &&
-      currentValue.value === "transparent"
-    ) {
-      color = { ...color, a: 1 };
-    }
-    return colorResultToRgbValue(color);
-  };
-
   const handleOpenChange = (open: boolean) => {
     setDisplayColorPicker(open);
     if (open) {
@@ -202,23 +266,6 @@ export const ColorPicker = ({
     document.body.style.removeProperty("user-select");
     enableCanvasPointerEvents();
   };
-
-  const parsedColor = colord(rgbValue);
-  const currentHex = parsedColor.toHex();
-
-  const handleComplete = (value: string | RgbValue) => {
-    if (typeof value === "string") {
-      const color = colord(value);
-      if (color.isValid()) {
-        onChangeComplete({ value: colorResultToRgbValue(color.toRgb()) });
-      }
-      return;
-    }
-
-    onChangeComplete({ value });
-  };
-
-  const handleCompleteDebounced = useDebouncedCallback(handleComplete, 500);
 
   const prefix = (
     <Popover modal open={displayColorPicker} onOpenChange={handleOpenChange}>
@@ -236,27 +283,11 @@ export const ColorPicker = ({
           gap: theme.spacing[5],
         }}
       >
-        <RgbaColorPicker
-          className={colorfulStyles.toString()}
-          color={rgbValue}
-          onChange={(newValue) => {
-            const color = fixColor(newValue);
-            onChange(color);
-            handleCompleteDebounced(color);
-          }}
+        <ColorPickerPopoverContent
+          value={currentValue}
+          onChange={onChange}
+          onChangeComplete={onChangeComplete}
         />
-        <Grid css={{ gridTemplateColumns: "auto 1fr" }} gap="1">
-          <EyeDropper onChange={handleComplete} />
-          <InputField
-            key={currentHex}
-            defaultValue={currentHex.slice(1)}
-            onChange={(event) => {
-              const value = event.target.value.trim();
-              const hex = value.startsWith("#") ? value : `#${value}`;
-              handleComplete(hex);
-            }}
-          />
-        </Grid>
       </PopoverContent>
     </Popover>
   );

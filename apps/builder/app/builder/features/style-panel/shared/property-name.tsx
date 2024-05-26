@@ -25,7 +25,7 @@ import type {
   StyleSource,
   StyleSources,
 } from "@webstudio-is/sdk";
-import { toProperty } from "@webstudio-is/css-engine";
+import { hyphenateProperty } from "@webstudio-is/css-engine";
 import {
   $breakpoints,
   $instances,
@@ -225,7 +225,7 @@ export const TooltipContent = ({
             cursor: "text",
           }}
         >
-          {scrollableContent ?? properties.map(toProperty).join("\n")}
+          {scrollableContent ?? properties.map(hyphenateProperty).join("\n")}
         </Text>
       </ScrollArea>
       {descriptionWithFallback && <Text>{descriptionWithFallback}</Text>}
