@@ -372,7 +372,7 @@ describe("find closest droppable component index", () => {
     ).toEqual(0);
   });
 
-  test.only("considers both required and invalid ancestors", () => {
+  test("considers both required and invalid ancestors", () => {
     expect(
       findClosestDroppableComponentIndex({
         metas: createFakeComponentMetas({}),
@@ -477,7 +477,7 @@ describe("find closest droppable target", () => {
     });
   });
 
-  test("finds closest container that doesn't have a direct text child and puts after a child that contains the selected instance", () => {
+  test("finds closest container that doesn't have a direct text child", () => {
     const instances = new Map([
       createInstancePair("body", "Body", [
         { type: "id", value: "box1" },
@@ -486,6 +486,32 @@ describe("find closest droppable target", () => {
       ]),
       createInstancePair("paragraph", "Paragraph", [
         { type: "text", value: "some text" },
+      ]),
+      createInstancePair("box1", "Box1", []),
+      createInstancePair("box2", "Box2", []),
+    ]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["paragraph", "body"],
+        emptyInsertConstraints
+      )
+    ).toEqual({
+      parentSelector: ["body"],
+      position: 2,
+    });
+  });
+
+  test("finds closest container that doesn't have an expression as a child", () => {
+    const instances = new Map([
+      createInstancePair("body", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "paragraph" },
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("paragraph", "Paragraph", [
+        { type: "expression", value: '"bla"' },
       ]),
       createInstancePair("box1", "Box1", []),
       createInstancePair("box2", "Box2", []),

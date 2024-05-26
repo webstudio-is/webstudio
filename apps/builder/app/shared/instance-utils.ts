@@ -333,7 +333,7 @@ export const findClosestDroppableComponentIndex = ({
       const instance = instances.get(instanceSelector[index]);
       if (instance !== undefined) {
         const hasTextChild = instance.children.some(
-          (child) => child.type === "text"
+          (child) => child.type === "text" || child.type === "expression"
         );
         if (hasTextChild) {
           containerIndex = -1;
