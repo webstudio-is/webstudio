@@ -340,4 +340,65 @@ describe("insert page copy", () => {
       systemDataSourceId: expect.not.stringMatching("systemId"),
     });
   });
+
+  test("append number to name only when conflict is found", () => {
+    const data = getWebstudioDataStub({
+      instances: toMap<Instance>([
+        { type: "instance", id: "bodyId", component: "Body", children: [] },
+      ]),
+      dataSources: toMap<DataSource>([
+        {
+          id: "systemId",
+          scopeInstanceId: "bodyId",
+          name: "system",
+          type: "parameter",
+        },
+      ]),
+      pages: {
+        meta: {},
+        homePage: {
+          id: "pageId",
+          name: "Name",
+          path: "/",
+          title: `"Title"`,
+          meta: {},
+          rootInstanceId: "bodyId",
+          systemDataSourceId: "systemId",
+        },
+        pages: [],
+        folders: [
+          createRootFolder(["pageId", "folderId"]),
+          {
+            id: "folderId",
+            name: "Folder",
+            slug: "folder",
+            children: [],
+          },
+        ],
+      },
+    });
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: ROOT_FOLDER_ID },
+    });
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: ROOT_FOLDER_ID },
+    });
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: "folderId" },
+    });
+    insertPageCopyMutable({
+      source: { data, pageId: "pageId" },
+      target: { data, folderId: "folderId" },
+    });
+    expect(data.pages.pages.length).toEqual(4);
+    // inside folder with conflict
+    expect(data.pages.pages[0].name).toEqual(`Name (1)`);
+    expect(data.pages.pages[1].name).toEqual(`Name (2)`);
+    // inside folder without conflict
+    expect(data.pages.pages[2].name).toEqual(`Name`);
+    expect(data.pages.pages[3].name).toEqual(`Name (1)`);
+  });
 });
