@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    volumes:
+      - ..:/workspaces/webstudio:cached
+      # preserve history
+      - ./.local:/home/node/.local
+
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:db
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: ghcr.io/supabase/postgres:15.1.1.55
+    # Uncomment to log all queries
+    # command: ["postgres", "-c", "log_statement=all"]
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: webstudio
+
+    ports:
+      - ${PGPORT:-5432}:5432
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d webstudio"]
+      interval: 10s
+      timeout: 5s
+      retries: 25
+
+    # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
+    # (Adding the "ports" property to this file will not forward from a Codespace.)
+
+volumes:
+  postgres-data:
