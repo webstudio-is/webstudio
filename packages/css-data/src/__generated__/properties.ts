@@ -60,26 +60,6 @@ export const properties = {
     popularity: 0.43732689,
     appliesTo: "flexItemsGridItemsAndAbsolutelyPositionedBoxes",
   },
-  alignTracks: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    popularity: 0,
-    appliesTo: "gridContainersWithMasonryLayoutInTheirBlockAxis",
-  },
-  animationComposition: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "replace",
-    },
-    popularity: 0,
-    appliesTo: "allElements",
-  },
   animationDelay: {
     unitGroups: ["time"],
     inherited: false,
@@ -162,36 +142,6 @@ export const properties = {
     },
     popularity: 0.41317969,
     appliesTo: "allElementsAndPseudos",
-  },
-  animationTimeline: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 4e-8,
-    appliesTo: "allElements",
-  },
-  appearance: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0.24468974,
-    appliesTo: "allElements",
-  },
-  aspectRatio: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.07243677,
-    appliesTo: "allElementsExceptInlineBoxesAndInternalRubyOrTableBoxes",
   },
   backdropFilter: {
     unitGroups: [],
@@ -294,28 +244,6 @@ export const properties = {
     popularity: 0.76724967,
     appliesTo: "allElements",
   },
-  backgroundPositionX: {
-    unitGroups: ["length", "percentage"],
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "%",
-      value: 0,
-    },
-    popularity: 0.08951679,
-    appliesTo: "allElements",
-  },
-  backgroundPositionY: {
-    unitGroups: ["length", "percentage"],
-    inherited: false,
-    initial: {
-      type: "unit",
-      unit: "%",
-      value: 0,
-    },
-    popularity: 0.06759137,
-    appliesTo: "allElements",
-  },
   backgroundRepeat: {
     unitGroups: [],
     inherited: false,
@@ -335,16 +263,6 @@ export const properties = {
     },
     popularity: 0.73157126,
     appliesTo: "allElements",
-  },
-  blockOverflow: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "clip",
-    },
-    popularity: 0,
-    appliesTo: "blockContainers",
   },
   blockSize: {
     unitGroups: ["length", "percentage"],
@@ -1059,46 +977,6 @@ export const properties = {
     popularity: 0.17189203,
     appliesTo: "allElements",
   },
-  containIntrinsicBlockSize: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
-  },
-  containIntrinsicHeight: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
-  },
-  containIntrinsicInlineSize: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
-  },
-  containIntrinsicWidth: {
-    unitGroups: ["length"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "elementsForWhichSizeContainmentCanApply",
-  },
   containerName: {
     unitGroups: [],
     inherited: false,
@@ -1500,16 +1378,6 @@ export const properties = {
     popularity: 0.88598106,
     appliesTo: "allElements",
   },
-  forcedColorAdjust: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.02245871,
-    appliesTo: "allElementsAndText",
-  },
   gridAutoColumns: {
     unitGroups: ["length", "percentage", "flex"],
     inherited: false,
@@ -1680,37 +1548,6 @@ export const properties = {
     popularity: 0.11112647,
     appliesTo: "allElements",
   },
-  imageResolution: {
-    unitGroups: ["resolution"],
-    inherited: true,
-    initial: {
-      type: "unit",
-      unit: "dppx",
-      value: 1,
-    },
-    popularity: 0,
-    appliesTo: "allElements",
-  },
-  initialLetter: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    popularity: 0,
-    appliesTo: "firstLetterPseudoElementsAndInlineLevelFirstChildren",
-  },
-  initialLetterAlign: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0,
-    appliesTo: "firstLetterPseudoElementsAndInlineLevelFirstChildren",
-  },
   inlineSize: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -1811,16 +1648,6 @@ export const properties = {
     popularity: 0.06147513,
     appliesTo: "blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems",
   },
-  justifyTracks: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "normal",
-    },
-    popularity: 0,
-    appliesTo: "gridContainersWithMasonryLayoutInTheirInlineAxis",
-  },
   left: {
     unitGroups: ["length", "percentage"],
     inherited: false,
@@ -1851,16 +1678,6 @@ export const properties = {
     popularity: 0.03790035,
     appliesTo: "allElements",
   },
-  lineClamp: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "blockContainersExceptMultiColumnContainers",
-  },
   lineHeight: {
     unitGroups: ["number", "length", "percentage"],
     inherited: true,
@@ -1870,17 +1687,6 @@ export const properties = {
     },
     popularity: 0.87354969,
     appliesTo: "allElements",
-  },
-  lineHeightStep: {
-    unitGroups: ["length"],
-    inherited: true,
-    initial: {
-      type: "unit",
-      unit: "px",
-      value: 0,
-    },
-    popularity: 0,
-    appliesTo: "blockContainers",
   },
   listStyleImage: {
     unitGroups: [],
@@ -1999,16 +1805,6 @@ export const properties = {
     },
     popularity: 0.90536837,
     appliesTo: "allElementsExceptTableDisplayTypes",
-  },
-  marginTrim: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "blockContainersAndMultiColumnContainers",
   },
   maskBorderMode: {
     unitGroups: [],
@@ -2162,16 +1958,6 @@ export const properties = {
     popularity: 0.00355107,
     appliesTo: "maskElements",
   },
-  masonryAutoFlow: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "pack",
-    },
-    popularity: 0,
-    appliesTo: "gridContainersWithMasonryLayout",
-  },
   mathDepth: {
     unitGroups: ["number"],
     inherited: true,
@@ -2232,16 +2018,6 @@ export const properties = {
     },
     popularity: 0.00062504,
     appliesTo: "sameAsWidthAndHeight",
-  },
-  maxLines: {
-    unitGroups: ["number"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "blockContainersExceptMultiColumnContainers",
   },
   maxWidth: {
     unitGroups: ["length", "percentage"],
@@ -2365,16 +2141,6 @@ export const properties = {
       value: "none",
     },
     popularity: 0.0008741,
-    appliesTo: "transformableElements",
-  },
-  offsetPosition: {
-    unitGroups: ["length", "percentage"],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 3e-8,
     appliesTo: "transformableElements",
   },
   offsetRotate: {
@@ -2842,36 +2608,6 @@ export const properties = {
     popularity: 0.01955862,
     appliesTo: "multiColumnElementsFlexContainersGridContainers",
   },
-  rubyAlign: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "space-around",
-    },
-    popularity: 0,
-    appliesTo: "rubyBasesAnnotationsBaseAnnotationContainers",
-  },
-  rubyMerge: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "separate",
-    },
-    popularity: 0,
-    appliesTo: "rubyAnnotationsContainers",
-  },
-  rubyPosition: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "alternate",
-    },
-    popularity: 0.00156034,
-    appliesTo: "rubyAnnotationsContainers",
-  },
   scale: {
     unitGroups: ["number"],
     inherited: false,
@@ -3120,26 +2856,6 @@ export const properties = {
     popularity: 0.05778112,
     appliesTo: "allElements",
   },
-  scrollTimelineAxis: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "block",
-    },
-    popularity: 0,
-    appliesTo: "scrollContainers",
-  },
-  scrollTimelineName: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "scrollContainers",
-  },
   shapeImageThreshold: {
     unitGroups: ["number", "percentage"],
     inherited: false,
@@ -3241,16 +2957,6 @@ export const properties = {
       value: "none",
     },
     popularity: 0.03656271,
-    appliesTo: "allElements",
-  },
-  textDecorationSkip: {
-    unitGroups: [],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "objects",
-    },
-    popularity: 0.054238,
     appliesTo: "allElements",
   },
   textDecorationSkipInk: {
@@ -3381,16 +3087,6 @@ export const properties = {
       value: "none",
     },
     popularity: 0.49899917,
-    appliesTo: "allElements",
-  },
-  textSizeAdjust: {
-    unitGroups: ["percentage"],
-    inherited: true,
-    initial: {
-      type: "keyword",
-      value: "auto",
-    },
-    popularity: 0.13611964,
     appliesTo: "allElements",
   },
   textTransform: {
@@ -3610,16 +3306,6 @@ export const properties = {
     },
     popularity: 0.84531302,
     appliesTo: "inlineLevelAndTableCellElements",
-  },
-  viewTransitionName: {
-    unitGroups: [],
-    inherited: false,
-    initial: {
-      type: "keyword",
-      value: "none",
-    },
-    popularity: 0,
-    appliesTo: "allElements",
   },
   visibility: {
     unitGroups: [],

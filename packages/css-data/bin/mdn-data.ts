@@ -256,8 +256,7 @@ const filteredProperties: FilteredProperties = (() => {
 
   for (property in properties) {
     const config = properties[property];
-    const isSupportedStatus =
-      config.status === "standard" || config.status === "experimental";
+    const isSupportedStatus = config.status === "standard";
 
     if (property in supportedComplexProperties) {
       config.initial = supportedComplexProperties[property];
