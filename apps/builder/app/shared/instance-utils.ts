@@ -295,12 +295,30 @@ export const computeInstancesConstraints = (
   };
 };
 
-export const findClosestDroppableComponentIndex = (
-  metas: Map<string, WsComponentMeta>,
-  componentSelector: string[],
-  constraints: InsertConstraints
-) => {
+export const findClosestDroppableComponentIndex = ({
+  metas,
+  constraints,
+  instances,
+  instanceSelector,
+  allowInsertIntoTextContainer = true,
+}: {
+  metas: Map<string, WsComponentMeta>;
+  constraints: InsertConstraints;
+  instances: Instances;
+  instanceSelector: InstanceSelector;
+  allowInsertIntoTextContainer?: boolean;
+}) => {
   const { requiredAncestors, invalidAncestors } = constraints;
+  const componentSelector: string[] = [];
+  for (const instanceId of instanceSelector) {
+    const instance = instances.get(instanceId);
+    if (instance === undefined) {
+      componentSelector.push("Fragment");
+      continue;
+    }
+    // Collection produce fake instances and fragment does not have constraints.
+    componentSelector.push(instance.component);
+  }
 
   let containerIndex = -1;
   let requiredFound = false;
@@ -310,6 +328,18 @@ export const findClosestDroppableComponentIndex = (
       containerIndex = -1;
       requiredFound = false;
       continue;
+    }
+    if (allowInsertIntoTextContainer === false) {
+      const instance = instances.get(instanceSelector[index]);
+      if (instance !== undefined) {
+        const hasTextChild = instance.children.some(
+          (child) => child.type === "text" || child.type === "expression"
+        );
+        if (hasTextChild) {
+          containerIndex = -1;
+          continue;
+        }
+      }
     }
     if (requiredAncestors.has(ancestorComponent) === true) {
       requiredFound = true;
@@ -332,26 +362,17 @@ export const findClosestDroppableTarget = (
   instanceSelector: InstanceSelector,
   insertConstraints: InsertConstraints
 ): undefined | DroppableTarget => {
-  const componentSelector: string[] = [];
-  for (const instanceId of instanceSelector) {
-    const component = instances.get(instanceId)?.component;
-    // collection produce fake instances
-    // and fragment does not have constraints
-    if (component === undefined) {
-      componentSelector.push("Fragment");
-      continue;
-    }
-    componentSelector.push(component);
-  }
-
-  const droppableIndex = findClosestDroppableComponentIndex(
+  const droppableIndex = findClosestDroppableComponentIndex({
     metas,
-    componentSelector,
-    insertConstraints
-  );
+    constraints: insertConstraints,
+    instances,
+    instanceSelector,
+    allowInsertIntoTextContainer: false,
+  });
   if (droppableIndex === -1) {
     return;
   }
+
   if (droppableIndex === 0) {
     return {
       parentSelector: instanceSelector,

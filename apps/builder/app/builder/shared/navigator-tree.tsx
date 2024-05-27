@@ -67,22 +67,12 @@ export const NavigatorTree = () => {
       if (insertConstraints === undefined) {
         return -1;
       }
-      const componentSelector: string[] = [];
-      for (const instanceId of instanceSelector) {
-        const component = instances.get(instanceId)?.component;
-        // collection produce fake instances
-        // and fragment does not have constraints
-        if (component === undefined) {
-          componentSelector.push("Fragment");
-          continue;
-        }
-        componentSelector.push(component);
-      }
-      return findClosestDroppableComponentIndex(
+      return findClosestDroppableComponentIndex({
         metas,
-        componentSelector,
-        insertConstraints
-      );
+        constraints: insertConstraints,
+        instances,
+        instanceSelector,
+      });
     },
     [instances, metas, insertConstraints]
   );

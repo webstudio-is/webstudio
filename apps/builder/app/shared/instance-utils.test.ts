@@ -291,80 +291,119 @@ describe("compute instances constraints", () => {
 describe("find closest droppable component index", () => {
   test("finds container", () => {
     expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({}),
-        ["Box", "Body"],
-        emptyInsertConstraints
-      )
+      findClosestDroppableComponentIndex({
+        metas: createFakeComponentMetas({}),
+        constraints: emptyInsertConstraints,
+        instances: new Map<Instance["id"], Instance>([
+          createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
+          createInstancePair("box", "Box", []),
+        ]),
+        instanceSelector: ["box", "body"],
+      })
     ).toEqual(0);
   });
 
   test("skips non containers", () => {
     expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({}),
-        ["Bold", "Italic", "Text", "Box", "Body"],
-        emptyInsertConstraints
-      )
+      findClosestDroppableComponentIndex({
+        metas: createFakeComponentMetas({}),
+        constraints: emptyInsertConstraints,
+        instances: new Map<Instance["id"], Instance>([
+          createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
+          createInstancePair("box", "Box", [{ type: "id", value: "text" }]),
+          createInstancePair("text", "Text", [{ type: "id", value: "italic" }]),
+          createInstancePair("italic", "Italic", [
+            { type: "id", value: "bold" },
+          ]),
+          createInstancePair("bold", "Bold", []),
+        ]),
+        instanceSelector: ["bold", "italic", "text", "box", "body"],
+      })
     ).toEqual(2);
   });
 
   test("considers invalid ancestors", () => {
     expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({}),
-        ["Box", "Item", "Body"],
-        {
+      findClosestDroppableComponentIndex({
+        metas: createFakeComponentMetas({}),
+        constraints: {
           requiredAncestors: new Set(),
           invalidAncestors: new Set(["Item"]),
-        }
-      )
+        },
+        instances: new Map<Instance["id"], Instance>([
+          createInstancePair("body", "Body", [{ type: "id", value: "item" }]),
+          createInstancePair("item", "Item", [{ type: "id", value: "box" }]),
+          createInstancePair("box", "Box", []),
+        ]),
+        instanceSelector: ["box", "item", "body"],
+      })
     ).toEqual(2);
   });
 
   test("requires some ancestor", () => {
     expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({}),
-        ["Box", "Body"],
-        {
+      findClosestDroppableComponentIndex({
+        metas: createFakeComponentMetas({}),
+        constraints: {
           requiredAncestors: new Set(["Form"]),
           invalidAncestors: new Set(),
-        }
-      )
+        },
+        instances: new Map<Instance["id"], Instance>([
+          createInstancePair("body", "Body", [{ type: "id", value: "box" }]),
+          createInstancePair("box", "Box", []),
+        ]),
+        instanceSelector: ["box", "body"],
+      })
     ).toEqual(-1);
     expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({}),
-        ["Box", "Form", "Body"],
-        {
+      findClosestDroppableComponentIndex({
+        metas: createFakeComponentMetas({}),
+        constraints: {
           requiredAncestors: new Set(["Form"]),
           invalidAncestors: new Set(),
-        }
-      )
+        },
+        instances: new Map<Instance["id"], Instance>([
+          createInstancePair("body", "Body", [{ type: "id", value: "form" }]),
+          createInstancePair("form", "Form", [{ type: "id", value: "box" }]),
+          createInstancePair("box", "Box", []),
+        ]),
+        instanceSelector: ["box", "form", "body"],
+      })
     ).toEqual(0);
   });
 
   test("considers both required and invalid ancestors", () => {
     expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({}),
-        ["Div", "Box", "Form", "Body"],
-        {
+      findClosestDroppableComponentIndex({
+        metas: createFakeComponentMetas({}),
+        constraints: {
           requiredAncestors: new Set(["Form"]),
           invalidAncestors: new Set(["Box"]),
-        }
-      )
+        },
+        instances: new Map<Instance["id"], Instance>([
+          createInstancePair("body", "Body", [{ type: "id", value: "form" }]),
+          createInstancePair("form", "Form", [{ type: "id", value: "box" }]),
+          createInstancePair("box", "Box", [{ type: "id", value: "div" }]),
+          createInstancePair("div", "Div", []),
+        ]),
+        instanceSelector: ["div", "box", "form", "body"],
+      })
     ).toEqual(2);
     expect(
-      findClosestDroppableComponentIndex(
-        createFakeComponentMetas({}),
-        ["Div", "Form", "Box", "Body"],
-        {
+      findClosestDroppableComponentIndex({
+        metas: createFakeComponentMetas({}),
+        constraints: {
           requiredAncestors: new Set(["Form"]),
           invalidAncestors: new Set(["Box"]),
-        }
-      )
+        },
+        instances: new Map<Instance["id"], Instance>([
+          createInstancePair("body", "Body", [{ type: "id", value: "form" }]),
+          createInstancePair("form", "Form", [{ type: "id", value: "box" }]),
+          createInstancePair("box", "Box", [{ type: "id", value: "div" }]),
+          createInstancePair("div", "Div", []),
+        ]),
+        instanceSelector: ["div", "form", "box", "body"],
+      })
     ).toEqual(-1);
   });
 });
@@ -435,6 +474,58 @@ describe("find closest droppable target", () => {
     ).toEqual({
       parentSelector: ["paragraph", "body"],
       position: 1,
+    });
+  });
+
+  test("finds closest container that doesn't have a direct text child", () => {
+    const instances = new Map([
+      createInstancePair("body", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "paragraph" },
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("paragraph", "Paragraph", [
+        { type: "text", value: "some text" },
+      ]),
+      createInstancePair("box1", "Box1", []),
+      createInstancePair("box2", "Box2", []),
+    ]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["paragraph", "body"],
+        emptyInsertConstraints
+      )
+    ).toEqual({
+      parentSelector: ["body"],
+      position: 2,
+    });
+  });
+
+  test("finds closest container that doesn't have an expression as a child", () => {
+    const instances = new Map([
+      createInstancePair("body", "Body", [
+        { type: "id", value: "box1" },
+        { type: "id", value: "paragraph" },
+        { type: "id", value: "box2" },
+      ]),
+      createInstancePair("paragraph", "Paragraph", [
+        { type: "expression", value: '"bla"' },
+      ]),
+      createInstancePair("box1", "Box1", []),
+      createInstancePair("box2", "Box2", []),
+    ]);
+    expect(
+      findClosestDroppableTarget(
+        defaultMetasMap,
+        instances,
+        ["paragraph", "body"],
+        emptyInsertConstraints
+      )
+    ).toEqual({
+      parentSelector: ["body"],
+      position: 2,
     });
   });
 });
@@ -649,6 +740,61 @@ test("insert template data with instances", () => {
   expect($instances.get()).toEqual(
     toMap<Instance>([
       createInstance("body", "Body", [{ type: "id", value: "box" }]),
+      createInstance("box", "Box", []),
+    ])
+  );
+});
+
+test("insert template inside text-only instance should wrap the text into Text instance", () => {
+  $instances.set(
+    toMap([
+      createInstance("body", "Body", [
+        {
+          type: "id",
+          value: "heading",
+        },
+      ]),
+      createInstance("heading", "Heading", [
+        { type: "text", value: "Heading text" },
+      ]),
+    ])
+  );
+  insertTemplateData(
+    {
+      children: [{ type: "id", value: "box" }],
+      instances: [createInstance("box", "Box", [])],
+      props: [],
+      dataSources: [],
+      styleSourceSelections: [],
+      styleSources: [],
+      styles: [],
+      assets: [],
+      resources: [],
+      breakpoints: [],
+    },
+    { parentSelector: ["heading", "body"], position: "end" }
+  );
+
+  expect($instances.get()).toEqual(
+    toMap<Instance>([
+      createInstance("body", "Body", [
+        {
+          type: "id",
+          value: "heading",
+        },
+      ]),
+      createInstance("heading", "Heading", [
+        {
+          type: "id",
+          value: expect.not.stringMatching("text") as unknown as string,
+        },
+        { type: "id", value: "box" },
+      ]),
+      createInstance(
+        expect.not.stringMatching("text") as unknown as string,
+        "Text",
+        [{ type: "text", value: "Heading text" }]
+      ),
       createInstance("box", "Box", []),
     ])
   );

@@ -26,7 +26,7 @@ export const meta: WsComponentMeta = {
   template: [
     {
       type: "instance",
-      component: "List Item",
+      component: "ListItem",
       children: [
         {
           type: "text",
