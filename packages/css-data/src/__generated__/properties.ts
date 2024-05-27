@@ -143,6 +143,26 @@ export const properties = {
     popularity: 0.41317969,
     appliesTo: "allElementsAndPseudos",
   },
+  appearance: {
+    unitGroups: [],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "none",
+    },
+    popularity: 0.24468974,
+    appliesTo: "allElements",
+  },
+  aspectRatio: {
+    unitGroups: ["number"],
+    inherited: false,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0.07243677,
+    appliesTo: "allElementsExceptInlineBoxesAndInternalRubyOrTableBoxes",
+  },
   backdropFilter: {
     unitGroups: [],
     inherited: false,

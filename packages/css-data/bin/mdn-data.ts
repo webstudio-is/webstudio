@@ -256,7 +256,12 @@ const filteredProperties: FilteredProperties = (() => {
 
   for (property in properties) {
     const config = properties[property];
-    const isSupportedStatus = config.status === "standard";
+    const isSupportedStatus =
+      config.status === "standard" ||
+      // these properties are standard
+      // but mdn still mark them as experimental
+      property === "aspect-ratio" ||
+      property === "appearance";
 
     if (property in supportedComplexProperties) {
       config.initial = supportedComplexProperties[property];

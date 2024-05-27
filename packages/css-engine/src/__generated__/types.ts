@@ -13,6 +13,8 @@ export type Property =
   | "animationName"
   | "animationPlayState"
   | "animationTimingFunction"
+  | "appearance"
+  | "aspectRatio"
   | "backdropFilter"
   | "backfaceVisibility"
   | "backgroundAttachment"
