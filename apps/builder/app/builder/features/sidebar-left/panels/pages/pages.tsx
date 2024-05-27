@@ -313,8 +313,12 @@ const PageEditor = ({
       onClose={() => setEditingPageId(undefined)}
       onDelete={() => {
         setEditingPageId(undefined);
+        // switch to home page when deleted currently selected page
         if (editingPageId === currentPageId) {
-          switchPage(currentPageId);
+          const pages = $pages.get();
+          if (pages) {
+            switchPage(pages.homePage.id);
+          }
         }
       }}
       onDuplicate={(newPageId) => {

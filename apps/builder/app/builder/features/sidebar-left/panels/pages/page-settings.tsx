@@ -1639,8 +1639,8 @@ export const PageSettings = ({
   const hanldeDelete = () => {
     updateWebstudioData((data) => {
       deletePageMutable(pageId, data);
-      onDelete();
     });
+    onDelete();
   };
 
   if (page === undefined) {
