@@ -2,12 +2,12 @@ import { test, expect } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
 import { $breakpoints } from "../nano-states";
 
-const { toInstanceData } = __testing__;
+const { toWebstudioFragment } = __testing__;
 
 $breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
 
 test("Heading Node", () => {
-  const expected = toInstanceData({
+  const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -27,13 +27,13 @@ test("Heading Node", () => {
       styles: [],
     },
   });
-  expect(expected.children).toEqual([
+  expect(fragment.children).toEqual([
     {
       type: "id",
       value: expect.not.stringMatching("instanceId"),
     },
   ]);
-  expect(expected.instances).toEqual([
+  expect(fragment.instances).toEqual([
     {
       children: [
         {
@@ -46,7 +46,7 @@ test("Heading Node", () => {
       type: "instance",
     },
   ]);
-  expect(expected.props).toEqual([
+  expect(fragment.props).toEqual([
     {
       id: expect.not.stringMatching("id"),
       instanceId: expect.not.stringMatching("instanceId"),
@@ -58,7 +58,7 @@ test("Heading Node", () => {
 });
 
 test("List and ListItem", () => {
-  const expected = toInstanceData({
+  const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -98,14 +98,14 @@ test("List and ListItem", () => {
       styles: [],
     },
   });
-  expect(expected.children).toEqual([
+  expect(fragment.children).toEqual([
     {
       type: "id",
       value: expect.not.stringMatching("instanceId"),
     },
   ]);
 
-  expect(expected.instances).toEqual([
+  expect(fragment.instances).toEqual([
     {
       id: expect.not.stringMatching("instanceId"),
       type: "instance",
@@ -138,7 +138,7 @@ test("List and ListItem", () => {
 });
 
 test("Heading with styles", () => {
-  const expected = toInstanceData({
+  const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -168,20 +168,20 @@ test("Heading with styles", () => {
       ],
     },
   });
-  expect(expected.styleSources).toEqual([
+  expect(fragment.styleSources).toEqual([
     {
       type: "token",
       id: expect.not.stringMatching("styleSourceId"),
       name: "Heading",
     },
   ]);
-  expect(expected.styleSourceSelections).toEqual([
+  expect(fragment.styleSourceSelections).toEqual([
     {
       instanceId: expect.not.stringMatching("instanceId"),
       values: [expect.not.stringMatching("styleSourceId")],
     },
   ]);
-  expect(expected.styles).toEqual([
+  expect(fragment.styles).toEqual([
     {
       styleSourceId: expect.not.stringMatching("styleSourceId"),
       breakpointId: "0",
