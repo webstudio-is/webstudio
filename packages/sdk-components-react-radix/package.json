@@ -42,9 +42,7 @@
     "build:stories": "webstudio-sdk generate-stories && prettier --write \"src/__generated__/*.stories.tsx\"",
     "dts": "tsc --project tsconfig.dts.json",
     "typecheck": "tsc",
-    "checks": "pnpm typecheck",
-    "storybook:dev": "storybook dev -p 6006",
-    "storybook:build": "storybook build"
+    "checks": "pnpm typecheck"
   },
   "peerDependencies": {
     "react": "18.3.0-canary-14898b6a9-20240318",
@@ -68,9 +66,6 @@
     "@webstudio-is/react-sdk": "workspace:*"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^8.1.2",
-    "@storybook/addon-links": "^8.1.2",
-    "@storybook/react": "^8.1.2",
     "@types/node": "^20.12.7",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
@@ -78,7 +73,6 @@
     "@webstudio-is/generate-arg-types": "workspace:*",
     "@webstudio-is/sdk-cli": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:*",
-    "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",

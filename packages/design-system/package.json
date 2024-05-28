@@ -9,21 +9,14 @@
     "build-figma-tokens": "tsx ./bin/transform-figma-tokens.ts",
     "typecheck": "tsc",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "checks": "pnpm typecheck && pnpm test",
-    "storybook:dev": "storybook dev -p 6006",
-    "storybook:build": "storybook build"
+    "checks": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@storybook/addon-actions": "^8.1.2",
-    "@storybook/addon-essentials": "^8.1.2",
-    "@storybook/addon-links": "^8.1.2",
-    "@storybook/react": "^8.1.2",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/jest-config": "workspace:*",
-    "@webstudio-is/storybook-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
