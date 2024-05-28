@@ -34,17 +34,3 @@ jobs:
         uses: lost-pixel/lost-pixel@v3.16.0
         env:
           LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
-  finalize:
-    needs: [lost-pixel]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Lost Pixel Finalize
-        uses: lost-pixel/lost-pixel@v3.16.0
-        env:
-          LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
-        with:
-          FINALIZE: true
