@@ -110,16 +110,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
     }
 
-    const hasPatches = Object.keys(patchesByField).length > 0;
-
-    if (hasPatches === false) {
-      return { status: "ok" };
-    }
-
     const rawSet = Object.entries(patchesByField).map(
       ([field, patches], index) =>
         Prisma.sql`${Prisma.raw(`"${field}"`)} = patch_map(${Prisma.raw(`"${field}"`)}, ${jsonFields[field as keyof typeof jsonFields]}, ${JSON.stringify(patches)})`
     );
+
+    rawSet.push(Prisma.sql`"version" = ${clientVersion + 1}`);
+    rawSet.push(Prisma.sql`"lastTransactionId" = ${lastTransactionId}`);
 
     // eslint-disable-next-line no-console
     console.time("updateQueryPatch");
@@ -127,9 +124,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     const updateQuery = Prisma.sql`
       UPDATE "Build"
       SET
-      ${Prisma.join(rawSet, ", ")},
-      "version" = ${clientVersion + 1},
-      "lastTransactionId" = ${lastTransactionId}
+      ${Prisma.join(rawSet, ", ")}
       WHERE
         id = ${buildId} AND
         "projectId" = ${projectId} AND
