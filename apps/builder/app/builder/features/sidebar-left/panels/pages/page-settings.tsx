@@ -1480,6 +1480,10 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       registerFolderChildMutable(folders, page.id, values.parentFolderId);
     }
 
+    if (values.marketplaceInclude !== undefined) {
+      page.marketplace ??= {};
+      page.marketplace.include = values.marketplaceInclude;
+    }
     if (values.marketplaceCategory !== undefined) {
       page.marketplace ??= {};
       page.marketplace.category =
