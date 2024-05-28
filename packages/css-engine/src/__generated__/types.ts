@@ -299,6 +299,7 @@ export type Property =
   | "textOverflow"
   | "textRendering"
   | "textShadow"
+  | "textSizeAdjust"
   | "textTransform"
   | "textUnderlineOffset"
   | "textUnderlinePosition"

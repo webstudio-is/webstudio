@@ -261,7 +261,9 @@ const filteredProperties: FilteredProperties = (() => {
       // these properties are standard
       // but mdn still mark them as experimental
       property === "aspect-ratio" ||
-      property === "appearance";
+      property === "appearance" ||
+      // actually experimental but used in our components normalize
+      property === "text-size-adjust";
 
     if (property in supportedComplexProperties) {
       config.initial = supportedComplexProperties[property];

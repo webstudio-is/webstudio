@@ -4943,6 +4943,7 @@ export const keywordValues = {
     "inherit",
     "unset",
   ],
+  textSizeAdjust: ["none", "auto", "initial", "inherit", "unset"],
   textTransform: [
     "none",
     "capitalize",

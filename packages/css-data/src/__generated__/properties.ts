@@ -3109,6 +3109,16 @@ export const properties = {
     popularity: 0.49899917,
     appliesTo: "allElements",
   },
+  textSizeAdjust: {
+    unitGroups: ["percentage"],
+    inherited: true,
+    initial: {
+      type: "keyword",
+      value: "auto",
+    },
+    popularity: 0.13611964,
+    appliesTo: "allElements",
+  },
   textTransform: {
     unitGroups: [],
     inherited: true,
