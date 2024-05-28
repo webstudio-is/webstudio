@@ -53,7 +53,7 @@ importers:
         version: 8.1.4(prettier@3.2.5)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
       '@storybook/react-vite':
         specifier: ^8.1.4
-        version: 8.1.4(prettier@3.2.5)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))
+        version: 8.1.4(prettier@3.2.5)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))
       '@types/css-tree':
         specifier: ^2.3.1
         version: 2.3.1(patch_hash=ac22lciodhaj6xmoeignv36gyq)
@@ -97,8 +97,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
 
   apps/builder:
     dependencies:
@@ -203,7 +203,7 @@ importers:
         version: 0.2.3
       '@vercel/remix':
         specifier: 2.9.1
-        version: 2.9.1(@remix-run/dev@2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.1(typescript@5.4.5))(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 2.9.1(@remix-run/dev@2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.1(typescript@5.4.5))(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -414,7 +414,7 @@ importers:
         version: 29.7.0
       '@remix-run/dev':
         specifier: ^2.9.1
-        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@testing-library/react-hooks':
         specifier: ^8.0.1
         version: 8.0.1(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react-test-renderer@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -455,8 +455,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
 
   fixtures/webstudio-cloudflare-template:
     dependencies:
@@ -520,7 +520,7 @@ importers:
         version: 4.20240405.0
       '@remix-run/dev':
         specifier: 2.9.1
-        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -534,8 +534,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -593,7 +593,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.1
-        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -604,8 +604,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -617,7 +617,7 @@ importers:
         version: 2.6.0
       '@netlify/remix-edge-adapter':
         specifier: ^3.2.2
-        version: 3.2.2(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(vite@5.2.11(@types/node@20.12.7))
+        version: 3.2.2(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(vite@5.2.12(@types/node@20.12.7))
       '@remix-run/node':
         specifier: 2.9.1
         version: 2.9.1(typescript@5.4.5)
@@ -660,7 +660,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.1
-        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -671,8 +671,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -684,7 +684,7 @@ importers:
         version: 2.6.0
       '@netlify/remix-adapter':
         specifier: ^2.3.1
-        version: 2.3.1(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))
+        version: 2.3.1(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))
       '@remix-run/node':
         specifier: 2.9.1
         version: 2.9.1(typescript@5.4.5)
@@ -727,7 +727,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.1
-        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -738,8 +738,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -788,7 +788,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.1
-        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -799,8 +799,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -993,10 +993,10 @@ importers:
     devDependencies:
       '@netlify/remix-adapter':
         specifier: ^2.3.1
-        version: 2.3.1(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))
+        version: 2.3.1(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))
       '@netlify/remix-edge-adapter':
         specifier: 3.2.2
-        version: 3.2.2(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(vite@5.2.11(@types/node@20.12.7))
+        version: 3.2.2(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(vite@5.2.12(@types/node@20.12.7))
       '@remix-run/cloudflare':
         specifier: ^2.9.1
         version: 2.9.1(@cloudflare/workers-types@4.20240405.0)(typescript@5.4.5)
@@ -1005,7 +1005,7 @@ importers:
         version: 2.9.1(@cloudflare/workers-types@4.20240405.0)(typescript@5.4.5)
       '@remix-run/dev':
         specifier: ^2.9.1
-        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@remix-run/node':
         specifier: ^2.9.1
         version: 2.9.1(typescript@5.4.5)
@@ -1049,8 +1049,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.11
-        version: 5.2.11(@types/node@20.12.7)
+        specifier: ^5.2.12
+        version: 5.2.12(@types/node@20.12.7)
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -9323,8 +9323,8 @@ packages:
       terser:
         optional: true
 
-  vite@5.2.11:
-    resolution: {integrity: sha512-HndV31LWW05i1BLPMUCE1B9E9GFbOu1MbenhS58FuK6owSO5qHm7GiCotrNY1YE5rMeQSFBGmT5ZaLEjFizgiQ==}
+  vite@5.2.12:
+    resolution: {integrity: sha512-/gC8GxzxMK5ntBwb48pR32GGhENnjtY30G4A0jemunsBkiEZFw60s8InGpN8gkhHEkjnRK1aSAxeQgwvFhUHAA==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -11075,13 +11075,13 @@ snapshots:
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  '@joshwooding/vite-plugin-react-docgen-typescript@0.3.1(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))':
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.3.1(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))':
     dependencies:
       glob: 7.2.3
       glob-promise: 4.2.2(glob@7.2.3)
       magic-string: 0.27.0
       react-docgen-typescript: 2.2.2(typescript@5.4.5)
-      vite: 5.2.11(@types/node@20.12.7)
+      vite: 5.2.12(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.4.5
 
@@ -11334,22 +11334,22 @@ snapshots:
 
   '@netlify/node-cookies@0.1.0': {}
 
-  '@netlify/remix-adapter@2.3.1(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))':
+  '@netlify/remix-adapter@2.3.1(@netlify/functions@2.6.0)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))':
     dependencies:
       '@netlify/functions': 2.6.0
       '@remix-run/node': 2.9.1(typescript@5.4.5)
       isbot: 4.4.0
     optionalDependencies:
-      vite: 5.2.11(@types/node@20.12.7)
+      vite: 5.2.12(@types/node@20.12.7)
     transitivePeerDependencies:
       - typescript
 
-  '@netlify/remix-edge-adapter@3.2.2(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(vite@5.2.11(@types/node@20.12.7))':
+  '@netlify/remix-edge-adapter@3.2.2(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(vite@5.2.12(@types/node@20.12.7))':
     dependencies:
       '@netlify/remix-runtime': 2.2.0(@remix-run/server-runtime@2.9.1(typescript@5.4.5))
       isbot: 4.4.0
     optionalDependencies:
-      vite: 5.2.11(@types/node@20.12.7)
+      vite: 5.2.12(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@remix-run/server-runtime'
 
@@ -12133,7 +12133,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
-  '@remix-run/dev@2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))':
+  '@remix-run/dev@2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))':
     dependencies:
       '@babel/core': 7.22.9
       '@babel/generator': 7.24.1
@@ -12192,7 +12192,7 @@ snapshots:
     optionalDependencies:
       '@remix-run/serve': 2.9.1(typescript@5.4.5)
       typescript: 5.4.5
-      vite: 5.2.11(@types/node@20.12.7)
+      vite: 5.2.12(@types/node@20.12.7)
       wrangler: 3.50.0(@cloudflare/workers-types@4.20240405.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -12599,7 +12599,7 @@ snapshots:
       - prettier
       - supports-color
 
-  '@storybook/builder-vite@8.1.4(prettier@3.2.5)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))':
+  '@storybook/builder-vite@8.1.4(prettier@3.2.5)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))':
     dependencies:
       '@storybook/channels': 8.1.4
       '@storybook/client-logger': 8.1.4
@@ -12618,7 +12618,7 @@ snapshots:
       fs-extra: 11.1.1
       magic-string: 0.30.1
       ts-dedent: 2.2.0
-      vite: 5.2.11(@types/node@20.12.7)
+      vite: 5.2.12(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -12920,11 +12920,11 @@ snapshots:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@storybook/react-vite@8.1.4(prettier@3.2.5)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))':
+  '@storybook/react-vite@8.1.4(prettier@3.2.5)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.3.1(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.3.1(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))
       '@rollup/pluginutils': 5.0.2(rollup@4.14.0)
-      '@storybook/builder-vite': 8.1.4(prettier@3.2.5)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))
+      '@storybook/builder-vite': 8.1.4(prettier@3.2.5)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))
       '@storybook/node-logger': 8.1.4
       '@storybook/react': 8.1.4(prettier@3.2.5)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
       '@storybook/types': 8.1.4
@@ -12935,7 +12935,7 @@ snapshots:
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       resolve: 1.22.8
       tsconfig-paths: 4.2.0
-      vite: 5.2.11(@types/node@20.12.7)
+      vite: 5.2.12(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@preact/preset-vite'
       - encoding
@@ -13514,9 +13514,9 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@vercel/remix@2.9.1(@remix-run/dev@2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.1(typescript@5.4.5))(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@vercel/remix@2.9.1(@remix-run/dev@2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.1(typescript@5.4.5))(@remix-run/server-runtime@2.9.1(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@remix-run/dev': 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.11(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+      '@remix-run/dev': 2.9.1(@remix-run/react@2.9.1(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.1(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@remix-run/node': 2.9.1(typescript@5.4.5)
       '@remix-run/server-runtime': 2.9.1(typescript@5.4.5)
       '@vercel/static-config': 3.0.0
@@ -18750,7 +18750,7 @@ snapshots:
       '@types/node': 20.12.7
       fsevents: 2.3.3
 
-  vite@5.2.11(@types/node@20.12.7):
+  vite@5.2.12(@types/node@20.12.7):
     dependencies:
       esbuild: 0.20.2
       postcss: 8.4.38
