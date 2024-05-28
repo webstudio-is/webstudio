@@ -34,8 +34,3 @@ jobs:
         with:
           projectToken: bea8dc1981d4
           buildScriptName: storybook:build
-
-      - name: Save deployed URL
-        id: deployed-url
-        run: echo "${{ steps.chromatic.outputs.storybookUrl }}" >> $GITHUB_OUTPUT
-
