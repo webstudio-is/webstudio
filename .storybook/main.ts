@@ -1,37 +1,43 @@
 import * as path from "node:path";
 import type { StorybookConfig } from "@storybook/react-vite";
 
+const visualTestingStories: StorybookConfig["stories"] = [
+  {
+    directory: "../apps/builder",
+    titlePrefix: "Builder",
+  },
+  {
+    directory: "../packages/design-system",
+    titlePrefix: "Design System",
+  },
+];
+
 export default {
-  stories: [
-    {
-      directory: "../apps/builder",
-      titlePrefix: "Builder",
-    },
-    {
-      directory: "../packages/css-engine",
-      titlePrefix: "Css Engine",
-    },
-    {
-      directory: "../packages/image",
-      titlePrefix: "Image",
-    },
-    {
-      directory: "../packages/design-system",
-      titlePrefix: "Design System",
-    },
-    {
-      directory: "../packages/icons",
-      titlePrefix: "Icons",
-    },
-    {
-      directory: "../packages/sdk-components-react",
-      titlePrefix: "Sdk Components React",
-    },
-    {
-      directory: "../packages/sdk-components-react-radix",
-      titlePrefix: "Sdk Components React Radix",
-    },
-  ],
+  stories: process.env.VISUAL_TESTING
+    ? visualTestingStories
+    : [
+        ...visualTestingStories,
+        {
+          directory: "../packages/css-engine",
+          titlePrefix: "Css Engine",
+        },
+        {
+          directory: "../packages/image",
+          titlePrefix: "Image",
+        },
+        {
+          directory: "../packages/icons",
+          titlePrefix: "Icons",
+        },
+        {
+          directory: "../packages/sdk-components-react",
+          titlePrefix: "Sdk Components React",
+        },
+        {
+          directory: "../packages/sdk-components-react-radix",
+          titlePrefix: "Sdk Components React Radix",
+        },
+      ],
   framework: {
     name: "@storybook/react-vite",
     options: {},
