@@ -56,26 +56,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw Error("You don't have edit access to this project");
     }
 
-    const jsonFields = {
-      pages: "object",
-      instances: "map",
-      styleSourceSelections: "styleSourceSelections",
-      styleSources: "map",
-      styles: "styles",
-      props: "map",
-      dataSources: "map",
-      breakpoints: "map",
-      resources: "map",
+    const jsonFieldsPrimaryKeys = {
+      pages: "",
+      instances: "id",
+      styleSourceSelections: "instanceId",
+      styleSources: "id",
+      styles: "styleSourceId,breakpointId,property,state",
+      props: "id",
+      dataSources: "id",
+      breakpoints: "id",
+      resources: "id",
 
-      marketplaceProduct: "map",
+      marketplaceProduct: "id",
     } as const;
 
     const isJsonField = (
       namespace: string
-    ): namespace is keyof typeof jsonFields => namespace in jsonFields;
+    ): namespace is keyof typeof jsonFieldsPrimaryKeys =>
+      namespace in jsonFieldsPrimaryKeys;
 
-    const patchesByField: Partial<Record<keyof typeof jsonFields, Patch[]>> =
-      {};
+    const patchesByField: Partial<
+      Record<keyof typeof jsonFieldsPrimaryKeys, Patch[]>
+    > = {};
 
     let doSocialImageUpdate = false;
 
@@ -112,7 +114,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     const rawSet = Object.entries(patchesByField).map(
       ([field, patches], index) =>
-        Prisma.sql`${Prisma.raw(`"${field}"`)} = patch_map(${Prisma.raw(`"${field}"`)}, ${jsonFields[field as keyof typeof jsonFields]}, ${JSON.stringify(patches)})`
+        Prisma.sql`${Prisma.raw(`"${field}"`)} = patch_map(${Prisma.raw(`"${field}"`)}, ${jsonFieldsPrimaryKeys[field as keyof typeof jsonFieldsPrimaryKeys]}, ${JSON.stringify(patches)})`
     );
 
     rawSet.push(Prisma.sql`"version" = ${clientVersion + 1}`);

@@ -140,32 +140,45 @@ const applyPatches = (draft, patches) => {
 /**
  *
  * @param {string} dataStr
- * @param {'styles' | 'styleSourceSelections' | 'map' | 'object'} inputType
+ * @param {string} primaryKeyCommaSeparated - if empty then it's js array or plain object, otherwise is a map
  * @param {string} patchesStr
  * @returns {string}
  */
-const patch = (dataStr, inputType, patchesStr) => {
+const patch = (dataStr, primaryKeyCommaSeparated, patchesStr) => {
   /**
    * @param {*} item
    * @returns
    */
-  let getKey = (item) => item.id;
 
-  if (inputType === "styles") {
-    getKey = (item) =>
-      `${item.styleSourceId}:${item.breakpointId}:${
-        item.property
-      }:${item.state == null ? "" : item.state}`;
-  }
+  const primaryKeyArray = primaryKeyCommaSeparated
+    .split(",")
+    .map((item) => item.trim());
 
-  if (inputType === "styleSourceSelections") {
-    getKey = (item) => item.instanceId;
-  }
+  const isPlainObjectOrArray =
+    primaryKeyArray.length === 1 && primaryKeyArray[0] === "";
+
+  /**
+   * @type { undefined | ((item: any) => string) }
+   */
+  let getKey = isPlainObjectOrArray
+    ? undefined
+    : (item) => {
+        if (primaryKeyArray.length === 1) {
+          return item[primaryKeyArray[0]];
+        }
+
+        return primaryKeyArray
+          .map((key) => (item[key] == null ? "" : item[key]))
+          .join(":");
+      };
 
   let data = JSON.parse(dataStr);
 
-  if (inputType !== "object") {
-    // @ts-ignore
+  if (getKey !== undefined) {
+    if (false === Array.isArray(data)) {
+      throw new Error("Expected data as an array");
+    }
+
     data = new Map(data.map((item) => [getKey(item), item]));
   }
 
@@ -173,11 +186,7 @@ const patch = (dataStr, inputType, patchesStr) => {
 
   const patched = applyPatches(data, patches);
 
-  if (inputType !== "object") {
-    if (false === patched instanceof Map) {
-      throw new Error("patched is not instance of Map");
-    }
-
+  if (patched instanceof Map) {
     return JSON.stringify(Array.from(patched.values()));
   }
 

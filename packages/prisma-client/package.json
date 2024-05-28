@@ -14,6 +14,7 @@
     "build:prod": "PRISMA_BINARY_TARGET='[\"rhel-openssl-3.0.x\"]' pnpm build",
     "dts": "tsc --declarationDir lib",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest ./src/patches.test.js",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch ./src/patches.test.js",
     "migrations": "./migrations-cli/cli.ts"
   },
   "bin": {
