@@ -8,9 +8,12 @@ touch /home/node/.local/fzf/.bash_history
 
 echo 'export HISTFILE=/home/node/.local/fzf/.bash_history' >> "/home/node/.bashrc"
 
-pnpm config set store-dir /home/node/.pnpm-store
-
 cd /workspaces/webstudio
+sudo corepack enable
+corepack install
+
+pnpm config set store-dir $HOME/.pnpm-store
+
 
 find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +
 find . -name 'lib' -type d -prune -exec rm -rf '{}' +
