@@ -134,7 +134,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         id = ${buildId} AND
         "projectId" = ${projectId} AND
         "version" = ${clientVersion} AND
-        "lastTransactionId" IS DISTINCT FROM ${lastTransactionId} AND
         "deployment" IS NULL
     `;
 
@@ -157,11 +156,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       // This can occur if the connection was lost or an error occurred post-transaction completion,
       // leaving the client in an erroneous state and prompting a retry.
       if (lastTransactionId === build.lastTransactionId) {
+        console.info("Last transaction id matches");
         return { status: "ok" };
       }
 
+      console.error({
+        status: "version_mismatched",
+        errors: `The client and server versions do not match. ${build.version} != ${clientVersion}`,
+        buildId,
+      });
+
       return {
         status: "version_mismatched",
+        errors: `The client and server versions do not match. ${build.version} != ${clientVersion}`,
       };
     }
 
