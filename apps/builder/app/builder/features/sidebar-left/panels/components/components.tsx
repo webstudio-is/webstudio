@@ -26,6 +26,7 @@ import { $registeredComponentMetas, $selectedPage } from "~/shared/nano-states";
 import { getMetaMaps } from "./get-meta-maps";
 import { getInstanceLabel } from "~/shared/instance-utils";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { insert } from "./insert";
 
 export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
   const metaByComponentName = useStore($registeredComponentMetas);
@@ -37,7 +38,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
     () => getMetaMaps(metaByComponentName),
     [metaByComponentName]
   );
-  const { dragCard, handleInsert, draggableContainerRef } = useDraggable({
+  const { dragCard, draggableContainerRef } = useDraggable({
     publish,
     metaByComponentName,
   });
@@ -119,7 +120,7 @@ export const TabContent = ({ publish, onSetActiveTab }: TabContentProps) => {
                             );
                             if (component) {
                               onSetActiveTab("none");
-                              handleInsert(component);
+                              insert(component);
                             }
                           }}
                         >

@@ -59,17 +59,35 @@ export const meta: WsComponentMeta = {
         {
           type: "instance",
           component: "ListItem",
-          children: [],
+          children: [
+            {
+              type: "text",
+              value: "List Item text you can edit",
+              placeholder: true,
+            },
+          ],
         },
         {
           type: "instance",
           component: "ListItem",
-          children: [],
+          children: [
+            {
+              type: "text",
+              value: "List Item text you can edit",
+              placeholder: true,
+            },
+          ],
         },
         {
           type: "instance",
           component: "ListItem",
-          children: [],
+          children: [
+            {
+              type: "text",
+              value: "List Item text you can edit",
+              placeholder: true,
+            },
+          ],
         },
       ],
     },

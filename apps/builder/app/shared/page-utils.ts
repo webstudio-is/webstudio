@@ -16,6 +16,31 @@ import {
   insertWebstudioFragmentCopy,
 } from "./instance-utils";
 
+const deduplicateName = (
+  pages: Pages,
+  folderId: Folder["id"],
+  pageName: Page["name"]
+) => {
+  const { name = pageName, copyNumber } =
+    // extract a number from "name (copyNumber)"
+    pageName.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
+  const folder = pages.folders.find((folder) => folder.id === folderId);
+  const usedNames = new Set<string>();
+  for (const pageId of folder?.children ?? []) {
+    const page = findPageByIdOrPath(pageId, pages);
+    if (page) {
+      usedNames.add(page.name);
+    }
+  }
+  let newName = name;
+  let nameNumber = Number(copyNumber ?? "0");
+  while (usedNames.has(newName)) {
+    nameNumber += 1;
+    newName = `${name} (${nameNumber})`;
+  }
+  return newName;
+};
+
 const deduplicatePath = (
   pages: Pages,
   folderId: Folder["id"],
@@ -76,10 +101,6 @@ export const insertPageCopyMutable = ({
     availableDataSources: new Set(),
   });
   const newPageId = nanoid();
-  const { name = page.name, copyNumber } =
-    // extract a number from "name (copyNumber)"
-    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
-  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
   const newRootInstanceId =
     newInstanceIds.get(page.rootInstanceId) ?? page.rootInstanceId;
   const newSystemDataSourceId =
@@ -89,7 +110,7 @@ export const insertPageCopyMutable = ({
     id: newPageId,
     rootInstanceId: newRootInstanceId,
     systemDataSourceId: newSystemDataSourceId,
-    name: newName,
+    name: deduplicateName(target.data.pages, target.folderId, page.name),
     path: deduplicatePath(target.data.pages, target.folderId, page.path),
     title: replaceDataSources(page.title, newDataSourceIds),
     meta: {

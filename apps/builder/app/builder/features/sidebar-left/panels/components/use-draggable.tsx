@@ -8,24 +8,12 @@ import {
   Flex,
   useDrag,
   ComponentCard,
-  toast,
   useDisableCanvasPointerEvents,
 } from "@webstudio-is/design-system";
-import {
-  $instances,
-  $registeredComponentMetas,
-  $selectedInstanceSelector,
-  $selectedPage,
-} from "~/shared/nano-states";
+import { $registeredComponentMetas } from "~/shared/nano-states";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $canvasRect, $scale } from "~/builder/shared/nano-states";
-import {
-  computeInstancesConstraints,
-  findClosestDroppableTarget,
-  getComponentTemplateData,
-  getInstanceLabel,
-  insertTemplateData,
-} from "~/shared/instance-utils";
+import { getInstanceLabel } from "~/shared/instance-utils";
 import { MetaIcon } from "~/builder/shared/meta-icon";
 
 const DragLayer = ({
@@ -97,25 +85,6 @@ export const elementToComponentName = (
   return false;
 };
 
-const formatInsertionError = (component: string, meta: WsComponentMeta) => {
-  const or = new Intl.ListFormat("en", {
-    type: "disjunction",
-  });
-  const and = new Intl.ListFormat("en", {
-    type: "conjunction",
-  });
-  const messages: string[] = [];
-  if (meta.requiredAncestors) {
-    const listString = or.format(meta.requiredAncestors);
-    messages.push(`can be added only inside of ${listString}`);
-  }
-  if (meta.invalidAncestors) {
-    const listString = and.format(meta.invalidAncestors);
-    messages.push(`cannot be added inside of ${listString}`);
-  }
-  return `${component} ${and.format(messages)}`;
-};
-
 export const useDraggable = ({
   publish,
   metaByComponentName,
@@ -174,45 +143,8 @@ export const useDraggable = ({
     <DragLayer component={dragComponent} point={point} />
   ) : undefined;
 
-  const handleInsert = (component: string) => {
-    const selectedPage = $selectedPage.get();
-    if (selectedPage === undefined) {
-      return;
-    }
-    const templateData = getComponentTemplateData(component);
-    if (templateData === undefined) {
-      return;
-    }
-    const newInstances = new Map(
-      templateData.instances.map((instance) => [instance.id, instance])
-    );
-    const rootInstanceIds = templateData.children
-      .filter((child) => child.type === "id")
-      .map((child) => child.value);
-    const instanceSelector = $selectedInstanceSelector.get() ?? [
-      selectedPage.rootInstanceId,
-    ];
-    const metas = $registeredComponentMetas.get();
-    const dropTarget = findClosestDroppableTarget(
-      metas,
-      $instances.get(),
-      // fallback to root as drop target
-      instanceSelector,
-      computeInstancesConstraints(metas, newInstances, rootInstanceIds)
-    );
-    if (dropTarget === undefined) {
-      const meta = metas.get(component);
-      if (meta) {
-        toast.error(formatInsertionError(component, meta));
-      }
-      return;
-    }
-    insertTemplateData(templateData, dropTarget);
-  };
-
   return {
     dragCard,
     draggableContainerRef: dragHandlers.rootRef,
-    handleInsert,
   };
 };
