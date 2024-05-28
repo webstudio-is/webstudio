@@ -1,5 +1,11 @@
-import { type ElementRef, type ComponentProps, forwardRef } from "react";
+import {
+  type ElementRef,
+  type ComponentProps,
+  forwardRef,
+  useContext,
+} from "react";
 import { Form, type FormProps } from "@remix-run/react";
+import { ReactSdkContext } from "@webstudio-is/react-sdk";
 
 export const defaultTag = "form";
 
@@ -12,13 +18,19 @@ export const RemixForm = forwardRef<
       method?: Lowercase<NonNullable<FormProps["method"]>>;
     }
 >((props, ref) => {
+  const { renderer } = useContext(ReactSdkContext);
   // remix casts action to relative url
   if (
     props.action === undefined ||
     props.action === "" ||
     props.action?.startsWith("/")
   ) {
-    return <Form {...props} ref={ref} />;
+    // remix forms specifies own action instead of provided one
+    // which makes it hard to handle intercepted submit events
+    // render remix form only in published sites
+    if (renderer !== "canvas" && renderer !== "preview") {
+      return <Form {...props} ref={ref} />;
+    }
   }
   return <form {...props} ref={ref} />;
 });
