@@ -1,8 +1,11 @@
 {
   "extends": "@webstudio-is/tsconfig/base.json",
-  "include": ["src"],
+  "include": ["src", "src/**/*.ts", "src/patches.js", "src/patches.test.js"],
+  "exclude": ["node_modules", "lib", "dist", "src/__generated__"],
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./lib"
+    "outDir": "./lib",
+    "allowJs": true,
+    "checkJs": true
   }
 }

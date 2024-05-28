@@ -20,6 +20,7 @@
     "migrations": "./migrations-cli/cli.ts"
   },
   "devDependencies": {
+    "@jest/globals": "^29.7.0",
     "@prisma/client": "^5.12.1",
     "@types/node": "^20.12.7",
     "@webstudio-is/tsconfig": "workspace:*",

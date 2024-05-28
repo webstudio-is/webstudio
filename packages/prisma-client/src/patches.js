@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 /**
  * Simplified source of: https://github.com/immerjs/immer/blob/e2d222bd4fb26abded04075c936290715e9ee335/src/plugins/patches.ts#L214
  *
@@ -24,47 +26,6 @@
  */
 
 /**
- * This code is used inside a PostgreSQL function defined with PLV8.
- * It is wrapped with the following SQL command:
- *
- * CREATE OR REPLACE FUNCTION patch_map(data_str text, input_type text, patches_str text)
- * RETURNS text AS $$
- *
- * {{ CODE FROM THIS FILE }}
- *
- * let getKey = (item) => item.id;
- *
- * if (input_type === 'styles') {
- *   getKey = (item) => `${item.styleSourceId}:${item.breakpointId}:${
- *     item.property
- *   }:${item.state == null ? "" : item.state}`
- * }
- *
- * if (input_type === 'styleSourceSelections') {
- *   getKey = (item) => item.instanceId;
- * }
- *
- *
- * let data = JSON.parse(data_str);
- *
- * if (input_type !== 'object') {
- *   data = new Map(data.map((item) => [getKey(item), item]));
- * }
- *
- * const patches = JSON.parse(patches_str);
- *
- * const patched = applyPatches(data, patches);
- *
- * if (input_type !== 'object') {
- *   return JSON.stringify(Array.from(patched.values()));
- * }
- *
- * return JSON.stringify(patched);
- *
- * $$ LANGUAGE plv8 IMMUTABLE PARALLEL SAFE;
- */
-
-/**
  * @typedef {Object} Patch
  * @property {"replace"|"remove"|"add"} op - The operation to perform.
  * @property {(string|number)[]} path - The path where the operation should be applied.
@@ -85,20 +46,24 @@ const getArchtype = (thing) =>
         ? "Set"
         : "Object";
 
+// @ts-ignore
 const get = (thing, prop) =>
   getArchtype(thing) === "Map" ? thing.get(prop) : thing[prop];
 
 /**
  * https://github.com/immerjs/immer/blob/e2d222bd4fb26abded04075c936290715e9ee335/src/plugins/patches.ts#L214
- * @param {unknown} draft
+ * @template T
+ * @param {T} draft - The draft object to apply patches to.
  * @param {ReadonlyArray<Patch>} patches
+ * @returns {T} The patched draft object.
  */
-export const applyPatches = (draft, patches) => {
+const applyPatches = (draft, patches) => {
   patches.forEach((patch) => {
     const { path, op } = patch;
 
     let base = draft;
     for (let i = 0; i < path.length - 1; i++) {
+      // @ts-ignore
       const parentType = getArchtype(base);
       let p = path[i];
       if (typeof p !== "string" && typeof p !== "number") {
@@ -120,32 +85,42 @@ export const applyPatches = (draft, patches) => {
       case "replace":
         switch (type) {
           case "Map":
+            // @ts-ignore
             return base.set(key, value);
           case "Set":
             throw new Error("set is not supported");
           default:
+            // @ts-ignore
             return (base[key] = value);
         }
       case "add":
         switch (type) {
           case "Array":
+            // @ts-ignore
             return key === "-" ? base.push(value) : base.splice(key, 0, value);
           case "Map":
+            // @ts-ignore
             return base.set(key, value);
           case "Set":
+            // @ts-ignore
             return base.add(value);
           default:
+            // @ts-ignore
             return (base[key] = value);
         }
       case "remove":
         switch (type) {
           case "Array":
+            // @ts-ignore
             return base.splice(key, 1);
           case "Map":
+            // @ts-ignore
             return base.delete(key);
           case "Set":
+            // @ts-ignore
             return base.delete(patch.value);
           default:
+            // @ts-ignore
             return delete base[key];
         }
       default:
@@ -155,3 +130,65 @@ export const applyPatches = (draft, patches) => {
 
   return draft;
 };
+
+/**
+ *
+ * @param {string} dataStr
+ * @param {'styles' | 'styleSourceSelections' | 'map' | 'object'} inputType
+ * @param {string} patchesStr
+ * @returns {string}
+ */
+export const patch = (dataStr, inputType, patchesStr) => {
+  /**
+   * @param {*} item
+   * @returns
+   */
+  let getKey = (item) => item.id;
+
+  if (inputType === "styles") {
+    getKey = (item) =>
+      `${item.styleSourceId}:${item.breakpointId}:${
+        item.property
+      }:${item.state == null ? "" : item.state}`;
+  }
+
+  if (inputType === "styleSourceSelections") {
+    getKey = (item) => item.instanceId;
+  }
+
+  let data = JSON.parse(dataStr);
+
+  if (inputType !== "object") {
+    // @ts-ignore
+    data = new Map(data.map((item) => [getKey(item), item]));
+  }
+
+  const patches = JSON.parse(patchesStr);
+
+  const patched = applyPatches(data, patches);
+
+  if (inputType !== "object") {
+    if (false === patched instanceof Map) {
+      throw new Error("patched is not instance of Map");
+    }
+
+    return JSON.stringify(Array.from(patched.values()));
+  }
+
+  return JSON.stringify(patched);
+};
+
+/**
+ * This code is used inside a PostgreSQL function defined with PLV8.
+ * It is wrapped with the following SQL command:
+ *
+ * CREATE OR REPLACE FUNCTION patch_map(data_str text, input_type text, patches_str text)
+ * RETURNS text AS $$
+ *
+ * {{ CODE FROM THIS FILE }}
+ *
+ * const result = patch(data_str, input_type, patches_str);
+ * return result;
+ *
+ * $$ LANGUAGE plv8 IMMUTABLE PARALLEL SAFE;
+ */
