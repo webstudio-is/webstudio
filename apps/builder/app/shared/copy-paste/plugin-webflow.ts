@@ -19,10 +19,18 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const mimeType = "application/json";
 
+const WfToWsComponentMap = {
+  Block: "Box",
+};
+type WfComponent = keyof typeof WfToWsComponentMap;
+
 const WfNode = z.union([
   z.object({
     _id: z.string(),
-    type: z.enum(["Heading"]),
+    type: z.enum([
+      "Heading",
+      ...(Object.keys(WfToWsComponentMap) as Array<WfComponent>),
+    ]),
     tag: z.string(),
     children: z.array(z.string()),
     classes: z.array(z.string()),
@@ -140,7 +148,7 @@ const addInstances = (
     fragment.instances.push({
       id: instanceId,
       type: "instance",
-      component: wfNode.type,
+      component: WfToWsComponentMap[wfNode.type as WfComponent] ?? wfNode.type,
       children,
     });
     added.set(wfNode._id, instanceId);
