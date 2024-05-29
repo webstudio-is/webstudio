@@ -24,6 +24,7 @@
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
+    "@clack/prompts": "^0.7.0",
     "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -36,7 +37,7 @@
     "execa": "^7.2.0",
     "ora": "^7.0.1",
     "p-limit": "^4.0.0",
-    "picocolors": "^1.0.0",
+    "picocolors": "^1.0.1",
     "prompts": "^2.4.2",
     "strip-indent": "^4.0.0",
     "title-case": "^4.1.0",
