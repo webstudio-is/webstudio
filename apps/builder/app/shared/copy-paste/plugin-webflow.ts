@@ -18,10 +18,10 @@ import { parseCss } from "@webstudio-is/css-data";
 
 export const mimeType = "application/json";
 
-const WebflowNode = z.union([
+const WfNode = z.union([
   z.object({
     _id: z.string(),
-    type: z.string(),
+    type: z.enum(["Heading"]),
     tag: z.string(),
     children: z.array(z.string()),
     classes: z.array(z.string()),
@@ -32,9 +32,9 @@ const WebflowNode = z.union([
     text: z.boolean(),
   }),
 ]);
-type WebflowNode = z.infer<typeof WebflowNode>;
+type WfNode = z.infer<typeof WfNode>;
 
-const WebflowStyle = z.object({
+const WfStyle = z.object({
   _id: z.string(),
   type: z.enum(["class"]),
   name: z.string(),
@@ -48,76 +48,26 @@ const WebflowStyle = z.object({
   //selector: z.null(),
 });
 
-type WebflowStyle = z.infer<typeof WebflowStyle>;
+type WfStyle = z.infer<typeof WfStyle>;
 
-const WebflowData = z.object({
+const WfData = z.object({
   type: z.literal("@webflow/XscpData"),
   payload: z.object({
-    nodes: z.array(WebflowNode),
-    styles: z.array(WebflowStyle),
+    nodes: z.array(WfNode),
+    styles: z.array(WfStyle),
   }),
 });
-type WebflowData = z.infer<typeof WebflowData>;
+type WfData = z.infer<typeof WfData>;
 
-const toInstanceData = (webflowData: WebflowData) => {
-  const fragment: WebstudioFragment = {
-    children: [],
-    instances: [],
-    props: [],
-    breakpoints: [],
-    styles: [],
-    styleSources: [],
-    styleSourceSelections: [],
-    dataSources: [],
-    resources: [],
-    assets: [],
-  };
-
-  const wfNodes = new Map<string, WebflowNode>(
-    webflowData.payload.nodes.map((node: WebflowNode) => [node._id, node])
-  );
-  const addedWfNodes = new Map<string, boolean>();
-  const wfStyles = new Map<string, WebflowStyle>(
-    webflowData.payload.styles.map((style: WebflowStyle) => [style._id, style])
-  );
-
-  for (const wfNode of webflowData.payload.nodes) {
-    if (addedWfNodes.get(wfNode._id) || "text" in wfNode) {
+const addStyles = (
+  wfNodes: Map<WfNode["_id"], WfNode>,
+  wfStyles: Map<WfStyle["_id"], WfStyle>,
+  added: Map<WfNode["_id"], Instance["id"]>,
+  fragment: WebstudioFragment
+) => {
+  for (const wfNode of wfNodes.values()) {
+    if ("text" in wfNode) {
       continue;
-    }
-    const children: Instance["children"] = [];
-    for (const childId of wfNode.children) {
-      const childNode = wfNodes.get(childId);
-      if (childNode === undefined) {
-        continue;
-      }
-      if ("text" in childNode) {
-        children.push({
-          type: "text",
-          value: childNode.v,
-        });
-        addedWfNodes.set(childId, true);
-      }
-    }
-    const instanceId = nanoid();
-    fragment.instances.push({
-      id: instanceId,
-      type: "instance",
-      component: wfNode.type,
-      children,
-    });
-    addedWfNodes.set(wfNode._id, true);
-    // Webflow nodes always come with a tag.
-    // We support tag only for instances like Heading, not all of them.
-    // @todo decide what to do about other instances.
-    if (wfNode.tag) {
-      fragment.props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "tag",
-        value: wfNode.tag,
-      });
     }
     for (const classId of wfNode.classes) {
       const style = wfStyles.get(classId);
@@ -130,6 +80,11 @@ const toInstanceData = (webflowData: WebflowData) => {
         id: styleSourceId,
         name: style.name,
       });
+      const instanceId = added.get(wfNode._id);
+      if (instanceId === undefined) {
+        console.error("No instance id found - should never happen");
+        continue;
+      }
 
       fragment.styleSourceSelections.push({
         instanceId,
@@ -154,6 +109,94 @@ const toInstanceData = (webflowData: WebflowData) => {
       }
     }
   }
+};
+
+const addInstances = (
+  wfNodes: Map<WfNode["_id"], WfNode>,
+  fragment: WebstudioFragment
+) => {
+  const added = new Map<WfNode["_id"], Instance["id"]>();
+  for (const wfNode of wfNodes.values()) {
+    if (added.get(wfNode._id) || "text" in wfNode) {
+      continue;
+    }
+    const children: Instance["children"] = [];
+    const instanceId = nanoid();
+
+    for (const childId of wfNode.children) {
+      const childNode = wfNodes.get(childId);
+      if (childNode === undefined) {
+        continue;
+      }
+      if ("text" in childNode) {
+        children.push({
+          type: "text",
+          value: childNode.v,
+        });
+        added.set(childId, instanceId);
+      }
+    }
+    fragment.instances.push({
+      id: instanceId,
+      type: "instance",
+      component: wfNode.type,
+      children,
+    });
+    added.set(wfNode._id, instanceId);
+  }
+  return added;
+};
+
+const addProperties = (
+  wfNodes: Map<WfNode["_id"], WfNode>,
+  added: Map<WfNode["_id"], Instance["id"]>,
+  fragment: WebstudioFragment
+) => {
+  for (const wfNode of wfNodes.values()) {
+    // Webflow nodes always come with a tag.
+    // We support tag only for instances like Heading, not all of them.
+    // @todo decide what to do about other instances.
+    if ("tag" in wfNode) {
+      const instanceId = added.get(wfNode._id);
+      if (instanceId === undefined) {
+        console.error("No instance id found - should never happen");
+        continue;
+      }
+      fragment.props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "tag",
+        value: wfNode.tag,
+      });
+    }
+  }
+};
+
+const toInstanceData = (WfData: WfData) => {
+  const fragment: WebstudioFragment = {
+    children: [],
+    instances: [],
+    props: [],
+    breakpoints: [],
+    styles: [],
+    styleSources: [],
+    styleSourceSelections: [],
+    dataSources: [],
+    resources: [],
+    assets: [],
+  };
+
+  const wfNodes = new Map<WfNode["_id"], WfNode>(
+    WfData.payload.nodes.map((node: WfNode) => [node._id, node])
+  );
+  const wfStyles = new Map<WfStyle["_id"], WfStyle>(
+    WfData.payload.styles.map((style: WfStyle) => [style._id, style])
+  );
+
+  const added = addInstances(wfNodes, fragment);
+  addStyles(wfNodes, wfStyles, added, fragment);
+  addProperties(wfNodes, added, fragment);
 
   fragment.children = fragment.instances.map((instance) => ({
     type: "id",
@@ -165,18 +208,22 @@ const toInstanceData = (webflowData: WebflowData) => {
 const parse = (clipboardData: string) => {
   try {
     const data = JSON.parse(clipboardData);
-    return WebflowData.parse(data);
+    const result = WfData.safeParse(data);
+    if (result.success) {
+      return result.data;
+    }
+    throw result.error.message;
   } catch (error) {
     console.error(error);
   }
 };
 
 export const onPaste = (clipboardData: string): boolean => {
-  const webflowData = parse(clipboardData);
-  if (webflowData === undefined) {
+  const WfData = parse(clipboardData);
+  if (WfData === undefined) {
     return false;
   }
-  const data = toInstanceData(webflowData);
+  const data = toInstanceData(WfData);
   const selectedPage = $selectedPage.get();
   if (data === undefined || selectedPage === undefined) {
     return false;

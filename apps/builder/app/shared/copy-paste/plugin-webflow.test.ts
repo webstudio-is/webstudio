@@ -88,7 +88,19 @@ test("Heading with styles", () => {
       ],
     },
   });
-
+  expect(expected.styleSources).toEqual([
+    {
+      type: "token",
+      id: expect.not.stringMatching("styleSourceId"),
+      name: "Heading",
+    },
+  ]);
+  expect(expected.styleSourceSelections).toEqual([
+    {
+      instanceId: expect.not.stringMatching("instanceId"),
+      values: [expect.not.stringMatching("styleSourceId")],
+    },
+  ]);
   expect(expected.styles).toEqual([
     {
       styleSourceId: expect.not.stringMatching("styleSourceId"),
