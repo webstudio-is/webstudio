@@ -1606,9 +1606,6 @@ importers:
       nanoid:
         specifier: ^5.0.1
         version: 5.0.1
-      prompts:
-        specifier: ^2.4.2
-        version: 2.4.2
       umzug:
         specifier: ^3.2.1
         version: 3.2.1
@@ -1619,9 +1616,6 @@ importers:
       '@types/node':
         specifier: ^20.12.7
         version: 20.12.7
-      '@types/prompts':
-        specifier: ^2.4.5
-        version: 2.4.5
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "checks": "pnpm typecheck && pnpm test",
-    "ci:migrate": "migrations migrate --force",
+    "ci:migrate": "migrations migrate",
     "middleware:link": "pnpx vercel link",
     "middleware:env": "pnpx vercel env pull --environment=preview ./.env.preview",
     "middleware:dev": "DOTENV_CONFIG_PATH=.env.preview tsx watch -r dotenv/config ./middleware.js"

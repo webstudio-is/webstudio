@@ -7,8 +7,5 @@ export const { values, positionals } = parseArgs({
     dev: {
       type: "boolean",
     },
-    force: {
-      type: "boolean",
-    },
   },
 });
