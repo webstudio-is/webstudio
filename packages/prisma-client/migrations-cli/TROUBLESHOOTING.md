@@ -5,7 +5,7 @@
 1. Set APPLY_MIGRATIONS to "true" for your PR's branch
 1. Fix the failed migration code
 1. Fix the database mannually if the migration have been applied half-way
-1. Temporarily change `ci:migrate` script to run `resolve` before applying migrations: `"ci:migrate": "migrations resolve rolled-back <name> --force && migrations migrate --force"`. Use `applied` instead of `rolled-back` if you manually applied the migration at previous step.
+1. Temporarily change `ci:migrate` script to run `resolve` before applying migrations: `"ci:migrate": "migrations resolve rolled-back <name> --force && migrations migrate"`. Use `applied` instead of `rolled-back` if you manually applied the migration at previous step.
 1. Commit the changes and check Vercel logs to see if the migration is applied
 1. Change `ci:migrate` script back to normal
 1. Merge the PR
