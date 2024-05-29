@@ -30,7 +30,7 @@ test("Heading Node", () => {
   expect(expected.children).toEqual([
     {
       type: "id",
-      value: expect.not.stringMatching("pageId"),
+      value: expect.not.stringMatching("instanceId"),
     },
   ]);
   expect(expected.instances).toEqual([
@@ -53,6 +53,86 @@ test("Heading Node", () => {
       name: "tag",
       type: "string",
       value: "h1",
+    },
+  ]);
+});
+
+test("List and ListItem", () => {
+  const expected = toInstanceData({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "7e11a800-c8e2-9b14-37cf-09a9e94754ad",
+          type: "List",
+          tag: "ul",
+          classes: [],
+          children: [
+            "7e11a800-c8e2-9b14-37cf-09a9e94754ae",
+            "7e11a800-c8e2-9b14-37cf-09a9e94754af",
+            "7e11a800-c8e2-9b14-37cf-09a9e94754b0",
+          ],
+        },
+        {
+          _id: "7e11a800-c8e2-9b14-37cf-09a9e94754ae",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: [],
+        },
+        {
+          _id: "7e11a800-c8e2-9b14-37cf-09a9e94754af",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: [],
+        },
+        {
+          _id: "7e11a800-c8e2-9b14-37cf-09a9e94754b0",
+          type: "ListItem",
+          tag: "li",
+          classes: [],
+          children: [],
+        },
+      ],
+      styles: [],
+    },
+  });
+  expect(expected.children).toEqual([
+    {
+      type: "id",
+      value: expect.not.stringMatching("instanceId"),
+    },
+  ]);
+
+  expect(expected.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "ListItem",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "ListItem",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "ListItem",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "List",
+      children: [
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+      ],
     },
   ]);
 });

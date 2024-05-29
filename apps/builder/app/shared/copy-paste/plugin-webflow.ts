@@ -19,17 +19,20 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const mimeType = "application/json";
 
-const WfToWsComponentMap = {
+const wfToWsComponentMap = {
   Block: "Box",
 };
-type WfComponent = keyof typeof WfToWsComponentMap;
+
+type WfComponent = keyof typeof wfToWsComponentMap;
 
 const WfNode = z.union([
   z.object({
     _id: z.string(),
     type: z.enum([
       "Heading",
-      ...(Object.keys(WfToWsComponentMap) as Array<WfComponent>),
+      "List",
+      "ListItem",
+      ...(Object.keys(wfToWsComponentMap) as Array<WfComponent>),
     ]),
     tag: z.string(),
     children: z.array(z.string()),
@@ -120,38 +123,60 @@ const addStyles = (
   }
 };
 
+const addInstance = (
+  wfNode: WfNode,
+  added: Map<WfNode["_id"], Instance["id"]>,
+  wfNodes: Map<WfNode["_id"], WfNode>,
+  fragment: WebstudioFragment
+) => {
+  if (added.get(wfNode._id) || "text" in wfNode) {
+    return;
+  }
+
+  const children: Instance["children"] = [];
+  const instanceId = nanoid();
+
+  for (const wfChildId of wfNode.children) {
+    const wfChildNode = wfNodes.get(wfChildId);
+    if (wfChildNode === undefined) {
+      continue;
+    }
+    if ("text" in wfChildNode) {
+      children.push({
+        type: "text",
+        value: wfChildNode.v,
+      });
+      added.set(wfChildId, instanceId);
+      continue;
+    }
+
+    const childInstanceId = addInstance(wfChildNode, added, wfNodes, fragment);
+    if (childInstanceId !== undefined) {
+      children.push({
+        type: "id",
+        value: childInstanceId,
+      });
+    }
+  }
+
+  fragment.instances.push({
+    id: instanceId,
+    type: "instance",
+    component: wfToWsComponentMap[wfNode.type as WfComponent] ?? wfNode.type,
+    children,
+  });
+  added.set(wfNode._id, instanceId);
+
+  return instanceId;
+};
+
 const addInstances = (
   wfNodes: Map<WfNode["_id"], WfNode>,
   fragment: WebstudioFragment
 ) => {
   const added = new Map<WfNode["_id"], Instance["id"]>();
   for (const wfNode of wfNodes.values()) {
-    if (added.get(wfNode._id) || "text" in wfNode) {
-      continue;
-    }
-    const children: Instance["children"] = [];
-    const instanceId = nanoid();
-
-    for (const childId of wfNode.children) {
-      const childNode = wfNodes.get(childId);
-      if (childNode === undefined) {
-        continue;
-      }
-      if ("text" in childNode) {
-        children.push({
-          type: "text",
-          value: childNode.v,
-        });
-        added.set(childId, instanceId);
-      }
-    }
-    fragment.instances.push({
-      id: instanceId,
-      type: "instance",
-      component: WfToWsComponentMap[wfNode.type as WfComponent] ?? wfNode.type,
-      children,
-    });
-    added.set(wfNode._id, instanceId);
+    addInstance(wfNode, added, wfNodes, fragment);
   }
   return added;
 };
@@ -182,7 +207,7 @@ const addProperties = (
   }
 };
 
-const toInstanceData = (WfData: WfData) => {
+const toInstanceData = (wfData: WfData) => {
   const fragment: WebstudioFragment = {
     children: [],
     instances: [],
@@ -197,20 +222,27 @@ const toInstanceData = (WfData: WfData) => {
   };
 
   const wfNodes = new Map<WfNode["_id"], WfNode>(
-    WfData.payload.nodes.map((node: WfNode) => [node._id, node])
+    wfData.payload.nodes.map((node: WfNode) => [node._id, node])
   );
   const wfStyles = new Map<WfStyle["_id"], WfStyle>(
-    WfData.payload.styles.map((style: WfStyle) => [style._id, style])
+    wfData.payload.styles.map((style: WfStyle) => [style._id, style])
   );
 
   const added = addInstances(wfNodes, fragment);
   addStyles(wfNodes, wfStyles, added, fragment);
   addProperties(wfNodes, added, fragment);
-
-  fragment.children = fragment.instances.map((instance) => ({
-    type: "id",
-    value: instance.id,
-  }));
+  const rootWfNode = wfData.payload.nodes[0];
+  const rootInstanceId = added.get(rootWfNode._id);
+  if (rootInstanceId === undefined) {
+    console.error("No root instance id found - should never happen");
+    return fragment;
+  }
+  fragment.children = [
+    {
+      type: "id",
+      value: rootInstanceId,
+    },
+  ];
   return fragment;
 };
 
