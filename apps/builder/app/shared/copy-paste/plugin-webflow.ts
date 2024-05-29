@@ -15,6 +15,7 @@ import {
 import { z } from "zod";
 import { isBaseBreakpoint } from "../breakpoints";
 import { parseCss } from "@webstudio-is/css-data";
+import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const mimeType = "application/json";
 
@@ -219,6 +220,9 @@ const parse = (clipboardData: string) => {
 };
 
 export const onPaste = (clipboardData: string): boolean => {
+  if (isFeatureEnabled("pasteFromWebflow") === false) {
+    return false;
+  }
   const WfData = parse(clipboardData);
   if (WfData === undefined) {
     return false;
