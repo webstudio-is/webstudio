@@ -14,7 +14,7 @@ export const ImageControl = ({
   const styleValue = currentStyle[property]?.value;
 
   if (styleValue === undefined) {
-    return null;
+    return;
   }
 
   const setValue = setProperty(property);

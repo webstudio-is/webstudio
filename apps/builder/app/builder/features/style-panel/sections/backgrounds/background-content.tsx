@@ -41,6 +41,7 @@ import {
 import { toValue } from "@webstudio-is/css-engine";
 import { BackgroundGradient } from "./background-gradient";
 import { NonResetablePropertyName } from "../../shared/property-name";
+import { BackgroundImage } from "./background-image";
 
 type BackgroundContentProps = {
   currentStyle: StyleInfo;
@@ -172,35 +173,6 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
                 />
               </FloatingPanelProvider>
             </>
-          )}
-
-          {imageGradientToggle === "gradient" && (
-            <Flex css={{ gridColumn: "span 2" }} direction="column">
-              <NonResetablePropertyName
-                style={currentStyle}
-                description={
-                  <>
-                    Paste a CSS gradient, for example:
-                    <br />
-                    <br />
-                    linear-gradient(...)
-                    <br />
-                    <br />
-                    If pasting from figma, remove the “background” property
-                    name.
-                  </>
-                }
-                properties={["backgroundImage"]}
-                label="Code"
-              />
-
-              <BackgroundGradient
-                setProperty={setProperty}
-                deleteProperty={deleteProperty}
-                currentStyle={currentStyle}
-                setBackgroundColor={props.setBackgroundColor}
-              />
-            </Flex>
           )}
 
           <NonResetablePropertyName
@@ -348,6 +320,22 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
           />
         </Grid>
       </BackgroundSection>
+      <Separator css={{ gridColumn: "span 2" }} />
+
+      {imageGradientToggle === "image" ? (
+        <BackgroundImage
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+          currentStyle={currentStyle}
+        />
+      ) : (
+        <BackgroundGradient
+          setProperty={setProperty}
+          deleteProperty={deleteProperty}
+          currentStyle={currentStyle}
+          setBackgroundColor={props.setBackgroundColor}
+        />
+      )}
     </>
   );
 };

@@ -151,7 +151,6 @@ export const LayersList = ({
           }
           const id = String(index);
           const properties = extractPropertiesFromLayer(layer);
-          const { name, value, color } = properties;
 
           return (
             <FloatingPanel
@@ -162,21 +161,21 @@ export const LayersList = ({
                 property,
                 layer,
                 onEditLayer,
-                propertyValue: value,
+                propertyValue: properties.value,
                 onDeleteLayer: handleDeleteLayer,
                 deleteProperty,
               })}
             >
               <CssValueListItem
                 id={id}
-                draggable={true}
+                draggable={value.value.length > 1}
                 active={dragItemId === id}
                 index={index}
-                label={<Label truncate>{name}</Label>}
+                label={<Label truncate>{properties.name}</Label>}
                 hidden={layer.type === "tuple" && layer?.hidden}
                 thumbnail={
                   property === "textShadow" || property === "boxShadow" ? (
-                    <ColorThumb color={color} />
+                    <ColorThumb color={properties.color} />
                   ) : undefined
                 }
                 buttons={
