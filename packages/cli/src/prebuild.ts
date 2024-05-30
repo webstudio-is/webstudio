@@ -10,10 +10,10 @@ import {
   readdir,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
-import { cwd } from "node:process";
+import { cwd, exit } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pLimit from "p-limit";
-import ora from "ora";
+import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import {
   generateCss,
@@ -210,12 +210,13 @@ export const prebuild = async (options: {
   /**
    * Template to use for the build in addition to defaults template
    **/
-  template?: string[];
+  template: string[];
 }) => {
-  if (options.template === undefined) {
-    throw new Error(
-      `\n Template is not provided \n Please check webstudio --help for more details`
+  if (options.template.length === 0) {
+    log.error(
+      `Template is not provided\nPlease check webstudio --help for more details`
     );
+    exit(1);
   }
 
   for (const template of options.template) {
@@ -230,16 +231,14 @@ export const prebuild = async (options: {
     }
 
     if ((await isCliTemplate(template)) === false) {
-      throw Error(
-        `\n Template ${options.template} is not available \n Please check webstudio --help for more details`
+      log.error(
+        `Template ${options.template} is not available\nPlease check webstudio --help for more details`
       );
+      exit(1);
     }
   }
 
-  const spinner = ora("Scaffolding the project files");
-  spinner.start();
-
-  spinner.text = "Generating files";
+  log.step("Scaffolding the project files");
 
   const appRoot = "app";
 
@@ -474,8 +473,6 @@ export const prebuild = async (options: {
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
 
-  spinner.text = "Generating css file";
-
   const { cssText, classesMap } = generateCss({
     instances: new Map(siteData.build.instances),
     props: new Map(siteData.build.props),
@@ -490,8 +487,6 @@ export const prebuild = async (options: {
   });
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
-
-  spinner.text = "Generating routes and pages";
 
   // MARK: - Route templates read
   const routeTemplatesDir = join(cwd(), "app/route-templates");
@@ -751,8 +746,6 @@ export const prebuild = async (options: {
 
   const redirects = siteData.build.pages?.redirects;
   if (redirects !== undefined && redirects.length > 0) {
-    spinner.text = "Generating redirects";
-
     for (const redirect of redirects) {
       const redirectPagePath = generateRemixRoute(redirect.old);
       const redirectFileName = `${redirectPagePath}.ts`;
@@ -768,8 +761,12 @@ export const prebuild = async (options: {
     }
   }
 
-  spinner.text = "Downloading fonts and images";
-  await Promise.all(assetsToDownload);
+  if (assetsToDownload.length > 0) {
+    const downloading = spinner();
+    downloading.start("Downloading fonts and images");
+    await Promise.all(assetsToDownload);
+    downloading.stop("Downloaded fonts and images");
+  }
 
-  spinner.succeed("Build finished");
+  log.step("Build finished");
 };
