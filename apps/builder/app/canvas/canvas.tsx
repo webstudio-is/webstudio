@@ -62,6 +62,7 @@ import { updateCollaborativeInstanceRect } from "./collaborative-instance";
 import { $params } from "./stores";
 import { useScrollNewInstanceIntoView } from "./shared/use-scroll-new-instance-into-view";
 import { subscribeInspectorEdits } from "./inspector-edits";
+import { initCanvasApi } from "~/shared/canvas-api";
 
 registerContainers();
 
@@ -176,6 +177,10 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
   useMount(() => {
     // required to compute asset and page props for rendering
     $params.set(params);
+  });
+
+  useMount(() => {
+    initCanvasApi();
   });
 
   useLayoutEffect(() => {
