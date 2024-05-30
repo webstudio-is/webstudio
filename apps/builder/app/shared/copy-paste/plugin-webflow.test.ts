@@ -295,6 +295,52 @@ test("Text", () => {
   ]);
 });
 
+test("Blockquote", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "Blockquote",
+          tag: "blockquote",
+          classes: [],
+          children: ["25ffefdf-c015-5edd-7673-933b41a25329"],
+        },
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25329",
+          text: true,
+          v: "Block Quote",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Blockquote",
+      children: [
+        {
+          type: "text",
+          value: "Block Quote",
+        },
+      ],
+    },
+  ]);
+  expect(fragment.props).toEqual([
+    {
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      type: "string",
+      value: "blockquote",
+    },
+  ]);
+});
+
 test("Basic styles with a class", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",

@@ -61,6 +61,7 @@ const WfNode = z.union([
     }),
   }),
   WfBaseNode.extend({ type: z.enum(["Paragraph"]) }),
+  WfBaseNode.extend({ type: z.enum(["Blockquote"]) }),
   WfTextNode,
 ]);
 type WfNode = z.infer<typeof WfNode>;
