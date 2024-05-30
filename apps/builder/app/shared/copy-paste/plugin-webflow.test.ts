@@ -6,7 +6,7 @@ const { toWebstudioFragment } = __testing__;
 
 $breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
 
-test("Heading Node", () => {
+test("Heading", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -17,7 +17,6 @@ test("Heading Node", () => {
           tag: "h1",
           children: ["97d91be2-3bba-d340-0f13-a84e975b7498"],
           classes: [],
-          data: {},
         },
         {
           _id: "97d91be2-3bba-d340-0f13-a84e975b7498",
@@ -58,7 +57,7 @@ test("Heading Node", () => {
   ]);
 });
 
-test("Link Block", () => {
+test("Link", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
@@ -136,7 +135,6 @@ test("List and ListItem", () => {
             "7e11a800-c8e2-9b14-37cf-09a9e94754af",
             "7e11a800-c8e2-9b14-37cf-09a9e94754b0",
           ],
-          data: {},
         },
         {
           _id: "7e11a800-c8e2-9b14-37cf-09a9e94754ae",
@@ -144,7 +142,6 @@ test("List and ListItem", () => {
           tag: "li",
           classes: [],
           children: [],
-          data: {},
         },
         {
           _id: "7e11a800-c8e2-9b14-37cf-09a9e94754af",
@@ -152,7 +149,6 @@ test("List and ListItem", () => {
           tag: "li",
           classes: [],
           children: [],
-          data: {},
         },
         {
           _id: "7e11a800-c8e2-9b14-37cf-09a9e94754b0",
@@ -160,7 +156,6 @@ test("List and ListItem", () => {
           tag: "li",
           classes: [],
           children: [],
-          data: {},
         },
       ],
       styles: [],
@@ -205,6 +200,52 @@ test("List and ListItem", () => {
   ]);
 });
 
+test("Paragraph", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "dfab64ae-6624-b6db-a909-b85588aa3f8d",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["dfab64ae-6624-b6db-a909-b85588aa3f8e"],
+        },
+        {
+          _id: "dfab64ae-6624-b6db-a909-b85588aa3f8e",
+          text: true,
+          v: "Text in a paragraph",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Paragraph",
+      children: [
+        {
+          type: "text",
+          value: "Text in a paragraph",
+        },
+      ],
+    },
+  ]);
+  expect(fragment.props).toEqual([
+    {
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      type: "string",
+      value: "p",
+    },
+  ]);
+});
+
 test("Basic styles with a class", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
@@ -219,7 +260,6 @@ test("Basic styles with a class", () => {
             "a7bff598-b719-1edb-067b-a90a54d68605",
           ],
           children: ["97d91be2-3bba-d340-0f13-a84e975b7498"],
-          data: {},
         },
         {
           _id: "97d91be2-3bba-d340-0f13-a84e975b7498",

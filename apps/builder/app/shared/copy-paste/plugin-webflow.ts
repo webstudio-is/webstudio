@@ -31,7 +31,7 @@ const WfBaseNode = z.object({
   tag: z.string(),
   children: z.array(z.string()),
   classes: z.array(z.string()),
-  data: z.object({}),
+  data: z.object({}).optional(),
 });
 
 const WfTextNode = z.object({
@@ -54,6 +54,7 @@ const WfNode = z.union([
       }),
     }),
   }),
+  WfBaseNode.extend({ type: z.enum(["Paragraph"]) }),
   WfTextNode,
 ]);
 type WfNode = z.infer<typeof WfNode>;
@@ -122,8 +123,8 @@ const addStyles = (
         console.error("No base breakpoint found - should never happen");
         continue;
       }
-      const parsed = parseCss(`.styles {${style.styleLess}}`);
-      for (const style of parsed.styles) {
+      const styles = parseCss(`.styles {${style.styleLess}}`).styles ?? [];
+      for (const style of styles) {
         fragment.styles.push({
           styleSourceId,
           breakpointId,
