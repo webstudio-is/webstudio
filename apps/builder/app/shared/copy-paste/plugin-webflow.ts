@@ -20,11 +20,14 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 export const mimeType = "application/json";
 
 // A list of Webflow component names that need to be mapped.
-const wfToWsComponentMap = {
-  Block: "Box",
+const componentMappers = {
+  Block(wfNode: WfNode) {
+    if ("type" in wfNode === false || wfNode.type !== "Block") {
+      return;
+    }
+    return wfNode.data.text ? "Text" : "Box";
+  },
 };
-
-type WfComponent = keyof typeof wfToWsComponentMap;
 
 const WfBaseNode = z.object({
   _id: z.string(),
@@ -42,7 +45,10 @@ const WfTextNode = z.object({
 
 const WfNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
-  WfBaseNode.extend({ type: z.enum(["Block"]) }),
+  WfBaseNode.extend({
+    type: z.enum(["Block"]),
+    data: z.object({ text: z.boolean().optional() }),
+  }),
   WfBaseNode.extend({ type: z.enum(["List"]) }),
   WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
   WfBaseNode.extend({
@@ -172,10 +178,17 @@ const addInstance = (
     }
   }
 
+  const component =
+    wfNode.type in componentMappers
+      ? componentMappers[wfNode.type as keyof typeof componentMappers](
+          wfNode
+        ) ?? wfNode.type
+      : wfNode.type;
+
   fragment.instances.push({
     id: instanceId,
     type: "instance",
-    component: wfToWsComponentMap[wfNode.type as WfComponent] ?? wfNode.type,
+    component,
     children,
   });
   added.set(wfNode._id, instanceId);

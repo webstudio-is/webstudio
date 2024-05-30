@@ -246,6 +246,55 @@ test("Paragraph", () => {
   ]);
 });
 
+test("Text", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "adea2109-96eb-63e0-c27f-632a7f40bce8",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: ["adea2109-96eb-63e0-c27f-632a7f40bce9"],
+          data: {
+            text: true,
+          },
+        },
+        {
+          _id: "adea2109-96eb-63e0-c27f-632a7f40bce9",
+          text: true,
+          v: "This is some text inside of a div block.",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Text",
+      children: [
+        {
+          type: "text",
+          value: "This is some text inside of a div block.",
+        },
+      ],
+    },
+  ]);
+  expect(fragment.props).toEqual([
+    {
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      type: "string",
+      value: "div",
+    },
+  ]);
+});
+
 test("Basic styles with a class", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
