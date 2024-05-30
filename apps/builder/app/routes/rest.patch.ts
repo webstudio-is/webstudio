@@ -67,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       breakpoints: "id",
       resources: "id",
 
-      marketplaceProduct: "id",
+      marketplaceProduct: "",
     } as const;
 
     const isJsonField = (
