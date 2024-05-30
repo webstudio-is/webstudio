@@ -2,12 +2,12 @@ import { test, expect } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
 import { $breakpoints } from "../nano-states";
 
-const { toInstanceData } = __testing__;
+const { toWebstudioFragment } = __testing__;
 
 $breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
 
-test("Heading Node", () => {
-  const expected = toInstanceData({
+test("Heading", () => {
+  const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -27,13 +27,13 @@ test("Heading Node", () => {
       styles: [],
     },
   });
-  expect(expected.children).toEqual([
+  expect(fragment.children).toEqual([
     {
       type: "id",
       value: expect.not.stringMatching("instanceId"),
     },
   ]);
-  expect(expected.instances).toEqual([
+  expect(fragment.instances).toEqual([
     {
       children: [
         {
@@ -46,7 +46,7 @@ test("Heading Node", () => {
       type: "instance",
     },
   ]);
-  expect(expected.props).toEqual([
+  expect(fragment.props).toEqual([
     {
       id: expect.not.stringMatching("id"),
       instanceId: expect.not.stringMatching("instanceId"),
@@ -57,8 +57,71 @@ test("Heading Node", () => {
   ]);
 });
 
+test("Link", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "97539676-c2ca-2e8f-55f3-6c4a3104a5c0",
+          type: "Link",
+          tag: "a",
+          classes: [],
+          children: [],
+          data: {
+            link: {
+              url: "https://webstudio.is",
+              target: "_blank",
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+  expect(fragment.children).toEqual([
+    {
+      type: "id",
+      value: expect.not.stringMatching("instanceId"),
+    },
+  ]);
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Link",
+      children: [],
+    },
+  ]);
+
+  expect(fragment.props).toEqual([
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      value: "a",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "href",
+      value: "https://webstudio.is",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "target",
+      value: "_blank",
+    },
+  ]);
+});
+
 test("List and ListItem", () => {
-  const expected = toInstanceData({
+  const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -98,14 +161,14 @@ test("List and ListItem", () => {
       styles: [],
     },
   });
-  expect(expected.children).toEqual([
+  expect(fragment.children).toEqual([
     {
       type: "id",
       value: expect.not.stringMatching("instanceId"),
     },
   ]);
 
-  expect(expected.instances).toEqual([
+  expect(fragment.instances).toEqual([
     {
       id: expect.not.stringMatching("instanceId"),
       type: "instance",
@@ -137,8 +200,149 @@ test("List and ListItem", () => {
   ]);
 });
 
-test("Heading with styles", () => {
-  const expected = toInstanceData({
+test("Paragraph", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "dfab64ae-6624-b6db-a909-b85588aa3f8d",
+          type: "Paragraph",
+          tag: "p",
+          classes: [],
+          children: ["dfab64ae-6624-b6db-a909-b85588aa3f8e"],
+        },
+        {
+          _id: "dfab64ae-6624-b6db-a909-b85588aa3f8e",
+          text: true,
+          v: "Text in a paragraph",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Paragraph",
+      children: [
+        {
+          type: "text",
+          value: "Text in a paragraph",
+        },
+      ],
+    },
+  ]);
+  expect(fragment.props).toEqual([
+    {
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      type: "string",
+      value: "p",
+    },
+  ]);
+});
+
+test("Text", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "adea2109-96eb-63e0-c27f-632a7f40bce8",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: ["adea2109-96eb-63e0-c27f-632a7f40bce9"],
+          data: {
+            text: true,
+          },
+        },
+        {
+          _id: "adea2109-96eb-63e0-c27f-632a7f40bce9",
+          text: true,
+          v: "This is some text inside of a div block.",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Text",
+      children: [
+        {
+          type: "text",
+          value: "This is some text inside of a div block.",
+        },
+      ],
+    },
+  ]);
+  expect(fragment.props).toEqual([
+    {
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      type: "string",
+      value: "div",
+    },
+  ]);
+});
+
+test("Blockquote", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "Blockquote",
+          tag: "blockquote",
+          classes: [],
+          children: ["25ffefdf-c015-5edd-7673-933b41a25329"],
+        },
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25329",
+          text: true,
+          v: "Block Quote",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Blockquote",
+      children: [
+        {
+          type: "text",
+          value: "Block Quote",
+        },
+      ],
+    },
+  ]);
+  expect(fragment.props).toEqual([
+    {
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      type: "string",
+      value: "blockquote",
+    },
+  ]);
+});
+
+test("Basic styles with a class", () => {
+  const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -168,20 +372,20 @@ test("Heading with styles", () => {
       ],
     },
   });
-  expect(expected.styleSources).toEqual([
+  expect(fragment.styleSources).toEqual([
     {
       type: "token",
       id: expect.not.stringMatching("styleSourceId"),
       name: "Heading",
     },
   ]);
-  expect(expected.styleSourceSelections).toEqual([
+  expect(fragment.styleSourceSelections).toEqual([
     {
       instanceId: expect.not.stringMatching("instanceId"),
       values: [expect.not.stringMatching("styleSourceId")],
     },
   ]);
-  expect(expected.styles).toEqual([
+  expect(fragment.styles).toEqual([
     {
       styleSourceId: expect.not.stringMatching("styleSourceId"),
       breakpointId: "0",
