@@ -70,6 +70,13 @@ export const getLayerName = (layerStyle: StyleInfo, assets: Assets) => {
     }
   }
 
+  if (
+    backgroundImageStyle?.type === "image" &&
+    backgroundImageStyle.value.type === "url"
+  ) {
+    return backgroundImageStyle.value.url;
+  }
+
   if (backgroundImageStyle?.type === "unparsed") {
     const gradientName = gradientNames.find((name) =>
       backgroundImageStyle.value.includes(name)
@@ -100,6 +107,21 @@ export const LayerThumbnail = (props: { layerStyle: StyleInfo }) => {
         key={asset.id}
         loader={imageLoader}
         src={asset.name}
+        width={theme.spacing[10]}
+        optimize={true}
+      />
+    );
+  }
+
+  if (
+    backgroundImageStyle?.type === "image" &&
+    backgroundImageStyle.value.type === "url"
+  ) {
+    return (
+      <StyledWebstudioImage
+        key={backgroundImageStyle.value.url}
+        loader={imageLoader}
+        src={backgroundImageStyle.value.url}
         width={theme.spacing[10]}
         optimize={true}
       />

@@ -1,5 +1,5 @@
 import { useStore } from "@nanostores/react";
-import { Button } from "@webstudio-is/design-system";
+import { Button, Text } from "@webstudio-is/design-system";
 import { $assets } from "~/shared/nano-states";
 import { FloatingPanel } from "~/builder/shared/floating-panel";
 import { ImageManager } from "~/builder/shared/image-manager";
@@ -18,6 +18,14 @@ export const ImageControl = ({
   }
 
   const setValue = setProperty(property);
+
+  if (styleValue.type === "image" && styleValue.value.type === "url") {
+    return (
+      <Text variant="mono" truncate>
+        {styleValue.value.url}
+      </Text>
+    );
+  }
 
   const asset =
     styleValue.type === "image" && styleValue.value.type === "asset"
