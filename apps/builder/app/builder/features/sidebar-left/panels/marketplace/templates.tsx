@@ -17,7 +17,6 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
-import { computeExpression } from "~/shared/nano-states";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
 import {
@@ -84,27 +83,13 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
   const pages = [data.pages.homePage, ...data.pages.pages];
 
   for (const page of pages) {
-    // @todo remove after all stores are migrated
-    const excludePageFromSearch =
-      computeExpression(
-        page.meta.excludePageFromSearch || "false",
-        new Map()
-      ) ?? true;
-    const include =
-      page.marketplace?.include ?? false === excludePageFromSearch ?? false;
+    const include = page.marketplace?.include ?? false;
     // We allow user to hide the page in the marketplace.
     if (false === include) {
       continue;
     }
 
-    const categoryMeta = page.meta.custom?.find(
-      ({ property }) => property === "ws:category"
-    );
-    // @todo remove after all stores are migrated
-    const categoryFallback = String(
-      computeExpression(categoryMeta?.content ?? `""`, new Map())
-    );
-    const category = page.marketplace?.category ?? categoryFallback ?? "Pages";
+    const category = page.marketplace?.category ?? "Pages";
 
     let templates = templatesByCategory.get(category);
     if (templates === undefined) {
@@ -112,16 +97,13 @@ const getTemplatesDataByCategory = (data?: WebstudioData) => {
       templatesByCategory.set(category, templates);
     }
 
-    const socialImageAsset = page.meta.socialImageAssetId
-      ? data.assets.get(page.meta.socialImageAssetId)
-      : undefined;
-    const thumbnailImageAsset = page.marketplace?.thumbnailAssetId
-      ? data.assets.get(page.marketplace.thumbnailAssetId)
-      : undefined;
+    const thumbnailAsset =
+      data.assets.get(page.marketplace?.thumbnailAssetId ?? "") ??
+      data.assets.get(page.meta.socialImageAssetId ?? "");
 
     templates.push({
       title: page.name,
-      thumbnailAsset: thumbnailImageAsset ?? socialImageAsset,
+      thumbnailAsset,
       pageId: page.id,
       rootInstanceId: page.rootInstanceId,
     });
