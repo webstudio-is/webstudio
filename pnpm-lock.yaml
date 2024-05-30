@@ -936,6 +936,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@clack/prompts':
+        specifier: ^0.7.0
+        version: 0.7.0
       '@webstudio-is/http-client':
         specifier: workspace:*
         version: link:../http-client
@@ -973,8 +976,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       picocolors:
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.0.1
+        version: 1.0.1
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
@@ -2856,6 +2859,14 @@ packages:
 
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
+
+  '@clack/core@0.3.4':
+    resolution: {integrity: sha512-H4hxZDXgHtWTwV3RAVenqcC4VbJZNegbBjlPvzOzCouXtS2y3sDvlO3IsbrPNWuLWPPlYVYPghQdSF64683Ldw==}
+
+  '@clack/prompts@0.7.0':
+    resolution: {integrity: sha512-0MhX9/B4iL6Re04jPrttDm+BsP8y6mS7byuv0BvXgdXhbV5PdlsHt55dvNsuBCPZ7xq1oTAOOuotR9NFbQyMSA==}
+    bundledDependencies:
+      - is-unicode-supported
 
   '@cloudflare/kv-asset-handler@0.1.3':
     resolution: {integrity: sha512-FNcunDuTmEfQTLRLtA6zz+buIXUHj1soPvSWzzQFBC+n2lsy+CGf/NIrR3SEPCmsVNQj70/Jx2lViCpq+09YpQ==}
@@ -9600,7 +9611,7 @@ snapshots:
   '@babel/code-frame@7.24.2':
     dependencies:
       '@babel/highlight': 7.24.2
-      picocolors: 1.0.0
+      picocolors: 1.0.1
 
   '@babel/compat-data@7.22.9': {}
 
@@ -9888,7 +9899,7 @@ snapshots:
       '@babel/helper-validator-identifier': 7.22.20
       chalk: 2.4.2
       js-tokens: 4.0.0
-      picocolors: 1.0.0
+      picocolors: 1.0.1
 
   '@babel/parser@7.23.0':
     dependencies:
@@ -10635,6 +10646,17 @@ snapshots:
   '@base2/pretty-print-object@1.0.1': {}
 
   '@bcoe/v8-coverage@0.2.3': {}
+
+  '@clack/core@0.3.4':
+    dependencies:
+      picocolors: 1.0.1
+      sisteransi: 1.0.5
+
+  '@clack/prompts@0.7.0':
+    dependencies:
+      '@clack/core': 0.3.4
+      picocolors: 1.0.1
+      sisteransi: 1.0.5
 
   '@cloudflare/kv-asset-handler@0.1.3':
     dependencies:
@@ -16931,7 +16953,7 @@ snapshots:
 
   nanospinner@1.1.0:
     dependencies:
-      picocolors: 1.0.0
+      picocolors: 1.0.1
 
   nanostores@0.9.3: {}
 
@@ -17352,13 +17374,13 @@ snapshots:
   postcss@8.4.27:
     dependencies:
       nanoid: 3.3.6
-      picocolors: 1.0.0
+      picocolors: 1.0.1
       source-map-js: 1.0.2
 
   postcss@8.4.38:
     dependencies:
       nanoid: 3.3.7
-      picocolors: 1.0.0
+      picocolors: 1.0.1
       source-map-js: 1.2.0
 
   prelude-ls@1.2.1: {}
@@ -18019,7 +18041,7 @@ snapshots:
       globby: 11.1.0
       lilconfig: 2.1.0
       nanospinner: 1.1.0
-      picocolors: 1.0.0
+      picocolors: 1.0.1
 
   slash@3.0.0: {}
 
@@ -18242,7 +18264,7 @@ snapshots:
       css-select: 5.1.0
       css-tree: 2.3.1(patch_hash=epgcmebti7rfrc2ej4odb3t4jy)
       csso: 5.0.5
-      picocolors: 1.0.0
+      picocolors: 1.0.1
 
   swr-store@0.10.6:
     dependencies:
@@ -18276,7 +18298,7 @@ snapshots:
       micromatch: 4.0.5
       normalize-path: 3.0.0
       object-hash: 3.0.0
-      picocolors: 1.0.0
+      picocolors: 1.0.1
       postcss: 8.4.27
       postcss-import: 15.1.0(postcss@8.4.27)
       postcss-js: 4.0.1(postcss@8.4.27)
@@ -18614,7 +18636,7 @@ snapshots:
     dependencies:
       browserslist: 4.21.9
       escalade: 3.1.1
-      picocolors: 1.0.0
+      picocolors: 1.0.1
 
   update-browserslist-db@1.0.16(browserslist@4.23.0):
     dependencies:
@@ -18721,7 +18743,7 @@ snapshots:
       debug: 4.3.4
       mlly: 1.6.1
       pathe: 1.1.2
-      picocolors: 1.0.0
+      picocolors: 1.0.1
       source-map: 0.6.1
       source-map-support: 0.5.21
       vite: 4.4.9(@types/node@20.12.7)
