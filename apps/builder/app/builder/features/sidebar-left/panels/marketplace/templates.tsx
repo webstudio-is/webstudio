@@ -83,7 +83,8 @@ const getTemplatesDataByCategory = (
   const pages = [data.pages.homePage, ...data.pages.pages]
     .filter((page) => page.marketplace?.include)
     .map((page) => {
-      const category = page.marketplace?.category ?? "Pages";
+      // category can be empty string
+      const category = page.marketplace?.category || "Pages";
       const thumbnailAsset =
         data.assets.get(page.marketplace?.thumbnailAssetId ?? "") ??
         data.assets.get(page.meta.socialImageAssetId ?? "");
