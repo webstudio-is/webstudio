@@ -15,25 +15,7 @@ permissions:
   contents: read # to fetch code (actions/checkout)
 
 jobs:
-  design-system:
-    timeout-minutes: 20
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        #with:
-        #ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
-
-      - uses: ./.github/actions/ci-setup
-
-      - name: Build Storybook for Design System
-        run: pnpm run --filter=@webstudio-is/design-system storybook:build
-
-      - name: Lost Pixel
-        uses: lost-pixel/lost-pixel@v3.16.0
-        env:
-          LOST_PIXEL_CONFIG_DIR: packages/design-system
-          LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
-  builder:
+  lost-pixel:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
@@ -46,26 +28,9 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
-      - name: Build Storybook for Builder
-        run: pnpm run --filter=@webstudio-is/builder storybook:build
+      - run: VISUAL_TESTING=true pnpm storybook:build
 
       - name: Lost Pixel
         uses: lost-pixel/lost-pixel@v3.16.0
         env:
-          LOST_PIXEL_CONFIG_DIR: apps/builder
           LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
-  finalize:
-    needs: [builder, design-system]
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Lost Pixel Finalize
-        uses: lost-pixel/lost-pixel@v3.16.0
-        env:
-          LOST_PIXEL_CONFIG_DIR: apps/builder
-          LOST_PIXEL_API_KEY: 8b76db6c-b9f0-46d1-982f-70900a02690a
-        with:
-          FINALIZE: true

@@ -1,7 +1,7 @@
 import { type ComponentProps, useState } from "react";
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { Box } from "@webstudio-is/design-system";
-import { CssValueInput, type IntermediateStyleValue } from ".";
+import { CssValueInput, type IntermediateStyleValue } from "./css-value-input";
 import type { DeleteProperty, SetValue } from "../use-style-data";
 
 type CssValueInputContainerProps = {
