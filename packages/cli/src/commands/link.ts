@@ -98,5 +98,5 @@ You can find your config at ${GLOBAL_CONFIG_FILE}`);
     join(cwd(), LOCAL_CONFIG_FILE),
     JSON.stringify(localConfig, null, 2)
   );
-  log.success("The project is linked successfully.");
+  log.step("The project is linked successfully");
 };
