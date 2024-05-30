@@ -17,6 +17,7 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
 import {
@@ -73,42 +74,28 @@ type TemplateData = {
   rootInstanceId: string;
 };
 
-const getTemplatesDataByCategory = (data?: WebstudioData) => {
-  const templatesByCategory = new Map<string, Array<TemplateData>>();
-
+const getTemplatesDataByCategory = (
+  data?: WebstudioData
+): Map<string, Array<TemplateData>> => {
   if (data === undefined) {
-    return templatesByCategory;
+    return new Map();
   }
-
-  const pages = [data.pages.homePage, ...data.pages.pages];
-
-  for (const page of pages) {
-    const include = page.marketplace?.include ?? false;
-    // We allow user to hide the page in the marketplace.
-    if (false === include) {
-      continue;
-    }
-
-    const category = page.marketplace?.category ?? "Pages";
-
-    let templates = templatesByCategory.get(category);
-    if (templates === undefined) {
-      templates = [];
-      templatesByCategory.set(category, templates);
-    }
-
-    const thumbnailAsset =
-      data.assets.get(page.marketplace?.thumbnailAssetId ?? "") ??
-      data.assets.get(page.meta.socialImageAssetId ?? "");
-
-    templates.push({
-      title: page.name,
-      thumbnailAsset,
-      pageId: page.id,
-      rootInstanceId: page.rootInstanceId,
+  const pages = [data.pages.homePage, ...data.pages.pages]
+    .filter((page) => page.marketplace?.include)
+    .map((page) => {
+      const category = page.marketplace?.category ?? "Pages";
+      const thumbnailAsset =
+        data.assets.get(page.marketplace?.thumbnailAssetId ?? "") ??
+        data.assets.get(page.meta.socialImageAssetId ?? "");
+      return {
+        category,
+        title: page.name,
+        thumbnailAsset,
+        pageId: page.id,
+        rootInstanceId: page.rootInstanceId,
+      };
     });
-  }
-  return templatesByCategory;
+  return mapGroupBy(pages, (page) => page.category);
 };
 
 export const Templates = ({
