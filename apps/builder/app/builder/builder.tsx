@@ -327,16 +327,13 @@ export const Builder = ({
    * Use onPointerDown instead of onFocus because Radix focus lock triggers on text edit blur
    * before the focusin event when editing text inside a Radix dialog.
    */
-  const handlePointerDown = useCallback(
-    (event: React.PointerEvent | React.FocusEvent) => {
-      // Ignore toolbar focus events. See the onFocus handler in text-toolbar.tsx
-      if (false === event.defaultPrevented) {
-        canvasApi.setInert();
-        $textEditingInstanceSelector.set(undefined);
-      }
-    },
-    []
-  );
+  const handlePointerDown = useCallback((event: React.PointerEvent) => {
+    // Ignore toolbar focus events. See the onFocus handler in text-toolbar.tsx
+    if (false === event.defaultPrevented) {
+      canvasApi.setInert();
+      $textEditingInstanceSelector.set(undefined);
+    }
+  }, []);
 
   /**
    * Prevent Radix from stealing focus during editing in the settings panel.
