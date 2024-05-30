@@ -36,7 +36,7 @@ import {
 } from "~/shared/nano-states";
 import { setDifference } from "~/shared/shim";
 import { $ephemeralStyles, $params } from "../stores";
-import { resetInert, setInert } from "./inert";
+import { canvasApi } from "~/shared/canvas-api";
 
 const userSheet = createRegularStyleSheet({ name: "user-styles" });
 const stateSheet = createRegularStyleSheet({ name: "state-styles" });
@@ -421,7 +421,7 @@ const subscribeEphemeralStyle = () => {
 
     // reset ephemeral styles
     if (ephemeralStyles.length === 0) {
-      resetInert();
+      canvasApi.resetInert();
       for (const styleDecl of appliedEphemeralDeclarations.values()) {
         // prematurely apply last known ephemeral update to user stylesheet
         // to avoid lag because of delay between deleting ephemeral style
@@ -442,7 +442,7 @@ const subscribeEphemeralStyle = () => {
 
     // add ephemeral styles
     if (ephemeralStyles.length > 0) {
-      setInert();
+      canvasApi.setInert();
       const selector = `[${idAttribute}="${instanceId}"]`;
       const rule = userSheet.addNestingRule(selector);
       let ephemetalSheetUpdated = false;
