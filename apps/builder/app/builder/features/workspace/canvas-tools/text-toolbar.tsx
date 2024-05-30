@@ -120,6 +120,11 @@ const Toolbar = ({ state, scale }: ToolbarProps) => {
       onClick={(event) => {
         event.stopPropagation();
       }}
+      // We use onPointerDown here to prevent the canvas from being inert (see builder.tsx for more details)
+      onPointerDown={(event) => {
+        // We don't want the logic in the builder to make canvas inert to be triggered
+        event.preventDefault();
+      }}
     >
       <Tooltip content="Clear styles">
         <IconButton

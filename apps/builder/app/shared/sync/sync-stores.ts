@@ -38,7 +38,6 @@ import {
   $resources,
   $resourceValues,
   $marketplaceProduct,
-  $inspectorLastInputTime,
 } from "~/shared/nano-states";
 import { $ephemeralStyles } from "~/canvas/stores";
 
@@ -119,7 +118,6 @@ export const registerContainers = () => {
   clientStores.set("dragAndDropState", $dragAndDropState);
   clientStores.set("ephemeralStyles", $ephemeralStyles);
   clientStores.set("selectedInstanceStates", $selectedInstanceStates);
-  clientStores.set("inspectorLastInputTime", $inspectorLastInputTime);
 
   for (const [name, store] of $synchronizedBreakpoints) {
     clientStores.set(name, store);

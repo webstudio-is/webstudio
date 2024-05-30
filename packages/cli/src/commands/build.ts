@@ -1,4 +1,6 @@
 import { access } from "node:fs/promises";
+import { exit } from "node:process";
+import { log } from "@clack/prompts";
 import { prebuild } from "../prebuild";
 import { LOCAL_DATA_FILE, PROJECT_TEMPALTES } from "../config";
 import type {
@@ -21,6 +23,7 @@ export const buildOptions = (yargs: CommonYargsArgv) =>
     .option("template", {
       type: "array",
       string: true,
+      default: [] as string[],
       describe: `Template to use for the build [choices: ${PROJECT_TEMPALTES.join(
         ", "
       )}]`,
@@ -34,9 +37,10 @@ export const build = async (
     await access(LOCAL_DATA_FILE);
   } catch (error: unknown) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      throw new Error(
+      log.error(
         `You need to link a webstudio project before building it. Run \`webstudio link\` to link a project.`
       );
+      exit(1);
     }
 
     throw error;

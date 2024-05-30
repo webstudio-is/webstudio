@@ -43,6 +43,7 @@ import {
   $authTokenPermissions,
   $publisherHost,
   $imageLoader,
+  $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -58,6 +59,7 @@ import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
+import { canvasApi } from "~/shared/canvas-api";
 
 registerContainers();
 
@@ -307,55 +309,95 @@ export const Builder = ({
     project,
   });
 
+  /**
+   * Prevents Lexical text editor from stealing focus during rendering.
+   * Sets the inert attribute on the canvas body element and disables the text editor.
+   *
+   * This must be done synchronously to avoid the following issue:
+   *
+   * 1. Text editor is in edit state.
+   * 2. User focuses on the builder (e.g., clicks any input).
+   * 3. The text editor blur event triggers, causing a rerender on data change (data saved in onBlur).
+   * 4. Text editor rerenders, stealing focus from the builder.
+   * 5. Inert attribute is set asynchronously, but focus is already lost.
+   *
+   * Synchronous focusing and setInert prevent the text editor from focusing on render.
+   * This cannot be handled inside the canvas because the text editor toolbar is in the builder and focus events in the canvas should be ignored.
+   *
+   * Use onPointerDown instead of onFocus because Radix focus lock triggers on text edit blur
+   * before the focusin event when editing text inside a Radix dialog.
+   */
+  const handlePointerDown = useCallback((event: React.PointerEvent) => {
+    // Ignore toolbar focus events. See the onFocus handler in text-toolbar.tsx
+    if (false === event.defaultPrevented) {
+      canvasApi.setInert();
+      $textEditingInstanceSelector.set(undefined);
+    }
+  }, []);
+
+  /**
+   * Prevent Radix from stealing focus during editing in the settings panel.
+   * For example, when the user modifies the text content of an H1 element inside a dialog.
+   */
+  const handleInput = useCallback(() => {
+    canvasApi.setInert();
+  }, []);
+
   return (
     <TooltipProvider>
-      <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <ProjectSettings />
-        <Topbar
-          gridArea="header"
-          project={project}
-          hasProPlan={userPlanFeatures.hasProPlan}
-        />
-        <Main>
-          <Workspace
-            onTransitionEnd={onTransitionEnd}
-            initialBreakpoints={build.breakpoints}
+      <div
+        style={{ display: "contents" }}
+        onPointerDown={handlePointerDown}
+        onInput={handleInput}
+      >
+        <ChromeWrapper isPreviewMode={isPreviewMode}>
+          <ProjectSettings />
+          <Topbar
+            gridArea="header"
+            project={project}
+            hasProPlan={userPlanFeatures.hasProPlan}
+          />
+          <Main>
+            <Workspace
+              onTransitionEnd={onTransitionEnd}
+              initialBreakpoints={build.breakpoints}
+            >
+              <CanvasIframe
+                ref={iframeRefCallback}
+                src={canvasUrl}
+                title={project.title}
+                css={{
+                  height: "100%",
+                  width: "100%",
+                  backgroundColor: "#fff",
+                }}
+              />
+            </Workspace>
+            <AiCommandBar isPreviewMode={isPreviewMode} />
+          </Main>
+          <NavigatorPanel
+            isPreviewMode={isPreviewMode}
+            navigatorLayout={navigatorLayout}
+          />
+          <SidePanel gridArea="sidebar">
+            <SidebarLeft publish={publish} />
+          </SidePanel>
+          <SidePanel
+            gridArea="inspector"
+            isPreviewMode={isPreviewMode}
+            css={{ overflow: "hidden" }}
           >
-            <CanvasIframe
-              ref={iframeRefCallback}
-              src={canvasUrl}
-              title={project.title}
-              css={{
-                height: "100%",
-                width: "100%",
-                backgroundColor: "#fff",
-              }}
-            />
-          </Workspace>
-          <AiCommandBar isPreviewMode={isPreviewMode} />
-        </Main>
-        <NavigatorPanel
-          isPreviewMode={isPreviewMode}
-          navigatorLayout={navigatorLayout}
-        />
-        <SidePanel gridArea="sidebar">
-          <SidebarLeft publish={publish} />
-        </SidePanel>
-        <SidePanel
-          gridArea="inspector"
-          isPreviewMode={isPreviewMode}
-          css={{ overflow: "hidden" }}
-        >
-          <Inspector navigatorLayout={navigatorLayout} />
-        </SidePanel>
-        {isPreviewMode === false && <Footer />}
-        <BlockingAlerts />
-        <CloneProjectDialog
-          isOpen={isCloneDialogOpen}
-          onOpenChange={$isCloneDialogOpen.set}
-          project={project}
-        />
-      </ChromeWrapper>
+            <Inspector navigatorLayout={navigatorLayout} />
+          </SidePanel>
+          {isPreviewMode === false && <Footer />}
+          <BlockingAlerts />
+          <CloneProjectDialog
+            isOpen={isCloneDialogOpen}
+            onOpenChange={$isCloneDialogOpen.set}
+            project={project}
+          />
+        </ChromeWrapper>
+      </div>
     </TooltipProvider>
   );
 };
