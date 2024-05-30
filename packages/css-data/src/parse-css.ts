@@ -7,6 +7,7 @@ import {
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
+import { camelCase } from "change-case";
 
 type Selector = string;
 type Style = {
@@ -19,10 +20,10 @@ export type Styles = Record<Selector, Style[]>;
 
 type Longhand = keyof typeof toLonghand;
 
-const parseCssValue = function parseCssValue(
+const parseCssValue = (
   property: Longhand | StyleProperty,
   value: string
-): S {
+): S => {
   const unwrap = toLonghand[property as Longhand];
 
   if (typeof unwrap === "function") {
@@ -70,13 +71,12 @@ const cssTreeTryParse = (input: string) => {
     const ast = csstree.parse(input);
     return ast;
   } catch {
-    return undefined;
+    return;
   }
 };
 
-export const parseCss = function cssToWS(css: string) {
+export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
-
   let selectors: Selector[] = [];
   const styles: Styles = {};
 
@@ -107,6 +107,7 @@ export const parseCss = function cssToWS(css: string) {
         ([property, value]) => {
           try {
             StyleValue.parse(value);
+            property = camelCase(property) as StyleProperty;
             selectors.forEach((selector) => {
               const selectors = styles[selector];
               if (Array.isArray(selectors)) {

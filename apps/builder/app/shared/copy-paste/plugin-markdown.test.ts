@@ -1,8 +1,10 @@
 import { describe, test, expect } from "@jest/globals";
-import { parse } from "./plugin-markdown";
+import { __testing__ } from "./plugin-markdown";
 import { $breakpoints } from "../nano-states";
 
 const options = { generateId: () => "123" };
+
+const { parse } = __testing__;
 
 $breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
 
