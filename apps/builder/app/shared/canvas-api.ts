@@ -1,5 +1,7 @@
 import { setInert, resetInert } from "../canvas/shared/inert";
 
+const apiWindowNamespace = "__webstudio__$__canvasApi";
+
 const _canvasApi = {
   setInert,
   resetInert,
@@ -7,7 +9,7 @@ const _canvasApi = {
 
 declare global {
   interface Window {
-    _canvasApi: typeof _canvasApi;
+    [apiWindowNamespace]: typeof _canvasApi;
   }
 }
 
@@ -27,8 +29,8 @@ const getIframeApi = () => {
     // Find first iframe with the API
     for (let i = 0; i < window.frames.length; ++i) {
       const frame = window.frames[i];
-      if (frame && frame._canvasApi) {
-        return frame._canvasApi;
+      if (frame && frame[apiWindowNamespace]) {
+        return frame[apiWindowNamespace];
       }
     }
 
@@ -66,6 +68,6 @@ export const canvasApi = new Proxy(_canvasApi, {
  */
 export const initCanvasApi = () => {
   if (isInIframe()) {
-    window._canvasApi = _canvasApi;
+    window[apiWindowNamespace] = _canvasApi;
   }
 };
