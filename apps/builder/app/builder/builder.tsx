@@ -323,17 +323,24 @@ export const Builder = ({
    *
    * Synchronous focusing and setInert prevent the text editor from focusing on render.
    * This cannot be handled inside the canvas because the text editor toolbar is in the builder and focus events in the canvas should be ignored.
+   *
+   * Use onPointerDown instead of onFocus because Radix focus lock triggers on text edit blur
+   * before the focusin event when editing text inside a Radix dialog.
    */
-  const handleFocus = useCallback((event: React.FocusEvent) => {
-    // Ignore toolbar focus events. See the onFocus handler in text-toolbar.tsx
-    if (false === event.defaultPrevented) {
-      canvasApi.setInert();
-      $textEditingInstanceSelector.set(undefined);
-    }
-  }, []);
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent | React.FocusEvent) => {
+      // Ignore toolbar focus events. See the onFocus handler in text-toolbar.tsx
+      if (false === event.defaultPrevented) {
+        canvasApi.setInert();
+        $textEditingInstanceSelector.set(undefined);
+      }
+    },
+    []
+  );
 
   /**
-   * Prevent radix to steal focus during editing in the settings panel.
+   * Prevent Radix from stealing focus during editing in the settings panel.
+   * For example, when the user modifies the text content of an H1 element inside a dialog.
    */
   const handleInput = useCallback(() => {
     canvasApi.setInert();
@@ -343,7 +350,7 @@ export const Builder = ({
     <TooltipProvider>
       <div
         style={{ display: "contents" }}
-        onFocus={handleFocus}
+        onPointerDown={handlePointerDown}
         onInput={handleInput}
       >
         <ChromeWrapper isPreviewMode={isPreviewMode}>
