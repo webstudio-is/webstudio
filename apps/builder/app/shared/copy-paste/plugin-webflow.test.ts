@@ -57,6 +57,69 @@ test("Heading Node", () => {
   ]);
 });
 
+test("Link Block", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "97539676-c2ca-2e8f-55f3-6c4a3104a5c0",
+          type: "Link",
+          tag: "a",
+          classes: [],
+          children: [],
+          data: {
+            link: {
+              url: "https://webstudio.is",
+              target: "_blank",
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+  expect(fragment.children).toEqual([
+    {
+      type: "id",
+      value: expect.not.stringMatching("instanceId"),
+    },
+  ]);
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Link",
+      children: [],
+    },
+  ]);
+
+  expect(fragment.props).toEqual([
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      value: "a",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "href",
+      value: "https://webstudio.is",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "target",
+      value: "_blank",
+    },
+  ]);
+});
+
 test("List and ListItem", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
@@ -137,7 +200,7 @@ test("List and ListItem", () => {
   ]);
 });
 
-test("Heading with styles", () => {
+test("Basic styles with a class", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {

@@ -19,32 +19,42 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const mimeType = "application/json";
 
+// A list of Webflow component names that need to be mapped.
 const wfToWsComponentMap = {
-  Heading: "Heading",
   Block: "Box",
-  List: "List",
-  ListItem: "ListItem",
-  Link: "Link",
 };
 
 type WfComponent = keyof typeof wfToWsComponentMap;
 
+const WfBaseNode = z.object({
+  _id: z.string(),
+  tag: z.string(),
+  children: z.array(z.string()),
+  classes: z.array(z.string()),
+  data: z.object({}),
+});
+
+const WfTextNode = z.object({
+  _id: z.string(),
+  v: z.string(),
+  text: z.boolean(),
+});
+
 const WfNode = z.union([
-  z.object({
-    _id: z.string(),
-    type: z.enum([
-      "Heading",
-      ...(Object.keys(wfToWsComponentMap) as Array<WfComponent>),
-    ]),
-    tag: z.string(),
-    children: z.array(z.string()),
-    classes: z.array(z.string()),
+  WfBaseNode.extend({ type: z.enum(["Heading"]) }),
+  WfBaseNode.extend({ type: z.enum(["Block"]) }),
+  WfBaseNode.extend({ type: z.enum(["List"]) }),
+  WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
+  WfBaseNode.extend({
+    type: z.enum(["Link"]),
+    data: z.object({
+      link: z.object({
+        url: z.string(),
+        target: z.string().optional(),
+      }),
+    }),
   }),
-  z.object({
-    _id: z.string(),
-    v: z.string(),
-    text: z.boolean(),
-  }),
+  WfTextNode,
 ]);
 type WfNode = z.infer<typeof WfNode>;
 
@@ -172,15 +182,35 @@ const addInstance = (
   return instanceId;
 };
 
-const addInstances = (
-  wfNodes: Map<WfNode["_id"], WfNode>,
-  fragment: WebstudioFragment
-) => {
-  const added = new Map<WfNode["_id"], Instance["id"]>();
-  for (const wfNode of wfNodes.values()) {
-    addInstance(wfNode, added, wfNodes, fragment);
-  }
-  return added;
+// Converting Webflow attributes and data to Webstudio props.
+const propertyMappers = {
+  Link(wfNode: WfNode, instanceId: Instance["id"]) {
+    if ("type" in wfNode === false || wfNode.type !== "Link") {
+      return [];
+    }
+    const data = wfNode.data;
+    const props: WebstudioFragment["props"] = [];
+
+    if (data.link.url) {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "href",
+        value: data.link.url,
+      });
+    }
+    if (data.link.target) {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "target",
+        value: data.link.target,
+      });
+    }
+    return props;
+  },
 };
 
 const addProperties = (
@@ -189,15 +219,18 @@ const addProperties = (
   fragment: WebstudioFragment
 ) => {
   for (const wfNode of wfNodes.values()) {
+    if ("text" in wfNode) {
+      continue;
+    }
+    const instanceId = added.get(wfNode._id);
+    if (instanceId === undefined) {
+      console.error("No instance id found - should never happen");
+      continue;
+    }
     // Webflow nodes always come with a tag.
     // We support tag only for instances like Heading, not all of them.
     // @todo decide what to do about other instances.
     if ("tag" in wfNode) {
-      const instanceId = added.get(wfNode._id);
-      if (instanceId === undefined) {
-        console.error("No instance id found - should never happen");
-        continue;
-      }
       fragment.props.push({
         type: "string",
         id: nanoid(),
@@ -205,6 +238,12 @@ const addProperties = (
         name: "tag",
         value: wfNode.tag,
       });
+    }
+    if (wfNode.type in propertyMappers) {
+      const props = propertyMappers[
+        wfNode.type as keyof typeof propertyMappers
+      ](wfNode, instanceId);
+      fragment.props.push(...props);
     }
   }
 };
@@ -229,8 +268,10 @@ const toWebstudioFragment = (wfData: WfData) => {
   const wfStyles = new Map<WfStyle["_id"], WfStyle>(
     wfData.payload.styles.map((style: WfStyle) => [style._id, style])
   );
-
-  const added = addInstances(wfNodes, fragment);
+  const added = new Map<WfNode["_id"], Instance["id"]>();
+  for (const wfNode of wfNodes.values()) {
+    addInstance(wfNode, added, wfNodes, fragment);
+  }
   addStyles(wfNodes, wfStyles, added, fragment);
   addProperties(wfNodes, added, fragment);
   // First node should be always the root node in theory, if not
