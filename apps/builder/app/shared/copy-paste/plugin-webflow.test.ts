@@ -17,6 +17,7 @@ test("Heading Node", () => {
           tag: "h1",
           children: ["97d91be2-3bba-d340-0f13-a84e975b7498"],
           classes: [],
+          data: {},
         },
         {
           _id: "97d91be2-3bba-d340-0f13-a84e975b7498",
@@ -135,6 +136,7 @@ test("List and ListItem", () => {
             "7e11a800-c8e2-9b14-37cf-09a9e94754af",
             "7e11a800-c8e2-9b14-37cf-09a9e94754b0",
           ],
+          data: {},
         },
         {
           _id: "7e11a800-c8e2-9b14-37cf-09a9e94754ae",
@@ -142,6 +144,7 @@ test("List and ListItem", () => {
           tag: "li",
           classes: [],
           children: [],
+          data: {},
         },
         {
           _id: "7e11a800-c8e2-9b14-37cf-09a9e94754af",
@@ -149,6 +152,7 @@ test("List and ListItem", () => {
           tag: "li",
           classes: [],
           children: [],
+          data: {},
         },
         {
           _id: "7e11a800-c8e2-9b14-37cf-09a9e94754b0",
@@ -156,6 +160,7 @@ test("List and ListItem", () => {
           tag: "li",
           classes: [],
           children: [],
+          data: {},
         },
       ],
       styles: [],
@@ -214,6 +219,7 @@ test("Basic styles with a class", () => {
             "a7bff598-b719-1edb-067b-a90a54d68605",
           ],
           children: ["97d91be2-3bba-d340-0f13-a84e975b7498"],
+          data: {},
         },
         {
           _id: "97d91be2-3bba-d340-0f13-a84e975b7498",
