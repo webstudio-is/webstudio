@@ -27,6 +27,24 @@ const componentMappers = {
     }
     return wfNode.data.text ? "Text" : "Box";
   },
+  RichText(wfNode: WfNode) {
+    if ("type" in wfNode === false || wfNode.type !== "RichText") {
+      return;
+    }
+    return "Box";
+  },
+  Strong(wfNode: WfNode) {
+    if ("type" in wfNode === false || wfNode.type !== "Strong") {
+      return;
+    }
+    return "Bold";
+  },
+  Emphasized(wfNode: WfNode) {
+    if ("type" in wfNode === false || wfNode.type !== "Emphasized") {
+      return;
+    }
+    return "Italic";
+  },
 };
 
 const WfBaseNode = z.object({
@@ -62,6 +80,11 @@ const WfNode = z.union([
   }),
   WfBaseNode.extend({ type: z.enum(["Paragraph"]) }),
   WfBaseNode.extend({ type: z.enum(["Blockquote"]) }),
+  WfBaseNode.extend({ type: z.enum(["RichText"]) }),
+  WfBaseNode.extend({ type: z.enum(["Strong"]) }),
+  WfBaseNode.extend({ type: z.enum(["Emphasized"]) }),
+  WfBaseNode.extend({ type: z.enum(["Superscript"]) }),
+  WfBaseNode.extend({ type: z.enum(["Subscript"]) }),
   WfTextNode,
 ]);
 type WfNode = z.infer<typeof WfNode>;
