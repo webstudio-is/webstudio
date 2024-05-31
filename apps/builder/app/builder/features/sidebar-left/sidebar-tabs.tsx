@@ -1,11 +1,15 @@
 import {
+  Box,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  Tooltip,
+  css,
   styled,
   theme,
 } from "@webstudio-is/design-system";
+import { forwardRef, type ComponentProps } from "react";
 
 export const SidebarTabs = styled(Tabs, {
   display: "flex",
@@ -27,7 +31,7 @@ const triggerFocusRing = {
   },
 };
 
-export const SidebarTabsTrigger = styled(TabsTrigger, {
+const buttonStyle = css({
   position: "relative",
   boxSizing: "border-box",
   flexShrink: 0,
@@ -53,6 +57,42 @@ export const SidebarTabsTrigger = styled(TabsTrigger, {
     color: theme.colors.foregroundMain,
     backgroundColor: theme.colors.backgroundHover,
   },
+});
+
+export const SidebarButton = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<"button"> & { label: string }
+>(({ label, ...props }, ref) => {
+  return (
+    <Tooltip side="right" content={label}>
+      <button
+        {...props}
+        ref={ref}
+        aria-label={label}
+        className={buttonStyle()}
+      ></button>
+    </Tooltip>
+  );
+});
+
+export const SidebarTabsTrigger = forwardRef<
+  HTMLButtonElement,
+  ComponentProps<typeof TabsTrigger> & { label: string }
+>(({ label, children, ...props }, ref) => {
+  return (
+    <Tooltip side="right" content={label}>
+      <Box>
+        <TabsTrigger
+          {...props}
+          ref={ref}
+          aria-label={label}
+          className={buttonStyle()}
+        >
+          {children}
+        </TabsTrigger>
+      </Box>
+    </Tooltip>
+  );
 });
 
 export const SidebarTabsList = styled(TabsList, {
