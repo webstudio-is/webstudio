@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
@@ -5,12 +6,12 @@ import {
   $scale,
   $workspaceRect,
 } from "~/builder/shared/nano-states";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
-import { $textEditingInstanceSelector } from "~/shared/nano-states";
+import {
+  $selectedInstanceSelector,
+  $textEditingInstanceSelector,
+} from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";
-import type { Breakpoint } from "@webstudio-is/sdk";
 
 const workspaceStyle = css({
   flexGrow: 1,
