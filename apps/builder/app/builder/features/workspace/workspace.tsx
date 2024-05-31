@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
@@ -5,14 +6,12 @@ import {
   $scale,
   $workspaceRect,
 } from "~/builder/shared/nano-states";
-import { $selectedInstanceSelector } from "~/shared/nano-states";
-import { $textEditingInstanceSelector } from "~/shared/nano-states";
+import {
+  $selectedInstanceSelector,
+  $textEditingInstanceSelector,
+} from "~/shared/nano-states";
 import { CanvasTools } from "./canvas-tools";
-import { useEffect, useRef } from "react";
 import { useSetCanvasWidth } from "../breakpoints";
-import type { Breakpoint } from "@webstudio-is/sdk";
-import { calcCanvasWidth } from "../breakpoints/calc-canvas-width";
-import { isBaseBreakpoint } from "~/shared/breakpoints";
 
 const workspaceStyle = css({
   flexGrow: 1,
@@ -50,29 +49,7 @@ const useMeasureWorkspace = () => {
   return ref;
 };
 
-/**
- * Used to prevent initial canvas width jump on wide screens.
- */
-const getCanvasInitialMaxWidth = (
-  initialBreakpoints: [Breakpoint["id"], Breakpoint][]
-) => {
-  const breakpoints = Array.from(new Map(initialBreakpoints).values());
-  const selectedBreakpoint =
-    breakpoints.find(isBaseBreakpoint) ?? initialBreakpoints[0]?.[1];
-
-  if (selectedBreakpoint) {
-    const initialWidth = calcCanvasWidth({
-      breakpoints,
-      selectedBreakpoint,
-      // Just some reasonable initial guess, will be overwritten later as soon as detected.
-      workspaceWidth: 2000,
-    });
-    return initialWidth;
-  }
-};
-
 const getCanvasStyle = (
-  initialBreakpoints: [Breakpoint["id"], Breakpoint][],
   scale: number,
   workspaceRect?: DOMRect,
   canvasWidth?: number
@@ -83,42 +60,27 @@ const getCanvasStyle = (
     canvasHeight = workspaceRect.height / (scale / 100);
   }
 
-  const maxWidth =
-    canvasWidth === undefined
-      ? getCanvasInitialMaxWidth(initialBreakpoints)
-      : undefined;
-
   return {
     width: canvasWidth ?? "100%",
     height: canvasHeight ?? "100%",
-    maxWidth,
     left: "50%",
     transform: `scale(${scale}%) translateX(-50%)`,
   };
 };
 
-const useCanvasStyle = (
-  initialBreakpoints: [Breakpoint["id"], Breakpoint][]
-) => {
+const useCanvasStyle = () => {
   const scale = useStore($scale);
   const workspaceRect = useStore($workspaceRect);
   const canvasWidth = useStore($canvasWidth);
 
-  return getCanvasStyle(initialBreakpoints, scale, workspaceRect, canvasWidth);
+  return getCanvasStyle(scale, workspaceRect, canvasWidth);
 };
 
-const useOutlineStyle = (
-  initialBreakpoints: [Breakpoint["id"], Breakpoint][]
-) => {
+const useOutlineStyle = () => {
   const scale = useStore($scale);
   const workspaceRect = useStore($workspaceRect);
   const canvasWidth = useStore($canvasWidth);
-  const style = getCanvasStyle(
-    initialBreakpoints,
-    100,
-    workspaceRect,
-    canvasWidth
-  );
+  const style = getCanvasStyle(100, workspaceRect, canvasWidth);
 
   return {
     ...style,
@@ -131,16 +93,11 @@ const useOutlineStyle = (
 type WorkspaceProps = {
   children: JSX.Element;
   onTransitionEnd: () => void;
-  initialBreakpoints: [Breakpoint["id"], Breakpoint][];
 };
 
-export const Workspace = ({
-  children,
-  onTransitionEnd,
-  initialBreakpoints,
-}: WorkspaceProps) => {
-  const canvasStyle = useCanvasStyle(initialBreakpoints);
-  const outlineStyle = useOutlineStyle(initialBreakpoints);
+export const Workspace = ({ children, onTransitionEnd }: WorkspaceProps) => {
+  const canvasStyle = useCanvasStyle();
+  const outlineStyle = useOutlineStyle();
   const workspaceRef = useMeasureWorkspace();
   useSetCanvasWidth();
   const handleWorkspaceClick = () => {

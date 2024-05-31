@@ -358,10 +358,7 @@ export const Builder = ({
             hasProPlan={userPlanFeatures.hasProPlan}
           />
           <Main>
-            <Workspace
-              onTransitionEnd={onTransitionEnd}
-              initialBreakpoints={build.breakpoints}
-            >
+            <Workspace onTransitionEnd={onTransitionEnd}>
               <CanvasIframe
                 ref={iframeRefCallback}
                 src={canvasUrl}
