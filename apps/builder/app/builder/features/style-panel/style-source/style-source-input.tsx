@@ -522,11 +522,13 @@ export const StyleSourceInput = (
 
                   if (item.id === newItemId) {
                     hasNewTokenItem = true;
+                    const { key, ...itemProps } = getItemProps({ item, index });
                     return (
                       <Fragment key={index}>
                         <ComboboxLabel>New Token</ComboboxLabel>
                         <ComboboxListboxItem
-                          {...getItemProps({ item, index })}
+                          {...itemProps}
+                          key={key}
                           selectable={false}
                         >
                           <div>
@@ -565,11 +567,13 @@ export const StyleSourceInput = (
                       </>
                     );
                   }
+                  const { key, ...itemProps } = getItemProps({ item, index });
                   return (
                     <Fragment key={index}>
                       {label}
                       <ComboboxListboxItem
-                        {...getItemProps({ item, index })}
+                        {...itemProps}
+                        key={key}
                         selectable={false}
                       >
                         <StyleSourceBadge source={item.source}>
