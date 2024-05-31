@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useStore } from "@nanostores/react";
 import { useNavigate } from "@remix-run/react";
 import { findPageByIdOrPath, type Page } from "@webstudio-is/sdk";
-import { useMount } from "~/shared/hook-utils/use-mount";
 import {
   $authToken,
   $pages,
@@ -30,9 +29,7 @@ export const switchPage = (pageId: Page["id"], pageHash: string = "") => {
 
   $selectedPageHash.set(pageHash);
   $selectedPageId.set(page.id);
-  $selectedInstanceSelector.set([
-    page.rootInstanceId ?? pages.homePage.rootInstanceId,
-  ]);
+  $selectedInstanceSelector.set([page.rootInstanceId]);
 };
 
 const setPageStateFromUrl = () => {
@@ -65,9 +62,16 @@ export const useSyncPageUrl = () => {
   const isPreviewMode = useStore($isPreviewMode);
 
   // Get pageId and pageHash from URL
-  useMount(() => {
-    setPageStateFromUrl();
-  });
+  // once pages are loaded
+  useEffect(() => {
+    const unsubscribe = $pages.subscribe((pages) => {
+      if (pages) {
+        unsubscribe();
+        setPageStateFromUrl();
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     window.addEventListener("popstate", setPageStateFromUrl);
