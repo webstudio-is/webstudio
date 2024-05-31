@@ -296,7 +296,7 @@ const useSyncProject = async ({
       updateProjectTransactions();
       clearInterval(intervalHandle);
     };
-  }, [authPermit]);
+  }, [projectId, authPermit]);
 };
 
 type SyncServerProps = {
