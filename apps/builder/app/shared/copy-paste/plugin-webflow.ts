@@ -23,7 +23,7 @@ export const mimeType = "application/json";
 const componentMappers = {
   Block(wfNode: WfElementNode) {
     if (wfNode.type === "Block") {
-      return wfNode.data.text ? "Text" : "Box";
+      return wfNode.data?.text ? "Text" : "Box";
     }
     return wfNode.type;
   },
@@ -51,6 +51,12 @@ const componentMappers = {
     }
     return wfNode.type;
   },
+  BlockContainer(wfNode: WfElementNode) {
+    if (wfNode.type === "BlockContainer") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
 };
 
 const WfBaseNode = z.object({
@@ -71,7 +77,7 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
-    data: z.object({ text: z.boolean().optional() }),
+    data: z.object({ text: z.boolean().optional() }).optional(),
   }),
   WfBaseNode.extend({ type: z.enum(["List"]) }),
   WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
@@ -92,6 +98,7 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Superscript"]) }),
   WfBaseNode.extend({ type: z.enum(["Subscript"]) }),
   WfBaseNode.extend({ type: z.enum(["Section"]) }),
+  WfBaseNode.extend({ type: z.enum(["BlockContainer"]) }),
 ]);
 type WfElementNode = z.infer<typeof WfElementNode>;
 

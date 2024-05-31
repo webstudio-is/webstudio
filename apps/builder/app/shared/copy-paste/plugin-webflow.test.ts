@@ -501,10 +501,32 @@ test("Section", () => {
           classes: [],
           children: ["25ffefdf-c015-5edd-7673-933b41a25329"],
         },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+  ]);
+});
+
+test("BlockContainer", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
         {
-          _id: "25ffefdf-c015-5edd-7673-933b41a25329",
-          text: true,
-          v: "Section",
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "BlockContainer",
+          tag: "div",
+          classes: [],
+          children: [],
         },
       ],
       styles: [],
@@ -516,12 +538,34 @@ test("Section", () => {
       id: expect.not.stringMatching("instanceId"),
       type: "instance",
       component: "Box",
-      children: [
+      children: [],
+    },
+  ]);
+});
+
+test("Block", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
         {
-          type: "text",
-          value: "Section",
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "Block",
+          tag: "div",
+          classes: [],
+          children: [],
         },
       ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
     },
   ]);
 });
