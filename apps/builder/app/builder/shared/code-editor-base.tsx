@@ -108,9 +108,10 @@ const editorContentStyle = css({
 
 // https://thememirror.net/clouds
 const highlightStyle = HighlightStyle.define([
+  // darker comment variant from https://github.com/vadimdemedes/thememirror/blob/main/source/themes/ayu-light.ts#L17-L20
   {
     tag: tags.comment,
-    color: "#BCC8BA",
+    color: "#787b8099",
   },
   {
     tag: [tags.string, tags.special(tags.brace), tags.regexp],
