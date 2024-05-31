@@ -24,5 +24,8 @@ export default defineConfig(({ mode }) => ({
   ssr: {
     external: ["@webstudio-is/prisma-client"],
   },
+  server: {
+    host: "0.0.0.0",
+  },
   envPrefix: "GITHUB_",
 }));
