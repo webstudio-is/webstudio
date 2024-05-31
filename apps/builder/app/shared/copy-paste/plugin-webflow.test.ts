@@ -489,6 +489,43 @@ test("Subscript", () => {
   ]);
 });
 
+test("Section", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "Section",
+          tag: "section",
+          classes: [],
+          children: ["25ffefdf-c015-5edd-7673-933b41a25329"],
+        },
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25329",
+          text: true,
+          v: "Section",
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [
+        {
+          type: "text",
+          value: "Section",
+        },
+      ],
+    },
+  ]);
+});
+
 test("Basic styles with a class", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
