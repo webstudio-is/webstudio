@@ -7,7 +7,6 @@ import {
   getTokenPlanFeatures,
   getUserPlanFeatures,
 } from "./db/user-plan-features.server";
-// import { getAllApprovedProjectIds } from "./marketplace/db.server";
 import { staticEnv } from "~/env/env.static.server";
 
 const createAuthorizationContext = async (
