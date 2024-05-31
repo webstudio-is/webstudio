@@ -103,12 +103,12 @@ const ListboxItemBase: ForwardRefRenderFunction<
 
   return (
     <ListboxItem
-      ref={ref}
       {...(disabled ? { "aria-disabled": true, disabled: true } : {})}
       {...(selected ? { "aria-current": true } : {})}
       {...(disabled ? {} : rest)}
       withIndicator={selectable}
       text={rest.text ?? "sentence"}
+      ref={ref}
     >
       {selectable && selected && <Indicator>{icon}</Indicator>}
       {children}
