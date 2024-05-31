@@ -24,6 +24,9 @@ export const About = ({
   if (item === undefined) {
     return;
   }
+
+  const hasAuthToken = item.authorizationToken != null;
+
   return (
     <>
       <Header
@@ -75,21 +78,38 @@ export const About = ({
         </Flex>
       </Flex>
       <Separator />
+
       <Flex gap="1" css={{ my: theme.spacing[5], mx: theme.spacing[8] }}>
-        <Link
-          className={buttonStyle({
-            color: "neutral",
-            css: { gap: theme.spacing[3] },
-          })}
-          underline="none"
-          href={builderUrl({
-            projectId: item.projectId,
-            origin: location.origin,
-          })}
-          target="_blank"
+        <Tooltip
+          content={
+            hasAuthToken
+              ? undefined
+              : 'The project does not have a shared link with "View" permission.'
+          }
         >
-          <ExternalLinkIcon aria-hidden /> Open project
-        </Link>
+          <Link
+            className={buttonStyle({
+              color: "neutral",
+              css: {
+                gap: theme.spacing[3],
+              },
+            })}
+            underline="none"
+            href={
+              hasAuthToken
+                ? builderUrl({
+                    projectId: item.projectId,
+                    origin: location.origin,
+                    authToken: item.authorizationToken,
+                  })
+                : undefined
+            }
+            target="_blank"
+            aria-disabled={hasAuthToken ? undefined : "true"}
+          >
+            <ExternalLinkIcon aria-hidden /> Open project
+          </Link>
+        </Tooltip>
       </Flex>
     </>
   );

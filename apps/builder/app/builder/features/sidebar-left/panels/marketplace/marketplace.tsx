@@ -58,6 +58,7 @@ export const TabContent = ({ onSetActiveTab }: TabContentProps) => {
           <Templates
             projectId={activeOverviewItem.projectId}
             name={activeOverviewItem.name}
+            authorizationToken={activeOverviewItem.authorizationToken}
             productCategory={activeOverviewItem.category}
             data={toWebstudioData(buildData)}
             onOpenChange={(isOpen: boolean) => {

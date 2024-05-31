@@ -27,21 +27,11 @@ export const getBuildProdData = async (
   };
 };
 
-export const getAllApprovedProjectIds = async (): Promise<
-  Array<Project["id"]>
-> => {
-  const approvedMarketplaceProducts =
-    await prisma.approvedMarketplaceProduct.findMany();
-
-  return approvedMarketplaceProducts.map(
-    (approvedMarketplaceProduct) => approvedMarketplaceProduct.projectId
-  );
-};
-
 export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
   const approvedMarketplaceProducts =
     await prisma.approvedMarketplaceProduct.findMany();
-  const items = [];
+
+  const items: MarketplaceOverviewItem[] = [];
 
   for (const approvedMarketplaceProduct of approvedMarketplaceProducts) {
     const parsedProduct = MarketplaceProduct.safeParse(
@@ -55,6 +45,8 @@ export const getItems = async (): Promise<Array<MarketplaceOverviewItem>> => {
 
     items.push({
       projectId: approvedMarketplaceProduct.projectId,
+      authorizationToken:
+        approvedMarketplaceProduct.authorizationToken ?? undefined,
       ...parsedProduct.data,
     });
   }
