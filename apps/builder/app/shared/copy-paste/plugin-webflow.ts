@@ -127,6 +127,7 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Cell"]) }),
   WfBaseNode.extend({ type: z.enum(["VFlex"]) }),
   WfBaseNode.extend({ type: z.enum(["HFlex"]) }),
+  WfBaseNode, // Allows us to skip the instance type if it's not supported, but insert the rest
 ]);
 type WfElementNode = z.infer<typeof WfElementNode>;
 
@@ -181,7 +182,7 @@ const addStyles = (
       });
       const instanceId = added.get(wfNode._id);
       if (instanceId === undefined) {
-        console.error("No instance id found - should never happen");
+        console.error("No instance id found");
         continue;
       }
 
@@ -216,7 +217,7 @@ const addInstance = (
   wfNodes: Map<WfNode["_id"], WfNode>,
   fragment: WebstudioFragment
 ) => {
-  if (added.get(wfNode._id) || "text" in wfNode) {
+  if (added.get(wfNode._id) || "text" in wfNode || "type" in wfNode === false) {
     return;
   }
 
@@ -304,7 +305,7 @@ const addProperties = (
     }
     const instanceId = added.get(wfNode._id);
     if (instanceId === undefined) {
-      console.error("No instance id found - should never happen");
+      console.error("No instance id found");
       continue;
     }
     // Webflow nodes always come with a tag.
@@ -359,7 +360,7 @@ const toWebstudioFragment = (wfData: WfData) => {
   const rootWfNode = wfData.payload.nodes[0];
   const rootInstanceId = added.get(rootWfNode._id);
   if (rootInstanceId === undefined) {
-    console.error("No root instance id found - should never happen");
+    console.error("No root instance id found");
     return fragment;
   }
   fragment.children = [
@@ -392,16 +393,16 @@ export const onPaste = (clipboardData: string): boolean => {
   if (wfData === undefined) {
     return false;
   }
-  const data = toWebstudioFragment(wfData);
+  const fragment = toWebstudioFragment(wfData);
   const selectedPage = $selectedPage.get();
-  if (data === undefined || selectedPage === undefined) {
+  if (fragment.instances.length === 0 || selectedPage === undefined) {
     return false;
   }
   const metas = $registeredComponentMetas.get();
   const newInstances = new Map(
-    data.instances.map((instance) => [instance.id, instance])
+    fragment.instances.map((instance) => [instance.id, instance])
   );
-  const rootInstanceIds = data.children
+  const rootInstanceIds = fragment.children
     .filter((child) => child.type === "id")
     .map((child) => child.value);
   // paste to the root if nothing is selected
@@ -417,7 +418,7 @@ export const onPaste = (clipboardData: string): boolean => {
   if (dropTarget === undefined) {
     return false;
   }
-  insertTemplateData(data, dropTarget);
+  insertTemplateData(fragment, dropTarget);
   return true;
 };
 
