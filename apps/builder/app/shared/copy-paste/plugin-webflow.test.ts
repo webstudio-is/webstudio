@@ -570,6 +570,33 @@ test("Block", () => {
   ]);
 });
 
+test("V Flex", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "VFlex",
+          tag: "div",
+          classes: [],
+          children: [],
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+  ]);
+});
+
 test("Quick Stack", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",

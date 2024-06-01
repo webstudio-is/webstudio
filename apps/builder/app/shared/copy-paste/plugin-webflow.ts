@@ -69,6 +69,12 @@ const componentMappers = {
     }
     return wfNode.type;
   },
+  VFlex(wfNode: WfElementNode) {
+    if (wfNode.type === "VFlex") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
 };
 
 const WfBaseNode = z.object({
@@ -113,6 +119,7 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["BlockContainer"]) }),
   WfBaseNode.extend({ type: z.enum(["Layout"]) }),
   WfBaseNode.extend({ type: z.enum(["Cell"]) }),
+  WfBaseNode.extend({ type: z.enum(["VFlex"]) }),
 ]);
 type WfElementNode = z.infer<typeof WfElementNode>;
 
