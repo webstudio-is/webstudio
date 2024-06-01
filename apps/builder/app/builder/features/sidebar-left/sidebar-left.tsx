@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Tooltip, rawTheme } from "@webstudio-is/design-system";
+import { Box, rawTheme } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
 import { panels } from "./panels";
@@ -11,6 +11,7 @@ import { HelpPopover } from "./help-popover";
 import { useStore } from "@nanostores/react";
 import { $activeSidebarPanel } from "~/builder/shared/nano-states";
 import {
+  SidebarButton,
   SidebarTabs,
   SidebarTabsContent,
   SidebarTabsList,
@@ -46,22 +47,18 @@ const useHideActiveTabOnPreview = () => {
 const AiTabTrigger = () => {
   const [clientSettings, setClientSetting] = useClientSettings();
   return (
-    <Tooltip side="right" content="AI">
-      <SidebarTabsTrigger
-        aria-label="AI"
-        value={
-          "anyValueNotInTabName" /* !!! This button does not have active state, use impossible tab value  !!! */
-        }
-        onClick={() => {
-          setClientSetting(
-            "isAiCommandBarVisible",
-            clientSettings.isAiCommandBarVisible === true ? false : true
-          );
-        }}
-      >
-        <AiIcon size={rawTheme.spacing[10]} />
-      </SidebarTabsTrigger>
-    </Tooltip>
+    <SidebarButton
+      label="AI"
+      data-state={clientSettings.isAiCommandBarVisible ? "active" : undefined}
+      onClick={() => {
+        setClientSetting(
+          "isAiCommandBarVisible",
+          clientSettings.isAiCommandBarVisible ? false : true
+        );
+      }}
+    >
+      <AiIcon size={rawTheme.spacing[10]} />
+    </SidebarButton>
   );
 };
 
@@ -69,36 +66,30 @@ const HelpTabTrigger = () => {
   const [helpIsOpen, setHelpIsOpen] = useState(false);
   return (
     <HelpPopover onOpenChange={setHelpIsOpen}>
-      <Tooltip side="right" content="Learn Webstudio or ask for help">
-        <HelpPopover.Trigger asChild>
-          <SidebarTabsTrigger
-            as="button"
-            aria-label="Learn Webstudio or ask for help"
-            data-state={helpIsOpen ? "active" : undefined}
-          >
-            <HelpIcon size={rawTheme.spacing[10]} />
-          </SidebarTabsTrigger>
-        </HelpPopover.Trigger>
-      </Tooltip>
+      <HelpPopover.Trigger asChild>
+        <SidebarButton
+          label="Learn Webstudio or ask for help"
+          data-state={helpIsOpen ? "active" : undefined}
+        >
+          <HelpIcon size={rawTheme.spacing[10]} />
+        </SidebarButton>
+      </HelpPopover.Trigger>
     </HelpPopover>
   );
 };
 
 const GithubTabTrigger = () => {
   return (
-    <Tooltip side="right" content="Report a bug on Github">
-      <SidebarTabsTrigger
-        as="button"
-        aria-label="Report a bug on Github"
-        onClick={() => {
-          window.open(
-            "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
-          );
-        }}
-      >
-        <BugIcon size={rawTheme.spacing[10]} />
-      </SidebarTabsTrigger>
-    </Tooltip>
+    <SidebarButton
+      label="Report a bug on Github"
+      onClick={() => {
+        window.open(
+          "https://github.com/webstudio-is/webstudio-community/discussions/new?category=q-a&labels=bug&title=[Bug]"
+        );
+      }}
+    >
+      <BugIcon size={rawTheme.spacing[10]} />
+    </SidebarButton>
   );
 };
 
@@ -134,25 +125,22 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
               {Array.from(panels.entries()).map(
                 ([tabName, { Icon, label }]) => {
                   return (
-                    <Tooltip side="right" content={label} key={tabName}>
-                      <SidebarTabsTrigger
-                        aria-label={label}
-                        value={tabName}
-                        onClick={() => {
-                          setActiveTab(
-                            activeTab === tabName ? "none" : tabName
-                          );
-                        }}
-                      >
-                        <Icon size={rawTheme.spacing[10]} />
-                      </SidebarTabsTrigger>
-                    </Tooltip>
+                    <SidebarTabsTrigger
+                      key={label}
+                      label={label}
+                      value={tabName}
+                      onClick={() => {
+                        setActiveTab(activeTab === tabName ? "none" : tabName);
+                      }}
+                    >
+                      <Icon size={rawTheme.spacing[10]} />
+                    </SidebarTabsTrigger>
                   );
                 }
               )}
-              <AiTabTrigger />
             </SidebarTabsList>
             <Box css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}>
+              <AiTabTrigger />
               <HelpTabTrigger />
               <GithubTabTrigger />
             </Box>
