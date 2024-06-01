@@ -19,8 +19,8 @@
     "middleware:dev": "DOTENV_CONFIG_PATH=.env.preview tsx watch -r dotenv/config ./middleware.js"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "^6.16.0",
-    "@codemirror/commands": "^6.3.3",
+    "@codemirror/autocomplete": "^6.16.2",
+    "@codemirror/commands": "^6.5.0",
     "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-javascript": "^6.2.2",
     "@codemirror/language": "^6.10.1",

@@ -87,6 +87,7 @@ const NameField = ({ defaultValue }: { defaultValue: string }) => {
           inputRef={ref}
           name="name"
           id={nameId}
+          autoComplete="off"
           color={error ? "error" : undefined}
           defaultValue={defaultValue}
           onChange={(event) => {
