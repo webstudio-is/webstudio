@@ -21,11 +21,65 @@ export const mimeType = "application/json";
 
 // A list of Webflow component names that need to be mapped.
 const componentMappers = {
-  Block(wfNode: WfNode) {
-    if ("type" in wfNode === false || wfNode.type !== "Block") {
-      return;
+  Block(wfNode: WfElementNode) {
+    if (wfNode.type === "Block") {
+      return wfNode.data?.text ? "Text" : "Box";
     }
-    return wfNode.data.text ? "Text" : "Box";
+    return wfNode.type;
+  },
+  Section(wfNode: WfElementNode) {
+    if (wfNode.type === "Section") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  RichText(wfNode: WfElementNode) {
+    if (wfNode.type === "RichText") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  Strong(wfNode: WfElementNode) {
+    if (wfNode.type === "Strong") {
+      return "Bold";
+    }
+    return wfNode.type;
+  },
+  Emphasized(wfNode: WfElementNode) {
+    if (wfNode.type === "Emphasized") {
+      return "Italic";
+    }
+    return wfNode.type;
+  },
+  BlockContainer(wfNode: WfElementNode) {
+    if (wfNode.type === "BlockContainer") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  Layout(wfNode: WfElementNode) {
+    if (wfNode.type === "Layout") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  Cell(wfNode: WfElementNode) {
+    if (wfNode.type === "Cell") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  VFlex(wfNode: WfElementNode) {
+    if (wfNode.type === "VFlex") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  HFlex(wfNode: WfElementNode) {
+    if (wfNode.type === "HFlex") {
+      return "Box";
+    }
+    return wfNode.type;
   },
 };
 
@@ -43,11 +97,11 @@ const WfTextNode = z.object({
   text: z.boolean(),
 });
 
-const WfNode = z.union([
+const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
-    data: z.object({ text: z.boolean().optional() }),
+    data: z.object({ text: z.boolean().optional() }).optional(),
   }),
   WfBaseNode.extend({ type: z.enum(["List"]) }),
   WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
@@ -62,8 +116,21 @@ const WfNode = z.union([
   }),
   WfBaseNode.extend({ type: z.enum(["Paragraph"]) }),
   WfBaseNode.extend({ type: z.enum(["Blockquote"]) }),
-  WfTextNode,
+  WfBaseNode.extend({ type: z.enum(["RichText"]) }),
+  WfBaseNode.extend({ type: z.enum(["Strong"]) }),
+  WfBaseNode.extend({ type: z.enum(["Emphasized"]) }),
+  WfBaseNode.extend({ type: z.enum(["Superscript"]) }),
+  WfBaseNode.extend({ type: z.enum(["Subscript"]) }),
+  WfBaseNode.extend({ type: z.enum(["Section"]) }),
+  WfBaseNode.extend({ type: z.enum(["BlockContainer"]) }),
+  WfBaseNode.extend({ type: z.enum(["Layout"]) }),
+  WfBaseNode.extend({ type: z.enum(["Cell"]) }),
+  WfBaseNode.extend({ type: z.enum(["VFlex"]) }),
+  WfBaseNode.extend({ type: z.enum(["HFlex"]) }),
 ]);
+type WfElementNode = z.infer<typeof WfElementNode>;
+
+const WfNode = z.union([WfElementNode, WfTextNode]);
 type WfNode = z.infer<typeof WfNode>;
 
 const WfStyle = z.object({
@@ -181,9 +248,7 @@ const addInstance = (
 
   const component =
     wfNode.type in componentMappers
-      ? componentMappers[wfNode.type as keyof typeof componentMappers](
-          wfNode
-        ) ?? wfNode.type
+      ? componentMappers[wfNode.type as keyof typeof componentMappers](wfNode)
       : wfNode.type;
 
   fragment.instances.push({

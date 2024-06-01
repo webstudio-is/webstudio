@@ -4,6 +4,7 @@ import type { Asset } from "@webstudio-is/sdk";
 
 export type MarketplaceOverviewItem = MarketplaceProduct & {
   projectId: Project["id"];
+  authorizationToken?: string | undefined;
   thumbnailAssetName?: Asset["name"];
 };
 
