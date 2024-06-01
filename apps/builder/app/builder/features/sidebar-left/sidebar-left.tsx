@@ -53,7 +53,7 @@ const AiTabTrigger = () => {
       onClick={() => {
         setClientSetting(
           "isAiCommandBarVisible",
-          clientSettings.isAiCommandBarVisible === true ? false : true
+          clientSettings.isAiCommandBarVisible ? false : true
         );
       }}
     >
