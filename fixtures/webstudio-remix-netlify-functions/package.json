@@ -9,11 +9,11 @@
     "fixtures:build": "webstudio build --template internal --template netlify-functions --preview && pnpm prettier --write ./app/ ./package.json"
   },
   "dependencies": {
-    "@netlify/functions": "^2.6.0",
-    "@netlify/remix-adapter": "^2.3.1",
-    "@remix-run/node": "2.9.1",
-    "@remix-run/react": "2.9.1",
-    "@remix-run/server-runtime": "2.9.1",
+    "@netlify/functions": "^2.7.0",
+    "@netlify/remix-adapter": "^2.4.0",
+    "@remix-run/node": "2.9.2",
+    "@remix-run/react": "2.9.2",
+    "@remix-run/server-runtime": "2.9.2",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -21,14 +21,14 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
-    "isbot": "^3.6.8",
+    "isbot": "^5.1.8",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "private": true,
   "sideEffects": false,
   "devDependencies": {
-    "@remix-run/dev": "2.9.1",
+    "@remix-run/dev": "2.9.2",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.4.5",
