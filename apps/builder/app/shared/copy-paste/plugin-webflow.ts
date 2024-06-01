@@ -57,6 +57,18 @@ const componentMappers = {
     }
     return wfNode.type;
   },
+  Layout(wfNode: WfElementNode) {
+    if (wfNode.type === "Layout") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  Cell(wfNode: WfElementNode) {
+    if (wfNode.type === "Cell") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
 };
 
 const WfBaseNode = z.object({
@@ -99,6 +111,8 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Subscript"]) }),
   WfBaseNode.extend({ type: z.enum(["Section"]) }),
   WfBaseNode.extend({ type: z.enum(["BlockContainer"]) }),
+  WfBaseNode.extend({ type: z.enum(["Layout"]) }),
+  WfBaseNode.extend({ type: z.enum(["Cell"]) }),
 ]);
 type WfElementNode = z.infer<typeof WfElementNode>;
 

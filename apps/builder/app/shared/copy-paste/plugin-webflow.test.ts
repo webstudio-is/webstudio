@@ -570,6 +570,77 @@ test("Block", () => {
   ]);
 });
 
+test("Quick Stack", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "91782272-bf55-194d-ce85-9ddc69c51dee",
+          type: "Layout",
+          tag: "div",
+          classes: [],
+          children: [
+            "91782272-bf55-194d-ce85-9ddc69c51def",
+            "91782272-bf55-194d-ce85-9ddc69c51df0",
+          ],
+          data: {
+            style: {
+              base: {
+                main: {
+                  noPseudo: {
+                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateRows: "auto",
+                  },
+                },
+              },
+            },
+          },
+        },
+        {
+          _id: "91782272-bf55-194d-ce85-9ddc69c51def",
+          type: "Cell",
+          tag: "div",
+          classes: [],
+          children: [],
+        },
+        {
+          _id: "91782272-bf55-194d-ce85-9ddc69c51df0",
+          type: "Cell",
+          tag: "div",
+          classes: [],
+          children: [],
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+      ],
+    },
+  ]);
+});
+
 test("Basic styles with a class", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
