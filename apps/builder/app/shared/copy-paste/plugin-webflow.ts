@@ -16,6 +16,7 @@ import { z } from "zod";
 import { isBaseBreakpoint } from "../breakpoints";
 import { parseCss } from "@webstudio-is/css-data";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
+import { Value } from "@radix-ui/react-select";
 
 export const mimeType = "application/json";
 
@@ -182,7 +183,7 @@ const addStyles = (
       });
       const instanceId = added.get(wfNode._id);
       if (instanceId === undefined) {
-        console.error("No instance id found");
+        console.error(`No instance id found for node ${wfNode._id}`);
         continue;
       }
 
@@ -198,14 +199,21 @@ const addStyles = (
         console.error("No base breakpoint found - should never happen");
         continue;
       }
-      const styles = parseCss(`.styles {${style.styleLess}}`).styles ?? [];
-      for (const style of styles) {
-        fragment.styles.push({
-          styleSourceId,
-          breakpointId,
-          property: style.property,
-          value: style.value,
-        });
+      try {
+        const styles = parseCss(`.styles {${style.styleLess}}`).styles ?? [];
+        for (const style of styles) {
+          fragment.styles.push({
+            styleSourceId,
+            breakpointId,
+            property: style.property,
+            value: style.value,
+          });
+          if (style.value.type === "invalid") {
+            console.error("Invalid style value", style);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to parse style", error, style.styleLess);
       }
     }
   }
@@ -305,7 +313,7 @@ const addProperties = (
     }
     const instanceId = added.get(wfNode._id);
     if (instanceId === undefined) {
-      console.error("No instance id found");
+      console.error(`No instance id found for node ${wfNode._id}`);
       continue;
     }
     // Webflow nodes always come with a tag.
@@ -360,7 +368,7 @@ const toWebstudioFragment = (wfData: WfData) => {
   const rootWfNode = wfData.payload.nodes[0];
   const rootInstanceId = added.get(rootWfNode._id);
   if (rootInstanceId === undefined) {
-    console.error("No root instance id found");
+    console.error(`No root instance id found for node ${rootWfNode._id}`);
     return fragment;
   }
   fragment.children = [

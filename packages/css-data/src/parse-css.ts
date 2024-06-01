@@ -49,7 +49,7 @@ const parseCssValue = (
           ];
         }
 
-        if (!value) {
+        if (value === undefined || value === "") {
           return [property, { type: "invalid", value: "" }];
         }
 
@@ -120,19 +120,7 @@ export const parseCss = (css: string) => {
               }
             });
           } catch (error) {
-            if (process.env.NODE_ENV !== "production") {
-              // eslint-disable-next-line no-console
-              console.warn(
-                true,
-                `Declaration parsing for \`${selectors.join(", ")}.${
-                  node.property
-                }: ${stringValue}\` failed:\n\n${JSON.stringify(
-                  parsedCss,
-                  null,
-                  2
-                )}`
-              );
-            }
+            console.error("Bad CSS declaration", error, parsedCss);
           }
         }
       );
