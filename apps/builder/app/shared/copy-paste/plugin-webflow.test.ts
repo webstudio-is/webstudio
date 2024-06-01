@@ -1,4 +1,4 @@
-import { test, expect } from "@jest/globals";
+import { test, expect, describe } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
 import { $breakpoints } from "../nano-states";
 
@@ -695,56 +695,130 @@ test("Quick Stack", () => {
   ]);
 });
 
-test("Basic styles with a class", () => {
-  const fragment = toWebstudioFragment({
-    type: "@webflow/XscpData",
-    payload: {
-      nodes: [
-        {
-          _id: "97d91be2-3bba-d340-0f13-a84e975b7497",
-          type: "Heading",
-          tag: "h1",
-          classes: [
-            "2891ad3d-89de-2434-bedd-51ef56dff4c4",
-            "a7bff598-b719-1edb-067b-a90a54d68605",
-          ],
-          children: ["97d91be2-3bba-d340-0f13-a84e975b7498"],
-        },
-        {
-          _id: "97d91be2-3bba-d340-0f13-a84e975b7498",
-          text: true,
-          v: "Turtle in the sea",
-        },
-      ],
-      styles: [
-        {
-          _id: "a7bff598-b719-1edb-067b-a90a54d68605",
-          type: "class",
-          name: "Heading",
-          styleLess: "color: hsla(0, 80.00%, 47.78%, 1.00);",
-        },
-      ],
-    },
+describe("Styles", () => {
+  test("Single class", () => {
+    const fragment = toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "97d91be2-3bba-d340-0f13-a84e975b7497",
+            type: "Heading",
+            tag: "h1",
+            classes: ["a7bff598-b719-1edb-067b-a90a54d68605"],
+            children: [],
+          },
+        ],
+        styles: [
+          {
+            _id: "a7bff598-b719-1edb-067b-a90a54d68605",
+            type: "class",
+            name: "Heading",
+            styleLess: "color: hsla(0, 80.00%, 47.78%, 1.00);",
+          },
+        ],
+      },
+    });
+    expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "Heading",
+      },
+    ]);
+    expect(fragment.styleSourceSelections).toEqual([
+      {
+        instanceId: expect.not.stringMatching("instanceId"),
+        values: [expect.not.stringMatching("styleSourceId")],
+      },
+    ]);
+    expect(fragment.styles).toEqual([
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "color",
+        value: { type: "rgb", alpha: 1, r: 219, g: 24, b: 24 },
+      },
+    ]);
   });
-  expect(fragment.styleSources).toEqual([
-    {
-      type: "token",
-      id: expect.not.stringMatching("styleSourceId"),
-      name: "Heading",
-    },
-  ]);
-  expect(fragment.styleSourceSelections).toEqual([
-    {
-      instanceId: expect.not.stringMatching("instanceId"),
-      values: [expect.not.stringMatching("styleSourceId")],
-    },
-  ]);
-  expect(fragment.styles).toEqual([
-    {
-      styleSourceId: expect.not.stringMatching("styleSourceId"),
-      breakpointId: "0",
-      property: "color",
-      value: { type: "rgb", alpha: 1, r: 219, g: 24, b: 24 },
-    },
-  ]);
+
+  test("Combo class", () => {
+    const fragment = toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "5f7ab979-89b3-c705-6ab9-35f77dfb209f",
+            type: "Link",
+            tag: "a",
+            classes: [
+              "194e7d07-469d-6ffa-3925-1f51bdad7e44",
+              "194e7d07-469d-6ffa-3925-1f51bdad7e46",
+            ],
+            children: [],
+            data: {
+              link: {
+                url: "#",
+              },
+            },
+          },
+        ],
+        styles: [
+          {
+            _id: "194e7d07-469d-6ffa-3925-1f51bdad7e44",
+            type: "class",
+            name: "button",
+            styleLess: "text-align: center;",
+            children: ["194e7d07-469d-6ffa-3925-1f51bdad7e46"],
+          },
+          {
+            _id: "194e7d07-469d-6ffa-3925-1f51bdad7e46",
+            type: "class",
+            name: "is-secondary",
+            comb: "&",
+            styleLess: "background-color: transparent; ",
+            createdBy: "6075409192d886a671499223",
+          },
+        ],
+      },
+    });
+    expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "button",
+      },
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "is-secondary",
+      },
+    ]);
+    expect(fragment.styleSourceSelections).toEqual([
+      {
+        instanceId: expect.not.stringMatching("instanceId"),
+        values: [
+          expect.not.stringMatching("styleSourceId"),
+          expect.not.stringMatching("styleSourceId"),
+        ],
+      },
+    ]);
+    expect(fragment.styles).toEqual([
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "textAlign",
+        value: { type: "keyword", value: "center" },
+      },
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "backgroundColor",
+        value: {
+          type: "keyword",
+          value: "transparent",
+        },
+      },
+    ]);
+  });
 });

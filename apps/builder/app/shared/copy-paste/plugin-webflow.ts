@@ -16,7 +16,6 @@ import { z } from "zod";
 import { isBaseBreakpoint } from "../breakpoints";
 import { parseCss } from "@webstudio-is/css-data";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
-import { Value } from "@radix-ui/react-select";
 
 export const mimeType = "application/json";
 
@@ -128,7 +127,6 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Cell"]) }),
   WfBaseNode.extend({ type: z.enum(["VFlex"]) }),
   WfBaseNode.extend({ type: z.enum(["HFlex"]) }),
-  WfBaseNode, // Allows us to skip the instance type if it's not supported, but insert the rest
 ]);
 type WfElementNode = z.infer<typeof WfElementNode>;
 
@@ -140,13 +138,14 @@ const WfStyle = z.object({
   type: z.enum(["class"]),
   name: z.string(),
   styleLess: z.string(),
-  //comb: z.string(),
-  //namespace: z.string(),
-  //variants: z.object(),
-  //children: z.array(z.string()),
-  //createdBy: z.string(),
-  //origin: z.null(),
-  //selector: z.null(),
+  fake: z.boolean().optional(),
+  comb: z.string().optional(),
+  namespace: z.string().optional(),
+  variants: z.object({}).optional(),
+  children: z.array(z.string()).optional(),
+  createdBy: z.string().optional(),
+  origin: z.null().optional(),
+  selector: z.null().optional(),
 });
 
 type WfStyle = z.infer<typeof WfStyle>;
@@ -154,7 +153,8 @@ type WfStyle = z.infer<typeof WfStyle>;
 const WfData = z.object({
   type: z.literal("@webflow/XscpData"),
   payload: z.object({
-    nodes: z.array(WfNode),
+    // Using WfBaseNode here just so we can skip a node with unknown node.type.
+    nodes: z.array(z.union([WfNode, WfBaseNode])),
     styles: z.array(WfStyle),
   }),
 });
@@ -187,10 +187,14 @@ const addStyles = (
         continue;
       }
 
-      fragment.styleSourceSelections.push({
-        instanceId,
-        values: [styleSourceId],
-      });
+      let styleSourceSelection = fragment.styleSourceSelections.find(
+        (selection) => selection.instanceId === instanceId
+      );
+      if (styleSourceSelection === undefined) {
+        styleSourceSelection = { instanceId, values: [] };
+        fragment.styleSourceSelections.push(styleSourceSelection);
+      }
+      styleSourceSelection.values.push(styleSourceId);
 
       const breakpointId = Array.from($breakpoints.get().values()).find(
         isBaseBreakpoint
@@ -308,7 +312,7 @@ const addProperties = (
   fragment: WebstudioFragment
 ) => {
   for (const wfNode of wfNodes.values()) {
-    if ("text" in wfNode) {
+    if ("text" in wfNode || "type" in wfNode === false) {
       continue;
     }
     const instanceId = added.get(wfNode._id);
