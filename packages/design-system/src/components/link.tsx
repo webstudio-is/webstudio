@@ -3,6 +3,13 @@ import { textVariants } from "./text";
 
 export const Link = styled("a", {
   cursor: "pointer",
+  "&[aria-disabled=true]": {
+    cursor: "default",
+    color: theme.colors.foregroundDisabled,
+    "&:hover, &:visited": {
+      color: theme.colors.foregroundDisabled,
+    },
+  },
   variants: {
     variant: {
       inherit: {

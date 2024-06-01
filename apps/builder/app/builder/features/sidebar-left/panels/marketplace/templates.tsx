@@ -8,6 +8,7 @@ import {
   Separator,
   theme,
   Link,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
 import {
@@ -28,6 +29,7 @@ import {
 import { insertPageCopyMutable } from "~/shared/page-utils";
 import { switchPage } from "~/shared/pages";
 import { Card } from "./card";
+import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
 
 /**
  * Insert page as a template.
@@ -133,12 +135,14 @@ export const Templates = ({
   name,
   projectId,
   productCategory,
+  authorizationToken,
   data,
   onOpenChange,
 }: {
   name: string;
   projectId: string;
   productCategory: MarketplaceProduct["category"];
+  authorizationToken: MarketplaceOverviewItem["authorizationToken"];
   data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -150,6 +154,8 @@ export const Templates = ({
   if (templatesDataByCategory === undefined || data === undefined) {
     return;
   }
+
+  const hasAuthToken = authorizationToken != null;
 
   return (
     <Flex direction="column" css={{ height: "100%" }}>
@@ -169,17 +175,31 @@ export const Templates = ({
         >
           {name}
         </Button>
-        <Link
-          underline="none"
-          href={builderUrl({
-            projectId: projectId,
-            origin: location.origin,
-          })}
-          target="_blank"
-          aria-label="Open project in new tab"
+        <Tooltip
+          content={
+            hasAuthToken
+              ? undefined
+              : 'The project does not have a shared link with "View" permission.'
+          }
         >
-          <ExternalLinkIcon />
-        </Link>
+          <Link
+            underline="none"
+            href={
+              hasAuthToken
+                ? builderUrl({
+                    projectId: projectId,
+                    origin: location.origin,
+                    authToken: authorizationToken,
+                  })
+                : undefined
+            }
+            target="_blank"
+            aria-label="Open project in new tab"
+            aria-disabled={hasAuthToken ? undefined : "true"}
+          >
+            <ExternalLinkIcon />
+          </Link>
+        </Tooltip>
       </Flex>
       <Separator />
       <ScrollArea>

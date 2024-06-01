@@ -6,6 +6,7 @@ on:
       - "migrate"
       - "main"
       - "*.staging"
+      - "*.migrate"
 
 # Pending if other migration from the same branch is running
 concurrency: migrate-${{ github.ref_name }}
@@ -25,7 +26,7 @@ jobs:
     #   git commit --allow-empty -m "::migrate::test description"
     # Note:
     #   This setup is a temporary measure. The intention is to transition to a fully automated publish and release process via GitHub Actions in the future.
-    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.staging')) && startsWith(github.event.head_commit.message, '::migrate::'))
+    if: (github.ref_name == 'main') || ((github.ref_name == 'migrate' || endsWith(github.ref_name, '.migrate') || endsWith(github.ref_name, '.staging')) && startsWith(github.event.head_commit.message, '::migrate::'))
 
     runs-on: ubuntu-latest
 

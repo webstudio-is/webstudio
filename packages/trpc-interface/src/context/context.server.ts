@@ -15,11 +15,6 @@ type AuthorizationContext = {
   authToken: string | undefined;
 
   /**
-   * Projects approved for the marketplace are available to everyone.
-   */
-  marketplaceProjectIds: Array<string>;
-
-  /**
    * Allow service 2 service communications to skip authorization for view calls
    */
   isServiceCall: boolean;
