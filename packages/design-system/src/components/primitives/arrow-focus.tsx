@@ -61,6 +61,19 @@ const ContextHelper = ({ render }: { render: Render }) => {
       event: KeyboardEvent,
       focusManagerOptions?: FocusManagerOptions
     ) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      if (
+        event.target instanceof Element &&
+        false === event.currentTarget.contains(event.target)
+      ) {
+        // Event occurs inside a portal, typically within a popover or dialog, but the handler is outside the popover/dialog.
+        // Ignore these events as they do not affect focus outside the dialog.
+        return;
+      }
+
       if (willEventMoveCaret(event)) {
         return;
       }
