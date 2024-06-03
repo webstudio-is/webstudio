@@ -805,6 +805,80 @@ test("Columns", () => {
   ]);
 });
 
+test("Image", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "3c0b6a7a-830f-4b4a-48c5-4215f9c9389a",
+          type: "Image",
+          tag: "img",
+          classes: [],
+          children: [],
+          data: {
+            attr: {
+              src: "https://uploads-ssl.webflow.com/6640ea3496ea68a4a4e3efcf/665dd9f1927826d5caad6ed4_Screenshot%202024-05-29%20at%2023.10.33.png",
+              loading: "eager",
+              width: "200",
+              height: "auto",
+              alt: "Test",
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Image",
+      children: [],
+    },
+  ]);
+
+  expect(fragment.props).toEqual([
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "tag",
+      value: "img",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "alt",
+      value: "Test",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "loading",
+      value: "eager",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "width",
+      value: "200",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "src",
+      value: expect.not.stringMatching("src"),
+    },
+  ]);
+});
+
 describe("Styles", () => {
   test("Single class", () => {
     const fragment = toWebstudioFragment({

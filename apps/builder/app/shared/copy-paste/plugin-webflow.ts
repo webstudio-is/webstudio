@@ -158,6 +158,18 @@ const WfElementNode = z.union([
     type: z.enum(["CodeBlock"]),
     data: z.object({ language: z.string().optional(), code: z.string() }),
   }),
+  WfBaseNode.extend({
+    type: z.enum(["Image"]),
+    data: z.object({
+      attr: z.object({
+        alt: z.string(),
+        loading: z.enum(["lazy", "eager", "auto"]),
+        src: z.string(),
+        width: z.string(),
+        height: z.string(),
+      }),
+    }),
+  }),
 ]);
 type WfElementNode = z.infer<typeof WfElementNode>;
 
@@ -359,6 +371,69 @@ const propertyMappers = {
         instanceId,
         name: "code",
         value: data.code,
+      });
+    }
+    return props;
+  },
+  Image(wfNode: WfElementNode, instanceId: Instance["id"]) {
+    if (wfNode.type !== "Image") {
+      return [];
+    }
+    const data = wfNode.data;
+    const props: WebstudioFragment["props"] = [];
+
+    if (
+      data.attr.alt &&
+      // This is how they tell it when alt comes from image meta during publishing
+      data.attr.alt !== "__wf_reserved_inherit" &&
+      // This is how they tell it to use alt="", which is our default anyways
+      data.attr.alt !== "__wf_reserved_decorative"
+    ) {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "alt",
+        value: data.attr.alt,
+      });
+    }
+
+    if (data.attr.loading === "eager" || data.attr.loading === "lazy") {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "loading",
+        value: data.attr.loading,
+      });
+    }
+
+    if (data.attr.width && data.attr.width !== "auto") {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "width",
+        value: data.attr.width,
+      });
+    }
+
+    if (data.attr.height && data.attr.height !== "auto") {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "height",
+        value: data.attr.height,
+      });
+    }
+    if (data.attr.src) {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "src",
+        value: data.attr.src,
       });
     }
     return props;
