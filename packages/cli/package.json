@@ -57,6 +57,7 @@
     "@types/yargs": "^17.0.32",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
+    "parse5": "7.1.2",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "tsx": "^4.7.2",

@@ -61,6 +61,7 @@ import {
   isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
+import { htmlToJsx } from "./html-to-jsx";
 
 const limit = pLimit(10);
 
@@ -652,6 +653,25 @@ export const prebuild = async (options: {
       export const pageBackgroundImageAssets: ImageAsset[] =
         ${JSON.stringify(pageBackgroundImageAssets)}
 
+
+      ${
+        projectMeta?.code
+          ? `
+      const Script = ({children, ...props}: Record<string, string | boolean>) => {
+        if (children == null) {
+          return <script {...props} />;
+        }
+
+        return <script {...props} dangerouslySetInnerHTML={{__html: children}} />;
+      };
+      `
+          : ""
+      }
+
+      export const CustomCode = () => {
+        return (<>${projectMeta?.code ? htmlToJsx(projectMeta.code) : ""}</>);
+      }
+
       ${xmlPresentationComponents}
 
       ${pageComponent}
@@ -684,6 +704,7 @@ export const prebuild = async (options: {
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
 
+      // @todo: Remove after release
       export const customCode = ${JSON.stringify(
         projectMeta?.code?.trim() ?? ""
       )};
