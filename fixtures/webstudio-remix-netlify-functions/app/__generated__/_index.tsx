@@ -21,6 +21,10 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
+export const CustomCode = () => {
+  return <></>;
+};
+
 const Page = ({}: { system: any }) => {
   return (
     <Body
