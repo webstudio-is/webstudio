@@ -695,6 +695,116 @@ test("Quick Stack", () => {
   ]);
 });
 
+test("Grid", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "Grid",
+          tag: "div",
+          classes: [],
+          children: [],
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+  ]);
+});
+
+test("Columns", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b58",
+          type: "Row",
+          tag: "div",
+          classes: [],
+          children: [
+            "08fb88d6-f6ec-5169-f4d4-8dac98df2b59",
+            "08fb88d6-f6ec-5169-f4d4-8dac98df2b5a",
+          ],
+          data: {
+            grid: {
+              type: "row",
+              cols: {
+                main: "6|6",
+                medium: "",
+                small: "",
+                tiny: "",
+              },
+            },
+            tag: "div",
+          },
+        },
+        {
+          _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b59",
+          type: "Column",
+          tag: "div",
+          classes: [],
+          children: [],
+          data: {
+            grid: {
+              type: "col",
+            },
+            tag: "div",
+          },
+        },
+        {
+          _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b5a",
+          type: "Column",
+          tag: "div",
+          classes: [],
+          children: [],
+          data: {
+            grid: {
+              type: "col",
+            },
+            tag: "div",
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+      ],
+    },
+  ]);
+});
+
 describe("Styles", () => {
   test("Single class", () => {
     const fragment = toWebstudioFragment({

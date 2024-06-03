@@ -81,6 +81,30 @@ const componentMappers = {
     }
     return wfNode.type;
   },
+  Grid(wfNode: WfElementNode) {
+    if (wfNode.type === "Grid") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  Row(wfNode: WfElementNode) {
+    if (wfNode.type === "Row") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  Column(wfNode: WfElementNode) {
+    if (wfNode.type === "Column") {
+      return "Box";
+    }
+    return wfNode.type;
+  },
+  CodeBlock(wfNode: WfElementNode) {
+    if (wfNode.type === "CodeBlock") {
+      return "CodeText";
+    }
+    return wfNode.type;
+  },
 };
 
 const WfBaseNode = z.object({
@@ -127,6 +151,13 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Cell"]) }),
   WfBaseNode.extend({ type: z.enum(["VFlex"]) }),
   WfBaseNode.extend({ type: z.enum(["HFlex"]) }),
+  WfBaseNode.extend({ type: z.enum(["Grid"]) }),
+  WfBaseNode.extend({ type: z.enum(["Row"]) }),
+  WfBaseNode.extend({ type: z.enum(["Column"]) }),
+  WfBaseNode.extend({
+    type: z.enum(["CodeBlock"]),
+    data: z.object({ language: z.string().optional(), code: z.string() }),
+  }),
 ]);
 type WfElementNode = z.infer<typeof WfElementNode>;
 
@@ -277,8 +308,8 @@ const addInstance = (
 
 // Converting Webflow attributes and data to Webstudio props.
 const propertyMappers = {
-  Link(wfNode: WfNode, instanceId: Instance["id"]) {
-    if ("type" in wfNode === false || wfNode.type !== "Link") {
+  Link(wfNode: WfElementNode, instanceId: Instance["id"]) {
+    if (wfNode.type !== "Link") {
       return [];
     }
     const data = wfNode.data;
@@ -300,6 +331,34 @@ const propertyMappers = {
         instanceId,
         name: "target",
         value: data.link.target,
+      });
+    }
+    return props;
+  },
+  CodeBlock(wfNode: WfElementNode, instanceId: Instance["id"]) {
+    if (wfNode.type !== "CodeBlock") {
+      return [];
+    }
+    const data = wfNode.data;
+    const props: WebstudioFragment["props"] = [];
+
+    if (data.language) {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "lang",
+        value: data.language,
+      });
+    }
+
+    if (data.code) {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "code",
+        value: data.code,
       });
     }
     return props;
