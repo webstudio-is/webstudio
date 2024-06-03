@@ -100,13 +100,6 @@ test("Link Block, Button, Text Link", () => {
       type: "string",
       id: expect.not.stringMatching("id"),
       instanceId: expect.not.stringMatching("instanceId"),
-      name: "tag",
-      value: "a",
-    },
-    {
-      type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
       name: "href",
       value: "https://webstudio.is",
     },
@@ -116,6 +109,13 @@ test("Link Block, Button, Text Link", () => {
       instanceId: expect.not.stringMatching("instanceId"),
       name: "target",
       value: "_blank",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      value: "a",
     },
   ]);
 });
@@ -845,13 +845,6 @@ test("Image", () => {
       type: "string",
       id: expect.not.stringMatching("instanceId"),
       instanceId: expect.not.stringMatching("id"),
-      name: "tag",
-      value: "img",
-    },
-    {
-      type: "string",
-      id: expect.not.stringMatching("instanceId"),
-      instanceId: expect.not.stringMatching("id"),
       name: "alt",
       value: "Test",
     },
@@ -875,6 +868,56 @@ test("Image", () => {
       instanceId: expect.not.stringMatching("id"),
       name: "src",
       value: expect.not.stringMatching("src"),
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "tag",
+      value: "img",
+    },
+  ]);
+});
+
+describe("Custom attributes", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "249f235e-91b6-bd0f-bc42-00993479e637",
+          type: "Heading",
+          tag: "h1",
+          classes: [],
+          children: [],
+          data: {
+            tag: "h1",
+            xattr: [
+              {
+                name: "at",
+                value: "b",
+              },
+            ],
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+  expect(fragment.props).toEqual([
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      value: "h1",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "at",
+      value: "b",
     },
   ]);
 });

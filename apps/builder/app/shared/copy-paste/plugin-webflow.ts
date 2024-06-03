@@ -19,12 +19,16 @@ import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const mimeType = "application/json";
 
+const WfNodeData = z.object({
+  xattr: z.array(z.object({ name: z.string(), value: z.string() })).optional(),
+});
+
 const WfBaseNode = z.object({
   _id: z.string(),
   tag: z.string(),
   children: z.array(z.string()),
   classes: z.array(z.string()),
-  data: z.object({}).optional(),
+  data: WfNodeData.optional(),
 });
 
 const WfTextNode = z.object({
@@ -37,13 +41,13 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Heading"]) }),
   WfBaseNode.extend({
     type: z.enum(["Block"]),
-    data: z.object({ text: z.boolean().optional() }).optional(),
+    data: WfNodeData.extend({ text: z.boolean().optional() }).optional(),
   }),
   WfBaseNode.extend({ type: z.enum(["List"]) }),
   WfBaseNode.extend({ type: z.enum(["ListItem"]) }),
   WfBaseNode.extend({
     type: z.enum(["Link"]),
-    data: z.object({
+    data: WfNodeData.extend({
       link: z.object({
         url: z.string(),
         target: z.string().optional(),
@@ -68,11 +72,14 @@ const WfElementNode = z.union([
   WfBaseNode.extend({ type: z.enum(["Column"]) }),
   WfBaseNode.extend({
     type: z.enum(["CodeBlock"]),
-    data: z.object({ language: z.string().optional(), code: z.string() }),
+    data: WfNodeData.extend({
+      language: z.string().optional(),
+      code: z.string(),
+    }),
   }),
   WfBaseNode.extend({
     type: z.enum(["Image"]),
-    data: z.object({
+    data: WfNodeData.extend({
       attr: z.object({
         alt: z.string(),
         loading: z.enum(["lazy", "eager", "auto"]),
@@ -178,7 +185,7 @@ const addStyles = (
   }
 };
 
-const addTagProperty = (
+const addAttributes = (
   wfNode: WfElementNode,
   instanceId: Instance["id"],
   props: Array<Prop>
@@ -192,6 +199,18 @@ const addTagProperty = (
       value: wfNode.tag,
     });
   }
+
+  if (wfNode.data?.xattr) {
+    for (const attribute of wfNode.data.xattr) {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: attribute.name,
+        value: attribute.value,
+      });
+    }
+  }
 };
 
 const mapComponentAndProperties = (
@@ -200,7 +219,6 @@ const mapComponentAndProperties = (
 ) => {
   const props: Array<Prop> = [];
   const component = wfNode.type;
-  addTagProperty(wfNode, instanceId, props);
 
   switch (component) {
     case "Heading":
@@ -424,7 +442,7 @@ const addInstanceAndProperties = (
     children,
   });
   added.set(wfNode._id, instanceId);
-
+  addAttributes(wfNode, instanceId, props);
   fragment.props.push(...props);
 
   return instanceId;
