@@ -5,6 +5,8 @@ import {
   useState,
   forwardRef,
   type ComponentProps,
+  type RefObject,
+  useImperativeHandle,
 } from "react";
 import {
   Annotation,
@@ -139,7 +141,12 @@ const highlightStyle = HighlightStyle.define([
   },
 ]);
 
+export type EditorApi = {
+  replaceSelection: (string: string) => void;
+};
+
 type EditorContentProps = {
+  editorApiRef?: RefObject<undefined | EditorApi>;
   extensions?: Extension[];
   readOnly?: boolean;
   autoFocus?: boolean;
@@ -150,6 +157,7 @@ type EditorContentProps = {
 };
 
 export const EditorContent = ({
+  editorApiRef,
   extensions = [],
   readOnly = false,
   autoFocus = false,
@@ -247,6 +255,17 @@ export const EditorContent = ({
       annotations: [ExternalChange.of(true)],
     });
   }, [value]);
+
+  useImperativeHandle(editorApiRef, () => ({
+    replaceSelection: (string) => {
+      const view = viewRef.current;
+      if (view === undefined) {
+        return;
+      }
+      view.dispatch(view.state.replaceSelection(string));
+      view.focus();
+    },
+  }));
 
   return (
     <div

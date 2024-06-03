@@ -94,6 +94,9 @@ const env = {
   PUBLISHER_HOST: process.env.PUBLISHER_HOST || "wstd.work",
 
   FEATURES: process.env.FEATURES ?? "",
+
+  // current user plan features (default)
+  USER_PLAN: process.env.USER_PLAN ?? "",
 };
 
 export type ServerEnv = typeof env;

@@ -40,7 +40,11 @@ import {
   getExpressionIdentifiers,
   lintExpression,
 } from "@webstudio-is/sdk";
-import { ExpressionEditor, formatValuePreview } from "./expression-editor";
+import {
+  ExpressionEditor,
+  formatValuePreview,
+  type EditorApi,
+} from "./expression-editor";
 import { useSideOffset } from "./floating-panel";
 import { $dataSourceVariables } from "~/shared/nano-states";
 
@@ -76,6 +80,7 @@ const BindingPanel = ({
   onChange: () => void;
   onSave: (value: string, invalid: boolean) => void;
 }) => {
+  const editorApiRef = useRef<undefined | EditorApi>();
   const [expression, setExpression] = useState(value);
   const usedIdentifiers = useMemo(
     () => getExpressionIdentifiers(value),
@@ -85,14 +90,18 @@ const BindingPanel = ({
   const [touched, setTouched] = useState(false);
   const scopeEntries = Object.entries(scope);
 
-  const updateExpression = (newExpression: string) => {
-    setExpression(newExpression);
-    onChange();
+  const validate = (expression: string) => {
     const diagnostics = lintExpression({
-      expression: newExpression,
+      expression,
       availableVariables: new Set(aliases.keys()),
     });
     setErrors(diagnostics.map((diagnostic) => diagnostic.message));
+  };
+
+  const updateExpression = (newExpression: string) => {
+    setExpression(newExpression);
+    onChange();
+    validate(newExpression);
   };
 
   return (
@@ -139,8 +148,13 @@ const BindingPanel = ({
                 active={usedIdentifiers.has(identifier)}
                 // convert variable to expression
                 onClick={() => {
-                  updateExpression(identifier);
-                  onSave(identifier, false);
+                  editorApiRef.current?.replaceSelection(identifier);
+                }}
+                // expression editor blur is fired after pointer down even
+                // preventing it allows to not trigger validation
+                // and flickering error tooltip
+                onPointerDown={(event) => {
+                  event.preventDefault();
                 }}
               />
             );
@@ -176,10 +190,11 @@ const BindingPanel = ({
         >
           <div>
             <ExpressionEditor
+              editorApiRef={editorApiRef}
               scope={scope}
               aliases={aliases}
               color={
-                errors.length > 0 || valueError !== undefined
+                (touched && errors.length > 0) || valueError !== undefined
                   ? "error"
                   : undefined
               }

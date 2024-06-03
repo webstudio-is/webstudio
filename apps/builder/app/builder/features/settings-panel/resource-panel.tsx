@@ -84,7 +84,7 @@ const UrlField = ({
   scope: Record<string, unknown>;
   value: string;
   onChange: (value: string) => void;
-  onCurlPaste?: (curl: CurlRequest) => void;
+  onCurlPaste: (curl: CurlRequest) => void;
 }) => {
   const urlId = useId();
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -124,7 +124,7 @@ const UrlField = ({
             value={String(evaluateExpressionWithinScope(value, scope))}
             onChange={(value) => {
               const curl = parseCurl(value);
-              if (curl && onCurlPaste) {
+              if (curl) {
                 onCurlPaste(curl);
               } else {
                 // update text value as string literal
@@ -773,6 +773,11 @@ export const SystemResourceForm = forwardRef<
 });
 SystemResourceForm.displayName = "SystemResourceForm";
 
+const zGraphqlBody = z.object({
+  query: z.string(),
+  variables: z.optional(z.record(z.unknown())),
+});
+
 export const GraphqlResourceForm = forwardRef<
   undefined | PanelApi,
   { variable?: DataSource }
@@ -862,7 +867,27 @@ export const GraphqlResourceForm = forwardRef<
 
   return (
     <>
-      <UrlField scope={scope} aliases={aliases} value={url} onChange={setUrl} />
+      <UrlField
+        scope={scope}
+        aliases={aliases}
+        value={url}
+        onChange={setUrl}
+        onCurlPaste={(curl) => {
+          // update all feilds when curl is paste into url field
+          setUrl(JSON.stringify(curl.url));
+          setHeaders(
+            curl.headers.map((header) => ({
+              name: header.name,
+              value: JSON.stringify(header.value),
+            }))
+          );
+          const body = zGraphqlBody.safeParse(curl.body);
+          if (body.success) {
+            setQuery(body.data.query);
+            setVariables(JSON.stringify(body.data.variables, null, 2));
+          }
+        }}
+      />
 
       <Grid gap={1}>
         <Label htmlFor={queryId}>Query</Label>

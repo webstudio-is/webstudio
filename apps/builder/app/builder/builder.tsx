@@ -2,14 +2,13 @@ import { useCallback, useEffect, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
-import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
-import { useSyncServer } from "./shared/sync/sync-server";
+import { startProjectSync, useSyncServer } from "./shared/sync/sync-server";
 import {
   SidebarLeft,
   NavigatorContent,
@@ -24,22 +23,12 @@ import {
   Workspace,
 } from "./features/workspace";
 import {
-  $assets,
   $authPermit,
   $authToken,
-  $breakpoints,
-  $dataSources,
-  $instances,
   $isPreviewMode,
   $pages,
   $project,
-  $props,
-  $styleSourceSelections,
-  $styleSources,
-  $styles,
-  $resources,
   subscribeResources,
-  $marketplaceProduct,
   $authTokenPermissions,
   $publisherHost,
   $imageLoader,
@@ -60,6 +49,7 @@ import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
+import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 
 registerContainers();
 
@@ -221,8 +211,7 @@ export type BuilderProps = {
   project: Project;
   publisherHost: string;
   imageBaseUrl: string;
-  build: Build;
-  assets: [Asset["id"], Asset][];
+  build: Pick<Build, "id" | "version">;
   authToken?: string;
   authPermit: AuthPermit;
   authTokenPermissions: TokenPermissions;
@@ -234,7 +223,6 @@ export const Builder = ({
   publisherHost,
   imageBaseUrl,
   build,
-  assets,
   authToken,
   authPermit,
   userPlanFeatures,
@@ -250,19 +238,22 @@ export const Builder = ({
     $userPlanFeatures.set(userPlanFeatures);
     $authTokenPermissions.set(authTokenPermissions);
 
-    // set initial containers value
-    $assets.set(new Map(assets));
-    $instances.set(new Map(build.instances));
-    $dataSources.set(new Map(build.dataSources));
-    $resources.set(new Map(build.resources));
-    // props should be after data sources to compute logic
-    $props.set(new Map(build.props));
-    $pages.set(build.pages);
-    $styleSources.set(new Map(build.styleSources));
-    $styleSourceSelections.set(new Map(build.styleSourceSelections));
-    $breakpoints.set(new Map(build.breakpoints));
-    $styles.set(new Map(build.styles));
-    $marketplaceProduct.set(build.marketplaceProduct);
+    const controller = new AbortController();
+    loadBuilderData({ projectId: project.id, signal: controller.signal })
+      .then((data) => {
+        setBuilderData(data);
+        startProjectSync({
+          projectId: project.id,
+          buildId: build.id,
+          version: build.version,
+          authPermit,
+          authToken,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      controller.abort("unmount");
+    };
   });
 
   useToastErrors();
@@ -282,11 +273,8 @@ export const Builder = ({
 
   useBuilderStore(publish);
   useSyncServer({
-    buildId: build.id,
     projectId: project.id,
-    authToken,
     authPermit,
-    version: build.version,
   });
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);

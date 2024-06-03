@@ -87,6 +87,7 @@ const NameField = ({ defaultValue }: { defaultValue: string }) => {
           inputRef={ref}
           name="name"
           id={nameId}
+          autoComplete="off"
           color={error ? "error" : undefined}
           defaultValue={defaultValue}
           onChange={(event) => {
@@ -711,9 +712,8 @@ export const VariablePopoverTrigger = forwardRef<
             actions={
               variable?.type === "resource" && (
                 <>
-                  {/* allow to copy curl only for default resource control */}
-                  {resources.get(variable.resourceId)?.control ===
-                    undefined && (
+                  {/* allow to copy curl only for default and graphql resource controls */}
+                  {resources.get(variable.resourceId)?.control !== "system" && (
                     <Tooltip
                       content="Copy resource as cURL command"
                       side="bottom"
