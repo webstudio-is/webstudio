@@ -2,6 +2,22 @@ import { describe, expect, test } from "@jest/globals";
 import { parseCss } from "./parse-css";
 
 describe("Parse CSS", () => {
+  test("longhand property name with keyword value", () => {
+    expect(parseCss(`.test { background-color: red }`)).toMatchInlineSnapshot(`
+      {
+        "test": [
+          {
+            "property": "backgroundColor",
+            "value": {
+              "type": "keyword",
+              "value": "red",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("one class selector rules", () => {
     expect(parseCss(`.test { color: #ff0000 }`)).toMatchInlineSnapshot(`
       {

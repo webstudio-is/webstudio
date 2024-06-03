@@ -1,6 +1,6 @@
-import { test, expect } from "@jest/globals";
+import { test, expect, describe } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
-import { $breakpoints } from "../nano-states";
+import { $breakpoints } from "../../nano-states";
 
 const { toWebstudioFragment } = __testing__;
 
@@ -100,13 +100,6 @@ test("Link Block, Button, Text Link", () => {
       type: "string",
       id: expect.not.stringMatching("id"),
       instanceId: expect.not.stringMatching("instanceId"),
-      name: "tag",
-      value: "a",
-    },
-    {
-      type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
       name: "href",
       value: "https://webstudio.is",
     },
@@ -116,6 +109,13 @@ test("Link Block, Button, Text Link", () => {
       instanceId: expect.not.stringMatching("instanceId"),
       name: "target",
       value: "_blank",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "tag",
+      value: "a",
     },
   ]);
 });
@@ -638,18 +638,6 @@ test("Quick Stack", () => {
             "91782272-bf55-194d-ce85-9ddc69c51def",
             "91782272-bf55-194d-ce85-9ddc69c51df0",
           ],
-          data: {
-            style: {
-              base: {
-                main: {
-                  noPseudo: {
-                    gridTemplateColumns: "1fr 1fr",
-                    gridTemplateRows: "auto",
-                  },
-                },
-              },
-            },
-          },
         },
         {
           _id: "91782272-bf55-194d-ce85-9ddc69c51def",
@@ -695,56 +683,332 @@ test("Quick Stack", () => {
   ]);
 });
 
-test("Basic styles with a class", () => {
+test("Grid", () => {
   const fragment = toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
         {
-          _id: "97d91be2-3bba-d340-0f13-a84e975b7497",
-          type: "Heading",
-          tag: "h1",
-          classes: [
-            "2891ad3d-89de-2434-bedd-51ef56dff4c4",
-            "a7bff598-b719-1edb-067b-a90a54d68605",
-          ],
-          children: ["97d91be2-3bba-d340-0f13-a84e975b7498"],
-        },
-        {
-          _id: "97d91be2-3bba-d340-0f13-a84e975b7498",
-          text: true,
-          v: "Turtle in the sea",
+          _id: "25ffefdf-c015-5edd-7673-933b41a25328",
+          type: "Grid",
+          tag: "div",
+          classes: [],
+          children: [],
         },
       ],
-      styles: [
-        {
-          _id: "a7bff598-b719-1edb-067b-a90a54d68605",
-          type: "class",
-          name: "Heading",
-          styleLess: "color: hsla(0, 80.00%, 47.78%, 1.00);",
-        },
-      ],
+      styles: [],
     },
   });
-  expect(fragment.styleSources).toEqual([
+
+  expect(fragment.instances).toEqual([
     {
-      type: "token",
-      id: expect.not.stringMatching("styleSourceId"),
-      name: "Heading",
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
     },
   ]);
-  expect(fragment.styleSourceSelections).toEqual([
+});
+
+test("Columns", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b58",
+          type: "Row",
+          tag: "div",
+          classes: [],
+          children: [
+            "08fb88d6-f6ec-5169-f4d4-8dac98df2b59",
+            "08fb88d6-f6ec-5169-f4d4-8dac98df2b5a",
+          ],
+        },
+        {
+          _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b59",
+          type: "Column",
+          tag: "div",
+          classes: [],
+          children: [],
+        },
+        {
+          _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b5a",
+          type: "Column",
+          tag: "div",
+          classes: [],
+          children: [],
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
     {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [],
+    },
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Box",
+      children: [
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.not.stringMatching("instanceId") },
+      ],
+    },
+  ]);
+});
+
+test("Image", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "3c0b6a7a-830f-4b4a-48c5-4215f9c9389a",
+          type: "Image",
+          tag: "img",
+          classes: [],
+          children: [],
+          data: {
+            attr: {
+              src: "https://uploads-ssl.webflow.com/6640ea3496ea68a4a4e3efcf/665dd9f1927826d5caad6ed4_Screenshot%202024-05-29%20at%2023.10.33.png",
+              loading: "eager",
+              width: "200",
+              height: "auto",
+              alt: "Test",
+            },
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+
+  expect(fragment.instances).toEqual([
+    {
+      id: expect.not.stringMatching("instanceId"),
+      type: "instance",
+      component: "Image",
+      children: [],
+    },
+  ]);
+
+  expect(fragment.props).toEqual([
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "alt",
+      value: "Test",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "loading",
+      value: "eager",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "width",
+      value: "200",
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "src",
+      value: expect.not.stringMatching("src"),
+    },
+    {
+      type: "string",
+      id: expect.not.stringMatching("instanceId"),
+      instanceId: expect.not.stringMatching("id"),
+      name: "tag",
+      value: "img",
+    },
+  ]);
+});
+
+describe("Custom attributes", () => {
+  const fragment = toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "249f235e-91b6-bd0f-bc42-00993479e637",
+          type: "Heading",
+          tag: "h1",
+          classes: [],
+          children: [],
+          data: {
+            xattr: [
+              {
+                name: "at",
+                value: "b",
+              },
+            ],
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+  expect(fragment.props).toEqual([
+    {
+      type: "string",
+      id: expect.not.stringMatching("id"),
       instanceId: expect.not.stringMatching("instanceId"),
-      values: [expect.not.stringMatching("styleSourceId")],
+      name: "tag",
+      value: "h1",
     },
-  ]);
-  expect(fragment.styles).toEqual([
     {
-      styleSourceId: expect.not.stringMatching("styleSourceId"),
-      breakpointId: "0",
-      property: "color",
-      value: { type: "rgb", alpha: 1, r: 219, g: 24, b: 24 },
+      type: "string",
+      id: expect.not.stringMatching("id"),
+      instanceId: expect.not.stringMatching("instanceId"),
+      name: "at",
+      value: "b",
     },
   ]);
+});
+
+describe("Styles", () => {
+  test("Single class", () => {
+    const fragment = toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "97d91be2-3bba-d340-0f13-a84e975b7497",
+            type: "Heading",
+            tag: "h1",
+            classes: ["a7bff598-b719-1edb-067b-a90a54d68605"],
+            children: [],
+          },
+        ],
+        styles: [
+          {
+            _id: "a7bff598-b719-1edb-067b-a90a54d68605",
+            type: "class",
+            name: "Heading",
+            styleLess: "color: hsla(0, 80.00%, 47.78%, 1.00);",
+          },
+        ],
+      },
+    });
+    expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "Heading",
+      },
+    ]);
+    expect(fragment.styleSourceSelections).toEqual([
+      {
+        instanceId: expect.not.stringMatching("instanceId"),
+        values: [expect.not.stringMatching("styleSourceId")],
+      },
+    ]);
+    expect(fragment.styles).toEqual([
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "color",
+        value: { type: "rgb", alpha: 1, r: 219, g: 24, b: 24 },
+      },
+    ]);
+  });
+
+  test("Combo class", () => {
+    const fragment = toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "5f7ab979-89b3-c705-6ab9-35f77dfb209f",
+            type: "Link",
+            tag: "a",
+            classes: [
+              "194e7d07-469d-6ffa-3925-1f51bdad7e44",
+              "194e7d07-469d-6ffa-3925-1f51bdad7e46",
+            ],
+            children: [],
+            data: {
+              link: {
+                url: "#",
+              },
+            },
+          },
+        ],
+        styles: [
+          {
+            _id: "194e7d07-469d-6ffa-3925-1f51bdad7e44",
+            type: "class",
+            name: "button",
+            styleLess: "text-align: center;",
+            children: ["194e7d07-469d-6ffa-3925-1f51bdad7e46"],
+          },
+          {
+            _id: "194e7d07-469d-6ffa-3925-1f51bdad7e46",
+            type: "class",
+            name: "is-secondary",
+            comb: "&",
+            styleLess: "background-color: transparent; ",
+            createdBy: "6075409192d886a671499223",
+          },
+        ],
+      },
+    });
+    expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "button",
+      },
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "is-secondary",
+      },
+    ]);
+    expect(fragment.styleSourceSelections).toEqual([
+      {
+        instanceId: expect.not.stringMatching("instanceId"),
+        values: [
+          expect.not.stringMatching("styleSourceId"),
+          expect.not.stringMatching("styleSourceId"),
+        ],
+      },
+    ]);
+    expect(fragment.styles).toEqual([
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "textAlign",
+        value: { type: "keyword", value: "center" },
+      },
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "backgroundColor",
+        value: {
+          type: "keyword",
+          value: "transparent",
+        },
+      },
+    ]);
+  });
 });
