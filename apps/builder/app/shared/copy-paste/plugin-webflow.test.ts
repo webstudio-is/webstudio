@@ -638,18 +638,6 @@ test("Quick Stack", () => {
             "91782272-bf55-194d-ce85-9ddc69c51def",
             "91782272-bf55-194d-ce85-9ddc69c51df0",
           ],
-          data: {
-            style: {
-              base: {
-                main: {
-                  noPseudo: {
-                    gridTemplateColumns: "1fr 1fr",
-                    gridTemplateRows: "auto",
-                  },
-                },
-              },
-            },
-          },
         },
         {
           _id: "91782272-bf55-194d-ce85-9ddc69c51def",
@@ -736,18 +724,6 @@ test("Columns", () => {
             "08fb88d6-f6ec-5169-f4d4-8dac98df2b59",
             "08fb88d6-f6ec-5169-f4d4-8dac98df2b5a",
           ],
-          data: {
-            grid: {
-              type: "row",
-              cols: {
-                main: "6|6",
-                medium: "",
-                small: "",
-                tiny: "",
-              },
-            },
-            tag: "div",
-          },
         },
         {
           _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b59",
@@ -755,12 +731,6 @@ test("Columns", () => {
           tag: "div",
           classes: [],
           children: [],
-          data: {
-            grid: {
-              type: "col",
-            },
-            tag: "div",
-          },
         },
         {
           _id: "08fb88d6-f6ec-5169-f4d4-8dac98df2b5a",
@@ -768,12 +738,6 @@ test("Columns", () => {
           tag: "div",
           classes: [],
           children: [],
-          data: {
-            grid: {
-              type: "col",
-            },
-            tag: "div",
-          },
         },
       ],
       styles: [],
@@ -891,7 +855,6 @@ describe("Custom attributes", () => {
           classes: [],
           children: [],
           data: {
-            tag: "h1",
             xattr: [
               {
                 name: "at",
