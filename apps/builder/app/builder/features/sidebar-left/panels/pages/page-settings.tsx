@@ -225,7 +225,6 @@ const validateValues = (
   // undefined page id means new page
   pageId: undefined | Page["id"],
   values: Values,
-  isHomePage: boolean,
   variableValues: Map<string, unknown>,
   userPlanFeatures: UserPlanFeatures
 ): Errors => {
@@ -247,7 +246,8 @@ const validateValues = (
       content: computeExpression(item.content, variableValues),
     })),
   };
-  const Validator = isHomePage ? HomePageValues : PageValues;
+
+  const Validator = values.isHomePage ? HomePageValues : PageValues;
   const parsedResult = Validator.safeParse(computedValues);
   const errors: Errors = {};
   if (parsedResult.success === false) {
@@ -1293,7 +1293,6 @@ export const NewPageSettings = ({
     pages,
     undefined,
     values,
-    false,
     variableValues,
     userPlanFeatures
   );
@@ -1505,11 +1504,22 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       return;
     }
 
+    if (pages.homePage.id === pageId) {
+      updatePageMutable(pages.homePage, values, pages.folders);
+    }
+
+    const pageToUpdate = pages.pages.find((page) => page.id === pageId);
+
+    if (pageToUpdate !== undefined) {
+      updatePageMutable(pageToUpdate, values, pages.folders);
+    }
+
     // swap home page
     if (values.isHomePage && pages.homePage.id !== pageId) {
       const newHomePageIndex = pages.pages.findIndex(
         (page) => page.id === pageId
       );
+
       if (newHomePageIndex === -1) {
         throw new Error(`Page with id ${pageId} not found`);
       }
@@ -1547,15 +1557,6 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       rootFolder.children[childIndexOfHome] = rootFolder.children[0];
       rootFolder.children[0] = pages.homePage.id;
     }
-
-    if (pages.homePage.id === pageId) {
-      updatePageMutable(pages.homePage, values, pages.folders);
-    }
-    for (const page of pages.pages) {
-      if (page.id === pageId) {
-        updatePageMutable(page, values, pages.folders);
-      }
-    }
   });
 };
 
@@ -1588,7 +1589,6 @@ export const PageSettings = ({
     pages,
     pageId,
     values,
-    values.isHomePage,
     variableValues,
     userPlanFeatures
   );
