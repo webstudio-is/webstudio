@@ -66,6 +66,15 @@ const convertTagName = (tagName: string) => {
   return tag;
 };
 
+const escapeValue = (value: string) =>
+  value
+    .trim()
+    .replace(/\\/g, "\\\\")
+    .replace(/`/g, "\\`")
+    .replace(/\$/g, "\\$")
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n");
+
 export const htmlToJsx = (html: string) => {
   const parsedHtml = parseFragment(html);
 
@@ -74,7 +83,11 @@ export const htmlToJsx = (html: string) => {
   for (const walkNode of walkChildNodes(parsedHtml)) {
     switch (walkNode.type) {
       case "text":
-        result += walkNode.value;
+        {
+          const escapedValue = escapeValue(walkNode.value);
+
+          result += escapedValue ? "{`" + escapedValue + "`}" : "";
+        }
         break;
       case "element-start":
         {

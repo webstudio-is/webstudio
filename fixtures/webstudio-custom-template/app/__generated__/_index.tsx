@@ -85,7 +85,7 @@ const Script = ({ children, ...props }: Record<string, string | boolean>) => {
 export const CustomCode = () => {
   return (
     <>
-      <Script>console.log('HELLO')</Script>
+      <Script>{`console.log('HELLO')`}</Script>
       <meta property="saas:test" content="test"></meta>
     </>
   );

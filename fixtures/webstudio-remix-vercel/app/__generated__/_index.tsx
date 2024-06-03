@@ -58,7 +58,7 @@ const Script = ({ children, ...props }: Record<string, string | boolean>) => {
 export const CustomCode = () => {
   return (
     <>
-      <Script>console.log('KittyGuardedZone')</Script>
+      <Script>{`console.log('KittyGuardedZone')`}</Script>
     </>
   );
 };
