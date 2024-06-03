@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 import { Links, Meta, Outlet, useMatches } from "@remix-run/react";
+// @todo think about how to make __generated__ typeable
+// @ts-ignore
 import { CustomCode } from "./__generated__/_index";
 
 const Root = () => {
