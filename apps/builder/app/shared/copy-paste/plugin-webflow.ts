@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
+import type { Instance, Prop, WebstudioFragment } from "@webstudio-is/sdk";
 import {
   computeInstancesConstraints,
   findClosestDroppableTarget,
@@ -18,94 +18,6 @@ import { parseCss } from "@webstudio-is/css-data";
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 
 export const mimeType = "application/json";
-
-// A list of Webflow component names that need to be mapped.
-const componentMappers = {
-  Block(wfNode: WfElementNode) {
-    if (wfNode.type === "Block") {
-      return wfNode.data?.text ? "Text" : "Box";
-    }
-    return wfNode.type;
-  },
-  Section(wfNode: WfElementNode) {
-    if (wfNode.type === "Section") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  RichText(wfNode: WfElementNode) {
-    if (wfNode.type === "RichText") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  Strong(wfNode: WfElementNode) {
-    if (wfNode.type === "Strong") {
-      return "Bold";
-    }
-    return wfNode.type;
-  },
-  Emphasized(wfNode: WfElementNode) {
-    if (wfNode.type === "Emphasized") {
-      return "Italic";
-    }
-    return wfNode.type;
-  },
-  BlockContainer(wfNode: WfElementNode) {
-    if (wfNode.type === "BlockContainer") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  Layout(wfNode: WfElementNode) {
-    if (wfNode.type === "Layout") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  Cell(wfNode: WfElementNode) {
-    if (wfNode.type === "Cell") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  VFlex(wfNode: WfElementNode) {
-    if (wfNode.type === "VFlex") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  HFlex(wfNode: WfElementNode) {
-    if (wfNode.type === "HFlex") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  Grid(wfNode: WfElementNode) {
-    if (wfNode.type === "Grid") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  Row(wfNode: WfElementNode) {
-    if (wfNode.type === "Row") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  Column(wfNode: WfElementNode) {
-    if (wfNode.type === "Column") {
-      return "Box";
-    }
-    return wfNode.type;
-  },
-  CodeBlock(wfNode: WfElementNode) {
-    if (wfNode.type === "CodeBlock") {
-      return "CodeText";
-    }
-    return wfNode.type;
-  },
-};
 
 const WfBaseNode = z.object({
   _id: z.string(),
@@ -266,7 +178,205 @@ const addStyles = (
   }
 };
 
-const addInstance = (
+const addTagProperty = (
+  wfNode: WfElementNode,
+  instanceId: Instance["id"],
+  props: Array<Prop>
+) => {
+  if ("tag" in wfNode) {
+    props.push({
+      type: "string",
+      id: nanoid(),
+      instanceId,
+      name: "tag",
+      value: wfNode.tag,
+    });
+  }
+};
+
+const mapComponentProperties = (
+  wfNode: WfElementNode,
+  instanceId: Instance["id"]
+) => {
+  const props: Array<Prop> = [];
+  const component = wfNode.type;
+  addTagProperty(wfNode, instanceId, props);
+
+  switch (component) {
+    case "Heading":
+    case "List":
+    case "ListItem":
+    case "Paragraph":
+    case "Superscript":
+    case "Subscript":
+    case "Blockquote": {
+      return { component, props };
+    }
+    case "Block": {
+      const component = wfNode.data?.text ? "Text" : "Box";
+      return { component, props };
+    }
+    case "Link": {
+      const data = wfNode.data;
+
+      if (data.link.url) {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "href",
+          value: data.link.url,
+        });
+      }
+      if (data.link.target) {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "target",
+          value: data.link.target,
+        });
+      }
+      return { component, props };
+    }
+    case "Section": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "RichText": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "Strong": {
+      const component = "Bold";
+      return { component, props };
+    }
+    case "Emphasized": {
+      const component = "Italic";
+      return { component, props };
+    }
+    case "BlockContainer": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "Layout": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "Cell": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "VFlex": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "HFlex": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "Grid": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "Row": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "Column": {
+      const component = "Box";
+      return { component, props };
+    }
+    case "CodeBlock": {
+      const component = "CodeText";
+      const data = wfNode.data;
+
+      if (data.language) {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "lang",
+          value: data.language,
+        });
+      }
+
+      if (data.code) {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "code",
+          value: data.code,
+        });
+      }
+      return { component, props };
+    }
+    case "Image": {
+      const data = wfNode.data;
+
+      if (
+        data.attr.alt &&
+        // This is how they tell it when alt comes from image meta during publishing
+        data.attr.alt !== "__wf_reserved_inherit" &&
+        // This is how they tell it to use alt="", which is our default anyways
+        data.attr.alt !== "__wf_reserved_decorative"
+      ) {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "alt",
+          value: data.attr.alt,
+        });
+      }
+
+      if (data.attr.loading === "eager" || data.attr.loading === "lazy") {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "loading",
+          value: data.attr.loading,
+        });
+      }
+
+      if (data.attr.width && data.attr.width !== "auto") {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "width",
+          value: data.attr.width,
+        });
+      }
+
+      if (data.attr.height && data.attr.height !== "auto") {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "height",
+          value: data.attr.height,
+        });
+      }
+      if (data.attr.src) {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "src",
+          value: data.attr.src,
+        });
+      }
+      return { component, props };
+    }
+  }
+
+  component satisfies never;
+};
+
+const addInstanceAndProperties = (
   wfNode: WfNode,
   added: Map<WfNode["_id"], Instance["id"]>,
   wfNodes: Map<WfNode["_id"], WfNode>,
@@ -275,7 +385,6 @@ const addInstance = (
   if (added.get(wfNode._id) || "text" in wfNode || "type" in wfNode === false) {
     return;
   }
-
   const children: Instance["children"] = [];
   const instanceId = nanoid();
 
@@ -293,7 +402,12 @@ const addInstance = (
       continue;
     }
 
-    const childInstanceId = addInstance(wfChildNode, added, wfNodes, fragment);
+    const childInstanceId = addInstanceAndProperties(
+      wfChildNode,
+      added,
+      wfNodes,
+      fragment
+    );
     if (childInstanceId !== undefined) {
       children.push({
         type: "id",
@@ -302,10 +416,7 @@ const addInstance = (
     }
   }
 
-  const component =
-    wfNode.type in componentMappers
-      ? componentMappers[wfNode.type as keyof typeof componentMappers](wfNode)
-      : wfNode.type;
+  const { component, props } = mapComponentProperties(wfNode, instanceId);
 
   fragment.instances.push({
     id: instanceId,
@@ -315,164 +426,9 @@ const addInstance = (
   });
   added.set(wfNode._id, instanceId);
 
+  fragment.props.push(...props);
+
   return instanceId;
-};
-
-// Converting Webflow attributes and data to Webstudio props.
-const propertyMappers = {
-  Link(wfNode: WfElementNode, instanceId: Instance["id"]) {
-    if (wfNode.type !== "Link") {
-      return [];
-    }
-    const data = wfNode.data;
-    const props: WebstudioFragment["props"] = [];
-
-    if (data.link.url) {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "href",
-        value: data.link.url,
-      });
-    }
-    if (data.link.target) {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "target",
-        value: data.link.target,
-      });
-    }
-    return props;
-  },
-  CodeBlock(wfNode: WfElementNode, instanceId: Instance["id"]) {
-    if (wfNode.type !== "CodeBlock") {
-      return [];
-    }
-    const data = wfNode.data;
-    const props: WebstudioFragment["props"] = [];
-
-    if (data.language) {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "lang",
-        value: data.language,
-      });
-    }
-
-    if (data.code) {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "code",
-        value: data.code,
-      });
-    }
-    return props;
-  },
-  Image(wfNode: WfElementNode, instanceId: Instance["id"]) {
-    if (wfNode.type !== "Image") {
-      return [];
-    }
-    const data = wfNode.data;
-    const props: WebstudioFragment["props"] = [];
-
-    if (
-      data.attr.alt &&
-      // This is how they tell it when alt comes from image meta during publishing
-      data.attr.alt !== "__wf_reserved_inherit" &&
-      // This is how they tell it to use alt="", which is our default anyways
-      data.attr.alt !== "__wf_reserved_decorative"
-    ) {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "alt",
-        value: data.attr.alt,
-      });
-    }
-
-    if (data.attr.loading === "eager" || data.attr.loading === "lazy") {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "loading",
-        value: data.attr.loading,
-      });
-    }
-
-    if (data.attr.width && data.attr.width !== "auto") {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "width",
-        value: data.attr.width,
-      });
-    }
-
-    if (data.attr.height && data.attr.height !== "auto") {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "height",
-        value: data.attr.height,
-      });
-    }
-    if (data.attr.src) {
-      props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "src",
-        value: data.attr.src,
-      });
-    }
-    return props;
-  },
-};
-
-const addProperties = (
-  wfNodes: Map<WfNode["_id"], WfNode>,
-  added: Map<WfNode["_id"], Instance["id"]>,
-  fragment: WebstudioFragment
-) => {
-  for (const wfNode of wfNodes.values()) {
-    if ("text" in wfNode || "type" in wfNode === false) {
-      continue;
-    }
-    const instanceId = added.get(wfNode._id);
-    if (instanceId === undefined) {
-      console.error(`No instance id found for node ${wfNode._id}`);
-      continue;
-    }
-    // Webflow nodes always come with a tag.
-    // We support tag only for instances like Heading, not all of them.
-    // @todo decide what to do about other instances.
-    if ("tag" in wfNode) {
-      fragment.props.push({
-        type: "string",
-        id: nanoid(),
-        instanceId,
-        name: "tag",
-        value: wfNode.tag,
-      });
-    }
-    if (wfNode.type in propertyMappers) {
-      const props = propertyMappers[
-        wfNode.type as keyof typeof propertyMappers
-      ](wfNode, instanceId);
-      fragment.props.push(...props);
-    }
-  }
 };
 
 const toWebstudioFragment = (wfData: WfData) => {
@@ -489,18 +445,20 @@ const toWebstudioFragment = (wfData: WfData) => {
     assets: [],
   };
 
-  const wfNodes = new Map<WfNode["_id"], WfNode>(
-    wfData.payload.nodes.map((node: WfNode) => [node._id, node])
-  );
+  const wfNodes = new Map<WfNode["_id"], WfNode>();
+  for (const node of wfData.payload.nodes) {
+    if ("type" in node) {
+      wfNodes.set(node._id, node);
+    }
+  }
   const wfStyles = new Map<WfStyle["_id"], WfStyle>(
     wfData.payload.styles.map((style: WfStyle) => [style._id, style])
   );
   const added = new Map<WfNode["_id"], Instance["id"]>();
   for (const wfNode of wfNodes.values()) {
-    addInstance(wfNode, added, wfNodes, fragment);
+    addInstanceAndProperties(wfNode, added, wfNodes, fragment);
   }
   addStyles(wfNodes, wfStyles, added, fragment);
-  addProperties(wfNodes, added, fragment);
   // First node should be always the root node in theory, if not
   // we need to find a node that is not a child of any other node.
   const rootWfNode = wfData.payload.nodes[0];
