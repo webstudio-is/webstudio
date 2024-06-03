@@ -629,6 +629,10 @@ export const prebuild = async (options: {
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
     const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
 
+    const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
+    const remixRoute = generateRemixRoute(pagePath);
+    const fileName = `${remixRoute}.tsx`;
+
     // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
       /* This is a auto generated file for building the project */ \n
@@ -653,23 +657,28 @@ export const prebuild = async (options: {
       export const pageBackgroundImageAssets: ImageAsset[] =
         ${JSON.stringify(pageBackgroundImageAssets)}
 
-
       ${
-        projectMeta?.code
+        remixRoute === "_index"
           ? `
-      const Script = ({children, ...props}: Record<string, string | boolean>) => {
-        if (children == null) {
-          return <script {...props} />;
-        }
+            ${
+              projectMeta?.code
+                ? `
+            const Script = ({children, ...props}: Record<string, string | boolean>) => {
+              if (children == null) {
+                return <script {...props} />;
+              }
 
-        return <script {...props} dangerouslySetInnerHTML={{__html: children}} />;
-      };
-      `
+              return <script {...props} dangerouslySetInnerHTML={{__html: children}} />;
+            };
+            `
+                : ""
+            }
+
+            export const CustomCode = () => {
+              return (<>${projectMeta?.code ? htmlToJsx(projectMeta.code) : ""}</>);
+            }
+          `
           : ""
-      }
-
-      export const CustomCode = () => {
-        return (<>${projectMeta?.code ? htmlToJsx(projectMeta.code) : ""}</>);
       }
 
       ${xmlPresentationComponents}
@@ -709,22 +718,6 @@ export const prebuild = async (options: {
         projectMeta?.code?.trim() ?? ""
       )};
     `;
-
-    /*
-      The _index is mandatory.
-      Let's say there is a route /test.one.tsx and then there is a /test.tsx route.
-      Remix doesn't pick the /test.tsx by default unless we mention the _index at the end.
-
-      Or else it picks the first route that matches the /test as a layout and not a independent route.
-      So, we need to mark the pages as _index at the end. So deep nested routes works as expected.
-
-      Details:
-      https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
-    */
-
-    const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
-    const remixRoute = generateRemixRoute(pagePath);
-    const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = (
       documentType === "html" ? routeFileTemplate : routeXmlFileTemplate
