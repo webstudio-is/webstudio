@@ -1508,10 +1508,10 @@ const updatePage = (pageId: Page["id"], values: Partial<Values>) => {
       updatePageMutable(pages.homePage, values, pages.folders);
     }
 
-    for (const page of pages.pages) {
-      if (page.id === pageId) {
-        updatePageMutable(page, values, pages.folders);
-      }
+    const pageToUpdate = pages.pages.find((page) => page.id === pageId);
+
+    if (pageToUpdate !== undefined) {
+      updatePageMutable(pageToUpdate, values, pages.folders);
     }
 
     // swap home page
