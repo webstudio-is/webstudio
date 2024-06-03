@@ -1,6 +1,6 @@
 import { test, expect, describe } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
-import { $breakpoints } from "../nano-states";
+import { $breakpoints } from "../../nano-states";
 
 const { toWebstudioFragment } = __testing__;
 
