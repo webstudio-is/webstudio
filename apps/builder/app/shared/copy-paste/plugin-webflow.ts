@@ -194,7 +194,7 @@ const addTagProperty = (
   }
 };
 
-const mapComponentProperties = (
+const mapComponentAndProperties = (
   wfNode: WfElementNode,
   instanceId: Instance["id"]
 ) => {
@@ -387,7 +387,6 @@ const addInstanceAndProperties = (
   }
   const children: Instance["children"] = [];
   const instanceId = nanoid();
-
   for (const wfChildId of wfNode.children) {
     const wfChildNode = wfNodes.get(wfChildId);
     if (wfChildNode === undefined) {
@@ -416,7 +415,7 @@ const addInstanceAndProperties = (
     }
   }
 
-  const { component, props } = mapComponentProperties(wfNode, instanceId);
+  const { component, props } = mapComponentAndProperties(wfNode, instanceId);
 
   fragment.instances.push({
     id: instanceId,
@@ -447,7 +446,7 @@ const toWebstudioFragment = (wfData: WfData) => {
 
   const wfNodes = new Map<WfNode["_id"], WfNode>();
   for (const node of wfData.payload.nodes) {
-    if ("type" in node) {
+    if ("type" in node || "text" in node) {
       wfNodes.set(node._id, node);
     }
   }
