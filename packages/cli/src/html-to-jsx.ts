@@ -144,23 +144,23 @@ export const htmlToJsx = (html: string) => {
 
   for (const walkNode of walkChildNodes(parsedHtml)) {
     switch (walkNode.type) {
-      case "text":
-        {
-          const escapedValue = escapeValue(walkNode.value);
+      case "text": {
+        const escapedValue = escapeValue(walkNode.value);
 
-          result += escapedValue ? "{`" + escapedValue + "`}" : "";
-        }
+        result += escapedValue ? "{`" + escapedValue + "`}" : "";
         break;
-      case "element-start":
-        {
-          const tag = convertTagName(walkNode.tagName);
-          result += `<${tag}${attributesToString(walkNode.attributes)}>`;
-        }
-        break;
+      }
 
-      case "element-end":
+      case "element-start": {
+        const tag = convertTagName(walkNode.tagName);
+        result += `<${tag}${attributesToString(walkNode.attributes)}>`;
+        break;
+      }
+
+      case "element-end": {
         result += `</${convertTagName(walkNode.tagName)}>`;
         break;
+      }
     }
   }
 
