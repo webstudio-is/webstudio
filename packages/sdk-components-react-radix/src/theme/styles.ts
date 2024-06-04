@@ -49,7 +49,7 @@ export const getButtonStyles = (
   if (size === "icon") {
     // Set explicit paddings for IOS Safari to prevent the icon from collapsing
     // h-10 w-10
-    sizeStyles = [tc.h(10), tc.w(10), tc.px(6), tc.py(3)].flat();
+    sizeStyles = [tc.h(10), tc.w(10), tc.px(1.5), tc.py(0)].flat();
   }
   if (size === "sm") {
     // h-9 rounded-md px-3
