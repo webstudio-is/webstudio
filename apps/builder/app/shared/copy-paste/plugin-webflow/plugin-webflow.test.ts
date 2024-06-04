@@ -957,7 +957,7 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
-          margin-bottom: 10px
+          font-weight: bold
         }
         Heading {
           color: rgba(219, 24, 24, 1)
@@ -1027,22 +1027,15 @@ describe("Styles", () => {
         ],
       },
     ]);
-    expect(fragment.styles).toEqual([
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "textAlign",
-        value: { type: "keyword", value: "center" },
-      },
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "backgroundColor",
-        value: {
-          type: "keyword",
-          value: "transparent",
-        },
-      },
-    ]);
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        button {
+          text-align: center
+        }
+        is-secondary {
+          background-color: transparent
+        }
+      }"
+    `);
   });
 });
