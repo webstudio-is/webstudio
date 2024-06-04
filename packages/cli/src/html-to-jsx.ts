@@ -4,6 +4,38 @@ import {
   type DefaultTreeAdapterMap,
 } from "parse5";
 
+const BOOLEAN_ATTRIBUTES = new Set([
+  "async",
+  "autofocus",
+  "autoplay",
+  "checked",
+  "contenteditable",
+  "controls",
+  "default",
+  "defer",
+  "disabled",
+  "formnovalidate",
+  "hidden",
+  "ismap",
+  "itemscope",
+  "loop",
+  "multiple",
+  "muted",
+  "nomodule",
+  "novalidate",
+  "open",
+  "playsinline",
+  "readonly",
+  "required",
+  "reversed",
+  "scoped",
+  "selected",
+  "truespeed",
+]);
+
+const isBooleanAttr = (name: string) =>
+  BOOLEAN_ATTRIBUTES.has(name.toLowerCase());
+
 type WalkNode =
   | { type: "text"; value: string }
   | {
@@ -55,7 +87,11 @@ const convertAttributeName = (name: string) =>
 
 const attributesToString = (attributes: [string, string][]) =>
   attributes
-    .map(([attName, value]) => ` ${convertAttributeName(attName)}="${value}"`)
+    .map(([attName, value]) =>
+      value === "" && isBooleanAttr(attName)
+        ? ` ${convertAttributeName(attName)}`
+        : ` ${convertAttributeName(attName)}="${value}"`
+    )
     .join("");
 
 const convertTagName = (tagName: string) => {
@@ -68,7 +104,7 @@ const convertTagName = (tagName: string) => {
 
 const escapeValue = (value: string) =>
   value
-    .trim()
+    // .trim()
     .replace(/\\/g, "\\\\")
     .replace(/`/g, "\\`")
     .replace(/\$/g, "\\$")
