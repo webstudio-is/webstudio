@@ -960,6 +960,9 @@ importers:
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:*
         version: link:../sdk-components-react-remix
+      change-case:
+        specifier: ^5.0.2
+        version: 5.0.2
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1

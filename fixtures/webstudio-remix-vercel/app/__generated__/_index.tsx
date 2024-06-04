@@ -54,6 +54,13 @@ const Script = ({ children, ...props }: Record<string, string | boolean>) => {
 
   return <script {...props} dangerouslySetInnerHTML={{ __html: children }} />;
 };
+const Style = ({ children, ...props }: Record<string, string | boolean>) => {
+  if (children == null) {
+    return <style {...props} />;
+  }
+
+  return <style {...props} dangerouslySetInnerHTML={{ __html: children }} />;
+};
 
 export const CustomCode = () => {
   return (

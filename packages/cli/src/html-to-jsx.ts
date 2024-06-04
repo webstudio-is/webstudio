@@ -3,6 +3,7 @@ import {
   defaultTreeAdapter,
   type DefaultTreeAdapterMap,
 } from "parse5";
+import { camelCase } from "change-case";
 
 const BOOLEAN_ATTRIBUTES = new Set([
   "async",
@@ -82,16 +83,37 @@ function* walkChildNodes(
   }
 }
 
-const convertAttributeName = (name: string) =>
-  name === "class" ? "className" : name;
+const convertStyleString = (style: string) => {
+  const styles = style
+    .split(";")
+    .map((style) => style.trim())
+    .map((style) => style.split(":").map((part) => part.trim()));
+
+  const res: Record<string, string> = {};
+  for (const [name, value] of styles) {
+    res[camelCase(name)] = value;
+  }
+  return JSON.stringify(res);
+};
+
+const toAttrString = (name: string, value: string) => {
+  const attName = name.toLowerCase();
+  const jsxName = attName === "class" ? "className" : attName;
+
+  if (value === "" && isBooleanAttr(attName)) {
+    return `${jsxName}`;
+  }
+
+  if (attName === "style") {
+    return `${jsxName}={${convertStyleString(value)}}`;
+  }
+
+  return `${jsxName}="${value}"`;
+};
 
 const attributesToString = (attributes: [string, string][]) =>
   attributes
-    .map(([attName, value]) =>
-      value === "" && isBooleanAttr(attName)
-        ? ` ${convertAttributeName(attName)}`
-        : ` ${convertAttributeName(attName)}="${value}"`
-    )
+    .map(([attName, value]) => ` ${toAttrString(attName, value)}`)
     .join("");
 
 const convertTagName = (tagName: string) => {
@@ -99,6 +121,11 @@ const convertTagName = (tagName: string) => {
   if (tag === "script") {
     return "Script";
   }
+
+  if (tag === "style") {
+    return "Style";
+  }
+
   return tag;
 };
 
@@ -111,7 +138,7 @@ const escapeValue = (value: string) =>
     .replace(/\n/g, "\\n");
 
 export const htmlToJsx = (html: string) => {
-  const parsedHtml = parseFragment(html);
+  const parsedHtml = parseFragment(html, { scriptingEnabled: false });
 
   let result = "";
 

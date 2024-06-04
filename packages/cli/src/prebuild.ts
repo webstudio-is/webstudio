@@ -670,6 +670,13 @@ export const prebuild = async (options: {
 
               return <script {...props} dangerouslySetInnerHTML={{__html: children}} />;
             };
+            const Style = ({children, ...props}: Record<string, string | boolean>) => {
+              if (children == null) {
+                return <style {...props} />;
+              }
+
+              return <style {...props} dangerouslySetInnerHTML={{__html: children}} />;
+            };
             `
                 : ""
             }
