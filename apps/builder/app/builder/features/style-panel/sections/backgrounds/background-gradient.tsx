@@ -112,7 +112,7 @@ export const BackgroundGradient = (
             linear-gradient(...)
             <br />
             <br />
-            If pasting from figma, remove the “background” property name.
+            If pasting from Figma, remove the "background" property name.
           </>
         }
         properties={[property]}
