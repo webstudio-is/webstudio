@@ -15,10 +15,10 @@ jobs:
       id: changelog
       with:
         commit-types: |
-          feat: New Features
-          fix: Bug Fixes
+          feat: Features
+          fix: Fixes
           docs: Documentation
-          experimental: Experimental features
+          experimental: Experimental
         semver: false
 
     - uses: ncipollo/release-action@v1
