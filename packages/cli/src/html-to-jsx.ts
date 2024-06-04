@@ -104,7 +104,6 @@ const convertTagName = (tagName: string) => {
 
 const escapeValue = (value: string) =>
   value
-    // .trim()
     .replace(/\\/g, "\\\\")
     .replace(/`/g, "\\`")
     .replace(/\$/g, "\\$")

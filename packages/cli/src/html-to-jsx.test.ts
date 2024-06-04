@@ -103,7 +103,7 @@ test("Supports script src and meta", async () => {
   expect(await formatHtml(htmlCode)).toBe(await formatHtml(result));
 });
 
-test.only("Should not fail", async () => {
+test("Should not fail", async () => {
   const htmlCode = `
    </s a="sd"><p><a><script src><scri pt>
   `;

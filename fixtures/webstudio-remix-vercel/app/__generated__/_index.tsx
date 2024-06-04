@@ -59,6 +59,7 @@ export const CustomCode = () => {
   return (
     <>
       <Script>{`console.log('KittyGuardedZone')`}</Script>
+      {`\n`}
     </>
   );
 };

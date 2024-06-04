@@ -712,11 +712,6 @@ export const prebuild = async (options: {
       export const projectId = "${siteData.build.projectId}";
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
-
-      // @todo: Remove after release
-      export const customCode = ${JSON.stringify(
-        projectMeta?.code?.trim() ?? ""
-      )};
     `;
 
     const routeFileContent = (
