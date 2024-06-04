@@ -158,11 +158,13 @@ export const BackgroundContent = (props: BackgroundContentProps) => {
         >
           {imageGradientToggle === "image" && (
             <>
-              <NonResetablePropertyName
-                style={currentStyle}
-                properties={["backgroundImage"]}
-                label="Image"
-              />
+              <Flex css={{ height: "100%" }} align="start">
+                <NonResetablePropertyName
+                  style={currentStyle}
+                  properties={["backgroundImage"]}
+                  label="Image"
+                />
+              </Flex>
 
               <FloatingPanelProvider container={elementRef}>
                 <ImageControl
