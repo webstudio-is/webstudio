@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef } from "react";
 import {
   type CSS,
   css,
@@ -16,17 +16,7 @@ type CanvasIframeProps = {
 
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
   ({ css, ...rest }, ref) => {
-    // initialize canvas after builder is rendered
-    // and synchronizatio is initialized
-    const [isInitialized, setInitialized] = useState(false);
-    useEffect(() => {
-      setInitialized(true);
-    }, []);
-    return (
-      isInitialized && (
-        <iframe {...rest} ref={ref} className={iframeStyle({ css })} />
-      )
-    );
+    return <iframe {...rest} ref={ref} className={iframeStyle({ css })} />;
   }
 );
 

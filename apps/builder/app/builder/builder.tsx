@@ -1,4 +1,4 @@
-import { useCallback, useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
@@ -228,6 +228,7 @@ export const Builder = ({
   userPlanFeatures,
   authTokenPermissions,
 }: BuilderProps) => {
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   useMount(() => {
     // additional data stores
     $project.set(project);
@@ -249,6 +250,10 @@ export const Builder = ({
           authPermit,
           authToken,
         });
+        // render canvas only after all data is loaded
+        // so builder is started listening for connect event
+        // when canvas is rendered
+        setIsDataLoaded(true);
       })
       .catch(() => {});
     return () => {
@@ -347,16 +352,18 @@ export const Builder = ({
           />
           <Main>
             <Workspace onTransitionEnd={onTransitionEnd}>
-              <CanvasIframe
-                ref={iframeRefCallback}
-                src={canvasUrl}
-                title={project.title}
-                css={{
-                  height: "100%",
-                  width: "100%",
-                  backgroundColor: "#fff",
-                }}
-              />
+              {isDataLoaded && (
+                <CanvasIframe
+                  ref={iframeRefCallback}
+                  src={canvasUrl}
+                  title={project.title}
+                  css={{
+                    height: "100%",
+                    width: "100%",
+                    backgroundColor: "#fff",
+                  }}
+                />
+              )}
             </Workspace>
             <AiCommandBar isPreviewMode={isPreviewMode} />
           </Main>
