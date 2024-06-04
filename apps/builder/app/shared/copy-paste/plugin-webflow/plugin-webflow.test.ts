@@ -909,7 +909,13 @@ describe("Styles", () => {
         ],
       },
     });
+
     expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "h1",
+      },
       {
         type: "token",
         id: expect.not.stringMatching("styleSourceId"),
@@ -919,10 +925,43 @@ describe("Styles", () => {
     expect(fragment.styleSourceSelections).toEqual([
       {
         instanceId: expect.not.stringMatching("instanceId"),
-        values: [expect.not.stringMatching("styleSourceId")],
+        values: [
+          expect.not.stringMatching("styleSourceId"),
+          expect.not.stringMatching("styleSourceId"),
+        ],
       },
     ]);
     expect(fragment.styles).toEqual([
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "fontSize",
+        value: { type: "unit", unit: "px", value: 38 },
+      },
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "lineHeight",
+        value: { type: "unit", unit: "px", value: 44 },
+      },
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "marginTop",
+        value: { type: "unit", unit: "px", value: 20 },
+      },
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "fontWeight",
+        value: { type: "keyword", value: "bold" },
+      },
+      {
+        styleSourceId: expect.not.stringMatching("styleSourceId"),
+        breakpointId: "0",
+        property: "marginBottom",
+        value: { type: "unit", unit: "px", value: 10 },
+      },
       {
         styleSourceId: expect.not.stringMatching("styleSourceId"),
         breakpointId: "0",
