@@ -221,7 +221,7 @@ export const isInstanceDetachable = (
   }
   const meta = metas.get(instance.component);
   if (meta === undefined) {
-    return false;
+    return true;
   }
   return meta.detachable ?? true;
 };

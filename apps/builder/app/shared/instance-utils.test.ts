@@ -1230,6 +1230,21 @@ describe("delete instance", () => {
     expect(data.dataSources).toEqual(new Map());
     expect(data.resources).toEqual(new Map());
   });
+
+  test("delete instance without meta", () => {
+    // body
+    //   invalid
+    const instances = new Map([
+      createInstancePair("body", "Body", [{ type: "id", value: "invalid" }]),
+      createInstancePair("invalid", "Invalid", []),
+    ]);
+    $registeredComponentMetas.set(new Map());
+    const data = getWebstudioDataStub({ instances });
+    deleteInstanceMutable(data, ["invalid", "body"]);
+    expect(data.instances).toEqual(
+      new Map([createInstancePair("body", "Body", [])])
+    );
+  });
 });
 
 describe("extract webstudio fragment", () => {
