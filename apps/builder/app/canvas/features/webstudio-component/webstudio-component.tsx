@@ -101,9 +101,11 @@ const ContentEditable = ({
   return renderComponentWithRef(ref);
 };
 
-const MissingComponentStub = forwardRef<
+const ErrorStub = forwardRef<
   HTMLDivElement,
-  { children?: ReactNode }
+  {
+    children?: ReactNode;
+  }
 >((props, ref) => {
   return (
     <div
@@ -114,24 +116,55 @@ const MissingComponentStub = forwardRef<
         border: `1px solid ${rawTheme.colors.borderDestructiveMain}`,
         color: rawTheme.colors.foregroundDestructive,
       }}
-    >
-      Component {props[componentAttribute as never]} does not exist
-    </div>
+    />
   );
 });
+ErrorStub.displayName = "ErrorStub";
 
+const MissingComponentStub = forwardRef<
+  HTMLDivElement,
+  { children?: ReactNode }
+>((props, ref) => {
+  return (
+    <ErrorStub ref={ref} {...props}>
+      Component {props[componentAttribute as never]} does not exist
+    </ErrorStub>
+  );
+});
 MissingComponentStub.displayName = "MissingComponentStub";
+
+const InvalidCollectionDataStub = forwardRef<
+  HTMLDivElement,
+  { children?: ReactNode }
+>((props, ref) => {
+  return (
+    <ErrorStub ref={ref} {...props}>
+      The Collection component requires an array in the data property. When
+      binding external data, it is likely that the array is nested somewhere
+      within, and you need to provide the correct path in the binding.{" "}
+      <a
+        style={{ color: "inherit" }}
+        target="_blank"
+        href="https://docs.webstudio.is/university/core-components/collection.md#whats-an-array"
+        // avoid preventing click by events interceptor
+        onClickCapture={(event) => event.stopPropagation()}
+      >
+        Learn more
+      </a>
+    </ErrorStub>
+  );
+});
+InvalidCollectionDataStub.displayName = "InvalidCollectionDataStub";
 
 const DroppableComponentStub = forwardRef<
   HTMLDivElement,
   { children?: ReactNode }
 >((props, ref) => {
   return (
-    <div
-      {...props}
-      ref={ref}
-      style={{ display: props.children ? "contents" : "block" }}
-    />
+    <div {...props} ref={ref} style={{ display: "block" }}>
+      {/* explicitly specify undefined to override passed children */}
+      {undefined}
+    </div>
   );
 });
 DroppableComponentStub.displayName = "DroppableComponentStub";
@@ -328,8 +361,10 @@ export const WebstudioComponentCanvas = forwardRef<
 
   if (instance.component === collectionComponent) {
     const data = instanceProps.data;
-    // render stub component when no data or children
-    if (
+    if (data && Array.isArray(data) === false) {
+      Component = InvalidCollectionDataStub as AnyComponent;
+    } else if (
+      // render stub component when no data or children
       Array.isArray(data) &&
       data.length > 0 &&
       instance.children.length > 0
@@ -351,8 +386,9 @@ export const WebstudioComponentCanvas = forwardRef<
           </Fragment>
         );
       });
+    } else {
+      Component = DroppableComponentStub as AnyComponent;
     }
-    Component = DroppableComponentStub as AnyComponent;
   }
 
   if (instance.component === descendantComponent) {
@@ -449,7 +485,7 @@ export const WebstudioComponentPreview = forwardRef<
 
   if (instance.component === collectionComponent) {
     const data = instanceProps.data;
-    // render stub component when no data or children
+    // render nothing when no data or children
     if (
       Array.isArray(data) &&
       data.length > 0 &&
