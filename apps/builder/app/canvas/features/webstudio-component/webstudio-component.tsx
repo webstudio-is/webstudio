@@ -139,7 +139,18 @@ const InvalidCollectionDataStub = forwardRef<
 >((props, ref) => {
   return (
     <ErrorStub ref={ref} {...props}>
-      Collection component requires array in data property
+      The Collection component requires an array in the data property. When
+      binding external data, it is likely that the array is nested somewhere
+      within, and you need to provide the correct path in the binding.{" "}
+      <a
+        style={{ color: "inherit" }}
+        target="_blank"
+        href="https://docs.webstudio.is/university/core-components/collection.md#whats-an-array"
+        // avoid preventing click by events interceptor
+        onClickCapture={(event) => event.stopPropagation()}
+      >
+        Learn more
+      </a>
     </ErrorStub>
   );
 });
