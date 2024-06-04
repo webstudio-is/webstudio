@@ -1,10 +1,33 @@
 import { test, expect, describe } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
 import { $breakpoints } from "../../nano-states";
+import { createRegularStyleSheet } from "@webstudio-is/css-engine";
+import type { WebstudioFragment } from "@webstudio-is/sdk";
 
 const { toWebstudioFragment } = __testing__;
 
 $breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
+
+const toCss = (fragment: WebstudioFragment) => {
+  const sheet = createRegularStyleSheet();
+
+  for (const breakpoint of fragment.breakpoints) {
+    sheet.addMediaRule(breakpoint.id, breakpoint);
+  }
+  for (const style of fragment.styles) {
+    const token = fragment.styleSources.find(
+      (source) => source.id === style.styleSourceId
+    );
+    sheet.addStyleRule(
+      {
+        style: { [style.property]: style.value },
+        breakpoint: style.breakpointId,
+      },
+      token && "name" in token ? token.name : "Local"
+    );
+  }
+  return sheet.cssText;
+};
 
 test("Heading", () => {
   const fragment = toWebstudioFragment({
@@ -931,44 +954,16 @@ describe("Styles", () => {
         ],
       },
     ]);
-    expect(fragment.styles).toEqual([
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "fontSize",
-        value: { type: "unit", unit: "px", value: 38 },
-      },
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "lineHeight",
-        value: { type: "unit", unit: "px", value: 44 },
-      },
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "marginTop",
-        value: { type: "unit", unit: "px", value: 20 },
-      },
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "fontWeight",
-        value: { type: "keyword", value: "bold" },
-      },
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "marginBottom",
-        value: { type: "unit", unit: "px", value: 10 },
-      },
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "color",
-        value: { type: "rgb", alpha: 1, r: 219, g: 24, b: 24 },
-      },
-    ]);
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        h1 {
+          margin-bottom: 10px
+        }
+        Heading {
+          color: rgba(219, 24, 24, 1)
+        }
+      }"
+    `);
   });
 
   test("Combo class", () => {

@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import { parseCss } from "@webstudio-is/css-data";
+import { presets } from "./style-presets";
 
 const addNodeStyles = (
   name: string,
@@ -69,11 +70,10 @@ export const addStyles = (
       continue;
     }
 
-    const defaultStyle =
-      defaultStyles[wfNode.tag as keyof typeof defaultStyles];
+    const preset = presets[wfNode.tag as keyof typeof presets];
 
-    if (defaultStyle) {
-      addNodeStyles(wfNode.tag, defaultStyle, instanceId, fragment);
+    if (preset) {
+      addNodeStyles(wfNode.tag, preset, instanceId, fragment);
     }
 
     for (const classId of wfNode.classes) {
@@ -83,51 +83,4 @@ export const addStyles = (
       }
     }
   }
-};
-
-const baseStyles = {
-  Heading: `
-    font-weight: bold;
-    margin-bottom: 10px;
-  `,
-};
-
-// @todo rewrite to support states
-const defaultStyles = {
-  h1: `
-    font-size: 38px;
-    line-height: 44px;
-    margin-top: 20px;
-    ${baseStyles.Heading}
-  `,
-  h2: `
-    font-size: 32px;
-    line-height: 36px;
-    margin-top: 20px;
-    ${baseStyles.Heading}
-  `,
-  h3: `
-    font-size: 24px;
-    line-height: 30px;
-    margin-top: 20px;
-    ${baseStyles.Heading}
-  `,
-  h4: `
-    font-size: 18px;
-    line-height: 24px;
-    margin-top: 10px;
-    ${baseStyles.Heading}
-  `,
-  h5: `
-    font-size: 14px;
-    line-height: 20px;
-    margin-top: 10px;
-    ${baseStyles.Heading}
-  `,
-  h6: `
-    font-size: 12px;
-    line-height: 18px;
-    margin-top: 10px;
-    ${baseStyles.Heading}
-  `,
 };
