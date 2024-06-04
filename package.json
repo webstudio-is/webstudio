@@ -37,7 +37,7 @@
     "@types/node": "^20.12.7",
     "@types/react": "^18.2.70",
     "@webstudio-is/eslint-config-custom": "workspace:*",
-    "esbuild": "^0.20.2",
+    "esbuild": "^0.21.4",
     "jest": "^29.7.0",
     "nano-staged": "^0.8.0",
     "prettier": "3.2.5",
@@ -45,7 +45,7 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "simple-git-hooks": "^2.11.1",
     "storybook": "^8.1.4",
-    "tsx": "^4.7.2",
+    "tsx": "^4.11.2",
     "typescript": "5.4.5",
     "vite": "^5.2.12"
   },
@@ -74,7 +74,6 @@
   "pnpm": {
     "overrides": {
       "@babel/types": "7.24.0",
-      "esbuild": "^0.20.2",
       "@types/react": "^18.2.70",
       "@types/react-dom": "^18.2.25",
       "react": "18.3.0-canary-14898b6a9-20240318",
