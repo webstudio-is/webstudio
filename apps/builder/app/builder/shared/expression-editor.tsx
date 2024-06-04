@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { matchSorter } from "match-sorter";
 import type { SyntaxNode } from "@lezer/common";
 import { Facet } from "@codemirror/state";
@@ -36,7 +42,10 @@ import {
   CodeEditorBase,
   EditorContent,
   EditorDialog,
+  type EditorApi,
 } from "./code-editor-base";
+
+export type { EditorApi };
 
 export const formatValue = (value: unknown) => {
   if (Array.isArray(value)) {
@@ -343,6 +352,7 @@ const wrapperStyle = css({
 });
 
 export const ExpressionEditor = ({
+  editorApiRef,
   scope = emptyScope,
   aliases = emptyAliases,
   color,
@@ -352,6 +362,7 @@ export const ExpressionEditor = ({
   onChange,
   onBlur,
 }: {
+  editorApiRef?: RefObject<undefined | EditorApi>;
   /**
    * object with variables and their data to autocomplete
    */
@@ -417,6 +428,7 @@ export const ExpressionEditor = ({
   return (
     <div className={wrapperStyle.toString()}>
       <CodeEditorBase
+        editorApiRef={editorApiRef}
         extensions={extensions}
         invalid={color === "error"}
         readOnly={readOnly}

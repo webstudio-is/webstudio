@@ -68,11 +68,19 @@ if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
 if (env.DEV_LOGIN === "true") {
   authenticator.use(
     new FormStrategy(async ({ form }) => {
-      const secret = form.get("secret");
+      const secretValue = form.get("secret");
+
+      if (secretValue == null) {
+        throw new Error("Secret is required");
+      }
+
+      const [secret, email = "hello@webstudio.is"] = secretValue
+        .toString()
+        .split(":");
 
       if (secret === env.AUTH_SECRET?.slice(0, 4)) {
         try {
-          const user = await db.user.createOrLoginWithDev();
+          const user = await db.user.createOrLoginWithDev(email);
           return user;
         } catch (error) {
           if (error instanceof Error) {

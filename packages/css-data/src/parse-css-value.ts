@@ -11,6 +11,7 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 import { parseFilter, parseShadow, parseTransition } from "./property-parsers";
+import { camelCase } from "change-case";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -131,9 +132,14 @@ export const parseCssValue = (
     }
 
     if (first?.type === "Identifier") {
-      const values = keywordValues[
-        property as keyof typeof keywordValues
-      ] as ReadonlyArray<string>;
+      const values =
+        keywordValues[camelCase(property) as keyof typeof keywordValues];
+      if (values === undefined) {
+        return {
+          type: "invalid",
+          value: "",
+        };
+      }
       const lettersRegex = /[^a-zA-Z]+/g;
       const searchValues = values.map((value) =>
         value.replace(lettersRegex, "").toLowerCase()

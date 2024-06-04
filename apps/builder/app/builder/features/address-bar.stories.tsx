@@ -59,8 +59,6 @@ $pages.set({
   ],
 });
 
-$selectedPageId.set("dynamicId");
-
 const $selectedPageSystem = computed(
   [$selectedPage, $dataSourceVariables],
   (selectedPage, dataSourceVariables) => {
@@ -99,18 +97,21 @@ export default {
   component: AddressBarPopover,
 } satisfies Meta;
 
-export const AddressBar: StoryFn = () => (
-  <>
-    <Box
-      css={{
-        height: theme.spacing[15],
-        background: theme.colors.backgroundTopbar,
-        color: theme.colors.foregroundContrastMain,
-      }}
-    >
-      <AddressBarPopover />
-    </Box>
-    <SystemInspect />
-    <HistoryInspect />
-  </>
-);
+export const AddressBar: StoryFn = () => {
+  $selectedPageId.set("dynamicId");
+  return (
+    <>
+      <Box
+        css={{
+          height: theme.spacing[15],
+          background: theme.colors.backgroundTopbar,
+          color: theme.colors.foregroundContrastMain,
+        }}
+      >
+        <AddressBarPopover />
+      </Box>
+      <SystemInspect />
+      <HistoryInspect />
+    </>
+  );
+};

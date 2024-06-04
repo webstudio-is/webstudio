@@ -1,86 +1,93 @@
-import { createFolderIfNotExists, isFileExists } from "../fs-utils";
 import { chdir, cwd } from "node:process";
 import { join } from "node:path";
-import ora from "ora";
-import { link } from "./link";
+import pc from "picocolors";
+import {
+  cancel,
+  confirm,
+  isCancel,
+  log,
+  select,
+  spinner,
+  text,
+} from "@clack/prompts";
+import { $ } from "execa";
+import { titleCase } from "title-case";
+import { createFolderIfNotExists, isFileExists } from "../fs-utils";
+import { PROJECT_TEMPALTES } from "../config";
+import { link, validateShareLink } from "./link";
 import { sync } from "./sync";
 import { build, buildOptions } from "./build";
-import { prompt } from "../prompts";
 import type { StrictYargsOptionsToInterface } from "./yargs-types";
-import pc from "picocolors";
-import { $ } from "execa";
-import { PROJECT_TEMPALTES } from "../config";
-import { titleCase } from "title-case";
 
 type ProjectTemplates = (typeof PROJECT_TEMPALTES)[number];
+
+const exitIfCancelled = <Value>(value: Value | symbol): Value => {
+  if (isCancel(value)) {
+    cancel("Project initialization is cancelled");
+    process.exit(0);
+  }
+  return value;
+};
 
 export const initFlow = async (
   options: StrictYargsOptionsToInterface<typeof buildOptions>
 ) => {
   const isProjectConfigured = await isFileExists(".webstudio/config.json");
   let shouldInstallDeps = false;
-  let folderName;
+  let folderName: undefined | string;
   let projectTemplate: ProjectTemplates | undefined = undefined;
 
   if (isProjectConfigured === false) {
-    const { shouldCreateFolder } = await prompt({
-      type: "confirm",
-      name: "shouldCreateFolder",
-      message:
-        "Would you like to create a project folder? (no to use current folder)",
-      initial: true,
-    });
+    const shouldCreateFolder = exitIfCancelled(
+      await confirm({
+        message:
+          "Would you like to create a project folder? (no to use current folder)",
+        initialValue: true,
+      })
+    );
 
     if (shouldCreateFolder === true) {
-      folderName = (
-        await prompt({
-          type: "text",
-          name: "folderName",
+      folderName = exitIfCancelled(
+        await text({
           message: "Please enter a project name",
+          validate(value) {
+            if (value.length === 0) {
+              return "Folder name is required";
+            }
+          },
         })
-      ).folderName;
+      );
 
-      if (folderName === undefined) {
-        throw new Error("Folder name is required");
-      }
       await createFolderIfNotExists(join(cwd(), folderName));
       chdir(join(cwd(), folderName));
     }
 
-    const { projectLink } = await prompt({
-      type: "text",
-      name: "projectLink",
-      message: "Please paste a link from the Share dialog in the builder",
-    });
+    const shareLink = exitIfCancelled(
+      await text({
+        message: "Please paste a link from the Share Dialog in the builder",
+        validate: validateShareLink,
+      })
+    );
 
-    if (projectLink === undefined) {
-      throw new Error(`Project Link is required`);
-    }
-    await link({ link: projectLink });
+    await link({ link: shareLink });
 
-    const { deployTarget } = await prompt({
-      type: "select",
-      name: "deployTarget",
-      message: "Where would you like to deploy your project?",
-      choices: PROJECT_TEMPALTES.map((template) => {
-        return {
-          title: titleCase(template),
+    projectTemplate = exitIfCancelled(
+      await select({
+        message: "Where would you like to deploy your project?",
+        options: PROJECT_TEMPALTES.map((template) => ({
           value: template,
-        };
-      }),
-    });
-    projectTemplate = deployTarget;
+          label: titleCase(template),
+        })),
+      })
+    );
 
-    const { installDeps } = await prompt({
-      type: "confirm",
-      name: "installDeps",
-      message: "Would you like to install dependencies? (recommended)",
-      initial: true,
-    });
-    shouldInstallDeps = installDeps;
+    shouldInstallDeps = exitIfCancelled(
+      await confirm({
+        message: "Would you like to install dependencies? (recommended)",
+        initialValue: true,
+      })
+    );
   }
-
-  await sync({ buildId: undefined, origin: undefined, authToken: undefined });
 
   /*
     If a project is already linked, we sync direclty without asking for deploy target.
@@ -88,19 +95,18 @@ export const initFlow = async (
   */
 
   if (projectTemplate === undefined) {
-    const { deployTarget } = await prompt({
-      type: "select",
-      name: "deployTarget",
-      message: "Where would you like to deploy your project?",
-      choices: PROJECT_TEMPALTES.map((template) => {
-        return {
-          title: titleCase(template),
+    projectTemplate = exitIfCancelled(
+      await select({
+        message: "Where would you like to deploy your project?",
+        options: PROJECT_TEMPALTES.map((template) => ({
           value: template,
-        };
-      }),
-    });
-    projectTemplate = deployTarget;
+          label: titleCase(template),
+        })),
+      })
+    );
   }
+
+  await sync({ buildId: undefined, origin: undefined, authToken: undefined });
 
   await build({
     ...options,
@@ -108,14 +114,15 @@ export const initFlow = async (
   });
 
   if (shouldInstallDeps === true) {
-    const spinner = ora().start();
-    spinner.text = "Installing dependencies";
+    const install = spinner();
+    install.start("Installing dependencies");
     await $`npm install`;
-    spinner.succeed("Installed dependencies");
+    install.stop("Installed dependencies");
   }
 
-  console.info(pc.bold(pc.green(`\nYour project was successfully synced 🎉`)));
-  console.info(
+  log.message();
+  log.message(pc.green(pc.bold(`Your project was successfully synced 🎉`)));
+  log.message(
     [
       "Now you can:",
       folderName && `Go to your project: ${pc.dim(`cd ${folderName}`)}`,

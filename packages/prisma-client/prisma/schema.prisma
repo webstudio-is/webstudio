@@ -337,6 +337,7 @@ view DashboardProject {
 }
 
 view ApprovedMarketplaceProduct {
-  projectId          String @id
+  projectId          String  @id
   marketplaceProduct String
+  authorizationToken String?
 }

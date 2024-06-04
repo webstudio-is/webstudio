@@ -1,12 +1,14 @@
-import { $inspectorLastInputTime, $props } from "~/shared/nano-states";
-import { setInert } from "./shared/inert";
+import { canvasApi } from "~/shared/canvas-api";
+import { $props } from "~/shared/nano-states";
 
 export const subscribeInspectorEdits = () => {
-  const unsubscribeInputTime = $inspectorLastInputTime.listen(setInert);
-  const unsubscribeProps = $props.listen(setInert);
+  /**
+   * Prevents Radix from stealing focus when the content inside a dialog changes.
+   * (Radix focus scope uses a MutationObserver)
+   */
+  const unsubscribeProps = $props.listen(canvasApi.setInert);
 
   return () => {
-    unsubscribeInputTime();
     unsubscribeProps();
   };
 };

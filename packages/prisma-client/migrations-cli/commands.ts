@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { FileLocker, MigrationMeta } from "umzug";
-import prompts from "prompts";
 import { inspect } from "node:util";
 import * as prismaMigrations from "./prisma-migrations";
 import { umzug } from "./umzug";
@@ -14,24 +13,6 @@ const templateFilePath = path.join(
   "template.txt"
 );
 const lockfilePath = path.join(prismaMigrations.migrationsDir, "lockfile");
-
-const ensureUserWantsToContinue = async (defaultResult = false) => {
-  if (args.values.force) {
-    return;
-  }
-
-  const { shouldContinue } = await prompts({
-    type: "confirm",
-    name: "shouldContinue",
-    message: "Continue?",
-    initial: defaultResult,
-  });
-
-  if (shouldContinue === false) {
-    logger.info("Aborted.");
-    process.exit(0);
-  }
-};
 
 const writeFile = (filePath: string, content: string) => {
   const dir = path.dirname(filePath);
@@ -359,8 +340,6 @@ export const resolve = async ({
   );
   logger.info("");
 
-  await ensureUserWantsToContinue();
-
   if (resolveAs === "applied") {
     await prismaMigrations.setApplied(migrationName);
     logger.info(`Resolved ${migrationName} as applied`);
@@ -381,8 +360,6 @@ export const reset = async () => {
   logger.info("You're about to DELETE ALL INFORMATION from the database,");
   logger.info("and run all migrations from scratch!");
   logger.info("");
-
-  await ensureUserWantsToContinue();
 
   await prismaMigrations.resetDatabase();
   await up();

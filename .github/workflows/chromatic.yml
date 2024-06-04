@@ -20,56 +20,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        project:
-          [
-            builder-app,
-            css-engine,
-            design-system,
-            icons,
-            image,
-            sdk-components-react,
-            sdk-components-react-radix,
-          ]
-        include:
-          - project: builder-app
-            chromaticSecretKey: bea8dc1981d4
-            workingDir: apps/builder
-
-          - project: css-engine
-            chromaticSecretKey: 4c9027c284cd
-            workingDir: packages/css-engine
-
-          - project: design-system
-            chromaticSecretKey: 1e6cb506d54c
-            workingDir: packages/design-system
-
-          - project: icons
-            chromaticSecretKey: a65a9a61b5eb
-            workingDir: packages/icons
-
-          - project: image
-            chromaticSecretKey: 45e26b79ab8a
-            workingDir: packages/image
-
-          - project: sdk-components-react
-            chromaticSecretKey: 04114b467b2b
-            workingDir: packages/sdk-components-react
-
-          - project: sdk-components-react-radix
-            chromaticSecretKey: 04114b467b2b
-            workingDir: packages/sdk-components-react-radix
-
-    outputs:
-      builder-app: ${{ steps.deployed-url.outputs.builder-app }}
-      css-engine: ${{ steps.deployed-url.outputs.css-engine }}
-      design-system: ${{ steps.deployed-url.outputs.design-system }}
-      icons: ${{ steps.deployed-url.outputs.icons }}
-      image: ${{ steps.deployed-url.outputs.image }}
-      sdk-components-react: ${{ steps.deployed-url.outputs.sdk-components-react }}
-      sdk-components-react-radix: ${{ steps.deployed-url.outputs.sdk-components-react-radix }}
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -82,34 +32,5 @@ jobs:
         id: chromatic
         uses: chromaui/action@v11.3.0
         with:
-          projectToken: ${{ matrix.chromaticSecretKey }}
-          workingDir: ${{ matrix.workingDir }}
+          projectToken: bea8dc1981d4
           buildScriptName: storybook:build
-
-      - name: Save deployed URL
-        id: deployed-url
-        run: echo "${{ matrix.project }}=${{ steps.chromatic.outputs.storybookUrl }}" >> $GITHUB_OUTPUT
-
-  chromatic-root:
-    timeout-minutes: 20
-
-    needs: chromatic
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2 # we need to fetch at least parent commit to satisfy Chromatic
-          ref: ${{ github.event.pull_request.head.sha || github.sha }} # HEAD commit instead of merge commit
-
-      - uses: ./.github/actions/ci-setup
-
-      - name: Chromatic
-        id: chromatic
-        uses: chromaui/action@v11.3.0
-        with:
-          projectToken: aed47de034e6
-          buildScriptName: storybook:build
-        env:
-          DEPLOYED_URLS: ${{ toJSON(needs.chromatic.outputs) }}

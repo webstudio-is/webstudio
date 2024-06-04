@@ -39,10 +39,11 @@ const switchPageAndUpdateSystem = (href: string, formData?: FormData) => {
   if (pages === undefined) {
     return;
   }
-  if (href === "") {
+  // preserve pathname when not specified in href/action
+  if (href === "" || href.startsWith("?") || href.startsWith("#")) {
     const pathname = getSelectedPagePathname();
     if (pathname) {
-      href = pathname;
+      href = pathname + href;
     }
   }
   const pageHref = new URL(href, "https://any-valid.url");

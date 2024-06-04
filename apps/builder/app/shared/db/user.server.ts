@@ -79,9 +79,9 @@ export const createOrLoginWithOAuth = async (
   return newUser;
 };
 
-export const createOrLoginWithDev = async (): Promise<User> => {
+export const createOrLoginWithDev = async (email: string): Promise<User> => {
   const userData = {
-    email: "hello@webstudio.is",
+    email,
     username: "admin",
     image: "",
     provider: "dev",
