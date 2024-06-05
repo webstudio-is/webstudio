@@ -162,7 +162,7 @@ const getPasteTarget = (
   return pasteTarget;
 };
 
-export const onPaste = (clipboardData: string): boolean => {
+export const onPaste = (clipboardData: string) => {
   const fragment = parse(clipboardData);
 
   const selectedPage = $selectedPage.get();

@@ -75,7 +75,7 @@ const parse = (clipboardData: string) => {
   }
 };
 
-export const onPaste = async (clipboardData: string): boolean => {
+export const onPaste = async (clipboardData: string) => {
   if (isFeatureEnabled("pasteFromWebflow") === false) {
     return false;
   }
