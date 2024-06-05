@@ -959,6 +959,9 @@ importers:
       '@webstudio-is/sdk-components-react-remix':
         specifier: workspace:*
         version: link:../sdk-components-react-remix
+      change-case:
+        specifier: ^5.0.2
+        version: 5.0.2
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
@@ -971,6 +974,9 @@ importers:
       p-limit:
         specifier: ^4.0.0
         version: 4.0.0
+      parse5:
+        specifier: 7.1.2
+        version: 7.1.2
       picocolors:
         specifier: ^1.0.1
         version: 1.0.1
@@ -987,6 +993,9 @@ importers:
         specifier: ^3.22.4
         version: 3.22.4
     devDependencies:
+      '@jest/globals':
+        specifier: ^29.7.0
+        version: 29.7.0
       '@netlify/remix-adapter':
         specifier: ^2.4.0
         version: 2.4.0(@netlify/functions@2.7.0(@opentelemetry/api@1.8.0))(typescript@5.4.5)(vite@5.2.12(@types/node@20.12.7))
@@ -1026,6 +1035,9 @@ importers:
       '@webstudio-is/form-handlers':
         specifier: workspace:*
         version: link:../form-handlers
+      '@webstudio-is/jest-config':
+        specifier: workspace:*
+        version: link:../jest-config
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
