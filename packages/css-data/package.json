@@ -13,7 +13,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "bin": {
-    "css-data:css-to-ws": "./bin/css-to-ws.ts"
+    "css-to-ws": "./bin/css-to-ws.ts"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

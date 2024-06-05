@@ -1,4 +1,3 @@
-export default `
 html {
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%;
@@ -2247,4 +2246,3 @@ a {
 a:hover {
   color: #b22828;
 }
-`;

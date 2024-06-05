@@ -3,8 +3,8 @@ import type { WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
-import { parseCss, type Style, type Styles } from "@webstudio-is/css-data";
-import presets from "./style-presets";
+import { parseCss, type Style } from "@webstudio-is/css-data";
+import presets from "./__generated__/style-presets";
 
 const addNodeStyles = (
   name: string,
@@ -49,16 +49,12 @@ const addNodeStyles = (
   }
 };
 
-let parsedPresets: Styles;
-
 export const addStyles = (
   wfNodes: Map<WfNode["_id"], WfNode>,
   wfStyles: Map<WfStyle["_id"], WfStyle>,
   added: Map<WfNode["_id"], Instance["id"]>,
   fragment: WebstudioFragment
 ) => {
-  parsedPresets = parsedPresets ?? parseCss(presets);
-
   for (const wfNode of wfNodes.values()) {
     if ("text" in wfNode) {
       continue;
@@ -68,14 +64,9 @@ export const addStyles = (
       console.error(`No instance id found for node ${wfNode._id}`);
       continue;
     }
-
-    if (parsedPresets[wfNode.tag]) {
-      addNodeStyles(
-        wfNode.tag,
-        parsedPresets[wfNode.tag],
-        instanceId,
-        fragment
-      );
+    const styles = presets[wfNode.tag as keyof typeof presets] as Array<Style>;
+    if (styles) {
+      addNodeStyles(wfNode.tag, styles, instanceId, fragment);
     }
     const instance = fragment.instances.find(
       (instance) => instance.id === instanceId
