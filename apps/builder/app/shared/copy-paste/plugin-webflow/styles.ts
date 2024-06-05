@@ -49,12 +49,16 @@ const addNodeStyles = (
   }
 };
 
+let parsedPresets;
+
 export const addStyles = (
   wfNodes: Map<WfNode["_id"], WfNode>,
   wfStyles: Map<WfStyle["_id"], WfStyle>,
   added: Map<WfNode["_id"], Instance["id"]>,
   fragment: WebstudioFragment
 ) => {
+  parsedPresets = parsedPresets ?? parseCss(presets);
+
   for (const wfNode of wfNodes.values()) {
     if ("text" in wfNode) {
       continue;
@@ -64,8 +68,6 @@ export const addStyles = (
       console.error(`No instance id found for node ${wfNode._id}`);
       continue;
     }
-
-    const parsedPresets = parseCss(presets);
 
     if (parsedPresets[wfNode.tag]) {
       addNodeStyles(
@@ -78,13 +80,14 @@ export const addStyles = (
 
     for (const classId of wfNode.classes) {
       const style = wfStyles.get(classId);
-      if (style) {
-        try {
-          const styles = parseCss(`.styles {${style.styleLess}}`).styles ?? [];
-          addNodeStyles(style.name, styles, instanceId, fragment);
-        } catch (error) {
-          console.error("Failed to parse style", error, style);
-        }
+      if (style === undefined) {
+        continue;
+      }
+      try {
+        const styles = parseCss(`.styles {${style.styleLess}}`).styles ?? [];
+        addNodeStyles(style.name, styles, instanceId, fragment);
+      } catch (error) {
+        console.error("Failed to parse style", error, style);
       }
     }
   }

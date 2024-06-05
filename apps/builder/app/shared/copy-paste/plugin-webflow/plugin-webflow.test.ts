@@ -966,7 +966,7 @@ describe("Styles", () => {
     `);
   });
 
-  test.only("Combo class", () => {
+  test("Combo class", () => {
     const fragment = toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
