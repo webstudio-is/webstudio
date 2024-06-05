@@ -29,8 +29,8 @@ const toCss = (fragment: WebstudioFragment) => {
   return sheet.cssText;
 };
 
-test("Heading", () => {
-  const fragment = toWebstudioFragment({
+test("Heading", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -80,8 +80,8 @@ test("Heading", () => {
   ]);
 });
 
-test("Link Block, Button, Text Link", () => {
-  const fragment = toWebstudioFragment({
+test("Link Block, Button, Text Link", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -143,8 +143,8 @@ test("Link Block, Button, Text Link", () => {
   ]);
 });
 
-test("List and ListItem", () => {
-  const fragment = toWebstudioFragment({
+test("List and ListItem", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -223,8 +223,8 @@ test("List and ListItem", () => {
   ]);
 });
 
-test("Paragraph", () => {
-  const fragment = toWebstudioFragment({
+test("Paragraph", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -269,8 +269,8 @@ test("Paragraph", () => {
   ]);
 });
 
-test("Text", () => {
-  const fragment = toWebstudioFragment({
+test("Text", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -318,8 +318,8 @@ test("Text", () => {
   ]);
 });
 
-test("Blockquote", () => {
-  const fragment = toWebstudioFragment({
+test("Blockquote", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -364,8 +364,8 @@ test("Blockquote", () => {
   ]);
 });
 
-test("Strong", () => {
-  const fragment = toWebstudioFragment({
+test("Strong", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -401,8 +401,8 @@ test("Strong", () => {
   ]);
 });
 
-test("Emphasized", () => {
-  const fragment = toWebstudioFragment({
+test("Emphasized", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -438,8 +438,8 @@ test("Emphasized", () => {
   ]);
 });
 
-test("Superscript", () => {
-  const fragment = toWebstudioFragment({
+test("Superscript", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -475,8 +475,8 @@ test("Superscript", () => {
   ]);
 });
 
-test("Subscript", () => {
-  const fragment = toWebstudioFragment({
+test("Subscript", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -512,8 +512,8 @@ test("Subscript", () => {
   ]);
 });
 
-test("Section", () => {
-  const fragment = toWebstudioFragment({
+test("Section", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -539,8 +539,8 @@ test("Section", () => {
   ]);
 });
 
-test("BlockContainer", () => {
-  const fragment = toWebstudioFragment({
+test("BlockContainer", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -566,8 +566,8 @@ test("BlockContainer", () => {
   ]);
 });
 
-test("Block", () => {
-  const fragment = toWebstudioFragment({
+test("Block", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -593,8 +593,8 @@ test("Block", () => {
   ]);
 });
 
-test("V Flex", () => {
-  const fragment = toWebstudioFragment({
+test("V Flex", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -620,8 +620,8 @@ test("V Flex", () => {
   ]);
 });
 
-test("H Flex", () => {
-  const fragment = toWebstudioFragment({
+test("H Flex", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -647,8 +647,8 @@ test("H Flex", () => {
   ]);
 });
 
-test("Quick Stack", () => {
-  const fragment = toWebstudioFragment({
+test("Quick Stack", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -706,8 +706,8 @@ test("Quick Stack", () => {
   ]);
 });
 
-test("Grid", () => {
-  const fragment = toWebstudioFragment({
+test("Grid", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -733,8 +733,8 @@ test("Grid", () => {
   ]);
 });
 
-test("Columns", () => {
-  const fragment = toWebstudioFragment({
+test("Columns", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -792,8 +792,8 @@ test("Columns", () => {
   ]);
 });
 
-test("Image", () => {
-  const fragment = toWebstudioFragment({
+test("Image", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -867,50 +867,52 @@ test("Image", () => {
 });
 
 describe("Custom attributes", () => {
-  const fragment = toWebstudioFragment({
-    type: "@webflow/XscpData",
-    payload: {
-      nodes: [
-        {
-          _id: "249f235e-91b6-bd0f-bc42-00993479e637",
-          type: "Heading",
-          tag: "h1",
-          classes: [],
-          children: [],
-          data: {
-            xattr: [
-              {
-                name: "at",
-                value: "b",
-              },
-            ],
+  test("Basic", async () => {
+    const fragment = await toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "249f235e-91b6-bd0f-bc42-00993479e637",
+            type: "Heading",
+            tag: "h1",
+            classes: [],
+            children: [],
+            data: {
+              xattr: [
+                {
+                  name: "at",
+                  value: "b",
+                },
+              ],
+            },
           },
-        },
-      ],
-      styles: [],
-    },
+        ],
+        styles: [],
+      },
+    });
+    expect(fragment.props).toEqual([
+      {
+        type: "string",
+        id: expect.not.stringMatching("id"),
+        instanceId: expect.not.stringMatching("instanceId"),
+        name: "tag",
+        value: "h1",
+      },
+      {
+        type: "string",
+        id: expect.not.stringMatching("id"),
+        instanceId: expect.not.stringMatching("instanceId"),
+        name: "at",
+        value: "b",
+      },
+    ]);
   });
-  expect(fragment.props).toEqual([
-    {
-      type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
-      name: "tag",
-      value: "h1",
-    },
-    {
-      type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
-      name: "at",
-      value: "b",
-    },
-  ]);
 });
 
 describe("Styles", () => {
-  test("Single class", () => {
-    const fragment = toWebstudioFragment({
+  test("Single class", async () => {
+    const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -966,8 +968,8 @@ describe("Styles", () => {
     `);
   });
 
-  test("Combo class", () => {
-    const fragment = toWebstudioFragment({
+  test("Combo class", async () => {
+    const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -1006,6 +1008,7 @@ describe("Styles", () => {
         ],
       },
     });
+
     expect(fragment.styleSources).toEqual([
       {
         type: "token",

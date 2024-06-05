@@ -4,7 +4,6 @@ import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
 import { parseCss, type Style } from "@webstudio-is/css-data";
-import presets from "./__generated__/style-presets";
 
 const addNodeStyles = (
   name: string,
@@ -49,12 +48,14 @@ const addNodeStyles = (
   }
 };
 
-export const addStyles = (
+export const addStyles = async (
   wfNodes: Map<WfNode["_id"], WfNode>,
   wfStyles: Map<WfStyle["_id"], WfStyle>,
   added: Map<WfNode["_id"], Instance["id"]>,
   fragment: WebstudioFragment
 ) => {
+  const { default: presets } = await import("./__generated__/style-presets");
+
   for (const wfNode of wfNodes.values()) {
     if ("text" in wfNode) {
       continue;
@@ -64,6 +65,7 @@ export const addStyles = (
       console.error(`No instance id found for node ${wfNode._id}`);
       continue;
     }
+
     const styles = presets[wfNode.tag as keyof typeof presets] as Array<Style>;
     if (styles) {
       addNodeStyles(wfNode.tag, styles, instanceId, fragment);
