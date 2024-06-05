@@ -17,7 +17,7 @@ import { addStyles } from "./styles";
 
 export const mimeType = "application/json";
 
-const toWebstudioFragment = (wfData: WfData) => {
+const toWebstudioFragment = async (wfData: WfData) => {
   const fragment: WebstudioFragment = {
     children: [],
     instances: [],
@@ -44,7 +44,7 @@ const toWebstudioFragment = (wfData: WfData) => {
   for (const wfNode of wfNodes.values()) {
     addInstanceAndProperties(wfNode, added, wfNodes, fragment);
   }
-  addStyles(wfNodes, wfStyles, added, fragment);
+  await addStyles(wfNodes, wfStyles, added, fragment);
   // First node should be always the root node in theory, if not
   // we need to find a node that is not a child of any other node.
   const rootWfNode = wfData.payload.nodes[0];
@@ -75,7 +75,7 @@ const parse = (clipboardData: string) => {
   }
 };
 
-export const onPaste = (clipboardData: string): boolean => {
+export const onPaste = async (clipboardData: string) => {
   if (isFeatureEnabled("pasteFromWebflow") === false) {
     return false;
   }
@@ -83,7 +83,7 @@ export const onPaste = (clipboardData: string): boolean => {
   if (wfData === undefined) {
     return false;
   }
-  const fragment = toWebstudioFragment(wfData);
+  const fragment = await toWebstudioFragment(wfData);
   const selectedPage = $selectedPage.get();
   if (fragment.instances.length === 0 || selectedPage === undefined) {
     return false;

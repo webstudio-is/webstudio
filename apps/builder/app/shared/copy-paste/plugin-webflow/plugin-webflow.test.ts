@@ -1,13 +1,36 @@
 import { test, expect, describe } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
 import { $breakpoints } from "../../nano-states";
+import { createRegularStyleSheet } from "@webstudio-is/css-engine";
+import type { WebstudioFragment } from "@webstudio-is/sdk";
 
 const { toWebstudioFragment } = __testing__;
 
 $breakpoints.set(new Map([["0", { id: "0", label: "base" }]]));
 
-test("Heading", () => {
-  const fragment = toWebstudioFragment({
+const toCss = (fragment: WebstudioFragment) => {
+  const sheet = createRegularStyleSheet();
+
+  for (const breakpoint of fragment.breakpoints) {
+    sheet.addMediaRule(breakpoint.id, breakpoint);
+  }
+  for (const style of fragment.styles) {
+    const token = fragment.styleSources.find(
+      (source) => source.id === style.styleSourceId
+    );
+    sheet.addStyleRule(
+      {
+        style: { [style.property]: style.value },
+        breakpoint: style.breakpointId,
+      },
+      token && "name" in token ? token.name : "Local"
+    );
+  }
+  return sheet.cssText;
+};
+
+test("Heading", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -57,8 +80,8 @@ test("Heading", () => {
   ]);
 });
 
-test("Link Block, Button, Text Link", () => {
-  const fragment = toWebstudioFragment({
+test("Link Block, Button, Text Link", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -120,8 +143,8 @@ test("Link Block, Button, Text Link", () => {
   ]);
 });
 
-test("List and ListItem", () => {
-  const fragment = toWebstudioFragment({
+test("List and ListItem", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -200,8 +223,8 @@ test("List and ListItem", () => {
   ]);
 });
 
-test("Paragraph", () => {
-  const fragment = toWebstudioFragment({
+test("Paragraph", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -246,8 +269,8 @@ test("Paragraph", () => {
   ]);
 });
 
-test("Text", () => {
-  const fragment = toWebstudioFragment({
+test("Text", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -295,8 +318,8 @@ test("Text", () => {
   ]);
 });
 
-test("Blockquote", () => {
-  const fragment = toWebstudioFragment({
+test("Blockquote", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -341,8 +364,8 @@ test("Blockquote", () => {
   ]);
 });
 
-test("Strong", () => {
-  const fragment = toWebstudioFragment({
+test("Strong", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -378,8 +401,8 @@ test("Strong", () => {
   ]);
 });
 
-test("Emphasized", () => {
-  const fragment = toWebstudioFragment({
+test("Emphasized", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -415,8 +438,8 @@ test("Emphasized", () => {
   ]);
 });
 
-test("Superscript", () => {
-  const fragment = toWebstudioFragment({
+test("Superscript", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -452,8 +475,8 @@ test("Superscript", () => {
   ]);
 });
 
-test("Subscript", () => {
-  const fragment = toWebstudioFragment({
+test("Subscript", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -489,8 +512,8 @@ test("Subscript", () => {
   ]);
 });
 
-test("Section", () => {
-  const fragment = toWebstudioFragment({
+test("Section", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -516,8 +539,8 @@ test("Section", () => {
   ]);
 });
 
-test("BlockContainer", () => {
-  const fragment = toWebstudioFragment({
+test("BlockContainer", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -543,8 +566,8 @@ test("BlockContainer", () => {
   ]);
 });
 
-test("Block", () => {
-  const fragment = toWebstudioFragment({
+test("Block", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -570,8 +593,8 @@ test("Block", () => {
   ]);
 });
 
-test("V Flex", () => {
-  const fragment = toWebstudioFragment({
+test("V Flex", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -597,8 +620,8 @@ test("V Flex", () => {
   ]);
 });
 
-test("H Flex", () => {
-  const fragment = toWebstudioFragment({
+test("H Flex", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -624,8 +647,8 @@ test("H Flex", () => {
   ]);
 });
 
-test("Quick Stack", () => {
-  const fragment = toWebstudioFragment({
+test("Quick Stack", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -683,8 +706,8 @@ test("Quick Stack", () => {
   ]);
 });
 
-test("Grid", () => {
-  const fragment = toWebstudioFragment({
+test("Grid", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -710,8 +733,8 @@ test("Grid", () => {
   ]);
 });
 
-test("Columns", () => {
-  const fragment = toWebstudioFragment({
+test("Columns", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -769,8 +792,8 @@ test("Columns", () => {
   ]);
 });
 
-test("Image", () => {
-  const fragment = toWebstudioFragment({
+test("Image", async () => {
+  const fragment = await toWebstudioFragment({
     type: "@webflow/XscpData",
     payload: {
       nodes: [
@@ -844,50 +867,52 @@ test("Image", () => {
 });
 
 describe("Custom attributes", () => {
-  const fragment = toWebstudioFragment({
-    type: "@webflow/XscpData",
-    payload: {
-      nodes: [
-        {
-          _id: "249f235e-91b6-bd0f-bc42-00993479e637",
-          type: "Heading",
-          tag: "h1",
-          classes: [],
-          children: [],
-          data: {
-            xattr: [
-              {
-                name: "at",
-                value: "b",
-              },
-            ],
+  test("Basic", async () => {
+    const fragment = await toWebstudioFragment({
+      type: "@webflow/XscpData",
+      payload: {
+        nodes: [
+          {
+            _id: "249f235e-91b6-bd0f-bc42-00993479e637",
+            type: "Heading",
+            tag: "h1",
+            classes: [],
+            children: [],
+            data: {
+              xattr: [
+                {
+                  name: "at",
+                  value: "b",
+                },
+              ],
+            },
           },
-        },
-      ],
-      styles: [],
-    },
+        ],
+        styles: [],
+      },
+    });
+    expect(fragment.props).toEqual([
+      {
+        type: "string",
+        id: expect.not.stringMatching("id"),
+        instanceId: expect.not.stringMatching("instanceId"),
+        name: "tag",
+        value: "h1",
+      },
+      {
+        type: "string",
+        id: expect.not.stringMatching("id"),
+        instanceId: expect.not.stringMatching("instanceId"),
+        name: "at",
+        value: "b",
+      },
+    ]);
   });
-  expect(fragment.props).toEqual([
-    {
-      type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
-      name: "tag",
-      value: "h1",
-    },
-    {
-      type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
-      name: "at",
-      value: "b",
-    },
-  ]);
 });
 
 describe("Styles", () => {
-  test("Single class", () => {
-    const fragment = toWebstudioFragment({
+  test("Single class", async () => {
+    const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -909,7 +934,13 @@ describe("Styles", () => {
         ],
       },
     });
+
     expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "h1",
+      },
       {
         type: "token",
         id: expect.not.stringMatching("styleSourceId"),
@@ -919,21 +950,26 @@ describe("Styles", () => {
     expect(fragment.styleSourceSelections).toEqual([
       {
         instanceId: expect.not.stringMatching("instanceId"),
-        values: [expect.not.stringMatching("styleSourceId")],
+        values: [
+          expect.not.stringMatching("styleSourceId"),
+          expect.not.stringMatching("styleSourceId"),
+        ],
       },
     ]);
-    expect(fragment.styles).toEqual([
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "color",
-        value: { type: "rgb", alpha: 1, r: 219, g: 24, b: 24 },
-      },
-    ]);
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        h1 {
+          line-height: 44px
+        }
+        Heading {
+          color: rgba(219, 24, 24, 1)
+        }
+      }"
+    `);
   });
 
-  test("Combo class", () => {
-    const fragment = toWebstudioFragment({
+  test("Combo class", async () => {
+    const fragment = await toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
         nodes: [
@@ -972,7 +1008,13 @@ describe("Styles", () => {
         ],
       },
     });
+
     expect(fragment.styleSources).toEqual([
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
+        name: "a",
+      },
       {
         type: "token",
         id: expect.not.stringMatching("styleSourceId"),
@@ -990,25 +1032,22 @@ describe("Styles", () => {
         values: [
           expect.not.stringMatching("styleSourceId"),
           expect.not.stringMatching("styleSourceId"),
+          expect.not.stringMatching("styleSourceId"),
         ],
       },
     ]);
-    expect(fragment.styles).toEqual([
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "textAlign",
-        value: { type: "keyword", value: "center" },
-      },
-      {
-        styleSourceId: expect.not.stringMatching("styleSourceId"),
-        breakpointId: "0",
-        property: "backgroundColor",
-        value: {
-          type: "keyword",
-          value: "transparent",
-        },
-      },
-    ]);
+    expect(toCss(fragment)).toMatchInlineSnapshot(`
+      "@media all {
+        a {
+          text-decoration: 
+        }
+        button {
+          text-align: center
+        }
+        is-secondary {
+          background-color: transparent
+        }
+      }"
+    `);
   });
 });

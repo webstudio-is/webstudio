@@ -32,7 +32,7 @@ const parse = (clipboardData: string): WsEmbedTemplate | undefined => {
 
 export const mimeType = "text/plain";
 
-export const onPaste = (clipboardData: string): boolean => {
+export const onPaste = (clipboardData: string) => {
   const template = parse(clipboardData);
 
   const selectedPage = $selectedPage.get();

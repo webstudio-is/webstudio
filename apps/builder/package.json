@@ -7,6 +7,7 @@
   "scripts": {
     "prebuild": "which remix",
     "build": "remix vite:build",
+    "build:webflow-presets": "css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
     "start": "remix-serve build/server/index.js",
     "start-local": "NODE_OPTIONS='-r dotenv/config' remix-serve build/server/index.js",
     "dev": "remix vite:dev",
