@@ -957,7 +957,7 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
-          font-weight: bold
+          line-height: 44px
         }
         Heading {
           color: rgba(219, 24, 24, 1)
