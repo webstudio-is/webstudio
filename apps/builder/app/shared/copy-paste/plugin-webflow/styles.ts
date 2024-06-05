@@ -3,7 +3,7 @@ import type { WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
-import { parseCss, type Style } from "@webstudio-is/css-data";
+import { parseCss, type Style, type Styles } from "@webstudio-is/css-data";
 import presets from "./style-presets";
 
 const addNodeStyles = (
@@ -49,7 +49,7 @@ const addNodeStyles = (
   }
 };
 
-let parsedPresets;
+let parsedPresets: Styles;
 
 export const addStyles = (
   wfNodes: Map<WfNode["_id"], WfNode>,
