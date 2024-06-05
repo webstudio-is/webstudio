@@ -77,6 +77,9 @@ export const addStyles = (
         fragment
       );
     }
+    const instance = fragment.instances.find(
+      (instance) => instance.id === instanceId
+    );
 
     for (const classId of wfNode.classes) {
       const style = wfStyles.get(classId);
@@ -85,6 +88,9 @@ export const addStyles = (
       }
       try {
         const styles = parseCss(`.styles {${style.styleLess}}`).styles ?? [];
+        if (instance && instance.label === undefined) {
+          instance.label = style.name;
+        }
         addNodeStyles(style.name, styles, instanceId, fragment);
       } catch (error) {
         console.error("Failed to parse style", error, style);
