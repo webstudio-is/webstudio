@@ -88,6 +88,14 @@ export const parseCss = (css: string) => {
     if (node.type === "SelectorList") {
       selectors = [];
     }
+
+    if (node.type === "TypeSelector") {
+      if (!item.prev && !item.next) {
+        selectors.push(node.name);
+      }
+      return;
+    }
+
     if (node.type === "ClassSelector") {
       if (!item.prev && !item.next) {
         selectors.push(node.name);
