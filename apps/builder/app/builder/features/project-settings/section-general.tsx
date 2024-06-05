@@ -167,7 +167,11 @@ export const SectionGeneral = () => {
           Custom code and scripts will be added at the end of the &lt;head&gt;
           tag to every page across the published project.
         </Text>
-        <CodeEditor value={meta.code ?? ""} onChange={handleSave("code")} />
+        <CodeEditor
+          lang="html"
+          value={meta.code ?? ""}
+          onChange={handleSave("code")}
+        />
       </Grid>
 
       <Separator />

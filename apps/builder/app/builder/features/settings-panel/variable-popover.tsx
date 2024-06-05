@@ -691,6 +691,11 @@ export const VariablePopoverTrigger = forwardRef<
                 if (event.currentTarget.checkValidity()) {
                   const formData = new FormData(event.currentTarget);
                   panelRef.current?.save(formData);
+                  // close popover whenever new variable is created
+                  // to prevent creating duplicated variable
+                  if (variable === undefined) {
+                    setOpen(false);
+                  }
                 }
               }}
             >

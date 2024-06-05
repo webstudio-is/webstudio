@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { theme, Toaster, css } from "@webstudio-is/design-system";
 import {
@@ -91,7 +91,7 @@ const useOutlineStyle = () => {
 };
 
 type WorkspaceProps = {
-  children: JSX.Element;
+  children: ReactNode;
   onTransitionEnd: () => void;
 };
 

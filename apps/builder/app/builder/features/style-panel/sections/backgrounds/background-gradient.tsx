@@ -1,8 +1,14 @@
 import type { InvalidValue, RgbValue } from "@webstudio-is/css-engine";
 import { parseCssValue, parseBackground } from "@webstudio-is/css-data";
-import { TextArea, textVariants } from "@webstudio-is/design-system";
+import {
+  Flex,
+  TextArea,
+  textVariants,
+  theme,
+} from "@webstudio-is/design-system";
 import { useEffect, useRef, useState } from "react";
 import type { ControlProps } from "../../controls";
+import { NonResetablePropertyName } from "../../shared/property-name";
 
 type IntermediateValue = {
   type: "intermediate";
@@ -86,32 +92,59 @@ export const BackgroundGradient = (
   }, []);
 
   return (
-    <TextArea
-      ref={textAreaRef}
-      css={{ ...textVariants.mono }}
-      rows={2}
-      autoGrow
-      maxRows={4}
-      name="description"
-      value={textAreaValue ?? ""}
-      color={intermediateValue?.type === "invalid" ? "error" : undefined}
-      onChange={handleChange}
-      onBlur={handleOnComplete}
-      onKeyDown={(event) => {
-        if (event.key === "Enter") {
-          handleOnComplete();
-          event.preventDefault();
-        }
-
-        if (event.key === "Escape") {
-          if (intermediateValue === undefined) {
-            return;
-          }
-          props.deleteProperty(property, { isEphemeral: true });
-          setIntermediateValue(undefined);
-          event.preventDefault();
-        }
+    <Flex
+      direction="column"
+      css={{
+        gridColumn: "span 2",
+        px: theme.spacing[9],
+        paddingTop: theme.spacing[5],
+        paddingBottom: theme.spacing[9],
+        gap: theme.spacing[3],
       }}
-    />
+    >
+      <NonResetablePropertyName
+        style={props.currentStyle}
+        description={
+          <>
+            Paste a CSS gradient, for example:
+            <br />
+            <br />
+            linear-gradient(...)
+            <br />
+            <br />
+            If pasting from Figma, remove the "background" property name.
+          </>
+        }
+        properties={[property]}
+        label="Code"
+      />
+      <TextArea
+        ref={textAreaRef}
+        css={{ ...textVariants.mono }}
+        rows={2}
+        autoGrow
+        maxRows={4}
+        name="description"
+        value={textAreaValue ?? ""}
+        color={intermediateValue?.type === "invalid" ? "error" : undefined}
+        onChange={handleChange}
+        onBlur={handleOnComplete}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            handleOnComplete();
+            event.preventDefault();
+          }
+
+          if (event.key === "Escape") {
+            if (intermediateValue === undefined) {
+              return;
+            }
+            props.deleteProperty(property, { isEphemeral: true });
+            setIntermediateValue(undefined);
+            event.preventDefault();
+          }
+        }}
+      />
+    </Flex>
   );
 };
