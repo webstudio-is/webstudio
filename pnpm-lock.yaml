@@ -435,9 +435,6 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.3.1
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1587,9 +1584,6 @@ importers:
 
   packages/prisma-client:
     dependencies:
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.3.1
       execa:
         specifier: ^7.2.0
         version: 7.2.0

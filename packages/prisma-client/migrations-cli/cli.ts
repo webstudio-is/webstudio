@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import * as dotenv from "dotenv";
+import { loadEnvFile } from "node:process";
 import * as commands from "./commands";
 import * as logger from "./logger";
 import * as args from "./args";
@@ -23,7 +23,16 @@ Arguments
 
 const main = async () => {
   if (args.values.dev) {
-    dotenv.config();
+    try {
+      loadEnvFile(".env.development");
+    } catch {
+      // empty block
+    }
+    try {
+      loadEnvFile(".env");
+    } catch {
+      // empty block
+    }
   }
 
   const command = args.positionals[0];
