@@ -3,12 +3,12 @@ import type { WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
-import { parseCss } from "@webstudio-is/css-data";
-import { presets } from "./style-presets";
+import { parseCss, type Style } from "@webstudio-is/css-data";
+import presets from "./style-presets";
 
 const addNodeStyles = (
   name: string,
-  styleBlock: string,
+  styles: Array<Style>,
   instanceId: Instance["id"],
   fragment: WebstudioFragment
 ) => {
@@ -36,21 +36,16 @@ const addNodeStyles = (
   }
   styleSourceSelection.values.push(styleSourceId);
 
-  try {
-    const styles = parseCss(`.styles {${styleBlock}}`).styles ?? [];
-    for (const style of styles) {
-      fragment.styles.push({
-        styleSourceId,
-        breakpointId,
-        property: style.property,
-        value: style.value,
-      });
-      if (style.value.type === "invalid") {
-        console.error("Invalid style value", style);
-      }
+  for (const style of styles) {
+    fragment.styles.push({
+      styleSourceId,
+      breakpointId,
+      property: style.property,
+      value: style.value,
+    });
+    if (style.value.type === "invalid") {
+      console.error("Invalid style value", style);
     }
-  } catch (error) {
-    console.error("Failed to parse style", error, styleBlock);
   }
 };
 
@@ -70,16 +65,26 @@ export const addStyles = (
       continue;
     }
 
-    const preset = presets[wfNode.tag as keyof typeof presets];
+    const parsedPresets = parseCss(presets);
 
-    if (preset) {
-      addNodeStyles(wfNode.tag, preset, instanceId, fragment);
+    if (parsedPresets[wfNode.tag]) {
+      addNodeStyles(
+        wfNode.tag,
+        parsedPresets[wfNode.tag],
+        instanceId,
+        fragment
+      );
     }
 
     for (const classId of wfNode.classes) {
       const style = wfStyles.get(classId);
       if (style) {
-        addNodeStyles(style.name, style.styleLess, instanceId, fragment);
+        try {
+          const styles = parseCss(`.styles {${style.styleLess}}`).styles ?? [];
+          addNodeStyles(style.name, styles, instanceId, fragment);
+        } catch (error) {
+          console.error("Failed to parse style", error, style);
+        }
       }
     }
   }

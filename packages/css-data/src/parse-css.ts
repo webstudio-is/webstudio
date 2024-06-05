@@ -10,7 +10,7 @@ import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
 
 type Selector = string;
-type Style = {
+export type Style = {
   // @todo add support for states and media queries in addition to declarations
   property: StyleProperty;
   value: StyleValue;

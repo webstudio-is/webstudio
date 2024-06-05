@@ -966,7 +966,7 @@ describe("Styles", () => {
     `);
   });
 
-  test("Combo class", () => {
+  test.only("Combo class", () => {
     const fragment = toWebstudioFragment({
       type: "@webflow/XscpData",
       payload: {
@@ -1010,6 +1010,11 @@ describe("Styles", () => {
       {
         type: "token",
         id: expect.not.stringMatching("styleSourceId"),
+        name: "a",
+      },
+      {
+        type: "token",
+        id: expect.not.stringMatching("styleSourceId"),
         name: "button",
       },
       {
@@ -1024,11 +1029,15 @@ describe("Styles", () => {
         values: [
           expect.not.stringMatching("styleSourceId"),
           expect.not.stringMatching("styleSourceId"),
+          expect.not.stringMatching("styleSourceId"),
         ],
       },
     ]);
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
+        a {
+          text-decoration: 
+        }
         button {
           text-align: center
         }
