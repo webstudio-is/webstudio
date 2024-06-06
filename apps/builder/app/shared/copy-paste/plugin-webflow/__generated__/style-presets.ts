@@ -357,17 +357,6 @@ export default {
       },
       state: ":hover",
     },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 178,
-        g: 40,
-        b: 40,
-      },
-      state: ":hover",
-    },
   ],
   abbr: [
     {
@@ -1294,7 +1283,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '"î˜€"',
+        value: '""',
       },
       state: ":before",
     },
@@ -1359,7 +1348,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '"î˜"',
+        value: '""',
       },
       state: ":before",
     },
@@ -1369,7 +1358,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '"î˜‚"',
+        value: '""',
       },
       state: ":before",
     },
@@ -1379,7 +1368,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '"î˜ƒ"',
+        value: '""',
       },
     },
   ],
@@ -1442,7 +1431,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '"î˜ƒ"',
+        value: '""',
       },
       state: ":before",
     },
@@ -1467,7 +1456,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '"î¤€"',
+        value: '""',
       },
       state: ":before",
     },
@@ -1500,7 +1489,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '"î¤ƒ"',
+        value: '""',
       },
       state: ":before",
     },
