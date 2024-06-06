@@ -61,6 +61,33 @@ const acceptMap = {
   font: FONT_MIME_TYPES,
 };
 
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/accept#unique_file_type_specifiers
+const acceptFileTypeSpecifier = (specifiers: string, file: File) => {
+  const specifierArray = specifiers
+    .split(",")
+    .map((specifier) => specifier.trim());
+
+  return specifierArray.some((specifier) => {
+    if (specifier.startsWith(".")) {
+      return file.name.endsWith(specifier);
+    }
+
+    return specifier === file.type;
+  });
+};
+
+export const acceptUploadType = (
+  assetType: AssetType,
+  accept: string | undefined,
+  file: File
+) => {
+  if (accept !== undefined) {
+    acceptFileTypeSpecifier(accept, file);
+  }
+
+  return acceptFileTypeSpecifier(acceptMap[assetType], file);
+};
+
 type AssetUploadProps = {
   type: AssetType;
   accept?: string;

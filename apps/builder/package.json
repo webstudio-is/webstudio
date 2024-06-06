@@ -19,6 +19,7 @@
     "middleware:dev": "tsx watch --env-file=.env.preview ./middleware.js"
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "^1.1.11",
     "@codemirror/autocomplete": "^6.16.2",
     "@codemirror/commands": "^6.5.0",
     "@codemirror/lang-html": "^6.4.9",
@@ -113,6 +114,7 @@
     "shallow-equal": "^3.1.0",
     "slugify": "^1.6.6",
     "strip-indent": "^4.0.0",
+    "tiny-invariant": "^1.3.3",
     "title-case": "^4.1.0",
     "ultraflag": "^0.1.0",
     "untruncate-json": "^0.0.1",

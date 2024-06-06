@@ -104,6 +104,9 @@ importers:
 
   apps/builder:
     dependencies:
+      '@atlaskit/pragmatic-drag-and-drop':
+        specifier: ^1.1.11
+        version: 1.1.11
       '@codemirror/autocomplete':
         specifier: ^6.16.2
         version: 6.16.2(@codemirror/language@6.10.1)(@codemirror/state@6.4.1)(@codemirror/view@6.26.3)(@lezer/common@1.2.1)
@@ -386,6 +389,9 @@ importers:
       strip-indent:
         specifier: ^4.0.0
         version: 4.0.0
+      tiny-invariant:
+        specifier: ^1.3.3
+        version: 1.3.3
       title-case:
         specifier: ^4.1.0
         version: 4.1.0
@@ -2042,6 +2048,9 @@ packages:
   '@ampproject/remapping@2.2.1':
     resolution: {integrity: sha512-lFMjJTrFL3j7L9yBxwYfCq2k6qqwHyzuUl/XBnif78PWTJYyL/dfowQHWE3sp6U6ZzqWiiIZnpTMO96zhkjwtg==}
     engines: {node: '>=6.0.0'}
+
+  '@atlaskit/pragmatic-drag-and-drop@1.1.11':
+    resolution: {integrity: sha512-oAwMGM68d7PrAHvcgwzJbOtZJKW6BJsc2eDWfVWb7W+lGo8tWDIFdMSmR2K+EczV03lXgdnQbRWDMcOrZ/98mQ==}
 
   '@aw-web-design/x-default-browser@1.4.126':
     resolution: {integrity: sha512-Xk1sIhyNC/esHGGVjL/niHLowM0csl/kFO5uawBy4IrWwy0o1G8LGt3jP6nmWGz+USxeeqbihAmp/oVZju6wug==}
@@ -5810,6 +5819,9 @@ packages:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
     engines: {node: '>=8'}
 
+  bind-event-listener@3.0.0:
+    resolution: {integrity: sha512-PJvH288AWQhKs2v9zyfYdPzlPqf5bXbGMmhmUIY9x4dAUGIWgomO771oBQNwJnMQSnUIXhKu6sgzpBRXTlvb8Q==}
+
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
 
@@ -8685,6 +8697,9 @@ packages:
   queue@6.0.2:
     resolution: {integrity: sha512-iHZWu+q3IdFZFX36ro/lKBkSvfkztY5Y7HMiPlOUjhupPcG2JMfst2KKEpu5XndviX/3UhFbRngUPNKtgvtZiA==}
 
+  raf-schd@4.0.3:
+    resolution: {integrity: sha512-tQkJl2GRWh83ui2DiPTJz9wEiMN20syf+5oKfB03yYP7ioZcJwsIK8FjrtLwH1m7C7e+Tt2yYBlrOpdT+dyeIQ==}
+
   ramda@0.29.0:
     resolution: {integrity: sha512-BBea6L67bYLtdbOqfp8f58fPMqEwx0doL+pAi8TZyp2YWz8R9G8z9x75CZI8W+ftqhFHCpEX2cRnUUXK130iKA==}
 
@@ -10098,6 +10113,12 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.2
       '@jridgewell/trace-mapping': 0.3.18
+
+  '@atlaskit/pragmatic-drag-and-drop@1.1.11':
+    dependencies:
+      '@babel/runtime': 7.22.3
+      bind-event-listener: 3.0.0
+      raf-schd: 4.0.3
 
   '@aw-web-design/x-default-browser@1.4.126':
     dependencies:
@@ -14713,6 +14734,8 @@ snapshots:
 
   binary-extensions@2.2.0: {}
 
+  bind-event-listener@3.0.0: {}
+
   bl@4.1.0:
     dependencies:
       buffer: 5.7.1
@@ -18336,6 +18359,8 @@ snapshots:
   queue@6.0.2:
     dependencies:
       inherits: 2.0.4
+
+  raf-schd@4.0.3: {}
 
   ramda@0.29.0: {}
 
