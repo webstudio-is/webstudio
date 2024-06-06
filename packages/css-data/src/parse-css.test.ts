@@ -133,7 +133,7 @@ describe("Parse CSS", () => {
     `);
   });
 
-  test("parse states", () => {
+  test("parse multiple rules", () => {
     expect(parseCss(`a { color: red} a:hover { color: #ff0000 }`))
       .toMatchInlineSnapshot(`
         {
