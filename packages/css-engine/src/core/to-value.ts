@@ -84,7 +84,7 @@ export const toValue = (
   }
 
   if (value.type === "unparsed") {
-    if (value.hidden) {
+    if (value.hidden === true) {
       // We assume that property is background-image and use this to hide background layers
       // In the future we might want to have a more generic way to hide values
       // i.e. have knowledge about property-name, as none is property specific
@@ -113,6 +113,11 @@ export const toValue = (
   }
 
   if (value.type === "function") {
+    // Right now, we are using function-value only for filter and backdrop-filter functions
+    if (value.hidden === true) {
+      return "";
+    }
+
     return `${value.name}(${toValue(value.args, transformValue)})`;
   }
 
