@@ -215,7 +215,7 @@ const EditableTreeItemLabel = styled(TreeItemLabel, {
         outline: "none",
         cursor: "auto",
         textOverflow: "clip",
-        userSelect: "auto",
+        userSelect: "text",
       },
     },
   },
