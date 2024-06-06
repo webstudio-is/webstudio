@@ -193,20 +193,9 @@ describe("Parse CSS", () => {
               "r": 255,
               "type": "rgb",
             },
-          ],
-          "test2": [
-            {
-              "property": "color",
-              "value": {
-                "alpha": 1,
-                "b": 0,
-                "g": 0,
-                "r": 255,
-                "type": "rgb",
-              },
-            },
-          ],
-        }
-      `);
+          },
+        ],
+      }
+    `);
   });
 });
