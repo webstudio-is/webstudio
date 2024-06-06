@@ -83,6 +83,26 @@ describe("Parse CSS", () => {
     `);
   });
 
+  test("parse states", () => {
+    expect(parseCss(`a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
+      {
+        "a:hover": [
+          {
+            "property": "color",
+            "state": ":hover",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("complex selector rules", () => {
     expect(parseCss(`.test, a, .test2, .test:hover { color: #ff0000 }`))
       .toMatchInlineSnapshot(`
@@ -114,6 +134,19 @@ describe("Parse CSS", () => {
           "test2": [
             {
               "property": "color",
+              "value": {
+                "alpha": 1,
+                "b": 0,
+                "g": 0,
+                "r": 255,
+                "type": "rgb",
+              },
+            },
+          ],
+          "test:hover": [
+            {
+              "property": "color",
+              "state": ":hover",
               "value": {
                 "alpha": 1,
                 "b": 0,

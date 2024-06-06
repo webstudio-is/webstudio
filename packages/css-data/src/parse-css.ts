@@ -4,19 +4,15 @@ import {
   type Style as S,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
+import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
 
 type Selector = string;
-export type Style = {
-  // @todo add support for states and media queries in addition to declarations
-  property: StyleProperty;
-  value: StyleValue;
-};
 
-export type Styles = Record<Selector, Style[]>;
+export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
 
 type Longhand = keyof typeof toLonghand;
 
@@ -78,6 +74,7 @@ const cssTreeTryParse = (input: string) => {
 export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
   let selectors: Selector[] = [];
+  let states = new Map<Selector, string>();
   const styles: Styles = {};
 
   if (ast === undefined) {
@@ -87,18 +84,18 @@ export const parseCss = (css: string) => {
   csstree.walk(ast, (node, item) => {
     if (node.type === "SelectorList") {
       selectors = [];
+      states = new Map();
     }
 
-    if (node.type === "TypeSelector") {
-      if (!item.prev && !item.next) {
-        selectors.push(node.name);
+    if (node.type === "ClassSelector" || node.type === "TypeSelector") {
+      let state = "";
+      if (item.next && item.next.data.type === "PseudoClassSelector") {
+        state = `:${item.next.data.name}`;
       }
-      return;
-    }
-
-    if (node.type === "ClassSelector") {
-      if (!item.prev && !item.next) {
-        selectors.push(node.name);
+      const selector = node.name + state;
+      selectors.push(selector);
+      if (state) {
+        states.set(selector, state);
       }
       return;
     }
@@ -117,15 +114,17 @@ export const parseCss = (css: string) => {
             StyleValue.parse(value);
             property = camelCase(property) as StyleProperty;
             selectors.forEach((selector) => {
-              const selectors = styles[selector];
-              if (Array.isArray(selectors)) {
-                selectors.push({
-                  property,
-                  value,
-                });
-              } else {
-                styles[selector] = [{ property, value }];
+              if (styles[selector] === undefined) {
+                styles[selector] = [];
               }
+              const style: EmbedTemplateStyleDecl = {
+                property,
+                value,
+              };
+              if (states.has(selector)) {
+                style.state = states.get(selector);
+              }
+              styles[selector].push(style);
             });
           } catch (error) {
             console.error("Bad CSS declaration", error, parsedCss);
