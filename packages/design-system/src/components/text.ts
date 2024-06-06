@@ -56,8 +56,8 @@ export const textStyle = css({
       },
     },
     userSelect: {
-      auto: {
-        userSelect: "auto",
+      text: {
+        userSelect: "text",
       },
       none: {
         userSelect: "none",

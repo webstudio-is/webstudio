@@ -134,10 +134,10 @@ const EditableText = ({
       truncate
       ref={ref}
       spellCheck={false}
+      userSelect={isEditing ? "text" : "none"}
       css={{
         outline: "none",
         textOverflow: isEditing ? "clip" : "ellipsis",
-        userSelect: isEditing ? "auto" : "none",
         cursor: isEditing ? "auto" : "default",
       }}
       {...handlers}
