@@ -41,28 +41,34 @@ export const deleteLayer = <T extends TupleValue | LayersValue>(
   batch.publish();
 };
 
-export const hideLayer = (
+export const hideLayer = <T extends LayersValue | TupleValue>(
   property: StyleProperty,
   index: number,
-  layers: LayersValue,
+  layers: T,
   createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
-  const batch = createBatchUpdate();
-  const value = layers.value[index];
-
-  if (value.type !== "tuple" && value.type !== "unparsed") {
+  if (layers.type !== "layers" && layers.type !== "tuple") {
     return;
   }
-  const newLayers = [...layers.value];
-  newLayers.splice(index, 1, {
-    ...value,
-    hidden: value.hidden !== true,
-  });
-  batch.setProperty(property)({
-    type: "layers",
-    value: newLayers,
+
+  const newLayersValue = layers.value.map((layer, layerIndex) => {
+    if (layerIndex !== index) {
+      return layer;
+    }
+
+    if (layer.type === "function" || layer.type === "tuple") {
+      return {
+        ...layer,
+        hidden: !layer.hidden,
+      } as T["value"][number];
+    }
   });
 
+  const newLayers: T = JSON.parse(JSON.stringify(layers));
+  newLayers.value = newLayersValue as T["value"];
+
+  const batch = createBatchUpdate();
+  batch.setProperty(property)(newLayers);
   batch.publish();
 };
 

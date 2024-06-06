@@ -58,7 +58,8 @@ type LayerListProps = SectionProps & {
 
 const extractPropertiesFromLayer = (layer: TupleValue | FunctionValue) => {
   if (layer.type === "function") {
-    return { name: toValue(layer), value: toValue(layer), color: undefined };
+    const value = `${layer.name}(${toValue(layer.args)})`;
+    return { name: value, value, color: undefined };
   }
 
   const name = [];
@@ -121,9 +122,6 @@ export const LayersList = ({
   };
 
   const handleHideLayer = (index: number) => {
-    if (value.type === "tuple") {
-      return;
-    }
     return hideLayer(property, index, value, createBatchUpdate);
   };
 
@@ -146,9 +144,17 @@ export const LayersList = ({
     <CssValueListArrowFocus dragItemId={dragItemId}>
       <Flex direction="column" ref={sortableRefCallback}>
         {value.value.map((layer, index) => {
-          if (layer.type !== "tuple" && layer.type !== "function") {
+          // Because we are using a tuple or function to represent the layers,
+          // We use tuple for text-shadow and box-shadow properties
+          // and function for filter and backdrop-filter property
+
+          const isLayerATupleOrFunction =
+            layer.type === "tuple" || layer.type === "function";
+
+          if (isLayerATupleOrFunction === false) {
             return;
           }
+
           const id = String(index);
           const properties = extractPropertiesFromLayer(layer);
 
@@ -172,7 +178,10 @@ export const LayersList = ({
                 active={dragItemId === id}
                 index={index}
                 label={<Label truncate>{properties.name}</Label>}
-                hidden={layer.type === "tuple" && layer?.hidden}
+                hidden={
+                  (layer.type === "tuple" || layer.type === "function") &&
+                  layer?.hidden
+                }
                 thumbnail={
                   property === "textShadow" || property === "boxShadow" ? (
                     <ColorThumb color={properties.color} />
@@ -180,7 +189,7 @@ export const LayersList = ({
                 }
                 buttons={
                   <>
-                    {layer.type === "tuple" ? (
+                    {layer.type === "tuple" || layer.type === "function" ? (
                       <SmallToggleButton
                         variant="normal"
                         pressed={layer?.hidden}
@@ -199,7 +208,10 @@ export const LayersList = ({
                     <SmallIconButton
                       variant="destructive"
                       tabIndex={-1}
-                      disabled={layer.type === "tuple" && layer.hidden}
+                      disabled={
+                        (layer.type === "tuple" || layer.type === "function") &&
+                        layer.hidden
+                      }
                       icon={<SubtractIcon />}
                       onClick={() => handleDeleteLayer(index)}
                     />

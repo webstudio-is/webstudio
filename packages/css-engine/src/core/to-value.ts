@@ -113,6 +113,11 @@ export const toValue = (
   }
 
   if (value.type === "function") {
+    // Right now, we are using function-value only for filter and backdrop-filter functions
+    if (value.hidden === true) {
+      return "";
+    }
+
     return `${value.name}(${toValue(value.args, transformValue)})`;
   }
 
