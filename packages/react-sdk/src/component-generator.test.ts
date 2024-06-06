@@ -992,3 +992,75 @@ data-ws-component="Body">
 "
 `);
 });
+
+test("generate conditional collection", () => {
+  expect(
+    generateWebstudioComponent({
+      classesMap: new Map(),
+      scope: createScope(),
+      name: "Page",
+      rootInstanceId: "body",
+      parameters: [],
+      instances: toMap([
+        createInstance("body", "Body", [{ type: "id", value: "list" }]),
+        createInstance("list", collectionComponent, []),
+      ]),
+      dataSources: toMap<DataSource>([
+        {
+          id: "conditionId",
+          scopeInstanceId: "list",
+          name: "conditionName",
+          type: "variable",
+          value: { type: "boolean", value: false },
+        },
+        {
+          id: "collectionItemId",
+          scopeInstanceId: "list",
+          name: "collectionItemName",
+          type: "parameter",
+        },
+      ]),
+      props: toMap<Prop>([
+        {
+          id: "showPropId",
+          instanceId: "list",
+          name: showAttribute,
+          type: "expression",
+          value: "$ws$dataSource$conditionId",
+        },
+        {
+          id: "dataPropId",
+          instanceId: "list",
+          name: "data",
+          type: "json",
+          value: [],
+        },
+        {
+          id: "itemPropId",
+          instanceId: "list",
+          name: "item",
+          type: "parameter",
+          value: "collectionItemId",
+        },
+      ]),
+      indexesWithinAncestors: new Map(),
+    })
+  ).toMatchInlineSnapshot(`
+    "const Page = () => {
+    let [conditionName, set$conditionName] = useState<any>(false)
+    return <Body
+    data-ws-id="body"
+    data-ws-component="Body">
+    {(conditionName) &&
+    <>
+    {[]?.map((collectionItemName: any, index: number) =>
+    <Fragment key={index}>
+    </Fragment>
+    )}
+    </>
+    }
+    </Body>
+    }
+    "
+    `);
+});

@@ -218,10 +218,10 @@ export const TooltipContent = ({
         <Text
           variant="monoBold"
           color="moreSubtle"
+          userSelect="text"
           css={{
             whiteSpace: "break-spaces",
             maxHeight: "3em",
-            userSelect: "text",
             cursor: "text",
           }}
         >

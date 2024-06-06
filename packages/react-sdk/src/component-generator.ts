@@ -153,6 +153,12 @@ export const generateJsxElement = ({
   children: string;
   classesMap?: Map<string, Array<string>>;
 }) => {
+  // descendant component is used only for styling
+  // and should not be rendered
+  if (instance.component === descendantComponent) {
+    return "";
+  }
+
   let generatedProps = "";
 
   // id and component props are always defined for styles
@@ -220,12 +226,6 @@ export const generateJsxElement = ({
   }
 
   let generatedElement = "";
-  // coditionally render instance when show prop is data source
-  // {dataSourceVariable && <Instance>}
-  if (conditionValue) {
-    generatedElement += `{(${conditionValue}) &&\n`;
-  }
-
   if (instance.component === collectionComponent) {
     // prevent generating invalid collection
     if (
@@ -253,14 +253,26 @@ export const generateJsxElement = ({
     }
   }
 
-  // descendant component is used only for styling
-  // and should not be rendered
-  if (instance.component === descendantComponent) {
-    return "";
-  }
-
+  // coditionally render instance when show prop is data source
+  // {dataSourceVariable && <Instance>}
   if (conditionValue) {
-    generatedElement += `}\n`;
+    let conditionalElement = "";
+    conditionalElement += `{(${conditionValue}) &&\n`;
+    // wrap collection with fragment when rendered inside condition
+    // {dataSourceVariable &&
+    //  <>
+    //    {[].map(...)}
+    //  </>
+    // }
+    if (instance.component === collectionComponent) {
+      conditionalElement += "<>\n";
+      conditionalElement += generatedElement;
+      conditionalElement += "</>\n";
+    } else {
+      conditionalElement += generatedElement;
+    }
+    conditionalElement += `}\n`;
+    return conditionalElement;
   }
 
   return generatedElement;

@@ -9,7 +9,6 @@
     "build": "remix vite:build",
     "build:webflow-presets": "css-to-ws ./app/shared/copy-paste/plugin-webflow/style-presets.css ./app/shared/copy-paste/plugin-webflow/__generated__/style-presets.ts",
     "start": "remix-serve build/server/index.js",
-    "start-local": "NODE_OPTIONS='-r dotenv/config' remix-serve build/server/index.js",
     "dev": "remix vite:dev",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
@@ -17,7 +16,7 @@
     "ci:migrate": "migrations migrate",
     "middleware:link": "pnpx vercel link",
     "middleware:env": "pnpx vercel env pull --environment=preview ./.env.preview",
-    "middleware:dev": "DOTENV_CONFIG_PATH=.env.preview tsx watch -r dotenv/config ./middleware.js"
+    "middleware:dev": "tsx watch --env-file=.env.preview ./middleware.js"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.16.2",
@@ -133,7 +132,6 @@
     "@types/react-dom": "^18.2.25",
     "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
-    "dotenv": "^16.3.1",
     "html-tags": "^3.3.1",
     "react-router-dom": "^6.23.1",
     "react-test-renderer": "18.3.0-canary-14898b6a9-20240318",
