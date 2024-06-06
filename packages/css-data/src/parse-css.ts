@@ -81,21 +81,32 @@ export const parseCss = (css: string) => {
     return styles;
   }
 
+  const addToLastSelector = (name: string) => {
+    selectors[selectors.length - 1] =
+      `${selectors[selectors.length - 1]}${name}`;
+  };
+
   csstree.walk(ast, (node, item) => {
     if (node.type === "SelectorList") {
       selectors = [];
+    }
+
+    if (node.type === "Selector") {
       states = new Map();
     }
 
+    if (node.type === "Combinator") {
+      addToLastSelector(node.name);
+    }
+
     if (node.type === "ClassSelector" || node.type === "TypeSelector") {
-      let state = "";
-      if (item.next && item.next.data.type === "PseudoClassSelector") {
-        state = `:${item.next.data.name}`;
+      if (item?.prev && item.prev.data.type === "Combinator") {
+        addToLastSelector(node.name);
+      } else {
+        selectors.push(node.name);
       }
-      const selector = node.name + state;
-      selectors.push(selector);
-      if (state) {
-        states.set(selector, state);
+      if (item?.next && item.next.data.type === "PseudoClassSelector") {
+        states.set(node.name, `:${item.next.data.name}`);
       }
       return;
     }
@@ -123,8 +134,11 @@ export const parseCss = (css: string) => {
               };
               if (states.has(selector)) {
                 style.state = states.get(selector);
+                states.delete(selector);
+                styles[selector].push(style);
+                return;
               }
-              styles[selector].push(style);
+              styles[selector].unshift(style);
             });
           } catch (error) {
             console.error("Bad CSS declaration", error, parsedCss);

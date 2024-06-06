@@ -3,11 +3,13 @@ import type { WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
-import { parseCss, type Style } from "@webstudio-is/css-data";
+import { parseCss } from "@webstudio-is/css-data";
+// @todo this should be moved
+import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 
 const addNodeStyles = (
   name: string,
-  styles: Array<Style>,
+  styles: Array<EmbedTemplateStyleDecl>,
   instanceId: Instance["id"],
   fragment: WebstudioFragment
 ) => {
@@ -66,7 +68,9 @@ export const addStyles = async (
       continue;
     }
 
-    const styles = presets[wfNode.tag as keyof typeof presets] as Array<Style>;
+    const styles = presets[
+      wfNode.tag as keyof typeof presets
+    ] as Array<EmbedTemplateStyleDecl>;
     if (styles) {
       addNodeStyles(wfNode.tag, styles, instanceId, fragment);
     }
