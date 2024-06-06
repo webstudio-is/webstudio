@@ -84,7 +84,7 @@ export const toValue = (
   }
 
   if (value.type === "unparsed") {
-    if (value.hidden) {
+    if (value.hidden === true) {
       // We assume that property is background-image and use this to hide background layers
       // In the future we might want to have a more generic way to hide values
       // i.e. have knowledge about property-name, as none is property specific
