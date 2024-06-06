@@ -12,29 +12,7 @@ const _canvasApi = {
   setInert,
   resetInert,
   preventUnhandled,
-
-  // We need to use monitorForExternal inside iframe context so preventUnhandled.start|stop would work as expected
-  monitorForExternal: (
-    args: Pick<
-      Parameters<typeof monitorForExternal>[0],
-      "onDragStart" | "onDrop" | "canMonitor"
-    >
-  ) => {
-    return monitorForExternal({
-      ...args,
-      onDragStart: (event) => {
-        // preventUnhandled.start();
-        args.onDragStart?.(event);
-      },
-      onDrop: (event) => {
-        // Stop should be delayed, and canceled if started at builder
-
-        // preventUnhandled.stop();
-
-        args.onDrop?.(event);
-      },
-    });
-  },
+  monitorForExternal,
 };
 
 declare global {
