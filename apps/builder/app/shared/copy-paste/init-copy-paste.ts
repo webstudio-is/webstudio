@@ -37,11 +37,11 @@ type Plugin = {
   mimeType?: string;
   onCopy?: () => undefined | string;
   onCut?: () => undefined | string;
-  onPaste?: (data: string) => boolean;
+  onPaste?: (data: string) => boolean | Promise<boolean>;
 };
 
 export const initCopyPaste = (plugins: Plugin[]) => {
-  const handleCopy = (event: ClipboardEvent) => {
+  const handleCopy = async (event: ClipboardEvent) => {
     if ($authTokenPermissions.get().canCopy === false) {
       toastError("Copying has been disabled by the project owner");
       event.preventDefault();
@@ -55,7 +55,7 @@ export const initCopyPaste = (plugins: Plugin[]) => {
       return;
     }
     for (const { mimeType = defaultMimeType, onCopy } of plugins) {
-      const data = onCopy?.();
+      const data = await onCopy?.();
       if (data) {
         // must prevent default, otherwise setData() will not work
         event.preventDefault();

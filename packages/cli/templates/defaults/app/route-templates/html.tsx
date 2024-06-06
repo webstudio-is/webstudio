@@ -81,7 +81,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
       status: pageMeta.status,
       headers: {
         "Cache-Control": "public, max-age=600",
-        "x-ws-language": pageMeta.language ?? "en",
       },
     }
   );
@@ -90,7 +89,6 @@ export const loader = async (arg: LoaderFunctionArgs) => {
 export const headers: HeadersFunction = ({ loaderHeaders }) => {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
-    "x-ws-language": loaderHeaders.get("x-ws-language") ?? "",
   };
 };
 

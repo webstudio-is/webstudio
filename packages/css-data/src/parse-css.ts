@@ -10,7 +10,7 @@ import * as toLonghand from "./property-parsers/to-longhand";
 import { camelCase } from "change-case";
 
 type Selector = string;
-type Style = {
+export type Style = {
   // @todo add support for states and media queries in addition to declarations
   property: StyleProperty;
   value: StyleValue;
@@ -88,6 +88,14 @@ export const parseCss = (css: string) => {
     if (node.type === "SelectorList") {
       selectors = [];
     }
+
+    if (node.type === "TypeSelector") {
+      if (!item.prev && !item.next) {
+        selectors.push(node.name);
+      }
+      return;
+    }
+
     if (node.type === "ClassSelector") {
       if (!item.prev && !item.next) {
         selectors.push(node.name);

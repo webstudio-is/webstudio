@@ -47,6 +47,30 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
+const Script = ({ children, ...props }: Record<string, string | boolean>) => {
+  if (children == null) {
+    return <script {...props} />;
+  }
+
+  return <script {...props} dangerouslySetInnerHTML={{ __html: children }} />;
+};
+const Style = ({ children, ...props }: Record<string, string | boolean>) => {
+  if (children == null) {
+    return <style {...props} />;
+  }
+
+  return <style {...props} dangerouslySetInnerHTML={{ __html: children }} />;
+};
+
+export const CustomCode = () => {
+  return (
+    <>
+      <Script>{`console.log('KittyGuardedZone')`}</Script>
+      {`\n`}
+    </>
+  );
+};
+
 const Page = ({}: { system: any }) => {
   return (
     <Body

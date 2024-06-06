@@ -22,7 +22,7 @@
  * ```shell
  * pnpx vercel link
  * pnpx vercel env pull --environment=preview ./.env.preview
- * DOTENV_CONFIG_PATH=.env.preview pnpm tsx watch -r dotenv/config ./middleware.js
+ * pnpm tsx watch --env-file=.env.preview ./middleware.js
  * ```
  */
 import { Ratelimit } from "@upstash/ratelimit";

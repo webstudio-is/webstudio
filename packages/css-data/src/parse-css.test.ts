@@ -86,32 +86,44 @@ describe("Parse CSS", () => {
   test("complex selector rules", () => {
     expect(parseCss(`.test, a, .test2, .test:hover { color: #ff0000 }`))
       .toMatchInlineSnapshot(`
-      {
-        "test": [
-          {
-            "property": "color",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
+        {
+          "a": [
+            {
+              "property": "color",
+              "value": {
+                "alpha": 1,
+                "b": 0,
+                "g": 0,
+                "r": 255,
+                "type": "rgb",
+              },
             },
-          },
-        ],
-        "test2": [
-          {
-            "property": "color",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
+          ],
+          "test": [
+            {
+              "property": "color",
+              "value": {
+                "alpha": 1,
+                "b": 0,
+                "g": 0,
+                "r": 255,
+                "type": "rgb",
+              },
             },
-          },
-        ],
-      }
-    `);
+          ],
+          "test2": [
+            {
+              "property": "color",
+              "value": {
+                "alpha": 1,
+                "b": 0,
+                "g": 0,
+                "r": 255,
+                "type": "rgb",
+              },
+            },
+          ],
+        }
+      `);
   });
 });

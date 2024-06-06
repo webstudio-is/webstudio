@@ -12,6 +12,9 @@
     "build:descriptions": "tsx ./bin/property-value-descriptions.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
+  "bin": {
+    "css-to-ws": "./bin/css-to-ws.ts"
+  },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
     "@types/css-tree": "^2.3.1",
