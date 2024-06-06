@@ -258,6 +258,12 @@ export const generateJsxElement = ({
   if (conditionValue) {
     let conditionalElement = "";
     conditionalElement += `{(${conditionValue}) &&\n`;
+    // wrap collection with fragment when rendered inside condition
+    // {dataSourceVariable &&
+    //  <>
+    //    {[].map(...)}
+    //  </>
+    // }
     if (instance.component === collectionComponent) {
       conditionalElement += "<>\n";
       conditionalElement += generatedElement;
