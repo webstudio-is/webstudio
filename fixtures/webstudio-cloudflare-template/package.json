@@ -1,9 +1,10 @@
 {
   "type": "module",
   "scripts": {
-    "fixtures:link": "webstudio link --link \"https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93&\"",
-    "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "webstudio build --template internal --template cloudflare --template saas-helpers  --preview && pnpm prettier --write ./app/ ./package.json",
+    "webstudio": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
+    "fixtures:link": "pnpm webstudio link --link \"https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93&\"",
+    "fixtures:sync": "pnpm webstudio sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "pnpm webstudio build --template internal --template cloudflare --template saas-helpers  --preview && pnpm prettier --write ./app/ ./package.json",
     "build": "remix vite:build",
     "dev": "remix vite:dev",
     "typecheck": "tsc",

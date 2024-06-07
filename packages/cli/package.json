@@ -9,6 +9,12 @@
     "webstudio-cli": "./bin.js",
     "webstudio": "./bin.js"
   },
+  "imports": {
+    "#cli": {
+      "webstudio": "./src/cli.ts",
+      "default": "./lib/cli.js"
+    }
+  },
   "files": [
     "lib/*",
     "templates/*",
@@ -19,7 +25,6 @@
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "build": "rm -rf lib && esbuild src/cli.ts --outdir=lib --bundle --format=esm --packages=external",
-    "local-run": "tsx --no-warnings ./src/bin.ts",
     "dev": "esbuild src/cli.ts --watch --bundle --format=esm --packages=external --outdir=./lib",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
