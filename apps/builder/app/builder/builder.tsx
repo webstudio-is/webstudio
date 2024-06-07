@@ -77,6 +77,7 @@ const SidePanel = ({
     <Box
       as="aside"
       css={{
+        isolation: "isolate",
         gridArea,
         display: isPreviewMode ? "none" : "flex",
         flexDirection: "column",

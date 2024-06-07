@@ -5,14 +5,17 @@ import {
   Flex,
   theme,
   InputErrorsTooltip,
+  Label,
+  Tooltip,
+  Text,
 } from "@webstudio-is/design-system";
 import { useRef, useState, useEffect } from "react";
 import type { ControlProps } from "../../controls";
-import { NonResetablePropertyName } from "../../shared/property-name";
 import { useStore } from "@nanostores/react";
 import { $assets } from "~/shared/nano-states";
 import { parseCssValue } from "@webstudio-is/css-data";
 import type { StyleUpdateOptions } from "../../shared/use-style-data";
+import { InfoCircleIcon } from "@webstudio-is/icons";
 
 const property: StyleProperty = "backgroundImage";
 
@@ -161,11 +164,24 @@ export const BackgroundImage = (
         gap: theme.spacing[3],
       }}
     >
-      <NonResetablePropertyName
-        style={props.currentStyle}
-        properties={[property]}
-        label="Image"
-      />
+      <Label>
+        <Flex align="center" gap="1">
+          Code
+          <Tooltip
+            variant="wrapped"
+            content={
+              <Text>
+                Paste a background-image CSS property value here. You can use
+                the URL of an asset in your project or an external URL.
+                <br /> <br />
+                <Text variant="monoBold">url("image.jpg")</Text>
+              </Text>
+            }
+          >
+            <InfoCircleIcon />
+          </Tooltip>
+        </Flex>
+      </Label>
 
       <InputErrorsTooltip errors={errors}>
         <TextArea

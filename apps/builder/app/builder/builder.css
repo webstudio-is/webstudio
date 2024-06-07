@@ -7,3 +7,13 @@ body {
   overscroll-behavior: contain;
   -webkit-font-smoothing: antialiased;
 }
+
+[data-radix-scroll-area-viewport] {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  display: none;
+}
