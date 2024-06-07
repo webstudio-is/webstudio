@@ -45,9 +45,7 @@ const imageStyle = css({
       true: {
         objectFit: "cover",
       },
-    },
-    isPlaceholder: {
-      true: {
+      false: {
         background: theme.colors.white,
         padding: rawTheme.spacing[5],
       },
@@ -70,7 +68,7 @@ const Thumbnail = ({ image, state, alt }: ThumbnailProps) => {
         <Flex
           align="center"
           justify="center"
-          className={imageStyle({ isPlaceholder: true })}
+          className={imageStyle({ hasAsset: false })}
         >
           <Text variant="brandSectionTitle">{alt}</Text>
         </Flex>
