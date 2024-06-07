@@ -225,28 +225,28 @@ th {
 }
 
 .w-icon-slider-right:before {
-  content: "";
+  content: "î˜€";
 }
 
 .w-icon-slider-left:before {
-  content: "";
+  content: "î˜";
 }
 
 .w-icon-nav-menu:before {
-  content: "";
+  content: "î˜‚";
 }
 
 .w-icon-arrow-down:before,
 .w-icon-dropdown-toggle:before {
-  content: "";
+  content: "î˜ƒ";
 }
 
 .w-icon-file-upload-remove:before {
-  content: "";
+  content: "î¤€";
 }
 
 .w-icon-file-upload-icon:before {
-  content: "";
+  content: "î¤ƒ";
 }
 
 * {
@@ -2224,21 +2224,4 @@ textarea.w-select {
   position: absolute;
   top: 0;
   left: 0;
-}
-
-:root {
-  --white: white;
-  --black: black;
-}
-
-h1 {
-  margin-top: 20px;
-  margin-bottom: 10px;
-  font-size: 38px;
-  font-weight: bold;
-  line-height: 44px;
-}
-
-a {
-  text-decoration: underline;
 }
