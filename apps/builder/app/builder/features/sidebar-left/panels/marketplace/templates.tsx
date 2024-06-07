@@ -18,7 +18,7 @@ import {
   type WebstudioData,
 } from "@webstudio-is/sdk";
 import type { MarketplaceProduct } from "@webstudio-is/project-build";
-import { computeExpression } from "~/shared/nano-states";
+import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
 import { builderUrl } from "~/shared/router-utils";
 import {
@@ -76,59 +76,29 @@ type TemplateData = {
   rootInstanceId: string;
 };
 
-const getTemplatesDataByCategory = (data?: WebstudioData) => {
-  const templatesByCategory = new Map<string, Array<TemplateData>>();
-
+const getTemplatesDataByCategory = (
+  data?: WebstudioData
+): Map<string, Array<TemplateData>> => {
   if (data === undefined) {
-    return templatesByCategory;
+    return new Map();
   }
-
-  const pages = [data.pages.homePage, ...data.pages.pages];
-
-  for (const page of pages) {
-    // @todo remove after all stores are migrated
-    const excludePageFromSearch =
-      computeExpression(
-        page.meta.excludePageFromSearch || "false",
-        new Map()
-      ) ?? true;
-    const include =
-      page.marketplace?.include ?? false === excludePageFromSearch ?? false;
-    // We allow user to hide the page in the marketplace.
-    if (false === include) {
-      continue;
-    }
-
-    const categoryMeta = page.meta.custom?.find(
-      ({ property }) => property === "ws:category"
-    );
-    // @todo remove after all stores are migrated
-    const categoryFallback = String(
-      computeExpression(categoryMeta?.content ?? `""`, new Map())
-    );
-    const category = page.marketplace?.category ?? categoryFallback ?? "Pages";
-
-    let templates = templatesByCategory.get(category);
-    if (templates === undefined) {
-      templates = [];
-      templatesByCategory.set(category, templates);
-    }
-
-    const socialImageAsset = page.meta.socialImageAssetId
-      ? data.assets.get(page.meta.socialImageAssetId)
-      : undefined;
-    const thumbnailImageAsset = page.marketplace?.thumbnailAssetId
-      ? data.assets.get(page.marketplace.thumbnailAssetId)
-      : undefined;
-
-    templates.push({
-      title: page.name,
-      thumbnailAsset: thumbnailImageAsset ?? socialImageAsset,
-      pageId: page.id,
-      rootInstanceId: page.rootInstanceId,
+  const pages = [data.pages.homePage, ...data.pages.pages]
+    .filter((page) => page.marketplace?.include)
+    .map((page) => {
+      // category can be empty string
+      const category = page.marketplace?.category || "Pages";
+      const thumbnailAsset =
+        data.assets.get(page.marketplace?.thumbnailAssetId ?? "") ??
+        data.assets.get(page.meta.socialImageAssetId ?? "");
+      return {
+        category,
+        title: page.name,
+        thumbnailAsset,
+        pageId: page.id,
+        rootInstanceId: page.rootInstanceId,
+      };
     });
-  }
-  return templatesByCategory;
+  return mapGroupBy(pages, (page) => page.category);
 };
 
 export const Templates = ({
