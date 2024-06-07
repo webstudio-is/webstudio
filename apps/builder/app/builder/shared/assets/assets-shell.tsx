@@ -79,6 +79,11 @@ export const AssetsShell = ({
     canvasApi.preventUnhandled.stop();
   }, 300);
 
+  /**
+   * Allow URL drop for images only
+   */
+  const containsByType = type === "image" ? containsFilesOrUri : containsFiles;
+
   useEffect(() => {
     if (false === canvasApi.isInitialized()) {
       return $canvasIframeState.listen((state) => {
@@ -99,8 +104,8 @@ export const AssetsShell = ({
 
     // Do not react if any dialog is opened above
     const isBlockedByBackdrop = (
-      blocked: typeof containsFilesOrUri,
-      notBlocked: typeof containsFilesOrUri
+      blocked: typeof containsByType,
+      notBlocked: typeof containsByType
     ) => {
       return (parameter: ContainsSource) => {
         const elementRect = element.getBoundingClientRect();
@@ -121,10 +126,23 @@ export const AssetsShell = ({
     return combine(
       dropTargetForExternal({
         element: element,
-        canDrop: isBlockedByBackdrop(() => false, containsFilesOrUri),
+        canDrop: isBlockedByBackdrop(() => false, containsByType),
         onDragEnter: () => setState(OVER),
         onDragLeave: () => setState(POTENTIAL),
         onDrop: async ({ source }) => {
+          setState(IDLE);
+          setCanvasState(IDLE);
+          const droppedUrls = await Promise.all(
+            source.items
+              .filter((item) => item.type === "text/uri-list")
+              .map(
+                (item) =>
+                  new Promise<URL>((resolve) =>
+                    item.getAsString((str) => resolve(new URL(str)))
+                  )
+              )
+          );
+
           const droppedFiles = await getFiles({ source });
 
           const files = droppedFiles
@@ -141,15 +159,11 @@ export const AssetsShell = ({
               return false;
             });
 
-          if (files.length === 0) {
-            return;
-          }
-
-          uploadAssets(type, files);
+          uploadAssets(type, files, droppedUrls);
         },
       }),
       monitorForExternal({
-        canMonitor: isBlockedByBackdrop(() => false, containsFilesOrUri),
+        canMonitor: isBlockedByBackdrop(() => false, containsByType),
         onDragStart: () => {
           preventUnhandledStart();
           setState(POTENTIAL);
@@ -162,7 +176,7 @@ export const AssetsShell = ({
         },
       }),
       canvasApi.monitorForExternal({
-        canMonitor: isBlockedByBackdrop(() => false, containsFilesOrUri),
+        canMonitor: isBlockedByBackdrop(() => false, containsByType),
         onDragStart: () => {
           preventUnhandledStart();
           setCanvasState(POTENTIAL);
@@ -183,6 +197,7 @@ export const AssetsShell = ({
     );
   }, [
     accept,
+    containsByType,
     handleBuilderOnDrop,
     handleCanvasOnDrop,
     preventUnhandledStop,

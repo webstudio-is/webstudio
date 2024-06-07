@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import type { LoaderFunctionArgs } from "@remix-run/server-runtime";
 import env from "~/env/env.server";
+import { getImageNameAndType } from "~/builder/shared/assets/image-formats";
 
 // this route used as proxy for images to cloudflare endpoint
 // https://developers.cloudflare.com/fundamentals/get-started/reference/cdn-cgi-endpoint/
@@ -59,7 +60,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     });
   }
 
+  const [contentType] = getImageNameAndType(name) ?? ["image/png"];
+
   return new Response(
-    createReadableStreamFromReadable(createReadStream(filePath))
+    createReadableStreamFromReadable(createReadStream(filePath)),
+    {
+      headers: {
+        "content-type": contentType,
+      },
+    }
   );
 };
