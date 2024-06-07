@@ -74,7 +74,7 @@ const cssTreeTryParse = (input: string) => {
 export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
   let selectors: Selector[] = [];
-  let states = new Map<Selector, string>();
+  let states = new Map<Selector, Array<string>>();
   const styles: Styles = {};
 
   if (ast === undefined) {
@@ -89,9 +89,6 @@ export const parseCss = (css: string) => {
   csstree.walk(ast, (node, item) => {
     if (node.type === "SelectorList") {
       selectors = [];
-    }
-
-    if (node.type === "Selector") {
       states = new Map();
     }
 
@@ -105,8 +102,11 @@ export const parseCss = (css: string) => {
       } else {
         selectors.push(node.name);
       }
+
       if (item?.next && item.next.data.type === "PseudoClassSelector") {
-        states.set(node.name, `:${item.next.data.name}`);
+        const statesArray = states.get(node.name) ?? [];
+        statesArray.push(`:${item.next.data.name}`);
+        states.set(node.name, statesArray);
       }
       return;
     }
@@ -124,21 +124,22 @@ export const parseCss = (css: string) => {
           try {
             StyleValue.parse(value);
             property = camelCase(property) as StyleProperty;
-            selectors.forEach((selector) => {
+
+            selectors.forEach((selector, index) => {
               if (styles[selector] === undefined) {
                 styles[selector] = [];
               }
-              const style: EmbedTemplateStyleDecl = {
-                property,
-                value,
-              };
-              if (states.has(selector)) {
-                style.state = states.get(selector);
-                states.delete(selector);
-                styles[selector].push(style);
+              const statesArray = states.get(selector) ?? [];
+              if (statesArray[index]) {
+                styles[selector].push({
+                  property,
+                  value,
+                  state: statesArray[index],
+                });
                 return;
               }
-              styles[selector].unshift(style);
+
+              styles[selector].unshift({ property, value });
             });
           } catch (error) {
             console.error("Bad CSS declaration", error, parsedCss);

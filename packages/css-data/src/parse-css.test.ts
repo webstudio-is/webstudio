@@ -133,6 +133,38 @@ describe("Parse CSS", () => {
     `);
   });
 
+  test("parse multiple selectors, both with state", () => {
+    expect(parseCss(`a:active, a:hover { color: #ff0000 }`))
+      .toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "state": ":active",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+          {
+            "property": "color",
+            "state": ":hover",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
   test("parse multiple rules", () => {
     expect(parseCss(`a { color: red} a:hover { color: #ff0000 }`))
       .toMatchInlineSnapshot(`
