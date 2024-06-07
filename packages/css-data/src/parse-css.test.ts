@@ -194,40 +194,10 @@ describe("Parse CSS", () => {
   });
 
   test("parse child combinator", () => {
-    expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`
-      {
-        "a>b": [
-          {
-            "property": "color",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+    expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });
 
   test("parse space combinator", () => {
-    expect(parseCss(`a b { color: #ff0000 }`)).toMatchInlineSnapshot(`
-      {
-        "a b": [
-          {
-            "property": "color",
-            "value": {
-              "alpha": 1,
-              "b": 0,
-              "g": 0,
-              "r": 255,
-              "type": "rgb",
-            },
-          },
-        ],
-      }
-    `);
+    expect(parseCss(`a b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });
 });

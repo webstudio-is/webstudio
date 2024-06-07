@@ -81,27 +81,22 @@ export const parseCss = (css: string) => {
     return styles;
   }
 
-  const addToLastSelector = (name: string) => {
-    selectors[selectors.length - 1] =
-      `${selectors[selectors.length - 1]}${name}`;
-  };
-
   csstree.walk(ast, (node, item) => {
     if (node.type === "SelectorList") {
       selectors = [];
       states = new Map();
     }
 
-    if (node.type === "Combinator") {
-      addToLastSelector(node.name);
-    }
-
     if (node.type === "ClassSelector" || node.type === "TypeSelector") {
-      if (item?.prev && item.prev.data.type === "Combinator") {
-        addToLastSelector(node.name);
-      } else {
-        selectors.push(node.name);
+      // We don't support nesting yet.
+      if (
+        (item?.prev && item.prev.data.type === "Combinator") ||
+        (item?.next && item.next.data.type === "Combinator")
+      ) {
+        return;
       }
+
+      selectors.push(node.name);
 
       if (item?.next && item.next.data.type === "PseudoClassSelector") {
         const statesArray = states.get(node.name) ?? [];
