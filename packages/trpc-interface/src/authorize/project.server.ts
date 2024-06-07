@@ -51,6 +51,23 @@ export const hasProjectPermit = async (
       return true;
     }
 
+    // @todo Delete and use tokens
+    const templateIds = [
+      // Production
+      "5e086cf4-4293-471c-8eab-ddca8b5cd4db",
+      "94e6e1b8-c6c4-485a-9d7a-8282e11920c0",
+      "05954204-fcee-407e-b47f-77a38de74431",
+      "afc162c2-6396-41b7-a855-8fc04604a7b1",
+      // Staging IDs
+      "e3dd56f9-ffd9-4692-8a61-e835de822e21",
+      "90b41d4e-f5e9-48d6-a954-6249b146852a",
+    ];
+
+    // @todo Delete and use tokens
+    if (props.permit === "view" && templateIds.includes(props.projectId)) {
+      return true;
+    }
+
     // Check if the user is allowed to access the project
     if (authorization.userId !== undefined) {
       checks.push(

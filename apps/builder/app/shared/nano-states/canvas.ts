@@ -69,3 +69,5 @@ export const synchronizedCanvasStores = [
   ["$collaborativeInstanceSelector", $collaborativeInstanceSelector],
   ["$collaborativeInstanceRect", $collaborativeInstanceRect],
 ] as const;
+
+export const $canvasIframeState = atom<"idle" | "ready">("idle");

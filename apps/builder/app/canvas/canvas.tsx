@@ -179,9 +179,7 @@ export const Canvas = ({ params, imageLoader }: CanvasProps) => {
     $params.set(params);
   });
 
-  useMount(() => {
-    initCanvasApi();
-  });
+  useMount(initCanvasApi);
 
   useLayoutEffect(() => {
     mountStyles();
