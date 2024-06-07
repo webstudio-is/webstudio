@@ -2225,24 +2225,3 @@ textarea.w-select {
   top: 0;
   left: 0;
 }
-
-:root {
-  --white: white;
-  --black: black;
-}
-
-h1 {
-  margin-top: 20px;
-  margin-bottom: 10px;
-  font-size: 38px;
-  font-weight: bold;
-  line-height: 44px;
-}
-
-a {
-  text-decoration: underline;
-}
-
-a:hover {
-  color: #b22828;
-}

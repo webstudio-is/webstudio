@@ -45,6 +45,16 @@ describe("Parse CSS", () => {
     ).toMatchInlineSnapshot(`
       [
         {
+          "property": "backgroundColor",
+          "value": {
+            "alpha": 1,
+            "b": 252,
+            "g": 255,
+            "r": 235,
+            "type": "rgb",
+          },
+        },
+        {
           "property": "backgroundImage",
           "value": {
             "type": "layers",
@@ -54,16 +64,6 @@ describe("Parse CSS", () => {
                 "value": "linear-gradient(180deg,#11181C 0%,rgba(17,24,28,0) 36.09%)",
               },
             ],
-          },
-        },
-        {
-          "property": "backgroundColor",
-          "value": {
-            "alpha": 1,
-            "b": 252,
-            "g": 255,
-            "r": 235,
-            "type": "rgb",
           },
         },
       ]
@@ -83,37 +83,103 @@ describe("Parse CSS", () => {
     `);
   });
 
-  test("complex selector rules", () => {
-    expect(parseCss(`.test, a, .test2, .test:hover { color: #ff0000 }`))
+  test("parse state", () => {
+    expect(parseCss(`a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "state": ":hover",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("parse multiple selectors, one with state", () => {
+    expect(parseCss(`a, a:hover { color: #ff0000 }`)).toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+          {
+            "property": "color",
+            "state": ":hover",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("parse multiple selectors, both with state", () => {
+    expect(parseCss(`a:active, a:hover { color: #ff0000 }`))
+      .toMatchInlineSnapshot(`
+      {
+        "a": [
+          {
+            "property": "color",
+            "state": ":active",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+          {
+            "property": "color",
+            "state": ":hover",
+            "value": {
+              "alpha": 1,
+              "b": 0,
+              "g": 0,
+              "r": 255,
+              "type": "rgb",
+            },
+          },
+        ],
+      }
+    `);
+  });
+
+  test("parse multiple rules", () => {
+    expect(parseCss(`a { color: red} a:hover { color: #ff0000 }`))
       .toMatchInlineSnapshot(`
         {
           "a": [
             {
               "property": "color",
               "value": {
-                "alpha": 1,
-                "b": 0,
-                "g": 0,
-                "r": 255,
-                "type": "rgb",
+                "type": "keyword",
+                "value": "red",
               },
             },
-          ],
-          "test": [
             {
               "property": "color",
-              "value": {
-                "alpha": 1,
-                "b": 0,
-                "g": 0,
-                "r": 255,
-                "type": "rgb",
-              },
-            },
-          ],
-          "test2": [
-            {
-              "property": "color",
+              "state": ":hover",
               "value": {
                 "alpha": 1,
                 "b": 0,
@@ -124,6 +190,14 @@ describe("Parse CSS", () => {
             },
           ],
         }
-      `);
+    `);
+  });
+
+  test("parse child combinator", () => {
+    expect(parseCss(`a > b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
+  });
+
+  test("parse space combinator", () => {
+    expect(parseCss(`a b { color: #ff0000 }`)).toMatchInlineSnapshot(`{}`);
   });
 });
