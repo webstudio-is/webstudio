@@ -219,8 +219,6 @@ export const AssetsShell = ({
         {children}
       </ScrollArea>
       <Flex
-        // align="center"
-        // justify="center"
         css={{
           position: "absolute",
           inset: 0,
