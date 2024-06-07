@@ -53,7 +53,7 @@ test("Heading", async () => {
   expect(fragment.children).toEqual([
     {
       type: "id",
-      value: expect.not.stringMatching("instanceId"),
+      value: expect.any(String),
     },
   ]);
   expect(fragment.instances).toEqual([
@@ -65,14 +65,14 @@ test("Heading", async () => {
         },
       ],
       component: "Heading",
-      id: expect.not.stringMatching("id"),
+      id: expect.any(String),
       type: "instance",
     },
   ]);
   expect(fragment.props).toEqual([
     {
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "tag",
       type: "string",
       value: "h1",
@@ -105,13 +105,13 @@ test("Link Block, Button, Text Link", async () => {
   expect(fragment.children).toEqual([
     {
       type: "id",
-      value: expect.not.stringMatching("instanceId"),
+      value: expect.any(String),
     },
   ]);
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Link",
       children: [],
@@ -121,22 +121,22 @@ test("Link Block, Button, Text Link", async () => {
   expect(fragment.props).toEqual([
     {
       type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "href",
       value: "https://webstudio.is",
     },
     {
       type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "target",
       value: "_blank",
     },
     {
       type: "string",
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "tag",
       value: "a",
     },
@@ -187,37 +187,37 @@ test("List and ListItem", async () => {
   expect(fragment.children).toEqual([
     {
       type: "id",
-      value: expect.not.stringMatching("instanceId"),
+      value: expect.any(String),
     },
   ]);
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "ListItem",
       children: [],
     },
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "ListItem",
       children: [],
     },
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "ListItem",
       children: [],
     },
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "List",
       children: [
-        { type: "id", value: expect.not.stringMatching("instanceId") },
-        { type: "id", value: expect.not.stringMatching("instanceId") },
-        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.any(String) },
+        { type: "id", value: expect.any(String) },
+        { type: "id", value: expect.any(String) },
       ],
     },
   ]);
@@ -247,7 +247,7 @@ test("Paragraph", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Paragraph",
       children: [
@@ -260,8 +260,8 @@ test("Paragraph", async () => {
   ]);
   expect(fragment.props).toEqual([
     {
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "tag",
       type: "string",
       value: "p",
@@ -296,7 +296,7 @@ test("Text", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Text",
       children: [
@@ -309,8 +309,8 @@ test("Text", async () => {
   ]);
   expect(fragment.props).toEqual([
     {
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "tag",
       type: "string",
       value: "div",
@@ -342,7 +342,7 @@ test("Blockquote", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Blockquote",
       children: [
@@ -355,8 +355,8 @@ test("Blockquote", async () => {
   ]);
   expect(fragment.props).toEqual([
     {
-      id: expect.not.stringMatching("id"),
-      instanceId: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "tag",
       type: "string",
       value: "blockquote",
@@ -388,7 +388,7 @@ test("Strong", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Bold",
       children: [
@@ -425,7 +425,7 @@ test("Emphasized", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Italic",
       children: [
@@ -462,7 +462,7 @@ test("Superscript", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Superscript",
       children: [
@@ -499,7 +499,7 @@ test("Subscript", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Subscript",
       children: [
@@ -531,7 +531,7 @@ test("Section", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
@@ -558,7 +558,7 @@ test("BlockContainer", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
@@ -585,7 +585,7 @@ test("Block", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
@@ -612,7 +612,7 @@ test("V Flex", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
@@ -639,7 +639,7 @@ test("H Flex", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
@@ -683,24 +683,24 @@ test("Quick Stack", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
     },
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
     },
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [
-        { type: "id", value: expect.not.stringMatching("instanceId") },
-        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.any(String) },
+        { type: "id", value: expect.any(String) },
       ],
     },
   ]);
@@ -725,7 +725,7 @@ test("Grid", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
@@ -769,24 +769,24 @@ test("Columns", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
     },
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [],
     },
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Box",
       children: [
-        { type: "id", value: expect.not.stringMatching("instanceId") },
-        { type: "id", value: expect.not.stringMatching("instanceId") },
+        { type: "id", value: expect.any(String) },
+        { type: "id", value: expect.any(String) },
       ],
     },
   ]);
@@ -820,7 +820,7 @@ test("Image", async () => {
 
   expect(fragment.instances).toEqual([
     {
-      id: expect.not.stringMatching("instanceId"),
+      id: expect.any(String),
       type: "instance",
       component: "Image",
       children: [],
@@ -830,36 +830,36 @@ test("Image", async () => {
   expect(fragment.props).toEqual([
     {
       type: "string",
-      id: expect.not.stringMatching("instanceId"),
-      instanceId: expect.not.stringMatching("id"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "alt",
       value: "Test",
     },
     {
       type: "string",
-      id: expect.not.stringMatching("instanceId"),
-      instanceId: expect.not.stringMatching("id"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "loading",
       value: "eager",
     },
     {
       type: "string",
-      id: expect.not.stringMatching("instanceId"),
-      instanceId: expect.not.stringMatching("id"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "width",
       value: "200",
     },
     {
       type: "string",
-      id: expect.not.stringMatching("instanceId"),
-      instanceId: expect.not.stringMatching("id"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "src",
       value: expect.not.stringMatching("src"),
     },
     {
       type: "string",
-      id: expect.not.stringMatching("instanceId"),
-      instanceId: expect.not.stringMatching("id"),
+      id: expect.any(String),
+      instanceId: expect.any(String),
       name: "tag",
       value: "img",
     },
@@ -894,15 +894,15 @@ describe("Custom attributes", () => {
     expect(fragment.props).toEqual([
       {
         type: "string",
-        id: expect.not.stringMatching("id"),
-        instanceId: expect.not.stringMatching("instanceId"),
+        id: expect.any(String),
+        instanceId: expect.any(String),
         name: "tag",
         value: "h1",
       },
       {
         type: "string",
-        id: expect.not.stringMatching("id"),
-        instanceId: expect.not.stringMatching("instanceId"),
+        id: expect.any(String),
+        instanceId: expect.any(String),
         name: "at",
         value: "b",
       },
@@ -938,24 +938,22 @@ describe("Styles", () => {
     expect(fragment.styleSources).toEqual([
       {
         type: "token",
-        id: expect.not.stringMatching("styleSourceId"),
+        id: expect.any(String),
         name: "h1",
       },
       {
         type: "token",
-        id: expect.not.stringMatching("styleSourceId"),
+        id: expect.any(String),
         name: "Heading",
       },
     ]);
     expect(fragment.styleSourceSelections).toEqual([
       {
-        instanceId: expect.not.stringMatching("instanceId"),
-        values: [
-          expect.not.stringMatching("styleSourceId"),
-          expect.not.stringMatching("styleSourceId"),
-        ],
+        instanceId: expect.any(String),
+        values: [expect.any(String), expect.any(String)],
       },
     ]);
+    console.log(toCss(fragment));
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
@@ -1012,34 +1010,31 @@ describe("Styles", () => {
     expect(fragment.styleSources).toEqual([
       {
         type: "token",
-        id: expect.not.stringMatching("styleSourceId"),
+        id: expect.any(String),
         name: "a",
       },
       {
         type: "token",
-        id: expect.not.stringMatching("styleSourceId"),
+        id: expect.any(String),
         name: "button",
       },
       {
         type: "token",
-        id: expect.not.stringMatching("styleSourceId"),
+        id: expect.any(String),
         name: "is-secondary",
       },
     ]);
     expect(fragment.styleSourceSelections).toEqual([
       {
-        instanceId: expect.not.stringMatching("instanceId"),
-        values: [
-          expect.not.stringMatching("styleSourceId"),
-          expect.not.stringMatching("styleSourceId"),
-          expect.not.stringMatching("styleSourceId"),
-        ],
+        instanceId: expect.any(String),
+        values: [expect.any(String), expect.any(String), expect.any(String)],
       },
     ]);
+
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         a {
-          text-decoration: 
+          outline: 0
         }
         button {
           text-align: center
