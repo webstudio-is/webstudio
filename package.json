@@ -47,7 +47,7 @@
     "storybook": "^8.1.6",
     "tsx": "^4.11.2",
     "typescript": "5.4.5",
-    "vite": "^5.2.12"
+    "vite": "^5.2.13"
   },
   "engines": {
     "node": "20",
