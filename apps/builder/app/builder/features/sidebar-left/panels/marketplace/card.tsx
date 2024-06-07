@@ -18,6 +18,7 @@ const imageContainerStyle = css({
   position: "relative",
   overflow: "hidden",
   aspectRatio: "1.91",
+  borderRadius: theme.borderRadius[4],
 });
 
 const spinnerStyle = css({
@@ -44,6 +45,10 @@ const imageStyle = css({
       true: {
         objectFit: "cover",
       },
+      false: {
+        background: theme.colors.white,
+        padding: rawTheme.spacing[5],
+      },
     },
   },
 });
@@ -51,15 +56,22 @@ const imageStyle = css({
 type ThumbnailProps = {
   image?: { name: string } | string;
   state?: "loading";
+  alt: string;
 };
 
-const Thumbnail = ({ image, state }: ThumbnailProps) => {
+const Thumbnail = ({ image, state, alt }: ThumbnailProps) => {
   const imageLoader = useStore($imageLoader);
   return (
-    <div className={imageContainerStyle()}>
+    <Flex className={imageContainerStyle()}>
       {image === "" || image === undefined ? (
-        // Will render a placeholder
-        <Image loader={imageLoader} className={imageStyle()} />
+        // Placeholder
+        <Flex
+          align="center"
+          justify="center"
+          className={imageStyle({ hasAsset: false })}
+        >
+          <Text variant="brandSectionTitle">{alt}</Text>
+        </Flex>
       ) : typeof image === "string" ? (
         // Its a URL.
         <img src={image} className={imageStyle({ hasAsset: true })} />
@@ -77,7 +89,7 @@ const Thumbnail = ({ image, state }: ThumbnailProps) => {
           <SpinnerIcon size={rawTheme.spacing[15]} />
         </div>
       )}
-    </div>
+    </Flex>
   );
 };
 
@@ -89,7 +101,10 @@ type CardProps = {
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ image, title, suffix, state = "initial" as const, ...props }, ref) => {
+  (
+    { image, title = "Untitled", suffix, state = "initial" as const, ...props },
+    ref
+  ) => {
     return (
       <Flex
         {...props}
@@ -109,10 +124,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         <Thumbnail
           image={image}
           state={state === "loading" ? state : undefined}
+          alt={title}
         />
         <Flex align="center">
           <Text truncate css={{ flexGrow: 1 }}>
-            {title}
+            {image === undefined || image === "" ? undefined : title}
           </Text>
           {suffix}
         </Flex>
