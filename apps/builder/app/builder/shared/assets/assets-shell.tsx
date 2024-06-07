@@ -219,8 +219,8 @@ export const AssetsShell = ({
         {children}
       </ScrollArea>
       <Flex
-        align="center"
-        justify="center"
+        // align="center"
+        // justify="center"
         css={{
           position: "absolute",
           inset: 0,
@@ -233,10 +233,20 @@ export const AssetsShell = ({
               : theme.colors.foregroundSubtle,
         }}
       >
-        <Flex align={"center"} gap={1}>
-          <UploadIcon />
+        <Flex
+          align="center"
+          justify="center"
+          css={{
+            position: "absolute",
+            inset: theme.spacing[4],
+            border: `2px dashed ${dragState === OVER ? theme.colors.foregroundMain : theme.colors.foregroundMoreSubtle}`,
+          }}
+        >
+          <Flex align={"center"} gap={1}>
+            <UploadIcon />
 
-          <Text variant={"regularBold"}>Drop files here</Text>
+            <Text variant={"regularBold"}>Drop files here</Text>
+          </Flex>
         </Flex>
       </Flex>
     </Flex>
