@@ -12,6 +12,9 @@ overrides:
   react-dom: 18.3.0-canary-14898b6a9-20240318
 
 patchedDependencies:
+  '@radix-ui/react-scroll-area@1.0.5':
+    hash: 5y6bqj6dymxto7bikr5opyo7lm
+    path: patches/@radix-ui__react-scroll-area@1.0.5.patch
   '@stitches/react@1.3.1-1':
     hash: knml42mpr6mlzseo3d6gjljiq4
     path: patches/@stitches__react@1.3.1-1.patch
@@ -1226,7 +1229,7 @@ importers:
         version: 1.1.3(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@radix-ui/react-scroll-area':
         specifier: ^1.0.5
-        version: 1.0.5(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 1.0.5(patch_hash=5y6bqj6dymxto7bikr5opyo7lm)(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@radix-ui/react-select':
         specifier: ^2.0.0
         version: 2.0.0(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -12642,7 +12645,7 @@ snapshots:
       '@types/react': 18.2.79
       '@types/react-dom': 18.2.25
 
-  '@radix-ui/react-scroll-area@1.0.5(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@radix-ui/react-scroll-area@1.0.5(patch_hash=5y6bqj6dymxto7bikr5opyo7lm)(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
       '@babel/runtime': 7.22.3
       '@radix-ui/number': 1.0.1

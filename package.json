@@ -82,7 +82,8 @@
     "patchedDependencies": {
       "@stitches/react@1.3.1-1": "patches/@stitches__react@1.3.1-1.patch",
       "css-tree@2.3.1": "patches/css-tree@2.3.1.patch",
-      "@types/css-tree@2.3.1": "patches/@types__css-tree@2.3.1.patch"
+      "@types/css-tree@2.3.1": "patches/@types__css-tree@2.3.1.patch",
+      "@radix-ui/react-scroll-area@1.0.5": "patches/@radix-ui__react-scroll-area@1.0.5.patch"
     }
   }
 }
