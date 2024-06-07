@@ -334,13 +334,6 @@ export default {
   ],
   a: [
     {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -406,45 +399,6 @@ export default {
     },
   ],
   h1: [
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 44,
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 38,
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
     {
       property: "lineHeight",
       value: {
@@ -1271,7 +1225,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î˜€"',
       },
       state: ":before",
     },
@@ -1336,7 +1290,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î˜"',
       },
       state: ":before",
     },
@@ -1346,7 +1300,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î˜‚"',
       },
       state: ":before",
     },
@@ -1356,7 +1310,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î˜ƒ"',
       },
       state: ":before",
     },
@@ -1420,7 +1374,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î˜ƒ"',
       },
     },
   ],
@@ -1444,7 +1398,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î¤€"',
       },
       state: ":before",
     },
@@ -1477,7 +1431,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î¤ƒ"',
       },
       state: ":before",
     },
