@@ -1,7 +1,10 @@
 import { test, expect, describe } from "@jest/globals";
 import { __testing__ } from "./plugin-webflow";
 import { $breakpoints } from "../../nano-states";
-import { createRegularStyleSheet } from "@webstudio-is/css-engine";
+import {
+  type StyleRule,
+  createRegularStyleSheet,
+} from "@webstudio-is/css-engine";
 import type { WebstudioFragment } from "@webstudio-is/sdk";
 
 const { toWebstudioFragment } = __testing__;
@@ -14,17 +17,25 @@ const toCss = (fragment: WebstudioFragment) => {
   for (const breakpoint of fragment.breakpoints) {
     sheet.addMediaRule(breakpoint.id, breakpoint);
   }
+  const rulesMap = new Map<string, StyleRule>();
   for (const style of fragment.styles) {
     const token = fragment.styleSources.find(
       (source) => source.id === style.styleSourceId
     );
-    sheet.addStyleRule(
-      {
-        style: { [style.property]: style.value },
-        breakpoint: style.breakpointId,
-      },
-      token && "name" in token ? token.name : "Local"
-    );
+    const name = token && "name" in token ? token.name : "Local";
+    let styleRule = rulesMap.get(name);
+    if (styleRule === undefined) {
+      styleRule = sheet.addStyleRule(
+        {
+          style: { [style.property]: style.value },
+          breakpoint: style.breakpointId,
+        },
+        name
+      );
+      rulesMap.set(name, styleRule);
+      continue;
+    }
+    styleRule.styleMap.set(style.property, style.value);
   }
   return sheet.cssText;
 };
@@ -953,10 +964,15 @@ describe("Styles", () => {
         values: [expect.any(String), expect.any(String)],
       },
     ]);
-    console.log(toCss(fragment));
+
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         h1 {
+          line-height: 44px;
+          font-weight: bold;
+          font-size: 2em;
+          margin-bottom: 10px;
+          margin-top: 20px;
           margin: 0.67em 0
         }
         Heading {
@@ -1034,6 +1050,8 @@ describe("Styles", () => {
     expect(toCss(fragment)).toMatchInlineSnapshot(`
       "@media all {
         a {
+          text-decoration: ;
+          background-color: rgba(0, 0, 0, 0);
           outline: 0
         }
         button {
