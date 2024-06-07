@@ -37,7 +37,7 @@
     "@webstudio-is/icons": "workspace:^",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/sdk": "workspace:*",
-    "change-case": "^5.0.2",
+    "change-case": "^5.4.4",
     "html-tags": "^3.3.1",
     "nanoid": "^5.0.1",
     "title-case": "^4.1.0"
