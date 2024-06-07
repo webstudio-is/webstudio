@@ -3,6 +3,16 @@
 export default {
   html: [
     {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
       property: "backgroundAttachment",
       value: {
         type: "keyword",
@@ -1088,29 +1098,6 @@ export default {
       },
     },
   ],
-  "html input": [
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "default",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "webkitAppearance",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-  ],
   legend: [
     {
       property: "padding",
@@ -1504,15 +1491,6 @@ export default {
       },
     },
   ],
-  "w-mod-touch *": [
-    {
-      property: "backgroundAttachment",
-      value: {
-        type: "keyword",
-        value: "scroll",
-      },
-    },
-  ],
   "w-block": [
     {
       property: "display",
@@ -1725,30 +1703,9 @@ export default {
       },
     },
   ],
-  "html ": [
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-  ],
   "w-code-block": [
     {
       property: "margin",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-  ],
-  "w-code-block code": [
-    {
-      property: "all",
       value: {
         type: "invalid",
         value: "",
@@ -2314,413 +2271,6 @@ export default {
       },
     },
   ],
-  "w-webflow-badge *": [
-    {
-      property: "transform",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "static",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "transition",
-      value: {
-        type: "invalid",
-        value: "none",
-      },
-    },
-    {
-      property: "listStyleType",
-      value: {
-        type: "keyword",
-        value: "disc",
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "maxHeight",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "minHeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "minWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "borderRadius",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "tuple",
-        value: [
-          {
-            type: "unit",
-            unit: "number",
-            value: 0,
-          },
-          {
-            type: "unparsed",
-            value: "rgba(0,0,0,0)",
-          },
-        ],
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "wordWrap",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordSpacing",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordBreak",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "baseline",
-      },
-    },
-    {
-      property: "fontSmoothing",
-      value: {
-        type: "invalid",
-        value: "auto",
-      },
-    },
-    {
-      property: "textShadow",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textTransform",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "textIndent",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitTextDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "letterSpacing",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariant",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "direction",
-      value: {
-        type: "keyword",
-        value: "ltr",
-      },
-    },
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "boxShadow",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "float",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "border-box",
-      },
-    },
-    {
-      property: "visibility",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-  ],
-  "w-webflow-badge>img": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "middle",
-      },
-    },
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "visibility",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-  ],
   h2: [
     {
       property: "lineHeight",
@@ -3146,151 +2696,21 @@ export default {
       },
     },
   ],
-  "w-video iframe": [
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-  ],
-  "w-video object": [
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-  ],
-  "w-video embed": [
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-  ],
   fieldset: [
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
     {
       property: "padding",
       value: {
@@ -3794,25 +3214,7 @@ export default {
       },
     },
   ],
-  "fieldset w-input": [
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-  ],
-  "fieldset w-select": [
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-  ],
-  "w-input-disabled w-select": [
+  "w-input-disabled": [
     {
       property: "backgroundColor",
       value: {
@@ -4608,40 +4010,6 @@ export default {
       state: ":after",
     },
   ],
-  "w-container w-row": [
-    {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -10,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -10,
-      },
-    },
-  ],
   "w-row": [
     {
       property: "marginRight",
@@ -4714,24 +4082,6 @@ export default {
         value: "both",
       },
       state: ":after",
-    },
-  ],
-  "w-row w-row": [
-    {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
     },
   ],
   "w-col": [
@@ -4809,24 +4159,6 @@ export default {
       value: {
         type: "keyword",
         value: "left",
-      },
-    },
-  ],
-  "w-col w-col": [
-    {
-      property: "paddingRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
       },
     },
   ],
@@ -5439,49 +4771,6 @@ export default {
       },
     },
   ],
-  "w-widget-map label": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-  ],
-  "w-widget-map img": [
-    {
-      property: "maxWidth",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  "w-widget-map gm-style-iw": [
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-  ],
-  "w-widget-map gm-style-iw>button": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-  ],
   "w-widget-twitter": [
     {
       property: "overflow",
@@ -5815,101 +5104,6 @@ export default {
       },
     },
   ],
-  "w-widget-twitter-count-shim *": [
-    {
-      property: "userSelect",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-  ],
-  "w-widget-twitter-count-shim w-widget-twitter-count-inner": [
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 12,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 15,
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "serif",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-  ],
-  "w-widget-twitter-count-shim w-widget-twitter-count-clear": [
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-  ],
   "w--large": [
     {
       property: "width",
@@ -5989,24 +5183,6 @@ export default {
         type: "unit",
         unit: "px",
         value: 36,
-      },
-    },
-  ],
-  "w--large w-widget-twitter-count-inner": [
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
       },
     },
   ],
@@ -6414,24 +5590,6 @@ export default {
       state: ":after",
     },
   ],
-  "w--vertical w-widget-twitter-count-inner": [
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 22,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-  ],
   "w-background-video": [
     {
       property: "overflow",
@@ -6463,114 +5621,6 @@ export default {
         r: 255,
         g: 255,
         b: 255,
-      },
-    },
-  ],
-  "w-background-video>video": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "webkitAppearance",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: -100,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: -100,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: -100,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: -100,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "backgroundSize",
-      value: {
-        type: "keyword",
-        value: "cover",
-      },
-    },
-    {
-      property: "backgroundPosition",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: -100,
-      },
-    },
-    {
-      property: "objectFit",
-      value: {
-        type: "keyword",
-        value: "cover",
       },
     },
   ],
@@ -6614,15 +5664,6 @@ export default {
         r: 0,
         g: 0,
         b: 0,
-      },
-    },
-  ],
-  "w-background-video--control>": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
       },
     },
   ],
@@ -6962,73 +6003,6 @@ export default {
       },
     },
   ],
-  "w-round>div": [
-    {
-      property: "borderRadius",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
-  "w-num>div": [
-    {
-      property: "padding",
-      value: {
-        type: "tuple",
-        value: [
-          {
-            type: "unit",
-            unit: "em",
-            value: 0.2,
-          },
-          {
-            type: "unit",
-            unit: "em",
-            value: 0.5,
-          },
-        ],
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  "w-shadow>div": [
-    {
-      property: "boxShadow",
-      value: {
-        type: "unparsed",
-        value: "0 0 3px rgba(51,51,51,0.4)",
-      },
-    },
-  ],
   "w-slider-nav-invert": [
     {
       property: "color",
@@ -7038,28 +6012,6 @@ export default {
         r: 255,
         g: 255,
         b: 255,
-      },
-    },
-  ],
-  "w-slider-nav-invert>div": [
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 34,
-        g: 34,
-        b: 34,
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 0.4,
-        r: 34,
-        g: 34,
-        b: 34,
       },
     },
   ],
@@ -7514,38 +6466,6 @@ export default {
       value: {
         type: "keyword",
         value: "pointer",
-      },
-    },
-  ],
-  "w-slider-arrow-left ": [
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-  ],
-  "w-slider-arrow-right ": [
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
       },
     },
   ],
@@ -8565,40 +7485,6 @@ export default {
       },
     },
   ],
-  "w-lightbox-group w-lightbox-view": [
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 84,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 84,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 86,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 86,
-      },
-    },
-  ],
   "w-lightbox-frame": [
     {
       property: "display",
@@ -8629,15 +7515,6 @@ export default {
         type: "unit",
         unit: "number",
         value: 0,
-      },
-    },
-  ],
-  "w-lightbox-group w-lightbox-figure": [
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
       },
     },
   ],
@@ -8709,32 +7586,6 @@ export default {
       value: {
         type: "keyword",
         value: "none",
-      },
-    },
-  ],
-  "w-lightbox-group w-lightbox-image": [
-    {
-      property: "maxHeight",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 84,
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "vw",
-        value: 82.3,
-      },
-    },
-    {
-      property: "maxHeight",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 86,
       },
     },
   ],
@@ -9326,56 +8177,6 @@ export default {
       },
     },
   ],
-  "w-lightbox-thumbnail w-lightbox-tall": [
-    {
-      property: "transform",
-      value: {
-        type: "unparsed",
-        value: "translate(0,-50%)",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
-  "w-lightbox-thumbnail w-lightbox-wide": [
-    {
-      property: "transform",
-      value: {
-        type: "unparsed",
-        value: "translate(-50%)",
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
   "w-lightbox-spinner": [
     {
       property: "left",
@@ -9651,578 +8452,6 @@ export default {
       state: ":after",
     },
   ],
-  "w-richtext ol": [
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "hidden",
-      },
-    },
-  ],
-  "w-richtext ul": [
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "hidden",
-      },
-    },
-  ],
-  "w-richtext w-richtext-figure-selected": [
-    {
-      property: "outline",
-      value: {
-        type: "unparsed",
-        value: "2px solid #2895f7",
-      },
-    },
-    {
-      property: "outline",
-      value: {
-        type: "unparsed",
-        value: "2px solid #2895f7",
-      },
-    },
-  ],
-  "w-richtext-figure-type-video div": [
-    {
-      property: "outline",
-      value: {
-        type: "unparsed",
-        value: "2px solid #2895f7",
-      },
-    },
-  ],
-  "w-richtext w-richtext-figure-selected div": [
-    {
-      property: "outline",
-      value: {
-        type: "unparsed",
-        value: "2px solid #2895f7",
-      },
-    },
-    {
-      property: "outline",
-      value: {
-        type: "unparsed",
-        value: "2px solid #2895f7",
-      },
-    },
-  ],
-  "w-richtext-figure-type-image div": [
-    {
-      property: "outline",
-      value: {
-        type: "unparsed",
-        value: "2px solid #2895f7",
-      },
-    },
-  ],
-  "w-richtext figure": [
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 15,
-      },
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "float",
-      value: {
-        type: "keyword",
-        value: "right",
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 15,
-      },
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "float",
-      value: {
-        type: "keyword",
-        value: "left",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "paddingBottom",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "both",
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "both",
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "both",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 60,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 60,
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "table-caption",
-      },
-    },
-    {
-      property: "captionSide",
-      value: {
-        type: "keyword",
-        value: "bottom",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "table",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "table",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 60,
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '""',
-      },
-    },
-  ],
-  "w-richtext-figure-type-video>div": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '""',
-      },
-    },
-  ],
-  "w-richtext figure>div": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "default",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '""',
-      },
-    },
-  ],
-  "w-richtext figure img": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
-  "w-richtext figure figcaption": [
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0.6,
-      },
-    },
-  ],
   "w-richtext-figcaption-placeholder": [
     {
       property: "opacity",
@@ -10233,81 +8462,12 @@ export default {
       },
     },
   ],
-  "w-richtext figure div": [
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-  ],
   "w-richtext-figure-type-image": [
     {
       property: "display",
       value: {
         type: "keyword",
         value: "table",
-      },
-    },
-  ],
-  "w-richtext-figure-type-image>div": [
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-  ],
-  "w-richtext-figure-type-image>figcaption": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "table-caption",
-      },
-    },
-    {
-      property: "captionSide",
-      value: {
-        type: "keyword",
-        value: "bottom",
-      },
-    },
-  ],
-  "w-richtext figure>figcaption": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "table-caption",
-      },
-    },
-    {
-      property: "captionSide",
-      value: {
-        type: "keyword",
-        value: "bottom",
       },
     },
   ],
@@ -10329,89 +8489,15 @@ export default {
       },
     },
   ],
-  "w-richtext-figure-type-video iframe": [
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
-  "w-richtext figure iframe": [
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-  ],
   "w-richtext-align-center": [
+    {
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
     {
       property: "maxWidth",
       value: {
@@ -10439,16 +8525,6 @@ export default {
       value: {
         type: "keyword",
         value: "both",
-      },
-    },
-  ],
-  "w-richtext-align-center>div": [
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
       },
     },
   ],
@@ -10514,31 +8590,6 @@ export default {
       },
     },
   ],
-  "w-richtext-align-fullwidth>div": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "paddingBottom",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  "w-richtext-align-fullwidth>figcaption": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-  ],
   "w-richtext-align-floatleft": [
     {
       property: "marginRight",
@@ -10588,6 +8639,168 @@ export default {
     },
   ],
   "w-nav": [
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
     {
       property: "position",
       value: {
@@ -10843,126 +9056,6 @@ export default {
       },
     },
   ],
-  "w-nav-overlay ": [
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-  ],
-  "w-nav w-nav-overlay": [
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-  ],
-  "w-nav ": [
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-  ],
   "w-nav-button": [
     {
       property: "backgroundColor",
@@ -11074,66 +9167,6 @@ export default {
         value: 0,
       },
       state: ":focus",
-    },
-  ],
-  "w-nav w-nav-menu": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-  ],
-  "w-nav w-nav-button": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
     },
   ],
   "w--nav-dropdown-open": [
@@ -11456,47 +9489,6 @@ export default {
       value: {
         type: "keyword",
         value: "grid",
-      },
-    },
-  ],
-  "w-code-component>*": [
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
       },
     },
   ],
