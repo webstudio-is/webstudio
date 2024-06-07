@@ -28,11 +28,11 @@
     "@fontsource-variable/manrope": "^5.0.15",
     "@fontsource/roboto-mono": "^5.0.13",
     "@radix-ui/react-tooltip": "^1.0.7",
-    "@storybook/addon-actions": "^8.1.4",
-    "@storybook/addon-essentials": "^8.1.4",
-    "@storybook/addon-links": "^8.1.4",
-    "@storybook/react": "^8.1.4",
-    "@storybook/react-vite": "^8.1.4",
+    "@storybook/addon-actions": "^8.1.6",
+    "@storybook/addon-essentials": "^8.1.6",
+    "@storybook/addon-links": "^8.1.6",
+    "@storybook/react": "^8.1.6",
+    "@storybook/react-vite": "^8.1.6",
     "@types/css-tree": "^2.3.1",
     "@types/node": "^20.12.7",
     "@types/react": "^18.2.70",
@@ -44,10 +44,10 @@
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "simple-git-hooks": "^2.11.1",
-    "storybook": "^8.1.4",
+    "storybook": "^8.1.6",
     "tsx": "^4.11.2",
     "typescript": "5.4.5",
-    "vite": "^5.2.12"
+    "vite": "^5.2.13"
   },
   "engines": {
     "node": "20",
@@ -73,7 +73,6 @@
   },
   "pnpm": {
     "overrides": {
-      "@babel/types": "7.24.0",
       "@types/react": "^18.2.70",
       "@types/react-dom": "^18.2.25",
       "react": "18.3.0-canary-14898b6a9-20240318",
