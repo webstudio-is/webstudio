@@ -36,6 +36,10 @@ export const ImageControl = ({
     if (styleValue?.type === "image" && styleValue.value.type === "url") {
       setRemoteImageURL({ type: "intermediate", value: styleValue.value.url });
     }
+
+    if (styleValue?.type === "image" && styleValue.value.type === "asset") {
+      setRemoteImageURL(undefined);
+    }
   }, [styleValue]);
 
   if (styleValue === undefined) {
