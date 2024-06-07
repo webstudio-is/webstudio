@@ -148,6 +148,7 @@ export const meta: WsComponentMeta = {
                             {
                               type: "text",
                               value: "Sheet Title",
+                              placeholder: true,
                             },
                           ],
                         },
@@ -167,6 +168,7 @@ export const meta: WsComponentMeta = {
                             {
                               type: "text",
                               value: "Sheet description text you can edit",
+                              placeholder: true,
                             },
                           ],
                         },
@@ -177,7 +179,11 @@ export const meta: WsComponentMeta = {
                       type: "instance",
                       component: "Text",
                       children: [
-                        { type: "text", value: "The text you can edit" },
+                        {
+                          type: "text",
+                          value: "The text you can edit",
+                          placeholder: true,
+                        },
                       ],
                     },
                   ],

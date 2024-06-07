@@ -3,6 +3,7 @@ import { z } from "zod";
 export const TextChild = z.object({
   type: z.literal("text"),
   value: z.string(),
+  placeholder: z.boolean().optional(),
 });
 
 export type TextChild = z.infer<typeof TextChild>;

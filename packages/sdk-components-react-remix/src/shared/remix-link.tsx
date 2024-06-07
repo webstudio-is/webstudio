@@ -20,10 +20,13 @@ export const wrapLinkComponent = (BaseLink: typeof Link) => {
     // cast to string when invalid value type is provided with binding
     const href = String(props.href ?? "");
 
-    // use remix link for home page and all relative urls
+    // use remix link for self reference and all relative urls
     // ignore asset paths which can be relative too
     if (
+      // remix appends ?index in runtime but not in ssr
       href === "" ||
+      href.startsWith("?") ||
+      href.startsWith("#") ||
       (href.startsWith("/") && href.startsWith(assetBaseUrl) === false)
     ) {
       // remix links behave in unexpected way when delete in content editable

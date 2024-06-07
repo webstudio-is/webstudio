@@ -8,7 +8,7 @@ export const Blockquote = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ children, ...props }, ref) => {
     return (
       <blockquote {...props} ref={ref}>
-        {children ?? "Blockquote you can edit"}
+        {children}
       </blockquote>
     );
   }

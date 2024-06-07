@@ -37,7 +37,7 @@ import { Card, CardContent, CardFooter } from "../shared/card";
 import { CloneProjectDialog } from "~/shared/clone-project";
 
 const titleStyle = css({
-  userSelect: "auto",
+  userSelect: "text",
   ...truncate(),
 });
 
@@ -313,7 +313,7 @@ export const ProjectTemplateCard = ({
       </CardContent>
       <CardFooter>
         <Flex direction="column" justify="around">
-          <Text variant="titles" truncate css={{ userSelect: "auto" }}>
+          <Text variant="titles" truncate userSelect="text">
             {title}
           </Text>
           {isPublished ? (

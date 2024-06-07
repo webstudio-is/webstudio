@@ -1,6 +1,6 @@
 {
   "name": "webstudio",
-  "version": "0.163.0",
+  "version": "0.167.0",
   "description": "Webstudio CLI",
   "author": "Webstudio <github@webstudio.is>",
   "homepage": "https://webstudio.is",
@@ -8,6 +8,12 @@
   "bin": {
     "webstudio-cli": "./bin.js",
     "webstudio": "./bin.js"
+  },
+  "imports": {
+    "#cli": {
+      "webstudio": "./src/cli.ts",
+      "default": "./lib/cli.js"
+    }
   },
   "files": [
     "lib/*",
@@ -19,11 +25,12 @@
     "typecheck": "tsc",
     "checks": "pnpm typecheck",
     "build": "rm -rf lib && esbuild src/cli.ts --outdir=lib --bundle --format=esm --packages=external",
-    "local-run": "tsx --no-warnings ./src/bin.ts",
-    "dev": "esbuild src/cli.ts --watch --bundle --format=esm --packages=external --outdir=./lib"
+    "dev": "esbuild src/cli.ts --watch --bundle --format=esm --packages=external --outdir=./lib",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
+    "@clack/prompts": "^0.7.0",
     "@webstudio-is/http-client": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -31,39 +38,39 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
+    "change-case": "^5.0.2",
     "deepmerge": "^4.3.1",
     "env-paths": "^3.0.0",
     "execa": "^7.2.0",
-    "ora": "^7.0.1",
+    "parse5": "7.1.2",
     "p-limit": "^4.0.0",
-    "picocolors": "^1.0.0",
-    "prompts": "^2.4.2",
+    "picocolors": "^1.0.1",
     "strip-indent": "^4.0.0",
     "title-case": "^4.1.0",
     "yargs": "^17.7.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@netlify/remix-adapter": "^2.3.1",
-    "@netlify/remix-edge-adapter": "3.2.2",
-    "@remix-run/cloudflare": "^2.9.1",
-    "@remix-run/cloudflare-pages": "^2.9.1",
-    "@remix-run/dev": "^2.9.1",
-    "@remix-run/node": "^2.9.1",
-    "@remix-run/react": "^2.9.1",
-    "@remix-run/server-runtime": "^2.9.1",
+    "@jest/globals": "^29.7.0",
+    "@netlify/remix-adapter": "^2.4.0",
+    "@netlify/remix-edge-adapter": "3.3.0",
+    "@remix-run/cloudflare": "^2.9.2",
+    "@remix-run/cloudflare-pages": "^2.9.2",
+    "@remix-run/dev": "^2.9.2",
+    "@remix-run/node": "^2.9.2",
+    "@remix-run/react": "^2.9.2",
+    "@remix-run/server-runtime": "^2.9.2",
     "@types/node": "^20.12.7",
-    "@types/prompts": "^2.4.5",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "@types/yargs": "^17.0.32",
     "@webstudio-is/form-handlers": "workspace:*",
+    "@webstudio-is/jest-config": "workspace:*",
     "@webstudio-is/tsconfig": "workspace:*",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
-    "tsx": "^4.7.2",
     "typescript": "5.4.5",
-    "vite": "^5.2.11",
+    "vite": "^5.2.13",
     "wrangler": "^3.48.0"
   }
 }

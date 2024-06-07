@@ -8,7 +8,7 @@ export const ListItem = forwardRef<ElementRef<typeof defaultTag>, Props>(
   ({ children, ...props }, ref) => {
     return (
       <li {...props} ref={ref}>
-        {children ?? "List Item you can edit"}
+        {children}
       </li>
     );
   }

@@ -1,14 +1,13 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { cwd } from "node:process";
 import { join } from "node:path";
-import ora from "ora";
+import pc from "picocolors";
+import { spinner } from "@clack/prompts";
 import {
   loadProjectDataByBuildId,
   loadProjectDataById,
   type Data,
 } from "@webstudio-is/http-client";
-import pc from "picocolors";
-
 import { createFileIfNotExists, isFileExists } from "../fs-utils";
 import {
   GLOBAL_CONFIG_FILE,
@@ -40,9 +39,8 @@ export const syncOptions = (yargs: CommonYargsArgv) =>
 export const sync = async (
   options: StrictYargsOptionsToInterface<typeof syncOptions>
 ) => {
-  const spinner = ora("Syncing project data").start();
-
-  spinner.text = "Loading project data from config file";
+  const syncing = spinner();
+  syncing.start("Synchronizing project data");
 
   const definedOptionValues = [
     options.buildId,
@@ -51,7 +49,7 @@ export const sync = async (
   ].filter(Boolean);
 
   if (definedOptionValues.length > 0 && definedOptionValues.length < 3) {
-    spinner.fail(`Please provide buildId, origin and authToken`);
+    syncing.stop(`Please provide buildId, origin and authToken`, 2);
     return;
   }
 
@@ -68,19 +66,13 @@ export const sync = async (
       origin: options.origin,
     });
   } else {
-    if ((await isFileExists(GLOBAL_CONFIG_FILE)) === false) {
-      spinner.fail(
-        `Global config file at path ${GLOBAL_CONFIG_FILE} is not found. Please link your project using webstudio link command`
-      );
-      return;
-    }
-
     const globalConfigText = await readFile(GLOBAL_CONFIG_FILE, "utf-8");
     const globalConfig = jsonToGlobalConfig(JSON.parse(globalConfigText));
 
     if ((await isFileExists(LOCAL_CONFIG_FILE)) === false) {
-      spinner.fail(
-        `Local config file is not found. Please make sure current directory is a webstudio project`
+      syncing.stop(
+        `Local config file is not found. Please make sure current directory is a webstudio project`,
+        2
       );
       return;
     }
@@ -95,31 +87,34 @@ export const sync = async (
     const projectConfig = globalConfig[localConfig.projectId];
 
     if (projectConfig === undefined) {
-      spinner.fail(
-        `Project config is not found, please run ${pc.dim("webstudio link")}`
+      syncing.stop(
+        `Project config is not found, please run ${pc.dim("webstudio link")}`,
+        2
       );
       return;
     }
 
     const { origin, token } = projectConfig;
 
-    spinner.text = "Loading project data from webstudio\n";
-
-    project = await loadProjectDataById({
-      projectId: localConfig.projectId,
-      authToken: token,
-      origin,
-    });
+    try {
+      project = await loadProjectDataById({
+        projectId: localConfig.projectId,
+        authToken: token,
+        origin,
+      });
+    } catch (error) {
+      // catch errors about unpublished project
+      syncing.stop((error as Error).message, 2);
+      return;
+    }
   }
 
   // Check that project defined
   project satisfies Data;
 
-  spinner.text = "Saving project data to config file";
-
   const localBuildFilePath = join(cwd(), LOCAL_DATA_FILE);
   await createFileIfNotExists(localBuildFilePath);
   await writeFile(localBuildFilePath, JSON.stringify(project, null, 2), "utf8");
 
-  spinner.succeed("Project data synced successfully");
+  syncing.stop("Project data synchronized successfully");
 };

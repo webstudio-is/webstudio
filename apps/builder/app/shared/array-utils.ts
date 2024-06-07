@@ -38,21 +38,3 @@ export const getMapValuesBy = <Key, Value>(
   }
   return values;
 };
-
-// @todo replace with builtin Map.groupBy when support
-export const groupBy = <Item, Key>(
-  array: Item[] | IterableIterator<Item>,
-  getKey: (item: Item) => Key
-) => {
-  const groups = new Map<Key, Item[]>();
-  for (const item of array) {
-    const key = getKey(item);
-    let group = groups.get(key);
-    if (group === undefined) {
-      group = [];
-      groups.set(key, group);
-    }
-    group.push(item);
-  }
-  return groups;
-};

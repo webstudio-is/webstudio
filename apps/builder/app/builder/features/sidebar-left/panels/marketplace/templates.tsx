@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Button,
   Flex,
@@ -7,103 +8,111 @@ import {
   Separator,
   theme,
   Link,
+  Tooltip,
 } from "@webstudio-is/design-system";
 import { ChevronLeftIcon, ExternalLinkIcon } from "@webstudio-is/icons";
-import { insert } from "./utils";
-import { computeExpression } from "~/shared/nano-states";
+import {
+  ROOT_FOLDER_ID,
+  type Asset,
+  type Page,
+  type WebstudioData,
+} from "@webstudio-is/sdk";
+import type { MarketplaceProduct } from "@webstudio-is/project-build";
+import { mapGroupBy } from "~/shared/shim";
 import { CollapsibleSection } from "~/builder/shared/collapsible-section";
-import type { Asset, WebstudioData } from "@webstudio-is/sdk";
-import { useMemo } from "react";
 import { builderUrl } from "~/shared/router-utils";
+import {
+  extractWebstudioFragment,
+  findTargetAndInsertFragment,
+  updateWebstudioData,
+} from "~/shared/instance-utils";
+import { insertPageCopyMutable } from "~/shared/page-utils";
+import { switchPage } from "~/shared/pages";
 import { Card } from "./card";
+import type { MarketplaceOverviewItem } from "~/shared/marketplace/types";
+
+/**
+ * Insert page as a template.
+ * - Currently only supports inserting everything from the body
+ * - Could be extended to support children of some other instance e.g. Marketplace Item
+ */
+const insertSection = ({
+  data,
+  instanceId,
+}: {
+  data: WebstudioData;
+  instanceId: string;
+}) => {
+  const fragment = extractWebstudioFragment(data, instanceId);
+  fragment.instances = fragment.instances.filter(
+    (instance) => instance.component !== "Body"
+  );
+  findTargetAndInsertFragment(fragment);
+};
+
+const insertPage = ({
+  data: sourceData,
+  pageId,
+}: {
+  data: WebstudioData;
+  pageId: Page["id"];
+}) => {
+  let newPageId: undefined | Page["id"];
+  updateWebstudioData((targetData) => {
+    newPageId = insertPageCopyMutable({
+      source: { data: sourceData, pageId },
+      target: { data: targetData, folderId: ROOT_FOLDER_ID },
+    });
+  });
+  if (newPageId) {
+    switchPage(newPageId);
+  }
+};
 
 type TemplateData = {
-  socialImageAsset?: Asset;
-  socialImageUrl?: string;
   title?: string;
+  thumbnailAsset?: Asset;
+  pageId: string;
   rootInstanceId: string;
 };
 
-// Special meta properties for the marketplace
-const marketplaceMeta = {
-  category: "ws:category",
-  title: "ws:title",
-};
-
-const getTemplatesDataByCategory = (data?: WebstudioData) => {
-  const templatesByCategory = new Map<string, Array<TemplateData>>();
-
+const getTemplatesDataByCategory = (
+  data?: WebstudioData
+): Map<string, Array<TemplateData>> => {
   if (data === undefined) {
-    return templatesByCategory;
+    return new Map();
   }
-
-  // In the future we could support bindings in the store as well.
-  const variableValues = new Map();
-  const pages = [data.pages.homePage, ...data.pages.pages];
-
-  for (const page of pages) {
-    const excludePageFromSearch = computeExpression(
-      page.meta.excludePageFromSearch || "false",
-      variableValues
-    );
-    // We allow user to hide the page in the marketplace.
-    if (excludePageFromSearch) {
-      continue;
-    }
-
-    let category = page.meta.custom?.find(
-      ({ property }) => property === marketplaceMeta.category
-    )?.content;
-
-    if (category !== undefined) {
-      category = computeExpression(category, variableValues);
-    }
-
-    if (category === undefined) {
-      category = "Pages";
-    }
-
-    let templates = templatesByCategory.get(category);
-    if (templates === undefined) {
-      templates = [];
-      templatesByCategory.set(category, templates);
-    }
-
-    const socialImageUrl = page.meta.socialImageUrl
-      ? String(computeExpression(page.meta.socialImageUrl, variableValues))
-      : undefined;
-    const socialImageAsset = page.meta.socialImageAssetId
-      ? data.assets.get(page.meta.socialImageAssetId)
-      : undefined;
-
-    let title = page.meta.custom?.find(
-      ({ property }) => property === marketplaceMeta.title
-    )?.content;
-    if (title !== undefined) {
-      title = computeExpression(title, variableValues);
-    }
-    if (title === undefined || title === "") {
-      title = computeExpression(page.title, variableValues);
-    }
-
-    templates.push({
-      title,
-      socialImageUrl,
-      socialImageAsset,
-      rootInstanceId: page.rootInstanceId,
+  const pages = [data.pages.homePage, ...data.pages.pages]
+    .filter((page) => page.marketplace?.include)
+    .map((page) => {
+      // category can be empty string
+      const category = page.marketplace?.category || "Pages";
+      const thumbnailAsset =
+        data.assets.get(page.marketplace?.thumbnailAssetId ?? "") ??
+        data.assets.get(page.meta.socialImageAssetId ?? "");
+      return {
+        category,
+        title: page.name,
+        thumbnailAsset,
+        pageId: page.id,
+        rootInstanceId: page.rootInstanceId,
+      };
     });
-  }
-  return templatesByCategory;
+  return mapGroupBy(pages, (page) => page.category);
 };
 
 export const Templates = ({
   name,
   projectId,
+  productCategory,
+  authorizationToken,
   data,
   onOpenChange,
 }: {
   name: string;
   projectId: string;
+  productCategory: MarketplaceProduct["category"];
+  authorizationToken: MarketplaceOverviewItem["authorizationToken"];
   data: WebstudioData;
   onOpenChange: (isOpen: boolean) => void;
 }) => {
@@ -115,6 +124,8 @@ export const Templates = ({
   if (templatesDataByCategory === undefined || data === undefined) {
     return;
   }
+
+  const hasAuthToken = authorizationToken != null;
 
   return (
     <Flex direction="column" css={{ height: "100%" }}>
@@ -134,17 +145,31 @@ export const Templates = ({
         >
           {name}
         </Button>
-        <Link
-          underline="none"
-          href={builderUrl({
-            projectId: projectId,
-            origin: location.origin,
-          })}
-          target="_blank"
-          aria-label="Open project in new tab"
+        <Tooltip
+          content={
+            hasAuthToken
+              ? undefined
+              : 'The project does not have a shared link with "View" permission.'
+          }
         >
-          <ExternalLinkIcon />
-        </Link>
+          <Link
+            underline="none"
+            href={
+              hasAuthToken
+                ? builderUrl({
+                    projectId: projectId,
+                    origin: location.origin,
+                    authToken: authorizationToken,
+                  })
+                : undefined
+            }
+            target="_blank"
+            aria-label="Open project in new tab"
+            aria-disabled={hasAuthToken ? undefined : "true"}
+          >
+            <ExternalLinkIcon />
+          </Link>
+        </Tooltip>
       </Flex>
       <Separator />
       <ScrollArea>
@@ -164,18 +189,23 @@ export const Templates = ({
                             key={templateData.rootInstanceId}
                             index={index}
                             onSelect={() => {
-                              insert({
-                                instanceId: templateData.rootInstanceId,
-                                data,
-                              });
+                              if (productCategory === "sectionTemplates") {
+                                insertSection({
+                                  data,
+                                  instanceId: templateData.rootInstanceId,
+                                });
+                              }
+                              if (productCategory === "pageTemplates") {
+                                insertPage({
+                                  data,
+                                  pageId: templateData.pageId,
+                                });
+                              }
                             }}
                           >
                             <Card
-                              image={
-                                templateData.socialImageAsset ??
-                                templateData.socialImageUrl
-                              }
                               title={templateData.title}
+                              image={templateData.thumbnailAsset}
                             />
                           </ListItem>
                         );

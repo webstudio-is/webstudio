@@ -80,7 +80,7 @@ export const metaTooltip: WsComponentMeta = {
               type: "instance",
               component: "Button",
               styles: getButtonStyles("outline"),
-              children: [{ type: "text", value: "Button" }],
+              children: [{ type: "text", value: "Button", placeholder: true }],
             },
           ],
         },
@@ -106,7 +106,13 @@ export const metaTooltip: WsComponentMeta = {
             {
               type: "instance",
               component: "Text",
-              children: [{ type: "text", value: "The text you can edit" }],
+              children: [
+                {
+                  type: "text",
+                  value: "The text you can edit",
+                  placeholder: true,
+                },
+              ],
             },
           ],
         },

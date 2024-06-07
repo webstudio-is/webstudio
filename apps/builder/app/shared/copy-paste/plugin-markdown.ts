@@ -192,7 +192,7 @@ const toInstanceData = (
   return children;
 };
 
-export const parse = (clipboardData: string, options?: Options) => {
+const parse = (clipboardData: string, options?: Options) => {
   const ast = fromMarkdown(clipboardData, micromarkOptions);
   if (ast.children.length === 0) {
     return;
@@ -219,7 +219,7 @@ export const parse = (clipboardData: string, options?: Options) => {
   return data;
 };
 
-export const onPaste = (clipboardData: string): boolean => {
+export const onPaste = (clipboardData: string) => {
   const data = parse(clipboardData);
   const selectedPage = $selectedPage.get();
   if (data === undefined || selectedPage === undefined) {
@@ -247,4 +247,8 @@ export const onPaste = (clipboardData: string): boolean => {
   }
   insertTemplateData(data, dropTarget);
   return true;
+};
+
+export const __testing__ = {
+  parse,
 };

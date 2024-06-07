@@ -190,11 +190,3 @@ export const $convertToLexical = (
     $writeLexical(p, rootInstance.children, instances, refs);
   }
 };
-
-export const $convertTextToLexical = (text: string) => {
-  const root = $getRoot();
-  const p = $createParagraphNode();
-  root.append(p);
-  const textNode = $createTextNode(text);
-  p.append(textNode);
-};

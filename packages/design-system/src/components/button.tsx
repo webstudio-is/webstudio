@@ -96,10 +96,11 @@ const perColorStyle = (variant: ButtonColor) => ({
           ),
   },
 
-  "&:disabled:not([data-state=pending]), &[data-state=disabled]": {
-    background: theme.colors.backgroundButtonDisabled,
-    color: theme.colors.foregroundDisabled,
-  },
+  "&:disabled:not([data-state=pending]), &[data-state=disabled], &[aria-disabled=true], &[aria-disabled=true]:hover, &[aria-disabled=true]:visited":
+    {
+      background: theme.colors.backgroundButtonDisabled,
+      color: theme.colors.foregroundDisabled,
+    },
 
   "&[data-state=pending]": {
     cursor: "wait",

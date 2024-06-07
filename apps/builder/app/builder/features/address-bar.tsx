@@ -4,6 +4,7 @@ import { mergeRefs } from "@react-aria/utils";
 import {
   forwardRef,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ComponentProps,
@@ -273,7 +274,10 @@ const AddressBar = forwardRef<
 >(({ onSubmit }, ref) => {
   const publishedOrigin = useStore($publishedOrigin);
   const path = useStore($selectedPagePath);
-  const history = useStore($selectedPageHistory);
+  let history = useStore($selectedPageHistory);
+  history = useMemo(() => {
+    return history.filter((item) => matchPathnamePattern(path, item));
+  }, [history, path]);
   const [pathParams, setPathParams] = useState(
     () => $selectedPagePathParams.get() ?? {}
   );

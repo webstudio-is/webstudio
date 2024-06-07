@@ -10,10 +10,10 @@ import {
   readdir,
 } from "node:fs/promises";
 import { pipeline } from "node:stream/promises";
-import { cwd } from "node:process";
+import { cwd, exit } from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import pLimit from "p-limit";
-import ora from "ora";
+import { log, spinner } from "@clack/prompts";
 import merge from "deepmerge";
 import {
   generateCss,
@@ -61,6 +61,7 @@ import {
   isFileExists,
 } from "./fs-utils";
 import type * as sharedConstants from "../templates/defaults/app/constants.mjs";
+import { htmlToJsx } from "./html-to-jsx";
 
 const limit = pLimit(10);
 
@@ -210,12 +211,13 @@ export const prebuild = async (options: {
   /**
    * Template to use for the build in addition to defaults template
    **/
-  template?: string[];
+  template: string[];
 }) => {
-  if (options.template === undefined) {
-    throw new Error(
-      `\n Template is not provided \n Please check webstudio --help for more details`
+  if (options.template.length === 0) {
+    log.error(
+      `Template is not provided\nPlease check webstudio --help for more details`
     );
+    exit(1);
   }
 
   for (const template of options.template) {
@@ -230,16 +232,14 @@ export const prebuild = async (options: {
     }
 
     if ((await isCliTemplate(template)) === false) {
-      throw Error(
-        `\n Template ${options.template} is not available \n Please check webstudio --help for more details`
+      log.error(
+        `Template ${options.template} is not available\nPlease check webstudio --help for more details`
       );
+      exit(1);
     }
   }
 
-  const spinner = ora("Scaffolding the project files");
-  spinner.start();
-
-  spinner.text = "Generating files";
+  log.step("Scaffolding the project files");
 
   const appRoot = "app";
 
@@ -474,8 +474,6 @@ export const prebuild = async (options: {
 
   const assets = new Map(siteData.assets.map((asset) => [asset.id, asset]));
 
-  spinner.text = "Generating css file";
-
   const { cssText, classesMap } = generateCss({
     instances: new Map(siteData.build.instances),
     props: new Map(siteData.build.props),
@@ -490,8 +488,6 @@ export const prebuild = async (options: {
   });
 
   await createFileIfNotExists(join(generatedDir, "index.css"), cssText);
-
-  spinner.text = "Generating routes and pages";
 
   // MARK: - Route templates read
   const routeTemplatesDir = join(cwd(), "app/route-templates");
@@ -633,6 +629,10 @@ export const prebuild = async (options: {
     const favIconAsset = assets.get(projectMeta?.faviconAssetId ?? "");
     const socialImageAsset = assets.get(pageMeta.socialImageAssetId ?? "");
 
+    const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
+    const remixRoute = generateRemixRoute(pagePath);
+    const fileName = `${remixRoute}.tsx`;
+
     // MARK: - TODO: XML GENERATION
     const pageExports = `/* eslint-disable */
       /* This is a auto generated file for building the project */ \n
@@ -656,6 +656,37 @@ export const prebuild = async (options: {
 
       export const pageBackgroundImageAssets: ImageAsset[] =
         ${JSON.stringify(pageBackgroundImageAssets)}
+
+      ${
+        remixRoute === "_index"
+          ? `
+            ${
+              projectMeta?.code
+                ? `
+            const Script = ({children, ...props}: Record<string, string | boolean>) => {
+              if (children == null) {
+                return <script {...props} />;
+              }
+
+              return <script {...props} dangerouslySetInnerHTML={{__html: children}} />;
+            };
+            const Style = ({children, ...props}: Record<string, string | boolean>) => {
+              if (children == null) {
+                return <style {...props} />;
+              }
+
+              return <style {...props} dangerouslySetInnerHTML={{__html: children}} />;
+            };
+            `
+                : ""
+            }
+
+            export const CustomCode = () => {
+              return (<>${projectMeta?.code ? htmlToJsx(projectMeta.code) : ""}</>);
+            }
+          `
+          : ""
+      }
 
       ${xmlPresentationComponents}
 
@@ -688,27 +719,7 @@ export const prebuild = async (options: {
       export const projectId = "${siteData.build.projectId}";
 
       export const contactEmail = ${JSON.stringify(contactEmail)};
-
-      export const customCode = ${JSON.stringify(
-        projectMeta?.code?.trim() ?? ""
-      )};
     `;
-
-    /*
-      The _index is mandatory.
-      Let's say there is a route /test.one.tsx and then there is a /test.tsx route.
-      Remix doesn't pick the /test.tsx by default unless we mention the _index at the end.
-
-      Or else it picks the first route that matches the /test as a layout and not a independent route.
-      So, we need to mark the pages as _index at the end. So deep nested routes works as expected.
-
-      Details:
-      https://remix.run/docs/en/main/file-conventions/route-files-v2#nested-urls-without-layout-nesting
-    */
-
-    const pagePath = getPagePath(pageData.page.id, siteData.build.pages);
-    const remixRoute = generateRemixRoute(pagePath);
-    const fileName = `${remixRoute}.tsx`;
 
     const routeFileContent = (
       documentType === "html" ? routeFileTemplate : routeXmlFileTemplate
@@ -751,8 +762,6 @@ export const prebuild = async (options: {
 
   const redirects = siteData.build.pages?.redirects;
   if (redirects !== undefined && redirects.length > 0) {
-    spinner.text = "Generating redirects";
-
     for (const redirect of redirects) {
       const redirectPagePath = generateRemixRoute(redirect.old);
       const redirectFileName = `${redirectPagePath}.ts`;
@@ -768,8 +777,12 @@ export const prebuild = async (options: {
     }
   }
 
-  spinner.text = "Downloading fonts and images";
-  await Promise.all(assetsToDownload);
+  if (assetsToDownload.length > 0) {
+    const downloading = spinner();
+    downloading.start("Downloading fonts and images");
+    await Promise.all(assetsToDownload);
+    downloading.stop("Downloaded fonts and images");
+  }
 
-  spinner.succeed("Build finished");
+  log.step("Build finished");
 };

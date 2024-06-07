@@ -5,6 +5,8 @@ import {
   useState,
   forwardRef,
   type ComponentProps,
+  type RefObject,
+  useImperativeHandle,
 } from "react";
 import {
   Annotation,
@@ -72,6 +74,8 @@ const editorContentStyle = css({
   paddingBottom: 4,
   paddingRight: theme.spacing[2],
   paddingLeft: theme.spacing[3],
+  // required to support copying selected text
+  userSelect: "text",
   "&:focus-within": {
     borderColor: theme.colors.borderFocus,
     outline: `1px solid ${theme.colors.borderFocus}`,
@@ -106,9 +110,10 @@ const editorContentStyle = css({
 
 // https://thememirror.net/clouds
 const highlightStyle = HighlightStyle.define([
+  // darker comment variant from https://github.com/vadimdemedes/thememirror/blob/main/source/themes/ayu-light.ts#L17-L20
   {
     tag: tags.comment,
-    color: "#BCC8BA",
+    color: "#787b8099",
   },
   {
     tag: [tags.string, tags.special(tags.brace), tags.regexp],
@@ -136,7 +141,12 @@ const highlightStyle = HighlightStyle.define([
   },
 ]);
 
+export type EditorApi = {
+  replaceSelection: (string: string) => void;
+};
+
 type EditorContentProps = {
+  editorApiRef?: RefObject<undefined | EditorApi>;
   extensions?: Extension[];
   readOnly?: boolean;
   autoFocus?: boolean;
@@ -147,6 +157,7 @@ type EditorContentProps = {
 };
 
 export const EditorContent = ({
+  editorApiRef,
   extensions = [],
   readOnly = false,
   autoFocus = false,
@@ -244,6 +255,17 @@ export const EditorContent = ({
       annotations: [ExternalChange.of(true)],
     });
   }, [value]);
+
+  useImperativeHandle(editorApiRef, () => ({
+    replaceSelection: (string) => {
+      const view = viewRef.current;
+      if (view === undefined) {
+        return;
+      }
+      view.dispatch(view.state.replaceSelection(string));
+      view.focus();
+    },
+  }));
 
   return (
     <div

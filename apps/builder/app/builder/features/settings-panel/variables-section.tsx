@@ -31,6 +31,7 @@ import {
   $props,
   $resources,
   $selectedInstanceSelector,
+  $selectedPage,
   $variableValuesByInstanceSelector,
 } from "~/shared/nano-states";
 import { serverSyncStore } from "~/shared/sync";
@@ -86,15 +87,16 @@ const $instanceVariableValues = computed(
  * body resource fiel
  */
 const $usedVariables = computed(
-  [$instances, $props, $resources],
-  (instances, props, resources) => {
-    const usedVariables = new Set<DataSource["id"]>();
+  [$instances, $props, $resources, $selectedPage],
+  (instances, props, resources, page) => {
+    const usedVariables = new Map<DataSource["id"], number>();
     const collectExpressionVariables = (expression: string) => {
       const identifiers = getExpressionIdentifiers(expression);
       for (const identifier of identifiers) {
         const id = decodeDataSourceVariable(identifier);
         if (id !== undefined) {
-          usedVariables.add(id);
+          const count = usedVariables.get(id) ?? 0;
+          usedVariables.set(id, count + 1);
         }
       }
     };
@@ -121,6 +123,20 @@ const $usedVariables = computed(
       if (prop.type === "action") {
         for (const value of prop.value) {
           collectExpressionVariables(value.code);
+        }
+      }
+    }
+    if (page) {
+      collectExpressionVariables(page.title);
+      collectExpressionVariables(page.meta.description ?? "");
+      collectExpressionVariables(page.meta.excludePageFromSearch ?? "");
+      collectExpressionVariables(page.meta.socialImageUrl ?? "");
+      collectExpressionVariables(page.meta.language ?? "");
+      collectExpressionVariables(page.meta.status ?? "");
+      collectExpressionVariables(page.meta.redirect ?? "");
+      if (page.meta.custom) {
+        for (const { content } of page.meta.custom) {
+          collectExpressionVariables(content);
         }
       }
     }
@@ -166,12 +182,12 @@ const VariablesItem = ({
   variable,
   index,
   value,
-  isUsedVariable,
+  usageCount,
 }: {
   variable: DataSource;
   index: number;
   value: unknown;
-  isUsedVariable: boolean;
+  usageCount: number;
 }) => {
   const label =
     value === undefined
@@ -217,10 +233,10 @@ const VariablesItem = ({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     // allow to delete only unused variables
-                    disabled={variable.type === "parameter" || isUsedVariable}
+                    disabled={variable.type === "parameter" || usageCount > 0}
                     onSelect={() => deleteVariable(variable.id)}
                   >
-                    Delete
+                    Delete {usageCount > 0 && `(${usageCount} bindings)`}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenuPortal>
@@ -251,7 +267,7 @@ const VariablesList = () => {
             value={value}
             variable={variable}
             index={index}
-            isUsedVariable={usedVariables.has(variable.id)}
+            usageCount={usedVariables.get(variable.id) ?? 0}
           />
         );
       })}

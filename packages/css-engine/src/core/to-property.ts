@@ -1,5 +1,10 @@
-import hyphenate from "hyphenate-style-name";
 import type { StyleProperty } from "../schema";
+
+/**
+ * Hyphenates a camelcased CSS property name
+ */
+export const hyphenateProperty = (property: string) =>
+  property.replace(/[A-Z]/g, (match) => "-" + match.toLowerCase());
 
 export const toProperty = (property: StyleProperty) => {
   // chrome started to support unprefixed background-clip in December 2023
@@ -8,5 +13,5 @@ export const toProperty = (property: StyleProperty) => {
   if (property === "backgroundClip") {
     return "-webkit-background-clip";
   }
-  return hyphenate(property);
+  return hyphenateProperty(property);
 };

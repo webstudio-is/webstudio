@@ -52,7 +52,7 @@ export const meta: WsComponentMeta = {
           component: "Text",
           label: "Radio Label",
           props: [{ type: "string", name: "tag", value: "span" }],
-          children: [{ type: "text", value: "Radio" }],
+          children: [{ type: "text", value: "Radio", placeholder: true }],
         },
       ],
     },

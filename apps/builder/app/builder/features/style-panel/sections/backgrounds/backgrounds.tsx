@@ -62,28 +62,28 @@ const Layer = (props: {
 }) => {
   const assets = useStore($assets);
 
-  const backgrounImageStyle = props.layerStyle.backgroundImage?.value;
+  const backgroundImageStyle = props.layerStyle.backgroundImage?.value;
   const isHidden =
-    backgrounImageStyle?.type === "image" ||
-    backgrounImageStyle?.type === "unparsed"
-      ? Boolean(backgrounImageStyle.hidden)
+    backgroundImageStyle?.type === "image" ||
+    backgroundImageStyle?.type === "unparsed"
+      ? Boolean(backgroundImageStyle.hidden)
       : false;
 
   const handleHiddenChange = (hidden: boolean) => {
     if (
-      backgrounImageStyle?.type === "image" ||
-      backgrounImageStyle?.type === "unparsed"
+      backgroundImageStyle?.type === "image" ||
+      backgroundImageStyle?.type === "unparsed"
     ) {
       props.setProperty("backgroundImage")({
-        ...backgrounImageStyle,
+        ...backgroundImageStyle,
         hidden,
       });
     }
   };
 
   const canDisable =
-    backgrounImageStyle?.type !== "image" &&
-    backgrounImageStyle?.type !== "unparsed";
+    backgroundImageStyle?.type !== "image" &&
+    backgroundImageStyle?.type !== "unparsed";
 
   return (
     <FloatingPanel

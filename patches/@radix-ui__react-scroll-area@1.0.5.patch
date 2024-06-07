@@ -1,0 +1,18 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 275085e7140d855f7b2c6df3eba959f49cb5837d..e8f6263e261ede55f7fc0d2b6162f0c975f7d696 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -93,11 +93,8 @@ const $57acba87d6e25586$export$a21cbf9f11fca853 = /*#__PURE__*/ $fnFM9$forwardRe
+     const context = $57acba87d6e25586$var$useScrollAreaContext($57acba87d6e25586$var$VIEWPORT_NAME, __scopeScrollArea);
+     const ref = $fnFM9$useRef(null);
+     const composedRefs = $fnFM9$useComposedRefs(forwardedRef, ref, context.onViewportChange);
+-    return /*#__PURE__*/ $fnFM9$createElement($fnFM9$Fragment, null, /*#__PURE__*/ $fnFM9$createElement("style", {
+-        dangerouslySetInnerHTML: {
+-            __html: `[data-radix-scroll-area-viewport]{scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;}[data-radix-scroll-area-viewport]::-webkit-scrollbar{display:none}`
+-        }
+-    }), /*#__PURE__*/ $fnFM9$createElement($fnFM9$Primitive.div, $fnFM9$babelruntimehelpersesmextends({
++    return /*#__PURE__*/ $fnFM9$createElement($fnFM9$Fragment, null
++      , /*#__PURE__*/ $fnFM9$createElement($fnFM9$Primitive.div, $fnFM9$babelruntimehelpersesmextends({
+         "data-radix-scroll-area-viewport": ""
+     }, viewportProps, {
+         ref: composedRefs,

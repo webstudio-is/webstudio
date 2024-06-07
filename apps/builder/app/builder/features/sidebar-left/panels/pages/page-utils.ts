@@ -1,4 +1,3 @@
-import { nanoid } from "nanoid";
 import { atom, computed } from "nanostores";
 import { createRootFolder } from "@webstudio-is/project-build";
 import {
@@ -11,17 +10,12 @@ import {
   type WebstudioData,
   getPagePath,
   findParentFolderByChildId,
-  DataSource,
-  decodeDataSourceVariable,
   encodeDataSourceVariable,
-  transpileExpression,
   type System,
 } from "@webstudio-is/sdk";
 import { removeByMutable } from "~/shared/array-utils";
 import {
   deleteInstanceMutable,
-  extractWebstudioFragment,
-  insertWebstudioFragmentCopy,
   updateWebstudioData,
 } from "~/shared/instance-utils";
 import {
@@ -35,6 +29,7 @@ import {
   getPageDefaultSystem,
   mergeSystem,
 } from "~/shared/nano-states";
+import { insertPageCopyMutable } from "~/shared/page-utils";
 
 type TreePage = {
   type: "page";
@@ -420,119 +415,18 @@ export const $pageRootScope = computed(
   }
 );
 
-const deduplicatePath = (pages: Pages, page: Page) => {
-  const fullPath = getPagePath(page.id, pages);
-  let matchedPage = findPageByIdOrPath(fullPath, pages);
-  let { path } = page;
-
-  if (matchedPage === undefined) {
-    return path;
-  }
-
-  if (path === "/") {
-    path = "";
-  }
-
-  let counter = 0;
-  const folder = findParentFolderByChildId(page.id, pages.folders);
-  const folderPath = folder ? getPagePath(folder.id, pages) : "";
-  while (matchedPage !== undefined) {
-    counter += 1;
-    matchedPage = findPageByIdOrPath(
-      `${folderPath}/copy-${counter}${path}`,
-      pages
-    );
-  }
-  return `/copy-${counter}${path}`;
-};
-
-const replaceDataSources = (
-  expression: string,
-  replacements: Map<DataSource["id"], DataSource["id"]>
-) => {
-  return transpileExpression({
-    expression,
-    replaceVariable: (identifier) => {
-      const dataSourceId = decodeDataSourceVariable(identifier);
-      if (dataSourceId === undefined) {
-        return;
-      }
-      return encodeDataSourceVariable(
-        replacements.get(dataSourceId) ?? dataSourceId
-      );
-    },
-  });
-};
-
 export const duplicatePage = (pageId: Page["id"]) => {
   const pages = $pages.get();
-  if (pages === undefined) {
+  const currentFolder = findParentFolderByChildId(pageId, pages?.folders ?? []);
+  if (currentFolder === undefined) {
     return;
   }
-  const page = findPageByIdOrPath(pageId, pages);
-
-  if (page === undefined) {
-    return;
-  }
-
-  const newPageId = nanoid();
-  const { name = page.name, copyNumber } =
-    // extract a number from "name (copyNumber)"
-    page.name.match(/^(?<name>.+) \((?<copyNumber>\d+)\)$/)?.groups ?? {};
-  const newName = `${name} (${Number(copyNumber ?? "0") + 1})`;
-
+  let newPageId: undefined | string;
   updateWebstudioData((data) => {
-    const fragment = extractWebstudioFragment(data, page.rootInstanceId);
-    const { newInstanceIds, newDataSourceIds } = insertWebstudioFragmentCopy({
-      data,
-      fragment,
-      availableDataSources: new Set(),
+    newPageId = insertPageCopyMutable({
+      source: { data, pageId },
+      target: { data, folderId: currentFolder.id },
     });
-    const newRootInstanceId = newInstanceIds.get(page.rootInstanceId);
-    const newSystemDataSourceId =
-      newDataSourceIds.get(page.systemDataSourceId) ?? page.systemDataSourceId;
-
-    if (newRootInstanceId === undefined) {
-      return;
-    }
-    const newPage = {
-      ...page,
-      id: newPageId,
-      rootInstanceId: newRootInstanceId,
-      systemDataSourceId: newSystemDataSourceId,
-      name: newName,
-      path: deduplicatePath(pages, page),
-      title: replaceDataSources(page.title, newDataSourceIds),
-      meta: {
-        ...page.meta,
-        description:
-          page.meta.description === undefined
-            ? undefined
-            : replaceDataSources(page.meta.description, newDataSourceIds),
-        excludePageFromSearch:
-          page.meta.excludePageFromSearch === undefined
-            ? undefined
-            : replaceDataSources(
-                page.meta.excludePageFromSearch,
-                newDataSourceIds
-              ),
-        socialImageUrl:
-          page.meta.socialImageUrl === undefined
-            ? undefined
-            : replaceDataSources(page.meta.socialImageUrl, newDataSourceIds),
-        custom: page.meta.custom?.map(({ property, content }) => ({
-          property,
-          content: replaceDataSources(content, newDataSourceIds),
-        })),
-      },
-    } satisfies Page;
-    data.pages.pages.push(newPage);
-    const currentFolder = findParentFolderByChildId(pageId, data.pages.folders);
-    registerFolderChildMutable(
-      data.pages.folders,
-      newPageId,
-      currentFolder?.id
-    );
   });
   return newPageId;
 };

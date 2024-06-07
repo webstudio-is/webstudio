@@ -55,7 +55,7 @@ export const Icons = ({ testColor }: { testColor: boolean }) => {
 };
 
 export default {
-  title: "All Icons",
+  title: "Icons",
   component: Icons,
   argTypes: {
     testColor: { control: "boolean", name: "Test color" },

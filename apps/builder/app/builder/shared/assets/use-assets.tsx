@@ -15,6 +15,7 @@ import type { ActionData } from "~/builder/shared/assets";
 import { $assets, $authToken, $project } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
 import { serverSyncStore } from "~/shared/sync";
+import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 
 export const deleteAssets = (assetIds: Asset["id"][]) => {
   serverSyncStore.createTransaction([$assets], (assets) => {
@@ -199,7 +200,7 @@ export const useUploadAsset = () => {
     }
   };
 
-  return uploadAssets;
+  return useEffectEvent(uploadAssets);
 };
 
 const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {

@@ -241,7 +241,7 @@ const syncServer = async function () {
   }
 };
 
-const useSyncProject = async ({
+export const startProjectSync = ({
   projectId,
   buildId,
   version,
@@ -254,19 +254,30 @@ const useSyncProject = async ({
   version: number;
   authPermit: AuthPermit;
 }) => {
+  if (authPermit === "view") {
+    return;
+  }
+  commandQueue.enqueue({
+    type: "setDetails",
+    projectId,
+    buildId,
+    version,
+    authToken,
+  });
+};
+
+const useSyncProject = async ({
+  projectId,
+  authPermit,
+}: {
+  projectId: Project["id"];
+  authPermit: AuthPermit;
+}) => {
   useEffect(() => {
     if (authPermit === "view") {
       return;
     }
     syncServer();
-
-    commandQueue.enqueue({
-      type: "setDetails",
-      projectId,
-      buildId,
-      version,
-      authToken,
-    });
 
     const updateProjectTransactions = () => {
       const transactions = serverSyncStore.popAll();
@@ -285,29 +296,17 @@ const useSyncProject = async ({
       updateProjectTransactions();
       clearInterval(intervalHandle);
     };
-  }, [authPermit, authToken, buildId, projectId, version]);
+  }, [projectId, authPermit]);
 };
 
 type SyncServerProps = {
-  buildId: Build["id"];
   projectId: Project["id"];
-  authToken: string | undefined;
   authPermit: AuthPermit;
-  version: number;
 };
 
-export const useSyncServer = ({
-  buildId,
-  projectId,
-  authToken,
-  authPermit,
-  version,
-}: SyncServerProps) => {
+export const useSyncServer = ({ projectId, authPermit }: SyncServerProps) => {
   useSyncProject({
-    buildId,
     projectId,
-    authToken,
-    version,
     authPermit,
   });
 

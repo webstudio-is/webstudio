@@ -41,7 +41,7 @@ export const heroiconsToSvgEmbed = (
           ];
         } else {
           node.component = "Text";
-          node.children = [{ type: "text", value: "Icon" }];
+          node.children = [{ type: "text", value: "Icon", placeholder: true }];
         }
       }
     }

@@ -15,6 +15,8 @@ export const pageFontAssets: FontAsset[] = [];
 
 export const pageBackgroundImageAssets: ImageAsset[] = [];
 
+export const CustomCode = () => null;
+
 const Page = (_props: { system: any }) => {
   return <></>;
 };

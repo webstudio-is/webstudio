@@ -1,15 +1,14 @@
-import { useCallback, useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
-import type { Asset } from "@webstudio-is/sdk";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
 import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
-import { useSyncServer } from "./shared/sync/sync-server";
+import { startProjectSync, useSyncServer } from "./shared/sync/sync-server";
 import {
   SidebarLeft,
   NavigatorContent,
@@ -24,25 +23,16 @@ import {
   Workspace,
 } from "./features/workspace";
 import {
-  $assets,
   $authPermit,
   $authToken,
-  $breakpoints,
-  $dataSources,
-  $instances,
   $isPreviewMode,
   $pages,
   $project,
-  $props,
-  $styleSourceSelections,
-  $styleSources,
-  $styles,
-  $resources,
   subscribeResources,
-  $marketplaceProduct,
   $authTokenPermissions,
   $publisherHost,
   $imageLoader,
+  $textEditingInstanceSelector,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -58,6 +48,8 @@ import { $isCloneDialogOpen, $userPlanFeatures } from "./shared/nano-states";
 import { CloneProjectDialog } from "~/shared/clone-project";
 import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
+import { canvasApi } from "~/shared/canvas-api";
+import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 
 registerContainers();
 
@@ -85,6 +77,7 @@ const SidePanel = ({
     <Box
       as="aside"
       css={{
+        isolation: "isolate",
         gridArea,
         display: isPreviewMode ? "none" : "flex",
         flexDirection: "column",
@@ -219,8 +212,7 @@ export type BuilderProps = {
   project: Project;
   publisherHost: string;
   imageBaseUrl: string;
-  build: Build;
-  assets: [Asset["id"], Asset][];
+  build: Pick<Build, "id" | "version">;
   authToken?: string;
   authPermit: AuthPermit;
   authTokenPermissions: TokenPermissions;
@@ -232,12 +224,12 @@ export const Builder = ({
   publisherHost,
   imageBaseUrl,
   build,
-  assets,
   authToken,
   authPermit,
   userPlanFeatures,
   authTokenPermissions,
 }: BuilderProps) => {
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   useMount(() => {
     // additional data stores
     $project.set(project);
@@ -248,19 +240,26 @@ export const Builder = ({
     $userPlanFeatures.set(userPlanFeatures);
     $authTokenPermissions.set(authTokenPermissions);
 
-    // set initial containers value
-    $assets.set(new Map(assets));
-    $instances.set(new Map(build.instances));
-    $dataSources.set(new Map(build.dataSources));
-    $resources.set(new Map(build.resources));
-    // props should be after data sources to compute logic
-    $props.set(new Map(build.props));
-    $pages.set(build.pages);
-    $styleSources.set(new Map(build.styleSources));
-    $styleSourceSelections.set(new Map(build.styleSourceSelections));
-    $breakpoints.set(new Map(build.breakpoints));
-    $styles.set(new Map(build.styles));
-    $marketplaceProduct.set(build.marketplaceProduct);
+    const controller = new AbortController();
+    loadBuilderData({ projectId: project.id, signal: controller.signal })
+      .then((data) => {
+        setBuilderData(data);
+        startProjectSync({
+          projectId: project.id,
+          buildId: build.id,
+          version: build.version,
+          authPermit,
+          authToken,
+        });
+        // render canvas only after all data is loaded
+        // so builder is started listening for connect event
+        // when canvas is rendered
+        setIsDataLoaded(true);
+      })
+      .catch(() => {});
+    return () => {
+      controller.abort("unmount");
+    };
   });
 
   useToastErrors();
@@ -280,11 +279,8 @@ export const Builder = ({
 
   useBuilderStore(publish);
   useSyncServer({
-    buildId: build.id,
     projectId: project.id,
-    authToken,
     authPermit,
-    version: build.version,
   });
   const isCloneDialogOpen = useStore($isCloneDialogOpen);
   const isPreviewMode = useStore($isPreviewMode);
@@ -307,55 +303,94 @@ export const Builder = ({
     project,
   });
 
+  /**
+   * Prevents Lexical text editor from stealing focus during rendering.
+   * Sets the inert attribute on the canvas body element and disables the text editor.
+   *
+   * This must be done synchronously to avoid the following issue:
+   *
+   * 1. Text editor is in edit state.
+   * 2. User focuses on the builder (e.g., clicks any input).
+   * 3. The text editor blur event triggers, causing a rerender on data change (data saved in onBlur).
+   * 4. Text editor rerenders, stealing focus from the builder.
+   * 5. Inert attribute is set asynchronously, but focus is already lost.
+   *
+   * Synchronous focusing and setInert prevent the text editor from focusing on render.
+   * This cannot be handled inside the canvas because the text editor toolbar is in the builder and focus events in the canvas should be ignored.
+   *
+   * Use onPointerDown instead of onFocus because Radix focus lock triggers on text edit blur
+   * before the focusin event when editing text inside a Radix dialog.
+   */
+  const handlePointerDown = useCallback((event: React.PointerEvent) => {
+    // Ignore toolbar focus events. See the onFocus handler in text-toolbar.tsx
+    if (false === event.defaultPrevented) {
+      canvasApi.setInert();
+      $textEditingInstanceSelector.set(undefined);
+    }
+  }, []);
+
+  /**
+   * Prevent Radix from stealing focus during editing in the settings panel.
+   * For example, when the user modifies the text content of an H1 element inside a dialog.
+   */
+  const handleInput = useCallback(() => {
+    canvasApi.setInert();
+  }, []);
+
   return (
     <TooltipProvider>
-      <ChromeWrapper isPreviewMode={isPreviewMode}>
-        <ProjectSettings />
-        <Topbar
-          gridArea="header"
-          project={project}
-          hasProPlan={userPlanFeatures.hasProPlan}
-        />
-        <Main>
-          <Workspace
-            onTransitionEnd={onTransitionEnd}
-            initialBreakpoints={build.breakpoints}
+      <div
+        style={{ display: "contents" }}
+        onPointerDown={handlePointerDown}
+        onInput={handleInput}
+      >
+        <ChromeWrapper isPreviewMode={isPreviewMode}>
+          <ProjectSettings />
+          <Topbar
+            gridArea="header"
+            project={project}
+            hasProPlan={userPlanFeatures.hasProPlan}
+          />
+          <Main>
+            <Workspace onTransitionEnd={onTransitionEnd}>
+              {isDataLoaded && (
+                <CanvasIframe
+                  ref={iframeRefCallback}
+                  src={canvasUrl}
+                  title={project.title}
+                  css={{
+                    height: "100%",
+                    width: "100%",
+                    backgroundColor: "#fff",
+                  }}
+                />
+              )}
+            </Workspace>
+            <AiCommandBar isPreviewMode={isPreviewMode} />
+          </Main>
+          <NavigatorPanel
+            isPreviewMode={isPreviewMode}
+            navigatorLayout={navigatorLayout}
+          />
+          <SidePanel gridArea="sidebar">
+            <SidebarLeft publish={publish} />
+          </SidePanel>
+          <SidePanel
+            gridArea="inspector"
+            isPreviewMode={isPreviewMode}
+            css={{ overflow: "hidden" }}
           >
-            <CanvasIframe
-              ref={iframeRefCallback}
-              src={canvasUrl}
-              title={project.title}
-              css={{
-                height: "100%",
-                width: "100%",
-                backgroundColor: "#fff",
-              }}
-            />
-          </Workspace>
-          <AiCommandBar isPreviewMode={isPreviewMode} />
-        </Main>
-        <NavigatorPanel
-          isPreviewMode={isPreviewMode}
-          navigatorLayout={navigatorLayout}
-        />
-        <SidePanel gridArea="sidebar">
-          <SidebarLeft publish={publish} />
-        </SidePanel>
-        <SidePanel
-          gridArea="inspector"
-          isPreviewMode={isPreviewMode}
-          css={{ overflow: "hidden" }}
-        >
-          <Inspector navigatorLayout={navigatorLayout} />
-        </SidePanel>
-        {isPreviewMode === false && <Footer />}
-        <BlockingAlerts />
-        <CloneProjectDialog
-          isOpen={isCloneDialogOpen}
-          onOpenChange={$isCloneDialogOpen.set}
-          project={project}
-        />
-      </ChromeWrapper>
+            <Inspector navigatorLayout={navigatorLayout} />
+          </SidePanel>
+          {isPreviewMode === false && <Footer />}
+          <BlockingAlerts />
+          <CloneProjectDialog
+            isOpen={isCloneDialogOpen}
+            onOpenChange={$isCloneDialogOpen.set}
+            project={project}
+          />
+        </ChromeWrapper>
+      </div>
     </TooltipProvider>
   );
 };

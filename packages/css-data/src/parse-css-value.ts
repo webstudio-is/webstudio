@@ -1,9 +1,9 @@
 import { colord } from "colord";
 import * as csstree from "css-tree";
-import hyphenate from "hyphenate-style-name";
 import warnOnce from "warn-once";
 import {
   TupleValue,
+  hyphenateProperty,
   type StyleProperty,
   type StyleValue,
   type Unit,
@@ -11,6 +11,7 @@ import {
 import { keywordValues } from "./__generated__/keyword-values";
 import { units } from "./__generated__/units";
 import { parseFilter, parseShadow, parseTransition } from "./property-parsers";
+import { camelCase } from "change-case";
 
 export const cssTryParseValue = (input: string) => {
   try {
@@ -27,7 +28,7 @@ export const isValidDeclaration = (
   property: string,
   value: string
 ): boolean => {
-  const cssPropertyName = hyphenate(property);
+  const cssPropertyName = hyphenateProperty(property);
 
   // @todo remove after csstree fixes
   // - https://github.com/csstree/csstree/issues/246
@@ -131,9 +132,14 @@ export const parseCssValue = (
     }
 
     if (first?.type === "Identifier") {
-      const values = keywordValues[
-        property as keyof typeof keywordValues
-      ] as ReadonlyArray<string>;
+      const values =
+        keywordValues[camelCase(property) as keyof typeof keywordValues];
+      if (values === undefined) {
+        return {
+          type: "invalid",
+          value: "",
+        };
+      }
       const lettersRegex = /[^a-zA-Z]+/g;
       const searchValues = values.map((value) =>
         value.replace(lettersRegex, "").toLowerCase()

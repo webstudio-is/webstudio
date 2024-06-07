@@ -4,16 +4,17 @@
     "dev": "remix vite:dev",
     "start": "netlify serve",
     "typecheck": "tsc",
-    "fixtures:link": "webstudio link --link \"https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93\"",
-    "fixtures:sync": "webstudio sync && pnpm prettier --write ./.webstudio/",
-    "fixtures:build": "webstudio build --template internal --template netlify-functions --preview && pnpm prettier --write ./app/ ./package.json"
+    "webstudio": "NODE_OPTIONS='--conditions=webstudio --import=tsx' webstudio",
+    "fixtures:link": "pnpm webstudio link --link \"https://main.development.webstudio.is/builder/d845c167-ea07-4875-b08d-83e97c09dcce?authToken=e9d1343f-9298-4fd3-a66e-f89a5af2dd93\"",
+    "fixtures:sync": "pnpm webstudio sync && pnpm prettier --write ./.webstudio/",
+    "fixtures:build": "pnpm webstudio build --template internal --template netlify-functions --preview && pnpm prettier --write ./app/ ./package.json"
   },
   "dependencies": {
-    "@netlify/functions": "^2.6.0",
-    "@netlify/remix-adapter": "^2.3.1",
-    "@remix-run/node": "2.9.1",
-    "@remix-run/react": "2.9.1",
-    "@remix-run/server-runtime": "2.9.1",
+    "@netlify/functions": "^2.7.0",
+    "@netlify/remix-adapter": "^2.4.0",
+    "@remix-run/node": "2.9.2",
+    "@remix-run/react": "2.9.2",
+    "@remix-run/server-runtime": "2.9.2",
     "@webstudio-is/form-handlers": "workspace:*",
     "@webstudio-is/image": "workspace:*",
     "@webstudio-is/react-sdk": "workspace:*",
@@ -21,18 +22,18 @@
     "@webstudio-is/sdk-components-react": "workspace:*",
     "@webstudio-is/sdk-components-react-radix": "workspace:*",
     "@webstudio-is/sdk-components-react-remix": "workspace:*",
-    "isbot": "^3.6.8",
+    "isbot": "^5.1.8",
     "react": "18.3.0-canary-14898b6a9-20240318",
     "react-dom": "18.3.0-canary-14898b6a9-20240318"
   },
   "private": true,
   "sideEffects": false,
   "devDependencies": {
-    "@remix-run/dev": "2.9.1",
+    "@remix-run/dev": "2.9.2",
     "@types/react": "^18.2.70",
     "@types/react-dom": "^18.2.25",
     "typescript": "5.4.5",
-    "vite": "^5.2.11",
+    "vite": "^5.2.13",
     "webstudio": "workspace:*"
   },
   "engines": {

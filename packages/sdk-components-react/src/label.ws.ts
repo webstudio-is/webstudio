@@ -29,7 +29,7 @@ export const meta: WsComponentMeta = {
     {
       type: "instance",
       component: "Label",
-      children: [{ type: "text", value: "Form Label" }],
+      children: [{ type: "text", value: "Form Label", placeholder: true }],
     },
   ],
 };

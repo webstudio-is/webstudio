@@ -11,10 +11,10 @@ import type {
   StyleUpdateOptions,
 } from "./shared/use-style-data";
 
-export const deleteLayer = <T extends TupleValue | LayersValue>(
+export const deleteLayer = <Layers extends TupleValue | LayersValue>(
   property: StyleProperty,
   index: number,
-  layers: T,
+  layers: Layers,
   createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
   const batch = createBatchUpdate();
@@ -41,34 +41,40 @@ export const deleteLayer = <T extends TupleValue | LayersValue>(
   batch.publish();
 };
 
-export const hideLayer = (
+export const hideLayer = <Layers extends LayersValue | TupleValue>(
   property: StyleProperty,
   index: number,
-  layers: LayersValue,
+  layers: Layers,
   createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
-  const batch = createBatchUpdate();
-  const value = layers.value[index];
-
-  if (value.type !== "tuple" && value.type !== "unparsed") {
+  if (layers.type !== "layers" && layers.type !== "tuple") {
     return;
   }
-  const newLayers = [...layers.value];
-  newLayers.splice(index, 1, {
-    ...value,
-    hidden: value.hidden !== true,
-  });
-  batch.setProperty(property)({
-    type: "layers",
-    value: newLayers,
+
+  const newLayersValue = layers.value.map((layer, layerIndex) => {
+    if (layerIndex !== index) {
+      return layer;
+    }
+
+    if (layer.type === "function" || layer.type === "tuple") {
+      return {
+        ...layer,
+        hidden: layer.hidden ? false : true,
+      } as Layers["value"][number];
+    }
   });
 
+  const newLayers: Layers = JSON.parse(JSON.stringify(layers));
+  newLayers.value = newLayersValue as Layers["value"];
+
+  const batch = createBatchUpdate();
+  batch.setProperty(property)(newLayers);
   batch.publish();
 };
 
-export const addLayer = <T extends LayersValue | TupleValue>(
+export const addLayer = <Layers extends LayersValue | TupleValue>(
   property: StyleProperty,
-  value: T | InvalidValue,
+  value: Layers | InvalidValue,
   style: StyleInfo,
   createBatchUpdate: SectionProps["createBatchUpdate"]
 ) => {
@@ -81,7 +87,7 @@ export const addLayer = <T extends LayersValue | TupleValue>(
 
   const existingValues = style[property]?.value;
   if (existingValues?.type === "layers") {
-    value.value = [...value.value, ...existingValues.value] as T["value"];
+    value.value = [...value.value, ...existingValues.value] as Layers["value"];
   }
 
   // Transitions come's with a default property of tuple. Which needs to be overwritten
@@ -94,7 +100,7 @@ export const addLayer = <T extends LayersValue | TupleValue>(
     value.value = [
       ...value.value,
       ...(existingValues?.value || []),
-    ] as T["value"];
+    ] as Layers["value"];
   }
 
   const batch = createBatchUpdate();
@@ -102,10 +108,10 @@ export const addLayer = <T extends LayersValue | TupleValue>(
   batch.publish();
 };
 
-export const updateLayer = <T extends LayersValue | TupleValue>(
+export const updateLayer = <Layers extends LayersValue | TupleValue>(
   property: StyleProperty,
-  newValue: T,
-  oldValue: T,
+  newValue: Layers,
+  oldValue: Layers,
   index: number,
   createBatchUpdate: SectionProps["createBatchUpdate"],
   options: StyleUpdateOptions

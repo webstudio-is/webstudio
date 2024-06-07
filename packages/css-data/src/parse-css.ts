@@ -4,25 +4,22 @@ import {
   type Style as S,
   type StyleProperty,
 } from "@webstudio-is/css-engine";
+import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
 import * as toLonghand from "./property-parsers/to-longhand";
+import { camelCase } from "change-case";
 
 type Selector = string;
-type Style = {
-  // @todo add support for states and media queries in addition to declarations
-  property: StyleProperty;
-  value: StyleValue;
-};
 
-export type Styles = Record<Selector, Style[]>;
+export type Styles = Record<Selector, Array<EmbedTemplateStyleDecl>>;
 
 type Longhand = keyof typeof toLonghand;
 
-const parseCssValue = function parseCssValue(
+const parseCssValue = (
   property: Longhand | StyleProperty,
   value: string
-): S {
+): S => {
   const unwrap = toLonghand[property as Longhand];
 
   if (typeof unwrap === "function") {
@@ -48,7 +45,7 @@ const parseCssValue = function parseCssValue(
           ];
         }
 
-        if (!value) {
+        if (value === undefined || value === "") {
           return [property, { type: "invalid", value: "" }];
         }
 
@@ -70,14 +67,14 @@ const cssTreeTryParse = (input: string) => {
     const ast = csstree.parse(input);
     return ast;
   } catch {
-    return undefined;
+    return;
   }
 };
 
-export const parseCss = function cssToWS(css: string) {
+export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
-
   let selectors: Selector[] = [];
+  let states = new Map<Selector, Array<string>>();
   const styles: Styles = {};
 
   if (ast === undefined) {
@@ -87,10 +84,24 @@ export const parseCss = function cssToWS(css: string) {
   csstree.walk(ast, (node, item) => {
     if (node.type === "SelectorList") {
       selectors = [];
+      states = new Map();
     }
-    if (node.type === "ClassSelector") {
-      if (!item.prev && !item.next) {
-        selectors.push(node.name);
+
+    if (node.type === "ClassSelector" || node.type === "TypeSelector") {
+      // We don't support nesting yet.
+      if (
+        (item?.prev && item.prev.data.type === "Combinator") ||
+        (item?.next && item.next.data.type === "Combinator")
+      ) {
+        return;
+      }
+
+      selectors.push(node.name);
+
+      if (item?.next && item.next.data.type === "PseudoClassSelector") {
+        const statesArray = states.get(node.name) ?? [];
+        statesArray.push(`:${item.next.data.name}`);
+        states.set(node.name, statesArray);
       }
       return;
     }
@@ -107,31 +118,26 @@ export const parseCss = function cssToWS(css: string) {
         ([property, value]) => {
           try {
             StyleValue.parse(value);
-            selectors.forEach((selector) => {
-              const selectors = styles[selector];
-              if (Array.isArray(selectors)) {
-                selectors.push({
+            property = camelCase(property) as StyleProperty;
+
+            selectors.forEach((selector, index) => {
+              if (styles[selector] === undefined) {
+                styles[selector] = [];
+              }
+              const statesArray = states.get(selector) ?? [];
+              if (statesArray[index]) {
+                styles[selector].push({
                   property,
                   value,
+                  state: statesArray[index],
                 });
-              } else {
-                styles[selector] = [{ property, value }];
+                return;
               }
+
+              styles[selector].unshift({ property, value });
             });
           } catch (error) {
-            if (process.env.NODE_ENV !== "production") {
-              // eslint-disable-next-line no-console
-              console.warn(
-                true,
-                `Declaration parsing for \`${selectors.join(", ")}.${
-                  node.property
-                }: ${stringValue}\` failed:\n\n${JSON.stringify(
-                  parsedCss,
-                  null,
-                  2
-                )}`
-              );
-            }
+            console.error("Bad CSS declaration", error, parsedCss);
           }
         }
       );
