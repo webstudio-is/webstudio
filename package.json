@@ -45,7 +45,7 @@
     "react-dom": "18.3.0-canary-14898b6a9-20240318",
     "simple-git-hooks": "^2.11.1",
     "storybook": "^8.1.4",
-    "tsx": "^4.11.2",
+    "tsx": "^4.13.1",
     "typescript": "5.4.5",
     "vite": "^5.2.12"
   },
