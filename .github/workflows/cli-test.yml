@@ -35,9 +35,6 @@ jobs:
 
       - uses: ./.github/actions/ci-setup
 
-      - name: Build cli and other fixtures dependencies
-        run: pnpm --filter='{./fixtures/*}^...' build
-
         # Testing fixtures for vercel template
       - name: Test cli --help flag
         working-directory: ./fixtures/webstudio-remix-vercel
