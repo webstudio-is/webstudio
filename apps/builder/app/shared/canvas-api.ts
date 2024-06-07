@@ -1,10 +1,18 @@
+import { preventUnhandled } from "@atlaskit/pragmatic-drag-and-drop/prevent-unhandled";
 import { setInert, resetInert } from "../canvas/shared/inert";
+import { monitorForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
+import { createRecursiveProxy } from "@trpc/server/shared";
+import invariant from "tiny-invariant";
+import { $canvasIframeState } from "./nano-states";
 
 const apiWindowNamespace = "__webstudio__$__canvasApi";
 
 const _canvasApi = {
+  isInitialized: () => true,
   setInert,
   resetInert,
+  preventUnhandled,
+  monitorForExternal,
 };
 
 declare global {
@@ -34,7 +42,7 @@ const getIframeApi = () => {
       }
     }
 
-    throw new Error("Iframe or API not found");
+    return;
   }
 };
 
@@ -47,27 +55,55 @@ const isKeyOf = <T>(key: unknown, obj: T): key is keyof T => {
 /**
  * Forwards the call from the builder to the iframe, invoking the original API in the iframe.
  */
-export const canvasApi = new Proxy(_canvasApi, {
-  get(_target, prop) {
-    if (typeof prop === "symbol") {
-      throw new Error("Symbol properties are not supported");
+export const canvasApi = createRecursiveProxy((options) => {
+  const api = getIframeApi();
+
+  if (api == null) {
+    if (
+      options.path.join(".") ===
+      ("isInitialized" satisfies keyof typeof _canvasApi)
+    ) {
+      return false;
     }
 
-    const api = getIframeApi();
+    // eslint-disable-next-line no-console
+    console.warn(
+      `API not found in the iframe, skipping ${options.path.join(".")} call, iframe probably not loaded yet`
+    );
+    return null;
+  }
 
-    if (api && isKeyOf(prop, api)) {
-      return api[prop].bind(api);
-    } else {
-      throw new Error(`API method ${prop} not found`);
-    }
-  },
-});
+  let currentMethod = api as unknown;
+
+  for (const key of options.path) {
+    invariant(
+      isKeyOf(key, currentMethod),
+      `API method ${options.path.join(".")} not found`
+    );
+    invariant(typeof currentMethod === "object");
+    invariant(currentMethod != null);
+
+    currentMethod = currentMethod[key];
+  }
+
+  invariant(
+    typeof currentMethod === "function",
+    `API method ${options.path.join(".")} is not a function`
+  );
+
+  return currentMethod.call(null, ...options.args);
+}) as typeof _canvasApi;
 
 /**
  * Initializes the canvas API in the iframe. Must be called in the iframe context.
  */
 export const initCanvasApi = () => {
   if (isInIframe()) {
+    $canvasIframeState.set("ready");
     window[apiWindowNamespace] = _canvasApi;
   }
+  return () => {
+    // Does not work as expected, because the iframe is detached from the builder
+    $canvasIframeState.set("idle");
+  };
 };
