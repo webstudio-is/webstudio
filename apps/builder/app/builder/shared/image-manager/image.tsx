@@ -59,7 +59,7 @@ export const Image = ({ assetContainer, alt, width }: ImageProps) => {
         // when used inside an iframe.
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        webkitUserDrag: "none",
+        WebkitUserDrag: "none",
       }}
       key={asset.id}
       loader={imageLoader}
