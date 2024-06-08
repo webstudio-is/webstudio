@@ -133,6 +133,9 @@ export const parseCss = (css: string) => {
               if (statesArray[index]) {
                 styleDecl.state = statesArray[index];
               }
+
+              // Checks if there is already a prorperty that is exactly the same and will be overwritten,
+              // so we may as well remove it from the data.
               const existingIndex = declarations.findIndex(
                 (decl) =>
                   decl.property === styleDecl.property &&
