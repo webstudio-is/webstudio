@@ -1,4 +1,3 @@
-import { useStore } from "@nanostores/react";
 import { atom, computed } from "nanostores";
 import { useEffect, useState } from "react";
 import { monitorForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
@@ -19,11 +18,11 @@ export const POTENTIAL = 1;
 
 export type ExternalMonitorDragState = typeof IDLE | typeof POTENTIAL;
 
-const monitorDragState = atom<ExternalMonitorDragState>(IDLE);
-const monitorCanvasDragState = atom<ExternalMonitorDragState>(IDLE);
+const $monitorDragState = atom<ExternalMonitorDragState>(IDLE);
+const $monitorCanvasDragState = atom<ExternalMonitorDragState>(IDLE);
 
-const externalDragState = computed(
-  [monitorDragState, monitorCanvasDragState],
+const $externalDragState = computed(
+  [$monitorDragState, $monitorCanvasDragState],
   (monitorDragState, monitorCanvasDragState) => {
     return Math.max(
       monitorDragState,
@@ -44,11 +43,11 @@ export const ExternalDragDropMonitor = () => {
   const [refresh, setRefresh] = useState(0);
 
   const handleBuilderOnDrop = useDebouncedCallback(() => {
-    monitorDragState.set(IDLE);
+    $monitorDragState.set(IDLE);
   }, 300);
 
   const handleCanvasOnDrop = useDebouncedCallback(() => {
-    monitorCanvasDragState.set(IDLE);
+    $monitorCanvasDragState.set(IDLE);
   }, 300);
 
   const preventUnhandledStop = useDebouncedCallback(() => {
@@ -65,11 +64,6 @@ export const ExternalDragDropMonitor = () => {
       usageCounter -= 1;
     };
   }, []);
-
-  /**
-   * Allow URL drop for images only
-   */
-  // const containsByType = type === "image" ? containsFilesOrUri : containsFiles;
 
   useEffect(() => {
     if (false === canvasApi.isInitialized()) {
@@ -90,7 +84,7 @@ export const ExternalDragDropMonitor = () => {
         canMonitor: containsFilesOrUri,
         onDragStart: () => {
           preventUnhandledStart();
-          monitorDragState.set(POTENTIAL);
+          $monitorDragState.set(POTENTIAL);
           handleBuilderOnDrop.cancel();
           preventUnhandledStop.cancel();
         },
@@ -103,7 +97,7 @@ export const ExternalDragDropMonitor = () => {
         canMonitor: containsFilesOrUri,
         onDragStart: () => {
           preventUnhandledStart();
-          monitorCanvasDragState.set(POTENTIAL);
+          $monitorCanvasDragState.set(POTENTIAL);
           handleCanvasOnDrop.cancel();
           preventUnhandledStop.cancel();
         },
@@ -119,8 +113,8 @@ export const ExternalDragDropMonitor = () => {
 
           preventUnhandled.stop();
           canvasApi.preventUnhandled.stop();
-          monitorDragState.set(IDLE);
-          monitorCanvasDragState.set(IDLE);
+          $monitorDragState.set(IDLE);
+          $monitorCanvasDragState.set(IDLE);
         };
       }
     );
@@ -129,18 +123,27 @@ export const ExternalDragDropMonitor = () => {
   return null;
 };
 
-export const useExternalDragState = () => {
-  const value = useStore(externalDragState);
-  return value;
-};
-
 export const useExternalDragStateEffect = (
   callback: (state: ExternalMonitorDragState) => void
 ) => {
   const handleCallback = useEffectEvent(callback);
 
   useEffect(() => {
-    return externalDragState.subscribe(handleCallback);
+    return $externalDragState.subscribe(handleCallback);
+  }, [handleCallback]);
+};
+
+const dropCount = atom(0);
+
+export const registerDrop = () => {
+  dropCount.set(dropCount.get() + 1);
+};
+
+export const useOnDropEffect = (callback: () => void) => {
+  const handleCallback = useEffectEvent(callback);
+
+  useEffect(() => {
+    return dropCount.listen(handleCallback);
   }, [handleCallback]);
 };
 

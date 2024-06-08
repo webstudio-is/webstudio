@@ -21,8 +21,10 @@ import {
   ExternalDragDropMonitor,
   POTENTIAL,
   isBlockedByBackdrop,
+  useOnDropEffect,
   useExternalDragStateEffect,
 } from "~/builder/shared/assets/drag-monitor";
+import type { TabName } from "./types";
 
 const none = { TabContent: () => null };
 
@@ -111,12 +113,32 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const isPreviewMode = useStore($isPreviewMode);
   const tabsWrapperRef = useRef<HTMLDivElement>(null);
 
+  const returnTabRef = useRef<TabName | undefined>(undefined);
+
   useSubscribe("dragEnd", () => {
     setActiveTab("none");
   });
 
+  useOnDropEffect(() => {
+    const element = tabsWrapperRef.current;
+
+    if (element == null) {
+      return;
+    }
+
+    if (isBlockedByBackdrop(element)) {
+      return;
+    }
+
+    returnTabRef.current = undefined;
+  });
+
   useExternalDragStateEffect((state) => {
     if (state !== POTENTIAL) {
+      if (returnTabRef.current !== undefined) {
+        setActiveTab(returnTabRef.current);
+      }
+      returnTabRef.current = undefined;
       return;
     }
 
@@ -130,6 +152,8 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
       return;
     }
 
+    returnTabRef.current = activeTab;
+    // Save prevous state
     setActiveTab("assets");
   });
 

@@ -24,6 +24,7 @@ import { UploadIcon } from "@webstudio-is/icons";
 import {
   IDLE,
   isBlockedByBackdrop,
+  registerDrop,
   useExternalDragStateEffect,
   type ExternalMonitorDragState,
 } from "./drag-monitor";
@@ -114,6 +115,7 @@ export const AssetsShell = ({
         onDragEnter: () => setDropTargetState(OVER),
         onDragLeave: () => setDropTargetState(IDLE),
         onDrop: async ({ source }) => {
+          registerDrop();
           setMonitorState(IDLE);
           setDropTargetState(IDLE);
 
