@@ -59,6 +59,11 @@ export const WfElementNode = z.union([
     }),
   }),
   WfBaseNode.extend({
+    type: z.enum(["HtmlEmbed"]),
+    v: z.string(),
+  }),
+
+  WfBaseNode.extend({
     type: z.enum(["Image"]),
     data: WfNodeData.extend({
       attr: z.object({
