@@ -928,6 +928,60 @@ test("HtmlEmbed", async () => {
   ]);
 });
 
+test("CodeBlock", async () => {
+  const fragment = await toWebstudioFragment({
+    type: "@webflow/XscpData",
+    payload: {
+      nodes: [
+        {
+          _id: "f06b6679-6414-3592-a6e3-b59196420d7f",
+          type: "CodeBlock",
+          tag: "div",
+          classes: [],
+          children: [],
+          data: {
+            code: "test",
+            language: "javascript",
+          },
+        },
+      ],
+      styles: [],
+    },
+  });
+  expect(fragment.instances).toEqual([
+    {
+      component: "CodeText",
+      id: expect.any(String),
+      type: "instance",
+      children: [],
+    },
+  ]);
+
+  expect(fragment.props).toEqual([
+    {
+      type: "string",
+      id: expect.any(String),
+      instanceId: expect.any(String),
+      name: "lang",
+      value: "javascript",
+    },
+    {
+      type: "string",
+      id: expect.any(String),
+      instanceId: expect.any(String),
+      name: "code",
+      value: "test",
+    },
+    {
+      type: "string",
+      id: expect.any(String),
+      instanceId: expect.any(String),
+      name: "tag",
+      value: "div",
+    },
+  ]);
+});
+
 describe("Custom attributes", () => {
   test("Basic", async () => {
     const fragment = await toWebstudioFragment({
