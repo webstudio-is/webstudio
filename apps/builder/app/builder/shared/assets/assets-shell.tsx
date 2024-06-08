@@ -18,7 +18,6 @@ import {
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import invariant from "tiny-invariant";
 import type { ContainsSource } from "@atlaskit/pragmatic-drag-and-drop/dist/types/public-utils/external/native-types";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { useUploadAsset } from "./use-assets";
 import { UploadIcon } from "@webstudio-is/icons";
 import {
@@ -38,10 +37,6 @@ type AssetsShellProps = {
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
-  if (false === isFeatureEnabled("assetDragSupport")) {
-    return false;
-  }
-
   return (
     containsFiles(parameter) || parameter.source.types.includes("text/uri-list")
   );

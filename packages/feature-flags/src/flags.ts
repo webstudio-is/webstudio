@@ -8,4 +8,3 @@ export const cssVars = false;
 export const filters = false;
 export const xmlElement = false;
 export const pasteFromWebflow = false;
-export const assetDragSupport = false;
