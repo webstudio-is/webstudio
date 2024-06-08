@@ -208,6 +208,40 @@ const NavigatorPanel = ({
   );
 };
 
+const FadeInEffect = ({
+  show,
+  children,
+  css,
+  backgroundColor,
+}: {
+  show: boolean;
+  children: ReactNode;
+  css?: CSS;
+  backgroundColor: string;
+}) => {
+  return (
+    <Box
+      css={{
+        position: "relative",
+        "> ::after": {
+          content: "",
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          transitionDuration: "300ms",
+          pointerEvents: "none",
+          transitionProperty: "opacity",
+          backgroundColor,
+          opacity: show ? 0 : 1,
+        },
+        ...css,
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
+
 export type BuilderProps = {
   project: Project;
   publisherHost: string;
@@ -346,11 +380,17 @@ export const Builder = ({
       >
         <ChromeWrapper isPreviewMode={isPreviewMode}>
           <ProjectSettings />
-          <Topbar
-            gridArea="header"
-            project={project}
-            hasProPlan={userPlanFeatures.hasProPlan}
-          />
+          <FadeInEffect
+            show={isDataLoaded}
+            backgroundColor={theme.colors.backgroundTopbar}
+            css={{ gridArea: "header" }}
+          >
+            <Topbar
+              gridArea="header"
+              project={project}
+              hasProPlan={userPlanFeatures.hasProPlan}
+            />
+          </FadeInEffect>
           <Main>
             <Workspace onTransitionEnd={onTransitionEnd}>
               {isDataLoaded && (
