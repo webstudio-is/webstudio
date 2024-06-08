@@ -966,20 +966,20 @@ describe("Styles", () => {
     ]);
 
     expect(toCss(fragment)).toMatchInlineSnapshot(`
-      "@media all {
-        h1 {
-          line-height: 44px;
-          font-weight: bold;
-          font-size: 2em;
-          margin-bottom: 10px;
-          margin-top: 20px;
-          margin: 0.67em 0
-        }
-        Heading {
-          color: rgba(219, 24, 24, 1)
-        }
-      }"
-    `);
+"@media all {
+  h1 {
+    line-height: 44px;
+    font-size: 2em;
+    margin-top: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    margin: 0.67em 0
+  }
+  Heading {
+    color: rgba(219, 24, 24, 1)
+  }
+}"
+`);
   });
 
   test("Combo class", async () => {
@@ -1048,19 +1048,18 @@ describe("Styles", () => {
     ]);
 
     expect(toCss(fragment)).toMatchInlineSnapshot(`
-      "@media all {
-        a {
-          text-decoration: ;
-          background-color: rgba(0, 0, 0, 0);
-          outline: 0
-        }
-        button {
-          text-align: center
-        }
-        is-secondary {
-          background-color: transparent
-        }
-      }"
-    `);
+"@media all {
+  a {
+    background-color: rgba(0, 0, 0, 0);
+    outline: 0
+  }
+  button {
+    text-align: center
+  }
+  is-secondary {
+    background-color: transparent
+  }
+}"
+`);
   });
 });
