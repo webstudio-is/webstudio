@@ -17,7 +17,6 @@ import {
   Flex,
   Grid,
   Progress,
-  rawTheme,
 } from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
@@ -65,7 +64,7 @@ import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
-import { Webstudio1cIcon, WebstudioIcon } from "@webstudio-is/icons";
+import { WebstudioIcon } from "@webstudio-is/icons";
 
 registerContainers();
 
