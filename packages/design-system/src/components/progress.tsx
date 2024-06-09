@@ -1,5 +1,5 @@
 import { Root, Indicator } from "@radix-ui/react-progress";
-import { css, theme, type CSS } from "../stitches.config";
+import { css, theme } from "../stitches.config";
 
 const rootStyle = css({
   width: 200,
