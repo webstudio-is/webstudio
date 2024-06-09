@@ -262,7 +262,7 @@ const Loading = ({ value }: { value: number }) => {
         }
         return progress + 1;
       });
-    }, 100);
+    }, 50);
     return () => {
       clearInterval(timerId);
     };
