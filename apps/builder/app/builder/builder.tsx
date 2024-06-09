@@ -10,7 +10,15 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import {
+  theme,
+  Box,
+  type CSS,
+  Flex,
+  Grid,
+  Progress,
+  rawTheme,
+} from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
@@ -57,6 +65,7 @@ import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
+import { Webstudio1cIcon, WebstudioIcon } from "@webstudio-is/icons";
 
 registerContainers();
 
@@ -222,12 +231,10 @@ const NavigatorPanel = ({
 const revealAnimation = ({
   show,
   backgroundColor,
-  transitionDelay = "0",
 }: {
   show: boolean;
   backgroundColor: string;
-  transitionDelay?: string;
-}) => ({
+}): CSS => ({
   position: "relative",
   "> ::after": {
     content: "",
@@ -235,13 +242,62 @@ const revealAnimation = ({
     inset: 0,
     zIndex: 1,
     transitionDuration: "300ms",
-    transitionDelay,
     pointerEvents: "none",
     transitionProperty: "opacity",
     backgroundColor,
     opacity: show ? 0 : 1,
   },
 });
+
+const Loading = ({ value }: { value: number }) => {
+  const [progress, setProgress] = useState(value);
+
+  // This is an approximation of a real progress that should come from "value".
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setProgress((progress) => {
+        if (progress >= 100) {
+          clearInterval(timerId);
+          return progress;
+        }
+        return progress + 1;
+      });
+    }, 100);
+    return () => {
+      clearInterval(timerId);
+    };
+  }, []);
+
+  // When real value from progress comes in, we reset our estimate.
+  useEffect(() => {
+    setProgress(value);
+  }, [value]);
+
+  if (progress === 100) {
+    return;
+  }
+
+  return (
+    <Flex
+      direction="column"
+      gap="3"
+      css={{
+        position: "absolute",
+        inset: 0,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <WebstudioIcon
+        size={60}
+        style={{
+          filter: `brightness(${progress}%)`,
+        }}
+      />
+      <Progress value={progress} />
+    </Flex>
+  );
+};
 
 export type BuilderProps = {
   project: Project;
@@ -454,6 +510,7 @@ export const Builder = ({
             project={project}
           />
         </ChromeWrapper>
+        <Loading value={isReady ? 100 : isDataLoaded ? 80 : 0} />
       </div>
     </TooltipProvider>
   );
