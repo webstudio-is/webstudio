@@ -288,12 +288,7 @@ const Loading = ({ value }: { value: number }) => {
         alignItems: "center",
       }}
     >
-      <WebstudioIcon
-        size={60}
-        style={{
-          filter: `brightness(${progress}%)`,
-        }}
-      />
+      <WebstudioIcon size={60} style={{ filter: `brightness(${progress}%)` }} />
       <Progress value={progress} />
     </Flex>
   );
