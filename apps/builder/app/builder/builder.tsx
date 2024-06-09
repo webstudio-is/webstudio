@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useStore } from "@nanostores/react";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
@@ -33,6 +39,7 @@ import {
   $publisherHost,
   $imageLoader,
   $textEditingInstanceSelector,
+  $selectedInstanceRenderState,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -77,6 +84,7 @@ const SidePanel = ({
     <Box
       as="aside"
       css={{
+        position: "relative",
         isolation: "isolate",
         gridArea,
         display: isPreviewMode ? "none" : "flex",
@@ -87,11 +95,11 @@ const SidePanel = ({
         //overflowY: "auto",
         bc: theme.colors.backgroundPanel,
         height: "100%",
-        ...css,
         "&:last-of-type": {
           // Ensure content still has full width, avoid subpixels give layout round numbers
           boxShadow: `inset 1px 0 0 0 ${theme.colors.borderMain}`,
         },
+        ...css,
       }}
     >
       {children}
@@ -183,11 +191,13 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
 type NavigatorPanelProps = {
   isPreviewMode: boolean;
   navigatorLayout: "docked" | "undocked";
+  css: CSS;
 };
 
 const NavigatorPanel = ({
   isPreviewMode,
   navigatorLayout,
+  css,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
     return;
@@ -200,6 +210,7 @@ const NavigatorPanel = ({
           borderRight: `1px solid ${theme.colors.borderMain}`,
           width: theme.spacing[30],
           height: "100%",
+          ...css,
         }}
       >
         <NavigatorContent isClosable={false} />
@@ -208,39 +219,29 @@ const NavigatorPanel = ({
   );
 };
 
-const FadeInEffect = ({
+const revealAnimation = ({
   show,
-  children,
-  css,
   backgroundColor,
+  transitionDelay = "0",
 }: {
   show: boolean;
-  children: ReactNode;
-  css?: CSS;
   backgroundColor: string;
-}) => {
-  return (
-    <Box
-      css={{
-        position: "relative",
-        "> ::after": {
-          content: "",
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          transitionDuration: "300ms",
-          pointerEvents: "none",
-          transitionProperty: "opacity",
-          backgroundColor,
-          opacity: show ? 0 : 1,
-        },
-        ...css,
-      }}
-    >
-      {children}
-    </Box>
-  );
-};
+  transitionDelay?: string;
+}) => ({
+  position: "relative",
+  "> ::after": {
+    content: "",
+    position: "absolute",
+    inset: 0,
+    zIndex: 1,
+    transitionDuration: "300ms",
+    transitionDelay,
+    pointerEvents: "none",
+    transitionProperty: "opacity",
+    backgroundColor,
+    opacity: show ? 0 : 1,
+  },
+});
 
 export type BuilderProps = {
   project: Project;
@@ -333,6 +334,13 @@ export const Builder = ({
 
   const navigatorLayout = useNavigatorLayout();
 
+  const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
+  const isReadyRef = useRef(false);
+  const isReady =
+    isReadyRef.current ||
+    (isDataLoaded && selectedInstanceRenderState === "mounted");
+  isReadyRef.current = isReady;
+
   const canvasUrl = getBuildUrl({
     project,
   });
@@ -380,17 +388,17 @@ export const Builder = ({
       >
         <ChromeWrapper isPreviewMode={isPreviewMode}>
           <ProjectSettings />
-          <FadeInEffect
-            show={isDataLoaded}
-            backgroundColor={theme.colors.backgroundTopbar}
-            css={{ gridArea: "header" }}
-          >
-            <Topbar
-              gridArea="header"
-              project={project}
-              hasProPlan={userPlanFeatures.hasProPlan}
-            />
-          </FadeInEffect>
+          <Topbar
+            project={project}
+            hasProPlan={userPlanFeatures.hasProPlan}
+            css={{
+              gridArea: "header",
+              ...revealAnimation({
+                show: isReady,
+                backgroundColor: theme.colors.backgroundTopbar,
+              }),
+            }}
+          />
           <Main>
             <Workspace onTransitionEnd={onTransitionEnd}>
               {isDataLoaded && (
@@ -411,14 +419,30 @@ export const Builder = ({
           <NavigatorPanel
             isPreviewMode={isPreviewMode}
             navigatorLayout={navigatorLayout}
+            css={revealAnimation({
+              show: isReady,
+              backgroundColor: theme.colors.backgroundPanel,
+            })}
           />
-          <SidePanel gridArea="sidebar">
+          <SidePanel
+            gridArea="sidebar"
+            css={revealAnimation({
+              show: isReady,
+              backgroundColor: theme.colors.backgroundPanel,
+            })}
+          >
             <SidebarLeft publish={publish} />
           </SidePanel>
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
-            css={{ overflow: "hidden" }}
+            css={{
+              overflow: "hidden",
+              ...revealAnimation({
+                show: isReady,
+                backgroundColor: theme.colors.backgroundPanel,
+              }),
+            }}
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
