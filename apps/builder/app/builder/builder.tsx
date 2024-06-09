@@ -451,8 +451,8 @@ export const Builder = ({
             }}
           />
           <Main>
-            <Workspace onTransitionEnd={onTransitionEnd}>
-              {isDataLoaded && (
+            {isDataLoaded && (
+              <Workspace onTransitionEnd={onTransitionEnd}>
                 <CanvasIframe
                   ref={iframeRefCallback}
                   src={canvasUrl}
@@ -463,8 +463,8 @@ export const Builder = ({
                     backgroundColor: "#fff",
                   }}
                 />
-              )}
-            </Workspace>
+              </Workspace>
+            )}
             <AiCommandBar isPreviewMode={isPreviewMode} />
           </Main>
           <NavigatorPanel
