@@ -266,13 +266,14 @@ const $loadingState = computed(
     const readyCount = Array.from(readyStates.values()).filter(Boolean).length;
     const progress = Math.round((readyCount / readyStates.size) * 100);
     const state = readyCount === readyStates.size ? "ready" : "loading";
-
     return { state, progress, readyStates };
   }
 );
 
 const ProgressIndicator = ({ value }: { value: number }) => {
   const [fakeValue, setFakeValue] = useState(value);
+  // A maximum fake value we can grow to if the value is still 0, so that we don't get stuck at 0%.
+  const defaultFakeValueLimit = 50;
 
   // This is an approximation of a real progress that should come from "value".
   useInterval((timerId) => {
@@ -282,7 +283,11 @@ const ProgressIndicator = ({ value }: { value: number }) => {
     }
     setFakeValue((fakeValue) => {
       fakeValue++;
-      return Math.min(fakeValue, 100);
+      // - When real value is 0, we don't want to use it, because we don't want to get stuck at 0.
+      // - When real value is smaller than fake value, we don't want to use it because that would jump the progress back.
+      const minFakeValue =
+        value === 0 || value < fakeValue ? defaultFakeValueLimit : value;
+      return Math.min(fakeValue, minFakeValue);
     });
   }, 50);
 
