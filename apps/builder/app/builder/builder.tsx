@@ -318,7 +318,12 @@ const ProgressIndicator = ({ value }: { value: number }) => {
     >
       <WebstudioIcon
         size={60}
-        style={{ filter: `brightness(${fakeValue}%)` }}
+        style={{
+          filter: `
+            drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7)) 
+            brightness(${fakeValue}%)
+          `,
+        }}
       />
       <Progress value={fakeValue} />
     </Flex>
