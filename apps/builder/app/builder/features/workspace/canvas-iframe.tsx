@@ -1,6 +1,5 @@
 import { forwardRef } from "react";
 import {
-  type CSS,
   css,
   canvasPointerEventsPropertyName,
 } from "@webstudio-is/design-system";
