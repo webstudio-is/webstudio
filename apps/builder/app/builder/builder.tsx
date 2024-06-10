@@ -248,8 +248,18 @@ const revealAnimation = ({
 });
 
 const $loadingState = computed(
-  [$dataLoadingState, $selectedInstanceRenderState, $canvasIframeState],
-  (dataLoadingState, selectedInstanceRenderState, canvasIframeState) => {
+  [
+    $dataLoadingState,
+    $selectedInstanceRenderState,
+    $canvasIframeState,
+    $isPreviewMode,
+  ],
+  (
+    dataLoadingState,
+    selectedInstanceRenderState,
+    canvasIframeState,
+    isPreviewMode
+  ) => {
     type State =
       | "dataLoadingState"
       | "selectedInstanceRenderState"
@@ -259,13 +269,14 @@ const $loadingState = computed(
       ["dataLoadingState", dataLoadingState === "loaded"],
       [
         "selectedInstanceRenderState",
-        selectedInstanceRenderState === "mounted",
+        selectedInstanceRenderState === "mounted" || isPreviewMode,
       ],
       ["canvasIframeState", canvasIframeState === "ready"],
     ]);
     const readyCount = Array.from(readyStates.values()).filter(Boolean).length;
     const progress = Math.round((readyCount / readyStates.size) * 100);
     const state = readyCount === readyStates.size ? "ready" : "loading";
+
     return { state, progress, readyStates };
   }
 );
