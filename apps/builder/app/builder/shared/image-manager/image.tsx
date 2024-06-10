@@ -53,6 +53,14 @@ export const Image = ({ assetContainer, alt, width }: ImageProps) => {
 
   return (
     <StyledWebstudioImage
+      style={{
+        // Prevent native image drag in Image Manager to avoid issues with monitorForExternal
+        // from @atlaskit/pragmatic-drag-and-drop, which incorrectly identifies it as an external drag operation
+        // when used inside an iframe.
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        WebkitUserDrag: "none",
+      }}
       key={asset.id}
       loader={imageLoader}
       decoding={decoding}

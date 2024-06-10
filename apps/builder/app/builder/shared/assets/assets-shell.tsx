@@ -15,19 +15,18 @@ import {
   containsFiles,
   getFiles,
 } from "@atlaskit/pragmatic-drag-and-drop/external/file";
-import {
-  dropTargetForExternal,
-  monitorForExternal,
-} from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
-import { preventUnhandled } from "@atlaskit/pragmatic-drag-and-drop/prevent-unhandled";
+import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import invariant from "tiny-invariant";
 import type { ContainsSource } from "@atlaskit/pragmatic-drag-and-drop/dist/types/public-utils/external/native-types";
-import { canvasApi } from "~/shared/canvas-api";
-import { useDebouncedCallback } from "use-debounce";
-import { $canvasIframeState } from "~/shared/nano-states";
-import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { useUploadAsset } from "./use-assets";
 import { UploadIcon } from "@webstudio-is/icons";
+import {
+  IDLE,
+  isBlockedByBackdrop,
+  registerDrop,
+  useExternalDragStateEffect,
+  type ExternalMonitorDragState,
+} from "./drag-monitor";
 
 type AssetsShellProps = {
   searchProps: ComponentProps<typeof SearchField>;
@@ -38,20 +37,13 @@ type AssetsShellProps = {
 };
 
 const containsFilesOrUri = (parameter: ContainsSource) => {
-  if (false === isFeatureEnabled("assetDragSupport")) {
-    return false;
-  }
-
   return (
     containsFiles(parameter) || parameter.source.types.includes("text/uri-list")
   );
 };
 
-const IDLE = 0;
-const POTENTIAL = 1;
 const OVER = 2;
-
-type DRAG_STATE = typeof IDLE | typeof POTENTIAL | typeof OVER;
+type DropTargetState = typeof IDLE | typeof OVER;
 
 export const AssetsShell = ({
   searchProps,
@@ -61,70 +53,78 @@ export const AssetsShell = ({
   accept,
 }: AssetsShellProps) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<DRAG_STATE>(IDLE);
-  const [canvasState, setCanvasState] = useState<DRAG_STATE>(IDLE);
-  const [refresh, setRefresh] = useState(0);
+  const [monitorState, setMonitorState] =
+    useState<ExternalMonitorDragState>(IDLE);
+
+  const [dropTargetState, setDropTargetState] = useState<DropTargetState>(IDLE);
+
   const uploadAssets = useUploadAsset();
 
-  const handleBuilderOnDrop = useDebouncedCallback(() => {
-    setState(IDLE);
-  }, 300);
+  useExternalDragStateEffect((state) => {
+    const element = ref.current;
 
-  const handleCanvasOnDrop = useDebouncedCallback(() => {
-    setCanvasState(IDLE);
-  }, 300);
-
-  const preventUnhandledStop = useDebouncedCallback(() => {
-    preventUnhandled.stop();
-    canvasApi.preventUnhandled.stop();
-  }, 300);
-
-  useEffect(() => {
-    if (false === canvasApi.isInitialized()) {
-      return $canvasIframeState.listen((state) => {
-        if (state === "ready") {
-          setRefresh((prev) => prev + 1);
-        }
-      });
+    if (element == null) {
+      return;
     }
 
+    if (state === IDLE) {
+      setMonitorState(IDLE);
+      return;
+    }
+
+    if (isBlockedByBackdrop(element)) {
+      setMonitorState(IDLE);
+      return;
+    }
+
+    setMonitorState(state);
+  });
+
+  /**
+   * Allow URL drop for images only
+   */
+  const containsByType = type === "image" ? containsFilesOrUri : containsFiles;
+
+  useEffect(() => {
     const element = ref.current;
 
     invariant(element);
 
-    const preventUnhandledStart = () => {
-      preventUnhandled.start();
-      canvasApi.preventUnhandled.start();
-    };
-
     // Do not react if any dialog is opened above
-    const isBlockedByBackdrop = (
-      blocked: typeof containsFilesOrUri,
-      notBlocked: typeof containsFilesOrUri
+    const isBlockedByBackdropCallback = (
+      blocked: typeof containsByType,
+      notBlocked: typeof containsByType
     ) => {
       return (parameter: ContainsSource) => {
-        const elementRect = element.getBoundingClientRect();
-        const centerX = elementRect.left + elementRect.width / 2;
-        const centerY = elementRect.top + elementRect.height / 2;
-
-        // Get the element directly under the center of the target element
-        const topElement = document.elementFromPoint(centerX, centerY);
-
-        const isNotBlocked =
-          element.contains(topElement) || topElement === element;
-
         // Check if this element is the original element or its descendant
-        return isNotBlocked ? notBlocked(parameter) : blocked(parameter);
+        return isBlockedByBackdrop(element)
+          ? blocked(parameter)
+          : notBlocked(parameter);
       };
     };
 
     return combine(
       dropTargetForExternal({
         element: element,
-        canDrop: isBlockedByBackdrop(() => false, containsFilesOrUri),
-        onDragEnter: () => setState(OVER),
-        onDragLeave: () => setState(POTENTIAL),
+        canDrop: isBlockedByBackdropCallback(() => false, containsByType),
+        onDragEnter: () => setDropTargetState(OVER),
+        onDragLeave: () => setDropTargetState(IDLE),
         onDrop: async ({ source }) => {
+          registerDrop();
+          setMonitorState(IDLE);
+          setDropTargetState(IDLE);
+
+          const droppedUrls = await Promise.all(
+            source.items
+              .filter((item) => item.type === "text/uri-list")
+              .map(
+                (item) =>
+                  new Promise<URL>((resolve) =>
+                    item.getAsString((str) => resolve(new URL(str)))
+                  )
+              )
+          );
+
           const droppedFiles = await getFiles({ source });
 
           const files = droppedFiles
@@ -141,57 +141,13 @@ export const AssetsShell = ({
               return false;
             });
 
-          if (files.length === 0) {
-            return;
-          }
-
-          uploadAssets(type, files);
+          uploadAssets(type, files, droppedUrls);
         },
-      }),
-      monitorForExternal({
-        canMonitor: isBlockedByBackdrop(() => false, containsFilesOrUri),
-        onDragStart: () => {
-          preventUnhandledStart();
-          setState(POTENTIAL);
-          handleBuilderOnDrop.cancel();
-          preventUnhandledStop.cancel();
-        },
-        onDrop: () => {
-          handleBuilderOnDrop();
-          preventUnhandledStop();
-        },
-      }),
-      canvasApi.monitorForExternal({
-        canMonitor: isBlockedByBackdrop(() => false, containsFilesOrUri),
-        onDragStart: () => {
-          preventUnhandledStart();
-          setCanvasState(POTENTIAL);
-          handleCanvasOnDrop.cancel();
-          preventUnhandledStop.cancel();
-        },
-        onDrop: () => {
-          handleCanvasOnDrop();
-          preventUnhandledStop();
-        },
-      }),
-      () => {
-        return () => {
-          preventUnhandled.stop();
-          canvasApi.preventUnhandled.stop();
-        };
-      }
+      })
     );
-  }, [
-    accept,
-    handleBuilderOnDrop,
-    handleCanvasOnDrop,
-    preventUnhandledStop,
-    refresh,
-    type,
-    uploadAssets,
-  ]);
+  }, [accept, containsByType, type, uploadAssets]);
 
-  const dragState = Math.max(state, canvasState);
+  const dragState = Math.max(monitorState, dropTargetState);
 
   return (
     <Flex

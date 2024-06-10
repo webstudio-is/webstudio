@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Box, rawTheme } from "@webstudio-is/design-system";
 import { useSubscribe, type Publish } from "~/shared/pubsub";
 import { $dragAndDropState, $isPreviewMode } from "~/shared/nano-states";
@@ -17,6 +17,14 @@ import {
   SidebarTabsList,
   SidebarTabsTrigger,
 } from "./sidebar-tabs";
+import {
+  ExternalDragDropMonitor,
+  POTENTIAL,
+  isBlockedByBackdrop,
+  useOnDropEffect,
+  useExternalDragStateEffect,
+} from "~/builder/shared/assets/drag-monitor";
+import type { TabName } from "./types";
 
 const none = { TabContent: () => null };
 
@@ -103,9 +111,50 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
   const dragAndDropState = useStore($dragAndDropState);
   const { TabContent } = panels.get(activeTab) ?? none;
   const isPreviewMode = useStore($isPreviewMode);
+  const tabsWrapperRef = useRef<HTMLDivElement>(null);
+
+  const returnTabRef = useRef<TabName | undefined>(undefined);
 
   useSubscribe("dragEnd", () => {
     setActiveTab("none");
+  });
+
+  useOnDropEffect(() => {
+    const element = tabsWrapperRef.current;
+
+    if (element == null) {
+      return;
+    }
+
+    if (isBlockedByBackdrop(element)) {
+      return;
+    }
+
+    returnTabRef.current = undefined;
+  });
+
+  useExternalDragStateEffect((state) => {
+    if (state !== POTENTIAL) {
+      if (returnTabRef.current !== undefined) {
+        setActiveTab(returnTabRef.current);
+      }
+      returnTabRef.current = undefined;
+      return;
+    }
+
+    const element = tabsWrapperRef.current;
+
+    if (element == null) {
+      return;
+    }
+
+    if (isBlockedByBackdrop(element)) {
+      return;
+    }
+
+    returnTabRef.current = activeTab;
+    // Save prevous state
+    setActiveTab("assets");
   });
 
   return (
@@ -121,24 +170,30 @@ export const SidebarLeft = ({ publish }: SidebarLeftProps) => {
         }
         {isPreviewMode === false && (
           <>
-            <SidebarTabsList>
-              {Array.from(panels.entries()).map(
-                ([tabName, { Icon, label }]) => {
-                  return (
-                    <SidebarTabsTrigger
-                      key={label}
-                      label={label}
-                      value={tabName}
-                      onClick={() => {
-                        setActiveTab(activeTab === tabName ? "none" : tabName);
-                      }}
-                    >
-                      <Icon size={rawTheme.spacing[10]} />
-                    </SidebarTabsTrigger>
-                  );
-                }
-              )}
-            </SidebarTabsList>
+            <ExternalDragDropMonitor />
+            <div ref={tabsWrapperRef} style={{ display: "contents" }}>
+              <SidebarTabsList>
+                {Array.from(panels.entries()).map(
+                  ([tabName, { Icon, label }]) => {
+                    return (
+                      <SidebarTabsTrigger
+                        key={label}
+                        label={label}
+                        value={tabName}
+                        onClick={() => {
+                          setActiveTab(
+                            activeTab === tabName ? "none" : tabName
+                          );
+                        }}
+                      >
+                        <Icon size={rawTheme.spacing[10]} />
+                      </SidebarTabsTrigger>
+                    );
+                  }
+                )}
+              </SidebarTabsList>
+            </div>
+
             <Box css={{ borderRight: `1px solid ${theme.colors.borderMain}` }}>
               <AiTabTrigger />
               <HelpTabTrigger />

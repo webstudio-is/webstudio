@@ -9,9 +9,10 @@ type FilenameProps = Omit<
 };
 
 export const Filename = ({ children, ...props }: FilenameProps) => {
-  const splitName = children.split(".");
-  const extension = splitName[splitName.length - 1];
-  const baseName = children.substr(0, children.length - extension.length - 1);
+  const parts = children.split(".");
+  const extension = parts.length > 1 ? parts.pop() : "";
+  const baseName = parts.join(".");
+
   return (
     <Flex>
       <DeprecatedText2 truncate {...props}>
