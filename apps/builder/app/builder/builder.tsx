@@ -245,7 +245,11 @@ const revealAnimation = ({
 });
 
 const useLoadingState = () => {
-  const [states, setStates] = useState(
+  type State =
+    | "dataLoadingState"
+    | "selectedInstanceRenderState"
+    | "canvasIframeState";
+  const [states, setStates] = useState<Map<State, "initial" | "ready">>(
     new Map([
       ["dataLoadingState", "initial"],
       ["selectedInstanceRenderState", "initial"],
@@ -256,7 +260,7 @@ const useLoadingState = () => {
   const dataLoadingState = useStore($dataLoadingState);
   const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
   const canvasIframeState = useStore($canvasIframeState);
-  const update = (name: string, current: string, expected: string) => {
+  const update = (name: State, current: string, expected: string) => {
     if (current === expected && states.get(name) !== "ready") {
       states.set(name, "ready");
       setStates(new Map(states));
@@ -274,7 +278,7 @@ const useLoadingState = () => {
   const state = readyCount === states.size ? "ready" : "loading";
   const progress = Math.round((readyCount / states.size) * 100);
 
-  return { state, progress };
+  return { state, progress, states };
 };
 
 const ProgressIndicator = ({ value }: { value: number }) => {
@@ -309,6 +313,7 @@ const ProgressIndicator = ({ value }: { value: number }) => {
         inset: 0,
         justifyContent: "center",
         alignItems: "center",
+        zIndex: 1,
       }}
     >
       <WebstudioIcon
@@ -475,20 +480,21 @@ export const Builder = ({
             }}
           />
           <Main>
-            {dataLoadingState === "loaded" && (
-              <Workspace onTransitionEnd={onTransitionEnd}>
+            <Workspace
+              onTransitionEnd={onTransitionEnd}
+              css={revealAnimation({
+                show: loadingState.state === "ready",
+                backgroundColor: theme.colors.backgroundCanvas,
+              })}
+            >
+              {dataLoadingState === "loaded" && (
                 <CanvasIframe
                   ref={iframeRefCallback}
                   src={canvasUrl}
                   title={project.title}
-                  css={{
-                    height: "100%",
-                    width: "100%",
-                    backgroundColor: "#fff",
-                  }}
                 />
-              </Workspace>
-            )}
+              )}
+            </Workspace>
             <AiCommandBar isPreviewMode={isPreviewMode} />
           </Main>
           <NavigatorPanel

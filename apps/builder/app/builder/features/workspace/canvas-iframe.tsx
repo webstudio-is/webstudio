@@ -10,20 +10,21 @@ import { $canvasIframeState } from "~/shared/nano-states";
 const iframeStyle = css({
   border: "none",
   pointerEvents: `var(${canvasPointerEventsPropertyName})`,
+  height: "100%",
+  width: "100%",
+  backgroundColor: "#fff",
 });
 
-type CanvasIframeProps = {
-  css: CSS;
-} & JSX.IntrinsicElements["iframe"];
+type CanvasIframeProps = JSX.IntrinsicElements["iframe"];
 
 export const CanvasIframe = forwardRef<HTMLIFrameElement, CanvasIframeProps>(
-  ({ css, ...rest }, ref) => {
+  (props, ref) => {
     useUnmount(() => {
       // Unmount does't work inside iframe.
       $canvasIframeState.set("idle");
     });
 
-    return <iframe {...rest} ref={ref} className={iframeStyle({ css })} />;
+    return <iframe {...props} ref={ref} className={iframeStyle()} />;
   }
 );
 
