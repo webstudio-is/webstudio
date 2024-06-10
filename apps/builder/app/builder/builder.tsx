@@ -375,7 +375,10 @@ export const Builder = ({
         // when canvas is rendered
         $dataLoadingState.set("loaded");
       })
-      .catch(() => {});
+      .catch(() => {
+        // @todo make needs error handling and error state? e.g. a toast
+        $dataLoadingState.set("idle");
+      });
     return () => {
       $dataLoadingState.set("idle");
       controller.abort("unmount");
@@ -474,7 +477,8 @@ export const Builder = ({
             css={{
               gridArea: "header",
               ...revealAnimation({
-                show: loadingState.state === "ready",
+                // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
+                show: loadingState.states.get("dataLoadingState") === "ready",
                 backgroundColor: theme.colors.backgroundTopbar,
               }),
             }}
