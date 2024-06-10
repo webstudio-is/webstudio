@@ -255,12 +255,11 @@ const Loading = ({ value }: { value: number }) => {
   useEffect(() => {
     const timerId = setInterval(() => {
       setProgress((progress) => {
-        if (progress >= 100) {
-          clearInterval(timerId);
-          return progress;
-        }
-        return progress + 1;
+        return progress >= 100 ? progress : progress + 1;
       });
+      if (progress >= 100) {
+        clearInterval(timerId);
+      }
     }, 50);
     return () => {
       clearInterval(timerId);
