@@ -60,9 +60,11 @@ import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { WebstudioIcon } from "@webstudio-is/icons";
-import { atom } from "nanostores";
+import { atom, computed } from "nanostores";
 
 registerContainers();
+
+const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
@@ -244,43 +246,29 @@ const revealAnimation = ({
   },
 });
 
-const useLoadingState = () => {
-  type State =
-    | "dataLoadingState"
-    | "selectedInstanceRenderState"
-    | "canvasIframeState";
-  const [states, setStates] = useState<Map<State, "initial" | "ready">>(
-    new Map([
-      ["dataLoadingState", "initial"],
-      ["selectedInstanceRenderState", "initial"],
-      ["canvasIframeState", "initial"],
-    ])
-  );
+const $loadingState = computed(
+  [$dataLoadingState, $selectedInstanceRenderState, $canvasIframeState],
+  (dataLoadingState, selectedInstanceRenderState, canvasIframeState) => {
+    type State =
+      | "dataLoadingState"
+      | "selectedInstanceRenderState"
+      | "canvasIframeState";
 
-  const dataLoadingState = useStore($dataLoadingState);
-  const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
-  const canvasIframeState = useStore($canvasIframeState);
-  const update = (name: State, current: string, expected: string) => {
-    if (current === expected && states.get(name) !== "ready") {
-      const nextStates = new Map(states);
-      nextStates.set(name, "ready");
-      setStates(nextStates);
-    }
-  };
+    const readyStates = new Map<State, boolean>([
+      ["dataLoadingState", dataLoadingState === "loaded"],
+      [
+        "selectedInstanceRenderState",
+        selectedInstanceRenderState === "mounted",
+      ],
+      ["canvasIframeState", canvasIframeState === "ready"],
+    ]);
+    const readyCount = Array.from(readyStates.values()).filter(Boolean).length;
+    const progress = Math.round((readyCount / readyStates.size) * 100);
+    const state = readyCount === readyStates.size ? "ready" : "loading";
 
-  // Each state can have a different readiness value.
-  update("dataLoadingState", dataLoadingState, "loaded");
-  update("selectedInstanceRenderState", selectedInstanceRenderState, "mounted");
-  update("canvasIframeState", canvasIframeState, "ready");
-
-  const readyCount = Array.from(states.values()).filter(
-    (state) => state === "ready"
-  ).length;
-  const state = readyCount === states.size ? "ready" : "loading";
-  const progress = Math.round((readyCount / states.size) * 100);
-
-  return { state, progress, states };
-};
+    return { state, progress, readyStates };
+  }
+);
 
 const ProgressIndicator = ({ value }: { value: number }) => {
   const [fakeValue, setFakeValue] = useState(value);
@@ -341,8 +329,6 @@ export type BuilderProps = {
   authTokenPermissions: TokenPermissions;
   userPlanFeatures: UserPlanFeatures;
 };
-
-const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 
 export const Builder = ({
   project,
@@ -428,7 +414,7 @@ export const Builder = ({
 
   const navigatorLayout = useNavigatorLayout();
   const dataLoadingState = useStore($dataLoadingState);
-  const loadingState = useLoadingState();
+  const loadingState = useStore($loadingState);
 
   const canvasUrl = getBuildUrl({
     project,
@@ -484,7 +470,7 @@ export const Builder = ({
               gridArea: "header",
               ...revealAnimation({
                 // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
-                show: loadingState.states.get("dataLoadingState") === "ready",
+                show: loadingState.states.get("dataLoadingState") ?? false,
                 backgroundColor: theme.colors.backgroundTopbar,
               }),
             }}
