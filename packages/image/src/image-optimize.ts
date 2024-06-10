@@ -92,6 +92,8 @@ export type ImageLoader = (
         quality: number;
         src: string;
         format?: "auto";
+        height?: number;
+        fit?: "pad";
       }
     | { src: string; format: "raw" }
 ) => string;

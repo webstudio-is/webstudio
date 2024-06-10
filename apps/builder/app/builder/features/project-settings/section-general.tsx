@@ -29,6 +29,7 @@ import { CodeEditor } from "~/builder/shared/code-editor";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 const imgStyle = css({
+  objectFit: "contain",
   width: 72,
   height: 72,
   borderRadius: theme.borderRadius[4],
@@ -137,7 +138,7 @@ export const SectionGeneral = () => {
 
       <Separator />
 
-      <Grid gap={2} css={sectionSpacing}>
+      <Grid gap={2} css={sectionSpacing} justify={"start"}>
         <Label>Favicon</Label>
         <Grid flow="column" gap={3}>
           <Image
@@ -150,7 +151,7 @@ export const SectionGeneral = () => {
 
           <Grid gap={2}>
             <Text color="subtle">
-              Upload a 32 x 32 px image to display in browser tabs.
+              Upload a square image to display in browser tabs.
             </Text>
             <ImageControl onAssetIdChange={handleSave("faviconAssetId")}>
               <Button css={{ justifySelf: "start" }}>Upload</Button>
