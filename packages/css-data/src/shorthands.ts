@@ -37,6 +37,12 @@ const splitBySlash = (list: List<CssNode>) => {
   return lists;
 };
 
+/**
+ * Match the list of specified syntaxes with nodes
+ * Matches can be placed in different order than the list
+ * All specified matches are optional
+ * Value Definition Syntax use <Type> || <Type> operator for describe this
+ */
 const parseUnordered = (syntaxes: string[], value: CssNode) => {
   const matched = new Map<string, Value>();
   const unprocessedSyntaxes = new Set(syntaxes);
