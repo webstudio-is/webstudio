@@ -276,13 +276,14 @@ const ProgressIndicator = ({ value }: { value: number }) => {
 
   // This is an approximation of a real progress that should come from "value".
   useInterval((timerId) => {
+    if (value >= 100) {
+      clearInterval(timerId);
+      return;
+    }
     setFakeValue((fakeValue) => {
       fakeValue++;
       return Math.min(fakeValue, 100);
     });
-    if (value >= 100) {
-      clearInterval(timerId);
-    }
   }, 50);
 
   if (value >= 100) {
