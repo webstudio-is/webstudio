@@ -4,7 +4,14 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { usePublish, $publisher } from "~/shared/pubsub";
 import type { Build } from "@webstudio-is/project-build";
 import type { Project } from "@webstudio-is/project";
-import { theme, Box, type CSS, Flex, Grid } from "@webstudio-is/design-system";
+import {
+  theme,
+  Box,
+  type CSS,
+  Flex,
+  Grid,
+  Progress,
+} from "@webstudio-is/design-system";
 import type { AuthPermit } from "@webstudio-is/trpc-interface/index.server";
 import { createImageLoader } from "@webstudio-is/image";
 import { registerContainers, useBuilderStore } from "~/shared/sync";
@@ -33,6 +40,8 @@ import {
   $publisherHost,
   $imageLoader,
   $textEditingInstanceSelector,
+  $selectedInstanceRenderState,
+  $canvasIframeState,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -50,8 +59,13 @@ import type { TokenPermissions } from "@webstudio-is/authorization-token";
 import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
+import { WebstudioIcon } from "@webstudio-is/icons";
+import { atom, computed } from "nanostores";
+import { useInterval } from "~/shared/hook-utils/use-interval";
 
 registerContainers();
+
+const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
@@ -77,6 +91,7 @@ const SidePanel = ({
     <Box
       as="aside"
       css={{
+        position: "relative",
         isolation: "isolate",
         gridArea,
         display: isPreviewMode ? "none" : "flex",
@@ -87,11 +102,11 @@ const SidePanel = ({
         //overflowY: "auto",
         bc: theme.colors.backgroundPanel,
         height: "100%",
-        ...css,
         "&:last-of-type": {
           // Ensure content still has full width, avoid subpixels give layout round numbers
           boxShadow: `inset 1px 0 0 0 ${theme.colors.borderMain}`,
         },
+        ...css,
       }}
     >
       {children}
@@ -183,11 +198,13 @@ const ChromeWrapper = ({ children, isPreviewMode }: ChromeWrapperProps) => {
 type NavigatorPanelProps = {
   isPreviewMode: boolean;
   navigatorLayout: "docked" | "undocked";
+  css: CSS;
 };
 
 const NavigatorPanel = ({
   isPreviewMode,
   navigatorLayout,
+  css,
 }: NavigatorPanelProps) => {
   if (navigatorLayout === "docked") {
     return;
@@ -200,11 +217,118 @@ const NavigatorPanel = ({
           borderRight: `1px solid ${theme.colors.borderMain}`,
           width: theme.spacing[30],
           height: "100%",
+          ...css,
         }}
       >
         <NavigatorContent isClosable={false} />
       </Box>
     </SidePanel>
+  );
+};
+
+const revealAnimation = ({
+  show,
+  backgroundColor,
+}: {
+  show: boolean;
+  backgroundColor: string;
+}): CSS => ({
+  position: "relative",
+  "> ::after": {
+    content: "",
+    position: "absolute",
+    inset: 0,
+    zIndex: 1,
+    transitionDuration: "300ms",
+    pointerEvents: "none",
+    transitionProperty: "opacity",
+    backgroundColor,
+    opacity: show ? 0 : 1,
+  },
+});
+
+const $loadingState = computed(
+  [
+    $dataLoadingState,
+    $selectedInstanceRenderState,
+    $canvasIframeState,
+    $isPreviewMode,
+  ],
+  (
+    dataLoadingState,
+    selectedInstanceRenderState,
+    canvasIframeState,
+    isPreviewMode
+  ) => {
+    type State =
+      | "dataLoadingState"
+      | "selectedInstanceRenderState"
+      | "canvasIframeState";
+
+    const readyStates = new Map<State, boolean>([
+      ["dataLoadingState", dataLoadingState === "loaded"],
+      [
+        "selectedInstanceRenderState",
+        selectedInstanceRenderState === "mounted" || isPreviewMode,
+      ],
+      ["canvasIframeState", canvasIframeState === "ready"],
+    ]);
+    const readyCount = Array.from(readyStates.values()).filter(Boolean).length;
+    const progress = Math.round((readyCount / readyStates.size) * 100);
+    const state = readyCount === readyStates.size ? "ready" : "loading";
+
+    return { state, progress, readyStates };
+  }
+);
+
+const ProgressIndicator = ({ value }: { value: number }) => {
+  const [fakeValue, setFakeValue] = useState(value);
+  // A maximum fake value we can grow to if the value is still 0, so that we don't get stuck at 0%.
+  const defaultFakeValueLimit = 50;
+
+  // This is an approximation of a real progress that should come from "value".
+  useInterval((timerId) => {
+    if (value >= 100) {
+      clearInterval(timerId);
+      return;
+    }
+    setFakeValue((fakeValue) => {
+      fakeValue++;
+      // - When real value is 0, we don't want to use it, because we don't want to get stuck at 0.
+      // - When real value is smaller than fake value, we don't want to use it because that would jump the progress back.
+      const minFakeValue =
+        value === 0 || value < fakeValue ? defaultFakeValueLimit : value;
+      return Math.min(fakeValue, minFakeValue);
+    });
+  }, 50);
+
+  if (value >= 100) {
+    return;
+  }
+
+  return (
+    <Flex
+      direction="column"
+      gap="3"
+      css={{
+        position: "absolute",
+        inset: 0,
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1,
+      }}
+    >
+      <WebstudioIcon
+        size={60}
+        style={{
+          filter: `
+            drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7)) 
+            brightness(${fakeValue}%)
+          `,
+        }}
+      />
+      <Progress value={fakeValue} />
+    </Flex>
   );
 };
 
@@ -229,7 +353,6 @@ export const Builder = ({
   userPlanFeatures,
   authTokenPermissions,
 }: BuilderProps) => {
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
   useMount(() => {
     // additional data stores
     $project.set(project);
@@ -241,6 +364,7 @@ export const Builder = ({
     $authTokenPermissions.set(authTokenPermissions);
 
     const controller = new AbortController();
+    $dataLoadingState.set("loading");
     loadBuilderData({ projectId: project.id, signal: controller.signal })
       .then((data) => {
         setBuilderData(data);
@@ -254,10 +378,14 @@ export const Builder = ({
         // render canvas only after all data is loaded
         // so builder is started listening for connect event
         // when canvas is rendered
-        setIsDataLoaded(true);
+        $dataLoadingState.set("loaded");
       })
-      .catch(() => {});
+      .catch(() => {
+        // @todo make needs error handling and error state? e.g. a toast
+        $dataLoadingState.set("idle");
+      });
     return () => {
+      $dataLoadingState.set("idle");
       controller.abort("unmount");
     };
   });
@@ -298,6 +426,8 @@ export const Builder = ({
   );
 
   const navigatorLayout = useNavigatorLayout();
+  const dataLoadingState = useStore($dataLoadingState);
+  const loadingState = useStore($loadingState);
 
   const canvasUrl = getBuildUrl({
     project,
@@ -347,22 +477,30 @@ export const Builder = ({
         <ChromeWrapper isPreviewMode={isPreviewMode}>
           <ProjectSettings />
           <Topbar
-            gridArea="header"
             project={project}
             hasProPlan={userPlanFeatures.hasProPlan}
+            css={{
+              gridArea: "header",
+              ...revealAnimation({
+                // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
+                show: loadingState.readyStates.get("dataLoadingState") ?? false,
+                backgroundColor: theme.colors.backgroundTopbar,
+              }),
+            }}
           />
           <Main>
-            <Workspace onTransitionEnd={onTransitionEnd}>
-              {isDataLoaded && (
+            <Workspace
+              onTransitionEnd={onTransitionEnd}
+              css={revealAnimation({
+                show: loadingState.state === "ready",
+                backgroundColor: theme.colors.backgroundCanvas,
+              })}
+            >
+              {dataLoadingState === "loaded" && (
                 <CanvasIframe
                   ref={iframeRefCallback}
                   src={canvasUrl}
                   title={project.title}
-                  css={{
-                    height: "100%",
-                    width: "100%",
-                    backgroundColor: "#fff",
-                  }}
                 />
               )}
             </Workspace>
@@ -371,14 +509,30 @@ export const Builder = ({
           <NavigatorPanel
             isPreviewMode={isPreviewMode}
             navigatorLayout={navigatorLayout}
+            css={revealAnimation({
+              show: loadingState.state === "ready",
+              backgroundColor: theme.colors.backgroundPanel,
+            })}
           />
-          <SidePanel gridArea="sidebar">
+          <SidePanel
+            gridArea="sidebar"
+            css={revealAnimation({
+              show: loadingState.state === "ready",
+              backgroundColor: theme.colors.backgroundPanel,
+            })}
+          >
             <SidebarLeft publish={publish} />
           </SidePanel>
           <SidePanel
             gridArea="inspector"
             isPreviewMode={isPreviewMode}
-            css={{ overflow: "hidden" }}
+            css={{
+              overflow: "hidden",
+              ...revealAnimation({
+                show: loadingState.state === "ready",
+                backgroundColor: theme.colors.backgroundPanel,
+              }),
+            }}
           >
             <Inspector navigatorLayout={navigatorLayout} />
           </SidePanel>
@@ -390,6 +544,7 @@ export const Builder = ({
             project={project}
           />
         </ChromeWrapper>
+        <ProgressIndicator value={loadingState.progress} />
       </div>
     </TooltipProvider>
   );
