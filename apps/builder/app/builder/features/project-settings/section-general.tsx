@@ -29,6 +29,7 @@ import { CodeEditor } from "~/builder/shared/code-editor";
 import { $userPlanFeatures } from "~/builder/shared/nano-states";
 
 const imgStyle = css({
+  objectFit: "contain",
   width: 72,
   height: 72,
   borderRadius: theme.borderRadius[4],
