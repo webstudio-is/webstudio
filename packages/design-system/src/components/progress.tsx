@@ -16,6 +16,7 @@ const indicatorStyle = css({
   background: theme.colors.brandBorderNavbar,
   transitionDuration: "1000ms",
   transitionProperty: "transform",
+  transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
 });
 
 export const Progress = ({
