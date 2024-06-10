@@ -1,1 +1,0 @@
-export const ChevronBigUpIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="m7.54 5.053-4.553 5.463a.6.6 0 0 0 .46.984h9.105a.6.6 0 0 0 .461-.984L8.461 5.053a.6.6 0 0 0-.922 0Z"/></svg>`;

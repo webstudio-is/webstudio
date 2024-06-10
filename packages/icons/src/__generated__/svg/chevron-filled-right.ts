@@ -1,1 +1,0 @@
-export const ChevronFilledRightIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><path d="M10.251 7.5 5.933 4.623a.6.6 0 0 0-.933.5v5.757a.6.6 0 0 0 .933.5l4.318-2.88a.6.6 0 0 0 0-.998Z"/></svg>`;

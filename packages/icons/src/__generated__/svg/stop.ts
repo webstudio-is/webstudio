@@ -1,1 +1,0 @@
-export const StopIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" width="100%" height="100%" style="display: block;"><rect width="9" height="9" x="3.5" y="3.5" rx="1"/></svg>`;

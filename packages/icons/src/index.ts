@@ -1,4 +1,4 @@
-export * from "./__generated__";
+export * from "./__generated__/components";
 export * from "./undo";
 export * from "./redo";
 export * from "./devices";

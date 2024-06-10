@@ -79,7 +79,7 @@
     "@webstudio-is/trpc-interface": "workspace:*",
     "arrgv": "^1.0.2",
     "bcp-47": "^2.1.0",
-    "change-case": "^5.0.2",
+    "change-case": "^5.4.4",
     "colord": "^2.9.3",
     "cookie": "^0.6.0",
     "date-fns": "^3.6.0",

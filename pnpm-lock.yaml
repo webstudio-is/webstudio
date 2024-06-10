@@ -284,8 +284,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       change-case:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.4.4
+        version: 5.4.4
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -965,8 +965,8 @@ importers:
         specifier: workspace:*
         version: link:../sdk-components-react-remix
       change-case:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.4.4
+        version: 5.4.4
       deepmerge:
         specifier: ^4.3.1
         version: 4.3.1
@@ -1074,8 +1074,8 @@ importers:
         specifier: workspace:*
         version: link:../css-engine
       change-case:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.4.4
+        version: 5.4.4
       colord:
         specifier: ^2.9.3
         version: 2.9.3
@@ -1284,8 +1284,8 @@ importers:
         specifier: workspace:*
         version: link:../icons
       change-case:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.4.4
+        version: 5.4.4
       downshift:
         specifier: ^6.1.7
         version: 6.1.7(react@18.3.0-canary-14898b6a9-20240318)
@@ -1494,6 +1494,9 @@ importers:
       '@webstudio-is/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      change-case:
+        specifier: ^5.4.4
+        version: 5.4.4
       react:
         specifier: 18.3.0-canary-14898b6a9-20240318
         version: 18.3.0-canary-14898b6a9-20240318
@@ -1710,8 +1713,8 @@ importers:
         specifier: workspace:*
         version: link:../sdk
       change-case:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.4.4
+        version: 5.4.4
       html-tags:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1802,8 +1805,8 @@ importers:
         specifier: workspace:^
         version: link:../sdk-components-react
       change-case:
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.4.4
+        version: 5.4.4
     devDependencies:
       '@types/node':
         specifier: ^20.12.7
@@ -5962,8 +5965,8 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
-  change-case@5.0.2:
-    resolution: {integrity: sha512-tH6YZXViaeC2/Mnt8m4gSmbZfNorC2rhwCX2bXw8SYZWr8ljCPB7iA+1TLG9t7yroWBFauc63LlOZ1gucMVCWw==}
+  change-case@5.4.4:
+    resolution: {integrity: sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w==}
 
   char-regex@1.0.2:
     resolution: {integrity: sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw==}
@@ -14903,7 +14906,7 @@ snapshots:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
 
-  change-case@5.0.2: {}
+  change-case@5.4.4: {}
 
   char-regex@1.0.2: {}
 

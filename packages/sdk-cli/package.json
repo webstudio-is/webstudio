@@ -21,7 +21,7 @@
     "@webstudio-is/react-sdk": "workspace:^",
     "@webstudio-is/sdk": "workspace:^",
     "@webstudio-is/sdk-components-react": "workspace:^",
-    "change-case": "^5.0.2"
+    "change-case": "^5.4.4"
   },
   "devDependencies": {
     "@types/node": "^20.12.7",
