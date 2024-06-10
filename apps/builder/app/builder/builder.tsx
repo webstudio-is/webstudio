@@ -47,6 +47,7 @@ import {
   $imageLoader,
   $textEditingInstanceSelector,
   $selectedInstanceRenderState,
+  $canvasIframeState,
 } from "~/shared/nano-states";
 import { type Settings } from "./shared/client-settings";
 import { getBuildUrl } from "~/shared/router-utils";
@@ -65,6 +66,7 @@ import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { WebstudioIcon } from "@webstudio-is/icons";
+import { atom, map, type Store } from "nanostores";
 
 registerContainers();
 
@@ -248,30 +250,59 @@ const revealAnimation = ({
   },
 });
 
-const Loading = ({ value }: { value: number }) => {
-  const [progress, setProgress] = useState(value);
+const useLoadingState = () => {
+  const [states, setStates] = useState(
+    new Map([
+      ["dataLoadingState", "initial"],
+      ["selectedInstanceRenderState", "initial"],
+      ["canvasIframeState", "initial"],
+    ])
+  );
+
+  const dataLoadingState = useStore($dataLoadingState);
+  const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
+  const canvasIframeState = useStore($canvasIframeState);
+  const update = (name: string, current: string, expected: string) => {
+    if (current === expected && states.get(name) !== "ready") {
+      states.set(name, "ready");
+      setStates(new Map(states));
+    }
+  };
+
+  // Each state can have a different readiness value.
+  update("dataLoadingState", dataLoadingState, "loaded");
+  update("selectedInstanceRenderState", selectedInstanceRenderState, "mounted");
+  update("canvasIframeState", canvasIframeState, "ready");
+
+  const readyCount = Array.from(states.values()).filter(
+    (state) => state === "ready"
+  ).length;
+  const state = readyCount === states.size ? "ready" : "loading";
+  const progress = Math.round((readyCount / states.size) * 100);
+
+  return { state, progress };
+};
+
+const ProgressIndicator = ({ value }: { value: number }) => {
+  const [fakeValue, setFakeValue] = useState(value);
 
   // This is an approximation of a real progress that should come from "value".
   useEffect(() => {
     const timerId = setInterval(() => {
-      setProgress((progress) => {
-        return progress >= 100 ? progress : progress + 1;
+      setFakeValue((fakeValue) => {
+        fakeValue++;
+        return Math.min(fakeValue, 100);
       });
-      if (progress >= 100) {
-        clearInterval(timerId);
-      }
     }, 50);
+    if (value >= 100) {
+      clearInterval(timerId);
+    }
     return () => {
       clearInterval(timerId);
     };
-  }, []);
-
-  // When real value from progress comes in, we reset our estimate.
-  useEffect(() => {
-    setProgress(value);
   }, [value]);
 
-  if (progress === 100) {
+  if (value >= 100) {
     return;
   }
 
@@ -286,8 +317,11 @@ const Loading = ({ value }: { value: number }) => {
         alignItems: "center",
       }}
     >
-      <WebstudioIcon size={60} style={{ filter: `brightness(${progress}%)` }} />
-      <Progress value={progress} />
+      <WebstudioIcon
+        size={60}
+        style={{ filter: `brightness(${fakeValue}%)` }}
+      />
+      <Progress value={fakeValue} />
     </Flex>
   );
 };
@@ -303,6 +337,8 @@ export type BuilderProps = {
   userPlanFeatures: UserPlanFeatures;
 };
 
+const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
+
 export const Builder = ({
   project,
   publisherHost,
@@ -313,7 +349,6 @@ export const Builder = ({
   userPlanFeatures,
   authTokenPermissions,
 }: BuilderProps) => {
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
   useMount(() => {
     // additional data stores
     $project.set(project);
@@ -325,6 +360,7 @@ export const Builder = ({
     $authTokenPermissions.set(authTokenPermissions);
 
     const controller = new AbortController();
+    $dataLoadingState.set("loading");
     loadBuilderData({ projectId: project.id, signal: controller.signal })
       .then((data) => {
         setBuilderData(data);
@@ -338,10 +374,11 @@ export const Builder = ({
         // render canvas only after all data is loaded
         // so builder is started listening for connect event
         // when canvas is rendered
-        setIsDataLoaded(true);
+        $dataLoadingState.set("loaded");
       })
       .catch(() => {});
     return () => {
+      $dataLoadingState.set("idle");
       controller.abort("unmount");
     };
   });
@@ -382,13 +419,8 @@ export const Builder = ({
   );
 
   const navigatorLayout = useNavigatorLayout();
-
-  const selectedInstanceRenderState = useStore($selectedInstanceRenderState);
-  const isReadyRef = useRef(false);
-  const isReady =
-    isReadyRef.current ||
-    (isDataLoaded && selectedInstanceRenderState === "mounted");
-  isReadyRef.current = isReady;
+  const dataLoadingState = useStore($dataLoadingState);
+  const loadingState = useLoadingState();
 
   const canvasUrl = getBuildUrl({
     project,
@@ -443,13 +475,13 @@ export const Builder = ({
             css={{
               gridArea: "header",
               ...revealAnimation({
-                show: isReady,
+                show: loadingState.state === "ready",
                 backgroundColor: theme.colors.backgroundTopbar,
               }),
             }}
           />
           <Main>
-            {isDataLoaded && (
+            {dataLoadingState === "loaded" && (
               <Workspace onTransitionEnd={onTransitionEnd}>
                 <CanvasIframe
                   ref={iframeRefCallback}
@@ -469,14 +501,14 @@ export const Builder = ({
             isPreviewMode={isPreviewMode}
             navigatorLayout={navigatorLayout}
             css={revealAnimation({
-              show: isReady,
+              show: loadingState.state === "ready",
               backgroundColor: theme.colors.backgroundPanel,
             })}
           />
           <SidePanel
             gridArea="sidebar"
             css={revealAnimation({
-              show: isReady,
+              show: loadingState.state === "ready",
               backgroundColor: theme.colors.backgroundPanel,
             })}
           >
@@ -488,7 +520,7 @@ export const Builder = ({
             css={{
               overflow: "hidden",
               ...revealAnimation({
-                show: isReady,
+                show: loadingState.state === "ready",
                 backgroundColor: theme.colors.backgroundPanel,
               }),
             }}
@@ -503,7 +535,7 @@ export const Builder = ({
             project={project}
           />
         </ChromeWrapper>
-        <Loading value={isReady ? 100 : isDataLoaded ? 80 : 0} />
+        <ProgressIndicator value={loadingState.progress} />
       </div>
     </TooltipProvider>
   );
