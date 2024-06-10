@@ -41,7 +41,7 @@ export const createImageLoader =
     }
 
     if (props.format !== "raw" && props.fit != null) {
-      searchParams.set("height", props.fit);
+      searchParams.set("fit", props.fit);
     }
 
     // Cloudflare docs say that we don't need to urlencode the path params
