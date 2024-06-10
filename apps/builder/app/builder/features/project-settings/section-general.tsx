@@ -150,7 +150,7 @@ export const SectionGeneral = () => {
 
           <Grid gap={2}>
             <Text color="subtle">
-              Upload a 32 x 32 px image to display in browser tabs.
+              Upload a square image to display in browser tabs.
             </Text>
             <ImageControl onAssetIdChange={handleSave("faviconAssetId")}>
               <Button css={{ justifySelf: "start" }}>Upload</Button>
