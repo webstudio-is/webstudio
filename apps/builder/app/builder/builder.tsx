@@ -61,6 +61,7 @@ import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { atom, computed } from "nanostores";
+import { useInterval } from "~/shared/hook-utils/use-interval";
 
 registerContainers();
 
@@ -274,20 +275,15 @@ const ProgressIndicator = ({ value }: { value: number }) => {
   const [fakeValue, setFakeValue] = useState(value);
 
   // This is an approximation of a real progress that should come from "value".
-  useEffect(() => {
-    const timerId = setInterval(() => {
-      setFakeValue((fakeValue) => {
-        fakeValue++;
-        return Math.min(fakeValue, 100);
-      });
-    }, 50);
+  useInterval((timerId) => {
+    setFakeValue((fakeValue) => {
+      fakeValue++;
+      return Math.min(fakeValue, 100);
+    });
     if (value >= 100) {
       clearInterval(timerId);
     }
-    return () => {
-      clearInterval(timerId);
-    };
-  }, [value]);
+  }, 50);
 
   if (value >= 100) {
     return;
@@ -470,7 +466,7 @@ export const Builder = ({
               gridArea: "header",
               ...revealAnimation({
                 // Looks nicer when topbar is already visible earlier, so user has more sense of progress.
-                show: loadingState.states.get("dataLoadingState") ?? false,
+                show: loadingState.readyStates.get("dataLoadingState") ?? false,
                 backgroundColor: theme.colors.backgroundTopbar,
               }),
             }}
