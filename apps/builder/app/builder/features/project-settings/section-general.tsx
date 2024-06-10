@@ -138,7 +138,7 @@ export const SectionGeneral = () => {
 
       <Separator />
 
-      <Grid gap={2} css={sectionSpacing}>
+      <Grid gap={2} css={sectionSpacing} justify={"start"}>
         <Label>Favicon</Label>
         <Grid flow="column" gap={3}>
           <Image
