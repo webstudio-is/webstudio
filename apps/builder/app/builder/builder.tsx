@@ -262,8 +262,9 @@ const useLoadingState = () => {
   const canvasIframeState = useStore($canvasIframeState);
   const update = (name: State, current: string, expected: string) => {
     if (current === expected && states.get(name) !== "ready") {
-      states.set(name, "ready");
-      setStates(new Map(states));
+      const nextStates = new Map(states);
+      nextStates.set(name, "ready");
+      setStates(nextStates);
     }
   };
 
