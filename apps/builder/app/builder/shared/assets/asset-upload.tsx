@@ -10,6 +10,7 @@ import {
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
 import { useUploadAsset } from "./use-assets";
 import { $authPermit } from "~/shared/nano-states";
+import { imageMimeTypes } from "./image-formats";
 
 const maxSize = toBytes(MAX_UPLOAD_SIZE);
 
@@ -45,24 +46,13 @@ const useUpload = (type: AssetType) => {
   return { inputRef, onChange };
 };
 
-// https://developers.cloudflare.com/images/image-resizing/format-limitations/
-const imageMimeTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-  "image/x-icon",
-  "image/ico",
-];
-
 const acceptMap = {
   image: imageMimeTypes.join(", "),
   font: FONT_MIME_TYPES,
 };
 
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/accept#unique_file_type_specifiers
-const acceptFileTypeSpecifier = (specifiers: string, file: File) => {
+export const acceptFileTypeSpecifier = (specifiers: string, file: File) => {
   const specifierArray = specifiers
     .split(",")
     .map((specifier) => specifier.trim());

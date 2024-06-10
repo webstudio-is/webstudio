@@ -31,7 +31,8 @@
         "redhat.vscode-yaml",
         "me-dutour-mathieu.vscode-github-actions",
         "eamodio.gitlens",
-        "bradymholt.pgformatter"
+        "bradymholt.pgformatter",
+        "YoavBls.pretty-ts-errors"
       ]
     }
   }
