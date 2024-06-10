@@ -78,7 +78,7 @@ const parseUnordered = (syntaxes: string[], value: CssNode) => {
  * border = <line-width> || <line-style> || <color>
  *
  */
-function* expandBorder(property: string, value: CssNode) {
+const expandBorder = function* (property: string, value: CssNode) {
   switch (property) {
     case "border":
     case "border-inline":
@@ -104,25 +104,25 @@ function* expandBorder(property: string, value: CssNode) {
     default:
       yield [property, value] as const;
   }
-}
+};
 
 type GetProperty = (edge: string) => string;
 
-function* expandBox(getProperty: GetProperty, value: CssNode) {
+const expandBox = function* (getProperty: GetProperty, value: CssNode) {
   const [top, right, bottom, left] = getValueList(value);
   yield [getProperty("top"), top] as const;
   yield [getProperty("right"), right ?? top] as const;
   yield [getProperty("bottom"), bottom ?? top] as const;
   yield [getProperty("left"), left ?? right ?? top] as const;
-}
+};
 
-function* expandLogical(getProperty: GetProperty, value: CssNode) {
+const expandLogical = function* (getProperty: GetProperty, value: CssNode) {
   const [start, end] = getValueList(value);
   yield [getProperty("start"), start] as const;
   yield [getProperty("end"), end ?? start] as const;
-}
+};
 
-function* expandEdges(property: string, value: CssNode) {
+const expandEdges = function* (property: string, value: CssNode) {
   switch (property) {
     case "margin":
     case "padding":
@@ -165,14 +165,14 @@ function* expandEdges(property: string, value: CssNode) {
     default:
       yield [property, value] as const;
   }
-}
+};
 
 /**
  *
  * border-radius = <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
  *
  */
-function* expandBorderRadius(property: string, value: CssNode) {
+const expandBorderRadius = function* (property: string, value: CssNode) {
   if (property !== "border-radius") {
     yield [property, value] as const;
     return;
@@ -217,7 +217,7 @@ function* expandBorderRadius(property: string, value: CssNode) {
   yield ["border-top-right-radius", topRight] as const;
   yield ["border-bottom-right-radius", bottomRight] as const;
   yield ["border-top-left-radius", bottomLeft] as const;
-}
+};
 
 /**
  *
@@ -232,7 +232,7 @@ function* expandBorderRadius(property: string, value: CssNode) {
  * <border-image-repeat> = [ stretch | repeat | round | space ]{1,2}
  *
  */
-function* expandBorderImage(property: string, value: CssNode) {
+const expandBorderImage = function* (property: string, value: CssNode) {
   if (property !== "border-image") {
     yield [property, value] as const;
     return;
@@ -265,9 +265,9 @@ function* expandBorderImage(property: string, value: CssNode) {
   yield ["border-image-width", width] as const;
   yield ["border-image-outset", outset] as const;
   yield ["border-image-repeat", repeat ?? createInitialValueNode()] as const;
-}
+};
 
-function* expandGap(property: string, value: CssNode) {
+const expandGap = function* (property: string, value: CssNode) {
   switch (property) {
     case "gap":
     case "grid-gap": {
@@ -285,9 +285,9 @@ function* expandGap(property: string, value: CssNode) {
     default:
       yield [property, value] as const;
   }
-}
+};
 
-function* expandPlace(property: string, value: CssNode) {
+const expandPlace = function* (property: string, value: CssNode) {
   switch (property) {
     case "place-content": {
       const [align, justify] = getValueList(value);
@@ -310,16 +310,16 @@ function* expandPlace(property: string, value: CssNode) {
     default:
       yield [property, value] as const;
   }
-}
+};
 
-function* parseValue(property: string, value: string) {
+const parseValue = function* (property: string, value: string) {
   try {
     const ast = parse(value, { context: "value" });
     yield [property, ast] as const;
   } catch {
     // empty block
   }
-}
+};
 
 export const expandShorthands = (
   shorthands: [property: string, value: string][]
