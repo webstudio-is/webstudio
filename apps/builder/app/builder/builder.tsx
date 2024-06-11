@@ -61,7 +61,6 @@ import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { computed } from "nanostores";
-import { useInterval } from "~/shared/hook-utils/use-interval";
 import { $dataLoadingState } from "~/shared/nano-states/builder";
 
 registerContainers();
