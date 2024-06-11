@@ -61,7 +61,6 @@ import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { WebstudioIcon } from "@webstudio-is/icons";
 import { computed } from "nanostores";
-import { useInterval } from "~/shared/hook-utils/use-interval";
 import { $dataLoadingState } from "~/shared/nano-states/builder";
 
 registerContainers();
@@ -281,27 +280,20 @@ const $loadingState = computed(
 );
 
 const ProgressIndicator = ({ value }: { value: number }) => {
+  const [isDone, setIsDone] = useState(false);
   const [fakeValue, setFakeValue] = useState(value);
-  // A maximum fake value we can grow to if the value is still 0, so that we don't get stuck at 0%.
-  const defaultFakeValueLimit = 50;
 
-  // This is an approximation of a real progress that should come from "value".
-  useInterval((timerId) => {
-    if (value >= 100) {
-      clearInterval(timerId);
-      return;
-    }
-    setFakeValue((fakeValue) => {
-      fakeValue++;
-      // - When real value is 0, we don't want to use it, because we don't want to get stuck at 0.
-      // - When real value is smaller than fake value, we don't want to use it because that would jump the progress back.
-      const minFakeValue =
-        value === 0 || value < fakeValue ? defaultFakeValueLimit : value;
-      return Math.min(fakeValue, minFakeValue);
-    });
-  }, 50);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setFakeValue((fakeValue) => {
+        // Fetching data is the slowest part and we don't want to get stuck at 0% visually
+        return Math.max(value, 50);
+      });
+    }, 300);
+    return () => clearTimeout(id);
+  }, [value]);
 
-  if (value >= 100) {
+  if (isDone) {
     return;
   }
 
@@ -324,9 +316,19 @@ const ProgressIndicator = ({ value }: { value: number }) => {
             drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7))
             brightness(${fakeValue}%)
           `,
+          transitionProperty: "filter",
+          transitionDuration: "500ms",
         }}
       />
-      <Progress value={fakeValue} />
+      <Progress
+        value={fakeValue}
+        transitionDuration="500ms"
+        onTransitionEnd={() => {
+          if (value === 100) {
+            setIsDone(true);
+          }
+        }}
+      />
     </Flex>
   );
 };
