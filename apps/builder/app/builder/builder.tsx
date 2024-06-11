@@ -281,30 +281,49 @@ const $loadingState = computed(
 );
 
 const ProgressIndicator = ({ value }: { value: number }) => {
+  const [isDone, setIsDone] = useState(false);
   const [fakeValue, setFakeValue] = useState(value);
   // A maximum fake value we can grow to if the value is still 0, so that we don't get stuck at 0%.
   const defaultFakeValueLimit = 50;
 
   // This is an approximation of a real progress that should come from "value".
   useInterval((timerId) => {
-    if (value >= 100) {
+    if (isDone) {
       clearInterval(timerId);
       return;
     }
     setFakeValue((fakeValue) => {
-      fakeValue++;
       // - When real value is 0, we don't want to use it, because we don't want to get stuck at 0.
       // - When real value is smaller than fake value, we don't want to use it because that would jump the progress back.
       const minFakeValue =
         value === 0 || value < fakeValue ? defaultFakeValueLimit : value;
+      fakeValue++;
       return Math.min(fakeValue, minFakeValue);
     });
   }, 50);
 
-  if (value >= 100) {
+  // This will set the fake value to 100 so that the looading state can progress quickly.
+  // But then it will wait a bit until hiding the loading indicator entirely so that
+  // the user can see loading has finished.
+  // Otherwise when everything loaded to quickly, it will look like an aborted loading.
+  useEffect(() => {
+    if (value < 100) {
+      return;
+    }
+    setFakeValue(100);
+
+    const id = setTimeout(() => {
+      setIsDone(true);
+    }, 500);
+
+    return () => {
+      clearTimeout(id);
+    };
+  }, [value]);
+
+  if (isDone) {
     return;
   }
-
   return (
     <Flex
       direction="column"
