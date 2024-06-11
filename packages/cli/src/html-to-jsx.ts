@@ -96,6 +96,8 @@ const convertStyleString = (style: string) => {
   return JSON.stringify(res);
 };
 
+const escape = (value: string) => JSON.stringify(value);
+
 const toAttrString = (name: string, value: string) => {
   const attName = name.toLowerCase();
   const jsxName = attName === "class" ? "className" : attName;
@@ -108,7 +110,7 @@ const toAttrString = (name: string, value: string) => {
     return `${jsxName}={${convertStyleString(value)}}`;
   }
 
-  return `${jsxName}="${value}"`;
+  return `${jsxName}={${escape(value)}}`;
 };
 
 const attributesToString = (attributes: [string, string][]) =>
@@ -129,14 +131,6 @@ const convertTagName = (tagName: string) => {
   return tag;
 };
 
-const escapeValue = (value: string) =>
-  value
-    .replace(/\\/g, "\\\\")
-    .replace(/`/g, "\\`")
-    .replace(/\$/g, "\\$")
-    .replace(/\r/g, "\\r")
-    .replace(/\n/g, "\\n");
-
 export const htmlToJsx = (html: string) => {
   const parsedHtml = parseFragment(html, { scriptingEnabled: false });
 
@@ -145,9 +139,9 @@ export const htmlToJsx = (html: string) => {
   for (const walkNode of walkChildNodes(parsedHtml)) {
     switch (walkNode.type) {
       case "text": {
-        const escapedValue = escapeValue(walkNode.value);
+        const escapedValue = escape(walkNode.value);
 
-        result += escapedValue ? "{`" + escapedValue + "`}" : "";
+        result += escapedValue ? "{" + escapedValue + "}" : "";
         break;
       }
 
