@@ -186,23 +186,14 @@ export const links: LinksFunction = () => {
       rel: "icon",
       href: imageLoader({
         src: favIconAsset.name,
-        width: 128,
+        // width,height must be multiple of 48 https://developers.google.com/search/docs/appearance/favicon-in-search
+        width: 144,
+        height: 144,
+        fit: "pad",
         quality: 100,
         format: "auto",
       }),
       type: undefined,
-    });
-  } else {
-    result.push({
-      rel: "icon",
-      href: "/favicon.ico",
-      type: "image/x-icon",
-    });
-
-    result.push({
-      rel: "shortcut icon",
-      href: "/favicon.ico",
-      type: "image/x-icon",
     });
   }
 

@@ -36,6 +36,14 @@ export const createImageLoader =
     searchParams.set("quality", quality.toString());
     searchParams.set("format", format ?? "auto");
 
+    if (props.format !== "raw" && props.height != null) {
+      searchParams.set("height", props.height.toString());
+    }
+
+    if (props.format !== "raw" && props.fit != null) {
+      searchParams.set("fit", props.fit);
+    }
+
     // Cloudflare docs say that we don't need to urlencode the path params
     return `${imageBaseUrl}${src}?${searchParams.toString()}`;
   };

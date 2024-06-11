@@ -1,4 +1,4 @@
-import { readdir, mkdir, readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { basename, extname } from "node:path";
 import { type Config, optimize } from "svgo";
 
@@ -14,10 +14,6 @@ const transformComponentName = (filename: string) => {
   const name = basename(filename, extname(filename));
   // digits cannot start variable name
   return `${pascalcase(name).replace(/^[0-9]/, (char) => `_${char}`)}Icon`;
-};
-
-const transformFilename = (filename: string) => {
-  return basename(filename, extname(filename)) + ".ts";
 };
 
 const plugins: Config["plugins"] = [
@@ -49,9 +45,7 @@ const plugins: Config["plugins"] = [
   },
 ];
 
-await mkdir("./src/__generated__/svg", { recursive: true });
-
-let index = "";
+let moduleContent = "";
 
 for (const name of await readdir("./icons")) {
   if (name.endsWith(".svg")) {
@@ -60,12 +54,8 @@ for (const name of await readdir("./icons")) {
     const { data: optimized } = optimize(content, {
       plugins,
     });
-    const code = `export const ${exportName} = \`${optimized.trim()}\`;`;
-    const newFilename = transformFilename(name);
-    const tsImportFilename = basename(newFilename, extname(newFilename));
-    await writeFile(`./src/__generated__/svg/${newFilename}`, code);
-    index += `export { ${exportName} } from "./${tsImportFilename}";\n`;
+    moduleContent += `export const ${exportName} = \`${optimized.trim()}\`;\n`;
   }
 }
 
-await writeFile("./src/__generated__/svg/index.ts", index);
+await writeFile("./src/__generated__/svg.ts", moduleContent);

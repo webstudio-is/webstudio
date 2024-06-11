@@ -41,7 +41,7 @@
     "@unocss/core": "^0.56.4",
     "@unocss/preset-uno": "^0.56.4",
     "@webstudio-is/css-engine": "workspace:*",
-    "change-case": "^5.0.2",
+    "change-case": "^5.4.4",
     "colord": "^2.9.3",
     "css-tree": "^2.3.1",
     "openai": "^3.2.1",
