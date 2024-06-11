@@ -96,6 +96,8 @@ const convertStyleString = (style: string) => {
   return JSON.stringify(res);
 };
 
+const escapeAttribute = (value: string) => JSON.stringify(value);
+
 const toAttrString = (name: string, value: string) => {
   const attName = name.toLowerCase();
   const jsxName = attName === "class" ? "className" : attName;
@@ -108,7 +110,7 @@ const toAttrString = (name: string, value: string) => {
     return `${jsxName}={${convertStyleString(value)}}`;
   }
 
-  return `${jsxName}="${value}"`;
+  return `${jsxName}={${escapeAttribute(value)}}`;
 };
 
 const attributesToString = (attributes: [string, string][]) =>

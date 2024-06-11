@@ -174,6 +174,16 @@ test("Support styles", async () => {
   expect(await formatHtml(htmlCode)).toBe(await formatHtml(result));
 });
 
+test("Supports symbols in attributes", async () => {
+  const htmlCode = `
+  <script data-cf-beacon='{"token": "b4c645f1e8df4373a68a454a48673738"}'>
+  </script>
+`;
+  const result = await convertHtmlToJsxAndRenderToHtml(htmlCode);
+
+  expect(await formatHtml(htmlCode)).toBe(await formatHtml(result));
+});
+
 test("Real User Script Works", async () => {
   const htmlCode = `
   <script type="text/javascript">
