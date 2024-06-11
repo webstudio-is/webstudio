@@ -1,5 +1,6 @@
 import { Root, Indicator } from "@radix-ui/react-progress";
 import { css, theme } from "../stitches.config";
+import type { TransitionEventHandler } from "react";
 
 const rootStyle = css({
   width: 200,
@@ -14,16 +15,18 @@ const indicatorStyle = css({
   width: "100%",
   height: "100%",
   background: theme.colors.brandBorderNavbar,
-  transitionDuration: "1000ms",
+  transitionDuration: "200ms",
   transitionProperty: "transform",
 });
 
 export const Progress = ({
   value,
   transitionDuration,
+  onTransitionEnd,
 }: {
   value: number;
   transitionDuration?: string;
+  onTransitionEnd?: TransitionEventHandler;
 }) => {
   return (
     <Root value={value} className={rootStyle()}>
@@ -33,6 +36,7 @@ export const Progress = ({
           transform: `translateX(-${100 - value}%)`,
           transitionDuration,
         }}
+        onTransitionEnd={onTransitionEnd}
       />
     </Root>
   );
