@@ -25,14 +25,38 @@ export const normalizeProps = ({
       if (asset === undefined) {
         continue;
       }
-      newProps.push({
+
+      const propBase = {
         id: prop.id,
         name: prop.name,
         required: prop.required,
         instanceId: prop.instanceId,
+      };
+
+      if (prop.name === "width" && asset.type === "image") {
+        newProps.push({
+          ...propBase,
+          type: "number",
+          value: asset.meta.width,
+        });
+        continue;
+      }
+
+      if (prop.name === "height" && asset.type === "image") {
+        newProps.push({
+          ...propBase,
+          type: "number",
+          value: asset.meta.height,
+        });
+        continue;
+      }
+
+      newProps.push({
+        ...propBase,
         type: "string",
         value: `${assetBaseUrl}${asset.name}`,
       });
+
       continue;
     }
 

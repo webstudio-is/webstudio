@@ -29,6 +29,7 @@ const AnimationContainer = styled("div", {
   flexDirection: "column",
   justifyContent: "center",
   alignItems: "center",
+  pointerEvents: "none",
 });
 
 export const UploadingAnimation = () => {

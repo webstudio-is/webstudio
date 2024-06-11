@@ -64,25 +64,11 @@ const renderProperty = (
         logic.handleDelete(prop);
       }
     },
-    onChange: (propValue, asset) => {
+    onChange: (propValue) => {
       logic.handleChange({ prop, propName }, propValue);
-
-      // @todo: better way to do this?
-      if (
-        component === "Image" &&
-        propName === "src" &&
-        asset &&
-        "width" in asset.meta &&
-        "height" in asset.meta
-      ) {
-        logic.handleChangeByPropName("width", {
-          value: asset.meta.width,
-          type: "number",
-        });
-        logic.handleChangeByPropName("height", {
-          value: asset.meta.height,
-          type: "number",
-        });
+      if (component === "Image" && propName === "src") {
+        logic.handleChangeByPropName("width", propValue);
+        logic.handleChangeByPropName("height", propValue);
       }
     },
   });

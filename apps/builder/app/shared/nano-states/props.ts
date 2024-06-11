@@ -272,8 +272,23 @@ export const $propValuesByInstanceSelector = computed(
       const propValues = new Map<Prop["name"], unknown>();
       const props = propsByInstanceId.get(instanceId);
       const parameters = new Map<Prop["name"], DataSource["id"]>();
+
       if (props) {
         for (const prop of props) {
+          if (prop.type === "asset" && prop.name === "width") {
+            const asset = assets.get(prop.value);
+            if (asset?.type === "image") {
+              propValues.set("width", asset.meta.width);
+            }
+          }
+
+          if (prop.type === "asset" && prop.name === "height") {
+            const asset = assets.get(prop.value);
+            if (asset?.type === "image") {
+              propValues.set("height", asset.meta.height);
+            }
+          }
+
           // at this point asset and page either already converted to string
           // or can be ignored
           if (prop.type === "asset" || prop.type === "page") {
