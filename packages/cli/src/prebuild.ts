@@ -251,6 +251,9 @@ export const prebuild = async (options: {
 
   await copyTemplates();
 
+  // force npm to install with not matching peer dependencies
+  await writeFile(join(cwd(), ".npmrc"), "force=true");
+
   for (const template of options.template) {
     // default template is already applied no need to copy twice
     if (template === "vanilla") {

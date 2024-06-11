@@ -516,12 +516,12 @@ const Content = (props: {
 
 const deployTargets = {
   vercel: {
-    command: "npx vercel",
+    command: "npx vercel@latest",
     docs: "https://vercel.com/docs/cli",
   },
   netlify: {
     command: `
-npx netlify-cli login
+npx netlify-cli@latest login
 npx netlify-cli sites:create
 npx netlify-cli build
 npx netlify-cli deploy`,
@@ -535,7 +535,7 @@ const isDeployTargets = (value: string): value is DeployTargets =>
   Object.keys(deployTargets).includes(value);
 
 const ExportContent = () => {
-  const npxCommand = "npx webstudio";
+  const npxCommand = "npx webstudio@latest";
   const [deployTarget, setDeployTarget] = useState<DeployTargets>("vercel");
 
   return (
