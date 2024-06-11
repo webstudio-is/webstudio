@@ -29,6 +29,9 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=20.12"
+  },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
     "@webstudio-is/http-client": "workspace:*",
