@@ -516,7 +516,7 @@ const Content = (props: {
 
 const deployTargets = {
   vercel: {
-    command: "npx@latest vercel",
+    command: "npx vercel@latest",
     docs: "https://vercel.com/docs/cli",
   },
   netlify: {
