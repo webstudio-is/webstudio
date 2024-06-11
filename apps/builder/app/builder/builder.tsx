@@ -60,12 +60,11 @@ import { useToastErrors } from "~/shared/error/toast-error";
 import { canvasApi } from "~/shared/canvas-api";
 import { loadBuilderData, setBuilderData } from "~/shared/builder-data";
 import { WebstudioIcon } from "@webstudio-is/icons";
-import { atom, computed } from "nanostores";
+import { computed } from "nanostores";
 import { useInterval } from "~/shared/hook-utils/use-interval";
+import { $dataLoadingState } from "~/shared/nano-states/builder";
 
 registerContainers();
-
-const $dataLoadingState = atom<"idle" | "loading" | "loaded">("idle");
 
 const useSetWindowTitle = () => {
   const project = useStore($project);
@@ -322,7 +321,7 @@ const ProgressIndicator = ({ value }: { value: number }) => {
         size={60}
         style={{
           filter: `
-            drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7)) 
+            drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.7))
             brightness(${fakeValue}%)
           `,
         }}
@@ -364,6 +363,7 @@ export const Builder = ({
     $authTokenPermissions.set(authTokenPermissions);
 
     const controller = new AbortController();
+
     $dataLoadingState.set("loading");
     loadBuilderData({ projectId: project.id, signal: controller.signal })
       .then((data) => {
@@ -427,6 +427,7 @@ export const Builder = ({
 
   const navigatorLayout = useNavigatorLayout();
   const dataLoadingState = useStore($dataLoadingState);
+
   const loadingState = useStore($loadingState);
 
   const canvasUrl = getBuildUrl({
