@@ -18,7 +18,7 @@ import {
 import { dropTargetForExternal } from "@atlaskit/pragmatic-drag-and-drop/external/adapter";
 import invariant from "tiny-invariant";
 import type { ContainsSource } from "@atlaskit/pragmatic-drag-and-drop/dist/types/public-utils/external/native-types";
-import { useUploadAsset } from "./use-assets";
+import { uploadAssets } from "./use-assets";
 import { UploadIcon } from "@webstudio-is/icons";
 import {
   IDLE,
@@ -57,8 +57,6 @@ export const AssetsShell = ({
     useState<ExternalMonitorDragState>(IDLE);
 
   const [dropTargetState, setDropTargetState] = useState<DropTargetState>(IDLE);
-
-  const uploadAssets = useUploadAsset();
 
   useExternalDragStateEffect((state) => {
     const element = ref.current;
@@ -145,7 +143,7 @@ export const AssetsShell = ({
         },
       })
     );
-  }, [accept, containsByType, type, uploadAssets]);
+  }, [accept, containsByType, type]);
 
   const dragState = Math.max(monitorState, dropTargetState);
 
