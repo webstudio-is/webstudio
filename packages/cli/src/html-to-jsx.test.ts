@@ -176,7 +176,7 @@ test("Support styles", async () => {
 
 test("Supports symbols in attributes", async () => {
   const htmlCode = `
-  <script data-cf-beacon='{"token": "b4c645f1e8df4373a68a454a48673738"}'>
+  <script data-cf-beacon='{"token": "124"}'>
   </script>
 `;
   const result = await convertHtmlToJsxAndRenderToHtml(htmlCode);

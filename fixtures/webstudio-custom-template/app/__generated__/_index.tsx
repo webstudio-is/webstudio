@@ -92,9 +92,9 @@ const Style = ({ children, ...props }: Record<string, string | boolean>) => {
 export const CustomCode = () => {
   return (
     <>
-      <Script>{`console.log('HELLO')`}</Script>
-      {`\n`}
-      <meta property="saas:test" content="test"></meta>
+      <Script>{"console.log('HELLO')"}</Script>
+      {"\n"}
+      <meta property={"saas:test"} content={"test"}></meta>
     </>
   );
 };
