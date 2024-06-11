@@ -109,9 +109,26 @@ export const createChain = <ModelMessageFormat>(): Chain<
     const completionText = completion.data.choices[0];
     llmMessages.push(["assistant", completionText]);
 
-    const parsedCompletion = AiOperationsSchema.safeParse(
-      JSON.parse(completionText)
-    );
+    let parsedCompletion;
+
+    try {
+      parsedCompletion = AiOperationsSchema.safeParse(
+        JSON.parse(completionText)
+      );
+    } catch (error) {
+      return {
+        id: name,
+        ...createErrorResponse({
+          status: 500,
+          error: "ai.parseError",
+          message: `Failed to parse completion JSON ${error}`,
+          debug: `Failed to parse completion JSON ${error}`,
+        }),
+        tokens: completion.tokens,
+        llmMessages,
+      } as const;
+    }
+
     if (parsedCompletion.success === false) {
       return {
         id: name,
