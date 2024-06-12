@@ -1,13 +1,30 @@
 import type { StyleValue } from "@webstudio-is/css-engine";
 import { popularityIndex } from "./popularity-index";
 
-export type UnitGroup =
-  | "number"
-  | "percentage"
-  | "length"
-  | "time"
-  | "angle"
-  | "resolution";
+const numericTypes = [
+  "number",
+  "percentage",
+  "length",
+  "time",
+  "angle",
+  "resolution",
+  "integer",
+  "x",
+  "y",
+] as const;
+
+export const valueTypes = [
+  ...numericTypes,
+  "hex-color",
+  "url",
+  "string",
+  "custom-ident",
+  "single-animation-composition",
+  "palette-identifier",
+  "flex",
+] as const;
+
+export type UnitGroup = (typeof numericTypes)[number];
 
 // Data type used before we generate a the constants.
 export type RawPropertyData = {
@@ -16,6 +33,7 @@ export type RawPropertyData = {
   initial: StyleValue;
   popularity: number;
   appliesTo: string;
+  types: Array<(typeof valueTypes)[number]>;
 };
 
 export const propertiesData: { [property: string]: RawPropertyData } = {};
@@ -34,6 +52,7 @@ propertiesData.WebkitFontSmoothing = {
   },
   popularity: getPopularityIndex("webkit-font-smoothing"),
   appliesTo: "allElements",
+  types: [],
 };
 keywordValues.WebkitFontSmoothing = [
   "auto",
@@ -51,6 +70,7 @@ propertiesData.MozOsxFontSmoothing = {
   },
   popularity: getPopularityIndex("moz-osx-font-smoothing"),
   appliesTo: "allElements",
+  types: [],
 };
 keywordValues.MozOsxFontSmoothing = ["auto", "grayscale"];
 

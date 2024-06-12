@@ -310,12 +310,23 @@ for (property in filteredProperties) {
   const config = filteredProperties[property];
   // collect node types to improve parsing of css values
   const unitGroups = new Set<customData.UnitGroup>();
+  const types = new Set();
   walkSyntax(config.syntax, (node) => {
     if (node.type === "Type") {
+      if (
+        customData.valueTypes.includes(
+          node.name as customData.RawPropertyData["types"][number]
+        ) === false
+      ) {
+        throw Error(`Unknown value type "${node.name}"`);
+      }
+      types.add(node.name);
       if (node.name === "integer" || node.name === "number") {
         unitGroups.add("number");
+        types.add("number");
         return;
       }
+
       // type names match unit groups
       if (node.name in units) {
         unitGroups.add(node.name as customData.UnitGroup);
@@ -341,6 +352,7 @@ for (property in filteredProperties) {
         ?.dayPercentage || 0,
 
     appliesTo: patchAppliesTo(property, config),
+    types: Array.from(types),
   };
 }
 
