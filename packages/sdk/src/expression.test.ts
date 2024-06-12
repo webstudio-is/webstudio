@@ -31,14 +31,26 @@ describe("lint expression", () => {
 
   test("output parse error as diagnostic", () => {
     expect(lintExpression({ expression: `a + ` })).toEqual([
-      error(4, 4, "Unexpected token (1:4)"),
+      error(4, 4, "Unexpected token"),
     ]);
   });
 
   test("restrict expression syntax", () => {
     expect(lintExpression({ expression: `var a = 1` })).toEqual([
-      error(0, 0, "Unexpected token (1:0)"),
+      error(0, 0, "Unexpected token"),
     ]);
+  });
+
+  test("lint whole expression instead of only first valid part", () => {
+    expect(
+      lintExpression({ expression: `a""`, availableVariables: new Set(["a"]) })
+    ).toEqual([error(1, 1, `Unexpected token`)]);
+    expect(
+      lintExpression({
+        expression: `/movie/{{CollectionItem['title']}}\n`,
+        availableVariables: new Set([""]),
+      })
+    ).toEqual([error(7, 7, `Unexpected token`)]);
   });
 
   test("supports accessing variable fields", () => {
@@ -76,7 +88,7 @@ describe("lint expression", () => {
       lintExpression({
         expression: "`my template",
       })
-    ).toEqual([error(1, 1, "Unterminated template (1:1)")]);
+    ).toEqual([error(1, 1, "Unterminated template")]);
   });
 
   test("supports parentheses", () => {
@@ -158,7 +170,7 @@ describe("lint expression", () => {
 
   test(`forbid "yield" keyword`, () => {
     expect(lintExpression({ expression: ` yield 1` })).toEqual([
-      error(1, 1, `The keyword 'yield' is reserved (1:1)`),
+      error(1, 1, `The keyword 'yield' is reserved`),
     ]);
   });
 

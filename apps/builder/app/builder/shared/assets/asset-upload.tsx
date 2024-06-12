@@ -8,7 +8,7 @@ import {
   toBytes,
 } from "@webstudio-is/asset-uploader";
 import { FONT_MIME_TYPES } from "@webstudio-is/fonts";
-import { useUploadAsset } from "./use-assets";
+import { uploadAssets } from "./use-assets";
 import { $authPermit } from "~/shared/nano-states";
 import { imageMimeTypes } from "./image-formats";
 
@@ -29,7 +29,6 @@ const getFilesFromInput = (_type: AssetType, input: HTMLInputElement) => {
 };
 
 const useUpload = (type: AssetType) => {
-  const uploadAsset = useUploadAsset();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onChange = (event: ChangeEvent<HTMLFormElement>) => {
@@ -39,7 +38,7 @@ const useUpload = (type: AssetType) => {
       return;
     }
     const files = getFilesFromInput(type, input);
-    uploadAsset(type, files);
+    uploadAssets(type, files);
     form.reset();
   };
 

@@ -43,6 +43,7 @@ const addNodeStyles = (
       breakpointId,
       property: style.property,
       value: style.value,
+      state: style.state,
     });
     if (style.value.type === "invalid") {
       console.error("Invalid style value", style);

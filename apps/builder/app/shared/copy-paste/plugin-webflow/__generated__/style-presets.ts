@@ -3,24 +3,15 @@
 export default {
   html: [
     {
-      property: "color",
+      property: "webkitTextSizeAdjust",
       value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
     {
-      property: "backgroundAttachment",
-      value: {
-        type: "keyword",
-        value: "scroll",
-      },
-    },
-    {
-      property: "height",
+      property: "msTextSizeAdjust",
       value: {
         type: "unit",
         unit: "%",
@@ -35,7 +26,7 @@ export default {
       },
     },
     {
-      property: "msTextSizeAdjust",
+      property: "height",
       value: {
         type: "unit",
         unit: "%",
@@ -43,52 +34,32 @@ export default {
       },
     },
     {
-      property: "webkitTextSizeAdjust",
+      property: "backgroundAttachment",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "keyword",
+        value: "scroll",
+      },
+    },
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
       },
     },
   ],
   body: [
     {
-      property: "lineHeight",
+      property: "color",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 14,
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "unparsed",
-        value: "Arial,sans-serif",
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "minHeight",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "rgb",
+        alpha: 1,
+        r: 51,
+        g: 51,
+        b: 51,
       },
     },
     {
@@ -102,13 +73,11 @@ export default {
       },
     },
     {
-      property: "color",
+      property: "minHeight",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 51,
-        g: 51,
-        b: 51,
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
     {
@@ -117,6 +86,29 @@ export default {
         type: "unit",
         unit: "number",
         value: 0,
+      },
+    },
+    {
+      property: "fontFamily",
+      value: {
+        type: "unparsed",
+        value: "Arial,sans-serif",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 14,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
       },
     },
   ],
@@ -149,11 +141,10 @@ export default {
   ],
   figcaption: [
     {
-      property: "marginTop",
+      property: "display",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
+        type: "keyword",
+        value: "block",
       },
     },
     {
@@ -164,26 +155,27 @@ export default {
       },
     },
     {
-      property: "display",
+      property: "marginTop",
       value: {
-        type: "keyword",
-        value: "block",
+        type: "unit",
+        unit: "px",
+        value: 5,
       },
     },
   ],
   figure: [
     {
-      property: "margin",
-      value: {
-        type: "unparsed",
-        value: "0 0 10px",
-      },
-    },
-    {
       property: "display",
       value: {
         type: "keyword",
         value: "block",
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "unparsed",
+        value: "0 0 10px",
       },
     },
   ],
@@ -261,65 +253,65 @@ export default {
   ],
   audio: [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "verticalAlign",
       value: {
         type: "keyword",
         value: "baseline",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
       },
     },
   ],
   canvas: [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "verticalAlign",
       value: {
         type: "keyword",
         value: "baseline",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
       },
     },
   ],
   progress: [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "verticalAlign",
       value: {
         type: "keyword",
         value: "baseline",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
       },
     },
   ],
   video: [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "verticalAlign",
       value: {
         type: "keyword",
         value: "baseline",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
       },
     },
   ],
@@ -333,13 +325,6 @@ export default {
     },
   ],
   a: [
-    {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
     {
       property: "backgroundColor",
       value: {
@@ -407,92 +392,6 @@ export default {
   ],
   h1: [
     {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 44,
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 38,
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 44,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 38,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: 2,
-      },
-    },
-    {
       property: "margin",
       value: {
         type: "tuple",
@@ -510,15 +409,54 @@ export default {
         ],
       },
     },
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "bold",
+      },
+    },
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 38,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 44,
+      },
+    },
   ],
   mark: [
     {
-      property: "backgroundColor",
+      property: "color",
       value: {
         type: "rgb",
         alpha: 1,
-        r: 255,
-        g: 255,
+        r: 0,
+        g: 0,
         b: 0,
       },
     },
@@ -530,12 +468,12 @@ export default {
       },
     },
     {
-      property: "color",
+      property: "backgroundColor",
       value: {
         type: "rgb",
         alpha: 1,
-        r: 0,
-        g: 0,
+        r: 255,
+        g: 255,
         b: 0,
       },
     },
@@ -552,26 +490,10 @@ export default {
   ],
   sub: [
     {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: -0.25,
-      },
-    },
-    {
-      property: "position",
+      property: "verticalAlign",
       value: {
         type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        value: "baseline",
       },
     },
     {
@@ -583,14 +505,60 @@ export default {
       },
     },
     {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: -0.25,
+      },
+    },
+  ],
+  sup: [
+    {
       property: "verticalAlign",
       value: {
         type: "keyword",
         value: "baseline",
       },
     },
-  ],
-  sup: [
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 75,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
     {
       property: "top",
       value: {
@@ -599,15 +567,10 @@ export default {
         value: -0.5,
       },
     },
+  ],
+  img: [
     {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "lineHeight",
+      property: "border",
       value: {
         type: "unit",
         unit: "number",
@@ -615,27 +578,10 @@ export default {
       },
     },
     {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 75,
-      },
-    },
-    {
       property: "verticalAlign",
       value: {
         type: "keyword",
-        value: "baseline",
-      },
-    },
-  ],
-  img: [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
+        value: "middle",
       },
     },
     {
@@ -647,22 +593,21 @@ export default {
       },
     },
     {
-      property: "verticalAlign",
+      property: "display",
       value: {
         type: "keyword",
-        value: "middle",
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        value: "inline-block",
       },
     },
   ],
   hr: [
+    {
+      property: "boxSizing",
+      value: {
+        type: "keyword",
+        value: "content-box",
+      },
+    },
     {
       property: "height",
       value: {
@@ -671,37 +616,8 @@ export default {
         value: 0,
       },
     },
-    {
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "content-box",
-      },
-    },
   ],
   pre: [
-    {
-      property: "all",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "monospace",
-      },
-    },
     {
       property: "overflow",
       value: {
@@ -709,8 +625,13 @@ export default {
         value: "auto",
       },
     },
-  ],
-  code: [
+    {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "monospace",
+      },
+    },
     {
       property: "fontSize",
       value: {
@@ -720,32 +641,56 @@ export default {
       },
     },
     {
+      property: "all",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+  ],
+  code: [
+    {
       property: "fontFamily",
       value: {
         type: "keyword",
         value: "monospace",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: 1,
       },
     },
   ],
   kbd: [
     {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "monospace",
+      },
+    },
+    {
       property: "fontSize",
       value: {
         type: "unit",
         unit: "em",
         value: 1,
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "monospace",
       },
     },
   ],
   samp: [
     {
+      property: "fontFamily",
+      value: {
+        type: "keyword",
+        value: "monospace",
+      },
+    },
+    {
       property: "fontSize",
       value: {
         type: "unit",
@@ -753,79 +698,28 @@ export default {
         value: 1,
       },
     },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "monospace",
-      },
-    },
   ],
   button: [
     {
-      property: "border",
+      property: "color",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "inherit",
       },
     },
     {
-      property: "webkitAppearance",
+      property: "font",
       value: {
         type: "invalid",
         value: "",
       },
     },
     {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "padding",
+      property: "margin",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "default",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "webkitAppearance",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "textTransform",
-      value: {
-        type: "keyword",
-        value: "none",
       },
     },
     {
@@ -836,118 +730,14 @@ export default {
       },
     },
     {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "font",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "color",
+      property: "textTransform",
       value: {
         type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  input: [
-    {
-      property: "webkitAppearance",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitAppearance",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitAppearance",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitAppearance",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
+        value: "none",
       },
     },
     {
       property: "padding",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "border-box",
-      },
-    },
-    {
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "border-box",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "border",
       value: {
         type: "unit",
         unit: "number",
@@ -969,20 +759,15 @@ export default {
       },
     },
     {
-      property: "margin",
+      property: "border",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
     },
-    {
-      property: "font",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
+  ],
+  input: [
     {
       property: "color",
       value: {
@@ -990,44 +775,11 @@ export default {
         value: "inherit",
       },
     },
-  ],
-  optgroup: [
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
     {
       property: "font",
       value: {
         type: "invalid",
         value: "",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  select: [
-    {
-      property: "textTransform",
-      value: {
-        type: "keyword",
-        value: "none",
       },
     },
     {
@@ -1039,72 +791,10 @@ export default {
       },
     },
     {
-      property: "font",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "color",
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  textarea: [
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "font",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-  ],
-  legend: [
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        value: "pointer",
       },
     },
     {
@@ -1115,8 +805,169 @@ export default {
         value: 0,
       },
     },
+    {
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "boxSizing",
+      value: {
+        type: "keyword",
+        value: "border-box",
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "webkitAppearance",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+  ],
+  optgroup: [
+    {
+      property: "color",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "font",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "bold",
+      },
+    },
+  ],
+  select: [
+    {
+      property: "color",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "font",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "textTransform",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
+  textarea: [
+    {
+      property: "color",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "font",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  legend: [
+    {
+      property: "border",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
   ],
   table: [
+    {
+      property: "borderCollapse",
+      value: {
+        type: "keyword",
+        value: "collapse",
+      },
+    },
     {
       property: "borderSpacing",
       value: {
@@ -1125,27 +976,21 @@ export default {
         value: 0,
       },
     },
-    {
-      property: "borderCollapse",
-      value: {
-        type: "keyword",
-        value: "collapse",
-      },
-    },
   ],
   td: [
     {
-      property: "fontStyle",
+      property: "padding",
       value: {
-        type: "keyword",
-        value: "normal",
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
     {
-      property: "fontWeight",
+      property: "fontFamily",
       value: {
-        type: "keyword",
-        value: "normal",
+        type: "unparsed",
+        value: "webflow-icons",
       },
     },
     {
@@ -1157,34 +1002,34 @@ export default {
       },
     },
     {
-      property: "fontFamily",
+      property: "fontWeight",
       value: {
-        type: "unparsed",
-        value: "webflow-icons",
+        type: "keyword",
+        value: "normal",
       },
     },
     {
-      property: "padding",
+      property: "fontStyle",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "normal",
       },
     },
   ],
   th: [
     {
-      property: "fontStyle",
+      property: "padding",
       value: {
-        type: "keyword",
-        value: "normal",
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
     {
-      property: "fontWeight",
+      property: "fontFamily",
       value: {
-        type: "keyword",
-        value: "normal",
+        type: "unparsed",
+        value: "webflow-icons",
       },
     },
     {
@@ -1196,32 +1041,54 @@ export default {
       },
     },
     {
-      property: "fontFamily",
+      property: "fontWeight",
       value: {
-        type: "unparsed",
-        value: "webflow-icons",
+        type: "keyword",
+        value: "normal",
       },
     },
     {
-      property: "padding",
+      property: "fontStyle",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "normal",
       },
     },
   ],
   "w-icon-slider-right": [
     {
-      property: "right",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '"î˜€"',
+      },
+      state: ":before",
+    },
+    {
+      property: "width",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "em",
+        value: 1,
       },
     },
     {
-      property: "left",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: 1,
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "top",
       value: {
         type: "unit",
         unit: "number",
@@ -1237,7 +1104,7 @@ export default {
       },
     },
     {
-      property: "top",
+      property: "left",
       value: {
         type: "unit",
         unit: "number",
@@ -1245,48 +1112,48 @@ export default {
       },
     },
     {
-      property: "margin",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "height",
+      property: "right",
       value: {
         type: "unit",
-        unit: "em",
-        value: 1,
+        unit: "number",
+        value: 0,
       },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '""',
-      },
-      state: ":before",
     },
   ],
   "w-icon-slider-left": [
     {
-      property: "right",
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '"î˜"',
+      },
+      state: ":before",
+    },
+    {
+      property: "width",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "em",
+        value: 1,
       },
     },
     {
-      property: "left",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: 1,
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "top",
       value: {
         type: "unit",
         unit: "number",
@@ -1302,7 +1169,7 @@ export default {
       },
     },
     {
-      property: "top",
+      property: "left",
       value: {
         type: "unit",
         unit: "number",
@@ -1310,35 +1177,12 @@ export default {
       },
     },
     {
-      property: "margin",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "height",
+      property: "right",
       value: {
         type: "unit",
-        unit: "em",
-        value: 1,
+        unit: "number",
+        value: 0,
       },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '""',
-      },
-      state: ":before",
     },
   ],
   "w-icon-nav-menu": [
@@ -1346,7 +1190,7 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î˜‚"',
       },
       state: ":before",
     },
@@ -1356,41 +1200,33 @@ export default {
       property: "content",
       value: {
         type: "unparsed",
-        value: '""',
+        value: '"î˜ƒ"',
       },
       state: ":before",
     },
   ],
   "w-icon-dropdown-toggle": [
     {
-      property: "right",
+      property: "content",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "unparsed",
+        value: '"î˜ƒ"',
       },
     },
     {
-      property: "bottom",
+      property: "width",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "em",
+        value: 1,
       },
     },
     {
-      property: "top",
+      property: "height",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
+        unit: "em",
+        value: 1,
       },
     },
     {
@@ -1401,37 +1237,45 @@ export default {
       },
     },
     {
-      property: "height",
+      property: "position",
       value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
+        type: "keyword",
+        value: "absolute",
       },
     },
     {
-      property: "width",
+      property: "top",
       value: {
         type: "unit",
-        unit: "em",
-        value: 1,
+        unit: "number",
+        value: 0,
       },
     },
     {
-      property: "content",
+      property: "bottom",
       value: {
-        type: "unparsed",
-        value: '""',
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
   ],
   "w-icon-file-upload-remove": [
     {
-      property: "fontSize",
+      property: "content",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
+        type: "unparsed",
+        value: '"î¤€"',
       },
+      state: ":before",
     },
     {
       property: "margin",
@@ -1441,20 +1285,29 @@ export default {
       },
     },
     {
-      property: "content",
+      property: "fontSize",
       value: {
-        type: "unparsed",
-        value: '""',
+        type: "unit",
+        unit: "px",
+        value: 10,
       },
-      state: ":before",
     },
   ],
   "w-icon-file-upload-icon": [
     {
-      property: "display",
+      property: "content",
       value: {
-        type: "keyword",
-        value: "inline-block",
+        type: "unparsed",
+        value: '"î¤ƒ"',
+      },
+      state: ":before",
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
       },
     },
     {
@@ -1466,20 +1319,11 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "display",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
+        type: "keyword",
+        value: "inline-block",
       },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '""',
-      },
-      state: ":before",
     },
   ],
   "*": [
@@ -1502,18 +1346,18 @@ export default {
   ],
   "w-inline-block": [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "maxWidth",
       value: {
         type: "unit",
         unit: "%",
         value: 100,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
       },
     },
   ],
@@ -1583,55 +1427,56 @@ export default {
         value: "none",
       },
     },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
   ],
   "w-button": [
     {
-      property: "webkitAppearance",
+      property: "color",
       value: {
-        type: "invalid",
-        value: "",
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
       },
     },
     {
-      property: "display",
+      property: "lineHeight",
       value: {
         type: "keyword",
-        value: "inline-block",
+        value: "inherit",
       },
     },
     {
-      property: "textDecoration",
+      property: "cursor",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "border",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "borderRadius",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -1653,53 +1498,24 @@ export default {
       },
     },
     {
-      property: "borderRadius",
+      property: "textDecoration",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "invalid",
+        value: "",
       },
     },
     {
-      property: "border",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "cursor",
+      property: "display",
       value: {
         type: "keyword",
-        value: "pointer",
+        value: "inline-block",
       },
     },
     {
-      property: "lineHeight",
+      property: "webkitAppearance",
       value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
+        type: "invalid",
+        value: "",
       },
     },
   ],
@@ -1714,96 +1530,84 @@ export default {
   ],
   "w-webflow-badge": [
     {
-      property: "transform",
+      property: "boxSizing",
+      value: {
+        type: "keyword",
+        value: "border-box",
+      },
+    },
+    {
+      property: "float",
       value: {
         type: "keyword",
         value: "none",
       },
     },
     {
-      property: "overflow",
+      property: "clear",
       value: {
         type: "keyword",
-        value: "visible",
+        value: "none",
       },
     },
     {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 12,
-      },
-    },
-    {
-      property: "left",
+      property: "direction",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "ltr",
       },
     },
     {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 12,
-      },
-    },
-    {
-      property: "top",
+      property: "fontFamily",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "inherit",
       },
     },
     {
-      property: "position",
+      property: "fontWeight",
       value: {
         type: "keyword",
-        value: "fixed",
+        value: "inherit",
       },
     },
     {
-      property: "display",
+      property: "fontStyle",
       value: {
         type: "keyword",
-        value: "inline-block",
+        value: "inherit",
       },
     },
     {
-      property: "textDecoration",
+      property: "fontVariant",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "letterSpacing",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "webkitTextDecoration",
       value: {
         type: "invalid",
         value: "",
       },
     },
     {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 14,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 12,
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 6,
-      },
-    },
-    {
-      property: "margin",
+      property: "textIndent",
       value: {
         type: "unit",
         unit: "number",
@@ -1811,227 +1615,59 @@ export default {
       },
     },
     {
-      property: "height",
+      property: "textTransform",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "inherit",
       },
     },
     {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "borderRadius",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 3,
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 170,
-        g: 173,
-        b: 176,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2147483647,
-      },
-    },
-    {
-      property: "visibility",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-    {
-      property: "boxShadow",
-      value: {
-        type: "unparsed",
-        value: "0 0 0 1px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.1)",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "nowrap",
-      },
-    },
-    {
-      property: "transform",
+      property: "textShadow",
       value: {
         type: "keyword",
         value: "none",
       },
     },
     {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "static",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "transition",
+      property: "fontSmoothing",
       value: {
         type: "invalid",
-        value: "none",
-      },
-    },
-    {
-      property: "listStyleType",
-      value: {
-        type: "keyword",
-        value: "disc",
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "maxHeight",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "minHeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "keyword",
         value: "auto",
       },
     },
     {
-      property: "maxWidth",
+      property: "verticalAlign",
       value: {
         type: "keyword",
-        value: "none",
+        value: "baseline",
       },
     },
     {
-      property: "minWidth",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "width",
+      property: "wordBreak",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "normal",
       },
     },
     {
-      property: "borderRadius",
+      property: "wordSpacing",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "wordWrap",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "backgroundImage",
+      value: {
+        type: "invalid",
+        value: "",
       },
     },
     {
@@ -2052,84 +1688,7 @@ export default {
       },
     },
     {
-      property: "backgroundColor",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "wordWrap",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordSpacing",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordBreak",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "baseline",
-      },
-    },
-    {
-      property: "fontSmoothing",
-      value: {
-        type: "invalid",
-        value: "auto",
-      },
-    },
-    {
-      property: "textShadow",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textTransform",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "textIndent",
+      property: "minWidth",
       value: {
         type: "unit",
         unit: "number",
@@ -2137,123 +1696,60 @@ export default {
       },
     },
     {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitTextDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "letterSpacing",
+      property: "maxWidth",
       value: {
         type: "keyword",
-        value: "inherit",
+        value: "none",
       },
     },
     {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontVariant",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontFamily",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "direction",
-      value: {
-        type: "keyword",
-        value: "ltr",
-      },
-    },
-    {
-      property: "opacity",
+      property: "minHeight",
       value: {
         type: "unit",
         unit: "number",
-        value: 1,
+        value: 0,
+      },
+    },
+    {
+      property: "maxHeight",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "listStyleType",
+      value: {
+        type: "keyword",
+        value: "disc",
+      },
+    },
+    {
+      property: "transition",
+      value: {
+        type: "invalid",
+        value: "none",
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
       },
     },
     {
       property: "boxShadow",
       value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "float",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "border-box",
+        type: "unparsed",
+        value: "0 0 0 1px rgba(0,0,0,0.1),0 1px 3px rgba(0,0,0,0.1)",
       },
     },
     {
@@ -2266,182 +1762,75 @@ export default {
     {
       property: "zIndex",
       value: {
+        type: "unit",
+        unit: "number",
+        value: 2147483647,
+      },
+    },
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 170,
+        g: 173,
+        b: 176,
+      },
+    },
+    {
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      property: "borderRadius",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 3,
+      },
+    },
+    {
+      property: "width",
+      value: {
         type: "keyword",
         value: "auto",
       },
     },
-  ],
-  h2: [
     {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 36,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 32,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "fontWeight",
+      property: "height",
       value: {
         type: "keyword",
-        value: "bold",
+        value: "auto",
       },
     },
     {
-      property: "marginBottom",
+      property: "margin",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "padding",
       value: {
         type: "unit",
         unit: "px",
-        value: 10,
-      },
-    },
-  ],
-  h3: [
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 30,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 24,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-  ],
-  h4: [
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 24,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-  ],
-  h5: [
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 14,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "bold",
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-  ],
-  h6: [
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
+        value: 6,
       },
     },
     {
@@ -2453,7 +1842,82 @@ export default {
       },
     },
     {
-      property: "marginTop",
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 14,
+      },
+    },
+    {
+      property: "textDecoration",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "fixed",
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      property: "transform",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+  ],
+  h2: [
+    {
+      property: "marginBottom",
       value: {
         type: "unit",
         unit: "px",
@@ -2468,6 +1932,32 @@ export default {
       },
     },
     {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 32,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 36,
+      },
+    },
+  ],
+  h3: [
+    {
       property: "marginBottom",
       value: {
         type: "unit",
@@ -2475,32 +1965,60 @@ export default {
         value: 10,
       },
     },
-  ],
-  p: [
     {
-      property: "marginBottom",
+      property: "fontWeight",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
+        type: "keyword",
+        value: "bold",
       },
     },
     {
       property: "marginTop",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 20,
       },
     },
-  ],
-  blockquote: [
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 24,
+      },
+    },
     {
       property: "lineHeight",
       value: {
         type: "unit",
         unit: "px",
-        value: 22,
+        value: 30,
+      },
+    },
+  ],
+  h4: [
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "bold",
+      },
+    },
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
       },
     },
     {
@@ -2509,6 +2027,130 @@ export default {
         type: "unit",
         unit: "px",
         value: 18,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 24,
+      },
+    },
+  ],
+  h5: [
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "bold",
+      },
+    },
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 14,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+  ],
+  h6: [
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "bold",
+      },
+    },
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 12,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 18,
+      },
+    },
+  ],
+  p: [
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+  ],
+  blockquote: [
+    {
+      property: "borderLeft",
+      value: {
+        type: "unparsed",
+        value: "5px solid #e2e2e2",
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "unparsed",
+        value: "0 0 10px",
       },
     },
     {
@@ -2530,27 +2172,29 @@ export default {
       },
     },
     {
-      property: "margin",
+      property: "fontSize",
       value: {
-        type: "unparsed",
-        value: "0 0 10px",
+        type: "unit",
+        unit: "px",
+        value: 18,
       },
     },
     {
-      property: "borderLeft",
+      property: "lineHeight",
       value: {
-        type: "unparsed",
-        value: "5px solid #e2e2e2",
+        type: "unit",
+        unit: "px",
+        value: 22,
       },
     },
   ],
   ul: [
     {
-      property: "paddingLeft",
+      property: "marginTop",
       value: {
         type: "unit",
-        unit: "px",
-        value: 40,
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -2562,21 +2206,21 @@ export default {
       },
     },
     {
-      property: "marginTop",
+      property: "paddingLeft",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 40,
       },
     },
   ],
   ol: [
     {
-      property: "paddingLeft",
+      property: "marginTop",
       value: {
         type: "unit",
-        unit: "px",
-        value: 40,
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -2588,28 +2232,28 @@ export default {
       },
     },
     {
-      property: "marginTop",
+      property: "paddingLeft",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 40,
       },
     },
   ],
   "w-list-unstyled": [
-    {
-      property: "listStyle",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
     {
       property: "paddingLeft",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
+      },
+    },
+    {
+      property: "listStyle",
+      value: {
+        type: "invalid",
+        value: "",
       },
     },
   ],
@@ -2673,10 +2317,11 @@ export default {
   ],
   "w-video": [
     {
-      property: "position",
+      property: "width",
       value: {
-        type: "keyword",
-        value: "relative",
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
     {
@@ -2688,31 +2333,16 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "position",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "keyword",
+        value: "relative",
       },
     },
   ],
   fieldset: [
     {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
-      property: "padding",
+      property: "border",
       value: {
         type: "unit",
         unit: "number",
@@ -2728,11 +2358,18 @@ export default {
       },
     },
     {
-      property: "border",
+      property: "padding",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
+      },
+    },
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
       },
     },
   ],
@@ -2747,18 +2384,10 @@ export default {
   ],
   "w-form-done": [
     {
-      property: "display",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
+        value: "center",
       },
     },
     {
@@ -2772,14 +2401,13 @@ export default {
       },
     },
     {
-      property: "textAlign",
+      property: "padding",
       value: {
-        type: "keyword",
-        value: "center",
+        type: "unit",
+        unit: "px",
+        value: 20,
       },
     },
-  ],
-  "w-form-fail": [
     {
       property: "display",
       value: {
@@ -2787,12 +2415,16 @@ export default {
         value: "none",
       },
     },
+  ],
+  "w-form-fail": [
     {
-      property: "padding",
+      property: "backgroundColor",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 222,
+        b: 222,
       },
     },
     {
@@ -2804,22 +2436,28 @@ export default {
       },
     },
     {
-      property: "backgroundColor",
+      property: "padding",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 222,
-        b: 222,
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
       },
     },
   ],
   label: [
     {
-      property: "display",
+      property: "marginBottom",
       value: {
-        type: "keyword",
-        value: "block",
+        type: "unit",
+        unit: "px",
+        value: 5,
       },
     },
     {
@@ -2830,85 +2468,52 @@ export default {
       },
     },
     {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-  ],
-  "w-input": [
-    {
-      property: "height",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
-      },
-    },
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
-      },
-    },
-    {
       property: "display",
       value: {
         type: "keyword",
         value: "block",
       },
     },
+  ],
+  "w-input": [
     {
-      property: "lineHeight",
+      property: "verticalAlign",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 1.42857,
+        type: "keyword",
+        value: "middle",
       },
     },
     {
-      property: "fontSize",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      property: "border",
+      value: {
+        type: "unparsed",
+        value: "1px solid #ccc",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "marginBottom",
       value: {
         type: "unit",
         unit: "px",
-        value: 14,
+        value: 10,
       },
     },
     {
@@ -2930,61 +2535,26 @@ export default {
       },
     },
     {
-      property: "marginBottom",
+      property: "fontSize",
       value: {
         type: "unit",
         unit: "px",
-        value: 10,
+        value: 14,
       },
     },
     {
-      property: "height",
+      property: "lineHeight",
       value: {
         type: "unit",
-        unit: "px",
-        value: 38,
+        unit: "number",
+        value: 1.42857,
       },
     },
     {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "1px solid #ccc",
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "verticalAlign",
+      property: "display",
       value: {
         type: "keyword",
-        value: "middle",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 51,
-        g: 51,
-        b: 51,
+        value: "block",
       },
     },
     {
@@ -2997,6 +2567,24 @@ export default {
         b: 153,
       },
       state: ":-moz-placeholder",
+    },
+    {
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
     },
     {
       property: "borderColor",
@@ -3018,13 +2606,134 @@ export default {
       },
       state: ":focus",
     },
-  ],
-  "w-select": [
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
+      },
+    },
     {
       property: "height",
       value: {
         type: "keyword",
         value: "auto",
+      },
+    },
+  ],
+  "w-select": [
+    {
+      property: "verticalAlign",
+      value: {
+        type: "keyword",
+        value: "middle",
+      },
+    },
+    {
+      property: "border",
+      value: {
+        type: "unparsed",
+        value: "1px solid #ccc",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "tuple",
+        value: [
+          {
+            type: "unit",
+            unit: "px",
+            value: 8,
+          },
+          {
+            type: "unit",
+            unit: "px",
+            value: 12,
+          },
+        ],
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 14,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1.42857,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 153,
+        g: 153,
+        b: 153,
+      },
+    },
+    {
+      property: "borderColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 56,
+        g: 152,
+        b: 236,
+      },
+    },
+    {
+      property: "outline",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "not-allowed",
       },
     },
     {
@@ -3044,175 +2753,6 @@ export default {
         value: "auto",
       },
     },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "not-allowed",
-      },
-    },
-    {
-      property: "outline",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "borderColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 56,
-        g: 152,
-        b: 236,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
-      },
-    },
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 153,
-        g: 153,
-        b: 153,
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1.42857,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 14,
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "tuple",
-        value: [
-          {
-            type: "unit",
-            unit: "px",
-            value: 8,
-          },
-          {
-            type: "unit",
-            unit: "px",
-            value: 12,
-          },
-        ],
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 38,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "1px solid #ccc",
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "middle",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 51,
-        g: 51,
-        b: 51,
-      },
-    },
   ],
   "w-input-disabled": [
     {
@@ -3228,17 +2768,10 @@ export default {
   ],
   "w-form-label": [
     {
-      property: "display",
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "fontWeight",
-      value: {
-        type: "keyword",
-        value: "normal",
+        value: "pointer",
       },
     },
     {
@@ -3250,19 +2783,27 @@ export default {
       },
     },
     {
-      property: "cursor",
+      property: "fontWeight",
       value: {
         type: "keyword",
-        value: "pointer",
+        value: "normal",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
       },
     },
   ],
   "w-radio": [
     {
-      property: "display",
+      property: "marginBottom",
       value: {
-        type: "keyword",
-        value: "block",
+        type: "unit",
+        unit: "px",
+        value: 5,
       },
     },
     {
@@ -3274,11 +2815,10 @@ export default {
       },
     },
     {
-      property: "marginBottom",
+      property: "display",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
+        type: "keyword",
+        value: "block",
       },
     },
     {
@@ -3340,10 +2880,10 @@ export default {
   ],
   "w-radio-input": [
     {
-      property: "lineHeight",
+      property: "float",
       value: {
         type: "keyword",
-        value: "normal",
+        value: "left",
       },
     },
     {
@@ -3354,21 +2894,14 @@ export default {
       },
     },
     {
-      property: "float",
+      property: "lineHeight",
       value: {
         type: "keyword",
-        value: "left",
+        value: "normal",
       },
     },
   ],
   "w-file-upload": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
     {
       property: "marginBottom",
       value: {
@@ -3377,36 +2910,21 @@ export default {
         value: 10,
       },
     },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
   ],
   "w-file-upload-input": [
     {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "hidden",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
+      property: "opacity",
       value: {
         type: "unit",
-        unit: "px",
-        value: 0.1,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 0.1,
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -3418,30 +2936,38 @@ export default {
       },
     },
     {
-      property: "opacity",
+      property: "width",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 0.1,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 0.1,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
       },
     },
   ],
   "w-file-upload-default": [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "color",
       value: {
         type: "rgb",
@@ -3449,25 +2975,18 @@ export default {
         r: 51,
         g: 51,
         b: 51,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
       },
     },
   ],
   "w-file-upload-uploading": [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "color",
       value: {
         type: "rgb",
@@ -3475,25 +2994,18 @@ export default {
         r: 51,
         g: 51,
         b: 51,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
       },
     },
   ],
   "w-file-upload-success": [
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
       property: "color",
       value: {
         type: "rgb",
@@ -3503,8 +3015,6 @@ export default {
         b: 51,
       },
     },
-  ],
-  "w-file-upload-error": [
     {
       property: "display",
       value: {
@@ -3512,13 +3022,8 @@ export default {
         value: "none",
       },
     },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
+  ],
+  "w-file-upload-error": [
     {
       property: "marginTop",
       value: {
@@ -3527,28 +3032,45 @@ export default {
         value: 10,
       },
     },
-  ],
-  "w-file-upload-uploading-btn": [
     {
       property: "display",
       value: {
         type: "keyword",
-        value: "flex",
+        value: "none",
       },
     },
+  ],
+  "w-file-upload-uploading-btn": [
     {
-      property: "fontWeight",
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "normal",
+        value: "pointer",
       },
     },
     {
-      property: "fontSize",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 250,
+        g: 250,
+        b: 250,
+      },
+    },
+    {
+      property: "border",
+      value: {
+        type: "unparsed",
+        value: "1px solid #ccc",
+      },
+    },
+    {
+      property: "margin",
       value: {
         type: "unit",
-        unit: "px",
-        value: 14,
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -3570,20 +3092,29 @@ export default {
       },
     },
     {
-      property: "margin",
+      property: "fontSize",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 14,
       },
     },
     {
-      property: "border",
+      property: "fontWeight",
       value: {
-        type: "unparsed",
-        value: "1px solid #ccc",
+        type: "keyword",
+        value: "normal",
       },
     },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
+      },
+    },
+  ],
+  "w-file-upload-file": [
     {
       property: "backgroundColor",
       value: {
@@ -3595,41 +3126,10 @@ export default {
       },
     },
     {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-  ],
-  "w-file-upload-file": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "flex",
-      },
-    },
-    {
-      property: "padding",
+      property: "border",
       value: {
         type: "unparsed",
-        value: "8px 9px 8px 11px",
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "justifyContent",
-      value: {
-        type: "keyword",
-        value: "space-between",
+        value: "1px solid #ccc",
       },
     },
     {
@@ -3641,29 +3141,42 @@ export default {
       },
     },
     {
-      property: "border",
+      property: "justifyContent",
       value: {
-        type: "unparsed",
-        value: "1px solid #ccc",
+        type: "keyword",
+        value: "space-between",
       },
     },
     {
-      property: "backgroundColor",
+      property: "margin",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 250,
-        g: 250,
-        b: 250,
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unparsed",
+        value: "8px 9px 8px 11px",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "flex",
       },
     },
   ],
   "w-file-upload-file-name": [
     {
-      property: "display",
+      property: "fontSize",
       value: {
-        type: "keyword",
-        value: "block",
+        type: "unit",
+        unit: "px",
+        value: 14,
       },
     },
     {
@@ -3674,24 +3187,37 @@ export default {
       },
     },
     {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 14,
-      },
-    },
-  ],
-  "w-file-remove-link": [
-    {
       property: "display",
       value: {
         type: "keyword",
         value: "block",
       },
     },
+  ],
+  "w-file-remove-link": [
     {
-      property: "padding",
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginTop",
       value: {
         type: "unit",
         unit: "px",
@@ -3707,7 +3233,7 @@ export default {
       },
     },
     {
-      property: "marginTop",
+      property: "padding",
       value: {
         type: "unit",
         unit: "px",
@@ -3715,33 +3241,22 @@ export default {
       },
     },
     {
-      property: "height",
+      property: "display",
       value: {
         type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
+        value: "block",
       },
     },
   ],
   "w-file-upload-error-msg": [
     {
-      property: "display",
+      property: "color",
       value: {
-        type: "keyword",
-        value: "inline-block",
+        type: "rgb",
+        alpha: 1,
+        r: 234,
+        g: 56,
+        b: 76,
       },
     },
     {
@@ -3763,32 +3278,14 @@ export default {
       },
     },
     {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 234,
-        g: 56,
-        b: 76,
-      },
-    },
-  ],
-  "w-file-upload-info": [
-    {
       property: "display",
       value: {
         type: "keyword",
         value: "inline-block",
       },
     },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 38,
-      },
-    },
+  ],
+  "w-file-upload-info": [
     {
       property: "padding",
       value: {
@@ -3807,8 +3304,14 @@ export default {
         ],
       },
     },
-  ],
-  "w-file-upload-label": [
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 38,
+      },
+    },
     {
       property: "display",
       value: {
@@ -3816,19 +3319,38 @@ export default {
         value: "inline-block",
       },
     },
+  ],
+  "w-file-upload-label": [
     {
-      property: "fontWeight",
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "normal",
+        value: "pointer",
       },
     },
     {
-      property: "fontSize",
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 250,
+        g: 250,
+        b: 250,
+      },
+    },
+    {
+      property: "border",
+      value: {
+        type: "unparsed",
+        value: "1px solid #ccc",
+      },
+    },
+    {
+      property: "margin",
       value: {
         type: "unit",
-        unit: "px",
-        value: 14,
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -3850,45 +3372,18 @@ export default {
       },
     },
     {
-      property: "margin",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "1px solid #ccc",
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 250,
-        g: 250,
-        b: 250,
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-  ],
-  "w-icon-file-upload-uploading": [
-    {
-      property: "height",
+      property: "fontSize",
       value: {
         type: "unit",
         unit: "px",
-        value: 20,
+        value: 14,
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "normal",
       },
     },
     {
@@ -3896,6 +3391,16 @@ export default {
       value: {
         type: "keyword",
         value: "inline-block",
+      },
+    },
+  ],
+  "w-icon-file-upload-uploading": [
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
       },
     },
     {
@@ -3907,7 +3412,14 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+    {
+      property: "height",
       value: {
         type: "unit",
         unit: "px",
@@ -3917,117 +3429,85 @@ export default {
   ],
   "w-container": [
     {
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":before",
+    },
+    {
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+      state: ":after",
+    },
+    {
+      property: "gridArea",
+      value: {
+        type: "unparsed",
+        value: "1/1/2/2",
+      },
+      state: ":before",
+    },
+    {
+      property: "gridArea",
+      value: {
+        type: "unparsed",
+        value: "1/1/2/2",
+      },
+      state: ":after",
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "table",
+      },
+      state: ":before",
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "table",
+      },
+      state: ":after",
+    },
+    {
+      property: "clear",
+      value: {
+        type: "keyword",
+        value: "both",
+      },
+      state: ":after",
+    },
+    {
       property: "maxWidth",
       value: {
         type: "keyword",
         value: "none",
       },
     },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 728,
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 940,
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-      state: ":before",
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-      state: ":after",
-    },
-    {
-      property: "gridArea",
-      value: {
-        type: "unparsed",
-        value: "1/1/2/2",
-      },
-      state: ":before",
-    },
-    {
-      property: "gridArea",
-      value: {
-        type: "unparsed",
-        value: "1/1/2/2",
-      },
-      state: ":after",
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "table",
-      },
-      state: ":before",
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "table",
-      },
-      state: ":after",
-    },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "both",
-      },
-      state: ":after",
-    },
   ],
   "w-row": [
     {
-      property: "marginRight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
       property: "content",
       value: {
         type: "unparsed",
@@ -4082,60 +3562,30 @@ export default {
         value: "both",
       },
       state: ":after",
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
     },
   ],
   "w-col": [
     {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "right",
+      property: "float",
       value: {
         type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "paddingRight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
+        value: "left",
       },
     },
     {
@@ -4147,18 +3597,48 @@ export default {
       },
     },
     {
+      property: "paddingLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "paddingRight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 100,
-      },
-    },
-    {
-      property: "float",
-      value: {
-        type: "keyword",
-        value: "left",
       },
     },
   ],
@@ -4290,27 +3770,6 @@ export default {
         value: "inherit",
       },
     },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
   ],
   "w-hidden-medium": [
     {
@@ -4318,20 +3777,6 @@ export default {
       value: {
         type: "keyword",
         value: "inherit",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
       },
     },
   ],
@@ -4457,10 +3902,11 @@ export default {
   ],
   "w-col-stack": [
     {
-      property: "right",
+      property: "width",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
     {
@@ -4471,11 +3917,10 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "right",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "keyword",
+        value: "auto",
       },
     },
   ],
@@ -4485,13 +3930,6 @@ export default {
       value: {
         type: "keyword",
         value: "inherit",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
       },
     },
   ],
@@ -4755,19 +4193,19 @@ export default {
   ],
   "w-widget-map": [
     {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 400,
-      },
-    },
-    {
       property: "width",
       value: {
         type: "unit",
         unit: "%",
         value: 100,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 400,
       },
     },
   ],
@@ -4782,279 +4220,34 @@ export default {
   ],
   "w-widget-twitter-count-shim": [
     {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 76,
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 22,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -4,
-      },
-    },
-    {
-      property: "borderColor",
-      value: {
-        type: "unparsed",
-        value: "#fff rgba(255,255,255,0) rgba(255,255,255,0)",
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
-      property: "borderColor",
-      value: {
-        type: "unparsed",
-        value: "#5d6c7b rgba(117,134,150,0) rgba(117,134,150,0)",
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "position",
+      property: "verticalAlign",
       value: {
         type: "keyword",
-        value: "absolute",
+        value: "top",
       },
     },
     {
-      property: "position",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "absolute",
+        value: "center",
       },
     },
     {
-      property: "height",
+      property: "backgroundImage",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "invalid",
+        value: "",
       },
     },
     {
-      property: "height",
+      property: "backgroundColor",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "solid rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "solid rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
-      },
-    },
-    {
-      property: "marginBottom",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 8,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 33,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 61,
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 28,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 36,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 28,
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
       },
     },
     {
@@ -5066,239 +4259,10 @@ export default {
       },
     },
     {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "1px solid #758696",
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "textAlign",
+      property: "display",
       value: {
         type: "keyword",
-        value: "center",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "top",
-      },
-    },
-  ],
-  "w--large": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 76,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -9,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -10,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 6,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 28,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 36,
-      },
-    },
-  ],
-  "w--vertical": [
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 76,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -4,
-      },
-    },
-    {
-      property: "borderColor",
-      value: {
-        type: "unparsed",
-        value: "#fff rgba(255,255,255,0) rgba(255,255,255,0)",
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
-      property: "borderColor",
-      value: {
-        type: "unparsed",
-        value: "#5d6c7b rgba(117,134,150,0) rgba(117,134,150,0)",
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "solid rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "pointerEvents",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "content",
-      value: {
-        type: "unparsed",
-        value: '" "',
+        value: "inline-block",
       },
     },
     {
@@ -5310,177 +4274,10 @@ export default {
       },
     },
     {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 33,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 61,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -9,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -8,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -4,
-      },
-    },
-    {
-      property: "borderColor",
+      property: "content",
       value: {
         type: "unparsed",
-        value:
-          "rgba(255,255,255,0) #fff rgba(255,255,255,0) rgba(255,255,255,0)",
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -10,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -5,
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 5,
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -9,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -4,
-      },
-    },
-    {
-      property: "borderColor",
-      value: {
-        type: "unparsed",
-        value:
-          "rgba(117,134,150,0) #5d6c7b rgba(117,134,150,0) rgba(117,134,150,0)",
-      },
-    },
-    {
-      property: "borderWidth",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 4,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "border",
-      value: {
-        type: "unparsed",
-        value: "solid rgba(0,0,0,0)",
+        value: '" "',
       },
     },
     {
@@ -5491,10 +4288,56 @@ export default {
       },
     },
     {
-      property: "content",
+      property: "border",
       value: {
         type: "unparsed",
-        value: '" "',
+        value: "solid rgba(0,0,0,0)",
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      property: "borderWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderColor",
+      value: {
+        type: "unparsed",
+        value: "#fff rgba(255,255,255,0) rgba(255,255,255,0)",
       },
     },
     {
@@ -5502,9 +4345,77 @@ export default {
       value: {
         type: "unit",
         unit: "px",
-        value: 6,
+        value: -4,
       },
     },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 18,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 22,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 76,
+      },
+    },
+  ],
+  "w--large": [
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 28,
+      },
+    },
+    {
+      property: "borderWidth",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 5,
+      },
+    },
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -5,
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -9,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 76,
+      },
+    },
+  ],
+  "w--vertical": [
     {
       property: "marginRight",
       value: {
@@ -5514,11 +4425,19 @@ export default {
       },
     },
     {
-      property: "marginLeft",
+      property: "marginTop",
       value: {
         type: "unit",
         unit: "px",
-        value: 5,
+        value: -5,
+      },
+    },
+    {
+      property: "marginBottom",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 8,
       },
     },
     {
@@ -5530,10 +4449,32 @@ export default {
       state: ":after",
     },
     {
+      property: "content",
+      value: {
+        type: "unparsed",
+        value: '" "',
+      },
+    },
+    {
       property: "pointerEvents",
       value: {
         type: "keyword",
         value: "none",
+      },
+      state: ":after",
+    },
+    {
+      property: "pointerEvents",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "border",
+      value: {
+        type: "unparsed",
+        value: "solid rgba(0,0,0,0)",
       },
       state: ":after",
     },
@@ -5543,7 +4484,6 @@ export default {
         type: "unparsed",
         value: "solid rgba(0,0,0,0)",
       },
-      state: ":after",
     },
     {
       property: "width",
@@ -5564,12 +4504,27 @@ export default {
       state: ":after",
     },
     {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
       property: "position",
       value: {
         type: "keyword",
         value: "absolute",
       },
       state: ":after",
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
     },
     {
       property: "top",
@@ -5581,6 +4536,14 @@ export default {
       state: ":after",
     },
     {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
       property: "left",
       value: {
         type: "unit",
@@ -5589,20 +4552,55 @@ export default {
       },
       state: ":after",
     },
-  ],
-  "w-background-video": [
     {
-      property: "overflow",
+      property: "left",
       value: {
-        type: "keyword",
-        value: "hidden",
+        type: "unit",
+        unit: "%",
+        value: 50,
       },
     },
     {
-      property: "position",
+      property: "borderWidth",
       value: {
-        type: "keyword",
-        value: "relative",
+        type: "unit",
+        unit: "px",
+        value: 4,
+      },
+    },
+    {
+      property: "borderColor",
+      value: {
+        type: "unparsed",
+        value: "#fff rgba(255,255,255,0) rgba(255,255,255,0)",
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -4,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 76,
+      },
+    },
+  ],
+  "w-background-video": [
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
       },
     },
     {
@@ -5614,38 +4612,29 @@ export default {
       },
     },
     {
-      property: "color",
+      property: "position",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
       },
     },
   ],
   "w-background-video--control": [
     {
-      property: "right",
+      property: "backgroundColor",
       value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
       },
     },
     {
@@ -5657,54 +4646,42 @@ export default {
       },
     },
     {
-      property: "backgroundColor",
+      property: "position",
       value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: 1,
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: 1,
       },
     },
   ],
   "w-slider": [
     {
-      property: "position",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "relative",
+        value: "center",
       },
     },
     {
-      property: "height",
+      property: "clear",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 300,
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 221,
-        g: 221,
-        b: 221,
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
+        type: "keyword",
+        value: "both",
       },
     },
     {
@@ -5718,10 +4695,167 @@ export default {
       },
     },
     {
-      property: "clear",
+      property: "tapHighlightColor",
+      value: {
+        type: "invalid",
+        value: "rgba(0,0,0,0)",
+      },
+    },
+    {
+      property: "backgroundImage",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 221,
+        g: 221,
+        b: 221,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 300,
+      },
+    },
+    {
+      property: "position",
       value: {
         type: "keyword",
-        value: "both",
+        value: "relative",
+      },
+    },
+  ],
+  "w-slider-mask": [
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+  ],
+  "w-slide": [
+    {
+      property: "verticalAlign",
+      value: {
+        type: "keyword",
+        value: "top",
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "left",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+  ],
+  "w-slider-nav": [
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2,
       },
     },
     {
@@ -5731,17 +4865,54 @@ export default {
         value: "center",
       },
     },
-  ],
-  "w-slider-mask": [
     {
-      property: "overflow",
+      property: "webkitTapHighlightColor",
       value: {
-        type: "keyword",
-        value: "hidden",
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
       },
     },
     {
-      property: "right",
+      property: "tapHighlightColor",
+      value: {
+        type: "invalid",
+        value: "rgba(0,0,0,0)",
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "paddingTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "bottom",
       value: {
         type: "unit",
         unit: "number",
@@ -5757,102 +4928,47 @@ export default {
       },
     },
     {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "nowrap",
-      },
-    },
-    {
-      property: "zIndex",
+      property: "right",
       value: {
         type: "unit",
         unit: "number",
-        value: 1,
-      },
-    },
-  ],
-  "w-slide": [
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
+        value: 0,
       },
     },
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "height",
+      property: "borderRadius",
       value: {
         type: "unit",
         unit: "%",
         value: 100,
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "inherit",
       },
     },
     {
       property: "width",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "keyword",
+        value: "auto",
       },
     },
     {
-      property: "textAlign",
+      property: "height",
       value: {
         type: "keyword",
-        value: "left",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "top",
-      },
-    },
-  ],
-  "w-slider-nav": [
-    {
-      property: "boxShadow",
-      value: {
-        type: "unparsed",
-        value: "0 0 3px rgba(51,51,51,0.4)",
+        value: "auto",
       },
     },
     {
@@ -5874,132 +4990,10 @@ export default {
       },
     },
     {
-      property: "height",
+      property: "boxShadow",
       value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "keyword",
-        value: "inherit",
-      },
-    },
-    {
-      property: "borderRadius",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "paddingTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 40,
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "webkitTapHighlightColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2,
+        type: "unparsed",
+        value: "0 0 3px rgba(51,51,51,0.4)",
       },
     },
   ],
@@ -6017,56 +5011,52 @@ export default {
   ],
   "w-active": [
     {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
       property: "boxShadow",
       value: {
         type: "keyword",
         value: "none",
       },
     },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 34,
-        g: 34,
-        b: 34,
-      },
-    },
   ],
   "w-slider-dot": [
     {
-      property: "backgroundColor",
+      property: "cursor",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
+        type: "keyword",
+        value: "pointer",
       },
     },
     {
-      property: "position",
+      property: "width",
       value: {
-        type: "keyword",
-        value: "relative",
+        type: "unit",
+        unit: "em",
+        value: 1,
       },
     },
     {
-      property: "display",
+      property: "height",
       value: {
-        type: "keyword",
-        value: "inline-block",
+        type: "unit",
+        unit: "em",
+        value: 1,
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "unparsed",
+        value: "0 3px 0.5em",
       },
     },
     {
@@ -6106,43 +5096,27 @@ export default {
       },
     },
     {
-      property: "margin",
+      property: "display",
       value: {
-        type: "unparsed",
-        value: "0 3px 0.5em",
+        type: "keyword",
+        value: "inline-block",
       },
     },
     {
-      property: "height",
+      property: "position",
       value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: 1,
+        type: "keyword",
+        value: "relative",
       },
     },
     {
       property: "backgroundColor",
       value: {
         type: "rgb",
-        alpha: 0.4,
+        alpha: 1,
         r: 255,
         g: 255,
         b: 255,
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
       },
     },
     {
@@ -6150,14 +5124,6 @@ export default {
       value: {
         type: "invalid",
         value: "",
-      },
-      state: ":focus",
-    },
-    {
-      property: "boxShadow",
-      value: {
-        type: "unparsed",
-        value: "0 0 0 2px #fff",
       },
       state: ":focus",
     },
@@ -6172,37 +5138,92 @@ export default {
   ],
   "w-slider-arrow-left": [
     {
-      property: "right",
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "pointer",
       },
     },
     {
-      property: "zIndex",
+      property: "color",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 3,
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
       },
     },
     {
-      property: "overflow",
+      property: "webkitTapHighlightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      property: "tapHighlightColor",
+      value: {
+        type: "invalid",
+        value: "rgba(0,0,0,0)",
+      },
+    },
+    {
+      property: "webkitUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "msUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "userSelect",
       value: {
         type: "keyword",
-        value: "hidden",
+        value: "none",
       },
     },
     {
-      property: "right",
+      property: "width",
       value: {
         type: "unit",
-        unit: "number",
-        value: 0,
+        unit: "px",
+        value: 80,
       },
     },
     {
-      property: "left",
+      property: "margin",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 40,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "top",
       value: {
         type: "unit",
         unit: "number",
@@ -6218,7 +5239,7 @@ export default {
       },
     },
     {
-      property: "top",
+      property: "left",
       value: {
         type: "unit",
         unit: "number",
@@ -6226,88 +5247,10 @@ export default {
       },
     },
     {
-      property: "position",
+      property: "overflow",
       value: {
         type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 40,
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 80,
-      },
-    },
-    {
-      property: "userSelect",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "webkitTapHighlightColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
+        value: "hidden",
       },
     },
     {
@@ -6319,48 +5262,110 @@ export default {
       },
       state: ":focus",
     },
-  ],
-  "w-slider-arrow-right": [
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
     {
       property: "zIndex",
       value: {
         type: "unit",
         unit: "number",
-        value: 4,
-      },
-    },
-    {
-      property: "outline",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "hidden",
+        value: 3,
       },
     },
     {
       property: "right",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  "w-slider-arrow-right": [
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
       },
     },
     {
-      property: "left",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      property: "webkitTapHighlightColor",
+      value: {
+        type: "rgb",
+        alpha: 0,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      property: "tapHighlightColor",
+      value: {
+        type: "invalid",
+        value: "rgba(0,0,0,0)",
+      },
+    },
+    {
+      property: "webkitUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "msUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "userSelect",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 80,
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 40,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "top",
       value: {
         type: "unit",
         unit: "number",
@@ -6376,100 +5381,13 @@ export default {
       },
     },
     {
-      property: "top",
+      property: "right",
       value: {
         type: "unit",
         unit: "number",
         value: 0,
       },
     },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 40,
-      },
-    },
-    {
-      property: "margin",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 80,
-      },
-    },
-    {
-      property: "userSelect",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
-      },
-    },
-    {
-      property: "webkitTapHighlightColor",
-      value: {
-        type: "rgb",
-        alpha: 0,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-  ],
-  "w-slider-aria-label": [
     {
       property: "overflow",
       value: {
@@ -6478,14 +5396,7 @@ export default {
       },
     },
     {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "padding",
+      property: "outline",
       value: {
         type: "unit",
         unit: "number",
@@ -6493,27 +5404,27 @@ export default {
       },
     },
     {
-      property: "margin",
+      property: "zIndex",
       value: {
         type: "unit",
-        unit: "px",
-        value: -1,
+        unit: "number",
+        value: 4,
       },
     },
     {
-      property: "height",
+      property: "left",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 1,
+        type: "keyword",
+        value: "auto",
       },
     },
+  ],
+  "w-slider-aria-label": [
     {
-      property: "width",
+      property: "clip",
       value: {
-        type: "unit",
-        unit: "px",
-        value: 1,
+        type: "unparsed",
+        value: "rect(0 0 0 0)",
       },
     },
     {
@@ -6525,10 +5436,49 @@ export default {
       },
     },
     {
-      property: "clip",
+      property: "width",
       value: {
-        type: "unparsed",
-        value: "rect(0 0 0 0)",
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 1,
+      },
+    },
+    {
+      property: "margin",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -1,
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
       },
     },
   ],
@@ -6543,31 +5493,10 @@ export default {
   ],
   "w-dropdown": [
     {
-      property: "position",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
+        value: "left",
       },
     },
     {
@@ -6579,34 +5508,10 @@ export default {
       },
     },
     {
-      property: "textAlign",
+      property: "marginLeft",
       value: {
         type: "keyword",
-        value: "left",
-      },
-    },
-  ],
-  "w-dropdown-btn": [
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
+        value: "auto",
       },
     },
     {
@@ -6617,24 +5522,26 @@ export default {
       },
     },
     {
-      property: "marginLeft",
+      property: "display",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "inline-block",
       },
     },
     {
-      property: "whiteSpace",
+      property: "position",
       value: {
         type: "keyword",
-        value: "nowrap",
+        value: "relative",
       },
     },
+  ],
+  "w-dropdown-btn": [
     {
-      property: "textAlign",
+      property: "verticalAlign",
       value: {
         type: "keyword",
-        value: "left",
+        value: "top",
       },
     },
     {
@@ -6648,19 +5555,150 @@ export default {
       },
     },
     {
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "left",
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "textDecoration",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+  ],
+  "w-dropdown-toggle": [
+    {
       property: "verticalAlign",
       value: {
         type: "keyword",
         value: "top",
       },
     },
-  ],
-  "w-dropdown-toggle": [
     {
-      property: "display",
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 34,
+        g: 34,
+        b: 34,
+      },
+    },
+    {
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "inline-block",
+        value: "left",
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 20,
+      },
+    },
+    {
+      property: "textDecoration",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      property: "webkitUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "msUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "userSelect",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
       },
     },
     {
@@ -6672,98 +5710,10 @@ export default {
       },
     },
     {
-      property: "cursor",
+      property: "display",
       value: {
         type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "userSelect",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "nowrap",
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "left",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 34,
-        g: 34,
-        b: 34,
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "top",
+        value: "inline-block",
       },
     },
     {
@@ -6778,20 +5728,52 @@ export default {
   ],
   "w-dropdown-link": [
     {
-      property: "color",
+      property: "verticalAlign",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 0,
-        g: 130,
-        b: 243,
+        type: "keyword",
+        value: "top",
       },
     },
     {
-      property: "display",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "block",
+        value: "left",
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "textDecoration",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
       },
     },
     {
@@ -6813,63 +5795,10 @@ export default {
       },
     },
     {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 34,
-        g: 34,
-        b: 34,
-      },
-    },
-    {
-      property: "position",
+      property: "display",
       value: {
         type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 20,
-      },
-    },
-    {
-      property: "marginRight",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "nowrap",
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "left",
+        value: "block",
       },
     },
     {
@@ -6877,16 +5806,9 @@ export default {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 34,
-        g: 34,
-        b: 34,
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "top",
+        r: 0,
+        g: 130,
+        b: 243,
       },
     },
     {
@@ -6901,32 +5823,10 @@ export default {
   ],
   "w-dropdown-list": [
     {
-      property: "display",
+      property: "backgroundImage",
       value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "minWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "invalid",
+        value: "",
       },
     },
     {
@@ -6940,22 +5840,34 @@ export default {
       },
     },
     {
-      property: "backgroundImage",
+      property: "minWidth",
       value: {
-        type: "invalid",
-        value: "",
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
       },
     },
   ],
   "w--open": [
     {
-      property: "backgroundColor",
+      property: "display",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 200,
-        g: 200,
-        b: 200,
+        type: "keyword",
+        value: "block",
       },
     },
     {
@@ -6969,14 +5881,27 @@ export default {
       },
     },
     {
-      property: "display",
+      property: "backgroundColor",
       value: {
-        type: "keyword",
-        value: "block",
+        type: "rgb",
+        alpha: 1,
+        r: 200,
+        g: 200,
+        b: 200,
       },
     },
   ],
   "w--current": [
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 0,
+        g: 130,
+        b: 243,
+      },
+    },
     {
       property: "backgroundColor",
       value: {
@@ -6987,48 +5912,13 @@ export default {
         b: 200,
       },
     },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 0,
-        g: 130,
-        b: 243,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 0,
-        g: 130,
-        b: 243,
-      },
-    },
   ],
   "w-nav-brand": [
     {
-      property: "paddingLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
-      property: "position",
+      property: "float",
       value: {
         type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
+        value: "left",
       },
     },
     {
@@ -7042,10 +5932,17 @@ export default {
       },
     },
     {
-      property: "float",
+      property: "textDecoration",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "position",
       value: {
         type: "keyword",
-        value: "left",
+        value: "relative",
       },
     },
     {
@@ -7059,36 +5956,21 @@ export default {
   ],
   "w-lightbox-backdrop": [
     {
-      property: "overflow",
+      property: "cursor",
       value: {
         type: "keyword",
         value: "auto",
       },
     },
     {
-      property: "height",
+      property: "letterSpacing",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "keyword",
+        value: "normal",
       },
     },
     {
-      property: "webkitOverflowScrolling",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitTransform",
-      value: {
-        type: "unparsed",
-        value: "translate(0)",
-      },
-    },
-    {
-      property: "right",
+      property: "textIndent",
       value: {
         type: "unit",
         unit: "number",
@@ -7096,7 +5978,187 @@ export default {
       },
     },
     {
-      property: "left",
+      property: "textShadow",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textTransform",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "visibility",
+      value: {
+        type: "keyword",
+        value: "visible",
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "wordBreak",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "wordSpacing",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "wordWrap",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 2000,
+      },
+    },
+    {
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "webkitUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "mozUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "webkitTapHighlightColor",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "backgroundImage",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 0.9,
+        r: 0,
+        g: 0,
+        b: 0,
+      },
+    },
+    {
+      property: "outline",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "fontFamily",
+      value: {
+        type: "unparsed",
+        value: "Helvetica Neue,Helvetica,Ubuntu,Segoe UI,Verdana,sans-serif",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 17,
+      },
+    },
+    {
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "normal",
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 300,
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1.2,
+      },
+    },
+    {
+      property: "listStyle",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "fixed",
+      },
+    },
+    {
+      property: "top",
       value: {
         type: "unit",
         unit: "number",
@@ -7112,7 +6174,7 @@ export default {
       },
     },
     {
-      property: "top",
+      property: "left",
       value: {
         type: "unit",
         unit: "number",
@@ -7120,214 +6182,25 @@ export default {
       },
     },
     {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "fixed",
-      },
-    },
-    {
-      property: "listStyle",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "lineHeight",
+      property: "right",
       value: {
         type: "unit",
         unit: "number",
-        value: 1.2,
+        value: 0,
       },
     },
     {
-      property: "fontWeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 300,
-      },
-    },
-    {
-      property: "fontStyle",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 17,
-      },
-    },
-    {
-      property: "fontFamily",
+      property: "webkitTransform",
       value: {
         type: "unparsed",
-        value: "Helvetica Neue,Helvetica,Ubuntu,Segoe UI,Verdana,sans-serif",
+        value: "translate(0)",
       },
     },
     {
-      property: "outline",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 0.9,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "backgroundImage",
+      property: "webkitOverflowScrolling",
       value: {
         type: "invalid",
         value: "",
-      },
-    },
-    {
-      property: "webkitTapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "mozUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "opacity",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 2000,
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "wordWrap",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordSpacing",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "wordBreak",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "visibility",
-      value: {
-        type: "keyword",
-        value: "visible",
-      },
-    },
-    {
-      property: "textTransform",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textShadow",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "textIndent",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "letterSpacing",
-      value: {
-        type: "keyword",
-        value: "normal",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-  ],
-  "w-lightbox-container": [
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "auto",
       },
     },
     {
@@ -7339,28 +6212,43 @@ export default {
       },
     },
     {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  "w-lightbox-container": [
+    {
       property: "webkitOverflowScrolling",
       value: {
         type: "invalid",
         value: "",
       },
     },
-  ],
-  "w-lightbox-content": [
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 2,
-      },
-    },
     {
       property: "height",
       value: {
         type: "unit",
-        unit: "vh",
-        value: 96,
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+  ],
+  "w-lightbox-content": [
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
       },
     },
     {
@@ -7371,23 +6259,6 @@ export default {
       },
     },
     {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 100,
-      },
-    },
-  ],
-  "w-lightbox-view": [
-    {
       property: "height",
       value: {
         type: "unit",
@@ -7396,32 +6267,21 @@ export default {
       },
     },
     {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "middle",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "height",
+      property: "marginTop",
       value: {
         type: "unit",
         unit: "vh",
-        value: 100,
+        value: 2,
+      },
+    },
+  ],
+  "w-lightbox-view": [
+    {
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -7433,11 +6293,10 @@ export default {
       },
     },
     {
-      property: "opacity",
+      property: "position",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "absolute",
       },
     },
     {
@@ -7449,13 +6308,26 @@ export default {
       state: ":before",
     },
     {
+      property: "verticalAlign",
+      value: {
+        type: "keyword",
+        value: "middle",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "inline-block",
+      },
+    },
+    {
       property: "height",
       value: {
         type: "unit",
         unit: "vh",
-        value: 100,
+        value: 96,
       },
-      state: ":before",
     },
     {
       property: "height",
@@ -7476,23 +6348,8 @@ export default {
         value: 84,
       },
     },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 86,
-      },
-    },
   ],
   "w-lightbox-frame": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
     {
       property: "verticalAlign",
       value: {
@@ -7500,15 +6357,15 @@ export default {
         value: "middle",
       },
     },
-  ],
-  "w-lightbox-figure": [
     {
-      property: "position",
+      property: "display",
       value: {
         type: "keyword",
-        value: "relative",
+        value: "inline-block",
       },
     },
+  ],
+  "w-lightbox-figure": [
     {
       property: "margin",
       value: {
@@ -7517,10 +6374,17 @@ export default {
         value: 0,
       },
     },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
   ],
   "w-lightbox-img": [
     {
-      property: "height",
+      property: "width",
       value: {
         type: "keyword",
         value: "auto",
@@ -7534,7 +6398,7 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "height",
       value: {
         type: "keyword",
         value: "auto",
@@ -7543,19 +6407,10 @@ export default {
   ],
   "w-lightbox-image": [
     {
-      property: "maxHeight",
+      property: "float",
       value: {
-        type: "unit",
-        unit: "vh",
-        value: 96,
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "vw",
-        value: 96,
+        type: "keyword",
+        value: "none",
       },
     },
     {
@@ -7566,66 +6421,59 @@ export default {
       },
     },
     {
-      property: "maxHeight",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 100,
-      },
-    },
-    {
       property: "maxWidth",
       value: {
         type: "unit",
         unit: "vw",
-        value: 100,
+        value: 96,
       },
     },
     {
-      property: "float",
+      property: "maxHeight",
       value: {
-        type: "keyword",
-        value: "none",
+        type: "unit",
+        unit: "vh",
+        value: 96,
       },
     },
   ],
   "w-lightbox-caption": [
     {
-      property: "overflow",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "hidden",
+        value: "left",
       },
     },
     {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
+      property: "textOverflow",
       value: {
         type: "keyword",
-        value: "absolute",
+        value: "ellipsis",
+      },
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "nowrap",
+      },
+    },
+    {
+      property: "backgroundImage",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 0.4,
+        r: 0,
+        g: 0,
+        b: 0,
       },
     },
     {
@@ -7647,47 +6495,14 @@ export default {
       },
     },
     {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 0.4,
-        r: 0,
-        g: 0,
-        b: 0,
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "whiteSpace",
+      property: "position",
       value: {
         type: "keyword",
-        value: "nowrap",
+        value: "absolute",
       },
     },
     {
-      property: "textOverflow",
-      value: {
-        type: "keyword",
-        value: "ellipsis",
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "left",
-      },
-    },
-  ],
-  "w-lightbox-embed": [
-    {
-      property: "right",
+      property: "bottom",
       value: {
         type: "unit",
         unit: "number",
@@ -7703,7 +6518,7 @@ export default {
       },
     },
     {
-      property: "bottom",
+      property: "right",
       value: {
         type: "unit",
         unit: "number",
@@ -7711,18 +6526,20 @@ export default {
       },
     },
     {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
+      property: "overflow",
       value: {
         type: "keyword",
-        value: "absolute",
+        value: "hidden",
+      },
+    },
+  ],
+  "w-lightbox-embed": [
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
     {
@@ -7734,15 +6551,12 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "position",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "keyword",
+        value: "absolute",
       },
     },
-  ],
-  "w-lightbox-control": [
     {
       property: "top",
       value: {
@@ -7752,10 +6566,66 @@ export default {
       },
     },
     {
-      property: "position",
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+  ],
+  "w-lightbox-control": [
+    {
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "absolute",
+        value: "pointer",
+      },
+    },
+    {
+      property: "backgroundPosition",
+      value: {
+        type: "keyword",
+        value: "center",
+      },
+    },
+    {
+      property: "backgroundRepeat",
+      value: {
+        type: "keyword",
+        value: "no-repeat",
+      },
+    },
+    {
+      property: "backgroundSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 24,
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "em",
+        value: 4,
       },
     },
     {
@@ -7781,40 +6651,18 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "absolute",
+      },
+    },
+    {
+      property: "top",
       value: {
         type: "unit",
-        unit: "em",
-        value: 4,
-      },
-    },
-    {
-      property: "backgroundSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 24,
-      },
-    },
-    {
-      property: "backgroundRepeat",
-      value: {
-        type: "keyword",
-        value: "no-repeat",
-      },
-    },
-    {
-      property: "backgroundPosition",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -7829,18 +6677,19 @@ export default {
   ],
   "w-lightbox-left": [
     {
-      property: "display",
+      property: "backgroundImage",
       value: {
-        type: "keyword",
-        value: "block",
+        type: "unparsed",
+        value:
+          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0yMCAwIDI0IDQwIiB3aWR0aD0iMjQiIGhlaWdodD0iNDAiPjxnIHRyYW5zZm9ybT0icm90YXRlKDQ1KSI+PHBhdGggZD0ibTAgMGg1djIzaDIzdjVoLTI4eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDN2MjNoMjN2M2gtMjZ6IiBmaWxsPSIjZmZmIi8+PC9nPjwvc3ZnPg==)",
       },
     },
     {
-      property: "opacity",
+      property: "bottom",
       value: {
         type: "unit",
         unit: "number",
-        value: 0.5,
+        value: 0,
       },
     },
     {
@@ -7852,6 +6701,31 @@ export default {
       },
     },
     {
+      property: "opacity",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0.5,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+  ],
+  "w-lightbox-right": [
+    {
+      property: "backgroundImage",
+      value: {
+        type: "unparsed",
+        value:
+          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMjQgNDAiIHdpZHRoPSIyNCIgaGVpZ2h0PSI0MCI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMC0waDI4djI4aC01di0yM2gtMjN6IiBvcGFjaXR5PSIuNCIvPjxwYXRoIGQ9Im0xIDFoMjZ2MjZoLTN2LTIzaC0yM3oiIGZpbGw9IiNmZmYiLz48L2c+PC9zdmc+)",
+      },
+    },
+    {
       property: "bottom",
       value: {
         type: "unit",
@@ -7860,27 +6734,11 @@ export default {
       },
     },
     {
-      property: "display",
+      property: "right",
       value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "unparsed",
-        value:
-          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii0yMCAwIDI0IDQwIiB3aWR0aD0iMjQiIGhlaWdodD0iNDAiPjxnIHRyYW5zZm9ybT0icm90YXRlKDQ1KSI+PHBhdGggZD0ibTAgMGg1djIzaDIzdjVoLTI4eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDN2MjNoMjN2M2gtMjZ6IiBmaWxsPSIjZmZmIi8+PC9nPjwvc3ZnPg==)",
-      },
-    },
-  ],
-  "w-lightbox-right": [
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
     {
@@ -7892,60 +6750,20 @@ export default {
       },
     },
     {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
       property: "display",
       value: {
         type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "backgroundImage",
-      value: {
-        type: "unparsed",
-        value:
-          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMjQgNDAiIHdpZHRoPSIyNCIgaGVpZ2h0PSI0MCI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMC0waDI4djI4aC01di0yM2gtMjN6IiBvcGFjaXR5PSIuNCIvPjxwYXRoIGQ9Im0xIDFoMjZ2MjZoLTN2LTIzaC0yM3oiIGZpbGw9IiNmZmYiLz48L2c+PC9zdmc+)",
+        value: "block",
       },
     },
   ],
   "w-lightbox-close": [
     {
-      property: "opacity",
+      property: "backgroundImage",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0.8,
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "em",
-        value: 2.6,
+        type: "unparsed",
+        value:
+          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMTggMTciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxNyI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMCAwaDd2LTdoNXY3aDd2NWgtN3Y3aC01di03aC03eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDd2LTdoM3Y3aDd2M2gtN3Y3aC0zdi03aC03eiIgZmlsbD0iI2ZmZiIvPjwvZz48L3N2Zz4=)",
       },
     },
     {
@@ -7957,27 +6775,11 @@ export default {
       },
     },
     {
-      property: "backgroundImage",
+      property: "height",
       value: {
-        type: "unparsed",
-        value:
-          "url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9Ii00IDAgMTggMTciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxNyI+PGcgdHJhbnNmb3JtPSJyb3RhdGUoNDUpIj48cGF0aCBkPSJtMCAwaDd2LTdoNXY3aDd2NWgtN3Y3aC01di03aC03eiIgb3BhY2l0eT0iLjQiLz48cGF0aCBkPSJtMSAxaDd2LTdoM3Y3aDd2M2gtN3Y3aC0zdi03aC03eiIgZmlsbD0iI2ZmZiIvPjwvZz48L3N2Zz4=)",
-      },
-    },
-  ],
-  "w-lightbox-strip": [
-    {
-      property: "overflowY",
-      value: {
-        type: "keyword",
-        value: "hidden",
-      },
-    },
-    {
-      property: "overflowX",
-      value: {
-        type: "keyword",
-        value: "auto",
+        type: "unit",
+        unit: "em",
+        value: 2.6,
       },
     },
     {
@@ -7989,34 +6791,20 @@ export default {
       },
     },
     {
-      property: "left",
+      property: "opacity",
       value: {
         type: "unit",
         unit: "number",
-        value: 0,
+        value: 0.8,
       },
     },
+  ],
+  "w-lightbox-strip": [
     {
-      property: "bottom",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "position",
+      property: "whiteSpace",
       value: {
         type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "lineHeight",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        value: "nowrap",
       },
     },
     {
@@ -8038,26 +6826,80 @@ export default {
       },
     },
     {
-      property: "whiteSpace",
+      property: "lineHeight",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "position",
       value: {
         type: "keyword",
-        value: "nowrap",
+        value: "absolute",
+      },
+    },
+    {
+      property: "bottom",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "overflowX",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "overflowY",
+      value: {
+        type: "keyword",
+        value: "hidden",
       },
     },
   ],
   "w-lightbox-item": [
     {
-      property: "webkitTransform",
+      property: "boxSizing",
       value: {
-        type: "unparsed",
-        value: "translate3d(0,0,0)",
+        type: "keyword",
+        value: "content-box",
       },
     },
     {
-      property: "display",
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "inline-block",
+        value: "pointer",
+      },
+    },
+    {
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "vh",
+        value: 10,
       },
     },
     {
@@ -8079,25 +6921,17 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "display",
       value: {
-        type: "unit",
-        unit: "vh",
-        value: 10,
+        type: "keyword",
+        value: "inline-block",
       },
     },
     {
-      property: "cursor",
+      property: "webkitTransform",
       value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "boxSizing",
-      value: {
-        type: "keyword",
-        value: "content-box",
+        type: "unparsed",
+        value: "translate3d(0,0,0)",
       },
     },
   ],
@@ -8113,25 +6947,10 @@ export default {
   ],
   "w-lightbox-thumbnail": [
     {
-      property: "overflow",
+      property: "backgroundImage",
       value: {
-        type: "keyword",
-        value: "hidden",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "vh",
-        value: 10,
+        type: "invalid",
+        value: "",
       },
     },
     {
@@ -8145,20 +6964,34 @@ export default {
       },
     },
     {
-      property: "backgroundImage",
+      property: "height",
       value: {
-        type: "invalid",
-        value: "",
+        type: "unit",
+        unit: "vh",
+        value: 10,
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
       },
     },
   ],
   "w-lightbox-thumbnail-image": [
     {
-      property: "left",
+      property: "position",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "absolute",
       },
     },
     {
@@ -8170,74 +7003,27 @@ export default {
       },
     },
     {
-      property: "position",
+      property: "left",
       value: {
-        type: "keyword",
-        value: "absolute",
+        type: "unit",
+        unit: "number",
+        value: 0,
       },
     },
   ],
   "w-lightbox-spinner": [
     {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 50,
-      },
-    },
-    {
-      property: "position",
+      property: "boxSizing",
       value: {
         type: "keyword",
-        value: "absolute",
+        value: "border-box",
       },
     },
     {
-      property: "animation",
+      property: "border",
       value: {
         type: "unparsed",
-        value: "0.8s linear infinite spin",
-      },
-    },
-    {
-      property: "marginLeft",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -20,
-      },
-    },
-    {
-      property: "marginTop",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: -20,
-      },
-    },
-    {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 40,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 40,
+        value: "5px solid rgba(0,0,0,0.4)",
       },
     },
     {
@@ -8249,17 +7035,65 @@ export default {
       },
     },
     {
-      property: "border",
+      property: "width",
       value: {
-        type: "unparsed",
-        value: "5px solid rgba(0,0,0,0.4)",
+        type: "unit",
+        unit: "px",
+        value: 40,
       },
     },
     {
-      property: "boxSizing",
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 40,
+      },
+    },
+    {
+      property: "marginTop",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -20,
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: -20,
+      },
+    },
+    {
+      property: "animation",
+      value: {
+        type: "unparsed",
+        value: "0.8s linear infinite spin",
+      },
+    },
+    {
+      property: "position",
       value: {
         type: "keyword",
-        value: "border-box",
+        value: "absolute",
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 50,
       },
     },
     {
@@ -8382,20 +7216,6 @@ export default {
   ],
   "w-richtext": [
     {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
-      property: "whiteSpace",
-      value: {
-        type: "keyword",
-        value: "initial",
-      },
-    },
-    {
       property: "content",
       value: {
         type: "unparsed",
@@ -8450,6 +7270,13 @@ export default {
         value: "both",
       },
       state: ":after",
+    },
+    {
+      property: "whiteSpace",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
     },
   ],
   "w-richtext-figcaption-placeholder": [
@@ -8473,14 +7300,6 @@ export default {
   ],
   "w-richtext-figure-type-video": [
     {
-      property: "height",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
       property: "width",
       value: {
         type: "unit",
@@ -8488,29 +7307,21 @@ export default {
         value: 60,
       },
     },
+    {
+      property: "height",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
   ],
   "w-richtext-align-center": [
     {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "maxWidth",
-      value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
-      },
-    },
-    {
-      property: "marginRight",
+      property: "clear",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "both",
       },
     },
     {
@@ -8521,10 +7332,18 @@ export default {
       },
     },
     {
-      property: "clear",
+      property: "marginRight",
       value: {
         type: "keyword",
-        value: "both",
+        value: "auto",
+      },
+    },
+    {
+      property: "maxWidth",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
   ],
@@ -8539,24 +7358,25 @@ export default {
   ],
   "w-richtext-align-fullwidth": [
     {
-      property: "display",
+      property: "textAlign",
       value: {
         type: "keyword",
-        value: "block",
+        value: "center",
       },
     },
     {
-      property: "marginRight",
+      property: "clear",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "both",
       },
     },
     {
-      property: "marginLeft",
+      property: "width",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "unit",
+        unit: "%",
+        value: 100,
       },
     },
     {
@@ -8568,29 +7388,42 @@ export default {
       },
     },
     {
-      property: "width",
+      property: "marginLeft",
       value: {
-        type: "unit",
-        unit: "%",
-        value: 100,
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
+  ],
+  "w-richtext-align-floatleft": [
+    {
+      property: "float",
+      value: {
+        type: "keyword",
+        value: "left",
       },
     },
     {
       property: "clear",
       value: {
         type: "keyword",
-        value: "both",
+        value: "none",
       },
     },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "center",
-      },
-    },
-  ],
-  "w-richtext-align-floatleft": [
     {
       property: "marginRight",
       value: {
@@ -8599,6 +7432,15 @@ export default {
         value: 15,
       },
     },
+  ],
+  "w-richtext-align-floatright": [
+    {
+      property: "float",
+      value: {
+        type: "keyword",
+        value: "right",
+      },
+    },
     {
       property: "clear",
       value: {
@@ -8606,15 +7448,6 @@ export default {
         value: "none",
       },
     },
-    {
-      property: "float",
-      value: {
-        type: "keyword",
-        value: "left",
-      },
-    },
-  ],
-  "w-richtext-align-floatright": [
     {
       property: "marginLeft",
       value: {
@@ -8623,189 +7456,13 @@ export default {
         value: 15,
       },
     },
-    {
-      property: "clear",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "float",
-      value: {
-        type: "keyword",
-        value: "right",
-      },
-    },
   ],
   "w-nav": [
     {
-      property: "display",
+      property: "backgroundImage",
       value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "block",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "right",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "top",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1,
-      },
-    },
-    {
-      property: "width",
-      value: {
-        type: "keyword",
-        value: "auto",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
+        type: "invalid",
+        value: "",
       },
     },
     {
@@ -8819,18 +7476,10 @@ export default {
       },
     },
     {
-      property: "backgroundImage",
+      property: "position",
       value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "zIndex",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 1000,
+        type: "keyword",
+        value: "relative",
       },
     },
     {
@@ -8889,37 +7538,78 @@ export default {
       },
       state: ":after",
     },
-  ],
-  "w-nav-link": [
     {
-      property: "color",
+      property: "right",
       value: {
-        type: "rgb",
-        alpha: 1,
-        r: 0,
-        g: 130,
-        b: 243,
+        type: "keyword",
+        value: "auto",
       },
     },
     {
-      property: "position",
+      property: "width",
       value: {
         type: "keyword",
-        value: "relative",
+        value: "auto",
+      },
+    },
+    {
+      property: "zIndex",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 1,
+      },
+    },
+    {
+      property: "top",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "left",
+      value: {
+        type: "keyword",
+        value: "auto",
       },
     },
     {
       property: "display",
       value: {
         type: "keyword",
-        value: "inline-block",
+        value: "block",
+      },
+    },
+  ],
+  "w-nav-link": [
+    {
+      property: "verticalAlign",
+      value: {
+        type: "keyword",
+        value: "top",
       },
     },
     {
-      property: "textDecoration",
+      property: "textAlign",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "left",
+      },
+    },
+    {
+      property: "marginLeft",
+      value: {
+        type: "keyword",
+        value: "auto",
+      },
+    },
+    {
+      property: "marginRight",
+      value: {
+        type: "keyword",
+        value: "auto",
       },
     },
     {
@@ -8931,24 +7621,24 @@ export default {
       },
     },
     {
-      property: "marginRight",
+      property: "textDecoration",
       value: {
-        type: "keyword",
-        value: "auto",
+        type: "invalid",
+        value: "",
       },
     },
     {
-      property: "marginLeft",
+      property: "display",
       value: {
         type: "keyword",
-        value: "auto",
+        value: "inline-block",
       },
     },
     {
-      property: "textAlign",
+      property: "position",
       value: {
         type: "keyword",
-        value: "left",
+        value: "relative",
       },
     },
     {
@@ -8956,27 +7646,13 @@ export default {
       value: {
         type: "rgb",
         alpha: 1,
-        r: 34,
-        g: 34,
-        b: 34,
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "top",
+        r: 0,
+        g: 130,
+        b: 243,
       },
     },
   ],
   "w-nav-menu": [
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
     {
       property: "float",
       value: {
@@ -8984,8 +7660,6 @@ export default {
         value: "right",
       },
     },
-  ],
-  "w--nav-link-open": [
     {
       property: "position",
       value: {
@@ -8993,6 +7667,8 @@ export default {
         value: "relative",
       },
     },
+  ],
+  "w--nav-link-open": [
     {
       property: "display",
       value: {
@@ -9000,29 +7676,35 @@ export default {
         value: "block",
       },
     },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
   ],
   "w-nav-overlay": [
     {
-      property: "overflow",
+      property: "width",
+      value: {
+        type: "unit",
+        unit: "%",
+        value: 100,
+      },
+    },
+    {
+      property: "display",
       value: {
         type: "keyword",
-        value: "hidden",
+        value: "none",
       },
     },
     {
-      property: "right",
+      property: "position",
       value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
-      },
-    },
-    {
-      property: "left",
-      value: {
-        type: "unit",
-        unit: "number",
-        value: 0,
+        type: "keyword",
+        value: "absolute",
       },
     },
     {
@@ -9034,105 +7716,42 @@ export default {
       },
     },
     {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "absolute",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "width",
+      property: "left",
       value: {
         type: "unit",
-        unit: "%",
-        value: 100,
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "right",
+      value: {
+        type: "unit",
+        unit: "number",
+        value: 0,
+      },
+    },
+    {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
       },
     },
   ],
   "w-nav-button": [
     {
-      property: "backgroundColor",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 200,
-        g: 200,
-        b: 200,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 255,
-        g: 255,
-        b: 255,
-      },
-    },
-    {
-      property: "position",
+      property: "float",
       value: {
         type: "keyword",
-        value: "relative",
+        value: "right",
       },
     },
     {
-      property: "display",
+      property: "cursor",
       value: {
         type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "fontSize",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 24,
-      },
-    },
-    {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 18,
-      },
-    },
-    {
-      property: "userSelect",
-      value: {
-        type: "keyword",
-        value: "none",
-      },
-    },
-    {
-      property: "msUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "webkitUserSelect",
-      value: {
-        type: "invalid",
-        value: "",
-      },
-    },
-    {
-      property: "tapHighlightColor",
-      value: {
-        type: "invalid",
-        value: "rgba(0,0,0,0)",
+        value: "pointer",
       },
     },
     {
@@ -9146,17 +7765,61 @@ export default {
       },
     },
     {
-      property: "cursor",
+      property: "tapHighlightColor",
       value: {
-        type: "keyword",
-        value: "pointer",
+        type: "invalid",
+        value: "rgba(0,0,0,0)",
       },
     },
     {
-      property: "float",
+      property: "webkitUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "msUserSelect",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "userSelect",
       value: {
         type: "keyword",
-        value: "right",
+        value: "none",
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 18,
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 24,
+      },
+    },
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
       },
     },
     {
@@ -9167,6 +7830,26 @@ export default {
         value: 0,
       },
       state: ":focus",
+    },
+    {
+      property: "color",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 255,
+        g: 255,
+        b: 255,
+      },
+    },
+    {
+      property: "backgroundColor",
+      value: {
+        type: "rgb",
+        alpha: 1,
+        r: 200,
+        g: 200,
+        b: 200,
+      },
     },
   ],
   "w--nav-dropdown-open": [
@@ -9272,41 +7955,34 @@ export default {
   ],
   "w-tab-link": [
     {
-      property: "display",
+      property: "verticalAlign",
       value: {
         type: "keyword",
-        value: "block",
+        value: "top",
       },
     },
     {
-      property: "backgroundColor",
+      property: "textAlign",
+      value: {
+        type: "keyword",
+        value: "left",
+      },
+    },
+    {
+      property: "cursor",
+      value: {
+        type: "keyword",
+        value: "pointer",
+      },
+    },
+    {
+      property: "color",
       value: {
         type: "rgb",
         alpha: 1,
-        r: 200,
-        g: 200,
-        b: 200,
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
-    {
-      property: "display",
-      value: {
-        type: "keyword",
-        value: "inline-block",
-      },
-    },
-    {
-      property: "textDecoration",
-      value: {
-        type: "invalid",
-        value: "",
+        r: 34,
+        g: 34,
+        b: 34,
       },
     },
     {
@@ -9328,44 +8004,27 @@ export default {
       },
     },
     {
+      property: "textDecoration",
+      value: {
+        type: "invalid",
+        value: "",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
+      },
+    },
+    {
       property: "backgroundColor",
       value: {
         type: "rgb",
         alpha: 1,
-        r: 221,
-        g: 221,
-        b: 221,
-      },
-    },
-    {
-      property: "color",
-      value: {
-        type: "rgb",
-        alpha: 1,
-        r: 34,
-        g: 34,
-        b: 34,
-      },
-    },
-    {
-      property: "cursor",
-      value: {
-        type: "keyword",
-        value: "pointer",
-      },
-    },
-    {
-      property: "textAlign",
-      value: {
-        type: "keyword",
-        value: "left",
-      },
-    },
-    {
-      property: "verticalAlign",
-      value: {
-        type: "keyword",
-        value: "top",
+        r: 200,
+        g: 200,
+        b: 200,
       },
     },
     {
@@ -9377,22 +8036,6 @@ export default {
       },
       state: ":focus",
     },
-  ],
-  "w-tab-content": [
-    {
-      property: "overflow",
-      value: {
-        type: "keyword",
-        value: "hidden",
-      },
-    },
-    {
-      property: "position",
-      value: {
-        type: "keyword",
-        value: "relative",
-      },
-    },
     {
       property: "display",
       value: {
@@ -9401,7 +8044,14 @@ export default {
       },
     },
   ],
-  "w-tab-pane": [
+  "w-tab-content": [
+    {
+      property: "display",
+      value: {
+        type: "keyword",
+        value: "block",
+      },
+    },
     {
       property: "position",
       value: {
@@ -9410,10 +8060,26 @@ export default {
       },
     },
     {
+      property: "overflow",
+      value: {
+        type: "keyword",
+        value: "hidden",
+      },
+    },
+  ],
+  "w-tab-pane": [
+    {
       property: "display",
       value: {
         type: "keyword",
         value: "none",
+      },
+    },
+    {
+      property: "position",
+      value: {
+        type: "keyword",
+        value: "relative",
       },
     },
   ],
@@ -9438,14 +8104,6 @@ export default {
   ],
   "w-dyn-empty": [
     {
-      property: "padding",
-      value: {
-        type: "unit",
-        unit: "px",
-        value: 10,
-      },
-    },
-    {
       property: "backgroundColor",
       value: {
         type: "rgb",
@@ -9453,6 +8111,14 @@ export default {
         r: 221,
         g: 221,
         b: 221,
+      },
+    },
+    {
+      property: "padding",
+      value: {
+        type: "unit",
+        unit: "px",
+        value: 10,
       },
     },
   ],

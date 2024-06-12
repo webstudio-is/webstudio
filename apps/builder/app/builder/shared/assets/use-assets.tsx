@@ -15,7 +15,6 @@ import type { ActionData } from "~/builder/shared/assets";
 import { $assets, $authToken, $project } from "~/shared/nano-states";
 import { atom, computed } from "nanostores";
 import { serverSyncStore } from "~/shared/sync";
-import { useEffectEvent } from "~/shared/hook-utils/effect-event";
 import type { Simplify } from "type-fest";
 import { extractImageNameAndMimeTypeFromUrl } from "./image-formats";
 
@@ -214,63 +213,59 @@ const uploadAsset = async ({
   }
 };
 
-export const useUploadAsset = () => {
-  const handleAfterSubmit = (assetId: string, data: UploadData) => {
-    warnOnce(
-      data.uploadedAssets?.length !== 1,
-      "Expected exactly 1 uploaded asset"
-    );
+const handleAfterSubmit = (assetId: string, data: UploadData) => {
+  warnOnce(
+    data.uploadedAssets?.length !== 1,
+    "Expected exactly 1 uploaded asset"
+  );
 
-    const uploadedAsset = data.uploadedAssets?.[0];
+  const uploadedAsset = data.uploadedAssets?.[0];
 
-    if (uploadedAsset === undefined) {
-      warnOnce(true, "An uploaded asset is undefined");
-      toast.error("Could not upload an asset");
-      deleteAssets([assetId]);
-      return;
-    }
+  if (uploadedAsset === undefined) {
+    warnOnce(true, "An uploaded asset is undefined");
+    toast.error("Could not upload an asset");
+    deleteAssets([assetId]);
+    return;
+  }
 
-    // update store with new asset and set current id
-    setAsset({ ...uploadedAsset, id: assetId });
-  };
+  // update store with new asset and set current id
+  setAsset({ ...uploadedAsset, id: assetId });
+};
 
-  const uploadAssets = async (
-    type: AssetType,
-    files: File[],
-    urls: URL[] = []
-  ) => {
-    const projectId = $project.get()?.id;
-    const authToken = $authToken.get();
-    if (projectId === undefined) {
-      return;
-    }
+export const uploadAssets = async (
+  type: AssetType,
+  files: File[],
+  urls: URL[] = []
+) => {
+  const projectId = $project.get()?.id;
+  const authToken = $authToken.get();
+  if (projectId === undefined) {
+    return;
+  }
 
-    const filesData = getFilesData(type, files, urls);
+  const filesData = getFilesData(type, files, urls);
 
-    addUploadingFilesData(filesData);
+  addUploadingFilesData(filesData);
 
-    for (const fileData of filesData) {
-      const assetId = fileData.assetId;
+  for (const fileData of filesData) {
+    const assetId = fileData.assetId;
 
-      await uploadAsset({
-        authToken,
-        projectId,
-        fileOrUrl: fileData.source === "file" ? fileData.file : fileData.url,
-        onCompleted: (data) => {
-          URL.revokeObjectURL(fileData.objectURL);
-          deleteUploadingFileData(assetId);
-          handleAfterSubmit(assetId, data);
-        },
-        onError: (error) => {
-          deleteAssets([assetId]);
-          deleteUploadingFileData(assetId);
-          toast.error(error);
-        },
-      });
-    }
-  };
-
-  return useEffectEvent(uploadAssets);
+    await uploadAsset({
+      authToken,
+      projectId,
+      fileOrUrl: fileData.source === "file" ? fileData.file : fileData.url,
+      onCompleted: (data) => {
+        URL.revokeObjectURL(fileData.objectURL);
+        deleteUploadingFileData(assetId);
+        handleAfterSubmit(assetId, data);
+      },
+      onError: (error) => {
+        deleteAssets([assetId]);
+        deleteUploadingFileData(assetId);
+        toast.error(error);
+      },
+    });
+  }
 };
 
 const filterByType = (assetContainers: AssetContainer[], type: AssetType) => {

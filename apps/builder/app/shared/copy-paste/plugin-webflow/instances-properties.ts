@@ -119,6 +119,24 @@ const mapComponentAndProperties = (
       }
       return { component, props };
     }
+    case "HtmlEmbed": {
+      props.push({
+        type: "string",
+        id: nanoid(),
+        instanceId,
+        name: "code",
+        value: wfNode.v,
+      });
+      props.push({
+        type: "boolean",
+        id: nanoid(),
+        instanceId,
+        name: "clientOnly",
+        value: true,
+      });
+
+      return { component, props };
+    }
     case "Image": {
       const data = wfNode.data;
 
