@@ -27,8 +27,9 @@ export const lintExpression = ({
   const addError = (message: string) => {
     return (node: Expression) => {
       diagnostics.push({
-        from: node.start,
-        to: node.end,
+        // tune error position after wrapping expression with parentheses
+        from: node.start - 1,
+        to: node.end - 1,
         severity: "error",
         message: message,
       });
@@ -45,7 +46,10 @@ export const lintExpression = ({
     return diagnostics;
   }
   try {
-    const root = parseExpressionAt(expression, 0, {
+    // wrap expression with parentheses to force acorn parse whole expression
+    // instead of just first valid part
+    // https://github.com/acornjs/acorn/tree/master/acorn
+    const root = parseExpressionAt(`(${expression})`, 0, {
       ecmaVersion: "latest",
       // support parsing import to forbid explicitly
       sourceType: "module",
@@ -98,10 +102,13 @@ export const lintExpression = ({
   } catch (error) {
     const castedError = error as { message: string; pos: number };
     diagnostics.push({
-      from: castedError.pos,
-      to: castedError.pos,
+      // tune error position after wrapping expression with parentheses
+      from: castedError.pos - 1,
+      to: castedError.pos - 1,
       severity: "error",
-      message: castedError.message,
+      // trim auto generated error location
+      // to not conflict with tuned position
+      message: castedError.message.replaceAll(/\s+\(\d+:\d+\)$/g, ""),
     });
   }
   return diagnostics;
