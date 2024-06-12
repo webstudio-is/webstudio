@@ -6,6 +6,8 @@ import { isBaseBreakpoint } from "~/shared/breakpoints";
 import { parseCss } from "@webstudio-is/css-data";
 // @todo this should be moved
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
+import { toast } from "@webstudio-is/design-system";
+import { kebabCase } from "change-case";
 
 const addNodeStyles = (
   name: string,
@@ -46,7 +48,9 @@ const addNodeStyles = (
       state: style.state,
     });
     if (style.value.type === "invalid") {
-      console.error("Invalid style value", style);
+      const error = `Invalid style value: "${kebabCase(style.property)}: ${style.value.value}"`;
+      toast.error(error);
+      console.error(error);
     }
   }
 };
