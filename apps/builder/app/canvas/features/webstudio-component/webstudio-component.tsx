@@ -310,7 +310,6 @@ export const WebstudioComponentCanvas = forwardRef<
   HTMLElement,
   WebstudioComponentProps
 >(({ instance, instanceSelector, components, ...restProps }, ref) => {
-  const rootRef = useRef<null | HTMLDivElement>(null);
   const instanceId = instance.id;
   const instances = useStore($instances);
 
@@ -410,7 +409,7 @@ export const WebstudioComponentCanvas = forwardRef<
 
   const instanceElement = (
     <>
-      <Component {...props} ref={mergeRefs(ref, rootRef)}>
+      <Component {...props} ref={ref}>
         {children}
       </Component>
     </>
@@ -427,13 +426,12 @@ export const WebstudioComponentCanvas = forwardRef<
   return (
     <Suspense fallback={instanceElement}>
       <TextEditor
-        rootRef={rootRef}
         rootInstanceSelector={instanceSelector}
         instances={instances}
         contentEditable={
           <ContentEditable
             renderComponentWithRef={(elementRef) => (
-              <Component {...props} ref={mergeRefs(ref, elementRef, rootRef)}>
+              <Component {...props} ref={mergeRefs(ref, elementRef)}>
                 {initialContentEditableContent.current}
               </Component>
             )}

@@ -14,7 +14,7 @@ import { LinkNode } from "@lexical/link";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { nanoid } from "nanoid";
@@ -196,7 +196,6 @@ const onError = (error: Error) => {
 };
 
 type TextEditorProps = {
-  rootRef: { current: null | HTMLDivElement };
   rootInstanceSelector: InstanceSelector;
   instances: Instances;
   contentEditable: JSX.Element;
@@ -205,7 +204,6 @@ type TextEditorProps = {
 };
 
 export const TextEditor = ({
-  rootRef,
   rootInstanceSelector,
   instances,
   contentEditable,
