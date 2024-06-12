@@ -175,7 +175,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     apiKey: env.OPENAI_KEY,
     organization: env.OPENAI_ORG,
     temperature: 0,
-    model: "gpt-3.5-turbo-16k",
+    model: "gpt-3.5-turbo",
   });
 
   const chain = operations.createChain<GptModelMessageFormat>();
