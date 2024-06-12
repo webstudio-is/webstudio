@@ -881,7 +881,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   columnFill: {
     unitGroups: [],
@@ -1035,7 +1035,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "integer", "number"],
+    types: ["custom-ident", "integer"],
   },
   counterReset: {
     unitGroups: ["number"],
@@ -1044,7 +1044,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "integer", "number"],
+    types: ["custom-ident", "integer"],
   },
   counterSet: {
     unitGroups: ["number"],
@@ -1053,7 +1053,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["custom-ident", "integer", "number"],
+    types: ["custom-ident", "integer"],
   },
   cursor: {
     unitGroups: [],
@@ -1172,7 +1172,7 @@ export const properties = {
       type: "keyword",
       value: "normal",
     },
-    types: ["string", "integer", "number"],
+    types: ["string", "integer"],
   },
   fontKerning: {
     unitGroups: [],
@@ -1397,7 +1397,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer", "number"],
+    types: ["custom-ident", "integer"],
   },
   gridColumnStart: {
     unitGroups: ["number"],
@@ -1406,7 +1406,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer", "number"],
+    types: ["custom-ident", "integer"],
   },
   gridRowEnd: {
     unitGroups: ["number"],
@@ -1415,7 +1415,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer", "number"],
+    types: ["custom-ident", "integer"],
   },
   gridRowStart: {
     unitGroups: ["number"],
@@ -1424,7 +1424,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["custom-ident", "integer", "number"],
+    types: ["custom-ident", "integer"],
   },
   gridTemplateAreas: {
     unitGroups: [],
@@ -1487,7 +1487,7 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   hyphens: {
     unitGroups: [],
@@ -1677,7 +1677,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   lineHeight: {
     unitGroups: ["number", "length", "percentage"],
@@ -1968,7 +1968,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   mathShift: {
     unitGroups: [],
@@ -2022,7 +2022,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   maxWidth: {
     unitGroups: ["length", "percentage"],
@@ -2173,7 +2173,7 @@ export const properties = {
       unit: "number",
       value: 0,
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   orphans: {
     unitGroups: ["number"],
@@ -2183,7 +2183,7 @@ export const properties = {
       unit: "number",
       value: 2,
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   outlineColor: {
     unitGroups: [],
@@ -2873,7 +2873,7 @@ export const properties = {
       unit: "number",
       value: 8,
     },
-    types: ["integer", "number", "length"],
+    types: ["integer", "length"],
   },
   tableLayout: {
     unitGroups: [],
@@ -2909,7 +2909,7 @@ export const properties = {
       type: "keyword",
       value: "none",
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   textDecorationColor: {
     unitGroups: [],
@@ -3299,7 +3299,7 @@ export const properties = {
       unit: "number",
       value: 2,
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
   width: {
     unitGroups: ["length", "percentage"],
@@ -3362,6 +3362,6 @@ export const properties = {
       type: "keyword",
       value: "auto",
     },
-    types: ["integer", "number"],
+    types: ["integer"],
   },
 } as const;

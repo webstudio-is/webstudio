@@ -300,7 +300,6 @@ for (property in filteredProperties) {
       types.add(name);
       if (node.name === "integer" || node.name === "number") {
         unitGroups.add("number");
-        types.add("number");
         return;
       }
 
