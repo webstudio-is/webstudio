@@ -3,9 +3,9 @@ import type {
   StyleValue,
   InvalidValue,
 } from "@webstudio-is/css-engine";
+import { units, properties, parseCssValue } from "@webstudio-is/css-data";
 import type { IntermediateStyleValue } from "./css-value-input";
 import { evaluateMath } from "./evaluate-math";
-import { units, parseCssValue } from "@webstudio-is/css-data";
 import { toKebabCase } from "../keyword-utils";
 
 const unitsList = Object.values(units).flat();
@@ -23,22 +23,32 @@ export const parseIntermediateOrInvalidValue = (
     };
   }
 
-  // Try value with existing or fallback unit
-  const unit = "unit" in styleValue ? styleValue.unit ?? "px" : "px";
-  let styleInput = parseCssValue(property, `${value}${unit}`);
+  const valueInfo = properties[property as keyof typeof properties];
 
-  if (styleInput.type !== "invalid") {
-    return styleInput;
+  // - When user enters a number, we don't know if its a valid unit value,
+  // so we are going to parse it with a unit and if its not invalid - we take it.
+  // - When value can be a custom-ident or a string - we can't do that test, because its going to be
+  // valid and we will end up adding unit to a user string.
+  if (
+    valueInfo.types.flat().includes("string") === false &&
+    valueInfo.types.flat().includes("custom-ident") === false
+  ) {
+    const testUnit = "unit" in styleValue ? styleValue.unit ?? "px" : "px";
+    const styleInput = parseCssValue(property, `${value}${testUnit}`);
+
+    if (styleInput.type !== "invalid") {
+      return styleInput;
+    }
   }
 
   // Probably value is already valid, use it
-  styleInput = parseCssValue(property, value);
+  let styleInput = parseCssValue(property, value);
 
   if (styleInput.type !== "invalid") {
     return styleInput;
   }
 
-  if (unit === "number") {
+  if ("unit" in styleValue && styleValue.unit === "number") {
     // Most css props supports 0 as unitless value, but not other numbers.
     // Its possible that we had { value: 0, unit: "number" } and value has changed
     // Lets try to parse it as px value
