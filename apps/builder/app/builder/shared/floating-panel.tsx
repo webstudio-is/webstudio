@@ -92,6 +92,11 @@ type FloatingPanelProps = {
   children: JSX.Element;
   open?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  // collisionPadding is the distance in pixels from the boundary edges where collision detection should occur.
+  collisionPadding?:
+    | number
+    | Partial<Record<"top" | "right" | "bottom" | "left", number>>;
+  align?: "start" | "center" | "end";
 };
 
 const contentStyle = css({
@@ -103,7 +108,9 @@ export const FloatingPanel = ({
   content,
   children,
   open,
+  align,
   onOpenChange,
+  collisionPadding,
 }: FloatingPanelProps) => {
   const { isOpen, handleOpenChange, triggerRef, sideOffset } = useLogic(
     open,
@@ -118,8 +125,9 @@ export const FloatingPanel = ({
       <FloatingPanelPopoverContent
         sideOffset={sideOffset}
         side="left"
-        align="start"
+        align={align ?? "start"}
         className={contentStyle()}
+        collisionPadding={collisionPadding}
       >
         {content}
         <FloatingPanelPopoverTitle>{title}</FloatingPanelPopoverTitle>
