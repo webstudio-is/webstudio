@@ -38,35 +38,38 @@ describe("Parse CSS", () => {
   });
 
   test("parses supported shorthand values", () => {
-    expect(
-      parseCss(
-        `.test { background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC; }`
-      ).test
-    ).toMatchInlineSnapshot(`
-      [
-        {
-          "property": "backgroundColor",
-          "value": {
-            "alpha": 1,
-            "b": 252,
-            "g": 255,
-            "r": 235,
-            "type": "rgb",
+    const css = `
+      .test { 
+        background: #ff0000 linear-gradient(180deg, #11181C 0%, rgba(17, 24, 28, 0) 36.09%), #EBFFFC; 
+      }    
+    `;
+    expect(parseCss(css)).toMatchInlineSnapshot(`
+      {
+        "test": [
+          {
+            "property": "backgroundImage",
+            "value": {
+              "type": "layers",
+              "value": [
+                {
+                  "type": "unparsed",
+                  "value": "linear-gradient(180deg,#11181C 0%,rgba(17,24,28,0) 36.09%)",
+                },
+              ],
+            },
           },
-        },
-        {
-          "property": "backgroundImage",
-          "value": {
-            "type": "layers",
-            "value": [
-              {
-                "type": "unparsed",
-                "value": "linear-gradient(180deg,#11181C 0%,rgba(17,24,28,0) 36.09%)",
-              },
-            ],
+          {
+            "property": "backgroundColor",
+            "value": {
+              "alpha": 1,
+              "b": 252,
+              "g": 255,
+              "r": 235,
+              "type": "rgb",
+            },
           },
-        },
-      ]
+        ],
+      }
     `);
   });
 
@@ -190,6 +193,88 @@ describe("Parse CSS", () => {
             },
           ],
         }
+    `);
+  });
+
+  test("parse multiple rules, remove overwritten properties", () => {
+    const css = `
+      h1 {
+        margin: 0.67em 0;
+        font-size: 2em;
+      }
+      h1 {
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      
+      h1 {
+        margin-top: 20px;
+        font-size: 38px;
+        line-height: 44px;
+      }
+    `;
+    expect(parseCss(css)).toMatchInlineSnapshot(`
+      {
+        "h1": [
+          {
+            "property": "margin",
+            "value": {
+              "type": "tuple",
+              "value": [
+                {
+                  "type": "unit",
+                  "unit": "em",
+                  "value": 0.67,
+                },
+                {
+                  "type": "unit",
+                  "unit": "number",
+                  "value": 0,
+                },
+              ],
+            },
+          },
+          {
+            "property": "marginBottom",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 10,
+            },
+          },
+          {
+            "property": "fontWeight",
+            "value": {
+              "type": "keyword",
+              "value": "bold",
+            },
+          },
+          {
+            "property": "marginTop",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 20,
+            },
+          },
+          {
+            "property": "fontSize",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 38,
+            },
+          },
+          {
+            "property": "lineHeight",
+            "value": {
+              "type": "unit",
+              "unit": "px",
+              "value": 44,
+            },
+          },
+        ],
+      }
     `);
   });
 

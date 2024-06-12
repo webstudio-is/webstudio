@@ -74,7 +74,7 @@ const cssTreeTryParse = (input: string) => {
 export const parseCss = (css: string) => {
   const ast = cssTreeTryParse(css);
   let selectors: Selector[] = [];
-  let states = new Map<Selector, Array<string>>();
+  let states = new Map<Selector, Array<string | undefined>>();
   const styles: Styles = {};
 
   if (ast === undefined) {
@@ -98,11 +98,15 @@ export const parseCss = (css: string) => {
 
       selectors.push(node.name);
 
+      const statesArray = states.get(node.name) ?? [];
+      states.set(node.name, statesArray);
+
       if (item?.next && item.next.data.type === "PseudoClassSelector") {
-        const statesArray = states.get(node.name) ?? [];
         statesArray.push(`:${item.next.data.name}`);
-        states.set(node.name, statesArray);
+      } else {
+        statesArray.push(undefined);
       }
+
       return;
     }
 
@@ -119,22 +123,28 @@ export const parseCss = (css: string) => {
           try {
             StyleValue.parse(value);
             property = camelCase(property) as StyleProperty;
-
             selectors.forEach((selector, index) => {
-              if (styles[selector] === undefined) {
-                styles[selector] = [];
+              let declarations = styles[selector];
+              if (declarations === undefined) {
+                declarations = styles[selector] = [];
               }
+              const styleDecl: EmbedTemplateStyleDecl = { property, value };
               const statesArray = states.get(selector) ?? [];
               if (statesArray[index]) {
-                styles[selector].push({
-                  property,
-                  value,
-                  state: statesArray[index],
-                });
-                return;
+                styleDecl.state = statesArray[index];
               }
 
-              styles[selector].unshift({ property, value });
+              // Checks if there is already a prorperty that is exactly the same and will be overwritten,
+              // so we may as well remove it from the data.
+              const existingIndex = declarations.findIndex(
+                (decl) =>
+                  decl.property === styleDecl.property &&
+                  decl.state === styleDecl.state
+              );
+              if (existingIndex !== -1) {
+                declarations.splice(existingIndex, 1);
+              }
+              declarations.push(styleDecl);
             });
           } catch (error) {
             console.error("Bad CSS declaration", error, parsedCss);
