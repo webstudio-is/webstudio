@@ -14,7 +14,6 @@ import type {
   UnitValue,
   UnparsedValue,
 } from "@webstudio-is/css-engine";
-import { popularityIndex } from "../src/popularity-index";
 import * as customData from "../src/custom-data";
 
 const units: Record<customData.UnitGroup, Array<string>> = {
@@ -25,7 +24,7 @@ const units: Record<customData.UnitGroup, Array<string>> = {
 };
 
 type Property = keyof typeof properties;
-type Value = (typeof properties)[Property] & { alsoAppliesTo?: Array<string> };
+type Value = (typeof properties)[Property];
 
 const inheritValue = {
   type: "keyword",
@@ -286,25 +285,6 @@ const filteredProperties: FilteredProperties = (() => {
 
 const propertiesData = { ...customData.propertiesData };
 
-const patchAppliesTo = (property: Property, config: Value) => {
-  // see https://github.com/mdn/data/issues/585 alignItems and justifyItems have appliesTo = "allElements"
-  // this specification https://www.w3.org/TR/css-align-3/  - "block containers", "grid containers", "flex containers"
-  // chrome devtools check grid or flex here https://github.com/ChromeDevTools/devtools-frontend/blob/354fb0fd3fc0a4af43ef760450e7d644d0e04daf/front_end/panels/elements/CSSRuleValidator.ts#L374
-  // our opinion is that it must be "grid containers", "flex containers"
-  if (property === "align-items" || property === "justify-items") {
-    if (config.appliesto !== "allElements") {
-      throw new Error(
-        "Specification has changed, please check and update the code"
-      );
-    }
-
-    // flexContainersGridContainers not exists in mdn-data, it's our custom value
-    return "flexContainersGridContainers";
-  }
-
-  return config.appliesto;
-};
-
 let property: Property;
 for (property in filteredProperties) {
   const config = filteredProperties[property];
@@ -344,11 +324,6 @@ for (property in filteredProperties) {
     unitGroups: Array.from(unitGroups),
     inherited: config.inherited,
     initial: parseInitialValue(property, config.initial, unitGroups),
-    popularity:
-      popularityIndex.find((data) => data.property === property)
-        ?.dayPercentage || 0,
-
-    appliesTo: patchAppliesTo(property, config),
     types: Array.from(types),
   };
 }
