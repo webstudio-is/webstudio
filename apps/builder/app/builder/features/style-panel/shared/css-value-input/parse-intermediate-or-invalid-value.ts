@@ -30,8 +30,8 @@ export const parseIntermediateOrInvalidValue = (
   // - When value can be a custom-ident or a string - we can't do that test, because its going to be
   // valid and we will end up adding unit to a user string.
   if (
-    valueInfo.types.includes("string") === false &&
-    valueInfo.types.includes("custom-ident") === false
+    valueInfo.types.flat().includes("string") === false &&
+    valueInfo.types.flat().includes("custom-ident") === false
   ) {
     const testUnit = "unit" in styleValue ? styleValue.unit ?? "px" : "px";
     const styleInput = parseCssValue(property, `${value}${testUnit}`);
