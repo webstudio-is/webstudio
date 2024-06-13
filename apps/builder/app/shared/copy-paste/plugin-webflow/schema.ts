@@ -61,7 +61,6 @@ export const WfElementNode = z.union([
       link: z.object({
         url: z.string(),
         target: z.string().optional(),
-        mode: z.enum(["external"]).optional(),
       }),
     }),
   }),

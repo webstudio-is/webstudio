@@ -1040,7 +1040,6 @@ test("RichText", async () => {
             block: "",
             link: {
               url: "http://google.com",
-              mode: "external",
             },
           },
         },
