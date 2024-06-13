@@ -487,17 +487,54 @@ test("expand flex-flow", () => {
   ]);
 });
 
+test("expand columns", () => {
+  expect(expandShorthands([["columns", "4 20px"]])).toEqual([
+    ["column-width", "20px"],
+    ["column-count", "4"],
+  ]);
+  expect(expandShorthands([["columns", "4"]])).toEqual([
+    ["column-width", "initial"],
+    ["column-count", "4"],
+  ]);
+  expect(expandShorthands([["columns", "20px"]])).toEqual([
+    ["column-width", "20px"],
+    ["column-count", "initial"],
+  ]);
+});
+
+test("expand column-rule", () => {
+  expect(expandShorthands([["column-rule", "thick inset blue"]])).toEqual([
+    ["column-rule-width", "thick"],
+    ["column-rule-style", "inset"],
+    ["column-rule-color", "blue"],
+  ]);
+});
+
+test("expand list-style", () => {
+  expect(
+    expandShorthands([
+      ["list-style", `lower-roman url("img/shape.png") outside`],
+    ])
+  ).toEqual([
+    ["list-style-position", "outside"],
+    ["list-style-image", "url(img/shape.png)"],
+    ["list-style-type", "lower-roman"],
+  ]);
+  expect(expandShorthands([["list-style", `square`]])).toEqual([
+    ["list-style-position", "initial"],
+    ["list-style-image", "initial"],
+    ["list-style-type", "square"],
+  ]);
+});
+
 test.todo("animation");
 test.todo("container");
-test.todo("columns");
-test.todo("column-rule");
 test.todo("contain-intrinsic-size");
 test.todo("grid");
 test.todo("grid-area");
 test.todo("grid-column");
 test.todo("grid-row");
 test.todo("grid-template");
-test.todo("list-style");
 test.todo("mask");
 test.todo("mask-border");
 test.todo("offset");
