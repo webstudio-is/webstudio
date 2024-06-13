@@ -65,6 +65,9 @@ const mapComponentAndPresetStyles = (wfNode: WfElementNode) => {
       if (data.button) {
         presetStyles.push("w-button");
       }
+      if (data.block === "inline") {
+        presetStyles.push("w-inline-block");
+      }
       return presetStyles;
     }
   }
@@ -91,14 +94,12 @@ export const addStyles = async (
     }
 
     mapComponentAndPresetStyles(wfNode).forEach((name) => {
-      if (name in presets === false) {
-        console.error(`Webflow style preset ${name} not found`);
-        return;
-      }
       const styles = presets[
         name as keyof typeof presets
       ] as Array<EmbedTemplateStyleDecl>;
-      addNodeStyles(name, styles, instanceId, fragment);
+      if (styles) {
+        addNodeStyles(name, styles, instanceId, fragment);
+      }
     });
 
     const instance = fragment.instances.find(

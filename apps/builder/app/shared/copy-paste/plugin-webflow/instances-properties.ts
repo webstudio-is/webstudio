@@ -44,6 +44,15 @@ const mapComponentAndProperties = (
           value: data.link.target,
         });
       }
+      if (data.link.mode === "external") {
+        props.push({
+          type: "string",
+          id: nanoid(),
+          instanceId,
+          name: "target",
+          value: "_blank",
+        });
+      }
       return { component, props };
     }
     case "Section": {
