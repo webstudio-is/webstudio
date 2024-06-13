@@ -119,7 +119,7 @@ type Props = ComponentProps<typeof ItemButton> & {
 const ItemWrapper = styled("div", {
   position: "relative",
   width: "100%",
-  "&:hover, &[data-active=true]": {
+  "&:hover, &:focus-within, &[data-active=true]": {
     [`& ${ItemButton}`]: {
       backgroundColor: theme.colors.backgroundHover,
       [`&[data-draggable=true] ${DragHandleIconStyled}`]: {
