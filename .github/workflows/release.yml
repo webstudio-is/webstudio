@@ -19,7 +19,6 @@ jobs:
           fix: Fixes
           docs: Documentation
           experimental: Experimental
-        semver: false
 
     - uses: ncipollo/release-action@v1
       with:
