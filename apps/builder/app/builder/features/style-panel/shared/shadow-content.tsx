@@ -419,6 +419,7 @@ export const ShadowContent = ({
                 intermediateValue?.type === "invalid" ? "error" : undefined
               }
               onChange={handleChange}
+              onBlur={handleComplete}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   handleComplete();

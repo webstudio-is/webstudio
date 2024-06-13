@@ -267,6 +267,11 @@ export const FilterSectionContent = ({
           onChange={(value) =>
             setIntermediateValue({ type: "intermediate", value })
           }
+          onBlur={() => {
+            if (intermediateValue !== undefined) {
+              handleComplete(intermediateValue.value);
+            }
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && intermediateValue !== undefined) {
               handleComplete(intermediateValue.value);
