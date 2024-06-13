@@ -43,24 +43,24 @@ export const normalizeProps = ({
       };
 
       if (prop.name === "width" && asset.type === "image") {
-        if (false === Number.isNaN(asset.meta.width)) {
-          newProps.push({
-            ...propBase,
-            type: "number",
-            value: asset.meta.width,
-          });
-        }
+        // if (false === Number.isNaN(asset.meta.width)) {
+        newProps.push({
+          ...propBase,
+          type: "number",
+          value: asset.meta.width,
+        });
+        //}
         continue;
       }
 
       if (prop.name === "height" && asset.type === "image") {
-        if (false === Number.isNaN(asset.meta.height)) {
-          newProps.push({
-            ...propBase,
-            type: "number",
-            value: asset.meta.height,
-          });
-        }
+        //if (false === Number.isNaN(asset.meta.height)) {
+        newProps.push({
+          ...propBase,
+          type: "number",
+          value: asset.meta.height,
+        });
+        //}
         continue;
       }
 
@@ -73,7 +73,7 @@ export const normalizeProps = ({
       if (source === "canvas") {
         newProps.push({
           id: nanoid(),
-          name: "$webstudio$assetId",
+          name: "$webstudio$canvasOnly$assetId",
           required: false,
           instanceId: prop.instanceId,
           type: "string",

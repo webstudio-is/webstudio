@@ -37,62 +37,95 @@ type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
 export const Image = forwardRef<
   ElementRef<typeof defaultTag>,
-  Props & { $webstudio$assetId?: string | undefined }
->(({ loading = "lazy", decoding, $webstudio$assetId, ...props }, ref) => {
-  // cast to string when invalid value type is provided with binding
-  const src = String(props.src ?? "");
+  Props & { $webstudio$canvasOnly$assetId?: string | undefined }
+>(
+  (
+    {
+      loading = "lazy",
+      width: widthProp,
+      height: heightProp,
+      optimize: optimizeProp,
+      decoding: decodingProp,
+      $webstudio$canvasOnly$assetId,
+      ...props
+    },
+    ref
+  ) => {
+    // cast to string when invalid value type is provided with binding
+    const src = String(props.src ?? "");
 
-  const { imageLoader, renderer, assetBaseUrl } = useContext(ReactSdkContext);
+    const { imageLoader, renderer, assetBaseUrl } = useContext(ReactSdkContext);
 
-  let decodingValue = decoding;
+    let decoding = decodingProp;
 
-  let key = src;
+    let key = src;
 
-  if (renderer === "canvas") {
-    // With disabled cache and loading lazy, chrome may not render the image at all
-    loading = "eager";
+    let optimize = optimizeProp;
 
-    // Avoid image flickering on switching from preview to asset (during upload)
-    decodingValue = "sync";
+    let width = widthProp;
+    let height = heightProp;
 
-    // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state
-    key = $webstudio$assetId ?? src;
-  }
+    if (renderer === "canvas") {
+      // With disabled cache and loading lazy, chrome may not render the image at all
+      loading = "eager";
 
-  if (src.startsWith(assetBaseUrl) === false) {
+      // Avoid image flickering on switching from preview to asset (during upload)
+      decoding = "sync";
+
+      // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state
+      key = $webstudio$canvasOnly$assetId ?? src;
+
+      // NaN width and height means that the image is not yet uploaded, and should not be optimized on canvas
+      if (
+        widthProp !== undefined &&
+        heightProp !== undefined &&
+        Number.isNaN(widthProp) &&
+        Number.isNaN(heightProp)
+      ) {
+        optimize = optimizeProp ?? false;
+        width = undefined;
+        height = undefined;
+      }
+    }
+
+    if (src.startsWith(assetBaseUrl) === false) {
+      return (
+        <img
+          key={key}
+          loading={loading}
+          {...props}
+          src={src || imagePlaceholderSvg}
+          ref={ref}
+        />
+      );
+    }
+
+    // webstudio pass resolved assetBaseUrl + asset.name
+    // trim assetBaseUrl and pass only asset.name to image loader
+    const assetName = src.slice(assetBaseUrl.length);
+
     return (
-      <img
+      <WebstudioImage
+        /**
+         * `key` is needed to recreate the image in case of asset change in builder,
+         * this gives immediate feedback when an asset is changed.
+         *
+         * In non-builder mode, key on images are usually also a good idea,
+         * prevents showing outdated images on route change.
+         **/
         key={key}
         loading={loading}
+        decoding={decoding}
+        optimize={optimize}
+        width={width}
+        height={height}
         {...props}
-        src={src || imagePlaceholderSvg}
+        loader={imageLoader}
+        src={assetName}
         ref={ref}
       />
     );
   }
-
-  // webstudio pass resolved assetBaseUrl + asset.name
-  // trim assetBaseUrl and pass only asset.name to image loader
-  const assetName = src.slice(assetBaseUrl.length);
-
-  return (
-    <WebstudioImage
-      /**
-       * `key` is needed to recreate the image in case of asset change in builder,
-       * this gives immediate feedback when an asset is changed.
-       *
-       * In non-builder mode, key on images are usually also a good idea,
-       * prevents showing outdated images on route change.
-       **/
-      key={key}
-      loading={loading}
-      decoding={decodingValue}
-      {...props}
-      loader={imageLoader}
-      src={assetName}
-      ref={ref}
-    />
-  );
-});
+);
 
 Image.displayName = "Image";
