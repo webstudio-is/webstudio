@@ -41,20 +41,20 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@storybook/addon-actions':
-        specifier: ^8.1.6
-        version: 8.1.6
+        specifier: ^8.1.8
+        version: 8.1.8
       '@storybook/addon-essentials':
-        specifier: ^8.1.6
-        version: 8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^8.1.8
+        version: 8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@storybook/addon-links':
-        specifier: ^8.1.6
-        version: 8.1.6(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^8.1.8
+        version: 8.1.8(react@18.3.0-canary-14898b6a9-20240318)
       '@storybook/react':
-        specifier: ^8.1.6
-        version: 8.1.6(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
+        specifier: ^8.1.8
+        version: 8.1.8(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
       '@storybook/react-vite':
-        specifier: ^8.1.6
-        version: 8.1.6(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))
+        specifier: ^8.1.8
+        version: 8.1.8(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))
       '@types/css-tree':
         specifier: ^2.3.1
         version: 2.3.1(patch_hash=ac22lciodhaj6xmoeignv36gyq)
@@ -68,8 +68,8 @@ importers:
         specifier: workspace:*
         version: link:packages/eslint-config-custom
       esbuild:
-        specifier: ^0.21.4
-        version: 0.21.4
+        specifier: ^0.21.5
+        version: 0.21.5
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@20.12.7)
@@ -89,17 +89,17 @@ importers:
         specifier: ^2.11.1
         version: 2.11.1
       storybook:
-        specifier: ^8.1.6
-        version: 8.1.6(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        specifier: ^8.1.8
+        version: 8.1.8(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       tsx:
-        specifier: ^4.11.2
-        version: 4.11.2
+        specifier: ^4.15.4
+        version: 4.15.4
       typescript:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
 
   apps/builder:
     dependencies:
@@ -207,7 +207,7 @@ importers:
         version: 0.2.3
       '@vercel/remix':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.2(typescript@5.4.5))(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+        version: 2.9.2(@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.2(typescript@5.4.5))(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@webstudio-is/ai':
         specifier: workspace:*
         version: link:../../packages/ai
@@ -421,7 +421,7 @@ importers:
         version: 29.7.0
       '@remix-run/dev':
         specifier: ^2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@testing-library/react-hooks':
         specifier: ^8.0.1
         version: 8.0.1(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react-test-renderer@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
@@ -459,8 +459,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
 
   fixtures/webstudio-cloudflare-template:
     dependencies:
@@ -524,7 +524,7 @@ importers:
         version: 4.20240405.0
       '@remix-run/dev':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -538,8 +538,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -597,7 +597,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -608,8 +608,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -621,7 +621,7 @@ importers:
         version: 2.8.1
       '@netlify/remix-edge-adapter':
         specifier: ^3.3.0
-        version: 3.3.0(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(vite@5.2.13(@types/node@20.12.7))
+        version: 3.3.0(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(vite@5.3.0(@types/node@20.12.7))
       '@remix-run/node':
         specifier: 2.9.2
         version: 2.9.2(typescript@5.4.5)
@@ -664,7 +664,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -675,8 +675,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -688,7 +688,7 @@ importers:
         version: 2.7.0(@opentelemetry/api@1.8.0)
       '@netlify/remix-adapter':
         specifier: ^2.4.0
-        version: 2.4.0(@netlify/functions@2.7.0(@opentelemetry/api@1.8.0))(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))
+        version: 2.4.0(@netlify/functions@2.7.0(@opentelemetry/api@1.8.0))(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))
       '@remix-run/node':
         specifier: 2.9.2
         version: 2.9.2(typescript@5.4.5)
@@ -731,7 +731,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -742,8 +742,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -792,7 +792,7 @@ importers:
     devDependencies:
       '@remix-run/dev':
         specifier: 2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@types/react':
         specifier: ^18.2.70
         version: 18.2.79
@@ -803,8 +803,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
       webstudio:
         specifier: workspace:*
         version: link:../../packages/cli
@@ -1003,10 +1003,10 @@ importers:
         version: 29.7.0
       '@netlify/remix-adapter':
         specifier: ^2.4.0
-        version: 2.4.0(@netlify/functions@2.7.0(@opentelemetry/api@1.8.0))(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))
+        version: 2.4.0(@netlify/functions@2.7.0(@opentelemetry/api@1.8.0))(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))
       '@netlify/remix-edge-adapter':
         specifier: 3.3.0
-        version: 3.3.0(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(vite@5.2.13(@types/node@20.12.7))
+        version: 3.3.0(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(vite@5.3.0(@types/node@20.12.7))
       '@remix-run/cloudflare':
         specifier: ^2.9.2
         version: 2.9.2(@cloudflare/workers-types@4.20240405.0)(typescript@5.4.5)
@@ -1015,7 +1015,7 @@ importers:
         version: 2.9.2(@cloudflare/workers-types@4.20240405.0)(typescript@5.4.5)
       '@remix-run/dev':
         specifier: ^2.9.2
-        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+        version: 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@remix-run/node':
         specifier: ^2.9.2
         version: 2.9.2(typescript@5.4.5)
@@ -1056,8 +1056,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       vite:
-        specifier: ^5.2.13
-        version: 5.2.13(@types/node@20.12.7)
+        specifier: ^5.3.0
+        version: 5.3.0(@types/node@20.12.7)
       wrangler:
         specifier: ^3.48.0
         version: 3.50.0(@cloudflare/workers-types@4.20240405.0)
@@ -1547,8 +1547,8 @@ importers:
         specifier: ^29.6.3
         version: 29.6.3
       esbuild:
-        specifier: ^0.21.4
-        version: 0.21.4
+        specifier: ^0.21.5
+        version: 0.21.5
 
   packages/jsx-utils:
     dependencies:
@@ -2943,8 +2943,8 @@ packages:
     cpu: [ppc64]
     os: [aix]
 
-  '@esbuild/aix-ppc64@0.21.4':
-    resolution: {integrity: sha512-Zrm+B33R4LWPLjDEVnEqt2+SLTATlru1q/xYKVn8oVTbiRBGmK2VIMoIYGJDGyftnGaC788IuzGFAlb7IQ0Y8A==}
+  '@esbuild/aix-ppc64@0.21.5':
+    resolution: {integrity: sha512-1SDgH6ZSPTlggy1yI6+Dbkiz8xzpHJEVAlF/AM1tHPLsf5STom9rwtjE4hKAF20FfXXNTFqEYXyJNWh1GiZedQ==}
     engines: {node: '>=12'}
     cpu: [ppc64]
     os: [aix]
@@ -2973,8 +2973,8 @@ packages:
     cpu: [arm64]
     os: [android]
 
-  '@esbuild/android-arm64@0.21.4':
-    resolution: {integrity: sha512-fYFnz+ObClJ3dNiITySBUx+oNalYUT18/AryMxfovLkYWbutXsct3Wz2ZWAcGGppp+RVVX5FiXeLYGi97umisA==}
+  '@esbuild/android-arm64@0.21.5':
+    resolution: {integrity: sha512-c0uX9VAUBQ7dTDCjq+wdyGLowMdtR/GoC2U5IYk/7D1H1JYC0qseD7+11iMP2mRLN9RcCMRcjC4YMclCzGwS/A==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [android]
@@ -3003,8 +3003,8 @@ packages:
     cpu: [arm]
     os: [android]
 
-  '@esbuild/android-arm@0.21.4':
-    resolution: {integrity: sha512-E7H/yTd8kGQfY4z9t3nRPk/hrhaCajfA3YSQSBrst8B+3uTcgsi8N+ZWYCaeIDsiVs6m65JPCaQN/DxBRclF3A==}
+  '@esbuild/android-arm@0.21.5':
+    resolution: {integrity: sha512-vCPvzSjpPHEi1siZdlvAlsPxXl7WbOVUBBAowWug4rJHb68Ox8KualB+1ocNvT5fjv6wpkX6o/iEpbDrf68zcg==}
     engines: {node: '>=12'}
     cpu: [arm]
     os: [android]
@@ -3033,8 +3033,8 @@ packages:
     cpu: [x64]
     os: [android]
 
-  '@esbuild/android-x64@0.21.4':
-    resolution: {integrity: sha512-mDqmlge3hFbEPbCWxp4fM6hqq7aZfLEHZAKGP9viq9wMUBVQx202aDIfc3l+d2cKhUJM741VrCXEzRFhPDKH3Q==}
+  '@esbuild/android-x64@0.21.5':
+    resolution: {integrity: sha512-D7aPRUUNHRBwHxzxRvp856rjUHRFW1SdQATKXH2hqA0kAZb1hKmi02OpYRacl0TxIGz/ZmXWlbZgjwWYaCakTA==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [android]
@@ -3063,8 +3063,8 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@esbuild/darwin-arm64@0.21.4':
-    resolution: {integrity: sha512-72eaIrDZDSiWqpmCzVaBD58c8ea8cw/U0fq/PPOTqE3c53D0xVMRt2ooIABZ6/wj99Y+h4ksT/+I+srCDLU9TA==}
+  '@esbuild/darwin-arm64@0.21.5':
+    resolution: {integrity: sha512-DwqXqZyuk5AiWWf3UfLiRDJ5EDd49zg6O9wclZ7kUMv2WRFr4HKjXp/5t8JZ11QbQfUS6/cRCKGwYhtNAY88kQ==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [darwin]
@@ -3093,8 +3093,8 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@esbuild/darwin-x64@0.21.4':
-    resolution: {integrity: sha512-uBsuwRMehGmw1JC7Vecu/upOjTsMhgahmDkWhGLWxIgUn2x/Y4tIwUZngsmVb6XyPSTXJYS4YiASKPcm9Zitag==}
+  '@esbuild/darwin-x64@0.21.5':
+    resolution: {integrity: sha512-se/JjF8NlmKVG4kNIuyWMV/22ZaerB+qaSi5MdrXtd6R08kvs2qCN4C09miupktDitvh8jRFflwGFBQcxZRjbw==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [darwin]
@@ -3123,8 +3123,8 @@ packages:
     cpu: [arm64]
     os: [freebsd]
 
-  '@esbuild/freebsd-arm64@0.21.4':
-    resolution: {integrity: sha512-8JfuSC6YMSAEIZIWNL3GtdUT5NhUA/CMUCpZdDRolUXNAXEE/Vbpe6qlGLpfThtY5NwXq8Hi4nJy4YfPh+TwAg==}
+  '@esbuild/freebsd-arm64@0.21.5':
+    resolution: {integrity: sha512-5JcRxxRDUJLX8JXp/wcBCy3pENnCgBR9bN6JsY4OmhfUtIHe3ZW0mawA7+RDAcMLrMIZaf03NlQiX9DGyB8h4g==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [freebsd]
@@ -3153,8 +3153,8 @@ packages:
     cpu: [x64]
     os: [freebsd]
 
-  '@esbuild/freebsd-x64@0.21.4':
-    resolution: {integrity: sha512-8d9y9eQhxv4ef7JmXny7591P/PYsDFc4+STaxC1GBv0tMyCdyWfXu2jBuqRsyhY8uL2HU8uPyscgE2KxCY9imQ==}
+  '@esbuild/freebsd-x64@0.21.5':
+    resolution: {integrity: sha512-J95kNBj1zkbMXtHVH29bBriQygMXqoVQOQYA+ISs0/2l3T9/kj42ow2mpqerRBxDJnmkUDCaQT/dfNXWX/ZZCQ==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [freebsd]
@@ -3183,8 +3183,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@esbuild/linux-arm64@0.21.4':
-    resolution: {integrity: sha512-/GLD2orjNU50v9PcxNpYZi+y8dJ7e7/LhQukN3S4jNDXCKkyyiyAz9zDw3siZ7Eh1tRcnCHAo/WcqKMzmi4eMQ==}
+  '@esbuild/linux-arm64@0.21.5':
+    resolution: {integrity: sha512-ibKvmyYzKsBeX8d8I7MH/TMfWDXBF3db4qM6sy+7re0YXya+K1cem3on9XgdT2EQGMu4hQyZhan7TeQ8XkGp4Q==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [linux]
@@ -3213,8 +3213,8 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@esbuild/linux-arm@0.21.4':
-    resolution: {integrity: sha512-2rqFFefpYmpMs+FWjkzSgXg5vViocqpq5a1PSRgT0AvSgxoXmGF17qfGAzKedg6wAwyM7UltrKVo9kxaJLMF/g==}
+  '@esbuild/linux-arm@0.21.5':
+    resolution: {integrity: sha512-bPb5AHZtbeNGjCKVZ9UGqGwo8EUu4cLq68E95A53KlxAPRmUyYv2D6F0uUI65XisGOL1hBP5mTronbgo+0bFcA==}
     engines: {node: '>=12'}
     cpu: [arm]
     os: [linux]
@@ -3243,8 +3243,8 @@ packages:
     cpu: [ia32]
     os: [linux]
 
-  '@esbuild/linux-ia32@0.21.4':
-    resolution: {integrity: sha512-pNftBl7m/tFG3t2m/tSjuYeWIffzwAZT9m08+9DPLizxVOsUl8DdFzn9HvJrTQwe3wvJnwTdl92AonY36w/25g==}
+  '@esbuild/linux-ia32@0.21.5':
+    resolution: {integrity: sha512-YvjXDqLRqPDl2dvRODYmmhz4rPeVKYvppfGYKSNGdyZkA01046pLWyRKKI3ax8fbJoK5QbxblURkwK/MWY18Tg==}
     engines: {node: '>=12'}
     cpu: [ia32]
     os: [linux]
@@ -3273,8 +3273,8 @@ packages:
     cpu: [loong64]
     os: [linux]
 
-  '@esbuild/linux-loong64@0.21.4':
-    resolution: {integrity: sha512-cSD2gzCK5LuVX+hszzXQzlWya6c7hilO71L9h4KHwqI4qeqZ57bAtkgcC2YioXjsbfAv4lPn3qe3b00Zt+jIfQ==}
+  '@esbuild/linux-loong64@0.21.5':
+    resolution: {integrity: sha512-uHf1BmMG8qEvzdrzAqg2SIG/02+4/DHB6a9Kbya0XDvwDEKCoC8ZRWI5JJvNdUjtciBGFQ5PuBlpEOXQj+JQSg==}
     engines: {node: '>=12'}
     cpu: [loong64]
     os: [linux]
@@ -3303,8 +3303,8 @@ packages:
     cpu: [mips64el]
     os: [linux]
 
-  '@esbuild/linux-mips64el@0.21.4':
-    resolution: {integrity: sha512-qtzAd3BJh7UdbiXCrg6npWLYU0YpufsV9XlufKhMhYMJGJCdfX/G6+PNd0+v877X1JG5VmjBLUiFB0o8EUSicA==}
+  '@esbuild/linux-mips64el@0.21.5':
+    resolution: {integrity: sha512-IajOmO+KJK23bj52dFSNCMsz1QP1DqM6cwLUv3W1QwyxkyIWecfafnI555fvSGqEKwjMXVLokcV5ygHW5b3Jbg==}
     engines: {node: '>=12'}
     cpu: [mips64el]
     os: [linux]
@@ -3333,8 +3333,8 @@ packages:
     cpu: [ppc64]
     os: [linux]
 
-  '@esbuild/linux-ppc64@0.21.4':
-    resolution: {integrity: sha512-yB8AYzOTaL0D5+2a4xEy7OVvbcypvDR05MsB/VVPVA7nL4hc5w5Dyd/ddnayStDgJE59fAgNEOdLhBxjfx5+dg==}
+  '@esbuild/linux-ppc64@0.21.5':
+    resolution: {integrity: sha512-1hHV/Z4OEfMwpLO8rp7CvlhBDnjsC3CttJXIhBi+5Aj5r+MBvy4egg7wCbe//hSsT+RvDAG7s81tAvpL2XAE4w==}
     engines: {node: '>=12'}
     cpu: [ppc64]
     os: [linux]
@@ -3363,8 +3363,8 @@ packages:
     cpu: [riscv64]
     os: [linux]
 
-  '@esbuild/linux-riscv64@0.21.4':
-    resolution: {integrity: sha512-Y5AgOuVzPjQdgU59ramLoqSSiXddu7F3F+LI5hYy/d1UHN7K5oLzYBDZe23QmQJ9PIVUXwOdKJ/jZahPdxzm9w==}
+  '@esbuild/linux-riscv64@0.21.5':
+    resolution: {integrity: sha512-2HdXDMd9GMgTGrPWnJzP2ALSokE/0O5HhTUvWIbD3YdjME8JwvSCnNGBnTThKGEB91OZhzrJ4qIIxk/SBmyDDA==}
     engines: {node: '>=12'}
     cpu: [riscv64]
     os: [linux]
@@ -3393,8 +3393,8 @@ packages:
     cpu: [s390x]
     os: [linux]
 
-  '@esbuild/linux-s390x@0.21.4':
-    resolution: {integrity: sha512-Iqc/l/FFwtt8FoTK9riYv9zQNms7B8u+vAI/rxKuN10HgQIXaPzKZc479lZ0x6+vKVQbu55GdpYpeNWzjOhgbA==}
+  '@esbuild/linux-s390x@0.21.5':
+    resolution: {integrity: sha512-zus5sxzqBJD3eXxwvjN1yQkRepANgxE9lgOW2qLnmr8ikMTphkjgXu1HR01K4FJg8h1kEEDAqDcZQtbrRnB41A==}
     engines: {node: '>=12'}
     cpu: [s390x]
     os: [linux]
@@ -3423,8 +3423,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@esbuild/linux-x64@0.21.4':
-    resolution: {integrity: sha512-Td9jv782UMAFsuLZINfUpoF5mZIbAj+jv1YVtE58rFtfvoKRiKSkRGQfHTgKamLVT/fO7203bHa3wU122V/Bdg==}
+  '@esbuild/linux-x64@0.21.5':
+    resolution: {integrity: sha512-1rYdTpyv03iycF1+BhzrzQJCdOuAOtaqHTWJZCWvijKD2N5Xu0TtVC8/+1faWqcP9iBCWOmjmhoH94dH82BxPQ==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [linux]
@@ -3453,8 +3453,8 @@ packages:
     cpu: [x64]
     os: [netbsd]
 
-  '@esbuild/netbsd-x64@0.21.4':
-    resolution: {integrity: sha512-Awn38oSXxsPMQxaV0Ipb7W/gxZtk5Tx3+W+rAPdZkyEhQ6968r9NvtkjhnhbEgWXYbgV+JEONJ6PcdBS+nlcpA==}
+  '@esbuild/netbsd-x64@0.21.5':
+    resolution: {integrity: sha512-Woi2MXzXjMULccIwMnLciyZH4nCIMpWQAs049KEeMvOcNADVxo0UBIQPfSmxB3CWKedngg7sWZdLvLczpe0tLg==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [netbsd]
@@ -3483,8 +3483,8 @@ packages:
     cpu: [x64]
     os: [openbsd]
 
-  '@esbuild/openbsd-x64@0.21.4':
-    resolution: {integrity: sha512-IsUmQeCY0aU374R82fxIPu6vkOybWIMc3hVGZ3ChRwL9hA1TwY+tS0lgFWV5+F1+1ssuvvXt3HFqe8roCip8Hg==}
+  '@esbuild/openbsd-x64@0.21.5':
+    resolution: {integrity: sha512-HLNNw99xsvx12lFBUwoT8EVCsSvRNDVxNpjZ7bPn947b8gJPzeHWyNVhFsaerc0n3TsbOINvRP2byTZ5LKezow==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [openbsd]
@@ -3513,8 +3513,8 @@ packages:
     cpu: [x64]
     os: [sunos]
 
-  '@esbuild/sunos-x64@0.21.4':
-    resolution: {integrity: sha512-hsKhgZ4teLUaDA6FG/QIu2q0rI6I36tZVfM4DBZv3BG0mkMIdEnMbhc4xwLvLJSS22uWmaVkFkqWgIS0gPIm+A==}
+  '@esbuild/sunos-x64@0.21.5':
+    resolution: {integrity: sha512-6+gjmFpfy0BHU5Tpptkuh8+uw3mnrvgs+dSPQXQOv3ekbordwnzTVEb4qnIvQcYXq6gzkyTnoZ9dZG+D4garKg==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [sunos]
@@ -3543,8 +3543,8 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@esbuild/win32-arm64@0.21.4':
-    resolution: {integrity: sha512-UUfMgMoXPoA/bvGUNfUBFLCh0gt9dxZYIx9W4rfJr7+hKe5jxxHmfOK8YSH4qsHLLN4Ck8JZ+v7Q5fIm1huErg==}
+  '@esbuild/win32-arm64@0.21.5':
+    resolution: {integrity: sha512-Z0gOTd75VvXqyq7nsl93zwahcTROgqvuAcYDUr+vOv8uHhNSKROyU961kgtCD1e95IqPKSQKH7tBTslnS3tA8A==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [win32]
@@ -3573,8 +3573,8 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@esbuild/win32-ia32@0.21.4':
-    resolution: {integrity: sha512-yIxbspZb5kGCAHWm8dexALQ9en1IYDfErzjSEq1KzXFniHv019VT3mNtTK7t8qdy4TwT6QYHI9sEZabONHg+aw==}
+  '@esbuild/win32-ia32@0.21.5':
+    resolution: {integrity: sha512-SWXFF1CL2RVNMaVs+BBClwtfZSvDgtL//G/smwAc5oVK/UPu2Gu9tIaRgFmYFFKrmg3SyAjSrElf0TiJ1v8fYA==}
     engines: {node: '>=12'}
     cpu: [ia32]
     os: [win32]
@@ -3603,8 +3603,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@esbuild/win32-x64@0.21.4':
-    resolution: {integrity: sha512-sywLRD3UK/qRJt0oBwdpYLBibk7KiRfbswmWRDabuncQYSlf8aLEEUor/oP6KRz8KEG+HoiVLBhPRD5JWjS8Sg==}
+  '@esbuild/win32-x64@0.21.5':
+    resolution: {integrity: sha512-tQd/1efJuzPC6rCFwEvLtci/xNFcTZknmXs98FYDfGE4wP9ClFV98nyKrzJKVPMhdDnjzLhdUyMX4PsQAPjwIw==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [win32]
@@ -4930,46 +4930,46 @@ packages:
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/addon-actions@8.1.6':
-    resolution: {integrity: sha512-EbiAdbtXN/UM4by3+qisbrQmElaIfahgNqffbst6GiCTmUCVE5if6geL1mzKd/u/rZOzx5g0EG76x8N9yDjOtg==}
+  '@storybook/addon-actions@8.1.8':
+    resolution: {integrity: sha512-bDfeoU+rkrvEXR8MUYqqTDOHIKjcuC44JAqKbj0yBVeh2haJF66rBiTPYO/AD9JcBTCA95S9ya3j08cy9+g5lw==}
 
-  '@storybook/addon-backgrounds@8.1.6':
-    resolution: {integrity: sha512-mrBG5mkcMg6vpRUtNxyYaseD4ucrG+mZiqZnXcx8LWzwDMOd4mOODvap286z+Si0Fl1etbGDDhPU9+hV+o1arw==}
+  '@storybook/addon-backgrounds@8.1.8':
+    resolution: {integrity: sha512-HEHvJHyLdR/iLg53ynKp+EqHDMbLnCZr2yaxdUUyQ2p5M5kg+VXe75+H34H0AYW7uTQniHghfVUgXuHKY9z4Jg==}
 
-  '@storybook/addon-controls@8.1.6':
-    resolution: {integrity: sha512-hDMsu4yRP/ySb/G7hbd7nSFhVNz+F9hnizJGJX4XGuiSx7rAEYjvfKQKkawxTP+VeAw6iZPj1fukvOrMCQ0xxQ==}
+  '@storybook/addon-controls@8.1.8':
+    resolution: {integrity: sha512-o/0WUSlWd6Erf37D9xOnRk7GYMOYf0eI1O7MQdPBSOpI+I77684vCp35D/WcamK3lqz0sAewF5tM14tuo3ATZw==}
 
-  '@storybook/addon-docs@8.1.6':
-    resolution: {integrity: sha512-ejTbjDhaHn6IeTma/pwn8OutDzIqbMJKNhZx24W4FE/qvYInZIK/9gYPU9/oLKZ7FImqP3s1e4+RxDBgsq21lA==}
+  '@storybook/addon-docs@8.1.8':
+    resolution: {integrity: sha512-zTQxrO53TxDNUn/laK4BCBHp1nO2DABq4BIuNAapYq+DuQ3w981/Jcb9Qwr8TrGGb0hmT1vV2ZGP1m0KfA8OQg==}
 
-  '@storybook/addon-essentials@8.1.6':
-    resolution: {integrity: sha512-8ve9eM9dL6JsC5hV98unXtADvwyhIZoa3iWSeTicxWab49tvAfIM9ExwcWmUyPaB4m5q45jBSBXg66bzW2+TFw==}
+  '@storybook/addon-essentials@8.1.8':
+    resolution: {integrity: sha512-qAVuighthkhYEgM977vj3sk4mZEOP+JGt+qYLT4nIjuucNm9aXyUOQovIiLQeAwtj+zvwSJ7diFDlQW3eYq+hQ==}
 
-  '@storybook/addon-highlight@8.1.6':
-    resolution: {integrity: sha512-QT95TS4OT0SJJVz/1m038COUdS2yWukQOwyq2rCgSM6nU3OHOPf/CldDK4Sdch7Z4jV9kRdRS0Pu4FB5SV+uOw==}
+  '@storybook/addon-highlight@8.1.8':
+    resolution: {integrity: sha512-5xT0+F2TqLyS2Jg6pEpCgonFLpWypNufUPN5v4Sne2pTrmGSUu6Jse7j856eNlMcoULOrB81wWi0oZ7DH6Hyyw==}
 
-  '@storybook/addon-links@8.1.6':
-    resolution: {integrity: sha512-EuSXoK+tpApjW08ZiC4yE9ePdJkIu36AFPJHA6FVierVU31klW+cbFqps88JpmALZkrlf+pzKf3uBIGLrkBSAw==}
+  '@storybook/addon-links@8.1.8':
+    resolution: {integrity: sha512-R6pRpsIWw06v21KdUjCxGZ8664hPtCSEGNhK1dqk9EbSXOpc24iX3cn39EqxQ4OEo/laAfozNJQkzD+/dIL6kw==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
     peerDependenciesMeta:
       react:
         optional: true
 
-  '@storybook/addon-measure@8.1.6':
-    resolution: {integrity: sha512-afG6XzClrkBQ9ZUZQs0rI9z/RYB+qhebG5k1NTCGYJnj7K4c+jso9nQ9vmypOBqlYKwTT2ZG+9xSK1/IhudEvg==}
+  '@storybook/addon-measure@8.1.8':
+    resolution: {integrity: sha512-slmzrMEQVY+K+3XNRs+JajLTVOMuIWBhdT1LqEI9HT2MH8ng5hutLYWW02df6QuwsEtLn03QmT2RLokgPxshyw==}
 
-  '@storybook/addon-outline@8.1.6':
-    resolution: {integrity: sha512-YjH3L4kxln0fLF77oDGJ2KF1I0RNrBQ9FRtqZkGMUbplxwYU0BBrguSgVeGxTLN1q/69LmL6wjFP4nLzqZARhA==}
+  '@storybook/addon-outline@8.1.8':
+    resolution: {integrity: sha512-hj2hNXMdfwZcUINftviwyl2c6k1kKwe+HgXYI1aUbaPvyj7K86CujYr9WlOUQITp7oTDE8+8/yZe0Xq2MEO/mA==}
 
-  '@storybook/addon-toolbars@8.1.6':
-    resolution: {integrity: sha512-d1GciLzD2ZRqh7+b8+JGuCdx8x/MAobhTy+jKeK79d+QKNtPhqZ1OvyUbwObgD6XLF8B/3DvyP3r52lmYMwlnQ==}
+  '@storybook/addon-toolbars@8.1.8':
+    resolution: {integrity: sha512-E3h7h/fbis+9PfIJLKRA8ZRwD/o21PRwuvkOWjX0H+7bgVZKkj0ndT0wBvyMRDY9bDoiUIUrc5biA0g3vMbdSw==}
 
-  '@storybook/addon-viewport@8.1.6':
-    resolution: {integrity: sha512-4EpEkJW1fPqlHIqG7OQtnAaHh9DPj7k+guXpzWjVwHfF6AE0fXIg7Yx6iVDGPyKkRaagPw6nL8DOr2U8YwK4rQ==}
+  '@storybook/addon-viewport@8.1.8':
+    resolution: {integrity: sha512-npYqLSpduRvIQ51VJuKvWo2xKPQ1i2WF6p0SgGXqfhoX+c0NColAQC/5VcSdbfFMkx5hH6ikeOmEJqkB2myFCQ==}
 
-  '@storybook/blocks@8.1.6':
-    resolution: {integrity: sha512-HBp80G9puOejqlBA0iNlV3gUxc7TkBlNIVG2rmhjcvPZUueldxTUGIGvEfTLdEM6nqzNVZT+duXwqeHHnDcynA==}
+  '@storybook/blocks@8.1.8':
+    resolution: {integrity: sha512-nx18ism4YCuLFOmI6mQ+EJD1XABcbDdAyeheZPwkwB+fKkseNiOy7C/Mqio7ReYIncvlML6CCUyFm/OSEZkHkQ==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
@@ -4979,11 +4979,11 @@ packages:
       react-dom:
         optional: true
 
-  '@storybook/builder-manager@8.1.6':
-    resolution: {integrity: sha512-Y5d+dikKnUuCYyh4VLEF6A+AbWughEgtipVkDKOddSTzn04trClIOKqfhQqEUObydCpgvvfdjGXJa/zDRV/UQA==}
+  '@storybook/builder-manager@8.1.8':
+    resolution: {integrity: sha512-M4qpETmQNUTg6KEt4nVONjF2dXlVV1V+Mxf9saiinoj+PCyHdz+BmYYmiGtopUPxJ2YGvTL1nGykkyH57HutrQ==}
 
-  '@storybook/builder-vite@8.1.6':
-    resolution: {integrity: sha512-xbGxI7aVMNuLcAB41Z+Vjr+M1Kznvw/jJ8HP9cfmUl1cO7ysF8R9opVG1C+kMIXUIQAVeND+DUZgmUg2zGzH6A==}
+  '@storybook/builder-vite@8.1.8':
+    resolution: {integrity: sha512-eZnHUyQ27A+Cm6UsCC+H2VMbeT+zjAQ8wBexZKhTXjFE0tlD/JWuezb3A2EVjfHrrVLHVc/DZBmxCWr9qddkUQ==}
     peerDependencies:
       '@preact/preset-vite': '*'
       typescript: '>= 4.3.x'
@@ -4997,44 +4997,44 @@ packages:
       vite-plugin-glimmerx:
         optional: true
 
-  '@storybook/channels@8.1.6':
-    resolution: {integrity: sha512-CzDnP6qfI8OC8pGUk+wPUzLPYcKhX8XbriF2gBtwl6qVM8YfkHP2mLTiDYDwBIi0rLuUbSm/SpILXQ/ouOHOGw==}
+  '@storybook/channels@8.1.8':
+    resolution: {integrity: sha512-mEjg72jmB7hBSDUIpSzQL+MC61kUn4D9CCH1EK5K6Cfr1dmmHaCyDPCtBXSvuVSKn1VbF3JfT429v+iYeBrHlA==}
 
-  '@storybook/cli@8.1.6':
-    resolution: {integrity: sha512-xsFdBoAbo+2h/UCWuVXiH4Tu49iQ6d+3R1J8F2n4N6rAKxMqAb6fzYnH1GeRYeZk0HGqb2iNc4kBkxj0jW0rKw==}
+  '@storybook/cli@8.1.8':
+    resolution: {integrity: sha512-GrU8zcLK0l/Jo9xQ42iEBqF0YL83gZF/GDTV+9MVMU1JtBtFldomvyGzT9J3TwvPgzC+rCmlk16rY1M2vc5klg==}
     hasBin: true
 
-  '@storybook/client-logger@8.1.6':
-    resolution: {integrity: sha512-QfSoUxS1rmrBzO7o99og9g+Gkm7sTmU5ZOpTkjszjlRqfV6/77eUnUOzUikej4LqPLmlJV5fqGuvoP0aNVksDw==}
+  '@storybook/client-logger@8.1.8':
+    resolution: {integrity: sha512-VABFR6jHtORRuRcm+q49T0F3z6LY46+qjkvETafMIy3jcXnLTKubaLVMZBxUyYbh6H4RYv8YjnkYcrUszgZCEQ==}
 
-  '@storybook/codemod@8.1.6':
-    resolution: {integrity: sha512-N5JeimfscAOcME7FIrTCmxcsXxow11vtmPTjYWoeLYokBodaH5RyWcyyQ5KS1ACtt+dHYoX8lepSZA5SBEzYog==}
+  '@storybook/codemod@8.1.8':
+    resolution: {integrity: sha512-hW9kQTgYN7GjLzjG624Bym1SfWfxQrHE2snIgbwRD9mO+jc/J6qjrR7Z42hV60LypqZ/FcZvBRq/1F247tNq9g==}
 
-  '@storybook/components@8.1.6':
-    resolution: {integrity: sha512-RDcSj2gBVhK/klfcXQgINtvWe5hpJ1CYUv8hrAon3fWtZmX1+IrTJTorsdISvdHQ99o0WHZ+Ouz42O0yJnHzRg==}
+  '@storybook/components@8.1.8':
+    resolution: {integrity: sha512-DEfAtDEeISkic8jFm/rFQeVGdA0evVkbiOof+insJxzh6KnIfnZVmJysX02xoUhOCIMjo59c7x0nmUf7NlYsMw==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/core-common@8.1.6':
-    resolution: {integrity: sha512-OTlfJFaTOB588ibXrrFm0TAXam6E5xV1VXSjNXL+fIifx8Kjln2HNSy1JKjvcblQneYiV4J1xPCVnAIe0EGHDg==}
+  '@storybook/core-common@8.1.8':
+    resolution: {integrity: sha512-RcJUTGjvVCuGtz7GifY8sMHLUvmsg8moDOgwwkOJ+9QdgInyuZeqLzNI7BjOv2CYCK1sy7x0eU7B4CWD8LwnwA==}
     peerDependencies:
       prettier: ^2 || ^3
     peerDependenciesMeta:
       prettier:
         optional: true
 
-  '@storybook/core-events@8.1.6':
-    resolution: {integrity: sha512-DaIVe4TUp/7uQdSJYGmJv9S/S364tSgZ3S3dZ1vsf1rgoUbCp5kTBtcd/fcqgukMPREgCgO9oDhmemI3SLAqzw==}
+  '@storybook/core-events@8.1.8':
+    resolution: {integrity: sha512-ZJWPeqBLFKRlRN1MitYNEXpNL+7vACXy14d6ja3zYW39htSSPlQYI1RXMURk+qTvGfxy1ZlAeyN62WeYXhTqLA==}
 
-  '@storybook/core-server@8.1.6':
-    resolution: {integrity: sha512-rgkeTG8V4emzhPqjlhchsjLay0WtgK7SrXNf1X40oTJIwmbgbReLJ5EmOXBe9rhWSXJ13aKL3l6JuTLAoptSkg==}
+  '@storybook/core-server@8.1.8':
+    resolution: {integrity: sha512-v2V7FC/y/lrKPxcseIwPavjdCCDHphpj+A23Jmp822tqYn+I4nYRvE74QKyn5dfLrdn52nz8KrUFwjhuacj10Q==}
 
-  '@storybook/csf-plugin@8.1.6':
-    resolution: {integrity: sha512-y2OW84leoWsqfBXb7EoRy2QUmtsI3gpqYqpyD/d5K+vQ+E9CBel2WB8RPrwcYm2L88WPDaufQQDzqyB7aMx4fQ==}
+  '@storybook/csf-plugin@8.1.8':
+    resolution: {integrity: sha512-5OxJlbedziDFdIGefPGSptEbfdGfuW9CViv9+eQ3g4AwG8HLdtSrcJtxYuUsK3vNTs7+Txy3Hm7fd9NSUcxOdg==}
 
-  '@storybook/csf-tools@8.1.6':
-    resolution: {integrity: sha512-jrKfHFNhiLBhWWW4/fm2wgKEVg55e6QuYUHY16KGd7PdPuzm+2Pt7jIl5V9yIj6a59YbjeMpT6jWPKbFx2TuCw==}
+  '@storybook/csf-tools@8.1.8':
+    resolution: {integrity: sha512-5kI0q2HPGNqaedjNx4Eh5uQf3f6qSyUa14fT4GCAAGgbG0YgUeIff4N95XZ1VVeQ14epx2UK4p3+FsD58Lwnig==}
 
   '@storybook/csf@0.1.8':
     resolution: {integrity: sha512-Ntab9o7LjBCbFIao5l42itFiaSh/Qu+l16l/r/9qmV9LnYZkO+JQ7tzhdlwpgJfhs+B5xeejpdAtftDRyXNajw==}
@@ -5042,8 +5042,8 @@ packages:
   '@storybook/docs-mdx@3.1.0-next.0':
     resolution: {integrity: sha512-t4syFIeSyufieNovZbLruPt2DmRKpbwL4fERCZ1MifWDRIORCKLc4NCEHy+IqvIqd71/SJV2k4B51nF7vlJfmQ==}
 
-  '@storybook/docs-tools@8.1.6':
-    resolution: {integrity: sha512-IhqQHSJ5nEBEJ162P/6/6c45toLinWpAkB7pwbAoP00djZSzfHNdQ4HfpZSGfD4GUJIvzsqMzUlyqCKLAoRPPA==}
+  '@storybook/docs-tools@8.1.8':
+    resolution: {integrity: sha512-YdwuLKIiqNFfpfBucWXt+MDvqBYmBWdm3pADTYmC9P3BI+jQ4A88LhIHYVycq8JWLxFQHSKNvgJ+Z5MFbnijIQ==}
 
   '@storybook/global@5.0.0':
     resolution: {integrity: sha512-FcOqPAXACP0I3oJ/ws6/rrPT9WGhu915Cg8D02a9YxLo0DE9zI+a9A5gRGvmQ09fiWPukqI8ZAEoQEdWUKMQdQ==}
@@ -5055,37 +5055,37 @@ packages:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/manager-api@8.1.6':
-    resolution: {integrity: sha512-L/s1FdFh/P+eFmQwLtFtJHwFJrGD9H7nauaQlKJOrU3GeXfjBjtlAZQF0Q6B4ZTGxwZjQrzShpt/0yKc6gymtw==}
+  '@storybook/manager-api@8.1.8':
+    resolution: {integrity: sha512-mVUGMp2Z0lnuIZL8wgb++Id1tGTBtaFtB89w89U/Y5Ii8UMv2tukNiDY37HTkkVIvRz0sm9bJa94GNDrUubnTw==}
 
-  '@storybook/manager@8.1.6':
-    resolution: {integrity: sha512-B7xc09FYHqC1sknJoWkGHBBCMQlfg7hF+4x42cGhAyYed4TeYAf7b1PDniq8L/PLbUgzTw+A62UC1fMurCcVDQ==}
+  '@storybook/manager@8.1.8':
+    resolution: {integrity: sha512-3d1qAIzx9TQslolwZSRvlgZ78bxL3RtesUq1NYtC/nDQ7M8Yb+X3taIk8iE/AXa2wlJ8dQ4vU5grLl/oWQeTJg==}
 
-  '@storybook/node-logger@8.1.6':
-    resolution: {integrity: sha512-IZEiTLFHu8Oom/vdEGpisSw5CfU+cw6/fTaX1P3EVClFOWVuy8/3X5MPu4wJH3jPym6E2DBduIUFeRsiuq61gA==}
+  '@storybook/node-logger@8.1.8':
+    resolution: {integrity: sha512-7woDHnwd8HdssbEQnfpwZu+zNjp9X6vqdPHhxhwAYsYt3x+m0Y8LP0sMJk8w/gQygelUoJsZLFZsJ2pifLXLCg==}
 
-  '@storybook/preview-api@8.1.6':
-    resolution: {integrity: sha512-g9EvVg/DYqmjMh1uivJBJnSIvURyuK4LLabYicQNmYdQJscAeXX2bpMcA4aeci9BBm9B2RP7JbSnq7DbXZaJYA==}
+  '@storybook/preview-api@8.1.8':
+    resolution: {integrity: sha512-O+QnMYA5WbNvWVYcnXtzKorSbM/68QHz3Jlcjr8pRw78G478XKUACTUob/XIfZ64HGLhs7MyCjC6clHptx5kpw==}
 
-  '@storybook/preview@8.1.6':
-    resolution: {integrity: sha512-o9OgOmO10GyX1ZC7WiapYqGdst4TOCPLqWSu3H2nL4ZT7BQLUQfCy30kyoMO7KyxCgc5K5rcqG7qZ/N0tfUgRg==}
+  '@storybook/preview@8.1.8':
+    resolution: {integrity: sha512-xUAV/7dLRXfCRp8j/Y4c9IG8YVZ3W+Ps6OAIXWoMjHRDNdEAItka2WnOlZWjDFNHSxOR7vOh0oraYPKgBV8edQ==}
 
-  '@storybook/react-dom-shim@8.1.6':
-    resolution: {integrity: sha512-qP5nkAmpGFy/gshO+bVjRo1rgo/6UVDElgOd2dlUtYnfdPONiOfWko2XGYKKfxa6Cp7KU35JlZz/kHGqWG31zQ==}
+  '@storybook/react-dom-shim@8.1.8':
+    resolution: {integrity: sha512-6lzFv/H5szDCy4D7Ob7gDAS9hTfFH9Cds+LEB6dRAsCC7ZMF56hp79AZZWkT3XXTNGXcy8w4+bI7Ntk3l4+rrA==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/react-vite@8.1.6':
-    resolution: {integrity: sha512-aUrSOVVG/11v5FBWjxyVVYtL1MhFcGFvkHcT2tTUK2lN/EMNFugL5t5YYPv0FIi/DXxg8RBdJIV9vdNCd6tNOA==}
+  '@storybook/react-vite@8.1.8':
+    resolution: {integrity: sha512-BdhCmxDY4EMTBFvA0SWdvJOcOc1cBkZ2Y4W44ltOq1KkqTsCgi5BFhB96HZTOMEM/yYyJb9+01iD5uY66xbCpg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
       vite: ^4.0.0 || ^5.0.0
 
-  '@storybook/react@8.1.6':
-    resolution: {integrity: sha512-2CSc3MLeaY7QaYAQLwaXRboKkgQnWrSZAo/WTJcSHUr2YFxH5+iECB0Kci12GqaJklhhgmfTfVZ4Jo9ZJ6LQfg==}
+  '@storybook/react@8.1.8':
+    resolution: {integrity: sha512-QFwyccbyZGcTpYk6BVChSSemeZ3mmnpp62Ca60j6JO+zbtZv3tTr4PFo79lkWwtz+jpfj0CX8hyYdT1p3r77YA==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
@@ -5095,14 +5095,14 @@ packages:
       typescript:
         optional: true
 
-  '@storybook/router@8.1.6':
-    resolution: {integrity: sha512-tvuhB2uXHEKK640Epm1SqVzPhQ9lXYfF7FX6FleJgVYEvZpJpNTD4RojedQoLI6SUUSXNy1Vs2QV26VM0XIPHQ==}
+  '@storybook/router@8.1.8':
+    resolution: {integrity: sha512-7OzLdeCE+a8Ypk4Ne/2DU3s81GDNISnKIaFJ2DAuLSJbmF/LzvL39H/gyHXqmFqXWeSuCdBS0V37OEgejlZIAQ==}
 
-  '@storybook/telemetry@8.1.6':
-    resolution: {integrity: sha512-qNWjQPF6ufRvLCAavulhNYoqldDIeBvioFuCjLlwbw3BZw3ck7pwh1vZg4AJ0SAfzbnpnXPGrHe31gnxV0D6tw==}
+  '@storybook/telemetry@8.1.8':
+    resolution: {integrity: sha512-Hr5QUVtn4BzQrqsv1dwlfKRj2yU8XRXmhwCbo0DFULpJasVsJB3VJXeuUOijwteWsGo2avKMZErwNZElJy2yXA==}
 
-  '@storybook/theming@8.1.6':
-    resolution: {integrity: sha512-0Cl/7/0z2WSfXhZ9XSw6rgEjb0fXac7jfktieX0vYo1YckrNpWFRQP9NCpVPAcYZaFLlRSOqYark6CLoutEsIg==}
+  '@storybook/theming@8.1.8':
+    resolution: {integrity: sha512-QhRMSRpnWVD1IB5sTZXVI35ETSQdwGh4/g8gKlGol8MN2Behd7CFgFAj2UL4jpPgjhnioH0U4rwwLkRfDlkR6Q==}
     peerDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318
@@ -5112,8 +5112,8 @@ packages:
       react-dom:
         optional: true
 
-  '@storybook/types@8.1.6':
-    resolution: {integrity: sha512-cWpS9+x1pxCO39spR8QmumMK2ub2p5cvMtrRvWaIjBFPbCwm2CvjBXFWIra2veBCZTxUKJ9VWxvi7pzRHjN/nw==}
+  '@storybook/types@8.1.8':
+    resolution: {integrity: sha512-bWg6WkhnhkWBIu03lUKlX2eOYSjDzpzoulzLh1H4Tl1JReGed+cHbIpdIU6lke2aJyb2BNyzoyudUHKBBGaOzg==}
 
   '@svgo/jsx@0.4.2':
     resolution: {integrity: sha512-0e4B41q+GnS8TI+SWHQw78ziW6V07Li2TMLS8FwbvKOTIJL0ua1Sat1AI0AFAjHlAePz9b+1VtyJzv1516edJw==}
@@ -6517,8 +6517,8 @@ packages:
     engines: {node: '>=12'}
     hasBin: true
 
-  esbuild@0.21.4:
-    resolution: {integrity: sha512-sFMcNNrj+Q0ZDolrp5pDhH0nRPN9hLIM3fRPwgbLYJeSHHgnXSnbV3xYgSVuOeLWH9c73VwmEverVzupIv5xuA==}
+  esbuild@0.21.5:
+    resolution: {integrity: sha512-mg3OPMV4hXywwpoDxu3Qda5xCKQi+vCTZq8S9J/EpkhB2HzKXq4SNFZE3+NK93JYxc8VMSep+lOUSC/RVKaBqw==}
     engines: {node: '>=12'}
     hasBin: true
 
@@ -9299,8 +9299,8 @@ packages:
   store2@2.14.2:
     resolution: {integrity: sha512-siT1RiqlfQnGqgT/YzXVUNsom9S0H1OX+dpdGN1xkyYATo4I6sep5NmsRD/40s3IIOvlCq6akxkqG82urIZW1w==}
 
-  storybook@8.1.6:
-    resolution: {integrity: sha512-qouQEB+sSb9ktE6fGVoBy6CLEUq4NOqDUpt/EhnITaWqzUeAZSQXTcoHg9DXhTMiynnbfqsUcZuK9PZOjgt7/w==}
+  storybook@8.1.8:
+    resolution: {integrity: sha512-2ld3JEmPWy3KOksfF0Reyiq5SC+dYBzV2XW2/YTkNkLTkyNofhdPeq71COGcB0Lq2PHZkZyNin8htQWbh0LLNg==}
     hasBin: true
 
   stream-shift@1.0.1:
@@ -9569,8 +9569,8 @@ packages:
   tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
 
-  tsx@4.11.2:
-    resolution: {integrity: sha512-V5DL5v1BuItjsQ2FN9+4OjR7n5cr8hSgN+VGmm/fd2/0cgQdBIWHcQ3bFYm/5ZTmyxkTDBUIaRuW2divgfPe0A==}
+  tsx@4.15.4:
+    resolution: {integrity: sha512-d++FLCwJLrXaBFtRcqdPBzu6FiVOJ2j+UsvUZPtoTrnYtCGU5CEW7iHXtNZfA2fcRTvJFWPqA6SWBuB0GSva9w==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -9876,8 +9876,8 @@ packages:
       terser:
         optional: true
 
-  vite@5.2.13:
-    resolution: {integrity: sha512-SSq1noJfY9pR3I1TUENL3rQYDQCFqgD+lM6fTRAM8Nv6Lsg5hDLaXkjETVeBt+7vZBCMoibD+6IWnT2mJ+Zb/A==}
+  vite@5.3.0:
+    resolution: {integrity: sha512-hA6vAVK977NyW1Qw+fLvqSo7xDPej7von7C3DwwqPRmnnnK36XEBC/J3j1V5lP8fbt7y0TgTKJbpNGSwM+Bdeg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
     peerDependencies:
@@ -10238,7 +10238,7 @@ snapshots:
 
   '@babel/helper-builder-binary-assignment-operator-visitor@7.22.15':
     dependencies:
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.7
 
   '@babel/helper-compilation-targets@7.22.9(@babel/core@7.22.9)':
     dependencies:
@@ -11051,7 +11051,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.24.5
       '@babel/helper-plugin-utils': 7.24.5
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.7
       esutils: 2.0.3
 
   '@babel/preset-typescript@7.24.1(@babel/core@7.24.5)':
@@ -11284,7 +11284,7 @@ snapshots:
   '@esbuild/aix-ppc64@0.20.2':
     optional: true
 
-  '@esbuild/aix-ppc64@0.21.4':
+  '@esbuild/aix-ppc64@0.21.5':
     optional: true
 
   '@esbuild/android-arm64@0.17.19':
@@ -11299,7 +11299,7 @@ snapshots:
   '@esbuild/android-arm64@0.20.2':
     optional: true
 
-  '@esbuild/android-arm64@0.21.4':
+  '@esbuild/android-arm64@0.21.5':
     optional: true
 
   '@esbuild/android-arm@0.17.19':
@@ -11314,7 +11314,7 @@ snapshots:
   '@esbuild/android-arm@0.20.2':
     optional: true
 
-  '@esbuild/android-arm@0.21.4':
+  '@esbuild/android-arm@0.21.5':
     optional: true
 
   '@esbuild/android-x64@0.17.19':
@@ -11329,7 +11329,7 @@ snapshots:
   '@esbuild/android-x64@0.20.2':
     optional: true
 
-  '@esbuild/android-x64@0.21.4':
+  '@esbuild/android-x64@0.21.5':
     optional: true
 
   '@esbuild/darwin-arm64@0.17.19':
@@ -11344,7 +11344,7 @@ snapshots:
   '@esbuild/darwin-arm64@0.20.2':
     optional: true
 
-  '@esbuild/darwin-arm64@0.21.4':
+  '@esbuild/darwin-arm64@0.21.5':
     optional: true
 
   '@esbuild/darwin-x64@0.17.19':
@@ -11359,7 +11359,7 @@ snapshots:
   '@esbuild/darwin-x64@0.20.2':
     optional: true
 
-  '@esbuild/darwin-x64@0.21.4':
+  '@esbuild/darwin-x64@0.21.5':
     optional: true
 
   '@esbuild/freebsd-arm64@0.17.19':
@@ -11374,7 +11374,7 @@ snapshots:
   '@esbuild/freebsd-arm64@0.20.2':
     optional: true
 
-  '@esbuild/freebsd-arm64@0.21.4':
+  '@esbuild/freebsd-arm64@0.21.5':
     optional: true
 
   '@esbuild/freebsd-x64@0.17.19':
@@ -11389,7 +11389,7 @@ snapshots:
   '@esbuild/freebsd-x64@0.20.2':
     optional: true
 
-  '@esbuild/freebsd-x64@0.21.4':
+  '@esbuild/freebsd-x64@0.21.5':
     optional: true
 
   '@esbuild/linux-arm64@0.17.19':
@@ -11404,7 +11404,7 @@ snapshots:
   '@esbuild/linux-arm64@0.20.2':
     optional: true
 
-  '@esbuild/linux-arm64@0.21.4':
+  '@esbuild/linux-arm64@0.21.5':
     optional: true
 
   '@esbuild/linux-arm@0.17.19':
@@ -11419,7 +11419,7 @@ snapshots:
   '@esbuild/linux-arm@0.20.2':
     optional: true
 
-  '@esbuild/linux-arm@0.21.4':
+  '@esbuild/linux-arm@0.21.5':
     optional: true
 
   '@esbuild/linux-ia32@0.17.19':
@@ -11434,7 +11434,7 @@ snapshots:
   '@esbuild/linux-ia32@0.20.2':
     optional: true
 
-  '@esbuild/linux-ia32@0.21.4':
+  '@esbuild/linux-ia32@0.21.5':
     optional: true
 
   '@esbuild/linux-loong64@0.17.19':
@@ -11449,7 +11449,7 @@ snapshots:
   '@esbuild/linux-loong64@0.20.2':
     optional: true
 
-  '@esbuild/linux-loong64@0.21.4':
+  '@esbuild/linux-loong64@0.21.5':
     optional: true
 
   '@esbuild/linux-mips64el@0.17.19':
@@ -11464,7 +11464,7 @@ snapshots:
   '@esbuild/linux-mips64el@0.20.2':
     optional: true
 
-  '@esbuild/linux-mips64el@0.21.4':
+  '@esbuild/linux-mips64el@0.21.5':
     optional: true
 
   '@esbuild/linux-ppc64@0.17.19':
@@ -11479,7 +11479,7 @@ snapshots:
   '@esbuild/linux-ppc64@0.20.2':
     optional: true
 
-  '@esbuild/linux-ppc64@0.21.4':
+  '@esbuild/linux-ppc64@0.21.5':
     optional: true
 
   '@esbuild/linux-riscv64@0.17.19':
@@ -11494,7 +11494,7 @@ snapshots:
   '@esbuild/linux-riscv64@0.20.2':
     optional: true
 
-  '@esbuild/linux-riscv64@0.21.4':
+  '@esbuild/linux-riscv64@0.21.5':
     optional: true
 
   '@esbuild/linux-s390x@0.17.19':
@@ -11509,7 +11509,7 @@ snapshots:
   '@esbuild/linux-s390x@0.20.2':
     optional: true
 
-  '@esbuild/linux-s390x@0.21.4':
+  '@esbuild/linux-s390x@0.21.5':
     optional: true
 
   '@esbuild/linux-x64@0.17.19':
@@ -11524,7 +11524,7 @@ snapshots:
   '@esbuild/linux-x64@0.20.2':
     optional: true
 
-  '@esbuild/linux-x64@0.21.4':
+  '@esbuild/linux-x64@0.21.5':
     optional: true
 
   '@esbuild/netbsd-x64@0.17.19':
@@ -11539,7 +11539,7 @@ snapshots:
   '@esbuild/netbsd-x64@0.20.2':
     optional: true
 
-  '@esbuild/netbsd-x64@0.21.4':
+  '@esbuild/netbsd-x64@0.21.5':
     optional: true
 
   '@esbuild/openbsd-x64@0.17.19':
@@ -11554,7 +11554,7 @@ snapshots:
   '@esbuild/openbsd-x64@0.20.2':
     optional: true
 
-  '@esbuild/openbsd-x64@0.21.4':
+  '@esbuild/openbsd-x64@0.21.5':
     optional: true
 
   '@esbuild/sunos-x64@0.17.19':
@@ -11569,7 +11569,7 @@ snapshots:
   '@esbuild/sunos-x64@0.20.2':
     optional: true
 
-  '@esbuild/sunos-x64@0.21.4':
+  '@esbuild/sunos-x64@0.21.5':
     optional: true
 
   '@esbuild/win32-arm64@0.17.19':
@@ -11584,7 +11584,7 @@ snapshots:
   '@esbuild/win32-arm64@0.20.2':
     optional: true
 
-  '@esbuild/win32-arm64@0.21.4':
+  '@esbuild/win32-arm64@0.21.5':
     optional: true
 
   '@esbuild/win32-ia32@0.17.19':
@@ -11599,7 +11599,7 @@ snapshots:
   '@esbuild/win32-ia32@0.20.2':
     optional: true
 
-  '@esbuild/win32-ia32@0.21.4':
+  '@esbuild/win32-ia32@0.21.5':
     optional: true
 
   '@esbuild/win32-x64@0.17.19':
@@ -11614,7 +11614,7 @@ snapshots:
   '@esbuild/win32-x64@0.20.2':
     optional: true
 
-  '@esbuild/win32-x64@0.21.4':
+  '@esbuild/win32-x64@0.21.5':
     optional: true
 
   '@eslint-community/eslint-utils@4.4.0(eslint@8.57.0)':
@@ -11876,13 +11876,13 @@ snapshots:
       '@types/yargs': 17.0.32
       chalk: 4.1.2
 
-  '@joshwooding/vite-plugin-react-docgen-typescript@0.3.1(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))':
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.3.1(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))':
     dependencies:
       glob: 7.2.3
       glob-promise: 4.2.2(glob@7.2.3)
       magic-string: 0.27.0
       react-docgen-typescript: 2.2.2(typescript@5.4.5)
-      vite: 5.2.13(@types/node@20.12.7)
+      vite: 5.3.0(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.4.5
 
@@ -12149,22 +12149,22 @@ snapshots:
 
   '@netlify/node-cookies@0.1.0': {}
 
-  '@netlify/remix-adapter@2.4.0(@netlify/functions@2.7.0(@opentelemetry/api@1.8.0))(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))':
+  '@netlify/remix-adapter@2.4.0(@netlify/functions@2.7.0(@opentelemetry/api@1.8.0))(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))':
     dependencies:
       '@netlify/functions': 2.7.0(@opentelemetry/api@1.8.0)
       '@remix-run/node': 2.9.2(typescript@5.4.5)
       isbot: 5.1.8
     optionalDependencies:
-      vite: 5.2.13(@types/node@20.12.7)
+      vite: 5.3.0(@types/node@20.12.7)
     transitivePeerDependencies:
       - typescript
 
-  '@netlify/remix-edge-adapter@3.3.0(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(vite@5.2.13(@types/node@20.12.7))':
+  '@netlify/remix-edge-adapter@3.3.0(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(vite@5.3.0(@types/node@20.12.7))':
     dependencies:
       '@netlify/remix-runtime': 2.3.0(@remix-run/server-runtime@2.9.2(typescript@5.4.5))
       isbot: 5.1.8
     optionalDependencies:
-      vite: 5.2.13(@types/node@20.12.7)
+      vite: 5.3.0(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@remix-run/server-runtime'
 
@@ -13025,7 +13025,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
-  '@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))':
+  '@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))':
     dependencies:
       '@babel/core': 7.24.5
       '@babel/generator': 7.24.5
@@ -13084,7 +13084,7 @@ snapshots:
     optionalDependencies:
       '@remix-run/serve': 2.9.2(typescript@5.4.5)
       typescript: 5.4.5
-      vite: 5.2.13(@types/node@20.12.7)
+      vite: 5.3.0(@types/node@20.12.7)
       wrangler: 3.50.0(@cloudflare/workers-types@4.20240405.0)
     transitivePeerDependencies:
       - '@types/node'
@@ -13323,24 +13323,24 @@ snapshots:
     dependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/addon-actions@8.1.6':
+  '@storybook/addon-actions@8.1.8':
     dependencies:
-      '@storybook/core-events': 8.1.6
+      '@storybook/core-events': 8.1.8
       '@storybook/global': 5.0.0
       '@types/uuid': 9.0.8
       dequal: 2.0.3
       polished: 4.2.2
       uuid: 9.0.1
 
-  '@storybook/addon-backgrounds@8.1.6':
+  '@storybook/addon-backgrounds@8.1.8':
     dependencies:
       '@storybook/global': 5.0.0
       memoizerific: 1.11.3
       ts-dedent: 2.2.0
 
-  '@storybook/addon-controls@8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/addon-controls@8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@storybook/blocks': 8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/blocks': 8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       dequal: 2.0.3
       lodash: 4.17.21
       ts-dedent: 2.2.0
@@ -13353,21 +13353,21 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@storybook/addon-docs@8.1.6(@types/react-dom@18.2.25)(prettier@3.3.2)':
+  '@storybook/addon-docs@8.1.8(@types/react-dom@18.2.25)(prettier@3.3.2)':
     dependencies:
       '@babel/core': 7.24.5
       '@mdx-js/react': 3.0.1(@types/react@18.2.79)(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/blocks': 8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/client-logger': 8.1.6
-      '@storybook/components': 8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/csf-plugin': 8.1.6
-      '@storybook/csf-tools': 8.1.6
+      '@storybook/blocks': 8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/client-logger': 8.1.8
+      '@storybook/components': 8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/csf-plugin': 8.1.8
+      '@storybook/csf-tools': 8.1.8
       '@storybook/global': 5.0.0
-      '@storybook/node-logger': 8.1.6
-      '@storybook/preview-api': 8.1.6
-      '@storybook/react-dom-shim': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/theming': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/types': 8.1.6
+      '@storybook/node-logger': 8.1.8
+      '@storybook/preview-api': 8.1.8
+      '@storybook/react-dom-shim': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/theming': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/types': 8.1.8
       '@types/react': 18.2.79
       fs-extra: 11.1.1
       react: 18.3.0-canary-14898b6a9-20240318
@@ -13381,21 +13381,21 @@ snapshots:
       - prettier
       - supports-color
 
-  '@storybook/addon-essentials@8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/addon-essentials@8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@storybook/addon-actions': 8.1.6
-      '@storybook/addon-backgrounds': 8.1.6
-      '@storybook/addon-controls': 8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/addon-docs': 8.1.6(@types/react-dom@18.2.25)(prettier@3.3.2)
-      '@storybook/addon-highlight': 8.1.6
-      '@storybook/addon-measure': 8.1.6
-      '@storybook/addon-outline': 8.1.6
-      '@storybook/addon-toolbars': 8.1.6
-      '@storybook/addon-viewport': 8.1.6
-      '@storybook/core-common': 8.1.6(prettier@3.3.2)
-      '@storybook/manager-api': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/node-logger': 8.1.6
-      '@storybook/preview-api': 8.1.6
+      '@storybook/addon-actions': 8.1.8
+      '@storybook/addon-backgrounds': 8.1.8
+      '@storybook/addon-controls': 8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/addon-docs': 8.1.8(@types/react-dom@18.2.25)(prettier@3.3.2)
+      '@storybook/addon-highlight': 8.1.8
+      '@storybook/addon-measure': 8.1.8
+      '@storybook/addon-outline': 8.1.8
+      '@storybook/addon-toolbars': 8.1.8
+      '@storybook/addon-viewport': 8.1.8
+      '@storybook/core-common': 8.1.8(prettier@3.3.2)
+      '@storybook/manager-api': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/node-logger': 8.1.8
+      '@storybook/preview-api': 8.1.8
       ts-dedent: 2.2.0
     transitivePeerDependencies:
       - '@types/react'
@@ -13406,11 +13406,11 @@ snapshots:
       - react-dom
       - supports-color
 
-  '@storybook/addon-highlight@8.1.6':
+  '@storybook/addon-highlight@8.1.8':
     dependencies:
       '@storybook/global': 5.0.0
 
-  '@storybook/addon-links@8.1.6(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/addon-links@8.1.8(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
       '@storybook/csf': 0.1.8
       '@storybook/global': 5.0.0
@@ -13418,36 +13418,36 @@ snapshots:
     optionalDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
 
-  '@storybook/addon-measure@8.1.6':
+  '@storybook/addon-measure@8.1.8':
     dependencies:
       '@storybook/global': 5.0.0
       tiny-invariant: 1.3.3
 
-  '@storybook/addon-outline@8.1.6':
+  '@storybook/addon-outline@8.1.8':
     dependencies:
       '@storybook/global': 5.0.0
       ts-dedent: 2.2.0
 
-  '@storybook/addon-toolbars@8.1.6': {}
+  '@storybook/addon-toolbars@8.1.8': {}
 
-  '@storybook/addon-viewport@8.1.6':
+  '@storybook/addon-viewport@8.1.8':
     dependencies:
       memoizerific: 1.11.3
 
-  '@storybook/blocks@8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/blocks@8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@storybook/channels': 8.1.6
-      '@storybook/client-logger': 8.1.6
-      '@storybook/components': 8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/core-events': 8.1.6
+      '@storybook/channels': 8.1.8
+      '@storybook/client-logger': 8.1.8
+      '@storybook/components': 8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/core-events': 8.1.8
       '@storybook/csf': 0.1.8
-      '@storybook/docs-tools': 8.1.6(prettier@3.3.2)
+      '@storybook/docs-tools': 8.1.8(prettier@3.3.2)
       '@storybook/global': 5.0.0
       '@storybook/icons': 1.2.9(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/manager-api': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/preview-api': 8.1.6
-      '@storybook/theming': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/types': 8.1.6
+      '@storybook/manager-api': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/preview-api': 8.1.8
+      '@storybook/theming': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/types': 8.1.8
       '@types/lodash': 4.14.182
       color-convert: 2.0.1
       dequal: 2.0.3
@@ -13470,12 +13470,12 @@ snapshots:
       - prettier
       - supports-color
 
-  '@storybook/builder-manager@8.1.6(prettier@3.3.2)':
+  '@storybook/builder-manager@8.1.8(prettier@3.3.2)':
     dependencies:
       '@fal-works/esbuild-plugin-global-externals': 2.1.2
-      '@storybook/core-common': 8.1.6(prettier@3.3.2)
-      '@storybook/manager': 8.1.6
-      '@storybook/node-logger': 8.1.6
+      '@storybook/core-common': 8.1.8(prettier@3.3.2)
+      '@storybook/manager': 8.1.8
+      '@storybook/node-logger': 8.1.8
       '@types/ejs': 3.1.2
       '@yarnpkg/esbuild-plugin-pnp': 3.0.0-rc.15(esbuild@0.20.2)
       browser-assert: 1.2.1
@@ -13491,17 +13491,17 @@ snapshots:
       - prettier
       - supports-color
 
-  '@storybook/builder-vite@8.1.6(prettier@3.3.2)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))':
+  '@storybook/builder-vite@8.1.8(prettier@3.3.2)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))':
     dependencies:
-      '@storybook/channels': 8.1.6
-      '@storybook/client-logger': 8.1.6
-      '@storybook/core-common': 8.1.6(prettier@3.3.2)
-      '@storybook/core-events': 8.1.6
-      '@storybook/csf-plugin': 8.1.6
-      '@storybook/node-logger': 8.1.6
-      '@storybook/preview': 8.1.6
-      '@storybook/preview-api': 8.1.6
-      '@storybook/types': 8.1.6
+      '@storybook/channels': 8.1.8
+      '@storybook/client-logger': 8.1.8
+      '@storybook/core-common': 8.1.8(prettier@3.3.2)
+      '@storybook/core-events': 8.1.8
+      '@storybook/csf-plugin': 8.1.8
+      '@storybook/node-logger': 8.1.8
+      '@storybook/preview': 8.1.8
+      '@storybook/preview-api': 8.1.8
+      '@storybook/types': 8.1.8
       '@types/find-cache-dir': 3.2.1
       browser-assert: 1.2.1
       es-module-lexer: 1.5.0
@@ -13510,7 +13510,7 @@ snapshots:
       fs-extra: 11.1.1
       magic-string: 0.30.1
       ts-dedent: 2.2.0
-      vite: 5.2.13(@types/node@20.12.7)
+      vite: 5.3.0(@types/node@20.12.7)
     optionalDependencies:
       typescript: 5.4.5
     transitivePeerDependencies:
@@ -13518,27 +13518,27 @@ snapshots:
       - prettier
       - supports-color
 
-  '@storybook/channels@8.1.6':
+  '@storybook/channels@8.1.8':
     dependencies:
-      '@storybook/client-logger': 8.1.6
-      '@storybook/core-events': 8.1.6
+      '@storybook/client-logger': 8.1.8
+      '@storybook/core-events': 8.1.8
       '@storybook/global': 5.0.0
       telejson: 7.2.0
       tiny-invariant: 1.3.3
 
-  '@storybook/cli@8.1.6(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/cli@8.1.8(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.7
       '@ndelangen/get-tarball': 3.0.9
-      '@storybook/codemod': 8.1.6
-      '@storybook/core-common': 8.1.6(prettier@3.3.2)
-      '@storybook/core-events': 8.1.6
-      '@storybook/core-server': 8.1.6(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/csf-tools': 8.1.6
-      '@storybook/node-logger': 8.1.6
-      '@storybook/telemetry': 8.1.6(prettier@3.3.2)
-      '@storybook/types': 8.1.6
+      '@storybook/codemod': 8.1.8
+      '@storybook/core-common': 8.1.8(prettier@3.3.2)
+      '@storybook/core-events': 8.1.8
+      '@storybook/core-server': 8.1.8(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/csf-tools': 8.1.8
+      '@storybook/node-logger': 8.1.8
+      '@storybook/telemetry': 8.1.8(prettier@3.3.2)
+      '@storybook/types': 8.1.8
       '@types/semver': 7.5.0
       '@yarnpkg/fslib': 2.10.3
       '@yarnpkg/libzip': 2.3.0
@@ -13559,7 +13559,7 @@ snapshots:
       prettier: 3.3.2
       prompts: 2.4.2
       read-pkg-up: 7.0.1
-      semver: 7.5.4
+      semver: 7.6.2
       strip-json-comments: 3.1.1
       tempy: 3.1.0
       tiny-invariant: 1.3.3
@@ -13573,19 +13573,19 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@storybook/client-logger@8.1.6':
+  '@storybook/client-logger@8.1.8':
     dependencies:
       '@storybook/global': 5.0.0
 
-  '@storybook/codemod@8.1.6':
+  '@storybook/codemod@8.1.8':
     dependencies:
       '@babel/core': 7.24.5
       '@babel/preset-env': 7.24.5(@babel/core@7.24.5)
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.7
       '@storybook/csf': 0.1.8
-      '@storybook/csf-tools': 8.1.6
-      '@storybook/node-logger': 8.1.6
-      '@storybook/types': 8.1.6
+      '@storybook/csf-tools': 8.1.8
+      '@storybook/node-logger': 8.1.8
+      '@storybook/types': 8.1.8
       '@types/cross-spawn': 6.0.2
       cross-spawn: 7.0.3
       globby: 14.0.1
@@ -13597,16 +13597,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/components@8.1.6(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/components@8.1.8(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
       '@radix-ui/react-dialog': 1.0.5(@types/react-dom@18.2.25)(@types/react@18.2.79)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
       '@radix-ui/react-slot': 1.0.2(@types/react@18.2.79)(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/client-logger': 8.1.6
+      '@storybook/client-logger': 8.1.8
       '@storybook/csf': 0.1.8
       '@storybook/global': 5.0.0
       '@storybook/icons': 1.2.9(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/theming': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/types': 8.1.6
+      '@storybook/theming': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/types': 8.1.8
       memoizerific: 1.11.3
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
@@ -13615,12 +13615,12 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
 
-  '@storybook/core-common@8.1.6(prettier@3.3.2)':
+  '@storybook/core-common@8.1.8(prettier@3.3.2)':
     dependencies:
-      '@storybook/core-events': 8.1.6
-      '@storybook/csf-tools': 8.1.6
-      '@storybook/node-logger': 8.1.6
-      '@storybook/types': 8.1.6
+      '@storybook/core-events': 8.1.8
+      '@storybook/csf-tools': 8.1.8
+      '@storybook/node-logger': 8.1.8
+      '@storybook/types': 8.1.8
       '@yarnpkg/fslib': 2.10.3
       '@yarnpkg/libzip': 2.3.0
       chalk: 4.1.2
@@ -13641,7 +13641,7 @@ snapshots:
       prettier-fallback: prettier@3.3.2
       pretty-hrtime: 1.0.3
       resolve-from: 5.0.0
-      semver: 7.5.4
+      semver: 7.6.2
       tempy: 3.1.0
       tiny-invariant: 1.3.3
       ts-dedent: 2.2.0
@@ -13652,31 +13652,31 @@ snapshots:
       - encoding
       - supports-color
 
-  '@storybook/core-events@8.1.6':
+  '@storybook/core-events@8.1.8':
     dependencies:
       '@storybook/csf': 0.1.8
       ts-dedent: 2.2.0
 
-  '@storybook/core-server@8.1.6(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/core-server@8.1.8(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
       '@aw-web-design/x-default-browser': 1.4.126
       '@babel/core': 7.24.5
       '@babel/parser': 7.24.5
       '@discoveryjs/json-ext': 0.5.7
-      '@storybook/builder-manager': 8.1.6(prettier@3.3.2)
-      '@storybook/channels': 8.1.6
-      '@storybook/core-common': 8.1.6(prettier@3.3.2)
-      '@storybook/core-events': 8.1.6
+      '@storybook/builder-manager': 8.1.8(prettier@3.3.2)
+      '@storybook/channels': 8.1.8
+      '@storybook/core-common': 8.1.8(prettier@3.3.2)
+      '@storybook/core-events': 8.1.8
       '@storybook/csf': 0.1.8
-      '@storybook/csf-tools': 8.1.6
+      '@storybook/csf-tools': 8.1.8
       '@storybook/docs-mdx': 3.1.0-next.0
       '@storybook/global': 5.0.0
-      '@storybook/manager': 8.1.6
-      '@storybook/manager-api': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/node-logger': 8.1.6
-      '@storybook/preview-api': 8.1.6
-      '@storybook/telemetry': 8.1.6(prettier@3.3.2)
-      '@storybook/types': 8.1.6
+      '@storybook/manager': 8.1.8
+      '@storybook/manager-api': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/node-logger': 8.1.8
+      '@storybook/preview-api': 8.1.8
+      '@storybook/telemetry': 8.1.8(prettier@3.3.2)
+      '@storybook/types': 8.1.8
       '@types/detect-port': 1.3.3
       '@types/diff': 5.2.1
       '@types/node': 18.17.1
@@ -13696,7 +13696,7 @@ snapshots:
       pretty-hrtime: 1.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
-      semver: 7.5.4
+      semver: 7.6.2
       telejson: 7.2.0
       tiny-invariant: 1.3.3
       ts-dedent: 2.2.0
@@ -13713,21 +13713,21 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@storybook/csf-plugin@8.1.6':
+  '@storybook/csf-plugin@8.1.8':
     dependencies:
-      '@storybook/csf-tools': 8.1.6
+      '@storybook/csf-tools': 8.1.8
       unplugin: 1.4.0
     transitivePeerDependencies:
       - supports-color
 
-  '@storybook/csf-tools@8.1.6':
+  '@storybook/csf-tools@8.1.8':
     dependencies:
       '@babel/generator': 7.24.5
       '@babel/parser': 7.24.5
       '@babel/traverse': 7.24.5
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.7
       '@storybook/csf': 0.1.8
-      '@storybook/types': 8.1.6
+      '@storybook/types': 8.1.8
       fs-extra: 11.1.1
       recast: 0.23.7
       ts-dedent: 2.2.0
@@ -13740,12 +13740,12 @@ snapshots:
 
   '@storybook/docs-mdx@3.1.0-next.0': {}
 
-  '@storybook/docs-tools@8.1.6(prettier@3.3.2)':
+  '@storybook/docs-tools@8.1.8(prettier@3.3.2)':
     dependencies:
-      '@storybook/core-common': 8.1.6(prettier@3.3.2)
-      '@storybook/core-events': 8.1.6
-      '@storybook/preview-api': 8.1.6
-      '@storybook/types': 8.1.6
+      '@storybook/core-common': 8.1.8(prettier@3.3.2)
+      '@storybook/core-events': 8.1.8
+      '@storybook/preview-api': 8.1.8
+      '@storybook/types': 8.1.8
       '@types/doctrine': 0.0.3
       assert: 2.1.0
       doctrine: 3.0.0
@@ -13762,17 +13762,17 @@ snapshots:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@storybook/manager-api@8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/manager-api@8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@storybook/channels': 8.1.6
-      '@storybook/client-logger': 8.1.6
-      '@storybook/core-events': 8.1.6
+      '@storybook/channels': 8.1.8
+      '@storybook/client-logger': 8.1.8
+      '@storybook/core-events': 8.1.8
       '@storybook/csf': 0.1.8
       '@storybook/global': 5.0.0
       '@storybook/icons': 1.2.9(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/router': 8.1.6
-      '@storybook/theming': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/types': 8.1.6
+      '@storybook/router': 8.1.8
+      '@storybook/theming': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/types': 8.1.8
       dequal: 2.0.3
       lodash: 4.17.21
       memoizerific: 1.11.3
@@ -13783,18 +13783,18 @@ snapshots:
       - react
       - react-dom
 
-  '@storybook/manager@8.1.6': {}
+  '@storybook/manager@8.1.8': {}
 
-  '@storybook/node-logger@8.1.6': {}
+  '@storybook/node-logger@8.1.8': {}
 
-  '@storybook/preview-api@8.1.6':
+  '@storybook/preview-api@8.1.8':
     dependencies:
-      '@storybook/channels': 8.1.6
-      '@storybook/client-logger': 8.1.6
-      '@storybook/core-events': 8.1.6
+      '@storybook/channels': 8.1.8
+      '@storybook/client-logger': 8.1.8
+      '@storybook/core-events': 8.1.8
       '@storybook/csf': 0.1.8
       '@storybook/global': 5.0.0
-      '@storybook/types': 8.1.6
+      '@storybook/types': 8.1.8
       '@types/qs': 6.9.7
       dequal: 2.0.3
       lodash: 4.17.21
@@ -13804,21 +13804,21 @@ snapshots:
       ts-dedent: 2.2.0
       util-deprecate: 1.0.2
 
-  '@storybook/preview@8.1.6': {}
+  '@storybook/preview@8.1.8': {}
 
-  '@storybook/react-dom-shim@8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/react-dom-shim@8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@storybook/react-vite@8.1.6(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))':
+  '@storybook/react-vite@8.1.8(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(rollup@4.14.0)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))':
     dependencies:
-      '@joshwooding/vite-plugin-react-docgen-typescript': 0.3.1(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))
+      '@joshwooding/vite-plugin-react-docgen-typescript': 0.3.1(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))
       '@rollup/pluginutils': 5.0.2(rollup@4.14.0)
-      '@storybook/builder-vite': 8.1.6(prettier@3.3.2)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))
-      '@storybook/node-logger': 8.1.6
-      '@storybook/react': 8.1.6(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
-      '@storybook/types': 8.1.6
+      '@storybook/builder-vite': 8.1.8(prettier@3.3.2)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))
+      '@storybook/node-logger': 8.1.8
+      '@storybook/react': 8.1.8(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)
+      '@storybook/types': 8.1.8
       find-up: 5.0.0
       magic-string: 0.30.1
       react: 18.3.0-canary-14898b6a9-20240318
@@ -13826,7 +13826,7 @@ snapshots:
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       resolve: 1.22.8
       tsconfig-paths: 4.2.0
-      vite: 5.2.13(@types/node@20.12.7)
+      vite: 5.3.0(@types/node@20.12.7)
     transitivePeerDependencies:
       - '@preact/preset-vite'
       - encoding
@@ -13836,14 +13836,14 @@ snapshots:
       - typescript
       - vite-plugin-glimmerx
 
-  '@storybook/react@8.1.6(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)':
+  '@storybook/react@8.1.8(prettier@3.3.2)(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5)':
     dependencies:
-      '@storybook/client-logger': 8.1.6
-      '@storybook/docs-tools': 8.1.6(prettier@3.3.2)
+      '@storybook/client-logger': 8.1.8
+      '@storybook/docs-tools': 8.1.8(prettier@3.3.2)
       '@storybook/global': 5.0.0
-      '@storybook/preview-api': 8.1.6
-      '@storybook/react-dom-shim': 8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/types': 8.1.6
+      '@storybook/preview-api': 8.1.8
+      '@storybook/react-dom-shim': 8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/types': 8.1.8
       '@types/escodegen': 0.0.6
       '@types/estree': 0.0.51
       '@types/node': 18.17.1
@@ -13857,7 +13857,7 @@ snapshots:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
       react-element-to-jsx-string: 15.0.0(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
-      semver: 7.5.4
+      semver: 7.6.2
       ts-dedent: 2.2.0
       type-fest: 2.19.0
       util-deprecate: 1.0.2
@@ -13868,17 +13868,17 @@ snapshots:
       - prettier
       - supports-color
 
-  '@storybook/router@8.1.6':
+  '@storybook/router@8.1.8':
     dependencies:
-      '@storybook/client-logger': 8.1.6
+      '@storybook/client-logger': 8.1.8
       memoizerific: 1.11.3
       qs: 6.11.0
 
-  '@storybook/telemetry@8.1.6(prettier@3.3.2)':
+  '@storybook/telemetry@8.1.8(prettier@3.3.2)':
     dependencies:
-      '@storybook/client-logger': 8.1.6
-      '@storybook/core-common': 8.1.6(prettier@3.3.2)
-      '@storybook/csf-tools': 8.1.6
+      '@storybook/client-logger': 8.1.8
+      '@storybook/core-common': 8.1.8(prettier@3.3.2)
+      '@storybook/csf-tools': 8.1.8
       chalk: 4.1.2
       detect-package-manager: 2.0.1
       fetch-retry: 5.0.3
@@ -13889,19 +13889,19 @@ snapshots:
       - prettier
       - supports-color
 
-  '@storybook/theming@8.1.6(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@storybook/theming@8.1.8(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
       '@emotion/use-insertion-effect-with-fallbacks': 1.0.1(react@18.3.0-canary-14898b6a9-20240318)
-      '@storybook/client-logger': 8.1.6
+      '@storybook/client-logger': 8.1.8
       '@storybook/global': 5.0.0
       memoizerific: 1.11.3
     optionalDependencies:
       react: 18.3.0-canary-14898b6a9-20240318
       react-dom: 18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318)
 
-  '@storybook/types@8.1.6':
+  '@storybook/types@8.1.8':
     dependencies:
-      '@storybook/channels': 8.1.6
+      '@storybook/channels': 8.1.8
       '@types/express': 4.17.17
       file-system-cache: 2.3.0
 
@@ -14002,7 +14002,7 @@ snapshots:
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.24.5
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.7
       '@types/babel__generator': 7.6.4
       '@types/babel__template': 7.4.1
       '@types/babel__traverse': 7.18.2
@@ -14394,9 +14394,9 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@vercel/remix@2.9.2(@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.2(typescript@5.4.5))(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
+  '@vercel/remix@2.9.2(@remix-run/dev@2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0)))(@remix-run/node@2.9.2(typescript@5.4.5))(@remix-run/server-runtime@2.9.2(typescript@5.4.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)':
     dependencies:
-      '@remix-run/dev': 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.2.13(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
+      '@remix-run/dev': 2.9.2(@remix-run/react@2.9.2(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)(typescript@5.4.5))(@remix-run/serve@2.9.2(typescript@5.4.5))(@types/node@20.12.7)(typescript@5.4.5)(vite@5.3.0(@types/node@20.12.7))(wrangler@3.50.0(@cloudflare/workers-types@4.20240405.0))
       '@remix-run/node': 2.9.2(typescript@5.4.5)
       '@remix-run/server-runtime': 2.9.2(typescript@5.4.5)
       '@vercel/static-config': 3.0.0
@@ -15523,31 +15523,31 @@ snapshots:
       '@esbuild/win32-ia32': 0.20.2
       '@esbuild/win32-x64': 0.20.2
 
-  esbuild@0.21.4:
+  esbuild@0.21.5:
     optionalDependencies:
-      '@esbuild/aix-ppc64': 0.21.4
-      '@esbuild/android-arm': 0.21.4
-      '@esbuild/android-arm64': 0.21.4
-      '@esbuild/android-x64': 0.21.4
-      '@esbuild/darwin-arm64': 0.21.4
-      '@esbuild/darwin-x64': 0.21.4
-      '@esbuild/freebsd-arm64': 0.21.4
-      '@esbuild/freebsd-x64': 0.21.4
-      '@esbuild/linux-arm': 0.21.4
-      '@esbuild/linux-arm64': 0.21.4
-      '@esbuild/linux-ia32': 0.21.4
-      '@esbuild/linux-loong64': 0.21.4
-      '@esbuild/linux-mips64el': 0.21.4
-      '@esbuild/linux-ppc64': 0.21.4
-      '@esbuild/linux-riscv64': 0.21.4
-      '@esbuild/linux-s390x': 0.21.4
-      '@esbuild/linux-x64': 0.21.4
-      '@esbuild/netbsd-x64': 0.21.4
-      '@esbuild/openbsd-x64': 0.21.4
-      '@esbuild/sunos-x64': 0.21.4
-      '@esbuild/win32-arm64': 0.21.4
-      '@esbuild/win32-ia32': 0.21.4
-      '@esbuild/win32-x64': 0.21.4
+      '@esbuild/aix-ppc64': 0.21.5
+      '@esbuild/android-arm': 0.21.5
+      '@esbuild/android-arm64': 0.21.5
+      '@esbuild/android-x64': 0.21.5
+      '@esbuild/darwin-arm64': 0.21.5
+      '@esbuild/darwin-x64': 0.21.5
+      '@esbuild/freebsd-arm64': 0.21.5
+      '@esbuild/freebsd-x64': 0.21.5
+      '@esbuild/linux-arm': 0.21.5
+      '@esbuild/linux-arm64': 0.21.5
+      '@esbuild/linux-ia32': 0.21.5
+      '@esbuild/linux-loong64': 0.21.5
+      '@esbuild/linux-mips64el': 0.21.5
+      '@esbuild/linux-ppc64': 0.21.5
+      '@esbuild/linux-riscv64': 0.21.5
+      '@esbuild/linux-s390x': 0.21.5
+      '@esbuild/linux-x64': 0.21.5
+      '@esbuild/netbsd-x64': 0.21.5
+      '@esbuild/openbsd-x64': 0.21.5
+      '@esbuild/sunos-x64': 0.21.5
+      '@esbuild/win32-arm64': 0.21.5
+      '@esbuild/win32-ia32': 0.21.5
+      '@esbuild/win32-x64': 0.21.5
 
   escalade@3.1.1: {}
 
@@ -16108,7 +16108,7 @@ snapshots:
     dependencies:
       '@sindresorhus/merge-streams': 2.3.0
       fast-glob: 3.3.2
-      ignore: 5.2.4
+      ignore: 5.3.1
       path-type: 5.0.0
       slash: 5.1.0
       unicorn-magic: 0.1.0
@@ -18427,7 +18427,7 @@ snapshots:
     dependencies:
       '@babel/core': 7.24.5
       '@babel/traverse': 7.24.5
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.7
       '@types/babel__core': 7.20.5
       '@types/babel__traverse': 7.18.2
       '@types/doctrine': 0.0.9
@@ -19043,9 +19043,9 @@ snapshots:
 
   store2@2.14.2: {}
 
-  storybook@8.1.6(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
+  storybook@8.1.8(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318):
     dependencies:
-      '@storybook/cli': 8.1.6(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
+      '@storybook/cli': 8.1.8(@babel/preset-env@7.24.5(@babel/core@7.24.5))(react-dom@18.3.0-canary-14898b6a9-20240318(react@18.3.0-canary-14898b6a9-20240318))(react@18.3.0-canary-14898b6a9-20240318)
     transitivePeerDependencies:
       - '@babel/preset-env'
       - bufferutil
@@ -19360,9 +19360,9 @@ snapshots:
 
   tslib@2.6.2: {}
 
-  tsx@4.11.2:
+  tsx@4.15.4:
     dependencies:
-      esbuild: 0.20.2
+      esbuild: 0.21.5
       get-tsconfig: 4.7.5
     optionalDependencies:
       fsevents: 2.3.3
@@ -19661,9 +19661,9 @@ snapshots:
       '@types/node': 20.12.7
       fsevents: 2.3.3
 
-  vite@5.2.13(@types/node@20.12.7):
+  vite@5.3.0(@types/node@20.12.7):
     dependencies:
-      esbuild: 0.20.2
+      esbuild: 0.21.5
       postcss: 8.4.38
       rollup: 4.14.0
     optionalDependencies:
