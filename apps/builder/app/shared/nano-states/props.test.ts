@@ -247,7 +247,12 @@ test("resolve asset prop values when params is provided", () => {
   });
   expect(
     $propValuesByInstanceSelector.get().get(JSON.stringify(["box"]))
-  ).toEqual(new Map<string, unknown>([["myAsset", "/asset/my-file.jpg"]]));
+  ).toEqual(
+    new Map<string, unknown>([
+      ["$webstudio$canvasOnly$assetId", "assetId"],
+      ["myAsset", "/asset/my-file.jpg"],
+    ])
+  );
 
   cleanStores($propValuesByInstanceSelector);
 });
