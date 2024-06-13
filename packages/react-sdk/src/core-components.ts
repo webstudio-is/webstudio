@@ -40,7 +40,13 @@ const collectionMeta: WsComponentMeta = {
         {
           type: "instance",
           component: "Box",
-          children: [{ type: "expression", value: "collectionItem" }],
+          children: [
+            {
+              type: "instance",
+              component: "Text",
+              children: [{ type: "expression", value: "collectionItem" }],
+            },
+          ],
         },
       ],
     },
