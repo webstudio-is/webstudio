@@ -1,9 +1,5 @@
 import * as csstree from "css-tree";
-import {
-  StyleValue,
-  type Style as S,
-  type StyleProperty,
-} from "@webstudio-is/css-engine";
+import { StyleValue, type StyleProperty } from "@webstudio-is/css-engine";
 import type { EmbedTemplateStyleDecl } from "@webstudio-is/react-sdk";
 import { parseCssValue as parseCssValueLonghand } from "./parse-css-value";
 import * as parsers from "./property-parsers/parsers";
