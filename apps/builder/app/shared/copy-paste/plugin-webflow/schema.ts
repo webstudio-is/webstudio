@@ -56,6 +56,7 @@ export const WfElementNode = z.union([
   WfBaseNode.extend({
     type: z.enum(["Link"]),
     data: WfNodeData.extend({
+      button: z.boolean().optional(),
       link: z.object({
         url: z.string(),
         target: z.string().optional(),

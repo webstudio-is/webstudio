@@ -1,5 +1,5 @@
 import type { Instance, WebstudioFragment } from "@webstudio-is/sdk";
-import type { WfNode, WfStyle } from "./schema";
+import type { WfElementNode, WfNode, WfStyle } from "./schema";
 import { nanoid } from "nanoid";
 import { $breakpoints } from "~/shared/nano-states";
 import { isBaseBreakpoint } from "~/shared/breakpoints";
@@ -55,6 +55,23 @@ const addNodeStyles = (
   }
 };
 
+const mapComponentAndPresetStyles = (wfNode: WfElementNode) => {
+  const component = wfNode.type;
+  const presetStyles = [wfNode.tag];
+
+  switch (component) {
+    case "Link": {
+      const data = wfNode.data;
+      if (data.button) {
+        presetStyles.push("w-button");
+      }
+      return presetStyles;
+    }
+  }
+
+  return presetStyles;
+};
+
 export const addStyles = async (
   wfNodes: Map<WfNode["_id"], WfNode>,
   wfStyles: Map<WfStyle["_id"], WfStyle>,
@@ -73,15 +90,25 @@ export const addStyles = async (
       continue;
     }
 
-    const styles = presets[
-      wfNode.tag as keyof typeof presets
-    ] as Array<EmbedTemplateStyleDecl>;
-    if (styles) {
-      addNodeStyles(wfNode.tag, styles, instanceId, fragment);
-    }
+    mapComponentAndPresetStyles(wfNode).forEach((name) => {
+      if (name in presets === false) {
+        console.error(`Webflow style preset ${name} not found`);
+        return;
+      }
+      const styles = presets[
+        name as keyof typeof presets
+      ] as Array<EmbedTemplateStyleDecl>;
+      addNodeStyles(name, styles, instanceId, fragment);
+    });
+
     const instance = fragment.instances.find(
       (instance) => instance.id === instanceId
     );
+
+    if (instance === undefined) {
+      console.error(`No instance found for ${instanceId}`);
+      continue;
+    }
 
     for (const classId of wfNode.classes) {
       const style = wfStyles.get(classId);
