@@ -882,7 +882,49 @@ export default {
       },
     },
     {
-      property: "font",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontVariant",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWidth",
+      value: {
+        type: "invalid",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontFamily",
       value: {
         type: "invalid",
         value: "",
@@ -1078,7 +1120,42 @@ export default {
       },
     },
     {
-      property: "font",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontVariant",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWidth",
+      value: {
+        type: "invalid",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "fontFamily",
       value: {
         type: "invalid",
         value: "",
@@ -1281,7 +1358,42 @@ export default {
       },
     },
     {
-      property: "font",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontVariant",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWidth",
+      value: {
+        type: "invalid",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontFamily",
       value: {
         type: "invalid",
         value: "",
@@ -1336,7 +1448,49 @@ export default {
       },
     },
     {
-      property: "font",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontVariant",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWidth",
+      value: {
+        type: "invalid",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontFamily",
       value: {
         type: "invalid",
         value: "",
@@ -1391,7 +1545,49 @@ export default {
       },
     },
     {
-      property: "font",
+      property: "fontStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontVariant",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontWidth",
+      value: {
+        type: "invalid",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontSize",
+      value: {
+        type: "keyword",
+        value: "inherit",
+      },
+    },
+    {
+      property: "lineHeight",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "fontFamily",
       value: {
         type: "invalid",
         value: "",
@@ -2347,10 +2543,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
@@ -2867,10 +3077,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
@@ -8266,10 +8490,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
@@ -8351,10 +8589,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
@@ -8470,10 +8722,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
@@ -8669,10 +8935,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
@@ -10682,10 +10962,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
@@ -11119,10 +11413,24 @@ export default {
       },
     },
     {
-      property: "textDecoration",
+      property: "textDecorationLine",
       value: {
-        type: "invalid",
-        value: "",
+        type: "keyword",
+        value: "none",
+      },
+    },
+    {
+      property: "textDecorationStyle",
+      value: {
+        type: "keyword",
+        value: "initial",
+      },
+    },
+    {
+      property: "textDecorationColor",
+      value: {
+        type: "keyword",
+        value: "initial",
       },
     },
     {
