@@ -72,7 +72,7 @@ export const Image = forwardRef<
       // Avoid image flickering on switching from preview to asset (during upload)
       decoding = "sync";
 
-      // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state
+      // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state (we don't know asset src during uploading)
       key = $webstudio$canvasOnly$assetId ?? src;
 
       // NaN width and height means that the image is not yet uploaded, and should not be optimized on canvas

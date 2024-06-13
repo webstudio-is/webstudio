@@ -6,7 +6,6 @@ import {
   getPagePath,
   findPageByIdOrPath,
 } from "@webstudio-is/sdk";
-import { nanoid } from "nanoid";
 
 export const normalizeProps = ({
   props,
@@ -43,24 +42,21 @@ export const normalizeProps = ({
       };
 
       if (prop.name === "width" && asset.type === "image") {
-        // if (false === Number.isNaN(asset.meta.width)) {
         newProps.push({
           ...propBase,
           type: "number",
           value: asset.meta.width,
         });
-        //}
+
         continue;
       }
 
       if (prop.name === "height" && asset.type === "image") {
-        //if (false === Number.isNaN(asset.meta.height)) {
         newProps.push({
           ...propBase,
           type: "number",
           value: asset.meta.height,
         });
-        //}
         continue;
       }
 
@@ -71,8 +67,10 @@ export const normalizeProps = ({
       });
 
       if (source === "canvas") {
+        // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state (we don't know asset src during uploading)
+        // see Image component in sdk-components-react
         newProps.push({
-          id: nanoid(),
+          id: `${prop.instanceId}-${asset.id}-assetId`,
           name: "$webstudio$canvasOnly$assetId",
           required: false,
           instanceId: prop.instanceId,
