@@ -248,13 +248,14 @@ export const getImageAttributes = (props: {
     }
   | undefined => {
   const width = getInt(props.width);
+
   const quality = Math.max(
     Math.min(getInt(props.quality) ?? DEFAULT_QUALITY, 100),
     0
   );
 
   if (props.src != null && props.src !== "") {
-    if (props.srcSet == null && props.optimize) {
+    if (props.srcSet == null && props.optimize && width !== undefined) {
       const sizes =
         props.sizes ?? (props.width == null ? DEFAULT_SIZES : undefined);
 

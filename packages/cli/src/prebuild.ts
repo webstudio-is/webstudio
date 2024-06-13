@@ -328,7 +328,9 @@ export const prebuild = async (options: {
       props: siteData.build.props.map(([_id, prop]) => prop),
       assetBaseUrl,
       assets: new Map(siteData.assets.map((asset) => [asset.id, asset])),
+      uploadingImageAssets: [],
       pages: siteData.build.pages,
+      source: "prebuild",
     });
 
     const props: [Prop["id"], Prop][] = [];

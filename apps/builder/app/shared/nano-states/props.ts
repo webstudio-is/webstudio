@@ -6,6 +6,7 @@ import type {
   Prop,
   ResourceRequest,
   System,
+  ImageAsset,
 } from "@webstudio-is/sdk";
 import {
   decodeDataSourceVariable,
@@ -21,7 +22,13 @@ import {
 import { isFeatureEnabled } from "@webstudio-is/feature-flags";
 import { mapGroupBy } from "~/shared/shim";
 import { $instances } from "./instances";
-import { $dataSources, $props, $assets, $resources } from "./nano-states";
+import {
+  $dataSources,
+  $props,
+  $assets,
+  $resources,
+  $uploadingFilesDataStore,
+} from "./nano-states";
 import { $selectedPage, $pages } from "./pages";
 import type { InstanceSelector } from "../tree-utils";
 import { $params } from "~/canvas/stores";
@@ -32,6 +39,7 @@ import {
   $selectedPageDefaultSystem,
   mergeSystem,
 } from "./variables";
+import { getMimeType } from "~/builder/shared/assets/asset-utils";
 
 export const getIndexedInstanceId = (
   instanceId: Instance["id"],
@@ -235,20 +243,58 @@ export const $propValuesByInstanceSelector = computed(
     $params,
     $pages,
     $assets,
+    $uploadingFilesDataStore,
   ],
-  (instances, props, page, unscopedVariableValues, params, pages, assets) => {
+  (
+    instances,
+    props,
+    page,
+    unscopedVariableValues,
+    params,
+    pages,
+    assets,
+    uploadingFilesDataStore
+  ) => {
     const variableValues = new Map<string, unknown>(unscopedVariableValues);
 
     let propsList = Array.from(props.values());
 
     // ignore asset and page props when params is not provided
     if (params && pages) {
+      const uploadingImageAssets = uploadingFilesDataStore
+        .map((fileData) => {
+          const format = getMimeType(
+            fileData.source === "file" ? fileData.file : new URL(fileData.url)
+          ).split("/")[1];
+
+          const uploadingAsset: ImageAsset = {
+            id: fileData.assetId,
+            name: fileData.objectURL,
+            format,
+            type: "image",
+            description: "",
+            createdAt: "",
+            projectId: "",
+            size: 0,
+
+            meta: {
+              width: Number.NaN,
+              height: Number.NaN,
+            },
+          };
+
+          return uploadingAsset;
+        })
+        .filter(<T>(value: T): value is NonNullable<T> => value !== undefined);
+
       // use whole props list to let access hash props from other pages and instances
       propsList = normalizeProps({
         props: propsList,
         assetBaseUrl: params.assetBaseUrl,
         assets,
+        uploadingImageAssets,
         pages,
+        source: "canvas",
       });
     }
     // collect props and group by instances

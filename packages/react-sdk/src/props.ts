@@ -2,26 +2,35 @@ import {
   type Prop,
   type Assets,
   type Pages,
+  type ImageAsset,
   getPagePath,
   findPageByIdOrPath,
 } from "@webstudio-is/sdk";
+import { nanoid } from "nanoid";
 
 export const normalizeProps = ({
   props,
   assetBaseUrl,
   assets,
+  uploadingImageAssets,
   pages,
+  source,
 }: {
   props: Prop[];
   assetBaseUrl: string;
   assets: Assets;
+  uploadingImageAssets: ImageAsset[];
   pages: Pages;
+  source: "canvas" | "prebuild";
 }) => {
   const newProps: Prop[] = [];
   for (const prop of props) {
     if (prop.type === "asset") {
       const assetId = prop.value;
-      const asset = assets.get(assetId);
+      const asset =
+        assets.get(assetId) ??
+        uploadingImageAssets.find((asset) => asset.id === assetId);
+
       if (asset === undefined) {
         continue;
       }
@@ -34,20 +43,24 @@ export const normalizeProps = ({
       };
 
       if (prop.name === "width" && asset.type === "image") {
-        newProps.push({
-          ...propBase,
-          type: "number",
-          value: asset.meta.width,
-        });
+        if (false === Number.isNaN(asset.meta.width)) {
+          newProps.push({
+            ...propBase,
+            type: "number",
+            value: asset.meta.width,
+          });
+        }
         continue;
       }
 
       if (prop.name === "height" && asset.type === "image") {
-        newProps.push({
-          ...propBase,
-          type: "number",
-          value: asset.meta.height,
-        });
+        if (false === Number.isNaN(asset.meta.height)) {
+          newProps.push({
+            ...propBase,
+            type: "number",
+            value: asset.meta.height,
+          });
+        }
         continue;
       }
 
@@ -56,6 +69,17 @@ export const normalizeProps = ({
         type: "string",
         value: `${assetBaseUrl}${asset.name}`,
       });
+
+      if (source === "canvas") {
+        newProps.push({
+          id: nanoid(),
+          name: "$webstudio$assetId",
+          required: false,
+          instanceId: prop.instanceId,
+          type: "string",
+          value: asset.id,
+        });
+      }
 
       continue;
     }

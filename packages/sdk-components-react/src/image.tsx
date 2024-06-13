@@ -35,54 +35,64 @@ const imagePlaceholderSvg = `data:image/svg+xml;base64,${btoa(`<svg
 
 type Props = Omit<ComponentPropsWithoutRef<typeof WebstudioImage>, "loader">;
 
-export const Image = forwardRef<ElementRef<typeof defaultTag>, Props>(
-  ({ loading = "lazy", ...props }, ref) => {
-    // cast to string when invalid value type is provided with binding
-    const src = String(props.src ?? "");
+export const Image = forwardRef<
+  ElementRef<typeof defaultTag>,
+  Props & { $webstudio$assetId?: string | undefined }
+>(({ loading = "lazy", decoding, $webstudio$assetId, ...props }, ref) => {
+  // cast to string when invalid value type is provided with binding
+  const src = String(props.src ?? "");
 
-    const { imageLoader, renderer, assetBaseUrl } = useContext(ReactSdkContext);
+  const { imageLoader, renderer, assetBaseUrl } = useContext(ReactSdkContext);
 
-    if (renderer === "canvas") {
-      // With disabled cache and loading lazy, chrome may not render the image at all
-      loading = "eager";
-    }
+  let decodingValue = decoding;
 
-    if (src.startsWith(assetBaseUrl) === false) {
-      return (
-        <img
-          key={src}
-          loading={loading}
-          {...props}
-          src={src || imagePlaceholderSvg}
-          ref={ref}
-        />
-      );
-    }
+  let key = src;
 
-    // webstudio pass resolved assetBaseUrl + asset.name
-    // trim assetBaseUrl and pass only asset.name to image loader
-    const assetName = src.slice(assetBaseUrl.length);
+  if (renderer === "canvas") {
+    // With disabled cache and loading lazy, chrome may not render the image at all
+    loading = "eager";
 
+    // Avoid image flickering on switching from preview to asset (during upload)
+    decodingValue = "sync";
+
+    // use assetId as key to not recreate the image if it's switched from uploading to uploaded asset state
+    key = $webstudio$assetId ?? src;
+  }
+
+  if (src.startsWith(assetBaseUrl) === false) {
     return (
-      <WebstudioImage
-        /**
-         * `key` is needed to recreate the image in case of asset change in builder,
-         * this gives immediate feedback when an asset is changed.
-         * Also, it visually fixes image distortion when another asset has a seriously different  aspectRatio
-         * (we change aspectRatio CSS prop on asset change)
-         *
-         * In non-builder mode, key on images are usually also a good idea,
-         * prevents showing outdated images on route change.
-         **/
-        key={assetName}
+      <img
+        key={key}
         loading={loading}
         {...props}
-        loader={imageLoader}
-        src={assetName}
+        src={src || imagePlaceholderSvg}
         ref={ref}
       />
     );
   }
-);
+
+  // webstudio pass resolved assetBaseUrl + asset.name
+  // trim assetBaseUrl and pass only asset.name to image loader
+  const assetName = src.slice(assetBaseUrl.length);
+
+  return (
+    <WebstudioImage
+      /**
+       * `key` is needed to recreate the image in case of asset change in builder,
+       * this gives immediate feedback when an asset is changed.
+       *
+       * In non-builder mode, key on images are usually also a good idea,
+       * prevents showing outdated images on route change.
+       **/
+      key={key}
+      loading={loading}
+      decoding={decodingValue}
+      {...props}
+      loader={imageLoader}
+      src={assetName}
+      ref={ref}
+    />
+  );
+});
 
 Image.displayName = "Image";

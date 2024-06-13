@@ -53,7 +53,9 @@ test("normalize asset prop into string", () => {
           },
         ],
       ]),
+      uploadingImageAssets: [],
       pages: pagesBase,
+      source: "canvas",
     })
   ).toEqual([
     {
@@ -80,6 +82,7 @@ test("normalize page prop with path into string", () => {
       ],
       assetBaseUrl: "",
       assets: new Map(),
+      uploadingImageAssets: [],
       pages: {
         ...pagesBase,
         pages: [
@@ -95,6 +98,7 @@ test("normalize page prop with path into string", () => {
         ],
         folders: [],
       },
+      source: "canvas",
     })
   ).toEqual([
     {
@@ -131,6 +135,7 @@ test("normalize page prop with path and hash into string", () => {
     ],
     assetBaseUrl: "",
     assets: new Map(),
+    uploadingImageAssets: [],
     pages: {
       ...pagesBase,
       pages: [
@@ -159,6 +164,7 @@ test("normalize page prop with path and hash into string", () => {
         },
       ],
     },
+    source: "canvas",
   });
   expect(result).toEqual([
     {

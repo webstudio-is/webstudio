@@ -62,6 +62,10 @@ const renderProperty = (
     onDelete: () => {
       if (prop) {
         logic.handleDelete(prop);
+        if (component === "Image" && propName === "src") {
+          logic.handleDeleteByPropName("width");
+          logic.handleDeleteByPropName("height");
+        }
       }
     },
     onChange: (propValue) => {

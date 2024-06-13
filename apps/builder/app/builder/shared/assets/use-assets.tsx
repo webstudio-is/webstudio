@@ -12,10 +12,16 @@ import type {
   UploadingAssetContainer,
 } from "./types";
 import type { ActionData } from "~/builder/shared/assets";
-import { $assets, $authToken, $project } from "~/shared/nano-states";
-import { atom, computed } from "nanostores";
+import {
+  $assets,
+  $authToken,
+  $project,
+  $uploadingFilesDataStore,
+  type UploadingFileData,
+} from "~/shared/nano-states";
+import { computed } from "nanostores";
 import { serverSyncStore } from "~/shared/sync";
-import type { Simplify } from "type-fest";
+
 import {
   getFileName,
   getMimeType,
@@ -37,24 +43,6 @@ const setAsset = (asset: Asset) => {
     assets.set(asset.id, asset);
   });
 };
-
-type UploadingFileData = Simplify<
-  {
-    // common props
-    assetId: string;
-    type: AssetType;
-    objectURL: string;
-  } & (
-    | {
-        source: "file";
-        file: File;
-      }
-    | {
-        source: "url";
-        url: URL;
-      }
-  )
->;
 
 const getFilesData = async (
   type: AssetType,
@@ -79,15 +67,13 @@ const getFilesData = async (
       source: "url" as const,
       assetId,
       type,
-      url,
+      url: url.href,
       objectURL: url.href,
     });
   }
 
   return filesData;
 };
-
-const $uploadingFilesDataStore = atom<UploadingFileData[]>([]);
 
 const addUploadingFilesData = (filesData: UploadingFileData[]) => {
   const uploadingFilesData = $uploadingFilesDataStore.get();
@@ -110,10 +96,12 @@ const $assetContainers = computed(
       const name =
         uploadingFile.source === "file"
           ? uploadingFile.file.name
-          : uploadingFile.url.href;
+          : uploadingFile.url;
 
       const format = getMimeType(
-        uploadingFile.source === "file" ? uploadingFile.file : uploadingFile.url
+        uploadingFile.source === "file"
+          ? uploadingFile.file
+          : new URL(uploadingFile.url)
       ).split("/")[1];
 
       uploadingContainers.push({
@@ -317,7 +305,8 @@ export const uploadAssets = async (
     await uploadAsset({
       authToken,
       projectId,
-      fileOrUrl: fileData.source === "file" ? fileData.file : fileData.url,
+      fileOrUrl:
+        fileData.source === "file" ? fileData.file : new URL(fileData.url),
       onCompleted: (data) => {
         URL.revokeObjectURL(fileData.objectURL);
         deleteUploadingFileData(assetId);
