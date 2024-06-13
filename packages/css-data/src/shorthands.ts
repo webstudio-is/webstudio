@@ -296,89 +296,84 @@ const expandGap = function* (property: string, value: CssNode) {
   }
 };
 
-const expandPlace = function* (property: string, value: CssNode) {
-  switch (property) {
-    case "place-content": {
-      const [align, justify] = getValueList(value);
-      yield ["align-content", align] as const;
-      yield ["justify-content", justify ?? align] as const;
-      break;
-    }
-    case "place-items": {
-      const [align, justify] = getValueList(value);
-      yield ["align-items", align] as const;
-      yield ["justify-items", justify ?? align] as const;
-      break;
-    }
-    case "place-self": {
-      const [align, justify] = getValueList(value);
-      yield ["align-self", align] as const;
-      yield ["justify-self", justify ?? align] as const;
-      break;
-    }
-    default:
-      yield [property, value] as const;
-  }
-};
 /**
  *
  * font =
  *   [ <'font-style'> || <font-variant-css2> || <'font-weight'> || <font-width-css3> ]?
  *   <'font-size'> [ / <'line-height'> ]? <'font-family'>
  *
- * text-decoration =
- *   <'text-decoration-line'> ||
- *   <'text-decoration-style'> ||
- *   <'text-decoration-color'>
- *
- * text-emphasis =
- *   <'text-emphasis-style'> ||
- *   <'text-emphasis-color'>
  */
-const expandText = function* (property: string, value: CssNode) {
-  switch (property) {
-    case "font": {
-      // const [before, after] = splitBySlash(getValueList(value));
-      const [fontStyle, fontVariant, fontWeight, fontWidth, config] =
-        parseUnordered(
-          [
-            "<'font-style'>",
-            // <font-variant-css2> is unsupported by csstree
-            "[ normal | small-caps ]",
-            "<'font-weight'>",
-            // <font-width-css3> is unsupported by csstree
-            "[ normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded ]",
-          ],
-          value
-        );
-      let fontSize: CssNode = createInitialNode();
-      let lineHeight: CssNode = createInitialNode();
-      let fontFamily: CssNode = createInitialNode();
-      if (config) {
-        if (
-          lexer.match("<'font-size'> / <'line-height'> <'font-family'>", config)
-            .matched
-        ) {
-          const [fontSizeNode, _slashNode, lineHeightNode, ...fontFamilyNodes] =
-            getValueList(config);
-          fontSize = fontSizeNode;
-          lineHeight = lineHeightNode;
-          fontFamily = createValueNode(fontFamilyNodes);
-        } else {
-          const [fontSizeNode, ...fontFamilyNodes] = getValueList(config);
-          fontSize = fontSizeNode;
-          fontFamily = createValueNode(fontFamilyNodes);
-        }
-      }
-      yield ["font-style", fontStyle ?? createInitialNode()] as const;
-      yield ["font-variant", fontVariant ?? createInitialNode()] as const;
-      yield ["font-weight", fontWeight ?? createInitialNode()] as const;
-      yield ["font-width", fontWidth ?? createInitialNode()] as const;
-      yield ["font-size", fontSize] as const;
-      yield ["line-height", lineHeight] as const;
-      yield ["font-family", fontFamily] as const;
-      break;
+const expandFont = function* (value: CssNode) {
+  // const [before, after] = splitBySlash(getValueList(value));
+  const [fontStyle, fontVariant, fontWeight, fontWidth, config] =
+    parseUnordered(
+      [
+        "<'font-style'>",
+        // <font-variant-css2> is unsupported by csstree
+        "[ normal | small-caps ]",
+        "<'font-weight'>",
+        // <font-width-css3> is unsupported by csstree
+        "[ normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded ]",
+      ],
+      value
+    );
+  let fontSize: CssNode = createInitialNode();
+  let lineHeight: CssNode = createInitialNode();
+  let fontFamily: CssNode = createInitialNode();
+  if (config) {
+    if (
+      lexer.match("<'font-size'> / <'line-height'> <'font-family'>", config)
+        .matched
+    ) {
+      const [fontSizeNode, _slashNode, lineHeightNode, ...fontFamilyNodes] =
+        getValueList(config);
+      fontSize = fontSizeNode;
+      lineHeight = lineHeightNode;
+      fontFamily = createValueNode(fontFamilyNodes);
+    } else {
+      const [fontSizeNode, ...fontFamilyNodes] = getValueList(config);
+      fontSize = fontSizeNode;
+      fontFamily = createValueNode(fontFamilyNodes);
     }
+  }
+  yield ["font-style", fontStyle ?? createInitialNode()] as const;
+  yield ["font-variant", fontVariant ?? createInitialNode()] as const;
+  yield ["font-weight", fontWeight ?? createInitialNode()] as const;
+  yield ["font-width", fontWidth ?? createInitialNode()] as const;
+  yield ["font-size", fontSize] as const;
+  yield ["line-height", lineHeight] as const;
+  yield ["font-family", fontFamily] as const;
+};
+
+const expandFlex = function* (value: CssNode) {
+  const zero = createValueNode([{ type: "Number", value: "0" }]);
+  const one = createValueNode([{ type: "Number", value: "1" }]);
+  const auto = createValueNode([{ type: "Identifier", name: "auto" }]);
+  let grow: undefined | Value;
+  let shrink: undefined | Value;
+  let basis: undefined | Value;
+  if (lexer.match("initial", value).matched) {
+    [grow, shrink, basis] = [zero, one, auto];
+  } else if (lexer.match("auto", value).matched) {
+    [grow, shrink, basis] = [one, one, auto];
+  } else if (lexer.match("none", value).matched) {
+    [grow, shrink, basis] = [zero, zero, auto];
+  } else {
+    [grow, shrink, basis] = parseUnordered(
+      ["<'flex-grow'>", "<'flex-shrink'>", "<'flex-basis'>"],
+      value
+    );
+  }
+  yield ["flex-grow", grow ?? one] as const;
+  yield ["flex-shrink", shrink ?? one] as const;
+  yield ["flex-basis", basis ?? zero] as const;
+};
+
+const expandShorthandsAst = function* (property: string, value: CssNode) {
+  switch (property) {
+    case "font":
+      yield* expandFont(value);
+      break;
 
     case "text-decoration": {
       const [line, style, color] = parseUnordered(
@@ -402,6 +397,41 @@ const expandText = function* (property: string, value: CssNode) {
       );
       yield ["text-emphasis-style", style ?? createInitialNode()] as const;
       yield ["text-emphasis-color", color ?? createInitialNode()] as const;
+      break;
+    }
+
+    case "flex":
+      yield* expandFlex(value);
+      break;
+
+    case "flex-flow": {
+      const [direction, wrap] = parseUnordered(
+        ["<'flex-direction'>", "<'flex-wrap'>"],
+        value
+      );
+      yield ["flex-direction", direction ?? createInitialNode()] as const;
+      yield ["flex-wrap", wrap ?? createInitialNode()] as const;
+      break;
+    }
+
+    case "place-content": {
+      const [align, justify] = getValueList(value);
+      yield ["align-content", align] as const;
+      yield ["justify-content", justify ?? align] as const;
+      break;
+    }
+
+    case "place-items": {
+      const [align, justify] = getValueList(value);
+      yield ["align-items", align] as const;
+      yield ["justify-items", justify ?? align] as const;
+      break;
+    }
+
+    case "place-self": {
+      const [align, justify] = getValueList(value);
+      yield ["align-self", align] as const;
+      yield ["justify-self", justify ?? align] as const;
       break;
     }
 
@@ -442,14 +472,10 @@ export const expandShorthands = (
               const generator = expandGap(property, value);
 
               for (const [property, value] of generator) {
-                const generator = expandPlace(property, value);
+                const generator = expandShorthandsAst(property, value);
 
                 for (const [property, value] of generator) {
-                  const generator = expandText(property, value);
-
-                  for (const [property, value] of generator) {
-                    longhands.push([property, generate(value)]);
-                  }
+                  longhands.push([property, generate(value)]);
                 }
               }
             }

@@ -439,13 +439,59 @@ test("expand text-emphasis", () => {
   ]);
 });
 
+test("expand flex", () => {
+  expect(expandShorthands([["flex", "initial"]])).toEqual([
+    ["flex-grow", "0"],
+    ["flex-shrink", "1"],
+    ["flex-basis", "auto"],
+  ]);
+  expect(expandShorthands([["flex", "auto"]])).toEqual([
+    ["flex-grow", "1"],
+    ["flex-shrink", "1"],
+    ["flex-basis", "auto"],
+  ]);
+  expect(expandShorthands([["flex", "none"]])).toEqual([
+    ["flex-grow", "0"],
+    ["flex-shrink", "0"],
+    ["flex-basis", "auto"],
+  ]);
+  expect(expandShorthands([["flex", "10px"]])).toEqual([
+    ["flex-grow", "1"],
+    ["flex-shrink", "1"],
+    ["flex-basis", "10px"],
+  ]);
+  expect(expandShorthands([["flex", "2"]])).toEqual([
+    ["flex-grow", "2"],
+    ["flex-shrink", "1"],
+    ["flex-basis", "0"],
+  ]);
+  expect(expandShorthands([["flex", "2 3"]])).toEqual([
+    ["flex-grow", "2"],
+    ["flex-shrink", "3"],
+    ["flex-basis", "0"],
+  ]);
+});
+
+test("expand flex-flow", () => {
+  expect(expandShorthands([["flex-flow", "row"]])).toEqual([
+    ["flex-direction", "row"],
+    ["flex-wrap", "initial"],
+  ]);
+  expect(expandShorthands([["flex-flow", "nowrap"]])).toEqual([
+    ["flex-direction", "initial"],
+    ["flex-wrap", "nowrap"],
+  ]);
+  expect(expandShorthands([["flex-flow", "row nowrap"]])).toEqual([
+    ["flex-direction", "row"],
+    ["flex-wrap", "nowrap"],
+  ]);
+});
+
 test.todo("animation");
 test.todo("container");
 test.todo("columns");
 test.todo("column-rule");
 test.todo("contain-intrinsic-size");
-test.todo("flex");
-test.todo("flex-flow");
 test.todo("grid");
 test.todo("grid-area");
 test.todo("grid-column");
