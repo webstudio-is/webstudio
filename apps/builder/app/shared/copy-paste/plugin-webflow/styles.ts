@@ -70,6 +70,30 @@ const mapComponentAndPresetStyles = (wfNode: WfElementNode) => {
       }
       return presetStyles;
     }
+    case "CodeBlock": {
+      presetStyles.push("w-code-block");
+      return presetStyles;
+    }
+    case "HtmlEmbed": {
+      presetStyles.push("w-embed");
+      return presetStyles;
+    }
+    //case "Form": {
+    //  presetStyles.push("w-form");
+    //  return presetStyles;
+    //}
+    case "BlockContainer": {
+      presetStyles.push("w-container");
+      return presetStyles;
+    }
+    case "Row": {
+      presetStyles.push("w-row");
+      return presetStyles;
+    }
+    case "Column": {
+      presetStyles.push("w-col");
+      return presetStyles;
+    }
   }
 
   return presetStyles;
